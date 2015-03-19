@@ -16,5 +16,5 @@ def make_product(domain, name, code):
     return p
 
 
-def make_supply_point(domain, location, owner_id=None):
-    return SupplyPointCase.create_from_location(domain, location, owner_id)
+def make_supply_point(domain, location):
+    return SupplyPointCase.create_from_location(domain, location)

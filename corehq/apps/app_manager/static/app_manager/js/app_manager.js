@@ -65,24 +65,26 @@
                 var $forms = $('.save-button-form');
                 $forms.each(function () {
                     var $form = $(this),
-	                    $buttonHolder = $form.find('.save-button-holder');
-	                COMMCAREHQ.SaveButton.initForm($form, {
-	                    unsavedMessage: "You have unsaved changes",
-	                    success: function (data) {
-	                        var key;
-	                        COMMCAREHQ.app_manager.updateDOM(data.update);
-	                        for (key in data.corrections) {
-	                            if (data.corrections.hasOwnProperty(key)) {
-	                                $form.find('[name="' + key + '"]').val(data.corrections[key]);
-	                                $(document).trigger('correction', [key, data.corrections[key]]);
-	                            }
-	                        }
-                            if (data.hasOwnProperty('case_list-show')
-                                && COMMCAREHQ.app_manager.hasOwnProperty('module_view')){
-                                COMMCAREHQ.app_manager.module_view.requires_case_details(data['case_list-show']);
+	                    $buttonHolder = $form.find('.save-button-holder'),
+                        button = COMMCAREHQ.SaveButton.initForm($form, {
+                            unsavedMessage: "You have unsaved changes",
+                            success: function (data) {
+                                var key;
+                                COMMCAREHQ.app_manager.updateDOM(data.update);
+                                for (key in data.corrections) {
+                                    if (data.corrections.hasOwnProperty(key)) {
+                                        $form.find('[name="' + key + '"]').val(data.corrections[key]);
+                                        $(document).trigger('correction', [key, data.corrections[key]]);
+                                    }
+                                }
+                                if (data.hasOwnProperty('case_list-show') &&
+                                    COMMCAREHQ.app_manager.hasOwnProperty('module_view')){
+                                    COMMCAREHQ.app_manager.module_view.requires_case_details(data['case_list-show']);
+                                }
                             }
-	                    }
-	                }).ui.appendTo($buttonHolder);
+                        });
+                    button.ui.appendTo($buttonHolder);
+                    $buttonHolder.data('button', button);
                 });
             }());
         }
@@ -270,7 +272,7 @@
             });
         };
         if ($.cookie('suppress_build_errors')) {
-            $.cookie('suppress_build_errors', null, {path: '/'});
+            $.removeCookie('suppress_build_errors', { path: '/' });
         } else {
             COMMCAREHQ.app_manager.fetchAndShowFormValidation();
         }

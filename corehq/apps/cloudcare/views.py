@@ -365,7 +365,9 @@ def get_fixtures(request, domain, user_id, fixture_id=None):
     else:
         for fixture in generator.get_fixtures(casexml_user, version=V2):
             if fixture.attrib.get("id") == fixture_id:
-                assert len(fixture.getchildren()) == 1
+                assert len(fixture.getchildren()) == 1, 'fixture {} expected 1 child but found {}'.format(
+                    fixture_id, len(fixture.getchildren())
+                )
                 return HttpResponse(ElementTree.tostring(fixture.getchildren()[0]), content_type="text/xml")
         raise Http404
 
@@ -456,7 +458,7 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
         }
 
     def put(self, request, *args, **kwargs):
-        j = json.loads(request.raw_post_data)
+        j = json.loads(request.body)
         old = ApplicationAccess.get_by_domain(self.domain)
         new = ApplicationAccess.wrap(j)
         old.restrict = new.restrict

@@ -1,35 +1,53 @@
 import json
 import os
 import tempfile
+
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse
 from django.http.response import Http404
 from django.shortcuts import render
+from django.utils.decorators import method_decorator
+from corehq.apps.app_manager.models import Application, Form
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
-from corehq import Session
-from corehq import toggles
-from corehq.apps.domain.decorators import login_and_domain_required
+from django.views.generic import TemplateView
+
+from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
+from corehq import ConfigurableReport, privileges, Session, toggles
+from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
 from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
 from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.apps.userreports.reports.builder.forms import (
+    ConfigureNewBarChartReport,
+    ConfigureNewPieChartReport,
+    ConfigureNewTableReport,
+    CreateNewReportForm,
+)
 from corehq.apps.userreports.models import (
     ReportConfiguration,
     DataSourceConfiguration,
-    CustomDataSourceConfiguration)
+    CustomDataSourceConfiguration,
+)
 from corehq.apps.userreports.sql import get_indicator_table, IndicatorSqlAdapter, get_engine
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.ui.forms import (
     ConfigurableReportEditForm,
     ConfigurableDataSourceEditForm,
     ConfigurableDataSourceFromAppForm,
-    ConfigurableFormDataSourceFromAppForm)
+)
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import Permissions
 from corehq.util.couch import get_document_or_404
+
 from couchexport.export import export_from_tables
 from couchexport.files import Temp
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
+from django_prbac.decorators import requires_privilege_raise404
+
 from dimagi.utils.web import json_response
+from dimagi.utils.decorators.memoized import memoized
 
 
 def get_datasource_config_or_404(config_id, domain):
@@ -59,6 +77,110 @@ def create_report(request, domain):
     return _edit_report_shared(request, domain, ReportConfiguration(domain=domain))
 
 
+class ReportBuilderView(TemplateView):
+
+    @cls_to_view_login_and_domain
+    @method_decorator(toggles.USER_CONFIGURABLE_REPORTS.required_decorator())
+    @method_decorator(requires_privilege_raise404(privileges.REPORT_BUILDER))
+    def dispatch(self, request, domain, **kwargs):
+        self.domain = domain
+        return super(ReportBuilderView, self).dispatch(request, domain, **kwargs)
+
+
+class CreateNewReportBuilderView(ReportBuilderView):
+    template_name = "userreports/create_new_report_builder.html"
+
+    def get_context_data(self, **kwargs):
+        context = {
+            "sources_map": self.create_new_report_builder_form.sources_map,
+            "domain": self.domain,
+            'report': {
+                "title": _("Create New Report"),
+            },
+            'form': self.create_new_report_builder_form,
+        }
+        return context
+
+    @property
+    @memoized
+    def create_new_report_builder_form(self):
+        if self.request.method == 'POST':
+            return CreateNewReportForm(self.domain, self.request.POST)
+        return CreateNewReportForm(self.domain)
+
+    def post(self, request, *args, **kwargs):
+        if self.create_new_report_builder_form.is_valid():
+            report_type = self.create_new_report_builder_form.cleaned_data['report_type']
+            url_names_map = {
+                'bar_chart': 'configure_bar_chart_report_builder',
+                'pie_chart': 'configure_pie_chart_report_builder',
+                'table': 'configure_table_report_builder',
+            }
+            url_name = url_names_map[report_type]
+            app_source = self.create_new_report_builder_form.get_selected_source()
+            return HttpResponseRedirect(
+                reverse(url_name, args=[self.domain]) + '?' + '&'.join([
+                    '%(key)s=%(value)s' % {
+                        'key': field,
+                        'value': getattr(app_source, field),
+                    } for field in [
+                        'application',
+                        'source_type',
+                        'source',
+                    ]
+                ])
+            )
+        else:
+            return self.get(request, *args, **kwargs)
+
+
+class ConfigureBarChartReportBuilderView(ReportBuilderView):
+    template_name = "userreports/partials/report_builder_configure_report.html"
+    configure_report_form_class = ConfigureNewBarChartReport
+    report_title = _("Create New Report > Configure Bar Chart Report")
+
+    def get_context_data(self, **kwargs):
+        context = {
+            "domain": self.domain,
+            'report': {"title": self.report_title},
+            'form': self.report_form,
+            'property_options': self.report_form.data_source_properties.values()
+        }
+        return context
+
+    @property
+    @memoized
+    def report_form(self):
+        app_id = self.request.GET.get('application', '')
+        source_type = self.request.GET.get('source_type', '')
+        report_source = self.request.GET.get('source', '')
+        args = [app_id, source_type, report_source]
+        if self.request.method == 'POST':
+            args.append(self.request.POST)
+        return self.configure_report_form_class(*args)
+
+    def post(self, *args, **kwargs):
+        if self.report_form.is_valid():
+            report_configuration = self.report_form.create_report()
+            return HttpResponseRedirect(
+                reverse(
+                    ConfigurableReport.slug,
+                    args=[self.domain, report_configuration._id]
+                )
+            )
+        return self.get(*args, **kwargs)
+
+
+class ConfigurePieChartReportBuilderView(ConfigureBarChartReportBuilderView):
+    configure_report_form_class = ConfigureNewPieChartReport
+    report_title = _("Create New Report > Configure Pie Chart Report")
+
+
+class ConfigureTableReportBuilderView(ConfigureBarChartReportBuilderView):
+    configure_report_form_class = ConfigureNewTableReport
+    report_title = _("Create New Report > Configure Table Report")
+
+
 def _edit_report_shared(request, domain, config):
     if request.method == 'POST':
         form = ConfigurableReportEditForm(domain, config, data=request.POST)
@@ -71,7 +193,7 @@ def _edit_report_shared(request, domain, config):
     context = _shared_context(domain)
     context.update({
         'form': form,
-        'report': config,
+        'report': config
     })
     return render(request, "userreports/edit_report_config.html", context)
 
@@ -80,6 +202,25 @@ def _edit_report_shared(request, domain, config):
 @require_POST
 def delete_report(request, domain, report_id):
     config = get_document_or_404(ReportConfiguration, domain, report_id)
+
+    # Delete the data source too if it's not being used by any other reports.
+    data_source_id = config.config_id
+
+    report_count = ReportConfiguration.view(
+        'userreports/report_configs_by_data_source',
+        reduce=True,
+        key=[domain, data_source_id]
+    ).one()['value']
+
+    if report_count <= 1:
+        # No other reports reference this data source.
+        try:
+            _delete_data_source_shared(request, domain, data_source_id)
+        except Http404:
+            # It's possible the data source has already been deleted, but
+            # that's fine with us.
+            pass
+
     config.delete()
     messages.success(request, _(u'Report "{}" deleted!').format(config.title))
     return HttpResponseRedirect(reverse('configurable_reports_home', args=[domain]))
@@ -131,30 +272,24 @@ def create_data_source_from_app(request, domain):
         form = ConfigurableDataSourceFromAppForm(domain, request.POST)
         if form.is_valid():
             # save config
-            data_source = get_case_data_source(form.app, form.cleaned_data['case_type'])
-            data_source.save()
-            messages.success(request, _(u"Data source created for '{}'".format(form.cleaned_data['case_type'])))
+            app_source = form.app_source_helper.get_app_source(form.cleaned_data)
+            app = Application.get(app_source.application)
+            if app_source.source_type == 'case':
+                data_source = get_case_data_source(app, app_source.source)
+                data_source.save()
+                messages.success(request, _(u"Data source created for '{}'".format(app_source.source)))
+            else:
+                assert app_source.source_type == 'form'
+                xform = Form.get_form(app_source.source)
+                data_source = get_form_data_source(app, xform)
+                data_source.save()
+                messages.success(request, _(u"Data source created for '{}'".format(xform.default_name())))
+
             return HttpResponseRedirect(reverse('edit_configurable_data_source', args=[domain, data_source._id]))
     else:
         form = ConfigurableDataSourceFromAppForm(domain)
     context = _shared_context(domain)
-    context['form'] = form
-    return render(request, 'userreports/data_source_from_app.html', context)
-
-
-@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
-def create_form_data_source_from_app(request, domain):
-    if request.method == 'POST':
-        form = ConfigurableFormDataSourceFromAppForm(domain, request.POST)
-        if form.is_valid():
-            # save config
-            data_source = get_form_data_source(form.app, form.form)
-            data_source.save()
-            messages.success(request, _(u"Data source created for '{}'".format(form.form.default_name())))
-            return HttpResponseRedirect(reverse('edit_configurable_data_source', args=[domain, data_source._id]))
-    else:
-        form = ConfigurableFormDataSourceFromAppForm(domain)
-    context = _shared_context(domain)
+    context['sources_map'] = form.app_source_helper.all_sources
     context['form'] = form
     return render(request, 'userreports/data_source_from_app.html', context)
 
@@ -163,6 +298,7 @@ def _edit_data_source_shared(request, domain, config, read_only=False):
     if request.method == 'POST':
         form = ConfigurableDataSourceEditForm(domain, config, read_only, data=request.POST)
         if form.is_valid():
+
             config = form.save(commit=True)
             messages.success(request, _(u'Data source "{}" saved!').format(config.display_name))
 
@@ -180,13 +316,18 @@ def _edit_data_source_shared(request, domain, config, read_only=False):
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 @require_POST
 def delete_data_source(request, domain, config_id):
+    _delete_data_source_shared(request, domain, config_id)
+    return HttpResponseRedirect(reverse('configurable_reports_home', args=[domain]))
+
+
+def _delete_data_source_shared(request, domain, config_id):
     config = get_document_or_404(DataSourceConfiguration, domain, config_id)
     adapter = IndicatorSqlAdapter(get_engine(), config)
     adapter.drop_table()
     config.delete()
     messages.success(request,
                      _(u'Data source "{}" has been deleted.'.format(config.display_name)))
-    return HttpResponseRedirect(reverse('configurable_reports_home', args=[domain]))
+
 
 
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
@@ -220,7 +361,8 @@ def preview_data_source(request, domain, config_id):
     return render(request, "userreports/preview_data.html", context)
 
 
-@login_and_domain_required
+@login_or_basic
+@require_permission(Permissions.view_reports)
 def export_data_source(request, domain, config_id):
     format = request.GET.get('format', Format.UNZIPPED_CSV)
     config = get_document_or_404(DataSourceConfiguration, domain, config_id)
@@ -245,6 +387,12 @@ def export_data_source(request, domain, config_id):
     with os.fdopen(fd, 'wb') as temp:
         export_from_tables([[config.table_id, get_table(q)]], temp, format)
         return export_response(Temp(path), format, config.display_name)
+
+
+@login_and_domain_required
+def data_source_status(request, domain, config_id):
+    config = get_document_or_404(DataSourceConfiguration, domain, config_id)
+    return json_response({'isBuilt': config.meta.build.finished})
 
 
 @login_and_domain_required

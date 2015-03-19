@@ -71,17 +71,17 @@
   value_names: ["Alphanumeric", "Numeric"]
   default: "n"
 
-- name: "Home Screen Logo"
-  description: "Upload a file to serve as a home screen logo on Android phones"
+- name: "CommCare Home Screen Logo"
+  description: "Upload a file to serve as a CommCare home screen logo on Android phones"
   id: "logo_android_home"
   widget: "image_uploader"
-  toggle: "COMMCARE_LOGO_UPLOADER"
+  privilege: "commcare_logo_uploader"
 
 - name: "Login Logo"
   description: "Upload a file to serve as a login logo on Android phones"
   id: "logo_android_login"
   widget: "image_uploader"
-  toggle: "COMMCARE_LOGO_UPLOADER"
+  privilege: "commcare_logo_uploader"
 
 - disabled: true
   name: "Server User Registration"
@@ -253,7 +253,6 @@
   contingent_default: [{"condition": "{features.sense}='true'", "value": "no"}]
   values_txt: "This will show or hide the 'Saved' button on the CommCare ODK home screen. Turning this off will prevent users from saving forms locally."
   since: "2.11"
-  preview: true
   force: true
 
 - name: "Incomplete Forms"
@@ -265,7 +264,6 @@
   contingent_default: [{"condition": "{features.sense}='true'", "value": "no"}]
   values_txt: "This will show or hide the 'Incomplete' button on the CommCare ODK home screen. Turning this off will prevent users from saving incomplete forms."
   since: "2.11"
-  preview: true
   force: true
 
 - name: "Auto-Resize Images"
@@ -286,5 +284,4 @@
   disabled_default: "no"
   values_txt: "Whether searches can match similar strings"
   since: "2.15"
-  preview: true
 

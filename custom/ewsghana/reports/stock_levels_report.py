@@ -3,7 +3,7 @@ from django.utils.timesince import timesince
 from math import ceil
 from corehq.apps.es import UserES
 from corehq import Domain
-from corehq.apps.commtrack.models import StockState
+from corehq.apps.commtrack.models import StockState, CommtrackConfig
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
@@ -60,16 +60,14 @@ class FacilityReportData(EWSData):
 
     def get_prod_data(self):
         def get_months_until_stockout_icon(value):
-            STOCKOUT = 0.0
-            LOW = 1
-            ADEQUATE = 3
-            if float(value) == STOCKOUT:
+            stock_levels = CommtrackConfig.for_domain(self.config['domain']).stock_levels_config
+            if float(value) == 0.0:
                 return '%s <span class="icon-remove" style="color:red"/>' % value
-            elif float(value) < LOW:
+            elif float(value) < stock_levels.understock_threshold:
                 return '%s <span class="icon-warning-sign" style="color:orange"/>' % value
-            elif float(value) <= ADEQUATE:
+            elif stock_levels.understock_threshold < float(value) < stock_levels.overstock_threshold:
                 return '%s <span class="icon-ok" style="color:green"/>' % value
-            elif float(value) > ADEQUATE:
+            elif float(value) >= stock_levels.overstock_threshold:
                 return '%s <span class="icon-arrow-up" style="color:purple"/>' % value
 
         state_grouping = {}

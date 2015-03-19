@@ -20,7 +20,8 @@ from corehq.apps.domain.views import (
     FeaturePreviewsView, ConfirmSubscriptionRenewalView,
     InvoiceStripePaymentView, CreditsStripePaymentView, SMSRatesView,
     AddFormRepeaterView, AddOpsUserAsDomainAdminView,
-    FeatureFlagsView, EditDhis2SettingsView)
+    FeatureFlagsView, EditDhis2SettingsView, TransferDomainView,
+    ActivateTransferDomainView, DeactivateTransferDomainView)
 
 #
 # After much reading, I discovered that Django matches URLs derived from the environment
@@ -66,6 +67,10 @@ urlpatterns =\
         url(r'^domain/select/$', 'select', name='domain_select'),
         url(r'^domain/autocomplete/(?P<field>\w+)/$', 'autocomplete_fields', name='domain_autocomplete_fields'),
         url(r'^domain/incomplete_email/$', 'incomplete_email'),
+        url(r'^domain/transfer/(?P<guid>\w+)/activate$',
+            ActivateTransferDomainView.as_view(), name='activate_transfer_domain'),
+        url(r'^domain/transfer/(?P<guid>\w+)/deactivate$',
+            DeactivateTransferDomainView.as_view(), name='deactivate_transfer_domain'),
     ) +\
     patterns('django.contrib.auth.views',
         url(r'^accounts/password_change/$', 'password_change', auth_pages_path('password_change_form.html'), name='password_change'),
@@ -127,6 +132,7 @@ domain_settings = patterns(
     url(r'^snapshots/set_published/(?P<snapshot_name>[\w-]+)/$', 'set_published_snapshot', name='domain_set_published'),
     url(r'^snapshots/set_published/$', 'set_published_snapshot', name='domain_clear_published'),
     url(r'^snapshots/$', ExchangeSnapshotsView.as_view(), name=ExchangeSnapshotsView.urlname),
+    url(r'^transfer/$', TransferDomainView.as_view(), name=TransferDomainView.urlname),
     url(r'^snapshots/new/$', CreateNewExchangeSnapshotView.as_view(), name=CreateNewExchangeSnapshotView.urlname),
     url(r'^multimedia/$', ManageProjectMediaView.as_view(), name=ManageProjectMediaView.urlname),
     url(r'^commtrack/settings/$', RedirectView.as_view(url='commtrack_settings')),

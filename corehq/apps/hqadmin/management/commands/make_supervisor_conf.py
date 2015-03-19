@@ -1,25 +1,21 @@
+import json
 import os
 import sys
 from optparse import make_option
 
 from django.core.management.base import BaseCommand
 from django.conf import settings
+from django.template import Context, Template
 
 
-def parse_files(option, opt, value, parser):
-    pairs = value.split('::')
-    args_dict = {}
-    for p in pairs:
-        try:
-            k, v = p.split('=', 1)
-            args_dict[k] = v
-        except ValueError:
-            # error handling
-            s = p.split('=')
-            print "argument error, %s should be key=filepath" % s
-            sys.exit()
+def parse_params(option, opt, value, parser):
+    try:
+        args_dict = json.loads(value)
+    except ValueError:
+        print "argument error, %s should be valid JSON" % value
 
     setattr(parser.values, option.dest, args_dict)
+
 
 class SupervisorConfCommand(BaseCommand):
     option_list = BaseCommand.option_list + (
@@ -28,15 +24,14 @@ class SupervisorConfCommand(BaseCommand):
         make_option('--params',
                     type="string",
                     action='callback',
-                    callback=parse_files,
+                    callback=parse_params,
                     dest='params',
                     default={},
-                    help='files to upload file1=path1,file2=path2,file3=path3'),
+                    help='template parameters as JSON data'),
     )
 
-    def render_configuration_file(self, conf_template_string):
-        return conf_template_string % self.params
-
+    def render_configuration_file(self, conf_template_string, params):
+        return Template(conf_template_string).render(Context(params))
 
     def handle(self, *args, **options):
         self.conf_file_template = options['conf_file']
@@ -56,7 +51,7 @@ class SupervisorConfCommand(BaseCommand):
         with open(conf_template_fullpath, 'r') as fin:
             conf_template_string = fin.read()
         dest_filepath = os.path.join(self.conf_dest, '%s_%s' % (settings.SERVER_ENVIRONMENT, self.conf_file_template))
-        rendered_conf = self.render_configuration_file(conf_template_string)
+        rendered_conf = self.render_configuration_file(conf_template_string, self.params)
 
         self.write_configuration_file(dest_filepath, rendered_conf)
 

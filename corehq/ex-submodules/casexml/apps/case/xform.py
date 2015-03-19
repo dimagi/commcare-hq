@@ -103,6 +103,16 @@ def process_cases_with_casedb(xform, case_db, config=None):
                 pass
         case_db.mark_changed(case)
 
+        action_xforms = {action.xform_id for action in case.actions if action.xform_id}
+        mismatched_forms = action_xforms ^ set(case.xform_ids)
+        if mismatched_forms:
+            logging.warning(
+                "CASE XFORM MISMATCH /a/{},{}".format(
+                    domain,
+                    case.case_id
+                )
+            )
+
     return cases
 
 
@@ -127,13 +137,14 @@ class CaseDbCache(object):
     to the database. Also provides some type checking safety.
     """
     def __init__(self, domain=None, strip_history=False, deleted_ok=False,
-                 lock=False, wrap=True, initial=None):
+                 lock=False, wrap=True, initial=None, xform=None):
         if initial:
             self.cache = {case['_id']: case for case in initial}
         else:
             self.cache = {}
 
         self.domain = domain
+        self.xform = xform
         self.strip_history = strip_history
         self.deleted_ok = deleted_ok
         self.lock = lock
@@ -223,6 +234,16 @@ class CaseDbCache(object):
     def clear_changed(self):
         self._changed = set()
 
+    def get_cached_forms(self):
+        """
+        Get any in-memory forms being processed.
+        """
+        # this will currently be at-most one form, though could be extended in the future
+        # abstracting the form cache inside this object seems useful.
+        if self.xform:
+            return {self.xform._id: self.xform}
+        return {}
+
 
 def get_and_check_xform_domain(xform):
     try:
@@ -288,14 +309,13 @@ def _get_or_update_model(case_update, xform, case_db):
     Gets or updates an existing case, based on a block of data in a
     submitted form.  Doesn't save anything.
     """
-
     case = case_db.get(case_update.id)
 
     if case is None:
         case = CommCareCase.from_case_update(case_update, xform)
         return case
     else:
-        case.update_from_case_update(case_update, xform)
+        case.update_from_case_update(case_update, xform, case_db.get_cached_forms())
         return case
 
 

@@ -18,6 +18,7 @@ Server layout:
         (i.e. ~/www/staging/logs and ~/www/production/logs).
 """
 import datetime
+import json
 import os
 import posixpath
 import sys
@@ -31,6 +32,7 @@ from fabric.colors import blue
 from fabric.context_managers import settings, cd
 from fabric.contrib import files, console
 from fabric.operations import require, local, prompt
+import yaml
 
 
 ROLES_ALL_SRC = ['pg', 'django_monolith', 'django_app', 'django_celery', 'django_pillowtop', 'formsplayer', 'staticfiles']
@@ -56,8 +58,6 @@ RSYNC_EXCLUDE = (
     '*.example',
     '*.db',
     )
-env.project = 'commcare-hq'
-env.code_repo = 'git://github.com/dimagi/commcare-hq.git'
 env.linewise = True
 
 if not hasattr(env, 'code_branch'):
@@ -65,10 +65,6 @@ if not hasattr(env, 'code_branch'):
            "You can set it with '--set code_branch=<branch>'")
     env.code_branch = 'master'
 
-env.home = "/home/cchq"
-env.selenium_url = 'http://jenkins.dimagi.com/job/commcare-hq-post-deploy/buildWithParameters?token=%(token)s&TARGET=%(environment)s'
-# Default to safety
-env.should_migrate = False
 env.roledefs = {
     'django_celery': [],
     'django_app': [],
@@ -93,15 +89,6 @@ env.roledefs = {
     # need a special 'deploy' role to make deploy only run once
     'deploy': [],
 }
-
-env.django_bind = '127.0.0.1'
-env.sms_queue_enabled = False
-env.reminder_queue_enabled = False
-env.reminder_rule_queue_enabled = False
-env.reminder_case_update_queue_enabled = False
-env.pillow_retry_queue_enabled = True
-if not hasattr(env, 'celery_periodic_enabled'):
-    env.celery_periodic_enabled = True
 
 
 def _require_target():
@@ -133,6 +120,7 @@ def format_env(current_env):
         'django_port',
         'django_bind',
         'flower_port',
+        'celery_params',
     ]
 
     host = current_env.get('host_string')
@@ -145,7 +133,7 @@ def format_env(current_env):
 
     for prop in important_props:
         ret[prop] = current_env.get(prop, '')
-    return '::'.join(['%s=%s' % (k, v) for k, v in ret.items()])
+    return json.dumps(ret)
 
 
 @task
@@ -189,23 +177,35 @@ def setup_dirs():
     sudo('mkdir -p %(services)s/supervisor' % env)
 
 
+def load_env(env_name):
+    def get_env_dict(path):
+        if os.path.isfile(path):
+            with open(path) as f:
+                try:
+                    return yaml.load(f)
+                except Exception:
+                    print 'Error in file {}'.format(path)
+                    raise
+        else:
+            raise Exception("Environment file not found: {}".format(path))
+
+    env_dict = get_env_dict(os.path.join('fab', 'environments.yml'))
+    env.update(env_dict['base'])
+    env.update(env_dict[env_name])
+
+
 @task
 def india():
     env.inventory = os.path.join('fab', 'inventory', 'india')
-    env.environment = 'india'
-    execute(development)
+    load_env('india')
+    execute(env_common)
 
 
 @task
 def zambia():
     """Our production server in wv zambia."""
-    env.sudo_user = 'cchq'
-    env.environment = 'production'
-    env.django_port = '9010'
-    env.code_branch = 'master'
-    env.should_migrate = True
-
-    env.hosts = ['41.222.19.153']  # LIKELY THAT THIS WILL CHANGE
+    load_env('zambia')
+    env.hosts = ['41.222.19.153']
 
     _setup_path()
 
@@ -227,19 +227,11 @@ def zambia():
         'django_monolith': ['41.222.19.153'],
     }
     env.roles = ['django_monolith']
-    env.flower_port = 5555
 
 
 @task
 def production():
     """www.commcarehq.org"""
-    env.environment = 'production'
-    env.sms_queue_enabled = True
-    env.reminder_queue_enabled = True
-    env.reminder_rule_queue_enabled = True
-    env.reminder_case_update_queue_enabled = True
-    env.pillow_retry_queue_enabled = True
-
     if env.code_branch != 'master':
         branch_message = (
             "Woah there bud! You're using branch {env.code_branch}. "
@@ -248,12 +240,9 @@ def production():
         if not console.confirm(branch_message, default=False):
             utils.abort('Action aborted.')
 
+    load_env('production')
     env.inventory = os.path.join('fab', 'inventory', 'production')
-    execute(development)
-
-    env.new_relic_enabled = {
-        'hqdjango3.internal.commcarehq.org',
-    }
+    execute(env_common)
 
 
 @task
@@ -263,23 +252,9 @@ def staging():
         env.code_branch = 'autostaging'
         print ("using default branch of autostaging. you can override this with --set code_branch=<branch>")
 
-    env.environment = 'staging'
-
-    # We should not enable the sms queue on staging because replication
-    # can cause sms to be processed again if an sms is replicated in its
-    # queued state.
-    env.sms_queue_enabled = False
-    env.pillow_retry_queue_enabled = True
-    env.celery_periodic_enabled = False
-
     env.inventory = os.path.join('fab', 'inventory', 'staging')
-    execute(development)
-
-    env.new_relic_enabled = {
-        'hqdjango0-staging.internal.commcarehq.org',
-        'hqdjango1-staging.internal.commcarehq.org',
-        'hqdb0-staging.internal.commcarehq.org',
-    }
+    load_env('staging')
+    execute(env_common)
 
 
 @task
@@ -290,19 +265,9 @@ def preview():
     production data in a safe preview environment on remote host
 
     """
-    env.code_branch = 'master'
-    env.environment = 'preview'
-
-    env.sms_queue_enabled = False
-    env.pillow_retry_queue_enabled = False
-    env.celery_periodic_enabled = False
-
     env.inventory = os.path.join('fab', 'inventory', 'preview')
-    execute(development)
-
-    env.flower_port = 5556
-    env.django_port = '7999'
-    env.should_migrate = False
+    load_env('preview')
+    execute(env_common)
 
 
 def read_inventory_file(filename):
@@ -333,13 +298,13 @@ def development():
         --set inventory=/path/to/commcarehq-ansible/ansible/inventories/development,environment=dev
 
     """
+    load_env('development')
+    execute(env_common)
+
+
+def env_common():
     require('inventory', 'environment')
     servers = read_inventory_file(env.inventory)
-
-    env.sudo_user = 'cchq'
-    env.django_bind = '0.0.0.0'
-    env.django_port = '9010'
-    env.should_migrate = True
 
     _setup_path()
 
@@ -377,7 +342,6 @@ def development():
     }
     env.roles = ['deploy']
     env.hosts = env.roledefs['deploy']
-    env.flower_port = 5555
 
 
 @task
@@ -1070,7 +1034,7 @@ def _rebuild_supervisor_conf_file(conf_command, filename):
         sudo((
             '%(virtualenv_root)s/bin/python manage.py '
             '%(conf_command)s --traceback --conf_file "%(filename)s" '
-            '--conf_destination "%(destination)s" --params "%(params)s"'
+            '--conf_destination "%(destination)s" --params \'%(params)s\''
         ) % {
 
             'conf_command': conf_command,
@@ -1213,8 +1177,8 @@ def do_update_django_locales():
 def reset_mvp_pillows():
     _require_target()
     mvp_pillows = [
-        'FormIndicatorPillow',
-        'CaseIndicatorPillow',
+        'MVPFormIndicatorPillow',
+        'MVPCaseIndicatorPillow',
     ]
     for pillow in mvp_pillows:
         reset_pillow(pillow)

@@ -27,7 +27,7 @@
         commtrack_programs: {{ commtrack_programs|JSON }}
     });
     caseConfig.init();
-    {% endif %}
+
 
     {% if module.has_schedule  %}
     var visitScheduler = new VisitScheduler.Scheduler({
@@ -38,6 +38,7 @@
         schedule: {{ form.schedule|JSON }}
     });
     visitScheduler.init();
+    {% endif %}
     {% endif %}
 {% endblock %}
 

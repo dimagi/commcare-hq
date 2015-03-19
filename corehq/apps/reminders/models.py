@@ -6,7 +6,7 @@ from couchdbkit.ext.django.schema import *
 from casexml.apps.case.models import CommCareCase, CommCareCaseGroup
 from corehq.apps.sms.models import CommConnectCase
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
-from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.users.models import CouchUser
 from corehq.apps.groups.models import Group
 from dimagi.utils.parsing import string_to_datetime, json_format_datetime
 from dateutil.parser import parse
@@ -293,11 +293,8 @@ def run_rule(case_id, handler, schedule_changed, prev_definition):
         handler.case_changed(case, schedule_changed=schedule_changed,
             prev_definition=prev_definition)
     try:
-        # It shouldn't be necessary to lock this out, but a deadlock can
-        # happen in rare cases without it
-        with CriticalSection(["reminder-rule-processing-%s" % handler._id], timeout=15):
-            client = get_redis_client()
-            client.incr("reminder-rule-processing-current-%s" % handler._id)
+        client = get_redis_client()
+        client.incr("reminder-rule-processing-current-%s" % handler._id)
     except:
         pass
 
@@ -621,7 +618,7 @@ class CaseReminderHandler(Document):
         """
         if recipient is None:
             if self.recipient == RECIPIENT_USER:
-                recipient = CommCareUser.get_by_user_id(case.user_id)
+                recipient = CouchUser.get_by_user_id(case.user_id)
             elif self.recipient == RECIPIENT_CASE:
                 recipient = CommConnectCase.get(case._id)
             elif self.recipient == RECIPIENT_PARENT_CASE:
@@ -858,13 +855,13 @@ class CaseReminderHandler(Document):
         # Retrieve the corresponding verified number entries for all individual recipients
         verified_numbers = {}
         for r in recipients:
-            try:
+            if hasattr(r, "get_verified_numbers"):
                 contact_verified_numbers = r.get_verified_numbers(False)
                 if len(contact_verified_numbers) > 0:
                     verified_number = sorted(contact_verified_numbers.iteritems())[0][1]
                 else:
                     verified_number = None
-            except Exception:
+            else:
                 verified_number = None
             verified_numbers[r.get_id] = verified_number
         
@@ -934,15 +931,15 @@ class CaseReminderHandler(Document):
         """
         now = now or self.get_now()
         reminder = self.get_reminder(case)
-        
-        try:
-            if (case.user_id == case._id) or (case.user_id is None):
+
+        if case and case.user_id and (case.user_id != case._id):
+            try:
+                user = CouchUser.get_by_user_id(case.user_id)
+            except KeyError:
                 user = None
-            else:
-                user = CommCareUser.get_by_user_id(case.user_id)
-        except Exception:
+        else:
             user = None
-        
+
         if (case.closed or case.type != self.case_type or
             case.doc_type.endswith("-Deleted") or self.deleted() or
             (self.recipient == RECIPIENT_USER and not user)):
@@ -1020,7 +1017,7 @@ class CaseReminderHandler(Document):
         elif self.recipient == RECIPIENT_USER_GROUP:
             recipient = Group.get(self.user_group_id)
         elif self.recipient == RECIPIENT_USER:
-            recipient = CommCareUser.get(self.user_id)
+            recipient = CouchUser.get_by_user_id(self.user_id)
         elif self.recipient == RECIPIENT_CASE:
             recipient = CommCareCase.get(self.case_id)
         else:
@@ -1198,13 +1195,13 @@ class CaseReminderHandler(Document):
                     pass
                 process_fast(case_ids, run_rule, item_goal=100, max_threads=5,
                     args=(self, schedule_changed, prev_definition),
-                    use_critical_section=True, print_stack_interval=60)
+                    use_critical_section=False, print_stack_interval=60)
             elif self.start_condition_type == ON_DATETIME:
                 self.datetime_definition_changed(send_immediately=send_immediately)
         else:
             reminder_ids = self.get_reminders(ids_only=True)
             process_fast(reminder_ids, retire_reminder, item_goal=100,
-                max_threads=5, use_critical_section=True,
+                max_threads=5, use_critical_section=False,
                 print_stack_interval=60)
 
     @classmethod
@@ -1307,7 +1304,7 @@ class CaseReminder(SafeSaveDocument, LockableMixIn):
     last_modified = DateTimeProperty()
     case_id = StringProperty()                      # Reference to the CommCareCase
     handler_id = StringProperty()                   # Reference to the CaseReminderHandler
-    user_id = StringProperty()                      # Reference to the CommCareUser who will receive the SMS messages
+    user_id = StringProperty()                      # Reference to the CouchUser who will receive the SMS messages
     method = StringProperty(choices=METHOD_CHOICES) # See CaseReminderHandler.method
     next_fire = DateTimeProperty()                  # The date and time that the next message should go out
     last_fired = DateTimeProperty()                 # The date and time that the last message went out
@@ -1344,11 +1341,7 @@ class CaseReminder(SafeSaveDocument, LockableMixIn):
     @property
     def user(self):
         if self.handler.recipient == RECIPIENT_USER:
-            try:
-                return CommCareUser.get_by_user_id(self.user_id)
-            except Exception:
-                self.retire()
-                return None
+            return CouchUser.get_by_user_id(self.user_id)
         else:
             return None
 

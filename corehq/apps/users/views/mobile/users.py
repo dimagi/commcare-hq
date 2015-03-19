@@ -140,7 +140,7 @@ class EditCommCareUserView(BaseFullEditUserView):
         # currently only support one location on the UI
         linked_loc = self.editable_user.location
         initial_id = linked_loc._id if linked_loc else None
-        return CommtrackUserForm(domain=self.domain, initial={'supply_point': initial_id})
+        return CommtrackUserForm(domain=self.domain, initial={'location': initial_id})
 
     @property
     def page_context(self):
@@ -623,7 +623,6 @@ class CreateCommCareUserView(BaseManageCommCareUserView):
         return CustomDataEditor(
             field_view=UserFieldsView,
             domain=self.domain,
-            required_only=True,
             post_dict=self.request.POST if self.request.method == "POST" else None,
         )
 

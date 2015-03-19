@@ -22,7 +22,6 @@ from custom.m4change.models import McctStatus
 from custom.m4change.reports import get_location_hierarchy_by_id
 from custom.m4change.utils import get_case_by_id, get_property, get_form_ids_by_status
 from custom.m4change.constants import EMPTY_FIELD
-from corehq.apps.reports.tasks import export_all_rows_task
 
 
 def _get_date_range(range):
@@ -277,14 +276,6 @@ class McctProjectReview(BaseReport):
         export_rows = self.get_all_rows
         table.extend(export_rows)
         return [[self.export_sheet_name, table]]
-
-    @property
-    @request_cache("export")
-    def export_response(self):
-        self.request.datespan = None
-        export_all_rows_task.delay(self.__class__, self.__getstate__())
-
-        return HttpResponse()
 
 
 class McctClientApprovalPage(McctProjectReview):

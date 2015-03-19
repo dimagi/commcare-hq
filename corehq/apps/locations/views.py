@@ -70,12 +70,14 @@ class LocationsListView(BaseLocationView):
     @property
     def page_context(self):
         selected_id = self.request.GET.get('selected')
+        has_location_types = len(self.domain_object.location_types) > 0
         return {
             'selected_id': selected_id,
             'locations': load_locs_json(
                 self.domain, selected_id, self.show_inactive
             ),
             'show_inactive': self.show_inactive,
+            'has_location_types': has_location_types
         }
 
 
@@ -109,6 +111,8 @@ class LocationSettingsView(BaseCommTrackManageView):
             'code': loctype.code,
             'allowed_parents': [p or None for p in loctype.allowed_parents],
             'administrative': loctype.administrative,
+            'shares_cases': loctype.shares_cases,
+            'view_descendants': loctype.view_descendants
         }
 
     def post(self, request, *args, **kwargs):
@@ -205,6 +209,8 @@ class NewLocationView(BaseLocationView):
 @domain_admin_required
 def archive_location(request, domain, loc_id):
     loc = Location.get(loc_id)
+    if loc.domain != domain:
+        raise Http404()
     loc.archive()
     return json_response({
         'success': True,
@@ -217,7 +223,13 @@ def archive_location(request, domain, loc_id):
 
 @domain_admin_required
 def unarchive_location(request, domain, loc_id):
-    loc = Location.get(loc_id)
+    # hack for circumventing cache
+    # which was found to be out of date, at least in one case
+    # http://manage.dimagi.com/default.asp?161454
+    # todo: find the deeper reason for invalid cache
+    loc = Location.get(loc_id, db=Location.get_db())
+    if loc.domain != domain:
+        raise Http404()
     loc.unarchive()
     return json_response({
         'success': True,
@@ -240,9 +252,13 @@ class EditLocationView(NewLocationView):
     @memoized
     def location(self):
         try:
-            return Location.get(self.location_id)
+            location = Location.get(self.location_id)
+            if location.domain != self.domain:
+                raise Http404()
         except ResourceNotFound:
             raise Http404()
+        else:
+            return location
 
     @property
     @memoized
@@ -337,7 +353,7 @@ class EditLocationView(NewLocationView):
               and toggles.PRODUCTS_PER_LOCATION.enabled(request.domain)):
             return self.products_form_post(request, *args, **kwargs)
         else:
-            raise Http404
+            raise Http404()
 
 
 class BaseSyncView(BaseLocationView):
@@ -491,6 +507,9 @@ def location_export(request, domain):
 @domain_admin_required
 @require_POST
 def sync_facilities(request, domain):
+    # TODO this is believed to be obsolete and should
+    # likely be removed, just need to make sure it isn't
+    # magically used by ils/ews first..
     # create Facility Registry and Facility LocationTypes if they don't exist
     if not any(lt.name == 'Facility Registry'
                for lt in request.project.location_types):

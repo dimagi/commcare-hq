@@ -55,6 +55,8 @@ class CustomDataFieldsDefinition(Document):
 
     @classmethod
     def get_or_create(cls, domain, field_type):
+        # todo: this overrides get_or_create from DocumentBase but with a completely different signature.
+        # This method should probably be renamed.
         existing = cls.view(
             'custom_data_fields/by_field_type',
             key=[domain, field_type],

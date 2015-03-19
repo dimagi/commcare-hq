@@ -1,6 +1,5 @@
 from corehq.pillows.core import DATE_FORMATS_STRING, DATE_FORMATS_ARR
-REPORT_XFORM_INDEX="report_xforms_7637d62486034216a235168080c0a0fe"
-
+REPORT_XFORM_INDEX = "report_xforms_60bb4c470f3aba54a5a95da9ece8a792"
 
 CASE_MAPPING_FRAGMENT = {
     'type': 'nested',

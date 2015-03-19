@@ -15,6 +15,7 @@ class ILSGatewayConfig(Document):
     url = StringProperty(default="http://ilsgateway.com/api/v0_1")
     username = StringProperty()
     password = StringProperty()
+    steady_sync = BooleanProperty(default=False)
 
     @classmethod
     def for_domain(cls, name):
@@ -34,6 +35,13 @@ class ILSGatewayConfig(Document):
     def get_all_enabled_domains(cls):
         configs = cls.get_all_configs()
         return [c.domain for c in filter(lambda config: config.enabled, configs)]
+
+    @classmethod
+    def get_all_steady_sync_configs(cls):
+        return [
+            config for config in cls.get_all_configs()
+            if config.steady_sync
+        ]
 
     @property
     def is_configured(self):
@@ -439,3 +447,13 @@ class SupervisionDocument(models.Model):
     domain = models.CharField(max_length=100)
     name = models.CharField(max_length=100)
     data_type = models.CharField(max_length=100)
+
+
+class ILSNotes(models.Model):
+    location = models.ForeignKey(SQLLocation)
+    domain = models.CharField(max_length=100, null=False)
+    user_name = models.CharField(max_length=128, null=False)
+    user_role = models.CharField(max_length=100, null=True)
+    user_phone = models.CharField(max_length=20, null=True)
+    date = models.DateTimeField()
+    text = models.TextField()

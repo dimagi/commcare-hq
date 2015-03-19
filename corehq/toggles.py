@@ -215,11 +215,17 @@ NO_VELLUM = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+DOUBLE_MANAGEMENT = StaticToggle(
+    'double_management',
+    'Case list actions a.k.a. double management',
+    [NAMESPACE_USER, NAMESPACE_DOMAIN]
+)
+
 BATCHED_RESTORE = PredicatablyRandomToggle(
     'batched_restore',
     'Batch OTA restore response generation',
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
-    0.1
+    0.5
 )
 
 SPLIT_MULTISELECT_EXPORT = StaticToggle(
@@ -241,11 +247,6 @@ STOCK_AND_RECEIPT_SMS_HANDLER = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-COMMCARE_LOGO_UPLOADER = StaticToggle(
-    'commcare_logo_uploader',
-    'CommCare logo uploader',
-)
-
 PAGINATE_WEB_USERS = StaticToggle(
     'paginate_web_users',
     'Paginate Web Users',
@@ -257,11 +258,22 @@ LOOSE_SYNC_TOKEN_VALIDATION = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+MULTIPLE_LOCATIONS_PER_USER = StaticToggle(
+    'multiple_locations',
+    "Enable multiple locations per user on domain.",
+    [NAMESPACE_DOMAIN]
+)
+
 PRODUCTS_PER_LOCATION = StaticToggle(
     'products_per_location',
     "Products Per Location: Specify products stocked at individual locations.  "
     "This doesn't actually do anything yet.",
     [NAMESPACE_DOMAIN]
+)
+
+DOCUMENTATION_FILE = StaticToggle(
+    'documentation_file',
+    "Allows users to optionally add a supporting documentation file to explain exchange applications",
 )
 
 ALLOW_CASE_ATTACHMENTS_VIEW = StaticToggle(
@@ -293,6 +305,12 @@ BULK_ARCHIVE_FORMS = StaticToggle(
     'Bulk archive forms with excel',
 )
 
+TRANSFER_DOMAIN = StaticToggle(
+    'transfer_domain',
+    'Transfer domains to different users',
+    [NAMESPACE_DOMAIN]
+)
+
 DHIS2_DOMAIN = StaticToggle(
     'dhis2_domain',
     'Enable DHIS2 integration for this domain',
@@ -305,15 +323,35 @@ PRIME_RESTORE = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-# not referenced in code directly but passed through to vellum
-# see toggles_dict
-VELLUM_HELP_TEXT = StaticToggle(
-    'add_help_text',
-    "Adds a help text in the form builder"
+FORM_LINK_WORKFLOW = StaticToggle(
+    'form_link_workflow',
+    'Form linking workflow available on forms',
 )
 
+# not referenced in code directly but passed through to vellum
+# see toggles_dict
 VELLUM_TRANSACTION_QUESTION_TYPES = StaticToggle(
     'transaction_question_types',
     "Adds transaction-related question types in the form builder",
+    [NAMESPACE_DOMAIN]
+)
+
+VELLUM_ITEMSETS = StaticToggle(
+    'itemsets',
+    "Adds dynamic (itemset) select and multi-select question types to the "
+    "form builder",
+    [NAMESPACE_DOMAIN]
+)
+
+CACHE_AND_INDEX = StaticToggle(
+    'cache_and_index',
+    'Enable the "Cache and Index" format option when choosing sort properties '
+    'in the app builder',
+    [NAMESPACE_DOMAIN],
+)
+
+CUSTOM_PROPERTIES = StaticToggle(
+    'custom_properties',
+    'Allow users to add arbitrary custom properties to their appliation',
     [NAMESPACE_DOMAIN]
 )

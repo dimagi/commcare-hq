@@ -1,0 +1,18 @@
+{% extends "settings/base_template.html" %}
+{% load hqstyle_tags %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+
+{% block main_column %}
+    <div class="page-header">
+        <h3>
+        {% blocktrans %}
+            Use this to transfer your project to another user.
+        {% endblocktrans %}
+        </h3>
+    </div>
+    {% crispy form %}
+{% endblock %}
+

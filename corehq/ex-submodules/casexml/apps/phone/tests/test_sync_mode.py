@@ -4,13 +4,14 @@ from django.test import TestCase
 import os
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.tests.utils import synclog_from_restore_payload
+from corehq.apps.domain.models import Domain
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
 from couchforms.tests.testutils import post_xform_to_couch
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import (check_user_has_case, delete_all_sync_logs,
     delete_all_xforms, delete_all_cases, assert_user_doesnt_have_case,
     assert_user_has_case)
-from casexml.apps.case import process_cases
+from casexml.apps.case.xform import process_cases
 from casexml.apps.phone.models import SyncLog, User
 from casexml.apps.phone.restore import generate_restore_payload, RestoreConfig
 from dimagi.utils.parsing import json_format_datetime
@@ -1049,7 +1050,7 @@ class LooseSyncTokenValidationTest(SyncBaseTest):
             RestoreConfig(
                 self.user, version=V2,
                 restore_id='not-a-valid-synclog-id',
-                domain='some-domain-without-toggle',
+                domain=Domain(name="test_restore_with_bad_log_default"),
             ).get_payload()
 
     def test_restore_with_bad_log_toggle_enabled(self):
@@ -1059,7 +1060,7 @@ class LooseSyncTokenValidationTest(SyncBaseTest):
             RestoreConfig(
                 self.user, version=V2,
                 restore_id='not-a-valid-synclog-id',
-                domain=domain,
+                domain=Domain(name=domain),
             ).get_payload()
 
         LOOSE_SYNC_TOKEN_VALIDATION.set(domain, False, namespace='domain')

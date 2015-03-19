@@ -2,17 +2,18 @@ from functools import partial
 
 from celery.schedules import crontab
 from celery.task import periodic_task
-from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.sms.api import send_sms_to_verified_number
+from custom.ewsghana.utils import send_test_message
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues, \
     DeliveryGroups
-from custom.ilsgateway.tanzania.reminders import REMINDER_DELIVERY_FACILITY, REMINDER_DELIVERY_DISTRICT, update_statuses
-from custom.ilsgateway.utils import send_for_day, get_current_group, get_groups
+from custom.ilsgateway.tanzania.reminders import REMINDER_DELIVERY_FACILITY, REMINDER_DELIVERY_DISTRICT, \
+    update_statuses
+from custom.ilsgateway.utils import send_for_day, get_groups, send_translated_message
 import settings
 
 
-def send_delivery_reminder(domain, date, loc_type='FACILITY'):
+def send_delivery_reminder(domain, date, loc_type='FACILITY', test_list=None):
     if loc_type == 'FACILITY':
         status_type = SupplyPointStatusTypes.DELIVERY_FACILITY
         sms_text = REMINDER_DELIVERY_FACILITY
@@ -23,16 +24,18 @@ def send_delivery_reminder(domain, date, loc_type='FACILITY'):
         return
     current_group = DeliveryGroups().current_delivering_group(date.month)
     sp_ids = set()
-    for user in CommCareUser.by_domain(domain):
-        if user.is_active and user.location and user.location.location_type == loc_type:
-            sp = SupplyPointCase.get_by_location(user.location)
-            if sp and current_group in get_groups(sp.location.metadata.get('groups', None)) and not \
-                    SupplyPointStatus.objects.filter(supply_point=sp._id,
-                                                     status_type=status_type,
-                                                     status_date__gte=date).exists():
-                if user.get_verified_number():
-                    send_sms_to_verified_number(user.get_verified_number(), sms_text)
-                    sp_ids.add(sp._id)
+    users = CommCareUser.by_domain(domain) if not test_list else test_list
+    for user in users:
+        location = user.location
+        if user.is_active and location and location.location_type == loc_type:
+            status_exists = SupplyPointStatus.objects.filter(
+                supply_point=location._id,
+                status_type=status_type,
+                status_date__gte=date
+            ).exists()
+            groups = get_groups(location.metadata.get('groups', None))
+            if groups and current_group in groups and not status_exists:
+                send_translated_message(user, sms_text)
     update_statuses(sp_ids, status_type, SupplyPointStatusValues.REMINDER_SENT)
 
 

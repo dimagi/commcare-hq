@@ -1,15 +1,17 @@
 from StringIO import StringIO
 import datetime
 import re
+import pytz
+import json
+
 from celery.utils.log import get_task_logger
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, Http404
 from django.template.context import RequestContext
-import json
 from django.template.loader import render_to_string
 from django.shortcuts import render
 
-import pytz
+from corehq.apps.reports.tasks import export_all_rows_task
 from corehq.apps.reports.models import ReportConfig
 from corehq.apps.reports import util
 from corehq.apps.reports.datatables import DataTablesHeader
@@ -86,7 +88,7 @@ class GenericReportView(CacheableRequestMixIn):
     printable = False
 
     exportable = False
-    exportable_all = False
+    exportable_all = False  # also requires overriding self.get_all_rows
     mobile_enabled = False
     export_format_override = None
     icon = None
@@ -123,7 +125,7 @@ class GenericReportView(CacheableRequestMixIn):
             raise ValueError("Class property dispatcher should point to a subclass of ReportDispatcher.")
 
         self.request = request
-        self.request_params = json_request(self.request.GET)
+        self.request_params = json_request(self.request.GET if self.request.method == 'GET' else self.request.POST)
         self.domain = domain
         self.context = base_context or {}
         self._update_initial_context()
@@ -148,7 +150,7 @@ class GenericReportView(CacheableRequestMixIn):
         # pickle only what the report needs from the request object
 
         request = dict(
-            GET=self.request.GET,
+            GET=self.request.GET if self.request.method == 'GET' else self.request.POST,
             META=dict(
                 QUERY_STRING=self.request.META.get('QUERY_STRING'),
                 PATH_INFO=self.request.META.get('PATH_INFO')
@@ -192,7 +194,7 @@ class GenericReportView(CacheableRequestMixIn):
         request.datespan = request_data.get('datespan')
 
         try:
-            couch_user = CouchUser.get(request_data.get('couch_user'))
+            couch_user = CouchUser.get_by_user_id(request_data.get('couch_user'))
             request.couch_user = couch_user
         except Exception as e:
             logging.error("Could not unpickle couch_user from request for report %s. Error: %s" %
@@ -609,9 +611,13 @@ class GenericReportView(CacheableRequestMixIn):
         Intention: Not to be overridden in general.
         Returns the tabular export of the data, if available.
         """
-        temp = StringIO()
-        export_from_tables(self.export_table, temp, self.export_format)
-        return export_response(temp, self.export_format, self.export_name)
+        if self.exportable_all:
+            export_all_rows_task.delay(self.__class__, self.__getstate__())
+            return HttpResponse()
+        else:
+            temp = StringIO()
+            export_from_tables(self.export_table, temp, self.export_format)
+            return export_response(temp, self.export_format, self.export_name)
 
     @property
     @request_cache("raw")

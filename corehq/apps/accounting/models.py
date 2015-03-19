@@ -27,7 +27,7 @@ from corehq.apps.users.models import WebUser
 from corehq.apps.accounting.exceptions import (
     CreditLineError, AccountingError, SubscriptionAdjustmentError,
     SubscriptionChangeError, NewSubscriptionError, InvoiceEmailThrottledError,
-    SubscriptionReminderError, SubscriptionRenewalError,
+    SubscriptionReminderError, SubscriptionRenewalError, ProductPlanNotFoundError,
 )
 from corehq.apps.accounting.invoice_pdf import InvoiceTemplate
 from corehq.apps.accounting.utils import (
@@ -637,13 +637,16 @@ class SoftwarePlanVersion(models.Model):
             'name': self.plan.name,
             'description': self.plan.description,
         }
-        if (self.plan.visibility == SoftwarePlanVisibility.PUBLIC
-            or self.plan.visibility == SoftwarePlanVisibility.TRIAL
-        ):
-            try:
-                desc = DESC_BY_EDITION[self.plan.edition]
-            except KeyError:
-                pass
+        try:
+            if (self.plan.visibility == SoftwarePlanVisibility.PUBLIC
+                or self.plan.visibility == SoftwarePlanVisibility.TRIAL):
+                desc['description'] = DESC_BY_EDITION[self.plan.edition]['description']
+            else:
+                for desc_key in desc:
+                    if not desc[desc_key]:
+                        desc[desc_key] = DESC_BY_EDITION[self.plan.edition][desc_key]
+        except KeyError:
+            pass
         desc.update({
             'monthly_fee': 'USD %s' % product.monthly_fee,
             'rates': [{'name': FEATURE_TYPE_TO_NAME[r.feature.feature_type],
@@ -720,7 +723,10 @@ class Subscriber(models.Model):
     def apply_upgrades_and_downgrades(self, downgraded_privileges=None,
                                       upgraded_privileges=None,
                                       new_plan_version=None,
-                                      verbose=False, web_user=None):
+                                      verbose=False,
+                                      web_user=None,
+                                      old_subscription=None,
+                                      new_subscription=None):
 
         if self.organization is not None:
             raise SubscriptionChangeError("Only domain upgrades and downgrades are possible.")
@@ -748,6 +754,36 @@ class Subscriber(models.Model):
             )
             if not upgrade_handler.get_response():
                 raise SubscriptionChangeError("The upgrade was not successful.")
+
+        if not (
+            (
+                new_subscription
+                and new_subscription.is_trial
+            )
+            or (
+                old_subscription
+                and old_subscription.is_trial
+                and not new_subscription
+            )
+        ):
+            from corehq.apps.domain.views import DefaultProjectSettingsView
+            email_context = {
+                'domain': self.domain,
+                'domain_url': absolute_reverse(
+                    DefaultProjectSettingsView.urlname,
+                    args=[self.domain],
+                ),
+                'old_plan': old_subscription.plan_version if old_subscription else None,
+                'new_plan': new_subscription.plan_version if new_subscription else None,
+                'old_subscription_start_date': old_subscription.date_start if old_subscription else None,
+                'new_subscription_end_date': new_subscription.date_end if new_subscription else None,
+            }
+            send_HTML_email(
+                "Subscription Change Alert: %(domain)s from %(old_plan)s to %(new_plan)s" % email_context,
+                settings.SUBSCRIPTION_CHANGE_EMAIL,
+                render_to_string('accounting/subscription_change_email.html', email_context),
+                text_content=render_to_string('accounting/subscription_change_email.txt', email_context),
+            )
 
 
 class Subscription(models.Model):
@@ -842,7 +878,6 @@ class Subscription(models.Model):
         today = datetime.date.today()
         if self.date_end is not None and today > self.date_end:
             raise SubscriptionAdjustmentError("The end date for this subscription already passed.")
-        self.subscriber.apply_upgrades_and_downgrades(web_user=web_user)
 
         self.date_end = today
         if self.date_start > today:
@@ -850,6 +885,11 @@ class Subscription(models.Model):
 
         self.is_active = False
         self.save()
+
+        self.subscriber.apply_upgrades_and_downgrades(
+            web_user=web_user,
+            old_subscription=self,
+        )
 
         # transfer existing credit lines to the account
         self.transfer_credits()
@@ -914,10 +954,6 @@ class Subscription(models.Model):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
         adjustment_reason, downgrades, upgrades = get_change_status(self.plan_version, new_plan_version)
-        self.subscriber.apply_upgrades_and_downgrades(
-            downgraded_privileges=downgrades, upgraded_privileges=upgrades,
-            new_plan_version=new_plan_version, web_user=web_user,
-        )
 
         today = datetime.date.today()
         new_start_date = today if self.date_start < today else self.date_start
@@ -947,6 +983,15 @@ class Subscription(models.Model):
         self.is_active = False
         self.save()
 
+        self.subscriber.apply_upgrades_and_downgrades(
+            downgraded_privileges=downgrades,
+            upgraded_privileges=upgrades,
+            new_plan_version=new_plan_version,
+            web_user=web_user,
+            old_subscription=self,
+            new_subscription=new_subscription,
+        )
+
         # transfer existing credit lines to the new subscription
         self.transfer_credits(new_subscription)
 
@@ -966,15 +1011,18 @@ class Subscription(models.Model):
         created in between).
         """
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
-        self.subscriber.apply_upgrades_and_downgrades(
-            new_plan_version=self.plan_version, web_user=web_user,
-        )
         self.date_end = date_end
         self.is_active = True
         for allowed_attr in self.allowed_attr_changes:
             if allowed_attr in kwargs.keys():
                 setattr(self, allowed_attr, kwargs[allowed_attr])
         self.save()
+        self.subscriber.apply_upgrades_and_downgrades(
+            new_plan_version=self.plan_version,
+            web_user=web_user,
+            old_subscription=self,
+            new_subscription=self,
+        )
         SubscriptionAdjustment.record_adjustment(
             self, reason=SubscriptionAdjustmentReason.REACTIVATE,
             method=adjustment_method, note=note, web_user=web_user,
@@ -1132,10 +1180,11 @@ class Subscription(models.Model):
             'subscription_url': absolute_reverse(
                 DomainSubscriptionView.urlname, args=[self.subscriber.domain]),
             'base_url': get_site_domain(),
+            'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
         }
         email_html = render_to_string(template, context)
         email_plaintext = render_to_string(template_plaintext, context)
-        bcc = [settings.INVOICING_CONTACT_EMAIL] if not self.is_trial else []
+        bcc = [settings.ACCOUNTS_EMAIL] if not self.is_trial else []
         if self.account.dimagi_contact is not None:
             bcc.append(self.account.dimagi_contact)
         for email in emails:
@@ -1188,9 +1237,14 @@ class Subscription(models.Model):
         """
         domain_obj = ensure_domain_instance(domain)
         if domain_obj is None:
-            plan_version = DefaultProductPlan.objects.get(edition=SoftwarePlanEdition.COMMUNITY,
-                                                          product_type=SoftwareProductType.COMMCARE).plan.get_version()
-            return plan_version, None
+            try:
+                plan_version = DefaultProductPlan.objects.get(
+                    edition=SoftwarePlanEdition.COMMUNITY,
+                    product_type=SoftwareProductType.COMMCARE,
+                ).plan.get_version()
+                return plan_version, None
+            except DefaultProductPlan.DoesNotExist:
+                raise ProductPlanNotFoundError
         domain = domain_obj
         subscriber = Subscriber.objects.safe_get(domain=domain.name, organization=None)
         plan_version, subscription = (cls._get_plan_by_subscriber(subscriber) if subscriber
@@ -1232,7 +1286,7 @@ class Subscription(models.Model):
         if date_end is not None:
             future_subscriptions = future_subscriptions.filter(date_start__lt=date_end)
         if future_subscriptions.count() > 0:
-            raise NewSubscriptionError(_(
+            raise NewSubscriptionError(unicode(_(
                 "There is already a subscription '%(sub)s' that has an end date "
                 "that conflicts with the start and end dates of this "
                 "subscription %(start)s - %(end)s." % {
@@ -1240,7 +1294,7 @@ class Subscription(models.Model):
                     'start': date_start,
                     'end': date_end
                 }
-            ))
+            )))
 
         can_reactivate, last_subscription = cls.can_reactivate_domain_subscription(
             account, domain, plan_version, date_start=date_start
@@ -1263,7 +1317,9 @@ class Subscription(models.Model):
             **kwargs
         )
         subscriber.apply_upgrades_and_downgrades(
-            new_plan_version=plan_version, web_user=web_user,
+            new_plan_version=plan_version,
+            web_user=web_user,
+            new_subscription=subscription,
         )
         SubscriptionAdjustment.record_adjustment(
             subscription, method=adjustment_method, note=note,
@@ -1481,9 +1537,10 @@ class BillingRecord(models.Model):
         }
         month_name = self.invoice.date_start.strftime("%B")
         domain = self.invoice.subscription.subscriber.domain
-        title = "Your %(product)s Billing Statement for %(month)s" % {
+        title = "Your %(month)s %(product)s Billing Statement for Project Space %(domain)s" % {
             'product': self.invoice.subscription.plan_version.core_product,
             'month': month_name,
+            'domain': self.invoice.subscription.subscriber.domain,
         }
         from corehq.apps.domain.views import (
             DomainBillingStatementsView, DefaultProjectSettingsView,
@@ -1503,6 +1560,7 @@ class BillingRecord(models.Model):
             'amount_due': fmt_dollar_amount(self.invoice.balance),
             'statements_url': absolute_reverse(
                 DomainBillingStatementsView.urlname, args=[domain]),
+            'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
         }
 
         contact_emails = contact_emails or self.invoice.email_recipients

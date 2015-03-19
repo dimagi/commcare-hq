@@ -18,6 +18,7 @@ from corehq.apps.hqadmin.reports import (
     CommConnectProjectSpacesReport,
     CommTrackProjectSpacesReport,
 )
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import (
     dropdown_dict,
     sidebar_to_dropdown
@@ -262,11 +263,23 @@ class ProjectReportsTab(UITab):
              'show_in_dropdown': True}
         ])]
 
+        user_reports = []
+        if (toggle_enabled(self._request, toggles.USER_CONFIGURABLE_REPORTS)
+                and has_privilege(self._request, privileges.REPORT_BUILDER)):
+            user_reports = [(
+                _("Create Reports"),
+                [{
+                    "title": _('Create new report'),
+                    "url": reverse("create_new_report_builder", args=[self.domain]),
+                    "icon": "icon-plus"
+                }]
+            )]
+
         project_reports = ProjectReportDispatcher.navigation_sections(context)
         custom_reports = CustomProjectReportDispatcher.navigation_sections(
             context)
 
-        return tools + project_reports + custom_reports
+        return tools + user_reports + project_reports + custom_reports
 
 
 class ADMReportsTab(UITab):
@@ -407,18 +420,9 @@ class SetupTab(UITab):
         )
         from corehq.apps.programs.views import ProgramListView
         from corehq.apps.products.views import ProductListView
-        from corehq.apps.locations.views import (
-            LocationsListView,
-            LocationSettingsView,
-        )
 
         dropdown_items = []
 
-        if self.project.locations_enabled:
-            dropdown_items += [(_(view.page_title), view) for view in (
-                LocationsListView,
-                LocationSettingsView,
-            )]
 
         if self.project.commtrack_enabled:
             dropdown_items += [(_(view.page_title), view) for view in (
@@ -438,10 +442,8 @@ class SetupTab(UITab):
 
     @property
     def is_viewable(self):
-        return self.couch_user.is_domain_admin() and (
-            self.project.commtrack_enabled or
-            self.project.locations_enabled
-        )
+        return (self.couch_user.is_domain_admin() and
+                self.project.commtrack_enabled)
 
     @property
     def sidebar_items(self):
@@ -463,47 +465,7 @@ class SetupTab(UITab):
             EditProductView,
             ProductFieldsView,
         )
-        from corehq.apps.locations.views import (
-            LocationsListView,
-            NewLocationView,
-            EditLocationView,
-            FacilitySyncView,
-            LocationImportView,
-            LocationImportStatusView,
-            LocationSettingsView,
-            LocationFieldsView,
-        )
-
-        locations_config = {
-            'title': LocationsListView.page_title,
-            'url': reverse(LocationsListView.urlname, args=[self.domain]),
-            'subpages': [
-                {
-                    'title': NewLocationView.page_title,
-                    'urlname': NewLocationView.urlname,
-                },
-                {
-                    'title': EditLocationView.page_title,
-                    'urlname': EditLocationView.urlname,
-                },
-                {
-                    'title': LocationImportView.page_title,
-                    'urlname': LocationImportView.urlname,
-                },
-                {
-                    'title': LocationImportStatusView.page_title,
-                    'urlname': LocationImportStatusView.urlname,
-                },
-                {
-                    'title': LocationFieldsView.page_name(),
-                    'urlname': LocationFieldsView.urlname,
-                },
-            ]
-        }
-        advanced_locations_config = {
-            'title': LocationSettingsView.page_title,
-            'url': reverse(LocationSettingsView.urlname, args=[self.domain]),
-        }
+        from corehq.apps.locations.views import FacilitySyncView
 
         if self.project.commtrack_enabled:
             return [[_('CommTrack Setup'), [
@@ -526,8 +488,6 @@ class SetupTab(UITab):
                         },
                     ]
                 },
-                locations_config,
-                advanced_locations_config,
                 # programs
                 {
                     'title': ProgramListView.page_title,
@@ -568,12 +528,6 @@ class SetupTab(UITab):
                     'title': StockLevelsView.page_title,
                     'url': reverse(StockLevelsView.urlname, args=[self.domain]),
                 },
-            ]]]
-
-        if self.project.locations_enabled:
-            return [[_('Setup'), [
-                locations_config,
-                advanced_locations_config,
             ]]]
 
 
@@ -959,7 +913,7 @@ class MessagingTab(UITab):
         if self.couch_user.is_superuser or self.couch_user.is_domain_admin(self.domain):
             settings_pages.append(
                 {'title': ugettext_lazy("General Settings"),
-                 'url': reverse('sms_settings_new', args=[self.domain])},
+                 'url': reverse('sms_settings', args=[self.domain])},
             )
             settings_pages.append(
                 {'title': ugettext_lazy("Languages"),
@@ -1105,6 +1059,55 @@ class ProjectUsersTab(UITab):
                 }
             ]))
 
+            if self.project.locations_enabled:
+                from corehq.apps.locations.views import (
+                    LocationsListView,
+                    NewLocationView,
+                    EditLocationView,
+                    LocationImportView,
+                    LocationImportStatusView,
+                    LocationFieldsView,
+                    LocationSettingsView,
+                )
+
+                locations_config = {
+                    'title': LocationsListView.page_title,
+                    'url': reverse(LocationsListView.urlname, args=[self.domain]),
+                    'show_in_dropdown': True,
+                    'subpages': [
+                        {
+                            'title': NewLocationView.page_title,
+                            'urlname': NewLocationView.urlname,
+                        },
+                        {
+                            'title': EditLocationView.page_title,
+                            'urlname': EditLocationView.urlname,
+                        },
+                        {
+                            'title': LocationImportView.page_title,
+                            'urlname': LocationImportView.urlname,
+                        },
+                        {
+                            'title': LocationImportStatusView.page_title,
+                            'urlname': LocationImportStatusView.urlname,
+                        },
+                        {
+                            'title': LocationFieldsView.page_name(),
+                            'urlname': LocationFieldsView.urlname,
+                        },
+                    ]
+                }
+                advanced_locations_config = {
+                    'title': LocationSettingsView.page_title,
+                    'url': reverse(LocationSettingsView.urlname, args=[self.domain]),
+                    'show_in_dropdown': True,
+                }
+
+                items.append((_('Locations'), [
+                    locations_config,
+                    advanced_locations_config,
+                ]))
+
         return items
 
 
@@ -1119,7 +1122,9 @@ class ProjectSettingsTab(UITab):
 
     @property
     def sidebar_items(self):
-        from corehq.apps.domain.views import FeatureFlagsView, FeaturePreviewsView
+        from corehq.apps.domain.views import (FeatureFlagsView,
+                                              FeaturePreviewsView,
+                                              TransferDomainView)
 
         items = []
         user_is_admin = self.couch_user.is_domain_admin(self.domain)
@@ -1205,6 +1210,12 @@ class ProjectSettingsTab(UITab):
                 'title': _(FeaturePreviewsView.page_title),
                 'url': reverse(FeaturePreviewsView.urlname, args=[self.domain])
             })
+
+            if toggles.TRANSFER_DOMAIN.enabled(self.domain):
+                administration.append({
+                    'title': _(TransferDomainView.page_title),
+                    'url': reverse(TransferDomainView.urlname, args=[self.domain])
+                })
             items.append((_('Project Administration'), administration))
 
         from corehq.apps.users.models import WebUser

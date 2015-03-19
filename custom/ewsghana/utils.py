@@ -1,10 +1,12 @@
+from django.db.models.query_utils import Q
 from corehq import Domain
 from corehq.apps.locations.models import SQLLocation
-from datetime import timedelta
+from datetime import timedelta, datetime
 from dateutil import rrule
 from dateutil.rrule import MO
-from corehq.apps.products.models import SQLProduct
 from django.utils import html
+from corehq.apps.sms.api import add_msg_tags
+from corehq.apps.sms.models import SMSLog, OUTGOING
 
 
 def get_supply_points(location_id, domain):
@@ -16,7 +18,9 @@ def get_supply_points(location_id, domain):
     if loc.location_type == 'district':
         locations = SQLLocation.objects.filter(parent=loc)
     elif loc.location_type == 'region':
-        locations = SQLLocation.objects.filter(parent__parent=loc)
+        locations = SQLLocation.objects.filter(
+            Q(parent__parent=loc) | Q(parent=loc, location_type__in=location_types)
+        )
     elif loc.location_type in location_types:
         locations = SQLLocation.objects.filter(id=loc.id)
     else:
@@ -50,6 +54,24 @@ def calculate_last_period(enddate):
     return fr_before, last_th
 
 
+def send_test_message(verified_number, text, metadata=None):
+    msg = SMSLog(
+        couch_recipient_doc_type=verified_number.owner_doc_type,
+        couch_recipient=verified_number.owner_id,
+        phone_number="+" + str(verified_number.phone_number),
+        direction=OUTGOING,
+        date=datetime.utcnow(),
+        domain=verified_number.domain,
+        text=text,
+        processed=True,
+        datetime_to_process=datetime.utcnow(),
+        queued_timestamp=datetime.utcnow()
+    )
+    msg.save()
+    add_msg_tags(msg, metadata)
+    return True
+
+
 def get_products_ids_assigned_to_rel_sp(domain, active_location=None):
 
     def filter_relevant(queryset):
@@ -72,3 +94,18 @@ def get_products_ids_assigned_to_rel_sp(domain, active_location=None):
         return products
     else:
         return filter_relevant(SQLLocation.objects.filter(domain=domain))
+
+
+def get_reporting_types(domain):
+    return [
+        location_type for location_type in Domain.get_by_name(domain).location_types
+        if not location_type.administrative
+    ]
+
+
+def can_receive_email(user, verified_number):
+    return user.email and verified_number.backend_id and verified_number.backend_id == 'MOBILE_BACKEND_TWILIO'
+
+
+def get_country_id(domain):
+    return SQLLocation.objects.filter(domain=domain, location_type='country')[0].location_id

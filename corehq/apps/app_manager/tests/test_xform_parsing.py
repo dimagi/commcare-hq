@@ -33,6 +33,8 @@ class XFormParsingTest(TestCase, TestFileMixin):
             self.assertEqual(str(e), "Can't find <itext>")
         self.assertEqual(self.xforms["itext_form"].localize(id="pork", lang="kosher"), None)
         self.assertEqual(self.xforms["itext_form"].localize(id="question1", lang="pt"), "P1")
+        self.assertEqual(self.xforms["itext_form"].localize(id="question1", lang="en"), "Q1")
+        self.assertEqual(self.xforms["itext_form"].localize(id="question1"), "Q1")
 
     def test_normalize_itext(self):
         original = self.xforms['itext_form']

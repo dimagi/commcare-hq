@@ -93,7 +93,6 @@ def bootstrap_commtrack_settings_if_necessary(domain, requisitions_enabled=False
     Create a new CommtrackConfig object for a domain
     if it does not already exist.
 
-
     This adds some collection of default products, programs,
     SMS keywords, etc.
     """
@@ -149,32 +148,6 @@ def bootstrap_commtrack_settings_if_necessary(domain, requisitions_enabled=False
     make_product(domain.name, 'Sample Product 2', 'pq', program.get_id)
     make_product(domain.name, 'Sample Product 3', 'pr', program.get_id)
 
-    domain.location_types = [
-        LocationType(
-            name='state',
-            allowed_parents=[''],
-            administrative=True
-        ),
-        LocationType(
-            name='district',
-            allowed_parents=['state'],
-            administrative=True
-        ),
-        LocationType(
-            name='block',
-            allowed_parents=['district'],
-            administrative=True
-        ),
-        LocationType(
-            name='village',
-            allowed_parents=['block'],
-            administrative=True
-        ),
-        LocationType(
-            name='outlet',
-            allowed_parents=['village']
-        ),
-    ]
     # this method is called during domain's post save, so this
     # is a little tricky, but it happens after the config is
     # created so should not cause problems
