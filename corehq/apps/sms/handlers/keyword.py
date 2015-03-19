@@ -336,7 +336,7 @@ def handle_structured_sms(survey_keyword, survey_keyword_action, contact,
         error_msg = get_message(MSG_TOUCHFORMS_ERROR, verified_number)
 
     if session is not None:
-        session = SQLXFormsSession.objects.get(couch_id=session._id)
+        session = SQLXFormsSession.objects.get(pk=session.pk)
         if session.is_open:
             session.end(False)
             session.save()
