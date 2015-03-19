@@ -4,6 +4,8 @@ from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.util import _report_user_dict
@@ -18,6 +20,7 @@ from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.views import BaseUserSettingsView
+from corehq import privileges
 from corehq import toggles
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.excel import alphanumeric_sort_key
@@ -43,13 +46,13 @@ class BulkSMSVerificationView(BaseDomainView):
     urlname = 'bulk_sms_verification'
 
     @method_decorator(require_can_edit_commcare_users)
+    @method_decorator(requires_privilege_with_fallback(privileges.INBOUND_SMS))
     def dispatch(self, *args, **kwargs):
         return super(BulkSMSVerificationView, self).dispatch(*args, **kwargs)
 
     def initiate_verification(self, request, group):
         counts = {
             'users': 0,
-            'users_with_phone_number': 0,
             'phone_numbers': 0,
             'phone_numbers_in_use': 0,
             'phone_numbers_already_verified': 0,
@@ -60,8 +63,6 @@ class BulkSMSVerificationView(BaseDomainView):
 
         for user in group.get_users(is_active=True, only_commcare=True):
             counts['users'] += 1
-            if len(user.phone_numbers) > 0:
-                counts['users_with_phone_number'] += 1
             for phone_number in user.phone_numbers:
                 counts['phone_numbers'] += 1
                 try:
@@ -83,6 +84,7 @@ class BulkSMSVerificationView(BaseDomainView):
         success_msg = _(
             '%(users)s user(s) and %(phone_numbers)s phone number(s) processed. '
             '%(phone_numbers_already_verified)s already verified, '
+            '%(phone_numbers_in_use)s already in use by other contact(s), '
             '%(phone_numbers_pending_verification)s already pending verification, '
             'and %(workflows_started)s verification workflow(s) started.'
         ) % counts
@@ -185,8 +187,10 @@ class EditGroupMembersView(BaseGroupsView):
 
     @property
     def page_context(self):
-        bulk_sms_verification_enabled = \
-            toggles.BULK_SMS_VERIFICATION.enabled(self.request.couch_user.username)
+        bulk_sms_verification_enabled = (
+            toggles.BULK_SMS_VERIFICATION.enabled(self.request.couch_user.username) and
+            domain_has_privilege(self.domain, privileges.INBOUND_SMS)
+        )
         return {
             'group': self.group,
             'bulk_sms_verification_enabled': bulk_sms_verification_enabled,
