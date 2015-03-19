@@ -50,3 +50,9 @@ class ImpactPublicView(TemplateView):
         kwargs['is_impact'] = True
 
         return super(ImpactPublicView, self).get_context_data(**kwargs)
+
+
+class ServicesPublicView(TemplateView):
+    urlname = 'public_services'
+    template_name = 'public/services.html'
+
