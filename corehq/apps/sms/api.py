@@ -50,12 +50,12 @@ class MessageMetadata(object):
 
 def add_msg_tags(msg, metadata):
     if msg and metadata:
-        msg.workflow = metadata.workflow
-        msg.xforms_session_couch_id = metadata.xforms_session_couch_id
-        msg.reminder_id = metadata.reminder_id
-        msg.chat_user_id = metadata.chat_user_id
-        msg.ignore_opt_out = metadata.ignore_opt_out
-        msg.location_id = metadata.location_id
+        fields = ('workflow', 'xforms_session_couch_id', 'reminder_id', 'chat_user_id',
+                  'ignore_opt_out', 'location_id')
+        for field in fields:
+            value = getattr(metadata, field)
+            if value:
+                setattr(msg, field, value)
         msg.save()
 
 
@@ -399,9 +399,9 @@ def process_incoming(msg, delay=True):
         msg.couch_recipient_doc_type = v.owner_doc_type
         msg.couch_recipient = v.owner_id
         msg.domain = v.domain
-        user = CommCareUser.get(v.owner_id)
-        if 'location_id' in user:
-            add_msg_tags(msg, metadata=MessageMetadata(location_id=user.location_id, workflow=msg.workflow))
+        contact = v.owner
+        if isinstance(contact, CommCareUser) and hasattr(contact, 'location_id'):
+            msg.location_id = contact.location_id
         msg.save()
 
     if msg.domain_scope:
