@@ -196,7 +196,7 @@ class ILSGatewayAPI(APISynchronization):
         sms_user = super(ILSGatewayAPI, self).sms_user_sync(ilsgateway_smsuser, **kwargs)
         if not sms_user:
             return None
-        
+
         sms_user.save()
         if ilsgateway_smsuser.supply_point:
             try:
