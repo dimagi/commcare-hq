@@ -51,7 +51,7 @@ branches:
   - locations-as-groups # tw 1/20
   - fixtures-spike  # cz 1/29
   - static-updates # Biyeun 2/9
-  # - project-settings-update # sravan 1/30
+  - project-settings-update # sravan 1/30
   - upgrade-celery # SK 2/27
   - balance-icon # Daniel 3/4
   - kill-referrals  # cz 3/6
