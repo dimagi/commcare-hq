@@ -355,3 +355,9 @@ CUSTOM_PROPERTIES = StaticToggle(
     'Allow users to add arbitrary custom properties to their appliation',
     [NAMESPACE_DOMAIN]
 )
+
+FILE_RESTORE = StaticToggle(
+    'file_restore',
+    'Use files to do phone restore',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
