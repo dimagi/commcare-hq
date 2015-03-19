@@ -18,7 +18,7 @@
             403: "{% trans "Forbidden." %}",
             404: "{% trans 'Page not found.' %}",
             500: "{% blocktrans %}There was an error processing your request. We're working quickly to fix the issue. Please try again shortly.{% endblocktrans %}"
-        });
+        }, "{% trans "Buy Credits" %}");
         {% if plan.cards %}
             paymentHandler.loadCards({{ plan.cards|JSON }});
         {% endif %}

@@ -16,7 +16,7 @@
             403: "{% trans "Forbidden." %}",
             404: "{% trans 'Page not found.' %}",
             500: "{% blocktrans %}There was an error processing your request. We're working quickly to fix the issue. Please try again shortly.{% endblocktrans %}"
-        });
+        }, "{% trans "Submit Payment" %}");
         {% if stripe_cards %}
             paymentHandler.loadCards({{ stripe_cards|JSON }});
         {% endif %}

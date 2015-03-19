@@ -1,8 +1,9 @@
-var PaymentMethodHandler = function (errorMessages) {
+var PaymentMethodHandler = function (errorMessages, submitBtnText) {
     'use strict';
     var self = this;
 
     self.errorMessages = errorMessages;
+    self.submitBtnText = submitBtnText;
 
     self.costItem = ko.observable();
     self.hasCostItem = ko.computed(function () {
