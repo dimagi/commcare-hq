@@ -1,12 +1,5 @@
 // Contains helper functions for rendering nvd3 multibar charts with data pulled from an elastic search histogram filter
 
-var INTERVAL_VALUES = {
-    "day": 86400000,
-    "week": 86400000 * 7,
-    "month": 86400000 * 30,
-    "year": 86400000 * 365
-};
-
 function isInt(n) {
     return typeof n === 'number' && parseFloat(n) == parseInt(n, 10) && !isNaN(n);
 }
@@ -33,60 +26,71 @@ function are_init_values_zero(values) {
     return true;
 }
 
-function intervalize(vals, start, end, interval) {
-    var ret = [];
-    for (var t = start; t <= end; t += interval) {
-        ret.push({x: t, y: 0});
-    }
-    for (var i = 0; i < vals.length; i++){
-        var index = Math.floor((vals[i].x - start) / interval);
-        if (index >= 0) {
-            ret[index].y += vals[i].y;
-        }
-    }
-    return ret;
-}
-
-function date_to_first_of_month(date_val) {
-    var month = new Date(date_val).getUTCMonth();
-    var year = new Date(date_val).getUTCFullYear();
-    return new Date(Date.UTC(year, month, 1));
-}
-
-function where_to_put(vals, time) {
-    for (var i = 0; i < vals.length; i++) {
-        if (i + 1 < vals.length && vals[i + 1].x <= time) {
-            continue;
-        }
-        return i;
-    }
-}
-
-function intervalize_months(vals, start, end) {
-    var ret = [];
-    var current_date = date_to_first_of_month(start), end = date_to_first_of_month(end);
-    var current_month = current_date.getUTCMonth();
-    var initial_year = current_date.getUTCFullYear();
-
-    while (current_date.valueOf() <= end.valueOf()) {
-        ret.push({x: current_date.valueOf(), y: 0});
-        current_month += 1;
-        current_date = new Date(Date.UTC(initial_year, current_month, 1))
-    }
-
-    for (var i = 0; i < vals.length; i++) {
-        var index = where_to_put(ret, vals[i].x);
-        if (index >= 0) {
-            ret[index].y += vals[i].y;
-        }
-    }
-    return ret;
-}
-
 function swap_prop_names(obj, from_to_map) {
     var ret_obj = {};
     _.each(from_to_map, function (v, k) { ret_obj[v] = obj[k] });
     return ret_obj;
+}
+
+function days_in_year(year) {
+    if (is_leap_year(year)) {
+        return 366;
+    }
+    return 365;
+}
+
+function is_leap_year(year) {
+    return (year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0));
+}
+
+function days_in_month(month, year) {
+    if (is_leap_year(year) && month === 1) {
+        return 29;
+    }
+    return [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month];
+}
+
+function next_interval(date, interval) {
+    switch(interval) {
+        case "day":
+            date.setUTCDate(date.getUTCDate() + 1);
+            break;
+        case "week":
+            date.setUTCDate(date.getUTCDate() + 7);
+            break;
+        case "month":
+            date.setUTCDate(date.getUTCDate() + days_in_month(date.getUTCMonth(), date.getUTCFullYear()));
+            break;
+        case "year":
+            date.setUTCDate(date.getUTCDate() + days_in_year(date.getUTCFullYear()));
+            break;
+    }
+    return date;
+}
+
+function fill_in_spaces(vals, start, end, interval) {
+    var start_date = new Date(start),
+        end_date = new Date(end),
+        cur_index = 0,
+        ret = [];
+
+    for (var i = start_date; i <= end_date; i=next_interval(i, interval)) {
+        if (cur_index < vals.length && vals[cur_index].x === i.getTime()) {
+            ret.push(vals[cur_index]);
+            cur_index++;
+        } else {
+            ret.push({x: i.getTime(), y: 0});
+        }
+    }
+
+    // if there are any values left over then tack them on to the end
+    // this should 
+    if (cur_index < vals.length) {
+        ret.concat(vals.slice(cur_index));
+        console.log("There were extra values in a response");
+    }
+
+    return ret;
 }
 
 function find(collection, filter) {
@@ -127,12 +131,10 @@ function trim_data(data) {
 function format_data(data, start, end, interval, no_trim) {
     var ret = [];
     _.each(data, function (vals, name) {
-        vals = _.map(vals, function(o) { return swap_prop_names(o, {time: "x", count: "y"})});
-        if (interval === 'month') {
-            vals = intervalize_months(vals, start, end)
-        } else {
-            vals = intervalize(vals, start, end, INTERVAL_VALUES[interval]);
-        }
+        vals = _.map(vals, function(o) {
+            return swap_prop_names(o, {time: "x", count: "y"});
+        });
+        vals = fill_in_spaces(vals, start, end, interval);
         ret.push({key: name, values: vals});
     });
 
