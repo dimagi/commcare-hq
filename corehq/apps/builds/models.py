@@ -210,7 +210,7 @@ class CommCareBuildConfig(Document):
         cls.fetch.clear(cls)
 
     @classmethod
-    @quickcache(timeout=30)
+    @quickcache([], timeout=30)
     def fetch(cls):
         try:
             return cls.get(cls._ID)

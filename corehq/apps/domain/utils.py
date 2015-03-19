@@ -35,7 +35,7 @@ def get_domain_from_url(path):
     return domain
 
 
-@quickcache(timeout=60)
+@quickcache([], timeout=60)
 def get_domain_module_map():
     hardcoded = getattr(settings, 'DOMAIN_MODULE_MAP', {})
     try:
@@ -47,7 +47,7 @@ def get_domain_module_map():
     return hardcoded
 
 
-@quickcache(timeout=60)
+@quickcache([], timeout=60)
 def get_adm_enabled_domains():
     try:
         domains = get_db().open_doc('ADM_ENABLED_DOMAINS').get('domains', {})
