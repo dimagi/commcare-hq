@@ -102,7 +102,7 @@ class SQLXFormsSession(models.Model):
     Keeps information about an SMS XForm session.
     """
     # generic properties
-    couch_id = models.CharField(null=True, blank=True, db_index=True, max_length=50)
+    couch_id = models.CharField(db_index=True, max_length=50)
     connection_id = models.CharField(null=True, blank=True, db_index=True, max_length=50)
     session_id = models.CharField(null=True, blank=True, db_index=True, max_length=50)
     form_xmlns = models.CharField(null=True, blank=True, max_length=100)
@@ -189,18 +189,7 @@ class SQLXFormsSession(models.Model):
 
 
 def get_session_by_session_id(id):
-    """
-    Utility method to first try and get a session in sql, then failing that get it in couch
-    and log an error.
-    """
-    sql_session = SQLXFormsSession.by_session_id(id)
-    if sql_session:
-        return sql_session
-
-    couch_session = XFormsSession.by_session_id(id)
-    if couch_session:
-        notify_error('session {} could not be found in sql.'.format(couch_session._id))
-    return couch_session
+    return SQLXFormsSession.by_session_id(id)
 
 
 SESSION_PROPERTIES_TO_SYNC = [
