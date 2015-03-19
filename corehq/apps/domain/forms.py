@@ -469,7 +469,7 @@ def tuple_of_copies(a_list, blank=True):
 
 class PrivacySecurityForm(forms.Form):
     restrict_superusers = BooleanField(
-        label=_("Restrict Superuser Access"),
+        label=_("Restrict Dimagi Staff Access"),
         required=False,
         help_text=_("If access to a project space is restricted only users added " +
                     "to the domain and staff members will have access.")
@@ -525,21 +525,31 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         help_text=ugettext_noop(
             "The organization built and deployed their app themselves. Dimagi may have provided indirect support"
         ))
+    is_test = ChoiceField(
+        label=_("Real Project"),
+        choices=(('true', _('Test')),
+                 ('false', _('Real')),
+                 ('none', _('unknown')))
+    )
     area = ChoiceField(
-        label=ugettext_noop("Sector"),
+        label=ugettext_noop("Sector*"),
         required=False,
         choices=tuple_of_copies(AREA_CHOICES))
     sub_area = ChoiceField(
-        label=ugettext_noop("Sub-Sector"),
+        label=ugettext_noop("Sub-Sector*"),
         required=False,
         choices=tuple_of_copies(SUB_AREA_CHOICES))
     organization_name = CharField(
-        label=ugettext_noop("Organization Name"),
+        label=ugettext_noop("Organization Name*"),
         required=False,
         help_text=_("Quick 1-2 sentence summary of the project."),
     )
-    notes = CharField(label=ugettext_noop("Notes"), required=False, widget=forms.Textarea)
-    phone_model = CharField(label=ugettext_noop("Phone Model"), required=False)
+    notes = CharField(label=ugettext_noop("Notes*"), required=False, widget=forms.Textarea)
+    phone_model = CharField(
+        label=ugettext_noop("Device Model"),
+        help_text=_("Add CloudCare, if this project is using CloudCare as well"),
+        required=False,
+    )
     deployment_date = CharField(
         label=ugettext_noop("Deployment date"),
         required=False,
@@ -566,6 +576,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                 'initiative',
                 'workshop_region',
                 'self_started',
+                'is_test',
                 'area',
                 'sub_area',
                 'organization_name',
@@ -614,6 +625,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             date=dateutil.parser.parse(self.cleaned_data['deployment_date']),
             countries=self.cleaned_data['countries'],
         )
+        domain.is_test = self.cleaned_data['is_test']
         domain.update_internal(
             sf_contract_id=self.cleaned_data['sf_contract_id'],
             sf_account_id=self.cleaned_data['sf_account_id'],
