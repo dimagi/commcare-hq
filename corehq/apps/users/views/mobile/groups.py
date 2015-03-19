@@ -148,10 +148,7 @@ class EditGroupMembersView(BaseGroupsView):
     @property
     @memoized
     def group(self):
-        try:
-            return Group.get(self.group_id)
-        except ResourceNotFound:
-            raise Http404("Group %s does not exist" % self.group_id)
+        return get_group_or_404(self.domain, self.group_id)
 
     @property
     @memoized
