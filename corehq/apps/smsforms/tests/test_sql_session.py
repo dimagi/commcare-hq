@@ -134,7 +134,7 @@ class SQLSessionTestCase(TestCase):
     def test_get_open_sms_session_one_result(self):
         domain = uuid.uuid4().hex
         contact = uuid.uuid4().hex
-        couch_session = _make_session(
+        new_session = _make_session(
             domain=domain,
             connection_id=contact,
             end_time=None,
@@ -142,7 +142,7 @@ class SQLSessionTestCase(TestCase):
         )
 
         session = SQLXFormsSession.get_open_sms_session(domain, contact)
-        self.assertEqual(couch_session.session_id, session.session_id)
+        self.assertEqual(new_session.session_id, session.session_id)
 
 
 def _make_session(**kwargs):

@@ -80,7 +80,6 @@ def start_session(domain, contact, app, module, form, case_id=None, yield_respon
 
     # Prevent future update conflicts by getting the session again from the db
     # since the session could have been updated separately in the first_responses call
-    # todo: is this still necessary?
     session = SQLXFormsSession.objects.get(pk=session.pk)
     if yield_responses:
         return (session, responses)
