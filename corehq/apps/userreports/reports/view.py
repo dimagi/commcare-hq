@@ -1,3 +1,4 @@
+from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.views.generic.base import TemplateView
 from braces.views import JSONResponseMixin
@@ -70,12 +71,17 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
             if request.is_ajax() or request.GET.get('format', None) == 'json':
                 return self.get_ajax(request, domain, **kwargs)
             self.content_type = None
+            self.add_warnings(request)
             return super(ConfigurableReport, self).dispatch(request, domain, **kwargs)
         else:
             raise Http403()
 
     def has_permissions(self, domain, user):
         return True
+
+    def add_warnings(self, request):
+        for warning in self.data_source.column_warnings:
+            messages.warning(request, warning)
 
     def get_context_data(self, **kwargs):
         return {
