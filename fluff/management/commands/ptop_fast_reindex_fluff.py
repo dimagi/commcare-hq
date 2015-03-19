@@ -17,6 +17,13 @@ class FluffPtopReindexer(PtopReindexer):
     # override these
     domain = None
     pillow_class = FluffPillow
+    option_list = PtopReindexer.option_list + (
+        make_option('--delete-filtered',
+                    action='store_true',
+                    dest='delete_filtered',
+                    default=False,
+                    help='Delete docs not matching the filter'),
+    )
 
     @property
     def doc_class(self):
@@ -41,6 +48,7 @@ class FluffPtopReindexer(PtopReindexer):
                 print "\tReset cancelled."
                 return
 
+        self.pillow_class.delete_filtered = options['delete_filtered']
         self._bootstrap(options)
         # override this to avoid any checkpointing issues
         self.pillow = self.pillow_class(chunk_size=0)
