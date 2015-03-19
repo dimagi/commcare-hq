@@ -155,7 +155,7 @@ class CaseSyncOperation(object):
     @property
     @memoized
     def _all_relevant_cases(self):
-        return get_footprint(self.actual_owned_cases, domain=self.user.domain)
+        return get_footprint(self.actual_owned_cases, domain=self.user.domain, strip_history=True)
 
     @property
     @memoized
@@ -537,7 +537,7 @@ class CaseSyncCouchBatch(CaseSyncBatch):
             return cases
 
     def _all_relevant_cases_dict(self, cases):
-        return get_footprint(cases, domain=self.domain)
+        return get_footprint(cases, domain=self.domain, strip_history=True)
 
     def __repr__(self):
         return "CaseSyncCouchBatch(startkey={}, startkey_docid={}, chunksize={}, use_minimal_cases={})".format(
