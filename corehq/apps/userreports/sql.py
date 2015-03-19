@@ -124,6 +124,8 @@ def get_expanded_columns(data_source_configuration, column_config, column_warnin
     try:
         connection = session.connection()
         table = get_indicator_table(data_source_configuration)
+        if not table.exists(bind=connection):
+            return []
         column = table.c[column_config.field]
 
         query = sqlalchemy.select([column], limit=MAXIMUM_EXPANSION+1).distinct()
