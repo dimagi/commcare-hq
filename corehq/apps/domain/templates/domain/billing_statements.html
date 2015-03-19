@@ -113,7 +113,7 @@
 
     {% include 'accounting/partials/stripe_card_ko_template.html' %}
 
-    <script type="text/html" id="invoice-cost-item-template">
+    <script type="text/html" id="cost-item-template">
         <div class="control-group">
             <input type="hidden"
                    name="invoice_id"
@@ -180,73 +180,5 @@
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-    <div class="modal hide fade" id="paymentModal">
-        <div class="modal-header">
-            <a class="close" data-dismiss="modal">&times;</a>
-            <div data-bind="template: {
-                data: costItem,
-                name: 'payment-method-modal-title',
-                if: hasCostItem
-            }"></div>
-        </div>
-        <form action="{{ process_payment_url }}"
-              method="POST"
-              class="form form-horizontal"
-              id="payment-form">
-            <div class="modal-body">
-                <p class="alert alert-error"
-                     data-bind="visible: showServerErrorMsg">
-                    <i class="icon-warning-sign"></i>
-                    <span data-bind="text: serverErrorMsg"></span>
-                </p>
-
-                <div data-bind="template: {
-                    data: costItem,
-                    name: 'invoice-cost-item-template',
-                    if: hasCostItem
-                }, visible: paymentIsNotComplete"></div>
-
-                <div data-bind="template: {
-                    data: newCard,
-                    name: 'select-new-stripe-card-template',
-                    if: mustCreateNewCard
-                }"></div>
-
-                <div data-bind="template: {
-                    data: $data,
-                    name: 'select-stripe-card-template',
-                    if: canSelectCard
-                }"></div>
-
-                <p class="alert alert-success"
-                     data-bind="visible: paymentIsComplete">
-                    {% blocktrans %}
-                    Thank you for your payment!
-                    {% endblocktrans %}
-                </p>
-            </div>
-            <div class="modal-footer">
-                <button type="button"
-                        data-bind="visible: paymentIsNotComplete"
-                        class="btn"
-                        data-dismiss="modal">
-                    {% trans "Cancel" %}
-                </button>
-                <button type="submit"
-                        data-bind="
-                            visible: paymentIsNotComplete,
-                            disable: isSubmitDisabled,
-                            click: processPayment"
-                        class="btn btn-success">
-                    {% trans 'Submit Payment' %}
-                </button>
-                <button type="button"
-                        data-bind="visible: paymentIsComplete"
-                        class="btn"
-                        data-dismiss="modal">
-                    {% trans "Close" %}
-                </button>
-            </div>
-        </form>
-    </div>
+    {% include 'domain/partials/payment_modal.html' %}
 {% endblock %}

@@ -1,0 +1,82 @@
+{% load i18n %}
+
+<div class="modal hide fade" id="paymentModal">
+    <div class="modal-header">
+        <a class="close" data-dismiss="modal">&times;</a>
+        <div data-bind="template: {
+            data: costItem,
+            name: 'payment-method-modal-title',
+            if: hasCostItem
+        }"></div>
+    </div>
+    <form action="{{ process_payment_url }}"
+          method="POST"
+          class="form form-horizontal"
+          id="payment-form">
+        <div class="modal-body">
+            <div data-bind="template: {
+                data: costItem,
+                name: 'cost-item-template',
+                if: hasCostItem
+            }, visible: paymentIsNotComplete"></div>
+
+            <p class="alert alert-error"
+                 data-bind="visible: showServerErrorMsg">
+                <i class="icon-warning-sign"></i>
+                <span data-bind="text: serverErrorMsg"></span>
+            </p>
+
+            <div data-bind="template: {
+                data: newCard,
+                name: 'select-new-stripe-card-template',
+                if: mustCreateNewCard
+            }"></div>
+
+            <div data-bind="template: {
+                data: $data,
+                name: 'select-stripe-card-template',
+                if: canSelectCard
+            }"></div>
+
+            <p class="alert alert-success"
+                 data-bind="visible: paymentIsComplete">
+                {% blocktrans %}
+                Thank you for your payment!
+                {% endblocktrans %}
+            </p>
+        </div>
+        <div class="modal-footer">
+            <button type="button"
+                    data-bind="visible: paymentIsNotComplete"
+                    class="btn"
+                    data-dismiss="modal">
+                {% trans "Cancel" %}
+            </button>
+            <!-- ko if: hasAgreedToPrivacy -->
+            <button type="submit"
+                    data-bind="
+                        visible: paymentIsNotComplete,
+                        disable: isSubmitDisabled,
+                        click: processPayment,
+                        text: submitBtnText"
+                    class="btn btn-success">
+            </button>
+            <!-- /ko -->
+            <!-- ko ifnot: hasAgreedToPrivacy -->
+            <button type="submit"
+                    class="btn btn-success disabled"
+                    data-bind="
+                        text: submitBtnText"
+                    disabled="disabled">
+            </button>
+            <span class="label label-info">{% trans 'Please agree to the Privacy Policy.' %}</span>
+            <!-- /ko -->
+            <button type="button"
+                    data-bind="visible: paymentIsComplete"
+                    class="btn"
+                    data-dismiss="modal">
+                {% trans "Close" %}
+            </button>
+        </div>
+    </form>
+</div>
