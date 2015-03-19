@@ -68,6 +68,7 @@
         var propertyList = function(options) {
             var that = this;
             options = options || {};
+            this.buttonText = options.buttonText != undefined ? options.buttonText : "Add property";
             this.hasFormatCol = ko.observable(options.hasFormatCol != undefined ? options.hasFormatCol : true);
             this.formatOptions = ko.observableArray(["Choice", "Date", "Numeric"]);
             this.propertyOptions = ko.observableArray({{ property_options|JSON }});
@@ -89,8 +90,15 @@
             var initialFilters = _.map({{ initial_filters|JSON }}, function(i){
                 return PropertyListItem.wrap(i);
             });
-            this.filtersList = new propertyList({hasFormatCol: true, initialCols: initialFilters});
-            this.columnsList = new propertyList({hasFormatCol:false});
+            this.filtersList = new propertyList({
+                hasFormatCol: true,
+                initialCols: initialFilters,
+                buttonText: 'Add Filter'
+            });
+            this.columnsList = new propertyList({
+                hasFormatCol: false,
+                buttonText: 'Add Column'
+            });
             this.submitHandler = function(){
                 var isValid = true;
                 isValid = that.filtersList.validate() && isValid;
