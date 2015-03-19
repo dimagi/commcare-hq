@@ -4,7 +4,7 @@ from django.test.utils import override_settings
 from casexml.apps.case.models import CommCareCase
 from couchforms.tests.testutils import post_xform_to_couch
 from casexml.apps.case.tests.util import check_xml_line_by_line, CaseBlock, delete_all_cases
-from casexml.apps.case import process_cases
+from casexml.apps.case.xform import process_cases
 from datetime import datetime
 from casexml.apps.phone import views as phone_views
 from django.http import HttpRequest
