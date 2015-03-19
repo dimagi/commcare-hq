@@ -279,6 +279,14 @@ class APISynchronization(object):
             v.delete()
             user.save_verified_number(self.domain, phone_number, True)
 
+    def _save_number(self, user, phone_number):
+        try:
+            user.save_verified_number(self.domain, phone_number, True)
+        except PhoneNumberInUseException:
+            self._reassign_number(user, phone_number)
+        except InvalidFormatException:
+            pass
+
     def add_language_to_user(self, logistics_sms_user):
         domain_part = "%s.commcarehq.org" % self.domain
         username_part = "%s%d" % (logistics_sms_user.name.strip().replace(' ', '.').lower(),
@@ -294,6 +302,9 @@ class APISynchronization(object):
 
         logistics_numbers = {apply_leniency(phone_number) for phone_number in logistics_sms_user.phone_numbers}
         if set(user.phone_numbers) == logistics_numbers:
+            if logistics_numbers and not user.get_verified_number():
+                phone_number = apply_leniency(logistics_sms_user.phone_numbers[0])
+                self._save_number(user, phone_number)
             return
 
         for phone_number in user.phone_numbers:
@@ -304,9 +315,4 @@ class APISynchronization(object):
             if not phone_number:
                 return
             user.set_default_phone_number(phone_number)
-            try:
-                user.save_verified_number(self.domain, phone_number, True)
-            except PhoneNumberInUseException:
-                self._reassign_number(user, phone_number)
-            except InvalidFormatException:
-                pass
+            self._save_number(user, phone_number)
