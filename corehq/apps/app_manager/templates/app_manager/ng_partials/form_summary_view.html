@@ -50,6 +50,18 @@
                         <select class="form-control" id="language" ng-model="lang" ng-options="lang for lang in appLangs">
                         </select>
                     </div>
+                    <div class="btn-group" role="group" >
+                        <button type="button" class="btn btn-default"
+                                ng-click="showLabels = true"
+                                ng-class="{ 'active' : showLabels }">
+                            {% trans "Labels" %}
+                        </button>
+                        <button type="button" class="btn btn-default"
+                                ng-click="showLabels = false"
+                                ng-class="{ 'active' : !showLabels }">
+                            {% trans "Question IDs" %}
+                        </button>
+                    </div>
                 </div>
              </div>
         </div>
@@ -67,14 +79,15 @@
                             <li ng-repeat="question in form.questions|filter:questionSearch">
                                 {% verbatim %}
                                 <i class="hq-icon fcc {{ getIcon(question.type) }}" title="{{ question.type }}"></i>
-                                <span class="label label-info">{{ question.value }}</span> {{ getQuestionLabel(question) }}
+                                <span ng-show="showLabels">{{ getQuestionLabel(question) }}</span>
                                 {% endverbatim %}
+                                <span ng-hide="showLabels">{{ question.value }}</span>
                                 <ol>
                                     <li ng-repeat="option in question.options">
                                         {% verbatim %}
-                                        <span class="label label-info">{{ option.value }}</span> {{ getQuestionLabel(option) }}
                                         <span ng-show="showLabels">{{ getQuestionLabel(option) }}</span>
                                         {% endverbatim %}
+                                        <span ng-hide="showLabels">{{ option.value }}</span>
                                     </li>
                                 </ol>
                             </li>

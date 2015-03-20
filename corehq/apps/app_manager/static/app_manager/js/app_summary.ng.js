@@ -110,6 +110,7 @@
         $scope.formSearch = {id: ''};
         $scope.moduleSearch = {id: ''};
         $scope.lang = 'en';
+        $scope.showLabels = true;
         $scope.appLangs = summaryConfig.appLangs;
 
         self.init = function () {
