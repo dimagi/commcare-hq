@@ -1430,12 +1430,13 @@ class SuiteGenerator(SuiteGeneratorBase):
 
         if not form or form.requires_case():
             self.configure_entry_module(module, e, use_filter=True)
-        elif form and 'open_case' in form.active_actions() and form.is_case_list_form:
-            self.configure_entry_as_case_list_form(form, e)
 
         datums = self.get_new_case_id_datums(form)
         for datum in datums:
             e.datums.append(datum)
+
+        if form and 'open_case' in form.active_actions() and form.is_case_list_form:
+            self.configure_entry_as_case_list_form(form, e)
 
         if form and self.app.case_sharing and case_sharing_requires_assertion(form):
             self.add_case_sharing_assertion(e)
