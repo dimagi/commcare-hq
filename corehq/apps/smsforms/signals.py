@@ -1,7 +1,7 @@
 from touchforms.formplayer.signals import sms_form_complete
-from corehq.apps.receiverwrapper.util import get_submit_url
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from couchforms.models import XFormInstance
+
 
 def handle_sms_form_complete(sender, session_id, form, **kwargs):
     from corehq.apps.smsforms.models import SQLXFormsSession

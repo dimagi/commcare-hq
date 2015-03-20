@@ -3,7 +3,7 @@ from corehq.util.quickcache import quickcache
 from dimagi.utils.couch.database import get_db
 
 
-@quickcache(timeout=60)
+@quickcache([], timeout=60)
 def get_indicator_config():
     try:
         doc = get_db().open_doc('INDICATOR_CONFIGURATION')

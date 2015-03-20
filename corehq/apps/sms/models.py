@@ -50,7 +50,9 @@ class MessageLog(SafeSaveDocument, UnicodeMixIn):
     billing_errors              = ListProperty()
     chat_user_id = StringProperty() # For outgoing sms only: if this sms was sent from a chat window, the _id of the CouchUser who sent this sms; otherwise None
     workflow = StringProperty() # One of the WORKFLOW_* constants above describing what kind of workflow this sms was a part of
-    xforms_session_couch_id = StringProperty() # Points to the _id of an instance of corehq.apps.smsforms.models.XFormsSession that this sms is tied to
+    # Points to the couch_id of an instance of SQLXFormsSession
+    # that this message is tied to
+    xforms_session_couch_id = StringProperty()
     reminder_id = StringProperty() # Points to the _id of an instance of corehq.apps.reminders.models.CaseReminder that this sms is tied to
     processed = BooleanProperty(default=True)
     datetime_to_process = DateTimeProperty()
@@ -70,6 +72,8 @@ class MessageLog(SafeSaveDocument, UnicodeMixIn):
     # phone number has opted-out. Should only be used to send opt-out
     # replies or other info-related queries while opted-out.
     ignore_opt_out = BooleanProperty(default=False)
+    location_id = StringProperty()
+
 
     def __unicode__(self):
         to_from = (self.direction == INCOMING) and "from" or "to"

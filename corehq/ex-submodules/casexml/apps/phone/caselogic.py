@@ -39,25 +39,31 @@ def get_related_cases(initial_cases, domain, strip_history=False, search_up=True
     def indices(case):
         return case['indices'] if search_up else reverse_indices(CommCareCase.get_db(), case, wrap=False)
 
-    def related(case_db, case):
-        return [case_db.get(index['referenced_id']) for index in indices(case)]
-
     relevant_cases = {}
     relevant_deleted_case_ids = []
 
-    queue = list(case for case in initial_cases)
+    cases_to_process = list(case for case in initial_cases)
     directly_referenced_indices = itertools.chain(
         *[[index['referenced_id'] for index in indices(case)]
           for case in initial_cases]
     )
     case_db.populate(directly_referenced_indices)
-    while queue:
-        case = queue.pop()
-        if case and case['_id'] not in relevant_cases:
-            relevant_cases[case['_id']] = case
-            if case['doc_type'] == 'CommCareCase-Deleted':
-                relevant_deleted_case_ids.append(case['_id'])
-            queue.extend(related(case_db, case))
+
+    def process_cases(cases):
+        new_relations = set()
+        for case in cases:
+            if case and case['_id'] not in relevant_cases:
+                relevant_cases[case['_id']] = case
+                if case['doc_type'] == 'CommCareCase-Deleted':
+                    relevant_deleted_case_ids.append(case['_id'])
+                new_relations.update(index['referenced_id'] for index in indices(case))
+
+        if new_relations:
+            case_db.populate(new_relations)
+            return [case_db.get(related_case) for related_case in new_relations]
+
+    while cases_to_process:
+        cases_to_process = process_cases(cases_to_process)
 
     if relevant_deleted_case_ids:
         logging.info('deleted cases included in footprint (restore): %s' % (
@@ -148,7 +154,7 @@ class CaseSyncOperation(object):
     @property
     @memoized
     def _all_relevant_cases(self):
-        return get_footprint(self.actual_owned_cases, domain=self.user.domain)
+        return get_footprint(self.actual_owned_cases, domain=self.user.domain, strip_history=True)
 
     @property
     @memoized
@@ -530,7 +536,7 @@ class CaseSyncCouchBatch(CaseSyncBatch):
             return cases
 
     def _all_relevant_cases_dict(self, cases):
-        return get_footprint(cases, domain=self.domain)
+        return get_footprint(cases, domain=self.domain, strip_history=True)
 
     def __repr__(self):
         return "CaseSyncCouchBatch(startkey={}, startkey_docid={}, chunksize={}, use_minimal_cases={})".format(
@@ -555,18 +561,18 @@ def filter_cases_modified_elsewhere_since_sync(cases, last_sync):
     if not last_sync:
         return cases
     else:
+        # todo: if this case list is huge i'm guessing this query is pretty expensive
         case_ids = [case['_id'] for case in cases]
         case_log_map = CommCareCase.get_db().view(
             'phone/cases_to_sync_logs',
             keys=case_ids,
             reduce=False,
         )
-        # incoming format is a list of objects that look like this:
-        # {
-        #   'value': '[log id]',
-        #   'key': '[case id]',
-        # }
+
+        # create a set of tuples of the format (case_id, log_id)
         unique_combinations = set((row['key'], row['value']) for row in case_log_map)
+
+        # todo: and this could arguably be even worse
         modification_dates = CommCareCase.get_db().view(
             'phone/case_modification_status',
             keys=[list(combo) for combo in unique_combinations],

@@ -17,7 +17,7 @@
             400: "{% trans "Your request was not formatted properly." %}",
             403: "{% trans "Forbidden." %}",
             404: "{% trans 'Page not found.' %}",
-            500: "{% blocktrans %}There was an error processing your request. We're working quickly to fix the issue. Please try back shortly.{% endblocktrans %}"
+            500: "{% blocktrans %}There was an error processing your request. We're working quickly to fix the issue. Please try again shortly.{% endblocktrans %}"
         });
         {% if plan.cards %}
             paymentHandler.loadCards({{ plan.cards|JSON }});

@@ -126,79 +126,6 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
         )
 
 
-class Referral(DocumentSchema):
-    """
-    A referral, taken from casexml.  
-    """
-    
-    # Referrals have top-level couch guids, but this id is important
-    # to the phone, so we keep it here.  This is _not_ globally unique
-    # but case_id/referral_id/type should be.  
-    # (in our world: case_id/referral_id/type)
-    opened_on = DateTimeProperty()
-    modified_on = DateTimeProperty()
-    type = StringProperty()
-    closed = BooleanProperty(default=False)
-    closed_on = DateTimeProperty()
-    referral_id = StringProperty()
-    followup_on = DateTimeProperty()
-    outcome = StringProperty()
-    
-    def __unicode__(self):
-        return ("%s:%s" % (self.type, self.referral_id))
-        
-    def apply_updates(self, date, referral_block):
-        if not const.REFERRAL_ACTION_UPDATE in referral_block:
-            logging.warn("No update action found in referral block, nothing to be applied")
-            return
-        
-        update_block = referral_block[const.REFERRAL_ACTION_UPDATE] 
-        if not self.type == update_block[const.REFERRAL_TAG_TYPE]:
-            logging.warn("Tried to update from a block with a mismatched type!")
-            return
-
-        if date > self.modified_on:
-            self.modified_on = date
-        
-        if const.REFERRAL_TAG_FOLLOWUP_DATE in referral_block:
-            self.followup_on = parsing.string_to_datetime(referral_block[const.REFERRAL_TAG_FOLLOWUP_DATE])
-        
-        if const.REFERRAL_TAG_DATE_CLOSED in update_block:
-            self.closed = True
-            self.closed_on = parsing.string_to_datetime(update_block[const.REFERRAL_TAG_DATE_CLOSED])
-            
-            
-    @classmethod
-    def from_block(cls, date, block):
-        """
-        Create referrals from a block of processed data (a dictionary)
-        """
-        if not const.REFERRAL_ACTION_OPEN in block:
-            raise ValueError("No open tag found in referral block!")
-        id = block[const.REFERRAL_TAG_ID]
-        follow_date = parsing.string_to_datetime(block[const.REFERRAL_TAG_FOLLOWUP_DATE])
-        open_block = block[const.REFERRAL_ACTION_OPEN]
-        types = open_block[const.REFERRAL_TAG_TYPES].split(" ")
-        
-        ref_list = []
-        for type in types:
-            ref = Referral(referral_id=id, followup_on=follow_date, 
-                            type=type, opened_on=date, modified_on=date, 
-                            closed=False)
-            ref_list.append(ref)
-        
-        # there could be a single update block that closes a referral
-        # that we just opened.  not sure why this would happen, but 
-        # we'll support it.
-        if const.REFERRAL_ACTION_UPDATE in block:
-            update_block = block[const.REFERRAL_ACTION_UPDATE]
-            for ref in ref_list:
-                if ref.type == update_block[const.REFERRAL_TAG_TYPE]:
-                    ref.apply_updates(date, block)
-        
-        return ref_list
-
-
 class CaseQueryMixin(object):
     @classmethod
     def get_by_xform_id(cls, xform_id):
@@ -267,7 +194,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
     opened_by = StringProperty()
     closed_by = StringProperty()
 
-    referrals = SchemaListProperty(Referral)
     actions = SchemaListProperty(CommCareCaseAction)
     name = StringProperty()
     version = StringProperty()
@@ -351,7 +277,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
 
     def get_json(self, lite=False):
         ret = {
-            # referrals and actions excluded here
+            # actions excluded here
             "domain": self.domain,
             "case_id": self.case_id,
             "user_id": self.user_id,
@@ -629,7 +555,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         case.modified_on = parsing.string_to_datetime(case_update.modified_on_str) \
                             if case_update.modified_on_str else datetime.utcnow()
         
-        # apply initial updates, referrals and such, if present
+        # apply initial updates, if present
         case.update_from_case_update(case_update, xformdoc)
         return case
     
@@ -658,91 +584,14 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
     def update_from_case_update(self, case_update, xformdoc, other_forms=None):
         other_forms = other_forms or {}
         if case_update.has_referrals():
-            return self._legacy_update_from_case_update(case_update, xformdoc)
+            logging.error('Form {} touching case {} in domain {} is still using referrals'.format(
+                xformdoc._id, case_update.id, getattr(xformdoc, 'domain', None))
+            )
+            raise Exception(_('Sorry, referrals are no longer supported!'))
         else:
             return self._new_update_from_case_update(case_update, xformdoc, other_forms)
 
-    def _legacy_update_from_case_update(self, case_update, xformdoc):
-        mod_date = parsing.string_to_datetime(case_update.modified_on_str) \
-            if case_update.modified_on_str else datetime.utcnow()
-
-        if self.modified_on is None or mod_date > self.modified_on:
-            self.modified_on = mod_date
-
-
-        if case_update.creates_case():
-            self.apply_create_block(case_update.get_create_action(), xformdoc, mod_date, case_update.user_id)
-            # case_update.get_create_action() seems to sometimes return an action with all properties set to none,
-            # so set opened_by and opened_on here
-            if not self.opened_on:
-                self.opened_on = mod_date
-            if not self.opened_by:
-                self.opened_by = case_update.user_id
-
-
-        if case_update.updates_case():
-            update_action = CommCareCaseAction.from_parsed_action(mod_date,
-                                                                  case_update.user_id,
-                                                                  xformdoc,
-                                                                  case_update.get_update_action())
-            self._apply_action(update_action, None)
-            self.actions.append(update_action)
-
-        if case_update.closes_case():
-            close_action = CommCareCaseAction.from_parsed_action(mod_date,
-                                                                 case_update.user_id,
-                                                                 xformdoc,
-                                                                 case_update.get_close_action())
-            self.closed_by = case_update.user_id
-            self._apply_action(close_action, None)
-            self.actions.append(close_action)
-
-        if case_update.has_referrals():
-            logging.error('Case {} in domain {} is still using referrals'.format(
-                case_update.id, getattr(xformdoc, 'domain', None))
-            )
-            if const.REFERRAL_ACTION_OPEN in case_update.referral_block:
-                referrals = Referral.from_block(mod_date, case_update.referral_block)
-                # for some reason extend doesn't work.  disconcerting
-                # self.referrals.extend(referrals)
-                for referral in referrals:
-                    self.referrals.append(referral)
-            elif const.REFERRAL_ACTION_UPDATE in case_update.referral_block:
-                found = False
-                update_block = case_update.referral_block[const.REFERRAL_ACTION_UPDATE]
-                for ref in self.referrals:
-                    if ref.type == update_block[const.REFERRAL_TAG_TYPE]:
-                        ref.apply_updates(mod_date, case_update.referral_block)
-                        found = True
-                if not found:
-                    logging.error(("Tried to update referral type %s for referral %s in case %s "
-                                   "but it didn't exist! Nothing will be done about this.") % \
-                                   (update_block[const.REFERRAL_TAG_TYPE], 
-                                    case_update.referral_block[const.REFERRAL_TAG_ID],
-                                    self.case_id))
-        
-        if case_update.has_indices():
-            index_action = CommCareCaseAction.from_parsed_action(mod_date,
-                                                                 case_update.user_id,
-                                                                 xformdoc,
-                                                                 case_update.get_index_action())
-            self.actions.append(index_action)
-            self._apply_action(index_action, None)
-
-        if case_update.has_attachments():
-            attachment_action = CommCareCaseAction.from_parsed_action(mod_date,
-                                                                      case_update.user_id,
-                                                                      xformdoc,
-                                                                      case_update.get_attachment_action())
-            self.actions.append(attachment_action)
-            self._apply_action(attachment_action, xformdoc)
-
-        # finally override any explicit properties from the update
-        if case_update.user_id:     self.user_id = case_update.user_id
-        if case_update.version:     self.version = case_update.version
-
     def _new_update_from_case_update(self, case_update, xformdoc, other_forms):
-        assert not case_update.has_referrals()
 
         mod_date = parsing.string_to_datetime(case_update.modified_on_str) \
             if case_update.modified_on_str else datetime.utcnow()

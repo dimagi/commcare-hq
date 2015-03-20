@@ -27,11 +27,15 @@
                 return '';
             };
             self.translateName = function (names, target_lang, fallback) {
+                fallback = fallback ? fallback : '[unknown]';
+                if (!names) {
+                    return fallback;
+                }
                 var langs = [target_lang].concat(config.appLangs),
                     firstLang = _(langs).find(function (lang) {
                     return names[lang];
                 });
-                if (!firstLang && fallback) {
+                if (!firstLang) {
                     return fallback;
                 }
                 return names[firstLang] + (firstLang === target_lang ? '': ' [' + firstLang + ']');
