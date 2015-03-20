@@ -8,24 +8,19 @@ class Migration(SchemaMigration):
 
     def forwards(self, orm):
 
-        # Removing index on 'LocationType', fields ['code']
-        db.delete_index(u'locations_locationtype', ['code'])
+        # Adding field 'LocationType.shares_cases'
+        db.add_column(u'locations_locationtype', 'shares_cases', self.gf('django.db.models.fields.BooleanField')(default=False), keep_default=False)
 
-        # Deleting field 'SQLLocation.tmp_location_type'
-        db.delete_column(u'locations_sqllocation', 'tmp_location_type')
-
+        # Adding field 'LocationType.view_descendants'
+        db.add_column(u'locations_locationtype', 'view_descendants', self.gf('django.db.models.fields.BooleanField')(default=False), keep_default=False)
 
     def backwards(self, orm):
 
-        # Adding index on 'LocationType', fields ['code']
-        db.create_index(u'locations_locationtype', ['code'])
+        # Deleting field 'LocationType.shares_cases'
+        db.delete_column(u'locations_locationtype', 'shares_cases')
 
-        # Adding field 'SQLLocation.tmp_location_type'
-        db.add_column(
-            u'locations_sqllocation', 'tmp_location_type',
-            self.gf('django.db.models.fields.CharField')(max_length=255, null=True),
-            keep_default=False
-        )
+        # Deleting field 'LocationType.view_descendants'
+        db.delete_column(u'locations_locationtype', 'view_descendants')
 
 
     models = {
@@ -36,7 +31,9 @@ class Migration(SchemaMigration):
             'domain': ('django.db.models.fields.CharField', [], {'max_length': '255', 'db_index': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
-            'parent_type': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['locations.LocationType']", 'null': 'True'})
+            'parent_type': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['locations.LocationType']", 'null': 'True'}),
+            'shares_cases': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'view_descendants': ('django.db.models.fields.BooleanField', [], {'default': 'False'})
         },
         u'locations.sqllocation': {
             'Meta': {'unique_together': "(('domain', 'site_code'),)", 'object_name': 'SQLLocation'},
@@ -60,6 +57,7 @@ class Migration(SchemaMigration):
             'site_code': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'stocks_all_products': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'supply_point_id': ('django.db.models.fields.CharField', [], {'max_length': '255', 'unique': 'True', 'null': 'True', 'db_index': 'True'}),
+            'tmp_location_type': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True'}),
             u'tree_id': ('django.db.models.fields.PositiveIntegerField', [], {'db_index': 'True'})
         },
         u'products.sqlproduct': {
