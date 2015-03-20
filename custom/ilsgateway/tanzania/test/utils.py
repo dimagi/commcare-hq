@@ -2,8 +2,7 @@ from corehq.apps.accounting import generator
 from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, SoftwarePlanEdition, Subscription
 from corehq.apps.commtrack.models import CommtrackActionConfig
 from corehq.apps.domain.models import Domain
-from corehq.apps.locations.models import Location, SQLLocation
-from corehq.apps.locations.schema import LocationType
+from corehq.apps.locations.models import Location, SQLLocation, LocationType
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.sms.mixin import MobileBackend
 from corehq.apps.users.models import CommCareUser
@@ -83,17 +82,20 @@ class ILSTestScript(TestScript):
 def prepare_domain(domain_name):
     from corehq.apps.commtrack.tests import bootstrap_domain
     domain = bootstrap_domain(domain_name)
-    domain.location_types = [
-        LocationType(name="MOHSW", allowed_parents=[""],
-                     administrative=True),
-        LocationType(name="REGION", allowed_parents=["MOHSW"],
-                     administrative=True),
-        LocationType(name="DISTRICT", allowed_parents=["REGION"],
-                     administrative=True),
-        LocationType(name="FACILITY", allowed_parents=["DISTRICT"],
-                     administrative=False)
-    ]
-    domain.save()
+    previous = None
+    for name, administrative in [
+        ("MOHSW", True),
+        ("REGION", True),
+        ("DISTRICT", True),
+        ("FACILITY", False)
+    ]:
+        previous, _ = LocationType.objects.get_or_create(
+            domain=domain_name,
+            name=name,
+            parent_type=previous,
+            administrative=administrative,
+        )
+
     generator.instantiate_accounting_for_tests()
     account = BillingAccount.get_or_create_account_by_domain(
         domain.name,

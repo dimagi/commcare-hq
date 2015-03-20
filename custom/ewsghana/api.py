@@ -170,12 +170,12 @@ class EWSApi(APISynchronization):
                                                           external_id=str(supply_point.id),
                                                           domain=self.domain))
 
-    def _make_loc_type(self, name, administrative=False, parent=None):
+    def _make_loc_type(self, name, administrative=False, parent_type=None):
         return LocationType.objects.get_or_create(
             domain=self.domain,
             name=name,
             administrative=administrative,
-            parent_type=parent,
+            parent_type=parent_type,
         )[0]
 
     def prepare_commtrack_config(self):

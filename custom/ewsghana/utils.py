@@ -108,39 +108,33 @@ def get_products_ids_assigned_to_rel_sp(domain, active_location=None):
 def prepare_domain(domain_name):
     from corehq.apps.commtrack.tests import bootstrap_domain
     domain = bootstrap_domain(domain_name)
-    domain.location_types = [
-        LocationType(name="country", allowed_parents=[""],
-                     administrative=True),
-        LocationType(name="Central Medical Store", allowed_parents=["country"],
-                     administrative=False),
-        LocationType(name="Teaching Hospital", allowed_parents=["country"],
-                     administrative=False),
-        LocationType(name="region", allowed_parents=["country"],
-                     administrative=True),
-        LocationType(name="Regional Medical Store", allowed_parents=["region"],
-                     administrative=False),
-        LocationType(name="Regional Hospital", allowed_parents=["region"],
-                     administrative=False),
-        LocationType(name="district", allowed_parents=["region"],
-                     administrative=True),
-        LocationType(name="Clinic", allowed_parents=["district"],
-                     administrative=False),
-        LocationType(name="District Hospital", allowed_parents=["district"],
-                     administrative=False),
-        LocationType(name="Health Centre", allowed_parents=["district"],
-                     administrative=False),
-        LocationType(name="CHPS Facility", allowed_parents=["district"],
-                     administrative=False),
-        LocationType(name="Hospital", allowed_parents=["district"],
-                     administrative=False),
-        LocationType(name="Psychiatric Hospital", allowed_parents=["district"],
-                     administrative=False),
-        LocationType(name="Polyclinic", allowed_parents=["district"],
-                     administrative=False),
-        LocationType(name="facility", allowed_parents=["district"],
-                     administrative=False)
-    ]
-    domain.save()
+
+    def _make_loc_type(name, administrative=False, parent_type=None):
+        return LocationType.objects.get_or_create(
+            domain=domain_name,
+            name=name,
+            administrative=administrative,
+            parent_type=parent_type,
+        )[0]
+
+    country = _make_loc_type(name="country", administrative=True)
+    _make_loc_type(name="Central Medical Store", parent_type=country)
+    _make_loc_type(name="Teaching Hospital", parent_type=country)
+
+    region = _make_loc_type(name="region", administrative=True, parent_type=country)
+    _make_loc_type(name="Regional Medical Store", parent_type=region)
+    _make_loc_type(name="Regional Hospital", parent_type=region)
+
+    district = _make_loc_type(name="district", administrative=True, parent_type=region)
+    _make_loc_type(name="Clinic", parent_type=district)
+    _make_loc_type(name="District Hospital", parent_type=district)
+    _make_loc_type(name="Health Centre", parent_type=district)
+    _make_loc_type(name="CHPS Facility", parent_type=district)
+    _make_loc_type(name="Hospital", parent_type=district)
+    _make_loc_type(name="Psychiatric Hospital", parent_type=district)
+    _make_loc_type(name="Polyclinic", parent_type=district)
+    _make_loc_type(name="facility", parent_type=district)
+
     generator.instantiate_accounting_for_tests()
     account = BillingAccount.get_or_create_account_by_domain(
         domain.name,
