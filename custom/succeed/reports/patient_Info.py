@@ -1,6 +1,6 @@
-from custom.succeed.reports import OUTPUT_DATE_FORMAT, CM2, PM_PM2, PM2, CHW_APP_PD_MODULE, CM_APP_PD_MODULE, PM_APP_PM_MODULE, CHW_APP_MA_MODULE, AP2, \
-    CM_APP_APPOINTMENTS_MODULE
-from django.utils.translation import ugettext as _, ugettext_noop
+from custom.succeed.reports import OUTPUT_DATE_FORMAT, CM2, PM_PM2, PM2, CHW_APP_PD_MODULE, CM_APP_PD_MODULE,\
+    PM_APP_PM_MODULE, AP2, CM_APP_APPOINTMENTS_MODULE
+from django.utils.translation import ugettext as _
 from custom.succeed.reports.patient_details import PatientDetailsReport
 from custom.succeed.utils import get_form_dict, is_pm_or_pi, is_cm, is_chw
 from custom.succeed.utils import format_date
