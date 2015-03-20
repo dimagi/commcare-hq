@@ -31,6 +31,7 @@ DELIVERY_NOT_RECEIVED = 'delivery_' + SupplyPointStatusValues.NOT_RECEIVED
 DELIVERY_NOT_RESPONDING = 'delivery_not_responding'
 SOH_NOT_RESPONDING = 'soh_not_responding'
 
+TEST_REGION_ID = 21
 
 def _is_valid_status(facility, date, status_type):
     if status_type not in NEEDED_STATUS_TYPES:
@@ -267,11 +268,15 @@ def default_start_date():
 
 
 def _get_test_locations(domain):
-    region_kilimanjaro = SQLLocation.objects.get(domain=domain, external_id=21)
+    """
+        returns test region and all its children
+    """
+    test_region = SQLLocation.objects.get(domain=domain, external_id=TEST_REGION_ID)
     sql_locations = SQLLocation.objects.filter(
-        Q(domain=domain) & (Q(parent=region_kilimanjaro) | Q(parent__parent=region_kilimanjaro))
+        Q(domain=domain) & (Q(parent=test_region) | Q(parent__parent=test_region))
     ).order_by('id').only('location_id')
-    return [Location.get(sql_location.location_id) for sql_location in sql_locations]
+    return [sql_location.couch_location() for sql_location in sql_locations] + \
+           [test_region.couch_location()]
 
 
 def populate_report_data(start_date, end_date, domain, runner):
