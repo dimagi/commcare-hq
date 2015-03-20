@@ -24,8 +24,8 @@ class EditFormTest(TestCase):
             form.delete()
 
     def _get_files(self):
-        first_file = os.path.join(os.path.dirname(__file__), "data", "duplicate.xml")
-        edit_file = os.path.join(os.path.dirname(__file__), "data", "edit.xml")
+        first_file = os.path.join(os.path.dirname(__file__), "data", "deprecation", "original.xml")
+        edit_file = os.path.join(os.path.dirname(__file__), "data", "deprecation", "edit.xml")
 
         with open(first_file, "rb") as f:
             xml_data1 = f.read()
