@@ -61,12 +61,13 @@ class BaseConfigView(BaseCommTrackManageView):
     def post(self, request, *args, **kwargs):
         payload = json.loads(request.POST.get('json'))
         config = self.config.wrap(self.settings_context['source_config'])
-        config.enabled = payload['source_config'].get('enabled', None)
+        config.enabled = payload['source_config'].get('enabled', False)
         config.domain = self.domain_object.name
         config.url = payload['source_config'].get('url', None)
         config.username = payload['source_config'].get('username', None)
         config.password = payload['source_config'].get('password', None)
-        config.steady_sync = payload['source_config'].get('steady_sync')
+        config.steady_sync = payload['source_config'].get('steady_sync', False)
+        config.all_stock_data = payload['source_config'].get('all_stock_data', False)
         config.save()
         return self.get(request, *args, **kwargs)
 

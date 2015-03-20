@@ -27,7 +27,8 @@ class Command(BaseCommand):
         config = ILSGatewayConfig.for_domain(domain)
         assert config.enabled, 'ilsgateway sync must be configured for this domain'
         endpoint = ILSGatewayEndpoint.from_config(config)
-        stock_data_task(domain, endpoint, get_ilsgateway_data_migrations(), test_facilities=[ilsgateway_id])
+        stock_data_task(domain, endpoint, get_ilsgateway_data_migrations(), config,
+                        test_facilities=[ilsgateway_id])
 
 
 def _cleanup_existing_data(domain, ilsgateway_id):

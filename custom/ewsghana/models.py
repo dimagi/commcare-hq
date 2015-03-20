@@ -12,6 +12,7 @@ class EWSGhanaConfig(Document):
     username = StringProperty()
     password = StringProperty()
     steady_sync = BooleanProperty(default=False)
+    all_stock_data = BooleanProperty(default=False)
 
     @classmethod
     def for_domain(cls, name):

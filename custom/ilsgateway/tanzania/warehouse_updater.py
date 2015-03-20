@@ -7,7 +7,7 @@ from dimagi.utils.dates import get_business_day_of_month, add_months, months_bet
 from casexml.apps.stock.models import StockReport, StockTransaction
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, DeliveryGroups, \
     OrganizationSummary, GroupSummary, SupplyPointStatusValues, Alert, ProductAvailabilityData, \
-    SupplyPointWarehouseRecord, HistoricalLocationGroup
+    SupplyPointWarehouseRecord, HistoricalLocationGroup, ILSGatewayConfig
 from custom.ilsgateway import TEST
 
 
@@ -262,7 +262,7 @@ def create_alert(location_id, date, alert_type, details):
 
 
 def default_start_date():
-    return datetime(2010, 11, 1)
+    return datetime(2012, 1, 1)
 
 
 def _get_test_locations(domain):
@@ -280,7 +280,7 @@ def populate_report_data(start_date, end_date, domain, runner):
     start_date = max(start_date, default_start_date())
 
     # For QA purposes generate reporting data for only some small part of data.
-    if TEST:
+    if not ILSGatewayConfig.for_domain(domain).all_stock_data:
         locations = _get_test_locations(domain)
         facilities = filter(lambda location: location.location_type == 'FACILITY', locations)
         non_facilities_types = ['DISTRICT', 'REGION', 'MOHSW']

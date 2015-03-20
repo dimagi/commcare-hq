@@ -96,7 +96,7 @@ def ews_sync_stock_data(request, domain):
     config = EWSGhanaConfig.for_domain(domain)
     domain = config.domain
     endpoint = GhanaEndpoint.from_config(config)
-    stock_data_task.delay(domain, endpoint, apis, EWS_FACILITIES)
+    stock_data_task.delay(domain, endpoint, apis, config, EWS_FACILITIES)
     return HttpResponse('OK')
 
 

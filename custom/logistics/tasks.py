@@ -19,7 +19,7 @@ from dimagi.utils.dates import force_to_datetime
 
 
 @task
-def stock_data_task(domain, endpoint, apis, test_facilities=None):
+def stock_data_task(domain, endpoint, apis, config, test_facilities=None):
     # checkpoint logic
     start_date = datetime.today()
     try:
@@ -44,7 +44,7 @@ def stock_data_task(domain, endpoint, apis, test_facilities=None):
         offset = 0
         location = None
 
-    if TEST:
+    if not config.all_stock_data:
         facilities = test_facilities
     else:
         supply_points_ids = SQLLocation.objects.filter(
