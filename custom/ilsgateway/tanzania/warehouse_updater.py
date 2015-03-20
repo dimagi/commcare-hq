@@ -39,13 +39,13 @@ def _is_valid_status(facility, date, status_type):
         date__year=date.year,
         location_id=facility.sql_location
     )
-    if (not facility.metadata.get('groups', [])) and (groups.count() == 0):
+    if (not facility.metadata.get('groups', None)) and (groups.count() == 0):
         return False
 
     if groups.count() > 0:
         code = groups[0].group
     else:
-        code = facility.metadata['groups'][0]
+        code = facility.metadata['groups']
     dg = DeliveryGroups(date.month)
     if status_type == SupplyPointStatusTypes.R_AND_R_FACILITY:
         return code == dg.current_submitting_group()

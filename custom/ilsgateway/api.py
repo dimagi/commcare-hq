@@ -236,7 +236,7 @@ class ILSGatewayAPI(APISynchronization):
             location.domain = self.domain
             location.name = ilsgateway_location.name
             if ilsgateway_location.groups:
-                location.metadata = {'groups': ilsgateway_location.groups}
+                location.metadata = {'groups': ilsgateway_location.groups[0]}
             if ilsgateway_location.latitude:
                 location.latitude = float(ilsgateway_location.latitude)
             if ilsgateway_location.longitude:
@@ -260,7 +260,7 @@ class ILSGatewayAPI(APISynchronization):
                 'metadata': {}
             }
             if ilsgateway_location.groups:
-                location_dict['metadata']['groups'] = ilsgateway_location.groups
+                location_dict['metadata']['groups'] = ilsgateway_location.groups[0]
             case = SupplyPointCase.get_by_location(location)
             if apply_updates(location, location_dict):
                 location.save()

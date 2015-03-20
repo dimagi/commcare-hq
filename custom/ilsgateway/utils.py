@@ -17,15 +17,6 @@ def get_next_meta_url(has_next, meta, next_url):
     return has_next, next_url
 
 
-def get_groups(groups):
-    if isinstance(groups, list):
-        return groups
-    elif isinstance(groups, (str, unicode)):
-        return groups.split(',')
-    else:
-        return None
-
-
 def get_current_group():
     month = datetime.utcnow().month
     return GROUPS[(month + 2) % 3]

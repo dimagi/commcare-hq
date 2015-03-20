@@ -29,7 +29,7 @@ from custom.ilsgateway.tanzania.reminders.supervision import send_supervision_re
 
 from custom.ilsgateway.tasks import ILS_FACILITIES, get_ilsgateway_data_migrations
 from casexml.apps.stock.models import StockTransaction
-from custom.logistics.tasks import sms_users_fix
+from custom.logistics.tasks import sms_users_fix, fix_groups_in_location_task
 from custom.ilsgateway.api import ILSGatewayAPI
 from custom.logistics.tasks import stock_data_task
 from custom.ilsgateway.api import ILSGatewayEndpoint
@@ -310,3 +310,10 @@ def save_ils_note(request, domain):
         ])
 
     return HttpResponse(json.dumps(data), content_type='application/json')
+
+
+@domain_admin_required
+@require_POST
+def fix_groups_in_location(request, domain):
+    fix_groups_in_location_task.delay(domain)
+    return HttpResponse('OK')
