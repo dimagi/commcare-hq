@@ -27,7 +27,8 @@ from couchforms.xml import (
 )
 from casexml.apps.case.xml import check_version, V1
 from casexml.apps.phone.fixtures import generator
-from django.http import HttpResponse
+from casexml.apps.phone.util import get_payload_content
+from django.http import HttpResponse, StreamingHttpResponse
 from django.conf import settings
 from casexml.apps.phone.checksum import CaseStateHash
 from no_exceptions.exceptions import HttpException
@@ -47,6 +48,9 @@ INITIAL_SYNC_CACHE_TIMEOUT = 60 * 60  # 1 hour
 # restores that take less than this time will not be cached to allow
 # for rapid iteration on fixtures/cases/etc.
 INITIAL_SYNC_CACHE_THRESHOLD = 60  # 1 minute
+
+# Max amount of bytes to have in memory when streaming a file
+MAX_BYTES = 1000000  # 1MB
 
 
 class StockSettings(object):
@@ -462,7 +466,13 @@ class RestoreConfig(object):
 
     def get_response(self):
         try:
-            return HttpResponse(self.get_payload(), mimetype="text/xml")
+            payload = self.get_payload()
+            try:
+                f = open(payload, 'r')
+                # Since payload file is all one line, need to readline based on bytes
+                return StreamingHttpResponse(iter(lambda: f.readline(MAX_BYTES), ''), mimetype="text/xml")
+            except IOError:
+                return HttpResponse(payload, mimetype="text/xml")
         except RestoreException, e:
             logging.exception("%s error during restore submitted by %s: %s" %
                               (type(e).__name__, self.user.username, str(e)))
