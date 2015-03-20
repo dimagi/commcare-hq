@@ -112,6 +112,7 @@
         $scope.lang = 'en';
         $scope.showLabels = true;
         $scope.showCalculations = false;
+        $scope.showRelevance = false;
         $scope.appLangs = summaryConfig.appLangs;
 
         self.init = function () {

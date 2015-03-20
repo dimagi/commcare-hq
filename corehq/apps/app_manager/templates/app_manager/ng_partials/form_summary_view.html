@@ -69,6 +69,12 @@
                             <i class="fa fa-calculator" ng-class="showCalculations ? 'hq-icon' : ''"></i>
                             &nbsp;{% trans "Show Calculations" %}
                         </button>
+                        <button type="button" class="btn btn-default"
+                                ng-click="showRelevance = !showRelevance"
+                                ng-class="{ 'active' : showRelevance }">
+                            <i class="fa fa-code-fork" ng-class="showRelevance ? 'hq-icon' : ''"></i>
+                            &nbsp;{% trans "Show Display Conditions" %}
+                        </button>
                     </div>
                 </div>
              </div>
@@ -90,6 +96,7 @@
                                 <span ng-show="showLabels">{{ getQuestionLabel(question) }}</span>
                                 {% endverbatim %}
                                 <span ng-hide="showLabels">{{ question.value }}</span>
+                                <i class="hq-icon fa fa-exclamation" ng-show="question.required" title="{% trans "This question is required" %}"></i>
                                 <ol>
                                     <li ng-repeat="option in question.options">
                                         {% verbatim %}
@@ -101,6 +108,11 @@
                                 <ul class="fa-ul" ng-if="question.calculate" ng-show="showCalculations">
                                     <li>
                                         <i class="fa-li fa fa-calculator text-muted"></i> {{ question.calculate }}
+                                    </li>
+                                </ul>
+                                <ul class="fa-ul" ng-if="question.relevant" ng-show="showRelevance">
+                                    <li>
+                                        <i class="fa-li fa fa-code-fork text-muted"></i> {{ question.relevant }}
                                     </li>
                                 </ul>
                             </li>
