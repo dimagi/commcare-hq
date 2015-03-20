@@ -103,7 +103,9 @@ class Migration(DataMigration):
             'domain': ('django.db.models.fields.CharField', [], {'max_length': '255', 'db_index': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
-            'parent_type': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['locations.LocationType']", 'null': 'True'})
+            'parent_type': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['locations.LocationType']", 'null': 'True'}),
+            'shares_cases': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'view_descendants': ('django.db.models.fields.BooleanField', [], {'default': 'False'})
         },
         u'locations.sqllocation': {
             'Meta': {'unique_together': "(('domain', 'site_code'),)", 'object_name': 'SQLLocation'},

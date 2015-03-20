@@ -57,6 +57,7 @@ class Migration(SchemaMigration):
             'site_code': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'stocks_all_products': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'supply_point_id': ('django.db.models.fields.CharField', [], {'max_length': '255', 'unique': 'True', 'null': 'True', 'db_index': 'True'}),
+            'tmp_location_type': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True'}),
             u'tree_id': ('django.db.models.fields.PositiveIntegerField', [], {'db_index': 'True'})
         },
         u'products.sqlproduct': {
