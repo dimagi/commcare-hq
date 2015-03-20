@@ -4,7 +4,7 @@ from corehq.apps.accounting.models import Subscription
 from corehq.apps.api.resources import HqBaseResource
 from corehq.apps.api.resources.v0_1 import (
     CustomResourceMeta,
-    SuperuserAuthentication,
+    AdminAuthentication,
 )
 from corehq.apps.es.domains import DomainES
 
@@ -65,7 +65,7 @@ class DomainMetadataResource(HqBaseResource):
             return list(Domain.get_all())
 
     class Meta(CustomResourceMeta):
-        authentication = SuperuserAuthentication()
+        authentication = AdminAuthentication()
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
         object_class = Domain
