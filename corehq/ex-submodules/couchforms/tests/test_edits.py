@@ -10,7 +10,7 @@ from couchforms.tests.testutils import post_xform_to_couch
 
 class EditFormTest(TestCase):
     ID = '7H46J37FGH3'
-
+    domain = 'test-form-edits'
     def tearDown(self):
         try:
             XFormInstance.get_db().delete_doc(self.ID)
@@ -44,10 +44,10 @@ class EditFormTest(TestCase):
         self.assertEqual("XFormInstance", doc.doc_type)
         self.assertEqual("", doc.form['vitals']['height'])
         self.assertEqual("other", doc.form['assessment']['categories'])
-        doc.domain = 'test-domain'
+        doc.domain = self.domain
         doc.save()
 
-        doc = post_xform_to_couch(xml_data2, domain='test-domain')
+        doc = post_xform_to_couch(xml_data2, domain=self.domain)
         self.assertEqual(self.ID, doc.get_id)
         self.assertEqual("XFormInstance", doc.doc_type)
         self.assertEqual("100", doc.form['vitals']['height'])
@@ -95,11 +95,11 @@ class EditFormTest(TestCase):
 
         xml_data1, xml_data2 = self._get_files()
 
-        submit_form_locally(xml_data1, 'test-domain')
+        submit_form_locally(xml_data1, self.domain)
         doc = XFormInstance.get(self.ID)
         self.assertEqual(self.ID, doc.get_id)
         self.assertEqual("XFormInstance", doc.doc_type)
-        self.assertEqual('test-domain', doc.domain)
+        self.assertEqual(self.domain, doc.domain)
 
         self.assertEqual(
             UnfinishedSubmissionStub.objects.filter(xform_id=self.ID).count(),
@@ -108,7 +108,7 @@ class EditFormTest(TestCase):
 
         with BorkDB(XFormInstance.get_db()):
             with self.assertRaises(RequestFailed):
-                submit_form_locally(xml_data2, 'test-domain')
+                submit_form_locally(xml_data2, self.domain)
 
         # it didn't go through, so make sure there are no edits still
         self.assertEqual(
