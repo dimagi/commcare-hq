@@ -16,14 +16,21 @@ from django.http import HttpRequest
 from casexml.apps.phone.tests import const
 from casexml.apps.case import const as case_const
 from casexml.apps.phone.tests.dummy import dummy_restore_xml, dummy_user,\
-    dummy_user_xml
+    dummy_user_xml, DUMMY_USERNAME
+from corehq import toggles
+from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
 
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
 class OtaRestoreTest(TestCase):
     """Tests OTA Restore"""
 
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
+        delete_all_cases()
+        delete_all_sync_logs()
+
+    def tearDown(self):
         delete_all_cases()
         delete_all_sync_logs()
 
@@ -410,3 +417,13 @@ class OtaRestoreTest(TestCase):
         # ghetto
         self.assertTrue('<dateattr somedate="2012-01-01">' in restore_payload)
         self.assertTrue('<stringattr somestring="i am a string">' in restore_payload)
+
+
+class FileRestoreOtaRestoreTest(OtaRestoreTest):
+    def setUp(self):
+        update_toggle_cache(toggles.FILE_RESTORE.slug, DUMMY_USERNAME, True)
+        super(FileRestoreOtaRestoreTest, self).setUp()
+
+    def tearDown(self):
+        clear_toggle_cache(toggles.FILE_RESTORE.slug, DUMMY_USERNAME)
+        super(FileRestoreOtaRestoreTest, self).tearDown()
