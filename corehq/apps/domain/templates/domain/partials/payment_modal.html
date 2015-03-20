@@ -5,7 +5,7 @@
         <a class="close" data-dismiss="modal">&times;</a>
         <div data-bind="template: {
             data: costItem,
-            name: 'payment-method-modal-title',
+            name: '{{ title_template }}',
             if: hasCostItem
         }"></div>
     </div>
@@ -16,7 +16,7 @@
         <div class="modal-body">
             <div data-bind="template: {
                 data: costItem,
-                name: 'cost-item-template',
+                name: '{{ cost_item_template }}',
                 if: hasCostItem
             }, visible: paymentIsNotComplete"></div>
 

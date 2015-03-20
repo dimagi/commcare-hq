@@ -177,5 +177,5 @@
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-    {% include 'domain/partials/payment_modal.html' with payment_modal_id="paymentModal" %}
+    {% include 'domain/partials/payment_modal.html' with payment_modal_id="paymentModal" title_template="payment-method-modal-title" cost_item_template="cost-item-template" %}
 {% endblock %}
