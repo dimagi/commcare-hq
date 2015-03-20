@@ -21,7 +21,6 @@ from couchforms.models import XFormInstance
 from casexml.apps.case.xml import V2, V1
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
-from casexml.apps.phone.util import get_payload_content
 from datetime import datetime
 from xml.etree import ElementTree
 from no_exceptions.exceptions import HttpException
@@ -393,6 +392,16 @@ class SyncTokenUpdateTest(SyncBaseTest):
 
         # ensure child case is included in sync using original sync log ID
         assert_user_has_case(self, self.user, child_id, restore_id=self.sync_log.get_id)
+
+
+class FileRestoreSyncTokenUpdateTest(SyncTokenUpdateTest):
+    def setUp(self):
+        update_toggle_cache(FILE_RESTORE.slug, USERNAME, True)
+        super(FileRestoreSyncTokenUpdateTest, self).setUp()
+
+    def tearDown(self):
+        clear_toggle_cache(FILE_RESTORE.slug, USERNAME)
+        super(FileRestoreSyncTokenUpdateTest, self).tearDown()
 
 
 class SyncTokenCachingTest(SyncBaseTest):
@@ -932,7 +941,7 @@ class MultiUserSyncTest(SyncBaseTest):
         assert_user_has_case(self, self.user, parent_id, restore_id=self.sync_log.get_id)
 
         # ghetto
-        payload = get_payload_content(generate_restore_payload(self.user, self.sync_log.get_id, 
+        payload = get_payload_content(generate_restore_payload(self.user, self.sync_log.get_id,
                                            version=V2))
         self.assertTrue("something different" in payload)
         self.assertTrue("hi changed!" in payload)
