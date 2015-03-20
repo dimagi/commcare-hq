@@ -111,6 +111,7 @@
         $scope.moduleSearch = {id: ''};
         $scope.lang = 'en';
         $scope.showLabels = true;
+        $scope.showCalculations = false;
         $scope.appLangs = summaryConfig.appLangs;
 
         self.init = function () {
