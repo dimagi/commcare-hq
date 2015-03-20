@@ -82,7 +82,7 @@ class StateHashTest(TestCase):
 class FileResponseStateHashTest(StateHashTest):
 
     def setUp(self):
-        super(StateFileHashTest, self).setUp()
+        super(FileResponseStateHashTest, self).setUp()
         update_toggle_cache(toggles.FILE_RESTORE.slug, self.user.username, True)
 
     def tearDown(self):

@@ -27,7 +27,6 @@ from couchforms.xml import (
 )
 from casexml.apps.case.xml import check_version, V1
 from casexml.apps.phone.fixtures import generator
-from casexml.apps.phone.util import get_payload_content
 from django.http import HttpResponse, StreamingHttpResponse
 from django.conf import settings
 from casexml.apps.phone.checksum import CaseStateHash
