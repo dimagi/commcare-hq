@@ -40,14 +40,11 @@ function days_in_year(year) {
 }
 
 function is_leap_year(year) {
-    return (year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0));
+    return new Date(year, 1, 29).getMonth() == 1;
 }
 
 function days_in_month(month, year) {
-    if (is_leap_year(year) && month === 1) {
-        return 29;
-    }
-    return [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month];
+    return new Date(year, month+1, 0).getDate();
 }
 
 function next_interval(date, interval) {
