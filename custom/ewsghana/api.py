@@ -135,15 +135,8 @@ class EWSApi(APISynchronization):
     PRODUCT_CUSTOM_FIELDS = []
 
     def _create_location_type_if_not_exists(self, supply_point, location):
-        parent, _ = LocationType.objects.get_or_create(
-            domain=self.domain,
-            name=location.location_type,
-        )
-        LocationType.objects.get_or_create(
-            domain=self.domain,
-            name=supply_point.type,
-            parent_type=parent,
-        )
+        parent = self._make_loc_type(name=location.location_type)
+        self._make_loc_type(name=supply_point.type, parent_type=parent)
 
     def _create_location_from_supply_point(self, supply_point, location):
         try:
@@ -177,99 +170,34 @@ class EWSApi(APISynchronization):
                                                           external_id=str(supply_point.id),
                                                           domain=self.domain))
 
+    def _make_loc_type(self, name, administrative=False, parent=None):
+        return LocationType.objects.get_or_create(
+            domain=self.domain,
+            name=name,
+            administrative=administrative,
+            parent_type=parent,
+        )[0]
+
     def prepare_commtrack_config(self):
-        country, _ = LocationType.objects.get_or_create(
-            domain=self.domain,
-            name="country",
-            administrative=True,
-        )
-        LocationType.objects.get_or_create(
-            domain=self.domain,
-            name="Central Medical Store",
-            administrative=False,
-            parent_type=country,
-        )
-        LocationType.objects.get_or_create(
-            domain=self.domain,
-            name="Teaching Hospital",
-            administrative=False,
-            parent_type=country,
-        )
+        country = self._make_loc_type(name="country", administrative=True)
+        self._make_loc_type(name="Central Medical Store", parent_type=country)
+        self._make_loc_type(name="Teaching Hospital", parent_type=country)
 
-        region, _ = LocationType.objects.get_or_create(
-            domain=self.domain,
-            name="region",
-            administrative=True,
-            parent_type=country,
-        )
-        LocationType.objects.get_or_create(
-            domain=self.domain,
-            name="Regional Medical Store",
-            administrative=False,
-            parent_type=region,
-        )
-        LocationType.objects.get_or_create(
-            domain=self.domain,
-            name="Regional Hospital",
-            administrative=False,
-            parent_type=region,
-        )
+        region = self._make_loc_type(name="region", administrative=True,
+                                     parent_type=country)
+        self._make_loc_type(name="Regional Medical Store", parent_type=region)
+        self._make_loc_type(name="Regional Hospital", parent_type=region)
 
-        district, _ = LocationType.objects.get_or_create(
-            domain=self.domain,
-            name="district",
-            administrative=True,
-            parent_type=region,
-        )
-        LocationType.objects.get_or_create(
-            domain=self.domain,
-            name="Clinic",
-            administrative=False,
-            parent_type=district,
-        )
-        LocationType.objects.get_or_create(
-            domain=self.domain,
-            name="District Hospital",
-            administrative=False,
-            parent_type=district,
-        )
-        LocationType.objects.get_or_create(
-            domain=self.domain,
-            name="Health Centre",
-            administrative=False,
-            parent_type=district,
-        )
-
-        LocationType.objects.get_or_create(
-            domain=self.domain,
-            name="CHPS Facility",
-            administrative=False,
-            parent_type=district,
-        ),
-        LocationType.objects.get_or_create(
-            domain=self.domain,
-            name="Hospital",
-            administrative=False,
-            parent_type=district,
-        )
-        LocationType.objects.get_or_create(
-            domain=self.domain,
-            name="Psychiatric Hospital",
-            administrative=False,
-            parent_type=district,
-        )
-        LocationType.objects.get_or_create(
-            domain=self.domain,
-            name="Polyclinic",
-            administrative=False,
-            parent_type=district,
-        )
-        LocationType.objects.get_or_create(
-            domain=self.domain,
-            name="facility",
-            administrative=False,
-            parent_type=district,
-        )
+        district = self._make_loc_type(name="district", administrative=True,
+                                       parent_type=region)
+        self._make_loc_type(name="Clinic", parent_type=district)
+        self._make_loc_type(name="District Hospital", parent_type=district)
+        self._make_loc_type(name="Health Centre", parent_type=district)
+        self._make_loc_type(name="CHPS Facility", parent_type=district)
+        self._make_loc_type(name="Hospital", parent_type=district)
+        self._make_loc_type(name="Psychiatric Hospital", parent_type=district)
+        self._make_loc_type(name="Polyclinic", parent_type=district)
+        self._make_loc_type(name="facility", parent_type=district)
 
     def _create_or_edit_facility_manager_role(self):
         facility_manager_role = UserRole.by_domain_and_name(self.domain, 'Facility manager')
