@@ -12,7 +12,7 @@ from corehq.apps.commtrack.const import COMMTRACK_USERNAME
 from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import SQLProduct
 from mptt.models import MPTTModel, TreeForeignKey
-from corehq.apps.domain.models import Domain
+
 
 LOCATION_SHARING_PREFIX = 'locationgroup-'
 LOCATION_REPORTING_PREFIX = 'locationreportinggroup-'

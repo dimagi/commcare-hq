@@ -33,10 +33,8 @@ def open_cases_json(request, domain):
             del case_json['_id']
             del case_json['_rev']
             del case_json['user_id']
-#            del case_json['type']
             del case_json['doc_type']
             case_json['actions'] = [action.action_type for action in case.actions]
-            case_json['referrals'] = [referral.type for referral in case.referrals]
 
     usercases = [{
         "username": user_id_to_username(user_id),
