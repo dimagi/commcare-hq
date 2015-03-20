@@ -39,9 +39,6 @@ class PostTest(TestCase):
     def test_duplicate(self):
         self._test('duplicate')
 
-    def test_edit(self):
-        self._test('edit')
-
     def test_meta(self):
         self._test('meta', any_id_ok=True)
 
