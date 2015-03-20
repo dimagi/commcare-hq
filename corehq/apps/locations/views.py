@@ -167,7 +167,7 @@ class LocationSettingsView(BaseCommTrackManageView):
     # This is largely copy-pasted from the LocationTypeManager
     def get_hierarchy(self, loc_types):
         """
-        Return loc types in order from parents to
+        Return loc types in order from parents to children
         """
         lt_dict = {lt['name']: lt for lt in loc_types}
 
@@ -178,6 +178,8 @@ class LocationSettingsView(BaseCommTrackManageView):
             def step(lt):
                 assert lt['name'] not in visited, \
                     "There's a loc type cycle, we need to prohibit that"
+                assert len(lt['allowed_parents']) <= 1, \
+                    "This location type has more than one parent. How?"
                 visited.add(lt['name'])
                 parents = lt['allowed_parents']
                 if parents and parents[0]:

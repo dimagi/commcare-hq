@@ -15,7 +15,7 @@ EXCLUDE_DOMAINS = (
 )
 
 
-def _couch_parent_loc(parent_code, couch_loc_types):
+def _couch_parent_loc(parent_code, couch_loc_types, domain):
     for loc_type in couch_loc_types:
         if loc_type.get('code') == parent_code or loc_type['name'] == parent_code:
             return loc_type
@@ -36,7 +36,7 @@ class Migration(DataMigration):
                 parent_type = None
             else:
                 parent_type = get_or_create(
-                    _couch_parent_loc(parents[0], couch_loc_types)
+                    _couch_parent_loc(parents[0], couch_loc_types, domain)
                 )
 
             return self.orm.LocationType.objects.get_or_create(
@@ -46,6 +46,8 @@ class Migration(DataMigration):
                     'name': couch_loc_type['name'],
                     'parent_type': parent_type,
                     'administrative': couch_loc_type['administrative'] or False,
+                    'shares_cases': couch_loc_type.get('shares_cases', False),
+                    'view_descendants': couch_loc_type.get('view_descendants', False),
                 }
             )[0]
 
