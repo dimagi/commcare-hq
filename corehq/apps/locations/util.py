@@ -27,7 +27,7 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False):
     def loc_to_json(loc):
         return {
             'name': loc.name,
-            'location_type': loc.location_type.name,
+            'location_type': loc.location_type.name,  # todo: remove when types aren't optional
             'uuid': loc.location_id,
             'is_archived': loc.is_archived,
         }
