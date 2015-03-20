@@ -212,17 +212,94 @@ class EWSApi(APISynchronization):
                          administrative=False)
         ]
         domain.save()
-        role = UserRole(
-            domain=self.domain,
-            permissions=Permissions(
-                view_reports=True,
+
+    def _create_or_edit_facility_manager_role(self):
+        facility_manager_role = UserRole.by_domain_and_name(self.domain, 'Facility manager')
+        reports_list = [
+            "corehq.apps.reports.standard.sms.MessageLogReport",
+            "custom.ewsghana.reports.specific_reports.dashboard_report.DashboardReport",
+            "custom.ewsghana.reports.specific_reports.stock_status_report.StockStatus",
+            "custom.ewsghana.reports.specific_reports.reporting_rates.ReportingRatesReport",
+            "custom.ewsghana.reports.maps.EWSMapReport"
+        ]
+        if facility_manager_role:
+            permissions = Permissions(
                 edit_web_users=True,
                 edit_commcare_users=True,
-                edit_data=True
-            ),
-            name='Facility manager'
-        )
-        role.save()
+                edit_data=True,
+                view_reports=False,
+                view_report_list=reports_list
+            )
+            facility_manager_role[0].permissions = permissions
+            facility_manager_role[0].save()
+        else:
+
+            role = UserRole(
+                domain=self.domain,
+                permissions=Permissions(
+                    view_reports=False,
+                    edit_web_users=True,
+                    edit_commcare_users=True,
+                    edit_data=True,
+                    view_report_list=reports_list
+                ),
+                name='Facility manager'
+            )
+            role.save()
+
+    def _create_or_edit_administrator_role(self):
+        administrator_role = UserRole.by_domain_and_name(self.domain, 'Administrator')
+        reports_list = [
+            "corehq.apps.reports.standard.sms.MessageLogReport",
+            "custom.ewsghana.reports.specific_reports.dashboard_report.DashboardReport",
+            "custom.ewsghana.reports.specific_reports.stock_status_report.StockStatus",
+            "custom.ewsghana.reports.specific_reports.reporting_rates.ReportingRatesReport",
+            "custom.ewsghana.reports.maps.EWSMapReport",
+            "custom.ewsghana.reports.email_reports.CMSRMSReport",
+            "custom.ewsghana.reports.email_reports.StockSummaryReport"
+        ]
+        if administrator_role:
+            permissions = Permissions(
+                edit_web_users=True,
+                edit_commcare_users=True,
+                edit_data=True,
+                edit_apps=True,
+                view_reports=False,
+                view_report_list=reports_list
+            )
+            administrator_role[0].permissions = permissions
+            administrator_role[0].save()
+        else:
+            role = UserRole(
+                domain=self.domain,
+                permissions=Permissions(
+                    view_reports=False,
+                    edit_web_users=True,
+                    edit_commcare_users=True,
+                    edit_data=True,
+                    edit_apps=True,
+                    view_report_list=reports_list
+                ),
+                name='Administrator'
+            )
+            role.save()
+
+    def _edit_read_only_role(self):
+        read_only_role = UserRole.get_read_only_role_by_domain(self.domain)
+        read_only_role.permissions.view_report_list = [
+            "corehq.apps.reports.standard.sms.MessageLogReport",
+            "custom.ewsghana.reports.specific_reports.dashboard_report.DashboardReport",
+            "custom.ewsghana.reports.specific_reports.stock_status_report.StockStatus",
+            "custom.ewsghana.reports.specific_reports.reporting_rates.ReportingRatesReport",
+            "custom.ewsghana.reports.maps.EWSMapReport"
+        ]
+        read_only_role.permissions.view_reports = False
+        read_only_role.save()
+
+    def create_or_edit_roles(self):
+        self._create_or_edit_facility_manager_role()
+        self._create_or_edit_administrator_role()
+        self._edit_read_only_role()
 
     def product_sync(self, ews_product):
         product = super(EWSApi, self).product_sync(ews_product)
@@ -341,6 +418,7 @@ class EWSApi(APISynchronization):
             sms_user.backend = ews_webuser.contact.backend
             sms_user.to = ews_webuser.contact.to
             sms_user.phone_numbers = ews_webuser.contact.phone_numbers
+        sms_user.role = 'facility_manager'
         return self.sms_user_sync(
             sms_user,
             username_part=ews_webuser.username.lower() if ews_webuser.username else None,
@@ -392,7 +470,7 @@ class EWSApi(APISynchronization):
         ews_webuser_extension(user, ews_webuser)
         dm = user.get_domain_membership(self.domain)
         if ews_webuser.is_superuser:
-            dm.is_admin = True
+            dm.role_id = UserRole.by_domain_and_name(self.domain, 'Administrator')[0].get_id
         else:
             dm.role_id = UserRole.get_read_only_role_by_domain(self.domain).get_id
         user.save()
@@ -405,6 +483,7 @@ class EWSApi(APISynchronization):
         sms_user.user_data['to'] = ews_smsuser.to
 
         if ews_smsuser.role == 'facility_manager':
+            sms_user.user_data['role'] = None
             role = UserRole.by_domain_and_name(self.domain, 'Facility manager')
             if role:
                 dm = sms_user.get_domain_membership(self.domain)
