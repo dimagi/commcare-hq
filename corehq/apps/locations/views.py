@@ -223,7 +223,11 @@ def archive_location(request, domain, loc_id):
 
 @domain_admin_required
 def unarchive_location(request, domain, loc_id):
-    loc = Location.get(loc_id)
+    # hack for circumventing cache
+    # which was found to be out of date, at least in one case
+    # http://manage.dimagi.com/default.asp?161454
+    # todo: find the deeper reason for invalid cache
+    loc = Location.get(loc_id, db=Location.get_db())
     if loc.domain != domain:
         raise Http404()
     loc.unarchive()

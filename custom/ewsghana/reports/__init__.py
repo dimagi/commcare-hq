@@ -1,4 +1,5 @@
 from django.core.urlresolvers import reverse
+from django.db.models import Q
 from corehq import Domain
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
@@ -6,10 +7,10 @@ from corehq.apps.reports.commtrack.standard import CommtrackReportMixin
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.graph_models import LineChart, MultiBarChart
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
-from corehq.apps.users.models import WebUser, UserRole, CommCareUser
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import Location, SQLLocation
-from custom.ewsghana.utils import get_supply_points
+from custom.ewsghana.utils import get_supply_points, calculate_last_period
+from casexml.apps.stock.models import StockTransaction
 
 REORDER_LEVEL = 1.5
 MAXIMUM_LEVEL = 3
@@ -49,8 +50,31 @@ class EWSData(object):
         return []
 
     @property
+    def location_id(self):
+        return self.config.get('location_id')
+
+    @property
+    def location(self):
+        location_id = self.location_id
+        if not location_id:
+            return None
+        return SQLLocation.objects.get(location_id=location_id)
+
+    @property
     def rows(self):
         raise NotImplementedError
+
+    @property
+    def domain(self):
+        return self.config.get('domain')
+
+    @memoized
+    def reporting_types(self):
+        return [
+            location_type.name
+            for location_type in Domain.get_by_name(self.domain).location_types
+            if not location_type.administrative
+        ]
 
     @property
     def sublocations(self):
@@ -59,13 +83,6 @@ class EWSData(object):
             return location.children
         else:
             return [location]
-
-    @property
-    def location_types(self):
-        return [loc_type.name for loc_type in filter(
-                lambda loc_type: not loc_type.administrative,
-                Domain.get_by_name(self.config['domain']).location_types
-                )]
 
     @property
     @memoized
@@ -82,6 +99,46 @@ class EWSData(object):
         for loc in locations:
             products.extend(loc.products)
         return sorted(set(products), key=lambda p: p.code)
+
+
+class ReportingRatesData(EWSData):
+    def get_supply_points(self, location_id=None):
+        location = SQLLocation.objects.get(location_id=location_id) if location_id else self.location
+        location_types = self.reporting_types()
+        if location.location_type == 'district':
+            locations = SQLLocation.objects.filter(parent=location)
+        elif location.location_type == 'region':
+            locations = SQLLocation.objects.filter(
+                Q(parent__parent=location) | Q(parent=location, location_type__in=location_types)
+            )
+        elif location.location_type in location_types:
+            locations = SQLLocation.objects.filter(id=location.id)
+        else:
+            locations = SQLLocation.objects.filter(
+                domain=self.domain,
+                location_type__in=location_types,
+                parent=location
+            )
+        return locations.exclude(supply_point_id__isnull=True)
+
+    def supply_points_list(self, location_id=None):
+        return self.get_supply_points(location_id).values_list('supply_point_id')
+
+    def reporting_supply_points(self, supply_points=None):
+        all_supply_points = self.get_supply_points().values_list('supply_point_id', flat=True)
+        supply_points = supply_points if supply_points else all_supply_points
+        last_period_st, last_period_end = calculate_last_period(self.config['enddate'])
+        return StockTransaction.objects.filter(
+            case_id__in=supply_points,
+            report__date__range=[last_period_st, last_period_end]
+        ).distinct('case_id').values_list('case_id', flat=True)
+
+    @memoized
+    def all_reporting_locations(self):
+        return SQLLocation.objects.filter(
+            domain=self.domain,
+            location_type__in=self.reporting_types()
+        ).values_list('supply_point_id', flat=True)
 
 
 class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParametersMixin, DatespanMixin):

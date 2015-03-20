@@ -3,6 +3,7 @@ from django.test import TestCase
 from corehq.apps.commtrack.models import Product
 from corehq.apps.commtrack.tests.util import bootstrap_domain as initial_bootstrap
 from corehq.apps.locations.models import Location
+from corehq.apps.sms.test_backend import TestSMSBackend
 from corehq.apps.users.models import WebUser, CommCareUser
 from custom.ilsgateway.models import ILSGatewayConfig
 from custom.ilsgateway.tests import MockEndpoint
@@ -17,6 +18,10 @@ class MigrationTaskTest(TestCase):
     def setUp(self):
         self.datapath = os.path.join(os.path.dirname(__file__), 'data')
         initial_bootstrap(TEST_DOMAIN)
+        sms_backend = TestSMSBackend(name="MOBILE_BACKEND_TEST", is_global=True)
+        sms_backend._id = sms_backend.name
+        sms_backend.save()
+
         config = ILSGatewayConfig()
         config.domain = TEST_DOMAIN
         config.enabled = True

@@ -9,7 +9,7 @@ from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, 
     DeliveryGroups
 from custom.ilsgateway.tanzania.reminders import REMINDER_DELIVERY_FACILITY, REMINDER_DELIVERY_DISTRICT, \
     update_statuses
-from custom.ilsgateway.utils import send_for_day, get_groups
+from custom.ilsgateway.utils import send_for_day, get_groups, send_translated_message
 import settings
 
 
@@ -33,14 +33,9 @@ def send_delivery_reminder(domain, date, loc_type='FACILITY', test_list=None):
                 status_type=status_type,
                 status_date__gte=date
             ).exists()
-            if current_group in get_groups(location.metadata.get('groups', None)) and not status_exists:
-                number = user.get_verified_number()
-                if number:
-                    if not test_list:
-                        send_sms_to_verified_number(number, sms_text)
-                        sp_ids.add(location._id)
-                    else:
-                        send_test_message(number, sms_text)
+            groups = get_groups(location.metadata.get('groups', None))
+            if groups and current_group in groups and not status_exists:
+                send_translated_message(user, sms_text)
     update_statuses(sp_ids, status_type, SupplyPointStatusValues.REMINDER_SENT)
 
 

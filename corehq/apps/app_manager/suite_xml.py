@@ -358,6 +358,7 @@ class Menu(DisplayNode, IdNode):
     ROOT_NAME = 'menu'
 
     root = StringField('@root')
+    relevant = XPathField('@relevant')
     commands = NodeListField('command', Command)
 
 
@@ -1468,7 +1469,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 detail_select=self.get_detail_id_safe(datum['module'], 'case_short'),
                 detail_confirm=(
                     self.get_detail_id_safe(datum['module'], 'case_long')
-                    if datum['index'] == 0 else None
+                    if datum['index'] == 0 and not detail_inline else None
                 ),
                 detail_persistent=detail_persistent,
                 detail_inline=self.get_detail_id_safe(datum['module'], 'case_long') if detail_inline else None
@@ -1747,6 +1748,11 @@ class SuiteGenerator(SuiteGeneratorBase):
                 }
                 if self.id_strings.menu_root(module):
                     menu_kwargs['root'] = self.id_strings.menu_root(module)
+
+                if self.app.enable_module_filtering and getattr(module, 'module_filter', None):
+                    menu_kwargs['relevant'] = dot_interpolate(module.module_filter,
+                                                              "instance('commcaresession')/session")
+
                 menu = Menu(**menu_kwargs)
 
                 def get_commands():

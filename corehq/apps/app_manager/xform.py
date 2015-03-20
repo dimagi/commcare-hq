@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from functools import wraps
 import logging
 from casexml.apps.case.xml import V2_NAMESPACE
@@ -568,7 +568,7 @@ class XForm(WrappedNode):
     @memoized
     @requires_itext(dict)
     def translations(self):
-        translations = {}
+        translations = OrderedDict()
         for translation in self.itext_node.findall('{f}translation'):
             lang = translation.attrib['lang']
             translations[lang] = translation
@@ -699,6 +699,7 @@ class XForm(WrappedNode):
         if not node_group:
             return None
 
+        lang = lang or self.translations().keys()[0]
         text_node = node_group.nodes.get(lang)
         if not text_node:
             return None
