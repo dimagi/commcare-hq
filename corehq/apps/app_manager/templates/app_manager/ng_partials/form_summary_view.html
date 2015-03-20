@@ -10,11 +10,15 @@
         <div class="well">
             <ul class="nav nav-pills nav-stacked">
                 <li ng-repeat="module in modules" role="presentation" ng-class="{ 'active' : moduleSelected(module)}">
-                    <a ng-click="filterList(module)"><i class="fa fa-folder-open"></i> {{ module.name }}</a>
+                    <a ng-click="filterList(module)"><i class="fa fa-folder-open"></i>
+                        {% verbatim %}{{ getFormModuleLabel(module) }}{% endverbatim %}
+                    </a>
                     <div class="well">
                         <ul class="nav nav-pills nav-stacked">
                             <li ng-repeat="form in module.forms" ng-class="{ 'active' : formSearch.id === form.id }">
-                                <a ng-click="filterList(module, form)">{{ form.name }}</a>
+                                <a ng-click="filterList(module, form)">
+                                    {% verbatim %}{{ getFormModuleLabel(form) }}{% endverbatim %}
+                                </a>
                             </li>
                         </ul>
                     </div>
@@ -29,23 +33,48 @@
 {% angularjs %}
     <div class="page-header" style="margin-top: 0;">
         <h1 style="font-size: 1.8em;">{% trans "Form Summary" %}</h1>
+        <div class="row">
+            <div class="col-xs-4">
+                <form class="form-inline" role="form">
+                  <div class="form-group">
+                    <label class="sr-only" for="property">{% trans "Filter questions" %}</label>
+                    <input type="text" class="form-control" id="property" placeholder="Filter questions" ng-model="questionSearch.$">
+                  </div>
+                  <button class="btn btn-default" ng-click="questionSearch.$ = ''"><i class="fa fa-times"></i></button>
+                </form>
+            </div>
+            <div class="col-xs-8">
+                <div class="btn-toolbar pull-right" role="toolbar">
+                    <div class="form-inline form-group btn-group">
+                        <label for="language">{% trans "Language" %}</label>
+                        <select class="form-control" id="language" ng-model="lang" ng-options="lang for lang in appLangs">
+                        </select>
+                    </div>
+                </div>
+             </div>
+        </div>
     </div>
     <div>
         <loading></loading>
         <ul>
             <li ng-repeat="module in modules|filter:moduleSearch">
-                 <h4><i class="fa fa-folder-open"></i> {{ module.name }}</h4>
+                 <h4><i class="fa fa-folder-open"></i> {% verbatim %}{{ getFormModuleLabel(module) }}{% endverbatim %}</h4>
 
                 <ul>
                     <li ng-repeat="form in module.forms|filter:formSearch">
-                    <h5>{{ form.name }}</h5>
+                    <h5>{% verbatim %}{{ getFormModuleLabel(form) }}{% endverbatim %}</h5>
                         <ol>
-                            <li ng-repeat="question in form.questions">
-                                {% verbatim %}<i class="fcc {{ getIcon(question.type) }}"></i>{% endverbatim %}
-                                <span class="label label-info">{{ question.value }}</span> {{ question.label }}
+                            <li ng-repeat="question in form.questions|filter:questionSearch">
+                                {% verbatim %}
+                                <i class="hq-icon fcc {{ getIcon(question.type) }}" title="{{ question.type }}"></i>
+                                <span class="label label-info">{{ question.value }}</span> {{ getQuestionLabel(question) }}
+                                {% endverbatim %}
                                 <ol>
                                     <li ng-repeat="option in question.options">
-                                        <span class="label label-info">{{ option.value }}</span> {{ option.label }}
+                                        {% verbatim %}
+                                        <span class="label label-info">{{ option.value }}</span> {{ getQuestionLabel(option) }}
+                                        <span ng-show="showLabels">{{ getQuestionLabel(option) }}</span>
+                                        {% endverbatim %}
                                     </li>
                                 </ol>
                             </li>
