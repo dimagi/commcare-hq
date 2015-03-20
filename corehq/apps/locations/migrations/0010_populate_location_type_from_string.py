@@ -46,8 +46,8 @@ class Migration(DataMigration):
                     'name': couch_loc_type['name'],
                     'parent_type': parent_type,
                     'administrative': couch_loc_type['administrative'] or False,
-                    'shares_cases': couch_loc_type.get('shares_cases', False),
-                    'view_descendants': couch_loc_type.get('view_descendants', False),
+                    'shares_cases': couch_loc_type.get('shares_cases') or False,
+                    'view_descendants': couch_loc_type.get('view_descendants') or False,
                 }
             )[0]
 
