@@ -71,13 +71,13 @@ var PublicSMSRateCalculator = function (form_data) {
     self.country_code = ko.observable();
     self.rate_table = ko.observableArray(rates);
     self.hasError = ko.observable(false);
-    self.rate = ko.observable();
+    self.rateErrorText = ko.observable();
     self.noError = ko.computed(function () {
         return ! self.hasError();
     });
     self.calculatingRate = ko.observable(false);
     self.showRateInfo = ko.computed(function () {
-        return self.rate() && ! self.calculatingRate();
+        return self.rateErrorText() && ! self.calculatingRate();
     });
 
     var updateRate = function () {
@@ -95,10 +95,12 @@ var PublicSMSRateCalculator = function (form_data) {
                     self.calculatingRate(false);
                     self.rate_table(response.data);
                     self.hasError(false);
+                    self.rateErrorText(false);
                 },
                 error: function () {
                     self.calculatingRate(false);
-                    self.rate("There was an error fetching the SMS rate.");
+                    self.hasError(true);
+                    self.rateErrorText("There was an error fetching the SMS rate.");
                 }
             });
     };
