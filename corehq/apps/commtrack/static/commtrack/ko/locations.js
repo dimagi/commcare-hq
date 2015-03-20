@@ -83,6 +83,7 @@ function LocationSettingsViewModel() {
 function LocationTypeModel(data, root) {
     var name = data.name || '';
     var self = this;
+    this.pk = data.pk || null;
     this.name = ko.observable(name);
     this.code = ko.observable(data.code || name);
     var code_autoset = this.name() == this.code();
@@ -143,6 +144,7 @@ function LocationTypeModel(data, root) {
 
     this.to_json = function() {
         return {
+            pk: this.pk,
             name: this.name(),
             code: this.code(),
             allowed_parents: this.allowed_parents(),

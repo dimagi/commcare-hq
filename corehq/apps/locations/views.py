@@ -32,7 +32,7 @@ from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.users.forms import MultipleSelectionForm
 from custom.openlmis.tasks import bootstrap_domain_task
 
-from .models import Location, LocationType
+from .models import Location, LocationType, SQLLocation
 from .forms import LocationForm
 from .util import load_locs_json, location_hierarchy_config, dump_locations
 
@@ -108,6 +108,7 @@ class LocationSettingsView(BaseCommTrackManageView):
 
     def _get_loctype_info(self, loctype):
         return {
+            'pk': loctype.pk,
             'name': loctype.name,
             'code': loctype.code,
             'allowed_parents': [loctype.parent_type.name
@@ -126,7 +127,7 @@ class LocationSettingsView(BaseCommTrackManageView):
         sql_loc_types = {}
 
         def mk_loctype(name, code, allowed_parents, administrative,
-                       shares_cases, view_descendants):
+                       shares_cases, view_descendants, pk):
             if allowed_parents and allowed_parents[0]:
                 parent = sql_loc_types[allowed_parents[0]]
             else:
@@ -141,9 +142,10 @@ class LocationSettingsView(BaseCommTrackManageView):
                                  err.format(code=code, new_code=cleaned_code))
 
             try:
-                loc_type = LocationType.objects.get(domain=self.domain, name=name)
+                loc_type = LocationType.objects.get(domain=self.domain, pk=pk)
             except LocationType.DoesNotExist:
-                loc_type = LocationType(domain=self.domain, name=name)
+                loc_type = LocationType(domain=self.domain)
+            loc_type.name = name
             loc_type.code = cleaned_code
             loc_type.administrative = administrative
             loc_type.parent_type = parent
@@ -153,16 +155,41 @@ class LocationSettingsView(BaseCommTrackManageView):
             sql_loc_types[name] = loc_type
 
         loc_types = payload['loc_types']
+        pks = []
         for loc_type in loc_types:
             for prop in ['name', 'code', 'allowed_parents', 'administrative',
-                         'shares_cases', 'view_descendants']:
+                         'shares_cases', 'view_descendants', 'pk']:
                 assert prop in loc_type, "Missing a location type property!"
+                assert len(loc_type['allowed_parents']) <= 1, \
+                    "This location type has more than one parent. How?"
+            pks.append(loc_type['pk'])
 
         hierarchy = self.get_hierarchy(loc_types)
+
+        if not self.remove_old_location_types(pks):
+            return self.get(request, *args, **kwargs)
+
         for loc_type in hierarchy:
             mk_loctype(**loc_type)
 
         return self.get(request, *args, **kwargs)
+
+    def remove_old_location_types(self, pks):
+        existing_pks = (LocationType.objects.filter(domain=self.domain)
+                                            .values_list('pk', flat=True))
+        to_delete = []
+        for pk in existing_pks:
+            if pk not in pks:
+                if (SQLLocation.objects.filter(domain=self.domain,
+                                               location_type=pk)
+                                       .exists()):
+                    msg = _("You cannot delete location types that have locations")
+                    messages.warning(self.request, msg)
+                    return False
+                to_delete.append(pk)
+        (LocationType.objects.filter(domain=self.domain, pk__in=to_delete)
+                             .delete())
+        return True
 
     # This is largely copy-pasted from the LocationTypeManager
     def get_hierarchy(self, loc_types):
@@ -178,8 +205,6 @@ class LocationSettingsView(BaseCommTrackManageView):
             def step(lt):
                 assert lt['name'] not in visited, \
                     "There's a loc type cycle, we need to prohibit that"
-                assert len(lt['allowed_parents']) <= 1, \
-                    "This location type has more than one parent. How?"
                 visited.add(lt['name'])
                 parents = lt['allowed_parents']
                 if parents and parents[0]:

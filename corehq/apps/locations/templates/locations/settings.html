@@ -71,7 +71,7 @@
                             {% endif %}
                             <th>{% trans "Shares Cases" %}</th>
                             <th>{% trans "View Child Cases" %}</th>
-                            {# <th></th> #}
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody data-bind="foreach: loc_types">
@@ -100,11 +100,11 @@
                         <td>
                             <input data-bind="checked: view_descendants" type="checkbox" />
                         </td>
-                        {# <td> #}
-                            {# <button type="button" class="btn btn-danger" data-bind="click: $root.remove_loctype"> #}
-                                {# <i class="icon-trash icon-white"></i> {% trans "Remove" %} #}
-                            {# </button> #}
-                        {# </td> #}
+                        <td>
+                            <button type="button" class="btn btn-danger" data-bind="click: $root.remove_loctype">
+                                <i class="icon-trash icon-white"></i> {% trans "Remove" %}
+                            </button>
+                        </td>
                     </tr>
                     </tbody>
                 </table>
