@@ -5,9 +5,8 @@ from django.http import (
     HttpResponseBadRequest,
     HttpResponseForbidden,
 )
-from casexml.apps.case import get_case_updates
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.xform import is_device_report
+from casexml.apps.case.xform import get_case_updates, is_device_report
 from corehq.apps.domain.decorators import login_or_digest_ex, login_or_basic_ex
 from corehq.apps.receiverwrapper.auth import (
     AuthContext,

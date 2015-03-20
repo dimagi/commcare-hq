@@ -5,9 +5,10 @@ from custom.ilsgateway.tanzania.reminders import STOP_CONFIRM
 class StopHandler(KeywordHandler):
 
     def help(self):
-        self.handle()
+        return self.handle()
 
     def handle(self):
         self.user.is_active = False
         self.user.save()
         self.respond(STOP_CONFIRM)
+        return True

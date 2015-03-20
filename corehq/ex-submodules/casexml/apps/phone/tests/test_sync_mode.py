@@ -12,7 +12,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import (check_user_has_case, delete_all_sync_logs,
     delete_all_xforms, delete_all_cases, assert_user_doesnt_have_case,
     assert_user_has_case)
-from casexml.apps.case import process_cases
+from casexml.apps.case.xform import process_cases
 from casexml.apps.phone.models import SyncLog, User
 from casexml.apps.phone.restore import generate_restore_payload, RestoreConfig
 from casexml.apps.phone.util import get_payload_content

@@ -51,18 +51,18 @@ branches:
   - locations-as-groups # tw 1/20
   - fixtures-spike  # cz 1/29
   - static-updates # Biyeun 2/9
-  # - project-settings-update # sravan 1/30
+  - project-settings-update # sravan 1/30
   - upgrade-celery # SK 2/27
   - balance-icon # Daniel 3/4
   - kill-referrals  # cz 3/6
   - loc-type-stock-rates  # Ethan 3/6
-  - ucr-scheduled-reports # Nick P 3/11
+  - refactor-payment-modal # Nick P 3/19
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches:
-      - tf-persistence  # wsp 3/10
+    branches: []
+#      - tf-persistence  # wsp 3/10
 
   submodules/formtranslate-src:
     # let's leave this here even when empty

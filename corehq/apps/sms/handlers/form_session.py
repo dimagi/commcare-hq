@@ -18,7 +18,7 @@ from corehq.apps.smsforms.models import SQLXFormsSession
 def form_session_handler(v, text, msg):
     """
     The form session handler will use the inbound text to answer the next question
-    in the open XformsSession for the associated contact. If no session is open,
+    in the open SQLXformsSession for the associated contact. If no session is open,
     the handler passes. If multiple sessions are open, they are all closed and an
     error message is displayed to the user.
     """
@@ -49,7 +49,7 @@ def form_session_handler(v, text, msg):
 
 def get_single_open_session_or_close_multiple(domain, contact_id):
     """
-    Retrieves the current open XFormsSession for the given contact.
+    Retrieves the current open SQLXFormsSession for the given contact.
     If multiple sessions are open, it closes all of them and returns
     None for the session.
 

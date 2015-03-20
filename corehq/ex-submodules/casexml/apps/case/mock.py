@@ -59,7 +59,6 @@ class CaseBlock(dict):
             date_opened=undefined,
             update=None,
             close=False,
-            # referrals currently not supported
             # V2 only
             index=None,
             version=V1,
@@ -88,17 +87,6 @@ class CaseBlock(dict):
 
             <close/>          <-- At Most One: Closes the case
 
-#            <referral>       <-- At Most One: Referral actions
-#                <referral_id/>              <-- Exactly One: The unique ID. No two referrals should be open with both the same referral_id and referral_type
-#                <followup_date/>            <-- At Most One: The due date for all followups referenced in this action
-#                <open>
-#                    <referral_types/>       <-- Exactly One: A space separated list of referral types which should be opened.
-#                </open>
-#                <update>
-#                    <referral_type/>        <-- Exactly One: The referral type to be changed
-#                    <date_closed/>          <-- At Most One: The date the referral was closed. If this element exists, the abstract referral matching the referral_id and referral_type should be closed.
-#                </update>
-#            </referral>
         </case>
 
         https://github.com/dimagi/commcare/wiki/casexml20

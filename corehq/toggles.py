@@ -225,7 +225,7 @@ BATCHED_RESTORE = PredicatablyRandomToggle(
     'batched_restore',
     'Batch OTA restore response generation',
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
-    0.25
+    0.5
 )
 
 SPLIT_MULTISELECT_EXPORT = StaticToggle(
@@ -360,4 +360,9 @@ FILE_RESTORE = StaticToggle(
     'file_restore',
     'Use files to do phone restore',
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+BULK_SMS_VERIFICATION = StaticToggle(
+    'bulk_sms_verification',
+    'Allow initiating the SMS phone verification workflow for all users in a group.',
 )

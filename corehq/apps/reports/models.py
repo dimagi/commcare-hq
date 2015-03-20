@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import logging
+from urllib import urlencode
 from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.utils import html
@@ -162,7 +163,7 @@ class TempCommCareUser(CommCareUser):
         app_label = 'reports'
 
 
-DATE_RANGE_CHOICES = ['last7', 'last30', 'lastn', 'lastmonth', 'since', 'range']
+DATE_RANGE_CHOICES = ['last7', 'last30', 'lastn', 'lastmonth', 'since', 'range', '']
 
 
 class ReportConfig(CachedCouchDocumentMixin, Document):
@@ -240,10 +241,14 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     @property
     @memoized
     def _dispatcher(self):
+        from corehq.apps.userreports.reports.view import ConfigurableReport
 
-        dispatchers = [ProjectReportDispatcher,
-                       CustomProjectReportDispatcher,
-                       ADMSectionDispatcher]
+        dispatchers = [
+            ProjectReportDispatcher,
+            CustomProjectReportDispatcher,
+            ADMSectionDispatcher,
+            ConfigurableReport,
+        ]
 
         for dispatcher in dispatchers:
             if dispatcher.prefix == self.report_type:
@@ -297,12 +302,12 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     @property
     @memoized
     def query_string(self):
-        from urllib import urlencode
-
-        params = self.filters.copy()
+        params = {}
         if self._id != 'dummy':
             params['config_id'] = self._id
-        params.update(self.get_date_range())
+        if not self.is_configurable_report:
+            params.update(self.filters)
+            params.update(self.get_date_range())
 
         return urlencode(params, True)
 
@@ -322,9 +327,13 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     def url(self):
         try:
             from django.core.urlresolvers import reverse
+            from corehq.apps.userreports.reports.view import ConfigurableReport
 
-            return reverse(self._dispatcher.name(), kwargs=self.view_kwargs) \
-                    + '?' + self.query_string
+            if self.is_configurable_report:
+                url_base = reverse(ConfigurableReport.slug, args=[self.domain, self.subreport_slug])
+            else:
+                url_base = reverse(self._dispatcher.name(), kwargs=self.view_kwargs)
+            return url_base + '?' + self.query_string
         except Exception:
             return "#"
 
@@ -337,7 +346,9 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         case.
 
         """
-        return self._dispatcher.get_report(self.domain, self.report_slug)
+        return self._dispatcher.get_report(
+            self.domain, self.report_slug, self.subreport_slug
+        )
 
     @property
     def report_name(self):
@@ -399,17 +410,29 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         request.domain = self.domain
         request.couch_user.current_domain = self.domain
 
-        request.GET = QueryDict(self.query_string + '&filterSet=true')
+        request.GET = QueryDict(
+            self.query_string
+            + '&filterSet=true'
+            + ('&' + urlencode(self.filters, True) if self.is_configurable_report else '')
+        )
 
         # Make sure the request gets processed by PRBAC Middleware
         CCHQPRBACMiddleware.apply_prbac(request)
 
         try:
-            response = self._dispatcher.dispatch(request, render_as='email',
-                **self.view_kwargs)
+            if self.is_configurable_report:
+                response = self._dispatcher.dispatch(request, self.subreport_slug, render_as='email',
+                    **self.view_kwargs)
+            else:
+                response = self._dispatcher.dispatch(request, render_as='email',
+                    **self.view_kwargs)
             if attach_excel is True:
-                file_obj = self._dispatcher.dispatch(request, render_as='excel',
-                **self.view_kwargs)
+                if self.is_configurable_report:
+                    file_obj = self._dispatcher.dispatch(request, self.subreport_slug, render_as='excel',
+                        **self.view_kwargs)
+                else:
+                    file_obj = self._dispatcher.dispatch(request, render_as='excel',
+                        **self.view_kwargs)
             else:
                 file_obj = None
             return json.loads(response.content)['report'], file_obj
@@ -440,6 +463,11 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
                 'report config': self.get_id
             })
             return _("An error occurred while generating this report."), None
+
+    @property
+    def is_configurable_report(self):
+        from corehq.apps.userreports.reports.view import ConfigurableReport
+        return isinstance(self._dispatcher, ConfigurableReport)
 
 
 class UnsupportedScheduledReportError(Exception):

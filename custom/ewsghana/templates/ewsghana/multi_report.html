@@ -50,9 +50,23 @@
         }
 
         {% if report.slug == "reporting_page" %}
-            .report {
-                float: left;
-                width: 50%;
+            .report:nth-of-type(2), .report:nth-of-type(3), .report:last-of-type, .report:nth-last-of-type(2) {
+                display: inline-table !important;
+                width: 48% !important;
+            }
+            .row, table {
+                width: 100%;
+            }
+            .report:first-of-type tbody {
+                max-height: 300px;
+                overflow-y: auto;
+                overflow-x: hidden;
+                display: inline-block;
+                width: 100%;
+            }
+            .report:first-of-type tr {
+                width: 100%;
+                display: inline-table;
             }
         {% elif  report.slug == "stock_status"%}
             .report:first-of-type {
@@ -114,10 +128,10 @@
                 <br/>
             {% endif %}
         {% else %}
-            <div class="report">
+            <span class="report">
                 <h4 class="media-heading">{{ thisreport.report_table.title }}<br/><small>{{ subtitle1 }}</small><br/><small>{{ subtitle2 }}</small></h4>
                 {% include 'ewsghana/partials/report_table.html' with report_table=thisreport.report_table charts=thisreport.charts chart_span=thisreport.chart_span show_table=thisreport.show_table%}
-            </div>
+            </span>
         {% endif %}
     {% endfor %}
 
@@ -134,6 +148,30 @@
             {% endwith %}
         {% endfor %}
     {% endfor %}
+
+    <script>
+        var report_filters = {{ r_filters | JSON }};
+        var fpr_filters = {{ fpr_filters | JSON }};
+
+        function toggleFilters(array, is_visible) {
+            $.each( array, function( index, value ) {
+                if(is_visible) $('#fieldset_' + value).show();
+                else $('#fieldset_' + value).hide();
+            });
+        }
+        $('body').on('change', function(){
+            setTimeout(function() {
+                var selected = $('#group_location_async select:last-child option:selected').text();
+                if (selected === 'All') {
+                    toggleFilters(fpr_filters, false);
+                    toggleFilters(report_filters, true);
+                } else {
+                    toggleFilters(report_filters, false);
+                    toggleFilters(fpr_filters, true);
+                }
+            }, 100);
+        });
+    </script>
 
     <script>
         function updateExportButton() {

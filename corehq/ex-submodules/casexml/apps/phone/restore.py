@@ -273,64 +273,77 @@ def get_restore_class(user):
 
 
 def get_case_payload(domain, stock_settings, version, user, last_sync, synclog):
-        response = get_restore_class(user)()
-        sync_operation = user.get_case_updates(last_sync)
-        synclog.cases_on_phone = [
-            CaseState.from_case(c) for c in sync_operation.actual_owned_cases
-        ]
-        synclog.dependent_cases_on_phone = [
-            CaseState.from_case(c) for c in sync_operation.actual_extended_cases
-        ]
-        synclog.save(**get_safe_write_kwargs())
+    response = get_restore_class(user)()
+    sync_operation = user.get_case_updates(last_sync)
+    synclog.cases_on_phone = [
+        CaseState.from_case(c) for c in sync_operation.actual_owned_cases
+    ]
+    synclog.dependent_cases_on_phone = [
+        CaseState.from_case(c) for c in sync_operation.actual_extended_cases
+    ]
+    synclog.save(**get_safe_write_kwargs())
+
+    # case blocks
+    case_xml_elements = (
+        xml.get_case_element(op.case, op.required_updates, version)
+        for op in sync_operation.actual_cases_to_sync
+    )
+    response.extend(case_xml_elements)
+
+    add_custom_parameter('restore_total_cases', len(sync_operation.all_potential_cases))
+    add_custom_parameter('restore_synced_cases', len(sync_operation.actual_cases_to_sync))
+
+    # commtrack balance sections
+    case_state_list = [CaseState.from_case(op.case) for op in sync_operation.actual_cases_to_sync]
+    commtrack_elements = get_stock_payload(domain, stock_settings, case_state_list)
+    response.extend(commtrack_elements)
+
+    batch_count = 1
+    return response, batch_count
+
+
+def get_case_payload_batched(domain, stock_settings, version, user, last_sync, synclog):
+    response = get_restore_class(user)()
+
+    batch_count = 0
+    sync_operation = BatchedCaseSyncOperation(user, last_sync)
+    for batch in sync_operation.batches():
+        batch_count += 1
+        logger.debug(batch)
 
         # case blocks
         case_xml_elements = (
             xml.get_case_element(op.case, op.required_updates, version)
-            for op in sync_operation.actual_cases_to_sync
+            for op in batch.case_updates_to_sync()
         )
         response.extend(case_xml_elements)
 
-        add_custom_parameter('restore_total_cases', len(sync_operation.all_potential_cases))
-        add_custom_parameter('restore_synced_cases', len(sync_operation.actual_cases_to_sync))
+    batch_count = 0
+    sync_operation = BatchedCaseSyncOperation(user, last_sync)
+    for batch in sync_operation.batches():
+        batch_count += 1
+        logger.debug(batch)
 
-        # commtrack balance sections
-        case_state_list = [CaseState.from_case(op.case) for op in sync_operation.actual_cases_to_sync]
-        commtrack_elements = get_stock_payload(domain, stock_settings, case_state_list)
-        response.extend(commtrack_elements)
+        # case blocks
+        case_xml_elements = (
+            xml.get_case_element(op.case, op.required_updates, version)
+            for op in batch.case_updates_to_sync()
+        )
+        response.extend(case_xml_elements)
 
-        batch_count = 1
-        return response, batch_count
+    sync_state = sync_operation.global_state
+    synclog.cases_on_phone = sync_state.actual_owned_cases
+    synclog.dependent_cases_on_phone = sync_state.actual_extended_cases
+    synclog.save(**get_safe_write_kwargs())
 
+    add_custom_parameter('restore_total_cases', len(sync_state.actual_relevant_cases))
+    add_custom_parameter('restore_synced_cases', len(sync_state.all_synced_cases))
 
-def get_case_payload_batched(domain, stock_settings, version, user, last_sync, synclog):
-        response = get_restore_class(user)()
+    # commtrack balance sections
+    commtrack_elements = get_stock_payload(domain, stock_settings, sync_state.all_synced_cases)
+    response.extend(commtrack_elements)
 
-        batch_count = 0
-        sync_operation = BatchedCaseSyncOperation(user, last_sync)
-        for batch in sync_operation.batches():
-            batch_count += 1
-            logger.debug(batch)
-
-            # case blocks
-            case_xml_elements = (
-                xml.get_case_element(op.case, op.required_updates, version)
-                for op in batch.case_updates_to_sync()
-            )
-            response.extend(case_xml_elements)
-
-        sync_state = sync_operation.global_state
-        synclog.cases_on_phone = sync_state.actual_owned_cases
-        synclog.dependent_cases_on_phone = sync_state.actual_extended_cases
-        synclog.save(**get_safe_write_kwargs())
-
-        add_custom_parameter('restore_total_cases', len(sync_state.actual_relevant_cases))
-        add_custom_parameter('restore_synced_cases', len(sync_state.all_synced_cases))
-
-        # commtrack balance sections
-        commtrack_elements = get_stock_payload(domain, stock_settings, sync_state.all_synced_cases)
-        response.extend(commtrack_elements)
-
-        return response, batch_count
+    return response, batch_count
 
 
 class RestoreConfig(object):
