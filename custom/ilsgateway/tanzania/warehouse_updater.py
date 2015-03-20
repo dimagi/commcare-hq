@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 import logging
 import itertools
+from django.db.models import Q
 from corehq.apps.products.models import Product
 from corehq.apps.locations.models import Location, SQLLocation
 from dimagi.utils.dates import get_business_day_of_month, add_months, months_between
@@ -266,10 +267,9 @@ def default_start_date():
 
 
 def _get_test_locations(domain):
-    from custom.ilsgateway.tasks import ILS_FACILITIES
+    region_kilimanjaro = SQLLocation.objects.get(domain=domain, external_id=21)
     sql_locations = SQLLocation.objects.filter(
-        domain=domain,
-        external_id__in=ILS_FACILITIES
+        Q(domain=domain) & (Q(parent=region_kilimanjaro) | Q(parent__parent=region_kilimanjaro))
     ).order_by('id').only('location_id')
     return [Location.get(sql_location.location_id) for sql_location in sql_locations]
 
