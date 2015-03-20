@@ -378,6 +378,7 @@ class DomainMembership(Membership):
     role_id = StringProperty()
     location_id = StringProperty()
     program_id = StringProperty()
+    show_in_ui = BooleanProperty(default=True)
 
     @property
     def permissions(self):
@@ -570,10 +571,10 @@ class _AuthorizableMixin(IsMemberOfMixin):
         else:
             return False
 
-    def get_domains(self):
+    def get_domains(self, for_ui=False):
         domains = [dm.domain for dm in self.domain_memberships]
         if set(domains) == set(self.domains):
-            return domains
+            return [dm for dm in domains if not for_ui or dm.show_in_ui]
         else:
             raise self.Inconsistent("domains and domain_memberships out of sync")
 
@@ -2146,8 +2147,8 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
                 teams.extend(om.team_ids)
         return teams
 
-    def get_domains(self):
-        domains = [dm.domain for dm in self.domain_memberships]
+    def get_domains(self, for_ui=False):
+        domains = [dm.domain for dm in self.domain_memberships if not for_ui or dm.show_in_ui]
         for team in self.get_teams():
             team_domains = [dm.domain for dm in team.domain_memberships]
             for domain in team_domains:

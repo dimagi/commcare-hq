@@ -369,7 +369,7 @@ class Domain(Document, SnapshotMixin):
         else:
             couch_user = CouchUser.from_django_user(user)
         if couch_user:
-            domain_names = couch_user.get_domains()
+            domain_names = couch_user.get_domains(for_ui=True)
             return cache_core.cached_view(Domain.get_db(), "domain/by_status",
                                           keys=[[is_active, d] for d in domain_names],
                                           reduce=False,
