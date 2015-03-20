@@ -1,16 +1,23 @@
 import os
+import uuid
 from couchdbkit import ResourceNotFound, RequestFailed
 from django.test import TestCase
 from mock import MagicMock
+from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.xml import V2
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper import submit_form_locally
 from couchforms.models import XFormDeprecated, XFormInstance, \
     UnfinishedSubmissionStub
 from couchforms.tests.testutils import post_xform_to_couch
+from dimagi.utils.parsing import json_format_datetime
 
 
 class EditFormTest(TestCase):
     ID = '7H46J37FGH3'
     domain = 'test-form-edits'
+
     def tearDown(self):
         try:
             XFormInstance.get_db().delete_doc(self.ID)
@@ -123,3 +130,49 @@ class EditFormTest(TestCase):
             UnfinishedSubmissionStub.objects.filter(xform_id=self.ID).count(),
             1
         )
+
+    def test_case_management(self):
+        form_id = uuid.uuid4().hex
+        case_id = uuid.uuid4().hex
+        owner_id = uuid.uuid4().hex
+        case_block = CaseBlock(
+            create=True,
+            case_id=case_id,
+            case_type='person',
+            owner_id=owner_id,
+            version=V2,
+            update={
+                'property': 'original value'
+            }
+        ).as_string(format_datetime=json_format_datetime)
+        submit_case_blocks(case_block, domain=self.domain, form_id=form_id)
+
+        # validate some assumptions
+        case = CommCareCase.get(case_id)
+        self.assertEqual(case.type, 'person')
+        self.assertEqual(case.property, 'original value')
+        self.assertEqual([form_id], case.xform_ids)
+        self.assertEqual(2, len(case.actions))
+        for a in case.actions:
+            self.assertEqual(form_id, a.xform_id)
+
+        # submit a new form with a different case update
+        case_block = CaseBlock(
+            create=True,
+            case_id=case_id,
+            case_type='newtype',
+            owner_id=owner_id,
+            version=V2,
+            update={
+                'property': 'edited value'
+            }
+        ).as_string(format_datetime=json_format_datetime)
+        submit_case_blocks(case_block, domain=self.domain, form_id=form_id)
+
+        case = CommCareCase.get(case_id)
+        self.assertEqual(case.type, 'newtype')
+        self.assertEqual(case.property, 'edited value')
+        self.assertEqual([form_id], case.xform_ids)
+        self.assertEqual(2, len(case.actions))
+        for a in case.actions:
+            self.assertEqual(form_id, a.xform_id)
