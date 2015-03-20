@@ -18,6 +18,7 @@ class SMSUsersSyncTest(TestCase):
         self.datapath = os.path.join(os.path.dirname(__file__), 'data')
         initial_bootstrap(TEST_DOMAIN)
         self.api_object.prepare_commtrack_config()
+        self.api_object.create_or_edit_roles()
         for user in CommCareUser.by_domain(TEST_DOMAIN):
             user.delete()
 
