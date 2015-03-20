@@ -5,8 +5,7 @@ from custom.logistics.commtrack import add_location
 from dimagi.utils.dates import force_to_datetime
 from corehq import Domain
 from corehq.apps.commtrack.models import SupplyPointCase
-from corehq.apps.locations.models import SQLLocation
-from corehq.apps.locations.schema import LocationType
+from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.users.models import WebUser, UserRole, Permissions
 from custom.api.utils import apply_updates
 from custom.ewsghana.extensions import ews_product_extension, ews_webuser_extension
@@ -136,14 +135,8 @@ class EWSApi(APISynchronization):
     PRODUCT_CUSTOM_FIELDS = []
 
     def _create_location_type_if_not_exists(self, supply_point, location):
-        domain = Domain.get_by_name(self.domain)
-        if not filter(lambda l: l.name == supply_point.type, domain.location_types):
-            domain.location_types.append(LocationType(
-                name=supply_point.type,
-                allowed_parents=[location.location_type],
-                administrative=False
-            ))
-            domain.save()
+        parent = self._make_loc_type(name=location.location_type)
+        self._make_loc_type(name=supply_point.type, parent_type=parent)
 
     def _create_location_from_supply_point(self, supply_point, location):
         try:
@@ -177,41 +170,34 @@ class EWSApi(APISynchronization):
                                                           external_id=str(supply_point.id),
                                                           domain=self.domain))
 
+    def _make_loc_type(self, name, administrative=False, parent=None):
+        return LocationType.objects.get_or_create(
+            domain=self.domain,
+            name=name,
+            administrative=administrative,
+            parent_type=parent,
+        )[0]
+
     def prepare_commtrack_config(self):
-        domain = Domain.get_by_name(self.domain)
-        domain.location_types = [
-            LocationType(name="country", allowed_parents=[""],
-                         administrative=True),
-            LocationType(name="Central Medical Store", allowed_parents=["country"],
-                         administrative=False),
-            LocationType(name="Teaching Hospital", allowed_parents=["country"],
-                         administrative=False),
-            LocationType(name="region", allowed_parents=["country"],
-                         administrative=True),
-            LocationType(name="Regional Medical Store", allowed_parents=["region"],
-                         administrative=False),
-            LocationType(name="Regional Hospital", allowed_parents=["region"],
-                         administrative=False),
-            LocationType(name="district", allowed_parents=["region"],
-                         administrative=True),
-            LocationType(name="Clinic", allowed_parents=["district"],
-                         administrative=False),
-            LocationType(name="District Hospital", allowed_parents=["district"],
-                         administrative=False),
-            LocationType(name="Health Centre", allowed_parents=["district"],
-                         administrative=False),
-            LocationType(name="CHPS Facility", allowed_parents=["district"],
-                         administrative=False),
-            LocationType(name="Hospital", allowed_parents=["district"],
-                         administrative=False),
-            LocationType(name="Psychiatric Hospital", allowed_parents=["district"],
-                         administrative=False),
-            LocationType(name="Polyclinic", allowed_parents=["district"],
-                         administrative=False),
-            LocationType(name="facility", allowed_parents=["district"],
-                         administrative=False)
-        ]
-        domain.save()
+        country = self._make_loc_type(name="country", administrative=True)
+        self._make_loc_type(name="Central Medical Store", parent_type=country)
+        self._make_loc_type(name="Teaching Hospital", parent_type=country)
+
+        region = self._make_loc_type(name="region", administrative=True,
+                                     parent_type=country)
+        self._make_loc_type(name="Regional Medical Store", parent_type=region)
+        self._make_loc_type(name="Regional Hospital", parent_type=region)
+
+        district = self._make_loc_type(name="district", administrative=True,
+                                       parent_type=region)
+        self._make_loc_type(name="Clinic", parent_type=district)
+        self._make_loc_type(name="District Hospital", parent_type=district)
+        self._make_loc_type(name="Health Centre", parent_type=district)
+        self._make_loc_type(name="CHPS Facility", parent_type=district)
+        self._make_loc_type(name="Hospital", parent_type=district)
+        self._make_loc_type(name="Psychiatric Hospital", parent_type=district)
+        self._make_loc_type(name="Polyclinic", parent_type=district)
+        self._make_loc_type(name="facility", parent_type=district)
 
     def _create_or_edit_facility_manager_role(self):
         facility_manager_role = UserRole.by_domain_and_name(self.domain, 'Facility manager')
