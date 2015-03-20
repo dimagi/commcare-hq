@@ -18,8 +18,8 @@
 <div class="page-header" style="margin-top: 0;">
     <h1 style="font-size: 1.8em;">{% trans "Case Summary" %}</h1>
     <div class="row">
-        <div class="col-md-6">
-            <form class="form-inline" role="form" ng-hide="loading">
+        <div class="col-xs-4">
+            <form class="form-inline" role="form">
               <div class="form-group">
                 <label class="sr-only" for="property">{% trans "Filter properties" %}</label>
                 <input type="text" class="form-control" id="property" placeholder="Filter properties" ng-model="propertySearch.name">
@@ -27,8 +27,13 @@
               <button class="btn btn-default" ng-click="propertySearch.name = ''"><i class="fa fa-times"></i></button>
             </form>
         </div>
-        <div class="col-md-6">
+        <div class="col-xs-8">
             <div class="btn-toolbar pull-right" role="toolbar">
+                <div class="form-inline form-group btn-group">
+                    <label for="language">{% trans "Language" %}</label>
+                    <select class="form-control" id="language" ng-model="lang" ng-options="lang for lang in appLangs">
+                    </select>
+                </div>
                 <div class="btn-group" role="group" >
                     <button type="button" class="btn btn-default"
                             ng-click="showLabels = true"
@@ -45,12 +50,14 @@
                     <button type="button" class="btn btn-default"
                             ng-click="showConditions = !showConditions"
                             ng-class="{ 'active' : showConditions }">
-                        <i class="fa fa-sitemap"></i> {% trans "Conditions" %}
+                        <i class="fa fa-sitemap" ng-class="showConditions ? 'hq-icon' : ''"></i>
+                        &nbsp;{% trans "Show Conditions" %}
                     </button>
                     <button type="button" class="btn btn-default"
                             ng-click="showCalculations = !showCalculations"
                             ng-class="{ 'active' : showCalculations }">
-                        <i class="fa fa-calculator"></i> {% trans "Calculations" %}
+                        <i class="fa fa-calculator" ng-class="showCalculations ? 'hq-icon' : ''"></i>
+                        &nbsp;{% trans "Show Calculations" %}
                     </button>
                 </div>
             </div>
@@ -66,7 +73,7 @@
                     <div class="row">
                       <div class="col-md-3"><h3>{{ caseType.name }}</h3></div>
                       <div class="col-md-3">
-                          {% trans "Relationships:" %}
+                          <strong>{% trans "Relationships:" %}</strong>
                           <ul>
                                 <li ng-repeat="(relationship, case_type) in caseType.relationships">
                                     <span class="label label-primary">{{ relationship }}</span> {{ case_type }}
@@ -74,11 +81,11 @@
                           </ul>
                       </div>
                       <div class="col-md-3">
-                          {% trans "Opened by:" %}
+                          <strong>{% trans "Opened by:" %}</strong>
                           <opener-closer forms="caseType.opened_by" lang="lang"></opener-closer>
                       </div>
                       <div class="col-md-3">
-                          {% trans "Closed by:" %}
+                          <strong>{% trans "Closed by:" %}</strong>
                           <opener-closer forms="caseType.closed_by" lang="lang"></opener-closer>
                       </div>
                     </div>
@@ -96,7 +103,7 @@
                         </div>
                     </div>
                 </div>
-                <table class="table" ng-repeat-end>
+                <table class="case-properties table" ng-repeat-end>
                     <thead>
                         <th>{% trans "Case Property" %}</th>
                         <th>{% trans "Form" %}</th>
@@ -119,12 +126,14 @@
                                     questions="form.load_questions"
                                     show-conditions="showConditions"
                                     show-calculations="showCalculations"
-                                    show-labels="showLabels"></form-questions></td>
+                                    show-labels="showLabels"
+                                    lang="lang"></form-questions></td>
                             <td><form-questions
                                     questions="form.save_questions"
                                     show-conditions="showConditions"
                                     show-calculations="showCalculations"
-                                    show-labels="showLabels"></form-questions></td>
+                                    show-labels="showLabels"
+                                    lang="lang"></form-questions></td>
                         </tr>
                     </tbody>
                 </table>
@@ -172,8 +181,8 @@
 <script type="text/ng-template" id="/form_questions.html">
 <ul class="fa-ul">
     <li ng-repeat="question in questions">
-        {% verbatim %}<i class="fa-li fcc {{ getIcon(question.question.type) }}"></i>{% endverbatim %}
-        <span ng-show="showLabels">{{ question.question.label }}</span>
+        {% verbatim %}<i class="hq-icon fa-li fcc {{ getIcon(question.question.type) }}"></i>{% endverbatim %}
+        {% verbatim %}<span ng-show="showLabels">{{ getQuestionLabel(question.question) }}</span>{% endverbatim %}
         <span ng-hide="showLabels">{{ question.question.value }}</span>
         <ul class="fa-ul" ng-if="question.condition" ng-show="showConditions">
             <li>

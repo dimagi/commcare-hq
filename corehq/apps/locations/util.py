@@ -1,8 +1,10 @@
+from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.products.models import Product
 from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.domain.models import Domain
 from corehq.util.quickcache import quickcache
+from dimagi.utils.couch.database import iter_bulk_delete
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.excel import flatten_json, json_to_headers
 from couchdbkit import ResourceNotFound
@@ -248,3 +250,30 @@ def write_to_file(locations):
         writer.write([(loc_type, tab_rows)])
     writer.close()
     return outfile.getvalue()
+
+
+def purge_locations(domain):
+    """
+    Delete all location data associated with <domain>.
+
+    This means Locations, SQLLocations, LocationTypes, and anything which
+    has a ForeignKey relationship to SQLLocation (as of 2015-03-02, this
+    includes only StockStates and some custom stuff).
+    """
+    location_ids = set([r['id'] for r in Location.get_db().view(
+        'locations/by_type',
+        reduce=False,
+        startkey=[domain],
+        endkey=[domain, {}],
+    ).all()])
+    iter_bulk_delete(Location.get_db(), location_ids)
+
+    for loc in SQLLocation.objects.filter(domain=domain).iterator():
+        if loc.supply_point_id:
+            case = CommCareCase.get(loc.supply_point_id)
+            case.delete()
+        loc.delete()
+
+    domain_obj = Domain.get_by_name(domain)
+    domain_obj.location_types = []
+    domain_obj.save()

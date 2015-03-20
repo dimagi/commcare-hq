@@ -9,7 +9,6 @@ from custom.dhis2.models import Dhis2Settings
 import dateutil
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
-from django.forms.forms import get_declared_fields
 from django.views.generic import View
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
@@ -32,7 +31,7 @@ from corehq.apps.smsbillables.async_handlers import SMSRatesAsyncHandler, SMSRat
 from corehq.apps.smsbillables.forms import SMSRateCalculatorForm
 from corehq.apps.users.models import DomainInvitation
 from corehq.apps.fixtures.models import FixtureDataType
-from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA
+from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA, TRANSFER_DOMAIN
 from corehq.util.context_processors import get_domain_type
 from dimagi.utils.couch.resource_conflict import retry_resource
 from django.conf import settings
@@ -68,9 +67,9 @@ from corehq.apps.domain.forms import (
     DomainGlobalSettingsForm, DomainMetadataForm, SnapshotSettingsForm,
     SnapshotApplicationForm, DomainDeploymentForm, DomainInternalForm,
     ConfirmNewSubscriptionForm, ProBonoForm, EditBillingAccountInfoForm,
-    ConfirmSubscriptionRenewalForm, SnapshotFixtureForm,
+    ConfirmSubscriptionRenewalForm, SnapshotFixtureForm, TransferDomainForm
 )
-from corehq.apps.domain.models import Domain, LICENSES
+from corehq.apps.domain.models import Domain, LICENSES, TransferDomainRequest
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.hqwebapp.views import BaseSectionPageView, BasePageView, CRUDPaginatedViewMixin
 from corehq.apps.orgs.models import Organization, OrgRequest, Team
@@ -1717,7 +1716,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
                 new_domain.image_type = old.image_type
             new_domain.save()
 
-            if toggles.DOCUMENTATION_FILE.enabled(request.user):
+            if toggles.DOCUMENTATION_FILE.enabled(request.user.username):
                 documentation_file = self.snapshot_settings_form.cleaned_data['documentation_file']
                 if documentation_file:
                     new_domain.documentation_file_path = documentation_file.name
@@ -1742,7 +1741,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
             elif request.POST.get('old_image', False):
                 new_domain.put_attachment(content=old.fetch_attachment(old.image_path), name=new_domain.image_path)
 
-            if toggles.DOCUMENTATION_FILE.enabled(request.user):
+            if toggles.DOCUMENTATION_FILE.enabled(request.user.username):
                 if documentation_file:
                     new_domain.put_attachment(content=documentation_file, name=documentation_file.name)
                 elif request.POST.get('old_documentation_file', False):
@@ -2314,6 +2313,145 @@ class FeatureFlagsView(BaseAdminProjectSettingsView):
         return {
             'flags': self.enabled_flags(),
         }
+
+
+class TransferDomainView(BaseAdminProjectSettingsView):
+    urlname = 'transfer_domain_view'
+    page_title = ugettext_noop("Transfer Project")
+    template_name = 'domain/admin/transfer_domain.html'
+
+    @property
+    @memoized
+    def active_transfer(self):
+        return TransferDomainRequest.get_active_transfer(self.domain,
+                                                         self.request.user.username)
+
+    @property
+    @memoized
+    def transfer_domain_form(self):
+        return TransferDomainForm(self.domain,
+                                  self.request.user.username,
+                                  self.request.POST or None)
+
+    def get(self, request, *args, **kwargs):
+
+        if self.active_transfer:
+            self.template_name = 'domain/admin/transfer_domain_pending.html'
+
+            if request.GET.get('resend', None):
+                self.active_transfer.send_transfer_request()
+                messages.info(request,
+                              _(u"Resent transfer request for project '{domain}'").format(domain=self.domain))
+
+        return super(TransferDomainView, self).get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        form = self.transfer_domain_form
+        if form.is_valid():
+            # Initiate domain transfer
+            transfer = form.save()
+            transfer.send_transfer_request()
+            return HttpResponseRedirect(self.page_url)
+
+        context = self.get_context_data(**kwargs)
+        return self.render_to_response(context)
+
+    @property
+    def page_context(self):
+        if self.active_transfer:
+            return {'transfer': self.active_transfer.as_dict()}
+        else:
+            return {'form': self.transfer_domain_form}
+
+    @method_decorator(domain_admin_required)
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        if not TRANSFER_DOMAIN.enabled(request.domain):
+            raise Http404()
+        return super(TransferDomainView, self).dispatch(request, *args, **kwargs)
+
+
+class ActivateTransferDomainView(BasePageView):
+    urlname = 'activate_transfer_domain'
+    page_title = 'Activate Domain Transfer'
+    template_name = 'domain/activate_transfer_domain.html'
+
+    @property
+    @memoized
+    def active_transfer(self):
+        return TransferDomainRequest.get_by_guid(self.guid)
+
+    @property
+    def page_context(self):
+        if self.active_transfer:
+            return {'transfer': self.active_transfer.as_dict()}
+        else:
+            return {}
+
+    @property
+    def page_url(self):
+        return self.request.get_full_path()
+
+    def get(self, request, guid, *args, **kwargs):
+        self.guid = guid
+
+        if (self.active_transfer and
+                self.active_transfer.to_username != request.user.username and
+                not request.user.is_superuser):
+            return HttpResponseRedirect(reverse("no_permissions"))
+
+        return super(ActivateTransferDomainView, self).get(request, *args, **kwargs)
+
+    def post(self, request, guid, *args, **kwargs):
+        self.guid = guid
+
+        if not self.active_transfer:
+            raise Http404()
+
+        if self.active_transfer.to_username != request.user.username and not request.user.is_superuser:
+            return HttpResponseRedirect(reverse("no_permissions"))
+
+        self.active_transfer.transfer_domain(ip=get_ip(request))
+        messages.success(request, _(u"Successfully transferred ownership of project '{domain}'")
+                         .format(domain=self.active_transfer.domain))
+
+        return HttpResponseRedirect(reverse('dashboard_default', args=[self.active_transfer.domain]))
+
+    @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        return super(ActivateTransferDomainView, self).dispatch(*args, **kwargs)
+
+
+class DeactivateTransferDomainView(View):
+
+    def post(self, request, guid, *args, **kwargs):
+
+        transfer = TransferDomainRequest.get_by_guid(guid)
+
+        if not transfer:
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+
+        if (transfer.to_username != request.user.username and
+                transfer.from_username != request.user.username and
+                not request.user.is_superuser):
+            return HttpResponseRedirect(reverse("no_permissions"))
+
+        transfer.active = False
+        transfer.save()
+
+        referer = request.META.get('HTTP_REFERER', '/')
+
+        # Do not want to send them back to the activate page
+        if referer.endswith(reverse('activate_transfer_domain', args=[guid])):
+            messages.info(request,
+                          _(u"Declined ownership of project '{domain}'").format(domain=transfer.domain))
+            return HttpResponseRedirect('/')
+        else:
+            return HttpResponseRedirect(referer)
+
+    @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        return super(DeactivateTransferDomainView, self).dispatch(*args, **kwargs)
 
 
 class SMSRatesView(BaseAdminProjectSettingsView, AsyncHandlerMixin):

@@ -186,7 +186,10 @@ class GrapevineResource(Resource):
         if not bundle.data or not bundle.data.get('XML'):
             return bundle
 
-        root = ElementTree.fromstring(bundle.data['XML'])
+        # http://bugs.python.org/issue11033
+        xml = bundle.data['XML'].encode('utf-8')
+
+        root = ElementTree.fromstring(xml)
         if root.tag == 'gviSms':
             date_string = root.find('smsDateTime').text
             phone_number = root.find('cellNumber').text

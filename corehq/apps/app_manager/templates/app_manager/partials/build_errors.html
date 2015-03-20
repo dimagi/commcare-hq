@@ -3,7 +3,7 @@
 {% load xforms_extras %}{% if build_errors %}
     <div class="alert alert-warning alert-block">
         {% if not_actual_build %}
-            <p>{% trans "Build errors in this form:" %}</p>
+            <p>{% trans "Errors making a new version:" %}</p>
         {% else %}
             <p>{% trans "Build Failed!" %}</p>
         {% endif %}
@@ -56,6 +56,62 @@
                             <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
                             uses cases but doesn't have a
                             case type defined.
+                        {% case "case list form not registration" %}
+                            {% url "view_module" domain app.id error.module.id as module_url %}
+                            {% url "view_form" domain app.id error.module.id error.form.id as form_url %}
+                            {% blocktrans with module_name=error.module.name|trans:langs form_name=error.form.name|trans:langs %}
+                            You have selected form <a href="{{ form_url }}">{{ form_name }}</a>
+                            as the case registration form for the <a href="{{ module_url }}">{{ module_name }}</a> module.
+                            This form is not a registration form. You needs to select a form which opens a case and
+                            does not update an existing case. Please select a different form.
+                            {% endblocktrans %}
+                        {% case "case list form missing" %}
+                            {% url "view_module" domain app.id error.module.id as module_url %}
+                            {% blocktrans with module_name=error.module.name|trans:langs %}
+                            The form you have selected as the case registration form for the
+                            <a href="{{ module_url }}">{{ module_name }}</a> module does not exist.
+                            Please select another form.
+                            {% endblocktrans %}
+                        {% case "case list module form must require case" %}
+                            {% url "view_module" domain app.id error.module.id as module_url %}
+                            {% url "view_form" domain app.id error.module.id error.form.id as form_url %}
+                            {% blocktrans with module_name=error.module.name|trans:langs form_name=error.form.name|trans:langs %}
+                            The <a href="{{ form_url }}">{{ form_name }}</a> form in the <a href="{{ module_url }}">{{ module_name }}</a>
+                            module must update a case. All forms in a module that has a case registration form selected must update a case.
+                            {% endblocktrans %}
+                        {% case "case list module form must require only one case" %}
+                            {% url "view_module" domain app.id error.module.id as module_url %}
+                            {% url "view_form" domain app.id error.module.id error.form.id as form_url %}
+                            {% blocktrans with module_name=error.module.name|trans:langs form_name=error.form.name|trans:langs %}
+                            The <a href="{{ form_url }}">{{ form_name }}</a> form in the <a href="{{ module_url }}">{{ module_name }}</a>
+                            module can only load or update a single case. All forms in a module that has a case registration form
+                            selected can only update a single case.
+                            {% endblocktrans %}
+                        {% case "case list module form must match module case type" %}
+                            {% url "view_module" domain app.id error.module.id as module_url %}
+                            {% url "view_form" domain app.id error.module.id error.form.id as form_url %}
+                            {% blocktrans with module_name=error.module.name|trans:langs form_name=error.form.name|trans:langs %}
+                            The <a href="{{ form_url }}">{{ form_name }}</a> form in the <a href="{{ module_url }}">{{ module_name }}</a>
+                            module loads a case of a different type to the module. All forms in a module that has a case registration form
+                            selected must load a case of the same type as the module.
+                            {% endblocktrans %}
+                        {% case "all forms in case list module must have same case management" %}
+                            {% url "view_module" domain app.id error.module.id as module_url %}
+                            {% url "view_form" domain app.id error.module.id error.form.id as form_url %}
+                            {% blocktrans with module_name=error.module.name|trans:langs form_name=error.form.name|trans:langs expected_tag=error.expected_tag %}
+                            The <a href="{{ form_url }}">{{ form_name }}</a> form in the <a href="{{ module_url }}">{{ module_name }}</a>
+                            module loads a case with a different case tag to the other forms in the module.
+                            All forms in a module that has a case registration form selected must use the same case tag.
+                            Expected case tag: <strong>{{ expected_tag }}</strong>
+                            {% endblocktrans %}
+                        {% case "forms in case list module must use modules details" %}
+                            {% url "view_module" domain app.id error.module.id as module_url %}
+                            {% url "view_form" domain app.id error.module.id error.form.id as form_url %}
+                            {% blocktrans with module_name=error.module.name|trans:langs form_name=error.form.name|trans:langs %}
+                            The <a href="{{ form_url }}">{{ form_name }}</a> form in the <a href="{{ module_url }}">{{ module_name }}</a>
+                            module uses a details screen from another module. All forms in a module that has a case
+                            registration form selected must use the details screen from that module.
+                            {% endblocktrans %}
                         {% case "invalid filter xpath" %}
                             {% if error.filter %}
                                 Case List has invalid filter xpath <code>{{ error.filter }}</code> in module
@@ -81,6 +137,10 @@
                             module specified.
                         {% case "parent cycle" %}
                             The app's parent child case selection graph contains a cycle.
+                        {% case "root cycle" %}
+                            The app's parent child module graph contains a cycle.
+                        {% case "unknown root" %}
+                            A module points to an unknown Parent Module.
                         {% case "invalid location xpath" %}
                             Case List has invalid location reference <code>{{ error.column.field_property}}</code>.
                             Details: {{ error.details }}
@@ -112,7 +172,9 @@
                         {% case "path error" %}
                             {% if error.path %}
                                 The case management in form {% include "app_manager/partials/form_error_message.html" %}
-                                contains the invalid path "{{ error.path }}".
+                                references a question that no longer exists: "{{ error.path }}". It is likely that
+                                this question has been renamed or deleted. Please update or delete this question
+                                reference before you make a new version.
                             {% else %}
                                 {% trans "You're loading or saving a case property but have not chosen a question from the form. Please choose a question from the dropdown next to the case property." %}
                             {% endif %}

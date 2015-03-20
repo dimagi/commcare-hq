@@ -40,7 +40,6 @@ def retry(retry_max):
 def synchronization(name, get_objects_function, sync_function, checkpoint, date, limit, offset, **kwargs):
     has_next = True
     next_url = ""
-
     while has_next:
         meta, objects = get_objects_function(next_url_params=next_url, limit=limit, offset=offset, **kwargs)
         if checkpoint:
@@ -97,6 +96,7 @@ def bootstrap_domain(api_object, **kwargs):
     endpoint = api_object.endpoint
     start_date = datetime.today()
 
+    # get the last saved checkpoint from a prior migration and various config options
     try:
         checkpoint = MigrationCheckpoint.objects.get(domain=domain)
         api = checkpoint.api
@@ -109,6 +109,7 @@ def bootstrap_domain(api_object, **kwargs):
         else:
             start_date = checkpoint.start_date
     except MigrationCheckpoint.DoesNotExist:
+        # bootstrap static domain data
         api_object.prepare_commtrack_config()
         checkpoint = MigrationCheckpoint()
         checkpoint.domain = domain
@@ -117,8 +118,9 @@ def bootstrap_domain(api_object, **kwargs):
         date = None
         limit = 100
         offset = 0
-
+    api_object.set_default_backend()
     api_object.prepare_custom_fields()
+    api_object.create_or_edit_roles()
     synchronize_domain = partial(synchronization, checkpoint=checkpoint, date=date)
     apis = [
         ('product', partial(
@@ -126,12 +128,12 @@ def bootstrap_domain(api_object, **kwargs):
             get_objects_function=endpoint.get_products,
             sync_function=api_object.product_sync
         )),
-        ('location_facility', partial(
+        ('location_region', partial(
             synchronize_domain,
             get_objects_function=endpoint.get_locations,
             sync_function=api_object.location_sync,
             fetch_groups=True,
-            filters=dict(date_updated__gte=date, type='facility', is_active=True)
+            filters=dict(date_updated__gte=date, type='region', is_active=True)
         )),
         ('location_district', partial(
             synchronize_domain,
@@ -140,12 +142,12 @@ def bootstrap_domain(api_object, **kwargs):
             fetch_groups=True,
             filters=dict(date_updated__gte=date, type='district', is_active=True)
         )),
-        ('location_region', partial(
+        ('location_facility', partial(
             synchronize_domain,
             get_objects_function=endpoint.get_locations,
             sync_function=api_object.location_sync,
             fetch_groups=True,
-            filters=dict(date_updated__gte=date, type='region', is_active=True)
+            filters=dict(date_updated__gte=date, type='facility', is_active=True)
         )),
         ('webuser', partial(
             synchronize_domain,

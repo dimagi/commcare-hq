@@ -103,6 +103,16 @@ def process_cases_with_casedb(xform, case_db, config=None):
                 pass
         case_db.mark_changed(case)
 
+        action_xforms = {action.xform_id for action in case.actions if action.xform_id}
+        mismatched_forms = action_xforms ^ set(case.xform_ids)
+        if mismatched_forms:
+            logging.warning(
+                "CASE XFORM MISMATCH /a/{},{}".format(
+                    domain,
+                    case.case_id
+                )
+            )
+
     return cases
 
 

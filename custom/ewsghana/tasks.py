@@ -1,4 +1,5 @@
-from celery.task import task
+from celery.schedules import crontab
+from celery.task import task, periodic_task
 from casexml.apps.stock.models import StockReport, StockTransaction
 from custom.ewsghana.api import EWSApi
 
@@ -10,6 +11,8 @@ from custom.ewsghana.extensions import ews_location_extension, ews_smsuser_exten
 from custom.ewsghana.models import EWSGhanaConfig
 from custom.logistics.commtrack import bootstrap_domain as ews_bootstrap_domain, \
     bootstrap_domain
+from custom.logistics.tasks import stock_data_task, sync_stock_transactions
+import settings
 
 
 EXTENSIONS = {
@@ -33,12 +36,17 @@ EWS_FACILITIES = [304, 324, 330, 643, 327, 256, 637, 332, 326, 338, 340, 331, 34
                   526, 4, 30, 1, 14, 23, 521, 532, 516, 461, 520, 525, 961, 641, 257, 348]
 
 
-# @periodic_task(run_every=timedelta(days=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+@periodic_task(run_every=crontab(hour="23", minute="55", day_of_week="*"),
+               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def migration_task():
-    configs = EWSGhanaConfig.get_all_configs()
-    for config in configs:
+    for config in EWSGhanaConfig.get_all_steady_sync_configs():
         if config.enabled:
-            ews_bootstrap_domain(EWSApi(config.domain, GhanaEndpoint.from_config(config)))
+            endpoint = GhanaEndpoint.from_config(config)
+            ews_bootstrap_domain(EWSApi(config.domain, endpoint))
+            apis = (
+                ('stock_transaction', sync_stock_transactions),
+            )
+            stock_data_task.delay(config.domain, endpoint, apis, EWS_FACILITIES)
 
 
 @task

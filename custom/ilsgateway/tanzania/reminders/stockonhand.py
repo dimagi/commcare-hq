@@ -4,25 +4,25 @@ from celery.schedules import crontab
 from celery.task import periodic_task
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.sms.api import send_sms_to_verified_number
 from custom.ilsgateway.models import SupplyPointStatusValues, SupplyPointStatusTypes
 from custom.ilsgateway.tanzania.reminders import REMINDER_STOCKONHAND, update_statuses
 from casexml.apps.stock.models import StockTransaction
 from dimagi.utils.dates import get_business_day_of_month
-from custom.ilsgateway.utils import send_for_all_domains
+from custom.ilsgateway.utils import send_for_all_domains, send_translated_message
 import settings
 
 
-def send_soh_reminder(domain, date):
+def send_soh_reminder(domain, date, test_list=None):
     sp_ids = set()
-    for user in CommCareUser.by_domain(domain):
+    users = CommCareUser.by_domain(domain) if not test_list else test_list
+    for user in users:
         if user.is_active and user.location and user.location.location_type == 'FACILITY':
             sp = SupplyPointCase.get_by_location(user.location)
             if sp and not StockTransaction.objects.filter(case_id=sp._id, report__date__gte=date,
                                                           type='stockonhand').exists():
-                if user.get_verified_number():
-                        send_sms_to_verified_number(user.get_verified_number(), REMINDER_STOCKONHAND)
-                        sp_ids.add(sp._id)
+                result = send_translated_message(user, REMINDER_STOCKONHAND)
+                if not test_list and result:
+                    sp_ids.add(sp._id)
     update_statuses(sp_ids, SupplyPointStatusTypes.SOH_FACILITY, SupplyPointStatusValues.REMINDER_SENT)
 
 

@@ -183,6 +183,7 @@ class DeviceLogDetailsReport(PhonelogReport):
     }
     default_rows = 100
     default_sort = {'date': 'asc'}
+    inclusive = False
 
     @property
     def headers(self):

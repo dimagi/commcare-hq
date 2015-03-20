@@ -413,9 +413,8 @@ class SubmissionPost(object):
             )
             return self.get_exception_response(e.error_log), None, []
         else:
-            from casexml.apps.case import process_cases_with_casedb
             from casexml.apps.case.models import CommCareCase
-            from casexml.apps.case.xform import get_and_check_xform_domain, CaseDbCache
+            from casexml.apps.case.xform import get_and_check_xform_domain, CaseDbCache, process_cases_with_casedb
             from casexml.apps.case.signals import case_post_save
             from casexml.apps.case.exceptions import IllegalCaseId
             from corehq.apps.commtrack.processing import process_stock
@@ -474,18 +473,10 @@ class SubmissionPost(object):
                                     )
                                 )
                         try:
-                            # todo: remove this when http://manage.dimagi.com/default.asp?158371 is sorted out
-                            if domain == 'itech-etc3-test':
-                                logging.warning(
-                                    'ITECH DEBUG: forms are: {}, cases are: {}'.format(
-                                        ', '.join([f._id for f in xforms]),
-                                        ', '.join([c._id for c in cases])
-                                    )
-                                )
                             XFormInstance.get_db().bulk_save(docs)
                         except BulkSaveError as e:
                             logging.error('BulkSaveError saving forms', exc_info=1,
-                                          extra={'errors': e.errors})
+                                          extra={'details': {'errors': e.errors}})
                             raise
                         unfinished_submission_stub.saved = True
                         unfinished_submission_stub.save()

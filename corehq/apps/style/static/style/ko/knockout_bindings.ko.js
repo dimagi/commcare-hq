@@ -126,6 +126,7 @@ ko.bindingHandlers.langcode = {
                 b.valueUpdate = [b.valueUpdate];
             }
             b.valueUpdate.push('autocompletechange');
+            b.valueUpdate.push('autocompleteclose');
             return b;
         });
         $('input', element).addClass('short code').langcodes();
@@ -517,12 +518,14 @@ ko.bindingHandlers.makeHqHelp = {
             name = ko.utils.unwrapObservable(opts.name || $(element).data('title')),
             description = ko.utils.unwrapObservable(opts.description || $(element).data('content')),
             placement = ko.utils.unwrapObservable(opts.placement || $(element).data('placement')),
+            trigger = ko.utils.unwrapObservable(opts.trigger || $(element).data('trigger')),
             format = ko.utils.unwrapObservable(opts.format);
         COMMCAREHQ.makeHqHelp({
             title: name,
             content: description,
             html: format === 'html',
-            placement: placement || 'right'
+            placement: placement || 'right',
+            trigger: trigger || 'hover'
         }).appendTo(element);
     }
 };
@@ -630,6 +633,53 @@ ko.bindingHandlers.typeahead = {
         $(element).autocomplete('option', 'source', ko.utils.unwrapObservable(valueAccessor()));
     }
 };
+
+/**
+ * Converts the bound element to a select2 widget. The value of the binding is
+ * a list of strings, or a list of objects with the keys 'id' and 'text' used
+ * for the select2's options.
+ */
+ko.bindingHandlers.select2 = new function(){
+    var that = this;
+
+    this.SOURCE_KEY = "select2-source";
+
+    this.init = function(element, valueAccessor){
+        var $el = $(element);
+
+        // The select2 jquery element uses the array stored at
+        // $el.data(that.SOURCE_KEY) as its data source. Therefore, the options
+        // can only be changed by modifying this object, overwriting it will
+        // not change the select options.
+        $el.data(that.SOURCE_KEY, []);
+
+        $el.select2({
+            multiple: false,
+            width: "element",
+            data: $el.data(that.SOURCE_KEY)
+        });
+    };
+
+    this.update = function(element, valueAccessor, allBindings){
+        var $el = $(element);
+        var source = $el.data(that.SOURCE_KEY);
+
+        // We clear the array and repopulate it, instead of simply replacing
+        // it, because the select2 options are tied to this specific instance.
+        while(source.length > 0) {
+            source.pop();
+        }
+        var newItems = ko.utils.unwrapObservable(valueAccessor()) || [];
+        for (var i = 0; i < newItems.length; i++) {
+            var text = newItems[i].text || newItems[i];
+            var id = newItems[i].id || newItems[i];
+            source.push({id: id, text: text});
+        }
+
+        // Update the selected item
+        $el.val(ko.unwrap(allBindings().value)).trigger("change");
+    };
+}();
 
 ko.bindingHandlers.multiTypeahead = {
     init: function(element, valueAccessor) {

@@ -110,7 +110,8 @@ var SortRow = function(params){
 
     self.ascendText = ko.computed(function () {
         var type = self.type();
-        if (type === 'plain') {
+        // This is here for the CACHE_AND_INDEX feature
+        if (type === 'plain' || type === 'index') {
             return 'Increasing (a, b, c)';
         } else if (type === 'date') {
             return 'Increasing (May 1st, May 2nd)';
@@ -123,7 +124,7 @@ var SortRow = function(params){
 
     self.descendText = ko.computed(function () {
         var type = self.type();
-        if (type === 'plain') {
+        if (type === 'plain' || type === 'index') {
             return 'Decreasing (c, b, a)';
         } else if (type === 'date') {
             return 'Decreasing (May 2nd, May 1st)'
@@ -562,6 +563,7 @@ var DetailScreenConfig = (function () {
             this.allowsTabs = options.allowsTabs;
             this.useCaseTiles = ko.observable(spec[this.columnKey].use_case_tiles ? "yes" : "no");
             this.persistTileOnForms = ko.observable(spec[this.columnKey].persist_tile_on_forms || false);
+            this.enableTilePullDown = ko.observable(spec[this.columnKey].pull_down_tile || false);
             this.allowsEmptyColumns = options.allowsEmptyColumns;
 
             this.fireChange = function() {
@@ -637,6 +639,9 @@ var DetailScreenConfig = (function () {
                 that.saveButton.fire('change');
             });
             this.persistTileOnForms.subscribe(function(){
+                that.saveButton.fire('change');
+            });
+            this.enableTilePullDown.subscribe(function(){
                 that.saveButton.fire('change');
             });
             ko.computed(function () {
@@ -723,6 +728,7 @@ var DetailScreenConfig = (function () {
 
                 data.useCaseTiles = this.useCaseTiles() == "yes" ? true : false;
                 data.persistTileOnForms = this.persistTileOnForms();
+                data.enableTilePullDown = this.persistTileOnForms() ? this.enableTilePullDown() : false;
 
                 if (this.containsParentConfiguration) {
                     var parentSelect;

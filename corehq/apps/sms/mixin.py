@@ -600,9 +600,14 @@ class CommCareMobileContactMixin(object):
         if v is not None and (v.owner_doc_type != self.doc_type or v.owner_id != self._id):
             raise PhoneNumberInUseException("Phone number is already in use.")
 
-    def save_verified_number(self, domain, phone_number, verified, backend_id, ivr_backend_id=None, only_one_number_allowed=False):
+    def save_verified_number(self, domain, phone_number, verified, backend_id=None, ivr_backend_id=None, only_one_number_allowed=False):
         """
         Saves the given phone number as this contact's verified phone number.
+
+        backend_id - the name of an SMSBackend to use when sending SMS to
+            this number; if specified, this will override any project or
+            global settings for which backend will be used to send sms to
+            this number
 
         return  The VerifiedNumber
         raises  InvalidFormatException if the phone number format is invalid

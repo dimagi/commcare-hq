@@ -1,0 +1,30 @@
+{% extends "userreports/base_report_builder.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% block js-inline %}{{ block.super }}
+    <script type="text/javascript">
+        $(function () {
+            ko.applyBindings({
+                application: ko.observable(""),
+                sourceType: ko.observable(""),
+                sourcesMap: {{ sources_map|JSON }}
+            }, $("#report-builder-form").get(0));
+        });
+    </script>
+{% endblock %}
+
+{% block main_column %}
+    {% if sources_map %}
+        {{ block.super }}
+    {% else %}
+        <div style="padding: 1em; text-align: center">
+            <p style="font-size: 1.5em">
+                {% blocktrans %}
+                Before creating a new report, you need an application.
+                {% endblocktrans %}
+            </p>
+        </div>
+        {% include 'app_manager/partials/new_app_buttons.html' %}
+    {% endif %}
+{% endblock %}

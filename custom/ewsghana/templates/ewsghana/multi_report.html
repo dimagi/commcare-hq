@@ -16,7 +16,17 @@
             </div>
         </div>
         {% endif %}
-    {% endif %}{{ block.super }}
+    {% endif %}
+    {% if charts %}
+        <div class="row">
+            {% for chart in charts %}
+            <div id='chart_{{ report.slug }}_{{ forloop.counter }}' class="span{{ chart_span }} hide">
+                {% if chart.title %}<h4 style="text-align: center;">{{ chart.title }}</h4>{% endif %}
+                <svg style='height: {{ chart.height }}px'> </svg>
+            </div>
+            {% endfor %}
+        </div>
+    {% endif %}
 {% endblock %}
 
 {% block reporttable %}
@@ -39,22 +49,42 @@
             margin-top: -20px;
         }
 
-        .row {
-            float: left;
-            width: 100%;
-        }
+        {% if report.slug == "reporting_page" %}
+            .report {
+                float: left;
+                width: 50%;
+            }
+        {% elif  report.slug == "stock_status"%}
+            .report:first-of-type {
+                float: right;
+                width: 30%;
+            }
+            .report:nth-of-type(n+2) {
+                float: left;
+                width: 68%;
+            }
+        {% elif  report.slug == "dashboard_report"%}
+            .report:nth-of-type(n+2) {
+                float: left;
+                width: 50%;
+            }
+        {% endif %}
 
         #report_table_product_selection_pane tr {
-            width: 20%;
+            width: 50%;
             display: inline-block;
+            font-size: 10px;
         }
 
         #report_table_product_selection_pane tr:last-child {
             width: 100%;
         }
+
+        #report_table_product_selection_pane td {
+            padding: 0;
+        }
     </style>
     {% for thisreport in reports %}
-        <br/>
         {% if split %}
             {% if forloop.counter == 1 %}
                 <div class="firstreport">
@@ -84,8 +114,10 @@
                 <br/>
             {% endif %}
         {% else %}
-            <h4 class="media-heading">{{ thisreport.report_table.title }}<br/><small>{{ subtitle1 }}</small><br/><small>{{ subtitle2 }}</small></h4>
-            {% include 'ewsghana/partials/report_table.html' with report_table=thisreport.report_table charts=thisreport.charts chart_span=thisreport.chart_span show_table=thisreport.show_table%}
+            <div class="report">
+                <h4 class="media-heading">{{ thisreport.report_table.title }}<br/><small>{{ subtitle1 }}</small><br/><small>{{ subtitle2 }}</small></h4>
+                {% include 'ewsghana/partials/report_table.html' with report_table=thisreport.report_table charts=thisreport.charts chart_span=thisreport.chart_span show_table=thisreport.show_table%}
+            </div>
         {% endif %}
     {% endfor %}
 
@@ -110,7 +142,7 @@
                 button.text("Export Chart to Excel");
                 button.css('display', 'inline-block');
             } else if ({{ exportable|yesno:"true,false" }}){
-                button.text("Export to Excel");
+                button.text("Export Chart(s) to Excel");
                 button.css('display', 'inline-block');
             } else {
                 button.css('display', 'None');
@@ -119,7 +151,8 @@
         $("#apply-filters").on('click', function(){
             updateExportButton();
         });
-        updateExportButton()
+        updateExportButton();
+        $(".dataTables_filter").css('display', 'none');
     </script>
 
     <script>
@@ -155,5 +188,14 @@
                 });
             });
         });
+    </script>
+    <script>
+        var report_slug = "{{ report.slug | safe }}";
+        if ( report_slug === 'stock_summary_report' || report_slug === 'cms_rms_summary_report') {
+            var headings = $("#report-content > h4");
+            $(headings[0]).text($(headings[2]).text());
+            $(headings[2]).remove();
+            $('.dataTables_filter').remove();
+        }
     </script>
 {% endblock %}

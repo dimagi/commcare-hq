@@ -550,6 +550,10 @@ class _AuthorizableMixin(IsMemberOfMixin):
             record.save()
             return record
 
+    def transfer_domain_membership(self, domain, to_user, create_record=False, is_admin=True):
+        to_user.add_domain_membership(domain, is_admin=is_admin)
+        self.delete_domain_membership(domain, create_record=create_record)
+
     def is_domain_admin(self, domain=None):
         if not domain:
             # hack for template
@@ -658,6 +662,9 @@ class SingleMembershipMixin(_AuthorizableMixin):
         raise NotImplementedError
 
     def delete_domain_membership(self, domain, create_record=False):
+        raise NotImplementedError
+
+    def transfer_domain_membership(self, domain, user, create_record=False):
         raise NotImplementedError
 
 class MultiMembershipMixin(_AuthorizableMixin):
@@ -782,6 +789,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     keyboard_shortcuts = SchemaProperty(KeyboardShortcutsConfig)
     user_data = DictProperty()
     location_id = StringProperty()
+    has_built_app = BooleanProperty(default=False)
 
     _user = None
     _user_checked = False

@@ -24,6 +24,7 @@ from corehq.apps.smsbillables.models import (
     SmsGatewayFee,
     SmsGatewayFeeCriteria,
 )
+from couchexport.models import Format
 
 
 class SMSBillablesInterface(GenericTabularReport):
@@ -35,6 +36,8 @@ class SMSBillablesInterface(GenericTabularReport):
     slug = "sms_billables"
     ajax_pagination = True
     exportable = True
+    exportable_all = True
+    export_format_override = Format.UNZIPPED_CSV
     fields = [
         'corehq.apps.smsbillables.interface.DateSentFilter',
         'corehq.apps.accounting.interface.DateCreatedFilter',
@@ -89,6 +92,12 @@ class SMSBillablesInterface(GenericTabularReport):
         ]
 
     @property
+    def get_all_rows(self):
+        query = self.sms_billables
+        query = query.order_by(self.sort_field)
+        return self._format_billables(query)
+
+    @property
     def total_records(self):
         query = self.sms_billables
         return query.aggregate(Count('id'))['id__count']
@@ -99,6 +108,9 @@ class SMSBillablesInterface(GenericTabularReport):
         query = query.order_by(self.sort_field)
 
         sms_billables = query[self.pagination.start:(self.pagination.start + self.pagination.count)]
+        return self._format_billables(sms_billables)
+
+    def _format_billables(self, sms_billables):
         return [
             [
                 sms_billable.date_sent,
@@ -153,6 +165,7 @@ class SMSGatewayFeeCriteriaInterface(GenericTabularReport):
     description = "List of all SMS Gateway Fee Criteria"
     slug = "sms_gateway_fee_criteria"
     exportable = True
+    exportable_all = True
     fields = [
         'corehq.apps.smsbillables.interface.GatewayTypeFilter',
         'corehq.apps.smsbillables.interface.SpecificGateway',
@@ -167,8 +180,13 @@ class SMSGatewayFeeCriteriaInterface(GenericTabularReport):
             DataTablesColumn("Specific Gateway"),
             DataTablesColumn("Direction"),
             DataTablesColumn("Country Code"),
+            DataTablesColumn("Prefix"),
             DataTablesColumn("Fee (Amount, Currency)")
         )
+
+    @property
+    def get_all_rows(self):
+        return self.rows
 
     @property
     def rows(self):
@@ -182,6 +200,7 @@ class SMSGatewayFeeCriteriaInterface(GenericTabularReport):
                 criteria.direction,
                 (criteria.country_code
                  if criteria.country_code is not None else "Any"),
+                criteria.prefix or "Any",
                 "%(amount)s %(currency)s" % {
                     'amount': str(gateway_fee.amount),
                     'currency': gateway_fee.currency.code,

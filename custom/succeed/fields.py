@@ -1,13 +1,9 @@
 from django.utils.translation import ugettext_noop
-from corehq.apps.groups.models import Group
 from corehq.apps.reports.dont_use.fields import ReportSelectField
-from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter
-from corehq.apps.users.models import CouchUser
+from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.elastic import es_query
 from corehq.apps.es import CaseES
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
-from custom.succeed.reports import SUBMISSION_SELECT_FIELDS
-from casexml.apps.case.models import CommCareCase
 from custom.succeed.utils import (
     CONFIG
 )
@@ -56,21 +52,22 @@ class PatientStatus(ReportSelectField):
     options = [dict(val="active", text=ugettext_noop("Active")),
                dict(val="not_active", text=ugettext_noop("Not Active"))]
 
-class PatientFormNameFilter(BaseDrilldownOptionFilter):
-    label = ugettext_noop("Filter Forms")
+
+class PatientFormNameFilter(BaseSingleOptionFilter):
+    label = ugettext_noop("Form Group")
     slug = "form_name"
     css_class = "span5"
+    default_text = 'All Forms'
 
     @property
-    def drilldown_map(self):
-        return SUBMISSION_SELECT_FIELDS
-
-    @classmethod
-    def get_labels(cls):
+    def options(self):
         return [
-            ('Form Group', 'All Form Groups', 'group'),
-            ('Form Name', 'All Form names', 'xmlns'),
+            ('pm_forms', 'PM Forms'),
+            ('cm_forms', 'CM Forms'),
+            ('chw_forms', 'CHW Forms'),
+            ('task', 'Tasks and Appointments')
         ]
+
 
 class PatientNameFilterMixin(object):
     slug = "patient_id"

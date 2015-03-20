@@ -602,6 +602,8 @@ class SupplyPointCase(CommCareCase):
     @property
     @memoized
     def location(self):
+        if self.location_id is None:
+            return None
         try:
             return Location.get(self.location_id)
         except ResourceNotFound:
@@ -697,13 +699,17 @@ class SupplyPointCase(CommCareCase):
         )
 
     @classmethod
-    def get_by_location(cls, location):
+    def get_by_location_id(cls, domain, location_id):
         return cls.view(
             'commtrack/supply_point_by_loc',
-            key=[location.domain, location._id],
+            key=[domain, location_id],
             include_docs=True,
             classes={'CommCareCase': SupplyPointCase},
         ).one()
+
+    @classmethod
+    def get_by_location(cls, location):
+        return cls.get_by_location_id(location.domain, location._id)
 
     @classmethod
     def get_or_create_by_location(cls, location):

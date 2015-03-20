@@ -1,7 +1,6 @@
 import dateutil
 from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django.loading import get_db
-import pytz
 from casexml.apps.case.models import CommCareCase
 from couchforms.models import XFormInstance
 
@@ -25,32 +24,36 @@ class IndicatorDocument(object):
         return db
 
     @classmethod
-    def get_or_create_from_dict(cls, doc_dict):
-        if '_rev' in doc_dict:
-            del doc_dict['_rev']
-        if '_attachments' in doc_dict:
-            doc_dict['_attachments'] = {}
+    def wrap_for_indicator_db(cls, doc_dict):
+        """
+        wrap a doc that was pulled from the main db
+        modifying it so that it can be saved in the indicator db
 
+        like wrap, but also:
+        - sets _rev to whatever it needs to be in order to be saved
+          to the indicator db without an update conflict
+        - strips _attachments, because we don't care about them
+          and having the stub in JSON without the attachment will fail
+
+        """
         try:
-            existing_doc = cls.get_db().get(doc_dict['_id'])
-            is_existing = True
-            doc_instance = cls.wrap(existing_doc)
-            if doc_instance.is_update(doc_dict):
-                doc_instance._doc.update(doc_dict)
-                doc_instance.save()
+            current_rev = cls.get_db().get(doc_dict['_id'])['_rev']
         except ResourceNotFound:
-            doc_instance = cls.wrap(doc_dict)
-            doc_instance.save()
-            is_existing = False
+            del doc_dict['_rev']
+        else:
+            doc_dict['_rev'] = current_rev
 
-        return doc_instance, is_existing
+        if '_attachments' in doc_dict:
+            del doc_dict['_attachments']
+
+        return cls.wrap(doc_dict)
 
 
 class IndicatorXForm(IndicatorDocument, XFormInstance):
 
     def save(self, **kwargs):
         self.doc_type = 'IndicatorXForm'
-        assert(self.get_db() != XFormInstance.get_db())
+        assert self.get_db().uri != XFormInstance.get_db().uri
         super(IndicatorXForm, self).save(**kwargs)
 
     def is_update(self, doc_dict):
@@ -62,7 +65,7 @@ class IndicatorCase(IndicatorDocument, CommCareCase):
 
     def save(self, **kwargs):
         self.doc_type = 'IndicatorCase'
-        assert(self.get_db() != CommCareCase.get_db())
+        assert self.get_db().uri != CommCareCase.get_db().uri
         super(IndicatorCase, self).save(**kwargs)
 
     def is_update(self, doc_dict):

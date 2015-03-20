@@ -3,31 +3,32 @@ from datetime import timedelta, datetime, time
 from django.db.models import Q
 from django.template.defaultfilters import floatformat
 from corehq.apps.commtrack.models import SQLProduct, StockState
-from corehq.apps.locations.models import Location, SQLLocation
-from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
-from corehq.apps.reports.filters.select import MonthFilter, YearFilter
+from corehq.apps.reports.filters.select import YearFilter
 from django.utils import html
-from custom.ilsgateway.filters import ProductByProgramFilter, MSDZoneFilter
-from custom.ilsgateway.models import GroupSummary, SupplyPointStatusTypes, ProductAvailabilityData, \
+from custom.ilsgateway.filters import ProductByProgramFilter, MSDZoneFilter, MonthAndQuarterFilter, ProgramFilter
+from custom.ilsgateway.models import SupplyPointStatusTypes, ProductAvailabilityData, \
     OrganizationSummary, SupplyPointStatus, SupplyPointStatusValues
 from custom.ilsgateway.tanzania import ILSData, DetailsReport
-from custom.ilsgateway.tanzania.reports.facility_details import FacilityDetailsReport
+from custom.ilsgateway.tanzania.reports.facility_details import FacilityDetailsReport, InventoryHistoryData, \
+    RegistrationData, RandRHistory
 from custom.ilsgateway.tanzania.reports.mixins import ProductAvailabilitySummary, SohSubmissionData
 from django.utils.translation import ugettext as _
 from custom.ilsgateway.tanzania.reports.utils import link_format, format_percent, make_url
 from dimagi.utils.dates import get_business_day_of_month, get_day_of_month
 from dimagi.utils.decorators.memoized import memoized
+from django.db.models.aggregates import Avg, Max
 
 
 def get_facilities(location, domain):
 
-    if location.location_type == 'district':
+    if location.location_type.upper() == 'DISTRICT':
         locations = SQLLocation.objects.filter(parent=location)
-    elif location.location_type == 'region':
+    elif location.location_type.upper() == 'REGION':
         locations = SQLLocation.objects.filter(parent__parent=location)
-    elif location.location_type == 'FACILITY':
+    elif location.location_type.upper() == 'FACILITY':
         locations = SQLLocation.objects.filter(id=location.id)
     else:
         locations = SQLLocation.objects.filter(domain=domain)
@@ -83,8 +84,12 @@ class SohPercentageTableData(ILSData):
             DataTablesColumn(_('% Facilities With 1 Or More Stockouts This Month')),
         ])
 
+        month = 'month'
+        if self.config['month'] < 0:
+            month = 'quarter'
+
         for p in products:
-            headers.add_column(DataTablesColumn(_('%s stock outs this month') % p.code))
+            headers.add_column(DataTablesColumn(_('%s stock outs this %s') % (p.code, month)))
 
         return headers
 
@@ -93,7 +98,7 @@ class SohPercentageTableData(ILSData):
         rows = []
         if not self.config['products']:
             prd_id = SQLProduct.objects.filter(domain=self.config['domain'])\
-                .order_by('code').values_list('product_id')
+                .order_by('code').values_list('product_id', flat=True)
         else:
             prd_id = self.config['products']
 
@@ -104,10 +109,10 @@ class SohPercentageTableData(ILSData):
             for loc in locations:
                 org_summary = OrganizationSummary.objects.filter(date__range=(self.config['startdate'],
                                                                  self.config['enddate']),
-                                                                 supply_point=loc.location_id)[0]
+                                                                 supply_point=loc.location_id)
+                self.config['org_summary'] = org_summary
+                soh_data = SohSubmissionData(config=self.config).rows[0]
 
-                soh_data = GroupSummary.objects.get(title=SupplyPointStatusTypes.SOH_FACILITY,
-                                                    org_summary=org_summary)
                 facs = get_facilities(loc, self.config['domain'])
                 facs_count = facs.count()
                 soh_on_time = soh_data.on_time * 100 / facs_count
@@ -116,8 +121,8 @@ class SohPercentageTableData(ILSData):
                 fac_ids = facs.exclude(supply_point_id__isnull=True).values_list(*['supply_point_id'], flat=True)
                 stockouts = (StockTransaction.objects.filter(
                     case_id__in=fac_ids, quantity__lte=0,
-                    report__date__month=int(self.config['month']),
-                    report__date__year=int(self.config['year'])).count() or 0) / facs_count
+                    report__date__month=self.config['enddate'].month,
+                    report__date__year=self.config['enddate'].year).count() or 0) / facs_count
 
                 url = make_url(
                     StockOnHandReport,
@@ -135,11 +140,12 @@ class SohPercentageTableData(ILSData):
 
                 for product in prd_id:
                     ps = ProductAvailabilityData.objects.filter(
-                        supply_point=loc.external_id,
+                        supply_point=loc.location_id,
                         product=product,
-                        date=self.config['startdate'])
-                    if ps:
-                        row_data.append(format_percent(ps[0].without_stock * 100 / float(ps[0].total)))
+                        date__range=(self.config['startdate'], self.config['enddate']))\
+                        .aggregate(without_stock=Avg('without_stock'), total=Max('total'))
+                    if ps['without_stock'] and ps['total']:
+                        row_data.append(format_percent(ps['without_stock'] * 100 / float(ps['total'])))
                     else:
                         row_data.append("<span class='no_data'>None</span>")
                 rows.append(row_data)
@@ -235,10 +241,12 @@ class DistrictSohPercentageTableData(ILSData):
     @property
     def rows(self):
         rows = []
+        enddate = self.config['enddate']
 
         def get_last_reported(supplypoint):
-            last_bd_of_the_month = get_business_day_of_month(int(self.config['year']),
-                                                             int(self.config['month']),
+
+            last_bd_of_the_month = get_business_day_of_month(enddate.year,
+                                                             enddate.month,
                                                              -1)
             st = StockTransaction.objects.filter(
                 case_id=supplypoint,
@@ -246,11 +254,8 @@ class DistrictSohPercentageTableData(ILSData):
                 report__date__lte=last_bd_of_the_month
             ).order_by('-report__date')
 
-            last_of_last_month = datetime(int(self.config['year']),
-                                          int(self.config['month']),
-                                          1) - timedelta(days=1)
-            last_bd_of_last_month = datetime.combine(get_business_day_of_month(last_of_last_month.year,
-                                                     last_of_last_month.month,
+            last_bd_of_last_month = datetime.combine(get_business_day_of_month(enddate.year,
+                                                     enddate.month,
                                                      -1), time())
             if st:
                 sts = _reported_on_time(last_bd_of_last_month, st[0].report.date)
@@ -308,7 +313,7 @@ class DistrictSohPercentageTableData(ILSData):
                 ]
 
                 for product in products:
-                    last_of_the_month = get_day_of_month(int(self.config['year']), int(self.config['month']), -1)
+                    last_of_the_month = get_day_of_month(enddate.year, enddate.month, -1)
                     first_of_the_next_month = last_of_the_month + timedelta(days=1)
                     try:
                         srs = StockTransaction.objects.filter(
@@ -341,13 +346,44 @@ class DistrictSohPercentageTableData(ILSData):
         return rows
 
 
+class ProductSelectionPane(ILSData):
+    slug = 'product_selection_pane'
+    show_table = True
+    show_chart = False
+    title = 'Select Products'
+
+    @property
+    def rows(self):
+        products = SQLProduct.objects.filter(product_id__in=self.config['products'],
+                                             is_archived=False).order_by('code')
+        result = [
+            [
+                '<input class=\"toggle-column\" data-column={2} value=\"{0}\" type=\"checkbox\"'
+                '{3}>{1} ({0})</input>'
+                .format(p.code, p.name, idx, 'checked' if 5 <= idx <= 10 else 'disabled')
+            ] for idx, p in enumerate(products, start=5)
+        ]
+        return result
+
+
 class StockOnHandReport(DetailsReport):
     slug = "stock_on_hand"
     name = 'Stock On Hand'
-    title = 'Stock On Hand'
     use_datatables = True
 
-    fields = [AsyncLocationFilter, MonthFilter, YearFilter, ProductByProgramFilter, MSDZoneFilter]
+    @property
+    def title(self):
+        title = _('Stock On Hand')
+        if self.location and self.location.location_type == 'FACILITY':
+            title = _('Facility Details')
+        return title
+
+    @property
+    def fields(self):
+        fields = [AsyncLocationFilter, MonthAndQuarterFilter, YearFilter, ProgramFilter, MSDZoneFilter]
+        if self.location and self.location.location_type == 'FACILITY':
+            fields = [AsyncLocationFilter, ProductByProgramFilter]
+        return fields
 
     @property
     @memoized
@@ -355,15 +391,24 @@ class StockOnHandReport(DetailsReport):
         config = self.report_config
         data_providers = []
         if config['org_summary']:
-            location = SQLLocation.objects.get(location_id=config['org_summary'].supply_point)
+            location = SQLLocation.objects.get(location_id=config['org_summary'][0].supply_point)
 
             data_providers = [
-                SohSubmissionData(config=config, css_class='row_chart_all'),
+                SohSubmissionData(config=config, css_class='row_chart'),
+                ProductSelectionPane(config=config, css_class='row_chart'),
                 ProductAvailabilitySummary(config=config, css_class='row_chart_all', chart_stacked=False),
             ]
 
             if location.location_type.upper() == 'DISTRICT':
                 data_providers.append(DistrictSohPercentageTableData(config=config, css_class='row_chart_all'))
+            elif location.location_type == 'FACILITY':
+                return [
+                    InventoryHistoryData(config=config),
+                    RandRHistory(config=config),
+                    RegistrationData(config=dict(loc_type='FACILITY', **config), css_class='row_chart_all'),
+                    RegistrationData(config=dict(loc_type='DISTRICT', **config), css_class='row_chart_all'),
+                    RegistrationData(config=dict(loc_type='REGION', **config), css_class='row_chart_all')
+                ]
             else:
                 data_providers.append(SohPercentageTableData(config=config, css_class='row_chart_all'))
         return data_providers

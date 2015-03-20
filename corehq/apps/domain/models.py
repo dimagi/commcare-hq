@@ -3,15 +3,20 @@ from itertools import imap
 import hashlib
 import json
 import logging
+import uuid
 from couchdbkit.exceptions import ResourceConflict
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
+from django.template.loader import render_to_string
 from couchdbkit.ext.django.schema import (
     Document, StringProperty, BooleanProperty, DateTimeProperty, IntegerProperty,
     DocumentSchema, SchemaProperty, DictProperty,
     StringListProperty, SchemaListProperty, TimeProperty, DecimalProperty
 )
 from django.core.cache import cache
+from django.core.urlresolvers import reverse
+from django.db import models
+from django.utils.translation import ugettext_lazy as _
 from corehq.apps.appstore.models import SnapshotMixin
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import iter_docs
@@ -19,6 +24,8 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.couch.database import get_db, get_safe_write_kwargs, apply_update, iter_bulk_delete
+from dimagi.utils.django.email import send_HTML_email
+from dimagi.utils.web import get_url_base
 from itertools import chain
 from langcodes import langs as all_langs
 from collections import defaultdict
@@ -26,6 +33,7 @@ from django.utils.importlib import import_module
 from corehq.apps.locations.schema import LocationType
 from corehq import toggles
 
+from .exceptions import InactiveTransferDomainException
 
 lang_lookup = defaultdict(str)
 
@@ -1074,6 +1082,152 @@ class DomainCounter(Document):
                 if num_tries >= 500:
                     raise
         return (range_start, range_end)
+
+
+class TransferDomainRequest(models.Model):
+    active = models.BooleanField(default=True, blank=True)
+    request_time = models.DateTimeField(null=True, blank=True)
+    request_ip = models.CharField(max_length=80, null=True, blank=True)
+    confirm_time = models.DateTimeField(null=True, blank=True)
+    confirm_ip = models.CharField(max_length=80, null=True, blank=True)
+    transfer_guid = models.CharField(max_length=32, null=True, blank=True)
+
+    domain = models.CharField(max_length=256)
+    from_username = models.CharField(max_length=80)
+    to_username = models.CharField(max_length=80)
+
+    TRANSFER_TO_EMAIL = 'domain/email/domain_transfer_to_request'
+    TRANSFER_FROM_EMAIL = 'domain/email/domain_transfer_from_request'
+    DIMAGI_CONFIRM_EMAIL = 'domain/email/domain_transfer_confirm'
+    DIMAGI_CONFIRM_ADDRESS = 'commcarehq-support@dimagi.com'
+
+    @property
+    @memoized
+    def to_user(self):
+        from corehq.apps.users.models import WebUser
+        return WebUser.get_by_username(self.to_username)
+
+    @property
+    @memoized
+    def from_user(self):
+        from corehq.apps.users.models import WebUser
+        return WebUser.get_by_username(self.from_username)
+
+    @classmethod
+    def get_by_guid(cls, guid):
+        try:
+            return cls.objects.get(transfer_guid=guid, active=True)
+        except TransferDomainRequest.DoesNotExist:
+            return None
+
+    @classmethod
+    def get_active_transfer(cls, domain, from_username):
+        try:
+            return cls.objects.get(domain=domain, from_username=from_username, active=True)
+        except TransferDomainRequest.DoesNotExist:
+            return None
+        except TransferDomainRequest.MultipleObjectsReturned:
+            # Deactivate all active transfer except for most recent
+            latest = cls.objects \
+                .filter(domain=domain, from_username=from_username, active=True, request_time__isnull=False) \
+                .latest('request_time')
+            cls.objects \
+                .filter(domain=domain, from_username=from_username) \
+                .exclude(pk=latest.pk) \
+                .update(active=False)
+
+            return latest
+
+    def requires_active_transfer(fn):
+        def decorate(self, *args, **kwargs):
+            if not self.active:
+                raise InactiveTransferDomainException(_("Transfer domain request is no longer active"))
+            return fn(self, *args, **kwargs)
+        return decorate
+
+    @requires_active_transfer
+    def send_transfer_request(self):
+        self.transfer_guid = uuid.uuid4().hex
+        self.request_time = datetime.now()
+        self.save()
+
+        self.email_to_request()
+        self.email_from_request()
+
+    def activate_url(self):
+        return u"{url_base}/domain/transfer/{guid}/activate".format(
+            url_base=get_url_base(),
+            guid=self.transfer_guid
+        )
+
+    def deactivate_url(self):
+        return u"{url_base}/domain/transfer/{guid}/deactivate".format(
+            url_base=get_url_base(),
+            guid=self.transfer_guid
+        )
+
+    def email_to_request(self):
+        context = self.as_dict()
+
+        html_content = render_to_string("{template}.html".format(template=self.TRANSFER_TO_EMAIL), context)
+        text_content = render_to_string("{template}.txt".format(template=self.TRANSFER_TO_EMAIL), context)
+
+        send_HTML_email(
+            _(u'Transfer of ownership for CommCare project space.'),
+            self.to_user.email,
+            html_content,
+            text_content=text_content)
+
+    def email_from_request(self):
+        context = self.as_dict()
+        context['settings_url'] = u"{url_base}{path}".format(
+            url_base=get_url_base(),
+            path=reverse('transfer_domain_view', args=[self.domain]))
+
+        html_content = render_to_string("{template}.html".format(template=self.TRANSFER_FROM_EMAIL), context)
+        text_content = render_to_string("{template}.txt".format(template=self.TRANSFER_FROM_EMAIL), context)
+
+        send_HTML_email(
+            _(u'Transfer of ownership for CommCare project space.'),
+            self.from_user.email,
+            html_content,
+            text_content=text_content)
+
+    @requires_active_transfer
+    def transfer_domain(self, *args, **kwargs):
+
+        self.confirm_time = datetime.now()
+        if 'ip' in kwargs:
+            self.confirm_ip = kwargs['ip']
+
+        self.from_user.transfer_domain_membership(self.domain, self.to_user, is_admin=True)
+        self.from_user.save()
+        self.to_user.save()
+        self.active = False
+        self.save()
+
+        html_content = render_to_string(
+            "{template}.html".format(template=self.DIMAGI_CONFIRM_EMAIL),
+            self.as_dict())
+        text_content = render_to_string(
+            "{template}.txt".format(template=self.DIMAGI_CONFIRM_EMAIL),
+            self.as_dict())
+
+        send_HTML_email(_(u'There has been a transfer of ownership of {domain}').format(domain=self.domain),
+                        self.DIMAGI_CONFIRM_ADDRESS,
+                        html_content,
+                        text_content=text_content)
+
+    def as_dict(self):
+        return {
+            'domain': self.domain,
+            'from_username': self.from_username,
+            'to_username': self.to_username,
+            'guid': self.transfer_guid,
+            'request_time': self.request_time,
+            'deactivate_url': self.deactivate_url(),
+            'activate_url': self.activate_url(),
+        }
 
 
 def _domain_cache_key(name):

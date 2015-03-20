@@ -57,6 +57,7 @@ LANGUAGES = (
     ('fr', 'French'),
     ('fra', 'French'),  # we need this alias
     ('hin', 'Hindi'),
+    ('sw', 'Swahili'),
 )
 
 SITE_ID = 1
@@ -301,7 +302,6 @@ HQ_APPS = (
     'custom.apps.gsid',
     'hsph',
     'mvp',
-    'mvp_apps',
     'mvp_docs',
     'mvp_indicators',
     'custom.opm',
@@ -476,23 +476,25 @@ PAGINATOR_MAX_PAGE_LINKS = 5
 OPENROSA_VERSION = "1.0"
 
 # OTA restore fixture generators
-FIXTURE_GENERATORS = [
-    "corehq.apps.fixtures.fixturegenerators.hq_fixtures",
-]
-
-HQ_FIXTURE_GENERATORS = [
-    # core
-    "corehq.apps.users.fixturegenerators.user_groups",
-    "corehq.apps.fixtures.fixturegenerators.item_lists",
-    "corehq.apps.callcenter.fixturegenerators.indicators_fixture_generator",
-    "corehq.apps.products.fixtures.product_fixture_generator",
-    "corehq.apps.programs.fixtures.program_fixture_generator",
-    "corehq.apps.locations.fixtures.location_fixture_generator",
-    # custom
-    "custom.bihar.reports.indicators.fixtures.generator",
-    "custom.m4change.fixtures.report_fixtures.generator",
-    "custom.m4change.fixtures.location_fixtures.generator",
-]
+FIXTURE_GENERATORS = {
+    # fixtures that may be sent to the phone independent of cases
+    'standalone': [
+        # core
+        "corehq.apps.users.fixturegenerators.user_groups",
+        "corehq.apps.fixtures.fixturegenerators.item_lists",
+        "corehq.apps.callcenter.fixturegenerators.indicators_fixture_generator",
+        "corehq.apps.products.fixtures.product_fixture_generator",
+        "corehq.apps.programs.fixtures.program_fixture_generator",
+        # custom
+        "custom.bihar.reports.indicators.fixtures.generator",
+        "custom.m4change.fixtures.report_fixtures.generator",
+        "custom.m4change.fixtures.location_fixtures.generator",
+    ],
+    # fixtures that must be sent along with the phones cases
+    'case': [
+        "corehq.apps.locations.fixtures.location_fixture_generator",
+    ]
+}
 
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
 
@@ -656,20 +658,16 @@ AUDIT_MODEL_SAVE = [
     'corehq.apps.app_manager.Application',
     'corehq.apps.app_manager.RemoteApp',
 ]
+
 AUDIT_VIEWS = [
-    'corehq.apps.domain.views.registration_request',
-    'corehq.apps.domain.views.registration_confirm',
-    'corehq.apps.domain.views.password_change',
-    'corehq.apps.domain.views.password_change_done',
-    'corehq.apps.reports.views.submit_history',
-    'corehq.apps.reports.views.active_cases',
-    'corehq.apps.reports.views.submit_history',
-    'corehq.apps.reports.views.default',
-    'corehq.apps.reports.views.submission_log',
-    'corehq.apps.reports.views.form_data',
-    'corehq.apps.reports.views.export_data',
-    'corehq.apps.reports.views.excel_report_data',
-    'corehq.apps.reports.views.daily_submissions',
+    'corehq.apps.settings.views.ChangeMyPasswordView',
+]
+
+AUDIT_MODULES = [
+    'corehq.apps.reports',
+    'corehq.apps.userreports',
+    'corehq.apps.data',
+    'corehq.apps.registration',
 ]
 
 # Don't use google analytics unless overridden in localsettings
@@ -1217,10 +1215,6 @@ PILLOWTOPS = {
         'custom.tdh.models.TDHNewbornTreatmentFluffPillow',
         'custom.tdh.models.TDHChildClassificationFluffPillow',
         'custom.tdh.models.TDHChildTreatmentFluffPillow',
-    ],
-    'mvp': [
-        'corehq.apps.indicators.pillows.FormIndicatorPillow',
-        'corehq.apps.indicators.pillows.CaseIndicatorPillow',
     ],
     'mvp_indicators': [
         'mvp_docs.pillows.MVPFormIndicatorPillow',

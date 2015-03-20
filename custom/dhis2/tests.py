@@ -7,14 +7,16 @@ Replace this with more appropriate tests for your application.
 from contextlib import contextmanager
 from unittest import skip
 from corehq.apps.fixtures.models import FixtureDataType, FixtureTypeField
+from corehq.apps.receiverwrapper.exceptions import IgnoreDocument
 from couchdbkit import ResourceNotFound
-from custom.dhis2.const import ORG_UNIT_FIXTURES
+from custom.dhis2.const import ORG_UNIT_FIXTURES, REGISTER_CHILD_XMLNS, CASE_TYPE
 from custom.dhis2.models import Dhis2OrgUnit, JsonApiRequest, JsonApiError, Dhis2Api, Dhis2ApiQueryError, \
     FixtureManager
-from custom.dhis2.tasks import sync_cases, sync_org_units
+from custom.dhis2.payload_generators import FormRepeaterDhis2EventPayloadGenerator
+from custom.dhis2.tasks import fetch_cases, fetch_org_units
 from django.test import TestCase
 from django.test.testcases import SimpleTestCase
-from mock import patch, Mock
+from mock import patch, Mock, MagicMock
 from couchforms.models import XFormInstance
 
 
@@ -99,9 +101,8 @@ class JsonApiRequestTest(SimpleTestCase):
         JsonApiRequest.json_or_error should return a status code and JSON on success
         """
         with response_context() as response_mock:
-            status_code, data = JsonApiRequest.json_or_error(response_mock)
+            data = JsonApiRequest.json_or_error(response_mock)
 
-            self.assertEqual(status_code, 200)
             self.assertEqual(data, {'spam': True})
 
     def test_json_or_error_raises_404(self):
@@ -111,10 +112,11 @@ class JsonApiRequestTest(SimpleTestCase):
         response_mock = Mock()
         response_mock.url = 'http://nowhere.example.com'
         response_mock.status_code = 404
+        response_mock.text = 'Where?'
 
         with self.assertRaisesMessage(
                 JsonApiError,
-                'API request to http://nowhere.example.com failed with HTTP status 404'):
+                'API request to http://nowhere.example.com failed with HTTP status 404: Where?'):
             JsonApiRequest.json_or_error(response_mock)
 
     def test_json_or_error_raises_500(self):
@@ -140,13 +142,12 @@ class JsonApiRequestTest(SimpleTestCase):
             requests_mock.return_value = response_mock
 
             request = JsonApiRequest('http://www.example.com', 'admin', 's3cr3t')
-            status_code, data = request.get('ham/eggs')
+            data = request.get('ham/eggs')
 
             requests_mock.assert_called_with(
                 'http://www.example.com/api/ham/eggs',
                 headers={'Accept': 'application/json'},
                 auth=('admin', 's3cr3t'))
-            self.assertEqual(status_code, 200)
             self.assertEqual(data, {'spam': True})
 
     def test_post_calls_requests(self):
@@ -158,14 +159,13 @@ class JsonApiRequestTest(SimpleTestCase):
             requests_mock.return_value = response_mock
 
             request = JsonApiRequest('http://www.example.com', 'admin', 's3cr3t')
-            status_code, data = request.post('ham/eggs', {'ham': True})
+            data = request.post('ham/eggs', {'ham': True})
 
             requests_mock.assert_called_with(
                 'http://www.example.com/api/ham/eggs',
                 '{"ham": true}',
                 headers={'Content-type': 'application/json', 'Accept': 'application/json'},
                 auth=('admin', 's3cr3t'))
-            self.assertEqual(status_code, 200)
             self.assertEqual(data, {'spam': True})
 
     def test_put_calls_requests(self):
@@ -177,14 +177,13 @@ class JsonApiRequestTest(SimpleTestCase):
             requests_mock.return_value = response_mock
 
             request = JsonApiRequest('http://www.example.com', 'admin', 's3cr3t')
-            status_code, data = request.put('ham/eggs', {'ham': True})
+            data = request.put('ham/eggs', {'ham': True})
 
             requests_mock.assert_called_with(
                 'http://www.example.com/api/ham/eggs',
                 '{"ham": true}',
                 headers={'Content-type': 'application/json', 'Accept': 'application/json'},
                 auth=('admin', 's3cr3t'))
-            self.assertEqual(status_code, 200)
             self.assertEqual(data, {'spam': True})
 
 
@@ -199,7 +198,7 @@ class Dhis2ApiTest(SimpleTestCase):
             {'name': 'spam', 'id': 'c0ffee'},
         ]}
         dhis2_api = Dhis2Api('http://example.com/dhis', 'user', 'p4ssw0rd')
-        dhis2_api._request.get = Mock(return_value=('foo', te_attrs))
+        dhis2_api._request.get = Mock(return_value=te_attrs)
         keys_before = set(dhis2_api._tracked_entity_attributes.keys())
         dhis2_api._fetch_tracked_entity_attributes()
         keys_after = set(dhis2_api._tracked_entity_attributes.keys())
@@ -380,7 +379,7 @@ class TaskTest(SimpleTestCase):
         pass
 
     @skip('Fix mocks')
-    def test_sync_org_units_dict_comps(self):
+    def test_fetch_org_units_dict_comps(self):
         """
         sync_org_units should create dictionaries of CCHQ and DHIS2 org units
         """
@@ -391,14 +390,14 @@ class TaskTest(SimpleTestCase):
             gen_org_units_patch.side_effect = lambda: (d for d in [ou_dict])  # Generates org unit dicts
             objects_all_patch.side_effect = lambda: (o for o in [ou_obj])  # Generates org unit objects
 
-            sync_org_units()
+            fetch_org_units()
 
             gen_org_units_patch.assert_called()
             objects_all_patch.assert_called()
 
     # TODO: No point in running this test if Dhis2OrgUnit patch doesn't work -- nothing to assert
     @skip('Fix mocks')
-    def test_sync_org_units_adds(self):
+    def test_fetch_org_units_adds(self):
         """
         sync_org_units should add new org units
         """
@@ -410,13 +409,13 @@ class TaskTest(SimpleTestCase):
             gen_org_units_patch.side_effect = lambda: (d for d in [ou_dict])
             objects_all_patch.side_effect = lambda: (o for o in [])
 
-            sync_org_units()
+            fetch_org_units()
 
             org_unit_patch.__init__.assert_called_with(id='1', name='Sri Lanka')
             org_unit_patch.save.assert_called()
 
     @skip('Fix mocks')
-    def test_sync_org_units_deletes(self):
+    def test_fetch_org_units_deletes(self):
         """
         sync_org_units should delete old org units
         """
@@ -427,12 +426,12 @@ class TaskTest(SimpleTestCase):
             gen_org_units_patch.side_effect = lambda: (d for d in [])
             objects_all_patch.side_effect = lambda: (o for o in [ou_obj])
 
-            sync_org_units()
+            fetch_org_units()
 
             delete_mock.assert_called()
 
     @skip('Fix mocks')
-    def test_sync_cases(self):
+    def test_fetch_cases(self):
         with patch('custom.dhis2.tasks.get_children_only_theirs') as only_theirs_mock, \
                 patch('custom.dhis2.tasks.pull_child_entities') as pull_mock, \
                 patch('custom.dhis2.tasks.gen_children_only_ours') as only_ours_mock, \
@@ -442,54 +441,45 @@ class TaskTest(SimpleTestCase):
             only_theirs_mock.return_value = foo
             only_ours_mock.return_value = bar
 
-            sync_cases()
+            fetch_cases()
 
             only_theirs_mock.assert_called()
             pull_mock.assert_called_with(DOMAIN, foo)
             only_ours_mock.assert_called_with(DOMAIN)
             push_mock.assert_called_with(bar)
 
-    @skip('Finish writing this test')
-    def test_sync_forms(self):
+
+class PayloadGeneratorTest(SimpleTestCase):
+
+    def test_get_payload_ignores_unknown_form(self):
         """
-        send_nutrition_data should update DHIS2 with received nutrition data
+        get_payload should raise IgnoreDocument on unknown form XMLNS
         """
-        pass
+        form_mock = {'xmlns': 'unknown', 'domain': 'test-domain'}
+        payload_generator = FormRepeaterDhis2EventPayloadGenerator(None)
+        with self.assertRaises(IgnoreDocument):
+            payload_generator.get_payload(None, form_mock)
 
-
-class UtilTest(SimpleTestCase):
-
-    @skip('Finish writing this test')
-    def test_push_child_entities(self):
+    @patch('custom.dhis2.payload_generators.push_case')
+    @patch('casexml.apps.case.models.CommCareCase')
+    @patch('custom.dhis2.payload_generators.Dhis2Settings')
+    def test_get_payload_ignores_registration(self, Dhis2SettingsPatch, CommCareCasePatch, push_case):
         """
-        push_child_entities should call the DHIS2 API for applicable child entities
+        get_payload should raise IgnoreDocument given a registration form
         """
-        pass
+        case_mock = Mock()
+        case_mock.type = CASE_TYPE
+        cases_mock = Mock()
+        cases_mock.iterator.return_value = [case_mock]
+        CommCareCasePatch.get_by_xform_id.return_value = cases_mock
 
-    @skip('Finish writing this test')
-    def test_pull_child_entities(self):
-        """
-        pull_child_entities should fetch applicable child entities from the DHIS2 API
-        """
-        pass
+        class Settings(object):
+            dhis2 = {'host': 'foo', 'username': 'foo', 'password': 'foo', 'top_org_unit_name': 'foo'}
+        Dhis2SettingsPatch.for_domain.return_value = Settings()
 
-    @skip('Finish writing this test')
-    def test_get_user_by_org_unit(self):
-        pass
+        form_mock = MagicMock()
+        form_mock.__getitem__.return_value = REGISTER_CHILD_XMLNS
 
-    @skip('Finish writing this test')
-    def test_get_case_by_external_id(self):
-        pass
-
-    @skip('Finish writing this test')
-    def test_gen_children_only_ours(self):
-        pass
-
-
-# def test_nutrition_get_payload():
-#
-#     xform = XFormInstance.get('01111de1-5e36-4b7a-a4ce-19ef544710f0')  # Growth monitoring/nutrition assessment
-#     create_repeat_records(FormRepeater, xform)                     # There are no risk assessment forms atm
-#     repeat_records = RepeatRecord.all()
-#     for repeat_record in repeat_records:
-#         repeat_record.fire()
+        payload_generator = FormRepeaterDhis2EventPayloadGenerator(None)
+        with self.assertRaises(IgnoreDocument):
+            payload_generator.get_payload(None, form_mock)

@@ -84,8 +84,20 @@ def rebuild_table(engine, table):
     engine.dispose()
 
 
+def get_column_name(path):
+    parts = path.split("/")
+
+    def _hash(parts):
+        front = "/".join(parts[:-1])
+        end = parts[-1]
+        return hashlib.sha1('{}_{}'.format(hashlib.sha1(front).hexdigest(), end)).hexdigest()[:8]
+
+    return "_".join(parts + [_hash(parts)])
+
+
 def get_table_name(domain, table_id):
     def _hash(domain, table_id):
         return hashlib.sha1('{}_{}'.format(hashlib.sha1(domain).hexdigest(), table_id)).hexdigest()[:8]
 
     return 'config_report_{0}_{1}_{2}'.format(domain, table_id, _hash(domain, table_id))
+
