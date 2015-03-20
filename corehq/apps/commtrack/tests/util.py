@@ -18,6 +18,7 @@ from corehq.apps.products.models import Product
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_safe_write_kwargs
 from casexml.apps.phone.restore import generate_restore_payload
+from casexml.apps.phone.util import get_payload_content
 from lxml import etree
 from corehq.apps.locations.schema import LocationType
 
@@ -201,9 +202,11 @@ class CommTrackTest(TestCase):
             include_docs=True
         )
 
+
 def get_ota_balance_xml(user):
-    xml = generate_restore_payload(user.to_casexml_user(), version=V2)
+    xml = get_payload_content(generate_restore_payload(user.to_casexml_user(), version=V2))
     return extract_balance_xml(xml)
+
 
 def extract_balance_xml(xml_payload):
     balance_blocks = etree.fromstring(xml_payload).findall('{http://commcarehq.org/ledger/v1}balance')
