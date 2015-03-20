@@ -10,7 +10,7 @@
         <div class="well">
             <ul class="nav nav-pills nav-stacked">
                 <li ng-repeat="module in modules" role="presentation" ng-class="{ 'active' : moduleSelected(module)}">
-                    <a ng-click="filterList(module)"><i class="fa fa-folder-open"></i>
+                    <a ng-click="filterList(module)"><i class="hq-icon fa fa-folder-open"></i>
                         {% verbatim %}{{ getFormModuleLabel(module) }}{% endverbatim %}
                     </a>
                     <div class="well">
@@ -84,7 +84,7 @@
         <loading></loading>
         <ul>
             <li ng-repeat="module in modules|filter:moduleSearch">
-                 <h4><i class="fa fa-folder-open"></i> {% verbatim %}{{ getFormModuleLabel(module) }}{% endverbatim %}</h4>
+                 <h4><i class="hq-icon fa fa-folder-open"></i> {% verbatim %}{{ getFormModuleLabel(module) }}{% endverbatim %}</h4>
 
                 <ul>
                     <li ng-repeat="form in module.forms|filter:formSearch">
