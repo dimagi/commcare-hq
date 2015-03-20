@@ -4,6 +4,7 @@ from dateutil.relativedelta import relativedelta
 import pytz
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
+from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.filters.select import YearFilter
 from corehq.apps.reports.sqlreport import SqlTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
@@ -310,6 +311,10 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport,
         table = headers.as_export_table
         rows = [_unformat_row(row) for row in formatted_rows]
         replace = ''
+
+        for row in rows:
+            for index, value in enumerate(row):
+                row[index] = GenericTabularReport._strip_tags(value)
 
         # make headers and subheaders consistent
         for k, v in enumerate(table[0]):

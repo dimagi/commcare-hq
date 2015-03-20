@@ -2,7 +2,9 @@ from django.utils.translation import ugettext_noop
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter
+from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from custom.common import ALL_OPTION
+from corehq import Domain
 
 
 class ProductByProgramFilter(BaseDrilldownOptionFilter):
@@ -77,3 +79,23 @@ class ProductFilter(BaseSingleOptionFilter):
     @property
     def options(self):
         return SQLProduct.objects.filter(domain=self.domain).values_list('product_id', 'name').order_by('name')
+
+
+class EWSLocationFilter(AsyncLocationFilter):
+    def reporting_types(self):
+        return [
+            location_type.name
+            for location_type in Domain.get_by_name(self.domain).location_types
+            if not location_type.administrative
+        ]
+
+    @property
+    def filter_context(self):
+        context = super(EWSLocationFilter, self).filter_context
+        hierarchy = []
+        for h in context['hierarchy']:
+            if h[0] not in self.reporting_types():
+                hierarchy.append(h)
+        context['hierarchy'] = hierarchy
+
+        return context

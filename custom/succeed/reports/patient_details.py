@@ -31,7 +31,7 @@ class PatientDetailsReport(CustomProjectReport, ElasticProjectInspectionReport, 
             return None
         return CommCareCase.get(self.request.GET['patient_id'])
 
-    def get_form_url(self, app_dict, app_build_id, module_idx, form, case_id=None):
+    def get_form_url(self, app_dict, app_build_id, module_idx, form, case_id=None, parent_id=None):
         try:
             module = app_dict['modules'][module_idx]
             if len(module['forms']) == 1:
@@ -41,11 +41,19 @@ class PatientDetailsReport(CustomProjectReport, ElasticProjectInspectionReport, 
         except IndexError:
             form_idx = None
 
-        return html.escape(get_cloudcare_form_url(domain=self.domain,
-                                                  app_build_id=app_build_id,
-                                                  module_id=module_idx,
-                                                  form_id=form_idx,
-                                                  case_id=case_id) + '/enter/')
+        if case_id is None and parent_id is not None:
+            url = get_cloudcare_form_url(domain=self.domain,
+                                         app_build_id=app_build_id,
+                                         module_id=module_idx,
+                                         form_id=form_idx,
+                                         case_id=case_id) + '/parent/' + parent_id
+        else:
+            url = get_cloudcare_form_url(domain=self.domain,
+                                         app_build_id=app_build_id,
+                                         module_id=module_idx,
+                                         form_id=form_idx,
+                                         case_id=case_id) + '/enter/'
+        return html.escape(url)
 
     @property
     def report_context(self):
@@ -82,7 +90,6 @@ class PatientDetailsReport(CustomProjectReport, ElasticProjectInspectionReport, 
         ret['patient_info_url'] = self.patient_info_url
         ret['patient_submission_url'] = self.patient_submission_url
         ret['patient_interactions_url'] = self.patient_interactions_url
-        ret['patient_careplan_url'] = self.patient_careplan_url
         ret['patient_status_url'] = self.patient_status_url
         return ret
 
@@ -122,15 +129,6 @@ class PatientDetailsReport(CustomProjectReport, ElasticProjectInspectionReport, 
         if self.is_all_reports_enabled or self.get_class_path(PatientInteractionsReport) in self.get_available_report_list:
             return html.escape(
                 PatientInteractionsReport.get_url(*[self.get_case()["domain"]]) + "?patient_id=%s" % self.get_case()['_id'])
-        else:
-            return EMPTY_URL
-
-    @property
-    def patient_careplan_url(self):
-        from custom.succeed.reports.patient_tasks import PatientTasksReport
-        if self.is_all_reports_enabled or unicode(PatientTasksReport.__module__+'.'+PatientTasksReport.__name__) in self.get_available_report_list:
-            return html.escape(
-                PatientTasksReport.get_url(*[self.get_case()["domain"]]) + "?patient_id=%s" % self.get_case()['_id'])
         else:
             return EMPTY_URL
 

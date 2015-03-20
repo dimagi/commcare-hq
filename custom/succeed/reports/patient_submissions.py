@@ -1,14 +1,11 @@
-from couchdbkit.exceptions import ResourceNotFound
 from django.core.urlresolvers import reverse
 from corehq.apps.api.es import ReportXFormES
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.search import SearchFilter
-from corehq.apps.users.models import CommCareUser
 from custom.succeed.reports import SUBMISSION_SELECT_FIELDS, EMPTY_FIELD, INTERACTION_OUTPUT_DATE_FORMAT
 from custom.succeed.reports.patient_details import PatientDetailsReport
 from custom.succeed.utils import SUCCEED_DOMAIN
 from django.utils import html
-from dimagi.utils.decorators.memoized import memoized
 from custom.succeed.utils import format_date
 
 
@@ -82,24 +79,17 @@ class PatientSubmissionReport(PatientDetailsReport):
             "from": self.pagination.start
         }
 
-        form_name_group = self.request.GET.get('form_name_group', None)
-        form_name_xmnls = self.request.GET.get('form_name_xmlns', None)
+        form_name_group = self.request.GET.get('form_name', None)
         search_string = SearchFilter.get_value(self.request, self.domain)
 
         if search_string:
             query_block = {"queryString": {"query": "*" + search_string + "*"}}
             full_query["query"]["filtered"]["query"] = query_block
 
-        if form_name_group and form_name_xmnls == '':
-            xmlns_terms = []
-            forms = filter(lambda obj: obj['val'] == form_name_group, SUBMISSION_SELECT_FIELDS)[0]
-            for form in forms['next']:
-                xmlns_terms.append(form['val'])
+        if form_name_group:
+            xmlns_terms = SUBMISSION_SELECT_FIELDS[form_name_group]
 
             full_query['query']['filtered']['filter']['and'].append({"terms": {"xmlns.exact": xmlns_terms}})
-
-        if form_name_xmnls:
-            full_query['query']['filtered']['filter']['and'].append({"term": {"xmlns.exact": form_name_xmnls}})
 
         res = self.xform_es.run_query(full_query)
         return res

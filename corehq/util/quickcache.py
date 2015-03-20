@@ -126,14 +126,14 @@ class QuickCache(object):
         return 'quickcache.{}/{}'.format(self.prefix, args_string)
 
 
-def quickcache(vary_on='', timeout=None, memoize_timeout=None, cache=None):
+def quickcache(vary_on, timeout=None, memoize_timeout=None, cache=None):
     """
     An easy "all-purpose" cache decorator
 
     Examples:
         - caching a singleton function, refresh every 5 minutes
 
-            @quickcache(timeout=5 * 60)
+            @quickcache([], timeout=5 * 60)
             def get_config_from_db():
                 # ...
 

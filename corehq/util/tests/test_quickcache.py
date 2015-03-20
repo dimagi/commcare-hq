@@ -41,7 +41,7 @@ class QuickcacheTest(SimpleTestCase):
         return result
 
     def test_tiered_cache(self):
-        @quickcache(cache=_cache)
+        @quickcache([], cache=_cache)
         def simple():
             BUFFER.append('called')
             return 'VALUE'
@@ -158,7 +158,7 @@ class QuickcacheTest(SimpleTestCase):
             len(key), len('quickcache.lots_of_args.xxxxxxxx/H') + 32, key)
 
     def test_really_long_function_name(self):
-        @quickcache()
+        @quickcache([])
         def aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa():
             """60 a's in a row"""
             pass

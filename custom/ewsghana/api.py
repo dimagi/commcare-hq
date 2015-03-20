@@ -404,6 +404,13 @@ class EWSApi(APISynchronization):
             return None
         sms_user.user_data['to'] = ews_smsuser.to
 
+        if ews_smsuser.role == 'facility_manager':
+            role = UserRole.by_domain_and_name(self.domain, 'Facility manager')
+            if role:
+                dm = sms_user.get_domain_membership(self.domain)
+                dm.role_id = role[0].get_id
+
+        sms_user.save()
         if ews_smsuser.supply_point:
             if ews_smsuser.supply_point.id:
                 sp = SupplyPointCase.view('hqcase/by_domain_external_id',
@@ -415,25 +422,16 @@ class EWSApi(APISynchronization):
                 sp = None
 
             if sp:
-                couch_location_id = sp.location_id
+                couch_location = sp.location
             elif ews_smsuser.supply_point.location_id:
                 try:
                     location = SQLLocation.objects.get(domain=self.domain,
                                                        external_id=ews_smsuser.supply_point.location_id)
-                    couch_location_id = location.location_id
+                    couch_location = location.couch_location()
                 except SQLLocation.DoesNotExist:
-                    couch_location_id = None
+                    couch_location = None
             else:
-                couch_location_id = None
-            if couch_location_id:
-                sms_user.location_id = couch_location_id
-                sms_user.save()
-
-        if ews_smsuser.role == 'facility_manager':
-            role = UserRole.by_domain_and_name(self.domain, 'Facility manager')
-            if role:
-                dm = sms_user.get_domain_membership(self.domain)
-                dm.role_id = role[0].get_id
-
-        sms_user.save()
+                couch_location = None
+            if couch_location:
+                sms_user.set_location(couch_location)
         return sms_user

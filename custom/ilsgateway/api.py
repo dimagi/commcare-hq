@@ -11,7 +11,7 @@ from corehq.apps.programs.models import Program
 from corehq.apps.users.models import UserRole
 from custom.api.utils import apply_updates
 from custom.ilsgateway.models import SupplyPointStatus, DeliveryGroupReport, HistoricalLocationGroup
-from custom.ilsgateway.utils import get_supply_point_by_external_id
+from custom.logistics.utils import get_supply_point_by_external_id
 from custom.logistics.api import LogisticsEndpoint, APISynchronization
 from corehq.apps.locations.models import Location as Loc
 
@@ -196,12 +196,14 @@ class ILSGatewayAPI(APISynchronization):
         sms_user = super(ILSGatewayAPI, self).sms_user_sync(ilsgateway_smsuser, **kwargs)
         if not sms_user:
             return None
-        try:
-            location = SQLLocation.objects.get(domain=self.domain, external_id=ilsgateway_smsuser.supply_point)
-            sms_user.set_location(location.location_id)
-        except SQLLocation.DoesNotExist:
-            pass
+
         sms_user.save()
+        if ilsgateway_smsuser.supply_point:
+            try:
+                location = SQLLocation.objects.get(domain=self.domain, external_id=ilsgateway_smsuser.supply_point)
+                sms_user.set_location(location.couch_location())
+            except SQLLocation.DoesNotExist:
+                pass
         return sms_user
 
     def location_sync(self, ilsgateway_location, fetch_groups=False):
