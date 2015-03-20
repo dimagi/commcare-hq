@@ -29,9 +29,9 @@ class TestLocationTypes(TestCase):
         self.domain.delete()
         LocationType.objects.filter(domain=self.domain.name).delete()
 
-    def test_heirarchy(self):
-        heirarchy = LocationType.objects.full_heirarchy(self.domain.name)
-        desired_heirarchy = {
+    def test_hierarchy(self):
+        hierarchy = LocationType.objects.full_hierarchy(self.domain.name)
+        desired_hierarchy = {
             self.state.id: (
                 self.state,
                 {
@@ -51,4 +51,4 @@ class TestLocationTypes(TestCase):
                 },
             ),
         }
-        self.assertEqual(heirarchy, desired_heirarchy)
+        self.assertEqual(hierarchy, desired_hierarchy)

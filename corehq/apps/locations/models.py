@@ -18,7 +18,7 @@ LOCATION_REPORTING_PREFIX = 'locationreportinggroup-'
 
 
 class LocationTypeManager(models.Manager):
-    def full_heirarchy(self, domain):
+    def full_hierarchy(self, domain):
         """
         Returns a graph of the form
         {
@@ -28,37 +28,37 @@ class LocationTypeManager(models.Manager):
            )
         }
         """
-        heirarchy = {}
+        hierarchy = {}
 
         def insert_loc_type(loc_type):
             """
-            Get parent location's heirarchy, insert loc_type into it, and return
-            heirarchy below loc_type
+            Get parent location's hierarchy, insert loc_type into it, and return
+            hierarchy below loc_type
             """
             if not loc_type.parent_type:
-                lt_heirarchy = heirarchy
+                lt_hierarchy = hierarchy
             else:
-                lt_heirarchy = insert_loc_type(loc_type.parent_type)
-            if loc_type.id not in lt_heirarchy:
-                lt_heirarchy[loc_type.id] = (loc_type, {})
-            return lt_heirarchy[loc_type.id][1]
+                lt_hierarchy = insert_loc_type(loc_type.parent_type)
+            if loc_type.id not in lt_hierarchy:
+                lt_hierarchy[loc_type.id] = (loc_type, {})
+            return lt_hierarchy[loc_type.id][1]
 
         for loc_type in self.filter(domain=domain).all():
             insert_loc_type(loc_type)
 
-        return heirarchy
+        return hierarchy
 
     def by_domain(self, domain):
         """
-        Sorts location types by heirarchy
+        Sorts location types by hierarchy
         """
         ordered_loc_types = []
-        def step_through_graph(heirarchy):
-            for _, (loc_type, children) in heirarchy.items():
+        def step_through_graph(hierarchy):
+            for _, (loc_type, children) in hierarchy.items():
                 ordered_loc_types.append(loc_type)
                 step_through_graph(children)
 
-        step_through_graph(self.full_heirarchy(domain))
+        step_through_graph(self.full_hierarchy(domain))
         return ordered_loc_types
 
 

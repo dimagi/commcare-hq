@@ -158,14 +158,14 @@ class LocationSettingsView(BaseCommTrackManageView):
                          'shares_cases', 'view_descendants']:
                 assert prop in loc_type, "Missing a location type property!"
 
-        heirarchy = self.get_heirarchy(loc_types)
-        for loc_type in heirarchy:
+        hierarchy = self.get_hierarchy(loc_types)
+        for loc_type in hierarchy:
             mk_loctype(**loc_type)
 
         return self.get(request, *args, **kwargs)
 
     # This is largely copy-pasted from the LocationTypeManager
-    def get_heirarchy(self, loc_types):
+    def get_hierarchy(self, loc_types):
         """
         Return loc types in order from parents to
         """
@@ -184,35 +184,35 @@ class LocationSettingsView(BaseCommTrackManageView):
                     step(lt_dict.get(parents[0]))
             step(loc_type)
 
-        heirarchy = {}
+        hierarchy = {}
 
         def insert_loc_type(loc_type):
             """
-            Get parent location's heirarchy, insert loc_type into it,
-            and return heirarchy below loc_type
+            Get parent location's hierarchy, insert loc_type into it,
+            and return hierarchy below loc_type
             """
             name = loc_type['name']
             parents = loc_type['allowed_parents']
             parent = lt_dict.get(parents[0], None) if parents else None
             if not parent:
-                lt_heirarchy = heirarchy
+                lt_hierarchy = hierarchy
             else:
-                lt_heirarchy = insert_loc_type(parent)
-            if name not in lt_heirarchy:
-                lt_heirarchy[name] = (loc_type, {})
-            return lt_heirarchy[name][1]
+                lt_hierarchy = insert_loc_type(parent)
+            if name not in lt_hierarchy:
+                lt_hierarchy[name] = (loc_type, {})
+            return lt_hierarchy[name][1]
 
         for loc_type in loc_types:
             insert_loc_type(loc_type)
 
         ordered_loc_types = []
 
-        def step_through_graph(heirarchy):
-            for name, (loc_type, children) in heirarchy.items():
+        def step_through_graph(hierarchy):
+            for name, (loc_type, children) in hierarchy.items():
                 ordered_loc_types.append(loc_type)
                 step_through_graph(children)
 
-        step_through_graph(heirarchy)
+        step_through_graph(hierarchy)
         return ordered_loc_types
 
 
