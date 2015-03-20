@@ -284,6 +284,9 @@ class BasicPillow(object):
 
         self.process_change(change)
 
+    def process_doc(self, doc_dict):
+        self.process_change({'id': doc_dict['_id'], 'doc': doc_dict})
+
     def process_change(self, change, is_retry_attempt=False):
         try:
             with lock_manager(self.change_trigger(change)) as t:
