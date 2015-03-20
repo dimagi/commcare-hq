@@ -72,6 +72,7 @@ var PaymentMethodHandler = function (errorMessages, submitBtnText) {
     self.reset = function () {
         self.paymentIsComplete(false);
         self.serverErrorMsg('');
+        self.newCard(new StripeCard());
     };
 
     self.processPayment = function () {
