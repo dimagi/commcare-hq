@@ -9,6 +9,7 @@ from corehq.apps.accounting.utils import fmt_dollar_amount
 from corehq.apps.hqwebapp.async_handler import BaseAsyncHandler
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.sms.mixin import SMSBackend
+from corehq.apps.sms.models import INCOMING, OUTGOING
 from corehq.apps.sms.util import get_backend_by_class_name
 from corehq.apps.smsbillables.exceptions import SMSRateCalculatorError
 from corehq.apps.smsbillables.models import SmsGatewayFeeCriteria, SmsGatewayFee, SmsUsageFee
@@ -140,8 +141,8 @@ class PublicSMSRatesAsyncHandler(BaseAsyncHandler):
         for backend_instance in backends:
             backend_type = get_backend_by_class_name(backend_instance.doc_type)
 
-            gateway_fee_incoming = _directed_fee('I', backend_type.get_api_id(), backend_instance._id) or 'NA'
-            gateway_fee_outgoing = _directed_fee('O', backend_type.get_api_id(), backend_instance._id) or 'NA'
+            gateway_fee_incoming = _directed_fee(INCOMING, backend_type.get_api_id(), backend_instance._id) or 'NA'
+            gateway_fee_outgoing = _directed_fee(OUTGOING, backend_type.get_api_id(), backend_instance._id) or 'NA'
             rate_table.append({
                 'gateway': "%s (%s)" % (backend_instance.name, backend_type.get_generic_name()),
                 'inn': gateway_fee_incoming,  # 'in' is reserved
