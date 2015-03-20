@@ -140,6 +140,9 @@ class ILSGatewayAPI(APISynchronization):
     ]
     PRODUCT_CUSTOM_FIELDS = []
 
+    def create_or_edit_roles(self):
+        pass
+
     def prepare_commtrack_config(self):
         """
         Bootstraps the domain-level metadata according to the static config.
