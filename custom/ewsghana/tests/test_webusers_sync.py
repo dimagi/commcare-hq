@@ -52,3 +52,6 @@ class WebUsersSyncTest(TestCase):
         self.assertEqual(0, len(list(WebUser.by_domain(TEST_DOMAIN))))
         users = CommCareUser.by_domain(TEST_DOMAIN)
         self.assertEqual(1, len(list(users)))
+        facility_manager_role = UserRole.by_domain_and_name(TEST_DOMAIN, 'Facility manager')[0]
+        dm = users[0].get_domain_membership(TEST_DOMAIN)
+        self.assertEqual(facility_manager_role.get_id, dm.role_id)
