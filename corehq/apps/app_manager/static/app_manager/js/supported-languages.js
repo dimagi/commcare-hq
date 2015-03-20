@@ -38,6 +38,7 @@ var SupportedLanguages = (function () {
         var self = this;
 
         this.editing = ko.observable(options.edit);
+        this.addLanguageDisabled = ko.observable(false);
         this._seen = ko.observable(false);
         this.seen = ko.computed({
             read: function () {
@@ -90,6 +91,7 @@ var SupportedLanguages = (function () {
                             }
                         }
                         self.removedLanguages.removeAll();
+                        self.addLanguageDisabled(false);
                         ko.utils.arrayForEach(self.languages(), function (language) {
                             language.originalLangcode(language.langcode());
                         });
@@ -113,6 +115,7 @@ var SupportedLanguages = (function () {
         }
         this.addLanguage = function () {
             self.languages.push(newLanguage());
+            this.addLanguageDisabled(true);
             self._seen(true);
         };
         this.removeLanguage = function (language) {
