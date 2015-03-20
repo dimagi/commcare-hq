@@ -23,6 +23,7 @@ from custom.succeed.utils import is_succeed_admin, SUCCEED_CM_APPNAME, has_any_r
 import logging
 import simplejson
 
+
 class PatientListReportDisplay(CaseDisplay):
     def __init__(self, report, case_dict):
 

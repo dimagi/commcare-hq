@@ -170,7 +170,7 @@ class PatientTaskListReport(CustomProjectReport, ElasticProjectInspectionReport,
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        return False
+        return True
 
     @property
     @memoized

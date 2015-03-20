@@ -20,6 +20,7 @@ RISK_FACTOR_CONFIG['Notes:'] = ['risk-factor_at_notes', 'risk-factor_bp_notes', 
                                 'risk-factor_psycho-social_notes', 'risk-factor_diabetes_notes',
                                 'risk-factor_smoking_notes']
 
+
 class PatientInteractionsReport(PatientDetailsReport):
     slug = "patient_interactions"
     name = 'Patient Interactions'
