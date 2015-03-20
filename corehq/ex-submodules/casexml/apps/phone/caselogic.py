@@ -42,17 +42,16 @@ def get_related_cases(initial_cases, domain, strip_history=False, search_up=True
     relevant_cases = {}
     relevant_deleted_case_ids = []
 
-    queue = list(case for case in initial_cases)
+    cases_to_process = list(case for case in initial_cases)
     directly_referenced_indices = itertools.chain(
         *[[index['referenced_id'] for index in indices(case)]
           for case in initial_cases]
     )
     case_db.populate(directly_referenced_indices)
 
-    def process_queue():
+    def process_cases(cases):
         new_relations = set()
-        while queue:
-            case = queue.pop()
+        for case in cases:
             if case and case['_id'] not in relevant_cases:
                 relevant_cases[case['_id']] = case
                 if case['doc_type'] == 'CommCareCase-Deleted':
@@ -61,10 +60,10 @@ def get_related_cases(initial_cases, domain, strip_history=False, search_up=True
 
         if new_relations:
             case_db.populate(new_relations)
-            queue.extend(case_db.get(related_case) for related_case in new_relations)
+            return [case_db.get(related_case) for related_case in new_relations]
 
-    while queue:
-        process_queue()
+    while cases_to_process:
+        cases_to_process = process_cases(cases_to_process)
 
     if relevant_deleted_case_ids:
         logging.info('deleted cases included in footprint (restore): %s' % (

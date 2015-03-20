@@ -133,6 +133,7 @@ class APISynchronization(object):
                             slug=name,
                             label=name,
                             is_required=False,
+                            choices=choices
                         )
                     )
                 else:
@@ -152,6 +153,9 @@ class APISynchronization(object):
         domain_object = Domain.get_by_name(self.domain)
         domain_object.default_sms_backend_id = MobileBackend.load_by_name(None, 'MOBILE_BACKEND_TEST').get_id
         domain_object.save()
+
+    def create_or_edit_roles(self):
+        raise NotImplemented("Not implemented yet")
 
     def location_sync(self, ilsgateway_location):
         raise NotImplemented("Not implemented yet")
