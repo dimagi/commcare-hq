@@ -204,7 +204,7 @@ class ILSGatewayAPI(APISynchronization):
         if ilsgateway_smsuser.supply_point:
             try:
                 location = SQLLocation.objects.get(domain=self.domain, external_id=ilsgateway_smsuser.supply_point)
-                sms_user.set_location(location.couch_location())
+                sms_user.set_location(location.couch_location)
             except SQLLocation.DoesNotExist:
                 pass
         return sms_user
@@ -228,7 +228,7 @@ class ILSGatewayAPI(APISynchronization):
                         domain=self.domain,
                         external_id=ilsgateway_location.parent_id
                     )
-                    loc_parent = sql_loc_parent.couch_location()
+                    loc_parent = sql_loc_parent.couch_location
                 except SQLLocation.DoesNotExist:
                     parent = self.endpoint.get_location(ilsgateway_location.parent_id)
                     loc_parent = self.location_sync(Location(parent))

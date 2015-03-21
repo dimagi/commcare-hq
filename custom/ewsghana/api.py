@@ -492,7 +492,7 @@ class EWSApi(APISynchronization):
                 try:
                     location = SQLLocation.objects.get(domain=self.domain,
                                                        external_id=ews_smsuser.supply_point.location_id)
-                    couch_location = location.couch_location()
+                    couch_location = location.couch_location
                 except SQLLocation.DoesNotExist:
                     couch_location = None
             else:
