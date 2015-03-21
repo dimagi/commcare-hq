@@ -23,9 +23,6 @@
         <li class="active"><a href="#properties" data-toggle="tab">{% trans "Case Properties" %}</a></li>
         {% endif %}
         <li {% if not dynamic_properties %}class="active"{% endif %}><a href="#history" data-toggle="tab">{% trans "Case History" %}</a></li>
-        {% if case.referrals %}
-        <li><a href="#referrals" data-toggle="tab">{% trans "Referrals" %}</a></li>
-        {% endif %}
         {% if case.has_indices %}
         <li><a href="#related" data-toggle="tab">{% trans "Related Cases" %}</a></li>
         {% endif %}
@@ -46,36 +43,6 @@
         </div><!-- end properties tab -->
         {% endif %}
 
-    {% if case.referrals %}
-        <div class="tab-pane" id="referrals">
-            <h2>{% trans "Referrals" %}</h2>
-            <table class="table table-striped case_history">
-                <thead>
-                <tr>
-                    <th>{% trans "Date Opened" %}</th>
-                    <th>{% trans "Type" %}</th>
-                    <th>{% trans "Date Modified" %}</th>
-                    <th>{% trans "Status" %}</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for referral in case.referrals %}
-                    <tr>
-                        <td>{% utc_to_timezone referral.opened_on timezone %}</td>
-                        <td>{{ referral.type }}</td>
-                        <td>{% utc_to_timezone referral.modified_on timezone %}</td>
-                        <td>{{ referral.closed|yesno:"closed,open" }}</td>
-                    </tr>
-                {% empty %}
-                    <tr>
-                        <td colspan="4" class="no_data">{% trans "No referrals" %}</td>
-                    </tr>
-                {% endfor %}
-
-                </tbody>
-            </table>
-        </div> <!-- end referrals tab -->
-    {% endif %}
     {% if case.has_indices %}
         <div class="tab-pane" id="related">
             {% render_case_hierarchy case case_hierarchy_options %}

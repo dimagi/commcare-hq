@@ -7,14 +7,15 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.api import send_sms_to_verified_number
 from corehq.apps.users.models import CommCareUser
-from custom.ewsghana.alerts import ONGOING_NON_REPORTING, ONGOING_STOCKOUT_AT_SDP, ONGOING_STOCKOUT_AT_RMS,\
+from custom.ewsghana.alerts import ONGOING_NON_REPORTING, ONGOING_STOCKOUT_AT_SDP, ONGOING_STOCKOUT_AT_RMS, \
     REPORT_REMINDER, WEB_REMINDER, URGENT_NON_REPORTING, URGENT_STOCKOUT, COMPLETE_REPORT, INCOMPLETE_REPORT, \
-    BELOW_REORDER_LEVELS, ABOVE_THRESHOLD, WITHOUT_RECEIPTS
+    STOCKOUTS_MESSAGE, LOW_SUPPLY_MESSAGE, OVERSTOCKED_MESSAGE, RECEIPT_MESSAGE
 from django.core.mail import send_mail
+from custom.ewsghana.utils import ProductsReportHelper
 from custom.ewsghana.utils import send_test_message, get_reporting_types, can_receive_email
 import settings
-from corehq.apps.commtrack.models import CommtrackConfig
 from custom.ewsghana.models import EWSGhanaConfig
+from django.utils.translation import ugettext as _
 
 
 def send_alert(transactions, sp, user, message):
@@ -300,7 +301,7 @@ def report_completion_check(user):
 
     if not missing_products:
         message = COMPLETE_REPORT
-        send_sms_to_verified_number(user.get_verified_number(), message)
+        send_sms_to_verified_number(user.get_verified_number(), message % user.username)
     elif missing_products:
         message = INCOMPLETE_REPORT % (user.name, user.location.name, ", ".join(sorted(missing_products)))
         send_sms_to_verified_number(user.get_verified_number(), message)
@@ -308,40 +309,66 @@ def report_completion_check(user):
 
 # sends overstock, understock, or SOH without receipts alerts
 def stock_alerts(transactions, user):
-    products_without_receipts = set()
-    products_above = set()
-    products_below = set()
-    sp = SupplyPointCase.get_by_location(user.location)
-    for i in range(0, len(transactions), 2):
-        if StockState.objects.filter(case_id=sp._id, product_id=transactions[i + 1].product_id).exists():
-            receipt = int(transactions[i].quantity)
-            stock = int(transactions[i + 1].quantity)
-            product = SQLProduct.objects.get(product_id=transactions[i].product_id).name
-            last_stock = StockState.objects.get(
-                case_id=sp._id, product_id=transactions[i].product_id).stock_on_hand
+    report_helper = ProductsReportHelper(user.location, transactions)
+    products_below = report_helper.low_supply()
+    stockouts = report_helper.stockouts()
+    overstocked = report_helper.overstocked()
+    receipts = report_helper.receipts()
+    message = ""
+    super_message = ""
 
-            stock_levels_config = CommtrackConfig.for_domain(user.domain).stock_levels_config
-            over_stock_threshold = stock_levels_config.overstock_threshold
-            under_stock_threshold = stock_levels_config.understock_threshold
-
-            if stock > over_stock_threshold:
-                products_above.add(product)
-            elif stock < under_stock_threshold:
-                products_below.add(product)
-            if stock > last_stock and receipt == 0:
-                products_without_receipts.add(product)
+    if stockouts:
+        products_codes_str = ' '.join([stockout.sql_product.code for stockout in stockouts])
+        products_names_str = ' '.join([stockout.sql_product.name for stockout in stockouts])
+        message += " " + STOCKOUTS_MESSAGE % {'products': products_codes_str}
+        super_message = _("stockouts %s; ") % products_names_str
 
     if products_below:
-        message = BELOW_REORDER_LEVELS % (user.name, user.location,
-                                          ", ".join(sorted([str(prod) for prod in products_below])))
-        send_sms_to_verified_number(user.get_verified_number(), message)
-    elif products_above:
-        message = ABOVE_THRESHOLD % (
-            user.name, ", ".join(sorted([str(prod) for prod in products_above])))
-        send_sms_to_verified_number(user.get_verified_number(), message)
-    elif products_without_receipts:
-        message = WITHOUT_RECEIPTS % (
-            ', '.join(sorted([str(prod) for prod in products_without_receipts])))
-        send_sms_to_verified_number(user.get_verified_number(), message)
+        products_codes_str = ' '.join([product.sql_product.code for product in products_below])
+        products_names_str = ' '.join([product.sql_product.name for product in products_below])
+        message += " " + LOW_SUPPLY_MESSAGE % {'low_supply': products_codes_str}
+        super_message += _("below reorder level %s; ") % products_names_str
+
+    if overstocked:
+        if not message:
+            products_codes_str = ' '.join([overstock.sql_product.code for overstock in overstocked])
+            message += " " + OVERSTOCKED_MESSAGE % {'username': user.username, 'overstocked': products_codes_str}
+        products_names_str = ' '.join([overstock.sql_product.name for overstock in overstocked])
+        super_message += _("overstocked %s; ") % products_names_str
+
+    if not message:
+        if not receipts:
+            message = COMPLETE_REPORT % user.username
+        else:
+            products_str = ' '.join(
+                [
+                    "%s %s" % (SQLProduct.objects.get(product_id=receipt.product_id).code, receipt.quantity)
+                    for receipt in receipts
+                ]
+            )
+            message = RECEIPT_MESSAGE % {'username': user.username, 'received': products_str}
     else:
-        return False
+        message = (_('Dear %s,') % user.username) + message
+
+    if super_message:
+        stripped_message = super_message.strip().strip(';')
+        super_message = _('Dear %s, %s is experiencing the following problems: ') + stripped_message
+        send_message_to_admins(user, super_message)
+    send_sms_to_verified_number(user.get_verified_number(), message)
+
+
+def send_message_to_admins(user, message):
+    users = CommCareUser.view(
+        'locations/users_by_location_id',
+        startkey=[user.location.get_id],
+        endkey=[user.location.get_id, {}],
+        include_docs=True
+    ).all()
+    in_charge_users = [
+        u
+        for u in users
+        if u.get_verified_number() and u.user_data.get('role') == "In Charge"
+    ]
+    for in_charge_user in in_charge_users:
+        send_sms_to_verified_number(in_charge_user.get_verified_number(),
+                                    message % (in_charge_user.username, in_charge_user.location.name))

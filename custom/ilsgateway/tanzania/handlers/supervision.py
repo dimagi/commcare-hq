@@ -4,7 +4,7 @@ import re
 from custom.ilsgateway.tanzania.handlers import get_location
 from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
 from custom.ilsgateway.models import SupplyPointStatusValues, SupplyPointStatus, SupplyPointStatusTypes
-from custom.ilsgateway.tanzania.reminders import SUPERVISION_HELP
+from custom.ilsgateway.tanzania.reminders import SUPERVISION_HELP, SUPERVISION_CONFIRM_NO, SUPERVISION_CONFIRM_YES
 
 
 class SupervisionHandler(KeywordHandler):
@@ -19,8 +19,10 @@ class SupervisionHandler(KeywordHandler):
             return
         if re.match("hap", subcommand) or re.match("no", subcommand):
             status_value = SupplyPointStatusValues.NOT_RECEIVED
+            self.respond(SUPERVISION_CONFIRM_NO)
         elif re.match("ndi", subcommand) or re.match("yes", subcommand):
             status_value = SupplyPointStatusValues.RECEIVED
+            self.respond(SUPERVISION_CONFIRM_YES)
         else:
             self.help()
             return

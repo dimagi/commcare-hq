@@ -5,7 +5,7 @@
         <tr class="row control-group" data-bind="css: {error: validateGeneral()}">
             <th></th>
             <th></th>
-            <th>{% if not always_deploy %}{% trans "Deploy" %}{% endif %}</th>
+            <th>{% if not hide_deploy_column %}{% trans "Deploy" %}{% endif %}</th>
             <th></th>
             <th></th>
             <th></th>
@@ -30,7 +30,7 @@
                 <span class="label label-info" data-bind="visible: isDefaultLang()">1. default</span>
             </td>
             <td>
-                {% if always_deploy %}
+                {% if hide_deploy_column %}
                 <input type="checkbox" checked="checked" data-bind="value: deploy, visible: false" />
                 {% else %}
                 <span data-bind="editableBool: deploy, editing: $root.editing"></span>
@@ -52,10 +52,11 @@
         </tr>
     </tbody>
 </table>
-<button class="btn" data-bind="click: addLanguage, visible: editing">
+<button class="btn" data-bind="click: addLanguage, visible: editing, disable: addLanguageDisabled">
     <i class="icon-plus"></i>
-    Add Language
+    {% trans "Add Language" %}
 </button>
+<span class='label label-warning' data-bind="visible: addLanguageDisabled">{% trans 'Please save before adding another language' %}</span>
 <div data-bind="if: removedLanguages().length">
     <h6>Deleting Languages:</h6>
     <table class="table">

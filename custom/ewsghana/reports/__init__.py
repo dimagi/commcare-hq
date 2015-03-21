@@ -191,12 +191,17 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
             location_id=self.request.GET.get('location_id'),
         )
 
+    def report_filters(self):
+        return [f.slug for f in self.fields]
+
     @property
     def report_context(self):
         context = {
             'reports': [self.get_report_context(dp) for dp in self.data_providers],
             'title': self.title,
             'split': self.split,
+            'r_filters': self.report_filters(),
+            'fpr_filters': [f.slug for f in self.fields],
             'exportable': self.is_exportable,
             'location_id': self.request.GET.get('location_id'),
         }
