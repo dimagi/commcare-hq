@@ -275,8 +275,8 @@ def _get_test_locations(domain):
     sql_locations = SQLLocation.objects.filter(
         Q(domain=domain) & (Q(parent=test_region) | Q(parent__parent=test_region))
     ).order_by('id').only('location_id')
-    return [sql_location.couch_location() for sql_location in sql_locations] + \
-           [test_region.couch_location()]
+    return [sql_location.couch_location for sql_location in sql_locations] + \
+           [test_region.couch_location]
 
 
 def populate_report_data(start_date, end_date, domain, runner):
