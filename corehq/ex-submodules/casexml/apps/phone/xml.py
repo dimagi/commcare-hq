@@ -76,10 +76,6 @@ def get_case_element(case, updates, version=V1):
         purge_block = generator.get_close_element()
         root.append(purge_block)
         
-    if not do_purge:
-        # only send down referrals if the case is not being purged
-        generator.add_referrals(root)
-        
     return root
 
 

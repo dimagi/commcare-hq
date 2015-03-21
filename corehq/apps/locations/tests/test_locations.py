@@ -1,8 +1,9 @@
-from corehq.apps.locations.models import Location, SQLLocation, LOCATION_SHARING_PREFIX, LOCATION_REPORTING_PREFIX
-from corehq.apps.locations.schema import LocationType
+from corehq.apps.locations.models import Location, LocationType, SQLLocation, \
+    LOCATION_SHARING_PREFIX, LOCATION_REPORTING_PREFIX
 from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.locations.fixtures import location_fixture_generator
 from corehq.apps.commtrack.helpers import make_supply_point, make_product
+from corehq.apps.commtrack.util import bootstrap_location_types
 from corehq.apps.users.models import CommCareUser
 from django.test import TestCase
 from couchdbkit import ResourceNotFound
@@ -17,13 +18,12 @@ class LocationProducts(TestCase):
     def setUp(self):
         self.domain = create_domain('locations-test')
         self.domain.locations_enabled = True
-        self.domain.location_types = [
-            LocationType(
-                name='outlet',
-                allowed_parents=[]
-            ),
-        ]
         self.domain.save()
+
+        LocationType.objects.get_or_create(
+            domain=self.domain.name,
+            name='outlet',
+        )
 
         make_product(self.domain.name, 'apple', 'apple')
         make_product(self.domain.name, 'orange', 'orange')
@@ -36,6 +36,7 @@ class LocationProducts(TestCase):
     def tearDown(self):
         # domain delete cascades to everything else
         self.domain.delete()
+        LocationType.objects.filter(domain=self.domain.name).delete()
 
     def test_start_state(self):
         self.assertTrue(self.loc.stocks_all_products)
@@ -79,23 +80,7 @@ class LocationTestBase(TestCase):
     def setUp(self):
         self.domain = create_domain('locations-test')
         self.domain.locations_enabled = True
-        self.domain.location_types = [
-            LocationType(
-                name='state',
-                allowed_parents=[''],
-                administrative=True
-            ),
-            LocationType(
-                name='village',
-                allowed_parents=['state'],
-                administrative=True
-            ),
-            LocationType(
-                name='outlet',
-                allowed_parents=['village']
-            ),
-        ]
-        self.domain.save()
+        bootstrap_location_types(self.domain.name)
 
         self.loc = make_loc('loc', type='outlet', domain=self.domain.name)
         self.sp = make_supply_point(self.domain.name, self.loc)
@@ -120,7 +105,7 @@ class LocationsTest(LocationTestBase):
         # make sure we can go between sql/couch locs
         sql_loc = SQLLocation.objects.get(name=self.loc.name)
         self.assertEqual(
-            sql_loc.couch_location()._id,
+            sql_loc.couch_location._id,
             self.loc._id
         )
 

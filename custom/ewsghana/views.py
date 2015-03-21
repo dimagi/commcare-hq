@@ -91,7 +91,7 @@ def sync_ewsghana(request, domain):
 @require_POST
 def ews_sync_stock_data(request, domain):
     apis = (
-        ('stock_transaction', sync_stock_transactions)
+        ('stock_transaction', sync_stock_transactions),
     )
     config = EWSGhanaConfig.for_domain(domain)
     domain = config.domain

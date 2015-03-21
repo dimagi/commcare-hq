@@ -120,6 +120,7 @@ def bootstrap_domain(api_object, **kwargs):
         offset = 0
     api_object.set_default_backend()
     api_object.prepare_custom_fields()
+    api_object.create_or_edit_roles()
     synchronize_domain = partial(synchronization, checkpoint=checkpoint, date=date)
     apis = [
         ('product', partial(

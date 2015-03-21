@@ -25,6 +25,8 @@ def ews_location_extension(location, loc):
 
 
 def ews_product_extension(couch_product, product):
+    if not product.program.code:
+        return couch_product
     program = Program.get_by_code(couch_product.domain, product.program.code)
     if not program:
         program = Program(domain=couch_product.domain)

@@ -105,18 +105,18 @@ class ReportingRatesData(EWSData):
     def get_supply_points(self, location_id=None):
         location = SQLLocation.objects.get(location_id=location_id) if location_id else self.location
         location_types = self.reporting_types()
-        if location.location_type == 'district':
+        if location.location_type.name == 'district':
             locations = SQLLocation.objects.filter(parent=location)
-        elif location.location_type == 'region':
+        elif location.location_type.name == 'region':
             locations = SQLLocation.objects.filter(
-                Q(parent__parent=location) | Q(parent=location, location_type__in=location_types)
+                Q(parent__parent=location) | Q(parent=location, location_type__name__in=location_types)
             )
         elif location.location_type in location_types:
             locations = SQLLocation.objects.filter(id=location.id)
         else:
             locations = SQLLocation.objects.filter(
                 domain=self.domain,
-                location_type__in=location_types,
+                location_type__name__in=location_types,
                 parent=location
             )
         return locations.exclude(supply_point_id__isnull=True)
@@ -137,7 +137,7 @@ class ReportingRatesData(EWSData):
     def all_reporting_locations(self):
         return SQLLocation.objects.filter(
             domain=self.domain,
-            location_type__in=self.reporting_types()
+            location_type__name__in=self.reporting_types()
         ).values_list('supply_point_id', flat=True)
 
 
@@ -191,12 +191,17 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
             location_id=self.request.GET.get('location_id'),
         )
 
+    def report_filters(self):
+        return [f.slug for f in self.fields]
+
     @property
     def report_context(self):
         context = {
             'reports': [self.get_report_context(dp) for dp in self.data_providers],
             'title': self.title,
             'split': self.split,
+            'r_filters': self.report_filters(),
+            'fpr_filters': [f.slug for f in self.fields],
             'exportable': self.is_exportable,
             'location_id': self.request.GET.get('location_id'),
         }

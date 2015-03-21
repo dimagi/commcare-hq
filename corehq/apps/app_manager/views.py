@@ -2770,17 +2770,6 @@ def _questions_for_form(request, form, langs):
     xform_questions = context['xform_questions']
     return xform_questions, m.messages
 
-def _find_name(names, langs):
-    name = None
-    for lang in langs:
-        if lang in names:
-            name = names[lang]
-            break
-    if name is None:
-        lang = names.keys()[0]
-        name = names[lang]
-    return name
-
 
 class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
     urlname = 'app_summary'
@@ -2848,16 +2837,21 @@ class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, Appli
         for module in self.app.get_modules():
             forms = []
             for form in module.get_forms():
-                questions = form.get_questions(self.app.langs, include_triggers=True, include_groups=True)
+                questions = form.get_questions(
+                    self.app.langs,
+                    include_triggers=True,
+                    include_groups=True,
+                    include_translations=True
+                )
                 forms.append({
                     'id': form.unique_id,
-                    'name': _find_name(form.name, self.app.langs),
+                    'name': form.name,
                     'questions': [FormQuestionResponse(q).to_json() for q in questions],
                 })
 
             modules.append({
                 'id': module.unique_id,
-                'name': _find_name(module.name, self.app.langs),
+                'name': module.name,
                 'forms': forms
             })
         return {

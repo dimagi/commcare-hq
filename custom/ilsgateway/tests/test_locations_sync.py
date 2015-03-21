@@ -51,9 +51,9 @@ class LocationSyncTest(TestCase):
         self.assertEqual(4, len(list(Location.by_domain(TEST_DOMAIN))))
         self.assertEqual(4, SQLLocation.objects.filter(domain=TEST_DOMAIN).count())
         sql_location = SQLLocation.objects.get(domain=TEST_DOMAIN, site_code='DM520053')
-        self.assertEqual('FACILITY', sql_location.location_type)
+        self.assertEqual('FACILITY', sql_location.location_type.name)
         self.assertIsNotNone(sql_location.supply_point_id)
 
         sql_location2 = SQLLocation.objects.get(domain=TEST_DOMAIN, site_code='region-dodoma')
-        self.assertEqual('REGION', sql_location2.location_type)
+        self.assertEqual('REGION', sql_location2.location_type.name)
         self.assertIsNone(sql_location2.supply_point_id)

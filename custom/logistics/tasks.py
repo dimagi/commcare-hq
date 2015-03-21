@@ -22,9 +22,14 @@ from dimagi.utils.dates import force_to_datetime
 def stock_data_task(domain, endpoint, apis, config, test_facilities=None):
     # checkpoint logic
     start_date = datetime.today()
+    default_api = apis[0][0]
+
     try:
         checkpoint = StockDataCheckpoint.objects.get(domain=domain)
         api = checkpoint.api
+        # legacy
+        if api == 'product_stock':
+            api = default_api
         date = checkpoint.date
         limit = checkpoint.limit
         offset = checkpoint.offset
@@ -38,9 +43,9 @@ def stock_data_task(domain, endpoint, apis, config, test_facilities=None):
         checkpoint = StockDataCheckpoint()
         checkpoint.domain = domain
         checkpoint.start_date = start_date
-        api = 'product_stock'
+        api = default_api
         date = None
-        limit = 100
+        limit = 1000
         offset = 0
         location = None
 
@@ -61,7 +66,6 @@ def stock_data_task(domain, endpoint, apis, config, test_facilities=None):
         if external_id:
             facilities = itertools.dropwhile(lambda x: int(x) != int(external_id), facilities)
 
-    default_api = apis[0][0]
     for idx, (api_name, api_function) in enumerate(apis_from_checkpoint):
         api_function(
             domain=domain,
@@ -72,13 +76,13 @@ def stock_data_task(domain, endpoint, apis, config, test_facilities=None):
             endpoint=endpoint,
             facilities=facilities
         )
-        limit = 100
+        limit = 1000
         offset = 0
         # todo: see if we can avoid modifying the list of facilities in place
         if idx == 0:
             facilities = facilities_copy
 
-    save_stock_data_checkpoint(checkpoint, default_api, 100, 0, start_date, None, False)
+    save_stock_data_checkpoint(checkpoint, default_api, 1000, 0, start_date, None, False)
     checkpoint.start_date = None
     checkpoint.save()
 
@@ -128,7 +132,7 @@ def sync_stock_transactions(domain, endpoint, facilities, checkpoint, date, limi
 
 
 def sync_stock_transactions_for_facility(domain, endpoint, facility, xform, checkpoint,
-                           date, limit=100, offset=0):
+                           date, limit=1000, offset=0):
     """
     Syncs stock data from StockTransaction objects in ILSGateway to StockTransaction objects in HQ
     """
