@@ -16,6 +16,7 @@ from corehq.apps.userreports.sql import _expand_column, _get_distinct_values
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
 
@@ -69,11 +70,20 @@ class TestExpandReportColumn(TestCase):
         post_case_blocks([case_block], {'domain': self.domain})
         return CommCareCase.get(id)
 
-    def test_getting_distinct_values(self):
+    def _build_report(self, vals, field='my_field'):
+        """
+        Build a new report, and populate it with cases.
+
+        Return a ConfigurableReportDataSource and a ReportColumn
+        :param vals: List of values to populate the given report field with.
+        :param field: The name of a field in the data source/report
+        :return: Tuple containing a ConfigurableReportDataSource and ReportColumn.
+        The column is a column mapped to the given field.
+        """
 
         # Create Cases
-        for x in ['apple', 'apple', 'banana', 'blueberry']:
-            self._new_case({'fruit': x}).save()
+        for v in vals:
+            self._new_case({field: v}).save()
 
         # Create report
         data_source_config = DataSourceConfiguration(
@@ -94,10 +104,10 @@ class TestExpandReportColumn(TestCase):
                 "type": "expression",
                 "expression": {
                     "type": "property_name",
-                    "property_name": "fruit"
+                    "property_name": field
                 },
-                "column_id": "fruit",
-                "display_name": "fruit",
+                "column_id": field,
+                "display_name": field,
                 "datatype": "string"
             }],
         )
@@ -112,8 +122,8 @@ class TestExpandReportColumn(TestCase):
             aggregation_columns=['doc_id'],
             columns=[{
                 "type": "field",
-                "field": "fruit",
-                "display": "Fruit",
+                "field": field,
+                "display": field,
                 "format": "default",
                 "aggregation": "expand",
             }],
@@ -123,9 +133,34 @@ class TestExpandReportColumn(TestCase):
         report_config.save()
         data_source = ReportFactory.from_spec(report_config)
 
-        # Get distinct values
-        vals = _get_distinct_values(data_source.config, data_source.column_configs[0])[0]
+        return data_source, data_source.column_configs[0]
+
+    def setUp(self):
+        delete_all_cases()
+
+    def test_getting_distinct_values(self):
+        data_source, column = self._build_report([
+            'apple',
+            'apple',
+            'banana',
+            'blueberry'
+        ])
+        vals = _get_distinct_values(data_source.config, column)[0]
         self.assertSetEqual(set(vals), set(['apple', 'banana', 'blueberry']))
+
+    def test_no_distinct_values(self):
+        data_source, column = self._build_report([])
+        distinct_vals, too_many_values = _get_distinct_values(data_source.config, column)
+        self.assertListEqual(distinct_vals, [])
+
+    def test_too_large_expansion(self):
+        vals = ['foo' + str(i) for i in range(11)]
+        # Maximum expansion width is 10
+        data_source, column = self._build_report(vals)
+        distinct_vals, too_many_values = _get_distinct_values(data_source.config, column)
+        self.assertTrue(too_many_values)
+        self.assertEqual(len(distinct_vals), 10)
+
 
     def test_expansion(self):
         column = ReportColumn(
