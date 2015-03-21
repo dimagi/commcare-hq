@@ -1,10 +1,12 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from corehq import Domain
+from corehq.apps.es import UserES
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.graph_models import PieChart
 from custom.ewsghana import StockLevelsReport
+from custom.ewsghana.filters import ProductByProgramFilter
 from custom.ewsghana.reports import MultiReport, EWSData, ReportingRatesData
 from casexml.apps.stock.models import StockTransaction
 from custom.ewsghana.reports.stock_levels_report import FacilityReportData, StockLevelsLegend, FacilitySMSUsers, \
@@ -17,11 +19,6 @@ from django.utils.translation import ugettext as _
 from dimagi.utils.dates import DateSpan
 
 
-# TODO Implement this when alerts (moving from EWS) will be finished
-class AlertsData(EWSData):
-    pass
-
-
 class ReportingRates(ReportingRatesData):
     show_table = False
     show_chart = True
@@ -32,7 +29,7 @@ class ReportingRates(ReportingRatesData):
     def rows(self):
         rows = {}
         if self.location_id:
-            if self.location.location_type == 'country':
+            if self.location.location_type.name == 'country':
                 supply_points = self.all_reporting_locations()
                 reports = len(self.reporting_supply_points(supply_points))
             else:
@@ -145,13 +142,13 @@ class SummaryReportingRates(ReportingRatesData):
             if location_type.administrative
         ]
         return SQLLocation.objects.filter(parent__location_id=self.config['location_id'],
-                                          location_type__in=location_types)
+                                          location_type__name__in=location_types)
 
     @property
     def headers(self):
         if self.location_id:
             return DataTablesHeader(
-                DataTablesColumn(_(self.get_locations[0].location_type.title())),
+                DataTablesColumn(_(self.get_locations[0].location_type.name.title())),
                 DataTablesColumn(_('# Sites')),
                 DataTablesColumn(_('# Reporting')),
                 DataTablesColumn(_('Reporting Rate'))
@@ -192,7 +189,7 @@ class NonReporting(ReportingRatesData):
     @property
     def title(self):
         if self.location_id:
-            location_type = self.location.location_type.lower()
+            location_type = self.location.location_type.name.lower()
             if location_type == 'country':
                 return _('Non Reporting RMS and THs')
             else:
@@ -279,13 +276,79 @@ class InCompleteReports(ReportingRatesData):
         return rows
 
 
+class AlertsData(ReportingRatesData):
+    show_table = True
+    show_chart = False
+    slug = 'alerts'
+    title = _('Alerts')
+
+    @property
+    def headers(self):
+        return []
+
+    def supply_points_reporting_last_month(self, supply_points):
+        self.config['enddate'] = datetime.today()
+        self.config['startdate'] = self.config['enddate'] - timedelta(days=30)
+        result = StockTransaction.objects.filter(
+            case_id__in=supply_points,
+            report__date__range=[self.config['startdate'], self.config['enddate']]
+        ).distinct('case_id').values_list('case_id', flat=True)
+        return result
+
+    def supply_points_users(self, supply_points):
+        query = UserES().mobile_users().domain(self.config['domain']).term("domain_membership.location_id",
+                                                                           [sp for sp in supply_points])
+        with_reporters = set()
+        with_in_charge = set()
+
+        for hit in query.run().hits:
+            with_reporters.add(hit['domain_membership']['location_id'])
+            if hit['user_data'].get('role') == 'In Charge':
+                with_in_charge.add(hit['domain_membership']['location_id'])
+
+        return with_reporters, with_in_charge
+
+    @property
+    def rows(self):
+        rows = []
+        if self.location_id:
+            supply_points = self.get_supply_points()
+            reported = self.supply_points_reporting_last_month(supply_points.values_list('supply_point_id',
+                                                                                         flat=True))
+            with_reporters, with_in_charge = self.supply_points_users(supply_points.values_list('location_id',
+                                                                                                flat=True))
+            for sp in supply_points:
+                url = make_url(
+                    StockLevelsReport, self.config['domain'], '?location_id=%s&startdate=%s&enddate=%s',
+                    (sp.location_id, self.config['startdate'].strftime("%Y-%m-%d"),
+                     self.config['enddate'].strftime("%Y-%m-%d"))
+                )
+                if sp.supply_point_id not in reported:
+                    rows.append(['<div style="background-color: rgba(255, 0, 0, 0.2)">%s has not reported last '
+                                 'month. <a href="%s">[details]</a></div>' % (sp.name, url)])
+                if sp.location_id not in with_reporters:
+                    rows.append(['<div style="background-color: rgba(255, 0, 0, 0.2)">%s has not no reporters'
+                                 ' registered. <a href="%s">[details]</a></div>' % (sp.name, url)])
+                if sp.location_id not in with_in_charge:
+                    rows.append(['<div style="background-color: rgba(255, 0, 0, 0.2)">%s has not no in-charge '
+                                 'registered. <a href="%s">[details]</a></div>' % (sp.name, url)])
+
+        if not rows:
+            rows.append(['<div style="background-color: rgba(0, 255, 0, 0.2)">No current alerts</div>'])
+
+        return rows
+
+
 class ReportingRatesReport(MultiReport):
 
     name = 'Reporting Page'
     title = 'Reporting Page'
     slug = 'reporting_page'
-    fields = [AsyncLocationFilter, DatespanFilter]
+    fields = [AsyncLocationFilter, ProductByProgramFilter, DatespanFilter]
     split = False
+
+    def report_filters(self):
+        return [f.slug for f in [AsyncLocationFilter, DatespanFilter]]
 
     @property
     def report_config(self):
@@ -314,12 +377,13 @@ class ReportingRatesReport(MultiReport):
             ]
         self.split = False
         data_providers = [
+            AlertsData(config=config),
             ReportingRates(config=config),
             ReportingDetails(config=config)]
 
         if config['location_id']:
             location = SQLLocation.objects.get(location_id=config['location_id'])
-            if location.location_type.lower() in ['country', 'region']:
+            if location.location_type.name.lower() in ['country', 'region']:
                 data_providers.append(SummaryReportingRates(config=config))
 
         data_providers.extend([

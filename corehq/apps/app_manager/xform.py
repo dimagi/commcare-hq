@@ -784,7 +784,7 @@ class XForm(WrappedNode):
 
         control_nodes = self.get_control_nodes()
 
-        for node, path, repeat, group, items, is_leaf, data_type in control_nodes:
+        for node, path, repeat, group, items, is_leaf, data_type, relevant, required in control_nodes:
             excluded_paths.add(path)
             if not is_leaf and not include_groups:
                 continue
@@ -802,7 +802,10 @@ class XForm(WrappedNode):
                 "repeat": repeat,
                 "group": group,
                 "type": data_type,
+                "relevant": relevant,
+                "required": required == "true()"
             }
+
             if include_translations:
                 question["translations"] = self.get_label_translations(node, langs)
 
@@ -846,6 +849,7 @@ class XForm(WrappedNode):
                 }
                 if include_translations:
                     question["translations"] = {}
+
                 questions.append(question)
 
         return questions
@@ -872,6 +876,8 @@ class XForm(WrappedNode):
                     path = self.resolve_path(self.get_path(node), path_context)
                     bind = self.get_bind(path)
                     data_type = infer_vellum_type(node, bind)
+                    relevant = bind.attrib.get('relevant') if bind else None
+                    required = bind.attrib.get('required') if bind else None
                     skip = False
 
                     if tag == "group":
@@ -906,7 +912,7 @@ class XForm(WrappedNode):
                     if not skip:
                         control_nodes.append((node, path, repeat_context,
                                               group_context, items, is_leaf,
-                                              data_type))
+                                              data_type, relevant, required))
                     if recursive_kwargs:
                         for_each_control_node(**recursive_kwargs)
 
