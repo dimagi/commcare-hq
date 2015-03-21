@@ -98,7 +98,7 @@ class CMSRMSReportData(EmailReportData):
     slug = 'stock_summary'
 
     def get_locations(self, loc_id, domain):
-        return SQLLocation.objects.filter(location_type__in=['Regional Medical Store', 'Central Medical Store'],
+        return SQLLocation.objects.filter(location_type__name__in=['Regional Medical Store', 'Central Medical Store'],
                                           domain=domain)
 
 
@@ -148,7 +148,7 @@ class StockSummaryReportingData(EmailReportingData):
 class CMSRMSSummaryReportingData(EmailReportingData):
     def get_locations(self, loc_id, domain):
         return [loc.supply_point_id for loc in
-                SQLLocation.objects.filter(location_type__in=['Regional Medical Store', 'Central Medical Store'],
+                SQLLocation.objects.filter(location_type__name__in=['Regional Medical Store', 'Central Medical Store'],
                                            domain=domain)]
 
 

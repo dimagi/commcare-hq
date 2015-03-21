@@ -24,16 +24,16 @@ def get_supply_points(location_id, domain):
         lambda loc_type: not loc_type.administrative,
         Domain.get_by_name(domain).location_types
     )]
-    if loc.location_type == 'district':
+    if loc.location_type.name == 'district':
         locations = SQLLocation.objects.filter(parent=loc)
-    elif loc.location_type == 'region':
+    elif loc.location_type.name == 'region':
         locations = SQLLocation.objects.filter(
-            Q(parent__parent=loc) | Q(parent=loc, location_type__in=location_types)
+            Q(parent__parent=loc) | Q(parent=loc, location_type__name__in=location_types)
         )
-    elif loc.location_type in location_types:
+    elif loc.location_type.name in location_types:
         locations = SQLLocation.objects.filter(id=loc.id)
     else:
-        locations = SQLLocation.objects.filter(domain=domain, location_type__in=location_types)
+        locations = SQLLocation.objects.filter(domain=domain, location_type__name__in=location_types)
     return locations.exclude(supply_point_id__isnull=True)
 
 
@@ -255,4 +255,4 @@ def can_receive_email(user, verified_number):
 
 
 def get_country_id(domain):
-    return SQLLocation.objects.filter(domain=domain, location_type='country')[0].location_id
+    return SQLLocation.objects.filter(domain=domain, location_type__name='country')[0].location_id

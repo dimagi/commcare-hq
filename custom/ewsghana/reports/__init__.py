@@ -105,18 +105,18 @@ class ReportingRatesData(EWSData):
     def get_supply_points(self, location_id=None):
         location = SQLLocation.objects.get(location_id=location_id) if location_id else self.location
         location_types = self.reporting_types()
-        if location.location_type == 'district':
+        if location.location_type.name == 'district':
             locations = SQLLocation.objects.filter(parent=location)
-        elif location.location_type == 'region':
+        elif location.location_type.name == 'region':
             locations = SQLLocation.objects.filter(
-                Q(parent__parent=location) | Q(parent=location, location_type__in=location_types)
+                Q(parent__parent=location) | Q(parent=location, location_type__name__in=location_types)
             )
         elif location.location_type in location_types:
             locations = SQLLocation.objects.filter(id=location.id)
         else:
             locations = SQLLocation.objects.filter(
                 domain=self.domain,
-                location_type__in=location_types,
+                location_type__name__in=location_types,
                 parent=location
             )
         return locations.exclude(supply_point_id__isnull=True)
@@ -137,7 +137,7 @@ class ReportingRatesData(EWSData):
     def all_reporting_locations(self):
         return SQLLocation.objects.filter(
             domain=self.domain,
-            location_type__in=self.reporting_types()
+            location_type__name__in=self.reporting_types()
         ).values_list('supply_point_id', flat=True)
 
 
