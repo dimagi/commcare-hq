@@ -43,9 +43,9 @@ def on_going_process_user(user, test=False):
         return
 
     facilities = []
-    if user_location.location_type == 'district':
+    if user_location.location_type.name == 'district':
         facilities = user_location.get_children()
-    elif user_location.location_type == 'region':
+    elif user_location.location_type.name == 'region':
         facilities = SQLLocation.objects.filter(domain=user.domain,
                                                 parent__parent__location_id=user.location._id)
     fac = set()
@@ -90,9 +90,9 @@ def on_going_stockout_process_user(user, test=False):
         return
 
     facilities = []
-    if user_location.location_type == 'district':
+    if user_location.location_type.name == 'district':
         facilities = user_location.get_children()
-    elif user_location.location_type == 'region':
+    elif user_location.location_type.name == 'region':
         facilities = SQLLocation.objects.filter(domain=user.domain,
                                                 parent__parent__location_id=user.location._id)
 
@@ -110,14 +110,14 @@ def on_going_stockout_process_user(user, test=False):
             fac.add(unicode(facility.name))
 
     if fac and user.get_verified_number():
-        if user_location.location_type == 'district':
+        if user_location.location_type.name == 'district':
             message = ONGOING_STOCKOUT_AT_SDP % " \n".join(fac)
             verified_number = user.get_verified_number()
             send_sms_to_verified_number(verified_number, message)
             if can_receive_email(user, verified_number):
                 email = str(user.email)
                 send_mail('ONGOING STOCKOUT AT SDP', message, 'commcarehq-noreply@dimagi.com', [email])
-        elif user_location.location_type == 'region':
+        elif user_location.location_type.name == 'region':
             message = ONGOING_STOCKOUT_AT_RMS % " \n".join(fac)
             verified_number = user.get_verified_number()
             if not test:
@@ -146,12 +146,12 @@ def urgent_non_reporting_process_user(user, test=False):
     if not user_location:
         return
     facilities = []
-    if user_location.location_type == 'district':
+    if user_location.location_type.name == 'district':
         facilities = user_location.get_children()
-    elif user_location.location_type == 'region':
+    elif user_location.location_type.name == 'region':
         facilities = SQLLocation.objects.filter(domain=user.domain,
                                                 parent__parent__location_id=user.location._id)
-    elif user_location.location_type == 'country':
+    elif user_location.location_type.name == 'country':
         facilities = SQLLocation.objects.filter(domain=user.domain,
                                                 parent__parent__parent__location_id=user.location._id)
     fac = set()
@@ -194,12 +194,12 @@ def urgent_stockout_process_user(user, test=False):
         return
 
     facilities = []
-    if user_location.location_type == 'district':
+    if user_location.location_type.name == 'district':
         facilities = user_location.get_children()
-    elif user_location.location_type == 'region':
+    elif user_location.location_type.name == 'region':
         facilities = SQLLocation.objects.filter(domain=user.domain,
                                                 parent__parent__location_id=user.location._id)
-    elif user_location.location_type == 'country':
+    elif user_location.location_type.name == 'country':
         facilities = SQLLocation.objects.filter(domain=user.domain,
                                                 parent__parent__parent__location_id=user.location._id)
     stocked_out_products = set()

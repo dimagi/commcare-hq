@@ -29,7 +29,7 @@ class ReportingRates(ReportingRatesData):
     def rows(self):
         rows = {}
         if self.location_id:
-            if self.location.location_type == 'country':
+            if self.location.location_type.name == 'country':
                 supply_points = self.all_reporting_locations()
                 reports = len(self.reporting_supply_points(supply_points))
             else:
@@ -142,13 +142,13 @@ class SummaryReportingRates(ReportingRatesData):
             if location_type.administrative
         ]
         return SQLLocation.objects.filter(parent__location_id=self.config['location_id'],
-                                          location_type__in=location_types)
+                                          location_type__name__in=location_types)
 
     @property
     def headers(self):
         if self.location_id:
             return DataTablesHeader(
-                DataTablesColumn(_(self.get_locations[0].location_type.title())),
+                DataTablesColumn(_(self.get_locations[0].location_type.name.title())),
                 DataTablesColumn(_('# Sites')),
                 DataTablesColumn(_('# Reporting')),
                 DataTablesColumn(_('Reporting Rate'))
@@ -189,7 +189,7 @@ class NonReporting(ReportingRatesData):
     @property
     def title(self):
         if self.location_id:
-            location_type = self.location.location_type.lower()
+            location_type = self.location.location_type.name.lower()
             if location_type == 'country':
                 return _('Non Reporting RMS and THs')
             else:
@@ -383,7 +383,7 @@ class ReportingRatesReport(MultiReport):
 
         if config['location_id']:
             location = SQLLocation.objects.get(location_id=config['location_id'])
-            if location.location_type.lower() in ['country', 'region']:
+            if location.location_type.name.lower() in ['country', 'region']:
                 data_providers.append(SummaryReportingRates(config=config))
 
         data_providers.extend([
