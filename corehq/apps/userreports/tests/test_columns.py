@@ -95,7 +95,7 @@ class TestExpandReportColumn(TestCase):
                 "type": "boolean_expression",
                 "operator": "eq",
                 "expression": {
-                "type": "property_name",
+                    "type": "property_name",
                     "property_name": "type"
                 },
                 "property_value": self.case_type,
@@ -161,7 +161,6 @@ class TestExpandReportColumn(TestCase):
         self.assertTrue(too_many_values)
         self.assertEqual(len(distinct_vals), 10)
 
-
     def test_expansion(self):
         column = ReportColumn(
             type="field",
@@ -175,4 +174,4 @@ class TestExpandReportColumn(TestCase):
 
         self.assertEqual(len(cols), 2)
         self.assertEqual(type(cols[0].view), SumWhen)
-        self.assertEqual(cols[1].view.whens, {'negative':1})
+        self.assertEqual(cols[1].view.whens, {'negative': 1})
