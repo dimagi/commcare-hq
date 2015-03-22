@@ -642,6 +642,14 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
                 c['aggregation'] = "expand"
         return columns
 
+    @property
+    @memoized
+    def _report_aggregation_cols(self):
+        # we want the bar chart behavior, which is reproduced here:
+        return [
+            self.data_source_properties[self.aggregation_field]['column_id']
+        ]
+
 
 class ConfigureWorkerReportForm(ConfigureTableReportForm):
     # It's a ConfigureTableReportForm, but with a predetermined aggregation
