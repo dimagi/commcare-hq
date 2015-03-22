@@ -118,7 +118,7 @@ def bootstrap_domain(api_object, **kwargs):
         date = None
         limit = 100
         offset = 0
-
+    api_object.set_default_backend()
     api_object.prepare_custom_fields()
     synchronize_domain = partial(synchronization, checkpoint=checkpoint, date=date)
     apis = [

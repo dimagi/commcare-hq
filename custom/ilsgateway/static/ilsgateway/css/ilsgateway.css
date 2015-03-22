@@ -50,3 +50,17 @@ tr:nth-child(n+2) {
     margin-bottom: 0.25em;
     padding-bottom: 0.25em;
 }
+
+#report_table_product_selection_pane tr {
+    width: 50%;
+    display: inline-block;
+    font-size: 10px;
+}
+
+#report_table_product_selection_pane tr:last-child {
+    width: 100%;
+}
+
+#report_table_product_selection_pane td {
+    padding: 0;
+}

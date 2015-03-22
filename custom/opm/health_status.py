@@ -81,229 +81,230 @@ class AWCHealthStatus(object):
     """
     method_map = [
         # method, header, help_text, count_method
+        ('awc_code',
+         _("AWC Code"),
+         "",
+         'no_denom'),
         ('awc_name',
          _("AWC Name"),
          "",
          'no_denom'),
+        ('gp',
+         _("Gram Panchayat"),
+         "",
+         'no_denom'),
         ('beneficiaries',
-         _("Total Beneficiaries"),
-         _("Pregnant women and children"),
+         _("Registered Beneficiaries"),
+         _("Beneficiaries registered with BCSP"),
          'no_denom'),
         ('pregnancies',
-         _("Pregnant Women"),
-         "",
+         _("Registered pregnant women"),
+         _("Pregnant women registered with BCSP"),
          'beneficiaries'),
         ('mothers',
-         _("New Mothers"),
-         _("Mothers of children aged 3 years and below"),
+         _("Registered mothers"),
+         _("Mothers registered with BCSP"),
          'beneficiaries'),
         ('children',
-         _("Children"),
-         _("Children below 3 years of age"),
+         _("Registered children "),
+         _("Children below 3 years of age registered with BCSP"),
          'beneficiaries'),
         ('eligible_by_fulfillment',
-         _("Eligible By Fulfillment"),
-        _("Number of beneficiaries eligilble for monthly cash payment in the "
-          "presence of a VHND in the last month."),
+         _("Eligible for payment upon fulfillment of cash conditions"),
+         _("Registered beneficiaries eligilble for cash payment for the month "
+           "upon fulfillment of cash conditions"),
          'beneficiaries'),
         ('eligible_by_default',
-         _("Eligible By Default"),
-        _("Number of beneficiaries eligilble for monthly cash payment on "
-          "absence of services at VHND in the last month."),
+         _("Eligible for payment upon absence of services"),
+         _("Registered beneficiaries eligilble for cash payment for the month upon absence of services at VHND"),
          'beneficiaries'),
         ('eligible',
-         _("Total Eligible For Payment"),
-        _("Number of beneficiaries eligilble for monthly cash payment."),
+         _("Eligible for payment"),
+         _("Registered beneficiaries eligilble for cash payment for the month"),
          'beneficiaries'),
         ('total_payment',
-         _("Total Payment"),
-        _("Total Monthly cash payment made to beneficiaries"),
+         _("Total cash payment"),
+         _("Total cash payment made to registered beneficiaries for the month"),
          'no_denom'),
         ('preg_vhnd',
-         _("Pregnant VHND Attendance"),
-         _("Pregnant women who attended a VHND this month or were or exempt.  "
-           "Beneficiaries are exempt during the 9th month of pregancy, and when "
-           "there is no VHND"),
+         _("Pregnant women attended VHND"),
+         _("Registered pregnant women who attended VHND for the month"),
          'pregnancies'),
         ('child_vhnd',
-         _("Child VHND Attendance"),
-         _("New mothers who attended a VHND this month or were exempt.  "
-           "Beneficiaries are exempt during the 1st month after childbirth, "
-           "and when there is no VHND"),
+         _("Children attended VHND"),
+         _("Registered children below 3 years of age who attended VHND for the month"),
          'children'),
         ('beneficiary_vhnd',
-         _("Beneficiary VHND Attendance"),
-         _("Total beneficiaries who attended a VHND this month or were exempt.  "
-           "Beneficiaries are exempt during the 1st month after childbirth, "
-           "and when there is no VHND"),
+         _("Beneficiaries attended VHND"),
+         _("Registered beneficiaries who attended VHND for the month"),
          'beneficiaries'),
         ('ifa_tablets',
-         _("IFA Receipts"),
-         _("Women 6 months pregnant who have received IFA tablets.  Exempt "
-           "if IFA tablets were not available."),
+         _("Received at least 30 IFA tablets"),
+         _("Registered pregnant women (6 months pregnant) who received at least "
+           "30 IFA tablets in second trimester"),
          'preg_6_months'),
         ('preg_weighed_6',
-         _("Pregnancy Weight Monitoring, 1st Trimester"),
-         _("Women 6 months pregnant whose weight gain was monitored this trimester.  Exempt if no VHND."),
+         _("Weight monitored in second trimester"),
+         _("Registered pregnant women (6 months pregnant) who got their weight monitored in second trimester"),
          'preg_6_months'),
         ('preg_weighed_9',
-         _("Pregnancy Weight Monitoring, 2nd Trimester"),
-         _("Women 9 months pregnant whose weight gain was monitored this trimester.  Exempt if no VHND."),
+         _("Weight monitored in third trimester"),
+         _("Registered pregnant women (9 months pregnant) who got their weight monitored in third trimester"),
          'preg_9_months'),
         ('child_weighed',
-         _("Child Weight Monitoring"),
-         _("3-month-old children who have been weighed since birth"),
+         _("Weight monitored at birth"),
+         _("Registered children (3 months old) whose weight was monitored at birth"),
          'child_3_months'),
         ('children_registered',
-         _("Births Registered"),
-         _("6-month-old children whose birth was registered.  Exempt if no VHND."),
+         _("Child birth registered"),
+         _("Registered children (6 months old) whose birth was registered in the first 6 months after birth"),
          'child_6_months'),
         ('child_growth_monitored_0_3',
-         _("Child Growth Monitored 0-3 months"),
-         _("Number of children aged 0-3 months who have "
-           "attended at least one growth monitoring session in that window. "
-           "Exempt if no scale was available at the VHND."),
+         _("Growth monitoring when 0-3 months old"),
+         _("Registered Children (3 months old) who have "
+           "attended at least one growth monitoring session between the age 0-3 months"),
          'child_0_3_months'),
         ('child_growth_monitored_4_6',
-         _("Child Growth Monitored 4-6 months"),
-         _("Number of children aged 4-6 months who have "
-           "attended at least one growth monitoring session in that window. "
-           "Exempt if no scale was available at the VHND."),
+         _("Growth Monitoring when 4-6 months old"),
+         _("Registered Children (6 months old) who have "
+           "attended at least one growth monitoring session between the age 4-6 months"),
          'child_4_6_months'),
         ('child_growth_monitored_7_9',
-         _("Child Growth Monitored 7-9 months"),
-         _("Number of children aged 7-9 months who have "
-           "attended at least one growth monitoring session in that window. "
-           "Exempt if no scale was available at the VHND."),
+         _("Growth Monitoring when 7-9 months old"),
+         _("Registered Children (9 months old) who have "
+           "attended at least one growth monitoring session between the age 7-9 months"),
          'child_7_9_months'),
         ('child_growth_monitored_10_12',
-         _("Child Growth Monitored 10-12 months"),
-         _("Number of children aged 10-12 months who have "
-           "attended at least one growth monitoring session in that window. "
-           "Exempt if no scale was available at the VHND."),
+         _("Growth Monitoring when 10-12 months old"),
+         _("Registered Children (12 months old) who have "
+           "attended at least one growth monitoring session between the age 10-12 months"),
          'child_10_12_months'),
         ('child_growth_monitored_13_15',
-         _("Child Growth Monitored 13-15 months"),
-         _("Number of children aged 13-15 months who have "
-           "attended at least one growth monitoring session in that window. "
-           "Exempt if no scale was available at the VHND."),
+         _("Growth Monitoring when 13-15 months old"),
+         _("Registered Children (15 months old) who have "
+           "attended at least one growth monitoring session between the age 13-15 months"),
          'child_13_15_months'),
         ('child_growth_monitored_16_18',
-         _("Child Growth Monitored 16-18 months"),
-         _("Number of children aged 16-18 months who have "
-           "attended at least one growth monitoring session in that window. "
-           "Exempt if no scale was available at the VHND."),
+         _("Growth Monitoring when 16-18 months old"),
+         _("Registered Children (18 months old) who have "
+           "attended at least one growth monitoring session between the age 16-18 months"),
          'child_16_18_months'),
         ('child_growth_monitored_19_21',
-         _("Child Growth Monitored 19-21 months"),
-         _("Number of children aged 19-21 months who have "
-           "attended at least one growth monitoring session in that window. "
-           "Exempt if no scale was available at the VHND."),
+         _("Growth Monitoring when 19-21 months old"),
+         _("Registered Children (21 months old) who have "
+           "attended at least one growth monitoring session between the age 19-21 months"),
          'child_19_21_months'),
         ('child_growth_monitored_22_24',
-         _("Child Growth Monitored 22-24 months"),
-         _("Number of children aged 22-24 months who have "
-           "attended at least one growth monitoring session in that window. "
-           "Exempt if no scale was available at the VHND."),
+         _("Growth Monitoring when 22-24 months old"),
+         _("Registered Children (24 months old) who have "
+           "attended at least one growth monitoring session between the age 22-24 months"),
          'child_22_24_months'),
         ('ors_received',
-         _("ORS received"),
-         _("Number of children who contracted diarrhea and received ORS and "
-           "Zinc treatment."),
+         _("Received ORS and Zinc treatment for diarrhoea"),
+         _("Registered children who received ORS and Zinc treatment if he/she contracts diarrhoea"),
          'has_diarhea'),
         ('child_breastfed',
-         _("Children Breastfed"),
-         _("Number of Children 6 months old reported to have exclusively breastfed"),
+         _("Exclusively breastfed for first 6 months"),
+         _("Registered children (6 months old) who have been exclusively breastfed for first 6 months"),
          'child_6_months'),
         ('measles_vaccine',
-         _("Measles Vaccine"),
-        _("Number of children 12 months of age who have received measles "
-          "vaccine.  Exempt if no vaccine was available."),
+         _("Received Measles vaccine"),
+         _("Registered children (12 months old) who have received Measles vaccine"),
          'child_12_months'),
         ('vhnd_held',
-         _("VHND"),
-         _("VHND organized at AWC"),
+         _("VHND organised"),
+         _("Whether VHND was organised at AWC for the month"),
          'one'),
         ('adult_scale_available',
          _("Adult Weighing Machine Available"),
-         _("Adult weighing machine available at vhnd"),
+         _("Whether adult weighing machine was available for the month"),
          'one'),
         ('adult_scale_functional',
          _("Adult Weighing Machine Functional"),
-         _("Adult weighing machine functional at vhnd"),
+         _("Whether adult weighing machine was functional for the month"),
          'one'),
         ('child_scale_available',
          _("Child Weighing Machine Available"),
-         _("Child weighing machine available at vhnd"),
+         _("Whether child weighing machine was available for the month"),
          'one'),
         ('child_scale_functional',
          _("Child Weighing Machine Functional"),
-         _("Child weighing machine functional at vhnd"),
+         _("Whether child weighing machine was functional for the month"),
          'one'),
         ('anm_present',
          _("ANM Present"),
-         _("ANM Present at VHND"),
+         _("Whether ANM present at VHND for the month"),
          'one'),
         ('asha_present',
          _("ASHA Present"),
-         _("ASHA Present at VHND"),
+         _("Whether ASHA present at VHND for the month"),
          'one'),
         ('cmg_present',
          _("CMG Present"),
-         _("CMG Present at VHND"),
+         _("Whether CMG present at VHND for the month"),
          'one'),
         ('ifa_stock_available',
          _("Stock of IFA tablets"),
-         _("AWC has enough Stock of IFA tablets"),
+         _("Whether AWC has enough stock of IFA tablets for the month"),
          'one'),
         ('ors_stock_available',
          _("Stock of ORS packets"),
-         _("AWC has enough Stock of ORS packets"),
+         _("Whether AWC has enough stock of ORS packets for the month"),
          'one'),
         ('zinc_stock_available',
          _("Stock of ZINC tablets"),
-         _("AWC has enough Stock of ZINC tablets"),
+         _("Whether AWC has enough stock of Zinc Tablets for the month"),
          'one'),
         ('measles_stock_available',
          _("Stock of Measles Vaccine"),
-         _("AWC has enough Stock of Measles Vaccine"),
+         _("Whether AWC has enough stock of measles vaccine for the month"),
          'one'),
         ('birth_spacing_bonus',
          _("Eligilble for Birth Spacing bonus"),
-         _("Number of Beneficiaries eligilble for Birth Spacing bonus"),
+         _("Registered beneficiaries eligible for birth spacing bonus for the month"),
          'beneficiaries'),
+        ('nutritional_status_sam',
+         _("Severely underweight"),
+         _("Registered children severely underweight (very low weight for age) for the month"),
+         'children'),
+        ('nutritional_status_mam',
+         _("Underweight"),
+         _("Registered children underweight (low weight for age) for the month"),
+         'children'),
+        ('nutritional_status_normal',
+         _("Normal weight for age"),
+         _("Registered children with normal weight for age for the month"),
+         'children'),
         ('nutritional_bonus',
          _("Eligilble for Nutritional status bonus"),
-         _("Number of Beneficiaries eligilble for Nutritional status bonus"),
+         _("Registered beneficiaries eligible for nutritonal status bonus for the month"),
          'beneficiaries'),
         ('closed_pregnants',
-         _("Pregnants closed this month"),
-         _("Number of Pregnant women closed this month"),
+         _("Pregnant women cases closed"),
+         _("Registered pregnant women cases closed for the month"),
          'beneficiaries'),
         ('closed_mothers',
-         _("Mothers closed this month"),
-         _("Number of Mothers closed this month"),
+         _("Mother cases closed"),
+         _("Registered mother cases closed for the month"),
          'mothers'),
         ('closed_children',
-         _("Children closed this month"),
-         _("Number of Children closed this month"),
+         _("Children cases closed"),
+         _("Registered children cases closed for the month"),
          'children'),
-        # ('',
-         # _(""),
-        # _(""),
-         # ''),
     ]
 
     # TODO possible general approach in the future:
     # subclass OPMCaseRow specifically for this report, and add in indicators to
     # our hearts' content.  This would allow us to override definitions of
     # indicators based on their meanings in THIS report.
-    def __init__(self, awc_name, cases):
+    def __init__(self, cases, awc, awc_code, gp):
         # Some of the cases are second or third children of the same mother
         # include that distinction here
         self.all_cases = cases
         self.primary_cases = [c for c in cases if not c.is_secondary]
-        self.awc_name = awc_name
+        self.awc_name = awc
+        self.awc_code = awc_code
+        self.gp = gp
 
     @property
     def no_denom(self):
@@ -554,6 +555,18 @@ class AWCHealthStatus(object):
     @property
     def nutritional_bonus(self):
         return len([c for c in self.all_cases if c.weight_grade_normal])
+
+    @property
+    def nutritional_status_sam(self):
+        return len([c for c in self.all_cases if c.weight_grade_status('SAM')])
+
+    @property
+    def nutritional_status_mam(self):
+        return len([c for c in self.all_cases if c.weight_grade_status('MAM')])
+
+    @property
+    def nutritional_status_normal(self):
+        return len([c for c in self.all_cases if c.weight_grade_status('normal')])
 
     @property
     def closed_pregnants(self):

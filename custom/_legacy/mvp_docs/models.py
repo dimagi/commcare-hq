@@ -53,7 +53,7 @@ class IndicatorXForm(IndicatorDocument, XFormInstance):
 
     def save(self, **kwargs):
         self.doc_type = 'IndicatorXForm'
-        assert(self.get_db() != XFormInstance.get_db())
+        assert self.get_db().uri != XFormInstance.get_db().uri
         super(IndicatorXForm, self).save(**kwargs)
 
     def is_update(self, doc_dict):
@@ -65,7 +65,7 @@ class IndicatorCase(IndicatorDocument, CommCareCase):
 
     def save(self, **kwargs):
         self.doc_type = 'IndicatorCase'
-        assert(self.get_db() != CommCareCase.get_db())
+        assert self.get_db().uri != CommCareCase.get_db().uri
         super(IndicatorCase, self).save(**kwargs)
 
     def is_update(self, doc_dict):

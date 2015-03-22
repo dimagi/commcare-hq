@@ -56,7 +56,7 @@ def has_any_role(user):
 
 
 def get_app_build(app_dict):
-    domain = Domain._get_by_name(app_dict['domain'])
+    domain = Domain.get_by_name(app_dict['domain'])
     if domain.use_cloudcare_releases:
         return ApplicationBase.get(app_dict['_id']).get_latest_app()['_id']
     else:
@@ -74,14 +74,15 @@ def get_form_dict(case, form_xmlns):
 
 
 def format_date(date_string, OUTPUT_FORMAT, localize=None):
-    if date_string is None or date_string == '' or date_string == " " or date_string == EMPTY_FIELD or isinstance(date_string, (int, float)):
-        return _("Bad Date Format!")
+    if date_string is None or date_string == '' or date_string == " " or date_string == EMPTY_FIELD \
+            or isinstance(date_string, (int, float)):
+        return ''
 
     if isinstance(date_string, basestring):
         try:
             date_string = dateutil.parser.parse(date_string)
         except (AttributeError, ValueError):
-            return _("Bad Date Format!")
+            return ''
 
     if localize:
         tz = timezone(Domain.get_by_name(SUCCEED_DOMAIN).default_timezone)

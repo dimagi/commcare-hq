@@ -24,9 +24,10 @@ def safe_download(f):
         domain = args[0] if len(args) > 0 else kwargs["domain"]
         app_id = args[1] if len(args) > 1 else kwargs["app_id"]
         latest = True if req.GET.get('latest') == 'true' else False
-        
+        target = req.GET.get('target') or None
+
         try:
-            req.app = get_app(domain, app_id, latest=latest)
+            req.app = get_app(domain, app_id, latest=latest, target=target)
             return f(req, *args, **kwargs)
         except (AppEditingError, CaseError), e:
             logging.exception(e)

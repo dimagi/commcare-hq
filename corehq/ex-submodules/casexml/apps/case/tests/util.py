@@ -14,7 +14,7 @@ from casexml.apps.phone.models import SyncLog
 from couchforms.tests.testutils import post_xform_to_couch
 from couchforms.models import XFormInstance
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case import process_cases
+from casexml.apps.case.xform import process_cases
 from casexml.apps.phone.restore import RestoreConfig
 from casexml.apps.case.util import post_case_blocks
 

@@ -45,6 +45,7 @@ class ProductAvailabilityData(EWSData):
                     without_stock = stocks.filter(stock_on_hand=0).count()
                     without_data = total - with_stock - without_stock
                     rows.append({"product_code": p.code,
+                                 "product_name": p.name,
                                  "total": total,
                                  "with_stock": with_stock,
                                  "without_stock": without_stock,
@@ -80,21 +81,25 @@ class ProductAvailabilityData(EWSData):
                     for row in rows:
                         total = row['total']
                         if k == 'No Stock Data':
-                            datalist.append([row['product_code'], calculate_percent(row['without_data'], total)])
+                            datalist.append([row['product_code'], calculate_percent(row['without_data'], total),
+                                             row['product_name']])
                         elif k == 'Stocked out':
-                            datalist.append([row['product_code'], calculate_percent(row['without_stock'], total)])
+                            datalist.append([row['product_code'], calculate_percent(row['without_stock'], total),
+                                             row['product_name']])
                         elif k == 'Not Stocked out':
-                            datalist.append([row['product_code'], calculate_percent(row['with_stock'], total)])
+                            datalist.append([row['product_code'], calculate_percent(row['with_stock'], total),
+                                             row['product_name']])
                     ret_data.append({'color': chart_config['label_color'][k], 'label': k, 'data': datalist})
                 return ret_data
             chart = EWSMultiBarChart('', x_axis=Axis('Products'), y_axis=Axis('', '.2%'))
             chart.rotateLabels = -45
             chart.marginBottom = 120
             chart.stacked = False
+            chart.tooltipFormat = " on "
             chart.forceY = [0, 1]
             for row in convert_product_data_to_stack_chart(product_availability, self.chart_config):
                 chart.add_dataset(row['label'], [
-                    {'x': r[0], 'y': r[1]}
+                    {'x': r[0], 'y': r[1], 'name': r[2]}
                     for r in sorted(row['data'], key=lambda x: x[0])], color=row['color']
                 )
             return [chart]

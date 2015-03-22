@@ -102,8 +102,6 @@ class MVPCaseIndicatorPillow(MVPIndicatorPillowBase):
                 domain,
                 case_type=case_type
             ))
-        if not case_indicator_defs:
-            return
 
         try:
             indicator_case = IndicatorCase.wrap_for_indicator_db(doc_dict)
