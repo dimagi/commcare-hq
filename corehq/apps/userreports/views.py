@@ -15,7 +15,7 @@ from corehq.apps.app_manager.models import(
 )
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, View
 
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq import ConfigurableReport, privileges, Session, toggles
@@ -155,10 +155,27 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
             return self.get(request, *args, **kwargs)
 
 
+class EditReportInBuilder(View):
+
+    def dispatch(self, request, *args, **kwargs):
+        report_id = kwargs['report_id']
+        report = ReportConfiguration.get(report_id)
+        if report.report_meta.created_by_builder:
+            view_class = {
+                'chart': ConfigureChartReport,
+                'list': ConfigureListReport,
+                'worker': ConfigureWorkerReport,
+                'table': ConfigureTableReport
+            }[report.report_meta.builder_report_type]
+            return view_class.as_view(existing_report=report)(request, *args, **kwargs)
+        raise Http404("Report was not created by the report builder")
+
+
 class ConfigureChartReport(ReportBuilderView):
     template_name = "userreports/partials/report_builder_configure_report.html"
     url_args = ['report_name', 'application', 'source_type', 'source']
     report_title = _("Chart Report: {}")
+    existing_report = None
 
     def get_context_data(self, **kwargs):
         context = {
@@ -170,7 +187,8 @@ class ConfigureChartReport(ReportBuilderView):
             },
             'form': self.report_form,
             'property_options': self.report_form.data_source_properties.values(),
-            'initial_filters': self.report_form.initial_filters
+            'initial_filters': self.report_form.initial_filters,
+            'initial_columns': getattr(self.report_form, 'initial_columns', []),
         }
         return context
 
@@ -185,14 +203,17 @@ class ConfigureChartReport(ReportBuilderView):
     @property
     @memoized
     def report_form(self):
-        args = [self.request.GET.get(f, '') for f in self.url_args]
+        args = [self.request.GET.get(f, '') for f in self.url_args] + [self.existing_report]
         if self.request.method == 'POST':
             args.append(self.request.POST)
         return self.configuration_form_class(*args)
 
     def post(self, *args, **kwargs):
         if self.report_form.is_valid():
-            report_configuration = self.report_form.create_report()
+            if self.report_form.existing_report:
+                report_configuration = self.report_form.update_report()
+            else:
+                report_configuration = self.report_form.create_report()
             return HttpResponseRedirect(
                 reverse(
                     ConfigurableReport.slug,

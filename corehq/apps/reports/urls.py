@@ -15,6 +15,7 @@ from corehq.apps.userreports.views import (
     ConfigureListReport,
     ConfigureTableReport,
     ConfigureWorkerReport,
+    EditReportInBuilder,
     ReportBuilderDataSourceSelect,
     ReportBuilderTypeSelect,
 )
@@ -35,6 +36,7 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^builder/configure/list/$', ConfigureListReport.as_view(), name="configure_list_report"),
     url(r'^builder/configure/table/$', ConfigureTableReport.as_view(), name="configure_table_report"),
     url(r'^builder/configure/worker/$', ConfigureWorkerReport.as_view(), name="configure_worker_report"),
+    url(r'^builder/edit/(?P<report_id>[\w\-]+)/$', EditReportInBuilder.as_view(), name='edit_report_in_builder'),
 
     url(r'^$', "default", name="reports_home"),
     url(r'^saved/', "saved_reports", name="saved_reports"),

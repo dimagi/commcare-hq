@@ -90,6 +90,9 @@
             var initialFilters = _.map({{ initial_filters|JSON }}, function(i){
                 return PropertyListItem.wrap(i);
             });
+            var initialColumns = _.map({{ initial_columns|JSON }}, function(i){
+                return PropertyListItem.wrap(i);
+            });
             this.filtersList = new propertyList({
                 hasFormatCol: true,
                 initialCols: initialFilters,
@@ -97,6 +100,7 @@
             });
             this.columnsList = new propertyList({
                 hasFormatCol: false,
+                initialCols: initialColumns,
                 buttonText: 'Add Column'
             });
             this.submitHandler = function(){

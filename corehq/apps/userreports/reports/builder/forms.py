@@ -310,16 +310,20 @@ class ConfigureNewReportBase(forms.Form):
     filters = FilterField(required=False)
     button_text = 'Done'
 
-    def __init__(self, report_name, app_id, source_type, report_source_id, *args, **kwargs):
+    def __init__(self, report_name, app_id, source_type, report_source_id, existing_report=None, *args, **kwargs):
         super(ConfigureNewReportBase, self).__init__(*args, **kwargs)
+        self.existing_report = existing_report
 
-        self.report_name = report_name
-        assert source_type in ['case', 'form']
-        self.source_type = source_type
-        self.report_source_id = report_source_id
-        self.app = Application.get(app_id)
+        if self.existing_report:
+            self._bootstrap(self.existing_report)
+        else:
+            self.report_name = report_name
+            assert source_type in ['case', 'form']
+            self.source_type = source_type
+            self.report_source_id = report_source_id
+            self.app = Application.get(app_id)
+
         self.domain = self.app.domain
-
         self.ds_builder = DataSourceBuilder(
             self.domain, self.app, self.source_type, self.report_source_id
         )
@@ -332,24 +336,37 @@ class ConfigureNewReportBase(forms.Form):
         self.helper.attrs['data_bind'] = "submit: submitHandler"
         self.helper.form_id = "report-config-form"
 
+        buttons = [crispy.Submit('submit', _(self.button_text))]
+        if not self.existing_report:
+            # noinspection PyTypeChecker
+            buttons.insert(
+                0,
+                crispy.HTML(
+                    '<a class="btn" href="{}" style="margin-right: 4px">{}</a>'.format(
+                        reverse(
+                            'report_builder_select_source',
+                            args=(self.domain, self.report_type),
+                        ),
+                        _('Back')
+                    )
+                ),
+            )
         self.helper.layout = crispy.Layout(
             self.container_fieldset,
-            FormActions(
-                crispy.ButtonHolder(
-                    crispy.HTML(
-                        '<a class="btn" href="{}" style="margin-right: 4px">{}</a>'.format(
-                            reverse(
-                                'report_builder_select_source',
-                                args=(self.domain, self.report_type),
-                                # TODO: set initial values for the previous form?
-                            ),
-                            _('Back')
-                        )
-                    ),
-                    crispy.Submit('submit', _(self.button_text)),
-                ),
-            ),
+            FormActions(crispy.ButtonHolder(*buttons)),
         )
+        # TODO: Hitting the back button won't do much. Should we at least
+        #  set initial value in the previous form?
+
+    def _bootstrap(self, existing_report):
+        """
+        Use an existing report to initialize some of the instance variables of this
+        form. This method is used when editing an existing report.
+        """
+        self.report_name = existing_report.title
+        self.source_type = {"CommCareCase": "case", "XFormInstance": "form"}[existing_report.config.referenced_doc_type]
+        self.report_source_id = existing_report.config.meta.build.source_id
+        self.app = Application.get(existing_report.config.meta.build.app_id)
 
     @property
     def column_config_template(self):
@@ -378,6 +395,15 @@ class ConfigureNewReportBase(forms.Form):
             ),
             crispy.Hidden('filters', None, data_bind="value: filtersList.serializedProperties")
         )
+
+    def update_report(self):
+        self.existing_report.aggregation_columns = self._report_aggregation_cols
+        self.existing_report.columns = self._report_columns
+        self.existing_report.filters = self._report_filters
+        self.existing_report.configured_charts = self._report_charts
+        self.existing_report.validate()
+        self.existing_report.save()
+        return self.existing_report
 
     def create_report(self):
         """
@@ -424,7 +450,11 @@ class ConfigureNewReportBase(forms.Form):
         return report
 
     @property
+    @memoized
     def initial_filters(self):
+        if self.existing_report:
+            r = [self._get_view_model(f) for f in self.existing_report.filters]
+            return r
         if self.source_type == 'case':
             return [
                 {
@@ -448,6 +478,30 @@ class ConfigureNewReportBase(forms.Form):
                     'format': 'Date'
                 }
             ]
+
+    def _get_view_model(self, filter):
+        """
+        Given a ReportFilter, return a dictionary representing the knockout view
+        model representing this filter in the report builder.
+        """
+        # TODO: share existing type map.
+        filter_type_map = {
+            'dynamic_choice_list': 'Choice',
+            'choice_list': 'Choice', # This exists to handle the `closed` filter that might exist
+            'date': 'Date',
+            'numeric': 'Numeric'
+        }
+        return {
+            'property': self._get_property_from_column(filter['field']),
+            'display_text': filter['display'],
+            'format': filter_type_map[filter['type']]
+        }
+
+    def _get_property_from_column(self, col):
+        # TODO: Don't iterate over this every time.
+        for x in self.data_source_properties.values():
+            if x['column_id'] == col:
+                return x['text']
 
     @property
     def _report_aggregation_cols(self):
@@ -503,9 +557,15 @@ class ConfigureBarChartReportForm(ConfigureNewReportBase):
     group_by = forms.ChoiceField(label="Property")
     report_type = 'chart'
 
-    def __init__(self, report_name, app_id, source_type, report_source_id, *args, **kwargs):
-        super(ConfigureBarChartReportForm, self).__init__(report_name, app_id, source_type, report_source_id, *args, **kwargs)
+    def __init__(self, report_name, app_id, source_type, report_source_id, existing_report=None, *args, **kwargs):
+        super(ConfigureBarChartReportForm, self).__init__(report_name, app_id, source_type, report_source_id, existing_report, *args, **kwargs)
         self.fields['group_by'].choices = self._group_by_choices
+
+        # Set initial value of group_by
+        existing_agg_cols = existing_report.aggregation_columns
+        assert len(existing_agg_cols) < 2
+        if existing_agg_cols:
+            self.fields['group_by'].initial = self._get_property_from_column(existing_agg_cols[0])
 
     @property
     def container_fieldset(self):
@@ -593,6 +653,19 @@ class ConfigureListReportForm(ConfigureNewReportBase):
             ),
             crispy.Hidden('columns', None, data_bind="value: columnsList.serializedProperties")
         )
+
+    @property
+    @memoized
+    def initial_columns(self):
+        if self.existing_report:
+            cols = []
+            for c in self.existing_report.columns:
+                cols.append({
+                    'property': self._get_property_from_column(c['field']),
+                    'display_text': c['display']
+                })
+            return cols
+        return []
 
     @property
     def _report_columns(self):
