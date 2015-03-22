@@ -37,9 +37,6 @@ from corehq.apps.userreports.ui.fields import JsonField
 from dimagi.utils.decorators.memoized import memoized
 
 
-#TODO: Makes sure filter/column/aggregate fields are all in the order specified in the spec
-
-
 class FilterField(JsonField):
     """
     A form field with a little bit of validation for report builder report
@@ -311,7 +308,6 @@ class DataSourceForm(forms.Form):
 class ConfigureNewReportBase(forms.Form):
     filters = FilterField(required=False)
     button_text = 'Done'
-    # TODO: Add back button
 
     def __init__(self, report_name, app_id, source_type, report_source_id, *args, **kwargs):
         super(ConfigureNewReportBase, self).__init__(*args, **kwargs)
@@ -426,14 +422,12 @@ class ConfigureNewReportBase(forms.Form):
     def initial_filters(self):
         if self.source_type == 'case':
             return [
-                # TODO: Make this not a dynamic choice (the interface doesn't currently suppose regular choice filters
                 {
                     'property': 'closed',
                     'display_text': 'closed',
                     'format': 'Choice'
                 },
-                # TODO: Make this owner, not owner_id. There also isn't a way to do this in the interface yet.
-                #       The answer might be to convert these filters after submission as special cases.
+                # TODO: Allow users to filter by owner name, not just id. Will likely require implementing data source filters.
                 {
                     'property': 'owner_id',
                     'display_text': 'owner id',
@@ -480,7 +474,20 @@ class ConfigureNewReportBase(forms.Form):
             }
 
         filter_configs = self.cleaned_data['filters']
-        return [_make_report_filter(f) for f in filter_configs]
+        filters = [_make_report_filter(f) for f in filter_configs]
+        if self.source_type == 'case':
+            self._convert_closed_filter_to_choice_list(filters)
+        return filters
+
+    @classmethod
+    def _convert_closed_filter_to_choice_list(cls, filters):
+        for f in filters:
+            if f['field'] == get_column_name('closed') and f['type'] == 'dynamic_choice_list':
+                f['type'] = 'choice_list'
+                f['choices'] = [
+                    {'value': 'True'},
+                    {'value': 'False'}
+                ]
 
     @property
     def _report_charts(self):
