@@ -1,5 +1,6 @@
 import uuid
 from django import forms
+from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop as _
 
@@ -266,7 +267,6 @@ class DataSourceForm(forms.Form):
                         'create_new_report_builder_btn',
                         _('Next'),
                     )
-                    # TODO: Add a back button here maybe
                 ),
             ),
         )
@@ -339,10 +339,17 @@ class ConfigureNewReportBase(forms.Form):
             self.container_fieldset,
             FormActions(
                 crispy.ButtonHolder(
-                    crispy.Submit(
-                        'submit',
-                        _(self.button_text)
-                    )
+                    crispy.HTML(
+                        '<a class="btn" href="{}" style="margin-right: 4px">{}</a>'.format(
+                            reverse(
+                                'report_builder_select_source',
+                                args=(self.domain, self.report_type),
+                                # TODO: set initial values for the previous form?
+                            ),
+                            _('Back')
+                        )
+                    ),
+                    crispy.Submit('submit', _(self.button_text)),
                 ),
             ),
         )
@@ -482,6 +489,7 @@ class ConfigureNewReportBase(forms.Form):
 
 class ConfigureBarChartReportForm(ConfigureNewReportBase):
     group_by = forms.ChoiceField(label="Property")
+    report_type = 'chart'
 
     def __init__(self, report_name, app_id, source_type, report_source_id, *args, **kwargs):
         super(ConfigureBarChartReportForm, self).__init__(report_name, app_id, source_type, report_source_id, *args, **kwargs)
@@ -553,6 +561,7 @@ class ConfigurePieChartReportForm(ConfigureBarChartReportForm):
 
 
 class ConfigureListReportForm(ConfigureNewReportBase):
+    report_type = 'list'
     columns = JsonField(required=True)
 
     @property
@@ -591,6 +600,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
 
 
 class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportForm):
+    report_type = 'table'
 
     @property
     def container_fieldset(self):
@@ -623,6 +633,7 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
 
 class ConfigureWorkerReportForm(ConfigureTableReportForm):
     # It's a ConfigureTableReportForm, but with a predetermined aggregation
+    report_type = 'worker'
 
     def __init__(self, *args, **kwargs):
         super(ConfigureWorkerReportForm, self).__init__(*args, **kwargs)
