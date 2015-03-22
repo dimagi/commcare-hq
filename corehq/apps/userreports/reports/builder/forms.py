@@ -22,6 +22,7 @@ from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     DataSourceMeta,
     ReportConfiguration,
+    ReportMeta,
 )
 from corehq.apps.userreports.reports.builder import (
     DEFAULT_CASE_PROPERTY_DATATYPES,
@@ -412,7 +413,11 @@ class ConfigureNewReportBase(forms.Form):
             aggregation_columns=self._report_aggregation_cols,
             columns=self._report_columns,
             filters=self._report_filters,
-            configured_charts=self._report_charts
+            configured_charts=self._report_charts,
+            report_meta=ReportMeta(
+                created_by_builder=True,
+                builder_report_type=self.report_type
+            )
         )
         report.validate()
         report.save()
