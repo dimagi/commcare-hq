@@ -70,15 +70,16 @@ def first_soh_process_user(user, test=False):
 @periodic_task(run_every=crontab(day_of_week=0, hour=13, minute=57),
                queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def second_soh_reminder():
-    now = datetime.datetime.utcnow()
-    date = now - datetime.timedelta(days=DAYS_UNTIL_LATE)
+
     domains = EWSGhanaConfig.get_all_enabled_domains()
     for domain in domains:
         for user in CommCareUser.by_domain(domain):
-            second_soh_process_user(user, date)
+            second_soh_process_user(user)
 
 
-def second_soh_process_user(user, date, test=False):
+def second_soh_process_user(user, test=False):
+    now = datetime.datetime.utcnow()
+    date = now - datetime.timedelta(days=DAYS_UNTIL_LATE)
     supply_point = SupplyPointCase.get_by_location(user.location)
     if not supply_point:
         return
