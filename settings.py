@@ -496,6 +496,7 @@ FIXTURE_GENERATORS = {
     ]
 }
 
+# Note: if you change this, make sure to update the cronjob in commcarehq-ansible
 RESTORE_PAYLOAD_DIR = os.path.join(FILEPATH, 'restore_payloads')
 
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'

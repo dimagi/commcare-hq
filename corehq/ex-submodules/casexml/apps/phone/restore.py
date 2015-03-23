@@ -49,7 +49,7 @@ INITIAL_SYNC_CACHE_TIMEOUT = 60 * 60  # 1 hour
 INITIAL_SYNC_CACHE_THRESHOLD = 60  # 1 minute
 
 # Max amount of bytes to have in memory when streaming a file
-MAX_BYTES = 1000000  # 1MB
+MAX_BYTES = 10000000  # 10MB
 
 
 class StockSettings(object):
@@ -318,19 +318,6 @@ def get_case_payload_batched(domain, stock_settings, version, user, last_sync, s
         )
         response.extend(case_xml_elements)
 
-    batch_count = 0
-    sync_operation = BatchedCaseSyncOperation(user, last_sync)
-    for batch in sync_operation.batches():
-        batch_count += 1
-        logger.debug(batch)
-
-        # case blocks
-        case_xml_elements = (
-            xml.get_case_element(op.case, op.required_updates, version)
-            for op in batch.case_updates_to_sync()
-        )
-        response.extend(case_xml_elements)
-
     sync_state = sync_operation.global_state
     synclog.cases_on_phone = sync_state.actual_owned_cases
     synclog.dependent_cases_on_phone = sync_state.actual_extended_cases
@@ -479,11 +466,15 @@ class RestoreConfig(object):
     def get_response(self):
         try:
             payload = self.get_payload()
-            try:
-                f = open(payload, 'r')
+            if payload.endswith('.xml'):
+                try:
+                    f = open(payload, 'r')
+                except IOError:
+                    return HttpResponse(u"Unable to process payload in file: {}".format(payload),
+                                        status=500)
                 # Since payload file is all one line, need to readline based on bytes
                 return StreamingHttpResponse(iter(lambda: f.readline(MAX_BYTES), ''), mimetype="text/xml")
-            except IOError:
+            else:
                 return HttpResponse(payload, mimetype="text/xml")
         except RestoreException, e:
             logging.exception("%s error during restore submitted by %s: %s" %
