@@ -70,7 +70,7 @@ class TestExpandReportColumn(TestCase):
         post_case_blocks([case_block], {'domain': self.domain})
         return CommCareCase.get(id)
 
-    def _build_report(self, vals, field='my_field'):
+    def _build_report(self, vals, field='my_field', build_data_source=True):
         """
         Build a new report, and populate it with cases.
 
@@ -113,7 +113,8 @@ class TestExpandReportColumn(TestCase):
         )
         data_source_config.validate()
         data_source_config.save()
-        tasks.rebuild_indicators(data_source_config._id)
+        if build_data_source:
+            tasks.rebuild_indicators(data_source_config._id)
 
         report_config = ReportConfiguration(
             domain=self.domain,
@@ -160,6 +161,12 @@ class TestExpandReportColumn(TestCase):
         distinct_vals, too_many_values = _get_distinct_values(data_source.config, column)
         self.assertTrue(too_many_values)
         self.assertEqual(len(distinct_vals), 10)
+
+    def test_unbuilt_data_source(self):
+        data_source, column = self._build_report(['apple'], build_data_source=False)
+        distinct_vals, too_many_values = _get_distinct_values(data_source.config, column)
+        self.assertListEqual(distinct_vals, [])
+        self.assertFalse(too_many_values)
 
     def test_expansion(self):
         column = ReportColumn(
