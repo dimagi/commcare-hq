@@ -151,7 +151,7 @@ def _get_distinct_values(data_source_configuration, column_config, expansion_lim
         connection = session.connection()
         table = get_indicator_table(data_source_configuration)
         if not table.exists(bind=connection):
-            return []
+            return [], False
         column = table.c[column_config.field]
 
         query = sqlalchemy.select([column], limit=expansion_limit + 1).distinct()
