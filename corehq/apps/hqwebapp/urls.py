@@ -20,7 +20,7 @@ urlpatterns = patterns(
     url(r'^notifications/dismiss/$', 'dismiss_notification', name="dismiss_notification"),
     url(r'^search/$', 'quick_find', name="global_quick_find"),
     url(r'^searchDescription.xml$', 'osdd', name="osdd"),
-    url(r'^backend_rates', PublicSMSRatesView.as_view(), name=PublicSMSRatesView.urlname),
+    url(r'^messaging-pricing', PublicSMSRatesView.as_view(), name=PublicSMSRatesView.urlname),
 )
 
 urlpatterns += patterns('corehq.apps.orgs.views', url(r'^search_orgs/', 'search_orgs', name='search_orgs'))
