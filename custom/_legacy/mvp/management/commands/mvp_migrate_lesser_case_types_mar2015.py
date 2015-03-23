@@ -83,13 +83,11 @@ class Command(LabelCommand):
                 results = new_db.bulk_save(case_dicts)
             except BulkSaveError as error:
                 results = error.results
-            else:
-                error = None
             for result in results:
-                if error and result.get('error') == 'conflict':
+                if result.get('error') == 'conflict':
                     self.log('- OK: [{id}] is already in the indicator db'.format(
                         id=result.get('id')))
-                elif error:
+                elif 'error' in result:
                     self.log('- ERROR: [{id}] ({result})'.format(
                         id=result.get('id'),
                         result=json.dumps(result)
