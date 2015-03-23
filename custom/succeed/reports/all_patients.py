@@ -21,7 +21,7 @@ from custom.succeed.reports import VISIT_SCHEDULE, LAST_INTERACTION_LIST, EMPTY_
     CM_APP_CM_MODULE, OUTPUT_DATE_FORMAT, INPUT_DATE_FORMAT
 from custom.succeed.utils import is_succeed_admin, SUCCEED_CM_APPNAME, has_any_role, get_app_build, SUCCEED_DOMAIN
 import logging
-import simplejson
+import json
 
 
 class PatientListReportDisplay(CaseDisplay):
@@ -442,7 +442,7 @@ class PatientListReport(CustomProjectReport, CaseListReport):
                                            "query": "*" + search_string + "*"}}
             q["query"]["filtered"]["query"] = query_block
 
-        logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, simplejson.dumps(q)))
+        logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, json.dumps(q)))
         if self.pagination:
             return es_query(q=q, es_url=REPORT_CASE_INDEX + '/_search', dict_only=False, start_at=self.pagination.start)
         else:
