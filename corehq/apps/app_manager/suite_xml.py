@@ -1341,7 +1341,7 @@ class SuiteGenerator(SuiteGeneratorBase):
 
         return results
 
-    def add_assertion(self, entry, test, locale_id, locale_arguments=None):
+    def get_assertion(self, test, locale_id, locale_arguments=None):
         assertion = Assertion(test=test)
         text = Text(locale_id=locale_id)
         if locale_arguments:
@@ -1349,25 +1349,26 @@ class SuiteGenerator(SuiteGeneratorBase):
             for arg in locale_arguments:
                 locale.arguments.append(LocaleArgument(value=arg))
         assertion.text.append(text)
-        entry.assertions.append(assertion)
+        return assertion
 
     def add_case_sharing_assertion(self, entry):
-        self.add_assertion(entry, "count(instance('groups')/groups/group) = 1",
+        assertion = self.get_assertion("count(instance('groups')/groups/group) = 1",
                            'case_sharing.exactly_one_group')
+        entry.assertions.append(assertion)
 
-    def add_auto_select_assertion(self, entry, case_id_xpath, mode, locale_arguments=None):
-        self.add_assertion(
-            entry,
-            "{0} = 1".format(case_id_xpath.count()),
-            'case_autoload.{0}.property_missing'.format(mode),
-            locale_arguments
-        )
+    def get_auto_select_assertions(self, case_id_xpath, mode, locale_arguments=None):
         case_count = CaseIDXPath(case_id_xpath).case().count()
-        self.add_assertion(
-            entry,
-            "{0} = 1".format(case_count),
-            'case_autoload.{0}.case_missing'.format(mode),
-        )
+        return [
+            self.get_assertion(
+                "{0} = 1".format(case_id_xpath.count()),
+                'case_autoload.{0}.property_missing'.format(mode),
+                locale_arguments
+            ),
+            self.get_assertion(
+                "{0} = 1".format(case_count),
+                'case_autoload.{0}.case_missing'.format(mode),
+            )
+        ]
 
     def get_new_case_id_datums(self, form):
         if not form:
@@ -1501,16 +1502,16 @@ class SuiteGenerator(SuiteGeneratorBase):
                 detail_inline=self.get_detail_id_safe(datum['module'], 'case_long') if detail_inline else None
             ))
 
-    def add_auto_select_datums_to_entry(self, action, auto_select, e, form):
+    def get_auto_select_datums_and_assertions(self, action, auto_select, form):
         from corehq.apps.app_manager.models import AUTO_SELECT_USER, AUTO_SELECT_CASE, \
             AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW
         if auto_select.mode == AUTO_SELECT_USER:
             xpath = session_var(auto_select.value_key, subref='user')
-            e.datums.append(SessionDatum(
+            assertions = self.get_auto_select_assertions(xpath, auto_select.mode, [auto_select.value_key])
+            return SessionDatum(
                 id=action.case_session_var,
                 function=xpath
-            ))
-            self.add_auto_select_assertion(e, xpath, auto_select.mode, [auto_select.value_key])
+            ), assertions
         elif auto_select.mode == AUTO_SELECT_CASE:
             try:
                 ref = form.actions.actions_meta_by_tag[auto_select.value_source]['action']
@@ -1518,30 +1519,29 @@ class SuiteGenerator(SuiteGeneratorBase):
             except KeyError:
                 raise ValueError("Case tag not found: %s" % auto_select.value_source)
             xpath = CaseIDXPath(session_var(sess_var)).case().index_id(auto_select.value_key)
-            e.datums.append(SessionDatum(
+            assertions = self.get_auto_select_assertions(xpath, auto_select.mode, [auto_select.value_key])
+            return SessionDatum(
                 id=action.case_session_var,
                 function=xpath
-            ))
-            self.add_auto_select_assertion(e, xpath, auto_select.mode, [auto_select.value_key])
+            ), assertions
         elif auto_select.mode == AUTO_SELECT_FIXTURE:
             xpath_base = ItemListFixtureXpath(auto_select.value_source).instance()
             xpath = xpath_base.slash(auto_select.value_key)
-            e.datums.append(SessionDatum(
-                id=action.case_session_var,
-                function=xpath
-            ))
-            self.add_assertion(
-                e,
+            fixture_assertion = self.get_assertion(
                 "{0} = 1".format(xpath_base.count()),
                 'case_autoload.{0}.exactly_one_fixture'.format(auto_select.mode),
                 [auto_select.value_source]
             )
-            self.add_auto_select_assertion(e, xpath, auto_select.mode, [auto_select.value_key])
+            assertions = self.get_auto_select_assertions(xpath, auto_select.mode, [auto_select.value_key])
+            return SessionDatum(
+                id=action.case_session_var,
+                function=xpath
+            ), [fixture_assertion] + assertions
         elif auto_select.mode == AUTO_SELECT_RAW:
-            e.datums.append(SessionDatum(
+            return SessionDatum(
                 id=action.case_session_var,
                 function=auto_select.value_key
-            ))
+            ), []
 
     def configure_entry_advanced_form(self, module, e, form, **kwargs):
         def case_sharing_requires_assertion(form):
@@ -1608,10 +1608,13 @@ class SuiteGenerator(SuiteGeneratorBase):
 
             return case_session_var
 
+        datums = []
+        assertions = []
         for index, action in enumerate(form.actions.load_update_cases):
             auto_select = action.auto_select
             if auto_select and auto_select.mode:
-                self.add_auto_select_datums_to_entry(action, auto_select, e, form)
+                datum, assertions = self.get_auto_select_datums_and_assertions(action, auto_select, form)
+                datums.append(datum)
             else:
                 if action.parent_tag:
                     parent_action = form.actions.actions_meta_by_tag[action.parent_tag]['action']
@@ -1624,7 +1627,7 @@ class SuiteGenerator(SuiteGeneratorBase):
 
                 target_module = get_target_module(action.case_type, action.details_module)
                 referenced_by = form.actions.actions_meta_by_parent_tag.get(action.case_tag)
-                e.datums.append(SessionDatum(
+                datums.append(SessionDatum(
                     id=get_datum_session_var(action, index),
                     nodeset=(self.get_nodeset_xpath(action.case_type, target_module, True) + parent_filter),
                     value="./@case_id",
@@ -1634,6 +1637,12 @@ class SuiteGenerator(SuiteGeneratorBase):
                         if not referenced_by or referenced_by['type'] != 'load' else None
                     )
                 ))
+
+        for datum in datums:
+            e.datums.append(datum)
+
+        # assertions come after session
+        e.assertions.extend(assertions)
 
         if module.get_app().commtrack_enabled:
             try:
