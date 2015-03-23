@@ -1,5 +1,6 @@
 from collections import namedtuple, defaultdict
 from functools import total_ordering
+from itertools import izip_longest
 import os
 from os.path import commonprefix
 import re
@@ -1584,37 +1585,16 @@ class SuiteGenerator(SuiteGeneratorBase):
                         "Module with case type %s in app %s not found" % (case_type, self.app)
                     )
 
-        root_module_datums = self._get_datums_meta(module.root_module)
-
-        def get_datum_session_var(action, action_index):
-            """
-            If this form's module is a child of another module then we want
-            to make the session variables match up.
-
-            This is a naive approach that just matches the datums based on
-            their order and the case types of the case that's being loaded.
-            If there is a match then we make the session variable in the child
-            module form equal to the parent.
-            """
-            case_session_var = action.case_session_var
-            try:
-                root_datum = root_module_datums[action_index]
-            except IndexError:
-                pass
-            else:
-                child_case_type = action.case_type
-                if root_datum['case_type'] == child_case_type:
-                    case_session_var = root_datum['session_var']
-
-            return case_session_var
-
         datums = []
         assertions = []
         for index, action in enumerate(form.actions.load_update_cases):
             auto_select = action.auto_select
             if auto_select and auto_select.mode:
                 datum, assertions = self.get_auto_select_datums_and_assertions(action, auto_select, form)
-                datums.append(datum)
+                datums.append({
+                    'datum': datum,
+                    'case_type': None
+                })
             else:
                 if action.parent_tag:
                     parent_action = form.actions.actions_meta_by_tag[action.parent_tag]['action']
@@ -1627,8 +1607,8 @@ class SuiteGenerator(SuiteGeneratorBase):
 
                 target_module = get_target_module(action.case_type, action.details_module)
                 referenced_by = form.actions.actions_meta_by_parent_tag.get(action.case_tag)
-                datums.append(SessionDatum(
-                    id=get_datum_session_var(action, index),
+                datum = SessionDatum(
+                    id=action.case_session_var,
                     nodeset=(self.get_nodeset_xpath(action.case_type, target_module, True) + parent_filter),
                     value="./@case_id",
                     detail_select=self.get_detail_id_safe(target_module, 'case_short'),
@@ -1636,10 +1616,34 @@ class SuiteGenerator(SuiteGeneratorBase):
                         self.get_detail_id_safe(target_module, 'case_long')
                         if not referenced_by or referenced_by['type'] != 'load' else None
                     )
-                ))
+                )
+                datums.append({
+                    'datum': datum,
+                    'case_type': action.case_type
+                })
 
-        for datum in datums:
-            e.datums.append(datum)
+        root_module_datums = self._get_datums_meta(module.root_module)
+        datum_pairs = izip_longest(datums, root_module_datums)
+        for this_datum, parent_datum_meta in datum_pairs:
+            if not this_datum:
+                continue
+
+            datum = this_datum['datum']
+            if not parent_datum_meta:
+                e.datums.append(datum)
+            elif datum.id != parent_datum_meta['session_var'] \
+                    and this_datum['case_type'] == parent_datum_meta['case_type']:
+                datum.id = parent_datum_meta['session_var']
+                # If this form's module is a child of another module then we want
+                # to make the session variables match up.
+                #
+                # This is a naive approach that just matches the datums based on
+                # their order and the case types of the case that's being loaded.
+                # If there is a match then we make the session variable in the child
+                # module form equal to the parent.
+                e.datums.append(datum)
+            else:
+                e.datums.append(datum)
 
         # assertions come after session
         e.assertions.extend(assertions)
