@@ -100,7 +100,7 @@ accounting_logger = logging.getLogger('accounting')
 
 @login_required
 def select(request, domain_select_template='domain/select.html'):
-    domains_for_user = Domain.active_for_user(request.user)
+    domains_for_user = Domain.active_for_user(request.user, for_ui=True)
     if not domains_for_user:
         return redirect('registration_domain', domain_type=get_domain_type(None, request))
 
