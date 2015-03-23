@@ -1,11 +1,20 @@
+import json
+import os
+import tempfile
+from StringIO import StringIO
+from django.contrib import messages
 from django.core.urlresolvers import reverse
+from django.http import HttpResponse
 from django.views.generic.base import TemplateView
 from braces.views import JSONResponseMixin
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
+from corehq.apps.reports.models import ReportConfig
 from corehq.apps.userreports.exceptions import UserReportsError
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.util.couch import get_document_or_404
+from couchexport.export import export_from_tables
+from couchexport.models import Format
 from dimagi.utils.couch.pagination import DatatablesParams
 from dimagi.utils.decorators.memoized import memoized
 
@@ -18,6 +27,8 @@ from corehq.apps.reports.datatables import DataTablesHeader
 class ConfigurableReport(JSONResponseMixin, TemplateView):
     template_name = 'userreports/configurable_report.html'
     slug = "configurable"
+    prefix = slug
+    emailable = True
 
     @property
     @memoized
@@ -62,28 +73,54 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         return self.spec.ui_filters
 
     @cls_to_view_login_and_domain
-    def dispatch(self, request, domain, report_config_id, **kwargs):
-        self.domain = domain
+    def dispatch(self, request, report_config_id, **kwargs):
+        self.request = request
+        self.domain = request.domain
         self.report_config_id = report_config_id
         user = request.couch_user
-        if self.has_permissions(domain, user):
-            if request.is_ajax() or request.GET.get('format', None) == 'json':
-                return self.get_ajax(request, domain, **kwargs)
+        if self.has_permissions(self.domain, user):
+            if kwargs.get('render_as') == 'email':
+                return self.email_response
+            elif kwargs.get('render_as') == 'excel':
+                return self.excel_response
+            elif request.is_ajax() or request.GET.get('format', None) == 'json':
+                return self.get_ajax(request, **kwargs)
             self.content_type = None
-            return super(ConfigurableReport, self).dispatch(request, domain, **kwargs)
+            self.add_warnings(request)
+            return super(ConfigurableReport, self).dispatch(request, self.domain, **kwargs)
         else:
             raise Http403()
 
     def has_permissions(self, domain, user):
         return True
 
+    def add_warnings(self, request):
+        for warning in self.data_source.column_warnings:
+            messages.warning(request, warning)
+
     def get_context_data(self, **kwargs):
-        return {
+        context = {
             'domain': self.domain,
             'report': self,
             'filter_context': self.filter_context,
-            'url': reverse(self.slug, args=[self.domain, self.report_config_id]),
-            'headers': self.headers,
+            'url': self.url,
+            'headers': self.headers
+        }
+        context.update(self.saved_report_context_data)
+        return context
+
+    @property
+    def saved_report_context_data(self):
+        current_config_id = self.request.GET.get('config_id')
+        return {
+            'report_configs': ReportConfig.by_domain_and_owner(
+                self.domain, self.request.couch_user._id, report_slug=self.slug
+            ),
+            'default_config': (
+                ReportConfig.get(current_config_id)
+                if current_config_id
+                else ReportConfig.default()
+            ),
         }
 
     @property
@@ -119,3 +156,70 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         from django.conf.urls import url
         pattern = r'^{slug}/(?P<report_config_id>[\w\-:]+)/$'.format(slug=cls.slug)
         return url(pattern, cls.as_view(), name=cls.slug)
+
+    @property
+    def type(self):
+        """
+        Used to populate ReportConfig.report_type
+        """
+        return self.prefix
+
+    @property
+    def sub_slug(self):
+        """
+        Used to populate ReportConfig.subreport_slug
+        """
+        return self.report_config_id
+
+    @classmethod
+    def get_report(cls, domain, slug, report_config_id):
+        report = cls()
+        report.domain = domain
+        report.report_config_id = report_config_id
+        report.name = report.title
+        return report
+
+    @property
+    def url(self):
+        return reverse(self.slug, args=[self.domain, self.report_config_id])
+
+    @property
+    @memoized
+    def export_table(self):
+        try:
+            data = self.data_source
+            data.set_filter_values(self.filter_values)
+        except UserReportsError as e:
+            return self.render_json_response({
+                'error': e.message,
+            })
+
+        report_config = ReportConfiguration.get(self.report_config_id)
+        raw_rows = list(data.get_data())
+        headers = [column['display'] for column in report_config.columns]
+        columns = [column['field'] for column in report_config.columns]
+        rows = [[raw_row[column] for column in columns] for raw_row in raw_rows]
+        return [
+            [
+                self.title,
+                [headers] + rows
+            ]
+        ]
+
+    @property
+    @memoized
+    def email_response(self):
+        fd, path = tempfile.mkstemp()
+        with os.fdopen(fd, 'wb') as temp:
+            export_from_tables(self.export_table, temp, Format.HTML)
+        with open(path) as f:
+            return HttpResponse(json.dumps({
+                'report': f.read(),
+            }))
+
+    @property
+    @memoized
+    def excel_response(self):
+        file = StringIO()
+        export_from_tables(self.export_table, file, Format.XLS_2007)
+        return file

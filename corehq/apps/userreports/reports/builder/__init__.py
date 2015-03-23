@@ -76,14 +76,17 @@ def make_form_question_indicator(question, column_id=None):
     return ret
 
 
-def make_form_meta_block_indicator(field_name, data_type):
+def make_form_meta_block_indicator(spec, column_id=None):
     """
     Return a data source indicator configuration (a dict) for the given
     form meta field and data type.
     """
+    field_name = spec[0]
+    data_type = spec[1]
+    column_id = column_id or field_name
     ret = {
         "type": "raw",
-        "column_id": field_name,
+        "column_id": column_id,
         "property_path": ['form', 'meta'] + [field_name],
         "display_name": field_name,
     }
@@ -92,8 +95,8 @@ def make_form_meta_block_indicator(field_name, data_type):
 
 
 def _get_form_indicator_data_type(data_type, options):
-    if data_type == "date":
-        return {"datatype": "date"}
+    if data_type in ["date", "datetime"]:
+        return {"datatype": data_type}
     if data_type == "MSelect":
         return {
             "type": "choice_list",

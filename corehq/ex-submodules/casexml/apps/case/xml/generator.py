@@ -58,25 +58,6 @@ class CaseXMLGeneratorBase(object):
     def get_close_element(self):
         return safe_element("close")
 
-    def get_referral_element(self, referral):
-        elem = safe_element("referral")
-        elem.append(safe_element("referral_id", referral.referral_id))
-        elem.append(safe_element("followup_date", date_to_xml_string(referral.followup_on)))
-
-        # TODO: support referrals not always opening, this will
-        # break with sync
-        open_block = safe_element("open")
-        open_block.append(safe_element("referral_types", referral.type))
-        elem.append(open_block)
-
-        if referral.closed:
-            update = safe_element("update")
-            update.append(safe_element("referral_type", referral.type))
-            update.append(safe_element("date_closed", date_to_xml_string(referral.closed_on)))
-            elem.append(update)
-
-        return elem
-
     def get_index_element(self, index):
         elem = safe_element(index.identifier, index.referenced_id)
         elem.attrib = {"case_type": index.referenced_type}
@@ -101,9 +82,6 @@ class CaseXMLGeneratorBase(object):
     def add_custom_properties(self, element):
         for k, v, in self.case.dynamic_case_properties():
             element.append(get_dynamic_element(k, v))
-
-    def add_referrals(self, element):
-        self._ni()
 
     def add_indices(self, element):
         self._ni()
@@ -133,10 +111,6 @@ class V1CaseXMLGenerator(CaseXMLGeneratorBase):
         if self.case.owner_id:
             element.append(safe_element('owner_id', self.case.owner_id))
         super(V1CaseXMLGenerator, self).add_custom_properties(element)
-
-    def add_referrals(self, element):
-        for ref in self.case.referrals:
-            element.append(self.get_referral_element(ref))
 
     def add_indices(self, element):
         # intentionally a no-op
@@ -172,12 +146,6 @@ class V2CaseXMLGenerator(CaseXMLGeneratorBase):
         if self.case.external_id:
             element.append(safe_element('external_id', self.case.external_id))
         super(V2CaseXMLGenerator, self).add_custom_properties(element)
-
-    def add_referrals(self, element):
-        # intentionally a no-op
-        if self.case.referrals:
-            logging.info("Tried to add referrals to version 2 CaseXML restore. This is not supported. "
-                         "The case id is %s, domain %s." % (self.case.get_id, self.case.domain))
 
     def add_indices(self, element):
         if self.case.indices:

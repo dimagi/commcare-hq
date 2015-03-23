@@ -22,8 +22,7 @@ class CaseFromXFormTest(TestCase):
         self.assertEqual(const.CASE_ACTION_CREATE, create_action.action_type)
         self.assertEqual("http://openrosa.org/case/test/create", create_action.xform_xmlns)
         self.assertEqual("test create", create_action.xform_name)
-        self.assertEqual(0, len(case.referrals))
-    
+
     def testCreateThenUpdateInSeparateForms(self):
         # recycle our previous test's form
         original_case = bootstrap_case_from_xml(self, "create_update.xml")
@@ -64,8 +63,7 @@ class CaseFromXFormTest(TestCase):
         # case should have a new modified date
         self.assertEqual(MODIFY_DATE, case.modified_on)
         
-        self.assertEqual(0, len(case.referrals))
-    
+
     def testCreateThenClose(self):
         case = bootstrap_case_from_xml(self, "create.xml")
         case.save()
@@ -89,8 +87,7 @@ class CaseFromXFormTest(TestCase):
         
         self.assertEqual(CLOSE_DATE, close_action.date)
         self.assertEqual(CLOSE_DATE, case.modified_on)
-        self.assertEqual(0, len(case.referrals))
-        
+
     def testCreateMultiple(self):
         # TODO: test creating multiple cases from a single form
         pass
@@ -98,69 +95,6 @@ class CaseFromXFormTest(TestCase):
     def testCreateAndUpdateInDifferentCaseBlocks(self):
         # TODO: two case blocks, one that creates, another that updates
         pass
-    
-    def testReferralOpen(self):
-        case = bootstrap_case_from_xml(self, "create.xml")
-        case.save()
-        self.assertEqual(0, len(case.referrals))
-        case = bootstrap_case_from_xml(self, "open_referral.xml", case.case_id)
-        self.assertEqual(False, case.closed)
-        self.assertEqual(1, len(case.actions))
-        self.assertEqual(2, len(case.referrals))
-        for referral in case.referrals:
-            self.assertTrue(referral.type in ("t1", "t2"))
-            self.assertEqual(False, referral.closed)
-            self.assertEqual(REFER_DATE, referral.followup_on)
-            self.assertEqual(case.modified_on, referral.modified_on)
-            self.assertEqual(case.modified_on, referral.opened_on)
-         
-    def testReferralUpdate(self):
-        case = bootstrap_case_from_xml(self, "create.xml")
-        case.save()
-        case = bootstrap_case_from_xml(self, "open_referral.xml", case.case_id)
-        case.save()
-        case = bootstrap_case_from_xml(self, "update_referral.xml", case.case_id, case.referrals[0].referral_id)
-        self.assertEqual(False, case.closed)
-        self.assertEqual(1, len(case.actions))
-        self.assertEqual(2, len(case.referrals))
-        self.assertEqual(MODIFY_2_DATE, case.modified_on)
-        for referral in case.referrals:
-            self.assertEqual(False, referral.closed)
-            if referral.type == "t1":
-                self.assertEqual(REFER_DATE_UPDATE, referral.followup_on)
-                self.assertEqual(case.modified_on, referral.modified_on)
-                self.assertEqual(MODIFY_DATE, referral.opened_on)
-            elif referral.type == "t2":
-                self.assertEqual(REFER_DATE, referral.followup_on)
-                self.assertEqual(MODIFY_DATE, referral.modified_on)
-                self.assertEqual(MODIFY_DATE, referral.opened_on)
-            else:
-                self.fail("Unexpected referral type %s!" % referral.type)
-    
-    def testReferralClose(self):
-        case = bootstrap_case_from_xml(self, "create.xml")
-        case.save()
-        case = bootstrap_case_from_xml(self, "open_referral.xml", case.case_id)
-        case.save()
-        case = bootstrap_case_from_xml(self, "close_referral.xml", case.case_id, case.referrals[0].referral_id)
-        self.assertEqual(False, case.closed)
-        self.assertEqual(1, len(case.actions))
-        self.assertEqual(2, len(case.referrals))
-        self.assertEqual(MODIFY_2_DATE, case.modified_on)
-        for referral in case.referrals:
-            if referral.type == "t1":
-                self.assertEqual(True, referral.closed)
-                self.assertEqual(REFER_DATE, referral.followup_on)
-                self.assertEqual(case.modified_on, referral.modified_on)
-                self.assertEqual(MODIFY_DATE, referral.opened_on)
-            elif referral.type == "t2":
-                self.assertEqual(False, referral.closed)
-                self.assertEqual(REFER_DATE, referral.followup_on)
-                self.assertEqual(MODIFY_DATE, referral.modified_on)
-                self.assertEqual(MODIFY_DATE, referral.opened_on)
-            else:
-                self.fail("Unexpected referral type %s!" % referral.type)
-    
     
     def _check_static_properties(self, case):
         self.assertEqual(CommCareCase, type(case))

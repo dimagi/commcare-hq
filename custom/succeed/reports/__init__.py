@@ -12,6 +12,7 @@ CM3 = 'http://openrosa.org/formdesigner/4EA3D459-7FB6-414F-B106-05E6E707568B'
 CM4 = 'http://openrosa.org/formdesigner/263cc99e9f0cdbc55d307359c7b45a1e555f35d1'
 CM5 = 'http://openrosa.org/formdesigner/8abd54794d8c5d592100b8cdf1f642903b7f4abe'
 CM6 = 'http://openrosa.org/formdesigner/9b47556945c6476438c2ac2f0583e2ca0055e46a'
+CM6_PHONE = "http://openrosa.org/formdesigner/61e1dc8eae04cf251c96e6d670568471d7954101"
 CM7 = 'http://openrosa.org/formdesigner/4b924f784e8dd6a23045649730e82f6a2e7ce7cf'
 CM_NEW_TASK = 'http://openrosa.org/formdesigner/BBDEBCBD-5EC6-47F9-A8E3-5CCF74AB9EFE'
 CM_UPDATE_TASK = 'http://openrosa.org/formdesigner/2447a22e4a648d5510db9a4db65f3b60ac91ed98'
@@ -19,6 +20,7 @@ HUD1 = 'http://openrosa.org/formdesigner/24433229c5f25d0bd3ceee9bf70c72093056d1a
 HUD2 = 'http://openrosa.org/formdesigner/63f8287ac6e7dce0292ebac9b232b0d3bde327dc'
 PD1 = 'http://openrosa.org/formdesigner/9eb0eaf6954791425d6d5f0b66db9a484cacd264'
 PD2 = 'http://openrosa.org/formdesigner/69751bf3078369491e1c2f1e3c874895f762a4c1'
+PD2ALL = "http://openrosa.org/formdesigner/39C22C58-3440-4D6B-92EF-846B07686F54"
 PD2AM = 'http://openrosa.org/formdesigner/b5376c48fbe845273db04ba88bb610577480fc26'
 PD2BPM = 'http://openrosa.org/formdesigner/8fca2fbbbe0655c55d651f587d99368f248842cd'
 PD2CHM = 'http://openrosa.org/formdesigner/351ec6c430a7dd90f6f7a96938f3d58183ec3992'
@@ -38,6 +40,17 @@ CHW2 = 'http://openrosa.org/formdesigner/cbc4e37437945bfda04e391d11006b6d02c24fc
 CHW3 = 'http://openrosa.org/formdesigner/5d77815bf7631a527d8647cdbaa5971e367f6548'
 CHW4 = 'http://openrosa.org/formdesigner/f8a741808584d772c4b899ef84db197da5b4d12a'
 AP2 = 'http://openrosa.org/formdesigner/58ba18b4bd2054419bfa8da8ec2d08f6c547c91b'
+CQ = "http://openrosa.org/formdesigner/bbbb340e75d2f0199b996e0b8b27984994663949"
+AS = "http://openrosa.org/formdesigner/DE075E90-E505-48DF-B963-A66E7CE192D4"
+TRANS = "http://openrosa.org/formdesigner/A0014589-AEAE-4636-96A8-E347A3219AF4"
+HBP = "http://openrosa.org/formdesigner/5489CDF8-35E9-4A47-A88B-1839BBA25485"
+PAFSHS = "http://openrosa.org/formdesigner/4D48CEAD-86AC-4549-88A5-4F669BCD2FB6"
+NAV = "http://openrosa.org/formdesigner/363a3fd625bbae3e01b855d127f8fd6c1a6636b3"
+CHW3_PHONE = "http://openrosa.org/formdesigner/f426d05877891c696b061f4f039baf0a84f237d1"
+AP1 = "http://openrosa.org/formdesigner/ef1f6eb52a38edeb962e2b4e526a5d0fef57fdbe"
+AP1_ADD = "http://openrosa.org/formdesigner/56b60d6c99f8e3bcfdbbd72256c47ab015a9f4a3"
+UPDATE_TASK_ALL = "http://openrosa.org/formdesigner/e03e28280756e22d7a94af52825bdba7b3a3dd7f"
+
 CUSTOM_EDIT = 'http://commcarehq.org/cloudcare/custom-edit'
 EMPTY_FIELD = "---"
 
@@ -63,6 +76,7 @@ CHW_APP_CHW2_MODULE = 3
 CHW_APP_CM_MODULE = 4
 CHW_APP_MA_MODULE = 5
 CHW_APP_TASK_MODULE = 6
+CHW_ADD_APPOINTMENTS_MODULE = 4
 
 VISIT_SCHEDULE = [
     {
@@ -72,7 +86,8 @@ VISIT_SCHEDULE = [
         'module_idx': CM_APP_CM_MODULE,
         'responsible_party': CONFIG['cm_role'],
         'show_button': True,
-        'target_date_case_property': 'CM1_form_target'
+        'target_date_case_property': 'CM1_form_target',
+        'completed_date': ['CM1_form_completed']
     },
     {
         'visit_name': _('CM Medical Record Review'),
@@ -81,7 +96,8 @@ VISIT_SCHEDULE = [
         'module_idx': CM_APP_CM_MODULE,
         'responsible_party': CONFIG['cm_role'],
         'show_button': True,
-        'target_date_case_property': 'CM2_form_target'
+        'target_date_case_property': 'CM2_form_target',
+        'completed_date': ['CM2_form_completed']
     },
     {
         'visit_name': _('CM 1-week Telephone Call'),
@@ -91,7 +107,8 @@ VISIT_SCHEDULE = [
         'show_button': True,
         'responsible_party': CONFIG['cm_role'],
         'scheduled_source': 'CM3_scheduled_date',
-        'target_date_case_property': 'CM3_form_target'
+        'target_date_case_property': 'CM3_form_target',
+        'completed_date': ['CM3_form_completed']
     },
     {
         'visit_name': _('CM Initial huddle'),
@@ -100,7 +117,8 @@ VISIT_SCHEDULE = [
         'module_idx': CM_APP_HUD_MODULE,
         'responsible_party': CONFIG['cm_role'],
         'show_button': True,
-        'target_date_case_property': 'HUD1_form_target'
+        'target_date_case_property': 'HUD1_form_target',
+        'completed_date': ['HUD1_form_completed']
     },
     {
         'visit_name': _('CHW Home Visit 1'),
@@ -110,7 +128,8 @@ VISIT_SCHEDULE = [
         'show_button': False,
         'responsible_party': CONFIG['chw_role'],
         'scheduled_source': 'CHW1_scheduled_date',
-        'target_date_case_property': 'CHW1_form_target'
+        'target_date_case_property': 'CHW1_form_target',
+        'completed_date': ['CHW1_1_complete', 'CHW1_1_complete_date']
     },
     {
         'visit_name': _('CM Clinic Visit 1'),
@@ -120,7 +139,8 @@ VISIT_SCHEDULE = [
         'show_button': True,
         'responsible_party': CONFIG['cm_role'],
         'scheduled_source': 'CM4_scheduled_date',
-        'target_date_case_property': 'CM4_form_target'
+        'target_date_case_property': 'CM4_1_form_target',
+        'completed_date': ['CM4_1_complete', 'CM4_1_complete_date']
     },
     {
         'visit_name': _('CHW Home Visit 2'),
@@ -129,18 +149,20 @@ VISIT_SCHEDULE = [
         'module_idx': CM_APP_CHW_MODULE,
         'show_button': False,
         'responsible_party': CONFIG['chw_role'],
-        'scheduled_source': 'CHW2_scheduled_date',
-        'target_date_case_property': 'CHW2_form_target'
+        'scheduled_source': 'CHW1_2_scheduled_date',
+        'target_date_case_property': 'CHW1_2_form_target',
+        'completed_date': ['CHW1_2_complete', 'CHW1_2_complete_date']
     },
     {
         'visit_name': _('CM Clinic Visit 2'),
-        'xmlns': CM5,
+        'xmlns': CM4,
         'days': 130,
         'module_idx': CM_APP_CM_MODULE,
         'show_button': True,
         'responsible_party': CONFIG['cm_role'],
-        'scheduled_source': 'CM5_scheduled_date',
-        'target_date_case_property': 'CM5_form_target'
+        'scheduled_source': 'CM4_2_scheduled_date',
+        'target_date_case_property': 'CM4_2_form_target',
+        'completed_date': ['CM4_2_complete', 'CM4_2_complete_date']
     },
     {
         'visit_name': _('CHW CDSMP tracking'),
@@ -149,8 +171,8 @@ VISIT_SCHEDULE = [
         'module_idx': CM_APP_CHW_MODULE,
         'show_button': False,
         'responsible_party': CONFIG['chw_role'],
-        'scheduled_source': 'CHW4_scheduled_date',
-        'target_date_case_property': 'CHW4_form_target'
+        'target_date_case_property': 'CHW4_form_target',
+        'completed_date': ['CHW4_form_completed']
     },
     {
         'visit_name': _('CHW Home Visit 3'),
@@ -159,177 +181,31 @@ VISIT_SCHEDULE = [
         'module_idx': CM_APP_CHW_MODULE,
         'show_button': False,
         'responsible_party': CONFIG['chw_role'],
-        'scheduled_source': 'CHW2-2_scheduled_date',
-        'target_date_case_property': 'CHW2-2_form_target'
+        'scheduled_source': 'CHW1_3_scheduled_date',
+        'target_date_case_property': 'CHW1_3_form_target',
+        'completed_date': ['CHW1_3_complete', 'CHW1_3_complete_date']
     },
     {
         'visit_name': _('CM Clinic Visit 3'),
-        'xmlns': CM5,
+        'xmlns': CM4,
         'days': 250,
         'module_idx': CM_APP_CM_MODULE,
         'show_button': 'CHW2-2_scheduled_date',
         'responsible_party': CONFIG['cm_role'],
-        'scheduled_source': 'CM5-2_scheduled_date',
-        'target_date_case_property': 'CM5-2_form_target'
+        'scheduled_source': 'CM4_3_scheduled_date',
+        'target_date_case_property': 'CM4_3_form_target',
+        'completed_date': ['CM4_3_complete', 'CM4_3_complete_date']
     },
 ]
 
-SUBMISSION_SELECT_FIELDS = [
-    {
-        "text": "Project Manager Forms",
-        "val": "pm_forms",
-        "next": [
-            {
-                "text": "PM1 Enrollment Form",
-                "val": PM1
-            },
-            {
-                "text": "PM2 Edit/Update Patient Info",
-                "val": PM2
-            },
-            {
-                "text": "PM3 Disenrollment Form",
-                "val": PM3
-            },
-            {
-                "text": "PM4 Change Care Site",
-                "val": PM4
-            }
-        ]
-    },
-    {
-        "text": "Care Manager Forms",
-        "val": "cm_forms",
-        "next": [
-            {
-                "text": "CM1 Initial Contact Form",
-                "val": CM1
-            },
-            {
-                "text": "CM2 Medical Record Form",
-                "val": CM2
-            },
-            {
-                "text": "CM3 1-week Phone Call",
-                "val": CM3
-            },
-            {
-                "text": "CM4 Initial Clinic Visit",
-                "val": CM4
-            },
-            {
-                "text": "CM5 Follow-up Clinic Visit",
-                "val": CM5
-            },
-            {
-                "text": "CM6 Follow-up Phone",
-                "val": CM6
-            },
-            {
-                "text": "CM7 Edit Patient Schedule",
-                "val": CM7
-            }
-        ]
-    },
-    {
-        "text": "CHW Forms",
-        "val": "chwm_forms",
-        "next": [
-            {
-                "text": "CHW1 Initial Home Visit",
-                "val": CHW1
-            },
-            {
-                "text": "CHW1 Psycho-Social",
-                "val": CHW1PS
-            },
-            {
-                "text": "CHW1 Cholesterol",
-                "val": CHW1CHOL
-            },
-            {
-                "text": "CHW1 Smoking Cessation",
-                "val": CHW1SMOKINGSENS
-            },
-            {
-                "text": "CHW1 Stroke Literacy",
-                "val": CHW1SL
-            },
-            {
-                "text": "CHW1 Communication Preferences",
-                "val": CHW1COMPREF
-            },
-            {
-                "text": "CHW2 Follow-up Home Visit",
-                "val": CHW2
-            },
-            {
-                "text": "CHW3 Follow-up Phone",
-                "val": CHW3
-            },
-            {
-                "text": "CHW4 CDSMP Tracking",
-                "val": CHW4
-            }
-        ]
-    },
-    {
-        "text": "Patient Data Forms",
-        "val": "pd_forms",
-        "next": [
-            {
-                "text": "PD1 Problem List",
-                "val": PD1
-            },
-            {
-                "text": "PD2 Medications",
-                "val": PD2
-            },
-            {
-                "text": "PD2 Antithrombotic Meds",
-                "val": PD2AM
-            },
-            {
-                "text": "PD2 Blood Pressure Meds",
-                "val": PD2BPM
-            },
-            {
-                "text": "PD2 Cholesterol Meds",
-                "val": PD2CHM
-            },
-            {
-                "text": "PD2 Diabetes Meds",
-                "val": PD2DIABM
-            },
-            {
-                "text": "PD2 Depression Meds",
-                "val": PD2DEPM
-            },
-            {
-                "text": "PD2 Smoking Cessation Meds",
-                "val": PD2SCM
-            },
-            {
-                "text": "PD2 Other Meds",
-                "val": PD2OM
-            }
-        ]
-    },
-    {
-        "text": "Huddle Forms",
-        "val": "hd_forms",
-        "next": [
-            {
-                "text": "HUD1 Initial Huddle",
-                "val": HUD1
-            },
-            {
-                "text": "HUD2 Follow-up Huddle",
-                "val": HUD2
-            }
-        ]
-    }
-]
+SUBMISSION_SELECT_FIELDS = {
+    'pm_forms': [PM1, PM3, PM4, PM_PM2, CHW4],
+    'cm_forms': [CM1, CM2, CM3, CM4, CM6_PHONE, CM7, HUD1, PD1, PD2AM, PD2BPM,
+                 PD2CHM, PD2DIABM, PD2DEPM, PD2SCM, PD2OM, PD2ALL],
+    'chw_forms': [CQ, CHW1PS, AS, CHW1DIAB, CHW1CHOL, CHW1SMOKINGSENS, TRANS,
+                  CHW1SL, HBP, CHW1DIETOBESITY, PAFSHS, NAV, CHW1COMPREF, CHW3_PHONE, CHW4],
+    'task': [AP1, AP2, CM_NEW_TASK, CM_UPDATE_TASK, AP1_ADD, UPDATE_TASK_ALL]
+}
 
 LAST_INTERACTION_LIST = [PM1, PM3, CM1, CM3, CM4, CM5, CM6, CHW1, CHW2, CHW3, CHW4]
 MEDICATION_DETAILS = ['MEDS_at_prescribed', 'MEDS_bp_prescribed', 'MEDS_cholesterol_prescribed', 'MEDS_depression_prescribed',

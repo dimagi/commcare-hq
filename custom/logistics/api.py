@@ -2,6 +2,7 @@ import logging
 from corehq import Domain
 from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
 from corehq.apps.custom_data_fields.models import CustomDataField
+from corehq.apps.locations.models import SQLLocation
 
 from corehq.apps.products.models import Product
 from custom.ewsghana.models import EWSGhanaConfig
@@ -132,6 +133,7 @@ class APISynchronization(object):
                             slug=name,
                             label=name,
                             is_required=False,
+                            choices=choices
                         )
                     )
                 else:
@@ -151,6 +153,9 @@ class APISynchronization(object):
         domain_object = Domain.get_by_name(self.domain)
         domain_object.default_sms_backend_id = MobileBackend.load_by_name(None, 'MOBILE_BACKEND_TEST').get_id
         domain_object.save()
+
+    def create_or_edit_roles(self):
+        raise NotImplemented("Not implemented yet")
 
     def location_sync(self, ilsgateway_location):
         raise NotImplemented("Not implemented yet")
@@ -189,12 +194,11 @@ class APISynchronization(object):
             'date_joined': force_to_datetime(ilsgateway_webuser.date_joined),
             'password_hashed': True,
         }
-        sp = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                  key=[self.domain, str(ilsgateway_webuser.location)],
-                                  reduce=False,
-                                  include_docs=True,
-                                  limit=1).first()
-        location_id = sp.location_id if sp else None
+        try:
+            sql_location = SQLLocation.objects.get(domain=self.domain, external_id=ilsgateway_webuser.location)
+            location_id = sql_location.location_id
+        except SQLLocation.DoesNotExist:
+            location_id = None
 
         if user is None:
             try:
@@ -242,8 +246,10 @@ class APISynchronization(object):
             user_dict['user_data']['role'] = ilsgateway_smsuser.role
 
         if ilsgateway_smsuser.phone_numbers:
-            user_dict['phone_numbers'] = [ilsgateway_smsuser.phone_numbers[0].replace('+', '')]
-            user_dict['user_data']['backend'] = ilsgateway_smsuser.backend
+            cleaned_number = apply_leniency(ilsgateway_smsuser.phone_numbers[0])
+            if cleaned_number:
+                user_dict['phone_numbers'] = [cleaned_number]
+                user_dict['user_data']['backend'] = ilsgateway_smsuser.backend
 
         if user is None and username_part:
             try:
@@ -257,7 +263,7 @@ class APISynchronization(object):
                 user.is_active = bool(ilsgateway_smsuser.is_active)
                 user.user_data = user_dict["user_data"]
                 if "phone_numbers" in user_dict:
-                    user.set_default_phone_number(apply_leniency(user_dict["phone_numbers"][0]))
+                    user.set_default_phone_number(user_dict["phone_numbers"][0])
                     try:
                         user.save_verified_number(self.domain, user_dict["phone_numbers"][0], True)
                     except PhoneNumberInUseException as e:
@@ -298,8 +304,10 @@ class APISynchronization(object):
             user.delete_phone_number(phone_number)
 
         if logistics_sms_user.phone_numbers:
-            phone_number = logistics_sms_user.phone_numbers[0]
-            user.set_default_phone_number(apply_leniency(phone_number))
+            phone_number = apply_leniency(logistics_sms_user.phone_numbers[0])
+            if not phone_number:
+                return
+            user.set_default_phone_number(phone_number)
             try:
                 user.save_verified_number(self.domain, phone_number, True)
             except PhoneNumberInUseException:

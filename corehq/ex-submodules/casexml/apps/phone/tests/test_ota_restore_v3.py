@@ -5,7 +5,7 @@ from django.test.utils import override_settings
 from casexml.apps.case.xml import V3
 from couchforms.tests.testutils import post_xform_to_couch
 from casexml.apps.case.tests.util import check_xml_line_by_line, delete_all_cases, delete_all_sync_logs
-from casexml.apps.case import process_cases
+from casexml.apps.case.xform import process_cases
 from casexml.apps.phone.models import SyncLog
 from casexml.apps.phone.restore import generate_restore_payload, StringRestoreResponse
 from casexml.apps.phone.tests.dummy import dummy_restore_xml, dummy_user

@@ -1,5 +1,9 @@
 from datetime import datetime, timedelta
+from couchdbkit import ResourceNotFound
 from django.utils.translation import ugettext as _, ugettext_noop
+from corehq.apps.groups.models import Group
+from custom.succeed.reports.patient_interactions import PatientInteractionsReport
+from custom.succeed.reports.patient_task_list import PatientTaskListReport
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.api.es import ReportCaseES
 from corehq.apps.cloudcare.api import get_cloudcare_app, get_cloudcare_form_url
@@ -8,19 +12,16 @@ from corehq.apps.reports.filters.search import SearchFilter
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
-from corehq.apps.users.models import CommCareUser, WebUser, UserRole, DomainMembershipError
 from corehq.elastic import es_query
 from corehq.pillows.base import restore_property_dict
 from django.utils import html
 import dateutil
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
-from custom.succeed.reports import VISIT_SCHEDULE, LAST_INTERACTION_LIST, EMPTY_FIELD, CM7, PM3, CM_APP_CM_MODULE, \
-    OUTPUT_DATE_FORMAT, INPUT_DATE_FORMAT
-from custom.succeed.reports.patient_Info import PatientInfoReport
-from custom.succeed.utils import is_succeed_admin, SUCCEED_CM_APPNAME, has_any_role, get_app_build, get_randomization_date
+from custom.succeed.reports import VISIT_SCHEDULE, LAST_INTERACTION_LIST, EMPTY_FIELD, CM7, PM3,\
+    CM_APP_CM_MODULE, OUTPUT_DATE_FORMAT, INPUT_DATE_FORMAT
+from custom.succeed.utils import is_succeed_admin, SUCCEED_CM_APPNAME, has_any_role, get_app_build, SUCCEED_DOMAIN
 import logging
 import simplejson
-from casexml.apps.case.models import CommCareCase
 
 
 class PatientListReportDisplay(CaseDisplay):
@@ -80,8 +81,7 @@ class PatientListReportDisplay(CaseDisplay):
     @property
     def case_detail_url(self):
         return html.escape(
-                PatientInfoReport.get_url(*[self.case["domain"]]) + "?patient_id=%s" % self.case["_id"])
-
+            PatientInteractionsReport.get_url(*[self.case["domain"]]) + "?patient_id=%s" % self.case["_id"])
 
     @property
     def mrn(self):
@@ -138,6 +138,28 @@ class PatientListReportDisplay(CaseDisplay):
         else:
             return EMPTY_FIELD
 
+    @property
+    def care_team(self):
+        group = Group.by_user(self.case['owner_id'], wrap=False, include_names=True)
+        if not group:
+            try:
+                group = Group.get(self.case['owner_id'])
+            except ResourceNotFound:
+                group = dict(name="No Group")
+        if isinstance(group, list):
+            group = group[0]
+        return group['name']
+
+    @property
+    def tasks(self):
+        url = html.escape(
+            PatientTaskListReport.get_url(*[self.case["domain"]]) +
+            "?patient_id=%s&task_status=open" % self.case["_id"])
+        if url:
+            return html.mark_safe("<a class='ajax_dialog' href='%s' target='_blank'>Tasks</a>" % url)
+        else:
+            return "%s (bad ID format)" % self.case_name
+
 
 class PatientListReport(CustomProjectReport, CaseListReport):
 
@@ -188,8 +210,9 @@ class PatientListReport(CustomProjectReport, CaseListReport):
             DataTablesColumn(_("Visit Name"), prop_name='visit_name'),
             DataTablesColumn(_("Target Date"), prop_name='target_date'),
             DataTablesColumn(_("Most Recent BP"), prop_name="BP_category.#value"),
-            DataTablesColumn(_("Discuss at Huddle?"), prop_name="discuss.#value"),
             DataTablesColumn(_("Last Patient Interaction"), prop_name="last_interaction"),
+            DataTablesColumn(_("Tasks"), prop_name="tasks", sortable=False),
+            DataTablesColumn(_("Care Team"), prop_name="care_team")
         )
         return headers
 
@@ -219,6 +242,11 @@ class PatientListReport(CustomProjectReport, CaseListReport):
                 "responsible_party": responsible_party
             }
         }
+
+    @property
+    @memoized
+    def groups(self):
+        return Group.by_domain(SUCCEED_DOMAIN)
 
     @property
     @memoized
@@ -334,6 +362,37 @@ class PatientListReport(CustomProjectReport, CaseListReport):
                 }
             }
             q['sort'] = sort
+        elif sorting_block == 'care_team':
+            ids_and_names = {}
+            user_ids = {}
+
+            users = []
+            for g in self.groups:
+                ids_and_names.update({g.get_id: g.name})
+                for user in g.users:
+                    users.append(user)
+                    if user not in user_ids:
+                        user_ids.update({user: g.name})
+            sort = {
+                "_script": {
+                    "script":
+                        """
+                            owner=_source.owner_id;
+                            grp_name=user_ids.get(owner);
+                            if (grp_name==null) {
+                               grp_name=ids_and_names.get(owner);
+                            }
+                            return grp_name;
+                        """,
+                    "type": "string",
+                    "params": {
+                        "user_ids": user_ids,
+                        "ids_and_names": ids_and_names
+                    },
+                    "order": order
+                }
+            }
+            q['sort'] = sort
 
         care_site = self.request_params.get('care_site_display', '')
         if care_site != '':
@@ -379,7 +438,8 @@ class PatientListReport(CustomProjectReport, CaseListReport):
         if self.case_type:
             es_filters["and"].append({"term": {"type.exact": 'participant'}})
         if search_string:
-            query_block = {"queryString": {"default_field": "full_name.#value", "query": "*" + search_string + "*"}}
+            query_block = {"queryString": {"default_field": "full_name.#value",
+                                           "query": "*" + search_string + "*"}}
             q["query"]["filtered"]["query"] = query_block
 
         logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, simplejson.dumps(q)))
@@ -406,8 +466,9 @@ class PatientListReport(CustomProjectReport, CaseListReport):
                 disp.visit_name,
                 disp.target_date,
                 disp.most_recent,
-                disp.discuss,
-                disp.patient_info
+                disp.patient_info,
+                disp.tasks,
+                disp.care_team
             ]
 
     @property

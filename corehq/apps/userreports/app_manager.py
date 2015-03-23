@@ -67,7 +67,7 @@ def get_form_data_source(app, form):
             make_form_question_indicator(q, column_id=get_column_name(q['value']))
             for q in questions
         ] + [
-            make_form_meta_block_indicator(field[0], field[1])
+            make_form_meta_block_indicator(field)
             for field in FORM_METADATA_PROPERTIES
         ],
     )

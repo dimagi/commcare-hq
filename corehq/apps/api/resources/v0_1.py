@@ -20,6 +20,7 @@ from tastypie.throttle import CacheThrottle
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.es import FormES
 from corehq.apps.users.decorators import require_permission, require_permission_raw
+from corehq.toggles import IS_DEVELOPER
 from couchforms.models import XFormInstance
 
 # CCHQ imports
@@ -128,14 +129,21 @@ class DomainAdminAuthentication(LoginAndDomainAuthentication):
         return self._auth_test(request, wrappers=wrappers, **kwargs)
 
 
-class SuperuserAuthentication(LoginAndDomainAuthentication):
+class AdminAuthentication(LoginAndDomainAuthentication):
+
+    @staticmethod
+    def _permission_check(couch_user, domain):
+        return (
+            couch_user.is_superuser or
+            IS_DEVELOPER.enabled(couch_user.username)
+        )
 
     def is_authenticated(self, request, **kwargs):
-        permission_check = lambda couch_user, domain: couch_user.is_superuser
-        wrappers = [
-            require_permission_raw(permission_check, login_decorator=self._get_auth_decorator(request)),
-            api_auth,
-        ]
+        decorator = require_permission_raw(
+            self._permission_check,
+            login_decorator=self._get_auth_decorator(request)
+        )
+        wrappers = [decorator, api_auth]
         # passing the domain is a hack to work around non-domain-specific requests
         # failing on auth
         return self._auth_test(request, wrappers=wrappers, domain='dimagi', **kwargs)

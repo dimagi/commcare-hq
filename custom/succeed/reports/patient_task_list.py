@@ -16,7 +16,7 @@ from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
 from corehq.elastic import es_query
 from corehq.pillows.base import restore_property_dict
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
-from custom.succeed import PatientInfoReport
+from custom.succeed.reports.patient_Info import PatientInfoReport
 from custom.succeed.reports import VISIT_SCHEDULE, LAST_INTERACTION_LIST, EMPTY_FIELD, \
     INPUT_DATE_FORMAT, OUTPUT_DATE_FORMAT, CM_APP_UPDATE_VIEW_TASK_MODULE, CM_UPDATE_TASK, TASK_RISK_FACTOR, TASK_ACTIVITY
 from custom.succeed.utils import is_succeed_admin, has_any_role, SUCCEED_CM_APPNAME, get_app_build
@@ -170,11 +170,7 @@ class PatientTaskListReport(CustomProjectReport, ElasticProjectInspectionReport,
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        if domain and project and user is None:
-            return True
-        if user and (is_succeed_admin(user) or has_any_role(user)):
-            return True
-        return False
+        return True
 
     @property
     @memoized

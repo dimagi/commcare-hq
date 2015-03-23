@@ -45,6 +45,15 @@ class FormRepeaterDhis2EventPayloadGenerator(BasePayloadGenerator):
     def get_headers(self, repeat_record, payload_doc):
         return {'Content-type': 'application/json'}
 
+    def _update_instance(self, dhis2_api, case):
+            instance = dhis2_api.get_te_inst(case['external_id'])
+            instance.update({dhis2_attr: case[cchq_attr]
+                             for cchq_attr, dhis2_attr in NUTRITION_ASSESSMENT_PROGRAM_FIELDS.iteritems()
+                             if getattr(case, cchq_attr, None)})
+            if 'Gender' in instance:
+                instance['Gender'] = instance['Gender'].capitalize()
+            dhis2_api.update_te_inst(instance)
+
     def get_payload(self, repeat_record, form):
         logger.debug('DHIS2: Form domain "%s" XMLNS "%s"', form['domain'], form['xmlns'])
         if form['xmlns'] not in (REGISTER_CHILD_XMLNS, GROWTH_MONITORING_XMLNS, RISK_ASSESSMENT_XMLNS):
@@ -73,12 +82,7 @@ class FormRepeaterDhis2EventPayloadGenerator(BasePayloadGenerator):
             if not getattr(case, 'external_id', None):
                 logger.info('Register Child form must be processed before Growth Monitoring form')
                 return  # Try again later
-            # Update tracked entity instance
-            instance = dhis2_api.get_te_inst(case['external_id'])
-            instance.update({dhis2_attr: case[cchq_attr]
-                             for cchq_attr, dhis2_attr in NUTRITION_ASSESSMENT_PROGRAM_FIELDS.iteritems()
-                             if getattr(case, cchq_attr, None)})
-            dhis2_api.update_te_inst(instance)
+            self._update_instance(dhis2_api, case)
             # Create a paediatric nutrition assessment event.
             program_id = dhis2_api.get_program_id('Paediatric Nutrition Assessment')
             program_stage_id = dhis2_api.get_program_stage_id('Nutrition Assessment')
@@ -90,12 +94,7 @@ class FormRepeaterDhis2EventPayloadGenerator(BasePayloadGenerator):
             if not getattr(case, 'external_id', None):
                 logger.info('Register Child form must be processed before Risk Assessment form')
                 return  # Try again later
-            # Update tracked entity instance
-            instance = dhis2_api.get_te_inst(case['external_id'])
-            instance.update({dhis2_attr: case[cchq_attr]
-                             for cchq_attr, dhis2_attr in RISK_ASSESSMENT_PROGRAM_FIELDS.iteritems()
-                             if getattr(case, cchq_attr, None)})
-            dhis2_api.update_te_inst(instance)
+            self._update_instance(dhis2_api, case)
             # Check whether the case needs to be enrolled in the Risk Assessment Program
             program_id = dhis2_api.get_program_id('Underlying Risk Assessment')
             if not dhis2_api.enrolled_in(case['external_id'], 'Underlying Risk Assessment'):
