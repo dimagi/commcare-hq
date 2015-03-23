@@ -355,3 +355,10 @@ CUSTOM_PROPERTIES = StaticToggle(
     'Allow users to add arbitrary custom properties to their appliation',
     [NAMESPACE_DOMAIN]
 )
+
+
+GLOBAL_SMS_RATES = StaticToggle(
+    'global_sms_rates',
+    'Global SMS Rates page',
+    [NAMESPACE_USER]
+)
