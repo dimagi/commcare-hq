@@ -1,19 +1,14 @@
 # encoding: utf-8
 from south.v2 import DataMigration
-from dimagi.utils.couch.database import get_db
-from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import LocationType
+
 
 class Migration(DataMigration):
 
     def forwards(self, orm):
         """call the save method on all relevant location types"""
-        db = get_db()
-        for domain in Domain.get_all():
-            if domain.commtrack_enabled:
-                for loc_type in (LocationType.objects
-                                 .filter(domain=domain.name).all()):
-                    loc_type.save()
+        for loc_type in LocationType.objects.iterator():
+            loc_type.save()
 
     def backwards(self, orm):
         "Write your backwards methods here."
