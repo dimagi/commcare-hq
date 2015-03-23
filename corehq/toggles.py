@@ -156,7 +156,7 @@ OFFLINE_CLOUDCARE = StaticToggle(
 
 CASE_REBUILD = StaticToggle(
     'case_rebuild',
-    'Show UI-based case rebuild option',
+    'Show UI-based case and form rebuild options (primarily for support team)',
 )
 
 IS_DEVELOPER = StaticToggle(
