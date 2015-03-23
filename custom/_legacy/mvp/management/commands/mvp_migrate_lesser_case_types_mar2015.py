@@ -92,7 +92,7 @@ class Command(LabelCommand):
                 elif error:
                     self.log('- ERROR: [{id}] ({result})'.format(
                         id=result.get('id'),
-                        response=json.dumps(result)
+                        result=json.dumps(result)
                     ))
                 else:
                     self.log('- ADDED: [{id}] saved to indicator db'.format(
