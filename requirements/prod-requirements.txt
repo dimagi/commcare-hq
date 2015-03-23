@@ -1,2 +1,2 @@
-flower==0.5.2
+flower==0.7.0
 newrelic
