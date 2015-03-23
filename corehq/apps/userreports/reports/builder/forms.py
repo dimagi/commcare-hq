@@ -316,6 +316,7 @@ class ConfigureNewReportBase(forms.Form):
 
         if self.existing_report:
             self._bootstrap(self.existing_report)
+            self.button_text = _('Update Report')
         else:
             self.report_name = report_name
             assert source_type in ['case', 'form']
@@ -338,7 +339,6 @@ class ConfigureNewReportBase(forms.Form):
 
         buttons = [crispy.Submit('submit', _(self.button_text))]
         if not self.existing_report:
-            # noinspection PyTypeChecker
             buttons.insert(
                 0,
                 crispy.HTML(
@@ -350,6 +350,16 @@ class ConfigureNewReportBase(forms.Form):
                         _('Back')
                     )
                 ),
+            )
+        else:
+            buttons.insert(
+                0,
+                crispy.HTML(
+                    '<a class="btn btn-danger" href="{}" style="margin-right: 4px">{}</a>'.format(
+                        reverse('delete_configurable_report', args=(self.domain, self.existing_report._id)),
+                        _('Delete Report')
+                    )
+                )
             )
         self.helper.layout = crispy.Layout(
             self.container_fieldset,

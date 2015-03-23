@@ -268,7 +268,6 @@ def _edit_report_shared(request, domain, config):
 
 
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
-@require_POST
 def delete_report(request, domain, report_id):
     config = get_document_or_404(ReportConfiguration, domain, report_id)
 
