@@ -2019,7 +2019,7 @@ VELLUM_TYPES = {
     },
     "DataBindOnly": {
         'icon': 'icon-vellum-variable',
-        'icon_bs3': 'fcc-fd-data',
+        'icon_bs3': 'fcc-fd-variable',
     },
     "Date": {
         'tag': 'input',
