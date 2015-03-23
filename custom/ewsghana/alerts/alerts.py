@@ -243,7 +243,7 @@ def reminder_to_visit_website():
         for user in CommCareUser.by_domain(domain):
             thirteen_days_ago = datetime.datetime.now() - datetime.timedelta(weeks=13)
             if user.location and user.last_login < thirteen_days_ago and user.get_verified_number()\
-                    and user.location.location_type in ['district', 'region', 'country']:
+                    and user.location.location_type.name in ['district', 'region', 'country']:
                     message = WEB_REMINDER % user.name
                     verified_number = user.get_verified_number()
                     send_sms_to_verified_number(verified_number, message)
