@@ -291,6 +291,7 @@ class SplitColumn(ComplexExportColumn):
     output = [1, '', 'c d']
     """
     options = StringListProperty()
+    ignore_extras = False
 
     def get_headers(self):
         header = self.display if '{option}' in self.display else u"{name} | {option}"
@@ -299,10 +300,11 @@ class SplitColumn(ComplexExportColumn):
                 name=self.display,
                 option=option
             )
-        yield header.format(
-            name=self.display,
-            option='extra'
-        )
+        if not self.ignore_extras:
+            yield header.format(
+                name=self.display,
+                option='extra'
+            )
 
     def get_data(self, value):
         row = [None] * len(self.options)
@@ -315,8 +317,12 @@ class SplitColumn(ComplexExportColumn):
                 row[index] = 1
                 values.remove(option)
 
-        remainder = ' '.join(values) if values else None
-        return row + [remainder]
+        if self.ignore_extras:
+            return row
+        else:
+            remainder = ' '.join(values) if values else None
+            return row + [remainder]
+
 
     def to_config_format(self, selected=True):
         config = super(SplitColumn, self).to_config_format(selected)
