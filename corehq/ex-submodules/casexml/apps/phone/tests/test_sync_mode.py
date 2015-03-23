@@ -57,7 +57,7 @@ class SyncBaseTest(TestCase):
                 case_type=PARENT_TYPE,
                 version=V2
             ).as_xml()
-            self._postFakeWithSyncToken(caseblock, self.sync_log.get_id)
+        self._postFakeWithSyncToken(caseblock, self.sync_log.get_id)
         
     def _postWithSyncToken(self, filename, token_id):
         file_path = os.path.join(os.path.dirname(__file__), "data", filename)
@@ -71,7 +71,7 @@ class SyncBaseTest(TestCase):
         return form
 
     def _postFakeWithSyncToken(self, caseblock, token_id):
-        return post_case_blocks([caseblock], form_extras={"last_sync_token": token_id})
+        return post_case_blocks(list(caseblock), form_extras={"last_sync_token": token_id})
 
     def _checkLists(self, l1, l2):
         self.assertEqual(len(l1), len(l2))

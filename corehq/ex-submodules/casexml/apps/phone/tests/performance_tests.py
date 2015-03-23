@@ -66,14 +66,15 @@ class SyncPerformanceTest(SyncBaseTest):
         id_list = ['case_id_{}'.format(i) for i in range(total_cases)]
         self._createCaseStubs(id_list, user_id=USER_ID, owner_id=SHARED_ID)
 
+        caseblocks = []
         for case_id in id_list[:modified]:
-            caseblock = CaseBlock(
+            caseblocks.append(CaseBlock(
                 case_id=case_id,
                 user_id=OTHER_USER_ID,
                 version=V2,
                 update={'favorite_color': 'blue'}
-            ).as_xml()
-            self._postFakeWithSyncToken(caseblock, self.other_sync_log.get_id)
+            ).as_xml())
+        self._postFakeWithSyncToken(caseblocks, self.other_sync_log.get_id)
 
         assert_user_has_cases(self, self.user, id_list[:modified], restore_id=self.sync_log.get_id)
 
@@ -91,10 +92,11 @@ class SyncPerformanceTest(SyncBaseTest):
         self._createCaseStubs(id_list, user_id=USER_ID, owner_id=SHARED_ID)
 
         new_case_ids = []
+        caseblocks = []
         for i, parent_case_id in enumerate(id_list):
             case_id = 'case_id_referral_{}'.format(i)
             new_case_ids.append(case_id)
-            caseblock = CaseBlock(
+            caseblocks.append(CaseBlock(
                 create=True,
                 case_id=case_id,
                 user_id=USER_ID,
@@ -102,8 +104,8 @@ class SyncPerformanceTest(SyncBaseTest):
                 case_type=REFERRAL_TYPE,
                 version=V2,
                 index={'parent': (PARENT_TYPE, parent_case_id)}
-            ).as_xml()
-            self._postFakeWithSyncToken(caseblock, self.sync_log.get_id)
+            ).as_xml())
+        self._postFakeWithSyncToken(caseblocks, self.sync_log.get_id)
 
         all_cases = id_list + new_case_ids
         assert_user_has_cases(self, self.referral_user, all_cases, restore_id=self.referral_sync_log.get_id)
@@ -116,16 +118,17 @@ class SyncPerformanceTest(SyncBaseTest):
         filter_cases_modified_elsewhere_since_sync
     ])
     def test_profile_get_related_cases_grandparent(self):
-        total_parent_cases = 30
+        total_parent_cases = 5
 
         parent_cases = ['case_id_{}'.format(i) for i in range(total_parent_cases)]
         self._createCaseStubs(parent_cases, user_id=USER_ID, owner_id=SHARED_ID)
 
         child_cases = []
+        caseblocks = []
         for i, parent_case_id in enumerate(parent_cases):
             case_id = 'case_id_child_{}'.format(i)
             child_cases.append(case_id)
-            caseblock = CaseBlock(
+            caseblocks.append(CaseBlock(
                 create=True,
                 case_id=case_id,
                 user_id=USER_ID,
@@ -133,15 +136,16 @@ class SyncPerformanceTest(SyncBaseTest):
                 case_type='child',
                 version=V2,
                 index={'parent': (PARENT_TYPE, parent_case_id)}
-            ).as_xml()
-            self._postFakeWithSyncToken(caseblock, self.sync_log.get_id)
+            ).as_xml())
             print("created child case", case_id)
+        self._postFakeWithSyncToken(caseblocks, self.sync_log.get_id)
 
         referreal_cases = []
+        caseblocks = []
         for i, child_case_id in enumerate(child_cases):
             case_id = 'case_id_referral_{}'.format(i)
             referreal_cases.append(case_id)
-            caseblock = CaseBlock(
+            caseblocks.append(CaseBlock(
                 create=True,
                 case_id=case_id,
                 user_id=USER_ID,
@@ -149,9 +153,9 @@ class SyncPerformanceTest(SyncBaseTest):
                 case_type=REFERRAL_TYPE,
                 version=V2,
                 index={'parent': ('child', child_case_id)}
-            ).as_xml()
-            self._postFakeWithSyncToken(caseblock, self.sync_log.get_id)
+            ).as_xml())
             print("created referral case", case_id)
+        self._postFakeWithSyncToken(caseblocks, self.sync_log.get_id)
 
         all_cases = parent_cases + child_cases + referreal_cases
         assert_user_has_cases(self, self.referral_user, all_cases, restore_id=self.referral_sync_log.get_id)

@@ -11,7 +11,8 @@ try:
         OtaRestoreTestBatched,
         BatchRestoreTests,
     )
-    from .performance_tests import SyncPerformanceTest
+    # uncomment to run performance tests
+    # from .performance_tests import SyncPerformanceTest
 except ImportError, e:
     # for some reason the test harness squashes these so log them here for clarity
     # otherwise debugging is a pain
