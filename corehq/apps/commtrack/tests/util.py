@@ -190,6 +190,8 @@ def extract_balance_xml(xml_payload):
 
 def fake_sms(user, text):
     """
+    Fake a commtrack SMS submission for a user.
+    `text` might be "soh myproduct 100"
     Don't use this with a real user
     """
     if not user.phone_number:
