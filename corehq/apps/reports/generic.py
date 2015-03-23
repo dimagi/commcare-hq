@@ -517,12 +517,11 @@ class GenericReportView(object):
         self.set_announcements()
         return render(self.request, template, self.context)
 
-    
     @property
     @request_cache()
     def mobile_response(self):
         """
-        This tries to render a mobile version of the report, by just calling 
+        This tries to render a mobile version of the report, by just calling
         out to a very simple default template. Likely won't work out of the box
         with most reports.
         """
@@ -533,7 +532,7 @@ class GenericReportView(object):
         async_context = self._async_context()
         self.context.update(async_context)
         return render(self.request, self.mobile_template_base, self.context)
-    
+
     @property
     def email_response(self):
         """
@@ -551,7 +550,7 @@ class GenericReportView(object):
             Renders the asynchronous view of the report template, returned as json.
         """
         return HttpResponse(json.dumps(self._async_context()), content_type='application/json')
-    
+
     def _async_context(self):
         self.update_template_context()
         self.update_report_context()
@@ -723,7 +722,7 @@ class GenericTabularReport(GenericReportView):
     use_datatables = True
     charts_per_row = 1
     bad_request_error_text = None
-    
+
     # override old class properties
     report_template_path = "reports/async/tabular.html"
     flush_layout = True
