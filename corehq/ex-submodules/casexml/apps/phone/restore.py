@@ -466,14 +466,14 @@ class RestoreConfig(object):
     def get_response(self):
         try:
             payload = self.get_payload()
-            if payload.endswith('.xml'):
+            if path.exists(payload):
                 try:
-                    f = open(payload, 'r')
-                except IOError:
-                    return HttpResponse(u"Unable to process payload in file: {}".format(payload),
-                                        status=500)
-                # Since payload file is all one line, need to readline based on bytes
-                return StreamingHttpResponse(iter(lambda: f.readline(MAX_BYTES), ''), mimetype="text/xml")
+                    with open(payload, 'r') as f:
+                        # Since payload file is all one line, need to readline based on bytes
+                        return StreamingHttpResponse(iter(lambda: f.readline(MAX_BYTES), ''),
+                                                     mimetype="text/xml")
+                except IOError as e:
+                    return HttpResponse(e, status=500)
             else:
                 return HttpResponse(payload, mimetype="text/xml")
         except RestoreException, e:
