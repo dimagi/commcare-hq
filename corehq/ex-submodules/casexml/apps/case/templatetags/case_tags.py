@@ -3,7 +3,7 @@ import copy
 import datetime
 import numbers
 import pytz
-import simplejson
+import json
 import types
 
 from django import template
@@ -109,7 +109,7 @@ def render_case(case, options):
             "style": "table"
         },
         "case": case,
-        "case_actions": mark_safe(simplejson.dumps(actions)),
+        "case_actions": mark_safe(json.dumps(actions)),
         "timezone": timezone,
         "tz_abbrev": tz_abbrev,
         "case_hierarchy_options": {

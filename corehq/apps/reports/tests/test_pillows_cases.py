@@ -1,5 +1,5 @@
 from django.test import TestCase
-import simplejson
+import json
 from casexml.apps.case.xform import extract_case_blocks
 from corehq.apps.api.es import report_term_filter
 from corehq.pillows.base import VALUE_TAG
