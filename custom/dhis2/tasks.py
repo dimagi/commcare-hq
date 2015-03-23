@@ -191,6 +191,13 @@ def create_case_from_dhis2(dhis2_child, domain, user):
     """
     case_id = uuid.uuid4().hex
     update = {k: dhis2_child[v] for k, v in NUTRITION_ASSESSMENT_PROGRAM_FIELDS.iteritems()}
+    update['dhis_org_id'] = dhis2_child['Org unit']
+    # Do the inverse of push_case() to 'Gender' / 'child_gender'
+    if 'child_gender' in update:
+        if update['child_gender'] == 'Undefined':
+            del update['child_gender']
+        else:
+            update['child_gender'] = update['child_gender'].lower()
     caseblock = CaseBlock(
         create=True,
         case_id=case_id,

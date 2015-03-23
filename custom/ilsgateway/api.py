@@ -148,6 +148,9 @@ class ILSGatewayAPI(APISynchronization):
         - Sets the proper location types hierarchy on the domain object.
         - Sets a keyword handler for reporting receipts
         """
+        for location_type in LocationType.objects.by_domain(self.domain):
+            location_type.delete()
+
         previous = None
         for loc_type in LOCATION_TYPES:
             previous, _ = LocationType.objects.get_or_create(

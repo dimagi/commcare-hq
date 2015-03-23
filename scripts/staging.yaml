@@ -57,6 +57,7 @@ branches:
   - kill-referrals  # cz 3/6
   - loc-type-stock-rates  # Ethan 3/6
   - refactor-payment-modal # Nick P 3/19
+  - pricingSMS # sravan 3/23
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
