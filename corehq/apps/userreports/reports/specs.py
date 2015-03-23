@@ -20,6 +20,7 @@ SQLAGG_COLUMN_MAP = {
     'sum': SumColumn,
     'simple': SimpleColumn,
     'year': YearColumn,
+    'expand': SimpleColumn,
 }
 
 
@@ -64,6 +65,8 @@ class ReportColumn(JsonObject):
         return None
 
     def get_sql_column(self):
+        if self.type == "expand":
+            raise RuntimeError("Don't use this method if self.type is 'expand'")
         return DatabaseColumn(
             self.display,
             SQLAGG_COLUMN_MAP[self.aggregation](self.field, alias=self.alias),

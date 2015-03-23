@@ -27,11 +27,12 @@ class ApisTest(TestCase):
         self.assertEqual(location.name, "Test facility")
         self.assertEqual(location.type, "facility")
         self.assertEqual(location.parent_id, 369)
-        self.assertEqual(location.latitude, "")
-        self.assertEqual(location.longitude, "")
+        self.assertEqual(location.latitude, "1.15")
+        self.assertEqual(location.longitude, "3.14")
         self.assertEqual(location.code, "testfacility")
         self.assertEqual(location.supervised_by, 591)
         self.assertEqual(location.groups, [])
+        self.assertIsNotNone(location.supply_points)
 
     def test_parse_webuser_json(self):
         with open(os.path.join(self.datapath, 'sample_webusers.json')) as f:

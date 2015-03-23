@@ -134,16 +134,11 @@ class EWSApi(APISynchronization):
     ]
     PRODUCT_CUSTOM_FIELDS = []
 
-    def _create_location_type_if_not_exists(self, supply_point, location):
-        parent = self._make_loc_type(name=location.location_type)
-        self._make_loc_type(name=supply_point.type, parent_type=parent)
-
     def _create_location_from_supply_point(self, supply_point, location):
         try:
             sql_location = SQLLocation.objects.get(domain=self.domain, site_code=supply_point.code)
             return Loc.get(sql_location.location_id)
         except SQLLocation.DoesNotExist:
-            self._create_location_type_if_not_exists(supply_point, location)
             new_location = Loc(parent=location)
             new_location.domain = self.domain
             new_location.location_type = supply_point.type
@@ -170,15 +165,18 @@ class EWSApi(APISynchronization):
                                                           external_id=str(supply_point.id),
                                                           domain=self.domain))
 
-    def _make_loc_type(self, name, administrative=False, parent=None):
+    def _make_loc_type(self, name, administrative=False, parent_type=None):
         return LocationType.objects.get_or_create(
             domain=self.domain,
             name=name,
             administrative=administrative,
-            parent_type=parent,
+            parent_type=parent_type,
         )[0]
 
     def prepare_commtrack_config(self):
+        for location_type in LocationType.objects.by_domain(self.domain):
+            location_type.delete()
+
         country = self._make_loc_type(name="country", administrative=True)
         self._make_loc_type(name="Central Medical Store", parent_type=country)
         self._make_loc_type(name="Teaching Hospital", parent_type=country)
@@ -492,7 +490,7 @@ class EWSApi(APISynchronization):
                 try:
                     location = SQLLocation.objects.get(domain=self.domain,
                                                        external_id=ews_smsuser.supply_point.location_id)
-                    couch_location = location.couch_location()
+                    couch_location = location.couch_location
                 except SQLLocation.DoesNotExist:
                     couch_location = None
             else:

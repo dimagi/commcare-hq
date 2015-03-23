@@ -129,7 +129,7 @@ def second_soh_process_user(user, date, test=False):
 def third_soh_to_super():
     domains = EWSGhanaConfig.get_all_enabled_domains()
     for domain in domains:
-        facilities = SQLLocation.objects.filter(location_type__in=reporting_types(domain))
+        facilities = SQLLocation.objects.filter(location_type__name__in=reporting_types(domain))
         users = CommCareUser.by_domain(domain)
         third_soh_process_users_and_facilities(users, facilities)
 

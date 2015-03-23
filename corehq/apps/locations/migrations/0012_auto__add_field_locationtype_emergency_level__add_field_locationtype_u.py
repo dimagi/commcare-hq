@@ -1,109 +1,46 @@
 # encoding: utf-8
-from south.v2 import DataMigration
-from corehq.apps.domain.models import Domain
+import datetime
+from south.db import db
+from south.v2 import SchemaMigration
+from django.db import models
 
-
-EXCLUDE_DOMAINS = (
-    "drewpsi",
-    "psi",
-    "psi-ors",
-    "psi-test",
-    "psi-test2",
-    "psi-test3",
-    "psi-unicef",
-    "psi-unicef-wb",
-)
-
-
-def _couch_parent_loc(parent_code, couch_loc_types, domain):
-    for loc_type in couch_loc_types:
-        if loc_type.get('code') == parent_code or loc_type['name'] == parent_code:
-            return loc_type
-    raise ValueError("Parent loc type {} not found on {}"
-                     .format(parent_code, domain))
-
-
-class Migration(DataMigration):
-
-    def make_loc_types(self, couch_loc_types, domain):
-
-        def get_or_create(couch_loc_type):
-            parents = couch_loc_type['allowed_parents']
-            if len(parents) != 1:
-                raise ValueError("Improperly configured location types on {}"
-                                 .format(domain))
-            elif parents[0] == '':
-                parent_type = None
-            else:
-                parent_type = get_or_create(
-                    _couch_parent_loc(parents[0], couch_loc_types, domain)
-                )
-
-            return self.orm.LocationType.objects.get_or_create(
-                domain=domain,
-                code=couch_loc_type.get('code', couch_loc_type['name']),
-                defaults={
-                    'name': couch_loc_type['name'],
-                    'parent_type': parent_type,
-                    'administrative': couch_loc_type['administrative'] or False,
-                    'shares_cases': couch_loc_type.get('shares_cases', False),
-                    'view_descendants': couch_loc_type.get('view_descendants', False),
-                }
-            )[0]
-
-        loc_types = {}
-        for lt in couch_loc_types:
-            loc_type = get_or_create(lt)
-            if 'code' in lt:
-                loc_types[lt['code']] = loc_type
-            loc_types[lt['name']] = loc_type
-        return loc_types
-
-    def link_locs_to_types(self, loc_types, domain):
-        for loc in (
-            self.orm.SQLLocation.objects.filter(domain=domain).iterator()
-        ):
-            if loc.tmp_location_type not in loc_types:
-                raise KeyError('loc_type {} not found on domain "{}"'
-                               .format(loc.tmp_location_type, domain))
-            loc.location_type = loc_types[loc.tmp_location_type]
-            loc.save()
+class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        """
-        Look up the old LocationType docs, make SQL LocationTypes based on that
-        and then link to locations on the domain.
-        """
-        self.orm = orm
-        for domain_obj in Domain.get_all():
-            domain_json = domain_obj.to_json()
-            loc_types = domain_json.get('obsolete_location_types')
-            if loc_types is None:
-                loc_types = domain_json.get('location_types')
 
-            if loc_types:
-                sql_loc_types = self.make_loc_types(loc_types, domain_obj.name)
-                self.link_locs_to_types(sql_loc_types, domain_obj.name)
+        # Adding field 'LocationType.emergency_level'
+        db.add_column(u'locations_locationtype', 'emergency_level', self.gf('django.db.models.fields.DecimalField')(default=0.5, max_digits=10, decimal_places=1), keep_default=False)
+
+        # Adding field 'LocationType.understock_threshold'
+        db.add_column(u'locations_locationtype', 'understock_threshold', self.gf('django.db.models.fields.DecimalField')(default=1.5, max_digits=10, decimal_places=1), keep_default=False)
+
+        # Adding field 'LocationType.overstock_threshold'
+        db.add_column(u'locations_locationtype', 'overstock_threshold', self.gf('django.db.models.fields.DecimalField')(default=3.0, max_digits=10, decimal_places=1), keep_default=False)
 
     def backwards(self, orm):
-        """
-        Populate the tmp_location_type field based on the location_type object
-        """
-        for loc in orm.SQLLocation.objects.iterator():
-            loc_type_str = loc.location_type.name if loc.location_type else ''
-            if loc_type_str and loc_type_str != loc.tmp_location_type:
-                loc.tmp_location_type = loc_type_str
-                loc.save()
+
+        # Deleting field 'LocationType.emergency_level'
+        db.delete_column(u'locations_locationtype', 'emergency_level')
+
+        # Deleting field 'LocationType.understock_threshold'
+        db.delete_column(u'locations_locationtype', 'understock_threshold')
+
+        # Deleting field 'LocationType.overstock_threshold'
+        db.delete_column(u'locations_locationtype', 'overstock_threshold')
+
 
     models = {
         u'locations.locationtype': {
             'Meta': {'object_name': 'LocationType'},
             'administrative': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'code': ('django.db.models.fields.SlugField', [], {'max_length': '50', 'null': 'True'}),
+            'code': ('django.db.models.fields.SlugField', [], {'max_length': '50'}),
             'domain': ('django.db.models.fields.CharField', [], {'max_length': '255', 'db_index': 'True'}),
+            'emergency_level': ('django.db.models.fields.DecimalField', [], {'default': '0.5', 'max_digits': '10', 'decimal_places': '1'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
-            'parent_type': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['locations.LocationType']", 'null': 'True'})
+            'overstock_threshold': ('django.db.models.fields.DecimalField', [], {'default': '3.0', 'max_digits': '10', 'decimal_places': '1'}),
+            'parent_type': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['locations.LocationType']", 'null': 'True'}),
+            'understock_threshold': ('django.db.models.fields.DecimalField', [], {'default': '1.5', 'max_digits': '10', 'decimal_places': '1'})
         },
         u'locations.sqllocation': {
             'Meta': {'unique_together': "(('domain', 'site_code'),)", 'object_name': 'SQLLocation'},
@@ -127,7 +64,6 @@ class Migration(DataMigration):
             'site_code': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'stocks_all_products': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'supply_point_id': ('django.db.models.fields.CharField', [], {'max_length': '255', 'unique': 'True', 'null': 'True', 'db_index': 'True'}),
-            'tmp_location_type': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True'}),
             u'tree_id': ('django.db.models.fields.PositiveIntegerField', [], {'db_index': 'True'})
         },
         u'products.sqlproduct': {

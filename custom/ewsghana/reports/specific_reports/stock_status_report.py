@@ -123,10 +123,10 @@ class MonthOfStockProduct(EWSData):
                 domain=self.config['domain'],
                 location_id=self.config['location_id']
             )
-            if location.location_type == 'country':
+            if location.location_type.name == 'country':
                 supply_points = SQLLocation.objects.filter(
                     Q(parent__location_id=self.config['location_id']) |
-                    Q(location_type='Regional Medical Store', domain=self.config['domain'])
+                    Q(location_type__name='Regional Medical Store', domain=self.config['domain'])
                 ).order_by('name').exclude(supply_point_id__isnull=True)
             else:
                 supply_points = SQLLocation.objects.filter(
@@ -252,10 +252,10 @@ class StockoutTable(EWSData):
                 domain=self.config['domain'],
                 location_id=self.config['location_id']
             )
-            if location.location_type == 'country':
+            if location.location_type.name == 'country':
                 supply_points = SQLLocation.objects.filter(
                     Q(parent__location_id=self.config['location_id']) |
-                    Q(location_type='Regional Medical Store', domain=self.config['domain'])
+                    Q(location_type__name='Regional Medical Store', domain=self.config['domain'])
                 ).order_by('name').exclude(supply_point_id__isnull=True)
             else:
                 supply_points = SQLLocation.objects.filter(
