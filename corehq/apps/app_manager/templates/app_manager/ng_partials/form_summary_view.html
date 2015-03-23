@@ -92,7 +92,7 @@
                         <ol>
                             <li ng-repeat="question in form.questions|filter:questionSearch">
                                 {% verbatim %}
-                                <i class="hq-icon fcc {{ getIcon(question.type) }}" title="{{ question.type }}"></i>
+                                <i class="hq-icon {{ getIcon(question.type) }}" title="{{ question.type }}"></i>
                                 <span ng-show="showLabels">{{ getQuestionLabel(question) }}</span>
                                 {% endverbatim %}
                                 <span ng-hide="showLabels">{{ question.value }}</span>
