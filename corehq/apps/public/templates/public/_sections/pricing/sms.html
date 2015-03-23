@@ -1,0 +1,125 @@
+{% load i18n %}
+<section id="pricing-sms"
+         class="section
+                section-default
+                section-pricing-sms">
+    <div class="container">
+        <div class="row row-pricing row-pricing-main">
+            <div class="col-sm-2">
+                <h2>
+                    {% trans 'SMS (CommConnect)' %}
+                    <a href="#"><i class="fa fa-info-circle"></i></a>
+                </h2>
+            </div>
+            <div class="col-sm-2 col-sm-offset-2">
+                <h3 class="pricing-header text-capitalize">
+                    <span class="sr-only">{% trans 'Community' %}</span>
+                </h3>
+            </div>
+            <div class="col-sm-2">
+                <h3 class="pricing-header">
+                    <span class="sr-only">{% trans 'Standard' %}</span>
+                </h3>
+            </div>
+            <div class="col-sm-2">
+                <h3 class="pricing-header">
+                    <span class="sr-only">{% trans 'Pro' %}</span>
+                </h3>
+            </div>
+            <div class="col-sm-2">
+                <h3 class="pricing-header">
+                    <span class="sr-only">{% trans 'Advanced' %}</span>
+                </h3>
+            </div>
+            <div class="col-sm-2">
+                <h3 class="pricing-header">
+                    <span class="sr-only">{% trans 'Enterprise' %}</span>
+                </h3>
+            </div>
+        </div>
+        <div class="row row-pricing-item">
+            <div class="col-sm-2">
+                {% blocktrans %}
+                    Outbound Messaging
+                {% endblocktrans %}
+            </div>
+            <div class="col-sm-2"><p><i class="fa fa-minus"></i></p></div>
+            <div class="col-sm-2"><p><i class="fa fa-check"></i></p></div>
+            <div class="col-sm-2"><p><i class="fa fa-check"></i></p></div>
+            <div class="col-sm-2"><p><i class="fa fa-check"></i></p></div>
+            <div class="col-sm-2"><p><i class="fa fa-check"></i></p></div>
+        </div>
+        <div class="row row-pricing-item">
+            <div class="col-sm-2">
+                {% blocktrans %}
+                    Rules Engine
+                {% endblocktrans %}
+            </div>
+            <div class="col-sm-2"><p><i class="fa fa-minus"></i></p></div>
+            <div class="col-sm-2"><p><i class="fa fa-check"></i></p></div>
+            <div class="col-sm-2"><p><i class="fa fa-check"></i></p></div>
+            <div class="col-sm-2"><p><i class="fa fa-check"></i></p></div>
+            <div class="col-sm-2"><p><i class="fa fa-check"></i></p></div>
+        </div>
+        <div class="row row-pricing-item">
+            <div class="col-sm-2">
+                {% blocktrans %}
+                    Android-based SMS Gateway
+                {% endblocktrans %}
+            </div>
+            <div class="col-sm-2"><p><i class="fa fa-minus"></i></p></div>
+            <div class="col-sm-2"><p><i class="fa fa-check"></i></p></div>
+            <div class="col-sm-2"><p><i class="fa fa-check"></i></p></div>
+            <div class="col-sm-2"><p><i class="fa fa-check"></i></p></div>
+            <div class="col-sm-2"><p><i class="fa fa-check"></i></p></div>
+        </div>
+        <div class="row row-pricing-item">
+            <div class="col-sm-2">
+                {% blocktrans %}
+                    SMS Data Collection
+                {% endblocktrans %}
+            </div>
+            <div class="col-sm-2"><p><i class="fa fa-minus"></i></p></div>
+            <div class="col-sm-2"><p><i class="fa fa-minus"></i></p></div>
+            <div class="col-sm-2"><p><i class="fa fa-check"></i></p></div>
+            <div class="col-sm-2"><p><i class="fa fa-check"></i></p></div>
+            <div class="col-sm-2"><p><i class="fa fa-check"></i></p></div>
+        </div>
+        <div class="row row-pricing-item">
+            <div class="col-sm-2">
+                {% blocktrans %}
+                    Inbound SMS (where available)
+                {% endblocktrans %}
+            </div>
+            <div class="col-sm-2"><p><i class="fa fa-minus"></i></p></div>
+            <div class="col-sm-2"><p><i class="fa fa-minus"></i></p></div>
+            <div class="col-sm-2"><p><i class="fa fa-check"></i></p></div>
+            <div class="col-sm-2"><p><i class="fa fa-check"></i></p></div>
+            <div class="col-sm-2"><p><i class="fa fa-check"></i></p></div>
+        </div>
+        <div class="row row-pricing-item">
+            <div class="col-sm-2">
+                {% blocktrans %}
+                    Free Messages (Dimagi Gateway)**
+                {% endblocktrans %}
+            </div>
+            <div class="col-sm-2"><p><i class="fa fa-minus"></i></p></div>
+            <div class="col-sm-2"><p>{% trans '100 /month' %}</p></div>
+            <div class="col-sm-2"><p>{% trans '500 /month' %}</p></div>
+            <div class="col-sm-2"><p>{% trans '1,000 /month' %}</p></div>
+            <div class="col-sm-2"><p>{% trans '2,000 /month' %}</p></div>
+        </div>
+        <div class="row row-pricing-item">
+            <div class="col-sm-2">
+                {% blocktrans %}
+                    Messages (Your Gateway)
+                {% endblocktrans %}
+            </div>
+            <div class="col-sm-2"><p><i class="fa fa-minus"></i></p></div>
+            <div class="col-sm-2"><p>{% trans '1 cent/SMS' %}</p></div>
+            <div class="col-sm-2"><p>{% trans '1 cent/SMS' %}</p></div>
+            <div class="col-sm-2"><p>{% trans '1 cent/SMS' %}</p></div>
+            <div class="col-sm-2"><p>{% trans '1 cent/SMS' %}</p></div>
+        </div>
+    </div>
+</section>

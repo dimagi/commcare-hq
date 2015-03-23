@@ -1,0 +1,109 @@
+{% load i18n %}
+<section class="section section-primary section-lead section-pricing-lead">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-9">
+                <header>
+                    <h1>
+                        {% trans 'CommCare Software Plans' %}
+                    </h1>
+                    <p class="lead">
+                        {% blocktrans %}
+                            Core Features are always FREE. Choose a plan
+                            to help your project scale.
+                        {% endblocktrans %}
+                    </p>
+                </header>
+                <p>
+                    {% blocktrans %}
+                    <strong>Anyone can use CommCare for FREE up to 50 mobile workers.</strong>
+                    For additional questions, please see our FAQs.
+                    {% endblocktrans %}
+                </p>
+            </div>
+        </div>
+        <div class="pricing-table-lead-bg"></div>
+        <div class="row">
+            <div class="col-sm-2 col-sm-offset-2">
+                <h3 class="pricing-header text-capitalize">
+                    {% trans 'Community' %}
+                </h3>
+                <p class="pricing-cost text-capitalize">
+                    {% trans 'Free' %}
+                </p>
+            </div>
+            <div class="col-sm-2">
+                <h3 class="pricing-header">
+                    {% trans 'Standard' %}
+                </h3>
+                <p class="pricing-cost text-capitalize">
+                    {% trans '$100 /month' %}
+                </p>
+            </div>
+            <div class="col-sm-2">
+                <h3 class="pricing-header">
+                    {% trans 'Pro' %}
+                </h3>
+                <p class="pricing-cost text-capitalize">
+                    {% trans '$500 /month' %}
+                </p>
+            </div>
+            <div class="col-sm-2">
+                <h3 class="pricing-header">
+                    {% trans 'Advanced' %}
+                </h3>
+                <p class="pricing-cost text-capitalize">
+                    {% trans '$1,000 /month' %}
+                </p>
+            </div>
+            <div class="col-sm-2">
+                <h3 class="pricing-header">
+                    {% trans 'Enterprise' %}
+                </h3>
+                <p class="pricing-cost text-capitalize">
+                    <a href="#">{% trans 'Contact Us' %}</a>
+                </p>
+            </div>
+        </div>
+        <div class="row pricing-row-lead">
+            <div class="col-sm-2">
+                <h3>{% trans 'Mobile Users' %}</h3>
+            </div>
+            <div class="col-sm-2">
+                <p>{% trans '50' %}</p>
+            </div>
+            <div class="col-sm-2">
+                <p>{% trans '100' %}</p>
+            </div>
+            <div class="col-sm-2">
+                <p>{% trans '500' %}</p>
+            </div>
+            <div class="col-sm-2">
+                <p>{% trans '1,000' %}</p>
+            </div>
+            <div class="col-sm-2">
+                <p>{% trans 'Unlimited / Discounted' %}</p>
+            </div>
+        </div>
+        <div class="row pricing-row-lead">
+            <div class="col-sm-2">
+                <h3>{% trans 'Price Per Additional Mobile User' %}</h3>
+            </div>
+            <div class="col-sm-2">
+                <p>{% trans '1 USD /month' %}</p>
+            </div>
+            <div class="col-sm-2">
+                <p>{% trans '1 USD /month' %}</p>
+            </div>
+            <div class="col-sm-2">
+                <p>{% trans '1 USD /month' %}</p>
+            </div>
+            <div class="col-sm-2">
+                <p>{% trans '1 USD /month' %}</p>
+            </div>
+            <div class="col-sm-2">
+                <p>{% trans 'Unlimited / Discounted' %}</p>
+            </div>
+        </div>
+    </div>
+</section>
