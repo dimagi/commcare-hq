@@ -163,21 +163,13 @@ var BaseCostItem = function (initData) {
 
 };
 
-var Invoice = function (initData) {
+var ChargedCostItem = function (initData) {
     'use strict';
     BaseCostItem.call(this, initData);
     var self = this;
-    self.paginatedItem = initData.paginatedItem;
-    self.paginatedList = initData.paginatedList;
-    self.id = ko.computed(function () {
-        return self.paginatedItem.itemData().id;
-    });
-    self.balance = ko.computed(function () {
-        return self.paginatedItem.itemData().balance;
-    });
-    self.invoiceNumber = ko.computed(function () {
-        return self.paginatedItem.itemData().invoice_number;
-    });
+
+    self.balance = ko.observable();
+
     self.customPaymentAmount = ko.observable(self.balance());
     self.paymentAmountType = ko.observable('full');
 
@@ -242,7 +234,29 @@ var Invoice = function (initData) {
     });
 };
 
-Invoice.prototype = Object.create( BaseCostItem.prototype );
+ChargedCostItem.prototype = Object.create( BaseCostItem.prototype );
+ChargedCostItem.prototype.constructor = ChargedCostItem;
+
+
+var Invoice = function (initData) {
+    'use strict';
+    ChargedCostItem.call(this, initData);
+    var self = this;
+
+    self.paginatedItem = initData.paginatedItem;
+    self.paginatedList = initData.paginatedList;
+    self.balance(self.paginatedItem.itemData().balance);
+    self.customPaymentAmount(self.balance());
+
+    self.id = ko.computed(function () {
+        return self.paginatedItem.itemData().id;
+    });
+    self.invoiceNumber = ko.computed(function () {
+        return self.paginatedItem.itemData().invoice_number;
+    });
+};
+
+Invoice.protoptye = Object.create( ChargedCostItem.prototype );
 Invoice.prototype.constructor = Invoice;
 
 var CreditCostItem = function (initData) {
