@@ -52,7 +52,7 @@ class TestFileMixin(object):
         if normalize:
             expected = parse_normalize(expected)
             actual = parse_normalize(actual)
-        _check_shared(expected, actual, LXMLOutputChecker(), "html")
+        _check_shared(expected, actual, LXMLOutputChecker(), "xml")
 
     def assertHtmlEqual(self, expected, actual, normalize=True):
         if normalize:
