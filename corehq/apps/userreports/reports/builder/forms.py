@@ -329,6 +329,9 @@ class ConfigureNewReportBase(forms.Form):
             self.domain, self.app, self.source_type, self.report_source_id
         )
         self.data_source_properties = self.ds_builder.data_source_properties
+        self._properties_by_column = {
+            p['column_id']: p for p in self.data_source_properties.values()
+        }
 
         # NOTE: The corresponding knockout view model is defined in:
         #       templates/userreports/partials/report_builder_configure_report.html
@@ -365,8 +368,6 @@ class ConfigureNewReportBase(forms.Form):
             self.container_fieldset,
             FormActions(crispy.ButtonHolder(*buttons)),
         )
-        # TODO: Hitting the back button won't do much. Should we at least
-        #  set initial value in the previous form?
 
     def _bootstrap(self, existing_report):
         """
@@ -467,26 +468,14 @@ class ConfigureNewReportBase(forms.Form):
             return r
         if self.source_type == 'case':
             return [
-                {
-                    'property': 'closed',
-                    'display_text': 'closed',
-                    'format': 'Choice'
-                },
+                {'property': 'closed', 'display_text': 'closed', 'format': 'Choice'},
                 # TODO: Allow users to filter by owner name, not just id. Will likely require implementing data source filters.
-                {
-                    'property': 'owner_id',
-                    'display_text': 'owner id',
-                    'format': 'Choice'
-                }
+                {'property': 'owner_id', 'display_text': 'owner id', 'format': 'Choice'},
             ]
         else:
             # self.source_type == 'form'
             return [
-                {
-                    'property': 'timeEnd',
-                    'display_text': 'Form completion time',
-                    'format': 'Date'
-                }
+                {'property': 'timeEnd', 'display_text': 'Form completion time', 'format': 'Date'}
             ]
 
     def _get_view_model(self, filter):
@@ -494,7 +483,6 @@ class ConfigureNewReportBase(forms.Form):
         Given a ReportFilter, return a dictionary representing the knockout view
         model representing this filter in the report builder.
         """
-        # TODO: share existing type map.
         filter_type_map = {
             'dynamic_choice_list': 'Choice',
             'choice_list': 'Choice', # This exists to handle the `closed` filter that might exist
@@ -508,10 +496,7 @@ class ConfigureNewReportBase(forms.Form):
         }
 
     def _get_property_from_column(self, col):
-        # TODO: Don't iterate over this every time.
-        for x in self.data_source_properties.values():
-            if x['column_id'] == col:
-                return x['text']
+        return self._properties_by_column[col]['text']
 
     @property
     def _report_aggregation_cols(self):
