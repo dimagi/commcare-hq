@@ -177,14 +177,14 @@ class RRreport(DetailsReport):
     @property
     def title(self):
         title = _('R & R')
-        if self.location and self.location.location_type == 'FACILITY':
+        if self.location and self.location.location_type.name.upper() == 'FACILITY':
             title = _('Facility Details')
         return title
 
     @property
     def fields(self):
         fields = [AsyncLocationFilter, MonthAndQuarterFilter, YearFilter, ProductByProgramFilter, MSDZoneFilter]
-        if self.location and self.location.location_type == 'FACILITY':
+        if self.location and self.location.location_type.name.upper() == 'FACILITY':
             fields = [AsyncLocationFilter, ProductByProgramFilter]
         return fields
 

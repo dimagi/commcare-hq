@@ -20,14 +20,14 @@ class DashboardReport(MultiReport):
     @property
     def title(self):
         title = _("Dashboard report")
-        if self.location and self.location.location_type == 'FACILITY':
+        if self.location and self.location.location_type.name.upper() == 'FACILITY':
             title = _('Facility Details')
         return title
 
     @property
     def fields(self):
         fields = [AsyncLocationFilter, MonthFilter, YearFilter, ProductByProgramFilter]
-        if self.location and self.location.location_type == 'FACILITY':
+        if self.location and self.location.location_type.name.upper() == 'FACILITY':
             fields = [AsyncLocationFilter, ProductByProgramFilter]
         return fields
 
@@ -36,7 +36,7 @@ class DashboardReport(MultiReport):
     def data_providers(self):
         config = self.report_config
         if self.location:
-            if self.location.location_type == 'FACILITY':
+            if self.location.location_type.name.upper() == 'FACILITY':
                 self.use_datatables = True
                 return [
                     InventoryHistoryData(config=config),
