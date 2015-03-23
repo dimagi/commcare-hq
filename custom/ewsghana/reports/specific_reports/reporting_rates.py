@@ -11,7 +11,7 @@ from custom.ewsghana.reports import MultiReport, EWSData, ReportingRatesData
 from casexml.apps.stock.models import StockTransaction
 from custom.ewsghana.reports.stock_levels_report import FacilityReportData, StockLevelsLegend, FacilitySMSUsers, \
     FacilityUsers, FacilityInChargeUsers, InventoryManagementData, InputStock
-from custom.ewsghana.utils import calculate_last_period
+from custom.ewsghana.utils import calculate_last_period, get_country_id
 from corehq.apps.reports.filters.dates import DatespanFilter
 from custom.ilsgateway.tanzania import make_url
 from custom.ilsgateway.tanzania.reports.utils import link_format
@@ -77,7 +77,7 @@ class ReportingDetails(ReportingRatesData):
         rows = {}
         if self.location_id:
             last_period_st, last_period_end = calculate_last_period(self.config['enddate'])
-            if self.location.location_type == 'country':
+            if self.location.location_type.name == 'country':
                 supply_points = self.reporting_supply_points(self.all_reporting_locations())
             else:
                 supply_points = self.reporting_supply_points()
@@ -142,7 +142,7 @@ class SummaryReportingRates(ReportingRatesData):
             if location_type.administrative
         ]
         return SQLLocation.objects.filter(parent__location_id=self.config['location_id'],
-                                          location_type__name__in=location_types)
+                                          location_type__name__in=location_types, is_archived=False)
 
     @property
     def headers(self):
@@ -356,7 +356,8 @@ class ReportingRatesReport(MultiReport):
             domain=self.domain,
             startdate=self.datespan.startdate_utc,
             enddate=self.datespan.enddate_utc,
-            location_id=self.request.GET.get('location_id'),
+            location_id=self.request.GET.get('location_id') if self.request.GET.get('location_id')
+            else get_country_id(self.domain),
             products=None,
             program=None
         )
