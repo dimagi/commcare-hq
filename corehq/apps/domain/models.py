@@ -900,6 +900,9 @@ class Domain(Document, SnapshotMixin):
     def get_license_display(self):
         return LICENSES.get(self.license)
 
+    def get_license_url(self):
+        return LICENSE_LINKS.get(self.license)
+
     def copies(self):
         return Domain.view('domain/copied_from_snapshot', key=self._id, include_docs=True)
 
