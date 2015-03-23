@@ -23,8 +23,8 @@
 
                 d3.select(line_chart_id + ' svg')
                         .datum(response)
-                        .transition().duration(500).call(chart);
-                addCheckboxes();
+                        .transition().duration(500).call(line_chart);
+                show_hide_line_chart_data();
                 $('#inventory_filter_btn').removeAttr('disabled');
                 $('.hq-loading').fadeOut();
             },

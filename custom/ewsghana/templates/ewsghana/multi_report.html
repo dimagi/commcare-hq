@@ -34,12 +34,16 @@
     {% include 'reports/standard/partials/description.html' %}
 {% else %}
     <style>
-        .firstreport {
-            width: 70%;
+        .firstreport, .inventory_chart {
+            width: 68%;
             float: left;
         }
+        .fpr_tables {
+            width: 100%;
+            display: inline-block;
+        }
 
-        .other_reports {
+        .other_reports, .selection_pane {
             width: 30%;
             margin-bottom: 20px;
             float: right;
@@ -111,27 +115,36 @@
     {% for thisreport in reports %}
         {% if split %}
             {% if forloop.counter == 1 %}
-                <div class="firstreport">
+                <div class="fpr_tables">
+                    <div class="firstreport">
+                        <h4 class="media-heading">{{ thisreport.report_table.title }}<br/><small>{{ subtitle1 }}</small><br/><small>{{ subtitle2 }}</small></h4>
+                        {% include 'ewsghana/partials/report_table.html' with report_table=thisreport.report_table charts=thisreport.charts chart_span=thisreport.chart_span show_table=thisreport.show_table%}
+                        <br/>
+                    </div>
+                    <div class="other_reports">
+            {% elif  forloop.revcounter == 2 %}
+                    </div>
+                </div>
+                <div class="inventory_chart">
                     <h4 class="media-heading">{{ thisreport.report_table.title }}<br/><small>{{ subtitle1 }}</small><br/><small>{{ subtitle2 }}</small></h4>
+                    {% if thisreport.report_table.slug == 'inventory_management' %}
+                        <div class="row" style="margin: 0 !important">
+                            <form>
+                                <div style="display: inline-block">
+                                    <input type="text" id="inventory_filter" class="date-range-picker" value="{{ datespan.startdate|date:'Y-m-d' }} to {{ datespan.enddate|date:'Y-m-d' }}" />
+                                    <button style="margin-bottom: 9px;" id="inventory_filter_btn" class="filters btn">Apply</button>
+                                </div>
+                            </form>
+                        </div>
+                    {% endif %}
                     {% include 'ewsghana/partials/report_table.html' with report_table=thisreport.report_table charts=thisreport.charts chart_span=thisreport.chart_span show_table=thisreport.show_table%}
                     <br/>
                 </div>
-            <div class="other_reports">
-            {% elif  forloop.last %}
+            {% elif  forloop.last%}
+                <div class="selection_pane">
+                    <h4 class="media-heading">{{ thisreport.report_table.title }}<br/><small>{{ subtitle1 }}</small><br/><small>{{ subtitle2 }}</small></h4>
+                    {% include 'ewsghana/partials/report_table.html' with report_table=thisreport.report_table charts=thisreport.charts chart_span=thisreport.chart_span show_table=thisreport.show_table%}
                 </div>
-                <h4 class="media-heading">{{ thisreport.report_table.title }}<br/><small>{{ subtitle1 }}</small><br/><small>{{ subtitle2 }}</small></h4>
-                {% if thisreport.report_table.slug == 'inventory_management' %}
-                    <div class="row" style="margin: 0 !important">
-                        <form>
-                            <div style="display: inline-block">
-                                <input type="text" id="inventory_filter" class="date-range-picker" value="{{ datespan.startdate|date:'Y-m-d' }} to {{ datespan.enddate|date:'Y-m-d' }}" />
-                                <button style="margin-bottom: 9px;" id="inventory_filter_btn" class="filters btn">Apply</button>
-                            </div>
-                        </form>
-                    </div>
-                {% endif %}
-                {% include 'ewsghana/partials/report_table.html' with report_table=thisreport.report_table charts=thisreport.charts chart_span=thisreport.chart_span show_table=thisreport.show_table%}
-                <br/>
             {% else %}
                 <h4 class="media-heading">{{ thisreport.report_table.title }}<br/><small>{{ subtitle1 }}</small><br/><small>{{ subtitle2 }}</small></h4>
                 {% include 'ewsghana/partials/report_table.html' with report_table=thisreport.report_table charts=thisreport.charts chart_span=thisreport.chart_span show_table=thisreport.show_table%}
@@ -185,6 +198,11 @@
 
         $('body').on('change', function(){
             show_hide_filters();
+        });
+
+        $('#apply-filters').on('click', function() {
+           multibar_chart_data = undefined;
+           line_chart_data = undefined;
         });
 
         show_hide_filters();

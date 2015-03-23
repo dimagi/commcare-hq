@@ -126,12 +126,11 @@ class MonthOfStockProduct(EWSData):
             if location.location_type.name == 'country':
                 supply_points = SQLLocation.objects.filter(
                     Q(parent__location_id=self.config['location_id'], is_archived=False) |
-                    Q(location_type__name='Regional Medical Store', domain=self.config['domain'],
-                      is_archived=False)
+                    Q(location_type__name='Regional Medical Store', domain=self.config['domain'])
                 ).order_by('name').exclude(supply_point_id__isnull=True)
             else:
                 supply_points = SQLLocation.objects.filter(
-                    parent__location_id=self.config['location_id'], is_archived=False
+                    parent__location_id=self.config['location_id']
                 ).order_by('name').exclude(supply_point_id__isnull=True)
         return supply_points
 
@@ -235,7 +234,6 @@ class StockoutTable(EWSData):
     title = 'Stockouts'
     show_chart = False
     show_table = True
-    use_datatables = True
 
     @property
     def headers(self):
@@ -254,13 +252,12 @@ class StockoutTable(EWSData):
             )
             if location.location_type.name == 'country':
                 supply_points = SQLLocation.objects.filter(
-                    Q(parent__location_id=self.config['location_id'], is_archived=False) |
-                    Q(location_type__name='Regional Medical Store', domain=self.config['domain'],
-                      is_archived=False)
+                    Q(parent__location_id=self.config['location_id']) |
+                    Q(location_type__name='Regional Medical Store', domain=self.config['domain'])
                 ).order_by('name').exclude(supply_point_id__isnull=True)
             else:
                 supply_points = SQLLocation.objects.filter(
-                    parent__location_id=self.config['location_id'], is_archived=False
+                    parent__location_id=self.config['location_id']
                 ).order_by('name').exclude(supply_point_id__isnull=True)
 
             products = set(self.unique_products(supply_points))
@@ -312,7 +309,8 @@ class StockStatus(MultiReport):
                 FacilitySMSUsers(config),
                 FacilityUsers(config),
                 FacilityInChargeUsers(config),
-                InventoryManagementData(config)
+                InventoryManagementData(config),
+                ProductSelectionPane(config),
             ]
         self.split = False
         if report_type == 'stockouts':

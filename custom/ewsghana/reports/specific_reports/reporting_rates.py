@@ -5,9 +5,10 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.graph_models import PieChart
+from custom.common import ALL_OPTION
 from custom.ewsghana import StockLevelsReport
 from custom.ewsghana.filters import ProductByProgramFilter
-from custom.ewsghana.reports import MultiReport, EWSData, ReportingRatesData
+from custom.ewsghana.reports import MultiReport, ReportingRatesData, ProductSelectionPane
 from casexml.apps.stock.models import StockTransaction
 from custom.ewsghana.reports.stock_levels_report import FacilityReportData, StockLevelsLegend, FacilitySMSUsers, \
     FacilityUsers, FacilityInChargeUsers, InventoryManagementData, InputStock
@@ -352,6 +353,7 @@ class ReportingRatesReport(MultiReport):
 
     @property
     def report_config(self):
+        program = self.request.GET.get('filter_by_program')
         return dict(
             domain=self.domain,
             startdate=self.datespan.startdate_utc,
@@ -359,7 +361,7 @@ class ReportingRatesReport(MultiReport):
             location_id=self.request.GET.get('location_id') if self.request.GET.get('location_id')
             else get_country_id(self.domain),
             products=None,
-            program=None
+            program=program if program != ALL_OPTION else None,
         )
 
     @property
@@ -374,7 +376,8 @@ class ReportingRatesReport(MultiReport):
                 FacilitySMSUsers(config),
                 FacilityUsers(config),
                 FacilityInChargeUsers(config),
-                InventoryManagementData(config)
+                InventoryManagementData(config),
+                ProductSelectionPane(config),
             ]
         self.split = False
         data_providers = [

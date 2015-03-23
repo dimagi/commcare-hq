@@ -1,7 +1,6 @@
 from django.core.urlresolvers import reverse
 from django.db.models import Q
 from corehq import Domain
-from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.commtrack.standard import CommtrackReportMixin
 from corehq.apps.reports.filters.dates import DatespanFilter
@@ -246,7 +245,7 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
             for location_type in Domain.get_by_name(self.domain).location_types
             if not location_type.administrative
         ]
-        return sql_location.location_type in reporting_types
+        return sql_location.location_type.name in reporting_types
 
     @property
     def export_table(self):
@@ -281,6 +280,7 @@ class ProductSelectionPane(EWSData):
     slug = 'product_selection_pane'
     show_table = True
     title = 'Select Products'
+    use_datatables = True
 
     @property
     def rows(self):
@@ -289,7 +289,7 @@ class ProductSelectionPane(EWSData):
         programs = {program.get_id: program.name for program in Program.by_domain(self.domain)}
         result = [
             [
-                '<input class=\"toggle-column\" data-column={2} value=\"{0}\" type=\"checkbox\"'
+                '<input class=\"toggle-column\" name=\"{1} ({0})\" data-column={2} value=\"{0}\" type=\"checkbox\"'
                 '{3}>{1} ({0})</input>'
                 .format(p.code, p.name, idx, 'checked' if 1 <= idx <= 6 else 'disabled'), programs[p.program_id],
                 p.code
