@@ -6,6 +6,7 @@
 
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/js/lib/select2/select2.js' %}"></script>
+    <script src="{% static 'hqwebapp/ko/select2_handler.js' %}"></script>
     <script src="{% static 'smsbillables/ko/smsbillables.rate_calc.js' %}"></script>
 {% endblock %}
 
@@ -59,7 +60,7 @@
     <hr />
     <div id="sms-rate-calculator">
         {% crispy rate_calc_form %}
-        <div class="alert alert-success" data-bind="visible: calculatingRate">
+        <div class="alert alert-info" data-bind="visible: calculatingRate">
             {% blocktrans %}
             Calculating SMS Rate...
             {% endblocktrans %}
