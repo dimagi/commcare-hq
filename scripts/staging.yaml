@@ -43,7 +43,6 @@
 trunk: master
 name: autostaging
 branches:
-  - uuid # danny (Simon) 3/17
   - app-manager-cleanup # danny 3/13
   - subscription-no-contact-info # bb 8/4
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
@@ -53,8 +52,6 @@ branches:
   - static-updates # Biyeun 2/9
   - project-settings-update # sravan 1/30
   - upgrade-celery # SK 2/27
-  - balance-icon # Daniel 3/4
-  - kill-referrals  # cz 3/6
   - loc-type-stock-rates  # Ethan 3/6
   - refactor-payment-modal # Nick P 3/19
  # - pricingSMS # sravan 3/23
