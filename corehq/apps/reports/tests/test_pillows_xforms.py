@@ -1,7 +1,6 @@
 import copy
 from django.test import TestCase
 from django.conf import settings
-import json
 from corehq.apps.api.es import report_term_filter
 from corehq.pillows.base import restore_property_dict, VALUE_TAG
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_MAPPING

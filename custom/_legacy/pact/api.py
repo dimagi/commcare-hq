@@ -278,7 +278,7 @@ def get_all_providers(invalidate=False):
         return providers
     else:
         try:
-            json_data= json.loads(raw_cached_fixtures)
+            json_data = json.loads(raw_cached_fixtures)
             #not necessary in the grand scheme of things - we could really just use raw JSON
             return [FixtureDataItem.wrap(x) for x in json_data]
         except Exception, ex:
