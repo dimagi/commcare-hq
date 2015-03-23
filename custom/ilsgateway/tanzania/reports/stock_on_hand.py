@@ -25,7 +25,7 @@ from django.db.models.aggregates import Avg, Max
 def get_facilities(location, domain):
 
     if location.location_type.name.upper() == 'DISTRICT':
-        locations = SQLLocation.name.objects.filter(parent=location)
+        locations = SQLLocation.objects.filter(parent=location)
     elif location.location_type.name.upper() == 'REGION':
         locations = SQLLocation.objects.filter(parent__parent=location)
     elif location.location_type.name.upper() == 'FACILITY':
