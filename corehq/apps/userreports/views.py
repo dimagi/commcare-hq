@@ -195,10 +195,15 @@ class ConfigureChartReport(ReportBuilderView):
     @property
     @memoized
     def configuration_form_class(self):
-        if self.request.GET.get('chart_type') == "bar":
-            return ConfigureBarChartReportForm
+        if self.existing_report:
+            type_ = self.existing_report.configured_charts[0]['type']
         else:
-            return ConfigurePieChartReportForm
+            type_ = self.request.GET.get('chart_type')
+        return {
+            'multibar': ConfigureBarChartReportForm,
+            'bar': ConfigureBarChartReportForm,
+            'pie': ConfigurePieChartReportForm,
+        }[type_]
 
     @property
     @memoized
@@ -215,10 +220,7 @@ class ConfigureChartReport(ReportBuilderView):
             else:
                 report_configuration = self.report_form.create_report()
             return HttpResponseRedirect(
-                reverse(
-                    ConfigurableReport.slug,
-                    args=[self.domain, report_configuration._id]
-                )
+                reverse(ConfigurableReport.slug, args=[self.domain, report_configuration._id])
             )
         return self.get(*args, **kwargs)
 

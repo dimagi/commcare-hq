@@ -464,8 +464,7 @@ class ConfigureNewReportBase(forms.Form):
     @memoized
     def initial_filters(self):
         if self.existing_report:
-            r = [self._get_view_model(f) for f in self.existing_report.filters]
-            return r
+            return [self._get_view_model(f) for f in self.existing_report.filters]
         if self.source_type == 'case':
             return [
                 {'property': 'closed', 'display_text': 'closed', 'format': 'Choice'},
@@ -496,7 +495,7 @@ class ConfigureNewReportBase(forms.Form):
         }
 
     def _get_property_from_column(self, col):
-        return self._properties_by_column[col]['text']
+        return self._properties_by_column[col]['id']
 
     @property
     def _report_aggregation_cols(self):
@@ -557,10 +556,11 @@ class ConfigureBarChartReportForm(ConfigureNewReportBase):
         self.fields['group_by'].choices = self._group_by_choices
 
         # Set initial value of group_by
-        existing_agg_cols = existing_report.aggregation_columns
-        assert len(existing_agg_cols) < 2
-        if existing_agg_cols:
-            self.fields['group_by'].initial = self._get_property_from_column(existing_agg_cols[0])
+        if self.existing_report:
+            existing_agg_cols = existing_report.aggregation_columns
+            assert len(existing_agg_cols) < 2
+            if existing_agg_cols:
+                self.fields['group_by'].initial = self._get_property_from_column(existing_agg_cols[0])
 
     @property
     def container_fieldset(self):
