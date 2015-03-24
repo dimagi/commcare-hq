@@ -83,3 +83,6 @@ def get_timezone_for_user(couch_user_or_id, domain):
         except pytz.UnknownTimeZoneError:
             timezone = pytz.utc
     return timezone
+
+
+TIMEZONE_DATA_MIGRATION_COMPLETE = False
