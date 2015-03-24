@@ -6,13 +6,11 @@ from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
 from corehq.apps.userreports.sql import get_table_name
-from custom.succeed.reports import EMPTY_FIELD, INTERACTION_OUTPUT_DATE_FORMAT
 from custom.succeed.reports.patient_details import PatientDetailsReport
 from django.utils import html
-from custom.succeed.utils import format_date
 
 
-class PatienSubmissionData(SqlData):
+class PatientSubmissionData(SqlData):
 
     slug = 'succeed_submissions'
 
@@ -62,7 +60,7 @@ class PatientSubmissionReport(GenericTabularReport, CustomProjectReport, Project
 
     @property
     def model(self):
-        return PatienSubmissionData(config=self.report_config)
+        return PatientSubmissionData(config=self.report_config)
 
     @property
     def base_template_filters(self):
