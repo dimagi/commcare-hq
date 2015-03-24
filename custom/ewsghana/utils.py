@@ -181,7 +181,7 @@ def bootstrap_user(username=TEST_USER, domain=TEST_DOMAIN,
 
     if not SupplyPointCase.get_by_location(home_loc):
         make_supply_point(domain, home_loc)
-
+        home_loc.save()
     user.set_location(home_loc)
 
     user.save_verified_number(domain, phone_number, verified=True, backend_id=backend)
@@ -196,6 +196,10 @@ class ProductsReportHelper(object):
         self.location = location
         self.transactions = transactions
 
+    @property
+    def sql_location(self):
+        return self.location.sql_location
+
     def reported_products(self):
         return [SQLProduct.objects.get(product_id=transaction.product_id) for transaction in self.transactions]
 
@@ -204,10 +208,16 @@ class ProductsReportHelper(object):
 
     def stock_states(self):
         product_ids = [product.product_id for product in self.reported_products()]
-        return StockState.objects.filter(product_id__in=product_ids)
+        return StockState.objects.filter(
+            product_id__in=product_ids,
+            case_id=self.sql_location.supply_point_id
+        )
 
     def stockouts(self):
-        return self.stock_states().filter(stock_on_hand=0).order_by('sql_product__code')
+        return self.stock_states().filter(
+            stock_on_hand=0,
+            case_id=self.sql_location.supply_point_id
+        ).order_by('sql_product__code')
 
     def reorders(self):
         reorders = []
@@ -225,6 +235,7 @@ class ProductsReportHelper(object):
             stock_state
             for stock_state in StockState.objects.filter(
                 product_id__in=product_ids,
+                case_id=self.sql_location.supply_point_id
             ).order_by('sql_product__code')
             if stock_state.stock_category == category
         ]
