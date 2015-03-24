@@ -9,7 +9,6 @@ from corehq.apps.commtrack.models import SupplyPointCase, update_stock_state_for
 from corehq.apps.locations.models import SQLLocation, Location
 from corehq.apps.products.models import SQLProduct
 from couchforms.models import XFormInstance
-from custom.ilsgateway import TEST
 from custom.logistics.commtrack import save_stock_data_checkpoint, synchronization
 from custom.logistics.models import StockDataCheckpoint
 from celery.task.base import task

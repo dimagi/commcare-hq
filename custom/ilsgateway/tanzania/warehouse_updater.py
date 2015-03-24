@@ -9,7 +9,6 @@ from casexml.apps.stock.models import StockReport, StockTransaction
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, DeliveryGroups, \
     OrganizationSummary, GroupSummary, SupplyPointStatusValues, Alert, ProductAvailabilityData, \
     SupplyPointWarehouseRecord, HistoricalLocationGroup, ILSGatewayConfig
-from custom.ilsgateway import TEST
 
 
 """
@@ -600,8 +599,14 @@ def update_historical_data(domain):
     org_summaries = OrganizationSummary.objects.order_by('date')
     if org_summaries.count() == 0:
         return
+
     start_date = org_summaries[0].date
-    locations = _get_test_locations(domain) if TEST else Location.by_domain(domain)
+
+    if not ILSGatewayConfig.for_domain(domain).all_stock_data:
+        locations = _get_test_locations(domain)
+    else:
+        locations = Location.by_domain(domain)
+
     for sp in locations:
         try:
             SupplyPointWarehouseRecord.objects.get(supply_point=sp._id)
