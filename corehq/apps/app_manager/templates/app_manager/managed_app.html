@@ -52,7 +52,8 @@
             COMMCAREHQ.app_manager.init({
                 appVersion: {% if app.version %}{{ app.version }}{% else %}-1{% endif %},
                 edit: {{ edit|JSON }},
-                commcareVersion: {{ app.commcare_minor_release|JSON }}
+                commcareVersion: {{ app.commcare_minor_release|JSON }},
+                latestCommcareVersion: {% if latest_commcare_version %}{{ latest_commcare_version|JSON }}{% else %}"0"{% endif %}
             });
         });
         $(function () {

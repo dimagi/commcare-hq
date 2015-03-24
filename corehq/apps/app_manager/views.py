@@ -84,7 +84,8 @@ from corehq.apps.app_manager.const import (
     MAJOR_RELEASE_TO_VERSION,
 )
 from corehq.apps.app_manager.success_message import SuccessMessage
-from corehq.apps.app_manager.util import is_valid_case_type, get_all_case_properties, add_odk_profile_after_build, ParentCasePropertyBuilder, commtrack_ledger_sections
+from corehq.apps.app_manager.util import is_valid_case_type, get_all_case_properties, add_odk_profile_after_build, ParentCasePropertyBuilder, commtrack_ledger_sections, \
+    get_commcare_versions
 from corehq.apps.app_manager.util import save_xform, get_settings_values
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import LoginAndDomainMixin
@@ -925,7 +926,8 @@ def get_module_view_context_and_template(app, module):
                 },
             ],
             'case_list_form_options': case_list_form_options(case_type),
-            'case_list_form_allowed': module.all_forms_require_a_case and not module.parent_select.active
+            'case_list_form_allowed': module.all_forms_require_a_case and not module.parent_select.active,
+            'latest_commcare_version': get_commcare_versions()[-1]
         }
 
 
