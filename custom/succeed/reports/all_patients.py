@@ -14,8 +14,7 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.cloudcare.api import get_cloudcare_app, get_cloudcare_form_url
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
 from django.utils import html
-from custom.succeed.reports import  EMPTY_FIELD, CM7, \
-    CM_APP_CM_MODULE, OUTPUT_DATE_FORMAT
+from custom.succeed.reports import EMPTY_FIELD, CM7, CM_APP_CM_MODULE, OUTPUT_DATE_FORMAT
 from custom.succeed.utils import is_succeed_admin, SUCCEED_CM_APPNAME, has_any_role, get_app_build, SUCCEED_DOMAIN
 
 

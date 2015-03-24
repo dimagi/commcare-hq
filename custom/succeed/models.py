@@ -8,11 +8,6 @@ import fluff
 from custom.utils.utils import flat_field
 from fluff.filters import CustomFilter
 
-LAST_VISIT_DICT = {
-    'name': 'last',
-    'days': -1
-}
-
 
 class _(Document): pass
 
@@ -31,7 +26,10 @@ def get_next_visit(case):
                     del case['actions'][key]
                     break
                 except IndexError:
-                    next_visit = LAST_VISIT_DICT
+                    next_visit = {
+                        'name': 'last',
+                        'days': -1
+                    }
     return next_visit
 
 
