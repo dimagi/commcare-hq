@@ -19,7 +19,7 @@ from .exceptions import (
     SuiteValidationError,
 )
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.exceptions import UnknownInstanceError, ScheduleError
+from corehq.apps.app_manager.exceptions import UnknownInstanceError, ScheduleError, FormNotFoundException
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE_LAST_VISIT, SCHEDULE_PHASE, RETURN_TO
 from corehq.apps.app_manager.util import split_path, create_temp_sort_column, languages_mapping
@@ -1322,7 +1322,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                     )
                 )
                 if isinstance(module, Module):
-                    self.configure_entry_module(module, e, use_filter=False)
+                    for datum_meta in self.get_datum_meta_module(module, use_filter=False):
+                        e.datums.append(datum_meta['datum'])
                 elif isinstance(module, AdvancedModule):
                     e.datums.append(SessionDatum(
                         id='case_id_case_%s' % module.case_type,
@@ -1371,7 +1372,7 @@ class SuiteGenerator(SuiteGeneratorBase):
             )
         ]
 
-    def get_new_case_id_datums(self, form):
+    def get_new_case_id_datums_meta(self, form):
         if not form:
             return []
 
@@ -1379,16 +1380,28 @@ class SuiteGenerator(SuiteGeneratorBase):
         if form.form_type == 'module_form':
             actions = form.active_actions()
             if 'open_case' in actions:
-                datums.append(SessionDatum(id=form.session_var_for_action('open_case'), function='uuid()'))
+                datums.append({
+                    'datum': SessionDatum(id=form.session_var_for_action('open_case'), function='uuid()'),
+                    'case_type': form.get_module().case_type,
+                    'requires_selection': False
+                })
 
             if 'subcases' in actions:
                 non_repeat_actions = [a for a in actions['subcases'] if not a.repeat_context]
                 for i, subcase in enumerate(non_repeat_actions):
-                    datums.append(SessionDatum(id=form.session_var_for_action('subcase', i), function='uuid()'))
+                    datums.append({
+                        'datum': SessionDatum(id=form.session_var_for_action('subcase', i), function='uuid()'),
+                        'case_type': subcase.case_type,
+                        'requires_selection': False
+                    })
         elif form.form_type == 'advanced_form':
             for action in form.actions.get_open_actions():
                 if not action.repeat_context:
-                    datums.append(SessionDatum(id=action.case_session_var, function='uuid()'))
+                    datums.append({
+                        'datum': SessionDatum(id=action.case_session_var, function='uuid()'),
+                        'case_type': action.case_type,
+                        'requires_selection': False
+                    })
 
         return datums
 
@@ -1431,12 +1444,13 @@ class SuiteGenerator(SuiteGeneratorBase):
                         return True
             return False
 
+        datums = []
         if not form or form.requires_case():
-            self.configure_entry_module(module, e, use_filter=True)
+            datums.extend(self.get_datum_meta_module(module, use_filter=True))
 
-        datums = self.get_new_case_id_datums(form)
+        datums.extend(self.get_new_case_id_datums_meta(form))
         for datum in datums:
-            e.datums.append(datum)
+            e.datums.append(datum['datum'])
 
         if form and 'open_case' in form.active_actions() and form.is_case_list_form:
             self.configure_entry_as_case_list_form(form, e)
@@ -1467,7 +1481,8 @@ class SuiteGenerator(SuiteGeneratorBase):
             for i, mod in reversed(list(enumerate(select_chain)))
         ]
 
-    def configure_entry_module(self, module, e, use_filter=False):
+    def get_datum_meta_module(self, module, use_filter=False):
+        datums = []
         datums_meta = self._get_datums_meta(module)
         for i, datum in enumerate(datums_meta):
             # get the session var for the previous datum if there is one
@@ -1489,19 +1504,24 @@ class SuiteGenerator(SuiteGeneratorBase):
                     detail_inline = bool(detail.pull_down_tile)
                     break
 
-            e.datums.append(SessionDatum(
-                id=datum['session_var'],
-                nodeset=(self.get_nodeset_xpath(datum['case_type'], datum['module'], use_filter)
-                         + parent_filter),
-                value="./@case_id",
-                detail_select=self.get_detail_id_safe(datum['module'], 'case_short'),
-                detail_confirm=(
-                    self.get_detail_id_safe(datum['module'], 'case_long')
-                    if datum['index'] == 0 and not detail_inline else None
+            datums.append({
+                'datum': SessionDatum(
+                    id=datum['session_var'],
+                    nodeset=(self.get_nodeset_xpath(datum['case_type'], datum['module'], use_filter)
+                             + parent_filter),
+                    value="./@case_id",
+                    detail_select=self.get_detail_id_safe(datum['module'], 'case_short'),
+                    detail_confirm=(
+                        self.get_detail_id_safe(datum['module'], 'case_long')
+                        if datum['index'] == 0 and not detail_inline else None
+                    ),
+                    detail_persistent=detail_persistent,
+                    detail_inline=self.get_detail_id_safe(datum['module'], 'case_long') if detail_inline else None
                 ),
-                detail_persistent=detail_persistent,
-                detail_inline=self.get_detail_id_safe(datum['module'], 'case_long') if detail_inline else None
-            ))
+                'case_type': datum['case_type'],
+                'requires_selection': True
+            })
+        return datums
 
     def get_auto_select_datums_and_assertions(self, action, auto_select, form):
         from corehq.apps.app_manager.models import AUTO_SELECT_USER, AUTO_SELECT_CASE, \
@@ -1552,6 +1572,60 @@ class SuiteGenerator(SuiteGeneratorBase):
                     return True
             return False
 
+        datums, assertions = self.get_datum_meta_assertions_advanced(module, form)
+        datums.extend(self.get_new_case_id_datums_meta(form))
+
+        root_module = module.root_module
+        root_datums = []
+        if root_module and root_module.module_type == 'basic':
+            try:
+                # assume that all forms in the root module have the same case management
+                root_module_form = root_module.get_form(0)
+            except FormNotFoundException:
+                pass
+            else:
+                if root_module_form.requires_case():
+                    root_datums.extend(self.get_datum_meta_module(root_module))
+                root_datums.extend(self.get_new_case_id_datums_meta(root_module_form))
+
+        if root_datums:
+            # we need to try and match the datums to the root module so that
+            # the navigation on the phone works correctly
+            # 1. Add in any datums that don't require user selection e.g. new case IDs
+            # 2. Match the datum ID for datums that appear in the same position and
+            #    will be loading the same case type
+            datum_pairs = izip_longest(datums, root_datums)
+            index = 0
+            for this_datum_meta, parent_datum_meta in datum_pairs:
+                if not this_datum_meta:
+                    continue
+
+                this_datum = this_datum_meta['datum']
+                if not parent_datum_meta:
+                    continue
+
+                that_datum = parent_datum_meta['datum']
+                if this_datum.id != that_datum.id:
+                    if not parent_datum_meta['requires_selection']:
+                        datums.insert(index, parent_datum_meta)
+                    elif this_datum_meta['case_type'] == parent_datum_meta['case_type']:
+                        this_datum.id = that_datum.id
+
+                index += 1
+
+        for datum_meta in datums:
+            e.datums.append(datum_meta['datum'])
+
+        # assertions come after session
+        e.assertions.extend(assertions)
+
+        if form.is_registration_form() and form.is_case_list_form:
+            self.configure_entry_as_case_list_form(form, e)
+
+        if self.app.case_sharing and case_sharing_requires_assertion(form):
+            self.add_case_sharing_assertion(e)
+
+    def get_datum_meta_assertions_advanced(self, module, form):
         def get_target_module(case_type, module_id, with_product_details=False):
             if module_id:
                 if module_id == module.unique_id:
@@ -1593,7 +1667,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                 datum, assertions = self.get_auto_select_datums_and_assertions(action, auto_select, form)
                 datums.append({
                     'datum': datum,
-                    'case_type': None
+                    'case_type': None,
+                    'requires_selection': False
                 })
             else:
                 if action.parent_tag:
@@ -1619,34 +1694,9 @@ class SuiteGenerator(SuiteGeneratorBase):
                 )
                 datums.append({
                     'datum': datum,
-                    'case_type': action.case_type
+                    'case_type': action.case_type,
+                    'requires_selection': True
                 })
-
-        root_module_datums = self._get_datums_meta(module.root_module)
-        datum_pairs = izip_longest(datums, root_module_datums)
-        for this_datum, parent_datum_meta in datum_pairs:
-            if not this_datum:
-                continue
-
-            datum = this_datum['datum']
-            if not parent_datum_meta:
-                e.datums.append(datum)
-            elif datum.id != parent_datum_meta['session_var'] \
-                    and this_datum['case_type'] == parent_datum_meta['case_type']:
-                datum.id = parent_datum_meta['session_var']
-                # If this form's module is a child of another module then we want
-                # to make the session variables match up.
-                #
-                # This is a naive approach that just matches the datums based on
-                # their order and the case types of the case that's being loaded.
-                # If there is a match then we make the session variable in the child
-                # module form equal to the parent.
-                e.datums.append(datum)
-            else:
-                e.datums.append(datum)
-
-        # assertions come after session
-        e.assertions.extend(assertions)
 
         if module.get_app().commtrack_enabled:
             try:
@@ -1658,24 +1708,20 @@ class SuiteGenerator(SuiteGeneratorBase):
 
                     target_module = get_target_module(action.case_type, last_action.details_module, True)
 
-                    e.datums.append(SessionDatum(
-                        id='product_id',
-                        nodeset=nodeset,
-                        value="./@id",
-                        detail_select=self.get_detail_id_safe(target_module, 'product_short')
-                    ))
+                    datums.append({
+                        'datum': SessionDatum(
+                            id='product_id',
+                            nodeset=nodeset,
+                            value="./@id",
+                            detail_select=self.get_detail_id_safe(target_module, 'product_short')
+                        ),
+                        'case_type': None,
+                        'requires_selection': True
+                    })
             except IndexError:
                 pass
 
-        datums = self.get_new_case_id_datums(form)
-        for datum in datums:
-            e.datums.append(datum)
-
-        if form.is_registration_form() and form.is_case_list_form:
-            self.configure_entry_as_case_list_form(form, e)
-
-        if self.app.case_sharing and case_sharing_requires_assertion(form):
-            self.add_case_sharing_assertion(e)
+        return datums, assertions
 
     def configure_entry_careplan_form(self, module, e, form=None, **kwargs):
             parent_module = self.get_module_by_id(module.parent_select.module_id)

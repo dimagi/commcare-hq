@@ -686,6 +686,19 @@ class AdvancedModuleAsChildTest(SimpleTestCase, TestFileMixin):
         """
         Test that session datum id's in child module match those in parent module
         """
+        self.module_1.root_module_id = self.module_0.unique_id
+        self.module_0.case_type = 'gold-fish'
+        m0f0 = self.module_0.get_form(0)
+        m0f0.requires = 'case'
+        m0f0.actions.update_case = UpdateCaseAction(update={'question1': '/data/question1'})
+        m0f0.actions.update_case.condition.type = 'always'
+        m0f0.actions.subcases.append(OpenSubCaseAction(
+            case_type='castle',
+            case_name="/data/question1",
+            condition=FormActionCondition(type='always')
+        ))
+
+
         self.module_1.case_type = 'guppy'
         m1f0 = self.module_1.get_form(0)
         m1f0.actions.load_update_cases.append(LoadUpdateAction(
@@ -696,28 +709,6 @@ class AdvancedModuleAsChildTest(SimpleTestCase, TestFileMixin):
             case_tag='guppy',
             case_type='guppy'
         ))
-
-        module_2 = self.app.add_module(AdvancedModule.new_module("Untitled Module", None))
-        module_2.unique_id = 'm3'
-        module_2.case_type = 'gold-fish'
-        self.app.new_form(2, "Form", None)
-        self.module_1.root_module_id = module_2.unique_id
-
-        m2f0 = module_2.get_form(0)
-        m2f0.actions.load_update_cases.extend([
-            LoadUpdateAction(
-                case_tag='gold-fish',
-                case_type='gold-fish'
-            ),
-            LoadUpdateAction(
-                case_tag='auto-loaded-case',
-                case_type='user-case',
-                auto_select=AutoSelectCase(
-                    mode=AUTO_SELECT_USER,
-                    value_key='case_id'
-                )
-            )
-        ])
 
         self.assertXmlPartialEqual(self.get_xml('child-module-entry-datums-added'), self.app.create_suite(), "./entry")
 
