@@ -327,6 +327,8 @@ class AdvancedAction(IndexedSchema):
 
     close_condition = SchemaProperty(FormActionCondition)
 
+    __eq__ = DocumentSchema.__eq__
+
     def get_paths(self):
         for path in self.case_properties.values():
             yield path
