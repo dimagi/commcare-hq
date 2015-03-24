@@ -75,7 +75,7 @@
                     <ul class="nav navbar-nav">
                         <li{% if is_home %} class="active"{% endif %}><a href="{% url 'public_home' %}">CommCare</a></li>
                         <li{% if is_impact %} class="active"{% endif %}><a href="{% url 'public_impact' %}">{% trans "Impact" %}</a></li>
-                        <li><a href="#">{% trans "Services" %}</a></li>
+                        <li{% if is_services %} class="active"{% endif %}><a href="{% url 'public_services' %}">{% trans "Services" %}</a></li>
                         <li><a href="#">{% trans "Pricing" %}</a></li>
                     </ul>
                     <ul class="nav navbar-nav navbar-right">
