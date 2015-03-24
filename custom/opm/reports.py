@@ -1021,6 +1021,27 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
         return DataTablesHeader(*headers)
 
     @property
+    @request_cache("raw")
+    def print_response(self):
+        self.is_rendered_as_email = True
+        self.use_datatables = False
+        self.override_template = "opm/new_hsr_print.html"
+        self.update_report_context()
+        self.pagination.count = 1000000
+        headers = self.headers
+        for h in headers:
+            if h.help_text:
+                h.html = "%s (%s)" % (h.html, h.help_text)
+                h.help_text = None
+
+        self.context['report_table'].update(
+            headers=headers
+        )
+        rendered_report = render_to_string(self.template_report, self.context,
+                                           context_instance=RequestContext(self.request))
+        return HttpResponse(rendered_report)
+
+    @property
     @memoized
     def awc_data(self):
         case_objects = self.row_objects + self.extra_row_objects
