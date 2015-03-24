@@ -1,0 +1,157 @@
+/* Variables Specific to Services Graphics */
+@services-globe-size-lg: 197px;
+@services-globe-size-md: 160px;
+@services-globe-size-sm: 118px;
+@services-globe-size-xs: 97px;
+
+@services-icon-size-lg: 173px;
+@services-icon-size-md: 140px;
+@services-icon-size-sm: 103px;
+@services-icon-size-xs: 85px;
+
+
+/* Services Mixins */
+
+.services-bg-img (@graphicType, @gName, @gSize) {
+  background-image: url('@{pub-images}/services-@{graphicType}/@{gName}-@{gSize}.png');
+}
+
+.make-services-graphic-bg (@graphicType, @gName) {
+  .services-bg-img(@graphicType, @gName, 'xs');
+
+  @media (min-width: @screen-xs-min) {
+    .services-bg-img(@graphicType, @gName, 'sm');
+  }
+
+  @media (min-width: @screen-sm-min) {
+    .services-bg-img(@graphicType, @gName, 'sm');
+  }
+
+  @media (min-width: @screen-md-min) {
+    .services-bg-img(@graphicType, @gName, 'md');
+  }
+
+  @media (min-width: @screen-lg-min) {
+    .services-bg-img(@graphicType, @gName, 'lg');
+  }
+}
+
+.make-services-graphic (@sizeXS, @sizeSM, @sizeMD, @sizeLG) {
+  width: @sizeSM;
+  height: @sizeSM;
+  background: no-repeat center center;
+
+  @media (min-width: @screen-sm-min) {
+    width: @sizeXS;
+    height: @sizeXS;
+  }
+
+  @media (min-width: @screen-sm-min) {
+    width: @sizeSM;
+    height: @sizeSM;
+  }
+
+  @media (min-width: @screen-md-min) {
+    width: @sizeMD;
+    height: @sizeMD;
+  }
+
+  @media (min-width: @screen-lg-min) {
+    width: @sizeLG;
+    height: @sizeLG;
+  }
+}
+
+.services-globe {
+  margin: 0 auto;
+  .make-services-graphic(@services-globe-size-xs, @services-globe-size-sm,
+    @services-globe-size-md, @services-globe-size-lg);
+}
+
+.services-icon {
+  margin: 0 auto;
+  .make-services-graphic(@services-icon-size-xs, @services-icon-size-sm,
+    @services-icon-size-md, @services-icon-size-lg);
+}
+
+.services-globe-americas {
+  .make-services-graphic-bg('globe', 'americas');
+}
+
+.services-globe-asia {
+  .make-services-graphic-bg('globe', 'asia');
+}
+
+.services-globe-africa {
+  .make-services-graphic-bg('globe', 'africa');
+}
+
+.services-icon-first {
+  .make-services-graphic-bg('icons', 'first');
+}
+
+.services-icon-second {
+  .make-services-graphic-bg('icons', 'second');
+}
+
+.services-icon-third {
+  .make-services-graphic-bg('icons', 'third');
+}
+
+.services-icon-fourth {
+  .make-services-graphic-bg('icons', 'fourth');
+}
+
+.services-globes-container {
+  position: relative;
+  width: 100%;
+
+  > .services-globes-container-inner {
+    width: 100%;
+    position: absolute;
+    margin-top: -10px;
+
+    @media (min-width: @screen-sm-min) {
+      margin-top: -7px;
+    }
+
+    @media (min-width: @screen-md-min) {
+      margin-top: -10px;
+    }
+
+    @media (min-width: @screen-lg-min) {
+      margin-top: -12px;
+    }
+  }
+}
+
+.services-summary-row {
+
+  @media (min-width: @screen-sm-min) {
+    margin-top: 10px;
+  }
+
+  @media (min-width: @screen-md-min) {
+    margin-top: 15px;
+  }
+
+  @media (min-width: @screen-lg-min) {
+    margin-top: 20px;
+  }
+
+  @media (max-width: @screen-xs-max) {
+    margin-bottom: 40px;
+  }
+}
+
+.services-summary {
+  @media (max-width: @screen-xs-max) {
+    min-height: 100px;
+    margin-bottom: 20px;
+
+    h3 {
+      margin-top: 0;
+    }
+  }
+
+}

@@ -2,13 +2,13 @@
 <div id="services-bundles" class="section section-default section-detail section-services-bundles">
     <div class="container">
         <div class="row">
-            <div class="col-md-8">
+            <div class="col-sm-8">
                 <h2>
                     {% blocktrans %}
                         Implementation Bundles
                     {% endblocktrans %}
                 </h2>
-                <p class="lead">
+                <p class="lead" style="margin-bottom: 10px;">
                     {% blocktrans %}
                         From two weeks of on-site field support to a full,
                         18-month deployment to take a program to scale.
@@ -23,180 +23,188 @@
                 </p>
             </div>
         </div>
-        <div class="row bundle-row-header">
-            <div class="col-sm-10 col-sm-offset-2">
-                <div class="bundle-header-bg"></div>
+        <div class="bundles-container">
+            <div class="bundles-container-inner">
+                <div class="bundle-header-container">
+                    <div class="bundle-header">
+                        <div class="row">
+                            <div class="col-xs-10 col-xs-offset-2">
+                                <div class="bundle-header-bg"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-2 col-xs-offset-2">
+                        <h3 class="bundle-name text-uppercase">{% trans 'Scope' %}</h3>
+                    </div>
+                    <div class="col-xs-2">
+                        <h3 class="bundle-name text-uppercase">{% trans 'Launch' %}</h3>
+                    </div>
+                    <div class="col-xs-2">
+                        <h3 class="bundle-name text-uppercase">{% trans 'Boost' %}</h3>
+                    </div>
+                    <div class="col-xs-2">
+                        <h3 class="bundle-name text-uppercase">{% trans 'Growth' %}</h3>
+                    </div>
+                    <div class="col-xs-2">
+                        <h3 class="bundle-name text-uppercase">{% trans 'Scale' %}</h3>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-2 col-xs-offset-2">
+                        <div class="bundle-price">{% trans '$10,000' %}</div>
+                    </div>
+                    <div class="col-xs-2">
+                        <div class="bundle-price">{% trans '$35,000' %}</div>
+                    </div>
+                    <div class="col-xs-2">
+                        <div class="bundle-price">{% trans '$50,000' %}</div>
+                    </div>
+                    <div class="col-xs-2">
+                        <div class="bundle-price">{% trans '$80,000' %}</div>
+                    </div>
+                    <div class="col-xs-2">
+                        <div class="bundle-price">{% trans '$150,000' %}</div>
+                    </div>
+                </div>
+                <div class="row bundle-row-plan">
+                    <div class="col-xs-2">
+                        <h4 class="bundle-section-header">
+                            {% trans 'Software Plan' %}
+                        </h4>
+                    </div>
+                    <div class="col-xs-2">
+                        <div class="bundle-plan bundle-plan-community">
+                            <p class="lead">
+                                {% trans 'Community' %}
+                            </p>
+                            <p class="text-uppercase">
+                                <small>{% trans "Free" %}</small>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-xs-2">
+                        <div class="bundle-plan bundle-plan-pro">
+                            <p class="lead">
+                                {% trans 'Pro' %}
+                            </p>
+                            <p><small>{% trans "12 months" %}</small></p>
+                        </div>
+                    </div>
+                    <div class="col-xs-2">
+                        <div class="bundle-plan bundle-plan-pro">
+                            <p class="lead">
+                                {% trans 'Pro' %}
+                            </p>
+                            <p><small>{% trans "12 months" %}</small></p>
+                        </div>
+                    </div>
+                    <div class="col-xs-2">
+                        <div class="bundle-plan bundle-plan-advanced">
+                            <p class="lead">
+                                {% trans 'Advanced' %}
+                            </p>
+                            <p><small>{% trans "12 months" %}</small></p>
+                        </div>
+                    </div>
+                    <div class="col-xs-2">
+                        <div class="bundle-plan bundle-plan-advanced">
+                            <p class="lead">
+                                {% trans 'Advanced' %}
+                            </p>
+                            <p><small>{% trans "18 months" %}</small></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="row bundle-row-services">
+                    <div class="col-xs-2">
+                        <h4 class="bundle-section-header">
+                            {% blocktrans %}
+                                Application Development &amp; Implementation Support
+                            {% endblocktrans %}
+                        </h4>
+                    </div>
+                    <div class="col-xs-2">
+                        <ul class="list-unstyled text-center bundle-details">
+                            <li>{% blocktrans %}Workflow Design{% endblocktrans %}</li>
+                            <li>{% blocktrans %}On-Site Scoping Visit{% endblocktrans %}</li>
+                            <li>{% blocktrans %}Mobile System Workflow Design{% endblocktrans %}</li>
+                        </ul>
+                    </div>
+                    <div class="col-xs-2">
+                        <ul class="list-unstyled text-center bundle-details">
+                            <li>
+                                {% blocktrans %}
+                                    Everything in<br />
+                                    Scope, plus:
+                                {% endblocktrans %}
+                            </li>
+                            <li>{% blocktrans %}Build &amp; Launch Application{% endblocktrans %}</li>
+                            <li>{% blocktrans %}Field Testing &amp; Iteration{% endblocktrans %}</li>
+                            <li>{% blocktrans %}Users Training{% endblocktrans %}</li>
+                        </ul>
+                    </div>
+                    <div class="col-xs-2">
+                        <ul class="list-unstyled text-center bundle-details">
+                            <li>
+                                {% blocktrans %}
+                                    Everything in<br />
+                                    Launch, plus:
+                                {% endblocktrans %}
+                            </li>
+                            <li>{% blocktrans %}Technology for Outcomes Monitoring{% endblocktrans %}</li>
+                            <li>{% blocktrans %}Capacity Building for Worker Performance Monitoring{% endblocktrans %}</li>
+                        </ul>
+                    </div>
+                    <div class="col-xs-2">
+                        <ul class="list-unstyled text-center bundle-details">
+                            <li>
+                                {% blocktrans %}
+                                    Everything in<br />
+                                    Boost, plus:
+                                {% endblocktrans %}
+                            </li>
+                            <li>{% blocktrans %}Refined Application{% endblocktrans %}</li>
+                            <li>{% blocktrans %}Additional Supervisor App{% endblocktrans %}</li>
+                            <li>{% blocktrans %}Application Troubleshooting Capacity Building{% endblocktrans %}</li>
+                        </ul>
+                    </div>
+                    <div class="col-xs-2">
+                        <ul class="list-unstyled text-center bundle-details">
+                            <li>
+                                {% blocktrans %}
+                                    Everything in<br />
+                                    Growth, plus:
+                                {% endblocktrans %}
+                            </li>
+                            <li>{% blocktrans %}Monitored Application Usage{% endblocktrans %}</li>
+                            <li>{% blocktrans %}Additional Tech for Reminder Messages{% endblocktrans %}</li>
+                            <li>{% blocktrans %}Training of Trainers{% endblocktrans %}</li>
+                            <li>{% blocktrans %}Capacity to Build Applications{% endblocktrans %}</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="row bundle-row-seemore">
+                    <div class="col-xs-2 col-xs-offset-2">
+                        <a href="#">{% trans 'See More...' %}</a>
+                    </div>
+                    {% for i in 'xxxx' %}
+                    <div class="col-xs-2">
+                        <a href="#">{% trans 'See More...' %}</a>
+                    </div>
+                    {% endfor %}
+                </div>
             </div>
         </div>
         <div class="row">
-            <div class="col-sm-2 col-sm-offset-2">
-                <h3 class="bundle-name text-uppercase">{% trans 'Scope' %}</h3>
-            </div>
-            <div class="col-sm-2">
-                <h3 class="bundle-name text-uppercase">{% trans 'Launch' %}</h3>
-            </div>
-            <div class="col-sm-2">
-                <h3 class="bundle-name text-uppercase">{% trans 'Boost' %}</h3>
-            </div>
-            <div class="col-sm-2">
-                <h3 class="bundle-name text-uppercase">{% trans 'Growth' %}</h3>
-            </div>
-            <div class="col-sm-2">
-                <h3 class="bundle-name text-uppercase">{% trans 'Scale' %}</h3>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-sm-2 col-sm-offset-2">
-                <p class="lead">{% trans '$10,000' %}</p>
-            </div>
-            <div class="col-sm-2">
-                <p class="lead">{% trans '$35,000' %}</p>
-            </div>
-            <div class="col-sm-2">
-                <p class="lead">{% trans '$50,000' %}</p>
-            </div>
-            <div class="col-sm-2">
-                <p class="lead">{% trans '$80,000' %}</p>
-            </div>
-            <div class="col-sm-2">
-                <p class="lead">{% trans '$150,000' %}</p>
-            </div>
-        </div>
-        <div class="row bundle-row-plan">
-            <div class="col-sm-2">
-                <h4 class="bundle-text-plan">
-                    {% trans 'Software Plan' %}
-                </h4>
-            </div>
-            <div class="col-sm-2">
-                <div class="bundle-plan">
-                    <p class="lead">
-                        {% trans 'Community' %}
-                    </p>
-                    <p class="text-uppercase">
-                        <small>{% trans "Free" %}</small>
-                    </p>
-                </div>
-            </div>
-            <div class="col-sm-2">
-                <div class="bundle-plan">
-                    <p class="lead">
-                        {% trans 'Pro' %}
-                    </p>
-                    <p><small>{% trans "12 months" %}</small></p>
-                </div>
-            </div>
-            <div class="col-sm-2">
-                <div class="bundle-plan">
-                    <p class="lead">
-                        {% trans 'Pro' %}
-                    </p>
-                    <p><small>{% trans "12 months" %}</small></p>
-                </div>
-            </div>
-            <div class="col-sm-2">
-                <div class="bundle-plan">
-                    <p class="lead">
-                        {% trans 'Advanced' %}
-                    </p>
-                    <p><small>{% trans "12 months" %}</small></p>
-                </div>
-            </div>
-            <div class="col-sm-2">
-                <div class="bundle-plan">
-                    <p class="lead">
-                        {% trans 'Advanced' %}
-                    </p>
-                    <p><small>{% trans "18 months" %}</small></p>
-                </div>
-            </div>
-        </div>
-        <div class="row bundle-row-services">
-            <div class="col-sm-2">
-                <h4 class="bundle-text-services">
+            <div class="col-xs-12">
+                <a href="#" class="btn btn-primary-dark pull-right">
                     {% blocktrans %}
-                        Application Development &amp; Implementation Support
+                    Inquire About Dimagi's Implementation Bundles
                     {% endblocktrans %}
-                </h4>
+                </a>
             </div>
-            <div class="col-sm-2">
-                <ul class="list-unstyled text-center bundle-details">
-                    <li>{% blocktrans %}Workflow Design{% endblocktrans %}</li>
-                    <li>{% blocktrans %}On-Site Scoping Visit{% endblocktrans %}</li>
-                    <li>{% blocktrans %}Mobile System Workflow Design{% endblocktrans %}</li>
-                </ul>
-            </div>
-            <div class="col-sm-2">
-                <ul class="list-unstyled text-center bundle-details">
-                    <li>
-                        {% blocktrans %}
-                            Everything in<br />
-                            Scope, plus:
-                        {% endblocktrans %}
-                    </li>
-                    <li>{% blocktrans %}Build &amp; Launch Application{% endblocktrans %}</li>
-                    <li>{% blocktrans %}Field Testing &amp; Iteration{% endblocktrans %}</li>
-                    <li>{% blocktrans %}Users Training{% endblocktrans %}</li>
-                </ul>
-            </div>
-            <div class="col-sm-2">
-                <ul class="list-unstyled text-center bundle-details">
-                    <li>
-                        {% blocktrans %}
-                            Everything in<br />
-                            Launch, plus:
-                        {% endblocktrans %}
-                    </li>
-                    <li>{% blocktrans %}Technology for Outcomes Monitoring{% endblocktrans %}</li>
-                    <li>{% blocktrans %}Capacity Building for Worker Performance Monitoring{% endblocktrans %}</li>
-                </ul>
-            </div>
-            <div class="col-sm-2">
-                <ul class="list-unstyled text-center bundle-details">
-                    <li>
-                        {% blocktrans %}
-                            Everything in<br />
-                            Boost, plus:
-                        {% endblocktrans %}
-                    </li>
-                    <li>{% blocktrans %}Refined Application{% endblocktrans %}</li>
-                    <li>{% blocktrans %}Additional Supervisor App{% endblocktrans %}</li>
-                    <li>{% blocktrans %}Application Troubleshooting Capacity Building{% endblocktrans %}</li>
-                </ul>
-            </div>
-            <div class="col-sm-2">
-                <ul class="list-unstyled text-center bundle-details">
-                    <li>
-                        {% blocktrans %}
-                            Everything in<br />
-                            Growth, plus:
-                        {% endblocktrans %}
-                    </li>
-                    <li>{% blocktrans %}Monitored Application Usage{% endblocktrans %}</li>
-                    <li>{% blocktrans %}Additional Tech for Reminder Messages{% endblocktrans %}</li>
-                    <li>{% blocktrans %}Training of Trainers{% endblocktrans %}</li>
-                    <li>{% blocktrans %}Capacity to Build Applications{% endblocktrans %}</li>
-                </ul>
-            </div>
-        </div>
-        <div class="row bundle-row-seemore">
-            <div class="col-sm-2 col-sm-offset-2">
-                <a href="#">{% trans 'See More...' %}</a>
-            </div>
-            {% for i in 'xxxx' %}
-            <div class="col-sm-2">
-                <a href="#">{% trans 'See More...' %}</a>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-sm-12">
-            <a href="#" class="btn btn-primary-dark pull-right">
-                {% blocktrans %}
-                Inquire About Dimagi's Implementation Bundles
-                {% endblocktrans %}
-            </a>
         </div>
     </div>
 </div>

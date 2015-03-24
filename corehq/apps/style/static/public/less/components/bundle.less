@@ -1,0 +1,140 @@
+.bundle-name {
+  line-height: 50px;
+  display: block;
+  background-color: @cc-neutral-low;
+  text-align: center;
+  color: #FFFFFF;
+  font-size: 14px;
+  margin: 0;
+}
+
+.bundle-header-container {
+  position: relative;
+  width: 100%;
+
+  > .bundle-header {
+    width: 100%;
+    position: absolute;
+  }
+}
+
+.bundle-header-bg {
+  background-color: fade(@cc-neutral-low, 60);
+  height: 50px;
+}
+
+.bundle-price {
+  line-height: 50px;
+  display: block;
+  text-align: center;
+  border-left: 1px solid @cc-neutral-hi;
+  border-right: 1px solid @cc-neutral-hi;
+  font-size: 18px;
+  font-weight: 200;
+}
+
+.bundle-plan {
+  height: 80px;
+  background-color: @cc-neutral-mid;
+  text-align: center;
+  color: #ffffff;
+  @media (max-width: @screen-sm-max) {
+    height: 70px;
+  }
+
+  p.lead {
+    padding: 13px 0 10px;
+    margin: 0;
+  }
+}
+
+.bundle-section-header {
+  color: @cc-neutral-mid;
+  font-size: 18px;
+  font-weight: 400;
+  padding-top: 5px;
+  line-height: 1.3em;
+
+  @media (max-width: @screen-xs-max) {
+    margin-left: 10px;
+  }
+
+  @media (max-width: @screen-sm-max) {
+    font-size: 14px;
+  }
+}
+
+.bundle-plan-community {
+  background-color: @cc-brand-mid;
+}
+
+.bundle-plan-pro {
+  background-color: @cc-light-cool-accent-mid;
+}
+
+.bundle-plan-advanced {
+  background-color: @cc-dark-cool-accent-mid;
+}
+
+.bundle-row-plan {
+  background-color: @cc-bg;
+}
+
+.bundle-row-services {
+  background-color: @cc-neutral-hi;
+  height: 260px;
+
+  @media (max-width: @screen-sm-max) {
+    height: 300px;
+  }
+
+  .bundle-section-header {
+    color: #FFFFFF;
+  }
+}
+
+.bundle-details {
+  background-color: @cc-bg;
+  color: @cc-neutral-mid;
+  height: 280px;
+
+  border-left: 1px solid @cc-neutral-hi;
+  border-right: 1px solid @cc-neutral-hi;
+  border-bottom: 1px solid @cc-neutral-hi;
+
+  padding: 0 5px;
+  margin: 0;
+
+  li {
+    padding-top: 20px;
+  }
+
+  @media (max-width: @screen-sm-max) {
+    height: 340px;
+  }
+}
+
+.bundles-container {
+  margin: 20px 0;
+
+  @media (max-width: 719px) {
+    overflow-x: scroll;
+    overflow-y: none;
+    height: 580px;
+  }
+}
+
+.bundles-container-inner {
+ min-width: 720px;
+}
+
+.bundle-row-seemore {
+  a {
+    display: block;
+    text-align: center;
+    line-height: 50px;
+    font-size: 14px;
+    border: 1px solid @cc-neutral-hi;
+    border-top: none;
+  }
+}
