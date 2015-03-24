@@ -25,7 +25,7 @@
         </thead>
 
         <tbody data-bind="foreach: rows">
-            <tr>
+            <tr data-bind="css: { error: !_.isEmpty(errors) }">
                 {% for spec in row_spec %}
                 <td>
                     <div class="control-group"
@@ -45,6 +45,11 @@
                 </td>
                 {% endfor %}
             </tr>
+            <tr class="error" data-bind="visible: errors.__all__">
+                <td class="text-error"
+                    data-bind="attr: { colspan: num_columns },
+                               text: errors.__all__"></td>
+            </tr>
         </tbody>
 
     </table>
@@ -61,12 +66,8 @@
 $(document).ready(function() {
     function Row(data, keys) {
         var self = this;
-
-        if ('form_errors' in data) {
-            self.errors = data.form_errors;
-        } else {
-            self.errors = {};
-        }
+        self.errors = ('form_errors' in data) ? data.form_errors : {};
+        self.num_columns = keys.length;
 
         self.data = {};
         keys.forEach(function(key) {

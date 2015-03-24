@@ -14,7 +14,7 @@ from casexml.apps.stock.models import StockTransaction, StockReport
 from couchforms.models import XFormInstance
 from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, product_ids_filtered_by_program
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
-from casexml.apps.stock.utils import months_of_stock_remaining, stock_category
+from casexml.apps.stock.utils import months_of_stock_remaining, stock_category, state_stock_category
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
 from decimal import Decimal
 from django.db.models import Sum
@@ -300,10 +300,12 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
 
                     product['count'] += 1
 
+                    location_type = state.sql_location.location_type
                     product['category'] = stock_category(
                         product['current_stock'],
                         _convert_to_daily(product['consumption']),
-                        Domain.get_by_name(self.domain)
+                        location_type.understock_threshold,
+                        location_type.overstock_threshold,
                     )
                     product['months_remaining'] = months_of_stock_remaining(
                         product['current_stock'],
@@ -322,11 +324,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                         'current_stock': format_decimal(state.stock_on_hand),
                         'count': 1,
                         'consumption': consumption,
-                        'category': stock_category(
-                            state.stock_on_hand,
-                            _convert_to_daily(consumption),
-                            Domain.get_by_name(self.domain)
-                        ),
+                        'category': state_stock_category(state),
                         'months_remaining': months_of_stock_remaining(
                             state.stock_on_hand,
                             _convert_to_daily(consumption)
