@@ -356,6 +356,12 @@ CUSTOM_PROPERTIES = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+GLOBAL_SMS_RATES = StaticToggle(
+    'global_sms_rates',
+    'Global SMS Rates page',
+    [NAMESPACE_USER]
+)
+
 BULK_SMS_VERIFICATION = StaticToggle(
     'bulk_sms_verification',
     'Allow initiating the SMS phone verification workflow for all users in a group.',
