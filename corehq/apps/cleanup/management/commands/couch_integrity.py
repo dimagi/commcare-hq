@@ -64,7 +64,7 @@ class Command(LabelCommand):
     )
 
     def handle_label(self, *labels, **options):
-        wiggle = options.get('wiggle', 0)
+        wiggle = options['wiggle']
         with open(labels[0]) as f:
             integrity_config = IntegrityConfig.wrap(json.loads(f.read()))
             integrity_check(integrity_config, wiggle)
@@ -88,7 +88,6 @@ def integrity_check(config, wiggle=0):
                 content = json.loads(resp.content)
                 try:
                     total_rows = content['total_rows']
-
                 except KeyError:
                     print "Problem getting `total_rows`. Is this a valid couch database?  {}"\
                         .format(suite.database)
@@ -96,12 +95,12 @@ def integrity_check(config, wiggle=0):
                     matched = False
                     for wiggle_range, couches in matches.items():
                         if wiggle_range[0] <= total_rows <= wiggle_range[1]:
-                            matches[wiggle_range].append(couch.uri)
+                            matches[wiggle_range].append((couch.uri, total_rows))
                             matched = True
 
                     if not matched:
                         new_wiggle_range = (total_rows - wiggle, total_rows + wiggle)
-                        matches[new_wiggle_range].append(couch.uri)
+                        matches[new_wiggle_range].append((couch.uri, total_rows))
 
             print_result(matches, view, suite.database)
 
@@ -111,15 +110,18 @@ def print_result(matches, view, database):
         return
 
     if len(matches) == 1:
-        print u"All is consistent in {} for view {}".format(database, view)
+        print u"{}All is consistent in {} for view {}{}".format(Colors.OKGREEN, database, view, Colors.ENDC)
         return
 
-    for rows, databases in matches.items():
-        print "##### {} #####".format(view)
-        print u"Databases: "
-        for db in databases:
-            print db
-        print u"Had this many {} rows for this view".format(rows)
+    print "{}{} - {}{}".format(Colors.WARNING, database, view, Colors.ENDC)
+    for wiggle_range, match_tuples in matches.items():
+        print u"Couches for wiggle range {}: ".format(wiggle_range)
+        for couch_uri, rows in match_tuples:
+            print u"\t{}".format(couch_uri)
+            print u"\tHad this many {}{}{} rows for this view".format(
+                Colors.BOLD,
+                rows,
+                Colors.ENDC)
 
 
 class CouchConfig(JsonObject):
@@ -163,3 +165,14 @@ class SuiteConfig(JsonObject):
 class IntegrityConfig(JsonObject):
     suites = ListProperty(SuiteConfig)
     couches = ListProperty(CouchConfig)
+
+
+class Colors:
+    # http://stackoverflow.com/a/287944/835696
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
