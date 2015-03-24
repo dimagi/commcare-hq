@@ -147,7 +147,9 @@
                 </a>
                 {% endif %}
                 {% if can_bulk_edit_users %}
-                    {% trans "or" %}
+                    <a id="bulk_download" class="btn btn-info" href="{% url "download_commcare_users" domain %}">
+                        <i class="icon-download-alt"></i> {% trans "Download Mobile Workers" %}
+                    </a>
                     <a id="bulk_upload" class="btn" href="{% url "upload_commcare_users" domain %}">
                         {% trans "Bulk Upload" %}
                     </a>
