@@ -1,5 +1,6 @@
 import json
 import requests
+from optparse import make_option
 from collections import defaultdict
 from django.core.management.base import LabelCommand
 from django.conf import settings
@@ -52,17 +53,28 @@ class Command(LabelCommand):
             "See couch_integrity/basic.json for example config")
     label = "config file"
 
+    option_list = LabelCommand.option_list + (
+        make_option(
+            '--wiggle',
+            dest='wiggle',
+            default=0,
+            type="int",
+            help='Define how much doc counts can be off by'
+        ),
+    )
+
     def handle_label(self, *labels, **options):
+        wiggle = options.get('wiggle', 0)
         with open(labels[0]) as f:
             integrity_config = IntegrityConfig.wrap(json.loads(f.read()))
-            integrity_check(integrity_config)
+            integrity_check(integrity_config, wiggle)
 
 
-def integrity_check(config):
+def integrity_check(config, wiggle=0):
     for suite in config.suites:
         for view in suite.views:
+            matches = defaultdict(list)
             for couch in config.couches:
-                matches = defaultdict(list)
                 params = {
                     'reduce': 'false',
                     'limit': 0
@@ -75,12 +87,23 @@ def integrity_check(config):
 
                 content = json.loads(resp.content)
                 try:
-                    matches[content['total_rows']].append(couch.uri)
+                    total_rows = content['total_rows']
+
                 except KeyError:
                     print "Problem getting `total_rows`. Is this a valid couch database?  {}"\
                         .format(suite.database)
+                else:
+                    matched = False
+                    for wiggle_range, couches in matches.items():
+                        if wiggle_range[0] <= total_rows <= wiggle_range[1]:
+                            matches[wiggle_range].append(couch.uri)
+                            matched = True
 
-                print_result(matches, view, suite.database)
+                    if not matched:
+                        new_wiggle_range = (total_rows - wiggle, total_rows + wiggle)
+                        matches[new_wiggle_range].append(couch.uri)
+
+            print_result(matches, view, suite.database)
 
 
 def print_result(matches, view, database):
