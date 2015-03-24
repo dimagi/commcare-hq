@@ -927,7 +927,6 @@ def get_module_view_context_and_template(app, module):
             ],
             'case_list_form_options': case_list_form_options(case_type),
             'case_list_form_allowed': module.all_forms_require_a_case and not module.parent_select.active,
-            'latest_commcare_version': get_commcare_versions()[-1]
         }
 
 
@@ -1072,6 +1071,8 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
     context.update({
         'copy_app_form': copy_app_form if copy_app_form is not None else CopyApplicationForm(app_id)
     })
+
+    context['latest_commcare_version'] = get_commcare_versions()[-1]
 
     if app and app.doc_type == 'Application' and has_privilege(req, privileges.COMMCARE_LOGO_UPLOADER):
         uploader_slugs = ANDROID_LOGO_PROPERTY_MAPPING.keys()

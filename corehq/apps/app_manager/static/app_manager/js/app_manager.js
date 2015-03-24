@@ -9,11 +9,12 @@
     COMMCAREHQ.app_manager.checkCommcareVersion = function (version) {
         return COMMCAREHQ.app_manager.versionGE(COMMCAREHQ.app_manager.commcareVersion(), version);
     };
-    COMMCAREHQ.app_manager.checkCommcareVaporWare = function (version) {
-        if (COMMCAREHQ.app_manager.latestCommcareVersion() === "0") {
-            return false;
+    COMMCAREHQ.app_manager.checkAreWeThereYet = function (version) {
+        if (!COMMCAREHQ.app_manager.latestCommcareVersion()) {
+            // We don't know the latest version. Assume this version has arrived
+            return true;
         } else {
-            return COMMCAREHQ.app_manager.versionGT(version, COMMCAREHQ.app_manager.latestCommcareVersion());
+            return COMMCAREHQ.app_manager.versionGE(COMMCAREHQ.app_manager.latestCommcareVersion(), version);
         }
     };
     COMMCAREHQ.app_manager.versionGE = function (commcareVersion1, commcareVersion2) {
@@ -31,13 +32,6 @@
 
         } else {
             return false;
-        }
-    };
-    COMMCAREHQ.app_manager.versionGT = function (commcareVersion1, commcareVersion2) {
-        if (commcareVersion1 === commcareVersion2) {
-            return false;
-        } else {
-            return COMMCAREHQ.app_manager.versionGE(commcareVersion1, commcareVersion2);
         }
     };
     COMMCAREHQ.app_manager.init = function (args) {
@@ -268,7 +262,7 @@
                 if (COMMCAREHQ.app_manager.checkCommcareVersion(version)) {
                     area.find('upgrade-message').remove();
                     area.find('*:not(".hide")').show();
-                } else if (COMMCAREHQ.app_manager.checkCommcareVaporWare(version)) {
+                } else if (!COMMCAREHQ.app_manager.checkAreWeThereYet(version)) {
                     area.parent().hide();
                 } else {
                     area.find('*').hide();
