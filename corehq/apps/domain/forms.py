@@ -36,7 +36,7 @@ from corehq.apps.accounting.models import (
     SubscriptionAdjustmentMethod,
     SubscriptionType,
 )
-from corehq.apps.app_manager.models import (Application,
+from corehq.apps.app_manager.models import (Application, RemoteApp
                                             FormBase, get_apps_in_domain)
 
 from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
