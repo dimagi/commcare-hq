@@ -1046,7 +1046,6 @@ COUCHDB_APPS = [
     ('cvsu', 'fluff-cvsu'),
     ('mc', 'fluff-mc'),
     ('m4change', 'm4change'),
-    ('wvindia2', 'wvindia2'),
     ('export', 'meta'),
     'tdhtesting'
 ]
