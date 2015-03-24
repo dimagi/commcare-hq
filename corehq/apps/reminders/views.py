@@ -75,7 +75,7 @@ from casexml.apps.case.models import CommCareCase, CommCareCaseGroup
 from dateutil.parser import parse
 from corehq.apps.sms.util import close_task
 from corehq.util.timezones import utils as tz_utils
-from corehq.apps.reports import util as report_utils
+from corehq.util.timezones.utils import get_timezone_for_user
 from dimagi.utils.couch.database import is_bigcouch, bigcouch_quorum_count, iter_docs
 
 ACTION_ACTIVATE = 'activate'
@@ -95,7 +95,7 @@ survey_reminders_permission = lambda *args, **kwargs: (
 )
 
 def get_project_time_info(domain):
-    timezone = report_utils.get_timezone(None, domain)
+    timezone = get_timezone_for_user(None, domain)
     now = pytz.utc.localize(datetime.utcnow())
     timezone_now = now.astimezone(timezone)
     return (timezone, now, timezone_now)
@@ -187,7 +187,7 @@ def add_one_time_reminder(request, domain, handler_id=None):
     else:
         handler = None
 
-    timezone = report_utils.get_timezone(None, domain) # Use project timezone only
+    timezone = get_timezone_for_user(None, domain) # Use project timezone only
 
     if request.method == "POST":
         form = OneTimeReminderForm(request.POST, can_use_survey=can_use_survey_reminders(request))
@@ -1286,7 +1286,7 @@ def reminders_in_error(request, domain):
                 handler.set_next_fire(reminder, current_timestamp)
                 reminder.save(**kwargs)
     
-    timezone = report_utils.get_timezone(request.couch_user, domain)
+    timezone = get_timezone_for_user(request.couch_user, domain)
     reminders = []
     for reminder in CaseReminder.view("reminders/reminders_in_error", startkey=[domain], endkey=[domain, {}], include_docs=True).all():
         if reminder.handler_id in handler_map:

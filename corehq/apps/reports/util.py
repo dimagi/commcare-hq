@@ -13,19 +13,17 @@ from django.utils import html, safestring
 
 from corehq.apps.announcements.models import ReportAnnouncement
 from corehq.apps.groups.models import Group
-from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.models import HQUserType, TempCommCareUser
-from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import user_id_to_username
+from corehq.util.timezones.utils import get_timezone_for_user
 from couchexport.util import SerializableFunction
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import WebUser
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import string_to_datetime, string_to_utc_datetime
-from corehq.util.timezones import utils as tz_utils
 from dimagi.utils.web import json_request
 
 
@@ -269,29 +267,6 @@ def app_export_filter(doc, app_id):
     else:
         return True
 
-def get_timezone(couch_user_or_id, domain):
-    # todo cleanup
-    timezone = None
-    if couch_user_or_id:
-        if isinstance(couch_user_or_id, CouchUser):
-            requesting_user = couch_user_or_id
-        else:
-            assert isinstance(couch_user_or_id, basestring)
-            try:
-                requesting_user = WebUser.get_by_user_id(couch_user_or_id)
-            except CouchUser.AccountTypeError:
-                return pytz.utc
-        domain_membership = requesting_user.get_domain_membership(domain)
-        if domain_membership:
-            timezone = tz_utils.coerce_timezone_value(domain_membership.timezone)
-
-    if not timezone:
-        current_domain = Domain.get_by_name(domain)
-        try:
-            timezone = tz_utils.coerce_timezone_value(current_domain.default_timezone)
-        except pytz.UnknownTimeZoneError:
-            timezone = pytz.utc
-    return timezone
 
 def datespan_export_filter(doc, datespan):
     if isinstance(datespan, dict):
@@ -367,7 +342,7 @@ def create_export_filter(request, domain, export_type='form'):
         filter = SerializableFunction(app_export_filter, app_id=app_id)
         datespan = request.datespan
         if datespan.is_valid():
-            datespan.set_timezone(get_timezone(request.couch_user, domain))
+            datespan.set_timezone(get_timezone_for_user(request.couch_user, domain))
             filter &= SerializableFunction(datespan_export_filter, datespan=datespan)
         if use_user_filters:
             filtered_users = users_matching_filter(domain, user_filters)

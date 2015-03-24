@@ -4,6 +4,8 @@ from django.utils.encoding import smart_str
 import pytz
 import datetime
 import dateutil
+from corehq.apps.domain.models import Domain
+from corehq.apps.users.models import CouchUser, WebUser
 
 
 def adjust_datetime_to_timezone(value, from_tz, to_tz=None):
@@ -56,3 +58,28 @@ def is_timezone_in_dst(tz, compare_time=None):
     if len(transitions) >= 2 and (transitions[0] <= now <= transitions[1]):
         return True
     return False
+
+
+def get_timezone_for_user(couch_user_or_id, domain):
+    # todo cleanup
+    timezone = None
+    if couch_user_or_id:
+        if isinstance(couch_user_or_id, CouchUser):
+            requesting_user = couch_user_or_id
+        else:
+            assert isinstance(couch_user_or_id, basestring)
+            try:
+                requesting_user = WebUser.get_by_user_id(couch_user_or_id)
+            except CouchUser.AccountTypeError:
+                return pytz.utc
+        domain_membership = requesting_user.get_domain_membership(domain)
+        if domain_membership:
+            timezone = coerce_timezone_value(domain_membership.timezone)
+
+    if not timezone:
+        current_domain = Domain.get_by_name(domain)
+        try:
+            timezone = coerce_timezone_value(current_domain.default_timezone)
+        except pytz.UnknownTimeZoneError:
+            timezone = pytz.utc
+    return timezone

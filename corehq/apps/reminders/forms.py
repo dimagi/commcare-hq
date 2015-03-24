@@ -76,7 +76,7 @@ from openpyxl.shared.exc import InvalidFileException
 from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.app_manager.models import Form as CCHQForm
 from dimagi.utils.django.fields import TrimmedCharField
-from corehq.apps.reports import util as report_utils
+from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.timezones import utils as tz_utils
 from langcodes import get_name as get_language_name
 
@@ -1796,7 +1796,7 @@ class OneTimeReminderForm(Form):
 
     def clean_datetime(self):
         utcnow = datetime.utcnow()
-        timezone = report_utils.get_timezone(None, self._cchq_domain) # Use project timezone only
+        timezone = get_timezone_for_user(None, self._cchq_domain) # Use project timezone only
         if self.cleaned_data.get("send_type") == SEND_NOW:
             start_datetime = utcnow + timedelta(minutes=1)
         else:

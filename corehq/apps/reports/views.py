@@ -9,6 +9,7 @@ import cStringIO
 import itertools
 from datetime import datetime, timedelta, date
 from urllib2 import URLError
+from corehq.util.timezones.utils import get_timezone_for_user
 from dimagi.utils.decorators.memoized import memoized
 from unidecode import unidecode
 from dateutil.parser import parse
@@ -877,7 +878,7 @@ def view_scheduled_report(request, domain, scheduled_report_id):
 @login_and_domain_required
 @require_GET
 def case_details(request, domain, case_id):
-    timezone = util.get_timezone(request.couch_user, domain)
+    timezone = get_timezone_for_user(request.couch_user, domain)
 
     try:
         case = get_document_or_404(CommCareCase, domain, case_id)
@@ -1129,7 +1130,7 @@ def download_cases(request, domain):
 
 
 def _get_form_context(request, domain, instance_id):
-    timezone = util.get_timezone(request.couch_user, domain)
+    timezone = get_timezone_for_user(request.couch_user, domain)
     instance = _get_form_or_404(instance_id)
     try:
         assert domain == instance.domain
