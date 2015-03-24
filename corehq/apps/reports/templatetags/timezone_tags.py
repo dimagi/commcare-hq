@@ -1,7 +1,7 @@
 import dateutil
 from django import template
 import pytz
-from dimagi.utils.timezones import utils as tz_utils
+from corehq.util.timezones import utils as tz_utils
 import datetime
 
 register = template.Library()

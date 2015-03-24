@@ -28,7 +28,7 @@ from django.utils.html import escape, conditional_escape
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import pretty_doc_info
 
-from dimagi.utils.timezones.utils import adjust_datetime_to_timezone
+from corehq.util.timezones.utils import adjust_datetime_to_timezone
 
 register = template.Library()
 

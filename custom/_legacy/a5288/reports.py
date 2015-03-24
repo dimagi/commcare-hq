@@ -6,7 +6,7 @@ from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.sms.models import ExpectedCallbackEventLog, CALLBACK_PENDING, CALLBACK_RECEIVED, CALLBACK_MISSED
 from datetime import datetime, timedelta
-from dimagi.utils.timezones import utils as tz_utils
+from corehq.util.timezones import utils as tz_utils
 from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.reports.util import format_datatables_data
 import pytz

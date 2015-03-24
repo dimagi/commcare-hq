@@ -69,7 +69,7 @@ from .models import (
     DAY_ANY,
 )
 from dimagi.utils.parsing import string_to_datetime
-from dimagi.utils.timezones.forms import TimeZoneChoiceField
+from corehq.util.timezones.forms import TimeZoneChoiceField
 from dateutil.parser import parse
 from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound
 from openpyxl.shared.exc import InvalidFileException
@@ -77,7 +77,7 @@ from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.app_manager.models import Form as CCHQForm
 from dimagi.utils.django.fields import TrimmedCharField
 from corehq.apps.reports import util as report_utils
-from dimagi.utils.timezones import utils as tz_utils
+from corehq.util.timezones import utils as tz_utils
 from langcodes import get_name as get_language_name
 
 ONE_MINUTE_OFFSET = time(0, 1)

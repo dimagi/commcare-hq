@@ -8,7 +8,7 @@ from dimagi.utils.couch.database import get_db
 from hsph.fields import (FacilityStatusField, IHForCHFField, SiteField,
     NameOfDCTLField)
 from hsph.reports import HSPHSiteDataMixin
-from dimagi.utils.timezones import utils as tz_utils
+from corehq.util.timezones import utils as tz_utils
 
 class ProjectManagementReport(CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
     """
@@ -201,6 +201,6 @@ class ImplementationStatusDashboardReport(GenericTabularReport, ProjectManagemen
                             user.username_in_report,
                             site,
                             FacilityStatusField.options[fac_stat+1]['text'],
-                            tz_utils.string_to_prertty_time(item.get('lastUpdated', "--"), to_tz=self.timezone)
+                            tz_utils.string_to_pretty_time(item.get('lastUpdated', "--"), to_tz=self.timezone)
                         ])
         return rows
