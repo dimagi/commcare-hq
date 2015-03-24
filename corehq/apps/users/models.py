@@ -1303,6 +1303,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     def is_current_web_user(self, request):
         return self.user_id == request.couch_user.user_id
 
+    # gets hit for can_view_reports, etc.
     def __getattr__(self, item):
         if item.startswith('can_'):
             perm = item[len('can_'):]
