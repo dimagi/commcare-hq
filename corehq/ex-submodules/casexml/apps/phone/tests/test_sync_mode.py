@@ -489,6 +489,38 @@ class SyncTokenCachingTest(SyncBaseTest):
         self.assertFalse(case_id in next_payload)
 
 
+class FileRestoreSyncTokenCachingTest(SyncTokenCachingTest):
+
+    def setUp(self):
+        update_toggle_cache(FILE_RESTORE.slug, USERNAME, True)
+        super(FileRestoreSyncTokenCachingTest, self).setUp()
+
+    def tearDown(self):
+        clear_toggle_cache(FILE_RESTORE.slug, USERNAME)
+        super(FileRestoreSyncTokenCachingTest, self).tearDown()
+
+    def testCacheInvalidationAfterFileDelete(self):
+        # first request should populate the cache
+        original_file = RestoreConfig(
+            self.user, version=V2,
+            restore_id=self.sync_log._id,
+        ).get_payload()
+        self.sync_log = SyncLog.get(self.sync_log._id)
+        self.assertTrue(self.sync_log.has_cached_payload(V2))
+
+        # Delete cached file
+        os.remove(original_file)
+
+        # resyncing should recreate the cache
+        next_file = RestoreConfig(
+            self.user, version=V2,
+            restore_id=self.sync_log._id,
+        ).get_payload()
+        self.sync_log = SyncLog.get(self.sync_log._id)
+        self.assertTrue(self.sync_log.has_cached_payload(V2))
+        self.assertNotEqual(original_file, next_file)
+
+
 class MultiUserSyncTest(SyncBaseTest):
     """
     Tests the interaction of two users in sync mode doing various things
