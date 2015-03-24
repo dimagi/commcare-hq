@@ -51,8 +51,6 @@ branches:
   - locations-as-groups # tw 1/20
   - fixtures-spike  # cz 1/29
   - static-updates # Biyeun 2/9
-  - project-settings-update # sravan 1/30
-  - upgrade-celery # SK 2/27
   - loc-type-stock-rates  # Ethan 3/6
   - refactor-payment-modal # Nick P 3/19
  # - pricingSMS # sravan 3/23
