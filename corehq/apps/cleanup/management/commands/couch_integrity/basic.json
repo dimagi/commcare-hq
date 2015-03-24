@@ -1,0 +1,19 @@
+{
+    "databases": [
+        {
+            "uri": "",
+            "headers": {
+                "X-cloudant-user": ""
+            }
+        },
+        {
+             "uri": ""
+        }
+
+    ],
+    "views": [
+        "_design/domain/_view/domains",
+        "_design/reports_forms/_view/all_forms",
+        "_all_docs"
+    ]
+}

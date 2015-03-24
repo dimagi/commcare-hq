@@ -1,5 +1,5 @@
 import logging
-import simplejson
+import json
 
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
@@ -105,8 +105,8 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
                 self.request.path,
                 self.request.GET.urlencode(),
                 self.request.couch_user.username,
-                simplejson.dumps(query),
-                simplejson.dumps(query_results)
+                json.dumps(query),
+                json.dumps(query_results)
             ))
             raise RequestFailed
         return query_results

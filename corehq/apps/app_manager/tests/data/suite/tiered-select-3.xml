@@ -165,6 +165,9 @@
           <locale id="forms.m0f0"></locale>
         </text>
       </command>
+      <session>
+        <datum id="case_id_new_parent_0" function="uuid()"/>
+      </session>
     </entry>
     <entry>
       <command id="m0-case-list">

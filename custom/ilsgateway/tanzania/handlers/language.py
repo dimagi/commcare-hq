@@ -7,6 +7,7 @@ class LanguageHandler(KeywordHandler):
 
     def help(self):
         self.respond(LANGUAGE_HELP)
+        return True
 
     def handle(self):
         if not self.user:
@@ -17,5 +18,6 @@ class LanguageHandler(KeywordHandler):
                 self.user.language = code
                 self.user.save()
                 self.respond(LANGUAGE_CONFIRM, language=name)
-                return
+                return True
         self.respond(LANGUAGE_UNKNOWN, language=language)
+        return True

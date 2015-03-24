@@ -17,15 +17,12 @@ class ProductByProgramFilter(BaseDrilldownOptionFilter):
     def drilldown_map(self):
         options = [{"val": ALL_OPTION, "text": "All", "next": []}]
         for program in Program.by_domain(self.domain):
-            products = [{"val": ALL_OPTION, "text": "All", "next": []}]
-            for product in Product.by_program_id(self.domain, program._id):
-                products.append({"val": product.get_id, "text": product.name + ' (%s)' % product.code})
-            options.append({"val": program.get_id, "text": program.name, "next": products})
+            options.append({"val": program.get_id, "text": program.name})
         return options
 
     @classmethod
     def get_labels(cls):
-        return [('Program', 'program'), ('Product', 'product')]
+        return [('Program', 'program')]
 
     @property
     def filter_context(self):

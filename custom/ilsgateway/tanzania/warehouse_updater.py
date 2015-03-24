@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 import logging
 import itertools
+from django.db.models import Q
 from corehq.apps.products.models import Product
 from corehq.apps.locations.models import Location, SQLLocation
 from dimagi.utils.dates import get_business_day_of_month, add_months, months_between
@@ -30,6 +31,7 @@ DELIVERY_NOT_RECEIVED = 'delivery_' + SupplyPointStatusValues.NOT_RECEIVED
 DELIVERY_NOT_RESPONDING = 'delivery_not_responding'
 SOH_NOT_RESPONDING = 'soh_not_responding'
 
+TEST_REGION_ID = 21
 
 def _is_valid_status(facility, date, status_type):
     if status_type not in NEEDED_STATUS_TYPES:
@@ -266,12 +268,15 @@ def default_start_date():
 
 
 def _get_test_locations(domain):
-    from custom.ilsgateway.tasks import ILS_FACILITIES
+    """
+        returns test region and all its children
+    """
+    test_region = SQLLocation.objects.get(domain=domain, external_id=TEST_REGION_ID)
     sql_locations = SQLLocation.objects.filter(
-        domain=domain,
-        external_id__in=ILS_FACILITIES
+        Q(domain=domain) & (Q(parent=test_region) | Q(parent__parent=test_region))
     ).order_by('id').only('location_id')
-    return [Location.get(sql_location.location_id) for sql_location in sql_locations]
+    return [sql_location.couch_location for sql_location in sql_locations] + \
+           [test_region.couch_location]
 
 
 def populate_report_data(start_date, end_date, domain, runner):
@@ -294,7 +299,7 @@ def populate_report_data(start_date, end_date, domain, runner):
         non_facilities += list(Location.filter_by_type(domain, 'MOHSW'))
 
     if runner.location:
-        if runner.location.location_type != 'FACILITY':
+        if runner.location.location_type.name.upper() != 'FACILITY':
             facilities = []
             non_facilities = itertools.dropwhile(
                 lambda location: location._id != runner.location.location_id,

@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 import time
 from dateutil.parser import parser
 from django.core.cache import cache
-import simplejson
+import json
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.api.es import ReportXFormES, get_report_script_field
 from pact.enums import PACT_DOMAIN
@@ -61,10 +61,10 @@ class CHWPatientSchedule(object):
             for item in chw_schedules:
                 single_sched = item['value']
                 to_cache.append(single_sched)
-            cache.set("%s_schedule" % (chw_username), simplejson.dumps(to_cache), 3600)
+            cache.set("%s_schedule" % (chw_username), json.dumps(to_cache), 3600)
             cached_arr = to_cache
         else:
-            cached_arr = simplejson.loads(cached_schedules)
+            cached_arr = json.loads(cached_schedules)
 
         for single_sched in cached_arr:
             day_of_week = int(single_sched['day_of_week'])
@@ -124,7 +124,7 @@ def dots_submissions_by_case(case_id, query_date, username=None):
     query['size'] = 1
     query['from'] = 0
     res = xform_es.run_query(query)
-    print simplejson.dumps(res, indent=2)
+    print json.dumps(res, indent=2)
     return res
 
 
@@ -175,7 +175,7 @@ def get_schedule_tally(username, total_interval, override_date=None):
                 #calculate if pillbox checked
                 pillbox_check_str = submissions[0]['fields']['pillbox_check']
                 if len(pillbox_check_str) > 0:
-                    pillbox_check_data = simplejson.loads(pillbox_check_str)
+                    pillbox_check_data = json.loads(pillbox_check_str)
                     anchor_date = dp.parse(pillbox_check_data.get('anchor'))
                 else:
                     pillbox_check_data = {}

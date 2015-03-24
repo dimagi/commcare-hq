@@ -34,12 +34,16 @@
     {% include 'reports/standard/partials/description.html' %}
 {% else %}
     <style>
-        .firstreport {
-            width: 70%;
+        .firstreport, .inventory_chart {
+            width: 68%;
             float: left;
         }
+        .fpr_tables {
+            width: 100%;
+            display: inline-block;
+        }
 
-        .other_reports {
+        .other_reports, .selection_pane {
             width: 30%;
             margin-bottom: 20px;
             float: right;
@@ -50,9 +54,23 @@
         }
 
         {% if report.slug == "reporting_page" %}
-            .report {
-                float: left;
-                width: 50%;
+            .report:nth-of-type(2), .report:nth-of-type(3), .report:last-of-type, .report:nth-last-of-type(2) {
+                display: inline-table !important;
+                width: 48% !important;
+            }
+            .row, table {
+                width: 100%;
+            }
+            .report:first-of-type tbody {
+                max-height: 300px;
+                overflow-y: auto;
+                overflow-x: hidden;
+                display: inline-block;
+                width: 100%;
+            }
+            .report:first-of-type tr {
+                width: 100%;
+                display: inline-table;
             }
         {% elif  report.slug == "stock_status"%}
             .report:first-of-type {
@@ -76,6 +94,16 @@
             font-size: 10px;
         }
 
+        #report_table_product_selection_pane tr.program {
+            width: 100%;
+            display: inline-block;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        #report_table_product_selection_pane tr.program td {
+            border: 0;
+        }
+
         #report_table_product_selection_pane tr:last-child {
             width: 100%;
         }
@@ -87,37 +115,46 @@
     {% for thisreport in reports %}
         {% if split %}
             {% if forloop.counter == 1 %}
-                <div class="firstreport">
+                <div class="fpr_tables">
+                    <div class="firstreport">
+                        <h4 class="media-heading">{{ thisreport.report_table.title }}<br/><small>{{ subtitle1 }}</small><br/><small>{{ subtitle2 }}</small></h4>
+                        {% include 'ewsghana/partials/report_table.html' with report_table=thisreport.report_table charts=thisreport.charts chart_span=thisreport.chart_span show_table=thisreport.show_table%}
+                        <br/>
+                    </div>
+                    <div class="other_reports">
+            {% elif  forloop.revcounter == 2 %}
+                    </div>
+                </div>
+                <div class="inventory_chart">
                     <h4 class="media-heading">{{ thisreport.report_table.title }}<br/><small>{{ subtitle1 }}</small><br/><small>{{ subtitle2 }}</small></h4>
+                    {% if thisreport.report_table.slug == 'inventory_management' %}
+                        <div class="row" style="margin: 0 !important">
+                            <form>
+                                <div style="display: inline-block">
+                                    <input type="text" id="inventory_filter" class="date-range-picker" value="{{ datespan.startdate|date:'Y-m-d' }} to {{ datespan.enddate|date:'Y-m-d' }}" />
+                                    <button style="margin-bottom: 9px;" id="inventory_filter_btn" class="filters btn">Apply</button>
+                                </div>
+                            </form>
+                        </div>
+                    {% endif %}
                     {% include 'ewsghana/partials/report_table.html' with report_table=thisreport.report_table charts=thisreport.charts chart_span=thisreport.chart_span show_table=thisreport.show_table%}
                     <br/>
                 </div>
-            <div class="other_reports">
-            {% elif  forloop.last %}
+            {% elif  forloop.last%}
+                <div class="selection_pane">
+                    <h4 class="media-heading">{{ thisreport.report_table.title }}<br/><small>{{ subtitle1 }}</small><br/><small>{{ subtitle2 }}</small></h4>
+                    {% include 'ewsghana/partials/report_table.html' with report_table=thisreport.report_table charts=thisreport.charts chart_span=thisreport.chart_span show_table=thisreport.show_table%}
                 </div>
-                <h4 class="media-heading">{{ thisreport.report_table.title }}<br/><small>{{ subtitle1 }}</small><br/><small>{{ subtitle2 }}</small></h4>
-                {% if thisreport.report_table.slug == 'inventory_management' %}
-                    <div class="row" style="margin: 0 !important">
-                        <form>
-                            <div style="display: inline-block">
-                                <input type="text" id="inventory_filter" class="date-range-picker" value="{{ datespan.startdate|date:'Y-m-d' }} to {{ datespan.enddate|date:'Y-m-d' }}" />
-                                <button style="margin-bottom: 9px;" id="inventory_filter_btn" class="filters btn">Apply</button>
-                            </div>
-                        </form>
-                    </div>
-                {% endif %}
-                {% include 'ewsghana/partials/report_table.html' with report_table=thisreport.report_table charts=thisreport.charts chart_span=thisreport.chart_span show_table=thisreport.show_table%}
-                <br/>
             {% else %}
                 <h4 class="media-heading">{{ thisreport.report_table.title }}<br/><small>{{ subtitle1 }}</small><br/><small>{{ subtitle2 }}</small></h4>
                 {% include 'ewsghana/partials/report_table.html' with report_table=thisreport.report_table charts=thisreport.charts chart_span=thisreport.chart_span show_table=thisreport.show_table%}
                 <br/>
             {% endif %}
         {% else %}
-            <div class="report">
+            <span class="report">
                 <h4 class="media-heading">{{ thisreport.report_table.title }}<br/><small>{{ subtitle1 }}</small><br/><small>{{ subtitle2 }}</small></h4>
                 {% include 'ewsghana/partials/report_table.html' with report_table=thisreport.report_table charts=thisreport.charts chart_span=thisreport.chart_span show_table=thisreport.show_table%}
-            </div>
+            </span>
         {% endif %}
     {% endfor %}
 
@@ -136,58 +173,40 @@
     {% endfor %}
 
     <script>
-        function updateExportButton() {
-            var button = $("#export-report-excel");
-            if ({{ split|yesno:"true,false" }}) {
-                button.text("Export Chart to Excel");
-                button.css('display', 'inline-block');
-            } else if ({{ exportable|yesno:"true,false" }}){
-                button.text("Export Chart(s) to Excel");
-                button.css('display', 'inline-block');
-            } else {
-                button.css('display', 'None');
-            }
-        }
-        $("#apply-filters").on('click', function(){
-            updateExportButton();
-        });
-        updateExportButton();
-        $(".dataTables_filter").css('display', 'none');
-    </script>
+        var report_filters = {{ r_filters | JSON }};
+        var fpr_filters = {{ fpr_filters | JSON }};
 
-    <script>
-        $('#selection_pane_apply').on('click', function(e) {
-            e.preventDefault();
-            var productCodes = [];
-            $("#report_table_product_selection_pane input:not(:checked)").each(function() {
-                productCodes.push($(this).attr('value'));
+        function toggleFilters(array, is_visible) {
+            $.each( array, function( index, value ) {
+                if(is_visible) $('#fieldset_' + value).show();
+                else $('#fieldset_' + value).hide();
             });
-            var idsToHide = [];
-            $(".dataTables_scrollHead thead th").each(function(id){
-                if (jQuery.inArray($(this).text().trim(), productCodes) !== -1) {
-                    $(this).css('display', 'none');
-                    idsToHide.push(id);
+        }
+
+        function show_hide_filters() {
+            setTimeout(function() {
+                var selected = $('#group_location_async select:last-child option:selected').text();
+                if (selected === 'All') {
+                    toggleFilters(fpr_filters, false);
+                    toggleFilters(report_filters, true);
                 } else {
-                    $(this).css('display', 'table-cell');
+                    toggleFilters(report_filters, false);
+                    toggleFilters(fpr_filters, true);
                 }
-            });
-            $(".dataTables_scrollBody th").each(function(id) {
-                if (jQuery.inArray(id, idsToHide) !== -1) {
-                    $(this).css('display', 'none');
-                } else {
-                    $(this).css('display', 'table-cell');
-                }
-            });
-            $(".dataTables_scrollBody tr").each(function() {
-                $(this).children().each(function(id) {
-                    if (jQuery.inArray(id, idsToHide) !== -1) {
-                        $(this).css('display', 'none');
-                    } else {
-                        $(this).css('display', 'table-cell');
-                    }
-                });
-            });
+            }, 100);
+        }
+
+        $('body').on('change', function(){
+            show_hide_filters();
         });
+
+        $('#apply-filters').on('click', function() {
+           multibar_chart_data = undefined;
+           line_chart_data = undefined;
+        });
+
+        show_hide_filters();
+        $('tr:has(div.program)').addClass('program').attr('align', 'center');
     </script>
     <script>
         var report_slug = "{{ report.slug | safe }}";

@@ -15,7 +15,7 @@ from corehq.apps.sms.models import (
     CallLog,
     ExpectedCallbackEventLog,
 )
-from corehq.apps.smsforms.models import XFormsSession
+from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.reports.standard.sms import BaseCommConnectLogReport
 from corehq.apps.users.models import CouchUser
@@ -126,20 +126,13 @@ class CallLogReport(BaseCommConnectLogReport):
             
             result.append(row)
 
-        # Look up the XFormsSession documents 500 at a time.
-        # Had to do this because looking up one document at a time slows things
-        # down a lot.
         all_session_ids = xforms_sessions.keys()
-        limit = 500
-        range_max = int(ceil(len(all_session_ids) * 1.0 / limit))
-        for i in range(range_max):
-            lower_bound = i * limit
-            upper_bound = (i + 1) * limit
-            sessions = XFormsSession.view("smsforms/sessions_by_touchforms_id",
-                keys=all_session_ids[lower_bound:upper_bound],
-                include_docs=True).all()
-            for session in sessions:
-                xforms_sessions[session.session_id] = session.submission_id
+        session_submission_map = dict(
+            SQLXFormsSession.objects.filter(session_id__in=all_session_ids).values_list(
+                'session_id', 'submission_id'
+            )
+        )
+        xforms_sessions.update(session_submission_map)
 
         # Add into the final result the link to the submission based on the
         # outcome of the above lookups.

@@ -20,6 +20,7 @@ RISK_FACTOR_CONFIG['Notes:'] = ['risk-factor_at_notes', 'risk-factor_bp_notes', 
                                 'risk-factor_psycho-social_notes', 'risk-factor_diabetes_notes',
                                 'risk-factor_smoking_notes']
 
+
 class PatientInteractionsReport(PatientDetailsReport):
     slug = "patient_interactions"
     name = 'Patient Interactions'
@@ -35,10 +36,8 @@ class PatientInteractionsReport(PatientDetailsReport):
                                               CM_APP_HUD_MODULE, HUD2, ret['patient']['_id'])
         ret['cm_phone_url'] = self.get_form_url(self.cm_app_dict, self.latest_cm_build,
                                                 CM_APP_CM_MODULE, CM6_PHONE, ret['patient']['_id'])
-        ret['chw_phone_url'] = self.get_form_url(self.cm_app_dict, self.latest_cm_build,
-                                                 CM_APP_CHW_MODULE, CHW3, ret['patient']['_id'])
         ret['cm_visits_url'] = self.get_form_url(self.cm_app_dict, self.latest_cm_build,
-                                                 CM_APP_APPOINTMENTS_MODULE, AP2, ret['patient']['_id'])
+                                                 CM_APP_CM_MODULE, CM4, ret['patient']['_id'])
 
         ret['anti_thrombotic_url'] = self.get_form_url(self.cm_app_dict, self.latest_cm_build,
                                                        CM_APP_MEDICATIONS_MODULE, PD2AM, ret['patient']['_id'])
@@ -110,7 +109,7 @@ class PatientInteractionsReport(PatientDetailsReport):
 
         ret['view_appointments_url'] = self.get_form_url(self.cm_app_dict, self.latest_cm_build,
                                                          CM_APP_APPOINTMENTS_MODULE, AP2,
-                                                         parent_id=ret['patient'].get_case_property('parent'))
+                                                         parent_id=ret['patient']['_id'])
         ret['add_appointments_url'] = self.get_form_url(self.cm_app_dict, self.latest_cm_build,
                                                         CM_APP_PD_MODULE, AP1,
                                                         case_id=ret['patient']['_id'])

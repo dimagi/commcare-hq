@@ -11,7 +11,7 @@ from django.core.urlresolvers import reverse
 
 from tastypie import fields
 from tastypie.bundle import Bundle
-from corehq.apps.api.resources.v0_1 import RequirePermissionAuthentication, SuperuserAuthentication
+from corehq.apps.api.resources.v0_1 import RequirePermissionAuthentication, AdminAuthentication
 from corehq.apps.es import UserES
 
 from corehq.apps.groups.models import Group
@@ -224,7 +224,7 @@ class AdminWebUserResource(v0_1.UserResource):
         return [WebUser.wrap(u) for u in UserES().web_users().run().hits]
 
     class Meta(WebUserResource.Meta):
-        authentication = SuperuserAuthentication()
+        authentication = AdminAuthentication()
         detail_allowed_methods = ['get']
         list_allowed_methods = ['get']
 

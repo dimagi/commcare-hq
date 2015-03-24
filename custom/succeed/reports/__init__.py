@@ -155,7 +155,7 @@ VISIT_SCHEDULE = [
     },
     {
         'visit_name': _('CM Clinic Visit 2'),
-        'xmlns': CM5,
+        'xmlns': CM4,
         'days': 130,
         'module_idx': CM_APP_CM_MODULE,
         'show_button': True,
@@ -187,7 +187,7 @@ VISIT_SCHEDULE = [
     },
     {
         'visit_name': _('CM Clinic Visit 3'),
-        'xmlns': CM5,
+        'xmlns': CM4,
         'days': 250,
         'module_idx': CM_APP_CM_MODULE,
         'show_button': 'CHW2-2_scheduled_date',

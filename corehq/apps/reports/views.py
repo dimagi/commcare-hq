@@ -82,7 +82,7 @@ from filters.users import UserTypeFilter
 from corehq.apps.domain.decorators import (login_or_digest)
 from corehq.apps.export.custom_export_helpers import CustomExportHelper
 from corehq.apps.groups.models import Group
-from corehq.apps.hqcase.export import export_cases_and_referrals
+from corehq.apps.hqcase.export import export_cases
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher
 from corehq.apps.reports.models import (
     ReportConfig,
@@ -683,11 +683,17 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
 
     user_id = request.couch_user._id
 
-    configs = ReportConfig.by_domain_and_owner(domain, user_id)
-    config_choices = [(c._id, c.full_name) for c in configs if c.report and c.report.emailable]
+    configs = [
+        c for c in ReportConfig.by_domain_and_owner(domain, user_id)
+        if c.report and c.report.emailable
+    ]
 
-    if not config_choices:
+    if not configs:
         return render(request, template, context)
+
+    display_privacy_disclaimer = any(c.is_configurable_report for c in configs)
+
+    config_choices = [(c._id, c.full_name) for c in configs]
 
     web_users = WebUser.view('users/web_users_by_domain', reduce=False,
                                key=domain, include_docs=True).all()
@@ -713,7 +719,11 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
     initial['recipient_emails'] = ', '.join(initial['recipient_emails'])
 
     kwargs = {'initial': initial}
-    args = (request.POST,) if request.method == "POST" else ()
+    args = (
+        (display_privacy_disclaimer, request.POST)
+        if request.method == "POST"
+        else (display_privacy_disclaimer,)
+    )
     form = ScheduledReportForm(*args, **kwargs)
 
     form.fields['config_ids'].choices = config_choices
@@ -1063,7 +1073,7 @@ def generate_case_export_payload(domain, include_closed, format, group, user_fil
     fd, path = tempfile.mkstemp()
     with os.fdopen(fd, 'wb') as file:
         workbook = WorkBook(file, format)
-        export_cases_and_referrals(
+        export_cases(
             domain,
             stream_cases(case_ids),
             workbook,
@@ -1203,6 +1213,7 @@ def download_attachment(request, domain, instance_id):
     assert(domain == instance.domain)
     return couchforms_views.download_attachment(request, instance_id, attachment)
 
+
 @require_form_view_permission
 @require_permission(Permissions.edit_data)
 @require_POST
@@ -1248,6 +1259,7 @@ def archive_form(request, domain, instance_id):
 
     return HttpResponseRedirect(redirect)
 
+
 @require_form_view_permission
 @require_permission(Permissions.edit_data)
 def unarchive_form(request, domain, instance_id):
@@ -1263,6 +1275,17 @@ def unarchive_form(request, domain, instance_id):
     if not redirect:
         redirect = reverse('render_form_data', args=[domain, instance_id])
     return HttpResponseRedirect(redirect)
+
+
+@require_form_view_permission
+@require_permission(Permissions.edit_data)
+@require_POST
+def resave_form(request, domain, instance_id):
+    instance = _get_form_or_404(instance_id)
+    assert instance.domain == domain
+    XFormInstance.get_db().save_doc(instance.to_json())
+    messages.success(request, _("Form was successfully resaved. It should reappear in reports shortly."))
+    return HttpResponseRedirect(reverse('render_form_data', args=[domain, instance_id]))
 
 
 # Weekly submissions by xmlns
