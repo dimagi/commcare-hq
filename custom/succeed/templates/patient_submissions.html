@@ -5,7 +5,7 @@
 
 {% block reportcontent %}
     {% include "base_patient.html" %}
-    <br>
+    <br><br>
     <table id="report_table_{{ report.slug }}" class="table table-striped datatable" {% if pagination.filter %} data-filter="true"{% endif %}>
         <thead>
             <tr>
