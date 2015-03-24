@@ -66,6 +66,14 @@
                 </div>
             </div>
             <div class="control-group" >
+                <label class="control-label" for="all_stock_data">
+                    {% trans "All stock data migration" %}
+                </label>
+                <div class="controls">
+                  <input id="all_stock_data" type="checkbox" data-bind="checked: all_stock_data">
+                </div>
+            </div>
+            <div class="control-group" >
                 <label class="control-label" for="source_url">
                     {% trans "API URL" %}
                 </label>

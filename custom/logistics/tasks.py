@@ -9,7 +9,6 @@ from corehq.apps.commtrack.models import SupplyPointCase, update_stock_state_for
 from corehq.apps.locations.models import SQLLocation, Location
 from corehq.apps.products.models import SQLProduct
 from couchforms.models import XFormInstance
-from custom.ilsgateway import TEST
 from custom.logistics.commtrack import save_stock_data_checkpoint, synchronization
 from custom.logistics.models import StockDataCheckpoint
 from celery.task.base import task
@@ -19,7 +18,7 @@ from dimagi.utils.dates import force_to_datetime
 
 
 @task
-def stock_data_task(domain, endpoint, apis, test_facilities=None):
+def stock_data_task(domain, endpoint, apis, config, test_facilities=None):
     # checkpoint logic
     start_date = datetime.today()
     default_api = apis[0][0]
@@ -49,7 +48,7 @@ def stock_data_task(domain, endpoint, apis, test_facilities=None):
         offset = 0
         location = None
 
-    if TEST:
+    if not config.all_stock_data:
         facilities = test_facilities
     else:
         supply_points_ids = SQLLocation.objects.filter(
@@ -132,7 +131,7 @@ def sync_stock_transactions(domain, endpoint, facilities, checkpoint, date, limi
 
 
 def sync_stock_transactions_for_facility(domain, endpoint, facility, xform, checkpoint,
-                           date, limit=1000, offset=0):
+                                         date, limit=1000, offset=0):
     """
     Syncs stock data from StockTransaction objects in ILSGateway to StockTransaction objects in HQ
     """
@@ -141,71 +140,73 @@ def sync_stock_transactions_for_facility(domain, endpoint, facility, xform, chec
     section_id = 'stock'
     supply_point = facility
     case = get_supply_point_by_external_id(domain, supply_point)
-    if case:
-        products_saved = set()
-        while has_next:
-            meta, stocktransactions = endpoint.get_stocktransactions(next_url_params=next_url,
-                                                                     limit=limit,
-                                                                     offset=offset,
-                                                                     filters=(dict(supply_point=supply_point,
-                                                                                   date__gte=date,
-                                                                                   order_by='date')))
+    if not case:
+        return
 
-            # set the checkpoint right before the data we are about to process
-            save_stock_data_checkpoint(checkpoint,
-                                       'stock_transaction',
-                                       meta.get('limit') or limit,
-                                       meta.get('offset') or offset,
-                                       date, facility, True)
-            transactions_to_add = []
-            with transaction.commit_on_success():
-                for stocktransaction in stocktransactions:
-                    params = dict(
-                        form_id=xform._id,
-                        date=force_to_datetime(stocktransaction.date),
-                        type='balance',
-                        domain=domain,
-                    )
-                    try:
-                        report, _ = StockReport.objects.get_or_create(**params)
-                    except StockReport.MultipleObjectsReturned:
-                        # legacy
-                        report = StockReport.objects.filter(**params)[0]
+    save_stock_data_checkpoint(checkpoint, 'stock_transaction', limit, offset, date, facility, True)
 
-                    sql_product = SQLProduct.objects.get(code=stocktransaction.product, domain=domain)
-                    if stocktransaction.quantity != 0:
-                        transactions_to_add.append(StockTransaction(
-                            case_id=case._id,
-                            product_id=sql_product.product_id,
-                            sql_product=sql_product,
-                            section_id=section_id,
-                            type='receipts' if stocktransaction.quantity > 0 else 'consumption',
-                            stock_on_hand=Decimal(stocktransaction.ending_balance),
-                            quantity=Decimal(stocktransaction.quantity),
-                            report=report
-                        ))
+    products_saved = set()
+    while has_next:
+        meta, stocktransactions = endpoint.get_stocktransactions(next_url_params=next_url,
+                                                                 limit=limit,
+                                                                 offset=offset,
+                                                                 filters=(dict(supply_point=supply_point,
+                                                                               date__gte=date,
+                                                                               order_by='date')))
+
+        # set the checkpoint right before the data we are about to process
+        meta_limit = meta.get('limit') or limit
+        meta_offset = meta.get('offset') or offset
+        save_stock_data_checkpoint(checkpoint, 'stock_transaction', meta_limit, meta_offset, date, facility, True)
+        transactions_to_add = []
+        with transaction.commit_on_success():
+            for stocktransaction in stocktransactions:
+                params = dict(
+                    form_id=xform._id,
+                    date=force_to_datetime(stocktransaction.date),
+                    type='balance',
+                    domain=domain,
+                )
+                try:
+                    report, _ = StockReport.objects.get_or_create(**params)
+                except StockReport.MultipleObjectsReturned:
+                    # legacy
+                    report = StockReport.objects.filter(**params)[0]
+
+                sql_product = SQLProduct.objects.get(code=stocktransaction.product, domain=domain)
+                if stocktransaction.quantity != 0:
                     transactions_to_add.append(StockTransaction(
                         case_id=case._id,
                         product_id=sql_product.product_id,
                         sql_product=sql_product,
                         section_id=section_id,
-                        type='stockonhand',
+                        type='receipts' if stocktransaction.quantity > 0 else 'consumption',
                         stock_on_hand=Decimal(stocktransaction.ending_balance),
+                        quantity=Decimal(stocktransaction.quantity),
                         report=report
                     ))
-                    products_saved.add(sql_product.product_id)
+                transactions_to_add.append(StockTransaction(
+                    case_id=case._id,
+                    product_id=sql_product.product_id,
+                    sql_product=sql_product,
+                    section_id=section_id,
+                    type='stockonhand',
+                    stock_on_hand=Decimal(stocktransaction.ending_balance),
+                    report=report
+                ))
+                products_saved.add(sql_product.product_id)
 
-            if transactions_to_add:
-                # Doesn't send signal
-                StockTransaction.objects.bulk_create(transactions_to_add)
+        if transactions_to_add:
+            # Doesn't send signal
+            StockTransaction.objects.bulk_create(transactions_to_add)
 
-            if not meta.get('next', False):
-                has_next = False
-            else:
-                next_url = meta['next'].split('?')[1]
+        if not meta.get('next', False):
+            has_next = False
+        else:
+            next_url = meta['next'].split('?')[1]
 
-        for product in products_saved:
-            # if we saved anything rebuild the stock state object by firing the signal
-            # on the last transaction for each product
-            last_st = StockTransaction.latest(case._id, section_id, product)
-            update_stock_state_for_transaction(last_st)
+    for product in products_saved:
+        # if we saved anything rebuild the stock state object by firing the signal
+        # on the last transaction for each product
+        last_st = StockTransaction.latest(case._id, section_id, product)
+        update_stock_state_for_transaction(last_st)

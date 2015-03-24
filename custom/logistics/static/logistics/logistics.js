@@ -38,6 +38,7 @@ function SourceConfigModel(data) {
     this.username = ko.observable(data.username);
     this.password = ko.observable(data.password);
     this.steady_sync = ko.observable(data.steady_sync);
+    this.all_stock_data = ko.observable(data.all_stock_data);
 
     this.to_json = function() {
         return {
@@ -45,7 +46,8 @@ function SourceConfigModel(data) {
             url: this.url(),
             username: this.username(),
             password: this.password(),
-            steady_sync: this.steady_sync()
+            steady_sync: this.steady_sync(),
+            all_stock_data: this.all_stock_data()
         };
     };
 }
