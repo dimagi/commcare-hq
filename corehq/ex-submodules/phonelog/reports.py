@@ -329,7 +329,7 @@ class DeviceLogDetailsReport(PhonelogReport):
         self.total_records = logs.count()
         for log in logs.order_by(self.ordering)[paged]:
             date = str(log.date)
-            date_fmt = tz_utils.string_to_prertty_time(
+            date_fmt = tz_utils.string_to_pretty_time(
                 date, self.timezone, fmt="%b %d, %Y %H:%M:%S")
 
             username = log.username

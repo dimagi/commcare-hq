@@ -5,12 +5,6 @@ import pytz
 import datetime
 import dateutil
 
-def localtime_for_timezone(value, timezone):
-    """
-    Given a ``datetime.datetime`` object in UTC and a timezone represented as
-    a string, return the localized time for the timezone.
-    """
-    return adjust_datetime_to_timezone(value, settings.TIME_ZONE, timezone)
 
 def adjust_datetime_to_timezone(value, from_tz, to_tz=None):
     """
@@ -25,11 +19,13 @@ def adjust_datetime_to_timezone(value, from_tz, to_tz=None):
         value = from_tz.localize(value)
     return value.astimezone(pytz.timezone(smart_str(to_tz)))
 
+
 def coerce_timezone_value(value):
     try:
         return pytz.timezone(str(value))
     except pytz.UnknownTimeZoneError:
         raise ValidationError("Unknown timezone")
+
 
 def validate_timezone_max_length(max_length, zones):
     def reducer(x, y):
@@ -37,13 +33,15 @@ def validate_timezone_max_length(max_length, zones):
     if not reduce(reducer, zones, True):
         raise Exception("corehq.apps.timezones.fields.TimeZoneField MAX_TIMEZONE_LENGTH is too small")
 
-def string_to_prertty_time(date_string, to_tz, from_tz=pytz.utc, fmt="%b %d, %Y %H:%M"):
+
+def string_to_pretty_time(date_string, to_tz, from_tz=pytz.utc, fmt="%b %d, %Y %H:%M"):
     try:
         date = datetime.datetime.replace(dateutil.parser.parse(date_string), tzinfo=from_tz)
         date = adjust_datetime_to_timezone(date, from_tz.zone, to_tz.zone)
         return date.strftime(fmt)
     except Exception:
         return date_string
+
 
 def is_timezone_in_dst(tz, compare_time=None):
     now = datetime.datetime.now(tz=tz) if not compare_time else tz.localize(compare_time)
