@@ -35,7 +35,7 @@
     };
     COMMCAREHQ.app_manager.versionGT = function (commcareVersion1, commcareVersion2) {
         if (commcareVersion1 === commcareVersion2) {
-            return false
+            return false;
         } else {
             return COMMCAREHQ.app_manager.versionGE(commcareVersion1, commcareVersion2);
         }
