@@ -1342,12 +1342,11 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
             initial = {
                 'company_name': "Dimagi",
                 'first_line': "585 Massachusetts Ave",
-                'second_line': "Suite 3",
+                'second_line': "Suite 4",
                 'city': "Cambridge",
                 'state_province_region': "MA",
                 'postal_code': "02139",
                 'country': "US",
-
             }
         if self.request.method == 'POST' and self.is_form_post:
             return ConfirmNewSubscriptionForm(
