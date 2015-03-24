@@ -9,7 +9,8 @@ from custom.utils.utils import flat_field
 from fluff.filters import CustomFilter
 
 
-class _(Document): pass
+class _(Document):
+    pass
 
 
 def get_randomization_date(case):
