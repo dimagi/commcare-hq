@@ -11,8 +11,8 @@ from corehq.apps.domain.utils import new_domain_re, new_org_re, website_re
 from corehq.apps.orgs.models import Organization
 from django.utils.encoding import smart_str
 from django.utils.safestring import mark_safe
-from dimagi.utils.timezones.fields import TimeZoneField
-from dimagi.utils.timezones.forms import TimeZoneChoiceField
+from corehq.util.timezones.fields import TimeZoneField
+from corehq.util.timezones.forms import TimeZoneChoiceField
 from django.utils.translation import ugettext_lazy as _
 
 class NewWebUserRegistrationForm(forms.Form):

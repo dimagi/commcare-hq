@@ -19,7 +19,7 @@ from custom.fri.models import (
 from corehq.apps.reports import util as report_utils
 from redis_cache.cache import RedisCache
 from dimagi.utils.couch.cache import cache_core
-from dimagi.utils.timezones import utils as tz_utils
+from corehq.util.timezones import utils as tz_utils
 from corehq.apps.domain.models import Domain
 from dimagi.utils.logging import notify_exception
 

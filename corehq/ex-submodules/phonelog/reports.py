@@ -21,10 +21,10 @@ from corehq.apps.reports.datatables import (
 from corehq.apps.reports.util import _report_user_dict, SimplifiedUserInfo
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.timezones import utils as tz_utils
+from corehq.util.timezones import utils as tz_utils
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop
-from dimagi.utils.timezones.utils import adjust_datetime_to_timezone
+from corehq.util.timezones.utils import adjust_datetime_to_timezone
 from .models import DeviceReportEntry
 from .utils import device_users_by_xform
 

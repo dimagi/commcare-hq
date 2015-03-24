@@ -46,8 +46,8 @@ from corehq.apps.reminders.models import CaseReminderHandler
 from corehq.apps.users.models import WebUser, CommCareUser
 from corehq.apps.groups.models import Group
 from dimagi.utils.django.email import send_HTML_email
-from dimagi.utils.timezones.fields import TimeZoneField
-from dimagi.utils.timezones.forms import TimeZoneChoiceField
+from corehq.util.timezones.fields import TimeZoneField
+from corehq.util.timezones.forms import TimeZoneChoiceField
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop, ugettext as _
 from corehq.apps.style.forms.widgets import BootstrapCheckboxInput, BootstrapDisabledInput
