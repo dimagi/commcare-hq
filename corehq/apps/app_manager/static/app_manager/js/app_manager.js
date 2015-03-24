@@ -255,7 +255,9 @@
                 } else {
                     area.find('*').hide();
                     upgradeMessage.append(
-                        $('<span></span>').text(area.find('*').text() + ' requires CommCare ' + version)
+                        $('<i></i>').addClass('icon-arrow-left')
+                    ).append(
+                        $('<span></span>').text(' Requires CommCare ' + version)
                     ).appendTo(area);
                 }
             });
