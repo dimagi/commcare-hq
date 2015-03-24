@@ -118,7 +118,7 @@ class ReportingRatesData(EWSData):
                 location_type__name__in=location_types,
                 parent=location
             )
-        locations.exclude(is_archived=True)
+        locations = locations.exclude(is_archived=True)
         return locations.exclude(supply_point_id__isnull=True)
 
     def supply_points_list(self, location_id=None):
@@ -161,7 +161,7 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
             if dm.program_id:
                 program_id = dm.program_id
             else:
-                program_id = Program.default_for_domain(domain)._id
+                program_id = 'all'
 
             url = '%s?location_id=%s&filter_by_program=%s' % (
                 url,
@@ -290,9 +290,7 @@ class ProductSelectionPane(EWSData):
         result = [
             [
                 '<input class=\"toggle-column\" name=\"{1} ({0})\" data-column={2} value=\"{0}\" type=\"checkbox\"'
-                '{3}>{1} ({0})</input>'
-                .format(p.code, p.name, idx, 'checked' if 1 <= idx <= 6 else 'disabled'), programs[p.program_id],
-                p.code
+                '{3}>{1} ({0})</input>'.format(p.code, p.name, idx, 'checked'), programs[p.program_id], p.code
             ] for idx, p in enumerate(products, start=1)
         ]
 
