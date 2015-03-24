@@ -109,6 +109,11 @@
         $scope.modules = [];
         $scope.formSearch = {id: ''};
         $scope.moduleSearch = {id: ''};
+        $scope.lang = 'en';
+        $scope.showLabels = true;
+        $scope.showCalculations = false;
+        $scope.showRelevance = false;
+        $scope.appLangs = summaryConfig.appLangs;
 
         self.init = function () {
             $scope.loading = true;
@@ -140,6 +145,14 @@
         };
 
         $scope.getIcon = utils.getIcon;
+
+        $scope.getQuestionLabel = function(question) {
+            return utils.translateName(question.translations, $scope.lang, question.label);
+        };
+
+        $scope.getFormModuleLabel = function(form_module) {
+            return utils.translateName(form_module.name, $scope.lang);
+        };
 
         self.init();
     };

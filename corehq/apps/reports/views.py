@@ -1213,6 +1213,7 @@ def download_attachment(request, domain, instance_id):
     assert(domain == instance.domain)
     return couchforms_views.download_attachment(request, instance_id, attachment)
 
+
 @require_form_view_permission
 @require_permission(Permissions.edit_data)
 @require_POST
@@ -1258,6 +1259,7 @@ def archive_form(request, domain, instance_id):
 
     return HttpResponseRedirect(redirect)
 
+
 @require_form_view_permission
 @require_permission(Permissions.edit_data)
 def unarchive_form(request, domain, instance_id):
@@ -1273,6 +1275,17 @@ def unarchive_form(request, domain, instance_id):
     if not redirect:
         redirect = reverse('render_form_data', args=[domain, instance_id])
     return HttpResponseRedirect(redirect)
+
+
+@require_form_view_permission
+@require_permission(Permissions.edit_data)
+@require_POST
+def resave_form(request, domain, instance_id):
+    instance = _get_form_or_404(instance_id)
+    assert instance.domain == domain
+    XFormInstance.get_db().save_doc(instance.to_json())
+    messages.success(request, _("Form was successfully resaved. It should reappear in reports shortly."))
+    return HttpResponseRedirect(reverse('render_form_data', args=[domain, instance_id]))
 
 
 # Weekly submissions by xmlns

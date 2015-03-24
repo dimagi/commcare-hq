@@ -46,8 +46,8 @@ class Migration(DataMigration):
                     'name': couch_loc_type['name'],
                     'parent_type': parent_type,
                     'administrative': couch_loc_type['administrative'] or False,
-                    'shares_cases': couch_loc_type.get('shares_cases', False),
-                    'view_descendants': couch_loc_type.get('view_descendants', False),
+                    'shares_cases': couch_loc_type.get('shares_cases') or False,
+                    'view_descendants': couch_loc_type.get('view_descendants') or False,
                 }
             )[0]
 
@@ -103,7 +103,9 @@ class Migration(DataMigration):
             'domain': ('django.db.models.fields.CharField', [], {'max_length': '255', 'db_index': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
-            'parent_type': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['locations.LocationType']", 'null': 'True'})
+            'parent_type': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['locations.LocationType']", 'null': 'True'}),
+            'shares_cases': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'view_descendants': ('django.db.models.fields.BooleanField', [], {'default': 'False'})
         },
         u'locations.sqllocation': {
             'Meta': {'unique_together': "(('domain', 'site_code'),)", 'object_name': 'SQLLocation'},

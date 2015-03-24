@@ -8,19 +8,24 @@ class Migration(SchemaMigration):
 
     def forwards(self, orm):
 
-        # Adding field 'LocationType.shares_cases'
-        db.add_column(u'locations_locationtype', 'shares_cases', self.gf('django.db.models.fields.BooleanField')(default=False), keep_default=False)
+        # Removing index on 'LocationType', fields ['code']
+        db.delete_index(u'locations_locationtype', ['code'])
 
-        # Adding field 'LocationType.view_descendants'
-        db.add_column(u'locations_locationtype', 'view_descendants', self.gf('django.db.models.fields.BooleanField')(default=False), keep_default=False)
+        # Deleting field 'SQLLocation.tmp_location_type'
+        db.delete_column(u'locations_sqllocation', 'tmp_location_type')
+
 
     def backwards(self, orm):
 
-        # Deleting field 'LocationType.shares_cases'
-        db.delete_column(u'locations_locationtype', 'shares_cases')
+        # Adding index on 'LocationType', fields ['code']
+        db.create_index(u'locations_locationtype', ['code'])
 
-        # Deleting field 'LocationType.view_descendants'
-        db.delete_column(u'locations_locationtype', 'view_descendants')
+        # Adding field 'SQLLocation.tmp_location_type'
+        db.add_column(
+            u'locations_sqllocation', 'tmp_location_type',
+            self.gf('django.db.models.fields.CharField')(max_length=255, null=True),
+            keep_default=False
+        )
 
 
     models = {

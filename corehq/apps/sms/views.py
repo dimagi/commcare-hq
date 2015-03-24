@@ -1222,7 +1222,6 @@ def sms_languages(request, domain):
             tdoc.save()
     context = {
         "domain": domain,
-        "always_deploy": True,
         "sms_langs": tdoc.langs,
         "bulk_upload": {
             "action": reverse("upload_sms_translations",

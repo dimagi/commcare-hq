@@ -311,6 +311,9 @@
         <locale id="forms.m1f0"/>
       </text>
     </command>
+    <session>
+      <datum id="case_id_new_child_0" function="uuid()"/>
+    </session>
   </entry>
   <menu id="m0">
     <text>

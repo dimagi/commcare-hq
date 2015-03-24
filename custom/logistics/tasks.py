@@ -27,6 +27,9 @@ def stock_data_task(domain, endpoint, apis, test_facilities=None):
     try:
         checkpoint = StockDataCheckpoint.objects.get(domain=domain)
         api = checkpoint.api
+        # legacy
+        if api == 'product_stock':
+            api = default_api
         date = checkpoint.date
         limit = checkpoint.limit
         offset = checkpoint.offset

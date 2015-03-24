@@ -1,5 +1,5 @@
 import logging
-import simplejson
+import json
 import six
 import copy
 import datetime
@@ -105,7 +105,7 @@ class ESView(View):
         Returns the raw query json back, or None if there's an error
         """
 
-        logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, simplejson.dumps(es_query)))
+        logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, json.dumps(es_query)))
         if 'fields' in es_query or 'script_fields' in es_query:
             #nasty hack to add domain field to query that does specific fields.
             #do nothing if there's no field query because we get everything
@@ -186,7 +186,7 @@ class ESView(View):
         size = request.GET.get('size', DEFAULT_SIZE)
         start = request.GET.get('start', 0)
         query_results = self.run_query(self.base_query(start=start, size=size))
-        query_output = simplejson.dumps(query_results, indent=self.indent)
+        query_output = json.dumps(query_results, indent=self.indent)
         response = HttpResponse(query_output, content_type="application/json")
         return response
 
@@ -196,15 +196,15 @@ class ESView(View):
         """
         try:
             raw_post = request.body
-            raw_query = simplejson.loads(raw_post)
+            raw_query = json.loads(raw_post)
         except Exception, ex:
             content_response = dict(message="Error parsing query request", exception=ex.message)
-            response = HttpResponse(status=406, content=simplejson.dumps(content_response))
+            response = HttpResponse(status=406, content=json.dumps(content_response))
             return response
 
         #ensure that the domain is filtered in implementation
         query_results = self.run_query(raw_query)
-        query_output = simplejson.dumps(query_results, indent=self.indent)
+        query_output = json.dumps(query_results, indent=self.indent)
         response = HttpResponse(query_output, content_type="application/json")
         return response
 
@@ -289,7 +289,7 @@ class UserES(ESView):
         """
 
         logging.info("ESlog: [%s.%s] ESquery: %s" % (
-            self.__class__.__name__, self.domain, simplejson.dumps(es_query)))
+            self.__class__.__name__, self.domain, json.dumps(es_query)))
 
         self.validate_query(es_query)
 
@@ -635,7 +635,7 @@ def es_search(request, domain, reserved_query_params=None):
     # NOTE: The fields actually analyzed into ES indices differ somewhat from the raw
     # XML / JSON.
     if '_search' in request.GET:
-        additions = simplejson.loads(request.GET['_search'])
+        additions = json.loads(request.GET['_search'])
 
         if 'filter' in additions:
             payload['filter']['and'].append(additions['filter'])

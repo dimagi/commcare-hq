@@ -167,14 +167,14 @@ class DeliveryReport(DetailsReport):
     @property
     def title(self):
         title = _('Delivery Report')
-        if self.location and self.location.location_type == 'FACILITY':
+        if self.location and self.location.location_type.name.upper() == 'FACILITY':
             title = _('Facility Details')
         return title
 
     @property
     def fields(self):
         fields = [AsyncLocationFilter, MonthAndQuarterFilter, YearFilter, ProductByProgramFilter, MSDZoneFilter]
-        if self.location and self.location.location_type == 'FACILITY':
+        if self.location and self.location.location_type.name.upper() == 'FACILITY':
             fields = [AsyncLocationFilter, ProductByProgramFilter]
         return fields
 
@@ -187,10 +187,10 @@ class DeliveryReport(DetailsReport):
         config = self.report_config
         if config['location_id']:
             location = SQLLocation.objects.get(location_id=config['location_id'])
-            if location.location_type in ['REGION', 'MOHSW']:
+            if location.location_type.name.upper() in ['REGION', 'MOHSW']:
                 data_providers.append(DeliveryData(config=config, css_class='row_chart_all'))
                 data_providers.append(LeadTimeHistory(config=config, css_class='row_chart_all'))
-            elif location.location_type == 'FACILITY':
+            elif location.location_type.name.upper() == 'FACILITY':
                 return [
                     InventoryHistoryData(config=config),
                     RandRHistory(config=config),

@@ -27,7 +27,7 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False):
     def loc_to_json(loc):
         return {
             'name': loc.name,
-            'location_type': loc.location_type.name,
+            'location_type': loc.location_type.name,  # todo: remove when types aren't optional
             'uuid': loc.location_id,
             'is_archived': loc.is_archived,
         }
@@ -272,6 +272,9 @@ def purge_locations(domain):
             case.delete()
         loc.delete()
 
-    domain_obj = Domain.get_by_name(domain)
-    domain_obj.location_types = []
-    domain_obj.save()
+    db = Domain.get_db()
+    domain_obj = Domain.get_by_name(domain)  # cached lookup is fast but stale
+    domain_json = db.get(domain_obj._id)  # get latest raw, unwrapped doc
+    domain_json.pop('obsolete_location_types', None)
+    domain_json.pop('location_types', None)
+    db.save_doc(domain_json)

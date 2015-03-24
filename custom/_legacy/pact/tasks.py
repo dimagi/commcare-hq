@@ -4,7 +4,7 @@ from xml.etree import ElementTree
 from celery.schedules import crontab
 
 from celery.task import task, periodic_task
-import simplejson
+import json
 from casexml.apps.case.mock import CaseBlock
 from corehq.apps.hqcase.utils import submit_case_blocks, get_case_ids_in_domain
 
@@ -56,7 +56,7 @@ def eval_dots_block(xform_json, callback=None):
             if xform_json['form']['case']['update'].has_key('dots'):
                 dots_json = xform_json['form']['case']['update']['dots']
                 if isinstance(dots_json, str) or isinstance(dots_json, unicode):
-                    json_data = simplejson.loads(dots_json)
+                    json_data = json.loads(dots_json)
                     xform_json[PACT_DOTS_DATA_PROPERTY]['dots'] = json_data
                 do_continue=True
             else:

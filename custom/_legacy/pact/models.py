@@ -1,7 +1,7 @@
 from django.utils.translation import ugettext as _
 import uuid
 from dateutil.parser import parser
-import simplejson
+import json
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.users.models import CommCareUser
 from couchforms.models import XFormInstance
@@ -42,7 +42,7 @@ class DOTSubmission(XFormInstance):
     def has_pillbox_check(self):
         pillbox_check_str = self.form['pillbox_check'].get('check', '')
         if len(pillbox_check_str) > 0:
-            pillbox_check_data = simplejson.loads(pillbox_check_str)
+            pillbox_check_data = json.loads(pillbox_check_str)
             anchor_date = dp.parse(pillbox_check_data.get('anchor', '0000-01-01'))
         else:
             anchor_date = datetime.min
@@ -518,7 +518,7 @@ class CObservation(Document):
         return "Obs %s [%s] %d/%d" % (self.observed_date.strftime("%Y-%m-%d"), "ART" if self.is_art else "NonART", self.dose_number+1, self.total_doses)
 
     def __repr__(self):
-        return simplejson.dumps(self.to_json(), indent=4)
+        return json.dumps(self.to_json(), indent=4)
 
 class CObservationAddendum(Document):
     observed_date = DateProperty()

@@ -4,12 +4,11 @@ from corehq import Domain
 from corehq.apps.accounting import generator
 from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, SoftwarePlanEdition, Subscription
 from corehq.apps.commtrack.models import StockState, SupplyPointCase
-from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.models import SQLLocation, LocationType
 from datetime import timedelta, datetime
 from dateutil import rrule
 from dateutil.rrule import MO
 from django.utils import html
-from corehq.apps.locations.schema import LocationType
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.api import add_msg_tags
 from corehq.apps.sms.models import SMSLog, OUTGOING
@@ -25,16 +24,16 @@ def get_supply_points(location_id, domain):
         lambda loc_type: not loc_type.administrative,
         Domain.get_by_name(domain).location_types
     )]
-    if loc.location_type == 'district':
+    if loc.location_type.name == 'district':
         locations = SQLLocation.objects.filter(parent=loc)
-    elif loc.location_type == 'region':
+    elif loc.location_type.name == 'region':
         locations = SQLLocation.objects.filter(
-            Q(parent__parent=loc) | Q(parent=loc, location_type__in=location_types)
+            Q(parent__parent=loc) | Q(parent=loc, location_type__name__in=location_types)
         )
-    elif loc.location_type in location_types:
+    elif loc.location_type.name in location_types:
         locations = SQLLocation.objects.filter(id=loc.id)
     else:
-        locations = SQLLocation.objects.filter(domain=domain, location_type__in=location_types)
+        locations = SQLLocation.objects.filter(domain=domain, location_type__name__in=location_types)
     return locations.exclude(supply_point_id__isnull=True)
 
 
@@ -109,39 +108,33 @@ def get_products_ids_assigned_to_rel_sp(domain, active_location=None):
 def prepare_domain(domain_name):
     from corehq.apps.commtrack.tests import bootstrap_domain
     domain = bootstrap_domain(domain_name)
-    domain.location_types = [
-        LocationType(name="country", allowed_parents=[""],
-                     administrative=True),
-        LocationType(name="Central Medical Store", allowed_parents=["country"],
-                     administrative=False),
-        LocationType(name="Teaching Hospital", allowed_parents=["country"],
-                     administrative=False),
-        LocationType(name="region", allowed_parents=["country"],
-                     administrative=True),
-        LocationType(name="Regional Medical Store", allowed_parents=["region"],
-                     administrative=False),
-        LocationType(name="Regional Hospital", allowed_parents=["region"],
-                     administrative=False),
-        LocationType(name="district", allowed_parents=["region"],
-                     administrative=True),
-        LocationType(name="Clinic", allowed_parents=["district"],
-                     administrative=False),
-        LocationType(name="District Hospital", allowed_parents=["district"],
-                     administrative=False),
-        LocationType(name="Health Centre", allowed_parents=["district"],
-                     administrative=False),
-        LocationType(name="CHPS Facility", allowed_parents=["district"],
-                     administrative=False),
-        LocationType(name="Hospital", allowed_parents=["district"],
-                     administrative=False),
-        LocationType(name="Psychiatric Hospital", allowed_parents=["district"],
-                     administrative=False),
-        LocationType(name="Polyclinic", allowed_parents=["district"],
-                     administrative=False),
-        LocationType(name="facility", allowed_parents=["district"],
-                     administrative=False)
-    ]
-    domain.save()
+
+    def _make_loc_type(name, administrative=False, parent_type=None):
+        return LocationType.objects.get_or_create(
+            domain=domain_name,
+            name=name,
+            administrative=administrative,
+            parent_type=parent_type,
+        )[0]
+
+    country = _make_loc_type(name="country", administrative=True)
+    _make_loc_type(name="Central Medical Store", parent_type=country)
+    _make_loc_type(name="Teaching Hospital", parent_type=country)
+
+    region = _make_loc_type(name="region", administrative=True, parent_type=country)
+    _make_loc_type(name="Regional Medical Store", parent_type=region)
+    _make_loc_type(name="Regional Hospital", parent_type=region)
+
+    district = _make_loc_type(name="district", administrative=True, parent_type=region)
+    _make_loc_type(name="Clinic", parent_type=district)
+    _make_loc_type(name="District Hospital", parent_type=district)
+    _make_loc_type(name="Health Centre", parent_type=district)
+    _make_loc_type(name="CHPS Facility", parent_type=district)
+    _make_loc_type(name="Hospital", parent_type=district)
+    _make_loc_type(name="Psychiatric Hospital", parent_type=district)
+    _make_loc_type(name="Polyclinic", parent_type=district)
+    _make_loc_type(name="facility", parent_type=district)
+
     generator.instantiate_accounting_for_tests()
     account = BillingAccount.get_or_create_account_by_domain(
         domain.name,
@@ -188,7 +181,7 @@ def bootstrap_user(username=TEST_USER, domain=TEST_DOMAIN,
 
     if not SupplyPointCase.get_by_location(home_loc):
         make_supply_point(domain, home_loc)
-
+        home_loc.save()
     user.set_location(home_loc)
 
     user.save_verified_number(domain, phone_number, verified=True, backend_id=backend)
@@ -203,6 +196,10 @@ class ProductsReportHelper(object):
         self.location = location
         self.transactions = transactions
 
+    @property
+    def sql_location(self):
+        return self.location.sql_location
+
     def reported_products(self):
         return [SQLProduct.objects.get(product_id=transaction.product_id) for transaction in self.transactions]
 
@@ -211,10 +208,16 @@ class ProductsReportHelper(object):
 
     def stock_states(self):
         product_ids = [product.product_id for product in self.reported_products()]
-        return StockState.objects.filter(product_id__in=product_ids)
+        return StockState.objects.filter(
+            product_id__in=product_ids,
+            case_id=self.sql_location.supply_point_id
+        )
 
     def stockouts(self):
-        return self.stock_states().filter(stock_on_hand=0).order_by('sql_product__code')
+        return self.stock_states().filter(
+            stock_on_hand=0,
+            case_id=self.sql_location.supply_point_id
+        ).order_by('sql_product__code')
 
     def reorders(self):
         reorders = []
@@ -232,6 +235,7 @@ class ProductsReportHelper(object):
             stock_state
             for stock_state in StockState.objects.filter(
                 product_id__in=product_ids,
+                case_id=self.sql_location.supply_point_id
             ).order_by('sql_product__code')
             if stock_state.stock_category == category
         ]
@@ -262,4 +266,4 @@ def can_receive_email(user, verified_number):
 
 
 def get_country_id(domain):
-    return SQLLocation.objects.filter(domain=domain, location_type='country')[0].location_id
+    return SQLLocation.objects.filter(domain=domain, location_type__name='country')[0].location_id

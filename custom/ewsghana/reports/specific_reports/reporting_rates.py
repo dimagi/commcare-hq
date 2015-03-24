@@ -5,13 +5,14 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.graph_models import PieChart
+from custom.common import ALL_OPTION
 from custom.ewsghana import StockLevelsReport
 from custom.ewsghana.filters import ProductByProgramFilter
-from custom.ewsghana.reports import MultiReport, EWSData, ReportingRatesData
+from custom.ewsghana.reports import MultiReport, ReportingRatesData, ProductSelectionPane
 from casexml.apps.stock.models import StockTransaction
 from custom.ewsghana.reports.stock_levels_report import FacilityReportData, StockLevelsLegend, FacilitySMSUsers, \
     FacilityUsers, FacilityInChargeUsers, InventoryManagementData, InputStock
-from custom.ewsghana.utils import calculate_last_period
+from custom.ewsghana.utils import calculate_last_period, get_country_id
 from corehq.apps.reports.filters.dates import DatespanFilter
 from custom.ilsgateway.tanzania import make_url
 from custom.ilsgateway.tanzania.reports.utils import link_format
@@ -29,7 +30,7 @@ class ReportingRates(ReportingRatesData):
     def rows(self):
         rows = {}
         if self.location_id:
-            if self.location.location_type == 'country':
+            if self.location.location_type.name == 'country':
                 supply_points = self.all_reporting_locations()
                 reports = len(self.reporting_supply_points(supply_points))
             else:
@@ -77,7 +78,7 @@ class ReportingDetails(ReportingRatesData):
         rows = {}
         if self.location_id:
             last_period_st, last_period_end = calculate_last_period(self.config['enddate'])
-            if self.location.location_type == 'country':
+            if self.location.location_type.name == 'country':
                 supply_points = self.reporting_supply_points(self.all_reporting_locations())
             else:
                 supply_points = self.reporting_supply_points()
@@ -142,13 +143,13 @@ class SummaryReportingRates(ReportingRatesData):
             if location_type.administrative
         ]
         return SQLLocation.objects.filter(parent__location_id=self.config['location_id'],
-                                          location_type__in=location_types)
+                                          location_type__name__in=location_types, is_archived=False)
 
     @property
     def headers(self):
         if self.location_id:
             return DataTablesHeader(
-                DataTablesColumn(_(self.get_locations[0].location_type.title())),
+                DataTablesColumn(_(self.get_locations[0].location_type.name.title())),
                 DataTablesColumn(_('# Sites')),
                 DataTablesColumn(_('# Reporting')),
                 DataTablesColumn(_('Reporting Rate'))
@@ -189,7 +190,7 @@ class NonReporting(ReportingRatesData):
     @property
     def title(self):
         if self.location_id:
-            location_type = self.location.location_type.lower()
+            location_type = self.location.location_type.name.lower()
             if location_type == 'country':
                 return _('Non Reporting RMS and THs')
             else:
@@ -352,13 +353,15 @@ class ReportingRatesReport(MultiReport):
 
     @property
     def report_config(self):
+        program = self.request.GET.get('filter_by_program')
         return dict(
             domain=self.domain,
             startdate=self.datespan.startdate_utc,
             enddate=self.datespan.enddate_utc,
-            location_id=self.request.GET.get('location_id'),
+            location_id=self.request.GET.get('location_id') if self.request.GET.get('location_id')
+            else get_country_id(self.domain),
             products=None,
-            program=None
+            program=program if program != ALL_OPTION else None,
         )
 
     @property
@@ -373,7 +376,8 @@ class ReportingRatesReport(MultiReport):
                 FacilitySMSUsers(config),
                 FacilityUsers(config),
                 FacilityInChargeUsers(config),
-                InventoryManagementData(config)
+                InventoryManagementData(config),
+                ProductSelectionPane(config),
             ]
         self.split = False
         data_providers = [
@@ -383,7 +387,7 @@ class ReportingRatesReport(MultiReport):
 
         if config['location_id']:
             location = SQLLocation.objects.get(location_id=config['location_id'])
-            if location.location_type.lower() in ['country', 'region']:
+            if location.location_type.name.lower() in ['country', 'region']:
                 data_providers.append(SummaryReportingRates(config=config))
 
         data_providers.extend([

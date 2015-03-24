@@ -8,7 +8,7 @@ from django.views.generic import RedirectView
 
 from corehq.apps.domain.forms import ConfidentialPasswordResetForm
 from corehq.apps.domain.views import (
-    EditBasicProjectInfoView, EditDeploymentProjectInfoView,
+    EditBasicProjectInfoView, EditPrivacySecurityView,
     DefaultProjectSettingsView, EditMyProjectSettingsView,
     ExchangeSnapshotsView, CreateNewExchangeSnapshotView,
     ManageProjectMediaView, DomainForwardingOptionsView,
@@ -96,6 +96,7 @@ domain_settings = patterns(
     url(r'^$', DefaultProjectSettingsView.as_view(), name=DefaultProjectSettingsView.urlname),
     url(r'^my_settings/$', EditMyProjectSettingsView.as_view(), name=EditMyProjectSettingsView.urlname),
     url(r'^basic/$', EditBasicProjectInfoView.as_view(), name=EditBasicProjectInfoView.urlname),
+    url(r'^privacy/$', EditPrivacySecurityView.as_view(), name=EditPrivacySecurityView.urlname),
     url(r'^dhis2/$', EditDhis2SettingsView.as_view(), name=EditDhis2SettingsView.urlname),
     url(r'^subscription/change/$', SelectPlanView.as_view(), name=SelectPlanView.urlname),
     url(r'^subscription/change/confirm/$', ConfirmSelectedPlanView.as_view(),
@@ -120,10 +121,11 @@ domain_settings = patterns(
     url(r'^subscription/$', DomainSubscriptionView.as_view(), name=DomainSubscriptionView.urlname),
     url(r'^subscription/renew/$', ConfirmSubscriptionRenewalView.as_view(),
         name=ConfirmSubscriptionRenewalView.urlname),
-    url(r'^billing_information/$', EditExistingBillingAccountView.as_view(), name=EditExistingBillingAccountView.urlname),
-    url(r'^deployment/$', EditDeploymentProjectInfoView.as_view(), name=EditDeploymentProjectInfoView.urlname),
+    url(r'^billing_information/$', EditExistingBillingAccountView.as_view(),
+        name=EditExistingBillingAccountView.urlname),
     url(r'^forwarding/$', DomainForwardingOptionsView.as_view(), name=DomainForwardingOptionsView.urlname),
-    url(r'^forwarding/new/FormRepeater/$', AddFormRepeaterView.as_view(), {'repeater_type':'FormRepeater'}, name=AddFormRepeaterView.urlname),
+    url(r'^forwarding/new/FormRepeater/$', AddFormRepeaterView.as_view(), {'repeater_type': 'FormRepeater'},
+        name=AddFormRepeaterView.urlname),
     url(r'^forwarding/new/(?P<repeater_type>\w+)/$', AddRepeaterView.as_view(), name=AddRepeaterView.urlname),
     url(r'^forwarding/test/$', 'test_repeater', name='test_repeater'),
     url(r'^forwarding/(?P<repeater_id>[\w-]+)/stop/$', 'drop_repeater', name='drop_repeater'),
