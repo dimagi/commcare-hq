@@ -31,7 +31,7 @@
     <dt>{% trans 'Published on' %}</dt>
     <dd>{{ version.snapshot_time }}</dd>
     <dt>{% trans 'License' %}</dt>
-    <dd>{{ version.get_license_display }}</dd>
+    <dd><a href="{{ project.get_license_url }}">{{ project.get_license_display }}</a> </dd>
     <dt>{% trans 'Status' %}</dt>
     <dd>{% if version.is_approved %}Approved{% else %}Not yet approved{% endif %}</dd>
     <dd>
