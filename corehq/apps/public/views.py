@@ -56,3 +56,8 @@ class ServicesPublicView(TemplateView):
     urlname = 'public_services'
     template_name = 'public/services.html'
 
+
+class PricingPublicView(TemplateView):
+    urlname = 'public_pricing'
+    template_name = 'public/pricing.html'
+

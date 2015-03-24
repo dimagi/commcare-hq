@@ -8,4 +8,6 @@ urlpatterns = patterns(
     url(r'^impact/$', ImpactPublicView.as_view(), name=ImpactPublicView.urlname),
     url(r'^services/$', ServicesPublicView.as_view(),
         name=ServicesPublicView.urlname),
+    url(r'^pricing/$', PricingPublicView.as_view(),
+        name=PricingPublicView.urlname),
 )
