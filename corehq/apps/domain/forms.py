@@ -36,7 +36,7 @@ from corehq.apps.accounting.models import (
     SubscriptionAdjustmentMethod,
     SubscriptionType,
 )
-from corehq.apps.app_manager.models import (Application, ApplicationBase,
+from corehq.apps.app_manager.models import (Application,
                                             FormBase, get_apps_in_domain)
 
 from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
@@ -555,8 +555,15 @@ class PrivacySecurityForm(forms.Form):
                         apps_to_save.append(app)
             domain.secure_submissions = secure_submissions
             domain.save()
+
             if apps_to_save:
-                ApplicationBase.bulk_save(apps_to_save)
+                apps = [app for app in apps_to_save if isinstance(app, Application)]
+                remote_apps = [app for app in apps_to_save if isinstance(app, RemoteApp)]
+                if apps:
+                    Application.bulk_save(apps)
+                if remote_apps:
+                    RemoteApp.bulk_save(remote_apps)
+
             return True
         except Exception:
             return False
