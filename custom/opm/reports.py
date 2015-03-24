@@ -1037,7 +1037,6 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
         self.context['report_table'].update(
             headers=headers
         )
-        print len(headers)
         rendered_report = render_to_string(self.template_report, self.context,
                                            context_instance=RequestContext(self.request))
         return HttpResponse(rendered_report)
