@@ -205,8 +205,8 @@ class InventoryManagementData(EWSData):
         rows['Understock'] = []
         rows['Overstock'] = []
         for i in range(1, int(weeks + 1)):
-            rows['Understock'].append({'x': i, 'y': stock_levels.understock_threshold})
-            rows['Overstock'].append({'x': i, 'y': stock_levels.overstock_threshold})
+            rows['Understock'].append({'x': i, 'y': float(stock_levels.understock_threshold)})
+            rows['Overstock'].append({'x': i, 'y': float(stock_levels.overstock_threshold)})
 
         return rows
 
