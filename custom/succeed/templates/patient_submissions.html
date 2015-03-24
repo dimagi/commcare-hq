@@ -48,5 +48,11 @@
             $('<input>').attr({id: 'patient_id_field', type: 'hidden', name: 'patient_id', value: '{{ patient_id }}' }).appendTo('#paramSelectorForm');
         }
     });
+     {% if report_table and report_table.datatables %}
+        var id = '#report_table_{{ report.slug }}';
+        var table = $(id).dataTable();
+        var oSettings = table.fnSettings().aaSorting = [[2, 'desc']];
+        table.fnDraw();
+     {% endif %}
 </script>
 {% endblock %}

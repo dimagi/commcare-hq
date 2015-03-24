@@ -11,7 +11,6 @@ from django.utils import html
 
 
 class PatientSubmissionData(SqlData):
-
     slug = 'succeed_submissions'
 
     @property
@@ -41,9 +40,6 @@ class PatientSubmissionReport(GenericTabularReport, CustomProjectReport, Project
     name = 'Patient Submissions'
     use_datatables = True
     hide_filters = True
-    default_sort = {
-        "received_on": "desc"
-    }
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
@@ -61,10 +57,6 @@ class PatientSubmissionReport(GenericTabularReport, CustomProjectReport, Project
     @property
     def model(self):
         return PatientSubmissionData(config=self.report_config)
-
-    @property
-    def base_template_filters(self):
-        return 'succeed/report.html'
 
     @property
     def fields(self):
@@ -95,7 +87,8 @@ class PatientSubmissionReport(GenericTabularReport, CustomProjectReport, Project
 
     def submit_history_form_link(self, form_id, form_name):
         url = reverse('render_form_data', args=[self.domain, form_id])
-        return html.mark_safe("<a class='ajax_dialog' href='%s' target='_blank'>%s</a>" % (url, html.escape(form_name)))
+        return html.mark_safe("<a class='ajax_dialog' href='%s'"
+                              "target='_blank'>%s</a>" % (url, html.escape(form_name)))
 
     @property
     def report_context(self):
