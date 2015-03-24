@@ -698,7 +698,6 @@ class AdvancedModuleAsChildTest(SimpleTestCase, TestFileMixin):
             condition=FormActionCondition(type='always')
         ))
 
-
         self.module_1.case_type = 'guppy'
         m1f0 = self.module_1.get_form(0)
         m1f0.actions.load_update_cases.append(LoadUpdateAction(

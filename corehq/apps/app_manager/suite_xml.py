@@ -1383,7 +1383,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                 datums.append({
                     'datum': SessionDatum(id=form.session_var_for_action('open_case'), function='uuid()'),
                     'case_type': form.get_module().case_type,
-                    'requires_selection': False
+                    'requires_selection': False,
+                    'action': actions['open_case']
                 })
 
             if 'subcases' in actions:
@@ -1392,7 +1393,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                     datums.append({
                         'datum': SessionDatum(id=form.session_var_for_action('subcase', i), function='uuid()'),
                         'case_type': subcase.case_type,
-                        'requires_selection': False
+                        'requires_selection': False,
+                        'action': subcase
                     })
         elif form.form_type == 'advanced_form':
             for action in form.actions.get_open_actions():
@@ -1400,7 +1402,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                     datums.append({
                         'datum': SessionDatum(id=action.case_session_var, function='uuid()'),
                         'case_type': action.case_type,
-                        'requires_selection': False
+                        'requires_selection': False,
+                        'action': action
                     })
 
         return datums
@@ -1519,7 +1522,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                     detail_inline=self.get_detail_id_safe(datum['module'], 'case_long') if detail_inline else None
                 ),
                 'case_type': datum['case_type'],
-                'requires_selection': True
+                'requires_selection': True,
+                'action': 'update_case'
             })
         return datums
 
@@ -1575,44 +1579,6 @@ class SuiteGenerator(SuiteGeneratorBase):
         datums, assertions = self.get_datum_meta_assertions_advanced(module, form)
         datums.extend(self.get_new_case_id_datums_meta(form))
 
-        root_module = module.root_module
-        root_datums = []
-        if root_module and root_module.module_type == 'basic':
-            try:
-                # assume that all forms in the root module have the same case management
-                root_module_form = root_module.get_form(0)
-            except FormNotFoundException:
-                pass
-            else:
-                if root_module_form.requires_case():
-                    root_datums.extend(self.get_datum_meta_module(root_module))
-                root_datums.extend(self.get_new_case_id_datums_meta(root_module_form))
-
-        if root_datums:
-            # we need to try and match the datums to the root module so that
-            # the navigation on the phone works correctly
-            # 1. Add in any datums that don't require user selection e.g. new case IDs
-            # 2. Match the datum ID for datums that appear in the same position and
-            #    will be loading the same case type
-            datum_pairs = izip_longest(datums, root_datums)
-            index = 0
-            for this_datum_meta, parent_datum_meta in datum_pairs:
-                if not this_datum_meta:
-                    continue
-
-                this_datum = this_datum_meta['datum']
-                if not parent_datum_meta:
-                    continue
-
-                that_datum = parent_datum_meta['datum']
-                if this_datum.id != that_datum.id:
-                    if not parent_datum_meta['requires_selection']:
-                        datums.insert(index, parent_datum_meta)
-                    elif this_datum_meta['case_type'] == parent_datum_meta['case_type']:
-                        this_datum.id = that_datum.id
-
-                index += 1
-
         for datum_meta in datums:
             e.datums.append(datum_meta['datum'])
 
@@ -1661,14 +1627,15 @@ class SuiteGenerator(SuiteGeneratorBase):
 
         datums = []
         assertions = []
-        for index, action in enumerate(form.actions.load_update_cases):
+        for action in form.actions.get_load_update_actions():
             auto_select = action.auto_select
             if auto_select and auto_select.mode:
                 datum, assertions = self.get_auto_select_datums_and_assertions(action, auto_select, form)
                 datums.append({
                     'datum': datum,
                     'case_type': None,
-                    'requires_selection': False
+                    'requires_selection': False,
+                    'action': action
                 })
             else:
                 if action.parent_tag:
@@ -1695,7 +1662,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                 datums.append({
                     'datum': datum,
                     'case_type': action.case_type,
-                    'requires_selection': True
+                    'requires_selection': True,
+                    'action': action
                 })
 
         if module.get_app().commtrack_enabled:
@@ -1716,10 +1684,50 @@ class SuiteGenerator(SuiteGeneratorBase):
                             detail_select=self.get_detail_id_safe(target_module, 'product_short')
                         ),
                         'case_type': None,
-                        'requires_selection': True
+                        'requires_selection': True,
+                        'action': None
                     })
             except IndexError:
                 pass
+
+        root_module = module.root_module
+        root_datums = []
+        if root_module and root_module.module_type == 'basic':
+            try:
+                # assume that all forms in the root module have the same case management
+                root_module_form = root_module.get_form(0)
+            except FormNotFoundException:
+                pass
+            else:
+                if root_module_form.requires_case():
+                    root_datums.extend(self.get_datum_meta_module(root_module))
+                root_datums.extend(self.get_new_case_id_datums_meta(root_module_form))
+
+        if root_datums:
+            # we need to try and match the datums to the root module so that
+            # the navigation on the phone works correctly
+            # 1. Add in any datums that don't require user selection e.g. new case IDs
+            # 2. Match the datum ID for datums that appear in the same position and
+            #    will be loading the same case type
+            # see advanced_app_features#child-modules in docs
+            datum_pairs = izip_longest(datums, root_datums)
+            index = 0
+            for this_datum_meta, parent_datum_meta in datum_pairs:
+                if not this_datum_meta:
+                    continue
+
+                this_datum = this_datum_meta['datum']
+                if not parent_datum_meta:
+                    continue
+
+                that_datum = parent_datum_meta['datum']
+                if this_datum.id != that_datum.id:
+                    if not parent_datum_meta['requires_selection']:
+                        datums.insert(index, parent_datum_meta)
+                    elif this_datum_meta['case_type'] == parent_datum_meta['case_type']:
+                        this_datum.id = that_datum.id
+
+                index += 1
 
         return datums, assertions
 

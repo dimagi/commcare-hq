@@ -1400,10 +1400,25 @@ class XForm(WrappedNode):
             None
         )
 
-        has_schedule = form.get_module().has_schedule and form.schedule and form.schedule.anchor
+        module = form.get_module()
+        has_schedule = module.has_schedule and form.schedule and form.schedule.anchor
+
+        adjusted_datums = {}
+        if module.root_module and module.root_module.module_type == 'basic':
+            # for child modules the session variable for a case may have been
+            # changed to match the parent module.
+            from corehq.apps.app_manager.suite_xml import SuiteGenerator
+            gen = SuiteGenerator(form.get_app())
+            datums_meta, _ = gen.get_datum_meta_assertions_advanced(module, form)
+            adjusted_datums = {
+                meta['action'].id: meta['datum'].id
+                for meta in datums_meta
+                if meta['action']
+            }
 
         for action in form.actions.get_load_update_actions():
-            session_case_id = CaseIDXPath(session_var(action.case_session_var))
+            var_name = adjusted_datums.get(action.id, action.case_session_var)
+            session_case_id = CaseIDXPath(session_var(var_name))
             if action.preload:
                 self.add_casedb()
                 for property, nodeset in action.preload.items():
