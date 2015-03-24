@@ -1225,11 +1225,7 @@ class XForm(WrappedNode):
 
             if 'open_case' in actions:
                 open_case_action = actions['open_case']
-                case_id = 'uuid()'
-                if not (hasattr(module, 'parent_select') and module.parent_select.active) and \
-                        form.is_case_list_form:
-                    case_id = session_var(CASE_ID)
-
+                case_id = session_var(form.session_var_for_action('open_case'))
                 case_block.add_create_block(
                     relevance=self.action_relevance(open_case_action.condition),
                     case_name=open_case_action.name_path,
@@ -1286,10 +1282,12 @@ class XForm(WrappedNode):
                         '/{x}'.join(subcase.repeat_context.split('/'))[1:]
                     )
                     nest = repeat_contexts[subcase.repeat_context] > 1
+                    case_id = 'uuid()'
                 else:
                     base_path = ''
                     parent_node = self.data_node
                     nest = True
+                    case_id = session_var(form.session_var_for_action('subcase', i))
 
                 if nest:
                     name = 'subcase_%s' % i
@@ -1309,6 +1307,7 @@ class XForm(WrappedNode):
                     delay_case_id=bool(subcase.repeat_context),
                     autoset_owner_id=autoset_owner_id_for_subcase(subcase),
                     has_case_sharing=form.get_app().case_sharing,
+                    case_id=case_id
                 )
 
                 subcase_block.add_update_block(subcase.case_properties)
@@ -1403,7 +1402,7 @@ class XForm(WrappedNode):
 
         has_schedule = form.get_module().has_schedule and form.schedule and form.schedule.anchor
 
-        for action in form.actions.load_update_cases:
+        for action in form.actions.get_load_update_actions():
             session_case_id = CaseIDXPath(session_var(action.case_session_var))
             if action.preload:
                 self.add_casedb()
@@ -1467,16 +1466,10 @@ class XForm(WrappedNode):
 
             return path, subcase_node
 
-        case_registration_action = None
-        if form.is_case_list_form:
-            case_registration_action = form.get_registration_actions()[0]
-
-        for action in form.actions.open_cases:
+        for action in form.actions.get_open_actions():
             check_case_type(action)
 
-            case_id = 'uuid()'
-            if case_registration_action == action:
-                case_id = session_var(action.case_session_var)
+            case_id = 'uuid()' if action.repeat_context else session_var(action.case_session_var)
 
             path, subcase_node = get_action_path(action)
 
@@ -2002,130 +1995,130 @@ VELLUM_TYPES = {
         'tag': 'input',
         'type': 'intent',
         'icon': 'icon-vellum-android-intent',
-        'icon_bs3': 'fcc-fd-android-intent',
+        'icon_bs3': 'fcc fcc-fd-android-intent',
     },
     "Audio": {
         'tag': 'upload',
         'media': 'audio/*',
         'type': 'binary',
         'icon': 'icon-vellum-audio-capture',
-        'icon_bs3': 'fcc-fd-audio-capture',
+        'icon_bs3': 'fcc fcc-fd-audio-capture',
     },
     "Barcode": {
         'tag': 'input',
         'type': 'barcode',
         'icon': 'icon-vellum-android-intent',
-        'icon_bs3': 'fcc-fd-android-intent',
+        'icon_bs3': 'fcc fcc-fd-android-intent',
     },
     "DataBindOnly": {
         'icon': 'icon-vellum-variable',
-        'icon_bs3': 'fcc-fd-data',
+        'icon_bs3': 'fcc fcc-fd-variable',
     },
     "Date": {
         'tag': 'input',
         'type': 'xsd:date',
         'icon': 'icon-calendar',
-        'icon_bs3': 'fd-question',
+        'icon_bs3': 'fa fa-calendar',
     },
     "DateTime": {
         'tag': 'input',
         'type': 'xsd:datetime',
         'icon': 'icon-vellum-datetime',
-        'icon_bs3': 'fcc-fd-datetime',
+        'icon_bs3': 'fcc fcc-fd-datetime',
     },
     "Double": {
         'tag': 'input',
         'type': 'xsd:double',
         'icon': 'icon-vellum-decimal',
-        'icon_bs3': 'fcc-fd-decimal',
+        'icon_bs3': 'fcc fcc-fd-decimal',
     },
     "FieldList": {
         'tag': 'group',
         'appearance': 'field-list',
         'icon': 'icon-reorder',
-        'icon_bs3': 'fd-question',
+        'icon_bs3': 'fa fa-bars',
     },
     "Geopoint": {
         'tag': 'input',
         'type': 'geopoint',
         'icon': 'icon-map-marker',
-        'icon_bs3': 'fd-question',
+        'icon_bs3': 'fa fa-map-marker',
     },
     "Group": {
         'tag': 'group',
         'icon': 'icon-folder-open',
-        'icon_bs3': 'fd-question',
+        'icon_bs3': 'fa fa-folder-open',
     },
     "Image": {
         'tag': 'upload',
         'media': 'image/*',
         'type': 'binary',
         'icon': 'icon-camera',
-        'icon_bs3': 'fd-question',
+        'icon_bs3': 'fa fa-camera',
     },
     "Int": {
         'tag': 'input',
         'type': ('xsd:int', 'xsd:integer'),
         'icon': 'icon-vellum-numeric',
-        'icon_bs3': 'fcc-fd-numeric',
+        'icon_bs3': 'fcc fcc-fd-numeric',
     },
     "Long": {
         'tag': 'input',
         'type': 'xsd:long',
         'icon': 'icon-vellum-long',
-        'icon_bs3': 'fcc-fd-long',
+        'icon_bs3': 'fcc fcc-fd-long',
     },
     "MSelect": {
         'tag': 'select',
         'icon': 'icon-vellum-multi-select',
-        'icon_bs3': 'fcc-fd-multi-select',
+        'icon_bs3': 'fcc fcc-fd-multi-select',
     },
     "PhoneNumber": {
         'tag': 'input',
         'type': ('xsd:string', None),
         'appearance': 'numeric',
         'icon': 'icon-signal',
-        'icon_bs3': 'fd-question',
+        'icon_bs3': 'fa fa-signal',
     },
     "Repeat": {
         'tag': 'repeat',
         'icon': 'icon-retweet',
-        'icon_bs3': 'fd-question',
+        'icon_bs3': 'fa fa-retweet',
     },
     "Secret": {
         'tag': 'secret',
         'type': ('xsd:string', None),
         'icon': 'icon-key',
-        'icon_bs3': 'fd-question',
+        'icon_bs3': 'fa fa-key',
     },
     "Select": {
         'tag': 'select1',
         'icon': 'icon-vellum-single-select',
-        'icon_bs3': 'fcc-fd-single-select',
+        'icon_bs3': 'fcc fcc-fd-single-select',
     },
     "Text": {
         'tag': 'input',
         'type': ('xsd:string', None),
         'icon': "icon-vellum-text",
-        'icon_bs3': 'fcc-fd-text',
+        'icon_bs3': 'fcc fcc-fd-text',
     },
     "Time": {
         'tag': 'input',
         'type': 'xsd:time',
         'icon': 'icon-time',
-        'icon_bs3': 'fd-question',
+        'icon_bs3': 'a fa-clock-o',
     },
     "Trigger": {
         'tag': 'trigger',
         'icon': 'icon-tag',
-        'icon_bs3': 'fd-question',
+        'icon_bs3': 'fa fa-tag',
     },
     "Video": {
         'tag': 'upload',
         'media': 'video/*',
         'type': 'binary',
         'icon': 'icon-facetime-video',
-        'icon_bs3': 'fd-question',
+        'icon_bs3': 'fa fa-video-camera',
     },
 }
 

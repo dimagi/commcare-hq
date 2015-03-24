@@ -181,7 +181,7 @@
 <script type="text/ng-template" id="/form_questions.html">
 <ul class="fa-ul">
     <li ng-repeat="question in questions">
-        {% verbatim %}<i class="hq-icon fa-li fcc {{ getIcon(question.question.type) }}"></i>{% endverbatim %}
+        {% verbatim %}<i class="hq-icon fa-li {{ getIcon(question.question.type) }}"></i>{% endverbatim %}
         {% verbatim %}<span ng-show="showLabels">{{ getQuestionLabel(question.question) }}</span>{% endverbatim %}
         <span ng-hide="showLabels">{{ question.question.value }}</span>
         <ul class="fa-ul" ng-if="question.condition" ng-show="showConditions">

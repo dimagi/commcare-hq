@@ -47,7 +47,9 @@ class NestedDictGetter(object):
             return None
         try:
             return recursive_lookup(item, self.property_path)
-        except KeyError:
+        except (KeyError, TypeError):
+            # key errors are missing keys
+            # type errors are valid keys that return the wrong type
             return None
 
 

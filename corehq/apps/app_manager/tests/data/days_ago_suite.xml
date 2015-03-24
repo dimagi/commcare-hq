@@ -193,6 +193,9 @@
         <text><locale id="forms.m0f0"/></text>
 
     </command>
+    <session>
+        <datum function="uuid()" id="case_id_new_days_ago_test_0"/>
+    </session>
 
 </entry>
 

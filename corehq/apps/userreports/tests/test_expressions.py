@@ -98,6 +98,22 @@ class ExpressionFromSpecTest(SimpleTestCase):
                 })
 
 
+class PropertyPathExpressionTest(SimpleTestCase):
+
+    def test_property_path_bad_type(self):
+        getter = ExpressionFactory.from_spec({
+            'type': 'property_path',
+            'property_path': ['path', 'to', 'foo'],
+        })
+        self.assertEqual(PropertyPathGetterSpec, type(getter))
+        for bad_value in [None, '', []]:
+            self.assertEqual(None, getter({
+                'path': {
+                    'to': bad_value
+                }
+            }))
+
+
 class ConditionalExpressionTest(SimpleTestCase):
 
     def setUp(self):

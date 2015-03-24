@@ -272,6 +272,9 @@ def purge_locations(domain):
             case.delete()
         loc.delete()
 
-    domain_obj = Domain.get_by_name(domain)
-    domain_obj.location_types = []
-    domain_obj.save()
+    db = Domain.get_db()
+    domain_obj = Domain.get_by_name(domain)  # cached lookup is fast but stale
+    domain_json = db.get(domain_obj._id)  # get latest raw, unwrapped doc
+    domain_json.pop('obsolete_location_types', None)
+    domain_json.pop('location_types', None)
+    db.save_doc(domain_json)

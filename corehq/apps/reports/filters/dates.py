@@ -1,4 +1,4 @@
-import simplejson
+import json
 from django.utils.translation import ugettext_lazy, ugettext as _
 from dimagi.utils.dates import DateSpan
 from corehq.apps.reports.filters.base import BaseReportFilter
@@ -36,7 +36,7 @@ class DatespanFilter(BaseReportFilter):
 
     @property
     def report_labels(self):
-        return simplejson.dumps({
+        return json.dumps({
             'last_7_days': _('Last 7 Days'),
             'last_month': _('Last Month'),
             'last_30_days': _('Last 30 Days')

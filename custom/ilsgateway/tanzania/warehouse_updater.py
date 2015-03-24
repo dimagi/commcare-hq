@@ -299,7 +299,7 @@ def populate_report_data(start_date, end_date, domain, runner):
         non_facilities += list(Location.filter_by_type(domain, 'MOHSW'))
 
     if runner.location:
-        if runner.location.location_type != 'FACILITY':
+        if runner.location.location_type.name.upper() != 'FACILITY':
             facilities = []
             non_facilities = itertools.dropwhile(
                 lambda location: location._id != runner.location.location_id,

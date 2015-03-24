@@ -4,7 +4,7 @@ import logging
 from django.core.urlresolvers import reverse
 from django.utils import html
 from django.utils.translation import ugettext as _, ugettext_noop
-import simplejson
+import json
 
 from corehq.apps.api.es import ReportCaseES
 from corehq.apps.cloudcare.api import get_cloudcare_app, get_cloudcare_form_url
@@ -318,7 +318,7 @@ class PatientTaskListReport(CustomProjectReport, ElasticProjectInspectionReport,
             }
             q['sort'] = sort
 
-        logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, simplejson.dumps(q)))
+        logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, json.dumps(q)))
 
         if self.pagination:
             return es_query(q=q, es_url=REPORT_CASE_INDEX + '/_search', dict_only=False, start_at=self.pagination.start)

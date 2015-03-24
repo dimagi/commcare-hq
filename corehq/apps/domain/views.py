@@ -97,6 +97,14 @@ accounting_logger = logging.getLogger('accounting')
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators
 # about why we need this custom login_required decorator
 
+PAYMENT_ERROR_MESSAGES = {
+    400: _('Your request was not formatted properly.'),
+    403: _('Forbidden.'),
+    404: _('Page not found.'),
+    500: _("There was an error processing your request."
+           " We're working quickly to fix the issue. Please try again shortly."),
+}
+
 
 @login_required
 def select(request, domain_select_template='domain/select.html'):
@@ -813,6 +821,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'process_payment_url': reverse(CreditsStripePaymentView.urlname,
                                            args=[self.domain]),
             'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
+            'payment_error_messages': PAYMENT_ERROR_MESSAGES,
             'sms_rate_calc_url': reverse(SMSRatesView.urlname,
                                          args=[self.domain])
         }
@@ -928,6 +937,7 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
         pagination_context = self.pagination_context
         pagination_context.update({
             'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
+            'payment_error_messages': PAYMENT_ERROR_MESSAGES,
             'process_payment_url': reverse(InvoiceStripePaymentView.urlname,
                                            args=[self.domain]),
             'stripe_cards': self.stripe_cards,

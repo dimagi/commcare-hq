@@ -10,7 +10,7 @@ from collections import defaultdict, OrderedDict
 import datetime
 import logging
 import pickle
-import simplejson
+import json
 import re
 from dateutil import parser
 
@@ -1234,7 +1234,7 @@ class HealthStatusReport(DatespanMixin, BaseReport):
             block_term = get_nested_terms_filter("user_data.block", self.blocks)
             es_filters["bool"]["must"].append(block_term)
         q["query"]["filtered"]["query"].update({"match_all": {}})
-        logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, simplejson.dumps(q)))
+        logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, json.dumps(q)))
         return es_query(q=q, es_url=USER_INDEX + '/_search', dict_only=False,
                         start_at=self.pagination.start, size=self.pagination.count)
 

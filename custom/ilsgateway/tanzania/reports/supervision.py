@@ -155,14 +155,14 @@ class SupervisionReport(DetailsReport):
     @property
     def title(self):
         title = _('Supervision')
-        if self.location and self.location.location_type == 'FACILITY':
+        if self.location and self.location.location_type.name.upper() == 'FACILITY':
             title = _('Facility Details')
         return title
 
     @property
     def fields(self):
         fields = [AsyncLocationFilter, MonthAndQuarterFilter, YearFilter, ProductByProgramFilter, MSDZoneFilter]
-        if self.location and self.location.location_type == 'FACILITY':
+        if self.location and self.location.location_type.name.upper() == 'FACILITY':
             fields = [AsyncLocationFilter, ProductByProgramFilter]
         return fields
 
@@ -178,9 +178,9 @@ class SupervisionReport(DetailsReport):
                 SupervisionSummaryData(config=config, css_class='row_chart_all'),
             ]
 
-            if location.location_type.upper() == 'DISTRICT':
+            if location.location_type.name.upper() == 'DISTRICT':
                 data_providers.append(DistrictSupervisionData(config=config, css_class='row_chart_all'))
-            elif location.location_type == 'FACILITY':
+            elif location.location_type.name.upper() == 'FACILITY':
                 return [
                     InventoryHistoryData(config=config),
                     RandRHistory(config=config),

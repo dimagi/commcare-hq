@@ -184,7 +184,7 @@
         <stack>
             <push>
                 <command value="'m1-f0'"/>
-                <datum id="case_id" value="uuid()"/>
+                <datum id="case_id_new_suite_test_0" value="uuid()"/>
                 <datum id="return_to" value="'m0'"/>
             </push>
         </stack>
@@ -345,6 +345,9 @@
             <locale id="forms.m0f0"/>
         </text>
     </command>
+    <session>
+        <datum id="case_id_new_suite_test_0" function="uuid()"/>
+    </session>
 </entry>
 <entry>
     <form>http://openrosa.org/formdesigner/BC66AA7E-7CB8-4D98-8FAA-68B60E52285D</form>
@@ -368,14 +371,14 @@
     <instance id="casedb" src="jr://instance/casedb"/>
     <instance id="commcaresession" src="jr://instance/session"/>
     <session>
-        <datum id="case_id" function="uuid()"/>
+        <datum id="case_id_new_suite_test_0" function="uuid()"/>
     </session>
     <stack>
-        <create if="count(instance('commcaresession')/session/data/return_to) = 1 and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) &gt; 0">
+        <create if="count(instance('commcaresession')/session/data/return_to) = 1 and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_new_suite_test_0]) &gt; 0">
             <command value="instance('commcaresession')/session/data/return_to"/>
-            <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
+            <datum id="case_id" value="instance('commcaresession')/session/data/case_id_new_suite_test_0"/>
         </create>
-        <create if="count(instance('commcaresession')/session/data/return_to) = 1 and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0">
+        <create if="count(instance('commcaresession')/session/data/return_to) = 1 and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_new_suite_test_0]) = 0">
             <command value="instance('commcaresession')/session/data/return_to"/>
         </create>
     </stack>

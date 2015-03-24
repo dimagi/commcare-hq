@@ -340,7 +340,7 @@ class DetailsReport(MultiReport):
 
     @property
     def with_tabs(self):
-        return self.location and self.location.location_type == 'FACILITY'
+        return self.location and self.location.location_type.name.upper() == 'FACILITY'
 
     @property
     def report_context(self):
