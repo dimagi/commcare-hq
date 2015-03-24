@@ -109,9 +109,6 @@ def print_result(matches, view, database):
     if not matches:
         return
 
-    COUCH = 0
-    ROWS = 1
-
     if len(matches) == 1:
         print u"{}All is consistent in {} for view {}{}".format(Colors.OKGREEN, database, view, Colors.ENDC)
         return
@@ -119,11 +116,11 @@ def print_result(matches, view, database):
     print "{}{} - {}{}".format(Colors.WARNING, database, view, Colors.ENDC)
     for wiggle_range, match_tuples in matches.items():
         print u"Couches for wiggle range {}: ".format(wiggle_range)
-        for match_tuple in match_tuples:
-            print u"\t{}".format(match_tuple[COUCH])
+        for couch_uri, rows in match_tuples:
+            print u"\t{}".format(couch_uri)
             print u"\tHad this many {}{}{} rows for this view".format(
                 Colors.BOLD,
-                match_tuple[ROWS],
+                rows,
                 Colors.ENDC)
 
 
