@@ -107,11 +107,11 @@ class RestoreResponse(object):
 class FileRestoreResponse(RestoreResponse):
 
     BODY_TAG_SUFFIX = '-body'
+    EXTENSION = 'xml'
 
     def __init__(self, username=None, items=False):
         super(FileRestoreResponse, self).__init__(username, items)
         self.filename = path.join(settings.RESTORE_PAYLOAD_DIR, uuid4().hex)
-        self.extention = 'xml'
 
         self.response_body = FileIO(self.get_filename(self.BODY_TAG_SUFFIX), 'w+')
         self.response = FileIO(self.get_filename(), 'w+')
@@ -120,7 +120,7 @@ class FileRestoreResponse(RestoreResponse):
         return "{filename}{suffix}.{ext}".format(
             filename=self.filename,
             suffix=suffix or '',
-            ext=self.extention
+            ext=self.EXTENSION
         )
 
     def __add__(self, other):
@@ -497,9 +497,13 @@ class RestoreConfig(object):
             return
 
         if self.sync_log:
-            return self.sync_log.get_cached_payload(self.version)
+            payload = self.sync_log.get_cached_payload(self.version)
         else:
-            return self.cache.get(self._initial_cache_key())
+            payload = self.cache.get(self._initial_cache_key())
+
+        if payload and payload.endswith(FileRestoreResponse.EXTENSION) and not path.exists(payload):
+            return
+        return payload
 
     def set_cached_payload_if_necessary(self, resp, duration):
         if self.sync_log:
