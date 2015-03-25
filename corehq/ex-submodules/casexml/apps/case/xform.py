@@ -137,14 +137,14 @@ class CaseDbCache(object):
     to the database. Also provides some type checking safety.
     """
     def __init__(self, domain=None, strip_history=False, deleted_ok=False,
-                 lock=False, wrap=True, initial=None, xform=None):
+                 lock=False, wrap=True, initial=None, xforms=None):
         if initial:
             self.cache = {case['_id']: case for case in initial}
         else:
             self.cache = {}
 
         self.domain = domain
-        self.xform = xform
+        self.xforms = xforms or []
         self.strip_history = strip_history
         self.deleted_ok = deleted_ok
         self.lock = lock
@@ -238,11 +238,7 @@ class CaseDbCache(object):
         """
         Get any in-memory forms being processed.
         """
-        # this will currently be at-most one form, though could be extended in the future
-        # abstracting the form cache inside this object seems useful.
-        if self.xform:
-            return {self.xform._id: self.xform}
-        return {}
+        return {xform._id: xform for xform in self.xforms}
 
 
 def get_and_check_xform_domain(xform):
