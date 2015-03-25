@@ -5,12 +5,13 @@ from corehq.apps.app_manager.models import (
     AUTO_SELECT_USER, AUTO_SELECT_CASE, LoadUpdateAction, AUTO_SELECT_FIXTURE,
     AUTO_SELECT_RAW, WORKFLOW_MODULE, DetailColumn, ScheduleVisit, FormSchedule,
     Module, AdvancedModule, WORKFLOW_ROOT, AdvancedOpenCaseAction, SortElement,
-    MappingItem, OpenCaseAction, OpenSubCaseAction, FormActionCondition, UpdateCaseAction)
+    MappingItem, OpenCaseAction, OpenSubCaseAction, FormActionCondition, UpdateCaseAction, WORKFLOW_FORM, FormLink)
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.suite_xml import dot_interpolate
 
 from lxml import etree
 import commcare_translations
+from corehq.apps.builds.models import BuildSpec
 
 
 class SuiteTest(SimpleTestCase, TestFileMixin):
@@ -715,3 +716,24 @@ class RegexTest(SimpleTestCase):
                 dot_interpolate(case[0], replacement),
                 case[1] % replacement
             )
+
+
+class TestFormLinking(SimpleTestCase, TestFileMixin):
+    file_path = ('data', 'suite')
+
+    def test_basic(self):
+        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        app.build_spec = BuildSpec.from_string('2.9.0/latest')
+        m0 = app.add_module(Module.new_module('m0', None))
+        m0f0 = app.new_form(m0.id, "m0f0", None)
+
+        m1 = app.add_module(Module.new_module('m1', None))
+        m1f0 = app.new_form(m1.id, "m1f0", None)
+        m1f0.unique_id = 'm1f0'
+
+        m0f0.post_form_workflow = WORKFLOW_FORM
+        m0f0.form_links = [
+            FormLink(xpath='true()', form_id=m1f0.unique_id)
+        ]
+
+        self.assertXmlPartialEqual(self.get_xml('form_link_basic'), app.create_suite(), "./entry[1]")

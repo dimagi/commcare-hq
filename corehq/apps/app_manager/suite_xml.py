@@ -747,7 +747,7 @@ class SuiteGenerator(SuiteGeneratorBase):
           * Finally remove the last item from the stack frame.
         """
         from corehq.apps.app_manager.models import (
-            WORKFLOW_DEFAULT, WORKFLOW_PREVIOUS, WORKFLOW_MODULE, WORKFLOW_ROOT
+            WORKFLOW_DEFAULT, WORKFLOW_PREVIOUS, WORKFLOW_MODULE, WORKFLOW_ROOT, WORKFLOW_FORM
         )
 
         def create_workflow_stack(suite, form_command, module_command, frame_children, allow_empty_stack=False):
@@ -785,7 +785,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                     frame_children = [module_command] if module_command != self.id_strings.ROOT else []
                     if form.post_form_workflow == WORKFLOW_ROOT:
                         create_workflow_stack(suite, form_command, module_command, [], True)
-                    if form.post_form_workflow == WORKFLOW_MODULE:
+                    elif form.post_form_workflow == WORKFLOW_MODULE:
                         create_workflow_stack(suite, form_command, module_command, frame_children)
                     elif form.post_form_workflow == WORKFLOW_PREVIOUS:
                         module_datums = self.get_module_datums(suite, module_id)
@@ -808,6 +808,14 @@ class SuiteGenerator(SuiteGeneratorBase):
                             last = frame_children.pop()
 
                         create_workflow_stack(suite, form_command, module_command, frame_children)
+                    elif form.post_form_workflow == WORKFLOW_FORM:
+                        for link in form.form_links:
+                            target_form = self.app.get_form(link.form_id)
+                            frame_children = [
+                                self.id_strings.menu_id(target_form.get_module()),
+                                self.id_strings.form_command(target_form)
+                            ]
+                            create_workflow_stack(suite, form_command, module_command, frame_children)
 
     def get_module_datums(self, suite, module_id):
         _, datums = self._get_entries_datums(suite)
