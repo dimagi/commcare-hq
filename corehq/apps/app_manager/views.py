@@ -987,11 +987,16 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
         })
 
         if toggles.FORM_LINK_WORKFLOW.enabled(request.user.username):
+            def qualified_form_name(form):
+                module_name = trans(form.get_module().name, app.langs)
+                form_name = trans(form.name, app.langs)
+                return "{} -> {}".format(module_name, form_name)
+
             modules = filter(lambda m: m.case_type == module.case_type, app.get_modules())
             linkable_forms = list(itertools.chain.from_iterable(list(m.get_forms()) for m in modules))
             context.update({
                 'linkable_forms': map(
-                    lambda f: {'unique_id': f.unique_id, 'name': trans(f.name, app.langs)},
+                    lambda f: {'unique_id': f.unique_id, 'name': qualified_form_name(f)},
                     linkable_forms
                 )
             })
