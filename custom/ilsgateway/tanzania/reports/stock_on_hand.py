@@ -253,9 +253,9 @@ class DistrictSohPercentageTableData(ILSData):
                 type='stockonhand',
                 report__date__lte=last_bd_of_the_month
             ).order_by('-report__date')
-
-            last_bd_of_last_month = datetime.combine(get_business_day_of_month(enddate.year,
-                                                     enddate.month,
+            last_of_last_month = datetime(enddate.year, enddate.month, 1) - timedelta(days=1)
+            last_bd_of_last_month = datetime.combine(get_business_day_of_month(last_of_last_month.year,
+                                                     last_of_last_month.month,
                                                      -1), time())
             if st:
                 sts = _reported_on_time(last_bd_of_last_month, st[0].report.date)
