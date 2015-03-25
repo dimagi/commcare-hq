@@ -975,7 +975,6 @@ class XForm(WrappedNode):
 
     def add_case_and_meta_advanced(self, form):
         self.create_casexml_2_advanced(form)
-        self.add_usercase_advanced(form)
         self.add_meta_2(form)
 
     def already_has_meta(self):
@@ -998,14 +997,11 @@ class XForm(WrappedNode):
 
         usercase_path = 'usercase/'
         actions = form.active_actions()
-        usercase_bound = False
 
         if 'update_case' in actions:
             usercase_updates = get_usercase_keys(actions['update_case'].update.items())
             if usercase_updates:
-                if not usercase_bound:
-                    self._add_usercase_bind(usercase_path)
-                    usercase_bound = True
+                self._add_usercase_bind(usercase_path)
                 usercase_block = _make_elem('{x}usercase')
                 case_block = CaseBlock(self, usercase_path)
                 case_block.add_update_block(usercase_updates)
@@ -1015,9 +1011,6 @@ class XForm(WrappedNode):
         if 'case_preload' in actions:
             self.add_casedb()
             usercase_preloads = get_usercase_values(actions['case_preload'].preload.items())
-            if usercase_preloads and not usercase_bound:
-                self._add_usercase_bind(usercase_path)
-                usercase_bound = True
             for nodeset, property_ in usercase_preloads.items():
                 parent_path, property_ = split_path(property_)
                 property_xpath = {
@@ -1030,49 +1023,6 @@ class XForm(WrappedNode):
                     ref=nodeset,
                     value=id_xpath.case().property(property_xpath),
                 )
-
-    def add_usercase_advanced(self, form):
-        from corehq.apps.app_manager.util import split_path
-
-        usercase_path = 'usercase/'
-        usercase_bound = False
-
-        for action in form.actions.load_update_cases:
-            session_case_id = CaseIDXPath(session_var(action.case_session_var))
-            if session_case_id != SESSION_USERCASE_ID:
-                # If it's not the user case, ignore it
-                continue
-
-            if action.preload:
-                self.add_casedb()
-                usercase_preloads = get_usercase_keys(action.preload.items())
-                if usercase_preloads and not usercase_bound:
-                    self._add_usercase_bind(usercase_path)
-                    usercase_bound = True
-                for property_, nodeset in usercase_preloads.items():
-                    parent_path, property_ = split_path(property_)
-                    property_xpath = {
-                        'name': 'case_name',
-                        'owner_id': '@owner_id'
-                    }.get(property_, property_)
-
-                    id_xpath = get_case_parent_id_xpath(parent_path, case_id_xpath=SESSION_USERCASE_ID)
-                    self.add_setvalue(
-                        ref=nodeset,
-                        value=id_xpath.case().property(property_xpath),
-                    )
-
-            if action.case_properties:
-                usercase_updates = get_usercase_keys(action.case_properties.items())
-                if usercase_updates:
-                    if not usercase_bound:
-                        self._add_usercase_bind(usercase_path)
-                        usercase_bound = True
-                    usercase_block = _make_elem('{x}usercase')
-                    case_block = CaseBlock(self, usercase_path)
-                    case_block.add_update_block(usercase_updates)
-                    usercase_block.append(case_block.elem)
-                    self.data_node.append(usercase_block)
 
     def add_meta_2(self, form):
         case_parent = self.data_node
