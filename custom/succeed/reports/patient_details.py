@@ -4,14 +4,16 @@ from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParam
 from corehq.apps.cloudcare.api import get_cloudcare_app, get_cloudcare_form_url
 from django.utils import html
 from dimagi.utils.decorators.memoized import memoized
-from custom.succeed.utils import get_app_build, SUCCEED_CM_APPNAME, SUCCEED_PM_APPNAME, SUCCEED_CHW_APPNAME
+from custom.succeed.utils import get_app_build, SUCCEED_CM_APPNAME, SUCCEED_PM_APPNAME, SUCCEED_CHW_APPNAME, \
+    SUCCEED_DOMAIN
 from casexml.apps.case.models import CommCareCase
 
 EMPTY_URL = ''
 
 
 class PatientDetailsReport(CustomProjectReport, ElasticProjectInspectionReport, ProjectReportParametersMixin):
-
+    name = 'Patient Details'
+    slug = 'patient'
     report_template_path = ""
 
     hide_filters = True
@@ -26,7 +28,9 @@ class PatientDetailsReport(CustomProjectReport, ElasticProjectInspectionReport, 
             return True
         return False
 
-    def get_case(self):
+    @property
+    @memoized
+    def case(self):
         if self.request.GET.get('patient_id', None) is None:
             return None
         return CommCareCase.get(self.request.GET['patient_id'])
@@ -55,38 +59,23 @@ class PatientDetailsReport(CustomProjectReport, ElasticProjectInspectionReport, 
                                          case_id=case_id) + '/enter/'
         return html.escape(url)
 
+    def update_app_info(self):
+        self.cm_app_dict = get_cloudcare_app(SUCCEED_DOMAIN, SUCCEED_CM_APPNAME)
+        self.latest_cm_build = get_app_build(self.cm_app_dict)
+        self.pm_app_dict = get_cloudcare_app(SUCCEED_DOMAIN, SUCCEED_PM_APPNAME)
+        self.latest_pm_build = get_app_build(self.pm_app_dict)
+        self.chw_app_dict = get_cloudcare_app(SUCCEED_DOMAIN, SUCCEED_CHW_APPNAME)
+        self.latest_chw_build = get_app_build(self.chw_app_dict)
+
     @property
     def report_context(self):
         ret = {}
-
         try:
-            case = self.get_case()
-            has_error = False
+            ret['patient'] = self.case
         except ResourceNotFound:
-
-            has_error = True
-            case = None
-        if case is None:
             self.report_template_path = "patient_error.html"
-            if has_error:
-                ret['error_message'] = "Patient not found"
-            else:
-                ret['error_message'] = "No patient selected"
+            ret['error_message'] = "Patient not found"
             return ret
-
-        try:
-            self.cm_app_dict = get_cloudcare_app(case['domain'], SUCCEED_CM_APPNAME)
-            self.latest_cm_build = get_app_build(self.cm_app_dict)
-            self.pm_app_dict = get_cloudcare_app(case['domain'], SUCCEED_PM_APPNAME)
-            self.latest_pm_build = get_app_build(self.pm_app_dict)
-            self.chw_app_dict = get_cloudcare_app(case['domain'], SUCCEED_CHW_APPNAME)
-            self.latest_chw_build = get_app_build(self.chw_app_dict)
-        except ResourceNotFound as ex:
-            self.report_template_path = "patient_error.html"
-            ret['error_message'] = ex.message
-            return ret
-
-        ret['patient'] = case
         ret['patient_info_url'] = self.patient_info_url
         ret['patient_submission_url'] = self.patient_submission_url
         ret['patient_interactions_url'] = self.patient_interactions_url
@@ -111,7 +100,7 @@ class PatientDetailsReport(CustomProjectReport, ElasticProjectInspectionReport, 
         from custom.succeed.reports.patient_Info import PatientInfoReport
         if self.is_all_reports_enabled or self.get_class_path(PatientInfoReport) in self.get_available_report_list:
             return html.escape(
-                PatientInfoReport.get_url(*[self.get_case()["domain"]]) + "?patient_id=%s" % self.get_case()['_id'])
+                PatientInfoReport.get_url(*[self.case["domain"]]) + "?patient_id=%s" % self.case['_id'])
         return EMPTY_URL
 
     @property
@@ -119,7 +108,7 @@ class PatientDetailsReport(CustomProjectReport, ElasticProjectInspectionReport, 
         from custom.succeed.reports.patient_submissions import PatientSubmissionReport
         if self.is_all_reports_enabled or self.get_class_path(PatientSubmissionReport) in self.get_available_report_list:
             return html.escape(
-                PatientSubmissionReport.get_url(*[self.get_case()["domain"]]) + "?patient_id=%s" % self.get_case()['_id'])
+                PatientSubmissionReport.get_url(*[self.case["domain"]]) + "?patient_id=%s" % self.case['_id'])
         else:
             return EMPTY_URL
 
@@ -128,7 +117,7 @@ class PatientDetailsReport(CustomProjectReport, ElasticProjectInspectionReport, 
         from custom.succeed.reports.patient_interactions import PatientInteractionsReport
         if self.is_all_reports_enabled or self.get_class_path(PatientInteractionsReport) in self.get_available_report_list:
             return html.escape(
-                PatientInteractionsReport.get_url(*[self.get_case()["domain"]]) + "?patient_id=%s" % self.get_case()['_id'])
+                PatientInteractionsReport.get_url(*[self.case["domain"]]) + "?patient_id=%s" % self.case['_id'])
         else:
             return EMPTY_URL
 
@@ -137,6 +126,6 @@ class PatientDetailsReport(CustomProjectReport, ElasticProjectInspectionReport, 
         from custom.succeed.reports.patient_status import PatientStatusReport
         if self.is_all_reports_enabled or self.get_class_path(PatientStatusReport) in self.get_available_report_list:
             return html.escape(
-                PatientStatusReport.get_url(*[self.get_case()["domain"]]) + "?patient_id=%s" % self.get_case()['_id'])
+                PatientStatusReport.get_url(*[self.case["domain"]]) + "?patient_id=%s" % self.case['_id'])
         else:
             return EMPTY_URL
