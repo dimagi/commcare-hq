@@ -1417,14 +1417,10 @@ class SuiteGenerator(SuiteGeneratorBase):
                         return True
             return False
 
-        def updates_usercase(form):
+        def uses_usercase(form):
             actions = form.active_actions()
             if 'update_case' in actions and hasattr(actions['update_case'], 'update'):
                 return any_usercase_items(actions['update_case'].update.keys())
-            return False
-
-        def preloads_usercase(form):
-            actions = form.active_actions()
             if 'case_preload' in actions:
                 return any_usercase_items(actions['case_preload'].preload.values())
             return False
@@ -1434,7 +1430,7 @@ class SuiteGenerator(SuiteGeneratorBase):
         elif form and form.is_case_list_form:
             self.configure_entry_as_case_list_form(form, e)
 
-        if form and (updates_usercase(form) or preloads_usercase(form)):
+        if form and uses_usercase(form):
             self.configure_entry_usercase(e)
 
         if form and self.app.case_sharing and case_sharing_requires_assertion(form):
@@ -1608,8 +1604,10 @@ class SuiteGenerator(SuiteGeneratorBase):
 
         def uses_usercase(form):
             for action in form.actions.load_update_cases:
-                if action.preload or action.case_properties:
+                if action.preload:
                     return any_usercase_items(action.preload.keys())
+                if action.case_properties:
+                    return any_usercase_items(action.case_properties.keys())
             return False
 
         for index, action in enumerate(form.actions.load_update_cases):

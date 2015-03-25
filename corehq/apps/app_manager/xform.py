@@ -409,7 +409,7 @@ class CaseBlock(object):
                 key = 'case_name'
             elif key.startswith(USERCASE_PREFIX):
                 # Skip usercase keys. They are handled by the usercase block.
-                # cf. add_usercase and add_usercase_advanced
+                # cf. add_usercase
                 continue
             if self.is_attachment(value):
                 attachments[key] = value
@@ -1000,7 +1000,7 @@ class XForm(WrappedNode):
         actions = form.active_actions()
         usercase_bound = False
 
-        if 'update_case' in actions and hasattr(actions['update_case'], 'update'):
+        if 'update_case' in actions:
             usercase_updates = get_usercase_keys(actions['update_case'].update.items())
             if usercase_updates:
                 if not usercase_bound:
