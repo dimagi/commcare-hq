@@ -95,11 +95,6 @@ def tasks(case_id):
         return "%s (bad ID format)" % case_id
 
 
-def test(val):
-    print val
-    return val
-
-
 class PatientListReport(SqlTabularReport, CustomProjectReport, ProjectReportParametersMixin):
 
     name = ugettext_noop('Patient List')

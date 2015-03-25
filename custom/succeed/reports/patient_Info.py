@@ -187,7 +187,7 @@ class PatientInfoReport(PatientDetailsReport):
     def report_context(self):
         self.report_template_path = "patient_info.html"
         ret = super(PatientInfoReport, self).report_context
-        # self.update_app_info()
+        self.update_app_info()
         ret['view_mode'] = 'info'
         patient_info = PatientInfoDisplay(ret['patient'])
 
