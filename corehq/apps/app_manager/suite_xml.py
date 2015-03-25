@@ -1431,7 +1431,8 @@ class SuiteGenerator(SuiteGeneratorBase):
             # for usercase_type. We shouldn't be using user case properties
             # if user case functionality is disabled.
             raise ValueError('Unable to determine user case. User case type unknown.')
-        case = UserCaseXPath(self.usercase_type).case()
+        case_type = CaseTypeXpath(self.usercase_type).case()
+        case = UserCaseXPath(case_type).case()
         e.datums.append(SessionDatum(
             id='usercase_id',
             function=('%s/@case_id' % case)

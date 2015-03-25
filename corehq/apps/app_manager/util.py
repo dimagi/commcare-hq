@@ -213,8 +213,10 @@ def get_case_properties(app, case_types, defaults=(),
 
 
 def get_usercase_type(domain_name):
-    call_center_config = Domain.get_by_name(domain_name).call_center_config
-    return call_center_config.case_type if call_center_config.enabled else None
+    domain = Domain.get_by_name(domain_name)
+    if not domain:
+        return None
+    return domain.call_center_config.case_type if domain.call_center_config.enabled else None
 
 
 def get_all_case_properties(app):

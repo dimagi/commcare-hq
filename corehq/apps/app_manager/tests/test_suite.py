@@ -12,10 +12,19 @@ from corehq.apps.app_manager.suite_xml import dot_interpolate
 
 from lxml import etree
 import commcare_translations
+from mock import patch
 
 
 class SuiteTest(SimpleTestCase, TestFileMixin):
     file_path = ('data', 'suite')
+
+    def setUp(self):
+        self.usercase_type_patch = patch('corehq.apps.app_manager.models.get_usercase_type')
+        self.usercase_type_mock = self.usercase_type_patch.start()
+        self.usercase_type_mock.return_value = 'user_case'
+
+    def tearDown(self):
+        self.usercase_type_patch.stop()
 
     def assertHasAllStrings(self, app, strings):
         et = etree.XML(app)
@@ -643,6 +652,12 @@ class AdvancedModuleAsChildTest(SimpleTestCase, TestFileMixin):
 
         for m_id in range(2):
             self.app.new_form(m_id, "Form", None)
+
+        self.usercase_type_patch = patch('corehq.apps.app_manager.models.get_usercase_type')
+        self.usercase_type_mock = self.usercase_type_patch.start()
+
+    def tearDown(self):
+        self.usercase_type_patch.stop()
 
     def test_basic_workflow(self):
         # make module_1 as submenu to module_0
