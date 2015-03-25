@@ -15,7 +15,7 @@ from corehq.apps.sms.api import (send_message_via_backend, process_incoming,
 from django.conf import settings
 from corehq.apps.domain.models import Domain
 from corehq.apps.smsbillables.models import SmsBillable
-from dimagi.utils.timezones import utils as tz_utils
+from corehq.util.timezones import utils as tz_utils
 from dimagi.utils.couch.cache import cache_core
 from threading import Thread
 

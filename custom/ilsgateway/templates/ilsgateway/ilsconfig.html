@@ -156,6 +156,15 @@
         <div class="row-fluid">
             <div class="span12">
                 <div class="btn-toolbar">
+                    <button class="btn" id="fix_groups_in_location">
+                        {% trans "Fix Groups in locations" %}
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="row-fluid">
+            <div class="span12">
+                <div class="btn-toolbar">
                     <button class="btn" id="delete_runs">
                         {% trans "Delete reports runs" %}
                     </button>
@@ -213,6 +222,12 @@
 
         $("#delete_runs").click(function() {
             var url = '{% url 'delete_runs' domain %}';
+            var successMessage = "{% trans "Started" %}";
+            _post(this, url, {success: successMessage});
+        });
+
+        $("#fix_groups_in_location").click(function() {
+            var url = '{% url 'fix_groups_in_location' domain %}';
             var successMessage = "{% trans "Started" %}";
             _post(this, url, {success: successMessage});
         });

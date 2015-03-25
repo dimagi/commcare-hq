@@ -5,7 +5,7 @@ from corehq.apps.app_manager.models import (
     AUTO_SELECT_USER, AUTO_SELECT_CASE, LoadUpdateAction, AUTO_SELECT_FIXTURE,
     AUTO_SELECT_RAW, WORKFLOW_MODULE, DetailColumn, ScheduleVisit, FormSchedule,
     Module, AdvancedModule, WORKFLOW_ROOT, AdvancedOpenCaseAction, SortElement,
-    MappingItem, UpdateCaseAction, PreloadAction
+    MappingItem, UpdateCaseAction, PreloadAction, OpenCaseAction, OpenSubCaseAction, FormActionCondition
 )
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.suite_xml import dot_interpolate
@@ -34,6 +34,11 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         suite_tag = suite_tag or app_tag
         app = Application.wrap(self.get_json(app_tag))
         self.assertXmlEqual(self.get_xml(suite_tag), app.create_suite())
+
+    def _test_generic_suite_partial(self, app_tag, xpath, suite_tag=None):
+        suite_tag = suite_tag or app_tag
+        app = Application.wrap(self.get_json(app_tag))
+        self.assertXmlPartialEqual(self.get_xml(suite_tag), app.create_suite(), xpath)
 
     def _test_app_strings(self, app_tag):
         app = Application.wrap(self.get_json(app_tag))
@@ -121,7 +126,8 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
             mode=AUTO_SELECT_USER,
             value_key='case_id'
         )
-        self.assertXmlEqual(self.get_xml('suite-advanced-autoselect-user'), app.create_suite())
+        self.assertXmlPartialEqual(self.get_xml('suite-advanced-autoselect-user'), app.create_suite(),
+                                   './entry[2]')
 
     def test_advanced_suite_auto_select_fixture(self):
         app = Application.wrap(self.get_json('suite-advanced'))
@@ -130,7 +136,8 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
             value_source='table_tag',
             value_key='field_name'
         )
-        self.assertXmlEqual(self.get_xml('suite-advanced-autoselect-fixture'), app.create_suite())
+        self.assertXmlPartialEqual(self.get_xml('suite-advanced-autoselect-fixture'), app.create_suite(),
+                                   './entry[2]')
 
     def test_advanced_suite_auto_select_raw(self):
         app = Application.wrap(self.get_json('suite-advanced'))
@@ -140,7 +147,8 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
                        "containing instance('casedb') "
                        "and instance('commcaresession')")
         )
-        self.assertXmlEqual(self.get_xml('suite-advanced-autoselect-raw'), app.create_suite())
+        self.assertXmlPartialEqual(self.get_xml('suite-advanced-autoselect-raw'), app.create_suite(),
+                                   './entry[2]')
 
     def test_advanced_suite_auto_select_case(self):
         app = Application.wrap(self.get_json('suite-advanced'))
@@ -153,7 +161,8 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
                 value_key='case_id_index'
             )
         ))
-        self.assertXmlEqual(self.get_xml('suite-advanced-autoselect-case'), app.create_suite())
+        self.assertXmlPartialEqual(self.get_xml('suite-advanced-autoselect-case'), app.create_suite(),
+                                   './entry[2]')
 
     def test_advanced_suite_auto_select_with_filter(self):
         """
@@ -169,7 +178,22 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         ))
         form = app.get_module(1).get_form(0)
         form.form_filter = "./edd = '123'"
-        self.assertXmlEqual(self.get_xml('suite-advanced-autoselect-with-filter'), app.create_suite())
+        suite = app.create_suite()
+        self.assertXmlPartialEqual(self.get_xml('suite-advanced-autoselect-with-filter'), suite, './entry[2]')
+        menu = """
+        <partial>
+          <menu id="m1">
+            <text>
+              <locale id="modules.m1"/>
+            </text>
+            <command id="m1-f0" relevant="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_case_clinic]/edd = '123'"/>
+            <command id="m1-f1"/>
+            <command id="m1-f2"/>
+            <command id="m1-case-list"/>
+          </menu>
+        </partial>
+        """
+        self.assertXmlPartialEqual(menu, suite, "./menu[@id='m1']")
 
     def test_case_assertions(self):
         self._test_generic_suite('app_case_sharing', 'suite-case-sharing')
@@ -222,14 +246,36 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         self.assertXmlPartialEqual(self.get_xml('schedule-fixture'), suite, './fixture')
         self.assertXmlPartialEqual(self.get_xml('schedule-entry'), suite, "./detail[@id='m1_case_short']")
 
-    def test_picture_format(self):
-        self._test_generic_suite('app_picture_format', 'suite-picture-format')
+    def _test_format(self, detail_format, template_form):
+        app = Application.wrap(self.get_json('app_audio_format'))
+        details = app.get_module(0).case_details
+        details.short.get_column(0).format = detail_format
+        details.long.get_column(0).format = detail_format
+
+        expected = """
+        <partial>
+          <template form="{0}">
+            <text>
+              <xpath function="picproperty"/>
+            </text>
+          </template>
+          <template form="{0}">
+            <text>
+              <xpath function="picproperty"/>
+            </text>
+          </template>
+        </partial>
+        """.format(template_form)
+        self.assertXmlPartialEqual(expected, app.create_suite(), "./detail/field/template")
 
     def test_audio_format(self):
-        self._test_generic_suite('app_audio_format', 'suite-audio-format')
+        self._test_format('audio', 'audio')
+
+    def test_image_format(self):
+        self._test_format('picture', 'image')
 
     def test_attached_picture(self):
-        self._test_generic_suite('app_attached_image', 'suite-attached-image')
+        self._test_generic_suite_partial('app_attached_image', "./detail", 'suite-attached-image')
 
     def test_form_workflow_previous(self):
         """
@@ -250,7 +296,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
             f1 - load a -> b -> c
             f2 - load a -> b -> autoselect
         """
-        self._test_generic_suite('suite-workflow', 'suite-workflow-previous')
+        self._test_generic_suite_partial('suite-workflow', "./entry", 'suite-workflow-previous')
 
     def test_form_workflow_module(self):
         app = Application.wrap(self.get_json('suite-workflow'))
@@ -258,7 +304,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
             for form in module.get_forms():
                 form.post_form_workflow = WORKFLOW_MODULE
 
-        self.assertXmlEqual(self.get_xml('suite-workflow-module'), app.create_suite())
+        self.assertXmlPartialEqual(self.get_xml('suite-workflow-module'), app.create_suite(), "./entry")
 
     def test_form_workflow_module_in_root(self):
         app = Application.wrap(self.get_json('suite-workflow'))
@@ -266,7 +312,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
             module = app.get_module(m)
             module.put_in_root = True
 
-        self.assertXmlEqual(self.get_xml('suite-workflow-module-in-root'), app.create_suite())
+        self.assertXmlPartialEqual(self.get_xml('suite-workflow-module-in-root'), app.create_suite(), "./entry")
 
     def test_form_workflow_root(self):
         app = Application.wrap(self.get_json('suite-workflow'))
@@ -274,7 +320,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
             for form in module.get_forms():
                 form.post_form_workflow = WORKFLOW_ROOT
 
-        self.assertXmlEqual(self.get_xml('suite-workflow-root'), app.create_suite())
+        self.assertXmlPartialEqual(self.get_xml('suite-workflow-root'), app.create_suite(), "./entry")
 
     def test_copy_form(self):
         app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
@@ -301,7 +347,50 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         app = Application.wrap(self.get_json('suite-advanced'))
         form = app.get_module(1).get_form(1)
         form.form_filter = "./edd = '123'"
-        self.assertXmlEqual(self.get_xml('form-filter'), app.create_suite())
+
+        expected = """
+        <partial>
+          <menu id="m1">
+            <text>
+              <locale id="modules.m1"/>
+            </text>
+            <command id="m1-f0"/>
+            <command id="m1-f1" relevant="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_load_clinic0]/edd = '123'"/>
+            <command id="m1-f2"/>
+            <command id="m1-case-list"/>
+          </menu>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, app.create_suite(), "./menu[@id='m1']")
+
+    def test_module_filter(self):
+        """
+        Ensure module filter gets added correctly
+        """
+        json = self.get_json('suite-workflow')
+        json['build_spec']['version'] = '2.20.0'
+
+        app = Application.wrap(json)
+        module = app.get_module(1)
+        module.module_filter = "/mod/filter = '123'"
+        self.assertXmlPartialEqual(
+            self.get_xml('module-filter'),
+            app.create_suite(),
+            "./menu[@id='m1']"
+        )
+
+    def test_module_filter_with_session(self):
+        json = self.get_json('suite-workflow')
+        json['build_spec']['version'] = '2.20.0'
+
+        app = Application.wrap(json)
+        module = app.get_module(1)
+        module.module_filter = "./user/mod/filter = '123'"
+        self.assertXmlPartialEqual(
+            self.get_xml('module-filter-user'),
+            app.create_suite(),
+            "./menu[@id='m1']"
+        )
 
     def test_tiered_select_with_advanced_module_as_parent(self):
         app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
@@ -322,9 +411,6 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         child_form.requires = 'case'
 
         self.assertXmlPartialEqual(self.get_xml('advanced_module_parent'), app.create_suite(), "./entry[1]")
-
-# Just use AdvancedModule
-
 
     def test_usercase_id_added_update(self):
         app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
@@ -354,6 +440,45 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
 
         self.assertXmlPartialEqual(self.get_xml('usercase_entry'), app.create_suite(), "./entry[1]")
 
+    def test_open_case_and_subcase(self):
+        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+
+        module = app.add_module(Module.new_module('parent', None))
+        module.case_type = 'phone'
+        module.unique_id = 'm0'
+
+        form = app.new_form(0, "Untitled Form", None)
+        form.xmlns = 'http://m0-f0'
+        form.actions.open_case = OpenCaseAction(name_path="/data/question1")
+        form.actions.open_case.condition.type = 'always'
+        form.actions.subcases.append(OpenSubCaseAction(
+            case_type='tablet',
+            case_name="/data/question1",
+            condition=FormActionCondition(type='always')
+        ))
+
+        self.assertXmlPartialEqual(self.get_xml('open_case_and_subcase'), app.create_suite(), "./entry[1]")
+
+    def test_update_and_subcase(self):
+        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+
+        module = app.add_module(Module.new_module('parent', None))
+        module.case_type = 'phone'
+        module.unique_id = 'm0'
+
+        form = app.new_form(0, "Untitled Form", None)
+        form.xmlns = 'http://m0-f0'
+        form.requires = 'case'
+        form.actions.update_case = UpdateCaseAction(update={'question1': '/data/question1'})
+        form.actions.update_case.condition.type = 'always'
+        form.actions.subcases.append(OpenSubCaseAction(
+            case_type=module.case_type,
+            case_name="/data/question1",
+            condition=FormActionCondition(type='always')
+        ))
+
+        self.assertXmlPartialEqual(self.get_xml('update_case_and_subcase'), app.create_suite(), "./entry[1]")
+
     def test_graphing(self):
         self._test_generic_suite('app_graphing', 'suite-graphing')
 
@@ -370,6 +495,8 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         register_module.case_type = case_module.case_type
         register_form = app.new_form(1, 'Register Case Form', lang='en')
         register_form.unique_id = 'register_case_form'
+        register_form.actions.open_case = OpenCaseAction(name_path="/data/question1", external_id=None)
+        register_form.actions.open_case.condition.type = 'always'
 
         case_module.case_list_form.form_id = register_form.get_unique_id()
         case_module.case_list_form.label = {

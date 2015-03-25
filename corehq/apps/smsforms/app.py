@@ -1,4 +1,6 @@
-from .models import XFormsSession, XFORMS_SESSION_SMS, SQLXFormsSession
+import uuid
+from corehq.apps.app_manager.suite_xml import SuiteGenerator
+from .models import XFORMS_SESSION_SMS, SQLXFormsSession
 from datetime import datetime
 from corehq.apps.cloudcare.touchforms_api import get_session_data
 from touchforms.formplayer.api import (
@@ -53,6 +55,11 @@ def start_session(domain, contact, app, module, form, case_id=None, yield_respon
             "footprint": "True"
         }
     
+    if app and form:
+        suite_gen = SuiteGenerator(app)
+        datums = suite_gen.get_new_case_id_datums(form)
+        session_data.update({datum.id: uuid.uuid4().hex for datum in datums})
+
     language = contact.get_language_code()
     config = XFormsConfig(form_content=form.render_xform(),
                           language=language,
@@ -60,21 +67,27 @@ def start_session(domain, contact, app, module, form, case_id=None, yield_respon
                           auth=AUTH)
     
     now = datetime.utcnow()
-    # just use the contact id as the connection id. may need to revisit this
+
+    # just use the contact id as the connection id
     connection_id = contact.get_id
+
     session_start_info = tfsms.start_session(config)
-    session = XFormsSession(connection_id=connection_id,
-                            session_id = session_start_info.session_id,
-                            start_time=now, modified_time=now, 
-                            form_xmlns=form.xmlns,
-                            completed=False, domain=domain,
-                            app_id=app.get_id, user_id=contact.get_id,
-                            session_type=session_type)
+    session = SQLXFormsSession(
+        couch_id=uuid.uuid4().hex,  # for legacy reasons we just generate a couch_id for now
+        connection_id=connection_id,
+        session_id=session_start_info.session_id,
+        start_time=now, modified_time=now,
+        form_xmlns=form.xmlns,
+        completed=False, domain=domain,
+        app_id=app.get_id, user_id=contact.get_id,
+        session_type=session_type,
+    )
     session.save()
     responses = session_start_info.first_responses
-    # Prevent future resource conflicts by getting the session again from the db
+
+    # Prevent future update conflicts by getting the session again from the db
     # since the session could have been updated separately in the first_responses call
-    session = XFormsSession.get(session._id)
+    session = SQLXFormsSession.objects.get(pk=session.pk)
     if yield_responses:
         return (session, responses)
     else:

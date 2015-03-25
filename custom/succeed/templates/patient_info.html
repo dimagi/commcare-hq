@@ -21,7 +21,9 @@
 
     <div style="display: inline">
         <span><a target="_blank" href="{{ edit_patient_info_url }}" class="btn btn-large btn-success" style="margin: 2%">{% trans "Edit Patient Info" %}</a></span>
-        <span><a target="_blank" href="{{ upcoming_appointments_url }}" class="btn btn-large btn-success" style="margin: 2%">{% trans "Upcoming Appointments" %}</a></span>
+        {% if upcoming_appointments_url %}
+            <span><a target="_blank" href="{{ upcoming_appointments_url }}" class="btn btn-large btn-success" style="margin: 2%">{% trans "Upcoming Appointments" %}</a></span>
+        {% endif %}
     </div>
 
     <div class="row">
@@ -69,6 +71,22 @@
                     <tr>
                         <td>{{ general_information.key_notes.label }}</td>
                         <td>{{ general_information.key_notes.value }}</td>
+                    </tr>
+                </tbody>
+            </table>
+            <table class="table table-condensed">
+                <tbody>
+                    <tr>
+                        <td>{{ general_information.running_notes.label }}</td>
+                        <td>{{ general_information.running_notes.value }}</td>
+                    </tr>
+                </tbody>
+            </table>
+            <table class="table table-condensed">
+                <tbody>
+                    <tr>
+                        <td>{{ general_information.cdsmp_notes.label }}</td>
+                        <td>{{ general_information.cdsmp_notes.value }}</td>
                     </tr>
                 </tbody>
             </table>

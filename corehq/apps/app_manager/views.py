@@ -90,6 +90,7 @@ from corehq.apps.app_manager.util import (
     add_odk_profile_after_build,
     ParentCasePropertyBuilder,
     commtrack_ledger_sections,
+    get_commcare_versions,
     save_xform,
     get_settings_values
 )
@@ -930,7 +931,7 @@ def get_module_view_context_and_template(app, module):
             'fixtures': fixtures,
             'details': get_details(),
             'case_list_form_options': case_list_form_options(case_type),
-            'case_list_form_allowed': module.all_forms_require_a_case and not module.parent_select.active
+            'case_list_form_allowed': module.all_forms_require_a_case and not module.parent_select.active,
         }
 
 
@@ -1076,6 +1077,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         'copy_app_form': copy_app_form if copy_app_form is not None else CopyApplicationForm(app_id)
     })
 
+    context['latest_commcare_version'] = get_commcare_versions()[-1]
     context['usercase_enabled'] = Domain.get_by_name(domain).call_center_config.enabled
 
     if app and app.doc_type == 'Application' and has_privilege(req, privileges.COMMCARE_LOGO_UPLOADER):
@@ -1489,6 +1491,7 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
         "case_list_form_media_audio": None,
         "parent_module": None,
         "root_module_id": None,
+        "module_filter": None,
     }
 
     if attr not in attributes:
@@ -1541,6 +1544,9 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
     if should_edit("parent_module"):
         parent_module = req.POST.get("parent_module")
         module.parent_select.module_id = parent_module
+
+    if app.enable_module_filtering and should_edit('module_filter'):
+        module['module_filter'] = req.POST.get('module_filter')
 
     if should_edit('case_list_form_id'):
         module.case_list_form.form_id = req.POST.get('case_list_form_id')
@@ -2773,17 +2779,6 @@ def _questions_for_form(request, form, langs):
     xform_questions = context['xform_questions']
     return xform_questions, m.messages
 
-def _find_name(names, langs):
-    name = None
-    for lang in langs:
-        if lang in names:
-            name = names[lang]
-            break
-    if name is None:
-        lang = names.keys()[0]
-        name = names[lang]
-    return name
-
 
 class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
     urlname = 'app_summary'
@@ -2851,16 +2846,21 @@ class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, Appli
         for module in self.app.get_modules():
             forms = []
             for form in module.get_forms():
-                questions = form.get_questions(self.app.langs, include_triggers=True, include_groups=True)
+                questions = form.get_questions(
+                    self.app.langs,
+                    include_triggers=True,
+                    include_groups=True,
+                    include_translations=True
+                )
                 forms.append({
                     'id': form.unique_id,
-                    'name': _find_name(form.name, self.app.langs),
+                    'name': form.name,
                     'questions': [FormQuestionResponse(q).to_json() for q in questions],
                 })
 
             modules.append({
                 'id': module.unique_id,
-                'name': _find_name(module.name, self.app.langs),
+                'name': module.name,
                 'forms': forms
             })
         return {

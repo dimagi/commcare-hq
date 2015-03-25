@@ -45,12 +45,17 @@ from corehq.apps.sms.forms import (ForwardingRuleForm, BackendMapForm,
 from corehq.apps.sms.util import get_available_backends, get_contact
 from corehq.apps.sms.messages import _MESSAGES
 from corehq.apps.groups.models import Group
-from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest, domain_admin_required, require_superuser
+from corehq.apps.domain.decorators import (
+    login_and_domain_required,
+    login_or_digest_ex,
+    domain_admin_required,
+    require_superuser,
+)
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from dimagi.utils.couch.database import get_db
 from django.contrib import messages
 from corehq.apps.reports import util as report_utils
-from dimagi.utils.timezones import utils as tz_utils
+from corehq.util.timezones import utils as tz_utils
 from django.views.decorators.csrf import csrf_exempt
 from corehq.apps.domain.models import Domain
 from django.utils.translation import ugettext as _, ugettext_noop
@@ -335,7 +340,7 @@ def message_test(request, domain, phone_number):
     return render(request, "sms/message_tester.html", context)
 
 @csrf_exempt
-@login_or_digest
+@login_or_digest_ex(allow_cc_users=True)
 @requires_privilege_plaintext_response(privileges.OUTBOUND_SMS)
 def api_send_sms(request, domain):
     """
@@ -1217,7 +1222,6 @@ def sms_languages(request, domain):
             tdoc.save()
     context = {
         "domain": domain,
-        "always_deploy": True,
         "sms_langs": tdoc.langs,
         "bulk_upload": {
             "action": reverse("upload_sms_translations",

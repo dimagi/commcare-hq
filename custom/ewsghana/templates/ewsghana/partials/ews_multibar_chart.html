@@ -4,14 +4,13 @@
         e.preventDefault();
         $('.hq-loading').fadeIn();
         var data = JSON.parse(JSON.stringify(multibar_chart_data));
-        var productCodes = [];
-        $("#report_table_product_selection_pane input:not(:checked)").each(function() {
-            productCodes.push($(this).attr('value'));
+        var productCodes = $("#report_table_product_selection_pane input:not(:checked)").map(function() {
+          return $(this).val();
         });
 
         for(var i = 0; i < data.length; i++) {
             data[i].values = jQuery.grep(data[i].values, function(value) {
-                return jQuery.inArray(value.x, productCodes) === -1
+                return !_.contains(productCodes, value.x)
             });
         }
         d3.select(multibar_chart_id + ' svg')
@@ -45,7 +44,9 @@
         multibar_chart.tooltips(chart_config.tooltips);
         // Customize tooltip message
         {% if chart.tooltipFormat %}
-            multibar_chart.tooltipContent(function(key, y, e, graph) { return e+ '{{ chart.tooltipFormat }}' +y });
+            multibar_chart.tooltipContent(function(key, y, e, graph) {
+                return '<h3>' + key + '</h3><p>' + e + '{{ chart.tooltipFormat }}' + graph.point.name + ' (' + y + ')';
+            });
         {% endif %}
         multibar_chart.stacked(chart_config.stacked);
         multibar_chart.margin(chart_config.margin);
@@ -53,8 +54,18 @@
         multibar_chart.multibar.groupSpacing(chart_config.groupSpacing);
         multibar_chart.multibar.forceY(chart_config.forceY);
 
+        var data =  JSON.parse(JSON.stringify(multibar_chart_data));
+        var productCodes = $("#report_table_product_selection_pane input:not(:checked)").map(function() {
+          return $(this).val();
+        });
+        for(var i = 0; i < data.length; i++) {
+            data[i].values = jQuery.grep(data[i].values, function(value) {
+                return !_.contains(productCodes, value.x)
+            });
+        }
+
         d3.select(multibar_chart_id + ' svg')
-                .datum(multibar_chart_data)
+                .datum(data)
                 .transition().duration(500).call(multibar_chart);
 
         nv.utils.windowResize(multibar_chart.update);

@@ -658,20 +658,16 @@ AUDIT_MODEL_SAVE = [
     'corehq.apps.app_manager.Application',
     'corehq.apps.app_manager.RemoteApp',
 ]
+
 AUDIT_VIEWS = [
-    'corehq.apps.domain.views.registration_request',
-    'corehq.apps.domain.views.registration_confirm',
-    'corehq.apps.domain.views.password_change',
-    'corehq.apps.domain.views.password_change_done',
-    'corehq.apps.reports.views.submit_history',
-    'corehq.apps.reports.views.active_cases',
-    'corehq.apps.reports.views.submit_history',
-    'corehq.apps.reports.views.default',
-    'corehq.apps.reports.views.submission_log',
-    'corehq.apps.reports.views.form_data',
-    'corehq.apps.reports.views.export_data',
-    'corehq.apps.reports.views.excel_report_data',
-    'corehq.apps.reports.views.daily_submissions',
+    'corehq.apps.settings.views.ChangeMyPasswordView',
+]
+
+AUDIT_MODULES = [
+    'corehq.apps.reports',
+    'corehq.apps.userreports',
+    'corehq.apps.data',
+    'corehq.apps.registration',
 ]
 
 # Don't use google analytics unless overridden in localsettings
@@ -1050,7 +1046,6 @@ COUCHDB_APPS = [
     ('cvsu', 'fluff-cvsu'),
     ('mc', 'fluff-mc'),
     ('m4change', 'm4change'),
-    ('wvindia2', 'wvindia2'),
     ('export', 'meta'),
     'tdhtesting'
 ]
@@ -1219,6 +1214,7 @@ PILLOWTOPS = {
         'custom.tdh.models.TDHNewbornTreatmentFluffPillow',
         'custom.tdh.models.TDHChildClassificationFluffPillow',
         'custom.tdh.models.TDHChildTreatmentFluffPillow',
+        'custom.succeed.models.UCLAPatientFluffPillow'
     ],
     'mvp_indicators': [
         'mvp_docs.pillows.MVPFormIndicatorPillow',
@@ -1230,6 +1226,7 @@ PILLOWTOPS = {
 CUSTOM_DATA_SOURCES = [
     os.path.join('custom', 'up_nrhm', 'data_sources', 'location_hierarchy.json'),
     os.path.join('custom', 'up_nrhm', 'data_sources', 'asha_facilitators.json'),
+    os.path.join('custom', 'succeed', 'data_sources', 'submissions.json'),
 ]
 
 

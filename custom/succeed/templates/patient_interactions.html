@@ -3,11 +3,14 @@
 {% load i18n %}
 {% block patient-tab-container %}
     <div style="display: inline">
-        <span><a target="_blank" href="{{ problem_url }}" class="btn btn-md btn-success" style="margin: 2%">{% trans "Problem List" %}</a></span>
-        <span><a target="_blank" href="{{ huddle_url }}" class="btn btn-md btn-success" style="margin: 2%">{% trans "Follow-up Huddle" %}</a></span>
-        <span><a target="_blank" href="{{ cm_phone_url }}" class="btn btn-md btn-success" style="margin: 2%">{% trans "Follow-up CM Phone Call" %}</a></span>
-        <span><a target="_blank" href="{{ chw_phone_url }}" class="btn btn-md btn-success" style="margin: 2%">{% trans "Follow-up CHW Phone Call" %}</a></span>
-        <span><a target="_blank" href="{{ cm_visits_url }}" class="btn btn-md btn-success" style="margin: 2%">{% trans "Follow-up CM Clinic Visit" %}</a></span>
+        <span><a target="_blank" href="{{ problem_url }}" class="btn btn-md btn-success" style="margin: 0.2%">{% trans "Problem List" %}</a></span>
+        <span><a target="_blank" href="{{ huddle_url }}" class="btn btn-md btn-success" style="margin: 0.2%">{% trans "Follow-up Huddle" %}</a></span>
+        <span><a target="_blank" href="{{ cm_phone_url }}" class="btn btn-md btn-success" style="margin: 0.2%">{% trans "Follow-up CM Phone Call" %}</a></span>
+        <span><a target="_blank" href="{{ cm_visits_url }}" class="btn btn-md btn-success" style="margin: 0.2%">{% trans "Follow-up CM Clinic Visit" %}</a></span>
+        <span><a target="_blank" href="{{ patient_task_list_url }}" class="btn btn-md btn-success" style="margin: 0.2%">{% trans "View All Tasks" %}</a></span>
+        <span><a target="_blank" href="{{ create_new_task_url }}" class="btn btn-md btn-success" style="margin: 0.2%">{% trans "Add New Task" %}</a></span>
+        <span><a target="_blank" href="{{ view_appointments_url }}" class="btn btn-md btn-success" style="margin: 0.2%">{% trans "View Appointments" %}</a></span>
+    <span><a target="_blank" href="{{ add_appointments_url }}" class="btn btn-md btn-success" style="margin: 0.2%">{% trans "Add Appointment" %}</a></span>
     </div>
     <table class="table">
         <thead>
@@ -60,6 +63,32 @@
                 <td style="text-align: center;">{{ medication }}</td>
                 {% endfor %}
             </tr>
+        </tbody>
+    </table>
+
+    <h2 style="margin-top: 55px">{% trans "Risk Factor" %}</h2>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th style="text-align: center;">{% trans 'Risk Factor' %}</th>
+                <th style="text-align: center;">{% trans 'Anti-thrombotic' %}</th>
+                <th style="text-align: center;">{% trans 'Blood Pressure' %}</th>
+                <th style="text-align: center;">{% trans 'Cholesterol' %}</th>
+                <th style="text-align: center;">{% trans 'Depression' %}</th>
+                <th style="text-align: center;">{% trans 'Diabetes'%}</th>
+                <th style="text-align: center;">{% trans 'Smoking' %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in risk_factor_table %}
+                <tr>
+                    {% for data in row %}
+                        <td style="text-align: center;">{{ data }}</td>
+                    {% endfor %}
+
+                </tr>
+            {% endfor %}
         </tbody>
     </table>
 

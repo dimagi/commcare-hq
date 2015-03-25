@@ -11,7 +11,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, D
 from dimagi.utils.decorators.memoized import memoized
 from corehq.elastic import stream_es_query, ES_URLS
 from custom.bihar.reports.display import MCHMotherDisplay, MCHChildDisplay
-from dimagi.utils.timezones import utils as tz_utils
+from corehq.util.timezones import utils as tz_utils
 import pytz
 from custom.bihar.utils import get_all_owner_ids_from_group
 

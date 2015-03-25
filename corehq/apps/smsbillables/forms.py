@@ -1,10 +1,37 @@
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from django import forms
+from django_countries.countries import COUNTRIES
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.sms.mixin import SMSBackend
 from corehq.apps.sms.models import INCOMING, OUTGOING
 from corehq.apps.sms.util import get_backend_by_class_name
+from phonenumbers import country_code_for_region
+
+
+class PublicSMSRateCalculatorForm(forms.Form):
+    country_code = forms.ChoiceField(label='Country')
+
+    def __init__(self, *args, **kwargs):
+        super(PublicSMSRateCalculatorForm, self).__init__(*args, **kwargs)
+
+        isd_codes = []
+        for country_shortcode, country_name in COUNTRIES:
+            country_isd_code = country_code_for_region(country_shortcode)
+            isd_codes.append((country_isd_code, country_name))
+
+        self.fields['country_code'].choices = isd_codes
+
+        self.helper = FormHelper()
+        self.helper.form_class = "form-horizontal"
+        self.helper.layout = crispy.Layout(
+            crispy.Field(
+                'country_code',
+                css_class="input-xxlarge",
+                data_bind="value: country_code",
+                placeholder=_("Please Select a Country Code"),
+            ),
+        )
 
 
 class SMSRateCalculatorForm(forms.Form):

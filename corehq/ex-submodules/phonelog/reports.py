@@ -21,10 +21,10 @@ from corehq.apps.reports.datatables import (
 from corehq.apps.reports.util import _report_user_dict, SimplifiedUserInfo
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.timezones import utils as tz_utils
+from corehq.util.timezones import utils as tz_utils
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop
-from dimagi.utils.timezones.utils import adjust_datetime_to_timezone
+from corehq.util.timezones.utils import adjust_datetime_to_timezone
 from .models import DeviceReportEntry
 from .utils import device_users_by_xform
 
@@ -183,6 +183,7 @@ class DeviceLogDetailsReport(PhonelogReport):
     }
     default_rows = 100
     default_sort = {'date': 'asc'}
+    inclusive = False
 
     @property
     def headers(self):
@@ -328,7 +329,7 @@ class DeviceLogDetailsReport(PhonelogReport):
         self.total_records = logs.count()
         for log in logs.order_by(self.ordering)[paged]:
             date = str(log.date)
-            date_fmt = tz_utils.string_to_prertty_time(
+            date_fmt = tz_utils.string_to_pretty_time(
                 date, self.timezone, fmt="%b %d, %Y %H:%M:%S")
 
             username = log.username

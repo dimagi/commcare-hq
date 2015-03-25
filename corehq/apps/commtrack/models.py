@@ -699,13 +699,17 @@ class SupplyPointCase(CommCareCase):
         )
 
     @classmethod
-    def get_by_location(cls, location):
+    def get_by_location_id(cls, domain, location_id):
         return cls.view(
             'commtrack/supply_point_by_loc',
-            key=[location.domain, location._id],
+            key=[domain, location_id],
             include_docs=True,
             classes={'CommCareCase': SupplyPointCase},
         ).one()
+
+    @classmethod
+    def get_by_location(cls, location):
+        return cls.get_by_location_id(location.domain, location._id)
 
     @classmethod
     def get_or_create_by_location(cls, location):
@@ -955,9 +959,9 @@ class StockState(models.Model):
     def resupply_quantity_needed(self):
         monthly_consumption = self.get_monthly_consumption()
         if monthly_consumption is not None:
-            stock_levels = self.get_domain().commtrack_settings.stock_levels_config
+            overstock = self.sql_location.location_type.overstock_threshold
             needed_quantity = int(
-                monthly_consumption * stock_levels.overstock_threshold
+                monthly_consumption * overstock
             )
             return int(max(needed_quantity - self.stock_on_hand, 0))
         else:

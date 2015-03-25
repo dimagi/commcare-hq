@@ -11,7 +11,7 @@ from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
 from couchforms.tests.testutils import post_xform_to_couch
-from casexml.apps.case import process_cases
+from casexml.apps.case.xform import process_cases
 
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)

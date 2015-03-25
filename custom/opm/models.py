@@ -51,6 +51,15 @@ class OpmCaseFluff(fluff.IndicatorDocument):
     children_registered = user_calcs.ChildrenRegistered()
 
 
+def is_valid_user(user):
+    if not (user.is_active and user.base_doc == "CouchUser"):
+        return False
+    for key in ('awc', 'gp', 'block'):
+        if not user.user_data.get(key, False):
+            return False
+    return True
+
+
 class OpmUserFluff(fluff.IndicatorDocument):
     def user_data(property):
         """
@@ -61,6 +70,8 @@ class OpmUserFluff(fluff.IndicatorDocument):
     document_class = CommCareUser
     domains = ('opm',)
     group_by = ('domain', )
+    # Only consider active users
+    document_filter = CustomFilter(is_valid_user)
 
     save_direct_to_sql = True
 

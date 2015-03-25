@@ -9,9 +9,12 @@ from corehq.apps.accounting.utils import fmt_dollar_amount
 from corehq.apps.hqwebapp.async_handler import BaseAsyncHandler
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.sms.mixin import SMSBackend
+from corehq.apps.sms.models import INCOMING, OUTGOING
 from corehq.apps.sms.util import get_backend_by_class_name
 from corehq.apps.smsbillables.exceptions import SMSRateCalculatorError
 from corehq.apps.smsbillables.models import SmsGatewayFeeCriteria, SmsGatewayFee, SmsUsageFee
+from corehq.util.quickcache import quickcache
+
 
 NONMATCHING_COUNTRY = 'nonmatching'
 logger = logging.getLogger('accounting')
@@ -103,3 +106,46 @@ class SMSRatesSelect2AsyncHandler(BaseAsyncHandler):
             } for r in response]
         }, cls=LazyEncoder)
         return success
+
+
+class PublicSMSRatesAsyncHandler(BaseAsyncHandler):
+    slug = 'public_sms_rate_calc'
+    allowed_actions = 'public_rate'
+
+    @property
+    def public_rate_response(self):
+        return self.get_rate_table(self.data.get('country_code'))
+
+    @quickcache(['country_code'], timeout=24 * 60 * 60)
+    def get_rate_table(self, country_code):
+        backends = SMSBackend.view(
+            'sms/global_backends',
+            reduce=False,
+            include_docs=True,
+        ).all()
+
+        def _directed_fee(direction, backend_api_id, backend_instance_id):
+            gateway_fee = SmsGatewayFee.get_by_criteria(
+                backend_api_id,
+                direction,
+                backend_instance=backend_instance_id,
+                country_code=country_code
+            )
+            if not gateway_fee:
+                return None
+            usd_gateway_fee = gateway_fee.amount / gateway_fee.currency.rate_to_default
+            usage_fee = SmsUsageFee.get_by_criteria(direction)
+            return fmt_dollar_amount(usage_fee.amount + usd_gateway_fee)
+
+        rate_table = []
+        for backend_instance in backends:
+            backend_type = get_backend_by_class_name(backend_instance.doc_type)
+
+            gateway_fee_incoming = _directed_fee(INCOMING, backend_type.get_api_id(), backend_instance._id) or 'NA'
+            gateway_fee_outgoing = _directed_fee(OUTGOING, backend_type.get_api_id(), backend_instance._id) or 'NA'
+            rate_table.append({
+                'gateway': "%s (%s)" % (backend_instance.name, backend_type.get_generic_name()),
+                'inn': gateway_fee_incoming,  # 'in' is reserved
+                'out': gateway_fee_outgoing
+            })
+        return rate_table

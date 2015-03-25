@@ -8,6 +8,7 @@ from corehq.apps.reports.dispatcher import (ProjectReportDispatcher,
 
 # from .filters.urls import urlpatterns as filter_urls
 from corehq.apps.example_reports.testreport import TestReport
+from corehq.apps.reports.views import AddSavedReportConfigView
 from corehq.apps.userreports.reports.view import ConfigurableReport
 from corehq.apps.userreports.views import (
     CreateNewReportBuilderView,
@@ -52,6 +53,7 @@ urlpatterns = patterns('corehq.apps.reports.views',
         'download_attachment', name='download_attachment'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/archive/$', 'archive_form', name='archive_form'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/unarchive/$', 'unarchive_form', name='unarchive_form'),
+    url(r'^form_data/(?P<instance_id>[\w\-:]+)/rebuild/$', 'resave_form', name='resave_form'),
 
     # export API
     url(r"^export/$", 'export_data'),
@@ -77,7 +79,7 @@ urlpatterns = patterns('corehq.apps.reports.views',
         kwargs=dict(report_type=CustomProjectReportDispatcher.prefix)),
 
     # Saved reports
-    url(r"^configs$", 'add_config', name='add_report_config'),
+    url(r"^configs$", AddSavedReportConfigView.as_view(), name=AddSavedReportConfigView.name),
     url(r"^configs/(?P<config_id>[\w-]+)$", 'delete_config',
         name='delete_report_config'),
 

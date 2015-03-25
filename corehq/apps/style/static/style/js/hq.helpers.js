@@ -42,7 +42,14 @@ $(function() {
     });
 
     $(document).on('click', '.no-click', function (e) {
+        // Prevent default actions for click events on this element and all
+        // child elements. This is usually used for click triggered popovers.
         e.preventDefault();
+    });
+    $(document).on('click', '.allow-click', function (e) {
+        // Adding this class to a child of a 'no-click' element will allow the click on this
+        // element to take place. e.g. link inside click triggered popover
+        e.stopPropagation();
     });
 });
 

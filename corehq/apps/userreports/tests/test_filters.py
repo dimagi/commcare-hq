@@ -21,22 +21,22 @@ class PropertyMatchFilterTest(SimpleTestCase):
             'property_value': 'bar',
         })
 
-    def testNormalFilter(self):
+    def test_normal_filter(self):
         # just asserting that this doesn't raise any exceptions
         self.get_filter()
 
-    def testFilterWithPath(self):
+    def test_filter_with_path(self):
         # just asserting that this doesn't raise any exceptions
         self.get_path_filter()
 
-    def testNoNameOrPath(self):
+    def test_no_name_or_path(self):
         with self.assertRaises(BadSpecError):
             FilterFactory.from_spec({
                 'type': 'property_match',
                 'property_value': 'bar',
             })
 
-    def testEmptyName(self):
+    def test_empty_name(self):
         with self.assertRaises(BadSpecError):
             FilterFactory.from_spec({
                 'type': 'property_match',
@@ -44,14 +44,14 @@ class PropertyMatchFilterTest(SimpleTestCase):
                 'property_value': 'bar',
             })
 
-    def testNameNoValue(self):
+    def test_name_no_value(self):
         with self.assertRaises(BadSpecError):
             FilterFactory.from_spec({
                 'type': 'property_match',
                 'property_name': 'foo',
             })
 
-    def testEmptyPath(self):
+    def test_empty_path(self):
         with self.assertRaises(BadSpecError):
             FilterFactory.from_spec({
                 'type': 'property_match',
@@ -59,22 +59,22 @@ class PropertyMatchFilterTest(SimpleTestCase):
                 'property_value': 'bar',
             })
 
-    def testFilterMatch(self):
+    def test_filter_match(self):
         self.assertTrue(self.get_filter()(dict(foo='bar')))
 
-    def testFilterNoMatch(self):
+    def test_filter_no_match(self):
         self.assertFalse(self.get_filter()(dict(foo='not bar')))
 
-    def testFilterMissing(self):
+    def test_filter_missing(self):
         self.assertFalse(self.get_filter()(dict(not_foo='bar')))
 
-    def testFilterPathMatch(self):
+    def test_filter_path_match(self):
         self.assertTrue(self.get_path_filter()({'path': {'to': {'foo': 'bar'}}}))
 
-    def testFilterPathNoMatch(self):
+    def test_filter_path_no_match(self):
         self.assertFalse(self.get_path_filter()({'path': {'to': {'foo': 'not bar'}}}))
 
-    def testPathFilterMissing(self):
+    def test_path_filter_missing(self):
         self.assertFalse(self.get_path_filter()({'path': {'to': {'not_foo': 'bar'}}}))
         self.assertFalse(self.get_path_filter()({'foo': 'bar'}))
 
@@ -104,6 +104,20 @@ class EqualityFilterTest(PropertyMatchFilterTest):
         })
 
 
+class PropertyMatchFilterTest(SimpleTestCase):
+
+    def test_null_value(self):
+        null_filter = FilterFactory.from_spec({
+            'type': 'property_match',
+            'property_name': 'foo',
+            'property_value': None,
+        })
+        self.assertEqual(True, null_filter({'foo': None}))
+        self.assertEqual(True, null_filter({}))
+        self.assertEqual(False, null_filter({'foo': 'exists'}))
+        self.assertEqual(False, null_filter({'foo': ''}))
+
+
 class BooleanExpressionFilterTest(SimpleTestCase):
 
     def get_filter(self, operator, value):
@@ -123,6 +137,13 @@ class BooleanExpressionFilterTest(SimpleTestCase):
         self.assertTrue(filter({'foo': match}))
         self.assertFalse(filter({'foo': 'non-match'}))
         self.assertFalse(filter({'foo': None}))
+
+    def test_equal_null(self):
+        null_filter = self.get_filter('eq', None)
+        self.assertEqual(True, null_filter({'foo': None}))
+        self.assertEqual(True, null_filter({}))
+        self.assertEqual(False, null_filter({'foo': 'exists'}))
+        self.assertEqual(False, null_filter({'foo': ''}))
 
     def test_in(self):
         values = ['a', 'b', 'c']
@@ -191,19 +212,19 @@ class ConfigurableANDFilterTest(SimpleTestCase):
         })
         self.assertTrue(isinstance(self.filter, ANDFilter))
 
-    def testFilterMatch(self):
+    def test_filter_match(self):
         self.assertTrue(self.filter(dict(foo='bar', foo2='bar2')))
 
-    def testFilterPartialMatch(self):
+    def test_filter_partial_match(self):
         self.assertFalse(self.filter(dict(foo='bar', foo2='not bar2')))
 
-    def testFilterNoMatch(self):
+    def test_filter_no_match(self):
         self.assertFalse(self.filter(dict(foo='not bar', foo2='not bar2')))
 
-    def testFilterMissingPartialMatch(self):
+    def test_filter_missing_partial_match(self):
         self.assertFalse(self.filter(dict(foo='bar')))
 
-    def testFilterMissingAll(self):
+    def test_filter_missing_all(self):
         self.assertFalse(self.filter(dict(notfoo='not bar')))
 
 
@@ -227,25 +248,25 @@ class ConfigurableORFilterTest(SimpleTestCase):
         })
         self.assertTrue(isinstance(self.filter, ORFilter))
 
-    def testFilterMatch(self):
+    def test_filter_match(self):
         self.assertTrue(self.filter(dict(foo='bar', foo2='bar2')))
 
-    def testFilterPartialMatch(self):
+    def test_filter_partial_match(self):
         self.assertTrue(self.filter(dict(foo='bar', foo2='not bar2')))
 
-    def testFilterNoMatch(self):
+    def test_filter_no_match(self):
         self.assertFalse(self.filter(dict(foo='not bar', foo2='not bar2')))
 
-    def testFilterMissingPartialMatch(self):
+    def test_filter_missing_partial_match(self):
         self.assertTrue(self.filter(dict(foo='bar')))
 
-    def testFilterMissingAll(self):
+    def test_filter_missing_all(self):
         self.assertFalse(self.filter(dict(notfoo='not bar')))
 
 
 class ComplexFilterTest(SimpleTestCase):
 
-    def testComplexStructure(self):
+    def test_complex_structure(self):
         # in slightly more compact format:
         # ((foo=bar) or (foo1=bar1 and foo2=bar2 and (foo3=bar3 or foo4=bar4)))
         filter = FilterFactory.from_spec({
@@ -315,10 +336,10 @@ class ConfigurableNOTFilterTest(SimpleTestCase):
         })
         self.assertTrue(isinstance(self.filter, NOTFilter))
 
-    def testFilterMatch(self):
+    def test_filter_match(self):
         self.assertTrue(self.filter(dict(foo='not bar')))
 
-    def testFilterNoMatch(self):
+    def test_filter_no_match(self):
         self.assertFalse(self.filter(dict(foo='bar')))
 
 
@@ -340,8 +361,8 @@ class ConfigurableNamedFilterTest(SimpleTestCase):
         )
         self.assertTrue(isinstance(self.filter, NOTFilter))
 
-    def testFilterMatch(self):
+    def test_filter_atch(self):
         self.assertTrue(self.filter(dict(foo='not bar')))
 
-    def testFilterNoMatch(self):
+    def test_filter_no_match(self):
         self.assertFalse(self.filter(dict(foo='bar')))

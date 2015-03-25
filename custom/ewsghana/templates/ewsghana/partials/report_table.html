@@ -73,14 +73,80 @@
                 sScrollX: "100%"
             };
 
-        var id = '#report_table_{{ report_table.slug }}';
-        var datatable = $(id).dataTable(params);
+        {% if report_table.slug != 'product_selection_pane' %}
+            var id = '#report_table_{{ report_table.slug }}';
+            var datatable = $(id).dataTable(params);
+        {% endif %}
 
-       {% if report_table.fix_column %}
+        {% if report_table.fix_column %}
             new FixedColumns(datatable, {
                iLeftColumns: 1,
                iLeftWidth: 130
             });
-       {% endif %}
+        {% endif %}
+
+        {% if report_table.slug != 'facility_report' %}
+            var show_hide_table_columns = function (element) {
+                var col_idx = $(element).attr('data-column');
+                var bVis = datatable.fnSettings().aoColumns[col_idx].bVisible;
+                datatable.fnSetColumnVis(col_idx, !bVis);
+            };
+        {% endif %}
+
+        var show_hide_multibar_chart_data = function() {
+            var data =  JSON.parse(JSON.stringify(multibar_chart_data));
+            var productCodes = $("#report_table_product_selection_pane input:not(:checked)").map(function() {
+              return $(this).val();
+            });
+            for(var i = 0; i < data.length; i++) {
+                data[i].values = jQuery.grep(data[i].values, function(value) {
+                    return !_.contains(productCodes, value.x)
+                });
+            }
+            d3.select(multibar_chart_id + ' svg')
+                .datum(data)
+                .transition().duration(100).call(multibar_chart);
+         };
+
+        var show_hide_line_chart_data = function() {
+            var data = JSON.parse(JSON.stringify(line_chart_data));
+            var productCodes = [];
+            $("#report_table_product_selection_pane input:not(:checked)").each(function() {
+                productCodes.push($(this).attr('value'));
+                productCodes.push($(this).attr('name'));
+            });
+
+            for(var i = 0; i < data.length; i++) {
+                data = jQuery.grep(data, function(value) {
+                    return !_.contains(productCodes, value.key)
+                });
+            }
+            d3.select(line_chart_id + ' svg')
+                    .datum(data)
+                    .transition().duration(500).call(line_chart);
+        };
+
+        $('.toggle-column').bind('click', function() {
+            {% if report_table.slug != 'product_selection_pane' and report_table.slug != 'facility_report' %}
+                if (datatable.fnSettings().aoColumns.length > 1) {
+                    show_hide_table_columns(this);
+                }
+            {% endif %}
+
+            if (typeof multibar_chart_data !== 'undefined') {
+                show_hide_multibar_chart_data();
+            }
+            if (typeof line_chart_data !== 'undefined') {
+                show_hide_line_chart_data();
+            }
+        });
+
+        {% if report_table.slug != 'product_selection_pane' and report_table.slug != 'facility_report' %}
+            $("#report_table_product_selection_pane input:not(:checked)").each(function () {
+                if (datatable.fnSettings().aoColumns.length > 1) {
+                    show_hide_table_columns(this);
+                }
+            });
+        {% endif %}
     {% endif %}
 </script>

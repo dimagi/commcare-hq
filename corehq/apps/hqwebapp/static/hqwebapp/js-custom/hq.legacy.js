@@ -15,10 +15,12 @@ var COMMCAREHQ = (function () {
             var el = $(
                 '<a href="#" class="hq-help no-click">' +
                     '<i class="icon-question-sign"></i></a>'
-            );
-            for (var attr in  {'content': 0, 'title': 0, 'placement': 0, 'trigger': 0}) {
+                ),
+                attrs = ['content', 'title', 'placement', 'trigger'];
+
+            attrs.map(function (attr) {
                 $('i', el).data(attr, opts[attr]);
-            }
+            });
             if (wrap) {
                 el.hqHelp();
             }

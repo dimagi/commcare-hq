@@ -14,7 +14,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
 from corehq.pillows.base import restore_property_dict
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.timezones import utils as tz_utils
+from corehq.util.timezones import utils as tz_utils
 
 
 def visit_completion_counter(case):
