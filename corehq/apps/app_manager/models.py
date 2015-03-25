@@ -1495,6 +1495,12 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
         except IndexError:
             raise FormNotFoundException()
 
+    def get_child_modules(self):
+        return [
+            module for module in self.get_app().get_modules()
+            if module.unique_id != self.unique_id and getattr(module, 'root_module_id', None) == self.unique_id
+        ]
+
     def requires_case_details(self):
         return False
 

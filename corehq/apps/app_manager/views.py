@@ -1008,6 +1008,9 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
                 return "{} -> {}".format(module_name, form_name)
 
             modules = filter(lambda m: m.case_type == module.case_type, app.get_modules())
+            if getattr(module, 'root_module_id', None):
+                modules.append(module.root_module)
+            modules.extend(module.get_child_modules())
             linkable_forms = list(itertools.chain.from_iterable(list(m.get_forms()) for m in modules))
             context.update({
                 'linkable_forms': map(
