@@ -14,7 +14,6 @@
         var CustomExportView = {
             wrap: function (o) {
                 var self = ko.mapping.fromJS(o);
-                self.show_deleted = ko.observable(false);
 
                 self.utils = {
                     rename: function (field, rename_map) {
@@ -223,6 +222,7 @@
                 });
 
                 _(self.table_configuration()).each(function (table) {
+                    table.show_deleted = ko.observable(false);
                     // assumes unselected
                     var unselected;
                     var columns = table.column_configuration();
@@ -280,7 +280,7 @@
 
                 self.setAllSelected = function (table, selected) {
                     _(table.column_configuration()).each(function (column) {
-                        if (!selected || self.show_deleted() || column.show()) {
+                        if (!selected || table.show_deleted() || column.show()) {
                             column.selected(selected);
                         }
                     });
@@ -495,10 +495,6 @@
                         {% trans "Automatically convert dates for Excel" %}
                     </label>
                     <label class="checkbox">
-                        <input type="checkbox" data-bind="checked: $root.show_deleted" />
-                        {% trans "Show Deleted Questions and Advanced Properties" %}
-                    </label>
-                    <label class="checkbox">
                         <input type="checkbox" id="presave-checkbox" data-bind="checked: presave" />
                         {% trans "Create a Daily Saved Export" %}
                     </label>
@@ -522,12 +518,23 @@
                     </span>
                 </legend>
                 <div data-bind="visibleFade: selected">
+                    <div class="control-group pull-right">
+                        <div class="controls">
+                            <button type="button" class="btn" data-bind="
+                                click: function() {show_deleted(!show_deleted());},
+                                css: {active: show_deleted}">
+                                <span data-bind="visible: !show_deleted()">{% trans "Show Deleted Questions and Advanced Properties" %}</span>
+                                <span data-bind="visible: show_deleted">{% trans "Hide Deleted Questions and Advanced Properties" %}</span>
+                            </button>
+                        </div>
+                    </div>
                     <div class="control-group" data-bind="visible: $root.repeatsEnabled()">
                         <label class="control-label">{% trans "Sheet Name" %}</label>
                         <div class="controls">
                             <input type="text" data-bind="value: display" />
                         </div>
                     </div>
+
                     <div class="control-group">
                         <label class="control-label">
                             <strong>{% trans "Choose the fields you want to export." %}</strong><br />
@@ -555,7 +562,7 @@
                                 </thead>
                                 <tbody data-bind="sortable: column_configuration">
                                     <tr data-bind="
-                                        visible:  $root.show_deleted() || ($data.show() || selected),
+                                        visible:  $parent.show_deleted() || ($data.show() || selected),
                                         attr: {'data-order': _sortableOrder}
                                         ">
                                         <td class="sortable-handle">
