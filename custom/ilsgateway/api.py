@@ -119,7 +119,10 @@ class ILSGatewayEndpoint(LogisticsEndpoint):
 class ILSGatewayAPI(APISynchronization):
 
     LOCATION_CUSTOM_FIELDS = [
-        {'name': 'groups'},
+        {
+            'name': 'group',
+            'choices': ['A', 'B', 'C']
+        },
     ]
     SMS_USER_CUSTOM_FIELDS = [
         {
