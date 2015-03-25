@@ -761,7 +761,7 @@ class TestFormLinking(SimpleTestCase, TestFileMixin):
             FormLink(xpath='true()', form_id=m1f0.unique_id)
         ]
 
-        self.assertXmlPartialEqual(self.get_xml('form_link_both_update_case'), app.create_suite(), "./entry[1]")
+        self.assertXmlPartialEqual(self.get_xml('form_link_update_case'), app.create_suite(), "./entry[1]")
 
     def test_with_case_management_create_update(self):
         app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
@@ -785,4 +785,34 @@ class TestFormLinking(SimpleTestCase, TestFileMixin):
             FormLink(xpath='true()', form_id=m1f0.unique_id)
         ]
 
-        self.assertXmlPartialEqual(self.get_xml('form_link_both_create_update_case'), app.create_suite(), "./entry[1]")
+        self.assertXmlPartialEqual(self.get_xml('form_link_create_update_case'), app.create_suite(), "./entry[1]")
+
+    def test_with_case_management_multiple_links(self):
+        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        app.build_spec = BuildSpec.from_string('2.9.0/latest')
+        m0 = app.add_module(Module.new_module('m0', None))
+        m0.case_type = 'frog'
+        m0f0 = app.new_form(m0.id, "m0f0", None)
+        m0f0.actions.open_case = OpenCaseAction(name_path="/data/question1")
+        m0f0.actions.open_case.condition.type = 'always'
+
+        m1 = app.add_module(Module.new_module('m1', None))
+        m1.case_type = 'frog'
+        m1f0 = app.new_form(m1.id, "m1f0", None)
+        m1f0.unique_id = 'm1f0'
+        m1f0.requires = 'case'
+        m1f0.actions.update_case = UpdateCaseAction(update={'question1': '/data/question1'})
+        m1f0.actions.update_case.condition.type = 'always'
+
+        m1f1 = app.new_form(m1.id, "m1f1", None)
+        m1f1.unique_id = 'm1f1'
+        m1f1.actions.open_case = OpenCaseAction(name_path="/data/question1")
+        m1f1.actions.open_case.condition.type = 'always'
+
+        m0f0.post_form_workflow = WORKFLOW_FORM
+        m0f0.form_links = [
+            FormLink(xpath="a = 1", form_id=m1f0.unique_id),
+            FormLink(xpath="a = 2", form_id=m1f1.unique_id)
+        ]
+
+        self.assertXmlPartialEqual(self.get_xml('form_link_multiple'), app.create_suite(), "./entry[1]")
