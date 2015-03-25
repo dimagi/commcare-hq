@@ -7,7 +7,7 @@ import redis
 from casexml.apps.case.signals import cases_received, case_post_save
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
 from casexml.apps.case.util import iter_cases
-from couchforms.models import XFormInstance, XFormDeprecated
+from couchforms.models import XFormInstance
 from casexml.apps.case.exceptions import (
     IllegalCaseId,
     NoDomainProvided,

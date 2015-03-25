@@ -423,8 +423,7 @@ class SubmissionPost(object):
         else:
             from casexml.apps.case.models import CommCareCase
             from casexml.apps.case.xform import (
-                get_and_check_xform_domain, CaseDbCache,
-                process_cases_with_casedb, process_cases_with_casedb_bulk
+                get_and_check_xform_domain, CaseDbCache, process_cases_with_casedb_bulk
             )
             from casexml.apps.case.signals import case_post_save
             from casexml.apps.case.exceptions import IllegalCaseId
