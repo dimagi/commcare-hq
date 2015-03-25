@@ -586,8 +586,16 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
     def update_from_case_update(self, case_update, xformdoc, other_forms=None):
         other_forms = other_forms or {}
         if is_deprecation(xformdoc):
-            # remove the form from actions and xform_ids (based on orig_id)
-            # and rebuild
+            # Remove the form from actions and xform_ids (based on orig_id)
+            # and rebuild the case in place.
+            # This assumes that there is a second update coming that will actually
+            # reapply the equivalent actions from the form that caused the current
+            # one to be deprecated (which is what happens in form processing).
+            # This is primarily implemented this way because of ease-of-implementation
+            # and not necessarily because it's the cleanest thing to do. Fortunately,
+            # the actions should get re-sorted during each submission so the updated
+            # action should edit the case in the original action's place (the desired
+            # behavior).
             self.xform_ids = [id for id in self.xform_ids if id != xformdoc.orig_id]
             self.actions = [a for a in self.actions if a.xform_id != xformdoc.orig_id]
             self.rebuild(strict=False, xforms=other_forms)
