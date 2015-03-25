@@ -1,0 +1,20 @@
+<partial>
+    <entry>
+        <command id="m0-f0">
+            <text>
+                <locale id="forms.m0f0"/>
+            </text>
+        </command>
+        <instance id="commcaresession" src="jr://instance/session"/>
+        <session>
+            <datum id="case_id_new_frog_0" function="uuid()"/>
+        </session>
+        <stack>
+          <create>
+            <command value="'m1'"/>
+            <datum id="case_id" value="instance('commcaresession')/session/data/case_id_new_frog_0"/>
+            <command value="'m1-f0'"/>
+          </create>
+        </stack>
+    </entry>
+</partial>
