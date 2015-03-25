@@ -177,3 +177,77 @@ class EditFormTest(TestCase):
         self.assertEqual(2, len(case.actions))
         for a in case.actions:
             self.assertEqual(form_id, a.xform_id)
+
+    def test_case_management_ordering(self):
+        case_id = uuid.uuid4().hex
+        owner_id = uuid.uuid4().hex
+
+        # create a case
+        case_block = CaseBlock(
+            create=True,
+            case_id=case_id,
+            case_type='person',
+            owner_id=owner_id,
+            version=V2,
+        ).as_string(format_datetime=json_format_datetime)
+        create_form_id = submit_case_blocks(case_block, domain=self.domain)
+
+        # validate that worked
+        case = CommCareCase.get(case_id)
+        self.assertEqual([create_form_id], case.xform_ids)
+        self.assertEqual([create_form_id],  [a.xform_id for a in case.actions])
+        for a in case.actions:
+            self.assertEqual(create_form_id, a.xform_id)
+
+        # set some property value
+        case_block = CaseBlock(
+            create=False,
+            case_id=case_id,
+            version=V2,
+            update={
+                'property': 'first value',
+            }
+        ).as_string(format_datetime=json_format_datetime)
+        edit_form_id = submit_case_blocks(case_block, domain=self.domain)
+
+        # validate that worked
+        case = CommCareCase.get(case_id)
+        self.assertEqual(case.property, 'first value')
+        self.assertEqual([create_form_id, edit_form_id], case.xform_ids)
+        self.assertEqual([create_form_id, edit_form_id], [a.xform_id for a in case.actions])
+
+        # submit a second (new) form updating the value
+        case_block = CaseBlock(
+            create=False,
+            case_id=case_id,
+            version=V2,
+            update={
+                'property': 'final value',
+            }
+        ).as_string(format_datetime=json_format_datetime)
+        second_edit_form_id = submit_case_blocks(case_block, domain=self.domain)
+
+        # validate that worked
+        case = CommCareCase.get(case_id)
+        self.assertEqual(case.property, 'final value')
+        self.assertEqual([create_form_id, edit_form_id, second_edit_form_id], case.xform_ids)
+        self.assertEqual([create_form_id, edit_form_id, second_edit_form_id], [a.xform_id for a in case.actions])
+
+        # deprecate the middle edit
+        case_block = CaseBlock(
+            create=False,
+            case_id=case_id,
+            version=V2,
+            update={
+                'property': 'edited value',
+                'added_property': 'added value',
+            }
+        ).as_string(format_datetime=json_format_datetime)
+        submit_case_blocks(case_block, domain=self.domain, form_id=edit_form_id)
+
+        # since the middle edit came after, its updates override the final edit.
+        case = CommCareCase.get(case_id)
+        self.assertEqual(case.property, 'edited value')
+        self.assertEqual(case.added_property, 'added value')
+        self.assertEqual([create_form_id, second_edit_form_id, edit_form_id], case.xform_ids)
+        self.assertEqual([create_form_id, second_edit_form_id, edit_form_id], [a.xform_id for a in case.actions])
