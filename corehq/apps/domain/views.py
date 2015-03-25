@@ -18,7 +18,9 @@ from corehq.apps.accounting.decorators import (
 )
 from corehq.apps.accounting.exceptions import PaymentRequestError
 from corehq.apps.accounting.payment_handlers import (
-    InvoiceStripePaymentHandler, CreditStripePaymentHandler,
+    BulkStripePaymentHandler,
+    CreditStripePaymentHandler,
+    InvoiceStripePaymentHandler,
 )
 from corehq.apps.accounting.subscription_changes import DomainDowngradeStatusHandler
 from corehq.apps.accounting.forms import EnterprisePlanContactForm
@@ -938,8 +940,14 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
         pagination_context.update({
             'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
             'payment_error_messages': PAYMENT_ERROR_MESSAGES,
-            'process_payment_url': reverse(InvoiceStripePaymentView.urlname,
-                                           args=[self.domain]),
+            'process_invoice_payment_url': reverse(
+                InvoiceStripePaymentView.urlname,
+                args=[self.domain],
+            ),
+            'process_bulk_payment_url': reverse(
+                BulkStripePaymentView.urlname,
+                args=[self.domain],
+            ),
             'stripe_cards': self.stripe_cards,
             'total_balance': "%.2f" % sum(invoice.get_total() for invoice in self.invoices)
         })
@@ -1122,6 +1130,19 @@ class InvoiceStripePaymentView(BaseStripePaymentView):
     def get_payment_handler(self):
         return InvoiceStripePaymentHandler(
             self.get_or_create_payment_method(), self.invoice
+        )
+
+
+class BulkStripePaymentView(BaseStripePaymentView):
+    urlname = 'domain_bulk_payment'
+
+    @property
+    def account(self):
+        return BillingAccount.get_account_by_domain(self.domain)
+
+    def get_payment_handler(self):
+        return BulkStripePaymentHandler(
+            self.get_or_create_payment_method(), self.domain
         )
 
 
