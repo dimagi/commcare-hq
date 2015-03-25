@@ -17,6 +17,7 @@ from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
 from PIL import Image
 from casexml.apps.case.exceptions import MissingServerDate, ReconciliationError
 from corehq.util.couch_helpers import CouchAttachmentsBuilder
+from couchforms.util import is_deprecation
 from dimagi.utils.chunked import chunked
 from dimagi.utils.django.cached_object import CachedObject, OBJECT_ORIGINAL, OBJECT_SIZE_MAP, CachedImage, IMAGE_SIZE_ORDERING
 from casexml.apps.phone.xml import get_case_element
@@ -550,6 +551,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         """
         Create a case object from a case update object.
         """
+        assert not is_deprecation(xformdoc)  # you should never be able to create a case from a deleted update
         case = cls()
         case._id = case_update.id
         case.modified_on = parsing.string_to_datetime(case_update.modified_on_str) \
@@ -583,7 +585,13 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
     
     def update_from_case_update(self, case_update, xformdoc, other_forms=None):
         other_forms = other_forms or {}
-        if case_update.has_referrals():
+        if is_deprecation(xformdoc):
+            # remove the form from actions and xform_ids (based on orig_id)
+            # and rebuild
+            self.xform_ids = [id for id in self.xform_ids if id != xformdoc.orig_id]
+            self.actions = [a for a in self.actions if a.xform_id != xformdoc.orig_id]
+            self.rebuild(strict=False, xforms=other_forms)
+        elif case_update.has_referrals():
             logging.error('Form {} touching case {} in domain {} is still using referrals'.format(
                 xformdoc._id, case_update.id, getattr(xformdoc, 'domain', None))
             )

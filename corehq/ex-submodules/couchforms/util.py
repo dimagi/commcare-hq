@@ -422,7 +422,10 @@ class SubmissionPost(object):
             return self.get_exception_response(e.error_log), None, []
         else:
             from casexml.apps.case.models import CommCareCase
-            from casexml.apps.case.xform import get_and_check_xform_domain, CaseDbCache, process_cases_with_casedb
+            from casexml.apps.case.xform import (
+                get_and_check_xform_domain, CaseDbCache,
+                process_cases_with_casedb, process_cases_with_casedb_bulk
+            )
             from casexml.apps.case.signals import case_post_save
             from casexml.apps.case.exceptions import IllegalCaseId
             from corehq.apps.commtrack.processing import process_stock
@@ -432,11 +435,14 @@ class SubmissionPost(object):
             errors = []
             with lock_manager as xforms:
                 instance = xforms[0]
-                if instance.doc_type == "XFormInstance":
+                if instance.doc_type == 'XFormInstance':
+                    if len(xforms) > 1:
+                        assert len(xforms) == 2
+                        assert is_deprecation(xforms[1])
                     domain = get_and_check_xform_domain(instance)
                     with CaseDbCache(domain=domain, lock=True, deleted_ok=True, xforms=xforms) as case_db:
                         try:
-                            process_cases_with_casedb(instance, case_db)
+                            process_cases_with_casedb_bulk(xforms, case_db)
                             process_stock(instance, case_db)
                         except IllegalCaseId as e:
                             # errors we know about related to the content of the form

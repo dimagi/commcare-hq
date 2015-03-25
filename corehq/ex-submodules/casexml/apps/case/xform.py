@@ -7,13 +7,14 @@ import redis
 from casexml.apps.case.signals import cases_received, case_post_save
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
 from casexml.apps.case.util import iter_cases
-from couchforms.models import XFormInstance
+from couchforms.models import XFormInstance, XFormDeprecated
 from casexml.apps.case.exceptions import (
     IllegalCaseId,
     NoDomainProvided,
     ReconciliationError,
 )
 from django.conf import settings
+from couchforms.util import is_deprecation
 from dimagi.utils.couch.database import iter_docs
 
 from casexml.apps.case import const
@@ -47,8 +48,14 @@ def process_cases(xform, config=None):
 
 
 def process_cases_with_casedb(xform, case_db, config=None):
+    # this is a convenience/legacy API. all the work happens in bulk now
+    return process_cases_with_casedb_bulk([xform], case_db, config)
+
+
+def process_cases_with_casedb_bulk(xforms, case_db, config=None):
     config = config or CaseProcessingConfig()
-    cases = get_or_update_cases(xform, case_db).values()
+    cases = _get_or_update_cases(xforms, case_db).values()
+    xform = xforms[0]
 
     if config.reconcile:
         for c in cases:
@@ -253,29 +260,30 @@ def get_and_check_xform_domain(xform):
     return domain
 
 
-def get_or_update_cases(xform, case_db):
+def _get_or_update_cases(xforms, case_db):
     """
     Given an xform document, update any case blocks found within it,
     returning a dictionary mapping the case ids affected to the
     couch case document objects
     """
-    case_updates = get_case_updates(xform)
+    # have to apply the deprecations before the updates
+    sorted_forms = sorted(xforms, key=lambda f: 0 if is_deprecation(f) else 1)
+    for xform in sorted_forms:
+        for case_update in get_case_updates(xform):
+            case_doc = _get_or_update_model(case_update, xform, case_db)
+            if case_doc:
+                # todo: legacy behavior, should remove after new case processing
+                # is fully enabled.
+                if xform._id not in case_doc.xform_ids:
+                    case_doc.xform_ids.append(xform.get_id)
+                case_db.set(case_doc.case_id, case_doc)
+            else:
+                logging.error(
+                    "XForm %s had a case block that wasn't able to create a case! "
+                    "This usually means it had a missing ID" % xform.get_id
+                )
 
-    for case_update in case_updates:
-        case_doc = _get_or_update_model(case_update, xform, case_db)
-        if case_doc:
-            # todo: legacy behavior, should remove after new case processing
-            # is fully enabled.
-            if xform._id not in case_doc.xform_ids:
-                case_doc.xform_ids.append(xform.get_id)
-            case_db.set(case_doc.case_id, case_doc)
-        else:
-            logging.error(
-                "XForm %s had a case block that wasn't able to create a case! "
-                "This usually means it had a missing ID" % xform.get_id
-            )
-
-    # at this point we know which cases we want to update so sopy this away
+    # at this point we know which cases we want to update so copy this away
     # this prevents indices that end up in the cache from being added to the return value
     touched_cases = copy.copy(case_db.cache)
 
