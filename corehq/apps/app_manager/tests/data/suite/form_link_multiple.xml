@@ -1,0 +1,25 @@
+<partial>
+    <entry>
+        <command id="m0-f0">
+            <text>
+                <locale id="forms.m0f0"/>
+            </text>
+        </command>
+        <instance id="commcaresession" src="jr://instance/session"/>
+        <session>
+            <datum id="case_id_new_frog_0" function="uuid()"/>
+        </session>
+        <stack>
+          <create if="a = 1">
+            <command value="'m1'"/>
+            <command value="'m1-f0'"/>
+            <datum id="case_id" value="instance('commcaresession')/session/data/case_id_new_frog_0"/>
+          </create>
+          <create if="a = 2">
+            <command value="'m1'"/>
+            <command value="'m1-f1'"/>
+            <datum id="case_id_new_frog_0" value="uuid()"/>
+          </create>
+        </stack>
+    </entry>
+</partial>

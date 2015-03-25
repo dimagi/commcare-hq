@@ -763,15 +763,23 @@ class SuiteGenerator(SuiteGeneratorBase):
             WORKFLOW_DEFAULT, WORKFLOW_PREVIOUS, WORKFLOW_MODULE, WORKFLOW_ROOT, WORKFLOW_FORM
         )
 
+        @memoized
+        def get_entry(suite, form_command):
+            entry = self.get_form_entry(suite, form_command)
+            if not entry.stack:
+                entry.stack = Stack()
+                return entry, True
+            else:
+                return entry, False
+
         def create_workflow_stack(suite, form_command, frame_children,
                                   allow_empty_stack=False, if_clause=None):
             if not frame_children and not allow_empty_stack:
                 return
 
+            entry, is_new = get_entry(suite, form_command)
             entry = self.get_form_entry(suite, form_command)
-            if not entry.stack:
-                entry.stack = Stack()
-            else:
+            if not is_new:
                 # TODO: find a more general way of handling multiple contributions to the workflow
                 if_prefix = '{} = 0'.format(session_var(RETURN_TO).count())
                 template = '({{}}) and ({})'.format(if_clause) if if_clause else '{}'
@@ -784,7 +792,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                 if isinstance(child, basestring):
                     frame.add_command(XPath.string(child))
                 else:
-                    frame.add_datum(StackDatum(id=child.id, value=session_var(child.source_id)))
+                    value = session_var(child.source_id) if child.nodeset else child.function
+                    frame.add_datum(StackDatum(id=child.id, value=value))
             return frame
 
         def get_frame_children_for_form(target_form):
@@ -863,10 +872,9 @@ class SuiteGenerator(SuiteGeneratorBase):
 
                     create_workflow_stack(suite, form_command, frame_children)
                 elif form.post_form_workflow == WORKFLOW_FORM:
+                    module_id, form_id = form_command.split('-')
+                    source_form_datums = self.get_form_datums(suite, module_id, form_id)
                     for link in form.form_links:
-                        module_id, form_id = form_command.split('-')
-                        source_form_datums = self.get_form_datums(suite, module_id, form_id)
-
                         target_form = self.app.get_form(link.form_id)
                         frame_children = get_frame_children_for_form(target_form)
                         frame_datums = [child for child in frame_children if isinstance(child, DatumMeta)]
@@ -874,7 +882,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                         # attempt to match the target session variables with ones in the current session
                         # making some large assumptions about how people will actually use this feature
                         for target_datum, source_datum in izip_longest(frame_datums, source_form_datums):
-                            if target_datum.id != source_datum.id:
+                            if not target_datum.function and target_datum.id != source_datum.id:
                                 if not source_datum.case_type or source_datum.case_type == target_datum.case_type:
                                     target_datum.source_id = source_datum.id
 
