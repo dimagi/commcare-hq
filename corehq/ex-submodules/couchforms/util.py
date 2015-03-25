@@ -209,16 +209,18 @@ def _handle_id_conflict(instance, attachments, process, domain):
     previous form and overwrite it with the new form's contents.
     """
 
+    assert domain
     conflict_id = _extract_id_from_raw_xml(instance)
 
-    # get old document
     existing_doc = XFormInstance.get_db().get(conflict_id, attachments=True)
-    assert domain
-    if existing_doc.get('domain') != domain\
-            or existing_doc.get('doc_type') not in doc_types():
+    if existing_doc.get('domain') != domain or existing_doc.get('doc_type') not in doc_types():
+        # the same form was submitted to two domains, or a form was submitted with
+        # an ID that belonged to a different doc type. these are likely developers
+        # manually testing or broken API users. just resubmit with a generated ID.
         return process_xform(instance, attachments=attachments,
                              process=process, _id=uid.new())
     else:
+        # It looks like a duplicate/edit in the same domain so pursue that workflow.
         existing_doc = XFormInstance.wrap(existing_doc)
         return _handle_duplicate(existing_doc, instance, attachments, process)
 
@@ -232,16 +234,16 @@ def _handle_duplicate(existing_doc, instance, attachments, process):
 
     """
     conflict_id = existing_doc.get_id
-    # compare md5s
     existing_md5 = existing_doc.xml_md5()
     new_md5 = hashlib.md5(instance).hexdigest()
 
-    # if not same:
-    # Deprecate old form (including changing ID)
-    # to deprecate, copy new instance into a XFormDeprecated
-    # todo: save transactionally like the rest of the code
     if existing_md5 != new_md5:
-        old_id = existing_doc.get_id
+        # if the form contents are not the same:
+        #  - "Deprecate" the old form by making a new document with the same contents
+        #    but a different ID and a doc_type of XFormDeprecated
+        #  - Save the new instance to the previous document to preserve the ID
+
+        old_id = existing_doc._id
         new_id = XFormInstance.get_db().server.next_uuid()
 
         multi_lock_manager = process_xform(instance, attachments=attachments,
@@ -253,7 +255,7 @@ def _handle_duplicate(existing_doc, instance, attachments, process):
         xform._id, existing_doc._id = old_id, new_id
         xform._rev, existing_doc._rev = existing_doc._rev, xform._rev
 
-        existing_doc.doc_type = XFormDeprecated.__name__
+        existing_doc.doc_type = deprecation_type()
         existing_doc.orig_id = old_id
 
         multi_lock_manager.append(
@@ -262,18 +264,24 @@ def _handle_duplicate(existing_doc, instance, attachments, process):
         )
         return multi_lock_manager
     else:
-        # follow standard dupe handling
+        # follow standard dupe handling, which simply saves a copy of the form
+        # but a new doc_id, and a doc_type of XFormDuplicate
         new_doc_id = uid.new()
         new_form, lock = create_xform(instance, attachments=attachments,
                                       _id=new_doc_id, process=process)
 
-        # create duplicate doc
-        # get and save the duplicate to ensure the doc types are set correctly
-        # so that it doesn't show up in our reports
         new_form.doc_type = XFormDuplicate.__name__
         dupe = XFormDuplicate.wrap(new_form.to_json())
         dupe.problem = "Form is a duplicate of another! (%s)" % conflict_id
         return MultiLockManager([LockManager(dupe, lock)])
+
+
+def is_deprecation(xform):
+    return xform.doc_type == deprecation_type()
+
+
+def deprecation_type():
+    return XFormDeprecated.__name__
 
 
 def _log_hard_failure(instance, attachments, error):
