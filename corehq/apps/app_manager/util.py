@@ -211,20 +211,21 @@ def get_case_properties(app, case_types, defaults=(),
     )
 
 
+def get_user_case_type(domain_name):
+    call_center_config = Domain.get_by_name(domain_name).call_center_config
+    return call_center_config.case_type if call_center_config.enabled else None
+
+
 def get_all_case_properties(app):
     case_types = set(itertools.chain.from_iterable(m.get_case_types() for m in app.modules))
-    call_center_config = Domain.get_by_name(app.domain).call_center_config
-    if call_center_config.enabled:
-        # Add user case type
-        case_types.add(call_center_config.case_type)
-        usercasetype = call_center_config.case_type
-    else:
-        usercasetype = None
+    user_case_type = get_user_case_type(app.domain)
+    if user_case_type:
+        case_types.add(user_case_type)
     return get_case_properties(
         app,
         case_types,
         defaults=('name',),
-        usercasetype=usercasetype
+        usercasetype=user_case_type
     )
 
 

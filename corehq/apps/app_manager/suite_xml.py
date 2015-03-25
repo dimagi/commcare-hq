@@ -725,6 +725,10 @@ class SuiteGenerator(SuiteGeneratorBase):
         'fixtures',
     )
 
+    def __init__(self, app, user_case_type=None):
+        super(SuiteGenerator, self).__init__(app)
+        self.user_case_type = user_case_type
+
     def post_process(self, suite):
         if self.app.enable_post_form_workflow:
             self.add_form_workflow(suite)
@@ -1399,11 +1403,16 @@ class SuiteGenerator(SuiteGeneratorBase):
         entry.stack.add_frame(frame_case_not_created)
 
     def configure_entry_usercase(self, e):
-        userid = session_var(var='userid', data='context')
-        usercase_xpath = UserCaseXPath(userid)
+        if self.user_case_type is None:
+            # Is call center config enabled? If it's not enabled, the
+            # SuiteGenerator constructor will have been passed a value of None
+            # for user_case_type. We shouldn't be using user case properties
+            # if user case functionality is disabled.
+            raise ValueError('Unable to determine user case. User case type unknown.')
+        case = UserCaseXPath(self.user_case_type).case()
         e.datums.append(SessionDatum(
             id='usercase_id',
-            function=('%s/@case_id' % usercase_xpath.case())
+            function=('%s/@case_id' % case)
         ))
 
     def configure_entry_module_form(self, module, e, form=None, use_filter=True, **kwargs):
@@ -1602,14 +1611,6 @@ class SuiteGenerator(SuiteGeneratorBase):
 
             return case_session_var
 
-        def uses_usercase(form):
-            for action in form.actions.load_update_cases:
-                if action.preload:
-                    return any_usercase_items(action.preload.keys())
-                if action.case_properties:
-                    return any_usercase_items(action.case_properties.keys())
-            return False
-
         for index, action in enumerate(form.actions.load_update_cases):
             auto_select = action.auto_select
             if auto_select and auto_select.mode:
@@ -1661,9 +1662,6 @@ class SuiteGenerator(SuiteGeneratorBase):
 
         if self.app.case_sharing and case_sharing_requires_assertion(form):
             self.add_case_sharing_assertion(e)
-
-        if uses_usercase(form):
-            self.configure_entry_usercase(e)
 
     def configure_entry_careplan_form(self, module, e, form=None, **kwargs):
             parent_module = self.get_module_by_id(module.parent_select.module_id)

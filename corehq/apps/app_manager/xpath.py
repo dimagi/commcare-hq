@@ -113,8 +113,9 @@ class CaseTypeXpath(CaseSelectionXPath):
         return CaseXPath(u"instance('casedb')/casedb/case[%s='%s']" % (self.selector, self))
 
 
-class UserCaseXPath(CaseSelectionXPath):
-    selector = 'user_id'
+class UserCaseXPath(XPath):
+    def case(self):
+        return CaseTypeXpath(self).select('hq_user_id', session_var(var='userid', data='context'))
 
 
 class CaseXPath(XPath):
