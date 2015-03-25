@@ -250,9 +250,9 @@
                         <input type="text"
                             placeholder="{% trans "XPath expression" %}"
                             name="module_filter"
-                            value="{{ module.module_filter }}"/>
+                            value="{% if module.module_filter %}{{ module.module_filter }}{% endif %}"/>
                         {% else %}
-                            {{ module.module_filter }}
+                            {{ module.module_filter|default:"" }}
                         {% endif %}
                     </div>
                 </div>
