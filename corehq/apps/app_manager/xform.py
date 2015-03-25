@@ -5,7 +5,6 @@ from casexml.apps.case.xml import V2_NAMESPACE
 from corehq.apps.app_manager.const import APP_V1, SCHEDULE_PHASE, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE, \
     CASE_ID, USERCASE_ID, USERCASE_PREFIX
 from lxml import etree as ET
-from corehq.apps.app_manager.util import get_usercase_keys, get_usercase_values
 from corehq.util.view_utils import get_request
 from dimagi.utils.decorators.memoized import memoized
 from .xpath import CaseIDXPath, session_var, CaseTypeXpath
@@ -993,7 +992,7 @@ class XForm(WrappedNode):
         )
 
     def add_usercase(self, form):
-        from corehq.apps.app_manager.util import split_path
+        from corehq.apps.app_manager.util import split_path, get_usercase_keys, get_usercase_values
 
         usercase_path = 'usercase/'
         actions = form.active_actions()
