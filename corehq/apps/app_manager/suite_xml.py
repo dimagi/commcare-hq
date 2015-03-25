@@ -837,44 +837,46 @@ class SuiteGenerator(SuiteGeneratorBase):
                               for datum in self.get_module_datums(suite, u'm{}'.format(module.id)).values()]
         for module in self.modules:
             for form in module.get_forms():
-                if form.post_form_workflow != WORKFLOW_DEFAULT:
-                    form_command = self.id_strings.form_command(form)
-                    module_command = self.id_strings.menu_id(module)
+                if form.post_form_workflow == WORKFLOW_DEFAULT:
+                    continue
 
-                    if form.post_form_workflow == WORKFLOW_ROOT:
-                        create_workflow_stack(suite, form_command, module_command, [], True)
-                    elif form.post_form_workflow == WORKFLOW_MODULE:
-                        frame_children = [module_command] if module_command != self.id_strings.ROOT else []
-                        create_workflow_stack(suite, form_command, module_command, frame_children)
-                    elif form.post_form_workflow == WORKFLOW_PREVIOUS:
-                        frame_children = get_frame_children_for_form(form)
+                form_command = self.id_strings.form_command(form)
+                module_command = self.id_strings.menu_id(module)
 
-                        # since we want to go the 'previous' screen we need to drop the last
-                        # datum
+                if form.post_form_workflow == WORKFLOW_ROOT:
+                    create_workflow_stack(suite, form_command, module_command, [], True)
+                elif form.post_form_workflow == WORKFLOW_MODULE:
+                    frame_children = [module_command] if module_command != self.id_strings.ROOT else []
+                    create_workflow_stack(suite, form_command, module_command, frame_children)
+                elif form.post_form_workflow == WORKFLOW_PREVIOUS:
+                    frame_children = get_frame_children_for_form(form)
+
+                    # since we want to go the 'previous' screen we need to drop the last
+                    # datum
+                    last = frame_children.pop()
+                    while isinstance(last, DatumMeta) and last.function:
+                        # keep removing last element until we hit a command
+                        # or a non-autoselect datum
                         last = frame_children.pop()
-                        while isinstance(last, DatumMeta) and last.function:
-                            # keep removing last element until we hit a command
-                            # or a non-autoselect datum
-                            last = frame_children.pop()
+
+                    create_workflow_stack(suite, form_command, module_command, frame_children)
+                elif form.post_form_workflow == WORKFLOW_FORM:
+                    for link in form.form_links:
+                        module_id, form_id = form_command.split('-')
+                        source_form_datums = self.get_form_datums(suite, module_id, form_id)
+
+                        target_form = self.app.get_form(link.form_id)
+                        frame_children = get_frame_children_for_form(target_form)
+                        frame_datums = [child for child in frame_children if isinstance(child, DatumMeta)]
+
+                        # attempt to match the target session variables with ones in the current session
+                        # making some large assumptions about how people will actually use this feature
+                        for target_datum, source_datum in izip_longest(frame_datums, source_form_datums):
+                            if target_datum.id != source_datum.id:
+                                if not source_datum.case_type or source_datum.case_type == target_datum.case_type:
+                                    target_datum.source_id = source_datum.id
 
                         create_workflow_stack(suite, form_command, module_command, frame_children)
-                    elif form.post_form_workflow == WORKFLOW_FORM:
-                        for link in form.form_links:
-                            module_id, form_id = form_command.split('-')
-                            source_form_datums = self.get_form_datums(suite, module_id, form_id)
-
-                            target_form = self.app.get_form(link.form_id)
-                            frame_children = get_frame_children_for_form(target_form)
-                            frame_datums = [child for child in frame_children if isinstance(child, DatumMeta)]
-
-                            # attempt to match the target session variables with ones in the current session
-                            # making some large assumptions about how people will actually use this feature
-                            for target_datum, source_datum in izip_longest(frame_datums, source_form_datums):
-                                if target_datum.id != source_datum.id:
-                                    if not source_datum.case_type or source_datum.case_type == target_datum.case_type:
-                                        target_datum.source_id = source_datum.id
-
-                            create_workflow_stack(suite, form_command, module_command, frame_children)
 
     def get_form_datums(self, suite, module_id, form_id):
         return self.get_module_datums(suite, module_id)[form_id]
