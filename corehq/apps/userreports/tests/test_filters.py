@@ -104,6 +104,20 @@ class EqualityFilterTest(PropertyMatchFilterTest):
         })
 
 
+class PropertyMatchFilterTest(SimpleTestCase):
+
+    def test_null_value(self):
+        null_filter = FilterFactory.from_spec({
+            'type': 'property_match',
+            'property_name': 'foo',
+            'property_value': None,
+        })
+        self.assertEqual(True, null_filter({'foo': None}))
+        self.assertEqual(True, null_filter({}))
+        self.assertEqual(False, null_filter({'foo': 'exists'}))
+        self.assertEqual(False, null_filter({'foo': ''}))
+
+
 class BooleanExpressionFilterTest(SimpleTestCase):
 
     def get_filter(self, operator, value):
@@ -123,6 +137,13 @@ class BooleanExpressionFilterTest(SimpleTestCase):
         self.assertTrue(filter({'foo': match}))
         self.assertFalse(filter({'foo': 'non-match'}))
         self.assertFalse(filter({'foo': None}))
+
+    def test_equal_null(self):
+        null_filter = self.get_filter('eq', None)
+        self.assertEqual(True, null_filter({'foo': None}))
+        self.assertEqual(True, null_filter({}))
+        self.assertEqual(False, null_filter({'foo': 'exists'}))
+        self.assertEqual(False, null_filter({'foo': ''}))
 
     def test_in(self):
         values = ['a', 'b', 'c']
