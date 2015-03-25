@@ -419,13 +419,11 @@ class SurveyResponsesReport(FRIReport):
         timestamp_start = datetime.combine(dt, time(20, 45))
         timestamp_start = UserTime(
             timestamp_start, self.domain_obj.default_timezone).server_time().done()
-        timestamp_start = timestamp_start.replace(tzinfo=None)
         timestamp_start = json_format_datetime(timestamp_start)
 
         timestamp_end = datetime.combine(dt + timedelta(days=1), time(11, 45))
         timestamp_end = UserTime(
             timestamp_end, self.domain_obj.default_timezone).server_time().done()
-        timestamp_end = timestamp_end.replace(tzinfo=None)
         if timestamp_end > datetime.utcnow():
             return RESPONSE_NOT_APPLICABLE
         timestamp_end = json_format_datetime(timestamp_end)

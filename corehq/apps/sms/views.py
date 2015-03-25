@@ -711,7 +711,7 @@ def chat(request, domain, contact_id):
     floored_utc_timestamp = UserTime(
         datetime.combine(local_date, time(0, 0)),
         timezone
-    ).server_time().done().replace(tzinfo=None)
+    ).server_time().done()
 
     def _fmt(d):
         return json_format_datetime(floored_utc_timestamp - timedelta(days=d))

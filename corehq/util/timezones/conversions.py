@@ -1,7 +1,4 @@
-from django.conf import settings
-from django.utils.encoding import smart_str
 import pytz
-from dimagi.utils.logging import notify_exception
 
 TIMEZONE_DATA_MIGRATION_COMPLETE = False
 
@@ -52,19 +49,9 @@ class PhoneTime(_HQTZTime):
     def user_time(self, user_tz):
         return self.server_time().user_time(user_tz)
 
-
-def _adjust_datetime_to_timezone(value, from_tz, to_tz=None):
-    """
-    Given a ``datetime`` object adjust it according to the from_tz timezone
-    string into the to_tz timezone string.
-    """
-    if to_tz is None:
-        to_tz = settings.TIME_ZONE
-    if value.tzinfo is None:
-        if not hasattr(from_tz, "localize"):
-            from_tz = pytz.timezone(smart_str(from_tz))
-        value = from_tz.localize(value)
-    return value.astimezone(pytz.timezone(smart_str(to_tz)))
+    def done(self):
+        # phone times should always come out timezone naive
+        return self._datetime.replace(tzinfo=None)
 
 
 def _adjust_datetime_to_utc(value, from_tz):
@@ -73,7 +60,8 @@ def _adjust_datetime_to_utc(value, from_tz):
     something other than a UTC time and converts it to UTC (timezone-aware)
 
     """
-    return _adjust_datetime_to_timezone(value, from_tz, pytz.utc)
+    assert value.tzinfo is None
+    return from_tz.localize(value).astimezone(pytz.utc).replace(tzinfo=None)
 
 
 def _adjust_utc_datetime_to_timezone(value, to_tz):
@@ -82,7 +70,8 @@ def _adjust_utc_datetime_to_timezone(value, to_tz):
 
     returns a timezone-aware datetime localized to to_tz
     """
-    return _adjust_datetime_to_timezone(value, pytz.utc, to_tz)
+    assert value.tzinfo is None
+    return value.astimezone(to_tz)
 
 
 def _adjust_phone_datetime_to_utc(value, phone_tz):
@@ -90,12 +79,7 @@ def _adjust_phone_datetime_to_utc(value, phone_tz):
     put a phone datetime (like timeEnd, modified_on, etc.) into UTC
 
     """
-    if value.tzinfo is not None:
-        # If this happens it's strange and I want to iron it out before
-        # timezone migration
-        notify_exception(None, 'value passed to adjust_phone_datetime_to_utc '
-                               'is not timezone naive: {}'
-                               .format(value.tzinfo))
+    assert value.tzinfo is None
     if TIMEZONE_DATA_MIGRATION_COMPLETE:
         return value
     else:
@@ -108,13 +92,8 @@ def _adjust_utc_datetime_to_phone_datetime(value, phone_tz):
     (like timeEnd, modified_on, etc.)
 
     """
-    if value.tzinfo is not None:
-        # If this happens it's strange and I want to iron it out before
-        # timezone migration
-        notify_exception(None, 'value passed to adjust_utc_datetime_to_phone_datetime '
-                               'is not timezone naive: {}'
-                               .format(value.tzinfo))
+    assert value.tzinfo is None
     if TIMEZONE_DATA_MIGRATION_COMPLETE:
-        return value
+        return value.astimezone(pytz.utc)
     else:
         return _adjust_utc_datetime_to_timezone(value, phone_tz)

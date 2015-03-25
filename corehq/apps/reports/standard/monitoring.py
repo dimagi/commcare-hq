@@ -797,10 +797,9 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, Mu
                     tz_utils.is_timezone_in_dst(self.timezone, completion_time)
                 completion_time = self.timezone.localize(completion_time, is_dst=completion_dst)
 
-                submission_time = row['received_on'].replace(tzinfo=pytz.utc)
-                submission_time = ServerTime(submission_time).phone_time(self.timezone).done()
+                submission_time = ServerTime(row['received_on']).phone_time(self.timezone).done()
 
-                td = submission_time-completion_time
+                td = submission_time - completion_time
                 td_total = (td.seconds + td.days * 24 * 3600)
                 rows.append([
                             self.get_user_link(user_map.get(row['user_id'])),

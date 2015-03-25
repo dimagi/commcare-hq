@@ -352,7 +352,7 @@ class DaysSinceADMColumn(CouchViewADMColumn, NumericalADMColumnMixin):
             now = UserTime(
                 getattr(datespan, self.start_or_end or "enddate"),
                 datespan.timezone
-            ).server_time().done()
+            ).server_time().done().replace(tzinfo=pytz.utc)
         except Exception:
             now = datetime.datetime.now(tz=pytz.utc)
         data = self.view_results(
@@ -653,6 +653,9 @@ class CaseCountADMColumn(ConfigurableADMColumn, CaseFilterADMColumnMixin,
             milestone_days_ago = UserTime(
                 self.report_datespan.enddate, self.report_datespan.timezone
             ).server_time().done() - datetime.timedelta(days=self.inactivity_milestone)
+            # in refactoring tz stuff,
+            # milestone_days_ago is now tz naive, so isoformat()
+            # no longer has +00:00 at the end. I think that's fine.
             datespan_keys = [[], [milestone_days_ago.isoformat()]]
         elif not self.ignore_datespan:
             datespan_keys = [[self.report_datespan.startdate_param_utc], [self.report_datespan.enddate_param_utc]]

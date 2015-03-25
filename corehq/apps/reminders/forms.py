@@ -1806,7 +1806,6 @@ class OneTimeReminderForm(Form):
                 return None
             start_datetime = datetime.combine(dt, tm)
             start_datetime = UserTime(start_datetime, timezone).server_time().done()
-            start_datetime = start_datetime.replace(tzinfo=None)
             if start_datetime < utcnow:
                 raise ValidationError(_("Date and time cannot occur in the past."))
         return start_datetime
