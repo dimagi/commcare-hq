@@ -92,8 +92,8 @@ from corehq.apps.app_manager.util import (
     commtrack_ledger_sections,
     get_commcare_versions,
     save_xform,
-    get_settings_values
-)
+    get_settings_values,
+    get_usercase_type)
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import LoginAndDomainMixin
 from corehq.util.compression import decompress
@@ -854,11 +854,10 @@ def get_module_view_context_and_template(app, module):
             'long': module.case_details.long,
             'child_case_types': child_case_types,
         }
-        call_center_config = Domain.get_by_name(app.domain).call_center_config
-        if call_center_config.enabled:
-            user_case_type = call_center_config.case_type
-            item['properties'] = sorted(builder.get_properties(case_type, usercasetype=user_case_type) |
-                                        builder.get_properties(user_case_type, usercasetype=user_case_type))
+        usercase_type = get_usercase_type(app.domain)
+        if usercase_type:
+            item['properties'] = sorted(builder.get_properties(case_type, usercase_type=usercase_type) |
+                                        builder.get_properties(usercase_type, usercase_type=usercase_type))
         else:
             item['properties'] = sorted(builder.get_properties(case_type))
 

@@ -725,9 +725,9 @@ class SuiteGenerator(SuiteGeneratorBase):
         'fixtures',
     )
 
-    def __init__(self, app, user_case_type=None):
+    def __init__(self, app, usercase_type=None):
         super(SuiteGenerator, self).__init__(app)
-        self.user_case_type = user_case_type
+        self.usercase_type = usercase_type
 
     def post_process(self, suite):
         if self.app.enable_post_form_workflow:
@@ -1425,13 +1425,13 @@ class SuiteGenerator(SuiteGeneratorBase):
         entry.stack.add_frame(frame_case_not_created)
 
     def configure_entry_usercase(self, e):
-        if self.user_case_type is None:
+        if self.usercase_type is None:
             # Is call center config enabled? If it's not enabled, the
             # SuiteGenerator constructor will have been passed a value of None
-            # for user_case_type. We shouldn't be using user case properties
+            # for usercase_type. We shouldn't be using user case properties
             # if user case functionality is disabled.
             raise ValueError('Unable to determine user case. User case type unknown.')
-        case = UserCaseXPath(self.user_case_type).case()
+        case = UserCaseXPath(self.usercase_type).case()
         e.datums.append(SessionDatum(
             id='usercase_id',
             function=('%s/@case_id' % case)
@@ -1693,9 +1693,6 @@ class SuiteGenerator(SuiteGeneratorBase):
 
         if self.app.case_sharing and case_sharing_requires_assertion(form):
             self.add_case_sharing_assertion(e)
-
-        if uses_usercase(form):
-            self.configure_entry_usercase(e)
 
     def configure_entry_careplan_form(self, module, e, form=None, **kwargs):
             parent_module = self.get_module_by_id(module.parent_select.module_id)

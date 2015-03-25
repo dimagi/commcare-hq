@@ -61,8 +61,13 @@ from corehq.apps.users.util import cc_user_domain
 from corehq.apps.domain.models import cached_property
 from corehq.apps.app_manager import current_builds, app_strings, remote_app
 from corehq.apps.app_manager import suite_xml, commcare_settings
-from corehq.apps.app_manager.util import split_path, save_xform, get_correct_app_class, ParentCasePropertyBuilder, \
-    get_user_case_type
+from corehq.apps.app_manager.util import (
+    split_path,
+    save_xform,
+    get_correct_app_class,
+    ParentCasePropertyBuilder,
+    get_usercase_type
+)
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
@@ -2146,8 +2151,8 @@ class AdvancedModule(ModuleBase):
 
                 if from_module.parent_select.active:
                     app = self.get_app()
-                    user_case_type = get_user_case_type(app.domain)
-                    gen = suite_xml.SuiteGenerator(app, user_case_type)
+                    usercase_type = get_usercase_type(app.domain)
+                    gen = suite_xml.SuiteGenerator(app, usercase_type)
                     select_chain = gen.get_select_chain(from_module, include_self=False)
                     for n, link in enumerate(reversed(list(enumerate(select_chain)))):
                         i, module = link
@@ -3562,8 +3567,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 'langs': ["default"] + self.build_langs
             })
         else:
-            user_case_type = get_user_case_type(self.domain)
-            return suite_xml.SuiteGenerator(self, user_case_type).generate_suite()
+            usercase_type = get_usercase_type(self.domain)
+            return suite_xml.SuiteGenerator(self, usercase_type).generate_suite()
 
     def create_media_suite(self):
         return suite_xml.MediaSuiteGenerator(self).generate_suite()

@@ -123,7 +123,7 @@ class ParentCasePropertyBuilder(object):
     @memoized
     def get_properties(self, case_type, already_visited=(),
                        include_shared_properties=True,
-                       usercasetype=None):
+                       usercase_type=None):
         if case_type in already_visited:
             return ()
 
@@ -131,7 +131,7 @@ class ParentCasePropertyBuilder(object):
             self.get_properties,
             already_visited=already_visited + (case_type,),
             include_shared_properties=include_shared_properties,
-            usercasetype=usercasetype
+            usercase_type=usercase_type
         )
 
         case_properties = set(self.defaults)
@@ -150,12 +150,12 @@ class ParentCasePropertyBuilder(object):
             for app in self.get_other_case_sharing_apps_in_domain():
                 case_properties.update(
                     get_case_properties(
-                        app, [case_type], include_shared_properties=False, usercasetype=usercasetype
+                        app, [case_type], include_shared_properties=False, usercase_type=usercase_type
                     ).get(case_type, [])
                 )
 
         # prefix user case properties with "user:".
-        prefix_user = lambda p: 'user:' + p if case_type == usercasetype else p
+        prefix_user = lambda p: USERCASE_PREFIX + p if case_type == usercase_type else p
 
         # .. note:: if the user case type has a parent case type, its
         #           properties will be returned as `user:parent/property`
@@ -191,11 +191,11 @@ class ParentCasePropertyBuilder(object):
 
         return parent_map
 
-    def get_case_property_map(self, case_types, include_shared_properties=True, usercasetype=None):
+    def get_case_property_map(self, case_types, include_shared_properties=True, usercase_type=None):
         case_types = sorted(case_types)
         return {
             case_type: sorted(self.get_properties(
-                case_type, include_shared_properties=include_shared_properties, usercasetype=usercasetype
+                case_type, include_shared_properties=include_shared_properties, usercase_type=usercase_type
             ))
             for case_type in case_types
         }
@@ -203,29 +203,30 @@ class ParentCasePropertyBuilder(object):
 
 def get_case_properties(app, case_types, defaults=(),
                         include_shared_properties=True,
-                        usercasetype=None):
+                        usercase_type=None):
     builder = ParentCasePropertyBuilder(app, defaults)
     return builder.get_case_property_map(
         case_types,
         include_shared_properties=include_shared_properties,
-        usercasetype=usercasetype
+        usercase_type=usercase_type
     )
+
+
+def get_usercase_type(domain_name):
+    call_center_config = Domain.get_by_name(domain_name).call_center_config
+    return call_center_config.case_type if call_center_config.enabled else None
 
 
 def get_all_case_properties(app):
     case_types = set(itertools.chain.from_iterable(m.get_case_types() for m in app.modules))
-    call_center_config = Domain.get_by_name(app.domain).call_center_config
-    if call_center_config.enabled:
-        # Add user case type
-        case_types.add(call_center_config.case_type)
-        usercasetype = call_center_config.case_type
-    else:
-        usercasetype = None
+    usercase_type = get_usercase_type(app.domain)
+    if usercase_type:
+        case_types.add(usercase_type)
     return get_case_properties(
         app,
         case_types,
         defaults=('name',),
-        usercasetype=usercasetype
+        usercase_type=usercase_type
     )
 
 
