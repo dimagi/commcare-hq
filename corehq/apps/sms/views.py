@@ -707,10 +707,9 @@ def chat(request, domain, contact_id):
     # "Yesterday", for example, gives you data from yesterday at
     # midnight local time.
     local_date = datetime.now(timezone).date()
-    floored_utc_timestamp = tz_utils.adjust_datetime_to_timezone(
+    floored_utc_timestamp = tz_utils.adjust_datetime_to_utc(
         datetime.combine(local_date, time(0,0)),
-        timezone.zone,
-        pytz.utc.zone
+        timezone.zone
     ).replace(tzinfo=None)
 
     def _fmt(d):
@@ -812,7 +811,7 @@ def api_history(request, domain):
         result.append({
             "sender" : sender,
             "text" : sms.text,
-            "timestamp" : tz_utils.adjust_datetime_to_timezone(sms.date, pytz.utc.zone, timezone.zone).strftime("%I:%M%p %m/%d/%y").lower(),
+            "timestamp" : tz_utils.adjust_utc_datetime_to_timezone(sms.date, timezone.zone).strftime("%I:%M%p %m/%d/%y").lower(),
             "utc_timestamp" : json_format_datetime(sms.date),
             "sent_by_requester": (sms.chat_user_id == request.couch_user.get_id),
         })

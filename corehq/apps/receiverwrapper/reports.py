@@ -120,7 +120,7 @@ class SubmissionErrorReport(DeploymentsReport):
                     return 'unable to view form'
             
             def _fmt_date(somedate):
-                time = tz_utils.adjust_datetime_to_timezone(somedate, pytz.utc.zone, self.timezone.zone)
+                time = tz_utils.adjust_utc_datetime_to_timezone(somedate, self.timezone.zone)
                 return time.strftime("%Y-%m-%d %H:%M:%S")
             
             return [_fmt_url(error_doc.get_id),

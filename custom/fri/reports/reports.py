@@ -251,7 +251,7 @@ class MessageReport(FRIReport, DatespanMixin):
             if message.couch_recipient_doc_type == "CommCareCase":
                 study_arm = case_cache.get(message.couch_recipient).get_case_property("study_arm")
 
-            timestamp = tz_utils.adjust_datetime_to_timezone(message.date, pytz.utc.zone, self.domain_obj.default_timezone)
+            timestamp = tz_utils.adjust_utc_datetime_to_timezone(message.date, self.domain_obj.default_timezone)
             result.append([
                 self._fmt(self._participant_id(recipient)),
                 self._fmt(study_arm or "-"),
@@ -385,8 +385,8 @@ class SurveyResponsesReport(FRIReport):
                 elif response == NO_RESPONSE:
                     row.append(self._fmt(_("No Response")))
                 else:
-                    response_timestamp = tz_utils.adjust_datetime_to_timezone(
-                        response.date, pytz.utc.zone, self.domain_obj.default_timezone)
+                    response_timestamp = tz_utils.adjust_utc_datetime_to_timezone(
+                        response.date, self.domain_obj.default_timezone)
                     row.append(self._fmt_timestamp(response_timestamp))
             result.append(row)
         return result
@@ -417,14 +417,14 @@ class SurveyResponsesReport(FRIReport):
 
     def get_first_survey_response(self, case, dt):
         timestamp_start = datetime.combine(dt, time(20, 45))
-        timestamp_start = tz_utils.adjust_datetime_to_timezone(
-            timestamp_start, self.domain_obj.default_timezone, pytz.utc.zone)
+        timestamp_start = tz_utils.adjust_datetime_to_utc(
+            timestamp_start, self.domain_obj.default_timezone)
         timestamp_start = timestamp_start.replace(tzinfo=None)
         timestamp_start = json_format_datetime(timestamp_start)
 
         timestamp_end = datetime.combine(dt + timedelta(days=1), time(11, 45))
-        timestamp_end = tz_utils.adjust_datetime_to_timezone(
-            timestamp_end, self.domain_obj.default_timezone, pytz.utc.zone)
+        timestamp_end = tz_utils.adjust_datetime_to_utc(
+            timestamp_end, self.domain_obj.default_timezone)
         timestamp_end = timestamp_end.replace(tzinfo=None)
         if timestamp_end > datetime.utcnow():
             return RESPONSE_NOT_APPLICABLE

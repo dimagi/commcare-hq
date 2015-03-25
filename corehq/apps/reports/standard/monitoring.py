@@ -187,7 +187,17 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
     @property
     @memoized
     def utc_now(self):
-        return tz_utils.adjust_datetime_to_timezone(datetime.datetime.utcnow(), self.timezone.zone, pytz.utc.zone)
+        # Fun story:
+        # this function was wrong since 2012. Through a convoluted series
+        # of refactors where no one was really thinking hard about this
+        # it at some point morphed into translating by self.timezone
+        # in the opposite direction.
+        # Additionally, when I (Danny) re-wrote this report in 2012
+        # I had no conception that the dates were suffering from this
+        # timezone stripping problem, and so I hadn't factored that in.
+        # As a result, this was two timezones off from correct
+        # and no one noticed all these years...
+        return datetime.datetime.utcnow()
 
     @property
     def headers(self):
@@ -267,9 +277,9 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
         if closed is not None:
             kwargs['closed'] = bool(closed)
         if modified_after:
-            kwargs['modified_on__gte'] = modified_after
+            kwargs['modified_on__gte'] = tz_utils.adjust_utc_datetime_to_phone_datetime(modified_after, self.timezone)
         if modified_before:
-            kwargs['modified_on__lt'] = modified_before
+            kwargs['modified_on__lt'] = tz_utils.adjust_utc_datetime_to_phone_datetime(modified_before, self.timezone)
         if self.case_type:
             kwargs['type'] = self.case_type
 
@@ -787,7 +797,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, Mu
                 completion_time = self.timezone.localize(completion_time, is_dst=completion_dst)
 
                 submission_time = row['received_on'].replace(tzinfo=pytz.utc)
-                submission_time = tz_utils.adjust_datetime_to_timezone(submission_time, pytz.utc.zone, self.timezone.zone)
+                submission_time = tz_utils.adjust_utc_datetime_to_phone_datetime(submission_time, self.timezone.zone)
 
                 td = submission_time-completion_time
                 td_total = (td.seconds + td.days * 24 * 3600)
@@ -896,9 +906,13 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
                     endkey=key+[self.datespan.enddate_param_utc],
                 ).all()
                 all_times.extend([dateutil.parser.parse(d['key'][-1]) for d in data])
-        if self.by_submission_time:
-            # completion time is assumed to be in the phone's timezone until we can send proper timezone info
-            all_times = [tz_utils.adjust_datetime_to_timezone(t, pytz.utc.zone, self.timezone.zone) for t in all_times]
+        # Completion: adjust to UTC and then adjust to user's timezone
+        # Submission: just adjust to user's timezone
+        if not self.by_submission_time:
+            all_times = [tz_utils.adjust_phone_datetime_to_utc(t, self.timezone.zone)
+                         for t in all_times]
+        all_times = [tz_utils.adjust_utc_datetime_to_timezone(t, self.timezone.zone)
+                     for t in all_times]
         return [(t.weekday(), t.hour) for t in all_times]
 
     @property

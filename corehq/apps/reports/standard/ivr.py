@@ -97,7 +97,7 @@ class CallLogReport(BaseCommConnectLogReport):
             if abbreviate_phone_number and phone_number is not None:
                 phone_number = phone_number[0:7] if phone_number[0:1] == "+" else phone_number[0:6]
             
-            timestamp = tz_utils.adjust_datetime_to_timezone(call.date, pytz.utc.zone, self.timezone.zone)
+            timestamp = tz_utils.adjust_utc_datetime_to_timezone(call.date, self.timezone.zone)
             
             if call.direction == INCOMING:
                 answered = "-"
@@ -208,7 +208,7 @@ class ExpectedCallbackReport(ProjectReport, ProjectReportParametersMixin, Generi
                
                 username_map[recipient_id] = username
             
-            timestamp = tz_utils.adjust_datetime_to_timezone(event.date, pytz.utc.zone, self.timezone.zone)
+            timestamp = tz_utils.adjust_utc_datetime_to_timezone(event.date, self.timezone.zone)
             
             row = [
                 self._fmt_timestamp(timestamp),

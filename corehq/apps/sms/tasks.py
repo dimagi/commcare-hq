@@ -63,7 +63,7 @@ def handle_domain_specific_delays(msg, domain_object, utcnow):
 
     Returns True if a delay was made, False if not.
     """
-    domain_now = tz_utils.adjust_datetime_to_timezone(utcnow, pytz.utc.zone,
+    domain_now = tz_utils.adjust_utc_datetime_to_timezone(utcnow,
         domain_object.default_timezone)
 
     if len(domain_object.restricted_sms_times) > 0:

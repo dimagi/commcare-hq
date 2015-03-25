@@ -1805,7 +1805,7 @@ class OneTimeReminderForm(Form):
             if dt is None or tm is None:
                 return None
             start_datetime = datetime.combine(dt, tm)
-            start_datetime = tz_utils.adjust_datetime_to_timezone(start_datetime, timezone.zone, pytz.utc.zone)
+            start_datetime = tz_utils.adjust_datetime_to_utc(start_datetime, timezone.zone)
             start_datetime = start_datetime.replace(tzinfo=None)
             if start_datetime < utcnow:
                 raise ValidationError(_("Date and time cannot occur in the past."))

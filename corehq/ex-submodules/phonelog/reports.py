@@ -2,7 +2,6 @@ import json
 import logging
 from django.db.models import Count, Q
 from django.utils import html
-import pytz
 from corehq.apps.reports.datatables.DTSortType import DATE
 from corehq.apps.reports.filters.devicelog import (
     DeviceLogDevicesFilter,
@@ -24,7 +23,7 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq.util.timezones import utils as tz_utils
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop
-from corehq.util.timezones.utils import adjust_datetime_to_timezone
+from corehq.util.timezones.utils import adjust_utc_datetime_to_timezone
 from .models import DeviceReportEntry
 from .utils import device_users_by_xform
 
@@ -278,7 +277,7 @@ class DeviceLogDetailsReport(PhonelogReport):
             )
         elif self.goto_key:
             log = self.goto_log
-            date = adjust_datetime_to_timezone(log.date, from_tz=pytz.utc, to_tz=self.timezone)
+            date = adjust_utc_datetime_to_timezone(log.date, self.timezone)
             new_title = "Last %s Logs <small>before %s</small>" % (self.limit, date.strftime("%b %d, %Y %H:%M"))
         return mark_safe(new_title)
 

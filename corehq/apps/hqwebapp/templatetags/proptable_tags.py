@@ -12,9 +12,9 @@ See render_case() in casexml for an example of the display definition format.
 """
 
 import collections
-import copy
 import datetime
 import itertools
+import logging
 import types
 
 import dateutil
@@ -28,7 +28,7 @@ from django.utils.html import escape, conditional_escape
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import pretty_doc_info
 
-from corehq.util.timezones.utils import adjust_datetime_to_timezone
+from corehq.util.timezones.utils import adjust_utc_datetime_to_timezone
 
 register = template.Library()
 
@@ -160,9 +160,9 @@ def get_display_data(data, prop_def, processors=None, timezone=pytz.utc):
     is_utc = prop_def.pop('is_utc', True)
     if isinstance(val, datetime.datetime):
         if is_utc:
-            if val.tzinfo is None:
-                val = val.replace(tzinfo=pytz.utc)
-            val = adjust_datetime_to_timezone(val, val.tzinfo, timezone.zone)
+            logging.error("is_utc should really only get passed with "
+                          "timezone-naive datetimes representing UTC")
+            val = adjust_utc_datetime_to_timezone(val, timezone.zone)
         else:
             val = val.replace(tzinfo=timezone)
 

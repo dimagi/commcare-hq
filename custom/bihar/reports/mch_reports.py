@@ -12,7 +12,6 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq.elastic import stream_es_query, ES_URLS
 from custom.bihar.reports.display import MCHMotherDisplay, MCHChildDisplay
 from corehq.util.timezones import utils as tz_utils
-import pytz
 from custom.bihar.utils import get_all_owner_ids_from_group
 
 
@@ -60,8 +59,8 @@ class MCHBaseReport(CustomProjectReport, CaseListReport):
         return self.name
 
     def date_to_json(self, date):
-        return tz_utils.adjust_datetime_to_timezone\
-            (date, pytz.utc.zone, self.timezone.zone).strftime\
+        return tz_utils.adjust_utc_datetime_to_timezone\
+            (date, self.timezone.zone).strftime\
             ('%d/%m/%Y') if date else ""
 
     @property

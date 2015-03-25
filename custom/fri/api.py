@@ -260,9 +260,8 @@ def get_num_missed_windows(case):
     Get the number of reminder events that were missed on registration day.
     """
     domain_obj = Domain.get_by_name(case.domain, strict=True)
-    opened_timestamp = tz_utils.adjust_datetime_to_timezone(
+    opened_timestamp = tz_utils.adjust_utc_datetime_to_timezone(
         case.opened_on,
-        pytz.utc.zone,
         domain_obj.default_timezone
     )
     day_of_week = opened_timestamp.weekday()

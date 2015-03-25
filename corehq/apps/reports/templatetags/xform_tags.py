@@ -41,9 +41,8 @@ def form_inline_display(form_id, timezone=pytz.utc):
         try:
             form = XFormInstance.get(form_id)
             if form:
-                return "%s: %s" % (tz_utils.adjust_datetime_to_timezone\
-                                   (form.received_on, pytz.utc.zone, timezone.zone).date(), 
-                                   form.xmlns)
+                return "%s: %s" % (tz_utils.adjust_utc_datetime_to_timezone(
+                    form.received_on, timezone.zone).date(), form.xmlns)
         except ResourceNotFound:
             pass
         return "%s: %s" % (_("missing form"), form_id)

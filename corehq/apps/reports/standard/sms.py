@@ -265,7 +265,7 @@ class MessageLogReport(BaseCommConnectLogReport):
             if abbreviate_phone_number and phone_number is not None:
                 phone_number = phone_number[0:7] if phone_number[0:1] == "+" else phone_number[0:6]
 
-            timestamp = tz_utils.adjust_datetime_to_timezone(message.date, pytz.utc.zone, self.timezone.zone)
+            timestamp = tz_utils.adjust_utc_datetime_to_timezone(message.date, self.timezone.zone)
             result.append([
                 self._fmt_timestamp(timestamp),
                 self._fmt_contact_link(message, doc_info),
@@ -276,5 +276,3 @@ class MessageLogReport(BaseCommConnectLogReport):
             ])
 
         return result
-
-
