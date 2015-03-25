@@ -6,7 +6,7 @@
             </text>
         </command>
         <stack>
-          <create>
+          <create if="true()">
             <command value="'m1'"/>
             <command value="'m1-f0'"/>
           </create>
