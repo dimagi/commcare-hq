@@ -195,7 +195,7 @@ class EditFormTest(TestCase):
         # validate that worked
         case = CommCareCase.get(case_id)
         self.assertEqual([create_form_id], case.xform_ids)
-        self.assertEqual([create_form_id],  [a.xform_id for a in case.actions])
+        self.assertEqual([create_form_id], [a.xform_id for a in case.actions])
         for a in case.actions:
             self.assertEqual(create_form_id, a.xform_id)
 
