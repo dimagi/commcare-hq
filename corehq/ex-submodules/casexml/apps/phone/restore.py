@@ -5,6 +5,7 @@ from uuid import uuid4
 from collections import defaultdict
 import shutil
 import hashlib
+import tempfile
 from couchdbkit import ResourceConflict, ResourceNotFound
 from casexml.apps.phone.caselogic import BatchedCaseSyncOperation
 from casexml.apps.stock.consumption import compute_consumption_or_default
@@ -111,7 +112,7 @@ class FileRestoreResponse(RestoreResponse):
 
     def __init__(self, username=None, items=False):
         super(FileRestoreResponse, self).__init__(username, items)
-        self.filename = path.join(settings.RESTORE_PAYLOAD_DIR, uuid4().hex)
+        self.filename = path.join(settings.RESTORE_PAYLOAD_DIR or tempfile.gettempdir(), uuid4().hex)
 
         self.response_body = FileIO(self.get_filename(self.BODY_TAG_SUFFIX), 'w+')
         self.response = FileIO(self.get_filename(), 'w+')
