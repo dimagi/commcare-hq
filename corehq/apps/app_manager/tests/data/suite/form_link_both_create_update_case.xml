@@ -10,7 +10,7 @@
             <datum id="case_id_new_frog_0" function="uuid()"/>
         </session>
         <stack>
-          <create>
+          <create if="true()">
             <command value="'m1'"/>
             <datum id="case_id" value="instance('commcaresession')/session/data/case_id_new_frog_0"/>
             <command value="'m1-f0'"/>

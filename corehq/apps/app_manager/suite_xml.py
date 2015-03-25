@@ -763,17 +763,19 @@ class SuiteGenerator(SuiteGeneratorBase):
             WORKFLOW_DEFAULT, WORKFLOW_PREVIOUS, WORKFLOW_MODULE, WORKFLOW_ROOT, WORKFLOW_FORM
         )
 
-        def create_workflow_stack(suite, form_command, module_command, frame_children, allow_empty_stack=False):
+        def create_workflow_stack(suite, form_command, frame_children,
+                                  allow_empty_stack=False, if_clause=None):
             if not frame_children and not allow_empty_stack:
                 return
 
             entry = self.get_form_entry(suite, form_command)
-            if_clause = None
             if not entry.stack:
                 entry.stack = Stack()
             else:
                 # TODO: find a more general way of handling multiple contributions to the workflow
-                if_clause = '{} = 0'.format(session_var(RETURN_TO).count())
+                if_prefix = '{} = 0'.format(session_var(RETURN_TO).count())
+                template = '({{}}) and ({})'.format(if_clause) if if_clause else '{}'
+                if_clause = template.format(if_prefix)
 
             frame = CreateFrame(if_clause=if_clause)
             entry.stack.add_frame(frame)
@@ -841,13 +843,13 @@ class SuiteGenerator(SuiteGeneratorBase):
                     continue
 
                 form_command = self.id_strings.form_command(form)
-                module_command = self.id_strings.menu_id(module)
 
                 if form.post_form_workflow == WORKFLOW_ROOT:
-                    create_workflow_stack(suite, form_command, module_command, [], True)
+                    create_workflow_stack(suite, form_command, [], True)
                 elif form.post_form_workflow == WORKFLOW_MODULE:
+                    module_command = self.id_strings.menu_id(module)
                     frame_children = [module_command] if module_command != self.id_strings.ROOT else []
-                    create_workflow_stack(suite, form_command, module_command, frame_children)
+                    create_workflow_stack(suite, form_command, frame_children)
                 elif form.post_form_workflow == WORKFLOW_PREVIOUS:
                     frame_children = get_frame_children_for_form(form)
 
@@ -859,7 +861,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                         # or a non-autoselect datum
                         last = frame_children.pop()
 
-                    create_workflow_stack(suite, form_command, module_command, frame_children)
+                    create_workflow_stack(suite, form_command, frame_children)
                 elif form.post_form_workflow == WORKFLOW_FORM:
                     for link in form.form_links:
                         module_id, form_id = form_command.split('-')
@@ -876,7 +878,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                                 if not source_datum.case_type or source_datum.case_type == target_datum.case_type:
                                     target_datum.source_id = source_datum.id
 
-                        create_workflow_stack(suite, form_command, module_command, frame_children)
+                        create_workflow_stack(suite, form_command, frame_children, if_clause=link.xpath)
 
     def get_form_datums(self, suite, module_id, form_id):
         return self.get_module_datums(suite, module_id)[form_id]
