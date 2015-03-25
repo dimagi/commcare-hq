@@ -31,7 +31,7 @@ def send_delivery_reminder(domain, date, loc_type='FACILITY', test_list=None):
                 status_type=status_type,
                 status_date__gte=date
             ).exists()
-            groups = location.metadata.get('groups', None)
+            groups = location.metadata.get('group', None)
             if groups and current_group in groups and not status_exists:
                 send_translated_message(user, sms_text)
     update_statuses(sp_ids, status_type, SupplyPointStatusValues.REMINDER_SENT)

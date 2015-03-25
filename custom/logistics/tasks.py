@@ -98,9 +98,10 @@ def sms_users_fix(api):
 def fix_groups_in_location_task(domain):
     locations = Location.by_domain(domain=domain)
     for loc in locations:
-        groups = loc.metadata.get('groups', [])
+        groups = loc.metadata.get('groups', None)
         if groups:
-            loc.metadata['groups'] = groups[0]
+            loc.metadata['group'] = groups[0]
+            del loc.metadata['groups']
             loc.save()
 
 
