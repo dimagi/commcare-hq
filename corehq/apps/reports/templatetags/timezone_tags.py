@@ -1,8 +1,5 @@
-import dateutil
 from django import template
 import pytz
-from corehq.util.timezones import utils as tz_utils
-import datetime
 from corehq.util.timezones.conversions import ServerTime
 
 register = template.Library()
@@ -14,9 +11,6 @@ def utc_to_timezone(date, timezone, dest_fmt="%b %d, %Y %H:%M %Z"):
         timezone = pytz.utc
     if not date:
         return "---"
-    if not isinstance(date, datetime.datetime):
-        try:
-            date = datetime.datetime.replace(dateutil.parser.parse(date), tzinfo=pytz.utc)
-        except Exception as e:
-            return date
+    if isinstance(date, basestring):
+        raise ValueError("utc_to_timezone no longer accepts strings")
     return ServerTime(date).user_time(timezone).done().strftime(dest_fmt)

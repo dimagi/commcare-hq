@@ -13,16 +13,16 @@ class _HQTime(object):
 class _HQTZTime(_HQTime):
     def __init__(self, dt, tzinfo=None):
         if dt.tzinfo is None:
-            # assert tzinfo is not None
+            assert tzinfo is not None
             self._datetime = dt.replace(tzinfo=tzinfo)
         else:
-            # assert tzinfo is None
+            assert tzinfo is None
             self._datetime = dt
 
 
 class _HQUTCTime(_HQTime):
     def __init__(self, dt):
-        # assert dt.tzinfo is None
+        assert dt.tzinfo is None
         self._datetime = dt
 
 

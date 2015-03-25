@@ -34,6 +34,7 @@ from couchdbkit.resource import ResourceNotFound
 from corehq import toggles, privileges
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
 from corehq.util.quickcache import quickcache
+from corehq.util.timezones.conversions import ServerTime
 from django_prbac.exceptions import PermissionDenied
 from corehq.apps.accounting.utils import domain_has_privilege
 
@@ -54,7 +55,6 @@ from corehq.util import view_utils
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildSpec, CommCareBuildConfig, BuildRecord
 from corehq.apps.hqmedia.models import HQMediaMixin
-from corehq.apps.reports.templatetags.timezone_tags import utc_to_timezone
 from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import cc_user_domain
@@ -3287,8 +3287,8 @@ class SavedAppBuild(ApplicationBase):
             data.pop(key, None)
         data.update({
             'id': self.id,
-            'built_on_date': utc_to_timezone(data['built_on'], timezone, "%b %d, %Y"),
-            'built_on_time': utc_to_timezone(data['built_on'], timezone, "%H:%M %Z"),
+            'built_on_date': ServerTime(self.built_on).user_time(timezone).done().strftime("%b %d, %Y"),
+            'built_on_time': ServerTime(self.built_on).user_time(timezone).done().strftime("%H:%M %Z"),
             'build_label': self.built_with.get_label(),
             'jar_path': self.get_jar_path(),
             'short_name': self.short_name,
