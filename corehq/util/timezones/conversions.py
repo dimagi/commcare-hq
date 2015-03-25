@@ -51,6 +51,7 @@ class PhoneTime(_HQTZTime):
 
     def done(self):
         # phone times should always come out timezone naive
+        # clobbering the timezone without adjusting to UTC
         return self._datetime.replace(tzinfo=None)
 
 
@@ -71,7 +72,7 @@ def _adjust_utc_datetime_to_timezone(value, to_tz):
     returns a timezone-aware datetime localized to to_tz
     """
     assert value.tzinfo is None
-    return value.astimezone(to_tz)
+    return pytz.utc.localize(value).astimezone(to_tz)
 
 
 def _adjust_phone_datetime_to_utc(value, phone_tz):
@@ -91,9 +92,11 @@ def _adjust_utc_datetime_to_phone_datetime(value, phone_tz):
     adjust a UTC datetime so that it's comparable with a phone datetime
     (like timeEnd, modified_on, etc.)
 
+    returns a timezone-aware date
+
     """
     assert value.tzinfo is None
     if TIMEZONE_DATA_MIGRATION_COMPLETE:
-        return value.astimezone(pytz.utc)
+        return value.replace(tzinfo=pytz.utc)
     else:
         return _adjust_utc_datetime_to_timezone(value, phone_tz)
