@@ -13,6 +13,7 @@ from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
 from corehq.pillows.base import restore_property_dict
+from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.decorators.memoized import memoized
 from corehq.util.timezones import utils as tz_utils
 
@@ -189,9 +190,7 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
         return filters
 
     def date_to_json(self, date):
-        return tz_utils.adjust_utc_datetime_to_timezone\
-            (date, self.timezone.zone).strftime\
-            ('%d-%m-%Y') if date else ""
+        return ServerTime(date).user_time(self.timezone).done().strftime('%d-%m-%Y') if date else ""
 
 
 class HBNCMotherReport(BaseHNBCReport):

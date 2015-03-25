@@ -23,6 +23,7 @@ from corehq.apps.hqwebapp.crispy import (
     BootstrapMultiField, FieldsetAccordionGroup, HiddenFieldWithErrors,
     FieldWithHelpBubble, InlineColumnField, ErrorsOnlyField,
 )
+from corehq.util.timezones.conversions import UserTime
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from .models import (
@@ -77,7 +78,6 @@ from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.app_manager.models import Form as CCHQForm
 from dimagi.utils.django.fields import TrimmedCharField
 from corehq.util.timezones.utils import get_timezone_for_user
-from corehq.util.timezones import utils as tz_utils
 from langcodes import get_name as get_language_name
 
 ONE_MINUTE_OFFSET = time(0, 1)
@@ -1805,7 +1805,7 @@ class OneTimeReminderForm(Form):
             if dt is None or tm is None:
                 return None
             start_datetime = datetime.combine(dt, tm)
-            start_datetime = tz_utils.adjust_datetime_to_utc(start_datetime, timezone.zone)
+            start_datetime = UserTime(start_datetime, timezone).server_time().done()
             start_datetime = start_datetime.replace(tzinfo=None)
             if start_datetime < utcnow:
                 raise ValidationError(_("Date and time cannot occur in the past."))

@@ -27,8 +27,7 @@ from django.utils.safestring import mark_safe
 from django.utils.html import escape, conditional_escape
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import pretty_doc_info
-
-from corehq.util.timezones.utils import adjust_utc_datetime_to_timezone
+from corehq.util.timezones.conversions import ServerTime
 
 register = template.Library()
 
@@ -162,7 +161,7 @@ def get_display_data(data, prop_def, processors=None, timezone=pytz.utc):
         if is_utc:
             logging.error("is_utc should really only get passed with "
                           "timezone-naive datetimes representing UTC")
-            val = adjust_utc_datetime_to_timezone(val, timezone.zone)
+            val = ServerTime(val).user_time(timezone).done()
         else:
             val = val.replace(tzinfo=timezone)
 

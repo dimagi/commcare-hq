@@ -3,6 +3,7 @@ import pytz
 from corehq.apps.reports.standard.deployments import DeploymentsReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.util.timezones import utils as tz_utils
+from corehq.util.timezones.conversions import ServerTime
 from couchforms.models import XFormError
 from corehq.apps.receiverwrapper.filters import SubmissionErrorType, \
     SubmissionTypeFilter
@@ -120,7 +121,7 @@ class SubmissionErrorReport(DeploymentsReport):
                     return 'unable to view form'
             
             def _fmt_date(somedate):
-                time = tz_utils.adjust_utc_datetime_to_timezone(somedate, self.timezone.zone)
+                time = ServerTime(somedate).user_time(self.timezone).done()
                 return time.strftime("%Y-%m-%d %H:%M:%S")
             
             return [_fmt_url(error_doc.get_id),

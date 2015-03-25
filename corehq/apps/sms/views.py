@@ -52,6 +52,7 @@ from corehq.apps.domain.decorators import (
     require_superuser,
 )
 from corehq.apps.translations.models import StandaloneTranslationDoc
+from corehq.util.timezones.conversions import ServerTime, UserTime
 from dimagi.utils.couch.database import get_db
 from django.contrib import messages
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -707,10 +708,10 @@ def chat(request, domain, contact_id):
     # "Yesterday", for example, gives you data from yesterday at
     # midnight local time.
     local_date = datetime.now(timezone).date()
-    floored_utc_timestamp = tz_utils.adjust_datetime_to_utc(
-        datetime.combine(local_date, time(0,0)),
-        timezone.zone
-    ).replace(tzinfo=None)
+    floored_utc_timestamp = UserTime(
+        datetime.combine(local_date, time(0, 0)),
+        timezone
+    ).server_time().done().replace(tzinfo=None)
 
     def _fmt(d):
         return json_format_datetime(floored_utc_timestamp - timedelta(days=d))
@@ -811,7 +812,7 @@ def api_history(request, domain):
         result.append({
             "sender" : sender,
             "text" : sms.text,
-            "timestamp" : tz_utils.adjust_utc_datetime_to_timezone(sms.date, timezone.zone).strftime("%I:%M%p %m/%d/%y").lower(),
+            "timestamp" : ServerTime(sms.date).user_time(timezone).done().strftime("%I:%M%p %m/%d/%y").lower(),
             "utc_timestamp" : json_format_datetime(sms.date),
             "sent_by_requester": (sms.chat_user_id == request.couch_user.get_id),
         })

@@ -19,11 +19,11 @@ from corehq.apps.reports.datatables import (
 )
 from corehq.apps.reports.util import _report_user_dict, SimplifiedUserInfo
 from corehq.apps.users.models import CommCareUser
+from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.decorators.memoized import memoized
 from corehq.util.timezones import utils as tz_utils
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop
-from corehq.util.timezones.utils import adjust_utc_datetime_to_timezone
 from .models import DeviceReportEntry
 from .utils import device_users_by_xform
 
@@ -277,7 +277,7 @@ class DeviceLogDetailsReport(PhonelogReport):
             )
         elif self.goto_key:
             log = self.goto_log
-            date = adjust_utc_datetime_to_timezone(log.date, self.timezone)
+            date = ServerTime(log.date).user_time(self.timezone).done()
             new_title = "Last %s Logs <small>before %s</small>" % (self.limit, date.strftime("%b %d, %Y %H:%M"))
         return mark_safe(new_title)
 

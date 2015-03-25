@@ -15,6 +15,7 @@ from corehq.apps.receiverwrapper.auth import AuthContext
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id, DocInfo
 from corehq.apps.reports.formdetails.readable import get_readable_data_for_submission
 from corehq import toggles
+from corehq.util.timezones.conversions import ServerTime
 from couchforms.models import XFormInstance
 from corehq.util.timezones import utils as tz_utils
 from casexml.apps.case.xform import extract_case_blocks
@@ -41,8 +42,7 @@ def form_inline_display(form_id, timezone=pytz.utc):
         try:
             form = XFormInstance.get(form_id)
             if form:
-                return "%s: %s" % (tz_utils.adjust_utc_datetime_to_timezone(
-                    form.received_on, timezone.zone).date(), form.xmlns)
+                return "%s: %s" % (ServerTime(form.received_on).user_time(timezone).done().date(), form.xmlns)
         except ResourceNotFound:
             pass
         return "%s: %s" % (_("missing form"), form_id)

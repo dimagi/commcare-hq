@@ -6,6 +6,7 @@ from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader,\
     DTSortType
 from corehq.apps.sms.filters import MessageTypeFilter
+from corehq.util.timezones.conversions import ServerTime
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.web import get_url_base
 from django.core.urlresolvers import reverse
@@ -265,7 +266,7 @@ class MessageLogReport(BaseCommConnectLogReport):
             if abbreviate_phone_number and phone_number is not None:
                 phone_number = phone_number[0:7] if phone_number[0:1] == "+" else phone_number[0:6]
 
-            timestamp = tz_utils.adjust_utc_datetime_to_timezone(message.date, self.timezone.zone)
+            timestamp = ServerTime(message.date).user_time(self.timezone).done()
             result.append([
                 self._fmt_timestamp(timestamp),
                 self._fmt_contact_link(message, doc_info),

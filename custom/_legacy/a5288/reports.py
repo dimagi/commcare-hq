@@ -7,6 +7,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.sms.models import ExpectedCallbackEventLog, CALLBACK_PENDING, CALLBACK_RECEIVED, CALLBACK_MISSED
 from datetime import datetime, timedelta
 from corehq.util.timezones import utils as tz_utils
+from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.reports.util import format_datatables_data
 import pytz
@@ -20,7 +21,7 @@ class MissedCallbackReport(CustomProjectReport, GenericTabularReport):
     
     def get_past_two_weeks(self):
         now = datetime.utcnow()
-        local_datetime = tz_utils.adjust_utc_datetime_to_timezone(now, self.timezone.zone)
+        local_datetime = ServerTime(now).user_time(self.timezone).done()
         return [(local_datetime + timedelta(days = x)).date() for x in range(-14, 0)]
     
     @property
@@ -77,7 +78,7 @@ class MissedCallbackReport(CustomProjectReport, GenericTabularReport):
         
         for event in expected_callback_events:
             if event.couch_recipient in data:
-                event_date = tz_utils.adjust_utc_datetime_to_timezone(event.date, data[event.couch_recipient]["time_zone"]).date()
+                event_date = ServerTime(event.date).user_time(data[event.couch_recipient]["time_zone"]).done().date()
                 event_date = event_date.strftime("%Y-%m-%d")
                 if event_date in date_strings:
                     data[event.couch_recipient]["dates"][date_strings.index(event_date)] = event.status

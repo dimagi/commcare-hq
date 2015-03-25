@@ -16,6 +16,7 @@ from django.conf import settings
 from corehq.apps.domain.models import Domain
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.util.timezones import utils as tz_utils
+from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch.cache import cache_core
 from threading import Thread
 
@@ -63,8 +64,7 @@ def handle_domain_specific_delays(msg, domain_object, utcnow):
 
     Returns True if a delay was made, False if not.
     """
-    domain_now = tz_utils.adjust_utc_datetime_to_timezone(utcnow,
-        domain_object.default_timezone)
+    domain_now = ServerTime(utcnow).user_time(domain_object.default_timezone).done()
 
     if len(domain_object.restricted_sms_times) > 0:
         if not time_within_windows(domain_now, domain_object.restricted_sms_times):

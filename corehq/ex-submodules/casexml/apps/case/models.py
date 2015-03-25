@@ -17,7 +17,7 @@ from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
 from PIL import Image
 from casexml.apps.case.exceptions import MissingServerDate, ReconciliationError
 from corehq.util.couch_helpers import CouchAttachmentsBuilder
-from corehq.util.timezones.utils import TIMEZONE_DATA_MIGRATION_COMPLETE
+from corehq.util.timezones.conversions import TIMEZONE_DATA_MIGRATION_COMPLETE
 from dimagi.utils.chunked import chunked
 from dimagi.utils.django.cached_object import CachedObject, OBJECT_ORIGINAL, OBJECT_SIZE_MAP, CachedImage, IMAGE_SIZE_ORDERING
 from casexml.apps.phone.xml import get_case_element

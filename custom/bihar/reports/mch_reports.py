@@ -8,6 +8,7 @@ from corehq.apps.api.es import CaseES
 
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
+from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.decorators.memoized import memoized
 from corehq.elastic import stream_es_query, ES_URLS
 from custom.bihar.reports.display import MCHMotherDisplay, MCHChildDisplay
@@ -59,9 +60,7 @@ class MCHBaseReport(CustomProjectReport, CaseListReport):
         return self.name
 
     def date_to_json(self, date):
-        return tz_utils.adjust_utc_datetime_to_timezone\
-            (date, self.timezone.zone).strftime\
-            ('%d/%m/%Y') if date else ""
+        return ServerTime(date).user_time(self.timezone).done().strftime('%d/%m/%Y') if date else ""
 
     @property
     def get_all_rows(self):

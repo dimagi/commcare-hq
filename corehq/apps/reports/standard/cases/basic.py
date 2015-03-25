@@ -5,8 +5,7 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
 from couchdbkit import RequestFailed
-from corehq.util.timezones.utils import adjust_phone_datetime_to_utc, \
-    adjust_utc_datetime_to_timezone
+from corehq.util.timezones.conversions import PhoneTime
 from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.api.es import CaseES
@@ -323,10 +322,6 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
 
     def date_to_json(self, date):
         if date:
-            # before tz migration this will covert to UTC and back to timezone
-            # after tz migration this will be a no-op then convert to timzone
-            utc_date = adjust_phone_datetime_to_utc(date, self.timezone)
-            return adjust_utc_datetime_to_timezone(
-                utc_date, self.timezone.zone).strftime('%Y-%m-%d %H:%M:%S')
+            return PhoneTime(date, self.timezone).user_time(self.timezone).done().strftime('%Y-%m-%d %H:%M:%S')
         else:
             return ''

@@ -21,6 +21,7 @@ from corehq.apps.sofabed.models import FormData, CaseData
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import es_query
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
+from corehq.util.timezones.conversions import ServerTime, PhoneTime
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
@@ -277,9 +278,9 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
         if closed is not None:
             kwargs['closed'] = bool(closed)
         if modified_after:
-            kwargs['modified_on__gte'] = tz_utils.adjust_utc_datetime_to_phone_datetime(modified_after, self.timezone)
+            kwargs['modified_on__gte'] = ServerTime(modified_after).phone_time(self.timezone).done()
         if modified_before:
-            kwargs['modified_on__lt'] = tz_utils.adjust_utc_datetime_to_phone_datetime(modified_before, self.timezone)
+            kwargs['modified_on__lt'] = ServerTime(modified_before).phone_time(self.timezone).done()
         if self.case_type:
             kwargs['type'] = self.case_type
 
@@ -797,7 +798,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, Mu
                 completion_time = self.timezone.localize(completion_time, is_dst=completion_dst)
 
                 submission_time = row['received_on'].replace(tzinfo=pytz.utc)
-                submission_time = tz_utils.adjust_utc_datetime_to_phone_datetime(submission_time, self.timezone.zone)
+                submission_time = ServerTime(submission_time).phone_time(self.timezone).done()
 
                 td = submission_time-completion_time
                 td_total = (td.seconds + td.days * 24 * 3600)
@@ -906,13 +907,13 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
                     endkey=key+[self.datespan.enddate_param_utc],
                 ).all()
                 all_times.extend([dateutil.parser.parse(d['key'][-1]) for d in data])
-        # Completion: adjust to UTC and then adjust to user's timezone
-        # Submission: just adjust to user's timezone
-        if not self.by_submission_time:
-            all_times = [tz_utils.adjust_phone_datetime_to_utc(t, self.timezone.zone)
+        if self.by_submission_time:
+            all_times = [ServerTime(t).user_time(self.timezone).done()
                          for t in all_times]
-        all_times = [tz_utils.adjust_utc_datetime_to_timezone(t, self.timezone.zone)
-                     for t in all_times]
+        else:
+            all_times = [PhoneTime(t, self.timezone).user_time(self.timezone).done()
+                         for t in all_times]
+
         return [(t.weekday(), t.hour) for t in all_times]
 
     @property

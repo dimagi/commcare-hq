@@ -8,6 +8,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponse
 from django.shortcuts import render
 from corehq.apps.translations.models import StandaloneTranslationDoc
+from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch import CriticalSection
 from django.utils.translation import ugettext as _, ugettext_noop
@@ -148,7 +149,7 @@ def list_reminders(request, domain, reminder_type=REMINDER_TYPE_DEFAULT):
             "recipients" : recipients,
             "content" : content,
             "sent" : sent,
-            "start_datetime" : tz_utils.adjust_utc_datetime_to_timezone(handler.start_datetime, timezone.zone) if handler.start_datetime is not None else None,
+            "start_datetime" : ServerTime(handler.start_datetime).user_time(timezone).done() if handler.start_datetime is not None else None,
         })
     
     return render(request, "reminders/partial/list_reminders.html", {
@@ -224,7 +225,7 @@ def add_one_time_reminder(request, domain, handler_id=None):
             return HttpResponseRedirect(reverse('one_time_reminders', args=[domain]))
     else:
         if handler is not None:
-            start_datetime = tz_utils.adjust_utc_datetime_to_timezone(handler.start_datetime, timezone.zone)
+            start_datetime = ServerTime(handler.start_datetime).user_time(timezone).done()
             initial = {
                 "send_type" : SEND_LATER,
                 "date" : start_datetime.strftime("%Y-%m-%d"),
@@ -283,8 +284,7 @@ def scheduled_reminders(request, domain, template="reminders/partial/scheduled_r
     today = timezone_now.date()
 
     def adjust_next_fire_to_timezone(reminder_utc):
-        return tz_utils.adjust_utc_datetime_to_timezone(
-            reminder_utc.next_fire, timezone)
+        return ServerTime(reminder_utc.next_fire).user_time(timezone).done()
 
     if reminders:
         start_date = adjust_next_fire_to_timezone(reminders[0]).date()
@@ -1303,7 +1303,7 @@ def reminders_in_error(request, domain):
             "handler_name" : handler.nickname,
             "case_id" : case.get_id if case is not None else None,
             "case_name" : case.name if case is not None else None,
-            "next_fire" : tz_utils.adjust_utc_datetime_to_timezone(reminder.next_fire, timezone.zone).strftime("%Y-%m-%d %H:%M:%S"),
+            "next_fire" : ServerTime(reminder.next_fire).user_time(timezone).done().strftime("%Y-%m-%d %H:%M:%S"),
             "error_msg" : reminder.error_msg or "-",
             "recipient_name" : get_recipient_name(recipient),
         })
