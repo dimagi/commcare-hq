@@ -305,7 +305,7 @@ class DistrictSohPercentageTableData(ILSData):
                 row_data = [
                     loc.site_code,
                     link_format(loc.name, url),
-                    loc.metadata['groups'][0] if 'groups' in loc.metadata else '?',
+                    loc.metadata.get('group', None),
                     icon_format(status, last_reported),
                     "<span title='%d of %d'>%s%%</span>" % (hisp[1],
                                                             hisp[2],

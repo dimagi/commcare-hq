@@ -7,7 +7,7 @@ from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, 
     DeliveryGroups
 from custom.ilsgateway.tanzania.reminders import REMINDER_R_AND_R_FACILITY, update_statuses, \
     REMINDER_R_AND_R_DISTRICT
-from custom.ilsgateway.utils import send_for_day, get_groups, send_translated_message
+from custom.ilsgateway.utils import send_for_day, send_translated_message
 import settings
 
 
@@ -26,7 +26,7 @@ def send_ror_reminder(domain, date, loc_type='FACILITY', test_list=None):
     for user in users:
         location = user.location
         if user.is_active and location and location.location_type == loc_type:
-            if current_group in get_groups(location.metadata.get('groups', None)) \
+            if current_group in location.metadata.get('group', None) \
                     and not SupplyPointStatus.objects.filter(supply_point=location._id, status_type=status_type,
                                                              status_date__gte=date).exists():
                 result = send_translated_message(user, sms_text)

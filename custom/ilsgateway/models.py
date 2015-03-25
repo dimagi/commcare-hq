@@ -382,21 +382,21 @@ class DeliveryGroups(object):
             facs = self.facs
         if not facs:
             return []
-        return filter(lambda f: self.current_delivering_group(month) in f.metadata.get('groups', []), facs)
+        return filter(lambda f: self.current_delivering_group(month) in f.metadata.get('group', None), facs)
 
     def processing(self, facs=None, month=None):
         if not facs:
             facs = self.facs
         if not facs:
             return []
-        return filter(lambda f: self.current_processing_group(month) in f.metadata.get('groups', []), facs)
+        return filter(lambda f: self.current_processing_group(month) in f.metadata.get('group', None), facs)
 
     def submitting(self, facs=None, month=None):
         if not facs:
             facs = self.facs
         if not facs:
             return []
-        return filter(lambda f: self.current_submitting_group(month) in f.metadata.get('groups', []), facs)
+        return filter(lambda f: self.current_submitting_group(month) in f.metadata.get('group', None), facs)
 
 
 # Ported from:
