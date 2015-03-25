@@ -127,7 +127,7 @@ class CaseProcessingConfig(object):
     def __init__(self, reconcile=False, strict_asserts=True, case_id_blacklist=None):
         self.reconcile = reconcile
         self.strict_asserts = strict_asserts
-        self.case_id_blacklist = case_id_blacklist or []
+        self.case_id_blacklist = case_id_blacklist if case_id_blacklist is not None else []
 
     def __repr__(self):
         return 'reconcile: {reconcile}, strict: {strict}, ids: {ids}'.format(
@@ -151,7 +151,7 @@ class CaseDbCache(object):
             self.cache = {}
 
         self.domain = domain
-        self.xforms = xforms or []
+        self.xforms = xforms if xforms is not None else []
         self.strip_history = strip_history
         self.deleted_ok = deleted_ok
         self.lock = lock
