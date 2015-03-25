@@ -570,7 +570,7 @@ class FormLink(DocumentSchema):
     form_id:    id of next form to open
     """
     xpath = StringProperty()
-    form_id = StringProperty()
+    form_id = FormIdProperty('modules[*].forms[*].form_links[*].form_id')
 
 
 class FormSchedule(DocumentSchema):
