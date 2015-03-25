@@ -958,7 +958,7 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                 last_billing_record = BillingRecord.objects.filter(
                     invoice=invoice
                 ).latest('date_created')
-                if invoice.date_paid is not None:
+                if invoice.is_paid:
                     payment_status = (_("Paid on %s.")
                                       % invoice.date_paid.strftime("%d %B %Y"))
                     payment_class = "label label-inverse"
@@ -966,7 +966,7 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                     payment_status = _("Not Paid")
                     payment_class = "label label-important"
                 date_due = (invoice.date_due.strftime("%d %B %Y")
-                            if invoice.date_paid is None else _("Already Paid"))
+                            if not invoice.is_paid else _("Already Paid"))
                 yield {
                     'itemData': {
                         'id': invoice.id,
@@ -981,7 +981,7 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                             BillingStatementPdfView.urlname,
                             args=[self.domain, last_billing_record.pdf_data_id]
                         ),
-                        'canMakePayment': (invoice.date_paid is None
+                        'canMakePayment': (not invoice.is_paid
                                            and self.can_pay_invoices),
                         'balance': "%s" % quantize_accounting_decimal(invoice.balance),
                     },

@@ -215,7 +215,7 @@ class InvoiceStripePaymentHandler(BaseStripePaymentHandler):
         context = super(InvoiceStripePaymentHandler, self).get_email_context()
         context.update({
             'balance': fmt_dollar_amount(self.invoice.balance),
-            'is_paid': self.invoice.date_paid is not None,
+            'is_paid': self.invoice.is_paid,
             'date_due': self.invoice.date_due.strftime("%d %B %Y"),
             'invoice_num': self.invoice.invoice_number,
         })
