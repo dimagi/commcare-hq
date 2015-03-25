@@ -5,7 +5,8 @@ import itertools
 from corehq.apps.builds.models import CommCareBuildConfig
 from couchdbkit.exceptions import DocTypeError
 from corehq import Domain
-from corehq.apps.app_manager.const import CT_REQUISITION_MODE_3, CT_LEDGER_STOCK, CT_LEDGER_REQUESTED, CT_REQUISITION_MODE_4, CT_LEDGER_APPROVED, CT_LEDGER_PREFIX
+from corehq.apps.app_manager.const import CT_REQUISITION_MODE_3, CT_LEDGER_STOCK, CT_LEDGER_REQUESTED, \
+    CT_REQUISITION_MODE_4, CT_LEDGER_APPROVED, CT_LEDGER_PREFIX, USERCASE_PREFIX
 from corehq.apps.app_manager.xform import XForm, XFormException, parse_xml
 import re
 from dimagi.utils.decorators.memoized import memoized
@@ -385,3 +386,17 @@ def version_key(ver):
 def get_commcare_versions():
     versions = [i.build.version for i in CommCareBuildConfig.fetch().menu]
     return sorted(versions, key=version_key)
+
+
+def get_usercase_keys(items):
+    n = len(USERCASE_PREFIX)
+    return {k[n:]: v for k, v in items if k.startswith(USERCASE_PREFIX)}
+
+
+def get_usercase_values(items):
+    n = len(USERCASE_PREFIX)
+    return {k: v[n:] for k, v in items if v.startswith(USERCASE_PREFIX)}
+
+
+def any_usercase_items(items):
+    return any(i.startswith(USERCASE_PREFIX) for i in items)

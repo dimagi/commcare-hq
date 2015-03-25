@@ -551,7 +551,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         case_module.case_type = 'dugong'
         update_form = app.new_form(1, 'Update Case', lang='en')
         update_form.unique_id = 'update_case_form'
-        update_form.actions.load_update_cases.append(LoadUpdateAction(  # <-- e.g.
+        update_form.actions.load_update_cases.append(LoadUpdateAction(
             case_type='dugong',
             case_tag='load_dugong',
             details_module=case_module.unique_id
