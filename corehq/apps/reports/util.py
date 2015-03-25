@@ -25,7 +25,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import string_to_datetime, string_to_utc_datetime
-from dimagi.utils.timezones import utils as tz_utils
+from corehq.util.timezones import utils as tz_utils
 from dimagi.utils.web import json_request
 
 

@@ -1,0 +1,67 @@
+{% extends original_template %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% load compress %}
+{% if show_time_notice %}{% endif %}
+
+{% block js %}
+    <script src="{% static 'hqstyle/js/jquery/jquery-1.7.1.min.js' %}"></script>
+    <script src="/static/hqstyle/js/core/bootstrap.min.js"></script>
+    <script src="{% static 'opm/js/opm_utils.js' %}"></script>
+    {{ block.super }}
+{% endblock %}
+
+{% block posttable %}
+    <div style="width: 100%;">
+        <div class="media-heading" style="display: block; width: 80%; margin: 0 auto;">
+            <div style="width: 30%; float: left;height: 100px; border: 1px solid; margin: 40px auto;">{% trans "Prepared and verified by:" %}</div>
+            <div style="width: 30%; float: right;height: 100px; border: 1px solid; margin: 40px auto;">{% trans "Approved by:" %}</div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block js-inline %}
+    {{ block.super }}
+    <script type="text/javascript">
+
+        $(function() {
+            document.body.style.zoom="55%";
+            setTimeout(function() {
+                splitTableByNumber($(".table"), 25, 35);
+                $('.table').each(function() {
+                    split($(this), 20)
+                })
+                $('.hq-loading').hide();
+                window.print();
+            }, 3000);
+        })
+    </script>
+{% endblock %}
+
+{% block reportcontent %}
+    {% compress css %}
+    <link type="text/less" rel="stylesheet" media="all" href="{% static 'style/less/hqstyle-core.less' %}"/>
+
+    <style>
+         @page {
+            size: A4 landscape;
+            margin: 0mm 5mm 8.5mm 5mm;
+        }
+
+        body {
+            margin: 0;
+        }
+        h4 small {
+            font-size: 20px !important;
+        }
+    </style>
+    {% endcompress %}
+{{ block.super }}
+{% endblock %}
+
+{% block modals %}
+    <div class="hq-loading">
+        <img src="/static/hqwebapp/img/ajax-loader.gif" alt="loading indicator">
+        <h6>{% trans "Loading ..." %}</h6>
+    </div>
+{% endblock %}

@@ -3,6 +3,7 @@ from custom.ewsghana.filters import EWSLocationFilter
 from custom.ewsghana.reports import MultiReport
 from custom.ewsghana.reports.specific_reports.reporting_rates import ReportingRates, ReportingDetails
 from custom.ewsghana.reports.specific_reports.stock_status_report import ProductAvailabilityData
+from custom.ewsghana.utils import get_country_id
 
 
 class DashboardReport(MultiReport):
@@ -19,7 +20,7 @@ class DashboardReport(MultiReport):
             domain=self.domain,
             startdate=self.datespan.startdate_utc,
             enddate=self.datespan.enddate_utc,
-            location_id=self.request.GET.get('location_id'),
+            location_id=self.request.GET.get('location_id') or get_country_id(self.domain),
             program=None,
             products=None
         )

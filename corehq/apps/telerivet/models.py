@@ -76,7 +76,7 @@ class IncomingRequest(models.Model):
     event = models.CharField(max_length=255, null=True)
     message_id = models.CharField(max_length=255, null=True)
     message_type = models.CharField(max_length=255, null=True)
-    content = models.CharField(max_length=255, null=True)
+    content = models.TextField(null=True)
     from_number = models.CharField(max_length=255, null=True)
     from_number_e164 = models.CharField(max_length=255, null=True)
     to_number = models.CharField(max_length=255, null=True)

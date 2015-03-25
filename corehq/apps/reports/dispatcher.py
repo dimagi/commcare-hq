@@ -224,6 +224,8 @@ class ProjectReportDispatcher(ReportDispatcher):
     def permissions_check(self, report, request, domain=None, is_navigation_check=False):
         if domain is None:
             return False
+        if not request.couch_user.is_active:
+            return False
         return request.couch_user.can_view_report(domain, report)
 
 

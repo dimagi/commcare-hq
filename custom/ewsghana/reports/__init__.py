@@ -1,12 +1,14 @@
 from django.core.urlresolvers import reverse
 from django.db.models import Q
 from corehq import Domain
-from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.commtrack.standard import CommtrackReportMixin
+from corehq.apps.reports.filters.dates import DatespanFilter
+from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.graph_models import LineChart, MultiBarChart
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
+from custom.ewsghana.filters import ProductByProgramFilter
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import Location, SQLLocation
 from custom.ewsghana.utils import get_supply_points, calculate_last_period
@@ -84,20 +86,17 @@ class EWSData(object):
         else:
             return [location]
 
-    @property
-    @memoized
-    def products(self):
-        if self.config['products']:
-            return SQLProduct.objects.filter(product_id__in=self.config['products'])
-        elif self.config['program']:
-            return SQLProduct.objects.filter(program_id=self.config['program'])
-        else:
-            return []
-
     def unique_products(self, locations):
-        products = list(self.products)
+        products = list()
         for loc in locations:
-            products.extend(loc.products)
+            if self.config['products']:
+                products.extend([p for p in loc.products if p.product_id in self.config['products'] and
+                                 not p.is_archived])
+            elif self.config['program']:
+                products.extend([p for p in loc.products if p.program_id == self.config['program'] and
+                                 not p.is_archived])
+            else:
+                products.extend(p for p in loc.products if not p.is_archived)
         return sorted(set(products), key=lambda p: p.code)
 
 
@@ -105,20 +104,21 @@ class ReportingRatesData(EWSData):
     def get_supply_points(self, location_id=None):
         location = SQLLocation.objects.get(location_id=location_id) if location_id else self.location
         location_types = self.reporting_types()
-        if location.location_type == 'district':
+        if location.location_type.name == 'district':
             locations = SQLLocation.objects.filter(parent=location)
-        elif location.location_type == 'region':
+        elif location.location_type.name == 'region':
             locations = SQLLocation.objects.filter(
-                Q(parent__parent=location) | Q(parent=location, location_type__in=location_types)
+                Q(parent__parent=location) | Q(parent=location, location_type__name__in=location_types)
             )
         elif location.location_type in location_types:
             locations = SQLLocation.objects.filter(id=location.id)
         else:
             locations = SQLLocation.objects.filter(
                 domain=self.domain,
-                location_type__in=location_types,
+                location_type__name__in=location_types,
                 parent=location
             )
+        locations = locations.exclude(is_archived=True)
         return locations.exclude(supply_point_id__isnull=True)
 
     def supply_points_list(self, location_id=None):
@@ -136,8 +136,7 @@ class ReportingRatesData(EWSData):
     @memoized
     def all_reporting_locations(self):
         return SQLLocation.objects.filter(
-            domain=self.domain,
-            location_type__in=self.reporting_types()
+            domain=self.domain, location_type__name__in=self.reporting_types(), is_archived=False
         ).values_list('supply_point_id', flat=True)
 
 
@@ -162,7 +161,7 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
             if dm.program_id:
                 program_id = dm.program_id
             else:
-                program_id = Program.default_for_domain(domain)._id
+                program_id = 'all'
 
             url = '%s?location_id=%s&filter_by_program=%s' % (
                 url,
@@ -191,12 +190,20 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
             location_id=self.request.GET.get('location_id'),
         )
 
+    def report_filters(self):
+        return [f.slug for f in self.fields]
+
+    def fpr_report_filters(self):
+        return [f.slug for f in [AsyncLocationFilter, ProductByProgramFilter, DatespanFilter]]
+
     @property
     def report_context(self):
         context = {
             'reports': [self.get_report_context(dp) for dp in self.data_providers],
             'title': self.title,
             'split': self.split,
+            'r_filters': self.report_filters(),
+            'fpr_filters': self.fpr_report_filters(),
             'exportable': self.is_exportable,
             'location_id': self.request.GET.get('location_id'),
         }
@@ -232,13 +239,13 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
     def is_reporting_type(self):
         if not self.report_config.get('location_id'):
             return False
-        sql_location = SQLLocation.objects.get(location_id=self.report_config['location_id'])
+        sql_location = SQLLocation.objects.get(location_id=self.report_config['location_id'], is_archived=False)
         reporting_types = [
             location_type.name
             for location_type in Domain.get_by_name(self.domain).location_types
             if not location_type.administrative
         ]
-        return sql_location.location_type in reporting_types
+        return sql_location.location_type.name in reporting_types
 
     @property
     def export_table(self):
@@ -273,13 +280,27 @@ class ProductSelectionPane(EWSData):
     slug = 'product_selection_pane'
     show_table = True
     title = 'Select Products'
+    use_datatables = True
 
     @property
     def rows(self):
         locations = get_supply_points(self.config['location_id'], self.config['domain'])
         products = self.unique_products(locations)
-        result = [['<input value=\"{0}\" type=\"checkbox\" checked=\"checked\">{1} ({0})</input>'.format(p.code,
-                                                                                                         p.name)]
-                  for p in products]
-        result.append(['<button id=\"selection_pane_apply\" class=\"filters btn\">Apply</button>'])
-        return result
+        programs = {program.get_id: program.name for program in Program.by_domain(self.domain)}
+        result = [
+            [
+                '<input class=\"toggle-column\" name=\"{1} ({0})\" data-column={2} value=\"{0}\" type=\"checkbox\"'
+                '{3}>{1} ({0})</input>'.format(p.code, p.name, idx, 'checked'), programs[p.program_id], p.code
+            ] for idx, p in enumerate(products, start=1)
+        ]
+
+        result.sort(key=lambda r: (r[1], r[2]))
+
+        current_program = result[0][1] if result else ''
+        rows = [['<div class="program">%s</div>' % current_program]]
+        for r in result:
+            if r[1] != current_program:
+                rows.append(['<div class="program">%s</div>' % r[1]])
+                current_program = r[1]
+            rows.append([r[0]])
+        return rows

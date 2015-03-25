@@ -424,7 +424,7 @@ class CaseCustomExportHelper(CustomExportHelper):
 
     @property
     def export_title(self):
-        return _('Export Cases, Referrals, and Users')
+        return _('Export Cases and Users')
 
     def format_config_for_javascript(self, table_configuration):
         custom_columns = [

@@ -1,10 +1,12 @@
-from custom.succeed.reports import OUTPUT_DATE_FORMAT, CM2, PM_PM2, PM2, CHW_APP_PD_MODULE, CM_APP_PD_MODULE, PM_APP_PM_MODULE, CHW_APP_MA_MODULE, AP2
-from django.utils.translation import ugettext as _, ugettext_noop
+from custom.succeed.reports import OUTPUT_DATE_FORMAT, CM2, PM_PM2, PM2, CHW_APP_PD_MODULE, CM_APP_PD_MODULE,\
+    PM_APP_PM_MODULE, AP2, CM_APP_APPOINTMENTS_MODULE
+from django.utils.translation import ugettext as _
 from custom.succeed.reports.patient_details import PatientDetailsReport
 from custom.succeed.utils import get_form_dict, is_pm_or_pi, is_cm, is_chw
 from custom.succeed.utils import format_date
 
 EMPTY_FIELD = ""
+
 
 class PatientInfoDisplay(object):
 
@@ -100,7 +102,12 @@ class PatientInfoDisplay(object):
                                                          getattr(self.case, 'PCP_telephone', EMPTY_FIELD),
                                                      ]}
 
-        general_info['key_notes'] = {'label': _('Key Notes'), 'value': getattr(self.case, 'notes', EMPTY_FIELD)}
+        general_info['key_notes'] = {'label': _('Key Notes'),
+                                     'value': getattr(self.case, 'key_notes', EMPTY_FIELD)}
+
+        general_info['running_notes'] = {'label': _('Running Notes'),
+                                         'value': getattr(self.case, 'notes', EMPTY_FIELD)}
+
         general_info['cdsmp_notes'] = {'label': _('CDSMP Notes'),
                                        'value': getattr(self.case, 'cdsmp_notes', EMPTY_FIELD)}
         return general_info
@@ -135,7 +142,6 @@ class PatientInfoDisplay(object):
             if val and is_date:
                 val = format_date(val, OUTPUT_DATE_FORMAT)
             return _(label) + ': ' + str(val)
-
 
         most_recent_lab_exams['bmi'] = {'label': _('BMI'),
                                         'value': [_get_field_value('BMI Value', 'BMI'),
@@ -172,6 +178,7 @@ class PatientInfoDisplay(object):
         allergies['other'] = {'label': _('Other'), 'value': getattr(self.case, 'allergy_other_list', EMPTY_FIELD)}
         return allergies
 
+
 class PatientInfoReport(PatientDetailsReport):
     slug = "patient_info"
     name = 'Patient Info'
@@ -180,24 +187,28 @@ class PatientInfoReport(PatientDetailsReport):
     def report_context(self):
         self.report_template_path = "patient_info.html"
         ret = super(PatientInfoReport, self).report_context
+        # self.update_app_info()
         ret['view_mode'] = 'info'
         patient_info = PatientInfoDisplay(ret['patient'])
 
         #  check user role:
         user = self.request.couch_user
         if is_pm_or_pi(user):
-            ret['edit_patient_info_url'] = self.get_form_url(self.pm_app_dict, self.latest_pm_build, PM_APP_PM_MODULE, PM_PM2, ret['patient']['_id'])
+            ret['edit_patient_info_url'] = self.get_form_url(self.pm_app_dict,
+                                                             self.latest_pm_build, PM_APP_PM_MODULE,
+                                                             PM_PM2, ret['patient']['_id'])
         elif is_cm(user):
-            ret['edit_patient_info_url'] = self.get_form_url(self.cm_app_dict, self.latest_cm_build, CM_APP_PD_MODULE, PM_PM2, ret['patient']['_id'])
+            ret['edit_patient_info_url'] = self.get_form_url(self.cm_app_dict, self.latest_cm_build,
+                                                             CM_APP_PD_MODULE, PM_PM2, ret['patient']['_id'])
         elif is_chw(user):
-            ret['edit_patient_info_url'] = self.get_form_url(self.chw_app_dict, self.latest_chw_build, CHW_APP_PD_MODULE, PM2, ret['patient']['_id'])
+            ret['edit_patient_info_url'] = self.get_form_url(self.chw_app_dict, self.latest_chw_build,
+                                                             CHW_APP_PD_MODULE, PM2, ret['patient']['_id'])
 
-        if is_pm_or_pi(user):
-            ret['upcoming_appointments_url'] = self.get_form_url(self.pm_app_dict, self.latest_pm_build, PM_APP_PM_MODULE, PM_PM2, ret['patient']['_id'])
-        elif is_cm(user):
-            ret['upcoming_appointments_url'] = self.get_form_url(self.cm_app_dict, self.latest_cm_build, CM_APP_PD_MODULE, PM_PM2, ret['patient']['_id'])
-        elif is_chw(user):
-            ret['upcoming_appointments_url'] = self.get_form_url(self.chw_app_dict, self.latest_chw_build, CHW_APP_MA_MODULE, AP2, ret['patient']['_id'])
+        ret['upcoming_appointments_url'] = None
+        if is_cm(user):
+            ret['upcoming_appointments_url'] = self.get_form_url(self.cm_app_dict, self.latest_cm_build,
+                                                                 CM_APP_APPOINTMENTS_MODULE, AP2,
+                                                                 parent_id=ret['patient']['_id'])
 
         ret['general_information'] = patient_info.general_information
         ret['contact_information'] = patient_info.contact_information

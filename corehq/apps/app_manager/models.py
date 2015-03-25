@@ -17,6 +17,7 @@ from urllib2 import urlopen
 from urlparse import urljoin
 
 from couchdbkit import ResourceConflict, MultipleResultsFound
+import itertools
 from lxml import etree
 from django.core.cache import cache
 from django.utils.encoding import force_unicode
@@ -317,7 +318,7 @@ class FormActions(DocumentSchema):
         return names
 
 
-class AdvancedAction(DocumentSchema):
+class AdvancedAction(IndexedSchema):
     case_type = StringProperty()
     case_tag = StringProperty()
     case_properties = DictProperty()
@@ -325,6 +326,8 @@ class AdvancedAction(DocumentSchema):
     parent_reference_id = StringProperty(default='parent')
 
     close_condition = SchemaProperty(FormActionCondition)
+
+    __eq__ = DocumentSchema.__eq__
 
     def get_paths(self):
         for path in self.case_properties.values():
@@ -335,10 +338,6 @@ class AdvancedAction(DocumentSchema):
 
     def get_property_names(self):
         return set(self.case_properties.keys())
-
-    @property
-    def case_session_var(self):
-        return 'case_id_{0}'.format(self.case_tag)
 
     @property
     def is_subcase(self):
@@ -389,6 +388,10 @@ class LoadUpdateAction(AdvancedAction):
         names.update(self.preload.keys())
         return names
 
+    @property
+    def case_session_var(self):
+        return 'case_id_{0}'.format(self.case_tag)
+
 
 class AdvancedOpenCaseAction(AdvancedAction):
     name_path = StringProperty()
@@ -405,13 +408,20 @@ class AdvancedOpenCaseAction(AdvancedAction):
         if self.open_condition.type == 'if':
             yield self.open_condition.question
 
+    @property
+    def case_session_var(self):
+        return 'case_id_new_{}_{}'.format(self.case_type, self.id)
+
 
 class AdvancedFormActions(DocumentSchema):
     load_update_cases = SchemaListProperty(LoadUpdateAction)
     open_cases = SchemaListProperty(AdvancedOpenCaseAction)
 
+    get_load_update_actions = IndexedSchema.Getter('load_update_cases')
+    get_open_actions = IndexedSchema.Getter('open_cases')
+
     def get_all_actions(self):
-        return self.load_update_cases + self.open_cases
+        return itertools.chain(self.get_load_update_actions(), self.get_open_actions())
 
     def get_subcase_actions(self):
         return (a for a in self.get_all_actions() if a.parent_tag)
@@ -485,8 +495,8 @@ class AdvancedFormActions(DocumentSchema):
                 if type == 'load' and action.auto_select and action.auto_select.mode:
                     meta['by_auto_select_mode'][action.auto_select.mode].append(action)
 
-        add_actions('load', self.load_update_cases)
-        add_actions('open', self.open_cases)
+        add_actions('load', self.get_load_update_actions())
+        add_actions('open', self.get_open_actions())
 
         return meta
 
@@ -983,6 +993,17 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
     def all_other_forms_require_a_case(self):
         m = self.get_module()
         return all([form.requires == 'case' for form in m.get_forms() if form.id != self.id])
+
+    def session_var_for_action(self, action_type, subcase_index=None):
+        module_case_type = self.get_module().case_type
+        if action_type == 'open_case':
+            return 'case_id_new_{}_0'.format(module_case_type)
+        if action_type == 'subcase':
+            opens_case = 'open_case' in self.active_actions()
+            subcase_type = self.actions.subcases[subcase_index].case_type
+            if opens_case:
+                subcase_index += 1
+            return 'case_id_new_{}_{}'.format(subcase_type, subcase_index)
 
     def _get_active_actions(self, types):
         actions = {}
@@ -1841,7 +1862,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
 
     def get_registration_actions(self, case_type=None):
         return [
-            action for action in self.actions.open_cases
+            action for action in self.actions.get_open_actions()
             if not action.is_subcase and (not case_type or action.case_type == case_type)
         ]
 

@@ -5,7 +5,7 @@
 
 {% block reportcontent %}
     {% include "base_patient.html" %}
-    <br>
+    <br><br>
     <table id="report_table_{{ report.slug }}" class="table table-striped datatable" {% if pagination.filter %} data-filter="true"{% endif %}>
         <thead>
             <tr>
@@ -48,5 +48,11 @@
             $('<input>').attr({id: 'patient_id_field', type: 'hidden', name: 'patient_id', value: '{{ patient_id }}' }).appendTo('#paramSelectorForm');
         }
     });
+     {% if report_table and report_table.datatables %}
+        var id = '#report_table_{{ report.slug }}';
+        var table = $(id).dataTable();
+        var oSettings = table.fnSettings().aaSorting = [[2, 'desc']];
+        table.fnDraw();
+     {% endif %}
 </script>
 {% endblock %}

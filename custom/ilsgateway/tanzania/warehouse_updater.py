@@ -1,14 +1,14 @@
 from datetime import datetime, timedelta
 import logging
 import itertools
+from django.db.models import Q
 from corehq.apps.products.models import Product
 from corehq.apps.locations.models import Location, SQLLocation
 from dimagi.utils.dates import get_business_day_of_month, add_months, months_between
 from casexml.apps.stock.models import StockReport, StockTransaction
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, DeliveryGroups, \
     OrganizationSummary, GroupSummary, SupplyPointStatusValues, Alert, ProductAvailabilityData, \
-    SupplyPointWarehouseRecord, HistoricalLocationGroup
-from custom.ilsgateway import TEST
+    SupplyPointWarehouseRecord, HistoricalLocationGroup, ILSGatewayConfig
 
 
 """
@@ -30,6 +30,7 @@ DELIVERY_NOT_RECEIVED = 'delivery_' + SupplyPointStatusValues.NOT_RECEIVED
 DELIVERY_NOT_RESPONDING = 'delivery_not_responding'
 SOH_NOT_RESPONDING = 'soh_not_responding'
 
+TEST_REGION_ID = 21
 
 def _is_valid_status(facility, date, status_type):
     if status_type not in NEEDED_STATUS_TYPES:
@@ -262,16 +263,19 @@ def create_alert(location_id, date, alert_type, details):
 
 
 def default_start_date():
-    return datetime(2010, 11, 1)
+    return datetime(2012, 1, 1)
 
 
 def _get_test_locations(domain):
-    from custom.ilsgateway.tasks import ILS_FACILITIES
+    """
+        returns test region and all its children
+    """
+    test_region = SQLLocation.objects.get(domain=domain, external_id=TEST_REGION_ID)
     sql_locations = SQLLocation.objects.filter(
-        domain=domain,
-        external_id__in=ILS_FACILITIES
+        Q(domain=domain) & (Q(parent=test_region) | Q(parent__parent=test_region))
     ).order_by('id').only('location_id')
-    return [Location.get(sql_location.location_id) for sql_location in sql_locations]
+    return [sql_location.couch_location for sql_location in sql_locations] + \
+           [test_region.couch_location]
 
 
 def populate_report_data(start_date, end_date, domain, runner):
@@ -280,7 +284,7 @@ def populate_report_data(start_date, end_date, domain, runner):
     start_date = max(start_date, default_start_date())
 
     # For QA purposes generate reporting data for only some small part of data.
-    if TEST:
+    if not ILSGatewayConfig.for_domain(domain).all_stock_data:
         locations = _get_test_locations(domain)
         facilities = filter(lambda location: location.location_type == 'FACILITY', locations)
         non_facilities_types = ['DISTRICT', 'REGION', 'MOHSW']
@@ -294,7 +298,7 @@ def populate_report_data(start_date, end_date, domain, runner):
         non_facilities += list(Location.filter_by_type(domain, 'MOHSW'))
 
     if runner.location:
-        if runner.location.location_type != 'FACILITY':
+        if runner.location.location_type.name.upper() != 'FACILITY':
             facilities = []
             non_facilities = itertools.dropwhile(
                 lambda location: location._id != runner.location.location_id,
@@ -595,8 +599,14 @@ def update_historical_data(domain):
     org_summaries = OrganizationSummary.objects.order_by('date')
     if org_summaries.count() == 0:
         return
+
     start_date = org_summaries[0].date
-    locations = _get_test_locations(domain) if TEST else Location.by_domain(domain)
+
+    if not ILSGatewayConfig.for_domain(domain).all_stock_data:
+        locations = _get_test_locations(domain)
+    else:
+        locations = Location.by_domain(domain)
+
     for sp in locations:
         try:
             SupplyPointWarehouseRecord.objects.get(supply_point=sp._id)

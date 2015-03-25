@@ -3,7 +3,7 @@ from corehq.apps.users.cases import get_owner_id
 from soil import DownloadBase
 
 
-def export_cases_and_referrals(domain, cases, workbook, filter_group=None, users=None, all_groups=None,
+def export_cases(domain, cases, workbook, filter_group=None, users=None, all_groups=None,
                                process=None):
     by_user_id = dict([(user.user_id, user) for user in users]) if users else {}
     by_group_id = dict([(g.get_id, g) for g in all_groups]) if all_groups else {}
@@ -37,7 +37,6 @@ def export_cases_and_referrals(domain, cases, workbook, filter_group=None, users
     )
     case_dynamic_keys = get_case_properties(domain)
     case_rows = []
-    referral_rows = []
 
     def render_case_attr(case, key):
         attr = getattr(case, key)
@@ -88,15 +87,6 @@ def export_cases_and_referrals(domain, cases, workbook, filter_group=None, users
                 case_row['dynamic_properties'][key] = render_case_attr(case, key)
             case_rows.append(case_row)
 
-            for referral in case.referrals:
-                referral_row = {}
-                for key in referral_keys:
-                    if key == "case_id":
-                        referral_row[key] = case.case_id
-                    else:
-                        referral_row[key] = getattr(referral, key)
-                referral_rows.append(referral_row)
-
     def format_dynamic_key(key):
         return "d.{key}".format(key=key)
 
@@ -112,8 +102,4 @@ def export_cases_and_referrals(domain, cases, workbook, filter_group=None, users
     for case_row in case_rows:
         workbook.write_row("Cases", tidy_up_case_row(case_row))
 
-    if referral_rows:
-        workbook.open("Referrals", referral_keys)
-        for referral_row in referral_rows:
-            workbook.write_row("Referrals", referral_row)
     return workbook

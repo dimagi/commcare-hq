@@ -24,11 +24,11 @@ from django.db.models.aggregates import Avg, Max
 
 def get_facilities(location, domain):
 
-    if location.location_type.upper() == 'DISTRICT':
+    if location.location_type.name.upper() == 'DISTRICT':
         locations = SQLLocation.objects.filter(parent=location)
-    elif location.location_type.upper() == 'REGION':
+    elif location.location_type.name.upper() == 'REGION':
         locations = SQLLocation.objects.filter(parent__parent=location)
-    elif location.location_type.upper() == 'FACILITY':
+    elif location.location_type.name.upper() == 'FACILITY':
         locations = SQLLocation.objects.filter(id=location.id)
     else:
         locations = SQLLocation.objects.filter(domain=domain)
@@ -374,14 +374,14 @@ class StockOnHandReport(DetailsReport):
     @property
     def title(self):
         title = _('Stock On Hand')
-        if self.location and self.location.location_type == 'FACILITY':
+        if self.location and self.location.location_type.name.upper() == 'FACILITY':
             title = _('Facility Details')
         return title
 
     @property
     def fields(self):
         fields = [AsyncLocationFilter, MonthAndQuarterFilter, YearFilter, ProgramFilter, MSDZoneFilter]
-        if self.location and self.location.location_type == 'FACILITY':
+        if self.location and self.location.location_type.name.upper() == 'FACILITY':
             fields = [AsyncLocationFilter, ProductByProgramFilter]
         return fields
 
@@ -399,9 +399,9 @@ class StockOnHandReport(DetailsReport):
                 ProductAvailabilitySummary(config=config, css_class='row_chart_all', chart_stacked=False),
             ]
 
-            if location.location_type.upper() == 'DISTRICT':
+            if location.location_type.name.upper() == 'DISTRICT':
                 data_providers.append(DistrictSohPercentageTableData(config=config, css_class='row_chart_all'))
-            elif location.location_type == 'FACILITY':
+            elif location.location_type.name.upper() == 'FACILITY':
                 return [
                     InventoryHistoryData(config=config),
                     RandRHistory(config=config),

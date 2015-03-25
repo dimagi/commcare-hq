@@ -36,7 +36,8 @@ from corehq.apps.accounting.models import (
     SubscriptionAdjustmentMethod,
     SubscriptionType,
 )
-from corehq.apps.app_manager.models import Application, FormBase, RemoteApp, get_apps_in_domain
+from corehq.apps.app_manager.models import (Application, RemoteApp,
+                                            FormBase, get_apps_in_domain)
 
 from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
     AREA_CHOICES, SUB_AREA_CHOICES, Domain, TransferDomainRequest)
@@ -45,8 +46,8 @@ from corehq.apps.reminders.models import CaseReminderHandler
 from corehq.apps.users.models import WebUser, CommCareUser
 from corehq.apps.groups.models import Group
 from dimagi.utils.django.email import send_HTML_email
-from dimagi.utils.timezones.fields import TimeZoneField
-from dimagi.utils.timezones.forms import TimeZoneChoiceField
+from corehq.util.timezones.fields import TimeZoneField
+from corehq.util.timezones.forms import TimeZoneChoiceField
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop, ugettext as _
 from corehq.apps.style.forms.widgets import BootstrapCheckboxInput, BootstrapDisabledInput
@@ -65,10 +66,6 @@ logger = logging.getLogger(__name__)
 
 def tf_choices(true_txt, false_txt):
     return (('false', false_txt), ('true', true_txt))
-
-class SnapshotSettingsMixin(forms.Form):
-    project_type = CharField(label=ugettext_noop("Project Category"), required=False,
-        help_text=ugettext_noop("e.g. MCH, HIV, etc."))
 
 
 class ProjectSettingsForm(forms.Form):
@@ -150,15 +147,21 @@ class SnapshotFixtureForm(forms.Form):
             'description',
         ]
 
-class SnapshotSettingsForm(SnapshotSettingsMixin):
+
+class SnapshotSettingsForm(forms.Form):
     title = CharField(label=ugettext_noop("Title"), required=True, max_length=100)
-    project_type = CharField(label=ugettext_noop("Project Category"), required=True,
-        help_text=ugettext_noop("e.g. MCH, HIV, etc."))
+    project_type = CharField(
+        label=ugettext_noop("Project Category"),
+        required=True,
+        help_text=ugettext_noop("e.g. MCH, HIV, etc.")
+    )
     license = ChoiceField(label=ugettext_noop("License"), required=True, choices=LICENSES.items(),
-        widget=Select(attrs={'class': 'input-xxlarge'}))
-    description = CharField(label=ugettext_noop("Long Description"), required=False, widget=forms.Textarea,
+                          widget=Select(attrs={'class': 'input-xxlarge'}))
+    description = CharField(
+        label=ugettext_noop("Long Description"), required=False, widget=forms.Textarea,
         help_text=ugettext_noop("A high-level overview of your project as a whole"))
-    short_description = CharField(label=ugettext_noop("Short Description"), required=False,
+    short_description = CharField(
+        label=ugettext_noop("Short Description"), required=False,
         widget=forms.Textarea(attrs={'maxlength': 200}),
         help_text=ugettext_noop("A brief description of your project (max. 200 characters)"))
     share_multimedia = BooleanField(label=ugettext_noop("Share all multimedia?"), required=False,
@@ -393,14 +396,6 @@ class DomainGlobalSettingsForm(forms.Form):
         required=False,
         help_text=_("Enter the case type to be used for FLWs in call center apps")
     )
-    secure_submissions = BooleanField(
-        label=_("Only accept secure submissions"),
-        required=False,
-        help_text=_("Turn this on to prevent others from impersonating your "
-                    "mobile workers. To use, all of your deployed applications "
-                    "must be using secure submissions."),
-    )
-
 
     def __init__(self, *args, **kwargs):
         domain = kwargs.pop('domain', None)
@@ -473,80 +468,14 @@ class DomainGlobalSettingsForm(forms.Form):
                         users_to_save.append(user)
                 if users_to_save:
                     WebUser.bulk_save(users_to_save)
-
-            secure_submissions = self.cleaned_data.get(
-                'secure_submissions', False)
-            apps_to_save = []
-            if secure_submissions != domain.secure_submissions:
-                for app in get_apps_in_domain(domain.name):
-                    if app.secure_submissions != secure_submissions:
-                        app.secure_submissions = secure_submissions
-                        apps_to_save.append(app)
-            if apps_to_save:
-                apps = [app for app in apps_to_save if isinstance(app, Application)]
-                remote_apps = [app for app in apps_to_save if isinstance(app, RemoteApp)]
-                if apps:
-                    Application.bulk_save(apps)
-                if remote_apps:
-                    RemoteApp.bulk_save(remote_apps)
-
-            domain.secure_submissions = secure_submissions
             domain.save()
             return True
         except Exception:
             return False
 
-class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
-    customer_type = ChoiceField(
-        label=_("Customer Type"),
-        choices=(('basic', _('Basic')),
-                 ('plus', _('Plus')),
-                 ('full', _('Full')))
-    )
-    is_test = ChoiceField(
-        label=_("Test Project"),
-        choices=(('true', _('Test')),
-                 ('false', _('Real')),
-                 ('none', _('Not Sure')))
-    )
-    commconnect_enabled = BooleanField(
-        label=_("CommConnect Enabled"),
-        required=False,
-        help_text=_("CommConnect is a CommCareHQ module for SMS messages, "
-                    "reminders and data collection.")
-    )
-    survey_management_enabled = BooleanField(
-        label=_("Survey Management Enabled"),
-        required=False,
-        help_text=_("Survey Management is a CommCareHQ module for SMS and "
-                    "Call Center based surveys for large samples.  It is "
-                    "under active development. Do not enable for your domain "
-                    "unless you're piloting it.")
-    )
-    sms_case_registration_enabled = BooleanField(
-        label=_("Enable Case Registration Via SMS"),
-        required=False
-    )
-    sms_case_registration_type = CharField(
-        label=_("SMS Case Registration Type"),
-        required=False
-    )
-    sms_case_registration_owner_id = ChoiceField(
-        label=_("SMS Case Registration Owner"),
-        required=False,
-        choices=[]
-    )
-    sms_case_registration_user_id = ChoiceField(
-        label=_("SMS Case Registration Submitting User"),
-        required=False,
-        choices=[]
-    )
-    restrict_superusers = BooleanField(
-        label=_("Restrict Superuser Access"),
-        required=False,
-        help_text=_("If access to a domain is restricted only users added " +
-                    "to the domain and staff members will have access.")
-    )
+
+class DomainMetadataForm(DomainGlobalSettingsForm):
+
     cloudcare_releases = ChoiceField(
         label=_("CloudCare should use"),
         initial=None,
@@ -565,44 +494,11 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         domain = kwargs.get('domain', None)
         super(DomainMetadataForm, self).__init__(*args, **kwargs)
 
-        if not (user and user.is_staff):
-            self.fields['restrict_superusers'].widget = forms.HiddenInput()
-
         project = Domain.get_by_name(domain)
         if project.cloudcare_releases == 'default' or not domain_has_privilege(domain, privileges.CLOUDCARE):
             # if the cloudcare_releases flag was just defaulted, don't bother showing
             # this setting at all
             self.fields['cloudcare_releases'].widget = forms.HiddenInput()
-
-        if domain is not None:
-            groups = Group.get_case_sharing_groups(domain)
-            users = CommCareUser.by_domain(domain)
-
-            domain_group_choices = [(group._id, group.name) for group in groups]
-            domain_user_choices = [(user._id, user.raw_username) for user in users]
-            domain_owner_choices = domain_group_choices + domain_user_choices
-
-            self.fields["sms_case_registration_owner_id"].choices = domain_owner_choices
-            self.fields["sms_case_registration_user_id"].choices = domain_user_choices
-
-
-    def _validate_sms_registration_field(self, field_name, error_msg):
-        value = self.cleaned_data.get(field_name)
-        if value is not None:
-            value = value.strip()
-        if self.cleaned_data.get("sms_case_registration_enabled", False):
-            if value is None or value == "":
-                raise forms.ValidationError(error_msg)
-        return value
-
-    def clean_sms_case_registration_type(self):
-        return self._validate_sms_registration_field("sms_case_registration_type", _("Please enter a default case type for cases that register themselves via sms."))
-
-    def clean_sms_case_registration_owner_id(self):
-        return self._validate_sms_registration_field("sms_case_registration_owner_id", _("Please enter a default owner for cases that register themselves via sms."))
-
-    def clean_sms_case_registration_user_id(self):
-        return self._validate_sms_registration_field("sms_case_registration_user_id", _("Please enter a default submitting user for cases that register themselves via sms."))
 
     def save(self, request, domain):
         res = DomainGlobalSettingsForm.save(self, request, domain)
@@ -610,17 +506,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         if not res:
             return False
         try:
-            domain.project_type = self.cleaned_data['project_type']
-            domain.customer_type = self.cleaned_data['customer_type']
-            domain.is_test = self.cleaned_data['is_test']
-            domain.commconnect_enabled = self.cleaned_data.get(
-                    'commconnect_enabled', False)
-            domain.survey_management_enabled = self.cleaned_data.get('survey_management_enabled', False)
-            domain.sms_case_registration_enabled = self.cleaned_data.get('sms_case_registration_enabled', False)
-            domain.sms_case_registration_type = self.cleaned_data.get('sms_case_registration_type')
-            domain.sms_case_registration_owner_id = self.cleaned_data.get('sms_case_registration_owner_id')
-            domain.sms_case_registration_user_id = self.cleaned_data.get('sms_case_registration_user_id')
-            domain.restrict_superusers = self.cleaned_data.get('restrict_superusers', False)
             cloudcare_releases = self.cleaned_data.get('cloudcare_releases')
             if cloudcare_releases and domain.cloudcare_releases != 'default':
                 # you're never allowed to change from default
@@ -632,29 +517,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
             return False
 
 
-class DomainDeploymentForm(forms.Form):
-    city = CharField(label=ugettext_noop("City"), required=False)
-    countries = forms.MultipleChoiceField(label=ugettext_noop("Countries"),
-            choices=COUNTRIES)
-    region = CharField(label=ugettext_noop("Region"), required=False,
-        help_text=ugettext_noop("e.g. US, LAC, SA, Sub-Saharan Africa, Southeast Asia, etc."))
-    deployment_date = CharField(label=ugettext_noop("Deployment date"), required=False)
-    description = CharField(label=ugettext_noop("Description"), required=False, widget=forms.Textarea)
-    public = ChoiceField(label=ugettext_noop("Make Public?"), choices=tf_choices('Yes', 'No'), required=False)
-
-    def save(self, domain):
-        try:
-            domain.update_deployment(city=self.cleaned_data['city'],
-                countries=self.cleaned_data['countries'],
-                region=self.cleaned_data['region'],
-                date=dateutil.parser.parse(self.cleaned_data['deployment_date']),
-                description=self.cleaned_data['description'],
-                public=(self.cleaned_data['public'] == 'true'))
-            return True
-        except Exception:
-            return False
-
-
 def tuple_of_copies(a_list, blank=True):
     ret = [(item, item) for item in a_list]
     if blank:
@@ -662,38 +524,146 @@ def tuple_of_copies(a_list, blank=True):
     return tuple(ret)
 
 
+class PrivacySecurityForm(forms.Form):
+    restrict_superusers = BooleanField(
+        label=_("Restrict Dimagi Staff Access"),
+        required=False,
+        help_text=_("If access to a project space is restricted only users added " +
+                    "to the domain and staff members will have access.")
+    )
+    secure_submissions = BooleanField(
+        label=_("Secure submissions"),
+        required=False,
+        help_text=_(mark_safe(
+            "Secure Submissions prevents others from impersonating your mobile workers."
+            "This setting requires all deployed applications to be using secure "
+            "submissions as well. "
+            "<a href='https://help.commcarehq.org/display/commcarepublic/Project+Space+Settings'>"
+            "Read more about secure submissions here</a>"))
+    )
+
+    def save(self, domain):
+        domain.restrict_superusers = self.cleaned_data.get('restrict_superusers', False)
+        try:
+            secure_submissions = self.cleaned_data.get(
+                'secure_submissions', False)
+            apps_to_save = []
+            if secure_submissions != domain.secure_submissions:
+                for app in get_apps_in_domain(domain.name):
+                    if app.secure_submissions != secure_submissions:
+                        app.secure_submissions = secure_submissions
+                        apps_to_save.append(app)
+            domain.secure_submissions = secure_submissions
+            domain.save()
+
+            if apps_to_save:
+                apps = [app for app in apps_to_save if isinstance(app, Application)]
+                remote_apps = [app for app in apps_to_save if isinstance(app, RemoteApp)]
+                if apps:
+                    Application.bulk_save(apps)
+                if remote_apps:
+                    RemoteApp.bulk_save(remote_apps)
+
+            return True
+        except Exception:
+            return False
+
+
 class DomainInternalForm(forms.Form, SubAreaMixin):
     sf_contract_id = CharField(label=ugettext_noop("Salesforce Contract ID"), required=False)
     sf_account_id = CharField(label=ugettext_noop("Salesforce Account ID"), required=False)
-    commcare_edition = ChoiceField(label=ugettext_noop("CommCare Plan"), initial="community", required=False,
-                                   choices=tuple([(p, p) for p in
-                                                  ["community", "standard", "pro", "advanced", "enterprise"]]))
     services = ChoiceField(label=ugettext_noop("Services"), required=False,
                            choices=tuple_of_copies(["basic", "plus", "full", "custom"]))
-    initiative = forms.MultipleChoiceField(label=ugettext_noop("Initiative"), widget=forms.CheckboxSelectMultiple(),
-                                           choices=tuple_of_copies(DATA_DICT["initiatives"], blank=False), required=False)
-    workshop_region = CharField(label=ugettext_noop("Workshop Region"), required=False,
+    initiative = forms.MultipleChoiceField(label=ugettext_noop("Initiative"),
+                                           widget=forms.CheckboxSelectMultiple(),
+                                           choices=tuple_of_copies(DATA_DICT["initiatives"], blank=False),
+                                           required=False)
+    workshop_region = CharField(
+        label=ugettext_noop("Workshop Region"),
+        required=False,
         help_text=ugettext_noop("e.g. US, LAC, SA, Sub-Saharan Africa, Southeast Asia, etc."))
-    project_state = ChoiceField(label=ugettext_noop("Project State"), required=False,
-                                choices=tuple_of_copies(["POC", "transition", "at-scale"]))
-    self_started = ChoiceField(label=ugettext_noop("Self Started?"), choices=tf_choices('Yes', 'No'), required=False)
-    area = ChoiceField(label=ugettext_noop("Sector"), required=False, choices=tuple_of_copies(AREA_CHOICES))
-    sub_area = ChoiceField(label=ugettext_noop("Sub-Sector"), required=False, choices=tuple_of_copies(SUB_AREA_CHOICES))
-    using_adm = ChoiceField(label=ugettext_noop("Using ADM?"), choices=tf_choices('Yes', 'No'), required=False)
-    using_call_center = ChoiceField(label=ugettext_noop("Using Call Center?"), choices=tf_choices('Yes', 'No'), required=False)
-    organization_name = CharField(label=ugettext_noop("Organization Name"), required=False)
-    notes = CharField(label=ugettext_noop("Notes"), required=False, widget=forms.Textarea)
-    platform = forms.MultipleChoiceField(label=ugettext_noop("Platform"), widget=forms.CheckboxSelectMultiple(),
-                                         choices=tuple_of_copies(["java", "android", "cloudcare"], blank=False), required=False)
-    phone_model = CharField(label=ugettext_noop("Phone Model"), required=False)
-    project_manager = CharField(label=ugettext_noop("Project Manager's Email"), required=False)
-    goal_time_period = IntegerField(label=ugettext_noop("Goal time period (in days)"), required=False)
-    goal_followup_rate = DecimalField(label=ugettext_noop("Goal followup rate (percentage in decimal format. e.g. 70% is .7)"), required=False)
-    commtrack_domain = ChoiceField(label=ugettext_noop("CommTrack domain?"),
-                                   choices=tf_choices('Yes', 'No'), required=False)
+    self_started = ChoiceField(
+        label=ugettext_noop("Self Started?"),
+        choices=tf_choices('Yes', 'No'),
+        required=False,
+        help_text=ugettext_noop(
+            "The organization built and deployed their app themselves. Dimagi may have provided indirect support"
+        ))
+    is_test = ChoiceField(
+        label=_("Real Project"),
+        choices=(('true', _('Test')),
+                 ('false', _('Real')),
+                 ('none', _('unknown')))
+    )
+    area = ChoiceField(
+        label=ugettext_noop("Sector*"),
+        required=False,
+        choices=tuple_of_copies(AREA_CHOICES))
+    sub_area = ChoiceField(
+        label=ugettext_noop("Sub-Sector*"),
+        required=False,
+        choices=tuple_of_copies(SUB_AREA_CHOICES))
+    organization_name = CharField(
+        label=ugettext_noop("Organization Name*"),
+        required=False,
+        help_text=_("Quick 1-2 sentence summary of the project."),
+    )
+    notes = CharField(label=ugettext_noop("Notes*"), required=False, widget=forms.Textarea)
+    phone_model = CharField(
+        label=ugettext_noop("Device Model"),
+        help_text=_("Add CloudCare, if this project is using CloudCare as well"),
+        required=False,
+    )
+    deployment_date = CharField(
+        label=ugettext_noop("Deployment date"),
+        required=False,
+        help_text=_("Date that the project went live (usually right after training).")
+    )
+    countries = forms.MultipleChoiceField(
+        label=ugettext_noop("Countries"),
+        choices=COUNTRIES,
+    )
+    commtrack_domain = ChoiceField(
+        label=ugettext_noop("CommCare Supply Project"),
+        choices=tf_choices('Yes', 'No'),
+        required=False,
+        help_text=_("This app aims to improve the supply of goods and materials")
+    )
 
     def __init__(self, can_edit_eula, *args, **kwargs):
         super(DomainInternalForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_class = 'form form-horizontal'
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _("Basic Information"),
+                'initiative',
+                'workshop_region',
+                'self_started',
+                'is_test',
+                'area',
+                'sub_area',
+                'organization_name',
+                'notes',
+                'phone_model',
+                'deployment_date',
+                'countries',
+                'commtrack_domain',
+            ),
+            crispy.Fieldset(
+                _("Salesforce Details"),
+                'sf_contract_id',
+                'sf_account_id',
+                'services',
+            ),
+            FormActions(
+                StrictButton(
+                    _("Update Project Information"),
+                    type="submit",
+                    css_class='btn btn-primary',
+                ),
+            ),
+        )
         self.can_edit_eula = can_edit_eula
         if self.can_edit_eula:
             self.fields['custom_eula'] = ChoiceField(
@@ -715,24 +685,22 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             kwargs['custom_eula'] = self.cleaned_data['custom_eula'] == 'true'
             kwargs['can_use_data'] = self.cleaned_data['can_use_data'] == 'true'
 
-        domain.update_internal(sf_contract_id=self.cleaned_data['sf_contract_id'],
+        domain.update_deployment(
+            date=dateutil.parser.parse(self.cleaned_data['deployment_date']),
+            countries=self.cleaned_data['countries'],
+        )
+        domain.is_test = self.cleaned_data['is_test']
+        domain.update_internal(
+            sf_contract_id=self.cleaned_data['sf_contract_id'],
             sf_account_id=self.cleaned_data['sf_account_id'],
-            commcare_edition=self.cleaned_data['commcare_edition'],
             services=self.cleaned_data['services'],
             initiative=self.cleaned_data['initiative'],
-            project_state=self.cleaned_data['project_state'],
             self_started=self.cleaned_data['self_started'] == 'true',
             area=self.cleaned_data['area'],
             sub_area=self.cleaned_data['sub_area'],
-            using_adm=self.cleaned_data['using_adm'] == 'true',
-            using_call_center=self.cleaned_data['using_call_center'] == 'true',
             organization_name=self.cleaned_data['organization_name'],
             notes=self.cleaned_data['notes'],
-            platform=self.cleaned_data['platform'],
-            project_manager=self.cleaned_data['project_manager'],
             phone_model=self.cleaned_data['phone_model'],
-            goal_time_period=self.cleaned_data['goal_time_period'],
-            goal_followup_rate=self.cleaned_data['goal_followup_rate'],
             commtrack_domain=self.cleaned_data['commtrack_domain'] == 'true',
             **kwargs
         )

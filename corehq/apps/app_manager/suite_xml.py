@@ -20,8 +20,7 @@ from .exceptions import (
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import UnknownInstanceError, ScheduleError
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
-from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE_LAST_VISIT, SCHEDULE_PHASE, \
-    CASE_ID, RETURN_TO
+from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE_LAST_VISIT, SCHEDULE_PHASE, RETURN_TO
 from corehq.apps.app_manager.util import split_path, create_temp_sort_column, languages_mapping
 from corehq.apps.app_manager.xform import SESSION_CASE_ID, autoset_owner_id_for_open_case, \
     autoset_owner_id_for_subcase
@@ -931,8 +930,9 @@ class SuiteGenerator(SuiteGeneratorBase):
                     not (hasattr(module, 'parent_select') and module.parent_select.active):
                 # add form action to detail
                 form = self.app.get_form(module.case_list_form.form_id)
-                case_session_var = CASE_ID
-                if form.form_type == 'advanced_form':
+                if form.form_type == 'module_form':
+                    case_session_var = form.session_var_for_action('open_case')
+                elif form.form_type == 'advanced_form':
                     # match case session variable
                     reg_action = form.get_registration_actions(module.case_type)[0]
                     case_session_var = reg_action.case_session_var
@@ -1369,9 +1369,31 @@ class SuiteGenerator(SuiteGeneratorBase):
             'case_autoload.{0}.case_missing'.format(mode),
         )
 
+    def get_new_case_id_datums(self, form):
+        if not form:
+            return []
+
+        datums = []
+        if form.form_type == 'module_form':
+            actions = form.active_actions()
+            if 'open_case' in actions:
+                datums.append(SessionDatum(id=form.session_var_for_action('open_case'), function='uuid()'))
+
+            if 'subcases' in actions:
+                non_repeat_actions = [a for a in actions['subcases'] if not a.repeat_context]
+                for i, subcase in enumerate(non_repeat_actions):
+                    datums.append(SessionDatum(id=form.session_var_for_action('subcase', i), function='uuid()'))
+        elif form.form_type == 'advanced_form':
+            for action in form.actions.get_open_actions():
+                if not action.repeat_context:
+                    datums.append(SessionDatum(id=action.case_session_var, function='uuid()'))
+
+        return datums
+
     def configure_entry_as_case_list_form(self, form, entry):
         target_module = form.case_list_module
-        source_session_var = CASE_ID
+        if form.form_type == 'module_form':
+            source_session_var = form.session_var_for_action('open_case')
         if form.form_type == 'advanced_form':
             # match case session variable
             reg_action = form.get_registration_actions(target_module.case_type)[0]
@@ -1383,7 +1405,6 @@ class SuiteGenerator(SuiteGeneratorBase):
             form = target_module.forms[0]
             target_session_var = form.actions.load_update_cases[0].case_session_var
 
-        entry.datums.append(SessionDatum(id=source_session_var, function='uuid()'))
         entry.stack = Stack()
         source_case_id = session_var(source_session_var)
         case_count = CaseIDXPath(source_case_id).case().count()
@@ -1410,7 +1431,12 @@ class SuiteGenerator(SuiteGeneratorBase):
 
         if not form or form.requires_case():
             self.configure_entry_module(module, e, use_filter=True)
-        elif form and form.is_case_list_form:
+
+        datums = self.get_new_case_id_datums(form)
+        for datum in datums:
+            e.datums.append(datum)
+
+        if form and 'open_case' in form.active_actions() and form.is_case_list_form:
             self.configure_entry_as_case_list_form(form, e)
 
         if form and self.app.case_sharing and case_sharing_requires_assertion(form):
@@ -1627,6 +1653,10 @@ class SuiteGenerator(SuiteGeneratorBase):
                     ))
             except IndexError:
                 pass
+
+        datums = self.get_new_case_id_datums(form)
+        for datum in datums:
+            e.datums.append(datum)
 
         if form.is_registration_form() and form.is_case_list_form:
             self.configure_entry_as_case_list_form(form, e)

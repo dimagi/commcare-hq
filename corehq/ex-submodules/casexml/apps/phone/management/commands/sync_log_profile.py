@@ -18,7 +18,7 @@ class Command(BaseCommand):
         total_count = len(all_sync_log_ids)
 
         headers = [
-            'domain', 'user', 'cases', 'dependent cases', 'total cases', 'initial', 'duration',
+            'date', 'user', 'cases', 'dependent cases', 'total cases', 'initial', 'duration',
             'duration per case (ms/case)',
         ]
 
@@ -35,7 +35,7 @@ class Command(BaseCommand):
                 if duration and total_cases:
                     average_time = float(duration) * 1000 / float(total_cases)
                     writer.writerow([
-                        sync_log_dict.get('domain'),
+                        (sync_log_dict.get('date') or '1980-01-01')[:10],  # strip times off of the dates
                         sync_log_dict.get('user_id'),
                         cases,
                         dependent_cases,

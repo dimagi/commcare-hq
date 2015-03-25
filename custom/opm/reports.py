@@ -10,7 +10,7 @@ from collections import defaultdict, OrderedDict
 import datetime
 import logging
 import pickle
-import simplejson
+import json
 import re
 from dateutil import parser
 
@@ -1021,6 +1021,27 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
         return DataTablesHeader(*headers)
 
     @property
+    @request_cache("raw")
+    def print_response(self):
+        self.is_rendered_as_email = True
+        self.use_datatables = False
+        self.override_template = "opm/new_hsr_print.html"
+        self.update_report_context()
+        self.pagination.count = 1000000
+        headers = self.headers
+        for h in headers:
+            if h.help_text:
+                h.html = "%s (%s)" % (h.html, h.help_text)
+                h.help_text = None
+
+        self.context['report_table'].update(
+            headers=headers
+        )
+        rendered_report = render_to_string(self.template_report, self.context,
+                                           context_instance=RequestContext(self.request))
+        return HttpResponse(rendered_report)
+
+    @property
     @memoized
     def awc_data(self):
         case_objects = self.row_objects + self.extra_row_objects
@@ -1234,7 +1255,7 @@ class HealthStatusReport(DatespanMixin, BaseReport):
             block_term = get_nested_terms_filter("user_data.block", self.blocks)
             es_filters["bool"]["must"].append(block_term)
         q["query"]["filtered"]["query"].update({"match_all": {}})
-        logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, simplejson.dumps(q)))
+        logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, json.dumps(q)))
         return es_query(q=q, es_url=USER_INDEX + '/_search', dict_only=False,
                         start_at=self.pagination.start, size=self.pagination.count)
 

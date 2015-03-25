@@ -28,3 +28,4 @@ STOCKOUT_REPORT = 'Dear %(name)s, %(facility)s reported STOCKOUTS on %(date)s of
 RRIRV_REMINDER = "Dear %(name)s, have you submitted your RRIRV forms this month? Please reply 'yes' or 'no'"
 WEB_REMINDER = "Dear %(name)s, you have not visited commcarehq.org in a long time. " \
                "Please log in to find up-to-date info about stock availability and bottlenecks in Ghana."
+RECEIPT_CONFIRM = 'Thank you, you reported receipts for %(products)s.'

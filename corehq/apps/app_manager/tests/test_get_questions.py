@@ -18,6 +18,13 @@ QUESTIONS = [
             'es': u'label es ____\n____\n____',
         },
         'type': 'Text',
+        'required': False,
+        'relevant': ("instance('casedb')/casedb/case[@case_id=instance('casedb')/casedb/case["
+                     "@case_id=instance('commcaresession')/session/data/case_id]/index/parent"
+                     "]/parent_property_1 + 1 + "
+                     "instance('casedb')/casedb/case[@case_id=instance('casedb')/casedb/case["
+                     "@case_id=instance('commcaresession')/session/data/case_id]/index/parent"
+                     "]/parent_property_1"),
     },
     {
         'tag': 'input',
@@ -27,6 +34,8 @@ QUESTIONS = [
         'label': u'label en ____ label en',
         'translations': {'en': u'label en ____ label en'},
         'type': 'Text',
+        'required': False,
+        'relevant': None,
     },
     {
         'tag': 'input',
@@ -36,6 +45,8 @@ QUESTIONS = [
         'label': u'no references here!',
         'translations': {'en': u'no references here!'},
         'type': 'Text',
+        'required': False,
+        'relevant': None,
     },
     {
         'tag': 'trigger',
@@ -45,6 +56,8 @@ QUESTIONS = [
         'label': 'woo',
         'translations': {'en': u'woo'},
         'type': 'Trigger',
+        'required': False,
+        'relevant': None,
     },
     {
         'tag': 'input',
@@ -54,6 +67,8 @@ QUESTIONS = [
         'label': None,
         'translations': {},
         'type': 'Text',
+        'required': False,
+        'relevant': None,
     },
     {
         'tag': 'select1',
@@ -70,6 +85,8 @@ QUESTIONS = [
         'label': None,
         'translations': {},
         'type': 'Select',
+        'required': False,
+        'relevant': None,
     },
     {
         'tag': 'input',
@@ -79,6 +96,8 @@ QUESTIONS = [
         'label': None,
         'translations': {},
         'type': 'Int',
+        'required': False,
+        'relevant': None,
     },
     {
         'tag': 'input',
@@ -88,6 +107,8 @@ QUESTIONS = [
         'label': None,
         'translations': {},
         'type': 'Text',
+        'required': False,
+        'relevant': None,
     },
     {
         'tag': 'hidden',
@@ -130,6 +151,7 @@ class GetFormQuestionsTest(SimpleTestCase):
 
         non_label_questions = [
             q for q in QUESTIONS if q['tag'] not in ('label', 'trigger')]
+
         self.assertEqual(questions, non_label_questions)
 
     def test_get_questions_with_triggers(self):

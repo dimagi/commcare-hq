@@ -239,7 +239,7 @@ class CaseUpdate(object):
         self.index_block = block.get(const.CASE_ACTION_INDEX, {})
         self.attachment_block = block.get(const.CASE_ACTION_ATTACHMENT, {})
 
-        # referrals? really?
+        # referrals? really? really???
         self.referral_block = block.get(const.REFERRAL_TAG, {})
         
         # actions

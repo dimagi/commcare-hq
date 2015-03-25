@@ -20,7 +20,7 @@ from corehq.apps.reports.exportfilters import form_matches_users, is_commconnect
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
 from corehq.feature_previews import CALLCENTER
 from corehq.util.view_utils import absolute_reverse
-from couchexport.models import SavedExportSchema, GroupExportConfiguration, FakeSavedExportSchema
+from couchexport.models import SavedExportSchema, GroupExportConfiguration, FakeSavedExportSchema, SplitColumn
 from couchexport.transforms import couch_to_excel_datetime, identity
 from couchexport.util import SerializableFunction
 import couchforms
@@ -644,6 +644,12 @@ class FormExportSchema(HQExportSchema):
     def update_schema(self):
         super(FormExportSchema, self).update_schema()
         self.update_question_schema()
+        # update SplitColumn options
+        for column in [column for table in self.tables for column in table.columns]:
+            if isinstance(column, SplitColumn):
+                question = self.question_schema.question_schema.get(column.index)
+                column.options = question.options
+                column.ignore_extras = True
 
     def update_question_schema(self):
         schema = self.question_schema

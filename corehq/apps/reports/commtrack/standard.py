@@ -129,10 +129,9 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
         return DataTablesHeader(*columns)
 
     @property
+    @memoized
     def product_data(self):
-        if getattr(self, 'prod_data', None) is None:
-            self.prod_data = list(self.get_prod_data())
-        return self.prod_data
+        return list(self.get_prod_data())
 
     def get_prod_data(self):
         sp_ids = get_relevant_supply_point_ids(self.domain, self.active_location)
@@ -321,20 +320,18 @@ class InventoryReport(GenericTabularReport, CommtrackReportMixin):
         return DataTablesHeader(*columns)
 
     @property
+    @memoized
     def product_data(self):
-        if getattr(self, 'prod_data', None) is None:
-            self.prod_data = []
-            config = {
-                'domain': self.domain,
-                'location_id': self.request.GET.get('location_id'),
-                'program_id': self.request.GET.get('program'),
-                'startdate': self.datespan.startdate_utc,
-                'enddate': self.datespan.enddate_utc,
-                'aggregate': True,
-                'advanced_columns': self.showing_advanced_columns(),
-            }
-            self.prod_data = self.prod_data + list(StockStatusDataSource(config).get_data())
-        return self.prod_data
+        config = {
+            'domain': self.domain,
+            'location_id': self.request.GET.get('location_id'),
+            'program_id': self.request.GET.get('program'),
+            'startdate': self.datespan.startdate_utc,
+            'enddate': self.datespan.enddate_utc,
+            'aggregate': True,
+            'advanced_columns': self.showing_advanced_columns(),
+        }
+        return list(StockStatusDataSource(config).get_data())
 
     @property
     def rows(self):

@@ -2,7 +2,7 @@ from django.core.urlresolvers import reverse, NoReverseMatch
 import pytz
 from corehq.apps.reports.standard.deployments import DeploymentsReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from dimagi.utils.timezones import utils as tz_utils
+from corehq.util.timezones import utils as tz_utils
 from couchforms.models import XFormError
 from corehq.apps.receiverwrapper.filters import SubmissionErrorType, \
     SubmissionTypeFilter

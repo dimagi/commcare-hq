@@ -1,8 +1,9 @@
-var PaymentMethodHandler = function (errorMessages) {
+var PaymentMethodHandler = function (errorMessages, submitBtnText) {
     'use strict';
     var self = this;
 
-    self.errorMessages = errorMessages;
+    self.errorMessages = errorMessages || {};
+    self.submitBtnText = submitBtnText;
 
     self.costItem = ko.observable();
     self.hasCostItem = ko.computed(function () {
@@ -71,6 +72,7 @@ var PaymentMethodHandler = function (errorMessages) {
     self.reset = function () {
         self.paymentIsComplete(false);
         self.serverErrorMsg('');
+        self.newCard(new StripeCard());
     };
 
     self.processPayment = function () {

@@ -9,6 +9,14 @@
     COMMCAREHQ.app_manager.checkCommcareVersion = function (version) {
         return COMMCAREHQ.app_manager.versionGE(COMMCAREHQ.app_manager.commcareVersion(), version);
     };
+    COMMCAREHQ.app_manager.checkAreWeThereYet = function (version) {
+        if (!COMMCAREHQ.app_manager.latestCommcareVersion()) {
+            // We don't know the latest version. Assume this version has arrived
+            return true;
+        } else {
+            return COMMCAREHQ.app_manager.versionGE(COMMCAREHQ.app_manager.latestCommcareVersion(), version);
+        }
+    };
     COMMCAREHQ.app_manager.versionGE = function (commcareVersion1, commcareVersion2) {
         function parse(version) {
             version = version.split('.');
@@ -30,6 +38,8 @@
         var appVersion = args.appVersion,
             edit = args.edit;
         COMMCAREHQ.app_manager.commcareVersion = ko.observable();
+        COMMCAREHQ.app_manager.latestCommcareVersion = ko.observable();
+        COMMCAREHQ.app_manager.latestCommcareVersion(args.latestCommcareVersion);
 
         function updateDOM(update) {
             if (update.hasOwnProperty('app-version')) {
@@ -252,6 +262,8 @@
                 if (COMMCAREHQ.app_manager.checkCommcareVersion(version)) {
                     area.find('upgrade-message').remove();
                     area.find('*:not(".hide")').show();
+                } else if (!COMMCAREHQ.app_manager.checkAreWeThereYet(version)) {
+                    area.parent().hide();
                 } else {
                     area.find('*').hide();
                     upgradeMessage.append(

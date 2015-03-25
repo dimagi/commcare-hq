@@ -1,7 +1,6 @@
 import re
-from custom.ewsghana.handlers.registration import RegistrationHandler
+from custom.ewsghana.handlers.receipts import ReceiptsHandler
 from custom.ewsghana.handlers.requisition import RequisitionHandler
-from custom.ewsghana.handlers.undo import UndoHandler
 from custom.ewsghana.handlers.alerts import AlertsHandler
 from custom.ewsghana.models import EWSGhanaConfig
 from custom.ilsgateway.tanzania.handlers.language import LanguageHandler
@@ -12,8 +11,10 @@ from custom.ilsgateway.tanzania.handlers.notsubmitted import NotSubmittedHandler
 def handle(verified_contact, text, msg=None):
     user = verified_contact.owner if verified_contact else None
     domain = user.domain
+    if not domain:
+        return False
 
-    if domain and not EWSGhanaConfig.for_domain(domain):
+    if not EWSGhanaConfig.for_domain(domain):
         return False
 
     args = text.split()
@@ -38,16 +39,17 @@ def handle(verified_contact, text, msg=None):
 
     handlers = {
         ('language', 'lang', 'lugha'): LanguageHandler,
-        ('reg', 'register'): RegistrationHandler,
         ('yes', 'no', 'y', 'n'): RequisitionHandler,
-        ('undo', 'replace', 'revoke'): UndoHandler,
-        ('soh'): AlertsHandler,
-        ('not',): not_function(args[0]) if args else None
+        # For now there is no easy way to fetch last report sent by user
+        # ('undo', 'replace', 'revoke'): UndoHandler,
+        ('soh',): AlertsHandler,
+        ('not',): not_function(args[0]) if args else None,
+        ('rec', 'receipts', 'received'): ReceiptsHandler
     }
 
     def choose_handler(keyword):
         for k, v in handlers.iteritems():
-            if keyword in k:
+            if keyword.lower() in k:
                 return v
         return None
 
@@ -56,9 +58,8 @@ def handle(verified_contact, text, msg=None):
 
     if handler:
         if args:
-            handler.handle()
+            return handler.handle()
         else:
             handler.help()
-    if keyword == 'soh':
-        return True
+            return True
     return False

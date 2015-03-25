@@ -156,7 +156,7 @@ OFFLINE_CLOUDCARE = StaticToggle(
 
 CASE_REBUILD = StaticToggle(
     'case_rebuild',
-    'Show UI-based case rebuild option',
+    'Show UI-based case and form rebuild options (primarily for support team)',
 )
 
 IS_DEVELOPER = StaticToggle(
@@ -354,6 +354,12 @@ CUSTOM_PROPERTIES = StaticToggle(
     'custom_properties',
     'Allow users to add arbitrary custom properties to their appliation',
     [NAMESPACE_DOMAIN]
+)
+
+GLOBAL_SMS_RATES = StaticToggle(
+    'global_sms_rates',
+    'Global SMS Rates page',
+    [NAMESPACE_USER]
 )
 
 BULK_SMS_VERIFICATION = StaticToggle(

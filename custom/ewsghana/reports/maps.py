@@ -17,8 +17,8 @@ class EWSStockStatusBySupplyPointDataSource(StockStatusBySupplyPointDataSource):
             loc_type.name for loc_type in Domain.get_by_name(self.config['domain']).location_types
             if not loc_type.administrative
         ]
-        return SQLLocation.objects.filter(domain=self.domain,
-                                          location_type__in=reporting_types,
+        return SQLLocation.objects.filter(domain=self.domain, is_archived=False,
+                                          location_type__name__in=reporting_types,
                                           **kwargs)
 
     @property

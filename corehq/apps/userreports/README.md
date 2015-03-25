@@ -562,6 +562,55 @@ Here's an example report column that shows the owner name from an associated `ow
 }
 ```
 
+### Aggregation
+
+TODO: finish aggregation docs
+
+#### Expand
+
+If the column's `"aggregation"` attribute is set to `"expand"`, the column actually won't be aggregated at all. Instead, this column will be "expanded" into a new column for each distinct value in this column of the data source. The maximum expansion is to 10 columns. For example:
+ 
+If you have a data source like this:
+```
++---------+----------+-------------+
+| Patient | district | test_result |
++---------+----------+-------------+
+| Joe     | North    | positive    |
+| Bob     | North    | positive    |
+| Fred    | South    | negative    |
++---------+----------+-------------+
+```
+and a report configuration like this:
+```
+aggregation columns:
+["district"]
+
+columns:
+[
+  {
+    "field": "district", 
+    "format": "default", 
+    "aggregation": "simple", 
+    "type": "field", 
+  }, 
+  {
+    "field": "test_result", 
+    "format": "default", 
+    "aggregation": "expand", 
+    "type": "field", 
+  }
+]
+```
+Then you will get a report like this:
+```
++----------+----------------------+----------------------+
+| district | test_result-positive | test_result-negative |
++----------+----------------------+----------------------+
+| North    | 2                    | 0                    |
+| South    | 0                    | 1                    |
++----------+----------------------+----------------------+
+```
+ 
 ### Transforms
 
 Transforms can be used to transform the value returned by a column just before it reaches the user. Currently there are four supported transform types. These are shown below:

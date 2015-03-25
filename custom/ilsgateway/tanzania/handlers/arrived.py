@@ -4,10 +4,10 @@ from custom.ilsgateway.tanzania.reminders import ARRIVED_HELP, ARRIVED_KNOWN, AR
 
 
 class ArrivedHandler(KeywordHandler):
-    
+
     def help(self):
-        self.handle()
-    
+        return self.handle()
+
     def handle(self):
         if not self.args:
             self.respond(ARRIVED_HELP)
@@ -16,7 +16,8 @@ class ArrivedHandler(KeywordHandler):
         msdcode = self.args[0]
         location = get_supply_point(self.domain, site_code=msdcode)
 
-        if location:
+        if location['case'] is not None:
             self.respond(ARRIVED_KNOWN, facility=location['case'].name)
         else:
             self.respond(ARRIVED_DEFAULT)
+        return True

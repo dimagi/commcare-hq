@@ -239,7 +239,7 @@ def ils_sync_stock_data(request, domain):
     domain = config.domain
     endpoint = ILSGatewayEndpoint.from_config(config)
     apis = get_ilsgateway_data_migrations()
-    stock_data_task.delay(domain, endpoint, apis, ILS_FACILITIES)
+    stock_data_task.delay(domain, endpoint, apis, config, ILS_FACILITIES)
     return HttpResponse('OK')
 
 

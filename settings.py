@@ -1046,7 +1046,6 @@ COUCHDB_APPS = [
     ('cvsu', 'fluff-cvsu'),
     ('mc', 'fluff-mc'),
     ('m4change', 'm4change'),
-    ('wvindia2', 'wvindia2'),
     ('export', 'meta'),
     'tdhtesting'
 ]
@@ -1215,6 +1214,7 @@ PILLOWTOPS = {
         'custom.tdh.models.TDHNewbornTreatmentFluffPillow',
         'custom.tdh.models.TDHChildClassificationFluffPillow',
         'custom.tdh.models.TDHChildTreatmentFluffPillow',
+        'custom.succeed.models.UCLAPatientFluffPillow'
     ],
     'mvp_indicators': [
         'mvp_docs.pillows.MVPFormIndicatorPillow',
@@ -1226,6 +1226,7 @@ PILLOWTOPS = {
 CUSTOM_DATA_SOURCES = [
     os.path.join('custom', 'up_nrhm', 'data_sources', 'location_hierarchy.json'),
     os.path.join('custom', 'up_nrhm', 'data_sources', 'asha_facilitators.json'),
+    os.path.join('custom', 'succeed', 'data_sources', 'submissions.json'),
 ]
 
 

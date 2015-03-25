@@ -4,14 +4,22 @@
     "is_active": true,
     "name": "Abacavir 300mg",
     "sms_code": "abc",
-    "units": "Tablet"
+    "units": "Tablet",
+    "program": {
+        "code": "hiv",
+        "name": "HIV/AIDS"
+    }
   },
   {
     "description": "AL 20mg/120mg 1X6",
     "is_active": true,
     "name": "AL 20mg/120mg 1X6",
     "sms_code": "ali",
-    "units": "tablets"
+    "units": "tablets",
+    "program": {
+        "code": "hiv",
+        "name": "HIV/AIDS"
+    }
   },
   {
     "description": "AL (20mg/120mg) 4x6",

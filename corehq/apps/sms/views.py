@@ -55,7 +55,7 @@ from corehq.apps.translations.models import StandaloneTranslationDoc
 from dimagi.utils.couch.database import get_db
 from django.contrib import messages
 from corehq.apps.reports import util as report_utils
-from dimagi.utils.timezones import utils as tz_utils
+from corehq.util.timezones import utils as tz_utils
 from django.views.decorators.csrf import csrf_exempt
 from corehq.apps.domain.models import Domain
 from django.utils.translation import ugettext as _, ugettext_noop
@@ -1222,7 +1222,6 @@ def sms_languages(request, domain):
             tdoc.save()
     context = {
         "domain": domain,
-        "always_deploy": True,
         "sms_langs": tdoc.langs,
         "bulk_upload": {
             "action": reverse("upload_sms_translations",

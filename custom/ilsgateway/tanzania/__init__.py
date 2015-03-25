@@ -239,14 +239,19 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport,
                         .values_list('product_id', flat=True)
                     prd_part_url = '&filter_by_product=%s' % ALL_OPTION
                 else:
-                    products = [SQLProduct.objects.get(pk=product, is_archived=False).order_by('code').product_id
-                                for product in products_list]
+                    products = SQLProduct.objects.filter(
+                        pk__in=products_list,
+                        is_archived=False
+                    ).order_by('code').values_list('product_id', flat=True)
+
                     prd_part_url = "".join(["&filter_by_product=%s" % product for product in products_list])
 
             else:
-                products = SQLProduct.objects.filter(domain=self.domain, is_archived=False)\
-                    .values_list('product_id', flat=True)\
-                    .order_by('code')
+                products = SQLProduct.objects.filter(
+                    domain=self.domain,
+                    is_archived=False
+                ).order_by('code').values_list('product_id', flat=True)
+
                 prd_part_url = "&filter_by_product="
             config.update(dict(products=products, program=program, prd_part_url=prd_part_url))
 
@@ -340,7 +345,7 @@ class DetailsReport(MultiReport):
 
     @property
     def with_tabs(self):
-        return self.location and self.location.location_type == 'FACILITY'
+        return self.location and self.location.location_type.name.upper() == 'FACILITY'
 
     @property
     def report_context(self):

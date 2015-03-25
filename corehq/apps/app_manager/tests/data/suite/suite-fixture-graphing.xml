@@ -113,6 +113,9 @@
         <locale id="forms.m0f0"/>
       </text>
     </command>
+    <session>
+      <datum id="case_id_new_my_awesome_case_type_0" function="uuid()"/>
+    </session>
   </entry>
   <entry>
     <form>http://openrosa.org/formdesigner/57ACCA75-E670-45AB-ADA2-15BB0DE9484C</form>

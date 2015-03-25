@@ -27,11 +27,15 @@
                 return '';
             };
             self.translateName = function (names, target_lang, fallback) {
+                fallback = fallback ? fallback : '[unknown]';
+                if (!names) {
+                    return fallback;
+                }
                 var langs = [target_lang].concat(config.appLangs),
                     firstLang = _(langs).find(function (lang) {
                     return names[lang];
                 });
-                if (!firstLang && fallback) {
+                if (!firstLang) {
                     return fallback;
                 }
                 return names[firstLang] + (firstLang === target_lang ? '': ' [' + firstLang + ']');
@@ -105,6 +109,11 @@
         $scope.modules = [];
         $scope.formSearch = {id: ''};
         $scope.moduleSearch = {id: ''};
+        $scope.lang = 'en';
+        $scope.showLabels = true;
+        $scope.showCalculations = false;
+        $scope.showRelevance = false;
+        $scope.appLangs = summaryConfig.appLangs;
 
         self.init = function () {
             $scope.loading = true;
@@ -136,6 +145,14 @@
         };
 
         $scope.getIcon = utils.getIcon;
+
+        $scope.getQuestionLabel = function(question) {
+            return utils.translateName(question.translations, $scope.lang, question.label);
+        };
+
+        $scope.getFormModuleLabel = function(form_module) {
+            return utils.translateName(form_module.name, $scope.lang);
+        };
 
         self.init();
     };

@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 from django.test import TestCase
 from django.conf import settings
-import simplejson
+import json
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.shortcuts import create_domain
@@ -116,7 +116,7 @@ class dotsOrderingTests(TestCase):
 
         updated_case = PactPatientCase.get(CASE_ID)
         case_dots = updated_case.dots
-        days = simplejson.loads(case_dots)['days']
+        days = json.loads(case_dots)['days']
 
         nonart = [["full", "pillbox", "", 0], ["empty", "pillbox", "", 3]]
         art = [["full", "self", "", 0], ["empty", "pillbox", "", 3]]

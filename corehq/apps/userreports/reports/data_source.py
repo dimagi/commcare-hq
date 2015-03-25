@@ -6,7 +6,7 @@ from sqlalchemy.exc import ProgrammingError
 from corehq.apps.reports.sqlreport import SqlData
 from corehq.apps.userreports.exceptions import UserReportsError
 from corehq.apps.userreports.models import DataSourceConfiguration
-from corehq.apps.userreports.sql import get_table_name
+from corehq.apps.userreports.sql import get_table_name, get_expanded_columns
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -56,7 +56,23 @@ class ConfigurableReportDataSource(SqlData):
     @property
     @memoized
     def columns(self):
-        return [col.get_sql_column() for col in self.column_configs]
+        self._column_warnings = []
+        ret = []
+        for col in self.column_configs:
+            if col.aggregation == "expand":
+                ret += get_expanded_columns(self.config, col, self._column_warnings)
+            else:
+                ret.append(col.get_sql_column())
+        return ret
+
+    @property
+    @memoized
+    def column_warnings(self):
+        # self.columns is a property, and self._column_warnings is not computed
+        # until the body of self.columns is executed. Therefore, we access the
+        # property first to insure that self._column_warnings has been calculated.
+        self.columns
+        return self._column_warnings
 
     @memoized
     def get_data(self, slugs=None):
@@ -78,7 +94,10 @@ class ConfigurableReportDataSource(SqlData):
             raise UserReportsError(e.message)
         # arbitrarily sort by the first column in memory
         # todo: should get pushed to the database but not currently supported in sqlagg
-        return sorted(ret, key=lambda x: x[self.column_configs[0].report_column_id])
+        return sorted(ret, key=lambda x: x.get(
+            self.column_configs[0].report_column_id,
+            next(x.itervalues())
+        ))
 
     def get_total_records(self):
         return len(self.get_data())
