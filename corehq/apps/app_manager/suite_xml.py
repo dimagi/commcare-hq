@@ -1713,12 +1713,10 @@ class SuiteGenerator(SuiteGeneratorBase):
             datum_pairs = izip_longest(datums, root_datums)
             index = 0
             for this_datum_meta, parent_datum_meta in datum_pairs:
-                if not this_datum_meta:
+                if not (this_datum_meta and parent_datum_meta):
                     continue
 
                 this_datum = this_datum_meta['datum']
-                if not parent_datum_meta:
-                    continue
 
                 that_datum = parent_datum_meta['datum']
                 if this_datum.id != that_datum.id:

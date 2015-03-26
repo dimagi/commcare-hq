@@ -31,7 +31,7 @@ This is all good and well until we take into account the way the
 which "prioritizes the most relevant piece of information to be determined by the user at any given time".
 
 This means that if all the forms in a module require the same case (actually just the same session IDs) then the
-user will be asked to select the case before selecting the form. This is why when you build an module
+user will be asked to select the case before selecting the form. This is why when you build a module
 where *all forms require a case* the case selection happens before the form selection.
 
 From here on we will assume that all forms in a module have the same case management and hence require the same
