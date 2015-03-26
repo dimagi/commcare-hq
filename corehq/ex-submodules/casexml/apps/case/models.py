@@ -557,28 +557,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         case.update_from_case_update(case_update, xformdoc)
         return case
     
-    def apply_create_block(self, create_action, xformdoc, modified_on, user_id):
-        # create case from required fields in the case/create block
-        # create block
-        def _safe_replace_and_force_to_string(me, attr, val):
-            if getattr(me, attr, None):
-                # attr exists and wasn't empty or false, for now don't do anything, 
-                # though in the future we want to do a date-based modification comparison
-                return
-            if val:
-                setattr(me, attr, unicode(val))
-
-        _safe_replace_and_force_to_string(self, "type", create_action.type)
-        _safe_replace_and_force_to_string(self, "name", create_action.name)
-        _safe_replace_and_force_to_string(self, "external_id", create_action.external_id)
-        _safe_replace_and_force_to_string(self, "user_id", create_action.user_id)
-        _safe_replace_and_force_to_string(self, "owner_id", create_action.owner_id)
-        create_action = CommCareCaseAction.from_parsed_action(modified_on,
-                                                              user_id,
-                                                              xformdoc,
-                                                              create_action)
-        self.actions.append(create_action)
-    
     def update_from_case_update(self, case_update, xformdoc, other_forms=None):
         other_forms = other_forms or {}
         if is_deprecation(xformdoc):
@@ -607,13 +585,10 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
 
         # get actions and apply them
         for action in case_update.actions:
-            if action.action_type_slug == const.CASE_ACTION_CREATE:
-                self.apply_create_block(action, xformdoc, mod_date, case_update.user_id)
-            else:
-                case_action = CommCareCaseAction.from_parsed_action(
-                    mod_date, case_update.user_id, xformdoc, action,
-                )
-                self.actions.append(case_action)
+            case_action = CommCareCaseAction.from_parsed_action(
+                mod_date, case_update.user_id, xformdoc, action,
+            )
+            self.actions.append(case_action)
 
         local_forms = {xformdoc._id: xformdoc}
         local_forms.update(other_forms)
@@ -639,7 +614,9 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
             self.version = case_update.version
 
     def _apply_action(self, action, xform):
-        if action.action_type == const.CASE_ACTION_UPDATE:
+        if action.action_type == const.CASE_ACTION_CREATE:
+            self.apply_create(action)
+        elif action.action_type == const.CASE_ACTION_UPDATE:
             self.apply_updates(action)
         elif action.action_type == const.CASE_ACTION_INDEX:
             self.update_indices(action.indices)
@@ -656,6 +633,15 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
                 action.action_type,
                 self.get_id,
             ))
+
+    def apply_create(self, create_action):
+        """
+        Applies a create block to a case.
+
+        Note that all unexpected attributes are ignored (thrown away)
+        """
+        for k, v in create_action.updated_known_properties.items():
+            setattr(self, k, v)
 
     def apply_updates(self, update_action):
         """
@@ -814,19 +800,14 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
 
     def rebuild(self, strict=True, xforms=None):
         """
-        Rebuilds the case state from its actions.
+        Rebuilds the case state in place from its actions.
 
         If strict is True, this will enforce that the first action must be a create.
-
-        TODO: this implementation has a number of flaws:
-          - it starts from whatever the cases current state is,
-            not a clean slate
-          - it simply ignores all case create blocks,
-            except to report whether they're in order;
-            it does not apply their changes.
-
         """
+        from casexml.apps.case.cleanup import reset_state
+
         xforms = xforms or {}
+        reset_state(self)
         # try to re-sort actions if necessary
         try:
             self.actions = sorted(self.actions, key=_action_sort_key_function(self))
@@ -842,9 +823,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
                 raise ReconciliationError(
                     error.format(self.get_id, self.actions[0])
                 )
-            actions.pop(0)
-        else:
-            actions = [a for a in actions if a.action_type != const.CASE_ACTION_CREATE]
 
         for a in actions:
             self._apply_action(a, xforms.get(a.xform_id))
