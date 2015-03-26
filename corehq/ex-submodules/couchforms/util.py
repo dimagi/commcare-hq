@@ -261,7 +261,7 @@ def _handle_duplicate(existing_doc, instance, attachments, process):
 
         # and give the new doc server data of the old one and some metadata
         xform.received_on = existing_doc.received_on
-        xform.deprecated_for = existing_doc._id
+        xform.deprecated_form_id = existing_doc._id
         xform.edited_on = datetime.datetime.utcnow()
 
         multi_lock_manager.append(
@@ -291,8 +291,8 @@ def deprecation_type():
 
 
 def is_override(xform):
-    # it's an override if we've explicitly set the "deprecated_for" property on it.
-    return bool(getattr(xform, 'deprecated_for', None))
+    # it's an override if we've explicitly set the "deprecated_form_id" property on it.
+    return bool(getattr(xform, 'deprecated_form_id', None))
 
 
 def _log_hard_failure(instance, attachments, error):
