@@ -1710,19 +1710,37 @@ class SuiteGenerator(SuiteGeneratorBase):
             # 2. Match the datum ID for datums that appear in the same position and
             #    will be loading the same case type
             # see advanced_app_features#child-modules in docs
-            datum_pairs = izip_longest(datums, root_datums)
+            datum_pairs = list(izip_longest(datums, root_datums))
             index = 0
+            changed_ids_by_case_tag = {}
             for this_datum_meta, parent_datum_meta in datum_pairs:
-                if not (this_datum_meta and parent_datum_meta):
+                if not this_datum_meta:
                     continue
 
                 this_datum = this_datum_meta['datum']
+                action = this_datum_meta['action']
+                if action and action.parent_tag in changed_ids_by_case_tag:
+                    # update any reference to previously changed datums
+                    change = changed_ids_by_case_tag[action.parent_tag]
+                    nodeset = this_datum.nodeset
+                    old = session_var(change['old_id'])
+                    new = session_var(change['new_id'])
+                    this_datum.nodeset = nodeset.replace(old, new)
+
+                if not parent_datum_meta:
+                    continue
 
                 that_datum = parent_datum_meta['datum']
                 if this_datum.id != that_datum.id:
                     if not parent_datum_meta['requires_selection']:
                         datums.insert(index, parent_datum_meta)
                     elif this_datum_meta['case_type'] == parent_datum_meta['case_type']:
+                        action = action
+                        if action:
+                            changed_ids_by_case_tag[action.case_tag] = {
+                                "old_id": this_datum.id,
+                                "new_id": that_datum.id
+                            }
                         this_datum.id = that_datum.id
 
                 index += 1
