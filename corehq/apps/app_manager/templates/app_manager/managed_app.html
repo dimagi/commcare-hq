@@ -187,14 +187,12 @@
                 {% trans "Languages" %}
             </a>
         </li>
-        {% if request|toggle_enabled:'APP_SUMMARY' %}
         <li>
             <a href="{% url "app_summary" domain app.id %}" style="vertical-align: middle;">
                 <i class="icon-list"></i>
                 {% trans "App Summary" %}
             </a>
         </li>
-        {% endif %}
         <li class="divider"></li>
     {% if app.get_doc_type == "Application" %}
         <li>

@@ -294,12 +294,6 @@ LOCATION_TYPE_STOCK_RATES = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-APP_SUMMARY = StaticToggle(
-    'app_summary',
-    'Form and Case summary of an application',
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
 BULK_ARCHIVE_FORMS = StaticToggle(
     'bulk_archive_forms',
     'Bulk archive forms with excel',
