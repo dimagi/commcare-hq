@@ -86,10 +86,15 @@ class SMSBillablesInterface(GenericTabularReport):
                 },
                 {
                     'name': ShowBillablesFilter.slug,
-                    'value': ShowBillablesFilter.get_value(self.request, self.domain)},
+                    'value': ShowBillablesFilter.get_value(self.request, self.domain)
+                },
                 {
                     'name': DomainFilter.slug,
                     'value': DomainFilter.get_value(self.request, self.domain)
+                },
+                {
+                    'name': HasGatewayFeeFilter.slug,
+                    'value': HasGatewayFeeFilter.get_value(self.request, self.domain)
                 },
         ]
 
