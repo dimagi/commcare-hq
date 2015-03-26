@@ -4,7 +4,7 @@
         "referenced_doc_type": "XFormInstance",
         "table_id": "succeed_submissions",
         "display_name": "Patient Submissions",
-         "configured_filter": {
+        "configured_filter": {
             "type": "not",
             "filter": {
                 "type": "boolean_expression",

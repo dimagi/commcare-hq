@@ -4,7 +4,8 @@ import datetime
 from decimal import Decimal
 from django.test import SimpleTestCase, TestCase
 from jsonobject.exceptions import BadValueError
-from corehq.apps.userreports.models import DataSourceConfiguration
+from corehq.apps.userreports.models import DataSourceConfiguration, \
+    CustomDataSourceConfiguration
 
 
 class DataSourceConfigurationTest(SimpleTestCase):
@@ -64,20 +65,10 @@ class DataSourceConfigurationTest(SimpleTestCase):
                 # in the database layer. this should eventually be fixed.
                 self.assertEqual(str(expected_indicators[result.column.id]), result.value)
 
-    def test_jsonobject(self):
-        from couchdbkit.ext.django.schema import Document, DictProperty
-        import copy
-
-        class MyDocument(Document):
-            prop = DictProperty()
-
-        doc = MyDocument(prop={})
-        copy.deepcopy(doc)
-        copy.deepcopy(doc.prop)
-
-    def test_save_config(self):
-        config = CustomDataSourceConfiguration.all().next()
-        config.to_json()
+    def test_serializable_custom_configs(self):
+        for config in CustomDataSourceConfiguration.all():
+            # There are some serialization issues with custom configurations.
+            config.to_json()
 
 
 def get_sample_data_source():
