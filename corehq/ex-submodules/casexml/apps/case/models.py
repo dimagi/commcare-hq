@@ -584,11 +584,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         mod_date = case_update.guess_modified_on()
 
         # get actions and apply them
-        for action in case_update.actions:
-            case_action = CommCareCaseAction.from_parsed_action(
-                mod_date, case_update.user_id, xformdoc, action,
-            )
-            self.actions.append(case_action)
+        self.actions.extend(case_update.get_case_actions(xformdoc))
 
         local_forms = {xformdoc._id: xformdoc}
         local_forms.update(other_forms)
