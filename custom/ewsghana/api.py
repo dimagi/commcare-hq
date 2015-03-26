@@ -303,8 +303,10 @@ class EWSApi(APISynchronization):
         location.external_id = str(ews_location.id)
 
     def _set_up_supply_point(self, location, ews_location):
-        supply_point_with_stock_data = filter(lambda x: x.last_reported, ews_location.supply_points)
         if location.location_type in ['country', 'region', 'district']:
+            supply_point_with_stock_data = filter(
+                lambda x: x.last_reported and x.active, ews_location.supply_points
+            )
             for supply_point in supply_point_with_stock_data:
                 created_location = self._create_location_from_supply_point(supply_point, location)
                 fake_location = Loc(
@@ -320,7 +322,13 @@ class EWSApi(APISynchronization):
                                 domain=self.domain)
             SupplyPointCase.get_or_create_by_location(fake_location)
         elif ews_location.supply_points:
-            supply_point = ews_location.supply_points[0]
+            active_supply_points = filter(lambda sp: sp.active, ews_location.supply_points)
+            if active_supply_points:
+                supply_point = active_supply_points[0]
+            else:
+                supply_point = ews_location.supply_points[0]
+            location.name = supply_point.name
+            location.site_code = supply_point.code
             location.location_type = supply_point.type
             self._create_supply_point_from_location(supply_point, location)
             location.save()
