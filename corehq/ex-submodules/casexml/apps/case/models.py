@@ -576,16 +576,10 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
                 xformdoc._id, case_update.id, getattr(xformdoc, 'domain', None))
             )
             raise Exception(_('Sorry, referrals are no longer supported!'))
-        else:
-            self._new_update_from_case_update(case_update, xformdoc, other_forms)
 
-    def _new_update_from_case_update(self, case_update, xformdoc, other_forms):
-
-        mod_date = case_update.guess_modified_on()
 
         # get actions and apply them
         self.actions.extend(case_update.get_case_actions(xformdoc))
-
         local_forms = {xformdoc._id: xformdoc}
         local_forms.update(other_forms)
         self.rebuild(strict=False, xforms=local_forms)
