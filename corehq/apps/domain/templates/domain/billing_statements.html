@@ -74,6 +74,7 @@
 {% endblock %}
 
 {% block paginated_list_top %}
+    {% if request|toggle_enabled:"BULK_PAYMENTS" %}
     <div id="currentBalanceSection">
         <h2>{% trans 'Current Balance' %}</h2>
         <p>
@@ -90,6 +91,7 @@
             </button>
         </p>
     </div>
+    {% endif %}
     <h2>{% trans 'Billing Statements' %} <span data-bind="visible: showUnpaidBills">({% trans 'Unpaid' %})</span></h2>
     <p>
         <button type="button"

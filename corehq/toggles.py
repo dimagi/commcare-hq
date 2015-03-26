@@ -360,3 +360,8 @@ BULK_SMS_VERIFICATION = StaticToggle(
     'bulk_sms_verification',
     'Allow initiating the SMS phone verification workflow for all users in a group.',
 )
+
+BULK_PAYMENTS = StaticToggle(
+    'bulk_payments',
+    'Enable payment of invoices by bulk credit payments and invoice generation for wire tranfers',
+)
