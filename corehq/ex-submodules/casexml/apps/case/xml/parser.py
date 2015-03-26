@@ -9,7 +9,16 @@ from casexml.apps.case import const
 from casexml.apps.case.xml import DEFAULT_VERSION, V1, V2, NS_REVERSE_LOOKUP_MAP
 from dimagi.utils.parsing import string_to_datetime
 
+
 XMLNS_ATTR = "@xmlns"
+KNOWN_PROPERTIES = [
+    "name",
+    "external_id",
+    "type",
+    "owner_id",
+    "opened_on"
+    "user_id"
+]
 
 
 def get_version(case_block):
@@ -57,9 +66,7 @@ class CaseActionBase(object):
         self.attachments = attachments or {}
     
     def get_known_properties(self):
-        prop_list = ["type", "name", "external_id", "user_id",
-                     "owner_id", "opened_on"]
-        return dict((p, getattr(self, p)) for p in prop_list \
+        return dict((p, getattr(self, p)) for p in KNOWN_PROPERTIES \
                     if getattr(self, p) is not None)
     
     @classmethod
