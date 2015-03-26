@@ -54,31 +54,11 @@ def rebuild_case(case_id):
         case._id = case_id
         found = False
 
-    # clear actions, xform_ids, close state, and all dynamic properties
-    dynamic_properties = set([k for action in case.actions for k in action.updated_unknown_properties.keys()])
-    for k in dynamic_properties:
-        try:
-            delattr(case, k)
-        except KeyError:
-            pass
-        except AttributeError:
-            logging.error(
-                "Cannot delete attribute '%(attribute)s' from case '%(case_id)s'" % {
-                    'case_id': case_id,
-                    'attribute': k,
-                }
-            )
-
-    # already deleted means it was explicitly set to "deleted",
-    # as opposed to getting set to that because it has no actions
-    already_deleted = case.doc_type == 'CommCareCase-Deleted' and primary_actions(case)
-    if not already_deleted:
-        case.doc_type = 'CommCareCase'
+    reset_state(case)
+    # in addition to resetting the state, also manually clear xform_ids and actions
+    # since we're going to rebuild these from the forms
     case.xform_ids = []
     case.actions = []
-    case.closed = False
-    case.closed_on = None
-    case.closed_by = ''
 
     form_ids = get_case_xform_ids(case_id)
     forms = [fetch_and_wrap_form(id) for id in form_ids]
@@ -108,6 +88,37 @@ def rebuild_case(case_id):
     # add a "rebuild" action
     case.actions.append(_rebuild_action())
     case.save()
+    return case
+
+
+def reset_state(case):
+    """
+    Clear known case properties, and all dynamic properties
+    """
+    dynamic_properties = set([k for action in case.actions for k in action.updated_unknown_properties.keys()])
+    for k in dynamic_properties:
+        try:
+            delattr(case, k)
+        except KeyError:
+            pass
+        except AttributeError:
+            logging.error(
+                "Cannot delete attribute '%(attribute)s' from case '%(case_id)s'" % {
+                    'case_id': case._id,
+                    'attribute': k,
+                }
+            )
+
+    # already deleted means it was explicitly set to "deleted",
+    # as opposed to getting set to that because it has no actions
+    already_deleted = case.doc_type == 'CommCareCase-Deleted' and primary_actions(case)
+    if not already_deleted:
+        case.doc_type = 'CommCareCase'
+    case.name = None
+    case.type = None
+    case.closed = False
+    case.closed_on = None
+    case.closed_by = ''
     return case
 
 
