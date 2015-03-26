@@ -67,9 +67,9 @@ class CaseActionBase(object):
         self.attachments = attachments or {}
     
     def get_known_properties(self):
-        return dict((p, getattr(self, p)) for p in KNOWN_PROPERTIES.keys() \
+        return dict((p, getattr(self, p)) for p in KNOWN_PROPERTIES.keys()
                     if getattr(self, p) is not None)
-    
+
     @classmethod
     def _from_block_and_mapping(cls, block, mapping):
         def _normalize(val):
