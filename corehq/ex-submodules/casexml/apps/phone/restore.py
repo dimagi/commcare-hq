@@ -412,6 +412,17 @@ class RestoreConfig(object):
                                         case_ids=self.sync_log.get_footprint_of_cases_on_phone())
 
     def get_payload(self):
+        """
+        This function currently returns either a full string payload or a string name of a file
+        that contains the contents of the payload.
+
+        Cases that will return a full string response:
+        - FILE_RESTORE toggle has not been enabled for the user
+        - The payload was found in the cache
+
+        Cases that will return a filename as the response:
+        - FILE_RESTORE is enabled and the cache missed
+        """
         user = self.user
         last_sync = self.sync_log
 
