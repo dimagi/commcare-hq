@@ -54,8 +54,8 @@ branches:
   - fixtures-spike  # cz 1/29
   - static-updates # Biyeun 2/9
   - loc-type-stock-rates  # Ethan 3/6
-  - refactor-payment-modal # Nick P 3/19
  # - pricingSMS # sravan 3/23
+  - bulk-payments # Nick P 3/26
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
