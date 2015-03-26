@@ -603,7 +603,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
             )
             raise Exception(_('Sorry, referrals are no longer supported!'))
         else:
-            return self._new_update_from_case_update(case_update, xformdoc, other_forms)
+            self._new_update_from_case_update(case_update, xformdoc, other_forms)
 
     def _new_update_from_case_update(self, case_update, xformdoc, other_forms):
 
