@@ -28,15 +28,18 @@ class _HQUTCTime(_HQTime):
 
 class ServerTime(_HQUTCTime):
     def user_time(self, user_tz):
-        return UserTime(_adjust_utc_datetime_to_timezone(self._datetime, user_tz))
+        return UserTime(_adjust_utc_datetime_to_timezone(
+            self._datetime, user_tz))
 
     def phone_time(self, phone_tz_guess):
-        return PhoneTime(_adjust_utc_datetime_to_phone_datetime(self._datetime, phone_tz_guess))
+        return PhoneTime(_adjust_utc_datetime_to_phone_datetime(
+            self._datetime, phone_tz_guess))
 
 
 class UserTime(_HQTZTime):
     def server_time(self):
-        return ServerTime(_adjust_datetime_to_utc(self._datetime.replace(tzinfo=None), self._datetime.tzinfo))
+        return ServerTime(_adjust_datetime_to_utc(
+            self._datetime.replace(tzinfo=None), self._datetime.tzinfo))
 
     def phone_time(self, phone_tz_guess):
         return self.server_time().phone_time(phone_tz_guess)
@@ -44,7 +47,8 @@ class UserTime(_HQTZTime):
 
 class PhoneTime(_HQTZTime):
     def server_time(self):
-        return ServerTime(_adjust_phone_datetime_to_utc(self._datetime.replace(tzinfo=None), self._datetime.tzinfo))
+        return ServerTime(_adjust_phone_datetime_to_utc(
+            self._datetime.replace(tzinfo=None), self._datetime.tzinfo))
 
     def user_time(self, user_tz):
         return self.server_time().user_time(user_tz)
