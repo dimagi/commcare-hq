@@ -2777,7 +2777,7 @@ def _questions_for_form(request, form, langs):
 class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
     urlname = 'app_summary'
     page_title = ugettext_noop("Summary")
-    template_name = 'app_manager/summary_new.html'
+    template_name = 'app_manager/summary.html'
 
     def dispatch(self, request, *args, **kwargs):
         request.preview_bootstrap3 = True
