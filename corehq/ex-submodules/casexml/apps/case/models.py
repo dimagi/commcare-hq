@@ -23,7 +23,6 @@ from dimagi.utils.django.cached_object import CachedObject, OBJECT_ORIGINAL, OBJ
 from casexml.apps.phone.xml import get_case_element
 from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.util import (
-    couchable_property,
     get_case_xform_ids,
     reverse_indices,
 )
@@ -81,16 +80,13 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
         
         ret = CommCareCaseAction(action_type=action.action_type_slug, date=date, user_id=user_id)
         
-        def _couchify(d):
-            return dict((k, couchable_property(v)) for k, v in d.items())
-
         ret.server_date = xformdoc.received_on
         ret.xform_id = xformdoc.get_id
         ret.xform_xmlns = xformdoc.xmlns
         ret.xform_name = xformdoc.name
-        ret.updated_known_properties = _couchify(action.get_known_properties())
+        ret.updated_known_properties = action.get_known_properties()
 
-        ret.updated_unknown_properties = _couchify(action.dynamic_properties)
+        ret.updated_unknown_properties = action.dynamic_properties
         ret.indices = [CommCareCaseIndex.from_case_index_update(i) for i in action.indices]
         ret.attachments = dict((attach_id, CommCareCaseAttachment.from_case_index_update(attach))
                                for attach_id, attach in action.attachments.items())
@@ -671,7 +667,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         properties = self.properties()
         for item in update_action.updated_unknown_properties:
             if item not in const.CASE_TAGS:
-                value = couchable_property(update_action.updated_unknown_properties[item])
+                value = update_action.updated_unknown_properties[item]
                 if isinstance(properties.get(item), StringProperty):
                     value = unicode(value)
                 self[item] = value
