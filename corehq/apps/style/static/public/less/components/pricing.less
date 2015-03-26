@@ -1,0 +1,331 @@
+
+@pricing-row-single-height-sm: 40px;
+@pricing-row-single-height-md: 50px;
+@pricing-row-single-height-lg: 58px;
+
+@pricing-row-double-height-md: 65px;
+@pricing-row-double-height-lg: 73px;
+
+@pricing-row-triple-height-sm: 75px;
+@pricing-row-quad-height-sm: 93px;
+
+.pricing-table-bg-container {
+  position: relative;
+  width: 100%;
+  margin-top: 20px;
+}
+.pricing-table-bg {
+  position: absolute;
+  width: 100%;
+
+  .col-bg {
+    background-color: @cc-neutral-low;
+    height: 248px;
+    z-index: 0;
+
+    @media (min-width: @screen-sm-min) {
+      height: 259px;
+    }
+
+    @media (min-width: @screen-md-min) {
+      height: 260px;
+    }
+
+    @media (min-width: @screen-lg-min) {
+      height: 291px;
+    }
+  }
+}
+
+.pricing-header {
+  background-color: @cc-neutral-mid;
+  text-align: center;
+  font-size: 14px !important;
+  margin-bottom: 0;
+  line-height: @pricing-row-single-height-md;
+  color: #FFFFFF;
+
+  @media (max-width: @screen-sm-max) {
+    font-size: 12px !important;
+    line-height: @pricing-row-single-height-sm;
+  }
+
+  @media (min-width: @screen-lg-min) {
+    font-size: 16px !important;
+    line-height: @pricing-row-single-height-lg;
+  }
+}
+
+.pricing-row-main-header .pricing-header {
+  margin: 0;
+  height: @pricing-row-single-height-md;
+  font-size: 11px !important;
+
+  @media (max-width: @screen-sm-max) {
+    height: @pricing-row-single-height-sm;
+  }
+
+  @media (min-width: @screen-lg-min) {
+    height: @pricing-row-single-height-lg;
+  }
+}
+
+.pricing-cost {
+  background-color: @cc-neutral-hi;
+  color: @cc-neutral-mid;
+  font-size: 14px;
+  text-align: center;
+  font-weight: 200;
+  line-height: @pricing-row-single-height-md;
+
+  @media (max-width: @screen-sm-max) {
+    font-size: 12px;
+  }
+
+  @media (min-width: @screen-lg-min) {
+    font-size: 16px;
+    line-height: @pricing-row-single-height-lg;
+  }
+}
+
+.pricing-row {
+  height: @pricing-row-single-height-md;
+
+  @media (min-width: @screen-lg-min) {
+    height: @pricing-row-single-height-lg;
+  }
+
+  h2 {
+    margin: 0;
+    line-height: @pricing-row-single-height-sm;
+    font-size: 12px;
+    font-weight: 200;
+    color: @cc-brand-low;
+
+    @media (min-width: @screen-md-min) {
+      font-size: 16px;
+      line-height: @pricing-row-single-height-md;
+    }
+    @media (min-width: @screen-lg-min) {
+      font-size: 18px;
+      line-height: @pricing-row-single-height-lg;
+    }
+  }
+
+  h4 {
+    font-weight: 200;
+    font-size: 14px;
+    padding-top: 5px;
+    line-height: 1.3em;
+    color: #FFFFFF;
+
+    a, a:link, a:visited, a:focus {
+      color: @cc-brand-hi;
+    }
+    @media (max-width: @screen-sm-max) {
+      font-size: 12px;
+      margin-left: 5px;
+    }
+    @media (min-width: @screen-lg-min) {
+      font-size: 16px;
+    }
+  }
+}
+
+.pricing-info {
+  background-color: #FFFFFF;
+  display: block;
+  height: @pricing-row-single-height-md;
+
+  @media (min-width: @screen-lg-min) {
+    height: @pricing-row-single-height-lg;
+  }
+
+  p {
+    text-align: center;
+    color: @cc-neutral-low;
+    padding: 15px 10px;
+  }
+}
+
+.pricing-row-double {
+  height: @pricing-row-double-height-md;
+
+  @media (min-width: @screen-lg-min) {
+    height: @pricing-row-double-height-lg;
+  }
+  
+  .pricing-info {
+    height: @pricing-row-double-height-md;
+
+    @media (min-width: @screen-lg-min) {
+      height: @pricing-row-double-height-lg;
+    }
+  }
+}
+
+ .pricing-info .fa {
+    @media (max-width: @screen-sm-max) {
+      margin-top: 4px;
+    }
+    @media (min-width: @screen-lg-min) {
+      margin-top: 5px;
+    }
+ }
+
+.pricing-row-double .pricing-info .fa {
+  margin-top: 10px;
+  @media (max-width: @screen-sm-max) {
+    margin-top: 12px;
+  }
+  @media (min-width: @screen-lg-min) {
+    margin-top: 14px;
+  }
+}
+
+.pricing-row-quad-xs {
+  @media (max-width: @screen-xs-max) {
+    height: @pricing-row-quad-height-sm;
+    .pricing-info {
+      height: @pricing-row-quad-height-sm;
+    }
+    .pricing-info .fa {
+      margin-top: 26px;
+    }
+  }
+}
+
+.pricing-row-quad-sm {
+  @media (max-width: @screen-sm-max) {
+    height: @pricing-row-quad-height-sm;
+    .pricing-info {
+      height: @pricing-row-quad-height-sm;
+    }
+    .pricing-info .fa {
+      margin-top: 26px;
+    }
+  }
+}
+
+.pricing-row-triple-sm {
+  @media (max-width: @screen-sm-max) {
+    height: @pricing-row-triple-height-sm;
+    .pricing-info {
+      height: @pricing-row-triple-height-sm;
+    }
+    .pricing-info .fa {
+      margin-top: 19px;
+    }
+  }
+}
+
+.pricing-row-triple-xs {
+  @media (max-width: @screen-xs-max) {
+    height: @pricing-row-triple-height-sm;
+    .pricing-info {
+      height: @pricing-row-triple-height-sm;
+    }
+    .pricing-info .fa {
+      margin-top: 19px;
+    }
+  }
+}
+
+.pricing-row-double-sm {
+  @media (max-width: @screen-sm-max) {
+    height: @pricing-row-double-height-md;
+    .pricing-info {
+      height: @pricing-row-double-height-md;
+    }
+    .pricing-info .fa {
+      margin-top: 12px;
+    }
+  }
+}
+
+.pricing-info .pricing-info-center {
+  padding: 0;
+  line-height: @pricing-row-double-height-md;
+
+  @media (min-width: @screen-lg-min) {
+    line-height: @pricing-row-double-height-lg;
+  }
+}
+
+.pricing-row-lead {
+  background-color: fade(@cc-neutral-hi, 30);
+  z-index: 1;
+  margin-bottom: 1px;
+}
+
+.pricing-row-main {
+  background-color: fade(@cc-bg, 30);
+  margin-bottom: 1px;
+  z-index: 100;
+}
+
+
+.pricing-col-community {
+  .pricing-header {
+    background-color: @cc-brand-mid;
+  }
+  .pricing-cost {
+    color: @cc-brand-low;
+    background-color: @cc-brand-hi;
+  }
+}
+
+.pricing-col-standard {
+  .pricing-header {
+    background-color: @cc-att-pos-mid;
+  }
+  .pricing-cost {
+    color: @cc-att-pos-low;
+    background-color: @cc-att-pos-hi;
+  }
+}
+
+.pricing-col-pro {
+  .pricing-header {
+    background-color: @cc-light-cool-accent-mid;
+  }
+  .pricing-cost {
+    color: @cc-light-cool-accent-low;
+    background-color: @cc-light-cool-accent-hi;
+  }
+}
+
+.pricing-col-advanced {
+  .pricing-header {
+    background-color: @cc-dark-cool-accent-mid;
+  }
+  .pricing-cost {
+    color: @cc-dark-cool-accent-low;
+    background-color: @cc-dark-cool-accent-hi;
+  }
+}
+
+.pricing-row-main-header {
+  @media (max-width: @screen-sm-max) {
+    height: @pricing-row-single-height-sm;
+  }
+  .pricing-col-community .pricing-header {
+    color: @cc-brand-hi;
+  }
+  .pricing-col-standard .pricing-header {
+    color: @cc-att-pos-hi;
+  }
+  .pricing-col-pro .pricing-header {
+    color: @cc-light-cool-accent-hi;
+  }
+  .pricing-col-advanced .pricing-header {
+    color: @cc-dark-cool-accent-hi;
+  }
+  .pricing-col-enterprise .pricing-header {
+    color: @cc-neutral-hi;
+  }
+}
+
+.pricing-section-header-container {
+  background-color: @cc-brand-hi;
+}

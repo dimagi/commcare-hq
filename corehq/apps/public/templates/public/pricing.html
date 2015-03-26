@@ -4,18 +4,19 @@
 
 {% block content %}
 {% include 'public/_sections/pricing/lead.html' %}
-<div class="bg-static-fixed bg-pricing bg-pricing-first"></div>
+<div class="bg-static-fixed bg-pricing bg-pricing-odd bg-pricing-first"></div>
 {% include 'public/_sections/pricing/mobile.html' %}
 <div class="bg-static-fixed bg-pricing bg-pricing-second"></div>
 {% include 'public/_sections/pricing/web.html' %}
-<div class="bg-static-fixed bg-pricing bg-pricing-third"></div>
+<div class="bg-static-fixed bg-pricing bg-pricing-odd bg-pricing-third"></div>
 {% include 'public/_sections/pricing/analytics.html' %}
 <div class="bg-static-fixed bg-pricing bg-pricing-fourth"></div>
 {% include 'public/_sections/pricing/sms.html' %}
-<div class="bg-static-fixed bg-pricing bg-pricing-fifth"></div>
+<div class="bg-static-fixed bg-pricing bg-pricing-odd bg-pricing-fifth"></div>
 {% include 'public/_sections/pricing/user.html' %}
 <div class="bg-static-fixed bg-pricing bg-pricing-sixth"></div>
 {% include 'public/_sections/pricing/support.html' %}
-<div class="bg-static-fixed bg-pricing bg-pricing-seventh"></div>
+{% include 'public/_sections/pricing/fine_print.html' %}
+<div class="bg-static-fixed bg-pricing-seventh"></div>
 {% include 'public/_sections/pricing/last.html' %}
 {% endblock content %}

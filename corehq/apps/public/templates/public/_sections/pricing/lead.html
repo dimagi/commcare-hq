@@ -16,93 +16,140 @@
                 </header>
                 <p>
                     {% blocktrans %}
-                    <strong>Anyone can use CommCare for FREE up to 50 mobile workers.</strong>
+                    <strong>Anyone can use CommCare for FREE up to 50 mobile workers.</strong><br />
                     For additional questions, please see our FAQs.
                     {% endblocktrans %}
                 </p>
             </div>
         </div>
-        <div class="pricing-table-lead-bg"></div>
-        <div class="row">
-            <div class="col-sm-2 col-sm-offset-2">
-                <h3 class="pricing-header text-capitalize">
-                    {% trans 'Community' %}
-                </h3>
-                <p class="pricing-cost text-capitalize">
-                    {% trans 'Free' %}
-                </p>
-            </div>
-            <div class="col-sm-2">
-                <h3 class="pricing-header">
-                    {% trans 'Standard' %}
-                </h3>
-                <p class="pricing-cost text-capitalize">
-                    {% trans '$100 /month' %}
-                </p>
-            </div>
-            <div class="col-sm-2">
-                <h3 class="pricing-header">
-                    {% trans 'Pro' %}
-                </h3>
-                <p class="pricing-cost text-capitalize">
-                    {% trans '$500 /month' %}
-                </p>
-            </div>
-            <div class="col-sm-2">
-                <h3 class="pricing-header">
-                    {% trans 'Advanced' %}
-                </h3>
-                <p class="pricing-cost text-capitalize">
-                    {% trans '$1,000 /month' %}
-                </p>
-            </div>
-            <div class="col-sm-2">
-                <h3 class="pricing-header">
-                    {% trans 'Enterprise' %}
-                </h3>
-                <p class="pricing-cost text-capitalize">
-                    <a href="#">{% trans 'Contact Us' %}</a>
-                </p>
-            </div>
-        </div>
-        <div class="row pricing-row-lead">
-            <div class="col-sm-2">
-                <h3>{% trans 'Mobile Users' %}</h3>
-            </div>
-            <div class="col-sm-2">
-                <p>{% trans '50' %}</p>
-            </div>
-            <div class="col-sm-2">
-                <p>{% trans '100' %}</p>
-            </div>
-            <div class="col-sm-2">
-                <p>{% trans '500' %}</p>
-            </div>
-            <div class="col-sm-2">
-                <p>{% trans '1,000' %}</p>
-            </div>
-            <div class="col-sm-2">
-                <p>{% trans 'Unlimited / Discounted' %}</p>
-            </div>
-        </div>
-        <div class="row pricing-row-lead">
-            <div class="col-sm-2">
-                <h3>{% trans 'Price Per Additional Mobile User' %}</h3>
-            </div>
-            <div class="col-sm-2">
-                <p>{% trans '1 USD /month' %}</p>
-            </div>
-            <div class="col-sm-2">
-                <p>{% trans '1 USD /month' %}</p>
-            </div>
-            <div class="col-sm-2">
-                <p>{% trans '1 USD /month' %}</p>
-            </div>
-            <div class="col-sm-2">
-                <p>{% trans '1 USD /month' %}</p>
-            </div>
-            <div class="col-sm-2">
-                <p>{% trans 'Unlimited / Discounted' %}</p>
+    </div>
+    <div class="pricing-table-container">
+        <div class="pricing-table-container-inner">
+            <div class="container">
+                <div class="pricing-table-bg-container">
+                    <div class="pricing-table-bg">
+                        <div class="row">
+                            <div class="col-sm-10 col-sm-offset-2 col-bg"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-2 col-xs-offset-2 pricing-col-community">
+                        <h3 class="pricing-header text-uppercase">
+                            {% trans 'Community' %}
+                        </h3>
+                    </div>
+                    <div class="col-xs-2 pricing-col-standard">
+                        <h3 class="pricing-header text-uppercase">
+                            {% trans 'Standard' %}
+                        </h3>
+                    </div>
+                    <div class="col-xs-2 pricing-col-pro">
+                        <h3 class="pricing-header text-uppercase">
+                            {% trans 'Pro' %}
+                        </h3>
+                    </div>
+                    <div class="col-xs-2 pricing-col-advanced">
+                        <h3 class="pricing-header text-uppercase">
+                            {% trans 'Advanced' %}
+                        </h3>
+                    </div>
+                    <div class="col-xs-2 pricing-col-enterprise">
+                        <h3 class="pricing-header text-uppercase">
+                            {% trans 'Enterprise' %}
+                        </h3>
+                    </div>
+                </div>
+                <div class="row pricing-row">
+                    <div class="col-xs-2">
+                        <h4>{% trans 'Pricing' %}*</h4>
+                    </div>
+                    <div class="col-xs-2 pricing-col-community">
+                        <div class="pricing-cost text-uppercase">
+                            {% trans 'Free' %}
+                        </div>
+                    </div>
+                    <div class="col-xs-2 pricing-col-standard">
+                        <div class="pricing-cost">
+                            {% trans '$100 /month' %}
+                        </div>
+                    </div>
+                    <div class="col-xs-2 pricing-col-pro">
+                        <div class="pricing-cost">
+                            {% trans '$500 /month' %}
+                        </div>
+                    </div>
+                    <div class="col-xs-2 pricing-col-advanced">
+                        <div class="pricing-cost">
+                            {% trans '$1,000 /month' %}
+                        </div>
+                    </div>
+                    <div class="col-xs-2 pricing-col-enterprise">
+                        <div class="pricing-cost">
+                            <a href="#">{% trans 'Contact Us' %}</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="row pricing-row pricing-row-lead pricing-row-double">
+                    <div class="col-xs-2">
+                        <h4>{% trans 'Mobile Users' %}</h4>
+                    </div>
+                    <div class="col-xs-2">
+                        <div class="pricing-info">
+                            <p>{% trans '50' %}</p>
+                        </div>
+                    </div>
+                    <div class="col-xs-2">
+                        <div class="pricing-info">
+                            <p>{% trans '100' %}</p>
+                        </div>
+                    </div>
+                    <div class="col-xs-2">
+                        <div class="pricing-info">
+                            <p>{% trans '500' %}</p>
+                        </div>
+                    </div>
+                    <div class="col-xs-2">
+                        <div class="pricing-info">
+                            <p>{% trans '1,000' %}</p>
+                        </div>
+                    </div>
+                    <div class="col-xs-2">
+                        <div class="pricing-info">
+                            <p>{% trans 'Unlimited / Discounted' %}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="row pricing-row pricing-row-lead pricing-row-double pricing-row-triple-sm">
+                    <div class="col-xs-2">
+                        <h4>{% trans 'Price Per Additional Mobile User' %}</h4>
+                    </div>
+                    <div class="col-xs-2">
+                        <div class="pricing-info">
+                            <p>{% trans '1 USD /month' %}</p>
+                        </div>
+                    </div>
+                    <div class="col-xs-2">
+                        <div class="pricing-info">
+                            <p>{% trans '1 USD /month' %}</p>
+                        </div>
+                    </div>
+                    <div class="col-xs-2">
+                        <div class="pricing-info">
+                            <p>{% trans '1 USD /month' %}</p>
+                        </div>
+                    </div>
+                    <div class="col-xs-2">
+                        <div class="pricing-info">
+                            <p>{% trans '1 USD /month' %}</p>
+                        </div>
+                    </div>
+                    <div class="col-xs-2">
+                        <div class="pricing-info">
+                            <p>{% trans 'Unlimited / Discounted' %}</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
