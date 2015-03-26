@@ -32,7 +32,6 @@ def sync_user_cases(commcare_user):
     fields.update({
         'name': commcare_user.name or commcare_user.raw_username,
         'username': commcare_user.raw_username,
-        'user_id': commcare_user.get_id,
         'email': commcare_user.email,
         'language': commcare_user.language or '',
         'phone_number': commcare_user.phone_number or ''
