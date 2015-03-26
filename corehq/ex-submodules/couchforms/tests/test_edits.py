@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 import os
 import uuid
 from couchdbkit import ResourceNotFound, RequestFailed
@@ -43,7 +44,7 @@ class EditFormTest(TestCase):
 
     def test_basic_edit(self):
         xml_data1, xml_data2 = self._get_files()
-
+        yesterday = datetime.utcnow() - timedelta(days=1)
         docs = []
 
         doc = post_xform_to_couch(xml_data1)
@@ -52,6 +53,7 @@ class EditFormTest(TestCase):
         self.assertEqual("", doc.form['vitals']['height'])
         self.assertEqual("other", doc.form['assessment']['categories'])
         doc.domain = self.domain
+        doc.received_on = yesterday  # set this back in time to simulate an edit
         doc.save()
 
         doc = post_xform_to_couch(xml_data2, domain=self.domain)
@@ -62,14 +64,18 @@ class EditFormTest(TestCase):
 
         docs.append(doc)
 
-        doc = XFormDeprecated.view('couchforms/edits', include_docs=True).first()
-        self.assertEqual(self.ID, doc.orig_id)
-        self.assertNotEqual(self.ID, doc.get_id)
-        self.assertEqual(XFormDeprecated.__name__, doc.doc_type)
-        self.assertEqual("", doc.form['vitals']['height'])
-        self.assertEqual("other", doc.form['assessment']['categories'])
+        deprecated_doc = XFormDeprecated.view('couchforms/edits', include_docs=True).first()
+        self.assertEqual(self.ID, deprecated_doc.orig_id)
+        self.assertNotEqual(self.ID, deprecated_doc._id)
+        self.assertEqual(XFormDeprecated.__name__, deprecated_doc.doc_type)
+        self.assertEqual("", deprecated_doc.form['vitals']['height'])
+        self.assertEqual("other", deprecated_doc.form['assessment']['categories'])
 
-        self.assertEqual(XFormInstance.get_db().fetch_attachment(doc.get_id, 'form.xml'), xml_data1)
+        self.assertEqual(doc.received_on, deprecated_doc.received_on)
+        self.assertEqual(doc.deprecated_form_id, deprecated_doc._id)
+        self.assertTrue(doc.edited_on > doc.received_on)
+
+        self.assertEqual(XFormInstance.get_db().fetch_attachment(deprecated_doc._id, 'form.xml'), xml_data1)
         self.assertEqual(XFormInstance.get_db().fetch_attachment(self.ID, 'form.xml'), xml_data2)
 
         for doc in docs:
