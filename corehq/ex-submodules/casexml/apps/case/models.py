@@ -594,22 +594,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         local_forms.update(other_forms)
         self.rebuild(strict=False, xforms=local_forms)
 
-        # override any explicit properties from the update
-        if self.modified_on is None or mod_date > self.modified_on:
-            self.modified_on = mod_date
-
-        if case_update.creates_case():
-            # case_update.get_create_action() seems to sometimes return an action with all properties set to none,
-            # so set opened_by and opened_on here
-            if not self.opened_on:
-                self.opened_on = mod_date
-            if not self.opened_by:
-                self.opened_by = case_update.user_id
-
-        if case_update.closes_case():
-            self.closed_by = case_update.user_id
-        if case_update.user_id:
-            self.user_id = case_update.user_id
         if case_update.version:
             self.version = case_update.version
 
@@ -634,6 +618,12 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
                 self.get_id,
             ))
 
+        # override any explicit properties from the update
+        if action.user_id:
+            self.user_id = action.user_id
+        if self.modified_on is None or action.date > self.modified_on:
+            self.modified_on = action.date
+
     def apply_create(self, create_action):
         """
         Applies a create block to a case.
@@ -642,6 +632,11 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         """
         for k, v in create_action.updated_known_properties.items():
             setattr(self, k, v)
+
+        if not self.opened_on:
+            self.opened_on = create_action.date
+        if not self.opened_by:
+            self.opened_by = create_action.user_id
 
     def apply_updates(self, update_action):
         """
@@ -723,6 +718,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
     def apply_close(self, close_action):
         self.closed = True
         self.closed_on = close_action.date
+        self.closed_by = close_action.user_id
 
     def check_action_order(self):
         action_dates = [a.server_date for a in self.actions if a.server_date]
