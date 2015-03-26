@@ -9,6 +9,7 @@ from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.util import get_case_xform_ids, primary_actions
 from casexml.apps.case.xform import get_case_updates
 from casexml.apps.case.xml import V2
+from casexml.apps.case.xml.parser import KNOWN_PROPERTIES
 from corehq.apps.hqcase.utils import submit_case_blocks
 from couchforms import fetch_and_wrap_form
 
@@ -114,8 +115,11 @@ def reset_state(case):
     already_deleted = case.doc_type == 'CommCareCase-Deleted' and primary_actions(case)
     if not already_deleted:
         case.doc_type = 'CommCareCase'
-    case.name = None
-    case.type = None
+
+    # hard-coded normal properties (from a create block)
+    for prop, default_value in KNOWN_PROPERTIES.items():
+        setattr(case, prop, default_value)
+
     case.closed = False
     case.closed_on = None
     case.closed_by = ''
