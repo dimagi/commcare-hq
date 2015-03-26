@@ -255,7 +255,9 @@ var Invoice = function (initData) {
     });
 
     self.reset = function (response) {
-        ChargedCostItem.prototype.reset.call(self, response);
+        // TODO - use inheritance instead of duplicating code (tricky)
+        self.customPaymentAmount(self.balance());
+        self.paymentAmountType('full');
         self.paginatedList.refreshList(self.paginatedItem);
     };
 };
