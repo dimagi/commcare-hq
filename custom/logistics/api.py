@@ -291,7 +291,7 @@ class APISynchronization(object):
     def _save_verified_number(self, user, phone_number):
         try:
             user.save_verified_number(self.domain, phone_number, True)
-        except PhoneNumberInUseException as e:
+        except PhoneNumberInUseException:
             self._reassign_number(user, phone_number)
         except InvalidFormatException:
             pass
