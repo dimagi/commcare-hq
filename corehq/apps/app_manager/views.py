@@ -1072,7 +1072,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         'copy_app_form': copy_app_form if copy_app_form is not None else CopyApplicationForm(app_id)
     })
 
-    context['latest_commcare_version'] = get_commcare_versions()[-1]
+    context['latest_commcare_version'] = get_commcare_versions(req.user)[-1]
 
     if app and app.doc_type == 'Application' and has_privilege(req, privileges.COMMCARE_LOGO_UPLOADER):
         uploader_slugs = ANDROID_LOGO_PROPERTY_MAPPING.keys()
