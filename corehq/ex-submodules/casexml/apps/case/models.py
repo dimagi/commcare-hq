@@ -205,6 +205,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         return "CommCareCase: %s (%s)" % (self.case_id, self.get_id)
 
     def __setattr__(self, key, value):
+        # todo: figure out whether we can get rid of this.
         # couchdbkit's auto-type detection gets us into problems for various
         # workflows here, so just force known string properties to strings
         # before setting them. this would just end up failing hard later if
