@@ -252,7 +252,7 @@ class BulkStripePaymentHandler(BaseStripePaymentHandler):
         return Invoice.objects.filter(
             subscription__subscriber__domain=self.domain,
             is_hidden=False,
-        ).all()
+        )
 
     @property
     def balance(self):
