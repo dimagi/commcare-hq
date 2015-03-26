@@ -3,9 +3,11 @@ This isn't really a parser, but it's the code that generates case-like
 objects from things from xforms.
 """
 import os
+import datetime
 
 from casexml.apps.case import const
 from casexml.apps.case.xml import DEFAULT_VERSION, V1, V2, NS_REVERSE_LOOKUP_MAP
+from dimagi.utils.parsing import string_to_datetime
 
 XMLNS_ATTR = "@xmlns"
 
@@ -218,6 +220,7 @@ class CaseIndexAction(CaseActionBase):
             indices.append(CaseIndex(id, data["@case_type"], data.get("#text", "")))
         return cls(block, indices)
     
+
 class CaseUpdate(object):
     """
     A temporary model that parses the data from the form consistently.
@@ -258,7 +261,12 @@ class CaseUpdate(object):
         if not self.actions:
             self.actions.append(NOOP_ACTION_FUNCTION_MAP[self.version](self.raw_block))
 
-    
+    def guess_modified_on(self):
+        """
+        Guess the modified date, defaulting to the current time in UTC.
+        """
+        return string_to_datetime(self.modified_on_str) if self.modified_on_str else datetime.utcnow()
+
     def creates_case(self):
         # creates have to have actual data in them so this is fine
         return bool(self.create_block)    

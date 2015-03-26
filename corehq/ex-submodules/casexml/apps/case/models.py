@@ -607,8 +607,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
 
     def _new_update_from_case_update(self, case_update, xformdoc, other_forms):
 
-        mod_date = parsing.string_to_datetime(case_update.modified_on_str) \
-            if case_update.modified_on_str else datetime.utcnow()
+        mod_date = case_update.guess_modified_on()
 
         # get actions and apply them
         for action in case_update.actions:
