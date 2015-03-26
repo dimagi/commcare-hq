@@ -6,7 +6,6 @@ from django.utils.translation import ugettext as _
 from jsonobject import DateTimeProperty
 
 from corehq.apps.locations.models import Location
-from corehq.apps.reports.cache import request_cache
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.elastic import ES_URLS
 from corehq.apps.reports.standard import CustomProjectReport
