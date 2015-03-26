@@ -17,7 +17,7 @@ from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
 from PIL import Image
 from casexml.apps.case.exceptions import MissingServerDate, ReconciliationError
 from corehq.util.couch_helpers import CouchAttachmentsBuilder
-from couchforms.util import is_deprecation
+from couchforms.util import is_deprecation, is_override
 from dimagi.utils.chunked import chunked
 from dimagi.utils.django.cached_object import CachedObject, OBJECT_ORIGINAL, OBJECT_SIZE_MAP, CachedImage, IMAGE_SIZE_ORDERING
 from casexml.apps.phone.xml import get_case_element
@@ -72,6 +72,8 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
     updated_unknown_properties = DictProperty()
     indices = SchemaListProperty(CommCareCaseIndex)
     attachments = SchemaDictProperty(CommCareCaseAttachment)
+
+    deprecated = False
 
     @classmethod
     def from_parsed_action(cls, date, user_id, xformdoc, action):
@@ -558,30 +560,43 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         return case
     
     def update_from_case_update(self, case_update, xformdoc, other_forms=None):
-        other_forms = other_forms or {}
-        if is_deprecation(xformdoc):
-            # Remove the form from actions and xform_ids (based on orig_id)
-            # and rebuild the case in place.
-            # This assumes that there is a second update coming that will actually
-            # reapply the equivalent actions from the form that caused the current
-            # one to be deprecated (which is what happens in form processing).
-            # This means deprecation edits will get applied wherever they fall
-            # in the case action order based on submission date, and not necessarily
-            # exactly where the original form was.
-            self.xform_ids = [id for id in self.xform_ids if id != xformdoc.orig_id]
-            self.actions = [a for a in self.actions if a.xform_id != xformdoc.orig_id]
-            self.rebuild(strict=False, xforms=other_forms)
-        elif case_update.has_referrals():
+        if case_update.has_referrals():
             logging.error('Form {} touching case {} in domain {} is still using referrals'.format(
                 xformdoc._id, case_update.id, getattr(xformdoc, 'domain', None))
             )
             raise Exception(_('Sorry, referrals are no longer supported!'))
 
+        if is_deprecation(xformdoc):
+            # Mark all of the form actions as deprecated. These will get removed on rebuild.
+            # This assumes that there is a second update coming that will actually
+            # reapply the equivalent actions from the form that caused the current
+            # one to be deprecated (which is what happens in form processing).
+            for a in self.actions:
+                if a.xform_id == xformdoc.orig_id:
+                    a.deprecated = True
 
-        # get actions and apply them
-        self.actions.extend(case_update.get_case_actions(xformdoc))
+            # short circuit the rest of this since we don't actually want to
+            # do any case processing
+            return
+        elif is_override(xformdoc):
+            # This form is overriding a deprecated form.
+            # Apply the actions just after the last action with this form type.
+            # This puts the overriding actions in the right order relative to the others.
+            prior_actions = [a for a in self.actions if a.xform_id == xformdoc._id]
+            if prior_actions:
+                action_insert_pos = self.actions.index(prior_actions[-1]) + 1
+                # slice insertion
+                # http://stackoverflow.com/questions/7376019/python-list-extend-to-index/7376026#7376026
+                self.actions[action_insert_pos:action_insert_pos] = case_update.get_case_actions(xformdoc)
+            else:
+                self.actions.extend(case_update.get_case_actions(xformdoc))
+        else:
+            # normal form - just get actions and apply them on the end
+            self.actions.extend(case_update.get_case_actions(xformdoc))
+
+        # rebuild the case
         local_forms = {xformdoc._id: xformdoc}
-        local_forms.update(other_forms)
+        local_forms.update(other_forms or {})
         self.rebuild(strict=False, xforms=local_forms)
 
         if case_update.version:
@@ -802,7 +817,10 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
             if strict:
                 raise
 
+        # remove all deprecated actions during rebuild.
+        self.actions = [a for a in self.actions if not a.deprecated]
         actions = copy.deepcopy(list(self.actions))
+
         if strict:
             if actions[0].action_type != const.CASE_ACTION_CREATE:
                 error = u"Case {0} first action not create action: {1}"

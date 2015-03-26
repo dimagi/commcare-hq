@@ -244,9 +244,10 @@ class EditFormTest(TestCase):
         ).as_string(format_datetime=json_format_datetime)
         submit_case_blocks(case_block, domain=self.domain, form_id=edit_form_id)
 
-        # since the middle edit came after, its updates override the final edit.
+        # ensure that the middle edit stays in the right place and is applied
+        # before the final one
         case = CommCareCase.get(case_id)
-        self.assertEqual(case.property, 'edited value')
+        self.assertEqual(case.property, 'final value')
         self.assertEqual(case.added_property, 'added value')
-        self.assertEqual([create_form_id, second_edit_form_id, edit_form_id], case.xform_ids)
-        self.assertEqual([create_form_id, second_edit_form_id, edit_form_id], [a.xform_id for a in case.actions])
+        self.assertEqual([create_form_id, edit_form_id, second_edit_form_id], case.xform_ids)
+        self.assertEqual([create_form_id, edit_form_id, second_edit_form_id], [a.xform_id for a in case.actions])
