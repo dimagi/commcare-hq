@@ -1,4 +1,5 @@
 from collections import namedtuple, defaultdict
+import copy
 from functools import total_ordering
 from itertools import izip_longest
 import os
@@ -591,7 +592,7 @@ class DatumMeta(object):
         return not self == other
 
     def __repr__(self):
-        return 'DatumMeta(id={}, case_type={})'.format(self.id, self.case_type)
+        return 'DatumMeta(id={}, case_type={}, source_id={})'.format(self.id, self.case_type, self.source_id)
 
 
 def get_default_sort_elements(detail):
@@ -796,7 +797,11 @@ class SuiteGenerator(SuiteGeneratorBase):
                     frame.add_datum(StackDatum(id=child.id, value=value))
             return frame
 
-        def get_frame_children_for_form(target_form):
+        root_modules = [module for module in self.modules if getattr(module, 'put_in_root', False)]
+        root_module_datums = [datum for module in root_modules
+                              for datum in self.get_module_datums(suite, u'm{}'.format(module.id)).values()]
+
+        def get_frame_children(target_form, module_only=False):
             """
             For a form return the list of stack frame children that are required
             to navigate to that form.
@@ -838,14 +843,41 @@ class SuiteGenerator(SuiteGeneratorBase):
 
             frame_children = [module_command] if module_command != self.id_strings.ROOT else []
             frame_children.extend(common_datums)
-            frame_children.append(target_form_command)
-            frame_children.extend(remaining_datums)
+            if not module_only:
+                frame_children.append(target_form_command)
+                frame_children.extend(remaining_datums)
 
             return frame_children
 
-        root_modules = [module for module in self.modules if getattr(module, 'put_in_root', False)]
-        root_module_datums = [datum for module in root_modules
-                              for datum in self.get_module_datums(suite, u'm{}'.format(module.id)).values()]
+        def get_datums_matched_to_source(target_frame_elements, source_datums):
+            """
+            Attempt to match the target session variables with ones in the source session.
+            Making some large assumptions about how people will actually use this feature
+            """
+            children = []
+            datum_index = -1
+            for child in target_frame_elements:
+                if isinstance(child, DatumMeta):
+                    datum_index += 1
+                    if child.function:
+                        children.append(child)
+                        continue
+
+                    try:
+                        source_datum = source_datums[datum_index]
+                    except IndexError:
+                        pass
+                    else:
+                        if child.id != source_datum.id and not source_datum.case_type or \
+                                source_datum.case_type == child.case_type:
+                            target_datum = copy.copy(child)
+                            target_datum.source_id = source_datum.id
+                            children.append(target_datum)
+                else:
+                    children.append(child)
+
+            return children
+
         for module in self.modules:
             for form in module.get_forms():
                 if form.post_form_workflow == WORKFLOW_DEFAULT:
@@ -860,7 +892,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                     frame_children = [module_command] if module_command != self.id_strings.ROOT else []
                     create_workflow_stack(suite, form_command, frame_children)
                 elif form.post_form_workflow == WORKFLOW_PREVIOUS:
-                    frame_children = get_frame_children_for_form(form)
+                    frame_children = get_frame_children(form)
 
                     # since we want to go the 'previous' screen we need to drop the last
                     # datum
@@ -876,16 +908,24 @@ class SuiteGenerator(SuiteGeneratorBase):
                     source_form_datums = self.get_form_datums(suite, module_id, form_id)
                     for link in form.form_links:
                         target_form = self.app.get_form(link.form_id)
-                        frame_children = get_frame_children_for_form(target_form)
-                        frame_datums = [child for child in frame_children if isinstance(child, DatumMeta)]
+                        target_module = target_form.get_module()
 
-                        # attempt to match the target session variables with ones in the current session
-                        # making some large assumptions about how people will actually use this feature
-                        for target_datum, source_datum in izip_longest(frame_datums, source_form_datums):
-                            if not target_datum.function and target_datum.id != source_datum.id:
-                                if not source_datum.case_type or source_datum.case_type == target_datum.case_type:
-                                    target_datum.source_id = source_datum.id
+                        parent_frame_children = []
+                        if target_module in module.get_child_modules():
+                            parent_frame_children = get_frame_children(module.get_form(0), module_only=True)
 
+                        frame_children = get_frame_children(target_form)
+                        frame_children = get_datums_matched_to_source(frame_children, source_form_datums)
+
+                        # exclude frame children from the child module if they are already
+                        # supplied by the parent module
+                        children_to_skip = {getattr(child, "id", child) for child in parent_frame_children}
+                        frame_children = [
+                            child for child in frame_children
+                            if getattr(child, "id", child) not in children_to_skip
+                        ]
+
+                        frame_children = parent_frame_children + frame_children
                         create_workflow_stack(suite, form_command, frame_children, if_clause=link.xpath)
 
     def get_form_datums(self, suite, module_id, form_id):

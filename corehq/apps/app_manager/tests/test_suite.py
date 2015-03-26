@@ -748,12 +748,20 @@ class TestFormLinking(SimpleTestCase, TestFileMixin):
             m_type = m_spec['type']
             m_class = Module if m_type == 'basic' else AdvancedModule
             module = app.add_module(m_class.new_module(m_spec['name'], None))
-            module.case_type = case_type
+            module.unique_id = m_spec['name']
+            module.case_type = m_spec.get("case_type", "frog")
+            module.root_module_id = m_spec.get("parent", None)
             for f_spec in m_spec['f']:
                 form_name = f_spec["name"]
                 form = app.new_form(module.id, form_name, None)
                 form.unique_id = form_name
-                for action in f_spec.get('actions', []):
+                for a_spec in f_spec.get('actions', []):
+                    if isinstance(a_spec, dict):
+                        action = a_spec['action']
+                        case_type = a_spec.get("case_type", case_type)
+                        parent = a_spec.get("parent", None)
+                    else:
+                        action = a_spec
                     if 'open' == action:
                         if m_type == "basic":
                             form.actions.open_case = OpenCaseAction(name_path="/data/question1")
@@ -761,7 +769,7 @@ class TestFormLinking(SimpleTestCase, TestFileMixin):
                         else:
                             form.actions.open_cases.append(AdvancedOpenCaseAction(
                                 case_type=case_type,
-                                case_tag='open_case_0',
+                                case_tag='open_{}'.format(case_type),
                                 name_path='/data/name'
                             ))
                     elif 'update' == action:
@@ -772,8 +780,24 @@ class TestFormLinking(SimpleTestCase, TestFileMixin):
                         else:
                             form.actions.load_update_cases.append(LoadUpdateAction(
                                 case_type=case_type,
-                                case_tag='update_case_0',
+                                case_tag='update_{}'.format(case_type),
+                                parent_tag=parent,
                             ))
+                    elif 'open_subacse':
+                        if m_type == "basic":
+                            form.actions.subcases.append(OpenSubCaseAction(
+                                case_type=case_type,
+                                case_name="/data/question1",
+                                condition=FormActionCondition(type='always')
+                            ))
+                        else:
+                            form.actions.open_cases.append(AdvancedOpenCaseAction(
+                                case_type=case_type,
+                                case_tag='subcase_{}'.format(case_type),
+                                name_path='/data/name',
+                                parent_tag=parent
+                            ))
+
         return app
 
     def test_basic(self):
@@ -837,17 +861,55 @@ class TestFormLinking(SimpleTestCase, TestFileMixin):
         self.assertXmlPartialEqual(self.get_xml('form_link_multiple'), app.create_suite(), "./entry[1]")
 
     def test_with_case_management_advanced_module(self):
-        spec = copy.deepcopy(self.default_spec)
-        spec["m"][1]["type"] = "advanced"
-        spec["m"][1]["f"][0]["actions"] = ["update", "open"]
+        spec = {
+            "m": [
+                {
+                    "name": "enroll child",
+                    "type": "basic",
+                    "case_type": "child",
+                    "f": [
+                        {"name": "enroll child", "actions": ["open"]}
+                    ]
+                },
+                {
+                    "name": "child visit module",
+                    "type": "basic",
+                    "case_type": "child",
+                    "f": [
+                        {"name": "followup", "actions": [
+                            "update",
+                            {"action": "open_subcase", "case_type": "visit"}
+                        ]}
+                    ]
+                },
+                {
+                    "name": "visit history",
+                    "type": "advanced",
+                    "case_type": "visit",
+                    "parent": "child visit module",
+                    "f": [
+                        {"name": "treatment", "actions": [
+                            {"action": "update", "case_type": "child"},
+                            {"action": "update", "case_type": "visit", "parent": "update_child"}
+                        ]}
+                    ]
+                }
+            ]
+        }
         app = self.make_app(spec)
 
-        m0f0 = app.get_form("m0f0")
-        m1f0 = app.get_form("m1f0")
+        m0f0 = app.get_form("enroll child")
+        m1f0 = app.get_form("followup")
+        m2f0 = app.get_form("treatment")
 
         m0f0.post_form_workflow = WORKFLOW_FORM
         m0f0.form_links = [
-            FormLink(xpath="a = 1", form_id=m1f0.unique_id),
+            FormLink(xpath="true()", form_id=m1f0.unique_id),
         ]
 
-        self.assertXmlPartialEqual(self.get_xml('form_link_advanced_module'), app.create_suite(), "./entry[1]")
+        m1f0.post_form_workflow = WORKFLOW_FORM
+        m1f0.form_links = [
+            FormLink(xpath="true()", form_id=m2f0.unique_id),
+        ]
+
+        self.assertXmlPartialEqual(self.get_xml('form_link_tdh'), app.create_suite(), "./entry")
