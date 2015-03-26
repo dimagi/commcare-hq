@@ -338,6 +338,32 @@ class FormPreparationV2TestAdvanced(TestCase, TestFileMixin):
         self.module.case_list_form.form_id = self.form.get_unique_id()
         self.assertXmlEqual(self.get_xml('case_list_form'), self.form.render_xform())
 
+    def test_child_module_adjusted_datums(self):
+        """
+        Testing that the session variable name for the case_id is correct since
+        it will have been adjusted in the suite.xml to match the variable name
+        in the root module.
+        """
+        self.form.actions.load_update_cases.append(LoadUpdateAction(
+            case_type=self.module.case_type,
+            case_tag='load_1',
+            case_properties={'question1': '/data/question1'}
+        ))
+
+        root_module = self.app.add_module(Module.new_module('root module', None))
+        root_module.unique_id = 'm_root'
+        root_module.case_type = self.module.case_type
+
+        root_module_form = self.app.new_form(1, 'root module form', None)
+        root_module_form.requires = 'case'
+        root_module_form.actions.update_case = UpdateCaseAction(update={'question1': '/data/question1'})
+        root_module_form.actions.update_case.condition.type = 'always'
+
+        # make module a child module of root_module
+        self.module.root_module_id = root_module.unique_id
+
+        self.assertXmlEqual(self.get_xml('child_module_adjusted_case_id'), self.form.render_xform())
+
 
 class SubcaseRepeatTestAdvanced(TestCase, TestFileMixin):
     file_path = ('data', 'form_preparation_v2_advanced')

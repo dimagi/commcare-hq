@@ -1,6 +1,6 @@
 from django.test.testcases import TestCase, SimpleTestCase
 from corehq.apps.app_manager import suite_xml
-from corehq.apps.app_manager.models import Application, Module, Form, import_app
+from corehq.apps.app_manager.models import Application, Module, Form, import_app, FormLink
 from corehq.apps.app_manager.tests.util import add_build, patch_default_builds
 from corehq.apps.builds.models import BuildSpec
 
@@ -115,7 +115,7 @@ class FormVersioningTest(TestCase):
 
 class FormIdTest(SimpleTestCase):
 
-    def test_update_form_references(self):
+    def test_update_form_references_case_list_form(self):
         app = Application.new_app('domain', 'Foo', '2.0')
         app.modules.append(Module(forms=[Form()]))
         app.modules.append(Module(forms=[Form()]))
@@ -130,3 +130,26 @@ class FormIdTest(SimpleTestCase):
         new_form_id = copy.get_module(1).get_form(0).unique_id
         self.assertNotEqual(original_form_id, new_form_id)
         self.assertEqual(new_form_id, copy.get_module(0).case_list_form.form_id)
+
+    def test_update_form_references_form_link(self):
+        app = Application.new_app('domain', 'Foo', '2.0')
+        app.modules.append(Module(forms=[Form()]))
+        app.modules.append(Module(forms=[Form(), Form()]))
+        app.build_spec = BuildSpec.from_string('2.7.0/latest')
+        app.get_module(0).get_form(0).source = BLANK_TEMPLATE.format(xmlns='xmlns-0.0')
+        app.get_module(1).get_form(0).source = BLANK_TEMPLATE.format(xmlns='xmlns-1')
+
+        original_form_id1 = app.get_module(1).get_form(0).unique_id
+        original_form_id2 = app.get_module(1).get_form(1).unique_id
+        app.get_module(0).get_form(0).form_links = [
+            FormLink(xpath="", form_id=original_form_id1),
+            FormLink(xpath="", form_id=original_form_id2),
+        ]
+
+        copy = Application.from_source(app.export_json(dump_json=False), 'domain')
+        new_form_id1 = copy.get_module(1).get_form(0).unique_id
+        new_form_id2 = copy.get_module(1).get_form(1).unique_id
+        self.assertNotEqual(original_form_id1, new_form_id1)
+        self.assertNotEqual(original_form_id2, new_form_id2)
+        self.assertEqual(new_form_id1, copy.get_module(0).get_form(0).form_links[0].form_id)
+        self.assertEqual(new_form_id2, copy.get_module(0).get_form(0).form_links[1].form_id)
