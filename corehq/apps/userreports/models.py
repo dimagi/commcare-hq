@@ -222,6 +222,25 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         for result in iter_docs(cls.get_db(), ids):
             yield cls.wrap(result)
 
+    def to_json(self):
+        # TEMPORARY FIX (2015-03-26)
+        # until jsonobject serialization is fixed, convert to python data types
+        # can you remove this method and run test_serializable_custom_configs?
+        self.validate()
+
+        def copy(node):
+            if isinstance(node, dict):
+                return {copy(k): copy(v) for k, v in node.items()}
+            elif isinstance(node, list):
+                return [copy(v) for v in node]
+            elif isinstance(node, (basestring, type(None), bool,)):
+                return node
+            else:
+                msg = _("Type {} not supported.  I probably missed something")
+                raise BadSpecError(msg.format(type(node)))
+
+        return copy(self._obj)
+
 
 class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     """
@@ -331,7 +350,8 @@ class CustomDataSourceConfiguration(JsonObject):
 
     @classmethod
     def by_id(cls, config_id):
-        matching = [ds for ds in cls.all() if ds.get_id == config_id]
-        if not matching:
-            return None
-        return matching[0]
+        for ds in cls.all():
+            if ds.get_id == config_id:
+                return ds
+        raise BadSpecError(_('The data source referenced by this report could '
+                             'not be found.'))
