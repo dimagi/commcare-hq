@@ -76,6 +76,9 @@ var PublicSMSRateCalculator = function (form_data) {
         return ! self.hasError();
     });
     self.calculatingRate = ko.observable(false);
+    self.showTable = ko.computed(function (){
+        return !self.hasError() && !self.calculatingRate();
+    });
     self.showRateInfo = ko.computed(function () {
         return self.rateErrorText() && ! self.calculatingRate();
     });
