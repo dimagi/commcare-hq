@@ -84,6 +84,7 @@ class FieldColumn(ReportColumn):
 
 
 class PercentageColumn(ReportColumn):
+    type = TypeProperty('percent')
     numerator = ObjectProperty(FieldColumn, required=True)
     denominator = ObjectProperty(FieldColumn, required=True)
 

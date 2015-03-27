@@ -205,6 +205,7 @@ class TestExpandFieldColumn(TestCase):
 class TestPercentageColumn(SimpleTestCase):
     def test_wrap(self):
         wrapped = PercentageColumn.wrap({
+            'type': 'percent',
             'column_id': 'pct',
             'numerator': {
                 "aggregation": "sum",
@@ -229,15 +230,18 @@ class TestPercentageColumn(SimpleTestCase):
         }
         with self.assertRaises(BadValueError):
             PercentageColumn.wrap({
+                'type': 'percent',
                 'column_id': 'pct',
             })
         with self.assertRaises(BadValueError):
             PercentageColumn.wrap({
+                'type': 'percent',
                 'column_id': 'pct',
                 'numerator': field_spec,
             })
         with self.assertRaises(BadValueError):
             PercentageColumn.wrap({
+                'type': 'percent',
                 'column_id': 'pct',
                 'denominator': field_spec,
             })
