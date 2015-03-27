@@ -25,7 +25,7 @@ def migration_task():
             endpoint = ILSGatewayEndpoint.from_config(config)
             ils_bootstrap_domain(ILSGatewayAPI(config.domain, endpoint))
             apis = get_ilsgateway_data_migrations()
-            stock_data_task.delay(config.domain, endpoint, apis, ILS_FACILITIES)
+            stock_data_task.delay(config.domain, endpoint, apis, config, ILS_FACILITIES)
 
 
 @task

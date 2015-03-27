@@ -46,7 +46,7 @@ def migration_task():
             apis = (
                 ('stock_transaction', sync_stock_transactions),
             )
-            stock_data_task.delay(config.domain, endpoint, apis, EWS_FACILITIES)
+            stock_data_task.delay(config.domain, endpoint, apis, config, EWS_FACILITIES)
 
 
 @task
