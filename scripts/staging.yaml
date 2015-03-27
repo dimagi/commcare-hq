@@ -43,8 +43,8 @@
 trunk: master
 name: autostaging
 branches:
+  - background-queue  # cz 3/27
   - consolidate-timezone-utils+req-request  # danny 3/26
-#  - req-request  # danny 3/26
   - consolidate-timezone-utils  # danny 3/25
   - request-cache-refactor  # danny 3/23
   - app-manager-cleanup # danny 3/13
