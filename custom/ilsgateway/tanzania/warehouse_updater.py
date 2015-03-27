@@ -1,8 +1,9 @@
 from datetime import datetime, timedelta
 import logging
 import itertools
+from django.db import transaction
 from django.db.models import Q
-from corehq.apps.products.models import Product
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.locations.models import Location, SQLLocation
 from dimagi.utils.dates import get_business_day_of_month, add_months, months_between
 from casexml.apps.stock.models import StockReport, StockTransaction
@@ -150,15 +151,16 @@ def not_responding_facility(org_summary):
         group_summary.save()
 
 
+@transaction.commit_on_success
 def update_product_availability_facility_data(org_summary):
     # product availability
 
     facility = Location.get(docid=org_summary.supply_point)
     assert facility.location_type == "FACILITY"
-    prods = Product.ids_by_domain(facility.domain)
+    prods = SQLProduct.objects.filter(domain=facility.domain, is_archived=False)
     for p in prods:
         product_data, created = ProductAvailabilityData.objects.get_or_create(
-            product=p,
+            product=p.product_id,
             supply_point=facility._id,
             date=org_summary.date
         )
@@ -167,12 +169,12 @@ def update_product_availability_facility_data(org_summary):
             # set defaults
             product_data.total = 1
             previous_reports = ProductAvailabilityData.objects.filter(
-                product=p,
+                product=p.product_id,
                 supply_point=facility._id,
                 date__lt=org_summary.date
             )
             if previous_reports.count():
-                prev = previous_reports.order_by("-date")[0]
+                prev = previous_reports.latest('date')
                 product_data.with_stock = prev.with_stock
                 product_data.without_stock = prev.without_stock
                 product_data.without_data = prev.without_data
@@ -394,6 +396,7 @@ def process_facility_warehouse_data(facility, start_date, end_date):
         populate_facility_stockout_alerts(facility, window_date)
 
 
+@transaction.commit_on_success
 def process_facility_statuses(facility_id, statuses, alerts=True):
     """
     For a given facility and list of statuses, update the appropriate
@@ -479,6 +482,7 @@ def process_facility_product_reports(facility_id, reports):
         months_updated[warehouse_date] = None  # update the cache of stuff we've dealt with
 
 
+@transaction.commit_on_success
 def process_facility_transactions(facility_id, transactions):
     """
     For a given facility and list of transactions, update the appropriate
@@ -536,13 +540,13 @@ def process_non_facility_warehouse_data(location, start_date, end_date, strict=T
 
         org_summary.save()
         # product availability
-        prods = Product.ids_by_domain(location.domain)
+        prods = SQLProduct.objects.filter(domain=location.domain, is_archived=False)
         for p in prods:
-            product_data = ProductAvailabilityData.objects.get_or_create(product=p,
+            product_data = ProductAvailabilityData.objects.get_or_create(product=p.product_id,
                                                                          supply_point=location._id,
                                                                          date=window_date)[0]
 
-            sub_prods = ProductAvailabilityData.objects.filter(product=p,
+            sub_prods = ProductAvailabilityData.objects.filter(product=p.product_id,
                                                                supply_point__in=fac_ids,
                                                                date=window_date)
 
@@ -613,8 +617,7 @@ def update_historical_data(domain):
         except SupplyPointWarehouseRecord.DoesNotExist:
             # we didn't have a record so go through and historically update
             # anything we maybe haven't touched
-            opened_on = sp.linked_supply_point().opened_on
-            for year, month in months_between(start_date, opened_on):
+            for year, month in months_between(start_date, sp.sql_location.created_at):
                 window_date = datetime(year, month, 1)
                 for cls in [OrganizationSummary, ProductAvailabilityData, GroupSummary]:
                     _init_warehouse_model(cls, sp, window_date)
@@ -636,8 +639,8 @@ def _init_default(location, date):
 
 
 def _init_with_product(location, date):
-    for p in Product.ids_by_domain(location.domain):
-        ProductAvailabilityData.objects.get_or_create(supply_point=location._id, date=date, product=p)
+    for p in SQLProduct.objects.filter(domain=location.domain, is_archived=False):
+        ProductAvailabilityData.objects.get_or_create(supply_point=location._id, date=date, product=p.product_id)
 
 
 def _init_group_summary(location, date):
