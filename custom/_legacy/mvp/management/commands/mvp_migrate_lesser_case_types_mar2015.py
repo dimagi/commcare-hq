@@ -3,7 +3,7 @@ import datetime
 from optparse import make_option
 from couchdbkit import BulkSaveError
 from dimagi.utils.chunked import chunked
-from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.couch.database import iter_docs, iter_bulk_delete
 from django.core.management.base import LabelCommand, BaseCommand
 from mvp.models import MVP
 from casexml.apps.case.models import CommCareCase
@@ -72,6 +72,7 @@ class Command(LabelCommand):
             reduce=False,
             wrapper=lambda x: x['id']
         ).all()
+        self.delete_bad_doc_types(case_ids, chunk_size)
         case_dict_chunks = chunked(iter_docs(old_db, case_ids, chunk_size),
                                    chunk_size)
 
@@ -79,14 +80,15 @@ class Command(LabelCommand):
             for case_dict in case_dicts:
                 del case_dict['_rev']
                 case_dict.pop('_attachments', None)
+                case_dict['doc_type'] = "IndicatorCase"
             try:
                 results = new_db.bulk_save(case_dicts)
             except BulkSaveError as error:
                 results = error.results
             for result in results:
                 if result.get('error') == 'conflict':
-                    self.log('- OK: [{id}] is already in the indicator db'.format(
-                        id=result.get('id')))
+                    self.log('- OK: [{id}] is already in the indicator db'
+                             .format(id=result.get('id')))
                 elif 'error' in result:
                     self.log('- ERROR: [{id}] ({result})'.format(
                         id=result.get('id'),
@@ -96,3 +98,23 @@ class Command(LabelCommand):
                     self.log('- ADDED: [{id}] saved to indicator db'.format(
                         id=result.get('id')
                     ))
+
+    def delete_bad_doc_types(self, case_ids, chunk_size):
+        """
+        No view in this db includes CommCareCases, so check manually
+        """
+        db = IndicatorCase.get_db()
+        case_dict_chunks = chunked(iter_docs(db, case_ids, chunk_size),
+                                   chunk_size)
+        to_delete = []
+        for case_dicts in case_dict_chunks:
+            for case_dict in case_dicts:
+                if case_dict['doc_type'] == 'CommCareCase':
+                    to_delete.append(case_dict['_id'])
+                elif case_dict['doc_type'] != 'IndicatorCase':
+                    raise Exception("Unexpected case type {} found"
+                                    .format(case_dict['doc_type']))
+
+        assert db.uri != CommCareCase.get_db().uri
+        print "Deleting {} docs from db '{}'".format(len(to_delete), db.dbname)
+        iter_bulk_delete(db, to_delete, chunk_size)
