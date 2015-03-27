@@ -726,6 +726,33 @@ class AdvancedModuleAsChildTest(SimpleTestCase, TestFileMixin):
         ))
         self.assertXmlPartialEqual(self.get_xml('child-module-entry-datums'), self.app.create_suite(), "./entry")
 
+    def test_child_module_session_datums_added(self):
+        self.module_1.root_module_id = self.module_0.unique_id
+        self.module_0.case_type = 'gold-fish'
+        m0f0 = self.module_0.get_form(0)
+        m0f0.requires = 'case'
+        m0f0.actions.update_case = UpdateCaseAction(update={'question1': '/data/question1'})
+        m0f0.actions.update_case.condition.type = 'always'
+        m0f0.actions.subcases.append(OpenSubCaseAction(
+            case_type='guppy',
+            case_name="/data/question1",
+            condition=FormActionCondition(type='always')
+        ))
+
+        self.module_1.case_type = 'guppy'
+        m1f0 = self.module_1.get_form(0)
+        m1f0.actions.load_update_cases.append(LoadUpdateAction(
+            case_tag='gold-fish',
+            case_type='gold-fish'
+        ))
+        m1f0.actions.load_update_cases.append(LoadUpdateAction(
+            case_tag='guppy',
+            case_type='guppy',
+            parent_tag='gold-fish'
+        ))
+
+        self.assertXmlPartialEqual(self.get_xml('child-module-entry-datums-added'), self.app.create_suite(), "./entry")
+
     def test_deleted_parent(self):
         self.module_1.root_module_id = "unknownmodule"
 
