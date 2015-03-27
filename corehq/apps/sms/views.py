@@ -810,10 +810,13 @@ def api_history(request, domain):
             sender = _("System")
         last_sms = sms
         result.append({
-            "sender" : sender,
-            "text" : sms.text,
-            "timestamp" : ServerTime(sms.date).user_time(timezone).done().strftime("%I:%M%p %m/%d/%y").lower(),
-            "utc_timestamp" : json_format_datetime(sms.date),
+            "sender": sender,
+            "text": sms.text,
+            "timestamp": (
+                ServerTime(sms.date).user_time(timezone)
+                .ui_string("%I:%M%p %m/%d/%y").lower()
+            ),
+            "utc_timestamp": json_format_datetime(sms.date),
             "sent_by_requester": (sms.chat_user_id == request.couch_user.get_id),
         })
     if last_sms:

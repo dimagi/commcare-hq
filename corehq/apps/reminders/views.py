@@ -225,17 +225,26 @@ def add_one_time_reminder(request, domain, handler_id=None):
             return HttpResponseRedirect(reverse('one_time_reminders', args=[domain]))
     else:
         if handler is not None:
-            start_datetime = ServerTime(handler.start_datetime).user_time(timezone).done()
+            start_date_user_time = (ServerTime(handler.start_datetime)
+                                    .user_time(timezone))
             initial = {
-                "send_type" : SEND_LATER,
-                "date" : start_datetime.strftime("%Y-%m-%d"),
-                "time" : start_datetime.strftime("%H:%M"),
-                "recipient_type" : handler.recipient,
-                "case_group_id" : handler.sample_id,
-                "user_group_id" : handler.user_group_id,
-                "content_type" : handler.method,
-                "message" : handler.events[0].message[handler.default_lang] if handler.default_lang in handler.events[0].message else None,
-                "form_unique_id" : handler.events[0].form_unique_id if handler.events[0].form_unique_id is not None else None,
+                "send_type": SEND_LATER,
+                "date": start_date_user_time.ui_string("%Y-%m-%d"),
+                "time": start_date_user_time.ui_string("%H:%M"),
+                "recipient_type": handler.recipient,
+                "case_group_id": handler.sample_id,
+                "user_group_id": handler.user_group_id,
+                "content_type": handler.method,
+                "message": (
+                    handler.events[0].message[handler.default_lang]
+                    if handler.default_lang in handler.events[0].message
+                    else None
+                ),
+                "form_unique_id": (
+                    handler.events[0].form_unique_id
+                    if handler.events[0].form_unique_id is not None
+                    else None
+                ),
             }
         else:
             initial = {}
