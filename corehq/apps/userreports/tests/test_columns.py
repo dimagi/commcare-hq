@@ -11,7 +11,7 @@ from corehq.apps.userreports.models import (
     ReportConfiguration,
 )
 from corehq.apps.userreports.reports.factory import ReportFactory
-from corehq.apps.userreports.reports.specs import FieldColumn
+from corehq.apps.userreports.reports.specs import FieldColumn, PercentageColumn
 from corehq.apps.userreports.sql import _expand_column, _get_distinct_values
 
 from casexml.apps.case.mock import CaseBlock
@@ -200,3 +200,44 @@ class TestExpandFieldColumn(TestCase):
         self.assertEqual(len(cols), 2)
         self.assertEqual(type(cols[0].view), SumWhen)
         self.assertEqual(cols[1].view.whens, {'negative': 1})
+
+
+class TestPercentageColumn(SimpleTestCase):
+    def test_wrap(self):
+        wrapped = PercentageColumn.wrap({
+            'column_id': 'pct',
+            'numerator': {
+                "aggregation": "sum",
+                "field": "has_danger_signs",
+                "type": "field",
+            },
+            'denominator': {
+                "aggregation": "sum",
+                "field": "is_pregnant",
+                "type": "field",
+            },
+        })
+        self.assertEqual('pct', wrapped.column_id)
+        self.assertEqual('has_danger_signs', wrapped.numerator.field)
+        self.assertEqual('is_pregnant', wrapped.denominator.field)
+
+    def test_missing_fields(self):
+        field_spec = {
+            "aggregation": "simple",
+            "field": "is_pregnant",
+            "type": "field",
+        }
+        with self.assertRaises(BadValueError):
+            PercentageColumn.wrap({
+                'column_id': 'pct',
+            })
+        with self.assertRaises(BadValueError):
+            PercentageColumn.wrap({
+                'column_id': 'pct',
+                'numerator': field_spec,
+            })
+        with self.assertRaises(BadValueError):
+            PercentageColumn.wrap({
+                'column_id': 'pct',
+                'denominator': field_spec,
+            })

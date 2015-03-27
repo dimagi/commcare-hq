@@ -83,6 +83,11 @@ class FieldColumn(ReportColumn):
         )
 
 
+class PercentageColumn(ReportColumn):
+    numerator = ObjectProperty(FieldColumn, required=True)
+    denominator = ObjectProperty(FieldColumn, required=True)
+
+
 class FilterChoice(JsonObject):
     value = DefaultProperty()
     display = StringProperty()
