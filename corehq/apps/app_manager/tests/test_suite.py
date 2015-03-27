@@ -887,7 +887,7 @@ class TestFormLinking(SimpleTestCase, TestFileMixin):
 
         self.assertXmlPartialEqual(self.get_xml('form_link_multiple'), app.create_suite(), "./entry[1]")
 
-    def test_with_case_management_advanced_module(self):
+    def test_link_to_child_module(self):
         spec = {
             "m": [
                 {
@@ -940,3 +940,50 @@ class TestFormLinking(SimpleTestCase, TestFileMixin):
         ]
 
         self.assertXmlPartialEqual(self.get_xml('form_link_tdh'), app.create_suite(), "./entry")
+
+    def test_link_to_form_in_parent_module(self):
+        spec = {
+            "m": [
+                {
+                    "name": "enroll child",
+                    "type": "basic",
+                    "case_type": "child",
+                    "f": [
+                        {"name": "enroll child", "actions": ["open"]}
+                    ]
+                },
+                {
+                    "name": "child visit module",
+                    "type": "basic",
+                    "case_type": "child",
+                    "f": [
+                        {"name": "edit child", "actions": [
+                            "update",
+                        ]}
+                    ]
+                },
+                {
+                    "name": "visit history",
+                    "type": "advanced",
+                    "case_type": "visit",
+                    "parent": "child visit module",
+                    "f": [
+                        {"name": "link to child", "actions": [
+                            {"action": "update", "case_type": "child"},
+                        ]}
+                    ]
+                }
+            ]
+        }
+        app = self.make_app(spec)
+
+        m1f1 = app.get_form("edit child")
+        m2f1 = app.get_form("link to child")
+
+        # link to child -> edit child
+        m2f1.post_form_workflow = WORKFLOW_FORM
+        m2f1.form_links = [
+            FormLink(xpath="true()", form_id=m1f1.unique_id),
+        ]
+
+        self.assertXmlPartialEqual(self.get_xml('form_link_child_modules'), app.create_suite(), "./entry[3]")
