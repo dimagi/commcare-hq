@@ -86,13 +86,13 @@ class EWSData(object):
         else:
             return [location]
 
-    def unique_products(self, locations):
+    def unique_products(self, locations, all=False):
         products = list()
         for loc in locations:
-            if self.config['products']:
+            if self.config['products'] and not all:
                 products.extend([p for p in loc.products if p.product_id in self.config['products'] and
                                  not p.is_archived])
-            elif self.config['program']:
+            elif self.config['program'] and not all:
                 products.extend([p for p in loc.products if p.program_id == self.config['program'] and
                                  not p.is_archived])
             else:
@@ -285,12 +285,13 @@ class ProductSelectionPane(EWSData):
     @property
     def rows(self):
         locations = get_supply_points(self.config['location_id'], self.config['domain'])
-        products = self.unique_products(locations)
+        products = self.unique_products(locations, all=True)
         programs = {program.get_id: program.name for program in Program.by_domain(self.domain)}
         result = [
             [
                 '<input class=\"toggle-column\" name=\"{1} ({0})\" data-column={2} value=\"{0}\" type=\"checkbox\"'
-                '{3}>{1} ({0})</input>'.format(p.code, p.name, idx, 'checked'), programs[p.program_id], p.code
+                '{3}>{1} ({0})</input>'.format(p.code, p.name, idx, 'checked' if self.config['program'] is None or
+                self.config['program'] == p.program_id else ''), programs[p.program_id], p.code
             ] for idx, p in enumerate(products, start=1)
         ]
 

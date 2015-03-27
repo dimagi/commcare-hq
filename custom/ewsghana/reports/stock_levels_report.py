@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import timedelta
 from django.utils.timesince import timesince
 from math import ceil
@@ -170,34 +171,28 @@ class InventoryManagementData(EWSData):
         stoke_states = StockState.objects.filter(
             case_id=loc.supply_point_id,
             section_id=STOCK_SECTION_TYPE,
-            sql_product__in=self.unique_products([loc]),
-            last_modified_date__lte=self.config['enddate']
+            sql_product__in=self.unique_products([loc], all=True),
         )
 
         consumptions = {ss.product_id: ss.daily_consumption for ss in stoke_states}
-
         st = StockTransaction.objects.filter(
             case_id=loc.supply_point_id,
-            sql_product__in=self.unique_products([loc]),
+            sql_product__in=self.unique_products([loc], all=True),
             type='stockonhand',
             report__date__lte=self.config['enddate']
         ).order_by('report__date')
 
-        rows = {}
+        rows = defaultdict(dict)
         weeks = ceil((self.config['enddate'] - self.config['startdate']).days / 7.0)
         stock_levels = CommtrackConfig.for_domain(self.config['domain']).stock_levels_config
-
-        for state in stoke_states:
-            consumptions[state.product_id] = state.daily_consumption
-            product_name = '{0} ({1})'.format(state.sql_product.name, state.sql_product.code)
-            rows[product_name] = {}
 
         for state in st:
             product_name = '{0} ({1})'.format(state.sql_product.name, state.sql_product.code)
             for i in range(1, int(weeks + 1)):
                 date = self.config['startdate'] + timedelta(weeks=i)
                 if state.report.date < date:
-                    rows[product_name][i] = calculate_weeks_remaining(state, consumptions[state.product_id], date)
+                    rows[product_name][i] = calculate_weeks_remaining(
+                        state, consumptions.get(state.product_id, None), date)
 
         for k, v in rows.iteritems():
             rows[k] = [{'x': key, 'y': value} for key, value in v.iteritems()]
