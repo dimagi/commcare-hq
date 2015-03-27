@@ -72,10 +72,12 @@
                     contextVariables: COMMCAREHQ.app_manager.module_view
                 });
                 var $list_home = $("#" + detail.type + "-detail-screen-config-tab");
-                var $detail_home = $("#" + detail.type + "-detail-screen-detail-config-tab");
-
                 ko.applyBindings(detailScreenConfig, $list_home.get(0));
-                ko.applyBindings(detailScreenConfig, $detail_home.get(0));
+
+                if (detail.long !== undefined) {
+                    var $detail_home = $("#" + detail.type + "-detail-screen-detail-config-tab");
+                    ko.applyBindings(detailScreenConfig, $detail_home.get(0));
+                }
             }
         });
         $(function () {
@@ -303,9 +305,11 @@
     <div class="tab-pane" id="{{ detail.type }}-detail-screen-config-tab">
         {% include 'app_manager/partials/case_list.html' %}
     </div>
+    {% if detail.long %}
     <div class="tab-pane" id="{{ detail.type }}-detail-screen-detail-config-tab">
         {% include 'app_manager/partials/case_detail.html' %}
     </div>
+    {% endif %}
     {% endfor %}
 </div>
 </div>
