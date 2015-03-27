@@ -58,6 +58,7 @@
         el.show();
     });
 
+    analytics.track("Visited Releases-page");
 </script>
 <script>
     function track_deploy_type(type) {
@@ -136,7 +137,7 @@
             </small></p>
         </div>
         <button class="btn btn-primary" data-bind="
-            click: makeNewBuild,
+            click: function() {analytics.track('Clicked Make-New-Version'); return makeNewBuild();},
             attr: {disabled: !buildButtonEnabled() ? 'disabled' : undefined},
             css: {disabled: !buildButtonEnabled()}
         ">{% trans 'Make New Version' %}</button>
@@ -209,7 +210,7 @@
                             <a class="btn" data-bind="
                                 openModal: 'deploy-build-modal-template',
                                 css: {'btn-primary': !build_broken(), 'btn-danger': build_broken},
-                                click: function() { ga_track_event('App Manager', 'Deploy Button', '{{ app.id }}'); }
+                                click: function() { ga_track_event('App Manager', 'Deploy Button', '{{ app.id }}'); analytics.identify('Clicked Deploy-Button');}
                             ">
                                 <span class="icon icon-exclamation-sign" data-bind="visible: build_broken"></span>
                                 {% trans "Deploy" %}

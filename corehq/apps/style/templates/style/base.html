@@ -69,8 +69,7 @@
         {% block head %}
         {% endblock %}
 
-        {% include 'style/includes/analytics_google.html' %}
-        {% include 'style/includes/analytics_pingdom.html' %}
+        {% include 'style/includes/analytics_all.html' %}
 
         {% if less_debug %}
             <script src="{% new_static 'style/lib/lessjs/less-1.7.3.min.js' cache=True %}"></script>
