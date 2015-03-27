@@ -244,12 +244,6 @@ class EmwfMixin(object):
         return user_type_tuples
 
     def get_location_groups(self):
-        def case_share_types():
-            return [
-                loc_type for loc_type in Domain.get_by_name(self.domain).location_types
-                if loc_type.shares_cases
-            ]
-
         locations = SQLLocation.objects.filter(
             name__icontains=self.q.lower(),
             domain=self.domain,
@@ -260,9 +254,7 @@ class EmwfMixin(object):
 
         if self.include_share_groups:
             # filter out any non case share type locations for this part
-            locations = locations.filter(
-                location_type__in=[t.pk for t in case_share_types()]
-            )
+            locations = locations.filter(location_type__shares_cases=True)
             for loc in locations:
                 group = loc.case_sharing_group_object()
                 yield (group._id, group.name + ' [case sharing]')
