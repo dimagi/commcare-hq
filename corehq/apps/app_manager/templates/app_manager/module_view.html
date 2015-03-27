@@ -232,14 +232,10 @@
                         {% trans "Module filter" %}
                     </label>
                     <div class="controls commcare-feature" data-since-version="2.20">
-                        {% if edit %}
                         <input type="text"
                             placeholder="{% trans "XPath expression" %}"
                             name="module_filter"
                             value="{% if module.module_filter %}{{ module.module_filter }}{% endif %}"/>
-                        {% else %}
-                            {{ module.module_filter|default:"" }}
-                        {% endif %}
                     </div>
                 </div>
                 {% include "app_manager/partials/nav_menu_media.html" with ICON_LABEL="Icon" AUDIO_LABEL="Audio" %}
