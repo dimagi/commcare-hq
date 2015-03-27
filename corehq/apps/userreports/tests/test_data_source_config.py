@@ -4,7 +4,8 @@ import datetime
 from decimal import Decimal
 from django.test import SimpleTestCase, TestCase
 from jsonobject.exceptions import BadValueError
-from corehq.apps.userreports.models import DataSourceConfiguration
+from corehq.apps.userreports.models import DataSourceConfiguration, \
+    CustomDataSourceConfiguration
 
 
 class DataSourceConfigurationTest(SimpleTestCase):
@@ -63,6 +64,11 @@ class DataSourceConfigurationTest(SimpleTestCase):
                 # todo: this is a hack due to the fact that type conversion currently happens
                 # in the database layer. this should eventually be fixed.
                 self.assertEqual(str(expected_indicators[result.column.id]), result.value)
+
+    def test_serializable_custom_configs(self):
+        for config in CustomDataSourceConfiguration.all():
+            # There are some serialization issues with custom configurations.
+            config.to_json()
 
 
 def get_sample_data_source():
