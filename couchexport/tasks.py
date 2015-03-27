@@ -3,7 +3,7 @@ from unidecode import unidecode
 from celery.task import task
 import zipfile
 from couchexport.files import Temp
-from couchexport.models import Format, ExportSchema
+from couchexport.models import Format, ExportSchema, GroupExportConfiguration
 import tempfile
 import os
 from soil.util import expose_download
@@ -36,6 +36,7 @@ def export_async(custom_export, download_id, format=None, filename=None, **kwarg
         else:
             return cache_file_to_be_served(None, None, download_id, format, filename)
 
+
 @task
 def rebuild_schemas(index):
     """
@@ -50,6 +51,7 @@ def rebuild_schemas(index):
         cp.schema = latest.schema
         cp.save()
     return len(all_checkpoints)
+
 
 @task
 def bulk_export_async(bulk_export_helper, download_id,
@@ -97,6 +99,14 @@ def bulk_export_async(bulk_export_helper, download_id,
             format=export_object.format,
             expiry=expiry
         )
+
+
+@task(queue='background_queue')
+def rebuild_export_task(groupexport_id, index, output_dir='couch', last_access_cutoff=None):
+    from couchexport.groupexports import rebuild_export
+    group_config = GroupExportConfiguration.get(groupexport_id)
+    config, schema = group_config.all_exports[index]
+    rebuild_export(config, schema, output_dir, last_access_cutoff)
 
 
 def escape_quotes(s):
