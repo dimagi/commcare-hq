@@ -27,7 +27,7 @@ base:
   celery_params:
     main:
       concurrency: 1
-    doc_deletion_queue:
+    background_queue:
       concurrency: 1
     periodic:
       concurrency: 1
@@ -60,8 +60,8 @@ india:
   celery_params:
     main:
       concurrency: 8
-    doc_deletion_queue:
-      concurrency: 2
+    background_queue:
+      concurrency: 4
     periodic:
       concurrency: 4
     pillow_retry_queue:
@@ -100,8 +100,8 @@ production:
   celery_params:
     main:
       concurrency: 8
-    doc_deletion_queue:
-      concurrency: 2
+    background_queue:
+      concurrency: 4
     periodic:
       concurrency: 4
     pillow_retry_queue:
@@ -131,7 +131,7 @@ staging:
   celery_params:
     main:
       concurrency: 4
-    doc_deletion_queue:
+    background_queue:
       concurrency: 2
     pillow_retry_queue:
       concurrency: 1
@@ -158,8 +158,8 @@ zambia:
   celery_params:
     main:
       concurrency: 4
-    doc_deletion_queue:
-      concurrency: 2
+    background_queue:
+      concurrency: 4
     periodic:
       concurrency: 4
     pillow_retry_queue:

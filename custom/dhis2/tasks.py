@@ -254,7 +254,8 @@ def gen_children_only_ours(domain):
             yield CommCareCase.wrap(doc)
 
 
-@periodic_task(run_every=timedelta(hours=6))  # Check for new cases on DHIS2 every 6 hours
+# Check for new cases on DHIS2 every 6 hours
+@periodic_task(run_every=timedelta(hours=6), queue='background_queue')
 def fetch_cases():
     """
     Import new child cases from DHIS2 for nutrition tracking
@@ -266,7 +267,7 @@ def fetch_cases():
 
 
 # There is a large number of org units, but the lookup table is not deployed to handsets.
-@periodic_task(run_every=crontab(minute=3, hour=3))  # Run daily at 03h03
+@periodic_task(run_every=crontab(minute=3, hour=3), queue='background_queue')
 def fetch_org_units():
     """
     Synchronize DHIS2 Organization Units with local data.

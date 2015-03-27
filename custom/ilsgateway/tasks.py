@@ -13,12 +13,11 @@ from custom.ilsgateway.api import ILSGatewayEndpoint, ILSGatewayAPI
 from custom.logistics.commtrack import bootstrap_domain as ils_bootstrap_domain, save_stock_data_checkpoint
 from custom.ilsgateway.models import ILSGatewayConfig, SupplyPointStatus, DeliveryGroupReport, ReportRun
 from custom.ilsgateway.tanzania.warehouse_updater import populate_report_data
-import settings
 from custom.logistics.tasks import stock_data_task, sync_stock_transactions
 
 
 @periodic_task(run_every=crontab(hour="23", minute="55", day_of_week="*"),
-               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+               queue='background_queue')
 def migration_task():
     for config in ILSGatewayConfig.get_all_steady_sync_configs():
         if config.enabled:
@@ -28,7 +27,7 @@ def migration_task():
             stock_data_task.delay(config.domain, endpoint, apis, config, ILS_FACILITIES)
 
 
-@task
+@task(queue='background_queue')
 def ils_bootstrap_domain_task(domain):
     ils_config = ILSGatewayConfig.for_domain(domain)
     return ils_bootstrap_domain(ILSGatewayAPI(domain, ILSGatewayEndpoint.from_config(ils_config)))
@@ -146,7 +145,7 @@ def get_delivery_group_reports(domain, endpoint, facilities, checkpoint, date, l
 
 
 # Temporary for staging
-@task
+@task(queue='background_queue')
 def ils_clear_stock_data_task():
     StockTransaction.objects.filter(report__domain='ilsgateway-test-1').delete()
     StockReport.objects.filter(domain='ilsgateway-test-1').delete()
@@ -155,7 +154,7 @@ def ils_clear_stock_data_task():
 
 
 # @periodic_task(run_every=timedelta(days=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
-@task
+@task(queue='background_queue')
 def report_run(domain):
     last_successful_run = ReportRun.last_success(domain)
     last_run = ReportRun.last_run(domain)
