@@ -656,42 +656,42 @@ def deploy():
 
 def _deploy_without_asking():
     try:
-        execute(update_code)
-        execute(update_virtualenv)
+        _execute_with_timing(update_code)
+        _execute_with_timing(update_virtualenv)
 
         # handle static files
-        execute(version_static)
-        execute(_do_collectstatic)
-        execute(_do_compress)
+        _execute_with_timing(version_static)
+        _execute_with_timing(_do_collectstatic)
+        _execute_with_timing(_do_compress)
         # initial update of manifest to make sure we have no
         # Offline Compression Issues as services restart
-        execute(update_manifest, soft=True)
+        _execute_with_timing(update_manifest, soft=True)
 
-        execute(clear_services_dir)
+        _execute_with_timing(clear_services_dir)
         set_supervisor_config()
 
         do_migrate = env.should_migrate
         if do_migrate:
-            execute(stop_pillows)
-            execute(stop_celery_tasks)
-            execute(_migrate)
+            _execute_with_timing(stop_pillows)
+            _execute_with_timing(stop_celery_tasks)
+            _execute_with_timing(_migrate)
         else:
             print(blue("No migration required, skipping."))
-        execute(do_update_django_locales)
+        _execute_with_timing(do_update_django_locales)
         if do_migrate:
-            execute(flip_es_aliases)
+            _execute_with_timing(flip_es_aliases)
 
         # hard update of manifest.json since we're about to force restart
         # all services
-        execute(update_manifest)
+        _execute_with_timing(update_manifest)
     except Exception:
-        execute(mail_admins, "Deploy failed", "You had better check the logs.")
+        _execute_with_timing(mail_admins, "Deploy failed", "You had better check the logs.")
         # hopefully bring the server back to life
-        execute(services_restart)
+        _execute_with_timing(services_restart)
         raise
     else:
-        execute(services_restart)
-        execute(record_successful_deploy)
+        _execute_with_timing(services_restart)
+        _execute_with_timing(record_successful_deploy)
 
 
 @task
@@ -729,7 +729,7 @@ def awesome_deploy(confirm="yes"):
     max_wait = datetime.timedelta(minutes=5)
     pause_length = datetime.timedelta(seconds=5)
 
-    execute(preindex_views)
+    _execute_with_timing(preindex_views)
 
     start = datetime.datetime.utcnow()
 
@@ -1110,13 +1110,13 @@ def set_pillow_retry_queue_supervisorconf():
 def set_supervisor_config():
     """Upload and link Supervisor configuration from the template."""
     _require_target()
-    execute(set_celery_supervisorconf)
-    execute(set_djangoapp_supervisorconf)
-    execute(set_formsplayer_supervisorconf)
-    execute(set_pillowtop_supervisorconf)
-    execute(set_sms_queue_supervisorconf)
-    execute(set_reminder_queue_supervisorconf)
-    execute(set_pillow_retry_queue_supervisorconf)
+    _execute_with_timing(set_celery_supervisorconf)
+    _execute_with_timing(set_djangoapp_supervisorconf)
+    _execute_with_timing(set_formsplayer_supervisorconf)
+    _execute_with_timing(set_pillowtop_supervisorconf)
+    _execute_with_timing(set_sms_queue_supervisorconf)
+    _execute_with_timing(set_reminder_queue_supervisorconf)
+    _execute_with_timing(set_pillow_retry_queue_supervisorconf)
 
     # if needing tunneled ES setup, comment this back in
     # execute(set_elasticsearch_supervisorconf)
@@ -1205,8 +1205,15 @@ def reset_pillow(pillow):
     ))
 
 
-# tests
+def _execute_with_timing(fn, *args, **kwargs):
+    start_time = datetime.datetime.utcnow()
+    execute(fn, *args, **kwargs)
+    if env.timing_log:
+        with open(env.timing_log, 'a') as timing_log:
+            duration = datetime.datetime.utcnow() - start_time
+            timing_log.write('{}: {}\n'.format(fn.__name__, duration.seconds))
 
+# tests
 @task
 def selenium_test():
     _require_target()
