@@ -57,8 +57,8 @@ def start_session(domain, contact, app, module, form, case_id=None, yield_respon
     
     if app and form:
         suite_gen = SuiteGenerator(app)
-        datums = suite_gen.get_new_case_id_datums(form)
-        session_data.update({datum.id: uuid.uuid4().hex for datum in datums})
+        datums = suite_gen.get_new_case_id_datums_meta(form)
+        session_data.update({meta['datum'].id: uuid.uuid4().hex for meta in datums})
 
     language = contact.get_language_code()
     config = XFormsConfig(form_content=form.render_xform(),

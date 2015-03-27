@@ -197,8 +197,8 @@ def form_context(request, domain, app_id, module_id, form_id):
 
     session_extras = {'session_name': session_name, 'app_id': app._id}
     suite_gen = SuiteGenerator(app)
-    datums = suite_gen.get_new_case_id_datums(form)
-    session_extras.update({datum.id: uuid.uuid4().hex for datum in datums})
+    datums = suite_gen.get_new_case_id_datums_meta(form)
+    session_extras.update({datum['datum'].id: uuid.uuid4().hex for datum in datums})
 
     delegation = request.GET.get('task-list') == 'true'
     offline = request.GET.get('offline') == 'true'
