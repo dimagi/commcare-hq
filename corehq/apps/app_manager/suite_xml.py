@@ -1668,13 +1668,13 @@ class SuiteGenerator(SuiteGeneratorBase):
 
         if module.get_app().commtrack_enabled:
             try:
-                last_action = form.actions.load_update_cases[-1]
+                last_action = list(form.actions.get_load_update_actions())[-1]
                 if last_action.show_product_stock:
                     nodeset = ProductInstanceXpath().instance()
                     if last_action.product_program:
                         nodeset = nodeset.select('program_id', last_action.product_program)
 
-                    target_module = get_target_module(action.case_type, last_action.details_module, True)
+                    target_module = get_target_module(last_action.case_type, last_action.details_module, True)
 
                     datums.append({
                         'datum': SessionDatum(
