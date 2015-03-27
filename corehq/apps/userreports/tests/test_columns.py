@@ -22,6 +22,24 @@ from casexml.apps.case.xml import V2
 
 
 class TestFieldColumn(SimpleTestCase):
+
+    def testColumnSetFromAlias(self):
+        field = FieldColumn.wrap({
+            "aggregation": "simple",
+            "field": "doc_id",
+            "alias": "the_right_answer",
+            "type": "field",
+        })
+        self.assertEqual('the_right_answer', field.column_id)
+
+    def testColumnDefaultsToField(self):
+        field = FieldColumn.wrap({
+            "aggregation": "simple",
+            "field": "doc_id",
+            "type": "field",
+        })
+        self.assertEqual('doc_id', field.column_id)
+
     def testBadAggregation(self):
         with self.assertRaises(BadValueError):
             FieldColumn.wrap({
