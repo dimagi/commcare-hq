@@ -69,3 +69,12 @@ class PricingPublicView(TemplateView):
         kwargs['is_pricing'] = True
         return super(PricingPublicView, self).get_context_data(**kwargs)
 
+
+class ServicesDetailsPublicView(TemplateView):
+    urlname = 'public_services_details'
+    template_name = 'public/services_details.html'
+
+    def get_context_data(self, **kwargs):
+        kwargs['is_services'] = True
+        return super(ServicesDetailsPublicView, self).get_context_data(**kwargs)
+

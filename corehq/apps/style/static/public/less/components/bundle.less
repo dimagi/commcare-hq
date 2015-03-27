@@ -138,3 +138,67 @@
     border-top: none;
   }
 }
+
+.bundle-row-section-header {
+  background-color: @cc-neutral-low;
+  color: @cc-neutral-hi;
+
+  h3 {
+    font-size: 18px;
+    font-weight: 200;
+    line-height: 50px;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+.bundle-row {
+  background: fade(@cc-bg, 60);
+  margin-bottom: 1px;
+
+  h4 {
+    font-size: 14px;
+    font-weight: 300;
+  }
+
+  .pricing-info {
+    line-height: 100%;
+    border: 1px solid @cc-bg;
+    border-top: none;
+
+    > p {
+      height: 100%;
+    }
+  }
+}
+
+.bundle-row-triple {
+  .pricing-info {
+    height: 70px;
+  }
+  .pricing-info > p {
+    line-height: 40px;
+  }
+}
+
+.bundle-row-triple-sm {
+  @media (max-width: @screen-sm-max) {
+    .pricing-info {
+      height: 70px;
+    }
+    .pricing-info > p {
+      line-height: 40px;
+    }
+  }
+}
+
+.bundle-row-quad-sm {
+  @media (max-width: @screen-sm-max) {
+    .pricing-info {
+      height: 80px;
+    }
+    .pricing-info > p {
+      line-height: 50px;
+    }
+  }
+}
