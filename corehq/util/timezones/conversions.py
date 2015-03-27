@@ -1,4 +1,6 @@
 import pytz
+from corehq.const import USER_DATETIME_FORMAT
+from corehq.util.dates import safe_strftime
 
 TIMEZONE_DATA_MIGRATION_COMPLETE = False
 
@@ -43,6 +45,9 @@ class UserTime(_HQTZTime):
 
     def phone_time(self, phone_tz_guess):
         return self.server_time().phone_time(phone_tz_guess)
+
+    def ui_string(self, fmt=USER_DATETIME_FORMAT):
+        safe_strftime(self._datetime, fmt)
 
 
 class PhoneTime(_HQTZTime):

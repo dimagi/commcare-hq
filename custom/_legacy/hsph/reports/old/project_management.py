@@ -1,9 +1,11 @@
+import dateutil.parser
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.standard import (CustomProjectReport,
     ProjectReportParametersMixin, DatespanMixin)
 from corehq.apps.reports.datatables import (DataTablesColumn, DataTablesHeader,
     DTSortType)
 from corehq.apps.reports.generic import GenericTabularReport
+from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch.database import get_db
 from hsph.fields import (FacilityStatusField, IHForCHFField, SiteField,
     NameOfDCTLField)
@@ -193,6 +195,15 @@ class ImplementationStatusDashboardReport(GenericTabularReport, ProjectManagemen
                     for item in data:
                         item = item.get('value', {})
                         fac_stat = item.get('facilityStatus', -1)
+                        try:
+                            last_updated = dateutil.parser.parse(item.get('lastUpdated', "--")).replace(tzinfo=None)
+                        except ValueError:
+                            last_updated_str = item.get('lastUpdated', "--")
+                        else:
+                            last_updated_str = (
+                                ServerTime(last_updated)
+                                .user_time(self.timezone).ui_string()
+                            )
                         rows.append([
                             self.table_cell(fac_stat, pb_temp % dict(percent=(fac_stat+2)*25)),
                             region,
@@ -201,6 +212,6 @@ class ImplementationStatusDashboardReport(GenericTabularReport, ProjectManagemen
                             user.username_in_report,
                             site,
                             FacilityStatusField.options[fac_stat+1]['text'],
-                            tz_utils.string_to_pretty_time(item.get('lastUpdated', "--"), to_tz=self.timezone)
+                            last_updated_str,
                         ])
         return rows

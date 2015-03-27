@@ -27,6 +27,7 @@ from django.utils.safestring import mark_safe
 from django.utils.html import escape, conditional_escape
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import pretty_doc_info
+from corehq.const import USER_DATETIME_FORMAT, USER_DATE_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 
 register = template.Library()
@@ -56,8 +57,8 @@ def parse_date_or_datetime(val):
         return val if val else None
 
 
-def to_html(key, val, level=0, datetime_fmt="%b %d, %Y %H:%M %Z",
-            date_fmt="%b %d, %Y", timeago=False, timezone=pytz.utc,
+def to_html(key, val, level=0, datetime_fmt=USER_DATETIME_FORMAT,
+            date_fmt=USER_DATE_FORMAT, timeago=False, timezone=pytz.utc,
             key_format=None, collapse_lists=False):
     """
     Recursively convert a value to its HTML representation using <dl>s for

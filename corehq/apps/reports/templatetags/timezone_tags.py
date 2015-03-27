@@ -6,11 +6,11 @@ register = template.Library()
 
 
 @register.simple_tag
-def utc_to_timezone(date, timezone, dest_fmt="%b %d, %Y %H:%M %Z"):
+def utc_to_timezone(date, timezone):
     if not timezone:
         timezone = pytz.utc
     if not date:
         return "---"
     if isinstance(date, basestring):
         raise ValueError("utc_to_timezone no longer accepts strings")
-    return ServerTime(date).user_time(timezone).done().strftime(dest_fmt)
+    return ServerTime(date).user_time(timezone).ui_string()

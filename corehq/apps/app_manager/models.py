@@ -32,6 +32,7 @@ from django.template.loader import render_to_string
 from restkit.errors import ResourceError
 from couchdbkit.resource import ResourceNotFound
 from corehq import toggles, privileges
+from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import ServerTime
@@ -3293,10 +3294,11 @@ class SavedAppBuild(ApplicationBase):
                     '_attachments', 'profile', 'translations'
                     'description', 'short_description'):
             data.pop(key, None)
+        built_on_user_time = ServerTime(self.built_on).user_time(timezone)
         data.update({
             'id': self.id,
-            'built_on_date': ServerTime(self.built_on).user_time(timezone).done().strftime("%b %d, %Y"),
-            'built_on_time': ServerTime(self.built_on).user_time(timezone).done().strftime("%H:%M %Z"),
+            'built_on_date': built_on_user_time.ui_string(USER_DATE_FORMAT),
+            'built_on_time': built_on_user_time.ui_string(USER_TIME_FORMAT),
             'build_label': self.built_with.get_label(),
             'jar_path': self.get_jar_path(),
             'short_name': self.short_name,
