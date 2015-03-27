@@ -60,7 +60,7 @@ india:
     main:
       concurrency: 8
     background_queue:
-      concurrency: 2
+      concurrency: 4
     periodic:
       concurrency: 4
     pillow_retry_queue:
@@ -100,7 +100,7 @@ production:
     main:
       concurrency: 8
     background_queue:
-      concurrency: 2
+      concurrency: 4
     periodic:
       concurrency: 4
     pillow_retry_queue:
@@ -158,7 +158,7 @@ zambia:
     main:
       concurrency: 4
     background_queue:
-      concurrency: 2
+      concurrency: 4
     periodic:
       concurrency: 4
     pillow_retry_queue:
