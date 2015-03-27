@@ -556,6 +556,7 @@ COUCHLOG_DISPLAY_COLS = ["id", "archived?", "date", "exception type", "message",
                          "domain", "user", "url", "actions", "report"]
 COUCHLOG_RECORD_WRAPPER = "corehq.apps.hqcouchlog.wrapper"
 COUCHLOG_DATABASE_NAME = "commcarehq-couchlog"
+COUCHLOG_AUTH_DECORATOR = 'corehq.apps.domain.decorators.require_superuser_or_developer'
 
 # couchlog/case search
 LUCENE_ENABLED = False
