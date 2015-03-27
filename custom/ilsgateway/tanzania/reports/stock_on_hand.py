@@ -119,10 +119,12 @@ class SohPercentageTableData(ILSData):
                 soh_late = soh_data.late * 100 / facs_count
                 soh_not_responding = soh_data.not_responding * 100 / facs_count
                 fac_ids = facs.exclude(supply_point_id__isnull=True).values_list(*['supply_point_id'], flat=True)
-                stockouts = (StockTransaction.objects.filter(
-                    case_id__in=fac_ids, quantity__lte=0,
+                stockouts = StockTransaction.objects.filter(
+                    case_id__in=list(fac_ids), stock_on_hand__lte=0,
                     report__date__month=self.config['enddate'].month,
-                    report__date__year=self.config['enddate'].year).count() or 0) / facs_count
+                    report__date__year=self.config['enddate'].year,
+                    type='stockonhand').order_by('case_id').distinct('case_id').count()
+                percent_stockouts = (stockouts or 0) * 100 / float(facs_count)
 
                 url = make_url(
                     StockOnHandReport,
@@ -135,19 +137,19 @@ class SohPercentageTableData(ILSData):
                     format_percent(soh_on_time),
                     format_percent(soh_late),
                     format_percent(soh_not_responding),
-                    format_percent(stockouts)
+                    format_percent(percent_stockouts)
                 ]
 
                 for product in prd_id:
                     ps = ProductAvailabilityData.objects.filter(
-                        supply_point=loc.location_id,
+                        supply_point=org_summary[0].supply_point,
                         product=product,
                         date__range=(self.config['startdate'], self.config['enddate']))\
                         .aggregate(without_stock=Avg('without_stock'), total=Max('total'))
                     if ps['without_stock'] and ps['total']:
                         row_data.append(format_percent(ps['without_stock'] * 100 / float(ps['total'])))
                     else:
-                        row_data.append("<span class='no_data'>None</span>")
+                        row_data.append("<span class='no_data'>No Data</span>")
                 rows.append(row_data)
 
         return rows
@@ -360,7 +362,7 @@ class ProductSelectionPane(ILSData):
             [
                 '<input class=\"toggle-column\" data-column={2} value=\"{0}\" type=\"checkbox\"'
                 '{3}>{1} ({0})</input>'
-                .format(p.code, p.name, idx, 'checked' if 5 <= idx <= 10 else 'disabled')
+                .format(p.code, p.name, idx, 'checked' if 5 <= idx <= 14 else 'disabled')
             ] for idx, p in enumerate(products, start=5)
         ]
         return result

@@ -357,7 +357,8 @@ def process_facility_warehouse_data(facility, start_date, end_date):
     new_trans = StockTransaction.objects.filter(
         case_id=supply_point_id,
         report__date__gte=start_date,
-        report__date__lt=end_date
+        report__date__lt=end_date,
+        type='stockonhand'
     ).order_by('report__date')
     process_facility_transactions(location_id, new_trans)
 

@@ -233,7 +233,7 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport,
             program = self.request.GET.get('filter_by_program', '')
             if program and program != ALL_OPTION:
                 products_list = self.request.GET.getlist('filter_by_product')
-                if products_list and products_list[0] == ALL_OPTION:
+                if (products_list and products_list[0] == ALL_OPTION) or not products_list:
                     products = SQLProduct.objects.filter(program_id=program, is_archived=False)\
                         .order_by('code')\
                         .values_list('product_id', flat=True)
