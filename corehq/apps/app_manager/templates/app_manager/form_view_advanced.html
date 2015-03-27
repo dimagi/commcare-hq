@@ -10,13 +10,11 @@
 
 {% block case_management_js %}{{ block.super }}
     {% if form.source %}
-    var edit = {% if edit %}true{% else %}false{% endif %};
     var caseConfig = new AdvancedCase.CaseConfig({
         home: $('#casexml_home'),
         actions: {{ form.actions|JSON }},
         questions: {{ xform_questions|JSON }},
         requires: form_requires,
-        edit: edit,
         save_url: "{% url "corehq.apps.app_manager.views.edit_advanced_form_actions" app.domain app.id module.id nav_form.id %}",
         caseType: {{ form.get_case_type|JSON }},
         module_id: {{ module.unique_id|JSON }},
@@ -33,7 +31,6 @@
     var visitScheduler = new VisitScheduler.Scheduler({
         home: $('#visit-scheduler'),
         questions: {{ xform_questions|JSON }},
-        edit: edit,
         save_url: "{% url "corehq.apps.app_manager.views.edit_visit_schedule" app.domain app.id module.id nav_form.id %}",
         schedule: {{ form.schedule|JSON }}
     });

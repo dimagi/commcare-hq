@@ -171,7 +171,7 @@ CASE_TYPE_CONFLICT_MSG = (
 
 @require_deploy_apps
 def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
-                 unique_form_id=None, edit=True):
+                 unique_form_id=None):
     """
     returns an HttpResponseRedirect back to the main page for the App Manager app
     with the correct GET parameters.
@@ -183,8 +183,6 @@ def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
 
     page = None
     params = {}
-    if edit:
-        params['edit'] = 'true'
 
     args = [domain]
 
@@ -645,21 +643,9 @@ def _clear_app_cache(request, domain):
         cache.delete(key)
 
 
-def _get_edit(request, domain):
-    if getattr(request, 'couch_user', None):
-        return (
-            (request.GET.get('edit', 'true') == 'true') and
-            (request.couch_user.can_edit_apps(domain) or request.user.is_superuser)
-        )
-    else:
-        return False
-
-
 def get_apps_base_context(request, domain, app):
 
     lang, langs = get_langs(request, app)
-
-    edit = _get_edit(request, domain)
 
     if getattr(request, 'couch_user', None):
         timezone = report_utils.get_timezone(request.couch_user, domain)
@@ -670,7 +656,6 @@ def get_apps_base_context(request, domain, app):
         'lang': lang,
         'langs': langs,
         'domain': domain,
-        'edit': edit,
         'app': app,
         'URL_BASE': get_url_base(),
         'timezone': timezone,
@@ -1167,7 +1152,6 @@ def multimedia_ajax(request, domain, app_id, template='app_manager/partials/mult
             'multimedia': multimedia,
             'domain': domain,
             'app': app,
-            'edit': _get_edit(request, domain)
         }
         return render(request, template, context)
     else:
@@ -1226,7 +1210,6 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None,
     context.update(locals())
     context.update({
         'vellum_debug': settings.VELLUM_DEBUG,
-        'edit': True,
         'nav_form': form if not is_user_registration else '',
         'formdesigner': True,
         'multimedia_object_map': app.get_object_map(),

@@ -1,9 +1,7 @@
 
-[% if(casexml.edit || condition && condition.type == "if") { %]
+[% if(condition && condition.type == "if") { %]
     <div class="condition">
-        [% if (casexml.edit) { %]
-            <input type="checkbox" name="if" [% if(condition && condition.type == "if") { %]checked="true"[% } %] />
-        [% } %]
+        <input type="checkbox" name="if" [% if(condition && condition.type == "if") { %]checked="true"[% } %] />
         if
         <span>
              the answer to

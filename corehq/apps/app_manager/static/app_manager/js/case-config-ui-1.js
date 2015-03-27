@@ -8,7 +8,6 @@ var CaseConfig = (function () {
             this.home = params.home;
             this.actions = params.actions;
             this.questions = params.questions;
-            this.edit = params.edit;
             this.save_url = params.save_url;
             this.requires = ko.utils.unwrapObservable(params.requires);
             this.save_requires_url = params.save_requires_url;
@@ -51,9 +50,7 @@ var CaseConfig = (function () {
                     COMMCAREHQ.app_manager.updateDOM(data.update);
                 }
             });
-            if (this.edit) {
-                this.saveButton.ui.appendTo(this.home);
-            }
+            this.saveButton.ui.appendTo(this.home);
             $form.appendTo(this.home);
             this.subhome = $('<div/>').appendTo($form);
             var questionScores = {};
@@ -99,7 +96,7 @@ var CaseConfig = (function () {
     };
     CaseConfig.prototype.init = function () {
         var casexml = this;
-        if (this.questions.length && this.edit) {
+        if (this.questions.length) {
             this.home.delegate('input:not(.action-checkbox), select', 'change textchange', function () {
                 // recompute casexml_json
                 casexml.refreshActions();

@@ -1,11 +1,9 @@
 {% load i18n %}
 {% if multimedia %}
-    {% if edit %}
-        <h3 style="text-align: left;">{% trans 'Manage Multimedia' %}</h3>
-        <p>{% blocktrans %}View, upload, and download your application's multimedia{% endblocktrans %}</p>
-        <p><a id="open_checker" target="_blank" class="btn btn-primary" style="color: #ffffff; text-decoration: none;" href="{% url "hqmedia_references" domain app.get_id %}"><i class="icon icon-check"></i>
-            {% blocktrans %}Multimedia Reference Checker</a> (opens in a new window){% endblocktrans %}</p>
-    {% endif %}
+    <h3 style="text-align: left;">{% trans 'Manage Multimedia' %}</h3>
+    <p>{% blocktrans %}View, upload, and download your application's multimedia{% endblocktrans %}</p>
+    <p><a id="open_checker" target="_blank" class="btn btn-primary" style="color: #ffffff; text-decoration: none;" href="{% url "hqmedia_references" domain app.get_id %}"><i class="icon icon-check"></i>
+        {% blocktrans %}Multimedia Reference Checker</a> (opens in a new window){% endblocktrans %}</p>
     <h3 style="margin-top: 1em; text-align: left;">{% trans 'Download Multimedia Zip' %}</h3>
     {% include "hqmedia/partials/multimedia_zip_notice.html" %}
 {% else %}

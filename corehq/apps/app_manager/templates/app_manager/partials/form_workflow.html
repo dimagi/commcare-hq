@@ -10,38 +10,34 @@
             ></span>
         </label>
         <div id="form-workflow" class="controls commcare-feature" data-since-version="2.10">
-            {% if edit %}
-                <div class="control-group">
-                    <select name="post_form_workflow" data-bind="
-                        optstr: workflowOptions(),
-                        value: workflow
-                        "></select>
-                </div>
+            <div class="control-group">
+                <select name="post_form_workflow" data-bind="
+                    optstr: workflowOptions(),
+                    value: workflow
+                    "></select>
+            </div>
 
-                <div class="form-links-container" data-bind="
-                    visible: showFormLinkUI
+            <div class="form-links-container" data-bind="
+                visible: showFormLinkUI
+                ">
+
+                <!-- Container for Form Link UI. Will be populated with existing form links and where new
+                    form links will be added -->
+                <div class="form-links" data-bind="
+                    template: {
+                        name: 'form-link-template',
+                        foreach: formLinks,
+                        as: 'formLink'
+                    }
                     ">
-
-                    <!-- Container for Form Link UI. Will be populated with existing form links and where new
-                        form links will be added -->
-                    <div class="form-links" data-bind="
-                        template: {
-                            name: 'form-link-template',
-                            foreach: formLinks,
-                            as: 'formLink'
-                        }
-                        ">
-                    </div>
-                    <button class="btn btn-primary" data-bind="
-                        click: onAddFormLink
-                        ">
-                        {% trans "Add link" %}
-                    </button>
-                    <input type="hidden" class="workflow-change-trigger" />
                 </div>
-            {% else %}
-                <span data-bind="text: workflowDisplay()"></span>
-            {% endif %}
+                <button class="btn btn-primary" data-bind="
+                    click: onAddFormLink
+                    ">
+                    {% trans "Add link" %}
+                </button>
+                <input type="hidden" class="workflow-change-trigger" />
+            </div>
         </div>
     </div>
 
