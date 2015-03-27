@@ -72,10 +72,12 @@
                     contextVariables: COMMCAREHQ.app_manager.module_view
                 });
                 var $list_home = $("#" + detail.type + "-detail-screen-config-tab");
-                var $detail_home = $("#" + detail.type + "-detail-screen-detail-config-tab");
-
                 ko.applyBindings(detailScreenConfig, $list_home.get(0));
-                ko.applyBindings(detailScreenConfig, $detail_home.get(0));
+
+                if (detail.long !== undefined) {
+                    var $detail_home = $("#" + detail.type + "-detail-screen-detail-config-tab");
+                    ko.applyBindings(detailScreenConfig, $detail_home.get(0));
+                }
             }
         });
         $(function () {
@@ -230,14 +232,10 @@
                         {% trans "Module filter" %}
                     </label>
                     <div class="controls commcare-feature" data-since-version="2.20">
-                        {% if edit %}
                         <input type="text"
                             placeholder="{% trans "XPath expression" %}"
                             name="module_filter"
                             value="{% if module.module_filter %}{{ module.module_filter }}{% endif %}"/>
-                        {% else %}
-                            {{ module.module_filter|default:"" }}
-                        {% endif %}
                     </div>
                 </div>
                 {% include "app_manager/partials/nav_menu_media.html" with ICON_LABEL="Icon" AUDIO_LABEL="Audio" %}
@@ -303,9 +301,11 @@
     <div class="tab-pane" id="{{ detail.type }}-detail-screen-config-tab">
         {% include 'app_manager/partials/case_list.html' %}
     </div>
+    {% if detail.long %}
     <div class="tab-pane" id="{{ detail.type }}-detail-screen-detail-config-tab">
         {% include 'app_manager/partials/case_detail.html' %}
     </div>
+    {% endif %}
     {% endfor %}
 </div>
 </div>
