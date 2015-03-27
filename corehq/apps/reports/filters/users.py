@@ -261,7 +261,7 @@ class EmwfMixin(object):
         if self.include_share_groups:
             # filter out any non case share type locations for this part
             locations = locations.filter(
-                location_type__in=[t.name for t in case_share_types()]
+                location_type__in=[t.pk for t in case_share_types()]
             )
             for loc in locations:
                 group = loc.case_sharing_group_object()
