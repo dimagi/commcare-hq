@@ -421,8 +421,7 @@ def hq_download_saved_export(req, domain, export_id):
 def hq_update_saved_export(req, domain):
     group_id = req.POST['group_export_id']
     index = int(req.POST['index'])
-    group_config = HQGroupExportConfiguration.get(group_id)
-    assert domain == group_config.domain
+    group_config = get_document_or_404(HQGroupExportConfiguration, domain, group_id)
     config, schema = group_config.all_exports[index]
     rebuild_export(config, schema, 'couch')
     messages.success(req, _('The data for {} has been refreshed!').format(config.name))
