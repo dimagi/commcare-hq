@@ -1,132 +1,100 @@
 from django.core.urlresolvers import reverse
-from corehq.apps.api.es import ReportXFormES
+from sqlagg.columns import SimpleColumn
+from sqlagg.filters import EQ
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.filters.search import SearchFilter
-from custom.succeed.reports import SUBMISSION_SELECT_FIELDS, EMPTY_FIELD, INTERACTION_OUTPUT_DATE_FORMAT
+from corehq.apps.reports.generic import GenericTabularReport
+from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
+from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
+from corehq.apps.userreports.sql import get_table_name
 from custom.succeed.reports.patient_details import PatientDetailsReport
-from custom.succeed.utils import SUCCEED_DOMAIN
 from django.utils import html
-from custom.succeed.utils import format_date
 
 
-class PatientSubmissionReport(PatientDetailsReport):
-    slug = "patient_submissions"
-    name = 'Patient Submissions'
-    xform_es = ReportXFormES(SUCCEED_DOMAIN)
-    ajax_pagination = True
-    asynchronous = True
-    default_sort = {
-        "received_on": "desc"
-    }
+class PatientSubmissionData(SqlData):
+    slug = 'succeed_submissions'
 
     @property
-    def base_template_filters(self):
-        return 'succeed/report.html'
+    def table_name(self):
+        return get_table_name(self.config['domain'], self.slug)
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn('Doc Id', SimpleColumn('doc_id')),
+            DatabaseColumn('Form name', SimpleColumn('form_name')),
+            DatabaseColumn('Submitted By', SimpleColumn('username')),
+            DatabaseColumn('Completed', SimpleColumn('date')),
+        ]
+
+    @property
+    def filters(self):
+        return [EQ('case_id', 'case_id')]
+
+    @property
+    def group_by(self):
+        return ['doc_id', 'form_name', 'username', 'date']
+
+
+class PatientSubmissionReport(GenericTabularReport, CustomProjectReport, ProjectReportParametersMixin):
+    slug = "patient_submissions"
+    name = 'Patient Submissions'
+    use_datatables = True
+    hide_filters = True
+
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        if domain and project and user is None:
+            return True
+        return False
+
+    @property
+    def report_config(self):
+        return {
+            'domain': self.domain,
+            'case_id': self.request.GET.get('patient_id'),
+        }
+
+    @property
+    def model(self):
+        return PatientSubmissionData(config=self.report_config)
 
     @property
     def fields(self):
-        return ['custom.succeed.fields.PatientFormNameFilter',
-                'corehq.apps.reports.standard.cases.filters.CaseSearchFilter']
+        return []
 
     @property
     def headers(self):
         return DataTablesHeader(
-            # In order to get dafault_sort working as expected, first column cannot contain a 'prop_name'.
-            DataTablesColumn("", visible=False),
             DataTablesColumn("Form Name", prop_name='@name'),
             DataTablesColumn("Submitted By", prop_name='form.meta.username'),
-            DataTablesColumn("Completed", prop_name='received_on'))
-
-
-    @property
-    def es_results(self):
-        if not self.request.GET.has_key('patient_id'):
-            return None
-        full_query = {
-            'query': {
-                "filtered": {
-                    "filter": {
-                        "and": [
-                            {"term": {"domain.exact": self.request.domain}},
-                            {"term": {"doc_type": "xforminstance"}},
-                            {
-                                "nested": {
-                                    "path": "form.case",
-                                    "filter": {
-                                        "or": [
-                                            {
-                                                "term": {
-                                                    "@case_id": "%s" % self.request.GET[
-                                                        'patient_id']
-                                                }
-                                            },
-                                            {
-                                                "term": {
-                                                    "case_id": "%s" % self.request.GET['patient_id']
-                                                }
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        ]
-                    },
-                    "query": {"match_all": {}}
-                }
-            },
-            "sort": self.get_sorting_block(),
-            "size": self.pagination.count,
-            "from": self.pagination.start
-        }
-
-        form_name_group = self.request.GET.get('form_name', None)
-        search_string = SearchFilter.get_value(self.request, self.domain)
-
-        if search_string:
-            query_block = {"queryString": {"query": "*" + search_string + "*"}}
-            full_query["query"]["filtered"]["query"] = query_block
-
-        if form_name_group:
-            xmlns_terms = SUBMISSION_SELECT_FIELDS[form_name_group]
-
-            full_query['query']['filtered']['filter']['and'].append({"terms": {"xmlns.exact": xmlns_terms}})
-
-        res = self.xform_es.run_query(full_query)
-        return res
+            DataTablesColumn("Completed", prop_name='received_on')
+        )
 
     @property
     def rows(self):
         if self.request.GET.has_key('patient_id'):
             def _format_row(row_field_dict):
-                return [None, self.submit_history_form_link(row_field_dict["_id"],
-                                                      row_field_dict['_source'].get('es_readable_name', EMPTY_FIELD)),
-                        row_field_dict['_source']['form']['meta'].get('username', EMPTY_FIELD),
-                        self.form_completion_time(row_field_dict['_source']['form']['meta'].get('timeEnd', EMPTY_FIELD))
+                return [
+                    self.submit_history_form_link(row_field_dict["doc_id"],
+                                                  row_field_dict['form_name']),
+                    row_field_dict['username'],
+                    row_field_dict['date']
                 ]
 
-            res = self.es_results
-            if res:
-                if res.has_key('error'):
-                    pass
-                else:
-                    for result in res['hits']['hits']:
-                        yield list(_format_row(result))
+            rows = self.model.get_data()
+            for row in rows:
+                yield list(_format_row(row))
 
     def submit_history_form_link(self, form_id, form_name):
         url = reverse('render_form_data', args=[self.domain, form_id])
-        return html.mark_safe("<a class='ajax_dialog' href='%s' target='_blank'>%s</a>" % (url, html.escape(form_name)))
-
-    def form_completion_time(self, date_string):
-        if date_string != EMPTY_FIELD:
-            return format_date(date_string, INTERACTION_OUTPUT_DATE_FORMAT, localize=True)
-        else:
-            return EMPTY_FIELD
+        return html.mark_safe("<a class='ajax_dialog' href='%s'"
+                              "target='_blank'>%s</a>" % (url, html.escape(form_name)))
 
     @property
     def report_context(self):
         ret = super(PatientSubmissionReport, self).report_context
         ret['view_mode'] = 'submissions'
-        tabular_context = super(PatientDetailsReport, self).report_context
+        tabular_context = PatientDetailsReport(self.request).report_context
         tabular_context.update(ret)
         self.report_template_path = "patient_submissions.html"
         tabular_context['patient_id'] = self.request_params['patient_id']

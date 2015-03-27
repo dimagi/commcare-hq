@@ -17,7 +17,6 @@ var AdvancedCase = (function () {
 
         self.home = params.home;
         self.questions = params.questions;
-        self.edit = params.edit;
         self.save_url = params.save_url;
         self.caseType = params.caseType;
         self.module_id = params.module_id;
@@ -190,7 +189,6 @@ var AdvancedCase = (function () {
         var self = this;
 
         self.config = config;
-        self.edit = ko.observable(self.config.edit);
 
         self.getCaseTags = function (type, action) {
             var tags = [];

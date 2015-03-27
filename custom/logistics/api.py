@@ -273,9 +273,28 @@ class APISynchronization(object):
             except Exception as e:
                 logging.error(e)
         else:
+            verified_number = user.get_verified_number()
+            phone_number = verified_number.phone_number if verified_number else None
             if apply_updates(user, user_dict):
+                if user_dict.get('phone_numbers'):
+                    new_phone_number = user_dict['phone_numbers'][0]
+                    if new_phone_number != phone_number:
+                        if phone_number:
+                            user.delete_verified_number(phone_number)
+                        self._save_verified_number(user, new_phone_number)
+                elif phone_number:
+                    user.phone_numbers = []
+                    user.delete_verified_number(phone_number)
                 user.save()
         return user
+
+    def _save_verified_number(self, user, phone_number):
+        try:
+            user.save_verified_number(self.domain, phone_number, True)
+        except PhoneNumberInUseException:
+            self._reassign_number(user, phone_number)
+        except InvalidFormatException:
+            pass
 
     def _reassign_number(self, user, phone_number):
         v = VerifiedNumber.by_phone(phone_number, include_pending=True)
@@ -308,9 +327,4 @@ class APISynchronization(object):
             if not phone_number:
                 return
             user.set_default_phone_number(phone_number)
-            try:
-                user.save_verified_number(self.domain, phone_number, True)
-            except PhoneNumberInUseException:
-                self._reassign_number(user, phone_number)
-            except InvalidFormatException:
-                pass
+            self._save_verified_number(user, phone_number)

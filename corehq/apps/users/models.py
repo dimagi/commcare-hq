@@ -1303,6 +1303,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     def is_current_web_user(self, request):
         return self.user_id == request.couch_user.user_id
 
+    # gets hit for can_view_reports, etc.
     def __getattr__(self, item):
         if item.startswith('can_'):
             perm = item[len('can_'):]
@@ -1824,7 +1825,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin,
                     for loc in sql_loc.get_descendants()
                 ]
             else:
-                return [self.location.sql_location.case_sharing_group_object(self)._id]
+                return [self.location.sql_location.case_sharing_group_object(self._id)._id]
 
         else:
             return []

@@ -39,6 +39,18 @@ class DomainFilter(BaseSingleOptionFilter):
         )
 
 
+class HasGatewayFeeFilter(BaseSingleOptionFilter):
+    slug = 'has_gateway_fee'
+    label = _('Has Gateway Fee')
+    default_text = _('All')
+    YES = "yes"
+    NO = "no"
+    options = (
+        (YES, _('Yes')),
+        (NO, _('No')),
+    )
+
+
 class GatewayTypeFilter(BaseSingleOptionFilter):
     slug = 'gateway_type'
     label = _("Gateway Type")

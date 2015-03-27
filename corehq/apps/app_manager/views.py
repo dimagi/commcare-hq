@@ -169,8 +169,8 @@ CASE_TYPE_CONFLICT_MSG = (
 
 
 @require_deploy_apps
-def back_to_main(req, domain, app_id=None, module_id=None, form_id=None,
-                 unique_form_id=None, edit=True):
+def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
+                 unique_form_id=None):
     """
     returns an HttpResponseRedirect back to the main page for the App Manager app
     with the correct GET parameters.
@@ -182,8 +182,6 @@ def back_to_main(req, domain, app_id=None, module_id=None, form_id=None,
 
     page = None
     params = {}
-    if edit:
-        params['edit'] = 'true'
 
     args = [domain]
 
@@ -218,12 +216,12 @@ def back_to_main(req, domain, app_id=None, module_id=None, form_id=None,
         "?%s" % urlencode(params) if params else ""
         ))
 
-def bail(req, domain, app_id, not_found=""):
+def bail(request, domain, app_id, not_found=""):
     if not_found:
-        messages.error(req, 'Oops! We could not find that %s. Please try again' % not_found)
+        messages.error(request, 'Oops! We could not find that %s. Please try again' % not_found)
     else:
-        messages.error(req, 'Oops! We could not complete your request. Please try again')
-    return back_to_main(req, domain, app_id)
+        messages.error(request, 'Oops! We could not complete your request. Please try again')
+    return back_to_main(request, domain, app_id)
 
 def _get_xform_source(request, app, form, filename="form.xml"):
     download = json.loads(request.GET.get('download', 'false'))
@@ -243,38 +241,38 @@ def _get_xform_source(request, app, form, filename="form.xml"):
 
 
 @require_can_edit_apps
-def get_xform_source(req, domain, app_id, module_id, form_id):
+def get_xform_source(request, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
     try:
         form = app.get_module(module_id).get_form(form_id)
     except IndexError:
         raise Http404()
-    return _get_xform_source(req, app, form)
+    return _get_xform_source(request, app, form)
 
 
 @require_can_edit_apps
-def get_user_registration_source(req, domain, app_id):
+def get_user_registration_source(request, domain, app_id):
     app = get_app(domain, app_id)
     form = app.get_user_registration()
-    return _get_xform_source(req, app, form, filename="User Registration.xml")
+    return _get_xform_source(request, app, form, filename="User Registration.xml")
 
 
-def xform_display(req, domain, form_unique_id):
+def xform_display(request, domain, form_unique_id):
     try:
         form, app = Form.get_form(form_unique_id, and_app=True)
     except ResourceNotFound:
         raise Http404()
     if domain != app.domain:
         raise Http404()
-    langs = [req.GET.get('lang')] + app.langs
+    langs = [request.GET.get('lang')] + app.langs
 
     questions = form.get_questions(langs, include_triggers=True,
                                    include_groups=True)
 
-    if req.GET.get('format') == 'html':
+    if request.GET.get('format') == 'html':
         questions = [FormQuestionResponse(q) for q in questions]
 
-        return render(req, 'app_manager/xform_display.html', {
+        return render(request, 'app_manager/xform_display.html', {
             'questions': questions_in_hierarchy(questions)
         })
     else:
@@ -282,7 +280,7 @@ def xform_display(req, domain, form_unique_id):
 
 
 @require_can_edit_apps
-def form_casexml(req, domain, form_unique_id):
+def form_casexml(request, domain, form_unique_id):
     try:
         form, app = Form.get_form(form_unique_id, and_app=True)
     except ResourceNotFound:
@@ -293,29 +291,29 @@ def form_casexml(req, domain, form_unique_id):
 
 @login_or_digest
 @require_can_edit_apps
-def app_source(req, domain, app_id):
+def app_source(request, domain, app_id):
     app = get_app(domain, app_id)
     return HttpResponse(app.export_json())
 
 
 @require_can_edit_apps
-def copy_app_check_domain(req, domain, name, app_id):
+def copy_app_check_domain(request, domain, name, app_id):
     app_copy = import_app_util(app_id, domain, name=name)
-    return back_to_main(req, app_copy.domain, app_id=app_copy._id)
+    return back_to_main(request, app_copy.domain, app_id=app_copy._id)
 
 
 @require_can_edit_apps
-def copy_app(req, domain):
-    app_id = req.POST.get('app')
-    form = CopyApplicationForm(app_id, req.POST)
+def copy_app(request, domain):
+    app_id = request.POST.get('app')
+    form = CopyApplicationForm(app_id, request.POST)
     if form.is_valid():
-        return copy_app_check_domain(req, form.cleaned_data['domain'], form.cleaned_data['name'], app_id)
+        return copy_app_check_domain(request, form.cleaned_data['domain'], form.cleaned_data['name'], app_id)
     else:
-        return view_generic(req, domain, app_id=app_id, copy_app_form=form)
+        return view_generic(request, domain, app_id=app_id, copy_app_form=form)
 
 
 @require_can_edit_apps
-def migrate_app_filters(req, domain, app_id):
+def migrate_app_filters(request, domain, app_id):
     message = "Migration succeeded!"
     try:
         app = get_app(domain, app_id)
@@ -327,32 +325,32 @@ def migrate_app_filters(req, domain, app_id):
 
 
 @require_can_edit_apps
-def import_app(req, domain, template="app_manager/import_app.html"):
-    if req.method == "POST":
-        _clear_app_cache(req, domain)
-        name = req.POST.get('name')
-        compressed = req.POST.get('compressed')
+def import_app(request, domain, template="app_manager/import_app.html"):
+    if request.method == "POST":
+        _clear_app_cache(request, domain)
+        name = request.POST.get('name')
+        compressed = request.POST.get('compressed')
 
         valid_request = True
         if not name:
-            messages.error(req, _("You must submit a name for the application you are importing."))
+            messages.error(request, _("You must submit a name for the application you are importing."))
             valid_request = False
         if not compressed:
-            messages.error(req, _("You must submit the source data."))
+            messages.error(request, _("You must submit the source data."))
             valid_request = False
 
         if not valid_request:
-            return render(req, template, {'domain': domain})
+            return render(request, template, {'domain': domain})
 
         source = decompress([chr(int(x)) if int(x) < 256 else int(x) for x in compressed.split(',')])
         source = json.loads(source)
         assert(source is not None)
         app = import_app_util(source, domain, name=name)
 
-        return back_to_main(req, domain, app_id=app._id)
+        return back_to_main(request, domain, app_id=app._id)
     else:
-        app_id = req.GET.get('app')
-        redirect_domain = req.GET.get('domain') or None
+        app_id = request.GET.get('app')
+        redirect_domain = request.GET.get('domain') or None
         if redirect_domain is not None:
             redirect_domain = redirect_domain.lower()
             if Domain.get_by_name(redirect_domain):
@@ -362,27 +360,27 @@ def import_app(req, domain, template="app_manager/import_app.html"):
                 )
             else:
                 if redirect_domain:
-                    messages.error(req, "We can't find a project called %s." % redirect_domain)
+                    messages.error(request, "We can't find a project called %s." % redirect_domain)
                 else:
-                    messages.error(req, "You left the project name blank.")
-                return HttpResponseRedirect(req.META.get('HTTP_REFERER', req.path))
+                    messages.error(request, "You left the project name blank.")
+                return HttpResponseRedirect(request.META.get('HTTP_REFERER', request.path))
 
         if app_id:
             app = get_app(None, app_id)
             assert(app.get_doc_type() in ('Application', 'RemoteApp'))
-            assert(req.couch_user.is_member_of(app.domain))
+            assert(request.couch_user.is_member_of(app.domain))
         else:
             app = None
 
-        return render(req, template, {
+        return render(request, template, {
             'domain': domain,
             'app': app,
-            'is_superuser': req.couch_user.is_superuser
+            'is_superuser': request.couch_user.is_superuser
         })
 
 
 @require_deploy_apps
-def default(req, domain):
+def default(request, domain):
     """
     Handles a url that does not include an app_id.
     Currently the logic is taken care of by view_app,
@@ -390,7 +388,7 @@ def default(req, domain):
     reverse() to. (I guess I should use url(..., name="default")
     in url.py instead?)
     """
-    return view_app(req, domain)
+    return view_app(request, domain)
 
 
 def get_form_view_context_and_template(request, form, langs, is_user_registration, messages=messages):
@@ -644,21 +642,9 @@ def _clear_app_cache(request, domain):
         cache.delete(key)
 
 
-def _get_edit(request, domain):
-    if getattr(request, 'couch_user', None):
-        return (
-            (request.GET.get('edit', 'true') == 'true') and
-            (request.couch_user.can_edit_apps(domain) or request.user.is_superuser)
-        )
-    else:
-        return False
-
-
 def get_apps_base_context(request, domain, app):
 
     lang, langs = get_langs(request, app)
-
-    edit = _get_edit(request, domain)
 
     if getattr(request, 'couch_user', None):
         timezone = get_timezone_for_user(request.couch_user, domain)
@@ -669,7 +655,6 @@ def get_apps_base_context(request, domain, app):
         'lang': lang,
         'langs': langs,
         'domain': domain,
-        'edit': edit,
         'app': app,
         'URL_BASE': get_url_base(),
         'timezone': timezone,
@@ -930,13 +915,13 @@ def get_module_view_context_and_template(app, module):
 
 
 @retry_resource(3)
-def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user_registration=False, copy_app_form=None):
+def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_user_registration=False, copy_app_form=None):
     """
     This is the main view for the app. All other views redirect to here.
 
     """
     if form_id and not module_id:
-        return bail(req, domain, app_id)
+        return bail(request, domain, app_id)
 
     app = module = form = None
     try:
@@ -960,9 +945,9 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
             except IndexError:
                 raise Http404()
     except ModuleNotFoundException:
-        return bail(req, domain, app_id)
+        return bail(request, domain, app_id)
 
-    context = get_apps_base_context(req, domain, app)
+    context = get_apps_base_context(request, domain, app)
     if not app:
         all_applications = ApplicationBase.view('app_manager/applications_brief',
             startkey=[domain],
@@ -971,7 +956,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         ).all()
         if all_applications:
             app_id = all_applications[0].id
-            return back_to_main(req, domain, app_id=app_id, module_id=module_id,
+            return back_to_main(request, domain, app_id=app_id, module_id=module_id,
                                 form_id=form_id)
     if app and app.copy_of:
         # don't fail hard.
@@ -995,17 +980,25 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         context.update({"translations": app.translations.get(context['lang'], {})})
 
     if form:
-        template, form_context = get_form_view_context_and_template(req, form, context['langs'], is_user_registration)
+        template, form_context = get_form_view_context_and_template(request, form, context['langs'], is_user_registration)
         context.update({
             'case_properties': get_all_case_properties(app),
         })
 
-        if toggles.FORM_LINK_WORKFLOW.enabled(req.user.username):
+        if toggles.FORM_LINK_WORKFLOW.enabled(request.user.username):
+            def qualified_form_name(form):
+                module_name = trans(form.get_module().name, app.langs)
+                form_name = trans(form.name, app.langs)
+                return "{} -> {}".format(module_name, form_name)
+
             modules = filter(lambda m: m.case_type == module.case_type, app.get_modules())
+            if getattr(module, 'root_module_id', None) and module.root_module not in modules:
+                modules.append(module.root_module)
+            modules.extend([mod for mod in module.get_child_modules() if mod not in modules])
             linkable_forms = list(itertools.chain.from_iterable(list(m.get_forms()) for m in modules))
             context.update({
                 'linkable_forms': map(
-                    lambda f: {'unique_id': f.unique_id, 'name': trans(f.name, app.langs)},
+                    lambda f: {'unique_id': f.unique_id, 'name': qualified_form_name(f)},
                     linkable_forms
                 )
             })
@@ -1017,7 +1010,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
     else:
         template = "app_manager/app_view.html"
         if app:
-            context.update(get_app_view_context(req, app))
+            context.update(get_app_view_context(request, app))
 
     # update multimedia context for forms and modules.
     menu_host = form or module
@@ -1059,7 +1052,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         })
         context['multimedia'].update(specific_media)
 
-    error = req.GET.get('error', '')
+    error = request.GET.get('error', '')
 
     context.update({
         'error':error,
@@ -1071,14 +1064,14 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         'copy_app_form': copy_app_form if copy_app_form is not None else CopyApplicationForm(app_id)
     })
 
-    context['latest_commcare_version'] = get_commcare_versions()[-1]
+    context['latest_commcare_version'] = get_commcare_versions(request.user)[-1]
 
-    if app and app.doc_type == 'Application' and has_privilege(req, privileges.COMMCARE_LOGO_UPLOADER):
+    if app and app.doc_type == 'Application' and has_privilege(request, privileges.COMMCARE_LOGO_UPLOADER):
         uploader_slugs = ANDROID_LOGO_PROPERTY_MAPPING.keys()
         from corehq.apps.hqmedia.controller import MultimediaLogoUploadController
         from corehq.apps.hqmedia.views import ProcessLogoFileUploadView
         context.update({
-            "sessionid": req.COOKIES.get('sessionid'),
+            "sessionid": request.COOKIES.get('sessionid'),
             'uploaders': [
                 MultimediaLogoUploadController(
                     slug,
@@ -1103,7 +1096,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
             },
         })
 
-    response = render(req, template, context)
+    response = render(request, template, context)
     response.set_cookie('lang', _encode_if_unicode(context['lang']))
     return response
 
@@ -1121,27 +1114,27 @@ def view_user_registration(request, domain, app_id):
 
 @require_GET
 @require_deploy_apps
-def view_form(req, domain, app_id, module_id, form_id):
-    return view_generic(req, domain, app_id, module_id, form_id)
+def view_form(request, domain, app_id, module_id, form_id):
+    return view_generic(request, domain, app_id, module_id, form_id)
 
 
 @require_GET
 @require_deploy_apps
-def view_module(req, domain, app_id, module_id):
-    return view_generic(req, domain, app_id, module_id)
+def view_module(request, domain, app_id, module_id):
+    return view_generic(request, domain, app_id, module_id)
 
 
 @require_GET
 @require_deploy_apps
-def view_app(req, domain, app_id=None):
+def view_app(request, domain, app_id=None):
     # redirect old m=&f= urls
-    module_id = req.GET.get('m', None)
-    form_id = req.GET.get('f', None)
+    module_id = request.GET.get('m', None)
+    form_id = request.GET.get('f', None)
     if module_id or form_id:
-        return back_to_main(req, domain, app_id=app_id, module_id=module_id,
+        return back_to_main(request, domain, app_id=app_id, module_id=module_id,
                             form_id=form_id)
 
-    return view_generic(req, domain, app_id)
+    return view_generic(request, domain, app_id)
 
 
 @require_deploy_apps
@@ -1166,7 +1159,6 @@ def multimedia_ajax(request, domain, app_id, template='app_manager/partials/mult
             'multimedia': multimedia,
             'domain': domain,
             'app': app,
-            'edit': _get_edit(request, domain)
         }
         return render(request, template, context)
     else:
@@ -1174,17 +1166,17 @@ def multimedia_ajax(request, domain, app_id, template='app_manager/partials/mult
 
 
 @require_can_edit_apps
-def form_source(req, domain, app_id, module_id, form_id):
-    return form_designer(req, domain, app_id, module_id, form_id)
+def form_source(request, domain, app_id, module_id, form_id):
+    return form_designer(request, domain, app_id, module_id, form_id)
 
 
 @require_can_edit_apps
-def user_registration_source(req, domain, app_id):
-    return form_designer(req, domain, app_id, is_user_registration=True)
+def user_registration_source(request, domain, app_id):
+    return form_designer(request, domain, app_id, is_user_registration=True)
 
 
 @require_can_edit_apps
-def form_designer(req, domain, app_id, module_id=None, form_id=None,
+def form_designer(request, domain, app_id, module_id=None, form_id=None,
                   is_user_registration=False):
     app = get_app(domain, app_id)
 
@@ -1194,20 +1186,20 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None,
         try:
             module = app.get_module(module_id)
         except ModuleNotFoundException:
-            return bail(req, domain, app_id, not_found="module")
+            return bail(request, domain, app_id, not_found="module")
         try:
             form = module.get_form(form_id)
         except IndexError:
-            return bail(req, domain, app_id, not_found="form")
+            return bail(request, domain, app_id, not_found="form")
 
     if form.no_vellum:
-        messages.warning(req, _(
+        messages.warning(request, _(
             "You tried to edit this form in the Form Builder. "
             "However, your administrator has locked this form against editing "
             "in the form builder, so we have redirected you to "
             "the form's front page instead."
         ))
-        return back_to_main(req, domain, app_id=app_id,
+        return back_to_main(request, domain, app_id=app_id,
                             unique_form_id=form.unique_id)
 
     vellum_plugins = ["modeliteration"]
@@ -1216,34 +1208,33 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None,
     if toggles.VELLUM_TRANSACTION_QUESTION_TYPES.enabled(domain):
         vellum_plugins.append("commtrack")
 
-    vellum_features = toggles.toggles_dict(username=req.user.username,
+    vellum_features = toggles.toggles_dict(username=request.user.username,
                                            domain=domain)
     vellum_features.update({
         'group_in_field_list': app.enable_group_in_field_list
     })
-    context = get_apps_base_context(req, domain, app)
+    context = get_apps_base_context(request, domain, app)
     context.update(locals())
     context.update({
         'vellum_debug': settings.VELLUM_DEBUG,
-        'edit': True,
         'nav_form': form if not is_user_registration else '',
         'formdesigner': True,
         'multimedia_object_map': app.get_object_map(),
-        'sessionid': req.COOKIES.get('sessionid'),
+        'sessionid': request.COOKIES.get('sessionid'),
         'features': vellum_features,
         'plugins': vellum_plugins,
     })
-    return render(req, 'app_manager/form_designer.html', context)
+    return render(request, 'app_manager/form_designer.html', context)
 
 
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def new_app(req, domain):
+def new_app(request, domain):
     "Adds an app to the database"
     lang = 'en'
-    type = req.POST["type"]
-    application_version = req.POST.get('application_version', APP_V1)
+    type = request.POST["type"]
+    application_version = request.POST.get('application_version', APP_V1)
     cls = str_to_cls[type]
     if cls == Application:
         app = cls.new_app(domain, "Untitled Application", lang=lang, application_version=application_version)
@@ -1251,16 +1242,16 @@ def new_app(req, domain):
         app.new_form(0, "Untitled Form", lang)
     else:
         app = cls.new_app(domain, "Untitled Application", lang=lang)
-    if req.project.secure_submissions:
+    if request.project.secure_submissions:
         app.secure_submissions = True
     app.save()
-    _clear_app_cache(req, domain)
+    _clear_app_cache(request, domain)
     app_id = app.id
 
-    return back_to_main(req, domain, app_id=app_id)
+    return back_to_main(request, domain, app_id=app_id)
 
 @require_can_edit_apps
-def default_new_app(req, domain):
+def default_new_app(request, domain):
     """New Blank Application according to defaults. So that we can link here
     instead of creating a form and posting to the above link, which was getting
     annoying for the Dashboard.
@@ -1272,27 +1263,27 @@ def default_new_app(req, domain):
     )
     app.add_module(Module.new_module(_("Untitled Module"), lang))
     app.new_form(0, "Untitled Form", lang)
-    if req.project.secure_submissions:
+    if request.project.secure_submissions:
         app.secure_submissions = True
-    _clear_app_cache(req, domain)
+    _clear_app_cache(request, domain)
     app.save()
-    return back_to_main(req, domain, app_id=app.id)
+    return back_to_main(request, domain, app_id=app.id)
 
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def new_module(req, domain, app_id):
+def new_module(request, domain, app_id):
     "Adds a module to an app"
     app = get_app(domain, app_id)
-    lang = req.COOKIES.get('lang', app.langs[0])
-    name = req.POST.get('name')
-    module_type = req.POST.get('module_type', 'case')
+    lang = request.COOKIES.get('lang', app.langs[0])
+    name = request.POST.get('name')
+    module_type = request.POST.get('module_type', 'case')
     if module_type == 'case':
         module = app.add_module(Module.new_module(name, lang))
         module_id = module.id
         app.new_form(module_id, "Untitled Form", lang)
         app.save()
-        response = back_to_main(req, domain, app_id=app_id, module_id=module_id)
+        response = back_to_main(request, domain, app_id=app_id, module_id=module_id)
         response.set_cookie('suppress_build_errors', 'yes')
         return response
     elif module_type in MODULE_TYPE_MAP:
@@ -1300,71 +1291,71 @@ def new_module(req, domain, app_id):
         validations = MODULE_TYPE_MAP[module_type][VALIDATIONS]
         error = next((v[1] for v in validations if v[0](app)), None)
         if error:
-            messages.warning(req, error)
-            return back_to_main(req, domain, app_id=app.id)
+            messages.warning(request, error)
+            return back_to_main(request, domain, app_id=app.id)
         else:
-            return fn(req, domain, app, name, lang)
+            return fn(request, domain, app, name, lang)
     else:
         logger.error('Unexpected module type for new module: "%s"' % module_type)
-        return back_to_main(req, domain, app_id=app_id)
+        return back_to_main(request, domain, app_id=app_id)
 
 
-def _new_careplan_module(req, domain, app, name, lang):
+def _new_careplan_module(request, domain, app, name, lang):
     from corehq.apps.app_manager.util import new_careplan_module
-    target_module_index = req.POST.get('target_module_id')
+    target_module_index = request.POST.get('target_module_id')
     target_module = app.get_module(target_module_index)
     if not target_module.case_type:
         name = target_module.name[lang]
-        messages.error(req, _("Please set the case type for the target module '{name}'.".format(name=name)))
-        return back_to_main(req, domain, app_id=app.id)
+        messages.error(request, _("Please set the case type for the target module '{name}'.".format(name=name)))
+        return back_to_main(request, domain, app_id=app.id)
     module = new_careplan_module(app, name, lang, target_module)
     app.save()
-    response = back_to_main(req, domain, app_id=app.id, module_id=module.id)
+    response = back_to_main(request, domain, app_id=app.id, module_id=module.id)
     response.set_cookie('suppress_build_errors', 'yes')
-    messages.info(req, _('Caution: Care Plan modules are a labs feature'))
+    messages.info(request, _('Caution: Care Plan modules are a labs feature'))
     return response
 
 
-def _new_advanced_module(req, domain, app, name, lang):
+def _new_advanced_module(request, domain, app, name, lang):
     module = app.add_module(AdvancedModule.new_module(name, lang))
     module_id = module.id
     app.new_form(module_id, _("Untitled Form"), lang)
 
     app.save()
-    response = back_to_main(req, domain, app_id=app.id, module_id=module_id)
+    response = back_to_main(request, domain, app_id=app.id, module_id=module_id)
     response.set_cookie('suppress_build_errors', 'yes')
-    messages.info(req, _('Caution: Advanced modules are a labs feature'))
+    messages.info(request, _('Caution: Advanced modules are a labs feature'))
     return response
 
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def new_form(req, domain, app_id, module_id):
+def new_form(request, domain, app_id, module_id):
     "Adds a form to an app (under a module)"
     app = get_app(domain, app_id)
-    lang = req.COOKIES.get('lang', app.langs[0])
-    name = req.POST.get('name')
+    lang = request.COOKIES.get('lang', app.langs[0])
+    name = request.POST.get('name')
     form = app.new_form(module_id, name, lang)
     app.save()
     # add form_id to locals()
     form_id = form.id
-    response = back_to_main(req, domain, app_id=app_id, module_id=module_id,
+    response = back_to_main(request, domain, app_id=app_id, module_id=module_id,
                             form_id=form_id)
     return response
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def delete_app(req, domain, app_id):
+def delete_app(request, domain, app_id):
     "Deletes an app from the database"
     app = get_app(domain, app_id)
     record = app.delete_app()
-    messages.success(req,
+    messages.success(request,
         'You have deleted an application. <a href="%s" class="post-link">Undo</a>' % reverse('undo_delete_app', args=[domain, record.get_id]),
         extra_tags='html'
     )
     app.save()
-    _clear_app_cache(req, domain)
-    return back_to_main(req, domain)
+    _clear_app_cache(request, domain)
+    return back_to_main(request, domain)
 
 @no_conflict_require_POST
 @require_can_edit_apps
@@ -1383,20 +1374,20 @@ def undo_delete_app(request, domain, record_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def delete_module(req, domain, app_id, module_unique_id):
+def delete_module(request, domain, app_id, module_unique_id):
     "Deletes a module from an app"
     app = get_app(domain, app_id)
     try:
         record = app.delete_module(module_unique_id)
     except ModuleNotFoundException:
-        return bail(req, domain, app_id)
+        return bail(request, domain, app_id)
     if record is not None:
-        messages.success(req,
+        messages.success(request,
             'You have deleted a module. <a href="%s" class="post-link">Undo</a>' % reverse('undo_delete_module', args=[domain, record.get_id]),
             extra_tags='html'
         )
         app.save()
-    return back_to_main(req, domain, app_id=app_id)
+    return back_to_main(request, domain, app_id=app_id)
 
 @no_conflict_require_POST
 @require_can_edit_apps
@@ -1409,45 +1400,45 @@ def undo_delete_module(request, domain, record_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def delete_form(req, domain, app_id, module_unique_id, form_unique_id):
+def delete_form(request, domain, app_id, module_unique_id, form_unique_id):
     "Deletes a form from an app"
     app = get_app(domain, app_id)
     record = app.delete_form(module_unique_id, form_unique_id)
     if record is not None:
         messages.success(
-            req,
+            request,
             'You have deleted a form. <a href="%s" class="post-link">Undo</a>'
             % reverse('undo_delete_form', args=[domain, record.get_id]),
             extra_tags='html'
         )
         app.save()
     return back_to_main(
-        req, domain, app_id=app_id,
+        request, domain, app_id=app_id,
         module_id=app.get_module_by_unique_id(module_unique_id).id)
 
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def copy_form(req, domain, app_id, module_id, form_id):
+def copy_form(request, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
-    to_module_id = int(req.POST['to_module_id'])
+    to_module_id = int(request.POST['to_module_id'])
     try:
         app.copy_form(int(module_id), int(form_id), to_module_id)
     except ConflictingCaseTypeError:
-        messages.warning(req, CASE_TYPE_CONFLICT_MSG,  extra_tags="html")
+        messages.warning(request, CASE_TYPE_CONFLICT_MSG,  extra_tags="html")
         app.save()
     except BlankXFormError:
         # don't save!
-        messages.error(req, _('We could not copy this form, because it is blank.'
+        messages.error(request, _('We could not copy this form, because it is blank.'
                               'In order to copy this form, please add some questions first.'))
     except IncompatibleFormTypeException:
         # don't save!
-        messages.error(req, _('This form could not be copied because it '
+        messages.error(request, _('This form could not be copied because it '
                               'is not compatible with the selected module.'))
     else:
         app.save()
 
-    return back_to_main(req, domain, app_id=app_id, module_id=module_id,
+    return back_to_main(request, domain, app_id=app_id, module_id=module_id,
                         form_id=form_id)
 
 
@@ -1467,7 +1458,7 @@ def undo_delete_form(request, domain, record_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def edit_module_attr(req, domain, app_id, module_id, attr):
+def edit_module_attr(request, domain, app_id, module_id, attr):
     """
     Called to edit any (supported) module attribute, given by attr
     """
@@ -1496,18 +1487,18 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
         if 'all' == attr:
             if attributes[attribute]:
                 for param in attributes[attribute]:
-                    if not req.POST.get(param):
+                    if not request.POST.get(param):
                         return False
                 return True
             else:
-                return req.POST.get(attribute) is not None
+                return request.POST.get(attribute) is not None
 
     app = get_app(domain, app_id)
     module = app.get_module(module_id)
-    lang = req.COOKIES.get('lang', app.langs[0])
+    lang = request.COOKIES.get('lang', app.langs[0])
     resp = {'update': {}, 'corrections': {}}
     if should_edit("case_type"):
-        case_type = req.POST.get("case_type", None)
+        case_type = request.POST.get("case_type", None)
         if is_valid_case_type(case_type):
             # todo: something better than nothing when invalid
             old_case_type = module["case_type"]
@@ -1531,45 +1522,45 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
         else:
             return HttpResponseBadRequest("case type is improperly formatted")
     if should_edit("put_in_root"):
-        module["put_in_root"] = json.loads(req.POST.get("put_in_root"))
+        module["put_in_root"] = json.loads(request.POST.get("put_in_root"))
     if should_edit("display_separately"):
-        module["display_separately"] = json.loads(req.POST.get("display_separately"))
+        module["display_separately"] = json.loads(request.POST.get("display_separately"))
     if should_edit("parent_module"):
-        parent_module = req.POST.get("parent_module")
+        parent_module = request.POST.get("parent_module")
         module.parent_select.module_id = parent_module
 
     if app.enable_module_filtering and should_edit('module_filter'):
-        module['module_filter'] = req.POST.get('module_filter')
+        module['module_filter'] = request.POST.get('module_filter')
 
     if should_edit('case_list_form_id'):
-        module.case_list_form.form_id = req.POST.get('case_list_form_id')
+        module.case_list_form.form_id = request.POST.get('case_list_form_id')
     if should_edit('case_list_form_label'):
-        module.case_list_form.label[lang] = req.POST.get('case_list_form_label')
+        module.case_list_form.label[lang] = request.POST.get('case_list_form_label')
     if should_edit('case_list_form_media_image'):
         val = _process_media_attribute(
             'case_list_form_media_image',
             resp,
-            req.POST.get('case_list_form_media_image')
+            request.POST.get('case_list_form_media_image')
         )
         module.case_list_form.media_image = val
     if should_edit('case_list_form_media_audio'):
         val = _process_media_attribute(
             'case_list_form_media_audio',
             resp,
-            req.POST.get('case_list_form_media_audio')
+            request.POST.get('case_list_form_media_audio')
         )
         module.case_list_form.media_audio = val
 
     for attribute in ("name", "case_label", "referral_label"):
         if should_edit(attribute):
-            name = req.POST.get(attribute, None)
+            name = request.POST.get(attribute, None)
             module[attribute][lang] = name
             if should_edit("name"):
                 resp['update'].update({'.variable-module_name': module.name[lang]})
     for SLUG in ('case_list', 'task_list'):
         if should_edit(SLUG):
-            module[SLUG].show = json.loads(req.POST['{SLUG}-show'.format(SLUG=SLUG)])
-            module[SLUG].label[lang] = req.POST['{SLUG}-label'.format(SLUG=SLUG)]
+            module[SLUG].show = json.loads(request.POST['{SLUG}-show'.format(SLUG=SLUG)])
+            module[SLUG].label[lang] = request.POST['{SLUG}-label'.format(SLUG=SLUG)]
 
     if isinstance(module, AdvancedModule):
         module.has_schedule = should_edit('has_schedule')
@@ -1578,16 +1569,16 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
                 if not form.schedule:
                     form.schedule = FormSchedule()
         if should_edit("root_module_id"):
-            if not req.POST.get("root_module_id"):
+            if not request.POST.get("root_module_id"):
                 module["root_module_id"] = None
             else:
                 try:
                     app.get_module(module_id)
-                    module["root_module_id"] = req.POST.get("root_module_id")
+                    module["root_module_id"] = request.POST.get("root_module_id")
                 except ModuleNotFoundException:
                     messages.error(_("Unknown Module"))
 
-    _handle_media_edits(req, module, should_edit, resp)
+    _handle_media_edits(request, module, should_edit, resp)
 
     app.save(resp)
     resp['case_list-show'] = module.requires_case_details()
@@ -1595,13 +1586,13 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def edit_module_detail_screens(req, domain, app_id, module_id):
+def edit_module_detail_screens(request, domain, app_id, module_id):
     """
     Overwrite module case details. Only overwrites components that have been
     provided in the request. Components are short, long, filter, parent_select,
     and sort_elements.
     """
-    params = json_request(req.POST)
+    params = json_request(request.POST)
     detail_type = params.get('type')
     short = params.get('short', None)
     long = params.get('long', None)
@@ -1739,7 +1730,7 @@ def patch_xform(request, domain, app_id, unique_form_id):
 @no_conflict_require_POST
 @login_or_digest
 @require_permission(Permissions.edit_apps, login_decorator=None)
-def edit_form_attr(req, domain, app_id, unique_form_id, attr):
+def edit_form_attr(request, domain, app_id, unique_form_id, attr):
     """
     Called to edit any (supported) form attribute, given by attr
 
@@ -1747,22 +1738,22 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
 
     app = get_app(domain, app_id)
     form = app.get_form(unique_form_id)
-    lang = req.COOKIES.get('lang', app.langs[0])
-    ajax = json.loads(req.POST.get('ajax', 'true'))
+    lang = request.COOKIES.get('lang', app.langs[0])
+    ajax = json.loads(request.POST.get('ajax', 'true'))
 
     resp = {}
 
     def should_edit(attribute):
-        if req.POST.has_key(attribute):
+        if request.POST.has_key(attribute):
             return True
-        elif req.FILES.has_key(attribute):
+        elif request.FILES.has_key(attribute):
             return True
         else:
             return False
 
     if should_edit("user_reg_data"):
         # should be user_registrations only
-        data = json.loads(req.POST['user_reg_data'])
+        data = json.loads(request.POST['user_reg_data'])
         data_paths = data['data_paths']
         data_paths_dict = {}
         for path in data_paths:
@@ -1770,7 +1761,7 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
         form.data_paths = data_paths_dict
 
     if should_edit("name"):
-        name = req.POST['name']
+        name = request.POST['name']
         form.name[lang] = name
         xform = form.wrapped_xform()
         if xform.exists():
@@ -1781,15 +1772,15 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
         try:
             # support FILES for upload and POST for ajax post from Vellum
             try:
-                xform = req.FILES.get('xform').read()
+                xform = request.FILES.get('xform').read()
             except Exception:
-                xform = req.POST.get('xform')
+                xform = request.POST.get('xform')
             else:
                 try:
                     xform = unicode(xform, encoding="utf-8")
                 except Exception:
                     raise Exception("Error uploading form: Please make sure your form is encoded in UTF-8")
-            if req.POST.get('cleanup', False):
+            if request.POST.get('cleanup', False):
                 try:
                     # First, we strip all newlines and reformat the DOM.
                     px = parseString(xform.replace('\r\n', '')).toprettyxml()
@@ -1807,37 +1798,37 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
             if ajax:
                 return HttpResponseBadRequest(unicode(e))
             else:
-                messages.error(req, unicode(e))
+                messages.error(request, unicode(e))
     if should_edit("show_count"):
-        show_count = req.POST['show_count']
+        show_count = request.POST['show_count']
         form.show_count = True if show_count == "True" else False
     if should_edit("put_in_root"):
-        put_in_root = req.POST['put_in_root']
+        put_in_root = request.POST['put_in_root']
         form.put_in_root = True if put_in_root == "True" else False
     if should_edit('form_filter'):
-        form.form_filter = req.POST['form_filter']
+        form.form_filter = request.POST['form_filter']
     if should_edit('post_form_workflow'):
-        form.post_form_workflow = req.POST['post_form_workflow']
+        form.post_form_workflow = request.POST['post_form_workflow']
     if should_edit('auto_gps_capture'):
-        form.auto_gps_capture = req.POST['auto_gps_capture'] == 'true'
+        form.auto_gps_capture = request.POST['auto_gps_capture'] == 'true'
     if should_edit('no_vellum'):
-        form.no_vellum = req.POST['no_vellum'] == 'true'
+        form.no_vellum = request.POST['no_vellum'] == 'true'
     if (should_edit("form_links_xpath_expressions") and
             should_edit("form_links_form_ids") and
-            toggles.FORM_LINK_WORKFLOW.enabled(req.user.username)):
+            toggles.FORM_LINK_WORKFLOW.enabled(request.user.username)):
         form_links = zip(
-            req.POST.getlist('form_links_xpath_expressions'),
-            req.POST.getlist('form_links_form_ids')
+            request.POST.getlist('form_links_xpath_expressions'),
+            request.POST.getlist('form_links_form_ids')
         )
         form.form_links = [FormLink({'xpath': link[0], 'form_id': link[1]}) for link in form_links]
 
-    _handle_media_edits(req, form, should_edit, resp)
+    _handle_media_edits(request, form, should_edit, resp)
 
     app.save(resp)
     if ajax:
         return HttpResponse(json.dumps(resp))
     else:
-        return back_to_main(req, domain, app_id=app_id, unique_form_id=unique_form_id)
+        return back_to_main(request, domain, app_id=app_id, unique_form_id=unique_form_id)
 
 
 @no_conflict_require_POST
@@ -1854,9 +1845,9 @@ def edit_visit_schedule(request, domain, app_id, module_id, form_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def rename_language(req, domain, form_unique_id):
-    old_code = req.POST.get('oldCode')
-    new_code = req.POST.get('newCode')
+def rename_language(request, domain, form_unique_id):
+    old_code = request.POST.get('oldCode')
+    new_code = request.POST.get('newCode')
     try:
         form, app = Form.get_form(form_unique_id, and_app=True)
     except ResourceConflict:
@@ -1884,11 +1875,11 @@ def validate_language(request, domain, app_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def edit_form_actions(req, domain, app_id, module_id, form_id):
+def edit_form_actions(request, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
     form = app.get_module(module_id).get_form(form_id)
-    form.actions = FormActions.wrap(json.loads(req.POST['actions']))
-    form.requires = req.POST.get('requires', form.requires)
+    form.actions = FormActions.wrap(json.loads(request.POST['actions']))
+    form.requires = request.POST.get('requires', form.requires)
     response_json = {}
     app.save(response_json)
     response_json['propertiesMap'] = get_all_case_properties(app)
@@ -1896,10 +1887,10 @@ def edit_form_actions(req, domain, app_id, module_id, form_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def edit_careplan_form_actions(req, domain, app_id, module_id, form_id):
+def edit_careplan_form_actions(request, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
     form = app.get_module(module_id).get_form(form_id)
-    transaction = json.loads(req.POST.get('transaction'))
+    transaction = json.loads(request.POST.get('transaction'))
 
     for question in transaction['fixedQuestions']:
         setattr(form, question['name'], question['path'])
@@ -1917,10 +1908,10 @@ def edit_careplan_form_actions(req, domain, app_id, module_id, form_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def edit_advanced_form_actions(req, domain, app_id, module_id, form_id):
+def edit_advanced_form_actions(request, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
     form = app.get_module(module_id).get_form(form_id)
-    json_loads = json.loads(req.POST.get('actions'))
+    json_loads = json.loads(request.POST.get('actions'))
     actions = AdvancedFormActions.wrap(json_loads)
     form.actions = actions
     response_json = {}
@@ -1930,11 +1921,11 @@ def edit_advanced_form_actions(req, domain, app_id, module_id, form_id):
 
 
 @require_can_edit_apps
-def multimedia_list_download(req, domain, app_id):
+def multimedia_list_download(request, domain, app_id):
     app = get_app(domain, app_id)
-    include_audio = req.GET.get("audio", True)
-    include_images = req.GET.get("images", True)
-    strip_jr = req.GET.get("strip_jr", True)
+    include_audio = request.GET.get("audio", True)
+    include_images = request.GET.get("images", True)
+    strip_jr = request.GET.get("strip_jr", True)
     filelist = []
     for m in app.get_modules():
         for f in m.get_forms():
@@ -1954,7 +1945,7 @@ def multimedia_list_download(req, domain, app_id):
 
 @require_GET
 @login_and_domain_required
-def commcare_profile(req, domain, app_id):
+def commcare_profile(request, domain, app_id):
     app = get_app(domain, app_id)
     return HttpResponse(json.dumps(app.profile))
 
@@ -2091,17 +2082,17 @@ def get_app_translations(request, domain):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def delete_app_lang(req, domain, app_id):
+def delete_app_lang(request, domain, app_id):
     """
     DEPRECATED
     Called when a language (such as 'zh') is to be deleted from app.langs
 
     """
-    lang_id = int(req.POST['index'])
+    lang_id = int(request.POST['index'])
     app = get_app(domain, app_id)
     del app.langs[lang_id]
     app.save()
-    return back_to_main(req, domain, app_id=app_id)
+    return back_to_main(request, domain, app_id=app_id)
 
 
 @no_conflict_require_POST
@@ -2225,7 +2216,7 @@ def edit_app_attr(request, domain, app_id, attr):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def rearrange(req, domain, app_id, key):
+def rearrange(request, domain, app_id, key):
     """
     This function handles any request to switch two items in a list.
     Key tells us the list in question and must be one of
@@ -2234,38 +2225,38 @@ def rearrange(req, domain, app_id, key):
 
     """
     app = get_app(domain, app_id)
-    ajax = json.loads(req.POST.get('ajax', 'false'))
-    i, j = (int(x) for x in (req.POST['to'], req.POST['from']))
+    ajax = json.loads(request.POST.get('ajax', 'false'))
+    i, j = (int(x) for x in (request.POST['to'], request.POST['from']))
     resp = {}
     module_id = None
 
     try:
         if "forms" == key:
-            to_module_id = int(req.POST['to_module_id'])
-            from_module_id = int(req.POST['from_module_id'])
+            to_module_id = int(request.POST['to_module_id'])
+            from_module_id = int(request.POST['from_module_id'])
             try:
                 app.rearrange_forms(to_module_id, from_module_id, i, j)
             except ConflictingCaseTypeError:
-                messages.warning(req, CASE_TYPE_CONFLICT_MSG,  extra_tags="html")
+                messages.warning(request, CASE_TYPE_CONFLICT_MSG,  extra_tags="html")
         elif "modules" == key:
             app.rearrange_modules(i, j)
     except IncompatibleFormTypeException:
-        messages.error(req, _(
+        messages.error(request, _(
             'The form can not be moved into the desired module.'
         ))
-        return back_to_main(req, domain, app_id=app_id, module_id=module_id)
+        return back_to_main(request, domain, app_id=app_id, module_id=module_id)
     except (RearrangeError, ModuleNotFoundException):
-        messages.error(req, _(
+        messages.error(request, _(
             'Oops. '
             'Looks like you got out of sync with us. '
             'The sidebar has been updated, so please try again.'
         ))
-        return back_to_main(req, domain, app_id=app_id, module_id=module_id)
+        return back_to_main(request, domain, app_id=app_id, module_id=module_id)
     app.save(resp)
     if ajax:
         return HttpResponse(json.dumps(resp))
     else:
-        return back_to_main(req, domain, app_id=app_id, module_id=module_id)
+        return back_to_main(request, domain, app_id=app_id, module_id=module_id)
 
 
 # The following three functions deal with
@@ -2275,13 +2266,13 @@ def rearrange(req, domain, app_id, key):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def save_copy(req, domain, app_id):
+def save_copy(request, domain, app_id):
     """
     Saves a copy of the app to a new doc.
     See VersionedDoc.save_copy
 
     """
-    comment = req.POST.get('comment')
+    comment = request.POST.get('comment')
     app = get_app(domain, app_id)
     errors = app.validate_app()
 
@@ -2289,7 +2280,7 @@ def save_copy(req, domain, app_id):
         try:
             copy = app.make_build(
                 comment=comment,
-                user_id=req.couch_user.get_id,
+                user_id=request.couch_user.get_id,
                 previous_version=app.get_latest_app(released_only=False)
             )
             copy.save(increment_version=False)
@@ -2300,9 +2291,9 @@ def save_copy(req, domain, app_id):
     else:
         copy = None
     copy = copy and SavedAppBuild.wrap(copy.to_json()).to_saved_build_json(
-        get_timezone_for_user(req.couch_user, domain)
+        get_timezone_for_user(request.couch_user, domain)
     )
-    lang, langs = get_langs(req, app)
+    lang, langs = get_langs(request, app)
     return json_response({
         "saved_app": copy,
         "error_html": render_to_string('app_manager/partials/build_errors.html', {
@@ -2348,29 +2339,29 @@ def validate_form_for_build(request, domain, app_id, unique_form_id, ajax=True):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def revert_to_copy(req, domain, app_id):
+def revert_to_copy(request, domain, app_id):
     """
     Copies a saved doc back to the original.
     See VersionedDoc.revert_to_copy
 
     """
     app = get_app(domain, app_id)
-    copy = get_app(domain, req.POST['saved_app'])
+    copy = get_app(domain, request.POST['saved_app'])
     app = app.make_reversion_to_copy(copy)
     app.save()
-    messages.success(req, "Successfully reverted to version %s, now at version %s" % (copy.version, app.version))
-    return back_to_main(req, domain, app_id=app_id)
+    messages.success(request, "Successfully reverted to version %s, now at version %s" % (copy.version, app.version))
+    return back_to_main(request, domain, app_id=app_id)
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def delete_copy(req, domain, app_id):
+def delete_copy(request, domain, app_id):
     """
     Deletes a saved copy permanently from the database.
     See VersionedDoc.delete_copy
 
     """
     app = get_app(domain, app_id)
-    copy = get_app(domain, req.POST['saved_app'])
+    copy = get_app(domain, request.POST['saved_app'])
     app.delete_copy(copy)
     return json_response({})
 
@@ -2402,15 +2393,15 @@ def _download_index_files(request):
 
 
 @safe_download
-def download_index(req, domain, app_id, template="app_manager/download_index.html"):
+def download_index(request, domain, app_id, template="app_manager/download_index.html"):
     """
     A landing page, mostly for debugging, that has links the jad and jar as well as
     all the resource files that will end up zipped into the jar.
 
     """
-    return render(req, template, {
-        'app': req.app,
-        'files': _download_index_files(req),
+    return render(request, template, {
+        'app': request.app,
+        'files': _download_index_files(request),
     })
 
 
@@ -2444,7 +2435,7 @@ class DownloadCCZ(DownloadMultimediaZip):
 
 
 @safe_download
-def download_file(req, domain, app_id, path):
+def download_file(request, domain, app_id, path):
     mimetype_map = {
         'ccpr': 'commcare/profile',
         'jad': 'text/vnd.sun.j2me.app-descriptor',
@@ -2469,13 +2460,13 @@ def download_file(req, domain, app_id, path):
             r'^', 'corehq.apps.app_manager.download_urls').resolve(path)
 
     try:
-        assert req.app.copy_of
+        assert request.app.copy_of
         obj = CachedObject('{id}::{path}'.format(
-            id=req.app._id,
+            id=request.app._id,
             path=full_path,
         ))
         if not obj.is_cached():
-            payload = req.app.fetch_attachment(full_path)
+            payload = request.app.fetch_attachment(full_path)
             if type(payload) is unicode:
                 payload = payload.encode('utf-8')
             buffer = StringIO(payload)
@@ -2488,15 +2479,15 @@ def download_file(req, domain, app_id, path):
         response['Content-Length'] = len(response.content)
         return response
     except (ResourceNotFound, AssertionError):
-        if req.app.copy_of:
-            if req.META.get('HTTP_USER_AGENT') == 'bitlybot':
+        if request.app.copy_of:
+            if request.META.get('HTTP_USER_AGENT') == 'bitlybot':
                 raise Http404()
             elif path == 'profile.ccpr':
                 # legacy: should patch build to add odk profile
                 # which wasn't made on build for a long time
-                add_odk_profile_after_build(req.app)
-                req.app.save()
-                return download_file(req, domain, app_id, path)
+                add_odk_profile_after_build(request.app)
+                request.app.save()
+                return download_file(request, domain, app_id, path)
             else:
                 try:
                     resolve_path(path)
@@ -2510,16 +2501,16 @@ def download_file(req, domain, app_id, path):
                     # this resource should exist but doesn't
                     logging.error(
                         'Expected build resource %s not found' % path,
-                        extra={'request': req}
+                        extra={'request': request}
                     )
-                    if not req.app.build_broken:
-                        req.app.build_broken = True
-                        req.app.build_broken_reason = 'incomplete-build'
+                    if not request.app.build_broken:
+                        request.app.build_broken = True
+                        request.app.build_broken_reason = 'incomplete-build'
                         try:
-                            req.app.save()
+                            request.app.save()
                         except ResourceConflict:
                             # this really isn't a big deal:
-                            # It'll get updated next time a resource is req'd;
+                            # It'll get updated next time a resource is request'd;
                             # in fact the conflict is almost certainly from
                             # another thread doing this exact update
                             pass
@@ -2529,26 +2520,26 @@ def download_file(req, domain, app_id, path):
         except Resolver404:
             raise Http404()
 
-        return callback(req, domain, app_id, *callback_args, **callback_kwargs)
+        return callback(request, domain, app_id, *callback_args, **callback_kwargs)
 
 
 @safe_download
-def download_profile(req, domain, app_id):
+def download_profile(request, domain, app_id):
     """
     See ApplicationBase.create_profile
 
     """
     return HttpResponse(
-        req.app.create_profile()
+        request.app.create_profile()
     )
 
 @safe_download
-def download_media_profile(req, domain, app_id):
+def download_media_profile(request, domain, app_id):
     return HttpResponse(
-        req.app.create_profile(with_media=True)
+        request.app.create_profile(with_media=True)
     )
 
-def odk_install(req, domain, app_id, with_media=False):
+def odk_install(request, domain, app_id, with_media=False):
     app = get_app(domain, app_id)
     qr_code_view = "odk_qr_code" if not with_media else "odk_media_qr_code"
     context = {
@@ -2557,116 +2548,116 @@ def odk_install(req, domain, app_id, with_media=False):
         "qr_code": reverse("corehq.apps.app_manager.views.%s" % qr_code_view, args=[domain, app_id]),
         "profile_url": app.odk_profile_display_url if not with_media else app.odk_media_profile_display_url,
     }
-    return render(req, "app_manager/odk_install.html", context)
+    return render(request, "app_manager/odk_install.html", context)
 
-def odk_qr_code(req, domain, app_id):
+def odk_qr_code(request, domain, app_id):
     qr_code = get_app(domain, app_id).get_odk_qr_code()
     return HttpResponse(qr_code, mimetype="image/png")
 
-def odk_media_qr_code(req, domain, app_id):
+def odk_media_qr_code(request, domain, app_id):
     qr_code = get_app(domain, app_id).get_odk_qr_code(with_media=True)
     return HttpResponse(qr_code, mimetype="image/png")
 
 @safe_download
-def download_odk_profile(req, domain, app_id):
+def download_odk_profile(request, domain, app_id):
     """
     See ApplicationBase.create_profile
 
     """
     return HttpResponse(
-        req.app.create_profile(is_odk=True),
+        request.app.create_profile(is_odk=True),
         mimetype="commcare/profile"
     )
 
 @safe_download
-def download_odk_media_profile(req, domain, app_id):
+def download_odk_media_profile(request, domain, app_id):
     return HttpResponse(
-        req.app.create_profile(is_odk=True, with_media=True),
+        request.app.create_profile(is_odk=True, with_media=True),
         mimetype="commcare/profile"
     )
 
 @safe_download
-def download_suite(req, domain, app_id):
+def download_suite(request, domain, app_id):
     """
     See Application.create_suite
 
     """
     return HttpResponse(
-        req.app.create_suite()
+        request.app.create_suite()
     )
 
 @safe_download
-def download_media_suite(req, domain, app_id):
+def download_media_suite(request, domain, app_id):
     """
     See Application.create_media_suite
 
     """
     return HttpResponse(
-        req.app.create_media_suite()
+        request.app.create_media_suite()
     )
 
 
 @safe_download
-def download_app_strings(req, domain, app_id, lang):
+def download_app_strings(request, domain, app_id, lang):
     """
     See Application.create_app_strings
 
     """
     return HttpResponse(
-        req.app.create_app_strings(lang)
+        request.app.create_app_strings(lang)
     )
 
 
 @safe_download
-def download_xform(req, domain, app_id, module_id, form_id):
+def download_xform(request, domain, app_id, module_id, form_id):
     """
     See Application.fetch_xform
 
     """
     try:
         return HttpResponse(
-            req.app.fetch_xform(module_id, form_id)
+            request.app.fetch_xform(module_id, form_id)
         )
     except (IndexError, ModuleNotFoundException):
         raise Http404()
     except AppManagerException:
-        unique_form_id = req.app.get_module(module_id).get_form(form_id).unique_id
-        response = validate_form_for_build(req, domain, app_id, unique_form_id, ajax=False)
+        unique_form_id = request.app.get_module(module_id).get_form(form_id).unique_id
+        response = validate_form_for_build(request, domain, app_id, unique_form_id, ajax=False)
         response.status_code = 404
         return response
 
 
 @safe_download
-def download_user_registration(req, domain, app_id):
+def download_user_registration(request, domain, app_id):
     """See Application.fetch_xform"""
     return HttpResponse(
-        req.app.get_user_registration().render_xform()
+        request.app.get_user_registration().render_xform()
     )
 
 
 @safe_download
-def download_jad(req, domain, app_id):
+def download_jad(request, domain, app_id):
     """
     See ApplicationBase.create_jadjar
 
     """
-    app = req.app
+    app = request.app
     try:
         jad, _ = app.create_jadjar()
     except ResourceConflict:
-        return download_jad(req, domain, app_id)
+        return download_jad(request, domain, app_id)
     try:
         response = HttpResponse(jad)
     except Exception:
-        messages.error(req, BAD_BUILD_MESSAGE)
-        return back_to_main(req, domain, app_id=app_id)
+        messages.error(request, BAD_BUILD_MESSAGE)
+        return back_to_main(request, domain, app_id=app_id)
     set_file_download(response, "CommCare.jad")
     response["Content-Type"] = "text/vnd.sun.j2me.app-descriptor"
     response["Content-Length"] = len(jad)
     return response
 
 @safe_download
-def download_jar(req, domain, app_id):
+def download_jar(request, domain, app_id):
     """
     See ApplicationBase.create_jadjar
 
@@ -2676,15 +2667,15 @@ def download_jar(req, domain, app_id):
 
     """
     response = HttpResponse(mimetype="application/java-archive")
-    app = req.app
+    app = request.app
     _, jar = app.create_jadjar()
     set_file_download(response, 'CommCare.jar')
     response['Content-Length'] = len(jar)
     try:
         response.write(jar)
     except Exception:
-        messages.error(req, BAD_BUILD_MESSAGE)
-        return back_to_main(req, domain, app_id=app_id)
+        messages.error(request, BAD_BUILD_MESSAGE)
+        return back_to_main(request, domain, app_id=app_id)
     return response
 
 def download_test_jar(request):
@@ -2698,13 +2689,13 @@ def download_test_jar(request):
     return response
 
 @safe_download
-def download_raw_jar(req, domain, app_id):
+def download_raw_jar(request, domain, app_id):
     """
     See ApplicationBase.fetch_jar
 
     """
     response = HttpResponse(
-        req.app.fetch_jar()
+        request.app.fetch_jar()
     )
     response['Content-Type'] = "application/java-archive"
     return response
@@ -2776,7 +2767,7 @@ def _questions_for_form(request, form, langs):
 class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
     urlname = 'app_summary'
     page_title = ugettext_noop("Summary")
-    template_name = 'app_manager/summary_new.html'
+    template_name = 'app_manager/summary.html'
 
     def dispatch(self, request, *args, **kwargs):
         request.preview_bootstrap3 = True

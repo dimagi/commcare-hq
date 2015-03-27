@@ -20,7 +20,6 @@ var CaseConfig = (function () {
             return actions;
         }(params.actions));
         self.questions = params.questions;
-        self.edit = params.edit;
         self.save_url = params.save_url;
         // `requires` is a ko observable so it can be read by another UI
         self.requires = params.requires;
@@ -140,7 +139,6 @@ var CaseConfig = (function () {
         var self = this;
 
         self.caseConfig = caseConfig;
-        self.edit = ko.observable(self.caseConfig.edit);
         self.moduleCaseTypes = caseConfig.moduleCaseTypes;
         self.caseTypes = _.unique(_(self.moduleCaseTypes).map(function (moduleCaseType) {
             return moduleCaseType.case_type;

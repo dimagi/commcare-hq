@@ -1,5 +1,5 @@
 {% load i18n %}
-<div data-bind="saveButton: saveButton, visible: editing"></div>
+<div data-bind="saveButton: saveButton"></div>
 <table class="table">
     <thead>
         <tr class="row control-group" data-bind="css: {error: validateGeneral()}">
@@ -33,11 +33,11 @@
                 {% if hide_deploy_column %}
                 <input type="checkbox" checked="checked" data-bind="value: deploy, visible: false" />
                 {% else %}
-                <span data-bind="editableBool: deploy, editing: $root.editing"></span>
+                <span data-bind="editableBool: deploy"></span>
                 {% endif %}
             </td>
             <td>
-                <span data-bind="langcode: langcode, valueUpdate: 'textchange', editing: $root.editing, inputHandlers: {hasfocus: $root.seen}"></span>
+                <span data-bind="langcode: langcode, valueUpdate: 'textchange', inputHandlers: {hasfocus: $root.seen}"></span>
             </td>
             <td>
                 <span data-bind="visible: originalLangcode() && originalLangcode() !== langcode()"><i class="icon-arrow-left"></i></span>
@@ -47,12 +47,12 @@
             </td>
             <td><p class="help-inline" data-bind="text: message"></p></td>
             <td>
-                <a href="#" data-bind="click: $root.removeLanguage, visible: $root.editing">Delete</a>
+                <a href="#" data-bind="click: $root.removeLanguage">Delete</a>
             </td>
         </tr>
     </tbody>
 </table>
-<button class="btn" data-bind="click: addLanguage, visible: editing, disable: addLanguageDisabled">
+<button class="btn" data-bind="click: addLanguage, disable: addLanguageDisabled">
     <i class="icon-plus"></i>
     {% trans "Add Language" %}
 </button>

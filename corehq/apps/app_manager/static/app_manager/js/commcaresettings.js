@@ -2,7 +2,6 @@ function CommcareSettings(options) {
     var self = this;
     var initialValues = options.values;
     self.sections = options.sections;
-    self.edit = ko.observable(options.edit);
     self.user = options.user;
     self.permissions = options.permissions;
 

@@ -37,7 +37,6 @@ var SupportedLanguages = (function () {
         var validate = options.validate;
         var self = this;
 
-        this.editing = ko.observable(options.edit);
         this.addLanguageDisabled = ko.observable(false);
         this._seen = ko.observable(false);
         this.seen = ko.computed({
@@ -134,7 +133,7 @@ var SupportedLanguages = (function () {
         this.languages.subscribe(changeSaveButton);
 
         this.canSortLanguages = ko.computed(function () {
-             return self.editing() && self.languages().length > 1;
+             return self.languages().length > 1;
         });
 
         this.validateGeneral = function () {

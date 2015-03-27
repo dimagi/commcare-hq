@@ -327,6 +327,8 @@ class AdvancedAction(IndexedSchema):
 
     close_condition = SchemaProperty(FormActionCondition)
 
+    __eq__ = DocumentSchema.__eq__
+
     def get_paths(self):
         for path in self.case_properties.values():
             yield path
@@ -568,7 +570,7 @@ class FormLink(DocumentSchema):
     form_id:    id of next form to open
     """
     xpath = StringProperty()
-    form_id = StringProperty()
+    form_id = FormIdProperty('modules[*].forms[*].form_links[*].form_id')
 
 
 class FormSchedule(DocumentSchema):
@@ -1492,6 +1494,12 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
             return self.forms[i].with_id(i % len(self.forms), self)
         except IndexError:
             raise FormNotFoundException()
+
+    def get_child_modules(self):
+        return [
+            module for module in self.get_app().get_modules()
+            if module.unique_id != self.unique_id and getattr(module, 'root_module_id', None) == self.unique_id
+        ]
 
     def requires_case_details(self):
         return False

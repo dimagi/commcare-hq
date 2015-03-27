@@ -15,10 +15,6 @@
         .casexml ul {
             margin-left: 15px;
         }
-        .no-edit-select {
-            font-weight: bold;
-            color: #444;
-        }
         input[type="radio"]{
             margin: 3px 5px 5px 0px;
         }
@@ -72,13 +68,6 @@
         }
         .indent {
             margin-left: 15px;
-        }
-        .ko-no-edit-select {
-            font-weight: bold;
-            color: #444;
-        }
-        .code.ko-no-edit {
-            font-weight: normal;
         }
     </style>
     {% endif %}
@@ -239,7 +228,7 @@
 
 {% block form-view %}
     <div id="build_errors"></div>
-    {% if edit and not is_user_registration %}
+    {% if not is_user_registration %}
         <div class="delete-me">
             <form action="{% url "delete_form" domain app.id module.unique_id form.unique_id %}" method="post">
                 <button type="submit" class="disable-on-submit btn btn-danger">
@@ -259,7 +248,6 @@
     {% endif %}
     </h3>
 
-    {% if edit %}
     <div class="btn-group">
         {% if not form.no_vellum %}
         <a id="edit_label" href="{% if is_user_registration %}
@@ -289,7 +277,6 @@
         {% endif %}
     </div>
     <hr/>
-    {% endif %}
 
     {% if is_user_registration %}
     <h4>{% trans "User Registration Properties" %}</h4>

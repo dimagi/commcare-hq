@@ -31,6 +31,8 @@ def stock_category(stock, daily_consumption, understock, overstock):
 
 
 def state_stock_category(state):
+    if not state.sql_location:
+        return 'nodata'
     location_type = state.sql_location.location_type
     return stock_category(
         state.stock_on_hand,

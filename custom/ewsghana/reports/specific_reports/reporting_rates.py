@@ -288,11 +288,11 @@ class AlertsData(ReportingRatesData):
         return []
 
     def supply_points_reporting_last_month(self, supply_points):
-        self.config['enddate'] = datetime.today()
-        self.config['startdate'] = self.config['enddate'] - timedelta(days=30)
+        enddate = datetime.today()
+        startdate = enddate - timedelta(days=30)
         result = StockTransaction.objects.filter(
             case_id__in=supply_points,
-            report__date__range=[self.config['startdate'], self.config['enddate']]
+            report__date__range=[startdate, enddate]
         ).distinct('case_id').values_list('case_id', flat=True)
         return result
 

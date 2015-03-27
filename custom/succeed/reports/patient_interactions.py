@@ -29,6 +29,8 @@ class PatientInteractionsReport(PatientDetailsReport):
     def report_context(self):
         self.report_template_path = "patient_interactions.html"
         ret = super(PatientInteractionsReport, self).report_context
+        self.update_app_info()
+
         ret['view_mode'] = 'interactions'
         ret['problem_url'] = self.get_form_url(self.cm_app_dict, self.latest_cm_build,
                                                CM_APP_PD_MODULE, PD1, ret['patient']['_id'])

@@ -1214,6 +1214,7 @@ PILLOWTOPS = {
         'custom.tdh.models.TDHNewbornTreatmentFluffPillow',
         'custom.tdh.models.TDHChildClassificationFluffPillow',
         'custom.tdh.models.TDHChildTreatmentFluffPillow',
+        'custom.succeed.models.UCLAPatientFluffPillow'
     ],
     'mvp_indicators': [
         'mvp_docs.pillows.MVPFormIndicatorPillow',
@@ -1225,6 +1226,7 @@ PILLOWTOPS = {
 CUSTOM_DATA_SOURCES = [
     os.path.join('custom', 'up_nrhm', 'data_sources', 'location_hierarchy.json'),
     os.path.join('custom', 'up_nrhm', 'data_sources', 'asha_facilitators.json'),
+    os.path.join('custom', 'succeed', 'data_sources', 'submissions.json'),
 ]
 
 
@@ -1325,9 +1327,8 @@ DOMAIN_MODULE_MAP = {
     'succeed': 'custom.succeed',
     'ilsgateway-test-1': 'custom.ilsgateway',
     'ilsgateway-test-2': 'custom.ilsgateway',
-    'ews-ghana-test': 'custom.ewsghana',
     'ewsghana-test-1': 'custom.ewsghana',
-    'stock-status-test-1': 'custom.ewsghana',
+    'ewsghana-test-2': 'custom.ewsghana',
     'test-pathfinder': 'custom.m4change',
     'wvindia2': 'custom.world_vision',
     'pathways-india-mis': 'custom.care_pathways',
