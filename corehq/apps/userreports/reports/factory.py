@@ -10,8 +10,8 @@ from corehq.apps.userreports.reports.filters import(
     SHOW_ALL_CHOICE,
 )
 from corehq.apps.userreports.reports.specs import FilterSpec, ChoiceListFilterSpec, PieChartSpec, \
-    MultibarAggregateChartSpec, MultibarChartSpec, ReportFilter, ReportColumn, DynamicChoiceListFilterSpec, \
-    NumericFilterSpec
+    MultibarAggregateChartSpec, MultibarChartSpec, ReportFilter, DynamicChoiceListFilterSpec, \
+    NumericFilterSpec, FieldColumn
 
 
 def _build_date_filter(spec):
@@ -101,7 +101,7 @@ class ReportFactory(object):
             config_or_config_id=spec.config_id,
             filters=[ReportFilter.wrap(f) for f in spec.filters],
             aggregation_columns=spec.aggregation_columns,
-            columns=[ReportColumn.wrap(colspec) for colspec in spec.columns],
+            columns=[FieldColumn.wrap(colspec) for colspec in spec.columns],
         )
 
 

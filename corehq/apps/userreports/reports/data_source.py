@@ -95,7 +95,7 @@ class ConfigurableReportDataSource(SqlData):
         # arbitrarily sort by the first column in memory
         # todo: should get pushed to the database but not currently supported in sqlagg
         return sorted(ret, key=lambda x: x.get(
-            self.column_configs[0].report_column_id,
+            self.column_configs[0].column_id,
             next(x.itervalues())
         ))
 

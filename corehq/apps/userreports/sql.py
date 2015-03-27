@@ -186,10 +186,10 @@ def _expand_column(report_column, distinct_values):
                 report_column.field,
                 whens={val: 1},
                 else_=0,
-                alias=u"{}-{}".format(report_column.report_column_id, val),
+                alias=u"{}-{}".format(report_column.column_id, val),
             ),
             sortable=False,
-            data_slug=u"{}-{}".format(report_column.report_column_id, val),
+            data_slug=u"{}-{}".format(report_column.column_id, val),
             format_fn=report_column.get_format_fn(),
             help_text=report_column.description
         ))

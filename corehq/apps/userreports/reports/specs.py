@@ -1,4 +1,4 @@
-from jsonobject import JsonObject, StringProperty, BooleanProperty, ListProperty, DictProperty
+from jsonobject import JsonObject, StringProperty, BooleanProperty, ListProperty, DictProperty, ObjectProperty
 from jsonobject.base import DefaultProperty
 from sqlagg import CountUniqueColumn, SumColumn
 from sqlagg.columns import (
@@ -40,24 +40,30 @@ class ReportFilter(JsonObject):
 
 
 class ReportColumn(JsonObject):
-    type = StringProperty(required=True)
+    column_id = StringProperty(required=True)
     display = StringProperty()
     description = StringProperty()
+
+
+class FieldColumn(ReportColumn):
+    type = TypeProperty('field')
     field = StringProperty(required=True)
     aggregation = StringProperty(
         choices=SQLAGG_COLUMN_MAP.keys(),
         required=True,
     )
-    alias = StringProperty()
     format = StringProperty(default='default', choices=[
         'default',
         'percent_of_total',
     ])
     transform = DictProperty()
 
-    @property
-    def report_column_id(self):
-        return self.alias or self.field
+    @classmethod
+    def wrap(cls, obj):
+        # lazy migration - set column_id to alias, or field if no alias found
+        if obj.get('column_id') is None:
+            obj['column_id'] = obj.get('alias') or obj['field']
+        return super(FieldColumn, cls).wrap(obj)
 
     def get_format_fn(self):
         if self.transform:
@@ -71,7 +77,7 @@ class ReportColumn(JsonObject):
             self.display,
             SQLAGG_COLUMN_MAP[self.aggregation](self.field, alias=self.alias),
             sortable=False,
-            data_slug=self.report_column_id,
+            data_slug=self.column_id,
             format_fn=self.get_format_fn(),
             help_text=self.description
         )

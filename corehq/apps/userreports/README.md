@@ -552,6 +552,7 @@ Here's an example report column that shows the owner name from an associated `ow
 {
     "type": "field",
     "field": "owner_id",
+    "column_id": "owner_id",
     "display": "Owner Name"
     "format": "default",
     "transform": {
