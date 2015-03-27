@@ -38,7 +38,7 @@ def tag_docs_as_deleted(cls, docs, deletion_id):
 
 @periodic_task(
     run_every=crontab(hour=23, minute=55),
-    queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery')
+    queue='background_queue',
 )
 def resend_pending_invitations():
     from corehq.apps.users.models import DomainInvitation
