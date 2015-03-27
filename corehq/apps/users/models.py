@@ -1825,7 +1825,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin,
                     for loc in sql_loc.get_descendants()
                 ]
             else:
-                return [self.location.sql_location.case_sharing_group_object(self)._id]
+                return [self.location.sql_location.case_sharing_group_object(self._id)._id]
 
         else:
             return []
