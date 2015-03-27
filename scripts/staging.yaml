@@ -43,7 +43,6 @@
 trunk: master
 name: autostaging
 branches:
-  - background-queue  # cz 3/27
   - consolidate-timezone-utils  # danny 3/25
   - app-manager-cleanup # danny 3/13
   - subscription-no-contact-info # bb 8/4
