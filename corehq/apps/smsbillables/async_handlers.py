@@ -138,8 +138,14 @@ class PublicSMSRatesAsyncHandler(BaseAsyncHandler):
             return fmt_dollar_amount(usage_fee.amount + usd_gateway_fee)
 
         rate_table = []
+
+        from corehq.apps.sms.test_backend import TestSMSBackend
+
         for backend_instance in backends:
             backend_type = get_backend_by_class_name(backend_instance.doc_type)
+            # not a better way than hardcoding
+            if backend_type == TestSMSBackend:
+                continue
 
             gateway_fee_incoming = _directed_fee(INCOMING, backend_type.get_api_id(), backend_instance._id)
             gateway_fee_outgoing = _directed_fee(OUTGOING, backend_type.get_api_id(), backend_instance._id)
