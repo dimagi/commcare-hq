@@ -488,20 +488,22 @@ class SMSBackend(MobileBackend):
 
     @classmethod
     def get_wrapped(cls, backend_id):
-        from corehq.apps.sms.util import get_available_backends
-        backend_classes = get_available_backends()
         try:
             backend = SMSBackend.get(backend_id)
         except ResourceNotFound:
             raise UnrecognizedBackendException("Backend %s not found" %
                 backend_id)
-        doc_type = backend.doc_type
+        return backend.wrap_correctly()
+
+    def wrap_correctly(self):
+        from corehq.apps.sms.util import get_available_backends
+        backend_classes = get_available_backends()
+        doc_type = self.doc_type
         if doc_type in backend_classes:
-            backend = backend_classes[doc_type].wrap(backend.to_json())
-            return backend
+            return backend_classes[doc_type].wrap(self.to_json())
         else:
             raise UnrecognizedBackendException("Backend %s has an "
-                "unrecognized doc type." % backend_id)
+                "unrecognized doc type." % self._id)
 
 
 class BackendMapping(Document):
