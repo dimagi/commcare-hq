@@ -30,6 +30,7 @@ from corehq.apps.accounting.models import (
 )
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
+from corehq.apps.locations.models import Location
 from corehq.apps.users.util import (
     can_add_extra_mobile_workers,
     smart_query_string,
@@ -662,6 +663,28 @@ class CreateCommCareUserView(BaseManageCommCareUserView):
                 device_id="Generated from HQ",
                 user_data=self.custom_data.get_data_to_save(),
             )
+            return HttpResponseRedirect(reverse(EditCommCareUserView.urlname,
+                                                args=[self.domain, couch_user.userID]))
+        return self.get(request, *args, **kwargs)
+
+
+class CreateUserWithLocationView(CreateCommCareUserView):
+    def post(self, request, *args, **kwargs):
+        if self.new_commcare_user_form.is_valid() and self.custom_data.is_valid():
+            loc = Location.get(kwargs['location_id'])
+
+            username = self.new_commcare_user_form.data['username']
+            password = self.new_commcare_user_form.data['password']
+            phone_number = self.new_commcare_user_form.data['phone_number']
+            couch_user = CommCareUser.create(
+                self.domain,
+                username,
+                password,
+                phone_number=phone_number,
+                device_id="Generated from HQ",
+                user_data=self.custom_data.get_data_to_save(),
+            )
+            couch_user.set_location(loc)
             return HttpResponseRedirect(reverse(EditCommCareUserView.urlname,
                                                 args=[self.domain, couch_user.userID]))
         return self.get(request, *args, **kwargs)

@@ -22,6 +22,10 @@ def get_url(view_name, text, domain):
     return '<a href="%s">%s</a>' % (reverse(view_name, args=[domain]), text)
 
 
+def get_url_with_location(view_name, text, location_id, domain):
+    return '<a href="%s%s">%s</a>' % (reverse(view_name, args=[domain]), location_id, text)
+
+
 class EWSLineChart(LineChart):
     template_partial = 'ewsghana/partials/ews_line_chart.html'
 

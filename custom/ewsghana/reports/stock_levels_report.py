@@ -13,8 +13,8 @@ from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.graph_models import Axis
 from custom.common import ALL_OPTION
 from custom.ewsghana.filters import ProductByProgramFilter
-from custom.ewsghana.reports import EWSData, REORDER_LEVEL, MAXIMUM_LEVEL, MultiReport, get_url, EWSLineChart, \
-    ProductSelectionPane
+from custom.ewsghana.reports import EWSData, REORDER_LEVEL, MAXIMUM_LEVEL, MultiReport, get_url_with_location, \
+    EWSLineChart, ProductSelectionPane
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 from corehq.apps.locations.models import Location, SQLLocation
@@ -240,7 +240,7 @@ class FacilitySMSUsers(EWSData):
 
     @property
     def rows(self):
-        from corehq.apps.users.views.mobile import CreateCommCareUserView
+        from corehq.apps.users.views.mobile import CreateUserWithLocationView
 
         query = (UserES().mobile_users().domain(self.config['domain'])
                  .term("domain_membership.location_id", self.config['location_id']))
@@ -249,7 +249,8 @@ class FacilitySMSUsers(EWSData):
             if (hit['first_name'] or hit['last_name']) and hit['phone_numbers']:
                 yield [hit['first_name'] + ' ' + hit['last_name'], hit['phone_numbers'][0]]
 
-        yield [get_url(CreateCommCareUserView.urlname, 'Create new Mobile Worker', self.config['domain'])]
+        yield [get_url_with_location(CreateUserWithLocationView.urlname, 'Create new Mobile Worker',
+                                     self.config['location_id'], self.config['domain'])]
 
 
 class FacilityUsers(EWSData):
