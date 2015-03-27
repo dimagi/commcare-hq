@@ -10,7 +10,7 @@ base:
   home: "/home/cchq"
   project: commcare-hq
   code_repo: 'git://github.com/dimagi/commcare-hq.git'
-  timing_log: None  # make a file path to log deploy timing to it. e.g. '../fabric-timing.txt'
+  timing_log: null  # make a file path to log deploy timing to it. e.g. '../fabric-timing.txt'
 
   # celery queues all disabled by default
   sms_queue_enabled: False
