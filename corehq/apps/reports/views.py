@@ -49,11 +49,10 @@ from couchexport.exceptions import (
     CouchExportException,
     SchemaMismatchException
 )
-from couchexport.groupexports import rebuild_export
 from couchexport.models import FakeSavedExportSchema, SavedBasicExport
 from couchexport.shortcuts import (export_data_shared, export_raw_data,
     export_response)
-from couchexport.tasks import rebuild_schemas
+from couchexport.tasks import rebuild_schemas, rebuild_export_task
 from couchexport.util import SerializableFunction
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import wrapped_docs
@@ -421,11 +420,14 @@ def hq_download_saved_export(req, domain, export_id):
 def hq_update_saved_export(req, domain):
     group_id = req.POST['group_export_id']
     index = int(req.POST['index'])
-    group_config = HQGroupExportConfiguration.get(group_id)
-    assert domain == group_config.domain
+    group_config = get_document_or_404(HQGroupExportConfiguration, domain, group_id)
     config, schema = group_config.all_exports[index]
-    rebuild_export(config, schema, 'couch')
-    messages.success(req, _('The data for {} has been refreshed!').format(config.name))
+    rebuild_export_task.delay(group_id, index)
+    messages.success(
+        req,
+        _('Data update for {} has started and the saved export will be automatically updated soon. '
+          'Please refresh the page periodically to check the status.').format(config.name)
+    )
     return HttpResponseRedirect(reverse(DataInterfaceDispatcher.name(),
                                         args=[domain, req.POST['report_slug']]))
 
