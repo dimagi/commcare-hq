@@ -33,6 +33,7 @@ SOH_NOT_RESPONDING = 'soh_not_responding'
 
 TEST_REGION_ID = 21
 
+
 def _is_valid_status(facility, date, status_type):
     if status_type not in NEEDED_STATUS_TYPES:
         return False
@@ -359,7 +360,8 @@ def process_facility_warehouse_data(facility, start_date, end_date):
     new_trans = StockTransaction.objects.filter(
         case_id=supply_point_id,
         report__date__gte=start_date,
-        report__date__lt=end_date
+        report__date__lt=end_date,
+        type='stockonhand'
     ).order_by('report__date')
     process_facility_transactions(location_id, new_trans)
 
