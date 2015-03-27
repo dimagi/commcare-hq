@@ -868,7 +868,7 @@ def services_restart():
 
     _supervisor_command('update')
     _supervisor_command('reload')
-    time.sleep(1)
+    time.sleep(5)
     _supervisor_command('start  all')
 
 
