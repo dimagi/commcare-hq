@@ -2,7 +2,6 @@ import copy
 from django.http.response import HttpResponse
 from django.utils.translation import ugettext as _
 from corehq.apps.groups.models import Group
-from corehq.apps.reports.cache import request_cache
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.api.es import CaseES
 

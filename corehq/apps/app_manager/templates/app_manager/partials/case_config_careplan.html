@@ -14,7 +14,7 @@
 </script>
 
 <div id="case-config-ko">
-    <div data-bind="saveButton: saveButton, visible: edit, css: {disabled: validate}"></div>
+    <div data-bind="saveButton: saveButton, css: {disabled: validate}"></div>
     <div data-bind="with: transaction">
         <table class="table table-condensed">
             <thead>
@@ -35,9 +35,8 @@
                             <input class="input-xxlarge" type="hidden" data-bind="
                                 questionsSelect: $root.questions,
                                 value: path,
-                                optionsCaption: ' ',
-                                edit: $root.edit"
-                            />
+                                optionsCaption: ' '
+                            "/>
                         </div>
                         <p class="help-inline" data-bind="html: validateQuestion, visible: validateQuestion"></p>
                     </td>

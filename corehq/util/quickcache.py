@@ -126,7 +126,8 @@ class QuickCache(object):
         return 'quickcache.{}/{}'.format(self.prefix, args_string)
 
 
-def quickcache(vary_on, timeout=None, memoize_timeout=None, cache=None):
+def quickcache(vary_on, timeout=None, memoize_timeout=None, cache=None,
+               helper_class=QuickCache):
     """
     An easy "all-purpose" cache decorator
 
@@ -181,7 +182,7 @@ def quickcache(vary_on, timeout=None, memoize_timeout=None, cache=None):
                              get_cache('default', timeout=timeout)])
 
     def decorator(fn):
-        helper = QuickCache(fn, vary_on=vary_on, cache=cache)
+        helper = helper_class(fn, vary_on=vary_on, cache=cache)
 
         @functools.wraps(fn)
         def inner(*args, **kwargs):

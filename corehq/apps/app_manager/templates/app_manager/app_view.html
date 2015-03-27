@@ -28,7 +28,6 @@
                 urls: {
                     save: '{% url "edit_commcare_settings" domain app.id %}'
                 },
-                edit: {{ edit|BOOL }},
                 user: {
                     is_previewer: {{ request.couch_user.is_previewer|BOOL }}
                 },
@@ -131,13 +130,11 @@
             var langs = {{ app.langs|JSON }};
             var buildLangs = {{ app.build_langs|JSON }};
             var saveURL = "{% url "edit_app_langs" domain app.id %}";
-            var edit = {{ edit|JSON }};
             var validate = !{{ app.is_remote_app|BOOL }};
             ko.applyBindings(new SupportedLanguages({
                 langs: langs,
                 buildLangs: buildLangs,
                 saveURL: saveURL,
-                edit: edit,
                 validate: validate
             }), $("#supported-languages").get(0));
         });
@@ -236,7 +233,6 @@
                     url: "{% url "edit_app_translations" domain app.id %}",
                     suggestion_url: "{% url "get_app_translations" domain %}",
                     lang: "{{ lang }}",
-                    edit: {{ edit|yesno:"true,false" }},
                     allow_autofill: "{{ lang }}" !== 'en',
                     $home: $translation_ui
                 });

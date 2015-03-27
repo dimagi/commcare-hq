@@ -11,22 +11,18 @@
     </label>
     <div class="controls">
         <label class="checkbox">
-            {% if edit %}
-                {% if module.all_forms_require_a_case or module.has_schedule %}
-                    <input type="checkbox" name="has_schedule" {% if module.has_schedule %}checked{% endif %}>
-                    {% if not module.all_forms_require_a_case %}
-                    <div class="alert alert-error" data-bind="visible: value">
-                        <strong>{% trans "Visit schedule will be ignored as not all forms in the module update or close a case." %}</strong>
-                    </div>
-                    {% endif %}
-                {% else %}
-                    {% blocktrans %}
-                        Visit schedules can only be used on modules where all the forms in the module<br/>
-                        update or close a case, which means registration forms must go in a separate module.
-                    {% endblocktrans %}
+            {% if module.all_forms_require_a_case or module.has_schedule %}
+                <input type="checkbox" name="has_schedule" {% if module.has_schedule %}checked{% endif %}>
+                {% if not module.all_forms_require_a_case %}
+                <div class="alert alert-error" data-bind="visible: value">
+                    <strong>{% trans "Visit schedule will be ignored as not all forms in the module update or close a case." %}</strong>
+                </div>
                 {% endif %}
             {% else %}
-                {% trans "Visit schedule is enabled for forms in this module" %}
+                {% blocktrans %}
+                    Visit schedules can only be used on modules where all the forms in the module<br/>
+                    update or close a case, which means registration forms must go in a separate module.
+                {% endblocktrans %}
             {% endif %}
         </label>
     </div>

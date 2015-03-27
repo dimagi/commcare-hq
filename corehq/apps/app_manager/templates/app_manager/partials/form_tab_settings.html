@@ -7,11 +7,7 @@
         <div class="control-group">
             <label class="control-label">{% trans "Form Name" %}</label>
             <div class="controls">
-                {% if edit %}
-                    {% input_trans form.name langs %}
-                {% else %}
-                    {{ form.name|html_trans:langs|safe }}
-                {% endif %}
+                {% input_trans form.name langs %}
             </div>
         </div>
 
@@ -75,14 +71,9 @@
                     ></span>
                 </label>
                 <div class="controls" id="no-vellum">
-                    {% if edit %}
-                         <input type="checkbox" value="true"
-                                data-bind="checked: no_vellum"/>
-                    {% else %}
-                        <input type="checkbox" value="true" disabled="disabled"
-                               data-bind="checked: no_vellum"/>
-                    {% endif %}
-                    <input type="hidden" name="no_vellum" data-bind="value: no_vellum"/>
+                     <input type="checkbox" value="true"
+                            data-bind="checked: no_vellum"/>
+                     <input type="hidden" name="no_vellum" data-bind="value: no_vellum"/>
                 </div>
             </div>
             {% endif %}

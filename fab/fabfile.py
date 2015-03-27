@@ -59,6 +59,7 @@ RSYNC_EXCLUDE = (
     '*.db',
     )
 env.linewise = True
+env.colorize_errors = True
 
 if not hasattr(env, 'code_branch'):
     print ("code_branch not specified, using 'master'. "

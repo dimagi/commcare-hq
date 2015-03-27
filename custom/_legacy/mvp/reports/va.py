@@ -138,7 +138,7 @@ class VerbalAutopsyReport(MVPIndicatorReport):
                 ]
             },
             {
-                'category_title': "Medial Neonate",
+                'category_title': "Medical Neonate",
                 'category_slug': 'va_neonates',
                 'indicator_slugs': [
                     "va_neonates_birth_asphyxia",
@@ -152,7 +152,7 @@ class VerbalAutopsyReport(MVPIndicatorReport):
                 ]
             },
             {
-                'category_title': "Medial Child(1-59)",
+                'category_title': "Medical Child(1-59)",
                 'category_slug': 'va_child',
                 'indicator_slugs': [
                     "va_child_accident",

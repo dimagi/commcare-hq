@@ -43,7 +43,8 @@
 trunk: master
 name: autostaging
 branches:
-  - consolidate-timezone-utils+app-manager-cleanup
+  - consolidate-timezone-utils+req-request  # danny 3/26
+  - req-request  # danny 3/26
   - consolidate-timezone-utils  # danny 3/25
   - request-cache-refactor  # danny 3/23
   - app-manager-cleanup # danny 3/13
@@ -54,8 +55,9 @@ branches:
   - fixtures-spike  # cz 1/29
   - static-updates # Biyeun 2/9
   - loc-type-stock-rates  # Ethan 3/6
-  - refactor-payment-modal # Nick P 3/19
  # - pricingSMS # sravan 3/23
+  - bulk-payments # Nick P 3/26
+  - usercase # Norman 3/27
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

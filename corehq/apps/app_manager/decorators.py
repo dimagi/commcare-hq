@@ -20,18 +20,18 @@ def safe_download(f):
     domain and app_id, or there are keyword arguments with those names
     """
     @wraps(f)
-    def _safe_download(req, *args, **kwargs):
+    def _safe_download(request, *args, **kwargs):
         domain = args[0] if len(args) > 0 else kwargs["domain"]
         app_id = args[1] if len(args) > 1 else kwargs["app_id"]
-        latest = True if req.GET.get('latest') == 'true' else False
-        target = req.GET.get('target') or None
+        latest = True if request.GET.get('latest') == 'true' else False
+        target = request.GET.get('target') or None
 
         try:
-            req.app = get_app(domain, app_id, latest=latest, target=target)
-            return f(req, *args, **kwargs)
+            request.app = get_app(domain, app_id, latest=latest, target=target)
+            return f(request, *args, **kwargs)
         except (AppEditingError, CaseError), e:
             logging.exception(e)
-            messages.error(req, "Problem downloading file: %s" % e)
+            messages.error(request, "Problem downloading file: %s" % e)
             return HttpResponseRedirect(reverse("corehq.apps.app_manager.views.view_app", args=[domain,app_id]))
     return _safe_download
 
