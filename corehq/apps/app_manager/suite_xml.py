@@ -1,4 +1,5 @@
 from collections import namedtuple, defaultdict
+import copy
 from functools import total_ordering
 from itertools import izip_longest
 import os
@@ -564,10 +565,22 @@ class DatumMeta(object):
     Class used in computing the form workflow. Allows comparison by SessionDatum.id and reference
     to SessionDatum.nodeset and SessionDatum.function attributes.
     """
+    type_regex = re.compile("\[@case_type='([\w_]+)'\]")
+
     def __init__(self, session_datum):
         self.id = session_datum.id
         self.nodeset = session_datum.nodeset
         self.function = session_datum.function
+        self.source_id = self.id
+
+    @property
+    @memoized
+    def case_type(self):
+        if not self.nodeset:
+            return None
+
+        match = self.type_regex.search(self.nodeset)
+        return match.group(1)
 
     def __lt__(self, other):
         return self.id < other.id
@@ -579,7 +592,7 @@ class DatumMeta(object):
         return not self == other
 
     def __repr__(self):
-        return 'DatumMeta(id={})'.format(self.id)
+        return 'DatumMeta(id={}, case_type={}, source_id={})'.format(self.id, self.case_type, self.source_id)
 
 
 def get_default_sort_elements(detail):
@@ -748,20 +761,30 @@ class SuiteGenerator(SuiteGeneratorBase):
           * Finally remove the last item from the stack frame.
         """
         from corehq.apps.app_manager.models import (
-            WORKFLOW_DEFAULT, WORKFLOW_PREVIOUS, WORKFLOW_MODULE, WORKFLOW_ROOT
+            WORKFLOW_DEFAULT, WORKFLOW_PREVIOUS, WORKFLOW_MODULE, WORKFLOW_ROOT, WORKFLOW_FORM
         )
 
-        def create_workflow_stack(suite, form_command, module_command, frame_children, allow_empty_stack=False):
+        @memoized
+        def get_entry(suite, form_command):
+            entry = self.get_form_entry(suite, form_command)
+            if not entry.stack:
+                entry.stack = Stack()
+                return entry, True
+            else:
+                return entry, False
+
+        def create_workflow_stack(suite, form_command, frame_children,
+                                  allow_empty_stack=False, if_clause=None):
             if not frame_children and not allow_empty_stack:
                 return
 
+            entry, is_new = get_entry(suite, form_command)
             entry = self.get_form_entry(suite, form_command)
-            if_clause = None
-            if not entry.stack:
-                entry.stack = Stack()
-            else:
+            if not is_new:
                 # TODO: find a more general way of handling multiple contributions to the workflow
-                if_clause = '{} = 0'.format(session_var(RETURN_TO).count())
+                if_prefix = '{} = 0'.format(session_var(RETURN_TO).count())
+                template = '({{}}) and ({})'.format(if_clause) if if_clause else '{}'
+                if_clause = template.format(if_prefix)
 
             frame = CreateFrame(if_clause=if_clause)
             entry.stack.add_frame(frame)
@@ -770,45 +793,136 @@ class SuiteGenerator(SuiteGeneratorBase):
                 if isinstance(child, basestring):
                     frame.add_command(XPath.string(child))
                 else:
-                    frame.add_datum(StackDatum(id=child.id, value=session_var(child.id)))
+                    value = session_var(child.source_id) if child.nodeset else child.function
+                    frame.add_datum(StackDatum(id=child.id, value=value))
             return frame
 
         root_modules = [module for module in self.modules if getattr(module, 'put_in_root', False)]
         root_module_datums = [datum for module in root_modules
                               for datum in self.get_module_datums(suite, u'm{}'.format(module.id)).values()]
+
+        def get_frame_children(target_form, module_only=False):
+            """
+            For a form return the list of stack frame children that are required
+            to navigate to that form.
+
+            This is based on the following algorithm:
+
+            * Add the module the form is in to the stack (we'll call this `m`)
+            * Walk through all forms in the module, determine what datum selections are present in all of the modules
+              (this may be an empty set)
+              * Basically if there are three forms that respectively load
+                * f1: v1, v2, v3, v4
+                * f2: v1, v2, v4
+                * f3: v1, v2
+              * The longest common chain is v1, v2
+            * Add a datum for each of those values to the stack
+            * Add the form "command id" for the <entry> to the stack
+            * Add the remainder of the datums for the current form to the stack
+            * For the three forms above, the stack entries for "last element" would be
+              * m, v1, v2, f1, v3, v4
+              * m, v1, v2, f2, v4
+              * m, v1, v2, f3
+
+            :returns:   list of strings and DatumMeta objects. String represent stack commands
+                        and DatumMeta's represent stack datums.
+            """
+            target_form_command = self.id_strings.form_command(target_form)
+            target_module_id, target_form_id = target_form_command.split('-')
+            module_command = self.id_strings.menu_id(target_form.get_module())
+            module_datums = self.get_module_datums(suite, target_module_id)
+            form_datums = module_datums[target_form_id]
+
+            if module_command == self.id_strings.ROOT:
+                datums_list = root_module_datums
+            else:
+                datums_list = module_datums.values()  # [ [datums for f0], [datums for f1], ...]
+
+            common_datums = commonprefix(datums_list)
+            remaining_datums = form_datums[len(common_datums):]
+
+            frame_children = [module_command] if module_command != self.id_strings.ROOT else []
+            frame_children.extend(common_datums)
+            if not module_only:
+                frame_children.append(target_form_command)
+                frame_children.extend(remaining_datums)
+
+            return frame_children
+
+        def get_datums_matched_to_source(target_frame_elements, source_datums):
+            """
+            Attempt to match the target session variables with ones in the source session.
+            Making some large assumptions about how people will actually use this feature
+            """
+            datum_index = -1
+            for child in target_frame_elements:
+                if not isinstance(child, DatumMeta) or child.function:
+                    yield child
+                else:
+                    datum_index += 1
+                    try:
+                        source_datum = source_datums[datum_index]
+                    except IndexError:
+                        yield child
+                    else:
+                        if child.id != source_datum.id and not source_datum.case_type or \
+                                source_datum.case_type == child.case_type:
+                            target_datum = copy.copy(child)
+                            target_datum.source_id = source_datum.id
+                            yield target_datum
+                        else:
+                            yield child
+
         for module in self.modules:
             for form in module.get_forms():
-                if form.post_form_workflow != WORKFLOW_DEFAULT:
-                    form_command = self.id_strings.form_command(form)
-                    module_id, form_id = form_command.split('-')
+                if form.post_form_workflow == WORKFLOW_DEFAULT:
+                    continue
+
+                form_command = self.id_strings.form_command(form)
+
+                if form.post_form_workflow == WORKFLOW_ROOT:
+                    create_workflow_stack(suite, form_command, [], True)
+                elif form.post_form_workflow == WORKFLOW_MODULE:
                     module_command = self.id_strings.menu_id(module)
-
                     frame_children = [module_command] if module_command != self.id_strings.ROOT else []
-                    if form.post_form_workflow == WORKFLOW_ROOT:
-                        create_workflow_stack(suite, form_command, module_command, [], True)
-                    if form.post_form_workflow == WORKFLOW_MODULE:
-                        create_workflow_stack(suite, form_command, module_command, frame_children)
-                    elif form.post_form_workflow == WORKFLOW_PREVIOUS:
-                        module_datums = self.get_module_datums(suite, module_id)
-                        form_datums = module_datums[form_id]
-                        if module_command == self.id_strings.ROOT:
-                            datums_list = root_module_datums
-                        else:
-                            datums_list = module_datums.values()  # [ [datums for f0], [datums for f1], ...]
-                        common_datums = commonprefix(datums_list)
-                        remaining_datums = form_datums[len(common_datums):]
+                    create_workflow_stack(suite, form_command, frame_children)
+                elif form.post_form_workflow == WORKFLOW_PREVIOUS:
+                    frame_children = get_frame_children(form)
 
-                        frame_children.extend(common_datums)
-                        frame_children.append(self.id_strings.form_command(form))
-                        frame_children.extend(remaining_datums)
-
+                    # since we want to go the 'previous' screen we need to drop the last
+                    # datum
+                    last = frame_children.pop()
+                    while isinstance(last, DatumMeta) and last.function:
+                        # keep removing last element until we hit a command
+                        # or a non-autoselect datum
                         last = frame_children.pop()
-                        while isinstance(last, DatumMeta) and last.function:
-                            # keep removing last element until we hit a command
-                            # or a non-autoselect datum
-                            last = frame_children.pop()
 
-                        create_workflow_stack(suite, form_command, module_command, frame_children)
+                    create_workflow_stack(suite, form_command, frame_children)
+                elif form.post_form_workflow == WORKFLOW_FORM:
+                    module_id, form_id = form_command.split('-')
+                    source_form_datums = self.get_form_datums(suite, module_id, form_id)
+                    for link in form.form_links:
+                        target_form = self.app.get_form(link.form_id)
+                        target_module = target_form.get_module()
+
+                        frame_children = get_frame_children(target_form)
+                        frame_children = get_datums_matched_to_source(frame_children, source_form_datums)
+
+                        if target_module in module.get_child_modules():
+                            parent_frame_children = get_frame_children(module.get_form(0), module_only=True)
+
+                            # exclude frame children from the child module if they are already
+                            # supplied by the parent module
+                            child_ids_in_parent = {getattr(child, "id", child) for child in parent_frame_children}
+                            frame_children = parent_frame_children + [
+                                child for child in frame_children
+                                if getattr(child, "id", child) not in child_ids_in_parent
+                            ]
+
+                        create_workflow_stack(suite, form_command, frame_children, if_clause=link.xpath)
+
+    def get_form_datums(self, suite, module_id, form_id):
+        return self.get_module_datums(suite, module_id)[form_id]
 
     def get_module_datums(self, suite, module_id):
         _, datums = self._get_entries_datums(suite)
