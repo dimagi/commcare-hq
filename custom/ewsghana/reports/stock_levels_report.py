@@ -1,11 +1,11 @@
-from collections import defaultdict, OrderedDict
+from collections import OrderedDict
 from datetime import timedelta
 from django.utils.timesince import timesince
 from math import ceil
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.es import UserES
 from corehq import Domain
-from corehq.apps.commtrack.models import StockState, CommtrackConfig
+from corehq.apps.commtrack.models import StockState
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.dates import DatespanFilter
@@ -17,7 +17,6 @@ from custom.ewsghana.reports import EWSData, MultiReport, get_url_with_location,
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 from corehq.apps.locations.models import Location, SQLLocation
-from corehq.apps.locations.models import Location
 
 
 class StockLevelsLegend(EWSData):
