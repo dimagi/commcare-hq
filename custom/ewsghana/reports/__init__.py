@@ -14,9 +14,6 @@ from corehq.apps.locations.models import Location, SQLLocation
 from custom.ewsghana.utils import get_supply_points, calculate_last_period
 from casexml.apps.stock.models import StockTransaction
 
-REORDER_LEVEL = 1.5
-MAXIMUM_LEVEL = 3
-
 
 def get_url(view_name, text, domain):
     return '<a href="%s">%s</a>' % (reverse(view_name, args=[domain]), text)
