@@ -11,6 +11,7 @@ from corehq.apps.userreports.indicators.specs import DataTypeProperty
 from corehq.apps.userreports.reports.filters import DateFilterValue, ChoiceListFilterValue, \
     NumericFilterValue
 from corehq.apps.userreports.specs import TypeProperty
+from corehq.apps.userreports.sql import get_expanded_column_config, SqlColumnConfig
 from corehq.apps.userreports.transforms.factory import TransformFactory
 
 
@@ -50,6 +51,9 @@ class ReportColumn(JsonObject):
         """
         pass
 
+    def get_sql_column_config(self, data_source_config):
+        raise NotImplementedError('subclasses must override this')
+
 
 class FieldColumn(ReportColumn):
     type = TypeProperty('field')
@@ -85,17 +89,20 @@ class FieldColumn(ReportColumn):
             return TransformFactory.get_transform(self.transform).get_transform_function()
         return None
 
-    def get_sql_column(self):
+    def get_sql_column_config(self, data_source_config):
         if self.aggregation == "expand":
-            raise RuntimeError("Don't use this method if the aggregation is 'expand'")
-        return DatabaseColumn(
-            self.display,
-            SQLAGG_COLUMN_MAP[self.aggregation](self.field, alias=self.alias),
-            sortable=False,
-            data_slug=self.column_id,
-            format_fn=self.get_format_fn(),
-            help_text=self.description
-        )
+            return get_expanded_column_config(data_source_config, self)
+        else:
+            return SqlColumnConfig(columns=[
+                DatabaseColumn(
+                    header=self.display,
+                    agg_column=SQLAGG_COLUMN_MAP[self.aggregation](self.field, alias=self.column_id),
+                    sortable=False,
+                    data_slug=self.column_id,
+                    format_fn=self.get_format_fn(),
+                    help_text=self.description
+                )
+            ])
 
 
 class PercentageColumn(ReportColumn):
