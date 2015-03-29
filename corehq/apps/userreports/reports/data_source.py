@@ -79,13 +79,7 @@ class ConfigurableReportDataSource(SqlData):
         try:
             ret = super(ConfigurableReportDataSource, self).get_data(slugs)
             for report_column in self.column_configs:
-                if report_column.format == 'percent_of_total':
-                    column_name = report_column.get_sql_column().view.name
-                    total = sum(row[column_name] for row in ret)
-                    for row in ret:
-                        row[column_name] = '{:.0%}'.format(
-                            float(row[column_name]) / total
-                        )
+                report_column.format_data(ret)
         except (
             ColumnNotFoundException,
             TableNotFoundException,

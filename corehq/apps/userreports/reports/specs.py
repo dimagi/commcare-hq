@@ -44,6 +44,12 @@ class ReportColumn(JsonObject):
     display = StringProperty()
     description = StringProperty()
 
+    def format_data(self, data):
+        """
+        Subclasses can apply formatting to the entire dataset.
+        """
+        pass
+
 
 class FieldColumn(ReportColumn):
     type = TypeProperty('field')
@@ -64,6 +70,15 @@ class FieldColumn(ReportColumn):
         if obj.get('column_id') is None:
             obj['column_id'] = obj.get('alias') or obj['field']
         return super(FieldColumn, cls).wrap(obj)
+
+    def format_data(self, data):
+        if self.format == 'percent_of_total':
+            column_name = self.column_id
+            total = sum(row[column_name] for row in data)
+            for row in data:
+                row[column_name] = '{:.0%}'.format(
+                    float(row[column_name]) / total
+                )
 
     def get_format_fn(self):
         if self.transform:
