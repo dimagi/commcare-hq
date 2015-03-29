@@ -6,7 +6,7 @@ from sqlagg.columns import (
     SimpleColumn,
     YearColumn,
 )
-from corehq.apps.reports.sqlreport import DatabaseColumn
+from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
 from corehq.apps.userreports.indicators.specs import DataTypeProperty
 from corehq.apps.userreports.reports.filters import DateFilterValue, ChoiceListFilterValue, \
     NumericFilterValue
@@ -109,6 +109,39 @@ class PercentageColumn(ReportColumn):
     type = TypeProperty('percent')
     numerator = ObjectProperty(FieldColumn, required=True)
     denominator = ObjectProperty(FieldColumn, required=True)
+    format = StringProperty(choices=['percent', 'fraction', 'both'], default='percent')
+
+    def get_sql_column_config(self, data_source_config):
+        # todo: better checks that fields are not expand
+        num_config = self.numerator.get_sql_column_config(data_source_config)
+        denom_config = self.denominator.get_sql_column_config(data_source_config)
+        return SqlColumnConfig(columns=[
+            AggregateColumn(
+                header=self.display,
+                aggregate_fn=lambda n, d: {'num': n, 'denom': d},
+                format_fn=self._format_fn(),
+                columns=[c.view for c in num_config.columns + denom_config.columns],
+                slug=self.column_id,
+                data_slug=self.column_id,
+            )],
+            warnings=num_config.warnings + denom_config.warnings,
+        )
+
+    def _format_fn(self):
+        NO_DATA_TEXT = '--'
+
+        def _pct(data):
+            if data['denom']:
+                return '{0:.0f}%'.format((float(data['num']) / float(data['denom'])) * 100)
+            return NO_DATA_TEXT
+
+        _fraction = lambda data: '{num}/{denom}'.format(**data)
+
+        return {
+            'percent': _pct,
+            'fraction': _fraction,
+            'both': lambda data: '{} ({})'.format(_pct(data), _fraction(data))
+        }[self.format]
 
 
 class FilterChoice(JsonObject):
