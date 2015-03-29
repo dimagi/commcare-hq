@@ -141,7 +141,7 @@ This expression returns `"legal" if doc["age"] > 21 else "underage"`:
 ```
 Note that this expression contains other expressions inside it! This is why expressions are powerful. (It also contains a filter, but we haven't covered those yet - if you find the `"test"` section confusing, keep reading...)
 
-Note also that it's important to make sure that you are comparing values of the same type. In this example, the expression that retrieves the age property from the document also casts the value to an integer. If this datatype is not specified, the expression will compare a string to the `21` value, which will not produce the expected results! 
+Note also that it's important to make sure that you are comparing values of the same type. In this example, the expression that retrieves the age property from the document also casts the value to an integer. If this datatype is not specified, the expression will compare a string to the `21` value, which will not produce the expected results!
 
 #### Related document expressions
 
@@ -544,9 +544,11 @@ Choice lists allow manual configuration of a fixed, specified number of choices 
 
 ## Report Columns
 
-TODO: Report column docs will go here.
+Reports are made up of columns. There are currently two supported types of columns: _fields_ (which represent a single value) and _percentages_ which combine two values in to a percent.
 
-Here's an example report column that shows the owner name from an associated `owner_id`:
+### Field columns
+
+Field columns have a type of `"field"`. Here's an example field column that shows the owner name from an associated `owner_id`:
 
 ```
 {
@@ -563,6 +565,46 @@ Here's an example report column that shows the owner name from an associated `ow
 }
 ```
 
+### Percent columns
+
+Percent columns have a type of `"percent"`. They must specify a `numerator` and `denominator` as separate field columns. Here's an example percent column that shows the percentage of pregnant women who had danger signs.
+
+```
+{
+  "type": "percent",
+  "column_id": "pct_danger_signs",
+  "display": "Percent with Danger Signs",
+  "format": "both",
+  "denominator": {
+    "type": "field",
+    "aggregation": "sum",
+    "field": "is_pregnant",
+    "column_id": "is_pregnant"
+  },
+  "numerator": {
+    "type": "field",
+    "aggregation": "sum",
+    "field": "has_danger_signs",
+    "column_id": "has_danger_signs"
+  }
+}
+```
+
+#### Formats
+
+The following percentage formats are supported.
+
+Format    | Description                                    | example
+--------- | -----------------------------------------------| --------
+percent   | A whole number percentage (the default format) | 33%
+fraction  | A fraction                                     | 1/3
+both      | Percentage and fraction                        | 33% (1/3)
+
+#### Column IDs
+
+Column IDs in percentage fields *must be unique for the whole report*. If you use a field in a normal column and in a percent column you must assign unique `column_id` values to it in order for the report to process both.
+
+
 ### Aggregation
 
 TODO: finish aggregation docs
@@ -570,7 +612,7 @@ TODO: finish aggregation docs
 #### Expand
 
 If the column's `"aggregation"` attribute is set to `"expand"`, the column actually won't be aggregated at all. Instead, this column will be "expanded" into a new column for each distinct value in this column of the data source. The maximum expansion is to 10 columns. For example:
- 
+
 If you have a data source like this:
 ```
 +---------+----------+-------------+
@@ -589,16 +631,16 @@ aggregation columns:
 columns:
 [
   {
-    "field": "district", 
-    "format": "default", 
-    "aggregation": "simple", 
-    "type": "field", 
-  }, 
+    "field": "district",
+    "format": "default",
+    "aggregation": "simple",
+    "type": "field",
+  },
   {
-    "field": "test_result", 
-    "format": "default", 
-    "aggregation": "expand", 
-    "type": "field", 
+    "field": "test_result",
+    "format": "default",
+    "aggregation": "expand",
+    "type": "field",
   }
 ]
 ```
@@ -611,7 +653,7 @@ Then you will get a report like this:
 | South    | 0                    | 1                    |
 +----------+----------------------+----------------------+
 ```
- 
+
 ### Transforms
 
 Transforms can be used to transform the value returned by a column just before it reaches the user. Currently there are four supported transform types. These are shown below:
