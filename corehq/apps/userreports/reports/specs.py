@@ -119,7 +119,7 @@ class PercentageColumn(ReportColumn):
             AggregateColumn(
                 header=self.display,
                 aggregate_fn=lambda n, d: {'num': n, 'denom': d},
-                format_fn=self._format_fn(),
+                format_fn=self.format_fn(),
                 columns=[c.view for c in num_config.columns + denom_config.columns],
                 slug=self.column_id,
                 data_slug=self.column_id,
@@ -127,7 +127,7 @@ class PercentageColumn(ReportColumn):
             warnings=num_config.warnings + denom_config.warnings,
         )
 
-    def _format_fn(self):
+    def format_fn(self):
         NO_DATA_TEXT = '--'
 
         def _pct(data):

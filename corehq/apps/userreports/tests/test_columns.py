@@ -248,3 +248,58 @@ class TestPercentageColumn(SimpleTestCase):
                 'column_id': 'pct',
                 'denominator': field_spec,
             })
+
+    def test_wrong_field_type(self):
+        # can't put a percent in another percent
+        field_spec = {
+            "aggregation": "simple",
+            "field": "is_pregnant",
+            "type": "percent",
+        }
+        with self.assertRaises(BadValueError):
+            ReportColumnFactory.from_spec({
+                'type': 'percent',
+                'column_id': 'pct',
+                'numerator': field_spec,
+                'denominator': field_spec,
+            })
+
+    def test_format_pct(self):
+        spec = self._test_spec()
+        spec['format'] = 'percent'
+        wrapped = ReportColumnFactory.from_spec(spec)
+        self.assertEqual('33%', wrapped.format_fn()({'num': 1, 'denom': 3}))
+
+    def test_format_pct_denom_0(self):
+        spec = self._test_spec()
+        spec['format'] = 'percent'
+        wrapped = ReportColumnFactory.from_spec(spec)
+        self.assertEqual('--', wrapped.format_fn()({'num': 1, 'denom': 0}))
+
+    def test_format_fraction(self):
+        spec = self._test_spec()
+        spec['format'] = 'fraction'
+        wrapped = ReportColumnFactory.from_spec(spec)
+        self.assertEqual('1/3', wrapped.format_fn()({'num': 1, 'denom': 3}))
+
+    def test_format_both(self):
+        spec = self._test_spec()
+        spec['format'] = 'both'
+        wrapped = ReportColumnFactory.from_spec(spec)
+        self.assertEqual('33% (1/3)', wrapped.format_fn()({'num': 1, 'denom': 3}))
+
+    def _test_spec(self):
+        return {
+            'type': 'percent',
+            'column_id': 'pct',
+            'denominator': {
+                "aggregation": "simple",
+                "field": "is_pregnant",
+                "type": "field",
+            },
+            'numerator': {
+                "aggregation": "simple",
+                "field": "has_danger_signs",
+                "type": "field",
+            }
+        }
