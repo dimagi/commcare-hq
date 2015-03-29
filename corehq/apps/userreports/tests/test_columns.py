@@ -10,7 +10,7 @@ from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration,
 )
-from corehq.apps.userreports.reports.factory import ReportFactory
+from corehq.apps.userreports.reports.factory import ReportFactory, ReportColumnFactory
 from corehq.apps.userreports.reports.specs import FieldColumn, PercentageColumn
 from corehq.apps.userreports.sql import _expand_column, _get_distinct_values
 
@@ -24,16 +24,17 @@ from casexml.apps.case.xml import V2
 class TestFieldColumn(SimpleTestCase):
 
     def testColumnSetFromAlias(self):
-        field = FieldColumn.wrap({
+        field = ReportColumnFactory.from_spec({
             "aggregation": "simple",
             "field": "doc_id",
             "alias": "the_right_answer",
             "type": "field",
         })
+        self.assertTrue(isinstance(field, FieldColumn))
         self.assertEqual('the_right_answer', field.column_id)
 
     def testColumnDefaultsToField(self):
-        field = FieldColumn.wrap({
+        field = ReportColumnFactory.from_spec({
             "aggregation": "simple",
             "field": "doc_id",
             "type": "field",
@@ -42,7 +43,7 @@ class TestFieldColumn(SimpleTestCase):
 
     def testBadAggregation(self):
         with self.assertRaises(BadValueError):
-            FieldColumn.wrap({
+            ReportColumnFactory.from_spec({
                 "aggregation": "simple_",
                 "field": "doc_id",
                 "type": "field",
@@ -54,7 +55,7 @@ class TestFieldColumn(SimpleTestCase):
             'percent_of_total',
         ]:
             self.assertEquals(FieldColumn, type(
-                FieldColumn.wrap({
+                ReportColumnFactory.from_spec({
                     "aggregation": "simple",
                     "field": "doc_id",
                     "format": format,
@@ -64,7 +65,7 @@ class TestFieldColumn(SimpleTestCase):
 
     def testBadFormat(self):
         with self.assertRaises(BadValueError):
-            FieldColumn.wrap({
+            ReportColumnFactory.from_spec({
                 "aggregation": "simple",
                 "field": "doc_id",
                 "format": "default_",
@@ -187,7 +188,7 @@ class TestExpandFieldColumn(TestCase):
         self.assertFalse(too_many_values)
 
     def test_expansion(self):
-        column = FieldColumn.wrap(dict(
+        column = ReportColumnFactory.from_spec(dict(
             type="field",
             field="lab_result",
             display="Lab Result",
@@ -204,7 +205,7 @@ class TestExpandFieldColumn(TestCase):
 
 class TestPercentageColumn(SimpleTestCase):
     def test_wrap(self):
-        wrapped = PercentageColumn.wrap({
+        wrapped = ReportColumnFactory.from_spec({
             'type': 'percent',
             'column_id': 'pct',
             'numerator': {
@@ -218,9 +219,11 @@ class TestPercentageColumn(SimpleTestCase):
                 "type": "field",
             },
         })
+        self.assertTrue(isinstance(wrapped, PercentageColumn))
         self.assertEqual('pct', wrapped.column_id)
         self.assertEqual('has_danger_signs', wrapped.numerator.field)
         self.assertEqual('is_pregnant', wrapped.denominator.field)
+        self.assertEqual('percent', wrapped.format)
 
     def test_missing_fields(self):
         field_spec = {
@@ -229,18 +232,18 @@ class TestPercentageColumn(SimpleTestCase):
             "type": "field",
         }
         with self.assertRaises(BadValueError):
-            PercentageColumn.wrap({
+            ReportColumnFactory.from_spec({
                 'type': 'percent',
                 'column_id': 'pct',
             })
         with self.assertRaises(BadValueError):
-            PercentageColumn.wrap({
+            ReportColumnFactory.from_spec({
                 'type': 'percent',
                 'column_id': 'pct',
                 'numerator': field_spec,
             })
         with self.assertRaises(BadValueError):
-            PercentageColumn.wrap({
+            ReportColumnFactory.from_spec({
                 'type': 'percent',
                 'column_id': 'pct',
                 'denominator': field_spec,
