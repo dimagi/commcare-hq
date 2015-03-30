@@ -46,14 +46,23 @@ def _is_valid_status(facility, date, status_type):
         return False
 
     if groups.count() > 0:
-        code = groups[0].group
+        codes = [group.group for group in groups]
     else:
-        code = facility.metadata['group']
+        try:
+            latest_group = HistoricalLocationGroup.objects.filter(
+                location_id=facility.sql_location
+            ).latest('date')
+            if date.date() < latest_group.date:
+                return False
+            else:
+                codes = [facility.metadata['group']]
+        except HistoricalLocationGroup.DoesNotExist:
+            codes = [facility.metadata['group']]
     dg = DeliveryGroups(date.month)
     if status_type == SupplyPointStatusTypes.R_AND_R_FACILITY:
-        return code == dg.current_submitting_group()
+        return dg.current_submitting_group() in codes
     elif status_type == SupplyPointStatusTypes.DELIVERY_FACILITY:
-        return code == dg.current_delivering_group()
+        return dg.current_delivering_group() in codes
     return True
 
 
@@ -369,7 +378,6 @@ def process_facility_warehouse_data(facility, start_date, end_date):
     # and make sure there are warehouse tables there
     for year, month in months_between(start_date, end_date):
         window_date = datetime(year, month, 1)
-
         # create org_summary for every fac/date combo
         org_summary, created = OrganizationSummary.objects.get_or_create(
             supply_point=facility._id,
