@@ -67,7 +67,7 @@ class PhoneTime(_HQTZTime):
 def _adjust_datetime_to_utc(value, from_tz):
     """
     Takes a timezone-naive datetime that represents
-    something other than a UTC time and converts it to UTC (timezone-aware)
+    something other than a UTC time and converts it to UTC (timezone-naive)
 
     """
     assert value.tzinfo is None
@@ -87,6 +87,8 @@ def _adjust_utc_datetime_to_timezone(value, to_tz):
 def _adjust_phone_datetime_to_utc(value, phone_tz):
     """
     put a phone datetime (like timeEnd, modified_on, etc.) into UTC
+
+    input and output are both timezone-naive
 
     """
     assert value.tzinfo is None
