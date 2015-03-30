@@ -524,7 +524,7 @@ class RestoreConfig(object):
                 if path.exists(resp):
                     try:
                         with open(resp, 'r') as f:
-                            self.sync_log.set_cached_payload(f.read(), self.version)
+                            self.sync_log.set_cached_payload(f, self.version)
                     except IOError as e:
                         # Don't want to fail hard on cache setting, but should log error
                         logger.exception(e)
@@ -542,8 +542,7 @@ class RestoreConfig(object):
                 if path.exists(resp):
                     try:
                         with open(resp, 'r') as f:
-                            for payload_bytes in iter(lambda: f.readline(MAX_BYTES), ''):
-                                self.cache.append(self._initial_cache_key(), payload_bytes)
+                            self.cache.set(self._initial_cache_key(), f.read(), self.cache_timeout)
                     except IOError as e:
                         # Don't want to fail hard on cache setting, but should log error
                         logger.exception(e)
