@@ -234,13 +234,16 @@
                             </a>
                         </div>
                         <div data-bind="visible: editing_comment()">
-                            <input type="text" data-bind="value: new_comment"></input>
-                            <a href="#" data-bind="click: submit_new_comment, visible: !pending_comment_update()">
-                                <span class="icon-ok"></span>
-                            </a>
-                            <a href="#" data-bind="click: function () {editing_comment(false);}, visible: !pending_comment_update()">
-                                <span class="icon-remove"></span>
-                            </a>
+                            <form data-bind="submit: submit_new_comment">
+                                <input type="text" data-bind="value: new_comment"></input>
+                                <a href="#" data-bind="click: submit_new_comment,
+                                                       visible: !pending_comment_update()">
+                                    <span class="icon-ok"></span>
+                                </a>
+                                <a href="#" data-bind="click: function () {editing_comment(false);}, visible: !pending_comment_update()">
+                                    <span class="icon-remove"></span>
+                                </a>
+                            </form>
                             <span data-bind="visible: pending_comment_update()">
                                 <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}"/>
                             </span>
