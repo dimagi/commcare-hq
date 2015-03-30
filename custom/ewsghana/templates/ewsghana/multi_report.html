@@ -153,6 +153,16 @@
         {% else %}
             <span class="report">
                 <h4 class="media-heading">{{ thisreport.report_table.title }}<br/><small>{{ subtitle1 }}</small><br/><small>{{ subtitle2 }}</small></h4>
+                {% if thisreport.report_table.slug == 'stockouts_product' %}
+                    <div class="row" style="margin: 0 !important">
+                        <form>
+                            <div style="display: inline-block">
+                                <input type="text" id="stockouts_filter" class="date-range-picker" value="{{ datespan.enddate|add_days:-90|date:'Y-m-d' }} to {{ datespan.enddate|date:'Y-m-d' }}" />
+                                <button style="margin-bottom: 9px;" id="stockouts_filter_btn" class="filters btn">Apply</button>
+                            </div>
+                        </form>
+                    </div>
+                {% endif %}
                 {% include 'ewsghana/partials/report_table.html' with report_table=thisreport.report_table charts=thisreport.charts chart_span=thisreport.chart_span show_table=thisreport.show_table%}
             </span>
         {% endif %}

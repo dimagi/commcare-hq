@@ -1,3 +1,4 @@
+from datetime import timedelta
 from corehq import Domain
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.models import SQLLocation
@@ -203,7 +204,9 @@ class StockoutsProduct(EWSData):
             for product in products:
                 rows[product.code] = []
 
-            for d in get_second_week(self.config['startdate'], self.config['enddate']):
+            enddate = self.config['enddate']
+            startdate =self.config['startdate'] if 'custom_date' in self.config else enddate - timedelta(days=90)
+            for d in get_second_week(startdate, enddate):
                 for product in products:
                     st = StockTransaction.objects.filter(
                         case_id__in=supply_points.values_list('supply_point_id', flat=True),
