@@ -88,7 +88,7 @@ class RegistrationData(ILSData):
                 u = user['doc']
                 yield [
                     '{0} {1}'.format(u['first_name'], u['last_name']),
-                    u['user_data']['role'],
+                    u['user_data']['role'] if 'role' in u['user_data'] else 'No Role',
                     u['phone_numbers'][0] if u['phone_numbers'] else '',
                     u['email']
                 ]

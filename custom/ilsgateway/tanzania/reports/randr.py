@@ -150,7 +150,7 @@ class RRReportingHistory(ILSData):
                 [
                     child.site_code,
                     link_format(child.name, url),
-                    get_span(rr_value) % (format(rr_value, "d M Y") if rr_value else "Not reported"),
+                    get_span(rr_value) % (rr_value.strftime("%d/%m/%Y") if rr_value else "Not reported"),
                     contact_string,
                     hist_resp_rate
                 ]
