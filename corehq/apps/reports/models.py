@@ -421,8 +421,12 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
 
         try:
             if self.is_configurable_report:
-                response = self._dispatcher.dispatch(request, self.subreport_slug, render_as='email',
-                    **self.view_kwargs)
+                response = self._dispatcher.dispatch(
+                    request,
+                    self.subreport_slug,
+                    render_as='email',
+                    **self.view_kwargs
+                )
             else:
                 response = self._dispatcher.dispatch(
                     request,
@@ -432,8 +436,11 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
                 )
             if attach_excel is True:
                 if self.is_configurable_report:
-                    file_obj = self._dispatcher.dispatch(request, self.subreport_slug, render_as='excel',
-                        **self.view_kwargs)
+                    file_obj = self._dispatcher.dispatch(
+                        request, self.subreport_slug,
+                        render_as='excel',
+                        **self.view_kwargs
+                    )
                 else:
                     file_obj = self._dispatcher.dispatch(
                         request,
