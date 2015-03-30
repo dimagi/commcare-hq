@@ -16,8 +16,8 @@ import datetime
 import itertools
 import types
 
-import dateutil
-from jsonobject import DateTimeProperty
+from jsonobject import DateTimeProperty, DateProperty
+from jsonobject.exceptions import BadValueError
 from dimagi.utils.chunked import chunked
 import pytz
 
@@ -41,30 +41,29 @@ def _is_list_like(val):
 
 
 def _parse_date_or_datetime(val):
-    """A word to the wise: datetime is a subclass of date"""
-
     def parse():
         if not val:
             return None
 
+        # datetime is a subclass of date
         if isinstance(val, datetime.date):
             return val
 
         try:
-            return DateTimeProperty().wrap(val)
-        except ValueError:
-            pass
-        try:
-            dt = dateutil.parser.parse(val).replace(tzinfo=None)
+            dt = DateTimeProperty().wrap(val)
+        except BadValueError:
+            try:
+                return DateProperty().wrap(val)
+            except BadValueError:
+                return val
+        else:
             if not any([dt.hour, dt.minute, dt.second, dt.microsecond]):
                 return dt.date()
             else:
                 return dt
-        except Exception:
-            return val
 
     result = parse()
-    if result:
+    if isinstance(result, datetime.datetime):
         assert result.tzinfo is None
     return result
 
