@@ -1,10 +1,13 @@
 from datetime import datetime, timedelta
 import logging
 import itertools
+from celery.canvas import chain
+from celery.task import task
 from django.db import transaction
 from django.db.models import Q
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.locations.models import Location, SQLLocation
+from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import get_business_day_of_month, add_months, months_between
 from casexml.apps.stock.models import StockReport, StockTransaction
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, DeliveryGroups, \
@@ -322,16 +325,16 @@ def populate_report_data(start_date, end_date, domain, runner):
                 facilities
             )
 
-    for fac in facilities:
-        runner.location = fac.sql_location
-        runner.save()
-        process_facility_warehouse_data(fac, start_date, end_date)
+    facilities_chunked_list = chunked(facilities, 50)
+    for chunk in facilities_chunked_list:
+        res = chain(process_facility_warehouse_data.si(fac, start_date, end_date, runner) for fac in chunk)()
+        res.get()
 
+    non_facilities_chunked_list = chunked(non_facilities, 50)
     # then populate everything above a facility off a warehouse table
-    for org in non_facilities:
-        runner.location = org.sql_location
-        runner.save()
-        process_non_facility_warehouse_data(org, start_date, end_date)
+    for chunk in non_facilities_chunked_list:
+        res = chain(process_non_facility_warehouse_data.si(org, start_date, end_date, runner) for org in chunk)()
+        res.get()
     runner.location = None
     runner.save()
     # finally go back through the history and initialize empty data for any
@@ -339,11 +342,14 @@ def populate_report_data(start_date, end_date, domain, runner):
     update_historical_data(domain)
 
 
-def process_facility_warehouse_data(facility, start_date, end_date):
+@task(queue='background_queue')
+def process_facility_warehouse_data(facility, start_date, end_date, runner):
     """
     process all the facility-level warehouse tables
     """
     logging.info("processing facility %s (%s)" % (facility.name, str(facility._id)))
+    runner.location = facility.sql_location
+    runner.save()
     for alert_type in [SOH_NOT_RESPONDING, RR_NOT_RESPONDED, DELIVERY_NOT_RESPONDING]:
         alert = Alert.objects.filter(supply_point=facility._id, date__gte=start_date, date__lt=end_date,
                                      type=alert_type)
@@ -529,7 +535,10 @@ def get_nested_children(location):
     return children
 
 
-def process_non_facility_warehouse_data(location, start_date, end_date, strict=True):
+@task(queue='background_queue')
+def process_non_facility_warehouse_data(location, start_date, end_date, runner, strict=True):
+    runner.location = location.sql_location
+    runner.save()
     facs = get_nested_children(location)
     fac_ids = [f._id for f in facs]
     logging.info("processing non-facility %s (%s), %s children" % (location.name, str(location._id), len(facs)))
