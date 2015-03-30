@@ -20,7 +20,7 @@ from .exceptions import (
 )
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE_LAST_VISIT, SCHEDULE_PHASE, \
-    CASE_ID, RETURN_TO, USERCASE_PREFIX
+    CASE_ID, RETURN_TO, USERCASE_PREFIX, USERCASE_ID
 from corehq.apps.app_manager.exceptions import UnknownInstanceError, ScheduleError, FormNotFoundException
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.util import split_path, create_temp_sort_column, languages_mapping, \
@@ -1452,7 +1452,7 @@ class SuiteGenerator(SuiteGeneratorBase):
         case_type = CaseTypeXpath(self.usercase_type).case()
         case = UserCaseXPath(case_type).case()
         e.datums.append(SessionDatum(
-            id='usercase_id',
+            id=USERCASE_ID,
             function=('%s/@case_id' % case)
         ))
 

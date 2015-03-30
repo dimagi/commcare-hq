@@ -1,6 +1,7 @@
 import copy
 import logging
 from urlparse import urlparse, parse_qs
+from corehq.apps.app_manager.const import USERCASE_TYPE
 import dateutil
 import re
 import io
@@ -454,7 +455,8 @@ class DomainGlobalSettingsForm(forms.Form):
             if domain.call_center_config.enabled:
                 domain.internal.using_call_center = True
                 domain.call_center_config.case_owner_id = self.cleaned_data.get('call_center_case_owner', None)
-                domain.call_center_config.case_type = self.cleaned_data.get('call_center_case_type') or 'user-case'
+                domain.call_center_config.case_type = (self.cleaned_data.get('call_center_case_type') or
+                                                       USERCASE_TYPE)
 
             global_tz = self.cleaned_data['default_timezone']
             if domain.default_timezone != global_tz:
