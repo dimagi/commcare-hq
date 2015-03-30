@@ -5,7 +5,6 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.test.client import Client
 
-from corehq import toggles
 from corehq.apps.users.models import WebUser
 from corehq.apps.receiverwrapper.models import AppStructureRepeater
 from corehq.apps.domain.models import Domain
@@ -55,7 +54,6 @@ class TestDomainViews(TestCase):
         """
         Tests creating a new exchange snapshot and then creating another snapshot
         """
-        toggles.DOCUMENTATION_FILE.set(self.user.username, True)
 
         self.client.login(username=self.username, password=self.password)
         app_publish = "{}-publish".format(self.app._id)

@@ -89,29 +89,27 @@
                 </div>
             </div>
         {% endif %}
-        {% if request|toggle_enabled:"DOCUMENTATION_FILE" %}
-            {% if request.project.published_snapshot.documentation_file_path %}
-                <div class="control-group">
-                    <div class="control-label">
-                        <label for="id_old_documentation_file">
-                            {% trans "Use current documentation" %}
-                        </label>
-                    </div>
-                    <div class="controls">
-                        <input
-                            type="checkbox"
-                            checked="checked"
-                            id="id_old_documentation_file"
-                            name="old_documentation_file"
-                            value="true" />
-                        <p class="help-block">
-                            {% blocktrans %}
-                            If you upload new documentation, it will automatically erase the current documentation and use that instead.
-                            {% endblocktrans %}
-                        </p>
-                    </div>
+        {% if request.project.published_snapshot.documentation_file_path %}
+            <div class="control-group">
+                <div class="control-label">
+                    <label for="id_old_documentation_file">
+                        {% trans "Use current documentation" %}
+                    </label>
                 </div>
-            {% endif %}
+                <div class="controls">
+                    <input
+                        type="checkbox"
+                        checked="checked"
+                        id="id_old_documentation_file"
+                        name="old_documentation_file"
+                        value="true" />
+                    <p class="help-block">
+                        {% blocktrans %}
+                        If you upload new documentation, it will automatically erase the current documentation and use that instead.
+                        {% endblocktrans %}
+                    </p>
+                </div>
+            </div>
         {% endif %}
         {% if can_publish_as_org %}
             <div class="control-group">
