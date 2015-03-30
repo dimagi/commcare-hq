@@ -65,8 +65,8 @@ class ReportColumn(JsonObject):
         return None
 
     def get_sql_column(self):
-        if self.type == "expand":
-            raise RuntimeError("Don't use this method if self.type is 'expand'")
+        if self.aggregation == "expand":
+            raise RuntimeError("Don't use this method if the aggregation is 'expand'")
         return DatabaseColumn(
             self.display,
             SQLAGG_COLUMN_MAP[self.aggregation](self.field, alias=self.alias),
