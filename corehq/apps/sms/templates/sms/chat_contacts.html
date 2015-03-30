@@ -23,14 +23,24 @@
 {% block js-inline %}{{ block.super }}
 <script>
     $(function(){
-        var table = new HQReportDataTables({});
-        table.render();
+        $("#contact_list").dataTable({
+            "bProcessing": true,
+            "bServerSide": true,
+            "bSort": false,
+            "bFilter": false,
+            "oLanguage": {
+                "sLengthMenu": "{% trans "Show" %} _MENU_ {% trans "contacts per page" %}",
+                "sProcessing": '<img src="{% static "hqwebapp/img/ajax-loader.gif" %}" alt="loading indicator" /> {% trans "Loading Contacts..." %}',
+                "sInfo": "{% trans "Showing" %} _START_ {% trans "to" %} _END_ {% trans "of" %} _TOTAL_ {% trans "contacts" %}",
+            },
+            "sAjaxSource": "{% url "chat_contact_list" domain %}",
+        });
     });
 </script>
 {% endblock %}
 
 {% block main_column %}
-    <table class="table table-striped datatable">
+    <table id="contact_list" class="table table-striped table-bordered">
         <thead>
             <tr>
                 <th>{% trans "Contact Name" %}</th>
@@ -38,24 +48,5 @@
                 <th></th>
             </tr>
         </thead>
-        <tbody>
-            {% for contact in contacts %}
-            <tr>
-                <td><a href="{{ contact.url }}">{{ contact.name }}</a></td>
-                <td>
-                    {% if contact.doc_type == 'CommCareCase' %}
-                        {% trans "Case" %}
-                    {% else %}
-                        {% if contact.doc_type == 'CommCareUser' %}
-                            {% commcare_user %}
-                        {% else %}
-                            {% trans "(unknown)" %}
-                        {% endif %}
-                    {% endif %}
-                </td>
-                <td><span class="btn btn-primary" onClick="window.open('{% url "sms_chat" domain contact.id %}', '_blank', 'location=no,menubar=no,scrollbars=no,status=no,toolbar=no,height=400,width=400');">{% trans "Open Chat Window" %} <i class="icon icon-white icon-share-alt"></i></span></td>
-            </tr>
-            {% endfor %}
-        </tbody>
     </table>
 {% endblock %}

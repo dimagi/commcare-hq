@@ -12,6 +12,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
+from casexml.apps.case.models import CommCareCase
 from corehq import privileges
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.reminders.util import can_use_survey_reminders
@@ -29,7 +30,7 @@ from corehq.apps.sms.api import (
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import CouchUser, Permissions
+from corehq.apps.users.models import CouchUser, Permissions, CommCareUser
 from corehq.apps.users import models as user_models
 from corehq.apps.users.views.mobile.users import EditCommCareUserView
 from corehq.apps.sms.models import (
@@ -61,6 +62,7 @@ from dimagi.utils.decorators.view import get_file
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 from dimagi.utils.excel import WorkbookJSONReader
+from dimagi.utils.couch.database import iter_docs
 from django.conf import settings
 from couchdbkit.resource import ResourceNotFound
 from couchexport.models import Format
@@ -658,35 +660,86 @@ def global_backend_map(request):
     }
     return render(request, "sms/backend_map.html", context)
 
+
 @require_permission(Permissions.edit_data)
 @requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
 def chat_contacts(request, domain):
-    domain_obj = Domain.get_by_name(domain, strict=True)
-    verified_numbers = VerifiedNumber.by_domain(domain)
-    contacts = []
-    for vn in verified_numbers:
-        owner = vn.owner
-        if owner is not None and owner.doc_type in ('CommCareCase','CommCareUser'):
-            if owner.doc_type == "CommCareUser":
-                url = reverse(EditCommCareUserView.urlname, args=[domain, owner._id])
-                name = owner.raw_username
-            else:
-                url = reverse("case_details", args=[domain, owner._id])
-                if domain_obj.custom_case_username:
-                    name = owner.get_case_property(domain_obj.custom_case_username) or _("(unknown)")
-                else:
-                    name = owner.name
-            contacts.append({
-                "id" : owner._id,
-                "doc_type" : owner.doc_type,
-                "url" : url,
-                "name" : name,
-            })
     context = {
         "domain" : domain,
-        "contacts" : contacts,
     }
     return render(request, "sms/chat_contacts.html", context)
+
+
+def get_case_contact_info(domain_obj, case_ids):
+    data = {}
+    for doc in iter_docs(CommCareCase.get_db(), case_ids):
+        if domain_obj.custom_case_username:
+            name = doc.get(domain_obj.custom_case_username, _('unknown'))
+        else:
+            name = doc.get('name', _('unknown'))
+        data[doc['_id']] = [name]
+    return data
+
+
+def get_mobile_worker_contact_info(domain_obj, user_ids):
+    data = {}
+    for doc in iter_docs(CommCareUser.get_db(), user_ids):
+        user = CommCareUser.wrap(doc)
+        data[user.get_id] = user.raw_username
+    return data
+
+
+def get_contact_info(domain):
+    verified_number_ids = VerifiedNumber.by_domain(domain, ids_only=True)
+    domain_obj = Domain.get_by_name(domain, strict=True)    
+    case_ids = []
+    mobile_worker_ids = []
+    data = []
+    for doc in iter_docs(VerifiedNumber.get_db(), verified_number_ids):
+        doc_id = doc['_id']
+        owner_id = doc['owner_id']
+        if doc['owner_doc_type'] == 'CommCareCase':
+            case_ids.append(owner_id)
+            data.append([
+                owner_id,
+                _('Case'),
+                doc['phone_number'],
+            ])
+        elif doc['owner_doc_type'] == 'CommCareUser':
+            mobile_worker_ids.append(owner_id)
+            data.append([
+                owner_id,
+                _('Mobile Worker'),
+                doc['phone_number'],
+            ])
+    contact_data = get_case_contact_info(domain_obj, case_ids)
+    contact_data.update(get_mobile_worker_contact_info(domain_obj, mobile_worker_ids))
+    for row in data:
+        contact_info = contact_data.get(row[0])
+        row[0] = contact_info[0] if contact_info else _('(unknown)')
+    return data
+
+
+@require_permission(Permissions.edit_data)
+@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
+def chat_contact_list(request, domain):
+    sEcho = request.GET.get('sEcho')
+    iDisplayStart = int(request.GET.get('iDisplayStart'))
+    iDisplayLength = int(request.GET.get('iDisplayLength'))
+
+    total_number = VerifiedNumber.count_by_domain(domain)
+    result = {
+        'sEcho': sEcho,
+        'iTotalRecords': total_number,
+        'iTotalDisplayRecords': total_number,
+    }
+
+    data = get_contact_info(domain)
+    data.sort(key=lambda row: row[0])
+    result['aaData'] = data[iDisplayStart:iDisplayStart+iDisplayLength]
+
+    return HttpResponse(json.dumps(result))
+
 
 @require_permission(Permissions.edit_data)
 @requires_privilege_with_fallback(privileges.OUTBOUND_SMS)

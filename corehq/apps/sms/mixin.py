@@ -153,13 +153,28 @@ class VerifiedNumber(Document):
         return v if (include_pending or (v and v.verified)) else None
 
     @classmethod
-    def by_domain(cls, domain):
+    def by_domain(cls, domain, ids_only=False):
         result = cls.view("sms/verified_number_by_domain",
                           startkey=[domain],
                           endkey=[domain, {}],
-                          include_docs=True,
+                          include_docs=(not ids_only),
                           reduce=False).all()
-        return result
+        if ids_only:
+            return [row['id'] for row in result]
+        else:
+            return result
+
+    @classmethod
+    def count_by_domain(cls, domain):
+        result = cls.view("sms/verified_number_by_domain",
+            startkey=[domain],
+            endkey=[domain, {}],
+            include_docs=False,
+            reduce=True).all()
+        if result:
+            return result[0]['value']
+        return 0
+
 
 def add_plus(phone_number):
     return ('+' + phone_number) if not phone_number.startswith('+') else phone_number
