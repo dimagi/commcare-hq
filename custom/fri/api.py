@@ -1,10 +1,9 @@
 import random
 import re
-import pytz
 from dateutil.parser import parse
 from datetime import datetime, timedelta, date, time
 from casexml.apps.case.models import CommCareCase
-from corehq.util.timezones.conversions import ServerTime, PhoneTime
+from corehq.util.timezones.conversions import PhoneTime
 from custom.fri.models import (
     PROFILE_A,
     PROFILE_B,
@@ -20,7 +19,6 @@ from custom.fri.models import (
 from corehq.util.timezones.utils import get_timezone_for_user
 from redis_cache.cache import RedisCache
 from dimagi.utils.couch.cache import cache_core
-from corehq.util.timezones import utils as tz_utils
 from corehq.apps.domain.models import Domain
 from dimagi.utils.logging import notify_exception
 

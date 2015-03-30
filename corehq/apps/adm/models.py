@@ -11,7 +11,6 @@ from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.modules import to_function
-from corehq.util.timezones import utils as tz_utils
 from corehq.apps.users.models import CommCareUser
 from copy import copy
 

@@ -10,7 +10,7 @@ from dimagi.utils.couch.database import get_db
 from hsph.fields import (FacilityStatusField, IHForCHFField, SiteField,
     NameOfDCTLField)
 from hsph.reports import HSPHSiteDataMixin
-from corehq.util.timezones import utils as tz_utils
+
 
 class ProjectManagementReport(CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
     """

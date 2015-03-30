@@ -17,7 +17,6 @@ from corehq.apps.reports.formdetails.readable import get_readable_data_for_submi
 from corehq import toggles
 from corehq.util.timezones.conversions import ServerTime
 from couchforms.models import XFormInstance
-from corehq.util.timezones import utils as tz_utils
 from casexml.apps.case.xform import extract_case_blocks
 from casexml.apps.case import const
 from casexml.apps.case.models import CommCareCase

@@ -1,8 +1,6 @@
 from django.core.urlresolvers import reverse, NoReverseMatch
-import pytz
 from corehq.apps.reports.standard.deployments import DeploymentsReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.util.timezones import utils as tz_utils
 from corehq.util.timezones.conversions import ServerTime
 from couchforms.models import XFormError
 from corehq.apps.receiverwrapper.filters import SubmissionErrorType, \

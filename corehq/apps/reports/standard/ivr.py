@@ -22,7 +22,6 @@ from corehq.apps.reports.standard.sms import BaseCommConnectLogReport
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase
 from django.conf import settings
-from corehq.util.timezones import utils as tz_utils
 from corehq.apps.reminders.util import get_form_name
 import pytz
 from math import ceil

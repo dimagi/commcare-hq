@@ -6,12 +6,9 @@ from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.sms.models import ExpectedCallbackEventLog, CALLBACK_PENDING, CALLBACK_RECEIVED, CALLBACK_MISSED
 from datetime import datetime, timedelta
-from corehq.util.timezones import utils as tz_utils
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.parsing import json_format_datetime
-from corehq.apps.reports.util import format_datatables_data
-import pytz
-from dateutil.parser import parse
+
 
 class MissedCallbackReport(CustomProjectReport, GenericTabularReport):
     name = ugettext_noop("Missed Callbacks")

@@ -1,5 +1,4 @@
 import pytz
-import logging
 import cgi
 from datetime import datetime, time, timedelta
 from django.utils.translation import ugettext_noop
@@ -23,7 +22,6 @@ from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xform import CaseDbCache
 from corehq.apps.users.models import CouchUser, UserCache
-from corehq.util.timezones import utils as tz_utils
 from custom.fri.api import get_interactive_participants, get_valid_date_range
 from django.core.urlresolvers import reverse
 from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
