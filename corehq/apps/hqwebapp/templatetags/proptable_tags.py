@@ -12,9 +12,9 @@ See render_case() in casexml for an example of the display definition format.
 """
 
 import collections
-import copy
 import datetime
 import itertools
+import logging
 import types
 
 import dateutil
@@ -27,8 +27,9 @@ from django.utils.safestring import mark_safe
 from django.utils.html import escape, conditional_escape
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import pretty_doc_info
-
-from corehq.util.timezones.utils import adjust_datetime_to_timezone
+from corehq.const import USER_DATETIME_FORMAT, USER_DATE_FORMAT
+from corehq.util.dates import safe_strftime
+from corehq.util.timezones.conversions import ServerTime
 
 register = template.Library()
 
@@ -57,8 +58,8 @@ def parse_date_or_datetime(val):
         return val if val else None
 
 
-def to_html(key, val, level=0, datetime_fmt="%b %d, %Y %H:%M %Z",
-            date_fmt="%b %d, %Y", timeago=False, timezone=pytz.utc,
+def to_html(key, val, level=0, datetime_fmt=USER_DATETIME_FORMAT,
+            date_fmt=USER_DATE_FORMAT, timeago=False, timezone=pytz.utc,
             key_format=None, collapse_lists=False):
     """
     Recursively convert a value to its HTML representation using <dl>s for
@@ -74,21 +75,6 @@ def to_html(key, val, level=0, datetime_fmt="%b %d, %Y %H:%M %Z",
             return key_format(k) if key_format else k
         else:
             return ""
-
-    def safe_strftime(val, fmt):
-        """
-        This hack assumes datetime_fmt does not contain directives whose
-        value is dependent on the year, such as week number of the year ('%W').
-        The hack allows strftime to be used to support directives such as '%b'.
-        """
-        if isinstance(val, datetime.datetime):
-            safe_val = datetime.datetime(2012, val.month, val.day, hour=val.hour,
-                                         minute=val.minute, second=val.second,
-                                         microsecond=val.microsecond, tzinfo=val.tzinfo)
-        else:
-            safe_val = datetime.date(2012, val.month, val.day)
-        return safe_val.strftime(fmt.replace("%Y", str(val.year)))
-
 
     if isinstance(val, types.DictionaryType):
         ret = "".join(
@@ -160,9 +146,9 @@ def get_display_data(data, prop_def, processors=None, timezone=pytz.utc):
     is_utc = prop_def.pop('is_utc', True)
     if isinstance(val, datetime.datetime):
         if is_utc:
-            if val.tzinfo is None:
-                val = val.replace(tzinfo=pytz.utc)
-            val = adjust_datetime_to_timezone(val, val.tzinfo, timezone.zone)
+            logging.error("is_utc should really only get passed with "
+                          "timezone-naive datetimes representing UTC")
+            val = ServerTime(val).user_time(timezone).done()
         else:
             val = val.replace(tzinfo=timezone)
 

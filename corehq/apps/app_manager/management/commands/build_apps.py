@@ -62,6 +62,8 @@ class Command(BaseCommand):
                     app = RemoteApp.wrap(j)
 
             app.version = 1
+            if not app.domain:
+                app.domain = "test"
             build_path = os.path.join(path, build_slug, slug)
             print ' Creating files...'
             with record_performance_stats(perfpath, slug):

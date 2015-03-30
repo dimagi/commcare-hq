@@ -12,7 +12,8 @@ from custom.m4change.reports.reports import M4ChangeReportDataSource
 import settings
 
 
-@periodic_task(run_every=crontab(hour="3", minute="0", day_of_week="*"), queue=getattr(settings, "CELERY_PERIODIC_QUEUE", "celery"))
+@periodic_task(run_every=crontab(hour="3", minute="0", day_of_week="*"),
+               queue='background_queue')
 def generate_production_fixtures():
     db = FixtureReportResult.get_db()
     data_source = M4ChangeReportDataSource()
@@ -47,7 +48,8 @@ def generate_fixtures_for_domain(domain, db, data_source):
                 FixtureReportResult.save_result(domain, location_id, date[0].date(), date[1].date(),
                                                 report_slug, rows, name)
 
-@periodic_task(run_every=crontab(hour="*", minute="*/30", day_of_week="*"), queue=getattr(settings, "CELERY_PERIODIC_QUEUE", "celery"))
+@periodic_task(run_every=crontab(hour="*", minute="*/30", day_of_week="*"),
+               queue=getattr(settings, "CELERY_PERIODIC_QUEUE", "celery"))
 def generate_fixtures_for_locations():
 
     client = get_redis_client()

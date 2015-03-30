@@ -17,7 +17,7 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import force_to_datetime
 
 
-@task
+@task(queue='background_queue')
 def stock_data_task(domain, endpoint, apis, config, test_facilities=None):
     # checkpoint logic
     start_date = datetime.today()

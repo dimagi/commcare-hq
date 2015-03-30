@@ -130,13 +130,7 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
     Spec: https://github.com/dimagi/commcare/wiki/CaseAttachmentAPI
     """
     def tearDown(self):
-        deprecated_xforms = XFormDeprecated.view(
-            'couchforms/edits',
-            include_docs=True,
-        ).all()
-        for form in deprecated_xforms:
-            form.delete()
-            pass
+        delete_all_xforms()
 
     def testAttachInCreate(self):
         self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))

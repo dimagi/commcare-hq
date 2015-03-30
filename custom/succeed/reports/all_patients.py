@@ -3,7 +3,7 @@ from couchdbkit import ResourceNotFound
 from django.utils.translation import ugettext_noop
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SimpleColumn
-from sqlagg.filters import EQ
+from sqlagg.filters import EQ, IN
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.datatables import DTSortType
 from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn, SqlTabularReport, DataFormatter, \
@@ -128,10 +128,16 @@ class PatientListReport(SqlTabularReport, CustomProjectReport, ProjectReportPara
         if patient_status:
             is_active = 'True' if patient_status == 'active' else 'False'
 
+        owner_ids = []
+        user = self.request.couch_user
+        if not user.is_web_user():
+            owner_ids = [user._id] + user.get_group_ids()
+
         return {
             'domain': self.domain,
             'is_active': is_active,
-            'care_site': cate_site.lower() if cate_site else None
+            'care_site': cate_site.lower() if cate_site else None,
+            'owner_id': owner_ids
         }
 
     @property
@@ -141,6 +147,8 @@ class PatientListReport(SqlTabularReport, CustomProjectReport, ProjectReportPara
             filters.append(EQ('is_active', 'is_active'))
         if 'care_site' in self.config and self.config['care_site']:
             filters.append(EQ('care_site', 'care_site'))
+        if 'owner_id' in self.config and self.config['owner_id']:
+            filters.append(IN('owner_id', 'owner_id'))
         return filters
 
     @property

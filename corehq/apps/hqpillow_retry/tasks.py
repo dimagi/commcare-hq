@@ -10,7 +10,7 @@ from pillow_retry.models import PillowError
 from django.conf import settings
 
 
-@periodic_task(run_every=crontab(minute=0))
+@periodic_task(run_every=crontab(minute=0), queue='background_queue')
 def pillow_retry_notifier():
     enddate = datetime.utcnow()
     startdate = enddate - timedelta(hours=1)

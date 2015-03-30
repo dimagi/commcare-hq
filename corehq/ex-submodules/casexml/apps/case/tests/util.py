@@ -185,20 +185,27 @@ def post_util(create=False, case_id=None, user_id=None, owner_id=None,
     return case_id
 
 
-def _delete_all(db, viewname, id_func=None):
+def _delete_all(db, viewname):
+    deleted = set()
     for row in db.view(viewname, reduce=False):
-        try:
-            safe_delete(db, id_func(row) if id_func else row['id'])
-        except ResourceNotFound:
-            pass
+        doc_id = row['id']
+        if id not in deleted:
+            try:
+                safe_delete(db, doc_id)
+                deleted.add(doc_id)
+            except ResourceNotFound:
+                pass
+
 
 def delete_all_cases():
     # handle with care
     _delete_all(CommCareCase.get_db(), 'case/get_lite')
 
+
 def delete_all_xforms():
     # handle with care
-    _delete_all(XFormInstance.get_db(), 'case/by_xform_id', id_func=lambda row: row['key'])
+    _delete_all(XFormInstance.get_db(), 'couchforms/all_submissions_by_domain')
+
 
 def delete_all_sync_logs():
     # handle with care

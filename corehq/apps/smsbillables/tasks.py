@@ -11,7 +11,7 @@ from corehq.apps.accounting.models import Currency
 logger = get_task_logger("accounting")
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0))
+@periodic_task(run_every=crontab(minute=0, hour=0), queue='background_queue')
 def update_exchange_rates(app_id=settings.OPEN_EXCHANGE_RATES_ID):
     try:
         logger.info("Updating exchange rates...")

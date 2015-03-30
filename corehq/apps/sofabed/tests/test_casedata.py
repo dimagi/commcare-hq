@@ -140,4 +140,4 @@ class CaseDataTests(TestCase):
         instance = CommCareCase.get(case_id)
         casedata = CaseData.create_or_update_from_instance(instance)
         self.assertIsNotNone(casedata)
-        self.assertIsNone(casedata.name)
+        self.assertEqual('', casedata.name)

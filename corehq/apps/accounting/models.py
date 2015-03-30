@@ -1561,6 +1561,7 @@ class BillingRecord(models.Model):
             'statements_url': absolute_reverse(
                 DomainBillingStatementsView.urlname, args=[domain]),
             'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
+            'accounts_email': settings.ACCOUNTS_EMAIL,
         }
 
         contact_emails = contact_emails or self.invoice.email_recipients
