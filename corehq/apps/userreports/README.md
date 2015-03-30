@@ -637,7 +637,7 @@ columns:
     "type": "expanded",
     "field": "test_result",
     "column_id": "test_result",
-    "format": "default",
+    "format": "default"
   }
 ]
 ```
