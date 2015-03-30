@@ -14,7 +14,7 @@
       <stack>
       	<push>
       		<command value="'m0-f0'"/>
-      	    <datum id="case_id_case_child" value="uuid()"/>
+      	    <datum id="case_id_new_rec_child_0" value="uuid()"/>
       	</push>
       </stack>
     </action>
