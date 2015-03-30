@@ -56,7 +56,7 @@ class UserTime(_HQTZTime):
         return self.server_time().phone_time(phone_tz_guess)
 
     def ui_string(self, fmt=USER_DATETIME_FORMAT):
-        safe_strftime(self._datetime, fmt)
+        return safe_strftime(self._datetime, fmt)
 
 
 class PhoneTime(_HQTZTime):
