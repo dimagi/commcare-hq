@@ -58,8 +58,10 @@ def incomplete_domains_to_email():
     return email_domains
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0, day_of_week="monday",
-    day_of_month="15-21"))
+@periodic_task(
+    run_every=crontab(minute=0, hour=0, day_of_week="monday", day_of_month="15-21"),
+    queue='background_queue'
+)
 def fm_reminder_email():
     """
     Reminds FMs to update their domains with up to date information
@@ -98,8 +100,10 @@ def incomplete_self_started_domains():
     return email_domains
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0, day_of_week="monday",
-    day_of_month="15-21"))
+@periodic_task(
+    run_every=crontab(minute=0, hour=0, day_of_week="monday", day_of_month="15-21"),
+    queue='background_queue',
+)
 def self_starter_email():
     """
     Emails MASTER_LIST_EMAIL incomplete self started domains

@@ -5,7 +5,6 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import Location
 from corehq.apps.commtrack.models import SupplyPointCase, StockState, SQLLocation
 from corehq.apps.products.models import Product
-from corehq.apps.domain.models import Domain
 from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.reports.api import ReportDataSource
 from datetime import datetime, timedelta
@@ -300,13 +299,17 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
 
                     product['count'] += 1
 
-                    location_type = state.sql_location.location_type
-                    product['category'] = stock_category(
-                        product['current_stock'],
-                        _convert_to_daily(product['consumption']),
-                        location_type.understock_threshold,
-                        location_type.overstock_threshold,
-                    )
+                    if state.sql_location is not None:
+                        location_type = state.sql_location.location_type
+                        product['category'] = stock_category(
+                            product['current_stock'],
+                            _convert_to_daily(product['consumption']),
+                            location_type.understock_threshold,
+                            location_type.overstock_threshold,
+                        )
+                    else:
+                        product['category'] = 'nodata'
+
                     product['months_remaining'] = months_of_stock_remaining(
                         product['current_stock'],
                         _convert_to_daily(product['consumption'])

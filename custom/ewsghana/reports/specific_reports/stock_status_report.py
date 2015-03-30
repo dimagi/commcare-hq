@@ -36,7 +36,7 @@ class ProductAvailabilityData(EWSData):
         rows = []
         if self.config['location_id']:
             locations = get_supply_points(self.config['location_id'], self.config['domain'])
-            for p in self.unique_products(locations):
+            for p in self.unique_products(locations, all=True):
                 supply_points = locations.values_list('supply_point_id', flat=True)
                 if supply_points:
                     stocks = StockState.objects.filter(sql_product=p, case_id__in=supply_points)
@@ -137,7 +137,7 @@ class MonthOfStockProduct(EWSData):
     @property
     def headers(self):
         headers = DataTablesHeader(*[DataTablesColumn('Location')])
-        for product in self.unique_products(self.get_supply_points):
+        for product in self.unique_products(self.get_supply_points, all=True):
             headers.add_column(DataTablesColumn(product.code))
 
         return headers
@@ -165,7 +165,7 @@ class MonthOfStockProduct(EWSData):
                     '&filter_by_product='.join(self.config['products'])))
 
                 row = [link_format(sp.name, url)]
-                for p in self.unique_products(self.get_supply_points):
+                for p in self.unique_products(self.get_supply_points, all=True):
                     stock = StockState.objects.filter(sql_product=p, case_id=sp.supply_point_id)\
                         .order_by('-last_modified_date')
 
@@ -199,7 +199,7 @@ class StockoutsProduct(EWSData):
         rows = {}
         if self.config['location_id']:
             supply_points = get_supply_points(self.config['location_id'], self.config['domain'])
-            products = self.unique_products(supply_points)
+            products = self.unique_products(supply_points, all=True)
             for product in products:
                 rows[product.code] = []
 

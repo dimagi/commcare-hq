@@ -84,7 +84,8 @@ class StockTransaction(JsonObject):
 
 
 def _get_location_id(facility, domain):
-    return get_supply_point_by_external_id(domain, facility).location_id
+    supply_point = get_supply_point_by_external_id(domain, facility)
+    return supply_point.location_id if supply_point else None
 
 
 class ILSGatewayEndpoint(LogisticsEndpoint):
@@ -105,13 +106,13 @@ class ILSGatewayEndpoint(LogisticsEndpoint):
 
     def get_supplypointstatuses(self, domain, facility, **kwargs):
         meta, supplypointstatuses = self.get_objects(self.supplypointstatuses_url, **kwargs)
-        location_id = _get_location_id(facility, domain)
+        location_id = SQLLocation.objects.get(domain=domain, external_id=facility).location_id
         return meta, [SupplyPointStatus.wrap_from_json(supplypointstatus, location_id) for supplypointstatus in
                       supplypointstatuses]
 
     def get_deliverygroupreports(self, domain, facility, **kwargs):
         meta, deliverygroupreports = self.get_objects(self.deliverygroupreports_url, **kwargs)
-        location_id = _get_location_id(facility, domain)
+        location_id = SQLLocation.objects.filter(domain=domain, external_id=facility)
         return meta, [DeliveryGroupReport.wrap_from_json(deliverygroupreport, location_id)
                       for deliverygroupreport in deliverygroupreports]
 
@@ -119,7 +120,10 @@ class ILSGatewayEndpoint(LogisticsEndpoint):
 class ILSGatewayAPI(APISynchronization):
 
     LOCATION_CUSTOM_FIELDS = [
-        {'name': 'groups'},
+        {
+            'name': 'group',
+            'choices': ['A', 'B', 'C']
+        },
     ]
     SMS_USER_CUSTOM_FIELDS = [
         {

@@ -183,6 +183,7 @@ class MobileBackend(Document):
     base_doc = "MobileBackend"
     domain = StringProperty()               # This is the domain that the backend belongs to, or None for global backends
     name = StringProperty()                 # The name to use when setting this backend for a contact
+    display_name = StringProperty()        # Simple name to display to users - e.g. Twilio
     authorized_domains = ListProperty(StringProperty)  # A list of additional domains that are allowed to use this backend
     is_global = BooleanProperty(default=True)  # If True, this backend can be used for any domain
     description = StringProperty()          # (optional) A description of this backend

@@ -355,6 +355,7 @@ def version_key(ver):
     return int(values[0]) * 1000000 + int(values[1]) * 1000 + int(values[2])
 
 
-def get_commcare_versions():
-    versions = [i.build.version for i in CommCareBuildConfig.fetch().menu]
+def get_commcare_versions(request_user):
+    versions = [i.build.version for i in CommCareBuildConfig.fetch().menu
+                if request_user.is_superuser or not i.superuser_only]
     return sorted(versions, key=version_key)

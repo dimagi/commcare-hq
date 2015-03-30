@@ -15,7 +15,7 @@
         </tr>
         {% for location_type in location_types %}
             <tr role='row'>
-                <td>{{ location_type.location_type }}</td>
+                <td>{{ location_type.location_type__name }}</td>
                 <td>{{ location_type.location_type__count }}</td>
             </tr>
         {% endfor %}

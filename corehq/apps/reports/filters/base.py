@@ -1,14 +1,12 @@
 import pytz
 from django.template.loader import render_to_string
-#from corehq.apps.reports.cache import CacheableRequestMixIn, request_cache
-from corehq.apps.reports.cache import CacheableRequestMixIn
 from dimagi.utils.decorators.memoized import memoized
 # For translations
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
 
-class BaseReportFilter(CacheableRequestMixIn):   # (CacheableRequestMixIn):
+class BaseReportFilter(object):
     """
         For filtering the results of CommCare HQ Reports.
 
@@ -21,6 +19,7 @@ class BaseReportFilter(CacheableRequestMixIn):   # (CacheableRequestMixIn):
     label = None
     css_class = "span4"
     help_text = None
+    is_cacheable = False
 
     def __init__(self, request, domain=None, timezone=pytz.utc, parent_report=None):
         if self.slug is None:
@@ -244,7 +243,6 @@ class BaseDrilldownOptionFilter(BaseReportFilter):
         return self.get_labels()
 
     @property
-#    @request_cache('drilldownfiltercontext')
     def filter_context(self):
         controls = []
         for level, label in enumerate(self.rendered_labels):

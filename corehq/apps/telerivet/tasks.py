@@ -31,10 +31,10 @@ def process_incoming_message(*args, **kwargs):
         # Ignore the message if the webhook secret is not recognized
         return
 
-    from_number = strip_plus(kwargs["from_number"])
-    if backend.country_code:
-        if not from_number.startswith(backend.country_code):
-            from_number = "%s%s" % (backend.country_code, from_number)
+    if kwargs["from_number_e164"]:
+        from_number = strip_plus(kwargs["from_number_e164"])
+    else:
+        from_number = strip_plus(kwargs["from_number"])
 
     if kwargs["event"] == EVENT_INCOMING:
         if kwargs["message_type"] == MESSAGE_TYPE_SMS:

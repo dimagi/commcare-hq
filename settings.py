@@ -556,6 +556,7 @@ COUCHLOG_DISPLAY_COLS = ["id", "archived?", "date", "exception type", "message",
                          "domain", "user", "url", "actions", "report"]
 COUCHLOG_RECORD_WRAPPER = "corehq.apps.hqcouchlog.wrapper"
 COUCHLOG_DATABASE_NAME = "commcarehq-couchlog"
+COUCHLOG_AUTH_DECORATOR = 'corehq.apps.domain.decorators.require_superuser_or_developer'
 
 # couchlog/case search
 LUCENE_ENABLED = False
@@ -675,6 +676,7 @@ ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_ID': '',
     'PINGDOM_ID': '',
     'ANALYTICS_ID_PUBLIC_COMMCARE': '',
+    'SEGMENT_ANALYTICS_KEY': '',
 }
 
 OPEN_EXCHANGE_RATES_ID = ''
@@ -1327,9 +1329,8 @@ DOMAIN_MODULE_MAP = {
     'succeed': 'custom.succeed',
     'ilsgateway-test-1': 'custom.ilsgateway',
     'ilsgateway-test-2': 'custom.ilsgateway',
-    'ews-ghana-test': 'custom.ewsghana',
     'ewsghana-test-1': 'custom.ewsghana',
-    'stock-status-test-1': 'custom.ewsghana',
+    'ewsghana-test-2': 'custom.ewsghana',
     'test-pathfinder': 'custom.m4change',
     'wvindia2': 'custom.world_vision',
     'pathways-india-mis': 'custom.care_pathways',

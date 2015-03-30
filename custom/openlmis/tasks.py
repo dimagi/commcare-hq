@@ -7,7 +7,8 @@ from custom.openlmis.api import OpenLMISEndpoint
 from custom.openlmis.commtrack import bootstrap_domain, sync_requisition_from_openlmis
 import settings
 
-@periodic_task(run_every=timedelta(hours=1),queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
+# todo: no one uses this feature. If we ever need to enable it we should uncomment this line
+# @periodic_task(run_every=timedelta(hours=1),queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def check_requisition_updates():
     projects = Domain.get_all()
     for project in projects:

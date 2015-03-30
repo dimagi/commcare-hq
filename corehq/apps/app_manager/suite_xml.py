@@ -1,5 +1,7 @@
 from collections import namedtuple, defaultdict
+import copy
 from functools import total_ordering
+from itertools import izip_longest
 import os
 from os.path import commonprefix
 import re
@@ -18,7 +20,7 @@ from .exceptions import (
     SuiteValidationError,
 )
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.exceptions import UnknownInstanceError, ScheduleError
+from corehq.apps.app_manager.exceptions import UnknownInstanceError, ScheduleError, FormNotFoundException
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE_LAST_VISIT, SCHEDULE_PHASE, RETURN_TO
 from corehq.apps.app_manager.util import split_path, create_temp_sort_column, languages_mapping
@@ -563,10 +565,22 @@ class DatumMeta(object):
     Class used in computing the form workflow. Allows comparison by SessionDatum.id and reference
     to SessionDatum.nodeset and SessionDatum.function attributes.
     """
+    type_regex = re.compile("\[@case_type='([\w_]+)'\]")
+
     def __init__(self, session_datum):
         self.id = session_datum.id
         self.nodeset = session_datum.nodeset
         self.function = session_datum.function
+        self.source_id = self.id
+
+    @property
+    @memoized
+    def case_type(self):
+        if not self.nodeset:
+            return None
+
+        match = self.type_regex.search(self.nodeset)
+        return match.group(1)
 
     def __lt__(self, other):
         return self.id < other.id
@@ -578,7 +592,7 @@ class DatumMeta(object):
         return not self == other
 
     def __repr__(self):
-        return 'DatumMeta(id={})'.format(self.id)
+        return 'DatumMeta(id={}, case_type={}, source_id={})'.format(self.id, self.case_type, self.source_id)
 
 
 def get_default_sort_elements(detail):
@@ -747,20 +761,30 @@ class SuiteGenerator(SuiteGeneratorBase):
           * Finally remove the last item from the stack frame.
         """
         from corehq.apps.app_manager.models import (
-            WORKFLOW_DEFAULT, WORKFLOW_PREVIOUS, WORKFLOW_MODULE, WORKFLOW_ROOT
+            WORKFLOW_DEFAULT, WORKFLOW_PREVIOUS, WORKFLOW_MODULE, WORKFLOW_ROOT, WORKFLOW_FORM
         )
 
-        def create_workflow_stack(suite, form_command, module_command, frame_children, allow_empty_stack=False):
+        @memoized
+        def get_entry(suite, form_command):
+            entry = self.get_form_entry(suite, form_command)
+            if not entry.stack:
+                entry.stack = Stack()
+                return entry, True
+            else:
+                return entry, False
+
+        def create_workflow_stack(suite, form_command, frame_children,
+                                  allow_empty_stack=False, if_clause=None):
             if not frame_children and not allow_empty_stack:
                 return
 
+            entry, is_new = get_entry(suite, form_command)
             entry = self.get_form_entry(suite, form_command)
-            if_clause = None
-            if not entry.stack:
-                entry.stack = Stack()
-            else:
+            if not is_new:
                 # TODO: find a more general way of handling multiple contributions to the workflow
-                if_clause = '{} = 0'.format(session_var(RETURN_TO).count())
+                if_prefix = '{} = 0'.format(session_var(RETURN_TO).count())
+                template = '({{}}) and ({})'.format(if_clause) if if_clause else '{}'
+                if_clause = template.format(if_prefix)
 
             frame = CreateFrame(if_clause=if_clause)
             entry.stack.add_frame(frame)
@@ -769,45 +793,136 @@ class SuiteGenerator(SuiteGeneratorBase):
                 if isinstance(child, basestring):
                     frame.add_command(XPath.string(child))
                 else:
-                    frame.add_datum(StackDatum(id=child.id, value=session_var(child.id)))
+                    value = session_var(child.source_id) if child.nodeset else child.function
+                    frame.add_datum(StackDatum(id=child.id, value=value))
             return frame
 
         root_modules = [module for module in self.modules if getattr(module, 'put_in_root', False)]
         root_module_datums = [datum for module in root_modules
                               for datum in self.get_module_datums(suite, u'm{}'.format(module.id)).values()]
+
+        def get_frame_children(target_form, module_only=False):
+            """
+            For a form return the list of stack frame children that are required
+            to navigate to that form.
+
+            This is based on the following algorithm:
+
+            * Add the module the form is in to the stack (we'll call this `m`)
+            * Walk through all forms in the module, determine what datum selections are present in all of the modules
+              (this may be an empty set)
+              * Basically if there are three forms that respectively load
+                * f1: v1, v2, v3, v4
+                * f2: v1, v2, v4
+                * f3: v1, v2
+              * The longest common chain is v1, v2
+            * Add a datum for each of those values to the stack
+            * Add the form "command id" for the <entry> to the stack
+            * Add the remainder of the datums for the current form to the stack
+            * For the three forms above, the stack entries for "last element" would be
+              * m, v1, v2, f1, v3, v4
+              * m, v1, v2, f2, v4
+              * m, v1, v2, f3
+
+            :returns:   list of strings and DatumMeta objects. String represent stack commands
+                        and DatumMeta's represent stack datums.
+            """
+            target_form_command = self.id_strings.form_command(target_form)
+            target_module_id, target_form_id = target_form_command.split('-')
+            module_command = self.id_strings.menu_id(target_form.get_module())
+            module_datums = self.get_module_datums(suite, target_module_id)
+            form_datums = module_datums[target_form_id]
+
+            if module_command == self.id_strings.ROOT:
+                datums_list = root_module_datums
+            else:
+                datums_list = module_datums.values()  # [ [datums for f0], [datums for f1], ...]
+
+            common_datums = commonprefix(datums_list)
+            remaining_datums = form_datums[len(common_datums):]
+
+            frame_children = [module_command] if module_command != self.id_strings.ROOT else []
+            frame_children.extend(common_datums)
+            if not module_only:
+                frame_children.append(target_form_command)
+                frame_children.extend(remaining_datums)
+
+            return frame_children
+
+        def get_datums_matched_to_source(target_frame_elements, source_datums):
+            """
+            Attempt to match the target session variables with ones in the source session.
+            Making some large assumptions about how people will actually use this feature
+            """
+            datum_index = -1
+            for child in target_frame_elements:
+                if not isinstance(child, DatumMeta) or child.function:
+                    yield child
+                else:
+                    datum_index += 1
+                    try:
+                        source_datum = source_datums[datum_index]
+                    except IndexError:
+                        yield child
+                    else:
+                        if child.id != source_datum.id and not source_datum.case_type or \
+                                source_datum.case_type == child.case_type:
+                            target_datum = copy.copy(child)
+                            target_datum.source_id = source_datum.id
+                            yield target_datum
+                        else:
+                            yield child
+
         for module in self.modules:
             for form in module.get_forms():
-                if form.post_form_workflow != WORKFLOW_DEFAULT:
-                    form_command = self.id_strings.form_command(form)
-                    module_id, form_id = form_command.split('-')
+                if form.post_form_workflow == WORKFLOW_DEFAULT:
+                    continue
+
+                form_command = self.id_strings.form_command(form)
+
+                if form.post_form_workflow == WORKFLOW_ROOT:
+                    create_workflow_stack(suite, form_command, [], True)
+                elif form.post_form_workflow == WORKFLOW_MODULE:
                     module_command = self.id_strings.menu_id(module)
-
                     frame_children = [module_command] if module_command != self.id_strings.ROOT else []
-                    if form.post_form_workflow == WORKFLOW_ROOT:
-                        create_workflow_stack(suite, form_command, module_command, [], True)
-                    if form.post_form_workflow == WORKFLOW_MODULE:
-                        create_workflow_stack(suite, form_command, module_command, frame_children)
-                    elif form.post_form_workflow == WORKFLOW_PREVIOUS:
-                        module_datums = self.get_module_datums(suite, module_id)
-                        form_datums = module_datums[form_id]
-                        if module_command == self.id_strings.ROOT:
-                            datums_list = root_module_datums
-                        else:
-                            datums_list = module_datums.values()  # [ [datums for f0], [datums for f1], ...]
-                        common_datums = commonprefix(datums_list)
-                        remaining_datums = form_datums[len(common_datums):]
+                    create_workflow_stack(suite, form_command, frame_children)
+                elif form.post_form_workflow == WORKFLOW_PREVIOUS:
+                    frame_children = get_frame_children(form)
 
-                        frame_children.extend(common_datums)
-                        frame_children.append(self.id_strings.form_command(form))
-                        frame_children.extend(remaining_datums)
-
+                    # since we want to go the 'previous' screen we need to drop the last
+                    # datum
+                    last = frame_children.pop()
+                    while isinstance(last, DatumMeta) and last.function:
+                        # keep removing last element until we hit a command
+                        # or a non-autoselect datum
                         last = frame_children.pop()
-                        while isinstance(last, DatumMeta) and last.function:
-                            # keep removing last element until we hit a command
-                            # or a non-autoselect datum
-                            last = frame_children.pop()
 
-                        create_workflow_stack(suite, form_command, module_command, frame_children)
+                    create_workflow_stack(suite, form_command, frame_children)
+                elif form.post_form_workflow == WORKFLOW_FORM:
+                    module_id, form_id = form_command.split('-')
+                    source_form_datums = self.get_form_datums(suite, module_id, form_id)
+                    for link in form.form_links:
+                        target_form = self.app.get_form(link.form_id)
+                        target_module = target_form.get_module()
+
+                        frame_children = get_frame_children(target_form)
+                        frame_children = get_datums_matched_to_source(frame_children, source_form_datums)
+
+                        if target_module in module.get_child_modules():
+                            parent_frame_children = get_frame_children(module.get_form(0), module_only=True)
+
+                            # exclude frame children from the child module if they are already
+                            # supplied by the parent module
+                            child_ids_in_parent = {getattr(child, "id", child) for child in parent_frame_children}
+                            frame_children = parent_frame_children + [
+                                child for child in frame_children
+                                if getattr(child, "id", child) not in child_ids_in_parent
+                            ]
+
+                        create_workflow_stack(suite, form_command, frame_children, if_clause=link.xpath)
+
+    def get_form_datums(self, suite, module_id, form_id):
+        return self.get_module_datums(suite, module_id)[form_id]
 
     def get_module_datums(self, suite, module_id):
         _, datums = self._get_entries_datums(suite)
@@ -1321,7 +1436,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                     )
                 )
                 if isinstance(module, Module):
-                    self.configure_entry_module(module, e, use_filter=False)
+                    for datum_meta in self.get_datum_meta_module(module, use_filter=False):
+                        e.datums.append(datum_meta['datum'])
                 elif isinstance(module, AdvancedModule):
                     e.datums.append(SessionDatum(
                         id='case_id_case_%s' % module.case_type,
@@ -1341,7 +1457,7 @@ class SuiteGenerator(SuiteGeneratorBase):
 
         return results
 
-    def add_assertion(self, entry, test, locale_id, locale_arguments=None):
+    def get_assertion(self, test, locale_id, locale_arguments=None):
         assertion = Assertion(test=test)
         text = Text(locale_id=locale_id)
         if locale_arguments:
@@ -1349,27 +1465,28 @@ class SuiteGenerator(SuiteGeneratorBase):
             for arg in locale_arguments:
                 locale.arguments.append(LocaleArgument(value=arg))
         assertion.text.append(text)
-        entry.assertions.append(assertion)
+        return assertion
 
     def add_case_sharing_assertion(self, entry):
-        self.add_assertion(entry, "count(instance('groups')/groups/group) = 1",
+        assertion = self.get_assertion("count(instance('groups')/groups/group) = 1",
                            'case_sharing.exactly_one_group')
+        entry.assertions.append(assertion)
 
-    def add_auto_select_assertion(self, entry, case_id_xpath, mode, locale_arguments=None):
-        self.add_assertion(
-            entry,
-            "{0} = 1".format(case_id_xpath.count()),
-            'case_autoload.{0}.property_missing'.format(mode),
-            locale_arguments
-        )
+    def get_auto_select_assertions(self, case_id_xpath, mode, locale_arguments=None):
         case_count = CaseIDXPath(case_id_xpath).case().count()
-        self.add_assertion(
-            entry,
-            "{0} = 1".format(case_count),
-            'case_autoload.{0}.case_missing'.format(mode),
-        )
+        return [
+            self.get_assertion(
+                "{0} = 1".format(case_id_xpath.count()),
+                'case_autoload.{0}.property_missing'.format(mode),
+                locale_arguments
+            ),
+            self.get_assertion(
+                "{0} = 1".format(case_count),
+                'case_autoload.{0}.case_missing'.format(mode),
+            )
+        ]
 
-    def get_new_case_id_datums(self, form):
+    def get_new_case_id_datums_meta(self, form):
         if not form:
             return []
 
@@ -1377,16 +1494,31 @@ class SuiteGenerator(SuiteGeneratorBase):
         if form.form_type == 'module_form':
             actions = form.active_actions()
             if 'open_case' in actions:
-                datums.append(SessionDatum(id=form.session_var_for_action('open_case'), function='uuid()'))
+                datums.append({
+                    'datum': SessionDatum(id=form.session_var_for_action('open_case'), function='uuid()'),
+                    'case_type': form.get_module().case_type,
+                    'requires_selection': False,
+                    'action': actions['open_case']
+                })
 
             if 'subcases' in actions:
                 non_repeat_actions = [a for a in actions['subcases'] if not a.repeat_context]
                 for i, subcase in enumerate(non_repeat_actions):
-                    datums.append(SessionDatum(id=form.session_var_for_action('subcase', i), function='uuid()'))
+                    datums.append({
+                        'datum': SessionDatum(id=form.session_var_for_action('subcase', i), function='uuid()'),
+                        'case_type': subcase.case_type,
+                        'requires_selection': False,
+                        'action': subcase
+                    })
         elif form.form_type == 'advanced_form':
             for action in form.actions.get_open_actions():
                 if not action.repeat_context:
-                    datums.append(SessionDatum(id=action.case_session_var, function='uuid()'))
+                    datums.append({
+                        'datum': SessionDatum(id=action.case_session_var, function='uuid()'),
+                        'case_type': action.case_type,
+                        'requires_selection': False,
+                        'action': action
+                    })
 
         return datums
 
@@ -1429,12 +1561,13 @@ class SuiteGenerator(SuiteGeneratorBase):
                         return True
             return False
 
+        datums = []
         if not form or form.requires_case():
-            self.configure_entry_module(module, e, use_filter=True)
+            datums.extend(self.get_datum_meta_module(module, use_filter=True))
 
-        datums = self.get_new_case_id_datums(form)
+        datums.extend(self.get_new_case_id_datums_meta(form))
         for datum in datums:
-            e.datums.append(datum)
+            e.datums.append(datum['datum'])
 
         if form and 'open_case' in form.active_actions() and form.is_case_list_form:
             self.configure_entry_as_case_list_form(form, e)
@@ -1465,7 +1598,8 @@ class SuiteGenerator(SuiteGeneratorBase):
             for i, mod in reversed(list(enumerate(select_chain)))
         ]
 
-    def configure_entry_module(self, module, e, use_filter=False):
+    def get_datum_meta_module(self, module, use_filter=False):
+        datums = []
         datums_meta = self._get_datums_meta(module)
         for i, datum in enumerate(datums_meta):
             # get the session var for the previous datum if there is one
@@ -1487,30 +1621,36 @@ class SuiteGenerator(SuiteGeneratorBase):
                     detail_inline = bool(detail.pull_down_tile)
                     break
 
-            e.datums.append(SessionDatum(
-                id=datum['session_var'],
-                nodeset=(self.get_nodeset_xpath(datum['case_type'], datum['module'], use_filter)
-                         + parent_filter),
-                value="./@case_id",
-                detail_select=self.get_detail_id_safe(datum['module'], 'case_short'),
-                detail_confirm=(
-                    self.get_detail_id_safe(datum['module'], 'case_long')
-                    if datum['index'] == 0 and not detail_inline else None
+            datums.append({
+                'datum': SessionDatum(
+                    id=datum['session_var'],
+                    nodeset=(self.get_nodeset_xpath(datum['case_type'], datum['module'], use_filter)
+                             + parent_filter),
+                    value="./@case_id",
+                    detail_select=self.get_detail_id_safe(datum['module'], 'case_short'),
+                    detail_confirm=(
+                        self.get_detail_id_safe(datum['module'], 'case_long')
+                        if datum['index'] == 0 and not detail_inline else None
+                    ),
+                    detail_persistent=detail_persistent,
+                    detail_inline=self.get_detail_id_safe(datum['module'], 'case_long') if detail_inline else None
                 ),
-                detail_persistent=detail_persistent,
-                detail_inline=self.get_detail_id_safe(datum['module'], 'case_long') if detail_inline else None
-            ))
+                'case_type': datum['case_type'],
+                'requires_selection': True,
+                'action': 'update_case'
+            })
+        return datums
 
-    def add_auto_select_datums_to_entry(self, action, auto_select, e, form):
+    def get_auto_select_datums_and_assertions(self, action, auto_select, form):
         from corehq.apps.app_manager.models import AUTO_SELECT_USER, AUTO_SELECT_CASE, \
             AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW
         if auto_select.mode == AUTO_SELECT_USER:
             xpath = session_var(auto_select.value_key, subref='user')
-            e.datums.append(SessionDatum(
+            assertions = self.get_auto_select_assertions(xpath, auto_select.mode, [auto_select.value_key])
+            return SessionDatum(
                 id=action.case_session_var,
                 function=xpath
-            ))
-            self.add_auto_select_assertion(e, xpath, auto_select.mode, [auto_select.value_key])
+            ), assertions
         elif auto_select.mode == AUTO_SELECT_CASE:
             try:
                 ref = form.actions.actions_meta_by_tag[auto_select.value_source]['action']
@@ -1518,30 +1658,29 @@ class SuiteGenerator(SuiteGeneratorBase):
             except KeyError:
                 raise ValueError("Case tag not found: %s" % auto_select.value_source)
             xpath = CaseIDXPath(session_var(sess_var)).case().index_id(auto_select.value_key)
-            e.datums.append(SessionDatum(
+            assertions = self.get_auto_select_assertions(xpath, auto_select.mode, [auto_select.value_key])
+            return SessionDatum(
                 id=action.case_session_var,
                 function=xpath
-            ))
-            self.add_auto_select_assertion(e, xpath, auto_select.mode, [auto_select.value_key])
+            ), assertions
         elif auto_select.mode == AUTO_SELECT_FIXTURE:
             xpath_base = ItemListFixtureXpath(auto_select.value_source).instance()
             xpath = xpath_base.slash(auto_select.value_key)
-            e.datums.append(SessionDatum(
-                id=action.case_session_var,
-                function=xpath
-            ))
-            self.add_assertion(
-                e,
+            fixture_assertion = self.get_assertion(
                 "{0} = 1".format(xpath_base.count()),
                 'case_autoload.{0}.exactly_one_fixture'.format(auto_select.mode),
                 [auto_select.value_source]
             )
-            self.add_auto_select_assertion(e, xpath, auto_select.mode, [auto_select.value_key])
+            assertions = self.get_auto_select_assertions(xpath, auto_select.mode, [auto_select.value_key])
+            return SessionDatum(
+                id=action.case_session_var,
+                function=xpath
+            ), [fixture_assertion] + assertions
         elif auto_select.mode == AUTO_SELECT_RAW:
-            e.datums.append(SessionDatum(
+            return SessionDatum(
                 id=action.case_session_var,
                 function=auto_select.value_key
-            ))
+            ), []
 
     def configure_entry_advanced_form(self, module, e, form, **kwargs):
         def case_sharing_requires_assertion(form):
@@ -1551,6 +1690,22 @@ class SuiteGenerator(SuiteGeneratorBase):
                     return True
             return False
 
+        datums, assertions = self.get_datum_meta_assertions_advanced(module, form)
+        datums.extend(self.get_new_case_id_datums_meta(form))
+
+        for datum_meta in datums:
+            e.datums.append(datum_meta['datum'])
+
+        # assertions come after session
+        e.assertions.extend(assertions)
+
+        if form.is_registration_form() and form.is_case_list_form:
+            self.configure_entry_as_case_list_form(form, e)
+
+        if self.app.case_sharing and case_sharing_requires_assertion(form):
+            self.add_case_sharing_assertion(e)
+
+    def get_datum_meta_assertions_advanced(self, module, form):
         def get_target_module(case_type, module_id, with_product_details=False):
             if module_id:
                 if module_id == module.unique_id:
@@ -1584,34 +1739,18 @@ class SuiteGenerator(SuiteGeneratorBase):
                         "Module with case type %s in app %s not found" % (case_type, self.app)
                     )
 
-        root_module_datums = self._get_datums_meta(module.root_module)
-
-        def get_datum_session_var(action, action_index):
-            """
-            If this form's module is a child of another module then we want
-            to make the session variables match up.
-
-            This is a naive approach that just matches the datums based on
-            their order and the case types of the case that's being loaded.
-            If there is a match then we make the session variable in the child
-            module form equal to the parent.
-            """
-            case_session_var = action.case_session_var
-            try:
-                root_datum = root_module_datums[action_index]
-            except IndexError:
-                pass
-            else:
-                child_case_type = action.case_type
-                if root_datum['case_type'] == child_case_type:
-                    case_session_var = root_datum['session_var']
-
-            return case_session_var
-
-        for index, action in enumerate(form.actions.load_update_cases):
+        datums = []
+        assertions = []
+        for action in form.actions.get_load_update_actions():
             auto_select = action.auto_select
             if auto_select and auto_select.mode:
-                self.add_auto_select_datums_to_entry(action, auto_select, e, form)
+                datum, assertions = self.get_auto_select_datums_and_assertions(action, auto_select, form)
+                datums.append({
+                    'datum': datum,
+                    'case_type': None,
+                    'requires_selection': False,
+                    'action': action
+                })
             else:
                 if action.parent_tag:
                     parent_action = form.actions.actions_meta_by_tag[action.parent_tag]['action']
@@ -1624,8 +1763,8 @@ class SuiteGenerator(SuiteGeneratorBase):
 
                 target_module = get_target_module(action.case_type, action.details_module)
                 referenced_by = form.actions.actions_meta_by_parent_tag.get(action.case_tag)
-                e.datums.append(SessionDatum(
-                    id=get_datum_session_var(action, index),
+                datum = SessionDatum(
+                    id=action.case_session_var,
                     nodeset=(self.get_nodeset_xpath(action.case_type, target_module, True) + parent_filter),
                     value="./@case_id",
                     detail_select=self.get_detail_id_safe(target_module, 'case_short'),
@@ -1633,36 +1772,94 @@ class SuiteGenerator(SuiteGeneratorBase):
                         self.get_detail_id_safe(target_module, 'case_long')
                         if not referenced_by or referenced_by['type'] != 'load' else None
                     )
-                ))
+                )
+                datums.append({
+                    'datum': datum,
+                    'case_type': action.case_type,
+                    'requires_selection': True,
+                    'action': action
+                })
 
         if module.get_app().commtrack_enabled:
             try:
-                last_action = form.actions.load_update_cases[-1]
+                last_action = list(form.actions.get_load_update_actions())[-1]
                 if last_action.show_product_stock:
                     nodeset = ProductInstanceXpath().instance()
                     if last_action.product_program:
                         nodeset = nodeset.select('program_id', last_action.product_program)
 
-                    target_module = get_target_module(action.case_type, last_action.details_module, True)
+                    target_module = get_target_module(last_action.case_type, last_action.details_module, True)
 
-                    e.datums.append(SessionDatum(
-                        id='product_id',
-                        nodeset=nodeset,
-                        value="./@id",
-                        detail_select=self.get_detail_id_safe(target_module, 'product_short')
-                    ))
+                    datums.append({
+                        'datum': SessionDatum(
+                            id='product_id',
+                            nodeset=nodeset,
+                            value="./@id",
+                            detail_select=self.get_detail_id_safe(target_module, 'product_short')
+                        ),
+                        'case_type': None,
+                        'requires_selection': True,
+                        'action': None
+                    })
             except IndexError:
                 pass
 
-        datums = self.get_new_case_id_datums(form)
-        for datum in datums:
-            e.datums.append(datum)
+        root_module = module.root_module
+        root_datums = []
+        if root_module and root_module.module_type == 'basic':
+            try:
+                # assume that all forms in the root module have the same case management
+                root_module_form = root_module.get_form(0)
+            except FormNotFoundException:
+                pass
+            else:
+                if root_module_form.requires_case():
+                    root_datums.extend(self.get_datum_meta_module(root_module))
+                root_datums.extend(self.get_new_case_id_datums_meta(root_module_form))
 
-        if form.is_registration_form() and form.is_case_list_form:
-            self.configure_entry_as_case_list_form(form, e)
+        if root_datums:
+            # we need to try and match the datums to the root module so that
+            # the navigation on the phone works correctly
+            # 1. Add in any datums that don't require user selection e.g. new case IDs
+            # 2. Match the datum ID for datums that appear in the same position and
+            #    will be loading the same case type
+            # see advanced_app_features#child-modules in docs
+            datum_pairs = list(izip_longest(datums, root_datums))
+            index = 0
+            changed_ids_by_case_tag = {}
+            for this_datum_meta, parent_datum_meta in datum_pairs:
+                if not this_datum_meta:
+                    continue
 
-        if self.app.case_sharing and case_sharing_requires_assertion(form):
-            self.add_case_sharing_assertion(e)
+                this_datum = this_datum_meta['datum']
+                action = this_datum_meta['action']
+                if action and action.parent_tag in changed_ids_by_case_tag:
+                    # update any reference to previously changed datums
+                    change = changed_ids_by_case_tag[action.parent_tag]
+                    nodeset = this_datum.nodeset
+                    old = session_var(change['old_id'])
+                    new = session_var(change['new_id'])
+                    this_datum.nodeset = nodeset.replace(old, new)
+
+                if not parent_datum_meta:
+                    continue
+
+                that_datum = parent_datum_meta['datum']
+                if this_datum.id != that_datum.id:
+                    if not parent_datum_meta['requires_selection']:
+                        datums.insert(index, parent_datum_meta)
+                    elif this_datum_meta['case_type'] == parent_datum_meta['case_type']:
+                        action = action
+                        if action:
+                            changed_ids_by_case_tag[action.case_tag] = {
+                                "old_id": this_datum.id,
+                                "new_id": that_datum.id
+                            }
+                        this_datum.id = that_datum.id
+
+                index += 1
+
+        return datums, assertions
 
     def configure_entry_careplan_form(self, module, e, form=None, **kwargs):
             parent_module = self.get_module_by_id(module.parent_select.module_id)

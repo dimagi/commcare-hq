@@ -326,8 +326,6 @@ class DistrictSohPercentageTableData(ILSData):
                         srs = None
 
                     if srs:
-                        ss = StockState.objects.get(case_id=supply_point, product_id=product.product_id)
-
                         def calculate_months_remaining(stock_state, quantity):
                             consumption = stock_state.get_monthly_consumption()
                             if consumption is not None and consumption > 0 and quantity is not None:
@@ -335,9 +333,12 @@ class DistrictSohPercentageTableData(ILSData):
                             elif quantity == 0:
                                 return 0
                             return None
-
-                        val = calculate_months_remaining(ss, srs.stock_on_hand)
-                        ret = _months_or_default(val, -1)
+                        try:
+                            ss = StockState.objects.get(case_id=supply_point, product_id=product.product_id)
+                            val = calculate_months_remaining(ss, srs.stock_on_hand)
+                            ret = _months_or_default(val, -1)
+                        except StockState.DoesNotExist:
+                            ret = -1
                     else:
                         ret = -1
 

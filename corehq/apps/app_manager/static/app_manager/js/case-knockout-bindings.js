@@ -27,44 +27,39 @@ ko.bindingHandlers.questionsSelect = {
         var optionObjects = ko.utils.unwrapObservable(valueAccessor());
         var allBindings = ko.utils.unwrapObservable(allBindingsAccessor());
         var value = ko.utils.unwrapObservable(allBindings.value);
-        var edit = ko.utils.unwrapObservable(allBindings.edit);
         var $warning = $(element).next();
-        if (edit) {
-            if (value && !_.some(optionObjects, function (option) {
-                return option.value === value;
-            })) {
-                var option = {
-                    label: 'Unidentified Question (' + value + ')',
-                    value: value
-                };
-                optionObjects = [option].concat(optionObjects);
-                $warning.show().text('We cannot find this question in the allowed questions for this field. ' +
-                    'It is likely that you deleted or renamed the question. ' +
-                    'Please choose a valid question from the dropdown.');
-            } else {
-                $warning.hide();
-            }
-            _.delay(function () {
-                $(element).select2({
-                    placeholder: 'Select a Question',
-                    data: {
-                        results: _(optionObjects).map(function (o) {
-                            return {id: o.value, text: utils.getDisplay(o), question: o};
-                        })
-                    },
-                    formatSelection: function (o) {
-                        return utils.getDisplay(o.question);
-                    },
-                    formatResult: function (o) {
-                        return utils.getDisplay(o.question, 90);
-                    },
-                    dropdownCssClass: 'bigdrop'
-                });
-            });
-            allBindings.optstrText = utils.getLabel;
+        if (value && !_.some(optionObjects, function (option) {
+            return option.value === value;
+        })) {
+            var option = {
+                label: 'Unidentified Question (' + value + ')',
+                value: value
+            };
+            optionObjects = [option].concat(optionObjects);
+            $warning.show().text('We cannot find this question in the allowed questions for this field. ' +
+                'It is likely that you deleted or renamed the question. ' +
+                'Please choose a valid question from the dropdown.');
         } else {
             $warning.hide();
         }
+        _.delay(function () {
+            $(element).select2({
+                placeholder: 'Select a Question',
+                data: {
+                    results: _(optionObjects).map(function (o) {
+                        return {id: o.value, text: utils.getDisplay(o), question: o};
+                    })
+                },
+                formatSelection: function (o) {
+                    return utils.getDisplay(o.question);
+                },
+                formatResult: function (o) {
+                    return utils.getDisplay(o.question, 90);
+                },
+                dropdownCssClass: 'bigdrop'
+            });
+        });
+        allBindings.optstrText = utils.getLabel;
     }
 };
 

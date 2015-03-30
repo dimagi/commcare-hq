@@ -9,7 +9,6 @@ var LangcodeValidator = (function () {
         this.langcodes = options.langcodes;
         this.renameURL = options.renameURL;
         validateURL = options.validateURL;
-        this.edit = options.edit;
         this.validation = {
             isValid: {},
             name: {},
@@ -161,9 +160,7 @@ var LangcodeValidator = (function () {
                     $('<i/>').addClass(this.validation.isValid[langcode] ? 'icon-ok' : 'icon-exclamation-sign')
                 ).appendTo($row);
                 $("<td/>").html(this.validation.name[langcode] || "").appendTo($row);
-                if (this.edit) {
-                    $("<td></td>").appendTo($row).html($links);
-                }
+                $("<td></td>").appendTo($row).html($links);
                 $table.append($row);
             }
             this.$home.html("").append($table);

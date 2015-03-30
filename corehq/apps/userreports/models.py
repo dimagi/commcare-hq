@@ -331,7 +331,8 @@ class CustomDataSourceConfiguration(JsonObject):
 
     @classmethod
     def by_id(cls, config_id):
-        matching = [ds for ds in cls.all() if ds.get_id == config_id]
-        if not matching:
-            return None
-        return matching[0]
+        for ds in cls.all():
+            if ds.get_id == config_id:
+                return ds
+        raise BadSpecError(_('The data source referenced by this report could '
+                             'not be found.'))

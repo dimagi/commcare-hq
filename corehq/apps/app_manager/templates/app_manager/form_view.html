@@ -92,12 +92,10 @@
 
 {% block case_management_js %}{{ block.super }}
     {% if form.source %}
-    var edit = {% if edit %}true{% else %}false{% endif %};
     var caseConfig = new CaseConfig.CaseConfig({
         home: $('#casexml_home'),
         actions: {{ form.actions|JSON }},
         questions: {{ xform_questions|JSON }},
-        edit: edit,
         save_url: "{% url "corehq.apps.app_manager.views.edit_form_actions" app.domain app.id module.id nav_form.id %}",
         requires: form_requires,
         reserved_words: {{ case_reserved_words_json|JSON }},
