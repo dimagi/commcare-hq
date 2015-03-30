@@ -322,6 +322,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
 
     def date_to_json(self, date):
         if date:
-            return PhoneTime(date, self.timezone).user_time(self.timezone).done().strftime('%Y-%m-%d %H:%M:%S')
+            return (PhoneTime(date, self.timezone).user_time(self.timezone)
+                    .ui_string('%Y-%m-%d %H:%M:%S'))
         else:
             return ''
