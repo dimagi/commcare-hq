@@ -3,33 +3,30 @@
 <script type="text/html" id="case-config:condition">
     <!--ko with: condition -->
     <span data-bind="text: $parent.actionType"></span>
-    <div data-bind="visible: type() === 'always' && $root.edit">
+    <div data-bind="visible: type() === 'always'">
         <a href="#" data-bind="click: function () {type('if')}"><i class="icon-plus"></i> {% trans "Only if the answer to..." %}</a>
     </div>
     <div data-bind="visible: type() === 'if'">
-        <a href="#" data-bind="click: function () {type('always')}, visible: $root.edit"><i class="icon-remove"></i></a>
+        <a href="#" data-bind="click: function () {type('always')}"><i class="icon-remove"></i></a>
         {% trans "Only if the answer to" %}
         <input class="input-large" type="hidden" data-bind="
             questionsSelect: $root.getQuestions('select select1', false, $parent.config.allow.repeats()),
             value: question,
-            optionsCaption: ' ',
-            edit: $root.edit"
-        />
+            optionsCaption: ' '
+        "/>
         <select class="input-medium" data-bind="
                 optstr: [
                     {label:'{% trans "is" %}',value:'='},
                     {label:'{% trans "has selected" %}',value:'selected'}
                 ],
-                value: operator,
-                edit: $root.edit"></select>
+                value: operator"></select>
         <span data-bind="if: $root.getAnswers({question: question()}).length">
             <select data-bind="
                 optstr: $root.getAnswers({question: question()}),
-                value: answer,
-                edit: $root.edit"></select>
+                value: answer"></select>
         </span>
         <span data-bind="if: !$root.getAnswers({question: question()}).length">
-            <input type="text" class="code" data-bind="value: answer, edit: $root.edit"/>
+            <input type="text" class="code" data-bind="value: answer"/>
         </span>
     </div>
     <!--/ko-->
@@ -39,9 +36,8 @@
     <input class="input-large" type="hidden" data-bind="
         questionsSelect: $root.getQuestions('all', false, case_transaction.allow.repeats(), true),
         value: path,
-        optionsCaption: ' ',
-        edit: $root.edit"
-    />
+        optionsCaption: ' '
+    "/>
     <p class="help-inline" data-bind="visible: required() && !path()">{% trans "Required" %}</p>
     <p class="help-inline" data-bind="visible: !required() && !path() && key()">{% trans "Not assigned" %}</p>
 </script>
@@ -51,7 +47,6 @@
         <input type="text" class="input-medium" data-bind="
             valueDefault: property.key,
             default: property.defaultKey,
-            edit: $root.edit,
             casePropertyTypeahead: suggestedProperties,
             event: {
                 change: function(){
@@ -89,7 +84,7 @@
                 <td>
                     <a href="#" data-bind="
                         click: $parent.removePreload,
-                        visible: $root.edit && !(isBlank() && $index() === $parent.case_preload().length - 1)">
+                        visible: !(isBlank() && $index() === $parent.case_preload().length - 1)">
                         <i class="icon-remove"></i>
                     </a>
                 </td>
@@ -110,7 +105,7 @@
             </tr>
         </tbody>
     </table>
-    <a href="#" data-bind="click: addPreload, visible: $root.edit && !case_preload().length">
+    <a href="#" data-bind="click: addPreload, visible: !case_preload().length">
         <i class="icon-plus"></i>
         {% trans "Load properties" %}
     </a>
@@ -136,7 +131,7 @@
                 <td>
                     <a href="#" data-bind="
                         click: $parent.removeProperty,
-                        visible: $root.edit && !required() && !(isBlank() && $index() === $parent.case_properties().length - 1)
+                        visible: !required() && !(isBlank() && $index() === $parent.case_properties().length - 1)
                     ">
                         <i class="icon-remove"></i>
                     </a>
@@ -157,7 +152,7 @@
             </tr>
         </tbody>
     </table>
-    <a href="#" data-bind="click: addProperty, visible: $root.edit && !case_properties().length">
+    <a href="#" data-bind="click: addProperty, visible: !case_properties().length">
         <i class="icon-plus"></i>
         {% trans "Save properties" %}
     </a>

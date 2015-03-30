@@ -703,7 +703,7 @@ class InvoiceInterface(GenericTabularReport):
         )
 
     @property
-    @request_cache("default")
+    @request_cache()
     def view_response(self):
         if self.request.method == 'POST':
             if self.adjust_balance_form.is_valid():

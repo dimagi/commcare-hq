@@ -27,16 +27,16 @@
                 attr: {'data-order': _sortableOrder, 'tabindex': 1000 + $index()},
                 copy: function () { return copyCallback(); },
                 paste: function (data) { $parent.pasteCallback(data, $index() + 1); }
-        ">
-            <td data-bind="visible: $root.edit">
-                <span class="sort-disabled" data-bind="ifnot: grip"></span>
-                <i class="grip sortable-handle" data-bind="
-                    if: grip,
-                    css: COMMCAREHQ.icons.GRIP,
-                    style: {cursor: 'move'},
-                    event: {mousedown: function(){ $(':focus').blur(); }}
-                "></i>
-            </td>
+            ">
+                <td>
+                    <span class="sort-disabled" data-bind="ifnot: grip"></span>
+                    <i class="grip sortable-handle" data-bind="
+                        if: grip,
+                        css: COMMCAREHQ.icons.GRIP,
+                        style: {cursor: 'move'},
+                        event: {mousedown: function(){ $(':focus').blur(); }}
+                    "></i>
+                </td>
                 <!--ko if: !isTab -->
                     <td class="control-group"
                         data-bind="css: {error: showWarning}">
@@ -70,7 +70,7 @@
                 <td>
                     <i style="cursor: pointer;"
                        data-bind="
-                        visible: $root.edit && ($parent.columns().length > 1 || $parent.allowsEmptyColumns),
+                        visible: ($parent.columns().length > 1 || $parent.allowsEmptyColumns),
                         click: function(){screen.columns.remove($data);},
                         css: COMMCAREHQ.icons.DELETE,
                         attr: {title: DetailScreenConfig.message.DELETE_COLUMN}

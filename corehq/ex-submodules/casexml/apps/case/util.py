@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 
 from xml.etree import ElementTree
-from couchdbkit.schema.properties import LazyDict
 from django.conf import settings
 from casexml.apps.case import const
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
@@ -9,16 +8,6 @@ from casexml.apps.phone.models import SyncLogAssertionError, SyncLog
 from casexml.apps.stock.models import StockReport
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
-
-
-def couchable_property(prop):
-    """
-    Sometimes properties that come from couch can't be put back in
-    without some modification.
-    """
-    if isinstance(prop, LazyDict):
-        return dict(prop)
-    return prop
 
 
 def post_case_blocks(case_blocks, form_extras=None, domain=None):

@@ -15,6 +15,7 @@ from corehq.apps.smsbillables.filters import (
     DateSentFilter,
     DirectionFilter,
     DomainFilter,
+    HasGatewayFeeFilter,
     GatewayTypeFilter,
     ShowBillablesFilter,
     SpecificGateway,
@@ -43,6 +44,7 @@ class SMSBillablesInterface(GenericTabularReport):
         'corehq.apps.accounting.interface.DateCreatedFilter',
         'corehq.apps.smsbillables.interface.ShowBillablesFilter',
         'corehq.apps.smsbillables.interface.DomainFilter',
+        'corehq.apps.smsbillables.interface.HasGatewayFeeFilter',
     ]
 
     @property
@@ -84,10 +86,15 @@ class SMSBillablesInterface(GenericTabularReport):
                 },
                 {
                     'name': ShowBillablesFilter.slug,
-                    'value': ShowBillablesFilter.get_value(self.request, self.domain)},
+                    'value': ShowBillablesFilter.get_value(self.request, self.domain)
+                },
                 {
                     'name': DomainFilter.slug,
                     'value': DomainFilter.get_value(self.request, self.domain)
+                },
+                {
+                    'name': HasGatewayFeeFilter.slug,
+                    'value': HasGatewayFeeFilter.get_value(self.request, self.domain)
                 },
         ]
 
@@ -154,6 +161,18 @@ class SMSBillablesInterface(GenericTabularReport):
             selected_billables = selected_billables.filter(
                 domain=domain,
             )
+        has_gateway_fee = HasGatewayFeeFilter.get_value(
+            self.request, self.domain
+        )
+        if has_gateway_fee:
+            if has_gateway_fee == HasGatewayFeeFilter.YES:
+                selected_billables = selected_billables.exclude(
+                    gateway_fee=None
+                )
+            else:
+                selected_billables = selected_billables.filter(
+                    gateway_fee=None
+                )
         return selected_billables
 
 

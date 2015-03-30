@@ -1,95 +1,60 @@
-from django.conf import settings
-from django.core import cache
 from django.utils.cache import _generate_cache_header_key
-from dimagi.utils.decorators.memoized import memoized
-import functools
+from corehq.util.quickcache import quickcache, QuickCache
 
-DEFAULT_EXPIRY = 60 * 60 # an hour
+DEFAULT_EXPIRY = 60 * 60  # an hour
+CACHE_PREFIX = 'hq.reports'  # a namespace where cache keys go
 
-class CacheableRequestMixIn(object):
+
+class _ReportQuickCache(QuickCache):
     """
-    Used in conjunction with reports, to get a cache key that can be
-    used in django's caching framework. Relies on the assumption that
-    there is a .request property defined on this object.
-    
-    To actually enable caching, set is_cacheable to True (or some function)
-    on a subclass of this.
+    Just like QuickCache, but intercepts the function call to abort caching
+    under certain conditions
     """
-
-    is_cacheable = False
-    CACHE_PREFIX = 'hq.reports' # a namespace where cache keys go
-
-    def get_cache(self):
-        try:
-            return cache.get_cache(settings.REPORT_CACHE)
-        except ValueError:
-            return cache.cache
-
-    @property
-    @memoized
-    def cache_key(self):
-        # went source diving for this in django, it does exactly
-        # what we want here, though is marked 'private'. seemed
-        # better to import than to copy it and all dependencies
-        # elsewhere
-        return _generate_cache_header_key(self.CACHE_PREFIX, self.request)
-
-    def _is_valid(self):
-        # checks if this meets the preconditions for being allowed in the cache
-        try:
-            assert self.request.domain
-            assert self.request.couch_user._id
-            assert self.request.get_full_path().startswith('/a/{domain}/'.format(domain=self.request.domain))
-            return True
-        except (AssertionError, AttributeError):
-            return False
-
-    def set_in_cache(self, tag, object, expiry=DEFAULT_EXPIRY):
-        if self._is_valid():
-            # accessing it first (somehow) makes a test not hang
-            self.get_cache()
-            self.get_cache().set(self.get_cache_key(tag), object, expiry)
+    def __call__(self, *args, **kwargs):
+        report = args[0]
+        if report.is_cacheable and _is_valid(report):
+            return super(_ReportQuickCache, self).__call__(*args, **kwargs)
         else:
-            pass
+            return self.fn(*args, **kwargs)
 
-    def get_from_cache(self, tag):
-        if self._is_valid():
-            return self.get_cache().get(self.get_cache_key(tag))
-        else:
-            return None
 
-    def get_cache_key(self, tag):
-        assert self._is_valid()
-        domain = self.request.domain
-        user = self.request.couch_user._id
-        return "{key}-{domain}-{user}-{tag}".format(
-            key=self.cache_key, 
-            domain=domain,
-            user=user,
-            tag=tag,
+def _is_valid(report):
+    """
+    checks if this meets the preconditions for being allowed in the cache
+    """
+    try:
+        return (
+            report.request.domain
+            and report.request.couch_user._id
+            and report.request.get_full_path().startswith(
+                '/a/{domain}/'.format(domain=report.request.domain)
+            )
         )
+    except AttributeError:
+        return False
 
-class request_cache(object):
+
+def _custom_vary_on(report):
     """
-    A decorator that can be used on a function of a CacheableRequestMixIn
-    to cache the results.
+    signature is intentionally restricted to a single argument
+    to prevent @request_cache() from decorating a method that has non-self args
     """
-    def __init__(self, tag, expiry=DEFAULT_EXPIRY):
-        self.tag = tag
-        self.expiry = expiry
+    return [
+        _generate_cache_header_key(CACHE_PREFIX, report.request),
+        report.request.domain,
+        report.request.couch_user._id,
+    ]
 
-    def __call__(self, fn):
-        @functools.wraps(fn)
-        def decorated(*args, **kwargs):
-            report = args[0]
-            if not report.is_cacheable:
-                return fn(*args, **kwargs)
-            else:
-                from_cache = report.get_from_cache(self.tag)
-                if from_cache:
-                    return from_cache
-                ret = fn(*args, **kwargs)
-                report.set_in_cache(self.tag, ret, self.expiry)
-                return ret
-        return decorated
 
+def request_cache(expiry=DEFAULT_EXPIRY):
+    """
+    A decorator that can be used on a method of a GenericReportView subclass
+
+    or any other class that provides the following properties:
+      - self.request (a django request object, with .domain and .couch_user)
+      - self.is_cacheable (boolean)
+
+    """
+
+    return quickcache(vary_on=_custom_vary_on,
+                      timeout=expiry, helper_class=_ReportQuickCache)

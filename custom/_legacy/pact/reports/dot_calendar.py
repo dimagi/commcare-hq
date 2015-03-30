@@ -2,8 +2,8 @@ from calendar import HTMLCalendar
 from calendar import month_name
 from datetime import date, timedelta, datetime
 from itertools import groupby
+import logging
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
-from dimagi.utils import make_time
 from dimagi.utils.decorators.memoized import memoized
 from pact.dot_data import (
     DOTDay,
@@ -21,6 +21,12 @@ from pact.enums import (
     DOT_OBSERVATION_PILLBOX,
     DOT_OBSERVATION_SELF,
 )
+from pytz import timezone
+from django.conf import settings
+
+
+def make_time():
+    return datetime.now(tz=timezone(settings.TIME_ZONE))
 
 
 class DOTCalendarReporter(object):
@@ -60,6 +66,15 @@ class DOTCalendarReporter(object):
         self.start_date = start_date
         self.single_submit = submit_id
         if end_date is None:
+            # Danny March 24, 2015
+            logging.error("I don't think this ever happens, but rather than "
+                          "trying to figure that out right now, I'll just "
+                          "leave this here. If you get Sentry errors or "
+                          "see this in the logs, I apologize, and go ahead "
+                          "and delete this logging. If you come across this "
+                          "and it's been a number of month, feel free to "
+                          "delete this code path as well as the "
+                          "absurd make_time function.")
             self.end_date = make_time()
         else:
             self.end_date=end_date

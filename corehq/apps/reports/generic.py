@@ -25,13 +25,13 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.modules import to_function
 from dimagi.utils.web import json_request, json_response
 from dimagi.utils.parsing import string_to_boolean
-from corehq.apps.reports.cache import CacheableRequestMixIn, request_cache
+from corehq.apps.reports.cache import request_cache
 from django.utils.translation import ugettext
 
 CHART_SPAN_MAP = {1: '10', 2: '6', 3: '4', 4: '3', 5: '2', 6: '2'}
 
 
-class GenericReportView(CacheableRequestMixIn):
+class GenericReportView(object):
     """
         A generic report structure for viewing a report
         (or pages that follow the reporting structure closely---though that seems a bit hacky)
@@ -73,6 +73,8 @@ class GenericReportView(CacheableRequestMixIn):
     slug = None  # Name to be used in the URL (with lowercase and underscores)
     section_name = None  # string. ex: "Reports"
     dispatcher = None  # ReportDispatcher subclass
+
+    is_cacheable = False  # whether to use caching on @request_cache methods
 
     # Code can expect `fields` to be an iterable even when empty (never None)
     fields = ()
@@ -515,12 +517,11 @@ class GenericReportView(CacheableRequestMixIn):
         self.set_announcements()
         return render(self.request, template, self.context)
 
-    
     @property
-    @request_cache("mobile")
+    @request_cache()
     def mobile_response(self):
         """
-        This tries to render a mobile version of the report, by just calling 
+        This tries to render a mobile version of the report, by just calling
         out to a very simple default template. Likely won't work out of the box
         with most reports.
         """
@@ -531,7 +532,7 @@ class GenericReportView(CacheableRequestMixIn):
         async_context = self._async_context()
         self.context.update(async_context)
         return render(self.request, self.mobile_template_base, self.context)
-    
+
     @property
     def email_response(self):
         """
@@ -542,14 +543,14 @@ class GenericReportView(CacheableRequestMixIn):
         return self.async_response
 
     @property
-    @request_cache("async")
+    @request_cache()
     def async_response(self):
         """
             Intention: Not to be overridden in general.
             Renders the asynchronous view of the report template, returned as json.
         """
         return HttpResponse(json.dumps(self._async_context()), content_type='application/json')
-    
+
     def _async_context(self):
         self.update_template_context()
         self.update_report_context()
@@ -579,7 +580,7 @@ class GenericReportView(CacheableRequestMixIn):
         return file
 
     @property
-    @request_cache("filters", expiry=60 * 10)
+    @request_cache(expiry=60 * 10)
     def filters_response(self):
         """
             Intention: Not to be overridden in general.
@@ -596,7 +597,7 @@ class GenericReportView(CacheableRequestMixIn):
         )))
 
     @property
-    @request_cache("json")
+    @request_cache()
     def json_response(self):
         """
             Intention: Not to be overridden in general.
@@ -605,7 +606,7 @@ class GenericReportView(CacheableRequestMixIn):
         return json_response(self.json_dict)
 
     @property
-    @request_cache("export")
+    @request_cache()
     def export_response(self):
         """
         Intention: Not to be overridden in general.
@@ -620,7 +621,7 @@ class GenericReportView(CacheableRequestMixIn):
             return export_response(temp, self.export_format, self.export_name)
 
     @property
-    @request_cache("raw")
+    @request_cache()
     def print_response(self):
         """
         Returns the report for printing.
@@ -721,7 +722,7 @@ class GenericTabularReport(GenericReportView):
     use_datatables = True
     charts_per_row = 1
     bad_request_error_text = None
-    
+
     # override old class properties
     report_template_path = "reports/async/tabular.html"
     flush_layout = True
@@ -910,7 +911,7 @@ class GenericTabularReport(GenericReportView):
             return self.rows
 
     @property
-    @request_cache("report_context")
+    @request_cache()
     def report_context(self):
         """
             Don't override.

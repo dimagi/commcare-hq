@@ -193,7 +193,8 @@ class EditGroupMembersView(BaseGroupsView):
     @property
     def page_context(self):
         bulk_sms_verification_enabled = (
-            toggles.BULK_SMS_VERIFICATION.enabled(self.request.couch_user.username) and
+            any(toggles.BULK_SMS_VERIFICATION.enabled(item)
+                for item in [self.request.couch_user.username, self.domain]) and
             domain_has_privilege(self.domain, privileges.INBOUND_SMS)
         )
         return {

@@ -9,15 +9,13 @@ from django.conf import settings
 from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext
-from corehq import toggles
-from django.db import models
 from corehq.apps.domain.models import Domain
 from corehq.apps.accounting import utils
 from corehq.apps.accounting.exceptions import InvoiceError, CreditLineError, BillingContactInfoError
 from corehq.apps.accounting.invoicing import DomainInvoiceFactory
 
 from corehq.apps.accounting.models import (
-    Subscription, Invoice, BillingAccount, BillingAccountType,
+    Subscription, Invoice,
     SubscriptionAdjustment, SubscriptionAdjustmentReason,
     SubscriptionAdjustmentMethod)
 from corehq.apps.accounting.utils import (

@@ -141,11 +141,13 @@ class PublicSMSRatesAsyncHandler(BaseAsyncHandler):
         for backend_instance in backends:
             backend_type = get_backend_by_class_name(backend_instance.doc_type)
 
-            gateway_fee_incoming = _directed_fee(INCOMING, backend_type.get_api_id(), backend_instance._id) or 'NA'
-            gateway_fee_outgoing = _directed_fee(OUTGOING, backend_type.get_api_id(), backend_instance._id) or 'NA'
-            rate_table.append({
-                'gateway': "%s (%s)" % (backend_instance.name, backend_type.get_generic_name()),
-                'inn': gateway_fee_incoming,  # 'in' is reserved
-                'out': gateway_fee_outgoing
-            })
+            gateway_fee_incoming = _directed_fee(INCOMING, backend_type.get_api_id(), backend_instance._id)
+            gateway_fee_outgoing = _directed_fee(OUTGOING, backend_type.get_api_id(), backend_instance._id)
+
+            if gateway_fee_outgoing or gateway_fee_incoming:
+                rate_table.append({
+                    'gateway': backend_instance.display_name,
+                    'inn': gateway_fee_incoming or 'NA',  # 'in' is reserved
+                    'out': gateway_fee_outgoing or 'NA'
+                })
         return rate_table

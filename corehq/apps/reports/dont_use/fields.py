@@ -13,14 +13,14 @@ from corehq.apps.reports.filters.users import get_user_toggle
 from corehq.apps.reports.models import HQUserType
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
-from corehq.apps.reports.cache import CacheableRequestMixIn
 import uuid
 from corehq.apps.users.models import WebUser
 
 
-class ReportField(CacheableRequestMixIn):
+class ReportField(object):
     slug = ""
     template = ""
+    is_cacheable = False
 
     def __init__(self, request, domain=None, timezone=pytz.utc, parent_report=None):
         warnings.warn(

@@ -139,12 +139,11 @@ var SortRow = function(params){
 /**
  *
  * @param properties
- * @param edit is true if the user has permissions to edit the sort rows.
  * @param saveButton
  * The button that should be activated when something changes
  * @constructor
  */
-var SortRows = function (properties, edit, saveButton) {
+var SortRows = function (properties, saveButton) {
     var self = this;
     self.sortRows = ko.observableArray([]);
 
@@ -539,7 +538,6 @@ var DetailScreenConfig = (function () {
             this.type = spec.type;
             this.saveUrl = options.saveUrl;
             this.config = config;
-            this.edit = options.edit;
             this.columns = ko.observableArray([]);
             this.model = config.model;
             this.lang = options.lang;
@@ -572,15 +570,14 @@ var DetailScreenConfig = (function () {
 
             this.initColumnAsColumn = function (column) {
                 column.model.setEdit(false);
-                column.field.setEdit(that.edit);
-                column.header.setEdit(that.edit);
-                column.format.setEdit(that.edit);
-                column.enum_extra.setEdit(that.edit);
-                column.graph_extra.edit(that.edit);
-                column.late_flag_extra.setEdit(that.edit);
-                column.filter_xpath_extra.setEdit(that.edit);
-                column.calc_xpath_extra.setEdit(that.edit);
-                column.time_ago_extra.setEdit(that.edit);
+                column.field.setEdit(true);
+                column.header.setEdit(true);
+                column.format.setEdit(true);
+                column.enum_extra.setEdit(true);
+                column.late_flag_extra.setEdit(true);
+                column.filter_xpath_extra.setEdit(true);
+                column.calc_xpath_extra.setEdit(true);
+                column.time_ago_extra.setEdit(true);
                 column.setGrip(true);
                 column.on('change', that.fireChange);
 
@@ -808,7 +805,6 @@ var DetailScreenConfig = (function () {
                     langs: this.langs
                 });
             }
-            this.edit = spec.edit;
             this.saveUrl = spec.saveUrl;
             this.contextVariables = spec.contextVariables;
 
@@ -827,7 +823,6 @@ var DetailScreenConfig = (function () {
                     {
                         lang: that.lang,
                         langs: that.langs,
-                        edit: that.edit,
                         properties: that.properties,
                         saveUrl: that.saveUrl,
                         columnKey: columnType,
@@ -851,7 +846,7 @@ var DetailScreenConfig = (function () {
                 var filter_xpath = spec.state.short.filter;
                 this.filter = new filterViewModel(filter_xpath ? filter_xpath : null, this.shortScreen.saveButton);
                 // Set up SortRows
-                this.sortRows = new SortRows(this.properties, spec.edit, this.shortScreen.saveButton);
+                this.sortRows = new SortRows(this.properties, this.shortScreen.saveButton);
                 if (spec.sortRows) {
                     for (var j = 0; j < spec.sortRows.length; j++) {
                         this.sortRows.addSortRow(

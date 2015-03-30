@@ -4,37 +4,29 @@
 
 <script type="text/html" id="CommcareSettings.widgets.select">
     <span>
-        <span data-bind="if: $root.edit">
-            <span data-bind="if: valueIsLegal()">
-                <select class="span3" data-bind="
-                    options: options,
-                    value: selectedOption,
-                    optionsText: 'label',
-                    attr: {disabled: !enabled(), id: inputId}
-                "></select>
-            </span>
-            <span data-bind="if: !valueIsLegal()" >
-                <select class="span3 error" data-bind="
-                    options: options,
-                    value: writeSelectedOption,
-                    optionsText: 'label',
-                    attr: {disabled: !enabled(), id: inputId},
-                    optionsCaption: value()
-                "></select>
-            </span>
+        <span data-bind="if: valueIsLegal()">
+            <select class="span3" data-bind="
+                options: options,
+                value: selectedOption,
+                optionsText: 'label',
+                attr: {disabled: !enabled(), id: inputId}
+            "></select>
         </span>
-        <span data-bind="if: !$root.edit()">
-            <span data-bind="text: (selectedOption() ? selectedOption().label : '')"></span>
+        <span data-bind="if: !valueIsLegal()" >
+            <select class="span3 error" data-bind="
+                options: options,
+                value: writeSelectedOption,
+                optionsText: 'label',
+                attr: {disabled: !enabled(), id: inputId},
+                optionsCaption: value()
+            "></select>
         </span>
     </span>
 </script>
 
 <script type="text/html" id="CommcareSettings.widgets.bool">
-    <span class="span3" data-bind="visible: $root.edit">
+    <span class="span3">
         <input type="checkbox" data-bind="checked: boolValue, attr: {disabled: !enabled(), id: inputId}"/>
-    </span>
-    <span class="span3" data-bind="visible: !$root.edit()">
-        <i data-bind="css: {'icon-ok': boolValue, 'icon-remove': !boolValue()}"></i>
     </span>
 </script>
 
@@ -91,29 +83,24 @@
 {% include 'hqmedia/partials/multimedia_js.html' %}
 
 <script type="text/html" id="CommcareSettings.widgets.text">
-    <span data-bind="visible: $root.edit">
+    <span>
         <input type="text" class="span6" data-bind="
             value: visibleValue,
             valueUpdate: 'textchange',
             attr: {disabled: !enabled(), id: inputId}
         " />
     </span>
-    <span class="span3" data-bind="visible: !$root.edit(), text: visibleValue"></span>
 </script>
 
 <script type="text/html" id="CommcareSettings.widgets.textarea">
-    <span data-bind="visible: $root.edit">
+    <span>
         <textarea type="text" data-bind="value: value, attr: {id: inputId}" />
     </span>
-    <span class="span3" data-bind="visible: !$root.edit(), text: value"></span>
 </script>
 
 <script type="text/html" id="CommcareSettings.widgets.password">
-    <span data-bind="visible: $root.edit">
+    <span>
         <input type="password" data-bind="passwordSetter: visibleValue"/>
-    </span>
-    <span data-bind="visible: !$root.edit()">
-        ********
     </span>
 </script>
 

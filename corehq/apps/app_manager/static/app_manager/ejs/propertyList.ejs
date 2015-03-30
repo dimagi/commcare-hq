@@ -19,11 +19,7 @@
                     var value = nodeset.split('/');
                     value = value[value.length-1];
                 %]
-                [% if (casexml.edit) { %]
-                    <input class="code" type="text" name="action-update-key" value="[%= propertyName || value %]" />
-                [% } else { %]
-                    <code>[%= propertyName %]</code>
-                [% } %]
+                <input class="code" type="text" name="action-update-key" value="[%= propertyName || value %]" />
             </td>
             <td>
                 [% if (propertyName === "") { %]
@@ -40,13 +36,10 @@
             </td>
         </tr>
     [% }); %]
-    [% if (casexml.edit) { %]
-        <tr class="action-update">
-            <td>
-                [%= casexml.renderOptions(casexml.getQuestions("all"), "", 'action-update-value') %]
-            </td>
-            <td><input class="code" type="text" name="action-update-key" /></td>
-        </tr>
-    [% } %]
-
+    <tr class="action-update">
+        <td>
+            [%= casexml.renderOptions(casexml.getQuestions("all"), "", 'action-update-value') %]
+        </td>
+        <td><input class="code" type="text" name="action-update-key" /></td>
+    </tr>
 </table>

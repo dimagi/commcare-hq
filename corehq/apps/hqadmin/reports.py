@@ -185,6 +185,9 @@ INDICATOR_DATA = {
         "chart_title": "Active Mobile Users (last 30 days)",
         "get_request_params": {
             "include_forms": True,
+            "additional_params_es": {
+                "couch_recipient_doc_type": ["commcareuser"],
+            },
         },
         "hide_cumulative_charts": True,
         "histogram_type": "active_mobile_users",
