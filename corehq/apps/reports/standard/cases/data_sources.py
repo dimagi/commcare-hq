@@ -54,7 +54,7 @@ class CaseInfo(object):
         return self.case['closed']
 
     def _dateprop(self, prop, iso=True):
-        val = self.report.date_to_json(self.parse_date(self.case[prop]))
+        val = self.report.date_to_json(getattr(self.case, prop))
         if iso:
             val = 'T'.join(val.split(' ')) if val else None
         return val
