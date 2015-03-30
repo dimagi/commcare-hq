@@ -28,6 +28,7 @@ from django.utils.html import escape, conditional_escape
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import pretty_doc_info
 from corehq.const import USER_DATETIME_FORMAT, USER_DATE_FORMAT
+from corehq.util.dates import safe_strftime
 from corehq.util.timezones.conversions import ServerTime
 
 register = template.Library()
@@ -74,21 +75,6 @@ def to_html(key, val, level=0, datetime_fmt=USER_DATETIME_FORMAT,
             return key_format(k) if key_format else k
         else:
             return ""
-
-    def safe_strftime(val, fmt):
-        """
-        This hack assumes datetime_fmt does not contain directives whose
-        value is dependent on the year, such as week number of the year ('%W').
-        The hack allows strftime to be used to support directives such as '%b'.
-        """
-        if isinstance(val, datetime.datetime):
-            safe_val = datetime.datetime(2012, val.month, val.day, hour=val.hour,
-                                         minute=val.minute, second=val.second,
-                                         microsecond=val.microsecond, tzinfo=val.tzinfo)
-        else:
-            safe_val = datetime.date(2012, val.month, val.day)
-        return safe_val.strftime(fmt.replace("%Y", str(val.year)))
-
 
     if isinstance(val, types.DictionaryType):
         ret = "".join(

@@ -22,16 +22,23 @@ def get_timestamp_millis(date):
 
 def safe_strftime(val, fmt):
     """
-    This hack assumes datetime_fmt does not contain directives whose
+    conceptually the same as val.strftime(fmt), but this works even with
+    dates pre-1900.
+
+    (For some reason, '%Y' and others do not work for pre-1900 dates
+    in python stdlib datetime.[date|datetime].strftime.)
+
+    This function strictly asserts that fmt does not contain directives whose
     value is dependent on the year, such as week number of the year ('%W').
-    The hack allows strftime to be used to support directives such as '%b'.
     """
-    assert '%a' not in fmt
-    assert '%A' not in fmt
-    assert '%w' not in fmt
-    assert '%U' not in fmt
-    assert '%W' not in fmt
-    assert '%c' not in fmt
+    assert '%a' not in fmt  # short weekday name
+    assert '%A' not in fmt  # full weekday name
+    assert '%w' not in fmt  # weekday (Sun-Sat) as a number (0-6)
+    assert '%U' not in fmt  # week number of the year (weeks starting on Sun)
+    assert '%W' not in fmt  # week number of the year (weeks starting on Mon)
+    assert '%c' not in fmt  # full date and time representation
+    assert '%x' not in fmt  # date representation
+    assert '%X' not in fmt  # time representation
     # important that our dummy year is a leap year
     # so that it has Feb. 29 in it
     a_leap_year = 2012
