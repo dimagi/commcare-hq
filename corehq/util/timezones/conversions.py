@@ -78,11 +78,7 @@ def _soft_assert_tz_not_string(tz):
         assert hasattr(tz, "localize")
     except AssertionError:
         # tz is a string, or at least string-like
-        notify_exception(
-            None,
-            '{} is a {}, not a timezone object\n{}'.format(tz, type(tz),
-                                                           get_traceback(20))
-        )
+        # todo: log to figure out where this happens and fix
         return pytz.timezone(smart_str(tz))
     else:
         return tz
