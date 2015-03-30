@@ -10,8 +10,8 @@ from corehq.apps.userreports.reports.filters import(
     SHOW_ALL_CHOICE,
 )
 from corehq.apps.userreports.reports.specs import FilterSpec, ChoiceListFilterSpec, PieChartSpec, \
-    MultibarAggregateChartSpec, MultibarChartSpec, ReportFilter, ReportColumn, DynamicChoiceListFilterSpec, \
-    NumericFilterSpec
+    MultibarAggregateChartSpec, MultibarChartSpec, ReportFilter, DynamicChoiceListFilterSpec, \
+    NumericFilterSpec, FieldColumn, PercentageColumn
 
 
 def _build_date_filter(spec):
@@ -101,8 +101,27 @@ class ReportFactory(object):
             config_or_config_id=spec.config_id,
             filters=[ReportFilter.wrap(f) for f in spec.filters],
             aggregation_columns=spec.aggregation_columns,
-            columns=[ReportColumn.wrap(colspec) for colspec in spec.columns],
+            columns=[ReportColumnFactory.from_spec(colspec) for colspec in spec.columns],
         )
+
+
+class ReportColumnFactory(object):
+    class_map = {
+        'field': FieldColumn,
+        'percent': PercentageColumn,
+    }
+
+    @classmethod
+    def from_spec(cls, spec):
+        column_type = spec.get('type') or 'field'
+        if column_type not in cls.class_map:
+            raise BadSpecError(
+                'Unknown or missing column type: {} must be in [{}]'.format(
+                    column_type,
+                    ', '.join(cls.class_map.keys())
+                )
+            )
+        return cls.class_map[column_type].wrap(spec)
 
 
 class ChartFactory(object):
