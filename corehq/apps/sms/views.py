@@ -726,17 +726,23 @@ def chat_contact_list(request, domain):
     sEcho = request.GET.get('sEcho')
     iDisplayStart = int(request.GET.get('iDisplayStart'))
     iDisplayLength = int(request.GET.get('iDisplayLength'))
-
-    total_number = VerifiedNumber.count_by_domain(domain)
-    result = {
-        'sEcho': sEcho,
-        'iTotalRecords': total_number,
-        'iTotalDisplayRecords': total_number,
-    }
+    sSearch = request.GET.get('sSearch', '').strip()
 
     data = get_contact_info(domain)
+    total_records = len(data)
+
+    if sSearch:
+        regex = re.compile('^.*%s.*$' % sSearch)
+        data = filter(lambda row: regex.match(row[0]) or regex.match(row[2]), data)
+    filtered_records = len(data)
+
     data.sort(key=lambda row: row[0])
-    result['aaData'] = data[iDisplayStart:iDisplayStart+iDisplayLength]
+    result = {
+        'sEcho': sEcho,
+        'aaData': data[iDisplayStart:iDisplayStart+iDisplayLength],
+        'iTotalRecords': total_records,
+        'iTotalDisplayRecords': filtered_records,
+    }
 
     return HttpResponse(json.dumps(result))
 

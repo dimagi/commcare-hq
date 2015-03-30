@@ -22,24 +22,52 @@
 
 {% block js-inline %}{{ block.super }}
 <script>
+    var contactListTable = null;
+
+    function FilterViewModel() {
+        'use strict';
+        var self = this;
+
+        self.filterText = ko.observable();
+
+        self.performFilter = function() {
+            contactListTable.fnFilter(self.filterText());
+        };
+
+        self.clearFilter = function() {
+            self.filterText("");
+            self.performFilter();
+        };
+    }
+
     $(function(){
-        $("#contact_list").dataTable({
+        contactListTable = $("#contact_list").dataTable({
             "bProcessing": true,
             "bServerSide": true,
             "bSort": false,
-            "bFilter": false,
+            "bFilter": true,
             "oLanguage": {
                 "sLengthMenu": "{% trans "Show" %} _MENU_ {% trans "contacts per page" %}",
                 "sProcessing": '<img src="{% static "hqwebapp/img/ajax-loader.gif" %}" alt="loading indicator" /> {% trans "Loading Contacts..." %}',
-                "sInfo": "{% trans "Showing" %} _START_ {% trans "to" %} _END_ {% trans "of" %} _TOTAL_ {% trans "contacts" %}",
+                "sInfo": "{% trans "Showing _START_ to _END_ of _TOTAL_ contacts" %}",
+                "sInfoFiltered": "{% trans "(filtered from _MAX_ total contacts)" %}",
             },
             "sAjaxSource": "{% url "chat_contact_list" domain %}",
+            "sDom": "lrtip",
+            "sPaginationType": "bootstrap",
         });
+        var filterViewModel = new FilterViewModel();
+        ko.applyBindings(filterViewModel, $('#id_filter').get(0));
     });
 </script>
 {% endblock %}
 
 {% block main_column %}
+    <div id="id_filter" style="padding-bottom: 50px;" class="input-append">
+        <input id="id_filter_text" type="text" data-bind="value: filterText" placeholder="{% trans "Search by name or phone number" %}" />
+        <button class="btn btn-primary" data-bind="click: performFilter">{% trans "Search" %}</button>
+        <button class="btn" data-bind="click: clearFilter">{% trans "Clear" %}</button>
+    </div>
     <table id="contact_list" class="table table-striped table-bordered">
         <thead>
             <tr>
