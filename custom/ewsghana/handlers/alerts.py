@@ -10,7 +10,11 @@ class AlertsHandler(KeywordHandler):
         verified_contact = self.verified_contact
         user = verified_contact.owner
         domain = Domain.get_by_name(verified_contact.domain)
-        text = ' '.join(self.msg.text.split()[1:])
+        splitted_text = self.msg.text.split()
+        if splitted_text[0].lower() == 'soh':
+            text = ' '.join(self.msg.text.split()[1:])
+        else:
+            text = self.msg.text
 
         if not domain.commtrack_enabled:
             return False

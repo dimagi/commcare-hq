@@ -204,7 +204,19 @@ class ProductsReportHelper(object):
         return [SQLProduct.objects.get(product_id=transaction.product_id) for transaction in self.transactions]
 
     def missing_products(self):
-        return set(self.location.products) - set(self.reported_products())
+        products_ids = SQLProduct.objects.filter(
+            domain=self.location.domain,
+            is_archived=False
+        ).values_list('product_id')
+        date = datetime.now() - timedelta(days=7)
+        stock_states = StockState.objects.filter(
+            product_id__in=products_ids,
+            case_id=self.location.sql_location.supply_point_id
+        ).exclude(last_modified_date__lte=date)
+        reported_products = {stock_state.sql_product for stock_state in stock_states}
+        location_products = set(self.location.sql_location.products)
+        not_reported_location_products = location_products - reported_products
+        return not_reported_location_products - set(self.reported_products())
 
     def stock_states(self):
         product_ids = [product.product_id for product in self.reported_products()]

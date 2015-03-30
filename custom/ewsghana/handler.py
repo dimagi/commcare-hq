@@ -8,6 +8,14 @@ from custom.ilsgateway.tanzania.handlers.notdelivered import NotDeliveredHandler
 from custom.ilsgateway.tanzania.handlers.notsubmitted import NotSubmittedHandler
 
 
+def looks_like_prod_code(code):
+        try:
+            float(code)
+            return False
+        except ValueError:
+            return True
+
+
 def handle(verified_contact, text, msg=None):
     user = verified_contact.owner if verified_contact else None
     domain = user.domain
@@ -62,4 +70,8 @@ def handle(verified_contact, text, msg=None):
         else:
             handler.help()
             return True
+    elif looks_like_prod_code(keyword):
+        params['args'] = text.split()
+        return AlertsHandler(**params).handle()
+
     return False

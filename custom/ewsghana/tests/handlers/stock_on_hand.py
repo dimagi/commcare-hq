@@ -1,4 +1,6 @@
-from custom.ewsghana.tests.handlers.utils import EWSScriptTest
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.products.models import SQLProduct
+from custom.ewsghana.tests.handlers.utils import EWSScriptTest, TEST_DOMAIN
 
 
 class StockOnHandTest(EWSScriptTest):
@@ -112,4 +114,34 @@ class StockOnHandTest(EWSScriptTest):
            222222 < Dear super, Test RMS is experiencing the following problems: overstocked Micro-G
            5551234 < Dear stella, these items are overstocked: mg. The district admin has been informed.
            """
+        self.run_script(a)
+
+    def test_incomplete_report(self):
+        ng = SQLProduct.objects.get(domain=TEST_DOMAIN, code='ng')
+        jd = SQLProduct.objects.get(domain=TEST_DOMAIN, code='jd')
+        mg = SQLProduct.objects.get(domain=TEST_DOMAIN, code='mg')
+        location = SQLLocation.objects.get(domain=TEST_DOMAIN, site_code='garms')
+        location.products = [ng, jd, mg]
+        location.save()
+        a = """
+            5551234 > soh mg 20.0
+            5551234 < Dear stella, still missing jd ng.
+            5551234 > soh jd 20.0
+            5551234 < Dear stella, still missing ng.
+            5551234 > soh ng 20.0
+            5551234 < Dear stella, thank you for reporting the commodities you have in stock.
+        """
+        self.run_script(a)
+
+    def test_incomplete_report2(self):
+        ng = SQLProduct.objects.get(domain=TEST_DOMAIN, code='ng')
+        jd = SQLProduct.objects.get(domain=TEST_DOMAIN, code='jd')
+        mg = SQLProduct.objects.get(domain=TEST_DOMAIN, code='mg')
+        location = SQLLocation.objects.get(domain=TEST_DOMAIN, site_code='garms')
+        location.products = [ng, jd, mg]
+        location.save()
+        a = """
+            5551234 > soh mg 20.0 jd 20.0 ng 20.0
+            5551234 < Dear stella, thank you for reporting the commodities you have in stock.
+        """
         self.run_script(a)
