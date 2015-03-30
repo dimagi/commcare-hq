@@ -35,7 +35,7 @@
                 "products":["ad", "al"],
                 "supervised_by": null,
                 "supplied_by": null,
-                "type": "Regional Medical Store"
+                "type": "Hospital"
             }
         ]
     },
@@ -62,5 +62,104 @@
         "parent_id": 1,
         "supervised_by": null,
         "type": "region"
+    },
+    {
+        "code": "testregion",
+        "created_at": "2013-03-01T16:10:43.250200",
+        "groups": [],
+        "id": 621,
+        "latitude": "1.15",
+        "longitude": "3.14",
+        "name": "Test region2",
+        "parent_id": 1,
+        "supervised_by": 1,
+        "type": "region",
+        "supply_points": [
+            {
+                "active": true,
+                "code": "rsp",
+                "groups":[],
+                "id": 3,
+                "last_reported": "2014-06-20T15:22:59.115442",
+                "location_id": 621,
+                "name": "Test regional medical store",
+                "primary_reporter": 43,
+                "products":["ad", "al"],
+                "supervised_by": null,
+                "supplied_by": null,
+                "type": "Regional Medical Store"
+            },
+            {
+                "active": true,
+                "code": "rsp2",
+                "groups":[],
+                "id": 4,
+                "last_reported": "2014-06-20T15:22:59.115442",
+                "location_id": 621,
+                "name": "Test regional medical store2",
+                "primary_reporter": 43,
+                "products":["ad", "al"],
+                "supervised_by": null,
+                "supplied_by": null,
+                "type": "Regional Medical Store"
+            }
+        ]
+    },
+    {
+        "code": "testfacility2",
+        "created_at": "2013-03-01T16:10:43.250200",
+        "groups": [],
+        "id": 15,
+        "latitude": "1.15",
+        "longitude": "3.14",
+        "name": "Test facility2",
+        "parent_id": 369,
+        "supervised_by": 591,
+        "type": "facility",
+        "supply_points": []
+    },
+
+    {
+        "code": "testfacility3",
+        "created_at": "2013-03-01T16:10:43.250200",
+        "groups": [],
+        "id": 1000,
+        "latitude": "1.15",
+        "longitude": "3.14",
+        "name": "Test facility3",
+        "parent_id": 369,
+        "supervised_by": 591,
+        "type": "facility",
+        "supply_points": [
+            {
+                "active": false,
+                "code": "ts",
+                "groups":[],
+                "id": 5,
+                "last_reported": "2014-06-20T15:22:59.115442",
+                "location_id": 1000,
+                "name": "Inactive Test hospital",
+                "primary_reporter": 43,
+                "products":["ad", "al"],
+                "supervised_by": null,
+                "supplied_by": null,
+                "type": "Hospital"
+            },
+
+            {
+                "active": true,
+                "code": "tsactive",
+                "groups":[],
+                "id": 6,
+                "last_reported": "2014-06-20T15:22:59.115442",
+                "location_id": 1000,
+                "name": "Active Test hospital",
+                "primary_reporter": 43,
+                "products":["ad", "al"],
+                "supervised_by": null,
+                "supplied_by": null,
+                "type": "Hospital"
+            }
+        ]
     }
 ]
