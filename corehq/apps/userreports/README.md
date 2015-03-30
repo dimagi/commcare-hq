@@ -544,7 +544,7 @@ Choice lists allow manual configuration of a fixed, specified number of choices 
 
 ## Report Columns
 
-Reports are made up of columns. There are currently two supported types of columns: _fields_ (which represent a single value) and _percentages_ which combine two values in to a percent.
+Reports are made up of columns. There are currently three supported types of columns: _fields_ (which represent a single value), _percentages_ which combine two values in to a percent, and _expanded_ which expand a select question into multiple columns.
 
 ### Field columns
 
@@ -605,13 +605,9 @@ both      | Percentage and fraction                        | 33% (1/3)
 Column IDs in percentage fields *must be unique for the whole report*. If you use a field in a normal column and in a percent column you must assign unique `column_id` values to it in order for the report to process both.
 
 
-### Aggregation
+### Expanded Columns
 
-TODO: finish aggregation docs
-
-#### Expand
-
-If the column's `"aggregation"` attribute is set to `"expand"`, the column actually won't be aggregated at all. Instead, this column will be "expanded" into a new column for each distinct value in this column of the data source. The maximum expansion is to 10 columns. For example:
+Expanded columns have a type of `"expanded"`. Expanded columns will be "expanded" into a new column for each distinct value in this column of the data source. The maximum expansion is to 10 columns. For example:
 
 If you have a data source like this:
 ```
@@ -631,16 +627,17 @@ aggregation columns:
 columns:
 [
   {
-    "field": "district",
-    "format": "default",
-    "aggregation": "simple",
     "type": "field",
+    "field": "district",
+    "column_id": "district",
+    "format": "default",
+    "aggregation": "simple"
   },
   {
+    "type": "expanded",
     "field": "test_result",
+    "column_id": "test_result",
     "format": "default",
-    "aggregation": "expand",
-    "type": "field",
   }
 ]
 ```
@@ -653,6 +650,10 @@ Then you will get a report like this:
 | South    | 0                    | 1                    |
 +----------+----------------------+----------------------+
 ```
+
+### Aggregation
+
+TODO: finish aggregation docs
 
 ### Transforms
 

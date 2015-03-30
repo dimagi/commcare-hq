@@ -73,7 +73,7 @@ class TestFieldColumn(SimpleTestCase):
             })
 
 
-class TestExpandFieldColumn(TestCase):
+class TestExpandedColumn(TestCase):
     domain = 'foo'
     case_type = 'person'
 
@@ -141,11 +141,10 @@ class TestExpandFieldColumn(TestCase):
             title='foo',
             aggregation_columns=['doc_id'],
             columns=[{
-                "type": "field",
+                "type": "expanded",
                 "field": field,
                 "display": field,
                 "format": "default",
-                "aggregation": "expand",
             }],
             filters=[],
             configured_charts=[]
@@ -189,11 +188,10 @@ class TestExpandFieldColumn(TestCase):
 
     def test_expansion(self):
         column = ReportColumnFactory.from_spec(dict(
-            type="field",
+            type="expanded",
             field="lab_result",
             display="Lab Result",
             format="default",
-            aggregation="expand",
             description="foo"
         ))
         cols = _expand_column(column, ["positive", "negative"])
