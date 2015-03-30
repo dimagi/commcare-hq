@@ -8,7 +8,7 @@ from corehq.util.dates import safe_strftime
 # will shift all phone times (form.timeEnd, case.modified_on, etc.) to UTC
 # so functions that deal with converting to or from phone times
 # use this variable to decide what type of timezone conversion is necessary
-from dimagi.utils.logging import notify_exception
+from dimagi.utils.logging import notify_exception, get_traceback
 
 TIMEZONE_DATA_MIGRATION_COMPLETE = False
 
@@ -80,7 +80,8 @@ def _soft_assert_tz_not_string(tz):
         # tz is a string, or at least string-like
         notify_exception(
             None,
-            '{} is a {}, not a timezone object'.format(tz, type(tz))
+            '{} is a {}, not a timezone object\n{}'.format(tz, type(tz),
+                                                           get_traceback(20))
         )
         return pytz.timezone(smart_str(tz))
     else:
