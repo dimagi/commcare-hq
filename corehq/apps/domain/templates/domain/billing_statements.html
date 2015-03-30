@@ -81,6 +81,7 @@
             {% trans 'Total Due:' %}
             {{ total_balance }}
         </p>
+        {% if not is_ops_user_but_not_admin %}
         <p>
             <button type="button"
                     class="btn btn-success"
@@ -90,6 +91,12 @@
                 {% trans 'Pay with Credit Card' %}
             </button>
         </p>
+        {% else %}
+        <span class="label">
+            <i class="icon-info-sign"></i>
+            {% trans "Not Billing Admin, Can't Make Payment" %}
+        </span>
+        {% endif %}
     </div>
     {% endif %}
     <h2>{% trans 'Billing Statements' %} <span data-bind="visible: showUnpaidBills">({% trans 'Unpaid' %})</span></h2>
