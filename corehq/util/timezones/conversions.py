@@ -2,6 +2,11 @@ import pytz
 from corehq.const import USER_DATETIME_FORMAT
 from corehq.util.dates import safe_strftime
 
+
+# The timezone data migration happening some time in Apr-May 2015
+# will shift all phone times (form.timeEnd, case.modified_on, etc.) to UTC
+# so functions that deal with converting to or from phone times
+# use this variable to decide what type of timezone conversion is necessary
 TIMEZONE_DATA_MIGRATION_COMPLETE = False
 
 
