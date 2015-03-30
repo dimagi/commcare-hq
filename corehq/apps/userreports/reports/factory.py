@@ -11,7 +11,7 @@ from corehq.apps.userreports.reports.filters import(
 )
 from corehq.apps.userreports.reports.specs import FilterSpec, ChoiceListFilterSpec, PieChartSpec, \
     MultibarAggregateChartSpec, MultibarChartSpec, ReportFilter, DynamicChoiceListFilterSpec, \
-    NumericFilterSpec, FieldColumn, PercentageColumn, ExpandedColumn
+    NumericFilterSpec, FieldColumn, PercentageColumn, ExpandedColumn, AggregateDateColumn
 
 
 def _build_date_filter(spec):
@@ -107,6 +107,7 @@ class ReportFactory(object):
 
 class ReportColumnFactory(object):
     class_map = {
+        'aggregate_date': AggregateDateColumn,
         'expanded': ExpandedColumn,
         'field': FieldColumn,
         'percent': PercentageColumn,
