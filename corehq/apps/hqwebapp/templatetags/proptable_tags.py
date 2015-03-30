@@ -14,10 +14,11 @@ See render_case() in casexml for an example of the display definition format.
 import collections
 import datetime
 import itertools
-import logging
 import types
 
 import dateutil
+from jsonobject import DateTimeProperty
+from dimagi.utils.chunked import chunked
 import pytz
 
 from django import template
@@ -29,78 +30,80 @@ from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import pretty_doc_info
 from corehq.const import USER_DATETIME_FORMAT, USER_DATE_FORMAT
 from corehq.util.dates import safe_strftime
-from corehq.util.timezones.conversions import ServerTime
+from corehq.util.timezones.conversions import ServerTime, PhoneTime
 
 register = template.Library()
 
 
-def chunks(l, n):
-    """Yield successive n-sized chunks from l."""
-    for i in xrange(0, len(l), n):
-        yield l[i:i+n]
-
-
-def is_list(val):
-    return (isinstance(val, collections.Iterable) and 
+def _is_list_like(val):
+    return (isinstance(val, collections.Iterable) and
             not isinstance(val, basestring))
 
-def parse_date_or_datetime(val):
+
+def _parse_date_or_datetime(val):
     """A word to the wise: datetime is a subclass of date"""
-    if isinstance(val, datetime.date):
-        return val
-    try:
-        dt = dateutil.parser.parse(val)
-        if not any([dt.hour, dt.minute, dt.second, dt.microsecond]):
-            return dt.date()
-        else:
-            return dt
-    except Exception:
-        return val if val else None
+
+    def parse():
+        if not val:
+            return None
+
+        if isinstance(val, datetime.date):
+            return val
+
+        try:
+            return DateTimeProperty().wrap(val)
+        except ValueError:
+            pass
+        try:
+            dt = dateutil.parser.parse(val).replace(tzinfo=None)
+            if not any([dt.hour, dt.minute, dt.second, dt.microsecond]):
+                return dt.date()
+            else:
+                return dt
+        except Exception:
+            return val
+
+    result = parse()
+    if result:
+        assert result.tzinfo is None
+    return result
 
 
-def to_html(key, val, level=0, datetime_fmt=USER_DATETIME_FORMAT,
-            date_fmt=USER_DATE_FORMAT, timeago=False, timezone=pytz.utc,
-            key_format=None, collapse_lists=False):
+def _format_slug_string_for_display(key):
+    return key.replace('_', ' ').replace('-', ' ')
+
+
+def _to_html(val, key=None, level=0, timeago=False):
     """
     Recursively convert a value to its HTML representation using <dl>s for
     dictionaries and <ul>s for lists.
     """
-    recurse = lambda k, v: to_html(k, v, level=level + 1,
-            datetime_fmt=datetime_fmt, date_fmt=date_fmt, timeago=timeago,
-            timezone=timezone, key_format=key_format,
-            collapse_lists=collapse_lists)
-    
+    recurse = lambda k, v: _to_html(v, key=k, level=level + 1, timeago=timeago)
+
     def _key_format(k, v):
-        if not is_list(v):
-            return key_format(k) if key_format else k
+        if not _is_list_like(v):
+            return _format_slug_string_for_display(k)
         else:
             return ""
 
     if isinstance(val, types.DictionaryType):
         ret = "".join(
             ["<dl %s>" % ("class='well'" if level == 0 else '')] + 
-            ["<dt>%s</dt><dd>%s</dd>" % (
-                _key_format(k, v), recurse(k, v)
-             ) for k, v in val.items()] +
+            ["<dt>%s</dt><dd>%s</dd>" % (_key_format(k, v), recurse(k, v))
+             for k, v in val.items()] +
             ["</dl>"])
 
-    elif is_list(val):
-        if collapse_lists:
-            ret = "".join(
-                ["<dl>"] +
-                ["<dt>%s</dt><dd>%s</dd>" % (key, recurse(None, v)) for v in val] +
-                ["</dl>"])
-        else:
-            ret = "".join(
-                ["<ul>"] +
-                ["<li>%s</li>" % recurse(None, v) for v in val] +
-                ["</ul>"])
+    elif _is_list_like(val):
+        ret = "".join(
+            ["<dl>"] +
+            ["<dt>%s</dt><dd>%s</dd>" % (key, recurse(None, v)) for v in val] +
+            ["</dl>"])
 
     elif isinstance(val, datetime.date):
         if isinstance(val, datetime.datetime):
-            fmt = datetime_fmt
+            fmt = USER_DATETIME_FORMAT
         else:
-            fmt = date_fmt
+            fmt = USER_DATE_FORMAT
 
         iso = val.isoformat()
         ret = mark_safe("<time %s title='%s' datetime='%s'>%s</time>" % (
@@ -129,35 +132,32 @@ def get_display_data(data, prop_def, processors=None, timezone=pytz.utc):
     processors = processors or {}
     processors.update(default_processors)
 
-    def format_key(key):
-        key = key.replace('_', ' ')
-        return key.replace('-', ' ')
-
     expr = prop_def.pop('expr')
-    name = prop_def.pop('name', format_key(expr))
+    name = prop_def.pop('name', _format_slug_string_for_display(expr))
     format = prop_def.pop('format', None)
     process = prop_def.pop('process', None)
+    timeago = prop_def.get('timeago', False)
 
     # todo: nested attributes, jsonpath, indexing into related documents
     val = data.get(expr, None)
 
     if prop_def.pop('parse_date', None):
-        val = parse_date_or_datetime(val)
-    is_utc = prop_def.pop('is_utc', True)
+        val = _parse_date_or_datetime(val)
+    # is_utc is deprecated in favor of is_phone_time
+    # but preserving here for backwards compatibility
+    # is_utc = False is just reinterpreted as is_phone_time = True
+    is_phone_time = prop_def.pop('is_phone_time',
+                                 not prop_def.pop('is_utc', True))
     if isinstance(val, datetime.datetime):
-        if is_utc:
-            logging.error("is_utc should really only get passed with "
-                          "timezone-naive datetimes representing UTC")
+        if not is_phone_time:
             val = ServerTime(val).user_time(timezone).done()
         else:
-            val = val.replace(tzinfo=timezone)
+            val = PhoneTime(val, timezone).user_time(timezone).done()
 
     try:
         val = conditional_escape(processors[process](val))
     except KeyError:
-        val = mark_safe(to_html(None, val, 
-            timezone=timezone, key_format=format_key, collapse_lists=True,
-            **prop_def))
+        val = mark_safe(_to_html(val, timeago=timeago))
     if format:
         val = mark_safe(format.format(val))
 
@@ -242,7 +242,7 @@ def get_definition(keys, num_columns=1, name=None):
     `num_columns` columns.
     
     """
-    layout = chunks([{"expr": prop} for prop in keys], num_columns)
+    layout = chunked([{"expr": prop} for prop in keys], num_columns)
 
     return [
         {
