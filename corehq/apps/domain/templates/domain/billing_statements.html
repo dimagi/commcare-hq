@@ -49,13 +49,13 @@
         };
 
         paginatedListModel.getAdditionalData = function () {
-            var additiona_data = {
+            var additional_data = {
                 'show_unpaid': paginatedListModel.showUnpaidBills()
             };
             if (window.location.href.split('?').length > 2) {
-                additiona_data['show_hidden'] = _(window.location.href.split('?')[1].split('&')).contains('show_hidden=true');
+                additional_data['show_hidden'] = _(window.location.href.split('?')[1].split('&')).contains('show_hidden=true');
             }
-            return additiona_data;
+            return additional_data;
         };
         paginatedListModel.initRow = function (rowElems, paginatedItem) {
             var paymentButton = $(rowElems).find('.payment-button');
