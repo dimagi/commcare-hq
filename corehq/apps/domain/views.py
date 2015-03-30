@@ -18,7 +18,9 @@ from corehq.apps.accounting.decorators import (
 )
 from corehq.apps.accounting.exceptions import PaymentRequestError
 from corehq.apps.accounting.payment_handlers import (
-    InvoiceStripePaymentHandler, CreditStripePaymentHandler,
+    BulkStripePaymentHandler,
+    CreditStripePaymentHandler,
+    InvoiceStripePaymentHandler,
 )
 from corehq.apps.accounting.subscription_changes import DomainDowngradeStatusHandler
 from corehq.apps.accounting.forms import EnterprisePlanContactForm
@@ -875,9 +877,16 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
         pagination_context.update({
             'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
             'payment_error_messages': PAYMENT_ERROR_MESSAGES,
-            'process_payment_url': reverse(InvoiceStripePaymentView.urlname,
-                                           args=[self.domain]),
+            'process_invoice_payment_url': reverse(
+                InvoiceStripePaymentView.urlname,
+                args=[self.domain],
+            ),
+            'process_bulk_payment_url': reverse(
+                BulkStripePaymentView.urlname,
+                args=[self.domain],
+            ),
             'stripe_cards': self.stripe_cards,
+            'total_balance': "%.2f" % sum(invoice.get_total() for invoice in self.invoices)
         })
         return pagination_context
 
@@ -894,7 +903,7 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                 last_billing_record = BillingRecord.objects.filter(
                     invoice=invoice
                 ).latest('date_created')
-                if invoice.date_paid is not None:
+                if invoice.is_paid:
                     payment_status = (_("Paid on %s.")
                                       % invoice.date_paid.strftime("%d %B %Y"))
                     payment_class = "label label-inverse"
@@ -902,7 +911,7 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                     payment_status = _("Not Paid")
                     payment_class = "label label-important"
                 date_due = (invoice.date_due.strftime("%d %B %Y")
-                            if invoice.date_paid is None else _("Already Paid"))
+                            if not invoice.is_paid else _("Already Paid"))
                 yield {
                     'itemData': {
                         'id': invoice.id,
@@ -917,7 +926,7 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                             BillingStatementPdfView.urlname,
                             args=[self.domain, last_billing_record.pdf_data_id]
                         ),
-                        'canMakePayment': (invoice.date_paid is None
+                        'canMakePayment': (not invoice.is_paid
                                            and self.can_pay_invoices),
                         'balance': "%s" % quantize_accounting_decimal(invoice.balance),
                     },
@@ -1058,6 +1067,19 @@ class InvoiceStripePaymentView(BaseStripePaymentView):
     def get_payment_handler(self):
         return InvoiceStripePaymentHandler(
             self.get_or_create_payment_method(), self.invoice
+        )
+
+
+class BulkStripePaymentView(BaseStripePaymentView):
+    urlname = 'domain_bulk_payment'
+
+    @property
+    def account(self):
+        return BillingAccount.get_account_by_domain(self.domain)
+
+    def get_payment_handler(self):
+        return BulkStripePaymentHandler(
+            self.get_or_create_payment_method(), self.domain
         )
 
 
