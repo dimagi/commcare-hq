@@ -17,6 +17,7 @@ from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
 from PIL import Image
 from casexml.apps.case.exceptions import MissingServerDate, ReconciliationError
 from corehq.util.couch_helpers import CouchAttachmentsBuilder
+from corehq.util.timezones.conversions import TIMEZONE_DATA_MIGRATION_COMPLETE
 from couchforms.util import is_deprecation, is_override
 from dimagi.utils.chunked import chunked
 from dimagi.utils.django.cached_object import CachedObject, OBJECT_ORIGINAL, OBJECT_SIZE_MAP, CachedImage, IMAGE_SIZE_ORDERING
@@ -902,19 +903,19 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
                             "expr": "opened_on",
                             "name": _("Opened On"),
                             "parse_date": True,
-                            "is_utc": False,
+                            "is_utc": TIMEZONE_DATA_MIGRATION_COMPLETE,
                         },
                         {
                             "expr": "modified_on",
                             "name": _("Modified On"),
                             "parse_date": True,
-                            "is_utc": False,
+                            "is_utc": TIMEZONE_DATA_MIGRATION_COMPLETE,
                         },
                         {
                             "expr": "closed_on",
                             "name": _("Closed On"),
                             "parse_date": True,
-                            "is_utc": False,
+                            "is_utc": TIMEZONE_DATA_MIGRATION_COMPLETE,
                         },
                     ],
                     [
@@ -953,13 +954,13 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
                 'name': _('Date Opened'),
                 'expr': "opened_on",
                 'parse_date': True,
-                "is_utc": False,
+                "is_utc": TIMEZONE_DATA_MIGRATION_COMPLETE,
             },
             {
                 'name': _('Date Modified'),
                 'expr': "modified_on",
                 'parse_date': True,
-                "is_utc": False,
+                "is_utc": TIMEZONE_DATA_MIGRATION_COMPLETE,
             }
         ]
 

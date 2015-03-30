@@ -1,9 +1,9 @@
 import random
 import re
-import pytz
 from dateutil.parser import parse
 from datetime import datetime, timedelta, date, time
 from casexml.apps.case.models import CommCareCase
+from corehq.util.timezones.conversions import PhoneTime
 from custom.fri.models import (
     PROFILE_A,
     PROFILE_B,
@@ -16,10 +16,9 @@ from custom.fri.models import (
     FRIRandomizedMessage,
     FRIExtraMessage,
 )
-from corehq.apps.reports import util as report_utils
+from corehq.util.timezones.utils import get_timezone_for_user
 from redis_cache.cache import RedisCache
 from dimagi.utils.couch.cache import cache_core
-from corehq.util.timezones import utils as tz_utils
 from corehq.apps.domain.models import Domain
 from dimagi.utils.logging import notify_exception
 
@@ -104,7 +103,7 @@ def letters_only(text):
 def get_interactive_participants(domain):
     cases = CommCareCase.view("hqcase/types_by_domain", key=[domain, "participant"], include_docs=True, reduce=False).all()
     result = []
-    timezone = report_utils.get_timezone(None, domain) # Use project timezone only
+    timezone = get_timezone_for_user(None, domain) # Use project timezone only
     current_date = datetime.now(tz=timezone).date()
     for case in cases:
         study_arm = case.get_case_property("study_arm")
@@ -255,16 +254,16 @@ def get_message_offset(case):
     else:
         return None
 
+
 def get_num_missed_windows(case):
     """
     Get the number of reminder events that were missed on registration day.
     """
     domain_obj = Domain.get_by_name(case.domain, strict=True)
-    opened_timestamp = tz_utils.adjust_datetime_to_timezone(
-        case.opened_on,
-        pytz.utc.zone,
-        domain_obj.default_timezone
-    )
+    # this was wrong before I refactored it to these "typed" datetimes
+    # with them, it just popped out at me
+    opened_timestamp = (PhoneTime(case.opened_on)
+                        .user_time(domain_obj.default_timezone).done())
     day_of_week = opened_timestamp.weekday()
     time_of_day = opened_timestamp.time()
 
@@ -282,6 +281,7 @@ def get_num_missed_windows(case):
             return i
 
     return 5
+
 
 def get_message_number(reminder):
     return ((reminder.schedule_iteration_num - 1) * 35) + reminder.current_event_sequence_num

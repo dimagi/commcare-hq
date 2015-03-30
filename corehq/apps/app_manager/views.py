@@ -105,14 +105,13 @@ from corehq.apps.app_manager.xform import (
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.decorators.view import get_file
 from dimagi.utils.django.cache import make_template_fragment_key
 from dimagi.utils.excel import WorkbookJSONReader
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.subprocess_timeout import ProcessTimedOut
 from dimagi.utils.web import json_response, json_request
-from corehq.apps.reports import util as report_utils
+from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.app_manager.models import (
@@ -648,7 +647,7 @@ def get_apps_base_context(request, domain, app):
     lang, langs = get_langs(request, app)
 
     if getattr(request, 'couch_user', None):
-        timezone = report_utils.get_timezone(request.couch_user, domain)
+        timezone = get_timezone_for_user(request.couch_user, domain)
     else:
         timezone = None
 
@@ -695,7 +694,7 @@ def paginate_releases(request, domain, app_id):
         assert isinstance(start_build, int)
     else:
         start_build = {}
-    timezone = report_utils.get_timezone(request.couch_user, domain)
+    timezone = get_timezone_for_user(request.couch_user, domain)
     saved_apps = get_db().view('app_manager/saved_app',
         startkey=[domain, app_id, start_build],
         endkey=[domain, app_id],
@@ -2292,7 +2291,7 @@ def save_copy(request, domain, app_id):
     else:
         copy = None
     copy = copy and SavedAppBuild.wrap(copy.to_json()).to_saved_build_json(
-        report_utils.get_timezone(request.couch_user, domain)
+        get_timezone_for_user(request.couch_user, domain)
     )
     lang, langs = get_langs(request, app)
     return json_response({
