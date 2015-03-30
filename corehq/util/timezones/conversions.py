@@ -24,6 +24,7 @@ class _HQTZTime(_HQTime):
     def __init__(self, dt, tzinfo=None):
         if dt.tzinfo is None:
             assert tzinfo is not None
+            tzinfo = _soft_assert_tz_not_string(tzinfo)
             self._datetime = dt.replace(tzinfo=tzinfo)
         else:
             assert tzinfo is None

@@ -262,7 +262,7 @@ def get_num_missed_windows(case):
     domain_obj = Domain.get_by_name(case.domain, strict=True)
     # this was wrong before I refactored it to these "typed" datetimes
     # with them, it just popped out at me
-    opened_timestamp = (PhoneTime(case.opened_on)
+    opened_timestamp = (PhoneTime(case.opened_on, domain_obj.default_timezone)
                         .user_time(domain_obj.default_timezone).done())
     day_of_week = opened_timestamp.weekday()
     time_of_day = opened_timestamp.time()
