@@ -74,7 +74,9 @@ class PhoneTime(_HQTZTime):
 
 
 def _soft_assert_tz_not_string(tz):
-    if not hasattr(tz, "localize"):
+    try:
+        assert hasattr(tz, "localize")
+    except AssertionError:
         # tz is a string, or at least string-like
         notify_exception(
             None,
