@@ -340,7 +340,7 @@ boolean        | Save `1` if a filter is true, otherwise `0`.
 expression     | Save the output of an expression.
 choice_list    | Save multiple columns, one for each of a predefined set of choices
 
-*Note/todo: there are also other supported formats, but they are just shortcuts around the functionality of these two so they are left out of the current docs.*
+*Note/todo: there are also other supported formats, but they are just shortcuts around the functionality of these ones they are left out of the current docs.*
 
 #### Boolean indicators
 
@@ -385,6 +385,28 @@ Here is a sample expression indicator that just saves the "age" property to an i
     "column_id": "age",
     "datatype": "integer",
     "display_name": "age of patient"
+}
+```
+
+#### Choice list indicators
+
+Choice list indicators take a single choice column (select or multiselect) and expand it into multiple columns where each column represents a different choice. These can support both single-select and multi-select quesitons.
+
+A sample spec is below:
+
+```
+{
+    "type": "choice_list",
+    "column_id": "col",
+    "display_name": "the category",
+    "property_name": "category",
+    "choices": [
+        "bug",
+        "feature",
+        "app",
+        "schedule"
+    ],
+    "select_style": "single"
 }
 ```
 
