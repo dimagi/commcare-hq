@@ -663,28 +663,9 @@ class CreateCommCareUserView(BaseManageCommCareUserView):
                 device_id="Generated from HQ",
                 user_data=self.custom_data.get_data_to_save(),
             )
-            return HttpResponseRedirect(reverse(EditCommCareUserView.urlname,
-                                                args=[self.domain, couch_user.userID]))
-        return self.get(request, *args, **kwargs)
+            if 'location_id' in kwargs:
+                couch_user.set_location(Location.get(kwargs['location_id']))
 
-
-class CreateUserWithLocationView(CreateCommCareUserView):
-    def post(self, request, *args, **kwargs):
-        if self.new_commcare_user_form.is_valid() and self.custom_data.is_valid():
-            loc = Location.get(kwargs['location_id'])
-
-            username = self.new_commcare_user_form.data['username']
-            password = self.new_commcare_user_form.data['password']
-            phone_number = self.new_commcare_user_form.data['phone_number']
-            couch_user = CommCareUser.create(
-                self.domain,
-                username,
-                password,
-                phone_number=phone_number,
-                device_id="Generated from HQ",
-                user_data=self.custom_data.get_data_to_save(),
-            )
-            couch_user.set_location(loc)
             return HttpResponseRedirect(reverse(EditCommCareUserView.urlname,
                                                 args=[self.domain, couch_user.userID]))
         return self.get(request, *args, **kwargs)

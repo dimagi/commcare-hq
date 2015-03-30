@@ -75,10 +75,6 @@ class FacilityReportData(EWSData):
         state_grouping = {}
 
         loc = SQLLocation.objects.get(location_id=self.config['location_id'])
-        print loc.location_type.name
-        print loc.location_type.understock_threshold
-        print loc.location_type.overstock_threshold
-        print loc.location_type.emergency_level
         stock_states = StockState.objects.filter(
             case_id=loc.supply_point_id,
             section_id=STOCK_SECTION_TYPE,
@@ -242,7 +238,7 @@ class FacilitySMSUsers(EWSData):
 
     @property
     def rows(self):
-        from corehq.apps.users.views.mobile import CreateUserWithLocationView
+        from corehq.apps.users.views.mobile import CreateCommCareUserView
 
         query = (UserES().mobile_users().domain(self.config['domain'])
                  .term("domain_membership.location_id", self.config['location_id']))
@@ -251,7 +247,7 @@ class FacilitySMSUsers(EWSData):
             if (hit['first_name'] or hit['last_name']) and hit['phone_numbers']:
                 yield [hit['first_name'] + ' ' + hit['last_name'], hit['phone_numbers'][0]]
 
-        yield [get_url_with_location(CreateUserWithLocationView.urlname, 'Create new Mobile Worker',
+        yield [get_url_with_location(CreateCommCareUserView.urlname, 'Create new Mobile Worker',
                                      self.config['location_id'], self.config['domain'])]
 
 

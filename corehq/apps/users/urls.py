@@ -11,7 +11,7 @@ from .views.mobile.groups import (EditGroupsView, EditGroupMembersView,
     BulkSMSVerificationView)
 from .views.mobile.users import (UploadCommCareUsers, EditCommCareUserView,
     ListCommCareUsersView, AsyncListCommCareUsersView, CreateCommCareUserView,
-    ConfirmBillingAccountForExtraUsersView, UserUploadStatusView, CreateUserWithLocationView)
+    ConfirmBillingAccountForExtraUsersView, UserUploadStatusView)
 
 
 urlpatterns = patterns('corehq.apps.users.views',
@@ -69,8 +69,8 @@ patterns("corehq.apps.users.views.mobile.users",
     url(r'^commcare/set_group/$', 'set_commcare_user_group', name='set_commcare_user_group'),
     url(r'^commcare/add_commcare_account/$', CreateCommCareUserView.as_view(),
         name=CreateCommCareUserView.urlname),
-    url(r'^commcare/add_commcare_account/(?P<location_id>[\w-]+)/$', CreateUserWithLocationView.as_view(),
-        name=CreateUserWithLocationView.urlname),
+    url(r'^commcare/add_commcare_account/(?P<location_id>[\w-]+)/$', CreateCommCareUserView.as_view(),
+        name=CreateCommCareUserView.urlname),
     url(r'^commcare/confirm_charges/$', ConfirmBillingAccountForExtraUsersView.as_view(),
         name=ConfirmBillingAccountForExtraUsersView.urlname),
 ) +\
