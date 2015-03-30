@@ -21,7 +21,6 @@ SQLAGG_COLUMN_MAP = {
     'sum': SumColumn,
     'simple': SimpleColumn,
     'year': YearColumn,
-    'expand': SimpleColumn,
 }
 
 
@@ -44,6 +43,7 @@ class ReportColumn(JsonObject):
     column_id = StringProperty(required=True)
     display = StringProperty()
     description = StringProperty()
+    transform = DictProperty()
 
     def format_data(self, data):
         """
@@ -53,6 +53,14 @@ class ReportColumn(JsonObject):
 
     def get_sql_column_config(self, data_source_config):
         raise NotImplementedError('subclasses must override this')
+
+    def get_format_fn(self):
+        """
+        A function that gets applied to the data just in time before the report is rendered.
+        """
+        if self.transform:
+            return TransformFactory.get_transform(self.transform).get_transform_function()
+        return None
 
 
 class FieldColumn(ReportColumn):
@@ -66,13 +74,19 @@ class FieldColumn(ReportColumn):
         'default',
         'percent_of_total',
     ])
-    transform = DictProperty()
 
     @classmethod
     def wrap(cls, obj):
-        # lazy migration - set column_id to alias, or field if no alias found
-        if obj.get('column_id') is None:
-            obj['column_id'] = obj.get('alias') or obj['field']
+        # lazy migrations for legacy data.
+        # todo: remove once all reports are on new format
+        # 1. set column_id to alias, or field if no alias found
+        _add_column_id_if_missing(obj)
+        # 2. if aggregation='expand' convert to ExpandedColumn
+        if obj.get('aggregation') == 'expand':
+            del obj['aggregation']
+            obj['type'] = 'expanded'
+            return ExpandedColumn.wrap(obj)
+
         return super(FieldColumn, cls).wrap(obj)
 
     def format_data(self, data):
@@ -84,25 +98,32 @@ class FieldColumn(ReportColumn):
                     float(row[column_name]) / total
                 )
 
-    def get_format_fn(self):
-        if self.transform:
-            return TransformFactory.get_transform(self.transform).get_transform_function()
-        return None
+    def get_sql_column_config(self, data_source_config):
+        return SqlColumnConfig(columns=[
+            DatabaseColumn(
+                header=self.display,
+                agg_column=SQLAGG_COLUMN_MAP[self.aggregation](self.field, alias=self.column_id),
+                sortable=False,
+                data_slug=self.column_id,
+                format_fn=self.get_format_fn(),
+                help_text=self.description
+            )
+        ])
+
+
+class ExpandedColumn(ReportColumn):
+    type = TypeProperty('expanded')
+    field = StringProperty(required=True)
+
+    @classmethod
+    def wrap(cls, obj):
+        # lazy migrations for legacy data.
+        # todo: remove once all reports are on new format
+        _add_column_id_if_missing(obj)
+        return super(ExpandedColumn, cls).wrap(obj)
 
     def get_sql_column_config(self, data_source_config):
-        if self.aggregation == "expand":
-            return get_expanded_column_config(data_source_config, self)
-        else:
-            return SqlColumnConfig(columns=[
-                DatabaseColumn(
-                    header=self.display,
-                    agg_column=SQLAGG_COLUMN_MAP[self.aggregation](self.field, alias=self.column_id),
-                    sortable=False,
-                    data_slug=self.column_id,
-                    format_fn=self.get_format_fn(),
-                    help_text=self.description
-                )
-            ])
+        return get_expanded_column_config(data_source_config, self)
 
 
 class PercentageColumn(ReportColumn):
@@ -142,6 +163,11 @@ class PercentageColumn(ReportColumn):
             'fraction': _fraction,
             'both': lambda data: '{} ({})'.format(_pct(data), _fraction(data))
         }[self.format]
+
+
+def _add_column_id_if_missing(obj):
+    if obj.get('column_id') is None:
+        obj['column_id'] = obj.get('alias') or obj['field']
 
 
 class FilterChoice(JsonObject):

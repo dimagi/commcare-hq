@@ -73,7 +73,7 @@ class TestFieldColumn(SimpleTestCase):
             })
 
 
-class TestExpandFieldColumn(TestCase):
+class TestExpandedColumn(TestCase):
     domain = 'foo'
     case_type = 'person'
 
