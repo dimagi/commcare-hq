@@ -18,7 +18,6 @@ from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from couchforms.xml import (
     ResponseNature,
-    get_response_element,
     get_simple_response_xml,
 )
 from casexml.apps.case.xml import check_version, V1
