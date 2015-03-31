@@ -20,7 +20,7 @@ def get_url(view_name, text, domain):
 
 
 def get_url_with_location(view_name, text, location_id, domain):
-    return '<a href="%s%s">%s</a>' % (reverse(view_name, args=[domain]), location_id, text)
+    return '<a href="%s?location_id=%s">%s</a>' % (reverse(view_name, args=[domain]), location_id, text)
 
 
 class EWSLineChart(LineChart):
