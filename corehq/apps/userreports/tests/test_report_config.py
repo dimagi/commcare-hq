@@ -2,6 +2,7 @@ import json
 import os
 from django.test import SimpleTestCase, TestCase
 from jsonobject.exceptions import BadValueError
+from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import ReportConfiguration, DataSourceConfiguration
 
 
@@ -18,6 +19,20 @@ class ReportConfigurationTest(SimpleTestCase):
 
     def test_sample_config_is_valid(self):
         self.config.validate()
+
+    def test_duplicate_filter_slugs(self):
+        spec = self.config._doc
+        spec['filters'].append(spec['filters'][-1])
+        wrapped = ReportConfiguration.wrap(spec)
+        with self.assertRaises(BadSpecError):
+            wrapped.validate()
+
+    def test_duplicate_column_ids(self):
+        spec = self.config._doc
+        spec['columns'].append(spec['columns'][-1])
+        wrapped = ReportConfiguration.wrap(spec)
+        with self.assertRaises(BadSpecError):
+            wrapped.validate()
 
 
 class ReportConfigurationDbTest(TestCase):

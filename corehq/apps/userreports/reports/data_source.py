@@ -28,6 +28,7 @@ class ConfigurableReportDataSource(SqlData):
         self.aggregation_columns = aggregation_columns
         self._column_configs = SortedDict()
         for column in columns:
+            # should be caught in validation prior to reaching this
             assert column.column_id not in self._column_configs, \
                 'Report {} in domain {} has more than one {} column defined!'.format(
                     self._config_id, self.domain, column.column_id,
