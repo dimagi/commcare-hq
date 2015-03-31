@@ -66,7 +66,9 @@ def soft_assert(to, notify_admins=False,
 
     def send_to_recipients(subject, message):
         send_mail(
-            subject=subject,
+            # this prefix is automatically added in mail_admins
+            # but not send mail
+            subject=settings.EMAIL_SUBJECT_PREFIX + subject,
             message=message,
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=to,
