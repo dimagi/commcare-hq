@@ -77,7 +77,7 @@ class SoftAssertHelpersTest(SimpleTestCase):
 
         def test1(subject, message):
             self.assertRegexpMatches(subject,
-                                     r"Soft Assert: \[\w+\] self.soft_assert\(False, 'This should fail'\)")
+                                     r"Soft Assert: \[\w+\] This should fail")
             things_that_should_show_up_in_message = [
                 r"Message: This should fail",
                 r"Traceback:",
@@ -95,7 +95,7 @@ class SoftAssertHelpersTest(SimpleTestCase):
         def test2(subject, message):
             self.assertRegexpMatches(
                 subject,
-                r'Soft Assert: \[\w+\] self.soft_assert\(False\)',
+                r'Soft Assert: \[\w+\] None',
             )
             things_that_should_show_up_in_message = [
                 r"Message: None",

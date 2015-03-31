@@ -21,15 +21,15 @@ def _django_caching_counter(key):
 
 def _send_message(info, backend):
     backend(
-        subject='Soft Assert: [{}] {}'.format(info.key[:8], info.line),
+        subject='Soft Assert: [{}] {}'.format(info.key[:8], info.msg),
         message=('Message: {info.msg}\n'
                  'Traceback:\n{info.traceback}\n'
                  'Occurrences to date: {info.count}\n').format(info=info)
     )
 
 
-def soft_assert(assertion, msg=None, to=None, notify_admins=False,
-                fail_if_debug=False, exponential_backoff=True):
+def soft_assert(to, notify_admins=False,
+                fail_if_debug=False, exponential_backoff=True, skip_frames=0):
     """
     send an email with stack trace if assertion is not True
 
@@ -91,5 +91,5 @@ def soft_assert(assertion, msg=None, to=None, notify_admins=False,
         send=send,
         incrementing_counter=_django_caching_counter,
         should_send=should_send,
-        tb_skip=3,
-    )(assertion, msg)
+        skip_frames=skip_frames,
+    )

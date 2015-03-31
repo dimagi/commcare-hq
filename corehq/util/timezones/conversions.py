@@ -73,9 +73,10 @@ class PhoneTime(_HQTZTime):
 
 
 def _soft_assert_tz_not_string(tz):
-    if not soft_assert(hasattr(tz, "localize"),
-                       to=['droberts@dimagi.com'],
-                       msg='Timezone should be a tzinfo object, not a string'):
+    _assert = soft_assert(to=['droberts@dimagi.com'], skip_frames=1)
+
+    if not _assert(hasattr(tz, "localize"),
+                   'Timezone should be a tzinfo object, not a string'):
         # tz is a string, or at least string-like
         return pytz.timezone(smart_str(tz))
     else:

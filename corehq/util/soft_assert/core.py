@@ -10,7 +10,7 @@ SoftAssertInfo = namedtuple('SoftAssertInfo',
 
 class SoftAssert(object):
     def __init__(self, debug=False, send=None, incrementing_counter=None,
-                 should_send=None, tb_skip=2, key_limit=2):
+                 should_send=None, skip_frames=0, key_limit=2):
         assert send
         assert incrementing_counter
         assert should_send
@@ -18,10 +18,15 @@ class SoftAssert(object):
         self.send = send
         self.incrementing_counter = incrementing_counter
         self.should_send = should_send
-        self.tb_skip = tb_skip
+        self.tb_skip = skip_frames + 3
         self.key_limit = key_limit
 
     def __call__(self, assertion, msg=None):
+        return self._call(assertion, msg)
+
+    call = __call__
+
+    def _call(self, assertion, msg=None):
         if not assertion:
             if self.debug:
                 raise AssertionError(msg)
