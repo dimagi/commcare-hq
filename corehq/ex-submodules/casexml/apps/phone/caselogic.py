@@ -10,6 +10,7 @@ from casexml.apps.case import const
 from casexml.apps.case.util import reverse_indices
 from casexml.apps.case.xform import CaseDbCache
 from casexml.apps.phone.models import CaseState
+from couchdbkit import NoResultFound
 from dimagi.utils.decorators.memoized import memoized
 
 logger = logging.getLogger(__name__)
@@ -325,6 +326,15 @@ class BatchedCaseSyncOperation(object):
                 batch = batch.next_batch
                 yield batch
 
+        yield UserCaseSyncCouchBatch(
+            self.user,
+            self.global_state,
+            self.domain,
+            self.last_sync,
+            self.chunk_size,
+            case_sharing=self.case_sharing
+        )
+
         if self.last_sync:
             yield CaseSyncPhoneBatch(
                 self.global_state,
@@ -545,6 +555,21 @@ class CaseSyncCouchBatch(CaseSyncBatch):
             self.chunksize,
             self.use_minimal_cases
         )
+
+
+class UserCaseSyncCouchBatch(CaseSyncCouchBatch):
+    def __init__(self, user, global_state, domain, last_sync, chunksize, case_sharing=False):
+        super(UserCaseSyncCouchBatch, self).__init__(
+            global_state, domain, last_sync, chunksize, None, case_sharing=case_sharing)
+        self.user = user
+
+    def _actual_owned_cases(self):
+        from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
+
+        try:
+            return [get_case_by_domain_hq_user_id(self.domain, self.user.get_id, include_docs=False)]
+        except NoResultFound:
+            return []
 
 
 def get_case_updates(user, last_sync):
