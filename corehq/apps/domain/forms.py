@@ -455,8 +455,7 @@ class DomainGlobalSettingsForm(forms.Form):
             if domain.call_center_config.enabled:
                 domain.internal.using_call_center = True
                 domain.call_center_config.case_owner_id = self.cleaned_data.get('call_center_case_owner', None)
-                domain.call_center_config.case_type = (self.cleaned_data.get('call_center_case_type') or
-                                                       USERCASE_TYPE)
+                domain.call_center_config.case_type = self.cleaned_data.get('call_center_case_type', USERCASE_TYPE)
 
             global_tz = self.cleaned_data['default_timezone']
             if domain.default_timezone != global_tz:
