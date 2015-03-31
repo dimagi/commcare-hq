@@ -13,12 +13,10 @@
     <script type="text/javascript">
         Stripe.setPublishableKey('{{ stripe_public_key }}');
 
-        var paymentHandler = new PaymentMethodHandler({
-            400: "{% trans "Your request was not formatted properly." %}",
-            403: "{% trans "Forbidden." %}",
-            404: "{% trans 'Page not found.' %}",
-            500: "{% blocktrans %}There was an error processing your request. We're working quickly to fix the issue. Please try back shortly.{% endblocktrans %}"
-        });
+        var paymentHandler = new PaymentMethodHandler(
+            {{ payment_error_messages|JSON }},
+            "{% trans "Buy Credits" %}"
+        );
         {% if plan.cards %}
             paymentHandler.loadCards({{ plan.cards|JSON }});
         {% endif %}
@@ -236,7 +234,7 @@
 
     {% include 'accounting/partials/stripe_card_ko_template.html' %}
 
-    <script type="text/html" id="credit-cost-item-template">
+    <script type="text/html" id="cost-item-template">
         <p data-bind="visible: isPlanCredit">
             {% blocktrans %}
             <strong>Plan Credits</strong> are only applied toward the monthly
@@ -295,83 +293,5 @@
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-    <div class="modal hide fade" id="paymentModal">
-        <div class="modal-header">
-            <a class="close" data-dismiss="modal">&times;</a>
-            <div data-bind="template: {
-                data: costItem,
-                name: 'payment-method-modal-title',
-                if: hasCostItem
-            }"></div>
-        </div>
-        <form action="{{ process_payment_url }}"
-              method="POST"
-              class="form form-horizontal"
-              id="payment-form">
-            <div class="modal-body">
-                <div data-bind="template: {
-                    data: costItem,
-                    name: 'credit-cost-item-template',
-                    if: hasCostItem
-                }, visible: paymentIsNotComplete"></div>
-
-                <p class="alert alert-error"
-                     data-bind="visible: showServerErrorMsg">
-                    <i class="icon-warning-sign"></i>
-                    <span data-bind="text: serverErrorMsg"></span>
-                </p>
-
-                <div data-bind="template: {
-                    data: newCard,
-                    name: 'select-new-stripe-card-template',
-                    if: mustCreateNewCard
-                }"></div>
-
-                <div data-bind="template: {
-                    data: $data,
-                    name: 'select-stripe-card-template',
-                    if: canSelectCard
-                }"></div>
-
-                <p class="alert alert-success"
-                     data-bind="visible: paymentIsComplete">
-                    {% blocktrans %}
-                    Thank you for your payment!
-                    {% endblocktrans %}
-                </p>
-            </div>
-            <div class="modal-footer">
-                <button type="button"
-                        data-bind="visible: paymentIsNotComplete"
-                        class="btn"
-                        data-dismiss="modal">
-                    {% trans "Cancel" %}
-                </button>
-                <!-- ko if: hasAgreedToPrivacy -->
-                <button type="submit"
-                        data-bind="
-                            visible: paymentIsNotComplete,
-                            disable: isSubmitDisabled,
-                            click: processPayment"
-                        class="btn btn-success">
-                    {% trans 'Buy Credits' %}
-                </button>
-                <!-- /ko -->
-                <!-- ko ifnot: hasAgreedToPrivacy -->
-                <button type="submit"
-                        class="btn btn-success disabled"
-                        disabled="disabled">
-                    {% trans 'Buy Credits' %}
-                </button>
-                <span class="label label-info">{% trans 'Please agree to the Privacy Policy.' %}</span>
-                <!-- /ko -->
-                <button type="button"
-                        data-bind="visible: paymentIsComplete"
-                        class="btn"
-                        data-dismiss="modal">
-                    {% trans "Close" %}
-                </button>
-            </div>
-        </form>
-    </div>
+    {% include 'domain/partials/payment_modal.html' with payment_modal_id="paymentModal" title_template="payment-method-modal-title" cost_item_template="cost-item-template" %}
 {% endblock %}

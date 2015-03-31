@@ -13,12 +13,9 @@
             {% if app.auto_gps_capture %}
                 <input type="checkbox" value="true" disabled="disabled"
                        data-bind="checked: true"/>
-            {% elif edit %}
+            {% else %}
                  <input type="checkbox" value="true"
                         data-bind="checked: auto_gps_capture"/>
-            {% else %}
-                <input type="checkbox" value="true" disabled="disabled"
-                       data-bind="checked: auto_gps_capture"/>
             {% endif %}
             <input type="hidden" name="auto_gps_capture" data-bind="value: auto_gps_capture"/>
         </div>

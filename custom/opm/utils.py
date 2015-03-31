@@ -1,3 +1,5 @@
+from sqlagg.columns import SimpleColumn
+from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
 from custom.common import ALL_OPTION
 
 
@@ -43,3 +45,42 @@ def normal_format(value):
     if not value:
         value = 0
     return "<span style='display: block; text-align:center;'>%d<hr style='margin: 0;border-top: 0; border-color: black;'></span>" % value
+
+
+class UserSqlData(SqlData):
+    table_name = "fluff_OpmUserFluff"
+    group_by = ['doc_id', 'awc', 'awc_code', 'gp', 'block']
+
+    @property
+    def filters(self):
+        return []
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn('doc_id', SimpleColumn('doc_id')),
+            DatabaseColumn('awc', SimpleColumn('awc')),
+            DatabaseColumn('awc_code', SimpleColumn('awc_code')),
+            DatabaseColumn('gp', SimpleColumn('gp')),
+            DatabaseColumn('block', SimpleColumn('block')),
+        ]
+
+
+def get_matching_users(awcs=None, gps=None, blocks=None):
+    """
+    Accepts a list of one or more of `awcs`, `gps`, and `blocks`,
+    returns a list of users matching that selection
+    each user is represented as a dict with the following keys:
+    ['doc_id', 'awc', 'gp', 'block', 'awc_code']
+    """
+    non_null = filter(
+        lambda (k, v): bool(v),
+        [('awc', awcs), ('gp', gps), ('block', blocks)]
+    )
+    if not len(non_null) > 0:
+        raise TypeError("You must pass at least one of awc, gp, or block")
+    key, selected = non_null[0]  # get most specific selection
+    return [
+        user for user in UserSqlData().get_data()
+        if user[key] in selected
+    ]

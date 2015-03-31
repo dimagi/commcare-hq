@@ -63,7 +63,11 @@ class FormListForm(object):
     """
     A higher-level form for editing an arbitrary number of instances of one
     sub-form in a tabular fashion.
-    Give your child_form_class a `slug` field to enforce uniqueness
+
+    child_form_class: Normal django form used to handle individual rows
+    columns: Spec listing columns to appear in the report.
+        For normal django fields, just specify the corresponding attribute
+        To display arbitrary data, specify a {'label': ..., 'key': ...} dict.
 
     API:
         is_valid
@@ -71,10 +75,43 @@ class FormListForm(object):
         errors
         as_table
 
-    # TODO document header config
+    Example:
+
+    class SingleUserFavorites(forms.Form):
+        favorite_color = forms.CharField()
+        favorite_food = forms.CharField()
+
+        def clean_favorite_food(self):
+            food = self.cleaned_data['favorite_food']
+            if food.lower() == "brussels sprouts":
+                raise forms.ValidationError("No one likes {}!".format(food))
+            return food
+
+    class UserFavoritesForm(FormListForm):
+        child_form_class = SingleUserFavorites
+        columns = [
+            {'label': "Username", 'key': 'username'},
+            'favorite_food',
+            'favorite_color',
+        ]
+
+    class UserFavoritesView(TemplateView):
+        @property
+        @memoized
+        def user_favorites_form(self):
+            if self.request.method == "POST":
+                data = self.request.POST
+            else:
+                data = [{
+                    'username': user.username,
+                    'favorite_food': user.food,
+                    'favorite_color': user.color,
+                } for user in self.users]
+            return UserFavoritesForm(data)
     """
     child_form_class = None  # Django form which controls each row
     # child_form_template = None
+    # TODO Use child_form_class `slug` field to enforce uniqueness
     # sortable = False
     # deletable = False
     # can_add_elements = False

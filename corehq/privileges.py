@@ -10,6 +10,7 @@ CUSTOM_BRANDING = 'custom_branding'
 
 CROSS_PROJECT_REPORTS = 'cross_project_reports'
 CUSTOM_REPORTS = 'custom_reports'
+REPORT_BUILDER = 'user_configurable_report_builder'
 
 ROLE_BASED_ACCESS = 'role_based_access'
 
@@ -48,6 +49,7 @@ MAX_PRIVILEGES = [
     HIPAA_COMPLIANCE_ASSURANCE,
     ALLOW_EXCESS_USERS,
     COMMCARE_LOGO_UPLOADER,
+    REPORT_BUILDER,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -80,4 +82,5 @@ class Titles(object):
             DEIDENTIFIED_DATA: _("De-Identified Data"),
             HIPAA_COMPLIANCE_ASSURANCE: _("HIPAA Compliance Assurance"),
             COMMCARE_LOGO_UPLOADER: _("Custom CommCare Logo Uploader"),
+            REPORT_BUILDER: _('User Configurable Report Builder')
         }.get(privilege, privilege)

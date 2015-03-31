@@ -1,4 +1,5 @@
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
+from functools import wraps
 import logging
 from casexml.apps.case.xml import V2_NAMESPACE
 from corehq.apps.app_manager.const import APP_V1, SCHEDULE_PHASE, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE, \
@@ -68,6 +69,19 @@ def relative_path(from_path, to_path):
                     break
 
             return '%s/%s' % ('/'.join(['..' for n in from_nodes]), '/'.join(to_nodes))
+
+
+def requires_itext(on_fail_return=None):
+    def _wrapper(func):
+        @wraps(func)
+        def _inner(self, *args, **kwargs):
+            try:
+                self.itext_node
+            except XFormException:
+                return on_fail_return() if on_fail_return else None
+            return func(self, *args, **kwargs)
+        return _inner
+    return _wrapper
 
 
 SESSION_CASE_ID = CaseIDXPath(session_var(CASE_ID))
@@ -189,13 +203,13 @@ class ItextNodeGroup(object):
     def __eq__(self, other):
         for lang, node in self.nodes.items():
             other_node = other.nodes.get(lang)
-            if node.values != other_node.values:
+            if node.rendered_values != other_node.rendered_values:
                 return False
 
         return True
 
     def __hash__(self):
-        return ''.join(["{0}{1}".format(n.lang, n.values) for n in self.nodes.values()]).__hash__()
+        return ''.join(["{0}{1}".format(n.lang, n.rendered_values) for n in self.nodes.values()]).__hash__()
 
     def __repr__(self):
         return "{0}, {1}".format(self.id, self.nodes)
@@ -206,7 +220,12 @@ class ItextNode(object):
         self.lang = lang
         self.id = itext_node.attrib['id']
         values = itext_node.findall('{f}value')
-        self.values = sorted([str.strip(ET.tostring(v.xml)) for v in values])
+        self.values_by_form = {value.attrib.get('form'): value for value in values}
+
+    @property
+    @memoized
+    def rendered_values(self):
+        return sorted([str.strip(ET.tostring(v.xml)) for v in self.values_by_form.values()])
 
     def __repr__(self):
         return self.id
@@ -520,12 +539,10 @@ class XForm(WrappedNode):
         else:
             return self.data_node.find('{x}case')
 
+    @requires_itext(list)
     def media_references(self, form):
-        try:
-            nodes = self.itext_node.findall('{f}translation/{f}text/{f}value[@form="%s"]' % form)
-            return list(set([n.text for n in nodes]))
-        except XFormException:
-            return []
+        nodes = self.itext_node.findall('{f}translation/{f}text/{f}value[@form="%s"]' % form)
+        return list(set([n.text for n in nodes]))
 
     @property
     def image_references(self):
@@ -548,6 +565,40 @@ class XForm(WrappedNode):
         except XFormException:
             pass
 
+    @memoized
+    @requires_itext(dict)
+    def translations(self):
+        translations = OrderedDict()
+        for translation in self.itext_node.findall('{f}translation'):
+            lang = translation.attrib['lang']
+            translations[lang] = translation
+
+        return translations
+
+    @memoized
+    def itext_node_groups(self):
+        """
+        :return: dict mapping 'lang' to ItextNodeGroup objects.
+        """
+        node_groups = {}
+        for lang, translation in self.translations().items():
+            text_nodes = translation.findall('{f}text')
+            for text in text_nodes:
+                node = ItextNode(lang, text)
+                group = node_groups.get(node.id)
+                if not group:
+                    group = ItextNodeGroup([node])
+                else:
+                    group.add_node(node)
+                node_groups[node.id] = group
+
+        return node_groups
+
+    def _reset_translations_cache(self):
+        self.translations.reset_cache(self)
+        self.itext_node_groups.reset_cache(self)
+
+    @requires_itext()
     def normalize_itext(self):
         """
         Convert this:
@@ -561,24 +612,8 @@ class XForm(WrappedNode):
 
         and rename the appropriate label references.
         """
-        try:
-            itext = self.itext_node
-        except XFormException:
-            return
-        node_groups = {}
-        translations = {}
-        for translation in itext.findall('{f}translation'):
-            lang = translation.attrib['lang']
-            translations[lang] = translation
-            text_nodes = translation.findall('{f}text')
-            for text in text_nodes:
-                node = ItextNode(lang, text)
-                group = node_groups.get(node.id)
-                if not group:
-                    group = ItextNodeGroup([node])
-                else:
-                    group.add_node(node)
-                node_groups[node.id] = group
+        translations = self.translations()
+        node_groups = self.itext_node_groups()
 
         duplicate_dict = defaultdict(list)
         for g in node_groups.values():
@@ -610,6 +645,8 @@ class XForm(WrappedNode):
 
         self.xml = parse_xml(xf_string)
 
+        self._reset_translations_cache()
+
     def strip_vellum_ns_attributes(self):
         # vellum_ns is wrapped in braces i.e. '{http...}'
         vellum_ns = self.namespaces['v']
@@ -619,31 +656,30 @@ class XForm(WrappedNode):
                 if key.startswith(vellum_ns):
                     del node.attrib[key]
 
+    @requires_itext()
     def rename_language(self, old_code, new_code):
-        try:
-            trans_node = self.itext_node.find('{f}translation[@lang="%s"]' % old_code)
-            duplicate_node = self.itext_node.find('{f}translation[@lang="%s"]' % new_code)
-        except XFormException:
-            return
+        trans_node = self.translations().get(old_code)
+        duplicate_node = self.translations().get(new_code)
 
-        if not trans_node.exists():
+        if not trans_node or not trans_node.exists():
             raise XFormException("There's no language called '%s'" % old_code)
-        if duplicate_node.exists():
+        if duplicate_node and duplicate_node.exists():
             raise XFormException("There's already a language called '%s'" % new_code)
         trans_node.attrib['lang'] = new_code
 
+        self._reset_translations_cache()
+
     def exclude_languages(self, whitelist):
-        try:
-            translations = self.itext_node.findall('{f}translation')
-        except XFormException:
-            # if there's no itext then they must be using labels
-            return
-
-        for trans_node in translations:
-            if trans_node.attrib.get('lang') not in whitelist:
+        changes = False
+        for lang, trans_node in self.translations().items():
+            if lang not in whitelist:
                 self.itext_node.remove(trans_node.xml)
+                changes = True
 
-    def localize(self, id, lang=None, form=None):
+        if changes:
+            self._reset_translations_cache()
+
+    def _normalize_itext_id(self, id):
         pre = 'jr:itext('
         post = ')'
 
@@ -652,40 +688,55 @@ class XForm(WrappedNode):
         if id[0] == id[-1] and id[0] in ('"', "'"):
             id = id[1:-1]
 
-        if lang is None:
-            trans_node = self.itext_node.find('{f}translation')
-        else:
-            trans_node = self.itext_node.find('{f}translation[@lang="%s"]' % lang)
-            if not trans_node.exists():
-                return None
+        return id
 
-        text_node = trans_node.find('{f}text[@id="%s"]' % id)
-        if not text_node.exists():
+    def localize(self, id, lang=None, form=None):
+        # fail hard if no itext node present
+        self.itext_node
+
+        id = self._normalize_itext_id(id)
+        node_group = self.itext_node_groups().get(id)
+        if not node_group:
             return None
 
-        search_tag = '{f}value'
-        if form:
-            search_tag += '[@form="%s"]' % form
-        value_node = text_node.find(search_tag)
+        lang = lang or self.translations().keys()[0]
+        text_node = node_group.nodes.get(lang)
+        if not text_node:
+            return None
+
+        value_node = text_node.values_by_form.get(form)
 
         if value_node:
             text = ItextValue.from_node(value_node)
         else:
             raise XFormException('<translation lang="%s"><text id="%s"> node has no <value>' % (
-                trans_node.attrib.get('lang'), id
+                lang, id
             ))
 
         return text
 
-    def get_label_text(self, prompt, langs, form=None):
+    def get_label_translations(self, prompt, langs):
         if prompt.tag_name == 'repeat':
-            return self.get_label_text(prompt.find('..'), langs, form)
+            return self.get_label_translations(prompt.find('..'), langs)
+        label_node = prompt.find('{f}label')
+        translations = {}
+        if label_node.exists() and 'ref' in label_node.attrib:
+            for lang in langs:
+                label = self.localize(label_node.attrib['ref'], lang)
+                if label:
+                    translations[lang] = label
+
+        return translations
+
+    def get_label_text(self, prompt, langs):
+        if prompt.tag_name == 'repeat':
+            return self.get_label_text(prompt.find('..'), langs)
         label_node = prompt.find('{f}label')
         label = ""
         if label_node.exists():
             if 'ref' in label_node.attrib:
                 for lang in langs + [None]:
-                    label = self.localize(label_node.attrib['ref'], lang, form)
+                    label = self.localize(label_node.attrib['ref'], lang)
                     if label is not None:
                         break
             elif label_node.text:
@@ -707,20 +758,15 @@ class XForm(WrappedNode):
         else:
             return "%s/%s" % (path_context, path)
 
+    @requires_itext(list)
     def get_languages(self):
         if not self.exists():
             return []
-        try:
-            itext = self.itext_node
-        except XFormException:
-            return []
-        langs = []
-        for translation in itext.findall('{f}translation'):
-            langs.append(translation.attrib['lang'])
-        return langs
+
+        return self.translations().keys()
 
     def get_questions(self, langs, include_triggers=False,
-                      include_groups=False):
+                      include_groups=False, include_translations=False):
         """
         parses out the questions from the xform, into the format:
         [{"label": label, "tag": tag, "value": value}, ...]
@@ -738,7 +784,7 @@ class XForm(WrappedNode):
 
         control_nodes = self.get_control_nodes()
 
-        for node, path, repeat, group, items, is_leaf, data_type in control_nodes:
+        for node, path, repeat, group, items, is_leaf, data_type, relevant, required in control_nodes:
             excluded_paths.add(path)
             if not is_leaf and not include_groups:
                 continue
@@ -756,7 +802,12 @@ class XForm(WrappedNode):
                 "repeat": repeat,
                 "group": group,
                 "type": data_type,
+                "relevant": relevant,
+                "required": required == "true()"
             }
+
+            if include_translations:
+                question["translations"] = self.get_label_translations(node, langs)
 
             if items is not None:
                 options = []
@@ -766,10 +817,13 @@ class XForm(WrappedNode):
                         value = item.findtext('{f}value').strip()
                     except AttributeError:
                         raise XFormException("<item> (%r) has no <value>" % translation)
-                    options.append({
+                    option = {
                         'label': translation,
                         'value': value
-                    })
+                    }
+                    if include_translations:
+                        option['translations'] = self.get_label_translations(item, langs)
+                    options.append(option)
                 question['options'] = options
             questions.append(question)
 
@@ -784,7 +838,7 @@ class XForm(WrappedNode):
                     ][0]
                 except IndexError:
                     matching_repeat_context = None
-                questions.append({
+                question = {
                     "label": path,
                     "tag": "hidden",
                     "value": path,
@@ -792,7 +846,11 @@ class XForm(WrappedNode):
                     "group": matching_repeat_context,
                     "type": "DataBindOnly",
                     "calculate": bind.attrib.get('calculate') if hasattr(bind, 'attrib') else None,
-                })
+                }
+                if include_translations:
+                    question["translations"] = {}
+
+                questions.append(question)
 
         return questions
 
@@ -818,6 +876,8 @@ class XForm(WrappedNode):
                     path = self.resolve_path(self.get_path(node), path_context)
                     bind = self.get_bind(path)
                     data_type = infer_vellum_type(node, bind)
+                    relevant = bind.attrib.get('relevant') if bind else None
+                    required = bind.attrib.get('required') if bind else None
                     skip = False
 
                     if tag == "group":
@@ -852,7 +912,7 @@ class XForm(WrappedNode):
                     if not skip:
                         control_nodes.append((node, path, repeat_context,
                                               group_context, items, is_leaf,
-                                              data_type))
+                                              data_type, relevant, required))
                     if recursive_kwargs:
                         for_each_control_node(**recursive_kwargs)
 
@@ -1048,17 +1108,13 @@ class XForm(WrappedNode):
         # necessary to make casexml work
         transformation()
 
+    @requires_itext()
     def set_default_language(self, lang):
-        try:
-            itext_node = self.itext_node
-        except XFormException:
-            return
-        else:
-            for translation in itext_node.findall('{f}translation'):
-                if translation.attrib.get('lang') == lang:
-                    translation.attrib['default'] = ""
-                else:
-                    translation.attrib.pop('default', None)
+        for this_lang, translation in self.translations().items():
+            if this_lang == lang:
+                translation.attrib['default'] = ""
+            else:
+                translation.attrib.pop('default', None)
 
     def set_version(self, version):
         """set the form's version attribute"""
@@ -1169,11 +1225,7 @@ class XForm(WrappedNode):
 
             if 'open_case' in actions:
                 open_case_action = actions['open_case']
-                case_id = 'uuid()'
-                if not (hasattr(module, 'parent_select') and module.parent_select.active) and \
-                        form.is_case_list_form:
-                    case_id = session_var(CASE_ID)
-
+                case_id = session_var(form.session_var_for_action('open_case'))
                 case_block.add_create_block(
                     relevance=self.action_relevance(open_case_action.condition),
                     case_name=open_case_action.name_path,
@@ -1230,10 +1282,12 @@ class XForm(WrappedNode):
                         '/{x}'.join(subcase.repeat_context.split('/'))[1:]
                     )
                     nest = repeat_contexts[subcase.repeat_context] > 1
+                    case_id = 'uuid()'
                 else:
                     base_path = ''
                     parent_node = self.data_node
                     nest = True
+                    case_id = session_var(form.session_var_for_action('subcase', i))
 
                 if nest:
                     name = 'subcase_%s' % i
@@ -1253,6 +1307,7 @@ class XForm(WrappedNode):
                     delay_case_id=bool(subcase.repeat_context),
                     autoset_owner_id=autoset_owner_id_for_subcase(subcase),
                     has_case_sharing=form.get_app().case_sharing,
+                    case_id=case_id
                 )
 
                 subcase_block.add_update_block(subcase.case_properties)
@@ -1345,10 +1400,25 @@ class XForm(WrappedNode):
             None
         )
 
-        has_schedule = form.get_module().has_schedule and form.schedule and form.schedule.anchor
+        module = form.get_module()
+        has_schedule = module.has_schedule and form.schedule and form.schedule.anchor
 
-        for action in form.actions.load_update_cases:
-            session_case_id = CaseIDXPath(session_var(action.case_session_var))
+        adjusted_datums = {}
+        if module.root_module and module.root_module.module_type == 'basic':
+            # for child modules the session variable for a case may have been
+            # changed to match the parent module.
+            from corehq.apps.app_manager.suite_xml import SuiteGenerator
+            gen = SuiteGenerator(form.get_app())
+            datums_meta, _ = gen.get_datum_meta_assertions_advanced(module, form)
+            adjusted_datums = {
+                getattr(meta['action'], 'id', None): meta['datum'].id
+                for meta in datums_meta
+                if meta['action']
+            }
+
+        for action in form.actions.get_load_update_actions():
+            var_name = adjusted_datums.get(action.id, action.case_session_var)
+            session_case_id = CaseIDXPath(session_var(var_name))
             if action.preload:
                 self.add_casedb()
                 for property, nodeset in action.preload.items():
@@ -1411,16 +1481,10 @@ class XForm(WrappedNode):
 
             return path, subcase_node
 
-        case_registration_action = None
-        if form.is_case_list_form:
-            case_registration_action = form.get_registration_actions()[0]
-
-        for action in form.actions.open_cases:
+        for action in form.actions.get_open_actions():
             check_case_type(action)
 
-            case_id = 'uuid()'
-            if case_registration_action == action:
-                case_id = session_var(action.case_session_var)
+            case_id = 'uuid()' if action.repeat_context else session_var(action.case_session_var)
 
             path, subcase_node = get_action_path(action)
 
@@ -1946,130 +2010,130 @@ VELLUM_TYPES = {
         'tag': 'input',
         'type': 'intent',
         'icon': 'icon-vellum-android-intent',
-        'icon_bs3': 'fcc-fd-android-intent',
+        'icon_bs3': 'fcc fcc-fd-android-intent',
     },
     "Audio": {
         'tag': 'upload',
         'media': 'audio/*',
         'type': 'binary',
         'icon': 'icon-vellum-audio-capture',
-        'icon_bs3': 'fcc-fd-audio-capture',
+        'icon_bs3': 'fcc fcc-fd-audio-capture',
     },
     "Barcode": {
         'tag': 'input',
         'type': 'barcode',
         'icon': 'icon-vellum-android-intent',
-        'icon_bs3': 'fcc-fd-android-intent',
+        'icon_bs3': 'fcc fcc-fd-android-intent',
     },
     "DataBindOnly": {
         'icon': 'icon-vellum-variable',
-        'icon_bs3': 'fcc-fd-data',
+        'icon_bs3': 'fcc fcc-fd-variable',
     },
     "Date": {
         'tag': 'input',
         'type': 'xsd:date',
         'icon': 'icon-calendar',
-        'icon_bs3': 'fd-question',
+        'icon_bs3': 'fa fa-calendar',
     },
     "DateTime": {
         'tag': 'input',
         'type': 'xsd:datetime',
         'icon': 'icon-vellum-datetime',
-        'icon_bs3': 'fcc-fd-datetime',
+        'icon_bs3': 'fcc fcc-fd-datetime',
     },
     "Double": {
         'tag': 'input',
         'type': 'xsd:double',
         'icon': 'icon-vellum-decimal',
-        'icon_bs3': 'fcc-fd-decimal',
+        'icon_bs3': 'fcc fcc-fd-decimal',
     },
     "FieldList": {
         'tag': 'group',
         'appearance': 'field-list',
         'icon': 'icon-reorder',
-        'icon_bs3': 'fd-question',
+        'icon_bs3': 'fa fa-bars',
     },
     "Geopoint": {
         'tag': 'input',
         'type': 'geopoint',
         'icon': 'icon-map-marker',
-        'icon_bs3': 'fd-question',
+        'icon_bs3': 'fa fa-map-marker',
     },
     "Group": {
         'tag': 'group',
         'icon': 'icon-folder-open',
-        'icon_bs3': 'fd-question',
+        'icon_bs3': 'fa fa-folder-open',
     },
     "Image": {
         'tag': 'upload',
         'media': 'image/*',
         'type': 'binary',
         'icon': 'icon-camera',
-        'icon_bs3': 'fd-question',
+        'icon_bs3': 'fa fa-camera',
     },
     "Int": {
         'tag': 'input',
         'type': ('xsd:int', 'xsd:integer'),
         'icon': 'icon-vellum-numeric',
-        'icon_bs3': 'fcc-fd-numeric',
+        'icon_bs3': 'fcc fcc-fd-numeric',
     },
     "Long": {
         'tag': 'input',
         'type': 'xsd:long',
         'icon': 'icon-vellum-long',
-        'icon_bs3': 'fcc-fd-long',
+        'icon_bs3': 'fcc fcc-fd-long',
     },
     "MSelect": {
         'tag': 'select',
         'icon': 'icon-vellum-multi-select',
-        'icon_bs3': 'fcc-fd-multi-select',
+        'icon_bs3': 'fcc fcc-fd-multi-select',
     },
     "PhoneNumber": {
         'tag': 'input',
         'type': ('xsd:string', None),
         'appearance': 'numeric',
         'icon': 'icon-signal',
-        'icon_bs3': 'fd-question',
+        'icon_bs3': 'fa fa-signal',
     },
     "Repeat": {
         'tag': 'repeat',
         'icon': 'icon-retweet',
-        'icon_bs3': 'fd-question',
+        'icon_bs3': 'fa fa-retweet',
     },
     "Secret": {
         'tag': 'secret',
         'type': ('xsd:string', None),
         'icon': 'icon-key',
-        'icon_bs3': 'fd-question',
+        'icon_bs3': 'fa fa-key',
     },
     "Select": {
         'tag': 'select1',
         'icon': 'icon-vellum-single-select',
-        'icon_bs3': 'fcc-fd-single-select',
+        'icon_bs3': 'fcc fcc-fd-single-select',
     },
     "Text": {
         'tag': 'input',
         'type': ('xsd:string', None),
         'icon': "icon-vellum-text",
-        'icon_bs3': 'fcc-fd-text',
+        'icon_bs3': 'fcc fcc-fd-text',
     },
     "Time": {
         'tag': 'input',
         'type': 'xsd:time',
         'icon': 'icon-time',
-        'icon_bs3': 'fd-question',
+        'icon_bs3': 'a fa-clock-o',
     },
     "Trigger": {
         'tag': 'trigger',
         'icon': 'icon-tag',
-        'icon_bs3': 'fd-question',
+        'icon_bs3': 'fa fa-tag',
     },
     "Video": {
         'tag': 'upload',
         'media': 'video/*',
         'type': 'binary',
         'icon': 'icon-facetime-video',
-        'icon_bs3': 'fd-question',
+        'icon_bs3': 'fa fa-video-camera',
     },
 }
 

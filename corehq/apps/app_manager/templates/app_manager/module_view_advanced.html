@@ -13,14 +13,12 @@
             {% trans "Parent Module" %}
         </label>
         <div class="controls">
-            {% if edit %}
-                <select type="text" name="root_module_id" data-value="{{ module.root_module_id}}">
-				<option value="">{% trans "No Parent" %}</option>
-                {% for module in app.modules %}
-					<option value="{{module.unique_id}}">{{ module.name|trans:langs }}</option>
-                {% endfor %}
-                </select>
-            {% endif %}
+            <select type="text" name="root_module_id" data-value="{{ module.root_module_id}}">
+            <option value="">{% trans "No Parent" %}</option>
+            {% for module in valid_parent_modules %}
+                <option value="{{module.unique_id}}">{{ module.name|trans:langs }}</option>
+            {% endfor %}
+            </select>
             <!-- need a js util to get module name by unique id -->
         </div>
     </div>

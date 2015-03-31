@@ -283,7 +283,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                 ungettext(
                     "You have %(num_fix)s Lookup Table set up. Selecting this "
                     "plan will delete this Lookup Table.",
-                    "You have $(num_fix)s Lookup Tables set up. Selecting "
+                    "You have %(num_fix)s Lookup Tables set up. Selecting "
                     "this plan will delete these Lookup Tables.",
                     num_fixtures
                 ) % {'num_fix': num_fixtures}

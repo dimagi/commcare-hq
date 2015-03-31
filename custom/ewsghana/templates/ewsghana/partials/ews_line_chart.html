@@ -1,46 +1,6 @@
 {% load hq_shared_tags %}
 <script src='{% static 'hqadmin/js/nvd3_charts_helper.js' %}' type='text/javascript'></script>
 <script type="text/javascript">
-    function addCheckboxes() {
-        d3.selectAll(chart_id + ' .nv-series').append("foreignObject")
-                .attr("x", -25)
-                .attr("y", -10)
-                .attr("width", 20)
-                .attr("height", 20);
-
-        $("foreignObject").append('<input type="checkbox" checked="checked">');
-
-        $(".nv-series").click(function(){
-            setTimeout(function() {
-                $(".nv-series").each(function() {
-                    if(/(^|\s)disabled(\s|$)/.test($(this).attr("class"))) {
-                        $(this).find("input").prop('checked', false);
-                    } else {
-                        $(this).find("input").prop('checked', true);
-                    }
-                });
-            }, 100);
-        });
-    }
-
-    $('#selection_pane_apply').on('click', function(e) {
-        e.preventDefault();
-        var data = JSON.parse(JSON.stringify(chart_data));
-        var productCodes = [];
-        $("#report_table_product_selection_pane input:not(:checked)").each(function() {
-            productCodes.push($(this).attr('value'));
-        });
-
-        for(var i = 0; i < data.length; i++) {
-            data = jQuery.grep(data, function(value) {
-                return jQuery.inArray(value.key, productCodes) === -1
-            });
-        }
-        d3.select(chart_id + ' svg')
-                .datum(data)
-                .transition().duration(500).call(chart);
-    });
-
     $inventory_filter = $('#inventory_filter');
     $inventory_filter.createDefaultDateRangePicker();
     $('#inventory_filter_btn').on('click', function(e) {
@@ -59,12 +19,12 @@
                 location_id: '{{ location_id }}'
             },
             success: function(response) {
-                $(chart_id + ' svg').empty();
+                $(line_chart_id + ' svg').empty();
 
-                d3.select(chart_id + ' svg')
+                d3.select(line_chart_id + ' svg')
                         .datum(response)
-                        .transition().duration(500).call(chart);
-                addCheckboxes();
+                        .transition().duration(500).call(line_chart);
+                show_hide_line_chart_data();
                 $('#inventory_filter_btn').removeAttr('disabled');
                 $('.hq-loading').fadeOut();
             },
@@ -76,68 +36,71 @@
     nv.addGraph(function() {
         var chart_config = {{ chart.config_dict|JSON }};
         {% if chart.data_needs_formatting %}
-            chart_data = formatDataForLineGraph({{ chart.data|JSON }});
+            line_chart_data = formatDataForLineGraph({{ chart.data|JSON }});
         {% else %}
-            chart_data = {{ chart.data|JSON }};
+            line_chart_data = {{ chart.data|JSON }};
         {% endif %}
-        chart_id = '#{{ chart_id }}';
+        line_chart_id = '#{{ chart_id }}';
 
-        $(chart_id).show();
+        $(line_chart_id).show();
 
-        chart = nv.models.lineChart();
+        line_chart = nv.models.lineChart();
 
-        chart.xAxis.axisLabel({{ chart.x_axis.label|JSON }});
+        line_chart.xAxis.axisLabel({{ chart.x_axis.label|JSON }});
         {% if chart.x_axis.format %}
-            chart.xAxis.tickFormat(d3.format({{ chart.x_axis.format|JSON }}));
+            line_chart.xAxis.tickFormat(d3.format({{ chart.x_axis.format|JSON }}));
         {% else %}
             {% if chart.x_axis_uses_dates %}
-                chart.xAxis.tickFormat(function(d){return d3.time.format.utc('%b %d' + linebreak_txt + '%Y')(new Date(d));});
+                line_chart.xAxis.tickFormat(function(d){return d3.time.format.utc('%b %d' + linebreak_txt + '%Y')(new Date(d));});
             {% endif %}
         {% endif %}
 
         //Modify x-values to date-objects and set tickFormat
         {% if chart.x_axis.dateFormat %}
-            for (i=0 ; i<chart_data.length; i++){
-                single_chart_data = chart_data[i].values;
-                for (j=0; j<single_chart_data.length; j++){
-                    date = single_chart_data[j].x;
-                    single_chart_data[j].x = new Date(date).getTime();
+            for (i=0 ; i<line_chart_data.length; i++){
+                single_line_chart_data = line_chart_data[i].values;
+                for (j=0; j<single_line_chart_data.length; j++){
+                    date = single_line_chart_data[j].x;
+                    single_line_chart_data[j].x = new Date(date).getTime();
                 }
             }
-            chart.xAxis.tickFormat(function(d) {return d3.time.format({{ chart.x_axis.dateFormat|JSON }})(new Date(d)); })
+            line_chart.xAxis.tickFormat(function(d) {return d3.time.format({{ chart.x_axis.dateFormat|JSON }})(new Date(d)); })
         {% endif %}
 
-        chart.yAxis.axisLabel({{ chart.y_axis.label|JSON }});
+        line_chart.yAxis.axisLabel({{ chart.y_axis.label|JSON }});
         {% if chart.y_axis.format %}
-            chart.yAxis.tickFormat(d3.format({{ chart.y_axis.format|JSON }}));
+            line_chart.yAxis.tickFormat(d3.format({{ chart.y_axis.format|JSON }}));
         {% endif %}
 
-        chart.margin(chart_config.margin);
-        chart.tooltips(chart_config.tooltips);
+        line_chart.margin(chart_config.margin);
+        line_chart.tooltips(chart_config.tooltips);
 
-        d3.select(chart_id + ' svg')
-                .datum(chart_data)
-                .transition().duration(500).call(chart);
+        line_chart.legend.dispatch.legendClick = function(d, i){
+        };
 
-        nv.utils.windowResize(chart.update);
+        d3.select(line_chart_id + ' svg')
+                .datum(line_chart_data)
+                .transition().duration(500).call(line_chart);
+
+        nv.utils.windowResize(line_chart.update);
 
         var updateLineBreaks = function() {
-            d3.selectAll(chart_id + ' g.nv-x.nv-axis g text').each(insertLinebreaks);
+            d3.selectAll(line_chart_id + ' g.nv-x.nv-axis g text').each(insertLinebreaks);
         };
 
         {% if chart.x_axis_uses_dates %}
             // hacks for adding line breaks whenever the graphs are redrawn
             updateLineBreaks();
-            $(document).on('click', chart_id + ' .nv-series', function(){
+            $(document).on('click', line_chart_id + ' .nv-series', function(){
                 updateLineBreaks();
             });
             nv.utils.windowResize(function(e) {
-                chart.update(e);
+                line_chart.update(e);
                 updateLineBreaks();
             });
         {% endif %}
 
-        addCheckboxes();
-        return chart;
+        show_hide_line_chart_data();
+        return line_chart;
     });
 </script>

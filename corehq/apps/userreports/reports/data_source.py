@@ -54,22 +54,24 @@ class ConfigurableReportDataSource(SqlData):
         return self.aggregation_columns
 
     @property
-    @memoized
     def columns(self):
-        return [col.get_sql_column() for col in self.column_configs]
+        return [c for sql_conf in self.sql_column_configs for c in sql_conf.columns]
+
+    @property
+    @memoized
+    def sql_column_configs(self):
+        return [col.get_sql_column_config(self.config) for col in self.column_configs]
+
+    @property
+    def column_warnings(self):
+        return [w for sql_conf in self.sql_column_configs for w in sql_conf.warnings]
 
     @memoized
     def get_data(self, slugs=None):
         try:
             ret = super(ConfigurableReportDataSource, self).get_data(slugs)
             for report_column in self.column_configs:
-                if report_column.format == 'percent_of_total':
-                    column_name = report_column.get_sql_column().view.name
-                    total = sum(row[column_name] for row in ret)
-                    for row in ret:
-                        row[column_name] = '{:.0%}'.format(
-                            float(row[column_name]) / total
-                        )
+                report_column.format_data(ret)
         except (
             ColumnNotFoundException,
             TableNotFoundException,
@@ -78,7 +80,10 @@ class ConfigurableReportDataSource(SqlData):
             raise UserReportsError(e.message)
         # arbitrarily sort by the first column in memory
         # todo: should get pushed to the database but not currently supported in sqlagg
-        return sorted(ret, key=lambda x: x[self.column_configs[0].report_column_id])
+        return sorted(ret, key=lambda x: x.get(
+            self.column_configs[0].column_id,
+            next(x.itervalues())
+        ))
 
     def get_total_records(self):
         return len(self.get_data())

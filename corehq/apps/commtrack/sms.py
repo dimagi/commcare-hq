@@ -3,7 +3,7 @@ from django.utils.translation import ugettext_lazy as _
 from corehq.apps.commtrack.const import RequisitionActions
 from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack import const
-from corehq.apps.sms.api import send_sms_to_verified_number
+from corehq.apps.sms.api import send_sms_to_verified_number, MessageMetadata
 from corehq import toggles
 from lxml import etree
 import logging
@@ -599,7 +599,7 @@ def send_confirmation(v, data):
 
     static_loc = data['location']
     location_name = static_loc.name
-
+    metadata = MessageMetadata(location_id=static_loc.get_id)
     tx_by_action = map_reduce(lambda tx: [(tx.action_config(C).name,)], data=data['transactions'], include_docs=True)
     def summarize_action(action, txs):
         return '%s %s' % (txs[0].action_config(C).keyword.upper(), ' '.join(sorted(tx.fragment() for tx in txs)))
@@ -610,4 +610,4 @@ def send_confirmation(v, data):
         ' '.join(sorted(summarize_action(a, txs) for a, txs in tx_by_action.iteritems()))
     )
 
-    send_sms_to_verified_number(v, msg)
+    send_sms_to_verified_number(v, msg, metadata=metadata)

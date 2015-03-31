@@ -1,0 +1,75 @@
+.accordion-inner {
+    width: 100%;
+}
+
+svg {
+    overflow: visible;
+}
+
+.span6.hide {
+    width: 100% !important;
+}
+
+.nv-controlsWrap, .icon-question-sign, .accordion-heading, br, .row h4 {
+    display: none;
+}
+
+th {
+    font-weight: bold;
+}
+
+td {
+    font-size: small !important;
+}
+
+.mother_child_report table, .mother_child_report .row {
+    width: 8cm !important;
+    margin-left: 0.5cm;
+    margin-bottom: 5px;
+    float:left;
+    display: inline-block;
+    page-break-inside: avoid;
+}
+
+.mother_child_report #report_table_children_feeding_details,
+.mother_child_report #report_table_Child_health_indicators {
+    margin-top: -1cm;
+}
+
+.mother_child_report #report_table_children_deaths {
+    margin-left: 1cm;
+}
+
+.mother_report table, .child_report table {
+    width: 12cm;
+    margin-left: 0.5cm;
+    margin-bottom: 30px;
+}
+
+.mother_report table + .row, .mother_report .row + .row, .child_report table + .row, .child_report .row + .row {
+    width: 8cm;
+    margin-left: 2cm;
+}
+
+.mother_report .row, .mother_report .table-nonfluid,
+.child_report .row, .child_report .table-nonfluid{
+    display: inline-block;
+    float: left;
+    page-break-inside: avoid;
+}
+
+.mother_report, .mother_report .accordion, .mother_report .accordion-inner, .mother_report .accordion-body,
+.child_report, .child_report .accordion, .child_report .accordion-inner, .child_report .accordion-body {
+    display: inline-block;
+    float: left;
+    margin: 0;
+}
+
+@page {
+    size: A4 landscape;
+    margin: 4.5mm;
+}
+
+body {
+    margin: 0;
+}

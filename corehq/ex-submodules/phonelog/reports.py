@@ -2,7 +2,6 @@ import json
 import logging
 from django.db.models import Count, Q
 from django.utils import html
-import pytz
 from corehq.apps.reports.datatables.DTSortType import DATE
 from corehq.apps.reports.filters.devicelog import (
     DeviceLogDevicesFilter,
@@ -20,11 +19,10 @@ from corehq.apps.reports.datatables import (
 )
 from corehq.apps.reports.util import _report_user_dict, SimplifiedUserInfo
 from corehq.apps.users.models import CommCareUser
+from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.timezones import utils as tz_utils
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop
-from dimagi.utils.timezones.utils import adjust_datetime_to_timezone
 from .models import DeviceReportEntry
 from .utils import device_users_by_xform
 
@@ -183,6 +181,7 @@ class DeviceLogDetailsReport(PhonelogReport):
     }
     default_rows = 100
     default_sort = {'date': 'asc'}
+    inclusive = False
 
     @property
     def headers(self):
@@ -277,8 +276,10 @@ class DeviceLogDetailsReport(PhonelogReport):
             )
         elif self.goto_key:
             log = self.goto_log
-            date = adjust_datetime_to_timezone(log.date, from_tz=pytz.utc, to_tz=self.timezone)
-            new_title = "Last %s Logs <small>before %s</small>" % (self.limit, date.strftime("%b %d, %Y %H:%M"))
+            new_title = "Last %s Logs <small>before %s</small>" % (
+                self.limit,
+                ServerTime(log.date).user_time(self.timezone).ui_string()
+            )
         return mark_safe(new_title)
 
     @property
@@ -327,9 +328,8 @@ class DeviceLogDetailsReport(PhonelogReport):
 
         self.total_records = logs.count()
         for log in logs.order_by(self.ordering)[paged]:
-            date = str(log.date)
-            date_fmt = tz_utils.string_to_prertty_time(
-                date, self.timezone, fmt="%b %d, %Y %H:%M:%S")
+            ui_date = (ServerTime(log.date)
+                        .user_time(self.timezone).ui_string())
 
             username = log.username
             username_fmt = '<a href="%(url)s">%(username)s</a>' % {
@@ -392,7 +392,7 @@ class DeviceLogDetailsReport(PhonelogReport):
                 '<i class="icon icon-info-sign"></i></a>'
             ) % (version.split(' ')[0], html.escape(version))
 
-            row_set.append([date_fmt, log_tag_format, username_fmt,
+            row_set.append([ui_date, log_tag_format, username_fmt,
                             device_users_fmt, device_fmt, log.msg, ver_format])
         return row_set
 

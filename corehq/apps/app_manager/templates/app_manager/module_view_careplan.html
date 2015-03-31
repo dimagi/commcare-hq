@@ -31,18 +31,10 @@
             {% trans "Menu Mode" %}
         </label>
         <div class="controls">
-            {% if edit %}
-                <select type="text" name="display_separately" data-value="{% if module.display_separately %}true{% else %}false{% endif %}">
-                    <option value="false">{% trans "Display careplan inside attached module" %}</option>
-                    <option value="true">{% trans "Display careplan separately" %}</option>
-                </select>
-            {% else %}
-                {% if not module.display_separately %}
-                    {% trans "Display careplan inside attached module" %}
-                {% else %}
-                    {% trans "Display careplan separately" %}
-                {% endif %}
-            {% endif %}
+            <select type="text" name="display_separately" data-value="{% if module.display_separately %}true{% else %}false{% endif %}">
+                <option value="false">{% trans "Display careplan inside attached module" %}</option>
+                <option value="true">{% trans "Display careplan separately" %}</option>
+            </select>
         </div>
     </div>
 {% endblock %}

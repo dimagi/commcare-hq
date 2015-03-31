@@ -20,6 +20,7 @@ class FormQuestionOption(JsonObject):
 
 class FormQuestion(JsonObject):
     label = StringProperty()
+    translations = DictProperty(exclude_if_none=True)
     tag = StringProperty()
     type = StringProperty(choices=VELLUM_TYPES.keys())
     value = StringProperty()
@@ -27,6 +28,8 @@ class FormQuestion(JsonObject):
     group = StringProperty()
     options = ListProperty(FormQuestionOption, exclude_if_none=True)
     calculate = StringProperty()
+    relevant = StringProperty()
+    required = BooleanProperty()
 
     @property
     def icon(self):

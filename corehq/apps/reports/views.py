@@ -1,4 +1,5 @@
 from StringIO import StringIO
+from copy import copy
 import os
 import json
 import tempfile
@@ -8,6 +9,8 @@ import cStringIO
 import itertools
 from datetime import datetime, timedelta, date
 from urllib2 import URLError
+from corehq.util.timezones.utils import get_timezone_for_user
+from dimagi.utils.decorators.memoized import memoized
 from unidecode import unidecode
 from dateutil.parser import parse
 
@@ -20,6 +23,7 @@ from django.core.urlresolvers import reverse
 from django.http import (HttpResponseRedirect,
     HttpResponseBadRequest, Http404, HttpResponseForbidden)
 from django.shortcuts import render
+from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import (require_http_methods,
@@ -28,6 +32,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from django.core.files.base import ContentFile
 from django.http.response import HttpResponse, HttpResponseNotFound
 from django.views.decorators.http import require_GET
+from django.views.generic import View
 import pytz
 from casexml.apps.stock.models import StockTransaction
 from corehq import toggles, Domain
@@ -35,6 +40,7 @@ from casexml.apps.case.cleanup import rebuild_case, close_case
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 from corehq.apps.reports.display import FormType
+from corehq.apps.reports.forms import SavedReportConfigForm
 from corehq.util.couch import get_document_or_404
 from corehq.util.view_utils import absolute_reverse
 
@@ -44,11 +50,10 @@ from couchexport.exceptions import (
     CouchExportException,
     SchemaMismatchException
 )
-from couchexport.groupexports import rebuild_export
 from couchexport.models import FakeSavedExportSchema, SavedBasicExport
 from couchexport.shortcuts import (export_data_shared, export_raw_data,
     export_response)
-from couchexport.tasks import rebuild_schemas
+from couchexport.tasks import rebuild_schemas, rebuild_export_task
 from couchexport.util import SerializableFunction
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import wrapped_docs
@@ -77,7 +82,7 @@ from filters.users import UserTypeFilter
 from corehq.apps.domain.decorators import (login_or_digest)
 from corehq.apps.export.custom_export_helpers import CustomExportHelper
 from corehq.apps.groups.models import Group
-from corehq.apps.hqcase.export import export_cases_and_referrals
+from corehq.apps.hqcase.export import export_cases
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher
 from corehq.apps.reports.models import (
     ReportConfig,
@@ -416,11 +421,14 @@ def hq_download_saved_export(req, domain, export_id):
 def hq_update_saved_export(req, domain):
     group_id = req.POST['group_export_id']
     index = int(req.POST['index'])
-    group_config = HQGroupExportConfiguration.get(group_id)
-    assert domain == group_config.domain
+    group_config = get_document_or_404(HQGroupExportConfiguration, domain, group_id)
     config, schema = group_config.all_exports[index]
-    rebuild_export(config, schema, 'couch')
-    messages.success(req, _('The data for {} has been refreshed!').format(config.name))
+    rebuild_export_task.delay(group_id, index)
+    messages.success(
+        req,
+        _('Data update for {} has started and the saved export will be automatically updated soon. '
+          'Please refresh the page periodically to check the status.').format(config.name)
+    )
     return HttpResponseRedirect(reverse(DataInterfaceDispatcher.name(),
                                         args=[domain, req.POST['report_slug']]))
 
@@ -479,65 +487,80 @@ def touch_saved_reports_views(user, domain):
     ReportNotification.by_domain_and_owner(domain, user._id, limit=1, stale=False)
 
 
-@login_and_domain_required
-@require_POST
-def add_config(request, domain=None):
-    # todo: refactor this into a django form
-    from datetime import datetime
-    user_id = request.couch_user._id
+class AddSavedReportConfigView(View):
+    name = 'add_report_config'
 
-    POST = json.loads(request.body)
-    if 'name' not in POST or not POST['name']:
-        return HttpResponseBadRequest()
+    @method_decorator(login_and_domain_required)
+    def post(self, request, domain, *args, **kwargs):
+        self.domain = domain
 
-    user_configs = ReportConfig.by_domain_and_owner(domain, user_id)
-    if not POST.get('_id') and POST['name'] in [c.name for c in user_configs]:
-        return HttpResponseBadRequest()
+        if not self.saved_report_config_form.is_valid():
+            return HttpResponseBadRequest()
 
-    to_date = lambda s: datetime.strptime(s, '%Y-%m-%d').date() if s else s
-    try:
-        POST['start_date'] = to_date(POST['start_date'])
-        POST['end_date'] = to_date(POST['end_date'])
-    except ValueError:
-        # invalidly formatted date input
-        return HttpResponseBadRequest()
+        update_config_data = copy(self.saved_report_config_form.cleaned_data)
+        del update_config_data['_id']
+        update_config_data.update({
+            'filters': self.filters,
+        })
+        for field in self.config.properties().keys():
+            if field in update_config_data:
+                setattr(self.config, field, update_config_data[field])
 
-    date_range = POST.get('date_range')
-    if date_range == 'last7':
-        POST['days'] = 7
-    elif date_range == 'last30':
-        POST['days'] = 30
-    elif POST.get('days'):
-        POST['days'] = int(POST['days'])
+        # remove start and end date if the date range is "last xx days"
+        if (
+            self.saved_report_config_form.cleaned_data['days']
+            or self.saved_report_config_form.cleaned_data['date_range'] == 'lastmonth'
+        ):
+            if "start_date" in self.config:
+                delattr(self.config, "start_date")
+            if "end_date" in self.config:
+                delattr(self.config, "end_date")
 
-    exclude_filters = ['startdate', 'enddate']
-    for field in exclude_filters:
-        POST['filters'].pop(field, None)
+        self.config.save()
+        ReportsTab.clear_dropdown_cache(request, self.domain)
+        touch_saved_reports_views(request.couch_user, self.domain)
 
-    config = ReportConfig.get_or_create(POST.get('_id', None))
+        return json_response(self.config)
 
-    if config.owner_id:
-        # in case a user maliciously tries to edit another user's config
-        assert config.owner_id == user_id
-    else:
-        config.domain = domain
-        config.owner_id = user_id
+    @property
+    @memoized
+    def config(self):
+        config = ReportConfig.get_or_create(
+            self.saved_report_config_form.cleaned_data['_id']
+        )
+        if config.owner_id:
+            # in case a user maliciously tries to edit another user's config
+            assert config.owner_id == self.user_id
+        else:
+            config.domain = self.domain
+            config.owner_id = self.user_id
+        return config
 
-    for field in config.properties().keys():
-        if field in POST:
-            setattr(config, field, POST[field])
+    @property
+    @memoized
+    def saved_report_config_form(self):
+        return SavedReportConfigForm(
+            self.domain,
+            self.user_id,
+            self.post_data
+        )
 
-    if POST.get('days') or date_range == 'lastmonth':  # remove start and end date if the date range is "last xx days"
-        if "start_date" in config:
-            delattr(config, "start_date")
-        if "end_date" in config:
-            delattr(config, "end_date")
+    @property
+    def filters(self):
+        filters = copy(self.post_data.get('filters', {}))
+        for field in ['startdate', 'enddate']:
+            if field in filters:
+                del filters[field]
+        return filters
 
-    config.save()
-    ReportsTab.clear_dropdown_cache(request, domain)
-    touch_saved_reports_views(request.couch_user, domain)
+    @property
+    def post_data(self):
+        return json.loads(self.request.body)
 
-    return json_response(config)
+    @property
+    def user_id(self):
+        return self.request.couch_user._id
+
 
 @login_and_domain_required
 @datespan_default
@@ -663,11 +686,17 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
 
     user_id = request.couch_user._id
 
-    configs = ReportConfig.by_domain_and_owner(domain, user_id)
-    config_choices = [(c._id, c.full_name) for c in configs if c.report and c.report.emailable]
+    configs = [
+        c for c in ReportConfig.by_domain_and_owner(domain, user_id)
+        if c.report and c.report.emailable
+    ]
 
-    if not config_choices:
+    if not configs:
         return render(request, template, context)
+
+    display_privacy_disclaimer = any(c.is_configurable_report for c in configs)
+
+    config_choices = [(c._id, c.full_name) for c in configs]
 
     web_users = WebUser.view('users/web_users_by_domain', reduce=False,
                                key=domain, include_docs=True).all()
@@ -693,7 +722,11 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
     initial['recipient_emails'] = ', '.join(initial['recipient_emails'])
 
     kwargs = {'initial': initial}
-    args = (request.POST,) if request.method == "POST" else ()
+    args = (
+        (display_privacy_disclaimer, request.POST)
+        if request.method == "POST"
+        else (display_privacy_disclaimer,)
+    )
     form = ScheduledReportForm(*args, **kwargs)
 
     form.fields['config_ids'].choices = config_choices
@@ -847,7 +880,7 @@ def view_scheduled_report(request, domain, scheduled_report_id):
 @login_and_domain_required
 @require_GET
 def case_details(request, domain, case_id):
-    timezone = util.get_timezone(request.couch_user, domain)
+    timezone = get_timezone_for_user(request.couch_user, domain)
 
     try:
         case = get_document_or_404(CommCareCase, domain, case_id)
@@ -1043,7 +1076,7 @@ def generate_case_export_payload(domain, include_closed, format, group, user_fil
     fd, path = tempfile.mkstemp()
     with os.fdopen(fd, 'wb') as file:
         workbook = WorkBook(file, format)
-        export_cases_and_referrals(
+        export_cases(
             domain,
             stream_cases(case_ids),
             workbook,
@@ -1099,7 +1132,7 @@ def download_cases(request, domain):
 
 
 def _get_form_context(request, domain, instance_id):
-    timezone = util.get_timezone(request.couch_user, domain)
+    timezone = get_timezone_for_user(request.couch_user, domain)
     instance = _get_form_or_404(instance_id)
     try:
         assert domain == instance.domain
@@ -1183,6 +1216,7 @@ def download_attachment(request, domain, instance_id):
     assert(domain == instance.domain)
     return couchforms_views.download_attachment(request, instance_id, attachment)
 
+
 @require_form_view_permission
 @require_permission(Permissions.edit_data)
 @require_POST
@@ -1228,6 +1262,7 @@ def archive_form(request, domain, instance_id):
 
     return HttpResponseRedirect(redirect)
 
+
 @require_form_view_permission
 @require_permission(Permissions.edit_data)
 def unarchive_form(request, domain, instance_id):
@@ -1243,6 +1278,17 @@ def unarchive_form(request, domain, instance_id):
     if not redirect:
         redirect = reverse('render_form_data', args=[domain, instance_id])
     return HttpResponseRedirect(redirect)
+
+
+@require_form_view_permission
+@require_permission(Permissions.edit_data)
+@require_POST
+def resave_form(request, domain, instance_id):
+    instance = _get_form_or_404(instance_id)
+    assert instance.domain == domain
+    XFormInstance.get_db().save_doc(instance.to_json())
+    messages.success(request, _("Form was successfully resaved. It should reappear in reports shortly."))
+    return HttpResponseRedirect(reverse('render_form_data', args=[domain, instance_id]))
 
 
 # Weekly submissions by xmlns

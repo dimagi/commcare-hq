@@ -7,14 +7,15 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.api import send_sms_to_verified_number
 from corehq.apps.users.models import CommCareUser
-from custom.ewsghana.alerts import ONGOING_NON_REPORTING, ONGOING_STOCKOUT_AT_SDP, ONGOING_STOCKOUT_AT_RMS,\
+from custom.ewsghana.alerts import ONGOING_NON_REPORTING, ONGOING_STOCKOUT_AT_SDP, ONGOING_STOCKOUT_AT_RMS, \
     REPORT_REMINDER, WEB_REMINDER, URGENT_NON_REPORTING, URGENT_STOCKOUT, COMPLETE_REPORT, INCOMPLETE_REPORT, \
-    BELOW_REORDER_LEVELS, ABOVE_THRESHOLD, WITHOUT_RECEIPTS
+    STOCKOUTS_MESSAGE, LOW_SUPPLY_MESSAGE, OVERSTOCKED_MESSAGE, RECEIPT_MESSAGE
 from django.core.mail import send_mail
-from custom.ewsghana.utils import send_test_message, get_reporting_types
+from custom.ewsghana.utils import ProductsReportHelper
+from custom.ewsghana.utils import send_test_message, get_reporting_types, can_receive_email
 import settings
-from corehq.apps.commtrack.models import CommtrackConfig
 from custom.ewsghana.models import EWSGhanaConfig
+from django.utils.translation import ugettext as _
 
 
 def send_alert(transactions, sp, user, message):
@@ -42,9 +43,9 @@ def on_going_process_user(user, test=False):
         return
 
     facilities = []
-    if user_location.location_type == 'district':
+    if user_location.location_type.name == 'district':
         facilities = user_location.get_children()
-    elif user_location.location_type == 'region':
+    elif user_location.location_type.name == 'region':
         facilities = SQLLocation.objects.filter(domain=user.domain,
                                                 parent__parent__location_id=user.location._id)
     fac = set()
@@ -66,7 +67,7 @@ def on_going_process_user(user, test=False):
             send_sms_to_verified_number(verified_number, message)
         else:
             send_test_message(verified_number, message)
-        if user.email:
+        if can_receive_email(user, verified_number):
             email = str(user.email)
             send_mail('ONGOING NON REPORTING', message, 'commcarehq-noreply@dimagi.com', [email])
 
@@ -89,9 +90,9 @@ def on_going_stockout_process_user(user, test=False):
         return
 
     facilities = []
-    if user_location.location_type == 'district':
+    if user_location.location_type.name == 'district':
         facilities = user_location.get_children()
-    elif user_location.location_type == 'region':
+    elif user_location.location_type.name == 'region':
         facilities = SQLLocation.objects.filter(domain=user.domain,
                                                 parent__parent__location_id=user.location._id)
 
@@ -105,23 +106,25 @@ def on_going_stockout_process_user(user, test=False):
             type="stockonhand",
             report__date__gte=date
         )
-        if stockouts.exists() and not stockouts.filter(stock_on_hand__ne=0).exists():
+        if stockouts.exists() and not stockouts.exclude(stock_on_hand=0).exists():
             fac.add(unicode(facility.name))
 
     if fac and user.get_verified_number():
-        if user_location.location_type == 'district':
+        if user_location.location_type.name == 'district':
             message = ONGOING_STOCKOUT_AT_SDP % " \n".join(fac)
-            send_sms_to_verified_number(user.get_verified_number(), message)
-            if user.email:
+            verified_number = user.get_verified_number()
+            send_sms_to_verified_number(verified_number, message)
+            if can_receive_email(user, verified_number):
                 email = str(user.email)
                 send_mail('ONGOING STOCKOUT AT SDP', message, 'commcarehq-noreply@dimagi.com', [email])
-        elif user_location.location_type == 'region':
+        elif user_location.location_type.name == 'region':
             message = ONGOING_STOCKOUT_AT_RMS % " \n".join(fac)
+            verified_number = user.get_verified_number()
             if not test:
-                send_sms_to_verified_number(user.get_verified_number(), message)
+                send_sms_to_verified_number(verified_number, message)
             else:
-                send_test_message(user.get_verified_number(), message)
-            if user.email:
+                send_test_message(verified_number, message)
+            if can_receive_email(user, verified_number):
                 email = str(user.email)
                 send_mail('ONGOING STOCKOUT AT RMS', message, 'commcarehq-noreply@dimagi.com', [email])
 
@@ -143,12 +146,12 @@ def urgent_non_reporting_process_user(user, test=False):
     if not user_location:
         return
     facilities = []
-    if user_location.location_type == 'district':
+    if user_location.location_type.name == 'district':
         facilities = user_location.get_children()
-    elif user_location.location_type == 'region':
+    elif user_location.location_type.name == 'region':
         facilities = SQLLocation.objects.filter(domain=user.domain,
                                                 parent__parent__location_id=user.location._id)
-    elif user_location.location_type == 'country':
+    elif user_location.location_type.name == 'country':
         facilities = SQLLocation.objects.filter(domain=user.domain,
                                                 parent__parent__parent__location_id=user.location._id)
     fac = set()
@@ -165,11 +168,12 @@ def urgent_non_reporting_process_user(user, test=False):
             no_rep += 1
     if fac and no_rep >= len(facilities) / 2 and user.get_verified_number():
         message = URGENT_NON_REPORTING % user.location.name
+        verified_number = user.get_verified_number()
         if not test:
-            send_sms_to_verified_number(user.get_verified_number(), message)
+            send_sms_to_verified_number(verified_number, message)
         else:
-            send_test_message(user.get_verified_number(), message)
-        if user.email:
+            send_test_message(verified_number, message)
+        if can_receive_email(user, verified_number):
             email = str(user.email)
             send_mail('URGENT NON REPORTING', message, 'commcarehq-noreply@dimagi.com', [email])
 
@@ -190,12 +194,12 @@ def urgent_stockout_process_user(user, test=False):
         return
 
     facilities = []
-    if user_location.location_type == 'district':
+    if user_location.location_type.name == 'district':
         facilities = user_location.get_children()
-    elif user_location.location_type == 'region':
+    elif user_location.location_type.name == 'region':
         facilities = SQLLocation.objects.filter(domain=user.domain,
                                                 parent__parent__location_id=user.location._id)
-    elif user_location.location_type == 'country':
+    elif user_location.location_type.name == 'country':
         facilities = SQLLocation.objects.filter(domain=user.domain,
                                                 parent__parent__parent__location_id=user.location._id)
     stocked_out_products = set()
@@ -219,12 +223,13 @@ def urgent_stockout_process_user(user, test=False):
             [unicode(product) for product in stocked_out_products]
         ))
         message = URGENT_STOCKOUT % (user_location.name, stockout_str)
+        verified_number = user.get_verified_number()
         if not test:
-            send_sms_to_verified_number(user.get_verified_number(), message)
+            send_sms_to_verified_number(verified_number, message)
         else:
-            send_test_message(user.get_verified_number(), message)
+            send_test_message(verified_number, message)
 
-        if user.email:
+        if can_receive_email(user, verified_number):
             email = str(user.email)
             send_mail('URGENT STOCKOUT', message, 'commcarehq-noreply@dimagi.com', [email])
 
@@ -238,10 +243,11 @@ def reminder_to_visit_website():
         for user in CommCareUser.by_domain(domain):
             thirteen_days_ago = datetime.datetime.now() - datetime.timedelta(weeks=13)
             if user.location and user.last_login < thirteen_days_ago and user.get_verified_number()\
-                    and user.location.location_type in ['district', 'region', 'country']:
+                    and user.location.location_type.name in ['district', 'region', 'country']:
                     message = WEB_REMINDER % user.name
-                    send_sms_to_verified_number(user.get_verified_number(), message)
-                    if user.email:
+                    verified_number = user.get_verified_number()
+                    send_sms_to_verified_number(verified_number, message)
+                    if can_receive_email(user, verified_number):
                         email = str(user.email)
                         send_mail('REMINDER TO VISIT WEBSITE', message, 'commcarehq-noreply@dimagi.com', [email])
 
@@ -272,12 +278,13 @@ def report_reminder_process_user(user, test=False):
     ).exists()
     if sp and not transaction_exists and user.get_verified_number():
         message = REPORT_REMINDER % (user.name, user.location.name)
+        verified_number = user.get_verified_number()
         if not test:
-            send_sms_to_verified_number(user.get_verified_number(), message)
+            send_sms_to_verified_number(verified_number, message)
         else:
-            send_test_message(user.get_verified_number(), message)
+            send_test_message(verified_number, message)
 
-        if user.email:
+        if can_receive_email(user, verified_number):
             email = str(user.email)
             send_mail('REPORT REMINDER', message, 'commcarehq-noreply@dimagi.com', [email])
 
@@ -294,7 +301,7 @@ def report_completion_check(user):
 
     if not missing_products:
         message = COMPLETE_REPORT
-        send_sms_to_verified_number(user.get_verified_number(), message)
+        send_sms_to_verified_number(user.get_verified_number(), message % user.username)
     elif missing_products:
         message = INCOMPLETE_REPORT % (user.name, user.location.name, ", ".join(sorted(missing_products)))
         send_sms_to_verified_number(user.get_verified_number(), message)
@@ -302,40 +309,66 @@ def report_completion_check(user):
 
 # sends overstock, understock, or SOH without receipts alerts
 def stock_alerts(transactions, user):
-    products_without_receipts = set()
-    products_above = set()
-    products_below = set()
-    sp = SupplyPointCase.get_by_location(user.location)
-    for i in range(0, len(transactions), 2):
-        if StockState.objects.filter(case_id=sp._id, product_id=transactions[i + 1].product_id).exists():
-            receipt = int(transactions[i].quantity)
-            stock = int(transactions[i + 1].quantity)
-            product = SQLProduct.objects.get(product_id=transactions[i].product_id).name
-            last_stock = StockState.objects.get(
-                case_id=sp._id, product_id=transactions[i].product_id).stock_on_hand
+    report_helper = ProductsReportHelper(user.location, transactions)
+    products_below = report_helper.low_supply()
+    stockouts = report_helper.stockouts()
+    overstocked = report_helper.overstocked()
+    receipts = report_helper.receipts()
+    message = ""
+    super_message = ""
 
-            stock_levels_config = CommtrackConfig.for_domain(user.domain).stock_levels_config
-            over_stock_threshold = stock_levels_config.overstock_threshold
-            under_stock_threshold = stock_levels_config.understock_threshold
-
-            if stock > over_stock_threshold:
-                products_above.add(product)
-            elif stock < under_stock_threshold:
-                products_below.add(product)
-            if stock > last_stock and receipt == 0:
-                products_without_receipts.add(product)
+    if stockouts:
+        products_codes_str = ' '.join([stockout.sql_product.code for stockout in stockouts])
+        products_names_str = ' '.join([stockout.sql_product.name for stockout in stockouts])
+        message += " " + STOCKOUTS_MESSAGE % {'products': products_codes_str}
+        super_message = _("stockouts %s; ") % products_names_str
 
     if products_below:
-        message = BELOW_REORDER_LEVELS % (user.name, user.location,
-                                          ", ".join(sorted([str(prod) for prod in products_below])))
-        send_sms_to_verified_number(user.get_verified_number(), message)
-    elif products_above:
-        message = ABOVE_THRESHOLD % (
-            user.name, ", ".join(sorted([str(prod) for prod in products_above])))
-        send_sms_to_verified_number(user.get_verified_number(), message)
-    elif products_without_receipts:
-        message = WITHOUT_RECEIPTS % (
-            ', '.join(sorted([str(prod) for prod in products_without_receipts])))
-        send_sms_to_verified_number(user.get_verified_number(), message)
+        products_codes_str = ' '.join([product.sql_product.code for product in products_below])
+        products_names_str = ' '.join([product.sql_product.name for product in products_below])
+        message += " " + LOW_SUPPLY_MESSAGE % {'low_supply': products_codes_str}
+        super_message += _("below reorder level %s; ") % products_names_str
+
+    if overstocked:
+        if not message:
+            products_codes_str = ' '.join([overstock.sql_product.code for overstock in overstocked])
+            message += " " + OVERSTOCKED_MESSAGE % {'username': user.username, 'overstocked': products_codes_str}
+        products_names_str = ' '.join([overstock.sql_product.name for overstock in overstocked])
+        super_message += _("overstocked %s; ") % products_names_str
+
+    if not message:
+        if not receipts:
+            message = COMPLETE_REPORT % user.username
+        else:
+            products_str = ' '.join(
+                [
+                    "%s %s" % (SQLProduct.objects.get(product_id=receipt.product_id).code, receipt.quantity)
+                    for receipt in receipts
+                ]
+            )
+            message = RECEIPT_MESSAGE % {'username': user.username, 'received': products_str}
     else:
-        return False
+        message = (_('Dear %s,') % user.username) + message
+
+    if super_message:
+        stripped_message = super_message.strip().strip(';')
+        super_message = _('Dear %s, %s is experiencing the following problems: ') + stripped_message
+        send_message_to_admins(user, super_message)
+    send_sms_to_verified_number(user.get_verified_number(), message)
+
+
+def send_message_to_admins(user, message):
+    users = CommCareUser.view(
+        'locations/users_by_location_id',
+        startkey=[user.location.get_id],
+        endkey=[user.location.get_id, {}],
+        include_docs=True
+    ).all()
+    in_charge_users = [
+        u
+        for u in users
+        if u.get_verified_number() and u.user_data.get('role') == "In Charge"
+    ]
+    for in_charge_user in in_charge_users:
+        send_sms_to_verified_number(in_charge_user.get_verified_number(),
+                                    message % (in_charge_user.username, in_charge_user.location.name))

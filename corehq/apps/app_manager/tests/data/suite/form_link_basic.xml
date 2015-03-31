@@ -1,0 +1,15 @@
+<partial>
+    <entry>
+        <command id="m0-f0">
+            <text>
+                <locale id="forms.m0f0"/>
+            </text>
+        </command>
+        <stack>
+          <create if="true()">
+            <command value="'m1'"/>
+            <command value="'m1-f0'"/>
+          </create>
+        </stack>
+    </entry>
+</partial>

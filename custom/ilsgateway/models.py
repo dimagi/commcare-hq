@@ -16,6 +16,7 @@ class ILSGatewayConfig(Document):
     username = StringProperty()
     password = StringProperty()
     steady_sync = BooleanProperty(default=False)
+    all_stock_data = BooleanProperty(default=False)
 
     @classmethod
     def for_domain(cls, name):
@@ -381,21 +382,21 @@ class DeliveryGroups(object):
             facs = self.facs
         if not facs:
             return []
-        return filter(lambda f: self.current_delivering_group(month) in f.metadata.get('groups', []), facs)
+        return filter(lambda f: self.current_delivering_group(month) == f.metadata.get('group', None), facs)
 
     def processing(self, facs=None, month=None):
         if not facs:
             facs = self.facs
         if not facs:
             return []
-        return filter(lambda f: self.current_processing_group(month) in f.metadata.get('groups', []), facs)
+        return filter(lambda f: self.current_processing_group(month) == f.metadata.get('group', None), facs)
 
     def submitting(self, facs=None, month=None):
         if not facs:
             facs = self.facs
         if not facs:
             return []
-        return filter(lambda f: self.current_submitting_group(month) in f.metadata.get('groups', []), facs)
+        return filter(lambda f: self.current_submitting_group(month) == f.metadata.get('group', None), facs)
 
 
 # Ported from:
@@ -447,3 +448,13 @@ class SupervisionDocument(models.Model):
     domain = models.CharField(max_length=100)
     name = models.CharField(max_length=100)
     data_type = models.CharField(max_length=100)
+
+
+class ILSNotes(models.Model):
+    location = models.ForeignKey(SQLLocation)
+    domain = models.CharField(max_length=100, null=False)
+    user_name = models.CharField(max_length=128, null=False)
+    user_role = models.CharField(max_length=100, null=True)
+    user_phone = models.CharField(max_length=20, null=True)
+    date = models.DateTimeField()
+    text = models.TextField()

@@ -18,7 +18,9 @@ from corehq.apps.accounting.decorators import (
 )
 from corehq.apps.accounting.exceptions import PaymentRequestError
 from corehq.apps.accounting.payment_handlers import (
-    InvoiceStripePaymentHandler, CreditStripePaymentHandler,
+    BulkStripePaymentHandler,
+    CreditStripePaymentHandler,
+    InvoiceStripePaymentHandler,
 )
 from corehq.apps.accounting.subscription_changes import DomainDowngradeStatusHandler
 from corehq.apps.accounting.forms import EnterprisePlanContactForm
@@ -31,7 +33,7 @@ from corehq.apps.smsbillables.async_handlers import SMSRatesAsyncHandler, SMSRat
 from corehq.apps.smsbillables.forms import SMSRateCalculatorForm
 from corehq.apps.users.models import DomainInvitation
 from corehq.apps.fixtures.models import FixtureDataType
-from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA, TRANSFER_DOMAIN
+from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA, TRANSFER_DOMAIN, GLOBAL_SMS_RATES
 from corehq.util.context_processors import get_domain_type
 from dimagi.utils.couch.resource_conflict import retry_resource
 from django.conf import settings
@@ -61,11 +63,12 @@ from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.shortcuts import redirect, render
 from corehq.apps.domain.calculations import CALCS, CALC_FNS, CALC_ORDER, dom_calc
 
-from corehq.apps.domain.decorators import (domain_admin_required,
-    login_required, require_superuser, login_and_domain_required)
+from corehq.apps.domain.decorators import (
+    domain_admin_required, login_required, require_superuser, login_and_domain_required
+)
 from corehq.apps.domain.forms import (
     DomainGlobalSettingsForm, DomainMetadataForm, SnapshotSettingsForm,
-    SnapshotApplicationForm, DomainDeploymentForm, DomainInternalForm,
+    SnapshotApplicationForm, DomainInternalForm, PrivacySecurityForm,
     ConfirmNewSubscriptionForm, ProBonoForm, EditBillingAccountInfoForm,
     ConfirmSubscriptionRenewalForm, SnapshotFixtureForm, TransferDomainForm
 )
@@ -96,6 +99,14 @@ accounting_logger = logging.getLogger('accounting')
 
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators
 # about why we need this custom login_required decorator
+
+PAYMENT_ERROR_MESSAGES = {
+    400: _('Your request was not formatted properly.'),
+    403: _('Forbidden.'),
+    404: _('Page not found.'),
+    500: _("There was an error processing your request."
+           " We're working quickly to fix the issue. Please try again shortly."),
+}
 
 
 @login_required
@@ -291,12 +302,12 @@ class BaseEditProjectInfoView(BaseAdminProjectSettingsView):
         context = super(BaseEditProjectInfoView, self).main_context
         context.update({
             'autocomplete_fields': self.autocomplete_fields,
-            'commtrack_enabled': self.domain_object.commtrack_enabled, # ideally the template gets access to the domain doc through
-                # some other means. otherwise it has to be supplied to every view reachable in that sidebar (every
-                # view whose template extends users_base.html); mike says he's refactoring all of this imminently, so
-                # i will not worry about it until he is done
+            'commtrack_enabled': self.domain_object.commtrack_enabled,
+            # ideally the template gets access to the domain doc through
+            # some other means. otherwise it has to be supplied to every view reachable in that sidebar (every
+            # view whose template extends users_base.html); mike says he's refactoring all of this imminently, so
+            # i will not worry about it until he is done
             'call_center_enabled': self.domain_object.call_center_config.enabled,
-            'restrict_superusers': self.domain_object.restrict_superusers,
             'cloudcare_releases':  self.domain_object.cloudcare_releases,
         })
         return context
@@ -312,10 +323,6 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
         return self.request.couch_user.is_previewer()
 
     @property
-    def autocomplete_fields(self):
-        return ['project_type']
-
-    @property
     def can_use_custom_logo(self):
         return has_privilege(self.request, privileges.CUSTOM_BRANDING)
 
@@ -329,7 +336,6 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
             'call_center_case_owner': self.domain_object.call_center_config.case_owner_id,
             'call_center_case_type': self.domain_object.call_center_config.case_type,
             'commtrack_enabled': self.domain_object.commtrack_enabled,
-            'secure_submissions': self.domain_object.secure_submissions,
         }
         if self.request.method == 'POST':
             if self.can_user_see_meta:
@@ -348,19 +354,6 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
             )
 
         if self.can_user_see_meta:
-            for attr in [
-                'project_type',
-                'customer_type',
-                'commconnect_enabled',
-                'survey_management_enabled',
-                'sms_case_registration_enabled',
-                'sms_case_registration_type',
-                'sms_case_registration_owner_id',
-                'sms_case_registration_user_id',
-                'restrict_superusers',
-                'secure_submissions',
-            ]:
-                initial[attr] = getattr(self.domain_object, attr)
             initial.update({
                 'is_test': self.domain_object.is_test,
                 'cloudcare_releases': self.domain_object.cloudcare_releases,
@@ -390,52 +383,6 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
                 messages.success(request, _("Project settings saved!"))
             else:
                 messages.error(request, _("There seems to have been an error saving your settings. Please try again!"))
-        return self.get(request, *args, **kwargs)
-
-
-class EditDeploymentProjectInfoView(BaseEditProjectInfoView):
-    template_name = 'domain/admin/info_deployment.html'
-    urlname = 'domain_deployment_info'
-    page_title = ugettext_noop("Deployment")
-
-    @property
-    def autocomplete_fields(self):
-        return ['city', 'countries', 'region']
-
-    @property
-    @memoized
-    def deployment_info_form(self):
-        if self.request.method == 'POST':
-            return DomainDeploymentForm(self.request.POST)
-
-        initial = {
-            'deployment_date': self.domain_object.deployment.date.date if self.domain_object.deployment.date else "",
-            'public': 'true' if self.domain_object.deployment.public else 'false',
-        }
-        for attr in [
-            'city',
-            'countries',
-            'region',
-            'description',
-        ]:
-            initial[attr] = getattr(self.domain_object.deployment, attr)
-        return DomainDeploymentForm(initial=initial)
-
-    @property
-    def page_context(self):
-        return {
-            'deployment_info_form': self.deployment_info_form,
-        }
-
-    def post(self, request, *args, **kwargs):
-        if self.deployment_info_form.is_valid():
-            if self.deployment_info_form.save(self.domain_object):
-                messages.success(request,
-                                 _("The deployment information for project %s was successfully updated!")
-                                 % self.domain_object.name)
-            else:
-                messages.error(request, _("There seems to have been an error. Please try again!"))
-
         return self.get(request, *args, **kwargs)
 
 
@@ -813,6 +760,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'process_payment_url': reverse(CreditsStripePaymentView.urlname,
                                            args=[self.domain]),
             'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
+            'payment_error_messages': PAYMENT_ERROR_MESSAGES,
             'sms_rate_calc_url': reverse(SMSRatesView.urlname,
                                          args=[self.domain])
         }
@@ -928,9 +876,17 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
         pagination_context = self.pagination_context
         pagination_context.update({
             'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
-            'process_payment_url': reverse(InvoiceStripePaymentView.urlname,
-                                           args=[self.domain]),
+            'payment_error_messages': PAYMENT_ERROR_MESSAGES,
+            'process_invoice_payment_url': reverse(
+                InvoiceStripePaymentView.urlname,
+                args=[self.domain],
+            ),
+            'process_bulk_payment_url': reverse(
+                BulkStripePaymentView.urlname,
+                args=[self.domain],
+            ),
             'stripe_cards': self.stripe_cards,
+            'total_balance': "%.2f" % sum(invoice.get_total() for invoice in self.invoices)
         })
         return pagination_context
 
@@ -947,7 +903,7 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                 last_billing_record = BillingRecord.objects.filter(
                     invoice=invoice
                 ).latest('date_created')
-                if invoice.date_paid is not None:
+                if invoice.is_paid:
                     payment_status = (_("Paid on %s.")
                                       % invoice.date_paid.strftime("%d %B %Y"))
                     payment_class = "label label-inverse"
@@ -955,7 +911,7 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                     payment_status = _("Not Paid")
                     payment_class = "label label-important"
                 date_due = (invoice.date_due.strftime("%d %B %Y")
-                            if invoice.date_paid is None else _("Already Paid"))
+                            if not invoice.is_paid else _("Already Paid"))
                 yield {
                     'itemData': {
                         'id': invoice.id,
@@ -970,7 +926,7 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                             BillingStatementPdfView.urlname,
                             args=[self.domain, last_billing_record.pdf_data_id]
                         ),
-                        'canMakePayment': (invoice.date_paid is None
+                        'canMakePayment': (not invoice.is_paid
                                            and self.can_pay_invoices),
                         'balance': "%s" % quantize_accounting_decimal(invoice.balance),
                     },
@@ -1114,6 +1070,19 @@ class InvoiceStripePaymentView(BaseStripePaymentView):
         )
 
 
+class BulkStripePaymentView(BaseStripePaymentView):
+    urlname = 'domain_bulk_payment'
+
+    @property
+    def account(self):
+        return BillingAccount.get_account_by_domain(self.domain)
+
+    def get_payment_handler(self):
+        return BulkStripePaymentHandler(
+            self.get_or_create_payment_method(), self.domain
+        )
+
+
 class BillingStatementPdfView(View):
     urlname = 'domain_billing_statement_download'
 
@@ -1212,6 +1181,35 @@ class SelectPlanView(DomainAccountingSettings):
                                 else ""),
             'is_non_ops_superuser': self.is_non_ops_superuser,
         }
+
+
+class EditPrivacySecurityView(BaseAdminProjectSettingsView):
+    template_name = "domain/admin/project_privacy.html"
+    urlname = "privacy_info"
+    page_title = ugettext_noop("Privacy and Security")
+
+    @property
+    @memoized
+    def privacy_form(self):
+        initial = {
+            "secure_submissions": self.domain_object.secure_submissions,
+            "restrict_superusers": self.domain_object.restrict_superusers
+        }
+        if self.request.method == 'POST':
+            return PrivacySecurityForm(self.request.POST, initial=initial)
+        return PrivacySecurityForm(initial=initial)
+
+    @property
+    def page_context(self):
+        return {
+            'privacy_form': self.privacy_form
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.privacy_form.is_valid():
+            self.privacy_form.save(self.domain_object)
+            messages.success(request, _("Your project settings have been saved!"))
+        return self.get(request, *args, **kwargs)
 
 
 class SelectedEnterprisePlanView(SelectPlanView):
@@ -1366,12 +1364,11 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
             initial = {
                 'company_name': "Dimagi",
                 'first_line': "585 Massachusetts Ave",
-                'second_line': "Suite 3",
+                'second_line': "Suite 4",
                 'city': "Cambridge",
                 'state_province_region': "MA",
                 'postal_code': "02139",
                 'country': "US",
-
             }
         if self.request.method == 'POST' and self.is_form_post:
             return ConfirmNewSubscriptionForm(
@@ -1716,7 +1713,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
                 new_domain.image_type = old.image_type
             new_domain.save()
 
-            if toggles.DOCUMENTATION_FILE.enabled(request.user):
+            if toggles.DOCUMENTATION_FILE.enabled(request.user.username):
                 documentation_file = self.snapshot_settings_form.cleaned_data['documentation_file']
                 if documentation_file:
                     new_domain.documentation_file_path = documentation_file.name
@@ -1741,7 +1738,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
             elif request.POST.get('old_image', False):
                 new_domain.put_attachment(content=old.fetch_attachment(old.image_path), name=new_domain.image_path)
 
-            if toggles.DOCUMENTATION_FILE.enabled(request.user):
+            if toggles.DOCUMENTATION_FILE.enabled(request.user.username):
                 if documentation_file:
                     new_domain.put_attachment(content=documentation_file, name=documentation_file.name)
                 elif request.POST.get('old_documentation_file', False):
@@ -2014,32 +2011,32 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
     strict_domain_fetching = True
 
     @property
+    def autocomplete_fields(self):
+        return ['countries']
+
+    @property
     @memoized
     def internal_settings_form(self):
         can_edit_eula = CAN_EDIT_EULA.enabled(self.request.couch_user.username)
         if self.request.method == 'POST':
             return DomainInternalForm(can_edit_eula, self.request.POST)
-        initial = {}
+        initial = {
+            'deployment_date': self.domain_object.deployment.date.date
+            if self.domain_object.deployment.date else '',
+            'countries': self.domain_object.deployment.countries
+        }
         internal_attrs = [
             'sf_contract_id',
             'sf_account_id',
-            'commcare_edition',
             'services',
             'initiative',
             'workshop_region',
-            'project_state',
             'area',
             'sub_area',
             'organization_name',
             'notes',
-            'platform',
             'self_started',
-            'using_adm',
-            'using_call_center',
-            'project_manager',
             'phone_model',
-            'goal_time_period',
-            'goal_followup_rate',
             'commtrack_domain',
         ]
         if can_edit_eula:
@@ -2452,6 +2449,38 @@ class DeactivateTransferDomainView(View):
     @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):
         return super(DeactivateTransferDomainView, self).dispatch(*args, **kwargs)
+
+
+from corehq.apps.smsbillables.forms import PublicSMSRateCalculatorForm
+from corehq.apps.smsbillables.async_handlers import PublicSMSRatesAsyncHandler
+from corehq.apps.domain.decorators import login_required
+
+
+class PublicSMSRatesView(BasePageView, AsyncHandlerMixin):
+    urlname = 'public_sms_rates_view'
+    page_title = ugettext_noop("SMS Rate Calculator")
+    template_name = 'domain/admin/global_sms_rates.html'
+    async_handlers = [PublicSMSRatesAsyncHandler]
+
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        # this will be public latter
+        if not GLOBAL_SMS_RATES.enabled(request.user.username):
+            raise Http404()
+        return super(PublicSMSRatesView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname)
+
+    @property
+    def page_context(self):
+        return {
+            'rate_calc_form': PublicSMSRateCalculatorForm()
+        }
+
+    def post(self, request, *args, **kwargs):
+        return self.async_response or self.get(request, *args, **kwargs)
 
 
 class SMSRatesView(BaseAdminProjectSettingsView, AsyncHandlerMixin):

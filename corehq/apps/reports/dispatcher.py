@@ -92,7 +92,7 @@ class ReportDispatcher(View):
                     for name, group in self.get_reports(domain)
                     for report in group)
 
-    def get_report(self, domain, report_slug):
+    def get_report(self, domain, report_slug, *args):
         """
         Returns the report class for `report_slug`, or None if no report is
         found.
@@ -108,7 +108,7 @@ class ReportDispatcher(View):
 
     @datespan_default
     def dispatch(self, request, domain=None, report_slug=None, render_as=None,
-                 *args, **kwargs):
+                 permissions_check=None, *args, **kwargs):
         render_as = render_as or 'view'
         domain = domain or getattr(request, 'domain', None)
 
@@ -129,7 +129,8 @@ class ReportDispatcher(View):
         cls = self.get_report(domain, report_slug)
         class_name = cls.__module__ + '.' + cls.__name__ if cls else ''
 
-        if cls and (self.permissions_check(class_name, request, domain=domain)):
+        permissions_check = permissions_check or self.permissions_check
+        if cls and (permissions_check(class_name, request, domain=domain)):
             report = cls(request, domain=domain, **report_kwargs)
             report.rendered_as = render_as
             try:
@@ -223,6 +224,8 @@ class ProjectReportDispatcher(ReportDispatcher):
 
     def permissions_check(self, report, request, domain=None, is_navigation_check=False):
         if domain is None:
+            return False
+        if not request.couch_user.is_active:
             return False
         return request.couch_user.can_view_report(domain, report)
 

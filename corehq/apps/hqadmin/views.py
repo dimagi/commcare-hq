@@ -6,7 +6,7 @@ from datetime import timedelta, datetime, date
 from collections import defaultdict
 from StringIO import StringIO
 import dateutil
-from django.core.mail import send_mail
+from django.core.mail import EmailMessage
 from django.utils.datastructures import SortedDict
 from django.views.decorators.csrf import csrf_exempt
 
@@ -208,10 +208,14 @@ def message_log_report(request):
 @require_POST
 @csrf_exempt
 def contact_email(request):
-    from_email = request.POST['email']
-    description = request.POST['description']
     message = render_to_string('hqadmin/email/contact_template.txt', request.POST)
-    send_mail(description[:60], message, from_email, [settings.CONTACT_EMAIL])
+    EmailMessage(
+        subject="Incoming Contact CommCare Request",
+        body=message,
+        from_email="",
+        to=[settings.CONTACT_EMAIL],
+        headers={'Reply-To': request.POST['email']},
+    ).send()
     response = HttpResponse('success')
     response["Access-Control-Allow-Origin"] = "http://www.commcarehq.org"
     response["Access-Control-Allow-Methods"] = "POST"

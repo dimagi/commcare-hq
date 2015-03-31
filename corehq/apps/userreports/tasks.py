@@ -1,3 +1,4 @@
+import datetime
 import logging
 from celery.task import task
 from sqlalchemy.exc import DataError
@@ -9,13 +10,17 @@ from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
 
 
-@task
+@task(queue='background_queue')
 def rebuild_indicators(indicator_config_id):
     is_static = indicator_config_id.startswith(CustomDataSourceConfiguration._datasource_id_prefix)
     if is_static:
         config = CustomDataSourceConfiguration.by_id(indicator_config_id)
     else:
         config = DataSourceConfiguration.get(indicator_config_id)
+        # Save the start time now in case anything goes wrong. This way we'll be
+        # able to see if the rebuild started a long time ago without finishing.
+        config.meta.build.initiated = datetime.datetime.now()
+        config.save()
 
     adapter = IndicatorSqlAdapter(get_engine(), config)
     adapter.rebuild_table()
@@ -31,6 +36,10 @@ def rebuild_indicators(indicator_config_id):
         except DataError as e:
             logging.exception('problem saving document {} to table. {}'.format(doc['_id'], e))
     adapter.engine.dispose()
+
+    if not is_static:
+        config.meta.build.finished = True
+        config.save()
 
 
 def _get_db(doc_type):

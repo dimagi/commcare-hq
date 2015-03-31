@@ -9,7 +9,9 @@ from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import Location
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.models import Domain
-from corehq.apps.commtrack.util import get_default_requisition_config
+from corehq.apps.commtrack.sms import StockReportParser, process
+from corehq.apps.commtrack.util import get_default_requisition_config, \
+    bootstrap_location_types
 from corehq.apps.commtrack.models import SupplyPointCase, CommtrackConfig, ConsumptionConfig
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.sms.backend import test
@@ -19,7 +21,7 @@ from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_safe_write_kwargs
 from casexml.apps.phone.restore import generate_restore_payload
 from lxml import etree
-from corehq.apps.locations.schema import LocationType
+
 
 TEST_DOMAIN = 'commtrack-test'
 TEST_LOCATION_TYPE = 'outlet'
@@ -125,33 +127,7 @@ class CommTrackTest(TestCase):
 
         self.backend = test.bootstrap(TEST_BACKEND, to_console=True)
         self.domain = bootstrap_domain()
-        self.domain.location_types = [
-            LocationType(
-                name='state',
-                allowed_parents=[''],
-                administrative=True
-            ),
-            LocationType(
-                name='district',
-                allowed_parents=['state'],
-                administrative=True
-            ),
-            LocationType(
-                name='block',
-                allowed_parents=['district'],
-                administrative=True
-            ),
-            LocationType(
-                name='village',
-                allowed_parents=['block'],
-                administrative=True
-            ),
-            LocationType(
-                name='outlet',
-                allowed_parents=['village']
-            ),
-        ]
-        self.domain.save()
+        bootstrap_location_types(self.domain.name)
         self.ct_settings = CommtrackConfig.for_domain(self.domain.name)
         self.ct_settings.consumption_config = ConsumptionConfig(
             min_transactions=0,
@@ -210,3 +186,18 @@ def extract_balance_xml(xml_payload):
     if balance_blocks:
         return [etree.tostring(bb) for bb in balance_blocks]
     return []
+
+
+def fake_sms(user, text):
+    """
+    Fake a commtrack SMS submission for a user.
+    `text` might be "soh myproduct 100"
+    Don't use this with a real user
+    """
+    if not user.phone_number:
+        raise ValueError("User does not have a phone number")
+    if not user.get_verified_number():
+        user.save_verified_number(user.domain, user.phone_number, True, None)
+    domain_obj = Domain.get_by_name(user.domain)
+    parser = StockReportParser(domain_obj, user.get_verified_number())
+    process(user.domain, parser.parse(text.lower()))

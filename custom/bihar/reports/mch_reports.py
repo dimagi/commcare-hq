@@ -1,18 +1,14 @@
-import copy
-from django.http.response import HttpResponse
 from django.utils.translation import ugettext as _
 from corehq.apps.groups.models import Group
-from corehq.apps.reports.cache import request_cache
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.api.es import CaseES
 
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
+from corehq.util.timezones.conversions import PhoneTime
 from dimagi.utils.decorators.memoized import memoized
 from corehq.elastic import stream_es_query, ES_URLS
 from custom.bihar.reports.display import MCHMotherDisplay, MCHChildDisplay
-from dimagi.utils.timezones import utils as tz_utils
-import pytz
 from custom.bihar.utils import get_all_owner_ids_from_group
 
 
@@ -60,9 +56,11 @@ class MCHBaseReport(CustomProjectReport, CaseListReport):
         return self.name
 
     def date_to_json(self, date):
-        return tz_utils.adjust_datetime_to_timezone\
-            (date, pytz.utc.zone, self.timezone.zone).strftime\
-            ('%d/%m/%Y') if date else ""
+        if date:
+            return (PhoneTime(date, self.timezone).user_time(self.timezone)
+                    .ui_string('%d/%m/%Y'))
+        else:
+            return ''
 
     @property
     def get_all_rows(self):

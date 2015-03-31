@@ -6,11 +6,11 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.adm.admin.crud import *
 from corehq.apps.crud.models import AdminCRUDDocumentMixin
 from corehq.apps.groups.models import Group
+from corehq.util.timezones.conversions import UserTime
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.modules import to_function
-from dimagi.utils.timezones import utils as tz_utils
 from corehq.apps.users.models import CommCareUser
 from copy import copy
 
@@ -348,8 +348,10 @@ class DaysSinceADMColumn(CouchViewADMColumn, NumericalADMColumnMixin):
     def get_couch_view_data(self, key, datespan=None):
         default_value = None
         try:
-            now = tz_utils.adjust_datetime_to_timezone(getattr(datespan, self.start_or_end or "enddate"),
-                from_tz=datespan.timezone, to_tz=pytz.utc)
+            now = UserTime(
+                getattr(datespan, self.start_or_end or "enddate"),
+                datespan.timezone
+            ).server_time().done().replace(tzinfo=pytz.utc)
         except Exception:
             now = datetime.datetime.now(tz=pytz.utc)
         data = self.view_results(
@@ -647,8 +649,12 @@ class CaseCountADMColumn(ConfigurableADMColumn, CaseFilterADMColumnMixin,
         datespan_keys = None
         if self.inactivity_milestone > 0:
             # inactivity milestone takes precedence over any ignore_datespan configurations
-            milestone_days_ago = tz_utils.adjust_datetime_to_timezone(self.report_datespan.enddate,
-                from_tz=self.report_datespan.timezone, to_tz=pytz.utc) - datetime.timedelta(days=self.inactivity_milestone)
+            milestone_days_ago = UserTime(
+                self.report_datespan.enddate, self.report_datespan.timezone
+            ).server_time().done() - datetime.timedelta(days=self.inactivity_milestone)
+            # in refactoring tz stuff,
+            # milestone_days_ago is now tz naive, so isoformat()
+            # no longer has +00:00 at the end. I think that's fine.
             datespan_keys = [[], [milestone_days_ago.isoformat()]]
         elif not self.ignore_datespan:
             datespan_keys = [[self.report_datespan.startdate_param_utc], [self.report_datespan.enddate_param_utc]]

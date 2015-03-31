@@ -7,7 +7,7 @@ from casexml.apps.phone.xml import date_to_xml_string
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
-from corehq.apps.cloudcare.api import get_filtered_cases, CASE_STATUS_OPEN, CASE_STATUS_ALL,\
+from corehq.apps.cloudcare.api import get_filtered_cases, CaseAPIResult, CASE_STATUS_OPEN, CASE_STATUS_ALL,\
     CASE_STATUS_CLOSED
 import uuid
 
@@ -215,6 +215,24 @@ class CaseAPITest(TestCase):
         # when filtering with footprint, the filters get intentionally ignored
         # so just ensure the whole footprint including open and closed is available
         self.assertEqual(self.expectedOpenByUserWithFootprint + self.expectedClosedByUserWithFootprint, len(list))
+
+    def testCaseAPIResultJSON(self):
+        try:
+            case = CommCareCase()
+            # because of how setattr is overridden you have to set it to None in this wacky way
+            case._doc['type'] = None
+            case.save()
+            self.assertEqual(None, CommCareCase.get(case._id).type)
+            res_sanitized = CaseAPIResult(id=case._id, couch_doc=case, sanitize=True)
+            res_unsanitized = CaseAPIResult(id=case._id, couch_doc=case, sanitize=False)
+
+            json = res_sanitized.case_json
+            self.assertEqual(json['properties']['case_type'], '')
+
+            json = res_unsanitized.case_json
+            self.assertEqual(json['properties']['case_type'], None)
+        finally:
+            case.delete()
 
 
 def _child_case_type(type):

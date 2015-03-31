@@ -9,6 +9,7 @@
         <script src="{% static 'translations/js/translations.js' %}"></script>
     {% endif %}
     <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
+    <script src="{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
     <script src="{% static 'hqwebapp/ko/bulk_upload_file.js' %}"></script>
     <script src="{% static 'app_manager/js/supported-languages.js' %}"></script>
     <script type="text/javascript" src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
@@ -21,10 +22,12 @@
             settings: {
                 sections: {{ settings_layout|JSON }},
                 values: {{ settings_values|JSON }},
+                {% if request|toggle_enabled:"CUSTOM_PROPERTIES" %}
+                customProperties: {{ custom_properties|JSON }},
+                {% endif %}
                 urls: {
                     save: '{% url "edit_commcare_settings" domain app.id %}'
                 },
-                edit: {{ edit|BOOL }},
                 user: {
                     is_previewer: {{ request.couch_user.is_previewer|BOOL }}
                 },
@@ -127,13 +130,11 @@
             var langs = {{ app.langs|JSON }};
             var buildLangs = {{ app.build_langs|JSON }};
             var saveURL = "{% url "edit_app_langs" domain app.id %}";
-            var edit = {{ edit|JSON }};
             var validate = !{{ app.is_remote_app|BOOL }};
             ko.applyBindings(new SupportedLanguages({
                 langs: langs,
                 buildLangs: buildLangs,
                 saveURL: saveURL,
-                edit: edit,
                 validate: validate
             }), $("#supported-languages").get(0));
         });
@@ -232,7 +233,6 @@
                     url: "{% url "edit_app_translations" domain app.id %}",
                     suggestion_url: "{% url "get_app_translations" domain %}",
                     lang: "{{ lang }}",
-                    edit: {{ edit|yesno:"true,false" }},
                     allow_autofill: "{{ lang }}" !== 'en',
                     $home: $translation_ui
                 });

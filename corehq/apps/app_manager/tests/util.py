@@ -1,7 +1,7 @@
 import json
 import os
 import lxml
-from lxml.doctestcompare import LXMLOutputChecker
+from lxml.doctestcompare import LXMLOutputChecker, LHTMLOutputChecker
 import mock
 from corehq.apps.builds.models import CommCareBuild, CommCareBuildConfig, \
     BuildSpec
@@ -15,20 +15,28 @@ class TestFileMixin(object):
 
     @property
     def base(self):
-        return os.path.join(self.root, *self.file_path)
+        return self.get_base()
 
-    def get_path(self, name, ext):
-        return os.path.join(self.base, '%s.%s' % (name, ext))
+    @classmethod
+    def get_base(cls):
+        return os.path.join(cls.root, *cls.file_path)
 
-    def get_file(self, name, ext):
-        with open(self.get_path(name, ext)) as f:
+    @classmethod
+    def get_path(cls, name, ext):
+        return os.path.join(cls.get_base(), '%s.%s' % (name, ext))
+
+    @classmethod
+    def get_file(cls, name, ext):
+        with open(cls.get_path(name, ext)) as f:
             return f.read()
 
-    def get_json(self, name):
-        return json.loads(self.get_file(name, 'json'))
+    @classmethod
+    def get_json(cls, name):
+        return json.loads(cls.get_file(name, 'json'))
 
-    def get_xml(self, name):
-        return self.get_file(name, 'xml')
+    @classmethod
+    def get_xml(cls, name):
+        return cls.get_file(name, 'xml')
 
     def assertXmlPartialEqual(self, expected, actual, xpath):
         """
@@ -44,20 +52,13 @@ class TestFileMixin(object):
         if normalize:
             expected = parse_normalize(expected)
             actual = parse_normalize(actual)
+        _check_shared(expected, actual, LXMLOutputChecker(), "xml")
 
-        # snippet from http://stackoverflow.com/questions/321795/comparing-xml-in-a-unit-test-in-python/7060342#7060342
-        checker = LXMLOutputChecker()
-        if not checker.check_output(expected, actual, 0):
-            message = "XML mismatch\n\n"
-            diff = difflib.unified_diff(
-                expected.splitlines(1),
-                actual.splitlines(1),
-                fromfile='want.xml',
-                tofile='got.xml'
-            )
-            for line in diff:
-                message += line
-            raise AssertionError(message)
+    def assertHtmlEqual(self, expected, actual, normalize=True):
+        if normalize:
+            expected = parse_normalize(expected, is_html=True)
+            actual = parse_normalize(actual, is_html=True)
+        _check_shared(expected, actual, LHTMLOutputChecker(), "html")
 
 
 def normalize_attributes(xml):
@@ -70,11 +71,33 @@ def normalize_attributes(xml):
     return xml
 
 
-def parse_normalize(xml, to_string=True):
-    parser = lxml.etree.XMLParser(remove_blank_text=True)
-    parse = lambda *args: normalize_attributes(lxml.etree.XML(*args))
+def parse_normalize(xml, to_string=True, is_html=False):
+    parser_class = lxml.etree.XMLParser
+    markup_class = lxml.etree.XML
+    meth = "xml"
+    if is_html:
+        parser_class = lxml.etree.HTMLParser
+        markup_class = lxml.etree.HTML
+        meth = "html"
+    parser = parser_class(remove_blank_text=True)
+    parse = lambda *args: normalize_attributes(markup_class(*args))
     parsed = parse(xml, parser)
-    return lxml.etree.tostring(parsed, pretty_print=True) if to_string else parsed
+    return lxml.etree.tostring(parsed, pretty_print=True, method=meth) if to_string else parsed
+
+
+def _check_shared(expected, actual, checker, extension):
+    # snippet from http://stackoverflow.com/questions/321795/comparing-xml-in-a-unit-test-in-python/7060342#7060342
+    if not checker.check_output(expected, actual, 0):
+        message = "{} mismatch\n\n".format(extension.upper())
+        diff = difflib.unified_diff(
+            expected.splitlines(1),
+            actual.splitlines(1),
+            fromfile='want.{}'.format(extension),
+            tofile='got.{}'.format(extension)
+        )
+        for line in diff:
+            message += line
+        raise AssertionError(message)
 
 
 def extract_xml_partial(xml, xpath):

@@ -156,7 +156,7 @@ OFFLINE_CLOUDCARE = StaticToggle(
 
 CASE_REBUILD = StaticToggle(
     'case_rebuild',
-    'Show UI-based case rebuild option',
+    'Show UI-based case and form rebuild options (primarily for support team)',
 )
 
 IS_DEVELOPER = StaticToggle(
@@ -225,7 +225,7 @@ BATCHED_RESTORE = PredicatablyRandomToggle(
     'batched_restore',
     'Batch OTA restore response generation',
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
-    0.25
+    0.5
 )
 
 SPLIT_MULTISELECT_EXPORT = StaticToggle(
@@ -294,12 +294,6 @@ LOCATION_TYPE_STOCK_RATES = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-APP_SUMMARY = StaticToggle(
-    'app_summary',
-    'Form and Case summary of an application',
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
 BULK_ARCHIVE_FORMS = StaticToggle(
     'bulk_archive_forms',
     'Bulk archive forms with excel',
@@ -348,4 +342,27 @@ CACHE_AND_INDEX = StaticToggle(
     'Enable the "Cache and Index" format option when choosing sort properties '
     'in the app builder',
     [NAMESPACE_DOMAIN],
+)
+
+CUSTOM_PROPERTIES = StaticToggle(
+    'custom_properties',
+    'Allow users to add arbitrary custom properties to their appliation',
+    [NAMESPACE_DOMAIN]
+)
+
+GLOBAL_SMS_RATES = StaticToggle(
+    'global_sms_rates',
+    'Global SMS Rates page',
+    [NAMESPACE_USER]
+)
+
+BULK_SMS_VERIFICATION = StaticToggle(
+    'bulk_sms_verification',
+    'Allow initiating the SMS phone verification workflow for all users in a group.',
+    [NAMESPACE_USER, NAMESPACE_DOMAIN],
+)
+
+BULK_PAYMENTS = StaticToggle(
+    'bulk_payments',
+    'Enable payment of invoices by bulk credit payments and invoice generation for wire tranfers',
 )

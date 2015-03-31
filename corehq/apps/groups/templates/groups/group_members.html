@@ -141,6 +141,12 @@
                     return false;
                 });
             });
+
+            $('#initiate-verification-workflow').submit(function() {
+                var button = $('#submit-verification');
+                button.prop('disabled', true);
+                button.text('{% trans "Please wait and do not navigate away..." %}');
+            });
         });
 
     </script>
@@ -168,6 +174,23 @@
                     Delete Group "{{group_name}}"
                 {% endblocktrans %}
             </a>
+            {% if bulk_sms_verification_enabled %}
+            <form id="initiate-verification-workflow" class="form form-horizontal" method="post" action="{% url "bulk_sms_verification" domain group.get_id %}">
+                <button id="submit-verification" type="submit" class="btn">
+                    <i class="icon icon-signal"></i> {% trans 'Initiate Phone Verification for All Members' %}
+                </button>
+                <span class="hq-help-template"
+                    data-title="{% trans 'Initiate Phone Verification for All Members' %}"
+                    data-content="{% blocktrans %}
+                        For all active mobile workers in this group, and for each phone number, this will
+                        initiate an SMS verification workflow. If the phone number is already verified or
+                        if the phone number is already in use by another contact in the system, nothing
+                        will happen. If the phone number is pending verification, the verification SMS
+                        will be resent.
+                        {% endblocktrans %}">
+                </span>
+            </form>
+            {% endif %}
         </div>
 
         <div class="modal hide fade" id="editGroupSettings">

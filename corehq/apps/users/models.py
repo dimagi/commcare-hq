@@ -1303,6 +1303,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     def is_current_web_user(self, request):
         return self.user_id == request.couch_user.user_id
 
+    # gets hit for can_view_reports, etc.
     def __getattr__(self, item):
         if item.startswith('can_'):
             perm = item[len('can_'):]
@@ -1824,7 +1825,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin,
                     for loc in sql_loc.get_descendants()
                 ]
             else:
-                return [self.location.sql_location.case_sharing_group_object(self)._id]
+                return [self.location.sql_location.case_sharing_group_object(self._id)._id]
 
         else:
             return []
@@ -2112,7 +2113,7 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
         return self.email or self.username
 
     def get_time_zone(self):
-        from corehq.apps.reports import util as report_utils
+        from corehq.util.timezones.utils import get_timezone_for_user
 
         if hasattr(self, 'current_domain'):
             domain = self.current_domain
@@ -2121,7 +2122,7 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
         else:
             return None
 
-        timezone = report_utils.get_timezone(self.user_id, domain)
+        timezone = get_timezone_for_user(self.user_id, domain)
         return timezone.zone
 
     def get_language_code(self):

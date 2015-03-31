@@ -65,7 +65,10 @@ class ToggleEditView(ToggleBaseView):
             return Toggle(slug=self.toggle_slug)
 
     def toggle_meta(self):
-        return self.toggle_map()[self.toggle_slug]
+        toggle_map = self.toggle_map()
+        if self.toggle_slug in toggle_map:
+            return toggle_map[self.toggle_slug]
+        raise Http404
 
     @property
     def page_context(self):

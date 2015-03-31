@@ -178,6 +178,9 @@
         <locale id="forms.m0f0"/>
       </text>
     </command>
+    <session>
+      <datum id="case_id_new_clinic_0" function="uuid()"/>
+    </session>
   </entry>
   <entry>
     <form>http://openrosa.org/formdesigner/5FBED77B-E327-495D-97E8-0733B97D8EA5</form>
@@ -201,6 +204,7 @@
     <instance id="casedb" src="jr://instance/casedb"/>
     <session>
       <datum id="case_id_load_clinic0" nodeset="instance('casedb')/casedb/case[@case_type='clinic'][@status='open']" value="./@case_id" detail-select="m1_case_short" detail-confirm="m1_case_long"/>
+      <datum id="case_id_new_requisition_0" function="uuid()"/>
     </session>
   </entry>
   <entry>

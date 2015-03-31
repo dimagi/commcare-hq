@@ -17,6 +17,7 @@ from urllib2 import urlopen
 from urlparse import urljoin
 
 from couchdbkit import ResourceConflict, MultipleResultsFound
+import itertools
 from lxml import etree
 from django.core.cache import cache
 from django.utils.encoding import force_unicode
@@ -31,8 +32,10 @@ from django.template.loader import render_to_string
 from restkit.errors import ResourceError
 from couchdbkit.resource import ResourceNotFound
 from corehq import toggles, privileges
+from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
 from corehq.util.quickcache import quickcache
+from corehq.util.timezones.conversions import ServerTime
 from django_prbac.exceptions import PermissionDenied
 from corehq.apps.accounting.utils import domain_has_privilege
 
@@ -53,13 +56,12 @@ from corehq.util import view_utils
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildSpec, CommCareBuildConfig, BuildRecord
 from corehq.apps.hqmedia.models import HQMediaMixin
-from corehq.apps.reports.templatetags.timezone_tags import utc_to_timezone
 from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import cc_user_domain
 from corehq.apps.domain.models import cached_property
 from corehq.apps.app_manager import current_builds, app_strings, remote_app
-from corehq.apps.app_manager import fixtures, suite_xml, commcare_settings
+from corehq.apps.app_manager import suite_xml, commcare_settings
 from corehq.apps.app_manager.util import split_path, save_xform, get_correct_app_class, ParentCasePropertyBuilder
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
@@ -317,7 +319,7 @@ class FormActions(DocumentSchema):
         return names
 
 
-class AdvancedAction(DocumentSchema):
+class AdvancedAction(IndexedSchema):
     case_type = StringProperty()
     case_tag = StringProperty()
     case_properties = DictProperty()
@@ -325,6 +327,8 @@ class AdvancedAction(DocumentSchema):
     parent_reference_id = StringProperty(default='parent')
 
     close_condition = SchemaProperty(FormActionCondition)
+
+    __eq__ = DocumentSchema.__eq__
 
     def get_paths(self):
         for path in self.case_properties.values():
@@ -335,10 +339,6 @@ class AdvancedAction(DocumentSchema):
 
     def get_property_names(self):
         return set(self.case_properties.keys())
-
-    @property
-    def case_session_var(self):
-        return 'case_id_{0}'.format(self.case_tag)
 
     @property
     def is_subcase(self):
@@ -389,6 +389,10 @@ class LoadUpdateAction(AdvancedAction):
         names.update(self.preload.keys())
         return names
 
+    @property
+    def case_session_var(self):
+        return 'case_id_{0}'.format(self.case_tag)
+
 
 class AdvancedOpenCaseAction(AdvancedAction):
     name_path = StringProperty()
@@ -405,13 +409,20 @@ class AdvancedOpenCaseAction(AdvancedAction):
         if self.open_condition.type == 'if':
             yield self.open_condition.question
 
+    @property
+    def case_session_var(self):
+        return 'case_id_new_{}_{}'.format(self.case_type, self.id)
+
 
 class AdvancedFormActions(DocumentSchema):
     load_update_cases = SchemaListProperty(LoadUpdateAction)
     open_cases = SchemaListProperty(AdvancedOpenCaseAction)
 
+    get_load_update_actions = IndexedSchema.Getter('load_update_cases')
+    get_open_actions = IndexedSchema.Getter('open_cases')
+
     def get_all_actions(self):
-        return self.load_update_cases + self.open_cases
+        return itertools.chain(self.get_load_update_actions(), self.get_open_actions())
 
     def get_subcase_actions(self):
         return (a for a in self.get_all_actions() if a.parent_tag)
@@ -485,8 +496,8 @@ class AdvancedFormActions(DocumentSchema):
                 if type == 'load' and action.auto_select and action.auto_select.mode:
                     meta['by_auto_select_mode'][action.auto_select.mode].append(action)
 
-        add_actions('load', self.load_update_cases)
-        add_actions('open', self.open_cases)
+        add_actions('load', self.get_load_update_actions())
+        add_actions('open', self.get_open_actions())
 
         return meta
 
@@ -560,7 +571,7 @@ class FormLink(DocumentSchema):
     form_id:    id of next form to open
     """
     xpath = StringProperty()
-    form_id = StringProperty()
+    form_id = FormIdProperty('modules[*].forms[*].form_links[*].form_id')
 
 
 class FormSchedule(DocumentSchema):
@@ -768,13 +779,14 @@ class FormBase(DocumentSchema):
         self.add_stuff_to_xform(xform)
         return xform.render()
 
-    @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups'])
+    @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups', 'include_translations'])
     def get_questions(self, langs, include_triggers=False,
-                      include_groups=False):
+                      include_groups=False, include_translations=False):
         return XForm(self.source).get_questions(
             langs=langs,
             include_triggers=include_triggers,
             include_groups=include_groups,
+            include_translations=include_translations,
         )
 
     @memoized
@@ -983,6 +995,17 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         m = self.get_module()
         return all([form.requires == 'case' for form in m.get_forms() if form.id != self.id])
 
+    def session_var_for_action(self, action_type, subcase_index=None):
+        module_case_type = self.get_module().case_type
+        if action_type == 'open_case':
+            return 'case_id_new_{}_0'.format(module_case_type)
+        if action_type == 'subcase':
+            opens_case = 'open_case' in self.active_actions()
+            subcase_type = self.actions.subcases[subcase_index].case_type
+            if opens_case:
+                subcase_index += 1
+            return 'case_id_new_{}_{}'.format(subcase_type, subcase_index)
+
     def _get_active_actions(self, types):
         actions = {}
         for action_type in types:
@@ -1137,7 +1160,10 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
 
     def update_app_case_meta(self, app_case_meta):
         from corehq.apps.reports.formdetails.readable import FormQuestionResponse
-        questions = {q['value']: FormQuestionResponse(q) for q in self.get_questions(self.get_app().langs)}
+        questions = {
+            q['value']: FormQuestionResponse(q)
+            for q in self.get_questions(self.get_app().langs, include_translations=True)
+        }
         module_case_type = self.get_module().case_type
         type_meta = app_case_meta.get_type(module_case_type)
         for type_, action in self.active_actions().items():
@@ -1361,6 +1387,7 @@ class Detail(IndexedSchema):
     custom_xml = StringProperty()
     use_case_tiles = BooleanProperty()
     persist_tile_on_forms = BooleanProperty()
+    pull_down_tile = BooleanProperty()
 
     def get_tab_spans(self):
         '''
@@ -1428,6 +1455,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
     unique_id = StringProperty()
     case_type = StringProperty()
     case_list_form = SchemaProperty(CaseListForm)
+    module_filter = StringProperty()
 
     @classmethod
     def wrap(cls, data):
@@ -1467,6 +1495,12 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
             return self.forms[i].with_id(i % len(self.forms), self)
         except IndexError:
             raise FormNotFoundException()
+
+    def get_child_modules(self):
+        return [
+            module for module in self.get_app().get_modules()
+            if module.unique_id != self.unique_id and getattr(module, 'root_module_id', None) == self.unique_id
+        ]
 
     def requires_case_details(self):
         return False
@@ -1835,7 +1869,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
 
     def get_registration_actions(self, case_type=None):
         return [
-            action for action in self.actions.open_cases
+            action for action in self.actions.get_open_actions()
             if not action.is_subcase and (not case_type or action.case_type == case_type)
         ]
 
@@ -1965,7 +1999,10 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
 
     def update_app_case_meta(self, app_case_meta):
         from corehq.apps.reports.formdetails.readable import FormQuestionResponse
-        questions = {q['value']: FormQuestionResponse(q) for q in self.get_questions(self.get_app().langs)}
+        questions = {
+            q['value']: FormQuestionResponse(q)
+            for q in self.get_questions(self.get_app().langs, include_translations=True)
+        }
         for action in self.actions.load_update_cases:
             for name, question_path in action.case_properties.items():
                 self.add_property_save(
@@ -2318,7 +2355,10 @@ class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
 
     def update_app_case_meta(self, app_case_meta):
         from corehq.apps.reports.formdetails.readable import FormQuestionResponse
-        questions = {q['value']: FormQuestionResponse(q) for q in self.get_questions(self.get_app().langs)}
+        questions = {
+            q['value']: FormQuestionResponse(q)
+            for q in self.get_questions(self.get_app().langs, include_translations=True)
+        }
         meta = app_case_meta.get_type(self.case_type)
         for name, question_path in self.case_updates().items():
             self.add_property_save(
@@ -3254,10 +3294,11 @@ class SavedAppBuild(ApplicationBase):
                     '_attachments', 'profile', 'translations'
                     'description', 'short_description'):
             data.pop(key, None)
+        built_on_user_time = ServerTime(self.built_on).user_time(timezone)
         data.update({
             'id': self.id,
-            'built_on_date': utc_to_timezone(data['built_on'], timezone, "%b %d, %Y"),
-            'built_on_time': utc_to_timezone(data['built_on'], timezone, "%H:%M %Z"),
+            'built_on_date': built_on_user_time.ui_string(USER_DATE_FORMAT),
+            'built_on_time': built_on_user_time.ui_string(USER_TIME_FORMAT),
             'build_label': self.built_with.get_label(),
             'jar_path': self.get_jar_path(),
             'short_name': self.short_name,
@@ -3284,7 +3325,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     show_user_registration = BooleanProperty(default=False, required=True)
     modules = SchemaListProperty(ModuleBase)
     name = StringProperty()
-    # profile's schema is {'features': {}, 'properties': {}}
+    # profile's schema is {'features': {}, 'properties': {}, 'custom_properties': {}}
     # ended up not using a schema because properties is a reserved word
     profile = DictProperty()
     use_custom_suite = BooleanProperty(default=False)
@@ -3492,6 +3533,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             profile_url = self.media_profile_url if not is_odk else (self.odk_media_profile_url + '?latest=true')
         else:
             profile_url = self.profile_url if not is_odk else (self.odk_profile_url + '?latest=true')
+
+        if toggles.CUSTOM_PROPERTIES.enabled(self.domain) and "custom_properties" in self__profile:
+            app_profile['custom_properties'].update(self__profile['custom_properties'])
 
         return render_to_string(template, {
             'is_odk': is_odk,
@@ -4135,7 +4179,7 @@ def get_apps_in_domain(domain, full=False, include_remote=True):
     return filter(remote_app_filter, wrapped_apps)
 
 
-def get_app(domain, app_id, wrap_cls=None, latest=False):
+def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
     """
     Utility for getting an app, making sure it's in the domain specified, and wrapping it in the right class
     (Application or RemoteApp).
@@ -4160,17 +4204,30 @@ def get_app(domain, app_id, wrap_cls=None, latest=False):
             parent_app_id = original_app['_id']
             min_version = -1
 
-        latest_app = get_db().view('app_manager/applications',
-            startkey=['^ReleasedApplications', domain, parent_app_id, {}],
-            endkey=['^ReleasedApplications', domain, parent_app_id, min_version],
+        if target == 'build':
+            # get latest-build regardless of star
+            couch_view = 'app_manager/saved_app'
+            startkey = [domain, parent_app_id, {}]
+            endkey = [domain, parent_app_id]
+        else:
+            # get latest starred-build
+            couch_view = 'app_manager/applications'
+            startkey = ['^ReleasedApplications', domain, parent_app_id, {}]
+            endkey = ['^ReleasedApplications', domain, parent_app_id, min_version]
+
+        latest_app = get_db().view(
+            couch_view,
+            startkey=startkey,
+            endkey=endkey,
             limit=1,
             descending=True,
             include_docs=True
         ).one()
+
         try:
             app = latest_app['doc']
         except TypeError:
-            # If no starred builds, return act as if latest=False
+            # If no builds/starred-builds, return act as if latest=False
             app = original_app
     else:
         try:
@@ -4186,24 +4243,6 @@ def get_app(domain, app_id, wrap_cls=None, latest=False):
     app = cls.wrap(app)
     return app
 
-EXAMPLE_DOMAIN = 'example'
-
-
-def _get_or_create_app(app_id):
-    if app_id == "example--hello-world":
-        try:
-            app = Application.get(app_id)
-        except ResourceNotFound:
-            app = Application.wrap(fixtures.hello_world_example)
-            app._id = app_id
-            app.domain = EXAMPLE_DOMAIN
-            app.save()
-            return _get_or_create_app(app_id)
-        return app
-    else:
-        return get_app(None, app_id)
-
-
 str_to_cls = {
     "Application": Application,
     "Application-Deleted": Application,
@@ -4215,7 +4254,7 @@ str_to_cls = {
 def import_app(app_id_or_source, domain, name=None, validate_source_domain=None):
     if isinstance(app_id_or_source, basestring):
         app_id = app_id_or_source
-        source = _get_or_create_app(app_id)
+        source = get_app(None, app_id)
         src_dom = source['domain']
         if validate_source_domain:
             validate_source_domain(src_dom)

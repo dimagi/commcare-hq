@@ -35,10 +35,9 @@
         </div>
     </div>
     <div class="well">
-        <em>{% trans "Close this case when the form is complete" %}</em>
         <label>
             <input type="checkbox" data-bind="checked: close_case"/>
-            {% trans "Close Case" %}
+            {% trans "Close this case when the form is complete" %}
         </label>
         <div data-bind="template: {
             name: 'case-config:condition',
@@ -50,14 +49,14 @@
 
 
 <div id="case-config-ko">
-    <div data-bind="saveButton: saveButton, visible: $root.edit"></div>
+    <div data-bind="saveButton: saveButton"></div>
     <div data-bind="with: caseConfigViewModel">
         <div>
-            {% trans "Choose a type of form: " %}
+            {% trans "This form: " %}
             {% trans "Does not use cases" as no_cases %}
             {% trans "Registers a new case" as registers_case %}
             {% trans "Updates or closes a case" as updates_case %}
-            {% trans "Registers a case (different module)" as different_module %}
+            {% trans "Registers a case for a different module" as different_module %}
             <select class="input-xlarge" data-bind="
                 optstr: [{value: 'none', label: '{{ no_cases|escapejs }}'},
                          {value: 'open', label: '{{ registers_case|escapejs }}'},
@@ -92,16 +91,15 @@
                         options: $parent.caseTypes,
                         optionsText: $parent.getCaseTypeLabel,
                         value: case_type,
-                        optionsCaption: 'Choose a Module...',
-                        edit: $root.edit"
-                    ></select>
+                        optionsCaption: 'Choose a Module...'
+                    "></select>
                     <span class="help-inline" data-bind="visible: !case_type()">{% trans "Required" %}</span>
                     {% if show_custom_ref %}
                         <label>{% trans "Override reference id: " %}</label>
-                        <input type="text" data-bind="value: reference_id, edit: $root.edit"/>
+                        <input type="text" data-bind="value: reference_id"/>
                     {% endif %}
                 </span>
-                <a href="#" data-bind="openModal: 'remove-subcase-modal-template', visible: $root.edit" class="pull-right">
+                <a href="#" data-bind="openModal: 'remove-subcase-modal-template'" class="pull-right">
                     <i class="icon-trash"></i>
                     {% trans "Remove case" %}
                 </a>
@@ -109,7 +107,7 @@
             <div data-bind="template: 'case-config:case-transaction'"></div>
         </div>
         <div>
-            <a href="#" data-bind="click: addSubCase, visible: $root.edit">
+            <a href="#" data-bind="click: addSubCase">
                 <i class="icon-plus"></i>
                 {% trans "Opens a case for a different case list..." %}
             </a>

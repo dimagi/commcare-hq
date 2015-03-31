@@ -10,7 +10,7 @@ from corehq.apps.userreports.specs import EvaluationContext
 
 class ConstantExpressionTest(SimpleTestCase):
 
-    def test_property_name_expression(self):
+    def test_constant_expression(self):
         for constant in (7.2, 'hello world', ['a', 'list'], {'a': 'dict'}):
             getter = ExpressionFactory.from_spec({
                 'type': 'constant',
@@ -96,6 +96,22 @@ class ExpressionFromSpecTest(SimpleTestCase):
                     'type': 'property_path',
                     'property_path': empty_path,
                 })
+
+
+class PropertyPathExpressionTest(SimpleTestCase):
+
+    def test_property_path_bad_type(self):
+        getter = ExpressionFactory.from_spec({
+            'type': 'property_path',
+            'property_path': ['path', 'to', 'foo'],
+        })
+        self.assertEqual(PropertyPathGetterSpec, type(getter))
+        for bad_value in [None, '', []]:
+            self.assertEqual(None, getter({
+                'path': {
+                    'to': bad_value
+                }
+            }))
 
 
 class ConditionalExpressionTest(SimpleTestCase):

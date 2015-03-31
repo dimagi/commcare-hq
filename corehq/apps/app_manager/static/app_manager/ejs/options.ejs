@@ -1,45 +1,37 @@
 [% var something_is_selected = false; %]
-[% if(casexml.edit) { %]
-    [% if (options.length) { %]
-        <select name="[%= name %]">
+[% if (options.length) { %]
+    <select name="[%= name %]">
 
-            [% if(allowNull) { %]<option></option>[% } %]
-            [% options.forEach(function(o){ %]
-                <option value='[%= o.value %]' title='[%= casexml.escapeQuotes(o.label) %]'
-                        [% if(!something_is_selected && value === o.value) { something_is_selected=true; %]selected='true'[% } %]>
-                    [%= casexml.truncateLabel(o.label, o.tag === "hidden" ? " (Hidden)" : "") %]
-                </option>
-            [% }); %]
-            [% if(value && !something_is_selected) { %]
-                [% if (allowNull) { %]
-                    <option value='[%= value %]' selected="true">
-                        Unidentified Question([%= value %])
-                    </option>
-                [% } %]
-            [% } %]
-        </select>
-
-    [% } else { %]
-        [% if (!allowNull) { %]
-            <input type="text" class="short" name="[%= name %]" value="[%= value %]"/>
-        [% something_is_selected = true; %]
-        [% } else { %]
-            <select name="[%= name %]" disabled="true">
-                <option value="">No Options Available</option>
-            </select>
-        [% } %]
-    [% } %]
+        [% if(allowNull) { %]<option></option>[% } %]
+        [% options.forEach(function(o){ %]
+            <option value='[%= o.value %]' title='[%= casexml.escapeQuotes(o.label) %]'
+                    [% if(!something_is_selected && value === o.value) { something_is_selected=true; %]selected='true'[% } %]>
+                [%= casexml.truncateLabel(o.label, o.tag === "hidden" ? " (Hidden)" : "") %]
+            </option>
+        [% }); %]
         [% if(value && !something_is_selected) { %]
-            <div class="alert alert-danger">
-                We cannot find this question in the form.
-                It is likely that you deleted or renamed the question.
-                Please choose a valid question from the dropdown.
-            </div>
+            [% if (allowNull) { %]
+                <option value='[%= value %]' selected="true">
+                    Unidentified Question([%= value %])
+                </option>
+            [% } %]
         [% } %]
+    </select>
+
 [% } else { %]
-    [% options.forEach(function(o){ %]
-        [% if(value == o.value) { %]
-            <span class="no-edit-select">[%= o.label %]</span>
-        [% } %]
-    [% }); %]
+    [% if (!allowNull) { %]
+        <input type="text" class="short" name="[%= name %]" value="[%= value %]"/>
+    [% something_is_selected = true; %]
+    [% } else { %]
+        <select name="[%= name %]" disabled="true">
+            <option value="">No Options Available</option>
+        </select>
+    [% } %]
+[% } %]
+[% if(value && !something_is_selected) { %]
+    <div class="alert alert-danger">
+        We cannot find this question in the form.
+        It is likely that you deleted or renamed the question.
+        Please choose a valid question from the dropdown.
+    </div>
 [% } %]

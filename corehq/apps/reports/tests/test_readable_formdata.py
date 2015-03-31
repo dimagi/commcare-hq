@@ -25,6 +25,8 @@ class ReadableFormdataTest(SimpleTestCase):
             "label": "Question 4",
             "type": "Text",
             'calculate': None,
+            'required': False,
+            'relevant': None,
         }]
         form_data = {
             "@uiVersion": "1",
@@ -72,6 +74,8 @@ class ReadableFormdataTest(SimpleTestCase):
                 "response": "foo",
                 "type": "Text",
                 'calculate': None,
+                'required': False,
+                'relevant': None,
             }])
         )
 

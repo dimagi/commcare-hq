@@ -1,9 +1,81 @@
 from django import forms
 from django.core.validators import MinLengthValidator
+from django.template.loader import render_to_string
 from corehq.apps.style.forms.fields import MultiEmailField
+from corehq.apps.userreports.reports.view import ConfigurableReport
+from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Submit
-from .models import ReportNotification
+from .models import (
+    ReportConfig,
+    ReportNotification,
+)
+
+
+class SavedReportConfigForm(forms.Form):
+    name = forms.CharField()
+    description = forms.CharField(
+        required=False,
+        widget=forms.Textarea(),
+    )
+    start_date = forms.DateField(
+        required=False,
+    )
+    end_date = forms.DateField(
+        required=False,
+    )
+    date_range = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput(),
+    )
+    days = forms.IntegerField(
+        required=False,
+        widget=forms.HiddenInput(),
+    )
+    _id = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput(),
+    )
+    report_slug = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput(),
+    )
+    report_type = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput(),
+    )
+    subreport_slug = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput(),
+    )
+
+    def __init__(self, domain, user_id, *args, **kwargs):
+        self.domain = domain
+        self.user_id = user_id
+        super(SavedReportConfigForm, self).__init__(*args, **kwargs)
+
+    def clean(self):
+        name = self.cleaned_data['name']
+        _id = self.cleaned_data['_id']
+
+        user_configs = ReportConfig.by_domain_and_owner(self.domain, self.user_id)
+        if not _id and name in [c.name for c in user_configs]:
+            raise forms.ValidationError(
+                "A saved report with the name '%(name)s' already exists." % {
+                    'name': name,
+                }
+            )
+
+        date_range = self.cleaned_data['date_range']
+        if date_range == 'last7':
+            self.cleaned_data['days'] = 7
+        elif date_range == 'last30':
+            self.cleaned_data['days'] = 30
+        elif self.cleaned_data['days'] is None and self.cleaned_data['report_type'] != ConfigurableReport.prefix:
+            raise forms.ValidationError(
+                "Field 'days' was expected but not provided."
+            )
+
+        return self.cleaned_data
 
 
 class ScheduledReportForm(forms.Form):
@@ -40,11 +112,25 @@ class ScheduledReportForm(forms.Form):
         label='Other recipients',
         required=False)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, display_privacy_disclaimer, *args, **kwargs):
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
         self.helper.form_id = 'id-scheduledReportForm'
-        self.helper.add_input(Submit('submit_btn', 'Submit'))
+        self.helper.add_layout(
+            crispy.Layout(
+                'config_ids',
+                'interval',
+                'day',
+                'hour',
+                'send_to_owner',
+                'attach_excel',
+                'recipient_emails',
+                crispy.HTML(
+                    render_to_string('reports/partials/privacy_disclaimer.html')
+                ) if display_privacy_disclaimer else None
+            )
+        )
+        self.helper.add_input(crispy.Submit('submit_btn', 'Submit'))
 
         super(ScheduledReportForm, self).__init__(*args, **kwargs)
 

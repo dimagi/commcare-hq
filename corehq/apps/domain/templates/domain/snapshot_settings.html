@@ -89,7 +89,7 @@
                 </a>
             </td>
             <td>{{ snapshot.snapshot_time }}</td>
-            <td>{{ snapshot.get_license_display }}</td>
+            <td><a href="{{ project.get_license_url }}">{{ project.get_license_display }}</a> </td>
             {% if snapshot.published %}
             <td>
                 {% if snapshot.is_approved %}

@@ -2,6 +2,7 @@ from collections import defaultdict
 import functools
 import json
 import itertools
+from corehq.apps.builds.models import CommCareBuildConfig
 from couchdbkit.exceptions import DocTypeError
 from corehq import Domain
 from corehq.apps.app_manager.const import CT_REQUISITION_MODE_3, CT_LEDGER_STOCK, CT_LEDGER_REQUESTED, CT_REQUISITION_MODE_4, CT_LEDGER_APPROVED, CT_LEDGER_PREFIX
@@ -326,3 +327,35 @@ def commtrack_ledger_sections(mode):
         sections += [CT_LEDGER_REQUESTED, CT_LEDGER_APPROVED]
 
     return ['{}{}'.format(CT_LEDGER_PREFIX, s) for s in sections]
+
+
+def version_key(ver):
+    """
+    A key function that takes a version and returns a numeric value that can
+    be used for sorting
+
+    >>> version_key('2')
+    2000000
+    >>> version_key('2.9')
+    2009000
+    >>> version_key('2.10')
+    2010000
+    >>> version_key('2.9.1')
+    2009001
+    >>> version_key('2.9.1.1')
+    2009001
+    >>> version_key('2.9B')
+    Traceback (most recent call last):
+      ...
+    ValueError: invalid literal for int() ...
+
+    """
+    padded = ver + '.0.0'
+    values = padded.split('.')
+    return int(values[0]) * 1000000 + int(values[1]) * 1000 + int(values[2])
+
+
+def get_commcare_versions(request_user):
+    versions = [i.build.version for i in CommCareBuildConfig.fetch().menu
+                if request_user.is_superuser or not i.superuser_only]
+    return sorted(versions, key=version_key)

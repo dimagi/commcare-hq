@@ -3,7 +3,7 @@ import json
 import os
 from django.test import TestCase
 from corehq.apps.commtrack.tests.util import bootstrap_domain as initial_bootstrap
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import Location, SQLLocation
 from custom.ilsgateway.api import Location as Loc, ILSGatewayAPI
 from custom.ilsgateway.tests.mock_endpoint import MockEndpoint
 from custom.logistics.commtrack import synchronization
@@ -49,3 +49,11 @@ class LocationSyncTest(TestCase):
         self.assertEqual(100, checkpoint.limit)
         self.assertEqual(0, checkpoint.offset)
         self.assertEqual(4, len(list(Location.by_domain(TEST_DOMAIN))))
+        self.assertEqual(4, SQLLocation.objects.filter(domain=TEST_DOMAIN).count())
+        sql_location = SQLLocation.objects.get(domain=TEST_DOMAIN, site_code='DM520053')
+        self.assertEqual('FACILITY', sql_location.location_type.name)
+        self.assertIsNotNone(sql_location.supply_point_id)
+
+        sql_location2 = SQLLocation.objects.get(domain=TEST_DOMAIN, site_code='region-dodoma')
+        self.assertEqual('REGION', sql_location2.location_type.name)
+        self.assertIsNone(sql_location2.supply_point_id)

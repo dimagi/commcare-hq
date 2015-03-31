@@ -1,3 +1,4 @@
+import uuid
 from couchdbkit import ResourceConflict
 from django.utils.decorators import method_decorator
 from casexml.apps.stock.models import StockTransaction
@@ -172,14 +173,16 @@ def form_context(request, domain, app_id, module_id, form_id):
     case_id = request.GET.get('case_id')
     instance_id = request.GET.get('instance_id')
     try:
-        form = app.get_module(module_id).get_form(form_id).name.values()[0]
+        form = app.get_module(module_id).get_form(form_id)
     except (FormNotFoundException, ModuleNotFoundException):
         raise Http404()
+
+    form_name = form.name.values()[0]
 
     # make the name for the session we will use with the case and form
     session_name = u'{app} > {form}'.format(
         app=app.name,
-        form=form,
+        form=form_name,
     )
     if case_id:
         session_name = u'{0} - {1}'.format(session_name, CommCareCase.get(case_id).name)
@@ -191,12 +194,18 @@ def form_context(request, domain, app_id, module_id, form_id):
         root_context['instance_xml'] = XFormInstance.get_db().fetch_attachment(
             instance_id, ATTACHMENT_NAME
         )
+
+    session_extras = {'session_name': session_name, 'app_id': app._id}
+    suite_gen = SuiteGenerator(app)
+    datums = suite_gen.get_new_case_id_datums_meta(form)
+    session_extras.update({datum['datum'].id: uuid.uuid4().hex for datum in datums})
+
     delegation = request.GET.get('task-list') == 'true'
     offline = request.GET.get('offline') == 'true'
     session_helper = SessionDataHelper(domain, request.couch_user, case_id, delegation=delegation, offline=offline)
     return json_response(session_helper.get_full_context(
         root_context,
-        {'session_name': session_name, 'app_id': app._id}
+        session_extras
     ))
 
 

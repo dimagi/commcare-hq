@@ -41,7 +41,7 @@ class QuickcacheTest(SimpleTestCase):
         return result
 
     def test_tiered_cache(self):
-        @quickcache(cache=_cache)
+        @quickcache([], cache=_cache)
         def simple():
             BUFFER.append('called')
             return 'VALUE'
@@ -158,7 +158,7 @@ class QuickcacheTest(SimpleTestCase):
             len(key), len('quickcache.lots_of_args.xxxxxxxx/H') + 32, key)
 
     def test_really_long_function_name(self):
-        @quickcache()
+        @quickcache([])
         def aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa():
             """60 a's in a row"""
             pass
@@ -169,3 +169,14 @@ class QuickcacheTest(SimpleTestCase):
                .get_cache_key())
         self.assertEqual(
             len(key), len('quickcache.' + 'a' * 40 + '...xxxxxxxx/'), key)
+
+    def test_vary_on_func(self):
+        def vary_on(data):
+            return [data['name']]
+
+        @quickcache(vary_on=vary_on)
+        def cached_fn(data):
+            pass
+
+        key = cached_fn.get_cache_key({'name': 'a1'})
+        self.assertRegexpMatches(key, 'quickcache.cached_fn.[a-z0-9]{8}/sa1')

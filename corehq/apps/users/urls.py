@@ -7,7 +7,8 @@ from .views import (DefaultProjectUserSettingsView, EditWebUserView,
     NewListWebUsersView,
 )
 from .views.mobile.custom_data_fields import UserFieldsView
-from .views.mobile.groups import EditGroupsView, EditGroupMembersView
+from .views.mobile.groups import (EditGroupsView, EditGroupMembersView,
+    BulkSMSVerificationView)
 from .views.mobile.users import (UploadCommCareUsers, EditCommCareUserView,
     ListCommCareUsersView, AsyncListCommCareUsersView, CreateCommCareUserView,
     ConfirmBillingAccountForExtraUsersView, UserUploadStatusView)
@@ -66,11 +67,14 @@ patterns("corehq.apps.users.views.mobile.users",
         'user_upload_job_poll', name='user_upload_job_poll'),
     url(r'^commcare/download/$', 'download_commcare_users', name='download_commcare_users'),
     url(r'^commcare/set_group/$', 'set_commcare_user_group', name='set_commcare_user_group'),
-    url(r'^commcare/add_commcare_account/$', CreateCommCareUserView.as_view(), name=CreateCommCareUserView.urlname),
+    url(r'^commcare/add_commcare_account/$', CreateCommCareUserView.as_view(),
+        name=CreateCommCareUserView.urlname),
     url(r'^commcare/confirm_charges/$', ConfirmBillingAccountForExtraUsersView.as_view(),
         name=ConfirmBillingAccountForExtraUsersView.urlname),
 ) +\
 patterns("corehq.apps.users.views.mobile.groups",
     url(r'^groups/$', EditGroupsView.as_view(), name=EditGroupsView.urlname),
     url(r'^groups/(?P<group_id>[ \w-]+)/$', EditGroupMembersView.as_view(), name=EditGroupMembersView.urlname),
+    url(r'^groups/sms_verification/(?P<group_id>[ \w-]+)$', BulkSMSVerificationView.as_view(),
+        name=BulkSMSVerificationView.urlname),
 )

@@ -9,13 +9,12 @@ import lxml
 from django.core.files.uploadedfile import UploadedFile
 
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case import process_cases
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.models import SyncLog
 import couchforms
 from couchforms.models import XFormInstance, XFormDeprecated
-from couchforms.tests.testutils import post_xform_to_couch
+
 
 TEST_CASE_ID = "EOL9FIAKIQWOFXFOH0QAMWU64"
 CREATE_XFORM_ID = "6RGAZTETE3Z2QC0PE2DKM88MO"
@@ -131,13 +130,7 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
     Spec: https://github.com/dimagi/commcare/wiki/CaseAttachmentAPI
     """
     def tearDown(self):
-        deprecated_xforms = XFormDeprecated.view(
-            'couchforms/edits',
-            include_docs=True,
-        ).all()
-        for form in deprecated_xforms:
-            form.delete()
-            pass
+        delete_all_xforms()
 
     def testAttachInCreate(self):
         self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))

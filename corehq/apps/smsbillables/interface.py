@@ -15,6 +15,7 @@ from corehq.apps.smsbillables.filters import (
     DateSentFilter,
     DirectionFilter,
     DomainFilter,
+    HasGatewayFeeFilter,
     GatewayTypeFilter,
     ShowBillablesFilter,
     SpecificGateway,
@@ -24,6 +25,7 @@ from corehq.apps.smsbillables.models import (
     SmsGatewayFee,
     SmsGatewayFeeCriteria,
 )
+from couchexport.models import Format
 
 
 class SMSBillablesInterface(GenericTabularReport):
@@ -36,11 +38,13 @@ class SMSBillablesInterface(GenericTabularReport):
     ajax_pagination = True
     exportable = True
     exportable_all = True
+    export_format_override = Format.UNZIPPED_CSV
     fields = [
         'corehq.apps.smsbillables.interface.DateSentFilter',
         'corehq.apps.accounting.interface.DateCreatedFilter',
         'corehq.apps.smsbillables.interface.ShowBillablesFilter',
         'corehq.apps.smsbillables.interface.DomainFilter',
+        'corehq.apps.smsbillables.interface.HasGatewayFeeFilter',
     ]
 
     @property
@@ -82,10 +86,15 @@ class SMSBillablesInterface(GenericTabularReport):
                 },
                 {
                     'name': ShowBillablesFilter.slug,
-                    'value': ShowBillablesFilter.get_value(self.request, self.domain)},
+                    'value': ShowBillablesFilter.get_value(self.request, self.domain)
+                },
                 {
                     'name': DomainFilter.slug,
                     'value': DomainFilter.get_value(self.request, self.domain)
+                },
+                {
+                    'name': HasGatewayFeeFilter.slug,
+                    'value': HasGatewayFeeFilter.get_value(self.request, self.domain)
                 },
         ]
 
@@ -152,6 +161,18 @@ class SMSBillablesInterface(GenericTabularReport):
             selected_billables = selected_billables.filter(
                 domain=domain,
             )
+        has_gateway_fee = HasGatewayFeeFilter.get_value(
+            self.request, self.domain
+        )
+        if has_gateway_fee:
+            if has_gateway_fee == HasGatewayFeeFilter.YES:
+                selected_billables = selected_billables.exclude(
+                    gateway_fee=None
+                )
+            else:
+                selected_billables = selected_billables.filter(
+                    gateway_fee=None
+                )
         return selected_billables
 
 
@@ -178,6 +199,7 @@ class SMSGatewayFeeCriteriaInterface(GenericTabularReport):
             DataTablesColumn("Specific Gateway"),
             DataTablesColumn("Direction"),
             DataTablesColumn("Country Code"),
+            DataTablesColumn("Prefix"),
             DataTablesColumn("Fee (Amount, Currency)")
         )
 
@@ -197,6 +219,7 @@ class SMSGatewayFeeCriteriaInterface(GenericTabularReport):
                 criteria.direction,
                 (criteria.country_code
                  if criteria.country_code is not None else "Any"),
+                criteria.prefix or "Any",
                 "%(amount)s %(currency)s" % {
                     'amount': str(gateway_fee.amount),
                     'currency': gateway_fee.currency.code,

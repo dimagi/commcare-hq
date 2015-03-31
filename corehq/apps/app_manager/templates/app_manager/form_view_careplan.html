@@ -8,11 +8,8 @@
 {% endblock %}
 
 {% block case_management_js %}
-    var edit = {% if edit %}true{% else %}false{% endif %};
-
     var careplan = new CareplanConfig.Careplan({
         home: $('#case-config-ko'),
-        edit: edit,
         mode: "{{ mode }}",
         caseType: {{ form.get_case_type|JSON }},
         questions: {{ xform_questions|JSON }},

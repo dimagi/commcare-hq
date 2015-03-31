@@ -4,10 +4,14 @@ from corehq.apps.reports_core.filters import DatespanFilter, ChoiceListFilter, C
     NumericFilter
 from corehq.apps.userreports.exceptions import BadSpecError
 from django.utils.translation import ugettext as _
-from corehq.apps.userreports.reports.filters import SHOW_ALL_CHOICE, dynamic_choice_list_url
+from corehq.apps.userreports.reports.filters import(
+    dynamic_choice_list_url,
+    NONE_CHOICE,
+    SHOW_ALL_CHOICE,
+)
 from corehq.apps.userreports.reports.specs import FilterSpec, ChoiceListFilterSpec, PieChartSpec, \
-    MultibarAggregateChartSpec, MultibarChartSpec, ReportFilter, ReportColumn, DynamicChoiceListFilterSpec, \
-    NumericFilterSpec
+    MultibarAggregateChartSpec, MultibarChartSpec, ReportFilter, DynamicChoiceListFilterSpec, \
+    NumericFilterSpec, FieldColumn, PercentageColumn, ExpandedColumn, AggregateDateColumn
 
 
 def _build_date_filter(spec):
@@ -30,7 +34,10 @@ def _build_numeric_filter(spec):
 
 def _build_choice_list_filter(spec):
     wrapped = ChoiceListFilterSpec.wrap(spec)
-    choices = [Choice(fc.value, fc.get_display()) for fc in wrapped.choices]
+    choices = [Choice(
+        fc.value if fc.value is not None else NONE_CHOICE,
+        fc.get_display()
+    ) for fc in wrapped.choices]
     if wrapped.show_all:
         choices.insert(0, Choice(SHOW_ALL_CHOICE, _('Show all')))
     return ChoiceListFilter(
@@ -94,8 +101,29 @@ class ReportFactory(object):
             config_or_config_id=spec.config_id,
             filters=[ReportFilter.wrap(f) for f in spec.filters],
             aggregation_columns=spec.aggregation_columns,
-            columns=[ReportColumn.wrap(colspec) for colspec in spec.columns],
+            columns=[ReportColumnFactory.from_spec(colspec) for colspec in spec.columns],
         )
+
+
+class ReportColumnFactory(object):
+    class_map = {
+        'aggregate_date': AggregateDateColumn,
+        'expanded': ExpandedColumn,
+        'field': FieldColumn,
+        'percent': PercentageColumn,
+    }
+
+    @classmethod
+    def from_spec(cls, spec):
+        column_type = spec.get('type') or 'field'
+        if column_type not in cls.class_map:
+            raise BadSpecError(
+                'Unknown or missing column type: {} must be in [{}]'.format(
+                    column_type,
+                    ', '.join(cls.class_map.keys())
+                )
+            )
+        return cls.class_map[column_type].wrap(spec)
 
 
 class ChartFactory(object):

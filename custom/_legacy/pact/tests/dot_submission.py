@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 import dateutil
 import os
 from django.test import TestCase
-import simplejson
+import json
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
@@ -212,8 +212,8 @@ class dotsSubmissionTests(TestCase):
         casedoc.dot_a_three = ''
         casedoc.dot_a_four = None
 
-        computed_json = simplejson.loads(
-            simplejson.dumps(get_dots_case_json(casedoc, anchor_date=ANCHOR_DATE)))
+        computed_json = json.loads(
+            json.dumps(get_dots_case_json(casedoc, anchor_date=ANCHOR_DATE)))
         computed_anchor = computed_json['anchor']
         del computed_json['anchor']
 
@@ -221,7 +221,7 @@ class dotsSubmissionTests(TestCase):
             if k != 'days':
                 self.assertEquals(orig_data[k], computed_json[k])
 
-        self.assertEquals(simplejson.dumps(orig_data), simplejson.dumps(computed_json))
+        self.assertEquals(json.dumps(orig_data), json.dumps(computed_json))
 
 
     def testPillboxCheck(self):
@@ -255,7 +255,7 @@ class dotsSubmissionTests(TestCase):
                 else:
                     self.assertEquals(getattr(obs, k), v,
                                       msg="Error, observation %s\n\t%s didn't match: %s != %s" % (
-                                      simplejson.dumps(obs.to_json(), indent=4), k, getattr(obs, k),
+                                      json.dumps(obs.to_json(), indent=4), k, getattr(obs, k),
                                       v))
 
         for d in range(td.days):

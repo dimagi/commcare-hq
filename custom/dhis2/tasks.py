@@ -15,7 +15,7 @@ is done using FormRepeater payload generators. See payload_generators.py for
 details.
 
 """
-from datetime import date
+from datetime import date, timedelta
 import logging
 import uuid
 from xml.etree import ElementTree
@@ -191,6 +191,13 @@ def create_case_from_dhis2(dhis2_child, domain, user):
     """
     case_id = uuid.uuid4().hex
     update = {k: dhis2_child[v] for k, v in NUTRITION_ASSESSMENT_PROGRAM_FIELDS.iteritems()}
+    update['dhis_org_id'] = dhis2_child['Org unit']
+    # Do the inverse of push_case() to 'Gender' / 'child_gender'
+    if 'child_gender' in update:
+        if update['child_gender'] == 'Undefined':
+            del update['child_gender']
+        else:
+            update['child_gender'] = update['child_gender'].lower()
     caseblock = CaseBlock(
         create=True,
         case_id=case_id,
@@ -247,12 +254,11 @@ def gen_children_only_ours(domain):
             yield CommCareCase.wrap(doc)
 
 
-@periodic_task(run_every=crontab(minute=2, hour=2))  # Run daily at 02h02
+# Check for new cases on DHIS2 every 6 hours
+@periodic_task(run_every=timedelta(hours=6), queue='background_queue')
 def fetch_cases():
     """
-    Create new child cases in CommCare for nutrition tracking, and associate
-    CommCare child cases with DHIS2 child entities and enroll them in the
-    Pediatric Nutrition Assessment and Underlying Risk Assessment programs.
+    Import new child cases from DHIS2 for nutrition tracking
     """
     for settings in Dhis2Settings.all_enabled():
         logger.info('DHIS2: Fetching cases for domain "%s" from "%s"', settings.domain, settings.dhis2['host'])
@@ -261,7 +267,7 @@ def fetch_cases():
 
 
 # There is a large number of org units, but the lookup table is not deployed to handsets.
-@periodic_task(run_every=crontab(minute=3, hour=3))  # Run daily at 03h03
+@periodic_task(run_every=crontab(minute=3, hour=3), queue='background_queue')
 def fetch_org_units():
     """
     Synchronize DHIS2 Organization Units with local data.

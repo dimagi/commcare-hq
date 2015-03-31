@@ -29,6 +29,9 @@
     "password": "sha1$a2d46$57f1712b2fbe5e129206b45fa3fa5c14d9f879be",
     "sms_notifications": false,
     "supply_point": 370,
-    "username": "test2"
+    "username": "test2",
+    "groups": [
+        {"name": "facility_manager"}
+    ]
   }
 ]

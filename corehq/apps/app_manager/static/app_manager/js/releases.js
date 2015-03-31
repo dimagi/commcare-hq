@@ -235,8 +235,7 @@ function ReleasesMain(o) {
     };
     self.actuallyMakeBuild = function () {
         var comment = window.prompt(
-            "Please write a comment about the build you're making " +
-            "to help you remember later:"
+            "Add a comment about the version to help you remember later:"
         );
         if (comment || comment === "") {
             $(this).find("input[name='comment']").val(comment);

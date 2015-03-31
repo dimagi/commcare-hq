@@ -300,12 +300,13 @@ def get_active_users_data(domains, datespan, interval, datefield='date',
         if include_forms:
             users |= {
                 u['term'] for u in FormES()
+                .domain(domains)
                 .user_facet(size=USER_COUNT_UPPER_BOUND)
                 .submitted(gte=f, lte=t)
+                .user_id(mobile_users)
                 .size(0)
                 .run()
                 .facets.user.result
-                if u['term'] in mobile_users
             }
         c = len(users)
         if c > 0:

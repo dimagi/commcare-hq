@@ -568,7 +568,7 @@ class InvoiceInterface(GenericTabularReport):
                 get_exportable_column(invoice.subtotal),
                 get_exportable_column(invoice.applied_credit),
                 get_exportable_column(invoice.balance),
-                "Paid" if invoice.date_paid else "Not paid",
+                "Paid" if invoice.is_paid else "Not paid",
                 "YES" if invoice.is_hidden else "no",
             ])
 
@@ -703,7 +703,7 @@ class InvoiceInterface(GenericTabularReport):
         )
 
     @property
-    @request_cache("default")
+    @request_cache()
     def view_response(self):
         if self.request.method == 'POST':
             if self.adjust_balance_form.is_valid():

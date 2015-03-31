@@ -1,0 +1,14 @@
+<partial>
+  <entry>
+    <form>http://m0-f0</form>
+    <command id="m0-f0">
+      <text>
+        <locale id="forms.m0f0"/>
+      </text>
+    </command>
+    <session>
+      <datum id="case_id_new_phone_0" function="uuid()"/>
+      <datum id="case_id_new_tablet_1" function="uuid()"/>
+    </session>
+  </entry>
+</partial>

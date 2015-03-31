@@ -5,7 +5,7 @@
 ORG_UNIT_FIXTURES = 'dhis2_org_unit'
 CCHQ_CASE_ID = 'cchq_id'
 CASE_TYPE = 'child_gmp'
-CASE_NAME = 'child_id'
+CASE_NAME = 'chdr_number'
 TRACKED_ENTITY = 'Child'
 
 REGISTER_CHILD_XMLNS = 'http://openrosa.org/formdesigner/6A5D0A79-E945-4F62-A737-3D4E6998685C'
@@ -18,10 +18,10 @@ NUTRITION_ASSESSMENT_PROGRAM_FIELDS = {
     # c.f. http://dhis1.internal.commcarehq.org:8080/dhis/api/programs/HiHLy0f1C1q.json
     #      programTrackedEntityAttributes
 
-    'child_id': 'CHDR Number',
+    'chdr_number': 'CHDR Number',
     'child_first_name': 'First Name',
     'child_gender': 'Gender',
-    'child_hh_name': 'Last Name',
+    'father_name': 'Last Name',
     'dob': 'Date of Birth',
     'mother_first_name': 'Name of the Mother/Guardian',
     'mother_phone_number': 'Mobile Number of the Mother',

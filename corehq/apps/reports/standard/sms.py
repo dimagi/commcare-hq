@@ -6,18 +6,19 @@ from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader,\
     DTSortType
 from corehq.apps.sms.filters import MessageTypeFilter
+from corehq.util.timezones.conversions import ServerTime
 from corehq.util.view_utils import absolute_reverse
-from dimagi.utils.web import get_url_base
-from django.core.urlresolvers import reverse
 from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase
 from django.conf import settings
-from dimagi.utils.timezones import utils as tz_utils
-import pytz
-from corehq.apps.users.views import EditWebUserView
-from corehq.apps.users.views.mobile.users import EditCommCareUserView
+# This import is not used, but there's some sort circular dependency
+# that is exposed if you remove this. That's not something I've seen before
+# but presumably having this here changes the order in which files are imported
+# and that ends up mattering.
+# todo: figure out what that circular dependency is
+from corehq.apps.users.views import mobile
 from corehq.apps.hqwebapp.doc_info import get_doc_info
 from corehq.apps.sms.models import (
     WORKFLOW_REMINDER,
@@ -265,7 +266,7 @@ class MessageLogReport(BaseCommConnectLogReport):
             if abbreviate_phone_number and phone_number is not None:
                 phone_number = phone_number[0:7] if phone_number[0:1] == "+" else phone_number[0:6]
 
-            timestamp = tz_utils.adjust_datetime_to_timezone(message.date, pytz.utc.zone, self.timezone.zone)
+            timestamp = ServerTime(message.date).user_time(self.timezone).done()
             result.append([
                 self._fmt_timestamp(timestamp),
                 self._fmt_contact_link(message, doc_info),
@@ -276,5 +277,3 @@ class MessageLogReport(BaseCommConnectLogReport):
             ])
 
         return result
-
-

@@ -1,0 +1,58 @@
+{
+    "domains": ["succeed"],
+    "config": {
+        "referenced_doc_type": "XFormInstance",
+        "table_id": "succeed_submissions",
+        "display_name": "Patient Submissions",
+         "configured_filter": {
+            "type": "not",
+            "filter": {
+                "type": "boolean_expression",
+                "operator": "in",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "xmlns"
+                },
+                "property_value": ["http://code.javarosa.org/devicereport"]
+            }
+        },
+        "configured_indicators": [
+            {
+                "column_id": "date",
+                "type": "expression",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": ["received_on"]
+                },
+                "datatype": "datetime"
+            },
+            {
+                "column_id": "case_id",
+                "type": "expression",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": ["form", "case", "@case_id"]
+                },
+                "datatype": "string"
+            },
+            {
+                "column_id": "form_name",
+                "type": "expression",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": ["form", "@name"]
+                },
+                "datatype": "string"
+            },
+            {
+                "column_id": "username",
+                "type": "expression",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": ["form", "meta", "username"]
+                },
+                "datatype": "string"
+            }
+        ]
+    }
+}

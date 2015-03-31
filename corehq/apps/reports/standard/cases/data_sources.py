@@ -1,11 +1,13 @@
 from couchdbkit import ResourceNotFound
+import datetime
 import dateutil
+from dimagi.utils.parsing import string_to_utc_datetime
 from django.core import cache
 from django.core.urlresolvers import reverse, NoReverseMatch
 from django.template.defaultfilters import yesno
 from django.utils import html
 from django.utils.translation import ugettext as _
-import simplejson
+import json
 from casexml.apps.case.models import CommCareCaseAction
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser, CouchUser
@@ -117,12 +119,12 @@ class CaseInfo(object):
         cache_key = "%s.%s" % (Group.__class__.__name__, self.owner_id)
         try:
             if mc.has_key(cache_key):
-                cached_obj = simplejson.loads(mc.get(cache_key))
+                cached_obj = json.loads(mc.get(cache_key))
                 wrapped = Group.wrap(cached_obj)
                 return wrapped
             else:
                 group_obj = Group.get(self.owner_id)
-                mc.set(cache_key, simplejson.dumps(group_obj.to_json()))
+                mc.set(cache_key, json.dumps(group_obj.to_json()))
                 return group_obj
         except Exception:
             return None
@@ -157,14 +159,14 @@ class CaseInfo(object):
 
             try:
                 if mc.has_key(cache_key):
-                    user_dict = simplejson.loads(mc.get(cache_key))
+                    user_dict = json.loads(mc.get(cache_key))
                 else:
                     user_obj = CouchUser.get_by_user_id(user_id) if user_id else None
                     if user_obj:
                         user_dict = user_obj.to_json()
                     else:
                         user_dict = {}
-                    cache_payload = simplejson.dumps(user_dict)
+                    cache_payload = json.dumps(user_dict)
                     mc.set(cache_key, cache_payload)
                 if user_dict == {}:
                     return None
@@ -177,10 +179,16 @@ class CaseInfo(object):
 
     def parse_date(self, date_string):
         try:
-            date_obj = dateutil.parser.parse(date_string)
-            return date_obj
+            return string_to_utc_datetime(date_string)
         except:
-            return date_string
+            try:
+                date_obj = dateutil.parser.parse(date_string)
+                if isinstance(date_obj, datetime.datetime):
+                    return date_obj.replace(tzinfo=None)
+                else:
+                    return date_obj
+            except:
+                return date_string
 
 
 class CaseDisplay(CaseInfo):
