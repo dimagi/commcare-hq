@@ -1,4 +1,6 @@
 from couchdbkit import ResourceNotFound
+import datetime
+import dateutil
 from dimagi.utils.parsing import string_to_utc_datetime
 from django.core import cache
 from django.core.urlresolvers import reverse, NoReverseMatch
@@ -176,7 +178,17 @@ class CaseInfo(object):
         return username
 
     def parse_date(self, date_string):
-        return string_to_utc_datetime(date_string)
+        try:
+            return string_to_utc_datetime(date_string)
+        except:
+            try:
+                date_obj = dateutil.parser.parse(date_string)
+                if isinstance(date_obj, datetime.datetime):
+                    return date_obj.replace(tzinfo=None)
+                else:
+                    return date_obj
+            except:
+                return date_string
 
 
 class CaseDisplay(CaseInfo):
