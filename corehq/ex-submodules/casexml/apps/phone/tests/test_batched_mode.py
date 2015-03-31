@@ -45,7 +45,7 @@ class BatchRestoreTests(EnableBatchToggleMixin, SyncBaseTest):
         self._createCaseStubs(case_ids, owner_id=USER_ID)
 
         restore_config, _ = assert_user_has_cases(self, self.user, case_ids)
-        self.assertEqual(restore_config.num_batches, 4)
+        self.assertEqual(restore_config.num_batches, 5)
 
     def test_multiple_batches_sync(self):
         case_ids = ["case_{}".format(i) for i in range(10)]
@@ -53,5 +53,5 @@ class BatchRestoreTests(EnableBatchToggleMixin, SyncBaseTest):
 
         restore_config, _ = assert_user_doesnt_have_cases(self, self.user, case_ids,
                                                           restore_id=self.sync_log.get_id)
-        # 4 batches to fetch cases + 1 batch for cases left on phone
-        self.assertEqual(restore_config.num_batches, 5)
+        # 4 batches to fetch cases + 1 empty usercase batch + 1 batch for cases left on phone
+        self.assertEqual(restore_config.num_batches, 6)

@@ -561,15 +561,13 @@ class UserCaseSyncCouchBatch(CaseSyncCouchBatch):
     def __init__(self, user, global_state, domain, last_sync, chunksize, case_sharing=False):
         super(UserCaseSyncCouchBatch, self).__init__(
             global_state, domain, last_sync, chunksize, None, case_sharing=case_sharing)
-        self.user = user
+        self.user = user  # phone.models.User instance
 
     def _actual_owned_cases(self):
         from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 
-        try:
-            return [get_case_by_domain_hq_user_id(self.domain, self.user.get_id, include_docs=False)]
-        except NoResultFound:
-            return []
+        usercase = get_case_by_domain_hq_user_id(self.domain, self.user.user_id, include_docs=False)
+        return [usercase] if usercase else []
 
 
 def get_case_updates(user, last_sync):
