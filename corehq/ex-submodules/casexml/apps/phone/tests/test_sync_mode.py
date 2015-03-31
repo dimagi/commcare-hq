@@ -48,17 +48,19 @@ class SyncBaseTest(TestCase):
         self.sync_log = synclog_from_restore_payload(restore_config.get_payload())
 
     def _createCaseStubs(self, id_list, user_id=USER_ID, owner_id=USER_ID):
-        for id in id_list:
-            caseblock = CaseBlock(
+        caseblocks = [
+            CaseBlock(
                 create=True,
-                case_id=id,
+                case_id=case_id,
                 user_id=user_id,
                 owner_id=owner_id,
                 case_type=PARENT_TYPE,
                 version=V2
             ).as_xml()
-        self._postFakeWithSyncToken(caseblock, self.sync_log.get_id)
-        
+            for case_id in id_list
+        ]
+        self._postFakeWithSyncToken(caseblocks, self.sync_log.get_id)
+
     def _postWithSyncToken(self, filename, token_id):
         file_path = os.path.join(os.path.dirname(__file__), "data", filename)
         with open(file_path, "rb") as f:
