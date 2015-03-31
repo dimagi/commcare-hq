@@ -82,13 +82,14 @@ class EWSStockStatusBySupplyPointDataSource(StockStatusBySupplyPointDataSource):
 
                 if months_until_stockout is None:
                     category = "no-data"
-                if months_until_stockout < stock_levels.understock_threshold:
+                if months_until_stockout < loc.location_type.understock_threshold:
                     category = 'understock'
-                elif stock_levels.understock_threshold < months_until_stockout < stock_levels.overstock_threshold:
+                elif stock_levels.understock_threshold < months_until_stockout < \
+                        loc.location_type.overstock_threshold:
                     category = 'adequate'
                 elif months_until_stockout == 0:
                     category = 'stockout'
-                elif months_until_stockout > stock_levels.overstock_threshold:
+                elif months_until_stockout > loc.location_type.overstock_threshold:
                     category = 'overstock'
             icon, color = self._get_icon_and_color(category)
             yield {

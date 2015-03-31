@@ -38,13 +38,12 @@ class EmailReportData(EWSData):
         def percent(x, y):
             return "%d%% (%d)" % (x * 100 / (y or 1), x)
 
-        def stock_status(status):
-            stock_levels = CommtrackConfig.for_domain(self.config['domain']).stock_levels_config
+        def stock_status(status, loc):
             if status == 0.0:
                 return 'Stockout'
-            elif status < stock_levels.understock_threshold:
+            elif status < loc.location_type.understock_threshold:
                 return 'Low'
-            elif status < stock_levels.overstock_threshold:
+            elif status < loc.location_type.overstock_threshold:
                 return 'Adequate'
             else:
                 return 'Overstock'
@@ -77,7 +76,8 @@ class EmailReportData(EWSData):
             months_of_stock = float(v['total_stock']) / float(v['monthly_consumption'] or 1)
             rows.append([k, percent(v['fac_with_stockout'], v['total_fac']),
                         v['total_fac'], v['total_stock'], percent(v['fac_with_consumption'], v['total_fac']),
-                        v['monthly_consumption'], "%.1f" % months_of_stock, stock_status(months_of_stock)])
+                        v['monthly_consumption'], "%.1f" % months_of_stock, stock_status(months_of_stock,
+                                                                                         location)])
         return rows
 
 
