@@ -785,14 +785,6 @@ def get_module_view_context_and_template(app, module):
     child_case_types = list(child_case_types)
     fixtures = [f.tag for f in FixtureDataType.by_domain(app.domain)]
 
-    def ensure_unique_ids():
-        # make sure all modules have unique ids
-        modules = app.modules
-        if any(not mod.unique_id for mod in modules):
-            for mod in modules:
-                mod.get_or_create_unique_id()
-            app.save()
-
     def get_parent_modules(case_type):
         parent_types = builder.get_parent_types(case_type)
         modules = app.modules
@@ -820,7 +812,7 @@ def get_module_view_context_and_template(app, module):
 
         return options
 
-    ensure_unique_ids()
+    app.ensure_module_unique_ids(should_save=True)
     if isinstance(module, CareplanModule):
         return "app_manager/module_view_careplan.html", {
             'parent_modules': get_parent_modules(CAREPLAN_GOAL),
