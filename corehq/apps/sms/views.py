@@ -696,12 +696,11 @@ def get_mobile_worker_contact_info(domain_obj, user_ids):
 
 def get_contact_info(domain):
     verified_number_ids = VerifiedNumber.by_domain(domain, ids_only=True)
-    domain_obj = Domain.get_by_name(domain, strict=True)    
+    domain_obj = Domain.get_by_name(domain, strict=True)
     case_ids = []
     mobile_worker_ids = []
     data = []
     for doc in iter_docs(VerifiedNumber.get_db(), verified_number_ids):
-        doc_id = doc['_id']
         owner_id = doc['owner_id']
         if doc['owner_doc_type'] == 'CommCareCase':
             case_ids.append(owner_id)
@@ -758,7 +757,7 @@ def chat_contact_list(request, domain):
     filtered_records = len(data)
 
     data.sort(key=lambda row: row[0])
-    data = data[iDisplayStart:iDisplayStart+iDisplayLength]
+    data = data[iDisplayStart:iDisplayStart + iDisplayLength]
     format_contact_data(domain, data)
     result = {
         'sEcho': sEcho,
