@@ -5,7 +5,11 @@ from django.conf import settings
 from django.utils.translation import ugettext as _
 from corehq import Domain
 from corehq.apps.accounting.models import (
-    PaymentRecord, CreditLine, SoftwareProductType,
+    BillingAccount,
+    CreditLine,
+    Invoice,
+    PaymentRecord,
+    SoftwareProductType,
 )
 from corehq.apps.accounting.user_text import get_feature_name
 from corehq.apps.accounting.utils import fmt_dollar_amount
@@ -215,9 +219,81 @@ class InvoiceStripePaymentHandler(BaseStripePaymentHandler):
         context = super(InvoiceStripePaymentHandler, self).get_email_context()
         context.update({
             'balance': fmt_dollar_amount(self.invoice.balance),
-            'is_paid': self.invoice.date_paid is not None,
+            'is_paid': self.invoice.is_paid,
             'date_due': self.invoice.date_due.strftime("%d %B %Y"),
             'invoice_num': self.invoice.invoice_number,
+        })
+        return context
+
+
+class BulkStripePaymentHandler(BaseStripePaymentHandler):
+    receipt_email_template = 'accounting/bulk_payment_receipt_email.html'
+    receipt_email_template_plaintext = 'accounting/bulk_payment_receipt_email_plaintext.txt'
+
+    def __init__(self, payment_method, domain):
+        super(BulkStripePaymentHandler, self).__init__(payment_method)
+        self.domain = domain
+
+    @property
+    def cost_item_name(self):
+        return _('Bulk Payment for project space %s' % self.domain)
+
+    def create_charge(self, amount, card=None, customer=None):
+        return stripe.Charge.create(
+            card=card,
+            customer=customer,
+            amount=self.get_amount_in_cents(amount),
+            currency=settings.DEFAULT_CURRENCY,
+            description=self.cost_item_name,
+        )
+
+    @property
+    def invoices(self):
+        return Invoice.objects.filter(
+            subscription__subscriber__domain=self.domain,
+            is_hidden=False,
+        )
+
+    @property
+    def balance(self):
+        return sum(invoice.balance for invoice in self.invoices)
+
+    def get_charge_amount(self, request):
+        if request.POST['paymentAmount'] == 'full':
+            return self.balance
+        return Decimal(request.POST['customPaymentAmount'])
+
+    def update_credits(self, payment_record):
+        amount = payment_record.amount
+        for invoice in self.invoices:
+            deduct_amount = min(amount, invoice.balance)
+            amount -= deduct_amount
+            if deduct_amount > 0:
+                # TODO - refactor duplicated functionality
+                CreditLine.add_credit(
+                    deduct_amount, account=invoice.subscription.account,
+                    payment_record=payment_record,
+                )
+                CreditLine.add_credit(
+                    -deduct_amount,
+                    account=invoice.subscription.account,
+                    invoice=invoice,
+                )
+                invoice.update_balance()
+                invoice.save()
+        if amount:
+            account = BillingAccount.get_or_create_account_by_domain(self.domain)
+            CreditLine.add_credit(
+                amount, account=account,
+                payment_record=payment_record,
+            )
+
+    def get_email_context(self):
+        context = super(BulkStripePaymentHandler, self).get_email_context()
+        context.update({
+            'is_paid': all(invoice.is_paid for invoice in self.invoices),
+            'domain': self.domain,
+            'balance': self.balance,
         })
         return context
 

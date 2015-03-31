@@ -2,6 +2,7 @@ import random
 import re
 from dateutil.parser import parse
 from datetime import datetime, timedelta, date, time
+import pytz
 from casexml.apps.case.models import CommCareCase
 from corehq.util.timezones.conversions import PhoneTime
 from custom.fri.models import (
@@ -260,9 +261,9 @@ def get_num_missed_windows(case):
     Get the number of reminder events that were missed on registration day.
     """
     domain_obj = Domain.get_by_name(case.domain, strict=True)
-    # this was wrong before I refactored it to these "typed" datetimes
-    # with them, it just popped out at me
-    opened_timestamp = (PhoneTime(case.opened_on)
+    # unlike in most other projects, case.opened_on is actually in UTC
+    # because it was submitted from cloudcare
+    opened_timestamp = (PhoneTime(case.opened_on, pytz.UTC)
                         .user_time(domain_obj.default_timezone).done())
     day_of_week = opened_timestamp.weekday()
     time_of_day = opened_timestamp.time()

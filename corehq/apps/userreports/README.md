@@ -340,7 +340,7 @@ boolean        | Save `1` if a filter is true, otherwise `0`.
 expression     | Save the output of an expression.
 choice_list    | Save multiple columns, one for each of a predefined set of choices
 
-*Note/todo: there are also other supported formats, but they are just shortcuts around the functionality of these two so they are left out of the current docs.*
+*Note/todo: there are also other supported formats, but they are just shortcuts around the functionality of these ones they are left out of the current docs.*
 
 #### Boolean indicators
 
@@ -385,6 +385,28 @@ Here is a sample expression indicator that just saves the "age" property to an i
     "column_id": "age",
     "datatype": "integer",
     "display_name": "age of patient"
+}
+```
+
+#### Choice list indicators
+
+Choice list indicators take a single choice column (select or multiselect) and expand it into multiple columns where each column represents a different choice. These can support both single-select and multi-select quesitons.
+
+A sample spec is below:
+
+```
+{
+    "type": "choice_list",
+    "column_id": "col",
+    "display_name": "the category",
+    "property_name": "category",
+    "choices": [
+        "bug",
+        "feature",
+        "app",
+        "schedule"
+    ],
+    "select_style": "single"
 }
 ```
 
@@ -637,7 +659,7 @@ columns:
     "type": "expanded",
     "field": "test_result",
     "column_id": "test_result",
-    "format": "default",
+    "format": "default"
   }
 ]
 ```
@@ -692,6 +714,76 @@ Transforms can be used to transform the value returned by a column just before i
 {
     "type": "custom",
     "custom_type": "month_display"
+}
+```
+
+# Charts
+
+There are currently three types of charts supported. Pie charts, and two types of bar charts.
+
+## Pie charts
+
+A pie chart takes two inputs and makes a pie chart. Here are the inputs:
+
+
+Field              | Description
+------------------ | -----------------------------------------------
+aggregation_column | The column you want to group - typically a column from a select question
+value_column       | The column you want to sum - often just a count
+
+Here's a sample spec:
+
+```
+{
+    "type": "pie",
+    "title": "Remote status",
+    "aggregation_column": "remote",
+    "value_column": "count"
+}
+```
+
+## Aggregate multibar charts
+
+An aggregate multibar chart is used to aggregate across two columns (typically both of which are select questions). It takes three inputs:
+
+Field                 | Description
+--------------------- | -----------------------------------------------
+primary_aggregation   | The primary aggregation. These will be the x-axis on the chart.
+secondary_aggregation | The secondary aggregation. These will be the slices of the bar (or individual bars in "grouped" format)
+value_column          | The column you want to sum - often just a count
+
+Here's a sample spec:
+
+```
+{
+    "type": "multibar-aggregate",
+    "title": "Applicants by type and location",
+    "primary_aggregation": "remote",
+    "secondary_aggregation": "applicant_type",
+    "value_column": "count"
+}
+```
+
+## Multibar charts
+
+A multibar chart takes a single x-axis column (typically a select questions) and any number of y-axis columns (typically indicators or counts) and makes a bar chart from them.
+
+Field          | Description
+---------------| -----------------------------------------------
+x_axis_column  | This will be the x-axis on the chart.
+y_axis_columns | These are the columns to use for the secondary axis. These will be the slices of the bar (or individual bars in "grouped" format)
+
+Here's a sample spec:
+
+```
+{
+    "type": "multibar",
+    "title": "HIV Mismatch by Clinic",
+    "x_axis_column": "clinic",
+    "y_axis_columns": [
+        "diagnoses_match_no",
+        "diagnoses_match_yes"
+    ]
 }
 ```
 

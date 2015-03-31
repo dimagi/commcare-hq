@@ -11,15 +11,31 @@
     <script type="text/javascript">
         Stripe.setPublishableKey('{{ stripe_public_key }}');
 
+        var bulkPaymentHandler = new PaymentMethodHandler(
+            {{ payment_error_messages|JSON }},
+            "{% trans "Submit Payment" %}"
+        );
         var paymentHandler = new PaymentMethodHandler(
             {{ payment_error_messages|JSON }},
             "{% trans "Submit Payment" %}"
         );
+
         {% if stripe_cards %}
-            paymentHandler.loadCards({{ stripe_cards|JSON }});
+            var stripe_cards = {{ stripe_cards|JSON }};
+            bulkPaymentHandler.loadCards(stripe_cards);
+            paymentHandler.loadCards(stripe_cards);
         {% endif %}
+
         $(function () {
+            ko.applyBindings(bulkPaymentHandler, $('#bulkPaymentModal').get(0));
             ko.applyBindings(paymentHandler, $('#paymentModal').get(0));
+        });
+
+        $('#bulkPaymentBtn').click(function () {
+            bulkPaymentHandler.costItem(new TotalCostItem({
+                totalBalance: {{ total_balance }}
+            }));
+            bulkPaymentHandler.reset();
         });
 
         paginatedListModel.showUnpaidBills = ko.observable(true);
@@ -33,13 +49,13 @@
         };
 
         paginatedListModel.getAdditionalData = function () {
-            var additiona_data = {
+            var additional_data = {
                 'show_unpaid': paginatedListModel.showUnpaidBills()
             };
             if (window.location.href.split('?').length > 2) {
-                additiona_data['show_hidden'] = _(window.location.href.split('?')[1].split('&')).contains('show_hidden=true');
+                additional_data['show_hidden'] = _(window.location.href.split('?')[1].split('&')).contains('show_hidden=true');
             }
-            return additiona_data;
+            return additional_data;
         };
         paginatedListModel.initRow = function (rowElems, paginatedItem) {
             var paymentButton = $(rowElems).find('.payment-button');
@@ -58,6 +74,31 @@
 {% endblock %}
 
 {% block paginated_list_top %}
+    {% if request|toggle_enabled:"BULK_PAYMENTS" %}
+    <div id="currentBalanceSection">
+        <h2>{% trans 'Current Balance' %}</h2>
+        <p>
+            {% trans 'Total Due:' %}
+            {{ total_balance }}
+        </p>
+        {% if not is_ops_user_but_not_admin %}
+        <p>
+            <button type="button"
+                    class="btn btn-success"
+                    data-toggle="modal"
+                    data-target="#bulkPaymentModal"
+                    id="bulkPaymentBtn">
+                {% trans 'Pay with Credit Card' %}
+            </button>
+        </p>
+        {% else %}
+        <span class="label">
+            <i class="icon-info-sign"></i>
+            {% trans "Not Billing Admin, Can't Make Payment" %}
+        </span>
+        {% endif %}
+    </div>
+    {% endif %}
     <h2>{% trans 'Billing Statements' %} <span data-bind="visible: showUnpaidBills">({% trans 'Unpaid' %})</span></h2>
     <p>
         <button type="button"
@@ -174,8 +215,20 @@
             {% endblocktrans %}
         </h3>
     </script>
+
+    <script type="text/html" id="bulk-payment-method-modal-title">
+        <h3>
+            {% trans 'Bulk Payment' %}
+        </h3>
+    </script>
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-    {% include 'domain/partials/payment_modal.html' with payment_modal_id="paymentModal" title_template="payment-method-modal-title" cost_item_template="cost-item-template" %}
+    {% with process_invoice_payment_url as process_payment_url %}
+        {% include 'domain/partials/payment_modal.html' with payment_modal_id="paymentModal" title_template="payment-method-modal-title" cost_item_template="cost-item-template" %}
+    {% endwith %}
+    {% with process_bulk_payment_url as process_payment_url %}
+        {% include 'domain/partials/payment_modal.html' with payment_modal_id="bulkPaymentModal" title_template="bulk-payment-method-modal-title" cost_item_template="cost-item-template" %}
+    {% endwith %}
+
 {% endblock %}

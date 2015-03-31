@@ -2,6 +2,7 @@ from corehq import Domain
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.generic import GenericTabularReport
+from custom.ilsgateway.tanzania.reports.utils import link_format
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
@@ -15,10 +16,6 @@ from custom.ewsghana.reports import MultiReport, EWSData, EWSMultiBarChart, Prod
 from casexml.apps.stock.models import StockTransaction
 from django.db.models import Q
 from custom.ewsghana.utils import get_supply_points, make_url, get_second_week, get_country_id
-
-
-def link_format(text, url):
-    return '<a href=%s>%s</a>' % (url, text)
 
 
 class ProductAvailabilityData(EWSData):
