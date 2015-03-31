@@ -124,11 +124,11 @@ class StockOnHandTest(EWSScriptTest):
         location.products = [ng, jd, mg]
         location.save()
         a = """
-            5551234 > soh mg 20.0
+            5551234 > soh mg 31.0
             5551234 < Dear stella, still missing jd ng.
-            5551234 > soh jd 20.0
+            5551234 > soh jd 25.0
             5551234 < Dear stella, still missing ng.
-            5551234 > soh ng 20.0
+            5551234 > soh ng 25.0
             5551234 < Dear stella, thank you for reporting the commodities you have in stock.
         """
         self.run_script(a)
@@ -141,7 +141,7 @@ class StockOnHandTest(EWSScriptTest):
         location.products = [ng, jd, mg]
         location.save()
         a = """
-            5551234 > soh mg 20.0 jd 20.0 ng 20.0
+            5551234 > soh mg 25.0 jd 25.0 ng 25.0
             5551234 < Dear stella, thank you for reporting the commodities you have in stock.
         """
         self.run_script(a)
