@@ -34,20 +34,30 @@ def soft_assert(to, notify_admins=False,
     send an email with stack trace if assertion is not True
 
     Parameters:
-    - msg: A message to include in the email body
-    - recipient_list: List of email addresses that should receive the email
+    - to: List of email addresses that should receive the email
     - notify_admins: Send to all admins (using mail_admins) as well
-    - fail_hard_if_debug: if True, will fail hard (like a normal assert)
+    - fail_if_debug: if True, will fail hard (like a normal assert)
       if called in a developer environment (settings.DEBUG = True).
       If False, behavior will not depend on DEBUG setting.
     - exponential_backoff: if True, will only email every time an assert has
       failed 2**n times (1, 2, 4, 8, 16 times, etc.). If False, it will email
       every time.
+    - skip_frames: number of frames of the traceback (from the bottom)
+      to ignore. Useful if you're calling this from within a helper function.
+      In that case if you want the call _to_ the helper function to be the
+      last frame in the stack trace, then pass in skip_frames=1.
+      This affects both the traceback in the email as the "key" by which
+      errors are grouped.
+
+    For the purposes of grouping errors into email threads,
+    counting occurrences (sent in the email), and implementing exponential
+    backoff, errors are always grouped by a key that varies on the
+    last two frames (that aren't skipped by skip_frames) of the stack.
 
     Returns assertion. This makes it easy to do something like the following:
 
-        if not soft_assert(isinstance(n, float),
-                           recipient_list=['me@mycompany.com']):
+        if not soft_assert(to=['me@mycompany.com']).call(
+                isinstance(n, float), 'myfunction should be passed a float'):
             n = float(n)
 
     etc.
