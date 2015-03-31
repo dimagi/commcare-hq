@@ -810,6 +810,13 @@ class TestFormLinking(SimpleTestCase, TestFileMixin):
         ]
     }
 
+    def setUp(self):
+        self.get_usercase_type_patch = patch('corehq.apps.app_manager.models.get_usercase_type')
+        self.get_usercase_type_patch.start()
+
+    def tearDown(self):
+        self.get_usercase_type_patch.stop()
+
     def make_app(self, spec):
         app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
         app.build_spec = BuildSpec.from_string('2.9.0/latest')
