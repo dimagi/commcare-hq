@@ -9,6 +9,7 @@ from dimagi.utils.web import get_url_base
 from django import http
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
+from corehq.util import global_request
 
 JSON = 'application/json'
 logger = logging.getLogger('django.request')
@@ -103,20 +104,7 @@ def json_error(f):
 
 
 def get_request():
-    """
-    Walk up the stack, return the nearest first argument named "request".
-
-    taken from http://nedbatchelder.com/blog/201008/global_django_requests.html
-    """
-    frame = None
-    try:
-        for f in inspect.stack()[1:]:
-            frame = f[0]
-            code = frame.f_code
-            if code.co_varnames and code.co_varnames[0] in ("request", "req"):
-                return frame.f_locals[code.co_varnames[0]]
-    finally:
-        del frame
+    return global_request.get_request()
 
 
 def absolute_reverse(*args, **kwargs):

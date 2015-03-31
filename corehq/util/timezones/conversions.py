@@ -1,15 +1,35 @@
+import logging
 from django.utils.encoding import smart_str
 import pytz
 from corehq.const import USER_DATETIME_FORMAT
+from corehq.toggles import USE_NEW_TIMEZONE_BEHAVIOR
 from corehq.util.dates import safe_strftime
 from corehq.util.soft_assert import soft_assert
+from corehq.util.view_utils import get_request
 
 
-# The timezone data migration happening some time in Apr-May 2015
-# will shift all phone times (form.timeEnd, case.modified_on, etc.) to UTC
-# so functions that deal with converting to or from phone times
-# use this variable to decide what type of timezone conversion is necessary
-TIMEZONE_DATA_MIGRATION_COMPLETE = False
+def get_timezone_data_migration_complete():
+    """
+    The timezone data migration happening some time in Apr-May 2015
+    will shift all phone times (form.timeEnd, case.modified_on, etc.) to UTC
+    so functions that deal with converting to or from phone times
+    use this function to decide what type of timezone conversion is necessary
+
+    """
+    _default = False
+    request = get_request()
+    if not request or not request.domain:
+        return _default
+    try:
+        return USE_NEW_TIMEZONE_BEHAVIOR.enabled(request.domain)
+    except Exception:
+        # Danny Mar 31, 2015
+        # I don't expect this to happen
+        # but this code is going to be called from hundreds of places
+        # and I'd rather get lots of Sentry emails than lots of 500s
+        # todo: remove this once all is quiet for a while
+        logging.exception('Error in get_timezone_data_migration_complete')
+        return _default
 
 
 class _HQTime(object):
@@ -123,7 +143,7 @@ def _adjust_phone_datetime_to_utc(value, phone_tz):
     """
     phone_tz = _soft_assert_tz_not_string(phone_tz)
     assert value.tzinfo is None
-    if TIMEZONE_DATA_MIGRATION_COMPLETE:
+    if get_timezone_data_migration_complete():
         return value
     else:
         return _adjust_datetime_to_utc(value, phone_tz)
@@ -139,7 +159,7 @@ def _adjust_utc_datetime_to_phone_datetime(value, phone_tz):
     """
     phone_tz = _soft_assert_tz_not_string(phone_tz)
     assert value.tzinfo is None
-    if TIMEZONE_DATA_MIGRATION_COMPLETE:
+    if get_timezone_data_migration_complete():
         return value.replace(tzinfo=pytz.utc)
     else:
         return _adjust_utc_datetime_to_timezone(value, phone_tz)
