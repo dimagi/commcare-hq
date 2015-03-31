@@ -1,8 +1,29 @@
+import datetime
 import dateutil.parser
 from django.test import SimpleTestCase
 import pytz
+from corehq.const import USER_DATETIME_FORMAT
+from corehq.util.dates import safe_strftime
 from corehq.util.timezones.conversions import ServerTime, \
     TIMEZONE_DATA_MIGRATION_COMPLETE, PhoneTime, UserTime
+
+
+class UIStringTest(SimpleTestCase):
+    def test_ui_string(self):
+        now = datetime.datetime.utcnow()
+        user_time = ServerTime(now).user_time(pytz.FixedOffset(-4 * 60))
+        self.assertEqual(user_time.ui_string(),
+                         user_time.done().strftime(USER_DATETIME_FORMAT))
+
+    def test_safe_strftime(self):
+        dt = datetime.datetime(2015, 1, 1, 12, 24, 48)
+        self.assertEqual(safe_strftime(dt, '%Y-%m-%dT%H:%M:%SZ'),
+                         '2015-01-01T12:24:48Z')
+
+    def test_safe_strftime_abbr_year(self):
+        dt = datetime.datetime(2015, 1, 1, 12, 24, 48)
+        self.assertEqual(safe_strftime(dt, '%y-%m-%dT%H:%M:%SZ'),
+                         '15-01-01T12:24:48Z')
 
 
 class TimezoneConversionTest(SimpleTestCase):
@@ -59,3 +80,12 @@ class TimezoneConversionTest(SimpleTestCase):
             else:
                 server_dt = PhoneTime(phone_dt, tz).server_time().done()
             self.assertEqual(server_dt.isoformat(), out)
+
+
+class CloudCareTimeTest(SimpleTestCase):
+    def test_utc_phonetime(self):
+        dt = datetime.datetime.utcnow()
+        self.assertEqual(PhoneTime(dt, pytz.UTC)
+                         .user_time(pytz.FixedOffset(9 * 60 + 30)).done(),
+                         ServerTime(dt)
+                         .user_time(pytz.FixedOffset(9 * 60 + 30)).done())

@@ -2,6 +2,7 @@ import json
 import os
 import tempfile
 from StringIO import StringIO
+from django.conf import settings
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
@@ -133,6 +134,8 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
             data.set_filter_values(self.filter_values)
             total_records = data.get_total_records()
         except UserReportsError as e:
+            if settings.DEBUG:
+                raise
             return self.render_json_response({
                 'error': e.message,
             })

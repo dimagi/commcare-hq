@@ -363,6 +363,11 @@ class Domain(Document, SnapshotMixin):
             self.save()
         return self
 
+    def get_default_timezone(self):
+        """return a timezone object from self.default_timezone"""
+        import pytz
+        return pytz.timezone(self.default_timezone)
+
     @staticmethod
     def active_for_user(user, is_active=True):
         if isinstance(user, AnonymousUser):

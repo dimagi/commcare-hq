@@ -49,4 +49,6 @@ def safe_strftime(val, fmt):
             microsecond=val.microsecond, tzinfo=val.tzinfo)
     else:
         safe_val = datetime.date(a_leap_year, val.month, val.day)
-    return safe_val.strftime(fmt.replace("%Y", str(val.year)))
+    return safe_val.strftime(fmt
+                             .replace("%Y", str(val.year))
+                             .replace("%y", str(val.year)[-2:]))

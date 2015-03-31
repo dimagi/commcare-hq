@@ -126,6 +126,33 @@ class ExpandedColumn(ReportColumn):
         return get_expanded_column_config(data_source_config, self)
 
 
+class AggregateDateColumn(ReportColumn):
+    """
+    Used for grouping months and years together.
+    """
+    type = TypeProperty('aggregate_date')
+    field = StringProperty(required=True)
+
+    def get_sql_column_config(self, data_source_config):
+        return SqlColumnConfig(columns=[
+            AggregateColumn(
+                header=self.display,
+                aggregate_fn=lambda year, month: {'year': year, 'month': month},
+                format_fn=self.get_format_fn(),
+                columns=[
+                    YearColumn(self.field, alias='{}_year'.format(self.column_id)),
+                    MonthColumn(self.field, alias='{}_month'.format(self.column_id)),
+                ],
+                slug=self.column_id,
+                data_slug=self.column_id,
+            )],
+        )
+
+    def get_format_fn(self):
+        # todo: support more aggregation/more formats
+        return lambda data: '{}-{:02d}'.format(int(data['year']), int(data['month']))
+
+
 class PercentageColumn(ReportColumn):
     type = TypeProperty('percent')
     numerator = ObjectProperty(FieldColumn, required=True)
@@ -140,7 +167,7 @@ class PercentageColumn(ReportColumn):
             AggregateColumn(
                 header=self.display,
                 aggregate_fn=lambda n, d: {'num': n, 'denom': d},
-                format_fn=self.format_fn(),
+                format_fn=self.get_format_fn(),
                 columns=[c.view for c in num_config.columns + denom_config.columns],
                 slug=self.column_id,
                 data_slug=self.column_id,
@@ -148,7 +175,7 @@ class PercentageColumn(ReportColumn):
             warnings=num_config.warnings + denom_config.warnings,
         )
 
-    def format_fn(self):
+    def get_format_fn(self):
         NO_DATA_TEXT = '--'
 
         def _pct(data):
