@@ -1,5 +1,5 @@
 from couchdbkit import ResourceNotFound
-import dateutil
+from dimagi.utils.parsing import string_to_utc_datetime
 from django.core import cache
 from django.core.urlresolvers import reverse, NoReverseMatch
 from django.template.defaultfilters import yesno
@@ -54,7 +54,7 @@ class CaseInfo(object):
         return self.case['closed']
 
     def _dateprop(self, prop, iso=True):
-        val = self.report.date_to_json(getattr(self.case, prop))
+        val = self.report.date_to_json(self.parse_date(self.case[prop]))
         if iso:
             val = 'T'.join(val.split(' ')) if val else None
         return val
@@ -176,11 +176,7 @@ class CaseInfo(object):
         return username
 
     def parse_date(self, date_string):
-        try:
-            date_obj = dateutil.parser.parse(date_string)
-            return date_obj
-        except:
-            return date_string
+        return string_to_utc_datetime(date_string)
 
 
 class CaseDisplay(CaseInfo):
