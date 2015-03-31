@@ -19,6 +19,7 @@ from .exceptions import (
     SuiteError,
     SuiteValidationError,
 )
+from corehq.toggles import MODULE_FILTER
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import UnknownInstanceError, ScheduleError, FormNotFoundException
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
@@ -1976,7 +1977,9 @@ class SuiteGenerator(SuiteGeneratorBase):
                 if self.id_strings.menu_root(module):
                     menu_kwargs['root'] = self.id_strings.menu_root(module)
 
-                if self.app.enable_module_filtering and getattr(module, 'module_filter', None):
+                if (self.app.domain and MODULE_FILTER.enabled(self.app.domain) and
+                        self.app.enable_module_filtering and
+                        getattr(module, 'module_filter', None)):
                     menu_kwargs['relevant'] = dot_interpolate(module.module_filter,
                                                               "instance('commcaresession')/session")
 

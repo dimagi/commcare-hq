@@ -9,6 +9,8 @@ from corehq.apps.app_manager.models import (
     MappingItem, OpenCaseAction, OpenSubCaseAction, FormActionCondition, UpdateCaseAction, WORKFLOW_FORM, FormLink)
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.suite_xml import dot_interpolate
+from corehq.toggles import MODULE_FILTER, NAMESPACE_DOMAIN
+from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
 
 from lxml import etree
 import commcare_translations
@@ -17,6 +19,16 @@ from corehq.apps.builds.models import BuildSpec
 
 class SuiteTest(SimpleTestCase, TestFileMixin):
     file_path = ('data', 'suite')
+
+    def setUp(self):
+        update_toggle_cache(MODULE_FILTER.slug, 'skelly', True, NAMESPACE_DOMAIN)
+        update_toggle_cache(MODULE_FILTER.slug, 'domain', True, NAMESPACE_DOMAIN)
+        update_toggle_cache(MODULE_FILTER.slug, 'example', True, NAMESPACE_DOMAIN)
+
+    def tearDown(self):
+        clear_toggle_cache(MODULE_FILTER.slug, 'skelly', NAMESPACE_DOMAIN)
+        clear_toggle_cache(MODULE_FILTER.slug, 'domain', NAMESPACE_DOMAIN)
+        clear_toggle_cache(MODULE_FILTER.slug, 'example', NAMESPACE_DOMAIN)
 
     def assertHasAllStrings(self, app, strings):
         et = etree.XML(app)
