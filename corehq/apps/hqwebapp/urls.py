@@ -1,6 +1,8 @@
 from django.conf.urls import *
+from corehq.apps.domain.views import PublicSMSRatesView
 
-urlpatterns = patterns('corehq.apps.hqwebapp.views',
+urlpatterns = patterns(
+    'corehq.apps.hqwebapp.views',
     url(r'^homepage/$', 'redirect_to_default', name='homepage'),
     url(r'^home/$', 'landing_page', name='landing_page'),
     url(r'^crossdomain.xml$', 'yui_crossdomain', name='yui_crossdomain'),
@@ -18,6 +20,7 @@ urlpatterns = patterns('corehq.apps.hqwebapp.views',
     url(r'^notifications/dismiss/$', 'dismiss_notification', name="dismiss_notification"),
     url(r'^search/$', 'quick_find', name="global_quick_find"),
     url(r'^searchDescription.xml$', 'osdd', name="osdd"),
+    url(r'^messaging-pricing', PublicSMSRatesView.as_view(), name=PublicSMSRatesView.urlname),
 )
 
 urlpatterns += patterns('corehq.apps.orgs.views', url(r'^search_orgs/', 'search_orgs', name='search_orgs'))

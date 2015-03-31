@@ -1,0 +1,39 @@
+{% extends 'hqwebapp/two_column.html' %}
+{% load hq_shared_tags %}
+
+{% block main_column %}
+    <h2>Reminders tester</h2>
+    {% if user %}
+        {% block user_table %}
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Location</th>
+                    </tr>
+                </thead>
+                <tr>
+                    <td>{{ phone_user.username }}</td>
+                    <td>{{ phone_user.email }}</td>
+                    <td>{{ phone_user.location }}</td>
+                </tr>
+            </table>
+        {% endblock %}
+    {% else %}
+        <p>{{ phone_number }} is not assiociated with any user.</p>
+    {% endif %}
+    {% block pre_form %}
+    {% endblock %}
+    <form method="POST" action="{% url post_url domain phone_number %}">
+        <div class="form-group" id="reminder_field">
+            <label for="reminder">Reminder</label>
+            <select id="reminder" name="reminder">
+                {% for reminder in reminders %}
+                    <option value="{{ reminder }}">{{ reminder }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <input id="submitButton" class="btn" type="submit" value="submit"/>
+    </form>
+{% endblock %}

@@ -93,6 +93,9 @@
         <locale id="forms.m0f0"/>
       </text>
     </command>
+    <session>
+      <datum id="case_id_new_asd_0" function="uuid()"/>
+    </session>
   </entry>
   <menu id="m0">
     <text>

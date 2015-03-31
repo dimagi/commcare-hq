@@ -1,5 +1,4 @@
 import json
-import urllib
 import logging
 
 from django.contrib import messages
@@ -33,10 +32,9 @@ from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.users.forms import MultipleSelectionForm
 from custom.openlmis.tasks import bootstrap_domain_task
 
-from .models import Location
+from .models import Location, LocationType, SQLLocation
 from .forms import LocationForm
 from .util import load_locs_json, location_hierarchy_config, dump_locations
-from .schema import LocationType
 
 
 @domain_admin_required
@@ -102,41 +100,147 @@ class LocationSettingsView(BaseCommTrackManageView):
     @property
     def settings_context(self):
         return {
-            'loc_types': [self._get_loctype_info(l) for l in self.domain_object.location_types],
+            'loc_types': map(
+                self._get_loctype_info,
+                LocationType.objects.by_domain(self.domain)
+            )
         }
 
     def _get_loctype_info(self, loctype):
         return {
+            'pk': loctype.pk,
             'name': loctype.name,
             'code': loctype.code,
-            'allowed_parents': [p or None for p in loctype.allowed_parents],
+            'allowed_parents': [loctype.parent_type.name
+                                if loctype.parent_type else None],
             'administrative': loctype.administrative,
             'shares_cases': loctype.shares_cases,
             'view_descendants': loctype.view_descendants
         }
 
     def post(self, request, *args, **kwargs):
+        # This is really ugly, it needs a refactor.
+        # There are some changes coming to this UI, so I'm just gonna wait
+        # for that.  I intend to remove "code" from the UI altogether, and
+        # use the actual location_type pk to reference it, not the name.
         payload = json.loads(request.POST.get('json'))
+        sql_loc_types = {}
 
-        def mk_loctype(loctype):
-            loctype['allowed_parents'] = [p or '' for p in loctype['allowed_parents']]
-            cleaned_code = unicode_slug(loctype['code'])
-            if cleaned_code != loctype['code']:
-                err = _(
-                    'Location type code "{code}" is invalid. No spaces or special characters are allowed. '
-                    'It has been replaced with "{new_code}".'
-                )
-                messages.warning(request, err.format(code=loctype['code'], new_code=cleaned_code))
-                loctype['code'] = cleaned_code
-            return LocationType(**loctype)
+        def mk_loctype(name, code, allowed_parents, administrative,
+                       shares_cases, view_descendants, pk):
+            if allowed_parents and allowed_parents[0]:
+                parent = sql_loc_types[allowed_parents[0]]
+            else:
+                parent = None
 
-        #TODO add server-side input validation here (currently validated on client)
+            cleaned_code = unicode_slug(code)
+            if cleaned_code != code:
+                err = _('Location type code "{code}" is invalid. No spaces or '
+                        'special characters are allowed. It has been replaced '
+                        'with "{new_code}".')
+                messages.warning(request,
+                                 err.format(code=code, new_code=cleaned_code))
 
-        self.domain_object.location_types = [mk_loctype(l) for l in payload['loc_types']]
+            try:
+                loc_type = LocationType.objects.get(domain=self.domain, pk=pk)
+            except LocationType.DoesNotExist:
+                loc_type = LocationType(domain=self.domain)
+            loc_type.name = name
+            loc_type.code = cleaned_code
+            loc_type.administrative = administrative
+            loc_type.parent_type = parent
+            loc_type.shares_cases = shares_cases
+            loc_type.view_descendants = view_descendants
+            loc_type.save()
+            sql_loc_types[name] = loc_type
 
-        self.domain_object.save()
+        loc_types = payload['loc_types']
+        pks = []
+        for loc_type in loc_types:
+            for prop in ['name', 'code', 'allowed_parents', 'administrative',
+                         'shares_cases', 'view_descendants', 'pk']:
+                assert prop in loc_type, "Missing a location type property!"
+                assert len(loc_type['allowed_parents']) <= 1, \
+                    "This location type has more than one parent. How?"
+            pks.append(loc_type['pk'])
+
+        hierarchy = self.get_hierarchy(loc_types)
+
+        if not self.remove_old_location_types(pks):
+            return self.get(request, *args, **kwargs)
+
+        for loc_type in hierarchy:
+            mk_loctype(**loc_type)
 
         return self.get(request, *args, **kwargs)
+
+    def remove_old_location_types(self, pks):
+        existing_pks = (LocationType.objects.filter(domain=self.domain)
+                                            .values_list('pk', flat=True))
+        to_delete = []
+        for pk in existing_pks:
+            if pk not in pks:
+                if (SQLLocation.objects.filter(domain=self.domain,
+                                               location_type=pk)
+                                       .exists()):
+                    msg = _("You cannot delete location types that have locations")
+                    messages.warning(self.request, msg)
+                    return False
+                to_delete.append(pk)
+        (LocationType.objects.filter(domain=self.domain, pk__in=to_delete)
+                             .delete())
+        return True
+
+    # This is largely copy-pasted from the LocationTypeManager
+    def get_hierarchy(self, loc_types):
+        """
+        Return loc types in order from parents to children
+        """
+        lt_dict = {lt['name']: lt for lt in loc_types}
+
+        # Make sure there are no cycles
+        for loc_type in loc_types:
+            visited = set()
+
+            def step(lt):
+                assert lt['name'] not in visited, \
+                    "There's a loc type cycle, we need to prohibit that"
+                visited.add(lt['name'])
+                parents = lt['allowed_parents']
+                if parents and parents[0]:
+                    step(lt_dict.get(parents[0]))
+            step(loc_type)
+
+        hierarchy = {}
+
+        def insert_loc_type(loc_type):
+            """
+            Get parent location's hierarchy, insert loc_type into it,
+            and return hierarchy below loc_type
+            """
+            name = loc_type['name']
+            parents = loc_type['allowed_parents']
+            parent = lt_dict.get(parents[0], None) if parents else None
+            if not parent:
+                lt_hierarchy = hierarchy
+            else:
+                lt_hierarchy = insert_loc_type(parent)
+            if name not in lt_hierarchy:
+                lt_hierarchy[name] = (loc_type, {})
+            return lt_hierarchy[name][1]
+
+        for loc_type in loc_types:
+            insert_loc_type(loc_type)
+
+        ordered_loc_types = []
+
+        def step_through_graph(hierarchy):
+            for name, (loc_type, children) in hierarchy.items():
+                ordered_loc_types.append(loc_type)
+                step_through_graph(children)
+
+        step_through_graph(hierarchy)
+        return ordered_loc_types
 
 
 class NewLocationView(BaseLocationView):
@@ -209,6 +313,8 @@ class NewLocationView(BaseLocationView):
 @domain_admin_required
 def archive_location(request, domain, loc_id):
     loc = Location.get(loc_id)
+    if loc.domain != domain:
+        raise Http404()
     loc.archive()
     return json_response({
         'success': True,
@@ -221,7 +327,13 @@ def archive_location(request, domain, loc_id):
 
 @domain_admin_required
 def unarchive_location(request, domain, loc_id):
-    loc = Location.get(loc_id)
+    # hack for circumventing cache
+    # which was found to be out of date, at least in one case
+    # http://manage.dimagi.com/default.asp?161454
+    # todo: find the deeper reason for invalid cache
+    loc = Location.get(loc_id, db=Location.get_db())
+    if loc.domain != domain:
+        raise Http404()
     loc.unarchive()
     return json_response({
         'success': True,
@@ -244,9 +356,13 @@ class EditLocationView(NewLocationView):
     @memoized
     def location(self):
         try:
-            return Location.get(self.location_id)
+            location = Location.get(self.location_id)
+            if location.domain != self.domain:
+                raise Http404()
         except ResourceNotFound:
             raise Http404()
+        else:
+            return location
 
     @property
     @memoized
@@ -341,7 +457,7 @@ class EditLocationView(NewLocationView):
               and toggles.PRODUCTS_PER_LOCATION.enabled(request.domain)):
             return self.products_form_post(request, *args, **kwargs)
         else:
-            raise Http404
+            raise Http404()
 
 
 class BaseSyncView(BaseLocationView):
@@ -499,13 +615,18 @@ def sync_facilities(request, domain):
     # likely be removed, just need to make sure it isn't
     # magically used by ils/ews first..
     # create Facility Registry and Facility LocationTypes if they don't exist
-    if not any(lt.name == 'Facility Registry'
-               for lt in request.project.location_types):
-        request.project.location_types.extend([
-            LocationType(name='Facility Registry', allowed_parents=['']),
-            LocationType(name='Facility', allowed_parents=['Facility Registry'])
-        ])
-        request.project.save()
+    facility_registry, is_new = LocationType.objects.get_or_create(
+        domain=domain,
+        name='Facility Registry',
+    )
+    if is_new:
+        LocationType.objects.get_or_create(
+            domain=domain,
+            name='Facility',
+            defaults={
+                'parent_type': facility_registry,
+            },
+        )
 
     registry_locs = {
         l.external_id: l

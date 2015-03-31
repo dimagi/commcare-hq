@@ -1,3 +1,4 @@
+from decimal import Decimal
 
 
 class TransformedGetter(object):
@@ -46,7 +47,9 @@ class NestedDictGetter(object):
             return None
         try:
             return recursive_lookup(item, self.property_path)
-        except KeyError:
+        except (KeyError, TypeError):
+            # key errors are missing keys
+            # type errors are valid keys that return the wrong type
             return None
 
 
@@ -75,11 +78,45 @@ def transform_date(item):
     return item or None
 
 
+def transform_datetime(item):
+    return item or None
+
+
 def transform_int(item):
     try:
         return int(item)
     except (ValueError, TypeError):
         return None
+
+
+def transform_decimal(item):
+    try:
+        return Decimal(item)
+    except (ValueError, TypeError):
+        return None
+
+
+def transform_unicode(item):
+    if item is None:
+        return None
+    try:
+        return unicode(item)
+    except (ValueError, TypeError):
+        return None
+
+
+def transform_from_datatype(datatype):
+    """
+    Given a datatype, return a transform for that type.
+    """
+    identity = lambda x: x
+    return {
+        'date': transform_date,
+        'datetime': transform_datetime,
+        'decimal': transform_decimal,
+        'integer': transform_int,
+        'string': transform_unicode,
+    }.get(datatype) or identity
 
 
 def getter_from_property_reference(spec):

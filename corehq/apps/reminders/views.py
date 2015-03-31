@@ -8,6 +8,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponse
 from django.shortcuts import render
 from corehq.apps.translations.models import StandaloneTranslationDoc
+from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch import CriticalSection
 from django.utils.translation import ugettext as _, ugettext_noop
@@ -74,8 +75,7 @@ from corehq.apps.groups.models import Group
 from casexml.apps.case.models import CommCareCase, CommCareCaseGroup
 from dateutil.parser import parse
 from corehq.apps.sms.util import close_task
-from dimagi.utils.timezones import utils as tz_utils
-from corehq.apps.reports import util as report_utils
+from corehq.util.timezones.utils import get_timezone_for_user
 from dimagi.utils.couch.database import is_bigcouch, bigcouch_quorum_count, iter_docs
 
 ACTION_ACTIVATE = 'activate'
@@ -95,7 +95,7 @@ survey_reminders_permission = lambda *args, **kwargs: (
 )
 
 def get_project_time_info(domain):
-    timezone = report_utils.get_timezone(None, domain)
+    timezone = get_timezone_for_user(None, domain)
     now = pytz.utc.localize(datetime.utcnow())
     timezone_now = now.astimezone(timezone)
     return (timezone, now, timezone_now)
@@ -148,7 +148,7 @@ def list_reminders(request, domain, reminder_type=REMINDER_TYPE_DEFAULT):
             "recipients" : recipients,
             "content" : content,
             "sent" : sent,
-            "start_datetime" : tz_utils.adjust_datetime_to_timezone(handler.start_datetime, pytz.utc.zone, timezone.zone) if handler.start_datetime is not None else None,
+            "start_datetime" : ServerTime(handler.start_datetime).user_time(timezone).done() if handler.start_datetime is not None else None,
         })
     
     return render(request, "reminders/partial/list_reminders.html", {
@@ -187,7 +187,7 @@ def add_one_time_reminder(request, domain, handler_id=None):
     else:
         handler = None
 
-    timezone = report_utils.get_timezone(None, domain) # Use project timezone only
+    timezone = get_timezone_for_user(None, domain) # Use project timezone only
 
     if request.method == "POST":
         form = OneTimeReminderForm(request.POST, can_use_survey=can_use_survey_reminders(request))
@@ -224,17 +224,26 @@ def add_one_time_reminder(request, domain, handler_id=None):
             return HttpResponseRedirect(reverse('one_time_reminders', args=[domain]))
     else:
         if handler is not None:
-            start_datetime = tz_utils.adjust_datetime_to_timezone(handler.start_datetime, pytz.utc.zone, timezone.zone)
+            start_date_user_time = (ServerTime(handler.start_datetime)
+                                    .user_time(timezone))
             initial = {
-                "send_type" : SEND_LATER,
-                "date" : start_datetime.strftime("%Y-%m-%d"),
-                "time" : start_datetime.strftime("%H:%M"),
-                "recipient_type" : handler.recipient,
-                "case_group_id" : handler.sample_id,
-                "user_group_id" : handler.user_group_id,
-                "content_type" : handler.method,
-                "message" : handler.events[0].message[handler.default_lang] if handler.default_lang in handler.events[0].message else None,
-                "form_unique_id" : handler.events[0].form_unique_id if handler.events[0].form_unique_id is not None else None,
+                "send_type": SEND_LATER,
+                "date": start_date_user_time.ui_string("%Y-%m-%d"),
+                "time": start_date_user_time.ui_string("%H:%M"),
+                "recipient_type": handler.recipient,
+                "case_group_id": handler.sample_id,
+                "user_group_id": handler.user_group_id,
+                "content_type": handler.method,
+                "message": (
+                    handler.events[0].message[handler.default_lang]
+                    if handler.default_lang in handler.events[0].message
+                    else None
+                ),
+                "form_unique_id": (
+                    handler.events[0].form_unique_id
+                    if handler.events[0].form_unique_id is not None
+                    else None
+                ),
             }
         else:
             initial = {}
@@ -283,8 +292,7 @@ def scheduled_reminders(request, domain, template="reminders/partial/scheduled_r
     today = timezone_now.date()
 
     def adjust_next_fire_to_timezone(reminder_utc):
-        return tz_utils.adjust_datetime_to_timezone(
-            reminder_utc.next_fire, pytz.utc.zone, timezone)
+        return ServerTime(reminder_utc.next_fire).user_time(timezone).done()
 
     if reminders:
         start_date = adjust_next_fire_to_timezone(reminders[0]).date()
@@ -1286,7 +1294,7 @@ def reminders_in_error(request, domain):
                 handler.set_next_fire(reminder, current_timestamp)
                 reminder.save(**kwargs)
     
-    timezone = report_utils.get_timezone(request.couch_user, domain)
+    timezone = get_timezone_for_user(request.couch_user, domain)
     reminders = []
     for reminder in CaseReminder.view("reminders/reminders_in_error", startkey=[domain], endkey=[domain, {}], include_docs=True).all():
         if reminder.handler_id in handler_map:
@@ -1303,7 +1311,7 @@ def reminders_in_error(request, domain):
             "handler_name" : handler.nickname,
             "case_id" : case.get_id if case is not None else None,
             "case_name" : case.name if case is not None else None,
-            "next_fire" : tz_utils.adjust_datetime_to_timezone(reminder.next_fire, pytz.utc.zone, timezone.zone).strftime("%Y-%m-%d %H:%M:%S"),
+            "next_fire" : ServerTime(reminder.next_fire).user_time(timezone).done().strftime("%Y-%m-%d %H:%M:%S"),
             "error_msg" : reminder.error_msg or "-",
             "recipient_name" : get_recipient_name(recipient),
         })

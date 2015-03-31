@@ -1,17 +1,23 @@
 import logging
+from corehq import Domain
 from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
 from corehq.apps.custom_data_fields.models import CustomDataField
+from corehq.apps.locations.models import SQLLocation
 
 from corehq.apps.products.models import Product
+from custom.ewsghana.models import EWSGhanaConfig
+from custom.ilsgateway.models import ILSGatewayConfig
 from dimagi.utils.dates import force_to_datetime
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 import requests
 from corehq.apps.commtrack.models import SupplyPointCase
-from corehq.apps.sms.mixin import PhoneNumberInUseException, VerifiedNumber
+from corehq.apps.sms.mixin import PhoneNumberInUseException, VerifiedNumber, apply_leniency, InvalidFormatException, \
+    MobileBackend
 from corehq.apps.users.models import CouchUser, CommCareUser, WebUser
 from custom.api.utils import EndpointMixin, apply_updates
+from dimagi.utils.decorators.memoized import memoized
 
 
 class MigrationException(Exception):
@@ -117,17 +123,39 @@ class APISynchronization(object):
             fields_definitions = CustomDataFieldsDefinition.get_or_create(self.domain, definition_name)
             need_save = False
             for custom_field in custom_fields:
-                if not filter(lambda field: field.slug == custom_field, fields_definitions.fields):
+                name = custom_field.get('name')
+                choices = custom_field.get('choices') or []
+                existing_fields = filter(lambda field: field.slug == name, fields_definitions.fields)
+                if not existing_fields:
                     need_save = True
                     fields_definitions.fields.append(
                         CustomDataField(
-                            slug=custom_field,
-                            label=custom_field,
+                            slug=name,
+                            label=name,
                             is_required=False,
+                            choices=choices
                         )
                     )
+                else:
+                    existing_field = existing_fields[0]
+                    if set(existing_field.choices) != set(choices):
+                        existing_field.choices = choices
+                        need_save = True
+
             if need_save:
                 fields_definitions.save()
+
+    @memoized
+    def _get_logistics_domains(self):
+        return ILSGatewayConfig.get_all_enabled_domains() + EWSGhanaConfig.get_all_enabled_domains()
+
+    def set_default_backend(self):
+        domain_object = Domain.get_by_name(self.domain)
+        domain_object.default_sms_backend_id = MobileBackend.load_by_name(None, 'MOBILE_BACKEND_TEST').get_id
+        domain_object.save()
+
+    def create_or_edit_roles(self):
+        raise NotImplemented("Not implemented yet")
 
     def location_sync(self, ilsgateway_location):
         raise NotImplemented("Not implemented yet")
@@ -166,12 +194,11 @@ class APISynchronization(object):
             'date_joined': force_to_datetime(ilsgateway_webuser.date_joined),
             'password_hashed': True,
         }
-        sp = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                  key=[self.domain, str(ilsgateway_webuser.location)],
-                                  reduce=False,
-                                  include_docs=True,
-                                  limit=1).first()
-        location_id = sp.location_id if sp else None
+        try:
+            sql_location = SQLLocation.objects.get(domain=self.domain, external_id=ilsgateway_webuser.location)
+            location_id = sql_location.location_id
+        except SQLLocation.DoesNotExist:
+            location_id = None
 
         if user is None:
             try:
@@ -219,8 +246,10 @@ class APISynchronization(object):
             user_dict['user_data']['role'] = ilsgateway_smsuser.role
 
         if ilsgateway_smsuser.phone_numbers:
-            user_dict['phone_numbers'] = [ilsgateway_smsuser.phone_numbers[0].replace('+', '')]
-            user_dict['user_data']['backend'] = ilsgateway_smsuser.backend
+            cleaned_number = apply_leniency(ilsgateway_smsuser.phone_numbers[0])
+            if cleaned_number:
+                user_dict['phone_numbers'] = [cleaned_number]
+                user_dict['user_data']['backend'] = ilsgateway_smsuser.backend
 
         if user is None and username_part:
             try:
@@ -236,44 +265,66 @@ class APISynchronization(object):
                 if "phone_numbers" in user_dict:
                     user.set_default_phone_number(user_dict["phone_numbers"][0])
                     try:
-                        user.save_verified_number(self.domain, user_dict["phone_numbers"][0], True,
-                                                  ilsgateway_smsuser.backend)
+                        user.save_verified_number(self.domain, user_dict["phone_numbers"][0], True)
                     except PhoneNumberInUseException as e:
-                        v = VerifiedNumber.by_phone(user_dict["phone_numbers"][0], include_pending=True)
-                        v.delete()
-                        user.save_verified_number(self.domain, user_dict["phone_numbers"][0], True,
-                                                  ilsgateway_smsuser.backend)
+                        self._reassign_number(user, user_dict["phone_numbers"][0])
+                    except InvalidFormatException:
+                        pass
             except Exception as e:
                 logging.error(e)
         else:
+            verified_number = user.get_verified_number()
+            phone_number = verified_number.phone_number if verified_number else None
             if apply_updates(user, user_dict):
+                if user_dict.get('phone_numbers'):
+                    new_phone_number = user_dict['phone_numbers'][0]
+                    if new_phone_number != phone_number:
+                        if phone_number:
+                            user.delete_verified_number(phone_number)
+                        self._save_verified_number(user, new_phone_number)
+                elif phone_number:
+                    user.phone_numbers = []
+                    user.delete_verified_number(phone_number)
                 user.save()
         return user
 
-    def add_language_to_user(self, logistics_sms_user, domains=None):
-        if not domains:
-            domains = []
+    def _save_verified_number(self, user, phone_number):
+        try:
+            user.save_verified_number(self.domain, phone_number, True)
+        except PhoneNumberInUseException:
+            self._reassign_number(user, phone_number)
+        except InvalidFormatException:
+            pass
+
+    def _reassign_number(self, user, phone_number):
+        v = VerifiedNumber.by_phone(phone_number, include_pending=True)
+        if v.domain in self._get_logistics_domains():
+            v.delete()
+            user.save_verified_number(self.domain, phone_number, True)
+
+    def add_language_to_user(self, logistics_sms_user):
         domain_part = "%s.commcarehq.org" % self.domain
         username_part = "%s%d" % (logistics_sms_user.name.strip().replace(' ', '.').lower(),
                                   logistics_sms_user.id)
         username = "%s@%s" % (username_part[:(128 - (len(domain_part) + 1))], domain_part)
         user = CouchUser.get_by_username(username)
-        if user and user.language != logistics_sms_user.language:
+        if not user:
+            return
+
+        if user.language != logistics_sms_user.language:
             user.language = logistics_sms_user.language
             user.save()
+
+        logistics_numbers = {apply_leniency(phone_number) for phone_number in logistics_sms_user.phone_numbers}
+        if set(user.phone_numbers) == logistics_numbers:
+            return
 
         for phone_number in user.phone_numbers:
             user.delete_phone_number(phone_number)
 
         if logistics_sms_user.phone_numbers:
-            phone_number = logistics_sms_user.phone_numbers[0]
+            phone_number = apply_leniency(logistics_sms_user.phone_numbers[0])
+            if not phone_number:
+                return
             user.set_default_phone_number(phone_number)
-            try:
-                user.save_verified_number(self.domain, phone_number, True,
-                                          logistics_sms_user.backend)
-            except PhoneNumberInUseException:
-                v = VerifiedNumber.by_phone(phone_number, include_pending=True)
-                if v.domain in domains:
-                    v.delete()
-                    user.save_verified_number(self.domain, phone_number, True,
-                                              logistics_sms_user.backend)
+            self._save_verified_number(user, phone_number)

@@ -69,6 +69,9 @@
       </text>
     </command>
     <instance id="groups" src="jr://fixture/user-groups"/>
+    <session>
+      <datum id="case_id_new_t_0" function="uuid()"/>
+    </session>
     <assertions>
       <assert test="count(instance('groups')/groups/group) = 1">
         <text>

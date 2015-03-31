@@ -19,18 +19,18 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.appstore.models import SnapshotMixin
 from dimagi.utils.couch.cache import cache_core
-from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.couch.database import (
+    iter_docs, get_db, get_safe_write_kwargs, apply_update, iter_bulk_delete
+)
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.html import format_html
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.couch.database import get_db, get_safe_write_kwargs, apply_update, iter_bulk_delete
-from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.web import get_url_base
 from itertools import chain
 from langcodes import langs as all_langs
 from collections import defaultdict
 from django.utils.importlib import import_module
-from corehq.apps.locations.schema import LocationType
 from corehq import toggles
 
 from .exceptions import InactiveTransferDomainException
@@ -217,7 +217,6 @@ class Domain(Document, SnapshotMixin):
     is_shared = BooleanProperty(default=False)
     commtrack_enabled = BooleanProperty(default=False)
     locations_enabled = BooleanProperty(default=False)
-    location_types = SchemaListProperty(LocationType)
     call_center_config = SchemaProperty(CallCenterProperties)
     has_careplan = BooleanProperty(default=False)
     restrict_superusers = BooleanProperty(default=False)
@@ -350,6 +349,11 @@ class Domain(Document, SnapshotMixin):
         if 'cloudcare_releases' not in data:
             data['cloudcare_releases'] = 'nostars'  # legacy default setting
 
+        # Don't actually remove location_types yet.  We can migrate fully and
+        # remove this after everything's hunky-dory in production.  2015-03-06
+        if 'location_types' in data:
+            data['obsolete_location_types'] = data.pop('location_types')
+
         self = super(Domain, cls).wrap(data)
         if self.deployment is None:
             self.deployment = Deployment()
@@ -358,6 +362,11 @@ class Domain(Document, SnapshotMixin):
         if should_save:
             self.save()
         return self
+
+    def get_default_timezone(self):
+        """return a timezone object from self.default_timezone"""
+        import pytz
+        return pytz.timezone(self.default_timezone)
 
     @staticmethod
     def active_for_user(user, is_active=True):
@@ -613,7 +622,7 @@ class Domain(Document, SnapshotMixin):
         if not include_docs:
             return domains
         else:
-            return imap(cls, iter_docs(cls.get_db(), [d['id'] for d in domains]))
+            return imap(cls.wrap, iter_docs(cls.get_db(), [d['id'] for d in domains]))
 
     @classmethod
     def get_all_names(cls):
@@ -896,6 +905,9 @@ class Domain(Document, SnapshotMixin):
     def get_license_display(self):
         return LICENSES.get(self.license)
 
+    def get_license_url(self):
+        return LICENSE_LINKS.get(self.license)
+
     def copies(self):
         return Domain.view('domain/copied_from_snapshot', key=self._id, include_docs=True)
 
@@ -1034,6 +1046,11 @@ class Domain(Document, SnapshotMixin):
         return self.published_by.human_friendly_name if self.published_by else ""
 
     @property
+    def location_types(self):
+        from corehq.apps.locations.models import LocationType
+        return LocationType.objects.filter(domain=self.name).all()
+
+    @property
     def supports_multiple_locations_per_user(self):
         """
         This method is a wrapper around the toggle that
@@ -1049,7 +1066,7 @@ class DomainCounter(Document):
     domain = StringProperty()
     name = StringProperty()
     count = IntegerProperty()
-    
+
     @classmethod
     def get_or_create(cls, domain, name):
         #TODO: Need to make this atomic
@@ -1065,7 +1082,7 @@ class DomainCounter(Document):
             )
             counter.save()
         return counter
-    
+
     @classmethod
     def increment(cls, domain, name, amount=1):
         num_tries = 0
@@ -1209,10 +1226,14 @@ class TransferDomainRequest(models.Model):
         html_content = render_to_string(
             "{template}.html".format(template=self.DIMAGI_CONFIRM_EMAIL),
             self.as_dict())
+        text_content = render_to_string(
+            "{template}.txt".format(template=self.DIMAGI_CONFIRM_EMAIL),
+            self.as_dict())
 
         send_HTML_email(_(u'There has been a transfer of ownership of {domain}').format(domain=self.domain),
                         self.DIMAGI_CONFIRM_ADDRESS,
-                        html_content)
+                        html_content,
+                        text_content=text_content)
 
     def as_dict(self):
         return {

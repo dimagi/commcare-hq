@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.test import SimpleTestCase
 from fakecouch import FakeCouchDb
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -9,7 +10,7 @@ from corehq.apps.userreports.specs import EvaluationContext
 
 class ConstantExpressionTest(SimpleTestCase):
 
-    def test_property_name_expression(self):
+    def test_constant_expression(self):
         for constant in (7.2, 'hello world', ['a', 'list'], {'a': 'dict'}):
             getter = ExpressionFactory.from_spec({
                 'type': 'constant',
@@ -23,6 +24,26 @@ class ConstantExpressionTest(SimpleTestCase):
             ExpressionFactory.from_spec({
                 'type': 'constant',
             })
+
+
+class PropertyExpressionTest(SimpleTestCase):
+
+    def test_datatype(self):
+        for expected, datatype, original in [
+            (5, "integer", "5"),
+            (None, "integer", "5.3"),
+            (Decimal(5), "decimal", "5"),
+            (Decimal("5.3"), "decimal", "5.3"),
+            ("5", "string", "5"),
+            ("5", "string", 5),
+            (u"fo\u00E9", "string", u"fo\u00E9")
+        ]:
+            getter = ExpressionFactory.from_spec({
+                'type': 'property_name',
+                'property_name': 'foo',
+                'datatype': datatype
+            })
+            self.assertEqual(expected, getter({'foo': original}))
 
 
 class ExpressionFromSpecTest(SimpleTestCase):
@@ -75,6 +96,22 @@ class ExpressionFromSpecTest(SimpleTestCase):
                     'type': 'property_path',
                     'property_path': empty_path,
                 })
+
+
+class PropertyPathExpressionTest(SimpleTestCase):
+
+    def test_property_path_bad_type(self):
+        getter = ExpressionFactory.from_spec({
+            'type': 'property_path',
+            'property_path': ['path', 'to', 'foo'],
+        })
+        self.assertEqual(PropertyPathGetterSpec, type(getter))
+        for bad_value in [None, '', []]:
+            self.assertEqual(None, getter({
+                'path': {
+                    'to': bad_value
+                }
+            }))
 
 
 class ConditionalExpressionTest(SimpleTestCase):

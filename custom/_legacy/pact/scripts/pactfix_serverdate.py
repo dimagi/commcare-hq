@@ -1,4 +1,4 @@
-import simplejson
+import json
 from casexml.apps.case.models import CommCareCase
 from pact.enums import PACT_HP_GROUP_ID
 
@@ -13,4 +13,4 @@ def run():
         for action in c.actions:
             if getattr(action, 'server_date', None) is None:
                 print "\taction is none!"
-                print "\t%s" % simplejson.dumps(action.to_json(), indent=4)
+                print "\t%s" % json.dumps(action.to_json(), indent=4)

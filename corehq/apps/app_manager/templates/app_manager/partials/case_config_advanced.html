@@ -50,9 +50,7 @@
             <!-- ko if: show_product_stock_var -->
             <div class="control-group" style="margin-left: 25px;">
                 <label class="control-label">{% trans "Only show products for this program:" %}</label>
-                <select data-bind="optstr: $root.programs,
-                    value: product_program,
-                    edit: $root.edit">
+                <select data-bind="optstr: $root.programs, value: product_program">
                 </select>
             </div>
             <!-- /ko -->
@@ -69,7 +67,7 @@
                     {% if show_custom_ref %}
                     <div>
                         <label>{% trans "Parent reference id: " %}</label>
-                        <input type="text" data-bind="value: parent_reference_id, edit: $root.edit"/>
+                        <input type="text" data-bind="value: parent_reference_id"/>
                     </div>
                     {% endif %}
                 </span>
@@ -89,13 +87,12 @@
                 </label>
                 <span data-bind="if: subcase">
                     <select data-bind="optstr: $parent.getCaseTags('subcase', $data),
-                        value: parent_tag,
-                        edit: $root.edit">
+                        value: parent_tag">
                     </select>
                     {% if show_custom_ref %}
                     <div>
                         <label>{% trans "Parent reference id: " %}</label>
-                        <input type="text" data-bind="value: parent_reference_id, edit: $root.edit"/>
+                        <input type="text" data-bind="value: parent_reference_id"/>
                     </div>
                     {% endif %}
                 </span>
@@ -130,24 +127,22 @@
                 <select data-bind="
                     options: config.caseTypes,
                     value: case_type,
-                    optionsCaption: 'Choose a Case Type...',
-                    edit: $root.edit"
-                ></select>
+                    optionsCaption: 'Choose a Case Type...'
+                "></select>
                 <!-- ko if: actionType == 'load'-->
                 &nbsp;
                 {% trans "Case list:" %}
                 <select data-bind="optstr: available_modules,
                     optstrValue: 'id',
                     optstrText: 'module_name',
-                    value: details_module,
-                    edit: $root.edit">
+                    value: details_module">
                 </select>
                 <!-- /ko -->
                 &nbsp;
                 {% trans "Case Tag:" %}
                 <input type="text" class="input-medium" data-bind="value: case_tag, disable: disable_tag" />
                 <span class="help-inline" data-bind="text: validate"></span>
-                <a href="#" data-bind="openModal: 'remove-action-modal-template', visible: $root.edit" class="pull-right">
+                <a href="#" data-bind="openModal: 'remove-action-modal-template', visible: true" class="pull-right">
                     <i class="icon-trash"></i>
                     {% trans "Remove action" %}
                 </a>
@@ -181,8 +176,7 @@
     &nbsp;
     {% trans "Case containing index:" %}
     <select data-bind="optstr: $parent.config.caseConfigViewModel.getCaseTags('auto-select', $parent),
-        value: value_source,
-        edit: $root.edit">
+        value: value_source">
     </select>
     {% trans "Index name:" %}
     <input type="text" class="input-medium" data-bind="value: value_key" />
@@ -209,13 +203,12 @@
                 <select data-bind="
                     optstr: $parent.auto_select_modes,
                     value: mode,
-                    optionsCaption: 'Choose a mode...',
-                    edit: $root.edit"
-                ></select>
+                    optionsCaption: 'Choose a mode...'
+                "></select>
                 <!-- ko template: {name: 'auto-select:' + mode()} --><!-- /ko -->
                 <!-- /ko -->
                 <span class="help-inline" data-bind="text: validate"></span>
-                <a href="#" data-bind="openModal: 'remove-action-modal-template', visible: $root.edit" class="pull-right">
+                <a href="#" data-bind="openModal: 'remove-action-modal-template', visible: true" class="pull-right">
                     <i class="icon-trash"></i>
                     {% trans "Remove action" %}
                 </a>
@@ -231,7 +224,7 @@
 </script>
 
 <div id="case-config-ko" class="row">
-    <div data-bind="saveButton: saveButton, visible: $root.edit"></div>
+    <div data-bind="saveButton: saveButton"></div>
     <div data-bind="with: caseConfigViewModel" class="span11">
         <div class="dropdown" data-bind="visible: actionOptions().length">
             <a href="#" data-toggle="dropdown">

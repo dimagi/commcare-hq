@@ -9,63 +9,65 @@ import re
 
 
 class Command(BaseCommand):
-    startkey = ['ipm-senegal', 'by_type', 'XFormInstance']
-    endkey = startkey + [{}]
 
-    ids = [row['id'] for row in XFormInstance.get_db().view(
-        "couchforms/all_submissions_by_domain",
-        startkey=startkey,
-        endkey=endkey,
-        reduce=False
-    )]
+    def handle(self, *args, **options):
+        startkey = ['ipm-senegal', 'by_type', 'XFormInstance']
+        endkey = startkey + [{}]
 
-    to_save = []
+        ids = [row['id'] for row in XFormInstance.get_db().view(
+            "couchforms/all_submissions_by_domain",
+            startkey=startkey,
+            endkey=endkey,
+            reduce=False
+        )]
 
-    locations = SQLLocation.objects.filter(domain='ipm-senegal').values_list('location_id', 'name')
-    locations_map = {location_id: name for (location_id, name) in locations}
+        to_save = []
 
-    for doc in iter_docs(XFormInstance.get_db(), ids):
-        try:
-            if 'PPS_name' in doc['form'] and not doc['form']['PPS_name']:
-                case = SupplyPointCase.get(doc['form']['case']['@case_id'])
-                if case.type == 'supply-point':
-                    print 'Updating XFormInstance:', doc['_id']
+        locations = SQLLocation.objects.filter(domain='ipm-senegal').values_list('location_id', 'name')
+        locations_map = {location_id: name for (location_id, name) in locations}
 
-                    pps_name = locations_map[case.location_id]
+        for doc in iter_docs(XFormInstance.get_db(), ids):
+            try:
+                if 'PPS_name' in doc['form'] and not doc['form']['PPS_name']:
+                    case = SupplyPointCase.get(doc['form']['case']['@case_id'])
+                    if case.type == 'supply-point':
+                        print 'Updating XFormInstance:', doc['_id']
 
-                    instance = XFormInstance.get(doc['_id'])
+                        pps_name = locations_map[case.location_id]
 
-                    # fix the XFormInstance
-                    instance.form['PPS_name'] = pps_name
-                    for instance_prod in instance.form['products']:
-                        instance_prod['PPS_name'] = instance_prod['PPS_name'] or pps_name
+                        instance = XFormInstance.get(doc['_id'])
 
-                    # fix the actual form.xml
-                    xml_object = etree.fromstring(instance.get_xml())
-                    pps_name_node = xml_object.find(re.sub('}.*', '}PPS_name', xml_object.tag))
-                    pps_name_node.text = pps_name
+                        # fix the XFormInstance
+                        instance.form['PPS_name'] = pps_name
+                        for instance_prod in instance.form['products']:
+                            instance_prod['PPS_name'] = instance_prod['PPS_name'] or pps_name
 
-                    products_nodes = xml_object.findall(re.sub('}.*', '}products', xml_object.tag))
-                    for product_node in products_nodes:
-                        product_pps_name_node = product_node.find(re.sub('}.*', '}PPS_name', xml_object.tag))
-                        product_pps_name_node.text = pps_name
-                    updated_xml = etree.tostring(xml_object)
+                        # fix the actual form.xml
+                        xml_object = etree.fromstring(instance.get_xml())
+                        pps_name_node = xml_object.find(re.sub('}.*', '}PPS_name', xml_object.tag))
+                        pps_name_node.text = pps_name
 
-                    attachment_builder = CouchAttachmentsBuilder(instance._attachments)
-                    attachment_builder.add(
-                        name='form.xml',
-                        content=updated_xml,
-                        content_type=instance._attachments['form.xml']['content_type']
-                    )
-                    instance._attachments = attachment_builder.to_json()
+                        products_nodes = xml_object.findall(re.sub('}.*', '}products', xml_object.tag))
+                        for product_node in products_nodes:
+                            product_pps_name_node = product_node.find(re.sub('}.*', '}PPS_name', xml_object.tag))
+                            product_pps_name_node.text = pps_name
+                        updated_xml = etree.tostring(xml_object)
 
-                    to_save.append(instance)
-        except Exception:
-            print 'Failed to save XFormInstance:', doc['_id']
+                        attachment_builder = CouchAttachmentsBuilder(instance._attachments)
+                        attachment_builder.add(
+                            name='form.xml',
+                            content=updated_xml,
+                            content_type=instance._attachments['form.xml']['content_type']
+                        )
+                        instance._attachments = attachment_builder.to_json()
 
-        if len(to_save) > 500:
+                        to_save.append(instance)
+            except Exception:
+                print 'Failed to save XFormInstance:', doc['_id']
+
+            if len(to_save) > 500:
+                XFormInstance.get_db().bulk_save(to_save)
+                to_save = []
+
+        if to_save:
             XFormInstance.get_db().bulk_save(to_save)
-            to_save = []
-
-    if to_save:
-        XFormInstance.get_db().bulk_save(to_save)

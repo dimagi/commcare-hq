@@ -185,6 +185,9 @@ INDICATOR_DATA = {
         "chart_title": "Active Mobile Users (last 30 days)",
         "get_request_params": {
             "include_forms": True,
+            "additional_params_es": {
+                "couch_recipient_doc_type": ["commcareuser"],
+            },
         },
         "hide_cumulative_charts": True,
         "histogram_type": "active_mobile_users",
@@ -456,7 +459,6 @@ DOMAIN_FACETS = [
     "hr_name",
     "internal.area.exact",
     "internal.can_use_data",
-    "internal.commcare_edition",
     "internal.custom_eula",
     "internal.initiative.exact",
     "internal.workshop_region.exact",
@@ -526,7 +528,6 @@ FACET_MAPPING = [
         {"facet": "project_type", "name": "Project Type", "expanded": False},
         {"facet": "customer_type", "name": "Customer Type", "expanded": False},
         {"facet": "internal.initiative.exact", "name": "Initiative", "expanded": False},
-        {"facet": "internal.commcare_edition", "name": "CommCare Pricing Edition", "expanded": False},
         {"facet": "internal.services", "name": "Services", "expanded": False},
         {"facet": "is_sms_billable", "name": "SMS Billable", "expanded": False},
     ]),

@@ -10,29 +10,21 @@
         ></span>
     </label>
     <div class="controls">
-        {% if edit %}
-            <select type="text" name="{{ SLUG }}-show" data-value="{% if case_list.show %}true{% else %}false{% endif %}">
-                <option value="false">Don't Show</option>
-                <option value="true">Show</option>
-            </select>
-            <span id="{{ SLUG }}-label">
-                with label: {% input_trans case_list.label langs %}
-            </span>
-            <script>
-                $(function () {
-                    function updateCaseListLabel() {
-                        $(this).next()[$(this).val() === 'true' ? 'show' : 'hide']();
-                    }
-                    $('#{{ SLUG }}-label input').attr('name', '{{ SLUG }}-label').removeClass('wide');
-                    $('[name="{{ SLUG }}-show"]').change(updateCaseListLabel).each(updateCaseListLabel);
-                });
-            </script>
-        {% else %}
-            {% if not case_list.show %}
-                Don't Show
-            {% else %}
-                Show with label: {{ case_list.label|trans:langs }}
-            {% endif %}
-        {% endif %}
+        <select type="text" name="{{ SLUG }}-show" data-value="{% if case_list.show %}true{% else %}false{% endif %}">
+            <option value="false">Don't Show</option>
+            <option value="true">Show</option>
+        </select>
+        <span id="{{ SLUG }}-label">
+            with label: {% input_trans case_list.label langs %}
+        </span>
+        <script>
+            $(function () {
+                function updateCaseListLabel() {
+                    $(this).next()[$(this).val() === 'true' ? 'show' : 'hide']();
+                }
+                $('#{{ SLUG }}-label input').attr('name', '{{ SLUG }}-label').removeClass('wide');
+                $('[name="{{ SLUG }}-show"]').change(updateCaseListLabel).each(updateCaseListLabel);
+            });
+        </script>
     </div>
 </div>

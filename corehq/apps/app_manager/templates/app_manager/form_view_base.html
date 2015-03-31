@@ -15,10 +15,6 @@
         .casexml ul {
             margin-left: 15px;
         }
-        .no-edit-select {
-            font-weight: bold;
-            color: #444;
-        }
         input[type="radio"]{
             margin: 3px 5px 5px 0px;
         }
@@ -73,13 +69,6 @@
         .indent {
             margin-left: 15px;
         }
-        .ko-no-edit-select {
-            font-weight: bold;
-            color: #444;
-        }
-        .code.ko-no-edit {
-            font-weight: normal;
-        }
     </style>
     {% endif %}
 {% endblock %}
@@ -108,6 +97,9 @@
     {% if not is_user_registration %}
         {% include "app_manager/partials/nav_menu_media_js_common.html" %}
         {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.menu %}
+    {% endif %}
+    {% if allow_form_workflow %}
+        <script src="{% static 'app_manager/js/form_workflow.js' %}"></script>
     {% endif %}
     <script>
         $(function(){
@@ -181,22 +173,26 @@
                 {% endif %}
 
                 {% if allow_form_workflow %}
-                    var workflow_labels = {
-                        default: "{% trans "Home Screen" %}",
-                        root: "{% trans "Module Menu" %}",
-                        module: "{% trans "Module:" %} {{ module.name|trans:langs }}",
-                        previous_screen: "{% trans "Previous Screen" %}"
+                    var labels = {};
+                    labels[FormWorkflow.Values.DEFAULT] = "{% trans "Home Screen" %}";
+                    labels[FormWorkflow.Values.ROOT] = "{% trans "Module Menu" %}";
+                    labels[FormWorkflow.Values.MODULE] = "{% trans "Module:" %} {{ module.name|trans:langs }}";
+                    labels[FormWorkflow.Values.PREVIOUS_SCREEN] = "{% trans "Previous Screen" %}";
+
+                    var options = {
+                        labels: labels,
+                        workflow: '{{ form.post_form_workflow }}',
                     };
-                    var workflow_options = _.map(workflow_labels, function (label, value) {
-                        return {value: value, label: (value === 'default' ? '* ' + label : label)};
-                    });
-                    ko.applyBindings({
-                            workflow: ko.observable('{{ form.post_form_workflow }}'),
-                            form_workflow_options: workflow_options,
-                            workflow_display: workflow_labels["{{ form.post_form_workflow }}"]
-                        },
-                        $('#form-workflow').get(0)
-                    );
+                {% endif %}
+
+                {% if allow_form_workflow and request|toggle_enabled:"FORM_LINK_WORKFLOW"%}
+                    labels[FormWorkflow.Values.FORM] = "{% trans "Link to other form" %}";
+                    options.forms = {{ linkable_forms|JSON}}
+                    options.formLinks = {{ form.form_links|JSON }}
+                {% endif %}
+
+                {% if allow_form_workflow %}
+                    ko.applyBindings(new FormWorkflow(options), $('#form-workflow').get(0))
                 {% endif %}
 
                 ko.applyBindings({
@@ -217,6 +213,7 @@
                 $("#cloudcare-preview-url").attr("href", cloudCareUrl);
                 $('#cloudcare-preview-url').click(function(e) {
                     ga_track_event('CloudCare', 'Click "Try in CloudCare"');
+                    analytics.track('Cliked "Try in CloudCare"');
                 });
             {% endif %}
         {% endif %}
@@ -232,7 +229,7 @@
 
 {% block form-view %}
     <div id="build_errors"></div>
-    {% if edit and not is_user_registration %}
+    {% if not is_user_registration %}
         <div class="delete-me">
             <form action="{% url "delete_form" domain app.id module.unique_id form.unique_id %}" method="post">
                 <button type="submit" class="disable-on-submit btn btn-danger">
@@ -252,7 +249,6 @@
     {% endif %}
     </h3>
 
-    {% if edit %}
     <div class="btn-group">
         {% if not form.no_vellum %}
         <a id="edit_label" href="{% if is_user_registration %}
@@ -282,7 +278,6 @@
         {% endif %}
     </div>
     <hr/>
-    {% endif %}
 
     {% if is_user_registration %}
     <h4>{% trans "User Registration Properties" %}</h4>

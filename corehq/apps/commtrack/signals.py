@@ -8,7 +8,6 @@ from corehq.apps.commtrack.const import is_supply_point_form, RequisitionStatus
 from corehq.apps.commtrack.models import RequisitionCase, CommtrackConfig, SupplyPointCase
 from corehq.apps.commtrack.util import bootstrap_commtrack_settings_if_necessary
 from corehq.apps.domain.signals import commcare_domain_post_save
-from corehq.apps.locations.models import Location
 from corehq.apps.sms.api import send_sms_to_verified_number
 from dimagi.utils import create_unique_filter
 from custom.openlmis.commtrack import requisition_receipt, requisition_approved

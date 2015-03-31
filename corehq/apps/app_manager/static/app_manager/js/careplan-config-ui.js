@@ -333,7 +333,6 @@ var CareplanConfig = (function () {
         self.mode = params.mode;
         self.caseType = params.caseType;
         self.home = params.home;
-        self.edit = params.edit;
         self.save_url = params.save_url;
         self.questions = params.questions;
         self.reserved_words = params.reserved_words;

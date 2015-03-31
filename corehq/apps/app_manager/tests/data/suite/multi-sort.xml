@@ -161,6 +161,9 @@
         <locale id="forms.m0f0"/>
       </text>
     </command>
+    <session>
+      <datum id="case_id_new_patient_0" function="uuid()"/>
+    </session>
   </entry>
   <entry>
     <form>http://openrosa.org/formdesigner/5B595DE1-331F-4D97-9269-9F626AD67C66</form>

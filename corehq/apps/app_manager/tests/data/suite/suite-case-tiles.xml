@@ -40,7 +40,7 @@
       <stack>
       	<push>
       		<command value="'m0-f0'"/>
-      	    <datum id="case_id_case_child" value="uuid()"/>
+      	    <datum id="case_id_new_rec_child_0" value="uuid()"/>
       	</push>
       </stack>
     </action>
@@ -311,6 +311,9 @@
         <locale id="forms.m1f0"/>
       </text>
     </command>
+    <session>
+      <datum id="case_id_new_child_0" function="uuid()"/>
+    </session>
   </entry>
   <menu id="m0">
     <text>

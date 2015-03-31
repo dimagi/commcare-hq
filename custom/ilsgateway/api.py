@@ -5,12 +5,12 @@ from jsonobject.properties import StringProperty, BooleanProperty, DecimalProper
 from requests.exceptions import ConnectionError
 from corehq import Domain
 from corehq.apps.commtrack.models import SupplyPointCase, CommtrackConfig, CommtrackActionConfig
-from corehq.apps.locations.models import SQLLocation
-from corehq.apps.locations.schema import LocationType
+from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.programs.models import Program
 from corehq.apps.users.models import UserRole
 from custom.api.utils import apply_updates
 from custom.ilsgateway.models import SupplyPointStatus, DeliveryGroupReport, HistoricalLocationGroup
+from custom.logistics.utils import get_supply_point_by_external_id
 from custom.logistics.api import LogisticsEndpoint, APISynchronization
 from corehq.apps.locations.models import Location as Loc
 
@@ -84,11 +84,8 @@ class StockTransaction(JsonObject):
 
 
 def _get_location_id(facility, domain):
-        sp = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                  key=[domain, str(facility)],
-                                  reduce=False,
-                                  include_docs=True).first()
-        return sp.location_id
+    supply_point = get_supply_point_by_external_id(domain, facility)
+    return supply_point.location_id if supply_point else None
 
 
 class ILSGatewayEndpoint(LogisticsEndpoint):
@@ -109,22 +106,45 @@ class ILSGatewayEndpoint(LogisticsEndpoint):
 
     def get_supplypointstatuses(self, domain, facility, **kwargs):
         meta, supplypointstatuses = self.get_objects(self.supplypointstatuses_url, **kwargs)
-        location_id = _get_location_id(facility, domain)
+        location_id = SQLLocation.objects.get(domain=domain, external_id=facility).location_id
         return meta, [SupplyPointStatus.wrap_from_json(supplypointstatus, location_id) for supplypointstatus in
                       supplypointstatuses]
 
     def get_deliverygroupreports(self, domain, facility, **kwargs):
         meta, deliverygroupreports = self.get_objects(self.deliverygroupreports_url, **kwargs)
-        location_id = _get_location_id(facility, domain)
+        location_id = SQLLocation.objects.filter(domain=domain, external_id=facility)
         return meta, [DeliveryGroupReport.wrap_from_json(deliverygroupreport, location_id)
                       for deliverygroupreport in deliverygroupreports]
 
 
 class ILSGatewayAPI(APISynchronization):
 
-    LOCATION_CUSTOM_FIELDS = ['groups']
-    SMS_USER_CUSTOM_FIELDS = ['role', 'backend']
+    LOCATION_CUSTOM_FIELDS = [
+        {
+            'name': 'group',
+            'choices': ['A', 'B', 'C']
+        },
+    ]
+    SMS_USER_CUSTOM_FIELDS = [
+        {
+            'name': 'role',
+            'choices': [
+                "district supervisor",
+                "MSD",
+                "imci coordinator",
+                "Facility in-charge",
+                "MOHSW",
+                "RMO",
+                "District Pharmacist",
+                "DMO",
+            ]
+        },
+        {'name': 'backend'},
+    ]
     PRODUCT_CUSTOM_FIELDS = []
+
+    def create_or_edit_roles(self):
+        pass
 
     def prepare_commtrack_config(self):
         """
@@ -132,14 +152,18 @@ class ILSGatewayAPI(APISynchronization):
         - Sets the proper location types hierarchy on the domain object.
         - Sets a keyword handler for reporting receipts
         """
-        domain = Domain.get_by_name(self.domain)
-        domain.location_types = []
-        for i, value in enumerate(LOCATION_TYPES):
-            allowed_parents = [LOCATION_TYPES[i - 1]] if i > 0 else [""]
-            domain.location_types.append(
-                LocationType(name=value, allowed_parents=allowed_parents,
-                             administrative=(value.lower() != 'facility')))
-        domain.save()
+        for location_type in LocationType.objects.by_domain(self.domain):
+            location_type.delete()
+
+        previous = None
+        for loc_type in LOCATION_TYPES:
+            previous, _ = LocationType.objects.get_or_create(
+                domain=self.domain,
+                name=loc_type,
+                parent_type=previous,
+                administrative=(loc_type != 'FACILITY'),
+            )
+
         config = CommtrackConfig.for_domain(self.domain)
         actions = [action.keyword for action in config.actions]
         if 'delivered' not in actions:
@@ -179,20 +203,17 @@ class ILSGatewayAPI(APISynchronization):
         return web_user
 
     def sms_user_sync(self, ilsgateway_smsuser, **kwargs):
-        from custom.logistics.commtrack import add_location
         sms_user = super(ILSGatewayAPI, self).sms_user_sync(ilsgateway_smsuser, **kwargs)
         if not sms_user:
             return None
-        sp = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                  key=[self.domain, str(ilsgateway_smsuser.supply_point)],
-                                  reduce=False,
-                                  include_docs=True,
-                                  limit=1).first()
-        location_id = sp.location_id if sp else None
-        dm = sms_user.get_domain_membership(self.domain)
-        dm.location_id = location_id
+
         sms_user.save()
-        add_location(sms_user, location_id)
+        if ilsgateway_smsuser.supply_point:
+            try:
+                location = SQLLocation.objects.get(domain=self.domain, external_id=ilsgateway_smsuser.supply_point)
+                sms_user.set_location(location.couch_location)
+            except SQLLocation.DoesNotExist:
+                pass
         return sms_user
 
     def location_sync(self, ilsgateway_location, fetch_groups=False):
@@ -209,16 +230,15 @@ class ILSGatewayAPI(APISynchronization):
 
         if not location:
             if ilsgateway_location.parent_id:
-                # todo: this lookup is likely a source of slowness
-                loc_parent = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                                  key=[self.domain, str(ilsgateway_location.parent_id)],
-                                                  reduce=False,
-                                                  include_docs=True).first()
-                if not loc_parent:
+                try:
+                    sql_loc_parent = SQLLocation.objects.get(
+                        domain=self.domain,
+                        external_id=ilsgateway_location.parent_id
+                    )
+                    loc_parent = sql_loc_parent.couch_location
+                except SQLLocation.DoesNotExist:
                     parent = self.endpoint.get_location(ilsgateway_location.parent_id)
                     loc_parent = self.location_sync(Location(parent))
-                else:
-                    loc_parent = loc_parent.location
                 location = Loc(parent=loc_parent)
             else:
                 location = Loc()
@@ -226,25 +246,19 @@ class ILSGatewayAPI(APISynchronization):
             location.domain = self.domain
             location.name = ilsgateway_location.name
             if ilsgateway_location.groups:
-                location.metadata = {'groups': ilsgateway_location.groups}
+                location.metadata = {'group': ilsgateway_location.groups[0]}
             if ilsgateway_location.latitude:
                 location.latitude = float(ilsgateway_location.latitude)
             if ilsgateway_location.longitude:
                 location.longitude = float(ilsgateway_location.longitude)
             location.location_type = ilsgateway_location.type
             location.site_code = ilsgateway_location.code
-            # todo: unicode?
-            location.external_id = str(ilsgateway_location.id)
+            location.external_id = unicode(ilsgateway_location.id)
             location.save()
 
-            # todo: shouldn't this only be creating supply points for objects just at the facility level?
-            # explanation: There are some sms users in ILS that are assigned to non-facility locations.
-            # In HQ when we assign location to user supply point is automatically created.
-            # That's reason why I'm creating supply point for all locations. Not sure how it should be solved.
-            # note: I think we can now assign users to locations without making a supply point so am
-            # hoping this can get changed.
-            if not SupplyPointCase.get_by_location(location):
+            if ilsgateway_location.type == 'FACILITY' and not SupplyPointCase.get_by_location(location):
                 SupplyPointCase.create_from_location(self.domain, location)
+                location.save()
         else:
             location_dict = {
                 'name': ilsgateway_location.name,
@@ -256,7 +270,7 @@ class ILSGatewayAPI(APISynchronization):
                 'metadata': {}
             }
             if ilsgateway_location.groups:
-                location_dict['metadata']['groups'] = ilsgateway_location.groups
+                location_dict['metadata']['group'] = ilsgateway_location.groups[0]
             case = SupplyPointCase.get_by_location(location)
             if apply_updates(location, location_dict):
                 location.save()

@@ -1,0 +1,70 @@
+{
+    "couches": [
+        {
+            "host": "dimagi003.cloudant.com",
+            "headers": {
+                "X-cloudant-user": "commcarehq"
+            }
+        },
+        {
+            "host": "commcarehq.cloudant.com"
+        }
+    ],
+    "suites": [{
+        "database": "commcarehq",
+        "views": [
+            "_all_docs"
+        ]
+    }, {
+        "database": "commcarehq__auditcare",
+        "views": [
+            "_all_docs"
+        ]
+    }, {
+        "database": "commcarehq__couchlog",
+        "views": [
+            "_all_docs"
+        ]
+    }, {
+        "database": "commcarehq__receiverwrapper",
+        "views": [
+            "_all_docs"
+        ]
+    }, {
+        "database": "commcarehq__meta",
+        "views": [
+            "_all_docs"
+        ]
+    }, {
+        "database": "commcarehq__fluff-opm",
+        "views": [
+            "_all_docs"
+        ]
+    }, {
+        "database": "commcarehq__fluff-bihar",
+        "views": [
+            "_all_docs"
+        ]
+    }, {
+        "database": "commcarehq__fluff-care_sa",
+        "views": [
+            "_all_docs"
+        ]
+    }, {
+        "database": "commcarehq__fluff-cvsu",
+        "views": [
+            "_all_docs"
+        ]
+    }, {
+        "database": "commcarehq__fluff-mc",
+        "views": [
+            "_all_docs"
+        ]
+    }, {
+        "database": "commcarehq__m4change",
+        "views": [
+            "_all_docs"
+        ]
+    }
+    ]
+}

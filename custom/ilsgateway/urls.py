@@ -1,6 +1,6 @@
 from django.conf.urls import patterns, url
 from custom.ilsgateway.views import GlobalStats, SupervisionDocumentListView, SupervisionDocumentDeleteView, \
-    SupervisionDocumentView
+    SupervisionDocumentView, RemindersTester
 from custom.ilsgateway.views import ILSConfigView
 
 urlpatterns = patterns('custom.ilsgateway.views',
@@ -19,5 +19,8 @@ urlpatterns = patterns('custom.ilsgateway.views',
     url(r'^supervision/$', SupervisionDocumentListView.as_view(), name=SupervisionDocumentListView.urlname),
     url(r'^delete_supervision_document/(?P<document_id>\d+)/$', SupervisionDocumentDeleteView.as_view(),
         name='delete_supervision_document'),
-    url(r'^supervision/(?P<document_id>\d+)/$', SupervisionDocumentView.as_view(), name='supervision_document')
+    url(r'^supervision/(?P<document_id>\d+)/$', SupervisionDocumentView.as_view(), name='supervision_document'),
+    url(r'^reminder_test/(?P<phone_number>\d+)/$', RemindersTester.as_view(), name='ils_reminders_tester'),
+    url(r'save_ils_note', 'save_ils_note', name='save_ils_note'),
+    url(r'fix_groups_in_location', 'fix_groups_in_location', name='fix_groups_in_location')
 )

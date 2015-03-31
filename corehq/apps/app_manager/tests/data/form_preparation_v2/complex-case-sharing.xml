@@ -51,7 +51,7 @@
                   nodeset="/data/case/@date_modified" type="xsd:dateTime"/>
             <bind calculate="/data/meta/userID" nodeset="/data/case/@user_id"/>
             <setvalue event="xforms-ready" ref="/data/case/@case_id"
-                      value="uuid()"/>
+                      value="instance('commcaresession')/session/data/case_id_new_case_0"/>
             <bind calculate="/data/name" nodeset="/data/case/create/case_name"/>
             <bind calculate="/data/owner_id"
                   nodeset="/data/case/update/owner_id"

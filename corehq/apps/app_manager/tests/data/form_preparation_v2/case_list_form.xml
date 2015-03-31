@@ -35,7 +35,7 @@
             </itext>
             <bind nodeset="/data/case/@date_modified" type="xsd:dateTime" calculate="/data/meta/timeEnd"/>
             <bind nodeset="/data/case/@user_id" calculate="/data/meta/userID"/>
-            <setvalue ref="/data/case/@case_id" event="xforms-ready" value="instance('commcaresession')/session/data/case_id"/>
+            <setvalue ref="/data/case/@case_id" event="xforms-ready" value="instance('commcaresession')/session/data/case_id_new_test_case_type_0"/>
             <bind nodeset="/data/case/create/case_name" calculate="/data/question1"/>
             <bind nodeset="/data/case/create/owner_id" calculate="/data/meta/userID"/>
             <setvalue ref="/data/meta/deviceID" event="xforms-ready" value="instance('commcaresession')/session/context/deviceid"/>

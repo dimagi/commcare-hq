@@ -14,35 +14,46 @@
     });
 
     summaryModule.factory('utils', ['$location', 'summaryConfig', function ($location, config) {
-        return {
-            getTemplate: function (filename) {
+        function Utils () {
+            var self = this;
+            self.getTemplate = function (filename) {
                 return config.staticRoot + 'app_manager/ng_partials/' + filename;
-            },
-            getIcon: function (type) {
+            };
+            self.getIcon = function (type) {
                 var vtype = config.vellumTypes[type];
                 if (vtype) {
                     return vtype.icon_bs3;
                 }
                 return '';
-            },
-            getFormName: function (formId, target_lang) {
-                function translateName (name, langs) {
-                    var firstLang = _(langs).find(function (lang) {
-                        return name[lang];
-                    });
-                    return name[firstLang] + (firstLang === target_lang ? '': ' [' + firstLang + ']');
+            };
+            self.translateName = function (names, target_lang, fallback) {
+                fallback = fallback ? fallback : '[unknown]';
+                if (!names) {
+                    return fallback;
                 }
-                var names = config.formNameMap[formId],
-                    langs = [target_lang].concat(config.appLangs);
+                var langs = [target_lang].concat(config.appLangs),
+                    firstLang = _(langs).find(function (lang) {
+                    return names[lang];
+                });
+                if (!firstLang) {
+                    return fallback;
+                }
+                return names[firstLang] + (firstLang === target_lang ? '': ' [' + firstLang + ']');
+            };
+            self.getFormName = function (formId, target_lang) {
+                var names = config.formNameMap[formId];
                 if (names) {
-                    return translateName(names.module_name, langs) + ' -> ' + translateName(names.form_name, langs);
+                    return self.translateName(names.module_name, target_lang) +
+                        ' -> ' +
+                        self.translateName(names.form_name, target_lang);
                 }
                 return formId;
-            },
-            isActive: function (path) {
+            };
+            self.isActive = function (path) {
                 return $location.path().substr(0, path.length) === path;
-            }
-        };
+            };
+        }
+        return new Utils();
     }]);
 
     summaryModule.factory('_', function() {
@@ -98,6 +109,11 @@
         $scope.modules = [];
         $scope.formSearch = {id: ''};
         $scope.moduleSearch = {id: ''};
+        $scope.lang = 'en';
+        $scope.showLabels = true;
+        $scope.showCalculations = false;
+        $scope.showRelevance = false;
+        $scope.appLangs = summaryConfig.appLangs;
 
         self.init = function () {
             $scope.loading = true;
@@ -129,6 +145,14 @@
         };
 
         $scope.getIcon = utils.getIcon;
+
+        $scope.getQuestionLabel = function(question) {
+            return utils.translateName(question.translations, $scope.lang, question.label);
+        };
+
+        $scope.getFormModuleLabel = function(form_module) {
+            return utils.translateName(form_module.name, $scope.lang);
+        };
 
         self.init();
     };
@@ -213,10 +237,14 @@
                 questions: '=',
                 showConditions: '=',
                 showCalculations: '=',
-                showLabels: '='
+                showLabels: '=',
+                lang: '='
             },
             controller: function ($scope) {
                 $scope.getIcon = utils.getIcon;
+                $scope.getQuestionLabel = function(question) {
+                   return utils.translateName(question.translations, $scope.lang, question.label);
+                };
             }
         };
     }]);

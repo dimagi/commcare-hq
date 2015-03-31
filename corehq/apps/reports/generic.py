@@ -5,7 +5,6 @@ import pytz
 import json
 
 from celery.utils.log import get_task_logger
-from django.core.urlresolvers import reverse
 from django.http import HttpResponse, Http404
 from django.template.context import RequestContext
 from django.template.loader import render_to_string
@@ -13,10 +12,10 @@ from django.shortcuts import render
 
 from corehq.apps.reports.tasks import export_all_rows_task
 from corehq.apps.reports.models import ReportConfig
-from corehq.apps.reports import util
 from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.users.models import CouchUser
+from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import absolute_reverse
 from couchexport.export import export_from_tables
 from couchexport.shortcuts import export_response
@@ -25,13 +24,13 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.modules import to_function
 from dimagi.utils.web import json_request, json_response
 from dimagi.utils.parsing import string_to_boolean
-from corehq.apps.reports.cache import CacheableRequestMixIn, request_cache
+from corehq.apps.reports.cache import request_cache
 from django.utils.translation import ugettext
 
 CHART_SPAN_MAP = {1: '10', 2: '6', 3: '4', 4: '3', 5: '2', 6: '2'}
 
 
-class GenericReportView(CacheableRequestMixIn):
+class GenericReportView(object):
     """
         A generic report structure for viewing a report
         (or pages that follow the reporting structure closely---though that seems a bit hacky)
@@ -73,6 +72,8 @@ class GenericReportView(CacheableRequestMixIn):
     slug = None  # Name to be used in the URL (with lowercase and underscores)
     section_name = None  # string. ex: "Reports"
     dispatcher = None  # ReportDispatcher subclass
+
+    is_cacheable = False  # whether to use caching on @request_cache methods
 
     # Code can expect `fields` to be an iterable even when empty (never None)
     fields = ()
@@ -125,7 +126,7 @@ class GenericReportView(CacheableRequestMixIn):
             raise ValueError("Class property dispatcher should point to a subclass of ReportDispatcher.")
 
         self.request = request
-        self.request_params = json_request(self.request.GET)
+        self.request_params = json_request(self.request.GET if self.request.method == 'GET' else self.request.POST)
         self.domain = domain
         self.context = base_context or {}
         self._update_initial_context()
@@ -150,7 +151,7 @@ class GenericReportView(CacheableRequestMixIn):
         # pickle only what the report needs from the request object
 
         request = dict(
-            GET=self.request.GET,
+            GET=self.request.GET if self.request.method == 'GET' else self.request.POST,
             META=dict(
                 QUERY_STRING=self.request.META.get('QUERY_STRING'),
                 PATH_INFO=self.request.META.get('PATH_INFO')
@@ -194,7 +195,7 @@ class GenericReportView(CacheableRequestMixIn):
         request.datespan = request_data.get('datespan')
 
         try:
-            couch_user = CouchUser.get(request_data.get('couch_user'))
+            couch_user = CouchUser.get_by_user_id(request_data.get('couch_user'))
             request.couch_user = couch_user
         except Exception as e:
             logging.error("Could not unpickle couch_user from request for report %s. Error: %s" %
@@ -235,9 +236,9 @@ class GenericReportView(CacheableRequestMixIn):
             return pytz.utc
         else:
             try:
-                return util.get_timezone(self.request.couch_user, self.domain)
+                return get_timezone_for_user(self.request.couch_user, self.domain)
             except AttributeError:
-                return util.get_timezone(None, self.domain)
+                return get_timezone_for_user(None, self.domain)
 
     @property
     @memoized
@@ -515,12 +516,11 @@ class GenericReportView(CacheableRequestMixIn):
         self.set_announcements()
         return render(self.request, template, self.context)
 
-    
     @property
-    @request_cache("mobile")
+    @request_cache()
     def mobile_response(self):
         """
-        This tries to render a mobile version of the report, by just calling 
+        This tries to render a mobile version of the report, by just calling
         out to a very simple default template. Likely won't work out of the box
         with most reports.
         """
@@ -531,7 +531,7 @@ class GenericReportView(CacheableRequestMixIn):
         async_context = self._async_context()
         self.context.update(async_context)
         return render(self.request, self.mobile_template_base, self.context)
-    
+
     @property
     def email_response(self):
         """
@@ -542,14 +542,14 @@ class GenericReportView(CacheableRequestMixIn):
         return self.async_response
 
     @property
-    @request_cache("async")
+    @request_cache()
     def async_response(self):
         """
             Intention: Not to be overridden in general.
             Renders the asynchronous view of the report template, returned as json.
         """
         return HttpResponse(json.dumps(self._async_context()), content_type='application/json')
-    
+
     def _async_context(self):
         self.update_template_context()
         self.update_report_context()
@@ -579,7 +579,7 @@ class GenericReportView(CacheableRequestMixIn):
         return file
 
     @property
-    @request_cache("filters", expiry=60 * 10)
+    @request_cache(expiry=60 * 10)
     def filters_response(self):
         """
             Intention: Not to be overridden in general.
@@ -596,7 +596,7 @@ class GenericReportView(CacheableRequestMixIn):
         )))
 
     @property
-    @request_cache("json")
+    @request_cache()
     def json_response(self):
         """
             Intention: Not to be overridden in general.
@@ -605,7 +605,7 @@ class GenericReportView(CacheableRequestMixIn):
         return json_response(self.json_dict)
 
     @property
-    @request_cache("export")
+    @request_cache()
     def export_response(self):
         """
         Intention: Not to be overridden in general.
@@ -620,7 +620,7 @@ class GenericReportView(CacheableRequestMixIn):
             return export_response(temp, self.export_format, self.export_name)
 
     @property
-    @request_cache("raw")
+    @request_cache()
     def print_response(self):
         """
         Returns the report for printing.
@@ -721,7 +721,7 @@ class GenericTabularReport(GenericReportView):
     use_datatables = True
     charts_per_row = 1
     bad_request_error_text = None
-    
+
     # override old class properties
     report_template_path = "reports/async/tabular.html"
     flush_layout = True
@@ -910,7 +910,7 @@ class GenericTabularReport(GenericReportView):
             return self.rows
 
     @property
-    @request_cache("report_context")
+    @request_cache()
     def report_context(self):
         """
             Don't override.

@@ -19,3 +19,6 @@
 small {
     font-size: 1.5em !important;
 }
+th {
+    font-weight: bold !important;
+}

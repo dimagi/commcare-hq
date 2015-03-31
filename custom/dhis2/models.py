@@ -4,6 +4,7 @@ import json
 import logging
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType, FieldList, FixtureItemField
+from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django.schema import *
 from dimagi.utils.couch.cache import cache_core
 import requests
@@ -33,7 +34,10 @@ class Dhis2Settings(Document):
         """
         Yields settings of all domains for which "enabled" is true
         """
-        toggle = Toggle.get('dhis2_domain')
+        try:
+            toggle = Toggle.get('dhis2_domain')
+        except ResourceNotFound:
+            return
         for domain in toggle.enabled_users:
             if domain.startswith('domain:'):
                 # If the "domain" namespace is given, strip it off
@@ -285,7 +289,10 @@ class Dhis2Api(object):
             'orgUnit': ou_id,
             'attributes': self._data_to_attributes(instance_data)
         }
-        return self._request.put('trackedEntityInstances/' + te_inst_id, request_data)
+        response = self._request.put('trackedEntityInstances/' + te_inst_id, request_data)
+        if response['status'] != 'SUCCESS':
+            logger.error('Failed to update instance of tracked entity "%s". DHIS2 API error: %s',
+                         te_inst_id, response)
 
     def get_top_org_unit(self):
         """
@@ -381,7 +388,7 @@ class Dhis2Api(object):
                     'links': 'false',
                     'trackedEntity': te_id,
                     'ou': top_ou['id'],
-                    # 'ouMode': 'DESCENDANTS',  # Causes SQL error in DHIS2 2.16. Fixed in 2.18
+                    'ouMode': 'DESCENDANTS',
                     'attribute': attr_id
                 })
             instances = self.entities_to_dicts(response)
@@ -414,7 +421,7 @@ class Dhis2Api(object):
                     'links': 'false',
                     'trackedEntity': te_id,
                     'ou': top_ou['id'],
-                    # 'ouMode': 'DESCENDANTS',  # Causes SQL error in DHIS2 2.16. Fixed in 2.18
+                    'ouMode': 'DESCENDANTS',
                     'attribute': attr_id + ':EQ:' + attr_value
                 })
             instances = self.entities_to_dicts(response)
@@ -440,7 +447,7 @@ class Dhis2Api(object):
                     'page': page,
                     'links': 'false',
                     'ou': top_ou['id'],
-                    # 'ouMode': 'DESCENDANTS',  # Causes SQL error in DHIS2 2.16. Fixed in 2.18
+                    'ouMode': 'DESCENDANTS',
                     'program': program_id
                 })
             instances = self.entities_to_dicts(response)

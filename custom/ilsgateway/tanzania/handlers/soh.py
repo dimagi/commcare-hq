@@ -15,6 +15,8 @@ class SOHHandler(KeywordHandler):
                                              status_type=SupplyPointStatusTypes.SOH_FACILITY,
                                              status_value=SupplyPointStatusValues.SUBMITTED,
                                              status_date=datetime.utcnow())
+        return False
 
     def help(self):
         self.respond(SOH_HELP_MESSAGE)
+        return True

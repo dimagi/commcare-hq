@@ -14,7 +14,6 @@
         var CustomExportView = {
             wrap: function (o) {
                 var self = ko.mapping.fromJS(o);
-                self.show_deleted = ko.observable(false);
 
                 self.utils = {
                     rename: function (field, rename_map) {
@@ -223,6 +222,7 @@
                 });
 
                 _(self.table_configuration()).each(function (table) {
+                    table.show_deleted = ko.observable(false);
                     // assumes unselected
                     var unselected;
                     var columns = table.column_configuration();
@@ -234,6 +234,7 @@
                             niceField['field'] = special;
                         }
                         column._niceField = niceField;
+                        column.showOptions = ko.observable(false);
                         column.newOption = ko.observable("");
                         column.addOption = function(e) {
                             if (this.newOption() != "") {
@@ -279,7 +280,7 @@
 
                 self.setAllSelected = function (table, selected) {
                     _(table.column_configuration()).each(function (column) {
-                        if (!selected || self.show_deleted() || column.show()) {
+                        if (!selected || table.show_deleted() || column.show()) {
                             column.selected(selected);
                         }
                     });
@@ -444,9 +445,20 @@
         {% blocktrans %}
             These options allow you to configure how CommCare exports data from multi-select questions.
             If you do not want to split the options into multiple columns select the 'plain' option.
-            Each item that is selected in the select list will appear as a column in the exported data.
         {% endblocktrans %}
-        <a href='https://help.commcarehq.org/display/commcarepublic/Splitting+multi-select+data+in+exports' target="_blank">
+        <br/>
+        {% if custom_export.type == 'form' %}
+        {% blocktrans %}
+            When the export is run a new column will be added to the export file
+            for each item in the multi-select field.
+        {% endblocktrans %}
+        {% else %}
+            {% blocktrans %}
+            Each item that is selected in the select list will appear as a column in the exported data.
+            Any options not selected will be in an "extra" column.
+        {% endblocktrans %}
+        {% endif %}
+        <a href='https://help.commcarehq.org/display/commcarepublic/Splitting+multi-select+data+in+exports' target="_blank" class="allow-click">
             {% trans "More info" %}
         </a>
     </div>
@@ -483,10 +495,6 @@
                         {% trans "Automatically convert dates for Excel" %}
                     </label>
                     <label class="checkbox">
-                        <input type="checkbox" data-bind="checked: $root.show_deleted" />
-                        {% trans "Show Deleted Questions and Advanced Properties" %}
-                    </label>
-                    <label class="checkbox">
                         <input type="checkbox" id="presave-checkbox" data-bind="checked: presave" />
                         {% trans "Create a Daily Saved Export" %}
                     </label>
@@ -510,12 +518,23 @@
                     </span>
                 </legend>
                 <div data-bind="visibleFade: selected">
+                    <div class="control-group pull-right">
+                        <div class="controls">
+                            <button type="button" class="btn" data-bind="
+                                click: function() {show_deleted(!show_deleted());},
+                                css: {active: show_deleted}">
+                                <span data-bind="visible: !show_deleted()">{% trans "Show Deleted Questions and Advanced Properties" %}</span>
+                                <span data-bind="visible: show_deleted">{% trans "Hide Deleted Questions and Advanced Properties" %}</span>
+                            </button>
+                        </div>
+                    </div>
                     <div class="control-group" data-bind="visible: $root.repeatsEnabled()">
                         <label class="control-label">{% trans "Sheet Name" %}</label>
                         <div class="controls">
                             <input type="text" data-bind="value: display" />
                         </div>
                     </div>
+
                     <div class="control-group">
                         <label class="control-label">
                             <strong>{% trans "Choose the fields you want to export." %}</strong><br />
@@ -543,7 +562,7 @@
                                 </thead>
                                 <tbody data-bind="sortable: column_configuration">
                                     <tr data-bind="
-                                        visible:  $root.show_deleted() || ($data.show() || selected),
+                                        visible:  $parent.show_deleted() || ($data.show() || selected),
                                         attr: {'data-order': _sortableOrder}
                                         ">
                                         <td class="sortable-handle">
@@ -566,23 +585,25 @@
                                                 </select>
                                             </div>
                                             <div data-bind="if: allOptions">
-                                                <span data-bind="if: hasNewOptions" class="pull-right">
-                                                    <span class="icon-asterisk" title="{% trans "New options available" %}"></span>
-                                                </span>
                                                 <select data-bind="
                                                     value: doc_type,
                                                     foreach: $root.column_type_options
                                                 "/>
                                                     <option data-bind="value: value, text: label"></option>
                                                 </select>
-                                                <span data-bind="makeHqHelp: {name: '{% trans "Split multi-select data" %}', 'placement': 'left'}"></span>
+                                                <span data-bind="makeHqHelp: {name: '{% trans "Split multi-select data" %}', placement: 'left', trigger: 'click'}"></span>
+                                                {% if custom_export.type == 'case' %}
                                                 <div data-bind="if: doc_type() === 'SplitColumn'">
-                                                    <select class="select2" data-bind="options: allOptions, selectedOptions: options" multiple="true">
-                                                    </select>
-                                                    <br/>
-                                                    <input class="input input-small" type="text" data-bind="value: newOption"/>
-                                                    <button class="btn" data-bind="click: addOption">{% trans "Add" %}</button>
+                                                    <a href="#" data-bind="visible: !showOptions(), click: function() {showOptions(true);}">{% trans "Show Options" %}</a>
+                                                    <div data-bind="visible: showOptions">
+                                                        <select class="select2" data-bind="options: allOptions, selectedOptions: options" multiple="true">
+                                                        </select>
+                                                        <br/>
+                                                        <input class="input input-small" type="text" data-bind="value: newOption"/>
+                                                        <button class="btn" data-bind="click: addOption">{% trans "Add" %}</button>
+                                                    </div>
                                                 </div>
+                                                {% endif %}
                                             </div>
                                         </td>
                                         {% endif %}

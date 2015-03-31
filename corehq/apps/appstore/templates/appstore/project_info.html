@@ -50,6 +50,10 @@
                 $('#agree-button').attr('data-form', new_form);
             });
             $('#agree-button').click(function() {
+                $('#download-new-project').removeAttr('data-toggle');
+                $('#download-new-project').removeAttr('href');
+                $('#import-into-button').removeAttr('data-toggle');
+                $('#import-into-button').removeAttr('href');
                 var form = $("#" + $(this).attr('data-form'));
                 form.submit();
             });
@@ -170,7 +174,7 @@
         {% endif %}
     </dd>
     <dt>{% trans 'License' %}</dt>
-    <dd>{{ project.get_license_display }}</dd>
+    <dd><a href="{{ project.get_license_url }}">{{ project.get_license_display }}</a> </dd>
     <dt>{% trans 'Downloads' %}</dt>
     <dd>
         <!-- This version: -->

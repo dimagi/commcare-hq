@@ -1,3 +1,4 @@
+from functools import partial
 from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django.schema import *
 import itertools
@@ -11,18 +12,107 @@ from casexml.apps.case.cleanup import close_case
 from corehq.apps.commtrack.const import COMMTRACK_USERNAME
 from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import SQLProduct
+from corehq.toggles import LOCATION_TYPE_STOCK_RATES
 from mptt.models import MPTTModel, TreeForeignKey
-from corehq.apps.domain.models import Domain
+
 
 LOCATION_SHARING_PREFIX = 'locationgroup-'
 LOCATION_REPORTING_PREFIX = 'locationreportinggroup-'
+
+
+class LocationTypeManager(models.Manager):
+    def full_hierarchy(self, domain):
+        """
+        Returns a graph of the form
+        {
+           '<loc_type_id>: (
+               loc_type,
+               {'<child_loc_type_id>': (child_loc_type, [...])}
+           )
+        }
+        """
+        hierarchy = {}
+
+        def insert_loc_type(loc_type):
+            """
+            Get parent location's hierarchy, insert loc_type into it, and return
+            hierarchy below loc_type
+            """
+            if not loc_type.parent_type:
+                lt_hierarchy = hierarchy
+            else:
+                lt_hierarchy = insert_loc_type(loc_type.parent_type)
+            if loc_type.id not in lt_hierarchy:
+                lt_hierarchy[loc_type.id] = (loc_type, {})
+            return lt_hierarchy[loc_type.id][1]
+
+        for loc_type in self.filter(domain=domain).all():
+            insert_loc_type(loc_type)
+
+        return hierarchy
+
+    def by_domain(self, domain):
+        """
+        Sorts location types by hierarchy
+        """
+        ordered_loc_types = []
+        def step_through_graph(hierarchy):
+            for _, (loc_type, children) in hierarchy.items():
+                ordered_loc_types.append(loc_type)
+                step_through_graph(children)
+
+        step_through_graph(self.full_hierarchy(domain))
+        return ordered_loc_types
+
+
+StockLevelField = partial(models.DecimalField, max_digits=10, decimal_places=1)
+
+
+class LocationType(models.Model):
+    domain = models.CharField(max_length=255, db_index=True)
+    name = models.CharField(max_length=255)
+    code = models.SlugField(db_index=False, null=True)
+    parent_type = models.ForeignKey('self', null=True)
+    administrative = models.BooleanField(default=False)
+    shares_cases = models.BooleanField(default=False)
+    view_descendants = models.BooleanField(default=False)
+
+    emergency_level = StockLevelField(default=0.5)
+    understock_threshold = StockLevelField(default=1.5)
+    overstock_threshold = StockLevelField(default=3.0)
+
+    objects = LocationTypeManager()
+
+    def _populate_stock_levels(self):
+        from corehq.apps.commtrack.models import CommtrackConfig
+        ct_config = CommtrackConfig.for_domain(self.domain)
+        if (
+            (ct_config is None)
+            or (not Domain.get_by_name(self.domain).commtrack_enabled)
+            or LOCATION_TYPE_STOCK_RATES.enabled(self.domain)
+        ):
+            return
+        config = ct_config.stock_levels_config
+        self.emergency_level = config.emergency_level
+        self.understock_threshold = config.understock_threshold
+        self.overstock_threshold = config.overstock_threshold
+
+    def save(self, *args, **kwargs):
+        if not self.code:
+            from corehq.apps.commtrack.util import unicode_slug
+            self.code = unicode_slug(self.name)
+        self._populate_stock_levels()
+        return super(LocationType, self).save(*args, **kwargs)
+
+    def __unicode__(self):
+        return self.name
 
 
 class SQLLocation(MPTTModel):
     domain = models.CharField(max_length=255, db_index=True)
     name = models.CharField(max_length=100, null=True)
     location_id = models.CharField(max_length=100, db_index=True, unique=True)
-    location_type = models.CharField(max_length=255)
+    location_type = models.ForeignKey(LocationType, null=True)
     site_code = models.CharField(max_length=255)
     external_id = models.CharField(max_length=255, null=True)
     metadata = json_field.JSONField(default={})
@@ -119,7 +209,7 @@ class SQLLocation(MPTTModel):
             g.reporting = True
 
         g.metadata = {
-            'commcare_location_type': self.location_type,
+            'commcare_location_type': self.location_type.name,
             'commcare_location_name': self.name,
         }
         for key, val in self.metadata.items():
@@ -154,17 +244,10 @@ class SQLLocation(MPTTModel):
             False,
         )
 
+    @property
     @memoized
     def couch_location(self):
         return Location.get(self.location_id)
-
-    @memoized
-    def get_products(self):
-        """
-        If there are no products specified for this location, assume all
-        products for the domain are relevant.
-        """
-        return self.products.all() or SQLProduct.by_domain(self.domain)
 
 
 def _filter_for_archived(locations, include_archive_ancestors):
@@ -221,7 +304,7 @@ class Location(CachedCouchDocumentMixin, Document):
         super(Document, self).__init__(*args, **kwargs)
 
     def __repr__(self):
-        return "%s (%s)" % (self.name, self.location_type)
+        return "%s (%s)" % (self.name, self.location_type_object.name)
 
     def __eq__(self, other):
         if isinstance(other, Location):
@@ -237,7 +320,6 @@ class Location(CachedCouchDocumentMixin, Document):
             ('location_id', '_id'),
             'domain',
             'name',
-            'location_type',
             'site_code',
             'external_id',
             'latitude',
@@ -246,13 +328,19 @@ class Location(CachedCouchDocumentMixin, Document):
             'metadata'
         ]
 
-        sql_location, _ = SQLLocation.objects.get_or_create(
+        sql_location, is_new = SQLLocation.objects.get_or_create(
             location_id=self._id,
             defaults={
                 'domain': self.domain,
                 'site_code': self.site_code
             }
         )
+
+        if is_new or (sql_location.location_type.name != self.location_type):
+            sql_location.location_type, _ = LocationType.objects.get_or_create(
+                domain=self.domain,
+                name=self.location_type,
+            )
 
         for prop in properties_to_sync:
             if isinstance(prop, tuple):
@@ -381,17 +469,21 @@ class Location(CachedCouchDocumentMixin, Document):
         ).one()['value']
 
     @classmethod
-    def by_domain(cls, domain):
+    def by_domain(cls, domain, include_docs=True):
         relevant_ids = set([r['id'] for r in cls.get_db().view(
             'locations/by_type',
             reduce=False,
             startkey=[domain],
             endkey=[domain, {}],
         ).all()])
-        return (
-            cls.wrap(l) for l in iter_docs(cls.get_db(), list(relevant_ids))
-            if not l.get('is_archived', False)
-        )
+
+        if not include_docs:
+            return relevant_ids
+        else:
+            return (
+                cls.wrap(l) for l in iter_docs(cls.get_db(), list(relevant_ids))
+                if not l.get('is_archived', False)
+            )
 
     @classmethod
     def site_codes_for_domain(cls, domain):
@@ -510,17 +602,7 @@ class Location(CachedCouchDocumentMixin, Document):
 
     @property
     def location_type_object(self):
-        """
-        Brute force lookup for the LocationType object
-        that corresponds to this locations type.
-
-        This could definitely use a more efficient way,
-        but no domains at this point have a large list of
-        types.
-        """
-        for loc_type in Domain.get_by_name(self.domain).location_types:
-            if loc_type.name == self.location_type:
-                return loc_type
+        return self.sql_location.location_type
 
 
 def root_locations(domain):

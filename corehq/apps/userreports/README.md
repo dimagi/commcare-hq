@@ -102,6 +102,7 @@ This expression returns `doc["age"]`:
     "property_name": "age"
 }
 ```
+An optional `"datatype"` attribute may be specified, which will attempt to cast the property to the given data type. The options are "date", "datetime", "string", "integer", and "decimal". If no datatype is specified, "string" will be used.
 ##### Property Path Expression
 
 This expression returns `doc["child"]["age"]`:
@@ -111,6 +112,7 @@ This expression returns `doc["child"]["age"]`:
     "property_path": ["child", "age"]
 }
 ```
+An optional `"datatype"` attribute may be specified, which will attempt to cast the property to the given data type. The options are "date", "datetime", "string", "integer", and "decimal". If no datatype is specified, "string" will be used.
 ##### Conditional Expression
 
 This expression returns `"legal" if doc["age"] > 21 else "underage"`:
@@ -122,6 +124,7 @@ This expression returns `"legal" if doc["age"] > 21 else "underage"`:
         "expression": {
             "type": "property_name",
             "property_name": "age"
+            "datatype": "integer"
         },
         "type": "boolean_expression",
         "property_value": 21
@@ -137,6 +140,8 @@ This expression returns `"legal" if doc["age"] > 21 else "underage"`:
 }
 ```
 Note that this expression contains other expressions inside it! This is why expressions are powerful. (It also contains a filter, but we haven't covered those yet - if you find the `"test"` section confusing, keep reading...)
+
+Note also that it's important to make sure that you are comparing values of the same type. In this example, the expression that retrieves the age property from the document also casts the value to an integer. If this datatype is not specified, the expression will compare a string to the `21` value, which will not produce the expected results!
 
 #### Related document expressions
 
@@ -168,6 +173,7 @@ Here is a sample JSON format for simple `boolean_expression` filter:
     "expression": {
         "type": "property_name",
         "property_name": "age",
+        "datatype": "integer"
     },
     "operator": "gt",
     "property_value": 21
@@ -206,6 +212,7 @@ The following filter represents the statement: `doc["age"] < 21 and doc["nationa
             "expression": {
                 "type": "property_name",
                 "property_name": "age",
+                "datatype": "integer"
             },
             "operator": "lt",
             "property_value": 21
@@ -234,6 +241,7 @@ The following filter represents the statement: `doc["age"] > 21 or doc["national
             "expression": {
                 "type": "property_name",
                 "property_name": "age",
+                "datatype": "integer",
             },
             "operator": "gt",
             "property_value": 21
@@ -332,7 +340,7 @@ boolean        | Save `1` if a filter is true, otherwise `0`.
 expression     | Save the output of an expression.
 choice_list    | Save multiple columns, one for each of a predefined set of choices
 
-*Note/todo: there are also other supported formats, but they are just shortcuts around the functionality of these two so they are left out of the current docs.*
+*Note/todo: there are also other supported formats, but they are just shortcuts around the functionality of these ones they are left out of the current docs.*
 
 #### Boolean indicators
 
@@ -377,6 +385,28 @@ Here is a sample expression indicator that just saves the "age" property to an i
     "column_id": "age",
     "datatype": "integer",
     "display_name": "age of patient"
+}
+```
+
+#### Choice list indicators
+
+Choice list indicators take a single choice column (select or multiselect) and expand it into multiple columns where each column represents a different choice. These can support both single-select and multi-select quesitons.
+
+A sample spec is below:
+
+```
+{
+    "type": "choice_list",
+    "column_id": "col",
+    "display_name": "the category",
+    "property_name": "category",
+    "choices": [
+        "bug",
+        "feature",
+        "app",
+        "schedule"
+    ],
+    "select_style": "single"
 }
 ```
 
@@ -471,13 +501,13 @@ Here are some sample configurations that can be used as a reference until we hav
 
 ## Report filters
 
-TODO: Report filters docs will go here.
+The documentation for report filters is still in progress. Apologies for brevity below.
 
 **A note about report filters versus data source filters**
 
 Report filters are _completely_ different from data source filters. Data source filters limit the global set of data that ends up in the table, whereas report filters allow you to select values to limit the data returned by a query.
 
-#### "numeric" Filters
+### Numeric Filters
 Numeric filters allow users to filter the rows in the report by comparing a column to some constant that the user specifies when viewing the report.
 Numeric filters are only intended to be used with numeric (integer or decimal type) columns. Supported operators are =, &ne;, &lt;, &le;, &gt;, and &ge;.
 
@@ -491,7 +521,9 @@ ex:
 }
 ```
 
-Here are a few examples of report filters:
+### Date filters
+
+Date filters allow you filter on a date. They will show a datepicker in the UI.
 
 ```
 {
@@ -502,14 +534,24 @@ Here are a few examples of report filters:
   "required": false
 }
 ```
+
+### Dynamic choice lists
+
+Dynamic choice lists provide a select widget that shows all possible values for a column.
+
 ```
 {
   "type": "dynamic_choice_list",
   "slug": "village",
   "field": "village",
-  "display": "Village"
+  "display": "Village",
+  "datatype": "string"
 }
 ```
+
+### Choice lists
+
+Choice lists allow manual configuration of a fixed, specified number of choices and let you change what they look like in the UI.
 ```
 {
   "type": "choice_list",
@@ -524,14 +566,17 @@ Here are a few examples of report filters:
 
 ## Report Columns
 
-TODO: Report column docs will go here.
+Reports are made up of columns. There are currently three supported types of columns: _fields_ (which represent a single value), _percentages_ which combine two values in to a percent, and _expanded_ which expand a select question into multiple columns.
 
-Here's an example report column that shows the owner name from an associated `owner_id`:
+### Field columns
+
+Field columns have a type of `"field"`. Here's an example field column that shows the owner name from an associated `owner_id`:
 
 ```
 {
     "type": "field",
     "field": "owner_id",
+    "column_id": "owner_id",
     "display": "Owner Name"
     "format": "default",
     "transform": {
@@ -541,6 +586,96 @@ Here's an example report column that shows the owner name from an associated `ow
     "aggregation": "simple",
 }
 ```
+
+### Percent columns
+
+Percent columns have a type of `"percent"`. They must specify a `numerator` and `denominator` as separate field columns. Here's an example percent column that shows the percentage of pregnant women who had danger signs.
+
+```
+{
+  "type": "percent",
+  "column_id": "pct_danger_signs",
+  "display": "Percent with Danger Signs",
+  "format": "both",
+  "denominator": {
+    "type": "field",
+    "aggregation": "sum",
+    "field": "is_pregnant",
+    "column_id": "is_pregnant"
+  },
+  "numerator": {
+    "type": "field",
+    "aggregation": "sum",
+    "field": "has_danger_signs",
+    "column_id": "has_danger_signs"
+  }
+}
+```
+
+#### Formats
+
+The following percentage formats are supported.
+
+Format    | Description                                    | example
+--------- | -----------------------------------------------| --------
+percent   | A whole number percentage (the default format) | 33%
+fraction  | A fraction                                     | 1/3
+both      | Percentage and fraction                        | 33% (1/3)
+
+#### Column IDs
+
+Column IDs in percentage fields *must be unique for the whole report*. If you use a field in a normal column and in a percent column you must assign unique `column_id` values to it in order for the report to process both.
+
+
+### Expanded Columns
+
+Expanded columns have a type of `"expanded"`. Expanded columns will be "expanded" into a new column for each distinct value in this column of the data source. The maximum expansion is to 10 columns. For example:
+
+If you have a data source like this:
+```
++---------+----------+-------------+
+| Patient | district | test_result |
++---------+----------+-------------+
+| Joe     | North    | positive    |
+| Bob     | North    | positive    |
+| Fred    | South    | negative    |
++---------+----------+-------------+
+```
+and a report configuration like this:
+```
+aggregation columns:
+["district"]
+
+columns:
+[
+  {
+    "type": "field",
+    "field": "district",
+    "column_id": "district",
+    "format": "default",
+    "aggregation": "simple"
+  },
+  {
+    "type": "expanded",
+    "field": "test_result",
+    "column_id": "test_result",
+    "format": "default"
+  }
+]
+```
+Then you will get a report like this:
+```
++----------+----------------------+----------------------+
+| district | test_result-positive | test_result-negative |
++----------+----------------------+----------------------+
+| North    | 2                    | 0                    |
+| South    | 0                    | 1                    |
++----------+----------------------+----------------------+
+```
+
+### Aggregation
+
+TODO: finish aggregation docs
 
 ### Transforms
 
@@ -579,6 +714,76 @@ Transforms can be used to transform the value returned by a column just before i
 {
     "type": "custom",
     "custom_type": "month_display"
+}
+```
+
+# Charts
+
+There are currently three types of charts supported. Pie charts, and two types of bar charts.
+
+## Pie charts
+
+A pie chart takes two inputs and makes a pie chart. Here are the inputs:
+
+
+Field              | Description
+------------------ | -----------------------------------------------
+aggregation_column | The column you want to group - typically a column from a select question
+value_column       | The column you want to sum - often just a count
+
+Here's a sample spec:
+
+```
+{
+    "type": "pie",
+    "title": "Remote status",
+    "aggregation_column": "remote",
+    "value_column": "count"
+}
+```
+
+## Aggregate multibar charts
+
+An aggregate multibar chart is used to aggregate across two columns (typically both of which are select questions). It takes three inputs:
+
+Field                 | Description
+--------------------- | -----------------------------------------------
+primary_aggregation   | The primary aggregation. These will be the x-axis on the chart.
+secondary_aggregation | The secondary aggregation. These will be the slices of the bar (or individual bars in "grouped" format)
+value_column          | The column you want to sum - often just a count
+
+Here's a sample spec:
+
+```
+{
+    "type": "multibar-aggregate",
+    "title": "Applicants by type and location",
+    "primary_aggregation": "remote",
+    "secondary_aggregation": "applicant_type",
+    "value_column": "count"
+}
+```
+
+## Multibar charts
+
+A multibar chart takes a single x-axis column (typically a select questions) and any number of y-axis columns (typically indicators or counts) and makes a bar chart from them.
+
+Field          | Description
+---------------| -----------------------------------------------
+x_axis_column  | This will be the x-axis on the chart.
+y_axis_columns | These are the columns to use for the secondary axis. These will be the slices of the bar (or individual bars in "grouped" format)
+
+Here's a sample spec:
+
+```
+{
+    "type": "multibar",
+    "title": "HIV Mismatch by Clinic",
+    "x_axis_column": "clinic",
+    "y_axis_columns": [
+        "diagnoses_match_no",
+        "diagnoses_match_yes"
+    ]
 }
 ```
 

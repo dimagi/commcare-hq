@@ -13,7 +13,7 @@
     {% endblocktrans %}
 </div>
 {% endif %}
-<div data-bind="saveButton: shortScreen.saveButton, visible: $root.edit"></div>
+<div data-bind="saveButton: shortScreen.saveButton"></div>
 <div data-bind="with: customXMLViewModel">
     <div data-bind="visible: enabled">
         <legend>{% trans "Custom Case List XML" %}</legend>
@@ -30,11 +30,17 @@
         <option value="no">Don't Use Case Tiles</option>
         <option value="yes">Use Case Tiles</option>
     </select>
-    <label class="checkbox" data-bind="visible: useCaseTiles() == 'yes'">
-        <input type="checkbox" data-bind="checked: persistTileOnForms">
-        Use this case list tile persistently in forms
-    </label>
     {% endif %}
+    <div data-bind="visible: useCaseTiles() == 'yes' || window.toggles.CASE_LIST_CUSTOM_XML">
+        <label class="checkbox">
+            <input type="checkbox" data-bind="checked: persistTileOnForms">
+            Use this case list tile persistently in forms
+        </label>
+        <label class="checkbox" data-bind="visible: persistTileOnForms()">
+            <input type="checkbox" data-bind="checked: enableTilePullDown">
+            Embed case details in case tile pull-down
+        </label>
+    </div>
     {% include 'app_manager/partials/case_list_properties.html' %}
 </div>
 

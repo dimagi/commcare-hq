@@ -183,6 +183,8 @@ class MobileBackend(Document):
     base_doc = "MobileBackend"
     domain = StringProperty()               # This is the domain that the backend belongs to, or None for global backends
     name = StringProperty()                 # The name to use when setting this backend for a contact
+    display_name = StringProperty()         # Simple name to display to users - e.g. Twilio
+    incoming_api_id = StringProperty()      # Some Gateways have different API ids for IN/OUT
     authorized_domains = ListProperty(StringProperty)  # A list of additional domains that are allowed to use this backend
     is_global = BooleanProperty(default=True)  # If True, this backend can be used for any domain
     description = StringProperty()          # (optional) A description of this backend
@@ -487,20 +489,22 @@ class SMSBackend(MobileBackend):
 
     @classmethod
     def get_wrapped(cls, backend_id):
-        from corehq.apps.sms.util import get_available_backends
-        backend_classes = get_available_backends()
         try:
             backend = SMSBackend.get(backend_id)
         except ResourceNotFound:
             raise UnrecognizedBackendException("Backend %s not found" %
                 backend_id)
-        doc_type = backend.doc_type
+        return backend.wrap_correctly()
+
+    def wrap_correctly(self):
+        from corehq.apps.sms.util import get_available_backends
+        backend_classes = get_available_backends()
+        doc_type = self.doc_type
         if doc_type in backend_classes:
-            backend = backend_classes[doc_type].wrap(backend.to_json())
-            return backend
+            return backend_classes[doc_type].wrap(self.to_json())
         else:
             raise UnrecognizedBackendException("Backend %s has an "
-                "unrecognized doc type." % backend_id)
+                "unrecognized doc type." % self._id)
 
 
 class BackendMapping(Document):
@@ -600,9 +604,14 @@ class CommCareMobileContactMixin(object):
         if v is not None and (v.owner_doc_type != self.doc_type or v.owner_id != self._id):
             raise PhoneNumberInUseException("Phone number is already in use.")
 
-    def save_verified_number(self, domain, phone_number, verified, backend_id, ivr_backend_id=None, only_one_number_allowed=False):
+    def save_verified_number(self, domain, phone_number, verified, backend_id=None, ivr_backend_id=None, only_one_number_allowed=False):
         """
         Saves the given phone number as this contact's verified phone number.
+
+        backend_id - the name of an SMSBackend to use when sending SMS to
+            this number; if specified, this will override any project or
+            global settings for which backend will be used to send sms to
+            this number
 
         return  The VerifiedNumber
         raises  InvalidFormatException if the phone number format is invalid

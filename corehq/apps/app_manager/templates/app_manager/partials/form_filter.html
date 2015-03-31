@@ -9,22 +9,18 @@
             ></span>
         </label>
         <div id="form-filter" class="controls">
-            {% if edit %}
-                <div data-bind="valueOrNoneUI: {
-                    value: formFilter,
-                    allowed: formFilterAllowed,
-                    inputCss: {wide: true},
-                    inputName: 'form_filter'
-                }" class="span7">
-                    <span data-slug="add">{% trans "Add Display Condition" %}</span>
-                    <span data-slug="whyNotAdd">{% trans "Why can't I add a display condition?" %}</span>
-                    <span data-slug="notAllowedButExists">{% trans "Error! Display condition will be ignored." %}</span>
-                    <span data-slug="notAllowed">{% trans 'To use display conditions in a module, (1) the module <strong>Menu</strong> setting must be set to <em>Display module and then forms</em> and (2) all the forms in the module must update or close a case, which means registration forms must go in a separate module.' %}</span>
-                    <span data-slug="helpText">{% trans 'Similar to how you write display logic inside the form builder, except that you must enter <code>./</code> before a case property. <strong>For example</strong>: <code>./edd > today()</code> means "show this form if the selected case has an EDD later than today".<br/><a href="https://confluence.dimagi.com/display/commcarepublic/Common+Logic+and+Calculations#CommonLogicandCalculations-DisplayLogicforForms">Click here for more help</a>' %}</span>
-                </div>
-            {% else %}
-                <code>{{ form.form_filter|default:'' }}</code>
-            {% endif %}
+            <div data-bind="valueOrNoneUI: {
+                value: formFilter,
+                allowed: formFilterAllowed,
+                inputCss: {wide: true},
+                inputName: 'form_filter'
+            }" class="span7">
+                <span data-slug="add">{% trans "Add Display Condition" %}</span>
+                <span data-slug="whyNotAdd">{% trans "Why can't I add a display condition?" %}</span>
+                <span data-slug="notAllowedButExists">{% trans "Error! Display condition will be ignored." %}</span>
+                <span data-slug="notAllowed">{% trans 'To use display conditions in a module, (1) the module <strong>Menu</strong> setting must be set to <em>Display module and then forms</em> and (2) all the forms in the module must update or close a case, which means registration forms must go in a separate module.' %}</span>
+                <span data-slug="helpText">{% trans 'Similar to how you write display logic inside the form builder, except that you must enter <code>./</code> before a case property. <strong>For example</strong>: <code>./edd > today()</code> means "show this form if the selected case has an EDD later than today".<br/><a href="https://confluence.dimagi.com/display/commcarepublic/Common+Logic+and+Calculations#CommonLogicandCalculations-DisplayLogicforForms">Click here for more help</a>' %}</span>
+            </div>
         </div>
     </div>
 {% endif %}

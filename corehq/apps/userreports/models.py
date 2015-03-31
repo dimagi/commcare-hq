@@ -1,8 +1,14 @@
 from copy import copy
 import json
-from couchdbkit import ResourceNotFound
-from couchdbkit.ext.django.schema import Document, StringListProperty, BooleanProperty
-from couchdbkit.ext.django.schema import StringProperty, DictProperty, ListProperty
+from couchdbkit import ResourceNotFound, SchemaProperty
+from couchdbkit.ext.django.schema import (
+    BooleanProperty,
+    Document,
+    DocumentSchema,
+    StringListProperty,
+    DateTimeProperty
+)
+from couchdbkit.ext.django.schema import StringProperty, DictProperty, ListProperty, IntegerProperty
 from jsonobject import JsonObject
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -14,6 +20,7 @@ from corehq.apps.userreports.reports.factory import ReportFactory, ChartFactory,
 from corehq.apps.userreports.reports.specs import FilterSpec
 from django.utils.translation import ugettext as _
 from corehq.apps.userreports.specs import EvaluationContext
+from corehq.apps.userreports.sql import IndicatorSqlAdapter, get_engine
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
@@ -32,6 +39,27 @@ DELETED_DOC_TYPES = {
 }
 
 
+class DataSourceBuildInformation(DocumentSchema):
+    """
+    A class to encapsulate meta information about the process through which
+    its DataSourceConfiguration was configured and built.
+    """
+    # Either the case type or the form xmlns that this data source is based on.
+    source_id = StringProperty()
+    # The app that the form belongs to, or the app that was used to infer the case properties.
+    app_id = StringProperty()
+    # The version of the app at the time of the data source's configuration.
+    app_version = IntegerProperty()
+    # True if the data source has been built, that is, if the corresponding SQL table has been populated.
+    finished = BooleanProperty(default=False)
+    # Start time of the most recent build SQL table celery task.
+    initiated = DateTimeProperty()
+
+
+class DataSourceMeta(DocumentSchema):
+    build = SchemaProperty(DataSourceBuildInformation)
+
+
 class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     """
     A data source configuration. These map 1:1 with database tables that get created.
@@ -45,6 +73,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     configured_filter = DictProperty()
     configured_indicators = ListProperty()
     named_filters = DictProperty()
+    meta = SchemaProperty(DataSourceMeta)
 
     def __unicode__(self):
         return u'{} - {}'.format(self.domain, self.display_name)
@@ -136,6 +165,12 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             return ExpressionFactory.from_spec(self.base_item_expression, context=self.named_filter_objects)
         return None
 
+    @property
+    def table_exists(self):
+        adapter = IndicatorSqlAdapter(get_engine(), self)
+        table = adapter.get_table()
+        return table.exists()
+
     def get_columns(self):
         return self.indicators.get_columns()
 
@@ -170,13 +205,19 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     @classmethod
     def by_domain(cls, domain):
         return sorted(
-            cls.view('userreports/data_sources_by_domain', key=domain, reduce=False, include_docs=True),
+            cls.view(
+                'userreports/data_sources_by_build_info',
+                start_key=[domain],
+                end_key=[domain, {}],
+                reduce=False,
+                include_docs=True
+            ),
             key=lambda config: config.display_name
         )
 
     @classmethod
     def all(cls):
-        ids = [res['id'] for res in cls.get_db().view('userreports/data_sources_by_domain',
+        ids = [res['id'] for res in cls.get_db().view('userreports/data_sources_by_build_info',
                                                       reduce=False, include_docs=False)]
         for result in iter_docs(cls.get_db(), ids):
             yield cls.wrap(result)
@@ -290,7 +331,8 @@ class CustomDataSourceConfiguration(JsonObject):
 
     @classmethod
     def by_id(cls, config_id):
-        matching = [ds for ds in cls.all() if ds.get_id == config_id]
-        if not matching:
-            return None
-        return matching[0]
+        for ds in cls.all():
+            if ds.get_id == config_id:
+                return ds
+        raise BadSpecError(_('The data source referenced by this report could '
+                             'not be found.'))

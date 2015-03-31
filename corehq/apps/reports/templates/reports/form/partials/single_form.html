@@ -33,7 +33,8 @@ requires imports/proptable.html to be included in the main template
     $(function () {
         var help_text = {
             "{% trans "Archiving Forms" %}": "{% trans "Archived forms will no longer show up in reports and they will be removed from any relevant case histories. " %}",
-            "{% trans "Restoring Forms" %}": "{% trans "Restoring this form will cause it to show up in reports again." %}"
+            "{% trans "Restoring Forms" %}": "{% trans "Restoring this form will cause it to show up in reports again." %}",
+            "{% trans "Resaving Forms" %}": "{% trans "Resaving a form can manually cause it to be reincluded in reports if something went wrong during initial processing." %}"
         };
         $('.help_popover').popover({
             placement: 'left',
@@ -62,6 +63,9 @@ requires imports/proptable.html to be included in the main template
             $(this).tab('show');
             return false;
         });
+
+        // On page load, initially set show readable
+        showReadable();
 
         function showSkipped(show) {
             if (show) {
@@ -129,6 +133,11 @@ requires imports/proptable.html to be included in the main template
             });
             return false;
         });
+        $("#resave-form").submit(function() {
+            document.getElementById('resave-form-btn').disabled=true;
+            document.getElementById('resave-spinner').style.display='inline-block';
+        });
+
     });
 </script>
 <style>
@@ -264,6 +273,18 @@ requires imports/proptable.html to be included in the main template
                         {% trans "Restore this form" %}
                         <i class="icon-refresh icon-spin" id="unarchive-spinner" style="display:none"></i>
                    </button>
+                </form>
+                {% endif %}
+                {% if show_resave %}
+                <form action="{% url "resave_form" domain instance.get_id %}" method="POST"
+                      id="resave-form">
+                    <span class="help_popover" data-help-key="{% trans "Resaving Forms" %}">
+                        <i class="icon icon-question-sign"></i>
+                    </span>
+                    <button type="submit" class="btn" id="resave-form-btn">
+                        {% trans "Resave this form" %}
+                        <i class="icon-refresh icon-spin" id="resave-spinner" style="display:none"></i>
+                    </button>
                 </form>
                 {% endif %}
             </p>

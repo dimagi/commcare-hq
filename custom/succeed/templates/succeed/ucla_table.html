@@ -1,0 +1,19 @@
+{% extends "reports/async/tabular.html" %}
+{% block js-inline %} {{ block.super }}
+    <script type="text/javascript">
+
+        {% if report_table and report_table.datatables %}
+            var id = '#report_table_{{ report.slug }}';
+            var table = $(id).dataTable();
+            var oSettings = table.fnSettings().aaSorting = [[5, 'asc']];
+            table.fnDraw();
+        {% endif %}
+
+        $(function() {
+            $('.header-popover').popout({
+                trigger: 'hover',
+                placement: 'bottom'
+            });
+        });
+    </script>
+{% endblock js-inline %}
