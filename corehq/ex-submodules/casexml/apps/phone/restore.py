@@ -186,9 +186,9 @@ def get_stock_payload(domain, stock_settings, case_state_list):
                     )
 
 
-def get_case_payload(domain, stock_settings, version, user, last_sync, synclog):
+def get_case_payload(domain, stock_settings, version, user, last_synclog, synclog):
     response = StringRestoreResponse()
-    sync_operation = user.get_case_updates(last_sync)
+    sync_operation = user.get_case_updates(last_synclog)
     synclog.cases_on_phone = [
         CaseState.from_case(c) for c in sync_operation.actual_owned_cases
     ]
@@ -216,11 +216,11 @@ def get_case_payload(domain, stock_settings, version, user, last_sync, synclog):
     return response, batch_count
 
 
-def get_case_payload_batched(domain, stock_settings, version, user, last_sync, synclog):
+def get_case_payload_batched(domain, stock_settings, version, user, last_synclog, synclog):
     response = StringRestoreResponse()
 
     batch_count = 0
-    sync_operation = BatchedCaseSyncOperation(user, last_sync)
+    sync_operation = BatchedCaseSyncOperation(user, last_synclog)
     for batch in sync_operation.batches():
         batch_count += 1
         logger.debug(batch)
@@ -326,7 +326,7 @@ class RestoreConfig(object):
 
     def get_payload(self):
         user = self.user
-        last_sync = self.sync_log
+        last_synclog = self.sync_log
 
         self.validate()
 
@@ -338,32 +338,32 @@ class RestoreConfig(object):
         last_seq = str(get_db().info()["update_seq"])
 
         # create a sync log for this
-        previous_log_id = last_sync.get_id if last_sync else None
-        synclog = SyncLog(
+        previous_log_id = last_synclog.get_id if last_synclog else None
+        new_synclog = SyncLog(
             user_id=user.user_id,
             last_seq=last_seq,
             owner_ids_on_phone=user.get_owner_ids(),
             date=datetime.utcnow(),
             previous_log_id=previous_log_id
         )
-        synclog.save(**get_safe_write_kwargs())
+        new_synclog.save(**get_safe_write_kwargs())
 
         # start with standard response
         batch_enabled = BATCHED_RESTORE.enabled(self.user.domain) or BATCHED_RESTORE.enabled(self.user.username)
         logger.debug('Batch restore enabled: %s', batch_enabled)
         with StringRestoreResponse(user.username, items=self.items) as response:
             # add sync token info
-            response.append(xml.get_sync_element(synclog.get_id))
+            response.append(xml.get_sync_element(new_synclog.get_id))
             # registration block
             response.append(xml.get_registration_element(user))
 
             # fixture block
-            for fixture in generator.get_fixtures(user, self.version, last_sync):
+            for fixture in generator.get_fixtures(user, self.version, last_synclog):
                 response.append(fixture)
 
             payload_fn = get_case_payload_batched if batch_enabled else get_case_payload
             case_response, self.num_batches = payload_fn(
-                self.domain, self.stock_settings, self.version, user, last_sync, synclog
+                self.domain, self.stock_settings, self.version, user, last_synclog, new_synclog
             )
             combined_response = response + case_response
             case_response.close()
@@ -372,8 +372,8 @@ class RestoreConfig(object):
             combined_response.close()
 
         duration = datetime.utcnow() - start_time
-        synclog.duration = duration.seconds
-        synclog.save()
+        new_synclog.duration = duration.seconds
+        new_synclog.save()
         add_custom_parameter('restore_response_size', response.num_items)
         self.set_cached_payload_if_necessary(resp, duration)
         return resp
