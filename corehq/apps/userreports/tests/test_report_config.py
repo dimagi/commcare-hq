@@ -35,7 +35,7 @@ class ReportConfigurationDbTest(TestCase):
         for config in ReportConfiguration.all():
             config.delete()
 
-    def testGetByDomain(self):
+    def test_get_by_domain(self):
         results = ReportConfiguration.by_domain('foo')
         self.assertEqual(2, len(results))
         for item in results:
@@ -44,18 +44,18 @@ class ReportConfigurationDbTest(TestCase):
         results = ReportConfiguration.by_domain('not-foo')
         self.assertEqual(0, len(results))
 
-    def testGetAll(self):
+    def test_get_all(self):
         self.assertEqual(3, len(list(ReportConfiguration.all())))
 
-    def testDomainIsRequired(self):
+    def test_domain_is_required(self):
         with self.assertRaises(BadValueError):
             ReportConfiguration(config_id='foo').save()
 
-    def testConfigIdIsRequired(self):
+    def test_config_id_is_required(self):
         with self.assertRaises(BadValueError):
             ReportConfiguration(domain='foo').save()
 
-    def testSampleConfigIsValid(self):
+    def test_sample_config_is_valid(self):
         config = _get_sample_config()
         config.validate()
 
