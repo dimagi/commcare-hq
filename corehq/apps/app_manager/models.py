@@ -3486,6 +3486,21 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             else:
                 map_item.version = self.version
 
+    def ensure_module_unique_ids(self, should_save=False):
+        """
+            Creates unique_ids for modules that don't have unique_id attributes
+            should_save: the doc will be saved only if should_save is set to True
+
+            WARNING: If called on the same doc in different requests without saving,
+            this function will set different uuid each time,
+            likely causing unexpected behavior
+        """
+        if any(not mod.unique_id for mod in self.modules):
+            for mod in self.modules:
+                mod.get_or_create_unique_id()
+            if should_save:
+                self.save()
+
     def create_app_strings(self, lang):
         gen = app_strings.CHOICES[self.translation_strategy]
         if lang == 'default':
