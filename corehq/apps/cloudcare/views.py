@@ -1,5 +1,7 @@
 import uuid
-from couchdbkit import ResourceConflict
+from corehq.apps.app_manager.const import USERCASE_ID
+from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
+from couchdbkit import ResourceConflict, NoResultFound
 from django.utils.decorators import method_decorator
 from casexml.apps.stock.models import StockTransaction
 from casexml.apps.stock.utils import get_current_ledger_transactions
@@ -197,11 +199,14 @@ def form_context(request, domain, app_id, module_id, form_id):
         )
 
     session_extras = {'session_name': session_name, 'app_id': app._id}
-    usercase_type = get_usercase_type(domain)
-    suite_gen = SuiteGenerator(app, usercase_type)
+    suite_gen = SuiteGenerator(app)
     datums = suite_gen.get_new_case_id_datums_meta(form)
-    datums.extend(suite_gen.get_extra_case_id_datums(form))
     session_extras.update({datum['datum'].id: uuid.uuid4().hex for datum in datums})
+    try:
+        session_extras[USERCASE_ID] = get_case_by_domain_hq_user_id(
+            domain, request.couch_user.get_id, include_docs=False)['id']
+    except NoResultFound:
+        pass
 
     delegation = request.GET.get('task-list') == 'true'
     offline = request.GET.get('offline') == 'true'
