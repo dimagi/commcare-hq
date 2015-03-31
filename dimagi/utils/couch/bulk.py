@@ -86,7 +86,7 @@ def get_docs(db, keys, **query_params):
     r = requests.post(url, data=payload,
                       headers={'content-type': 'application/json'},
                       auth=get_auth(url),
-                      params=query_params)
+                      **query_params)
 
     try:
         return r.json()['rows']
