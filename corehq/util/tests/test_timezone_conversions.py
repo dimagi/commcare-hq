@@ -1,3 +1,4 @@
+import datetime
 import dateutil.parser
 from django.test import SimpleTestCase
 import pytz
@@ -59,3 +60,12 @@ class TimezoneConversionTest(SimpleTestCase):
             else:
                 server_dt = PhoneTime(phone_dt, tz).server_time().done()
             self.assertEqual(server_dt.isoformat(), out)
+
+
+class CloudCareTimeTest(SimpleTestCase):
+    def test_utc_phonetime(self):
+        dt = datetime.datetime.utcnow()
+        self.assertEqual(PhoneTime(dt, pytz.UTC)
+                         .user_time(pytz.FixedOffset(9 * 60 + 30)).done(),
+                         ServerTime(dt)
+                         .user_time(pytz.FixedOffset(9 * 60 + 30)).done())
