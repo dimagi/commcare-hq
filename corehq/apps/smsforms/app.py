@@ -1,5 +1,6 @@
 import uuid
 from corehq.apps.app_manager.suite_xml import SuiteGenerator
+from corehq.apps.app_manager.util import get_usercase_type
 from .models import XFORMS_SESSION_SMS, SQLXFormsSession
 from datetime import datetime
 from corehq.apps.cloudcare.touchforms_api import get_session_data
@@ -56,8 +57,10 @@ def start_session(domain, contact, app, module, form, case_id=None, yield_respon
         }
     
     if app and form:
-        suite_gen = SuiteGenerator(app)
+        usercase_type = get_usercase_type(domain)
+        suite_gen = SuiteGenerator(app, usercase_type)
         datums = suite_gen.get_new_case_id_datums_meta(form)
+        datums.extend(suite_gen.get_extra_case_id_datums(form))
         session_data.update({meta['datum'].id: uuid.uuid4().hex for meta in datums})
 
     language = contact.get_language_code()

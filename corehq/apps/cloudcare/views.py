@@ -197,8 +197,10 @@ def form_context(request, domain, app_id, module_id, form_id):
         )
 
     session_extras = {'session_name': session_name, 'app_id': app._id}
-    suite_gen = SuiteGenerator(app)
+    usercase_type = get_usercase_type(domain)
+    suite_gen = SuiteGenerator(app, usercase_type)
     datums = suite_gen.get_new_case_id_datums_meta(form)
+    datums.extend(suite_gen.get_extra_case_id_datums(form))
     session_extras.update({datum['datum'].id: uuid.uuid4().hex for datum in datums})
 
     delegation = request.GET.get('task-list') == 'true'

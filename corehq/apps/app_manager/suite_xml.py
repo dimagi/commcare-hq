@@ -21,7 +21,7 @@ from .exceptions import (
 )
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE_LAST_VISIT, SCHEDULE_PHASE, \
-    CASE_ID, RETURN_TO, USERCASE_PREFIX, USERCASE_ID
+    CASE_ID, RETURN_TO, USERCASE_ID
 from corehq.apps.app_manager.exceptions import UnknownInstanceError, ScheduleError, FormNotFoundException
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.util import split_path, create_temp_sort_column, languages_mapping, \
@@ -1492,6 +1492,28 @@ class SuiteGenerator(SuiteGeneratorBase):
             )
         ]
 
+    def get_extra_case_id_datums(self, form):
+
+        def uses_usercase(form_):
+            actions = form_.active_actions()
+            if 'update_case' in actions and hasattr(actions['update_case'], 'update'):
+                return any_usercase_items(actions['update_case'].update.keys())
+            if 'case_preload' in actions:
+                return any_usercase_items(actions['case_preload'].preload.values())
+            return False
+
+        datums = []
+        if form.form_type == 'module_form' and uses_usercase(form) and self.usercase_type:
+            case_type = CaseTypeXpath(self.usercase_type).case()
+            case = UserCaseXPath(case_type).case()
+            datums.append({
+                'datum': SessionDatum(id=USERCASE_ID, function=('%s/@case_id' % case)),
+                'case_type': self.usercase_type,
+                'requires_selection': False,
+                'action': None  # action and user case are independent.
+            })
+        return datums
+
     def get_new_case_id_datums_meta(self, form):
         if not form:
             return []
@@ -1556,20 +1578,6 @@ class SuiteGenerator(SuiteGeneratorBase):
         frame_case_not_created.add_command(return_to)
         entry.stack.add_frame(frame_case_not_created)
 
-    def configure_entry_usercase(self, e):
-        if self.usercase_type is None:
-            # Is call center config enabled? If it's not enabled, the
-            # SuiteGenerator constructor will have been passed a value of None
-            # for usercase_type. We shouldn't be using user case properties
-            # if user case functionality is disabled.
-            raise ValueError('Unable to determine user case. User case type unknown.')
-        case_type = CaseTypeXpath(self.usercase_type).case()
-        case = UserCaseXPath(case_type).case()
-        e.datums.append(SessionDatum(
-            id=USERCASE_ID,
-            function=('%s/@case_id' % case)
-        ))
-
     def configure_entry_module_form(self, module, e, form=None, use_filter=True, **kwargs):
         def case_sharing_requires_assertion(form):
             actions = form.active_actions()
@@ -1581,27 +1589,17 @@ class SuiteGenerator(SuiteGeneratorBase):
                         return True
             return False
 
-        def uses_usercase(form):
-            actions = form.active_actions()
-            if 'update_case' in actions and hasattr(actions['update_case'], 'update'):
-                return any_usercase_items(actions['update_case'].update.keys())
-            if 'case_preload' in actions:
-                return any_usercase_items(actions['case_preload'].preload.values())
-            return False
-
         datums = []
         if not form or form.requires_case():
             datums.extend(self.get_datum_meta_module(module, use_filter=True))
 
         datums.extend(self.get_new_case_id_datums_meta(form))
+        datums.extend(self.get_extra_case_id_datums(form))
         for datum in datums:
             e.datums.append(datum['datum'])
 
         if form and 'open_case' in form.active_actions() and form.is_case_list_form:
             self.configure_entry_as_case_list_form(form, e)
-
-        if form and uses_usercase(form):
-            self.configure_entry_usercase(e)
 
         if form and self.app.case_sharing and case_sharing_requires_assertion(form):
             self.add_case_sharing_assertion(e)
