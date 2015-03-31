@@ -701,23 +701,39 @@ def get_contact_info(domain):
         if doc['owner_doc_type'] == 'CommCareCase':
             case_ids.append(owner_id)
             data.append([
-                owner_id,
-                _('Case'),
+                None,
+                'case',
                 doc['phone_number'],
+                owner_id,
             ])
         elif doc['owner_doc_type'] == 'CommCareUser':
             mobile_worker_ids.append(owner_id)
             data.append([
-                owner_id,
-                _('Mobile Worker'),
+                None,
+                'mobile_worker',
                 doc['phone_number'],
+                owner_id,
             ])
     contact_data = get_case_contact_info(domain_obj, case_ids)
     contact_data.update(get_mobile_worker_contact_info(domain_obj, mobile_worker_ids))
     for row in data:
-        contact_info = contact_data.get(row[0])
+        contact_info = contact_data.get(row[3])
         row[0] = contact_info[0] if contact_info else _('(unknown)')
     return data
+
+
+def format_contact_data(domain, data):
+    for row in data:
+        contact_id = row[3]
+        if row[1] == 'case':
+            row[1] = _('Case')
+            row.append(reverse('case_details', args=[domain, contact_id]))
+        elif row[1] == 'mobile_worker':
+            row[1] = _('Mobile Worker')
+            row.append(reverse(EditCommCareUserView.urlname, args=[domain, contact_id]))
+        else:
+            row.append('#')
+        row.append(reverse('sms_chat', args=[domain, contact_id]))
 
 
 @require_permission(Permissions.edit_data)
@@ -737,9 +753,11 @@ def chat_contact_list(request, domain):
     filtered_records = len(data)
 
     data.sort(key=lambda row: row[0])
+    data = data[iDisplayStart:iDisplayStart+iDisplayLength]
+    format_contact_data(domain, data)
     result = {
         'sEcho': sEcho,
-        'aaData': data[iDisplayStart:iDisplayStart+iDisplayLength],
+        'aaData': data,
         'iTotalRecords': total_records,
         'iTotalDisplayRecords': filtered_records,
     }

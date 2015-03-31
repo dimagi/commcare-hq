@@ -42,6 +42,17 @@
 
     $(function(){
         contactListTable = $("#contact_list").dataTable({
+            "aoColumnDefs": [
+                {
+                    "aTargets": [0],
+                    "fnRender": function(obj) {
+                        return '<a target="_blank" href="'+obj.aData[4]+'">'+obj.aData[0]+'</a>'+
+                               '<span class="btn btn-primary pull-right" '+
+                               'onClick="window.open(\''+obj.aData[5]+'\', \'_blank\', \'location=no,menubar=no,scrollbars=no,status=no,toolbar=no,height=400,width=400\');">'+
+                               '{% trans "Chat" %} <i class="icon icon-white icon-share-alt"></i></span>';
+                    },
+                },
+            ],
             "bProcessing": true,
             "bServerSide": true,
             "bSort": false,
@@ -73,7 +84,7 @@
             <tr>
                 <th>{% trans "Contact Name" %}</th>
                 <th>{% trans "Contact Type" %}</th>
-                <th></th>
+                <th>{% trans "Phone Number" %}</th>
             </tr>
         </thead>
     </table>
