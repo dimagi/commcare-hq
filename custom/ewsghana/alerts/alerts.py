@@ -333,6 +333,15 @@ def stock_alerts(transactions, user):
         message += " " + LOW_SUPPLY_MESSAGE % {'low_supply': products_codes_str}
         super_message += _("below reorder level %s; ") % products_names_str
 
+    if stockouts or products_below:
+        reorders = [
+            u'%s %s' % (code, amount)
+            for (code, amount) in report_helper.reorders()
+            if amount
+        ]
+        if reorders:
+            message += " Please order %s." % ' '.join(reorders)
+
     if overstocked:
         if not message:
             products_codes_str = ' '.join([overstock.sql_product.code for overstock in overstocked])

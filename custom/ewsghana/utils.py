@@ -227,9 +227,8 @@ class ProductsReportHelper(object):
 
     def stockouts(self):
         return self.stock_states().filter(
-            stock_on_hand=0,
-            case_id=self.sql_location.supply_point_id
-        ).order_by('sql_product__code')
+            stock_on_hand=0
+        ).distinct('sql_product__code').order_by('sql_product__code')
 
     def reorders(self):
         reorders = []
@@ -242,13 +241,9 @@ class ProductsReportHelper(object):
         return reorders
 
     def _get_facilities_with_stock_category(self, category):
-        product_ids = [product.product_id for product in self.reported_products()]
         return [
             stock_state
-            for stock_state in StockState.objects.filter(
-                product_id__in=product_ids,
-                case_id=self.sql_location.supply_point_id
-            ).order_by('sql_product__code')
+            for stock_state in self.stock_states().distinct('sql_product__code').order_by('sql_product__code')
             if stock_state.stock_category == category
         ]
 

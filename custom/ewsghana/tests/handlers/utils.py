@@ -1,9 +1,10 @@
 import datetime
 from couchdbkit.exceptions import ResourceNotFound
+from casexml.apps.stock.consumption import ConsumptionConfiguration
 from couchforms.models import XFormInstance
 from corehq import Domain
 from corehq.apps.accounting import generator
-from corehq.apps.commtrack.models import CommtrackConfig, CommtrackActionConfig, StockState
+from corehq.apps.commtrack.models import CommtrackConfig, CommtrackActionConfig, StockState, ConsumptionConfig
 from corehq.apps.commtrack.tests.util import TEST_BACKEND, make_loc
 from corehq.apps.locations.models import Location, SQLLocation, LocationType
 from corehq.apps.products.models import Product, SQLProduct
@@ -21,27 +22,44 @@ TEST_DOMAIN = 'ewsghana-test'
 
 class EWSScriptTest(TestScript):
 
-    def _create_stock_state(self, product, factor):
+    def _create_stock_state(self, product, consumption):
         xform = XFormInstance.get('test-xform')
         loc = Location.by_site_code(TEST_DOMAIN, 'garms')
-        for idx, i in enumerate([30, 6, 0]):
-            report = StockReport(
-                form_id=xform._id,
-                date=datetime.datetime.now() - datetime.timedelta(days=i),
-                type='balance',
-                domain=TEST_DOMAIN
-            )
-            report.save()
-            stock_transaction = StockTransaction(
-                case_id=loc.linked_supply_point().get_id,
-                product_id=product.get_id,
-                sql_product=SQLProduct.objects.get(product_id=product.get_id),
-                section_id='stock',
-                type='stockonhand',
-                stock_on_hand=40 - factor * (idx + 1),
-                report=report
-            )
-            stock_transaction.save()
+        now = datetime.datetime.now()
+        report = StockReport(
+            form_id=xform._id,
+            date=(now - datetime.timedelta(days=10)).replace(second=0, microsecond=0),
+            type='balance',
+            domain=TEST_DOMAIN
+        )
+        report.save()
+        stock_transaction = StockTransaction(
+            case_id=loc.linked_supply_point().get_id,
+            product_id=product.get_id,
+            sql_product=SQLProduct.objects.get(product_id=product.get_id),
+            section_id='stock',
+            type='stockonhand',
+            stock_on_hand=2 * consumption,
+            report=report
+        )
+        stock_transaction.save()
+        report = StockReport(
+            form_id=xform._id,
+            date=now.replace(second=0, microsecond=0),
+            type='balance',
+            domain=TEST_DOMAIN
+        )
+        report.save()
+        stock_transaction = StockTransaction(
+            case_id=loc.linked_supply_point().get_id,
+            product_id=product.get_id,
+            sql_product=SQLProduct.objects.get(product_id=product.get_id),
+            section_id='stock',
+            type='stockonhand',
+            stock_on_hand=consumption,
+            report=report
+        )
+        stock_transaction.save()
 
     def setUp(self):
         p1 = Product.get_by_code(TEST_DOMAIN, 'mc')
@@ -55,6 +73,7 @@ class EWSScriptTest(TestScript):
         StockTransaction.objects.all().delete()
         StockReport.objects.all().delete()
         StockState.objects.all().delete()
+        DocDomainMapping.objects.all().delete()
 
     @classmethod
     def setUpClass(cls):
@@ -91,6 +110,7 @@ class EWSScriptTest(TestScript):
                 caption='receipts'
             )
         )
+        config.consumption_config = ConsumptionConfig(min_transactions=0, min_window=0, optimal_window=60)
         config.save()
 
     @classmethod

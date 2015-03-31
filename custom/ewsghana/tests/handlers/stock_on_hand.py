@@ -7,11 +7,11 @@ class StockOnHandTest(EWSScriptTest):
 
     def test_stock_on_hand(self):
         a = """
-           5551234 > soh lf 31.0
+           5551234 > soh lf 50.0
            5551234 < Dear stella, thank you for reporting the commodities you have in stock.
-           5551234 > soh lf 31.0 mc 25.0
+           5551234 > soh lf 50.0 mc 25.0
            5551234 < Dear stella, thank you for reporting the commodities you have in stock.
-           5551234 > SOH LF 31.0 MC 25.0
+           5551234 > SOH LF 50.0 MC 25.0
            5551234 < Dear stella, thank you for reporting the commodities you have in stock.
            """
         self.run_script(a)
@@ -19,7 +19,7 @@ class StockOnHandTest(EWSScriptTest):
     def test_stockout(self):
         a = """
            5551234 > soh lf 0.0 mc 0.0
-           5551234 < Dear stella, these items are stocked out: lf mc.
+           5551234 < Dear stella, these items are stocked out: lf mc. Please order lf 45 mc 22.
            """
         self.run_script(a)
 
@@ -33,7 +33,7 @@ class StockOnHandTest(EWSScriptTest):
     def test_low_supply(self):
         a = """
            5551234 > soh lf 7.0 mc 9.0
-           5551234 < Dear stella, these items need to be reordered: lf mc.
+           5551234 < Dear stella, these items need to be reordered: lf mc. Please order lf 58 mc 22.
            """
         self.run_script(a)
 
@@ -53,7 +53,7 @@ class StockOnHandTest(EWSScriptTest):
 
     def test_soh_and_receipt(self):
         a = """
-           5551234 > soh lf 15.20 mc 25.0
+           5551234 > soh lf 25.20 mc 25.0
            5551234 < Dear stella, thank you for reporting the commodities you have. You received lf 20.
            """
         self.run_script(a)
@@ -61,56 +61,66 @@ class StockOnHandTest(EWSScriptTest):
     def test_combined1(self):
         second_message = "Dear super, Test RMS is experiencing the following problems: stockouts Lofem; " \
                          "below reorder level Male Condom"
+        last_message = "Dear stella, these items are stocked out: lf. these items need to be reordered: mc. " \
+                       "Please order lf 45 mc 40."
         a = """
            5551234 > soh lf 0.0 mc 1.0
            222222  < %s
-           5551234 < Dear stella, these items are stocked out: lf. these items need to be reordered: mc.
-           """ % second_message
+           5551234 < %s
+           """ % (second_message, last_message)
         self.run_script(a)
 
     def test_combined2(self):
         second_message = "Dear super, Test RMS is experiencing the following problems: stockouts Male Condom; " \
                          "below reorder level Micro-G"
+        third_and_last_message = "Dear stella, these items are stocked out: mc. " \
+                                 "these items need to be reordered: mg. Please order mc 22 mg 40."
         fifth_message = "Dear super, Test RMS is experiencing the following problems: stockouts Male Condom; " \
                         "below reorder level Micro-G; overstocked Lofem"
+        last_message = "Dear stella, these items are stocked out: mc. these items need to be reordered: mg. " \
+                       "Please order mc 22 mg 40."
         a = """
            5551234 > soh mc 0.0 mg 1.0
            222222 < %s
-           5551234 < Dear stella, these items are stocked out: mc. these items need to be reordered: mg.
+           5551234 < %s
            5551234 > soh mc 0.0 mg 1.0 lf 100.0
            222222 < %s
-           5551234 < Dear stella, these items are stocked out: mc. these items need to be reordered: mg.
-           """ % (second_message, fifth_message)
+           5551234 < %s
+           """ % (second_message, third_and_last_message, fifth_message, last_message)
         self.run_script(a)
 
     def test_combined3(self):
         second_message = "Dear super, Test RMS is experiencing the following problems: stockouts Male Condom; " \
                          "below reorder level Micro-G"
+        third_message = "Dear stella, these items are stocked out: mc. these items need to be reordered: mg. " \
+                        "Please order mc 22 mg 40."
         fifth_message = "Dear super, Test RMS is experiencing the following problems: " \
                         "below reorder level Male Condom Micro-G"
         a = """
-           5551234 > soh mc 0.0 mg 1.0 ng 300.0
+           5551234 > soh mc 0.0 mg 1.0 ng 25.0
            222222 < %s
-           5551234 < Dear stella, these items are stocked out: mc. these items need to be reordered: mg.
-           5551234 > soh mc 0.2 mg 1.0 ng 300.0
+           5551234 < %s
+           5551234 > soh mc 0.2 mg 1.0
            222222 < %s
-           5551234 <  Dear stella, these items need to be reordered: mc mg.
-           """ % (second_message, fifth_message)
+           5551234 <  Dear stella, these items need to be reordered: mc mg. Please order mc 22 mg 40.
+           """ % (second_message, third_message, fifth_message)
         self.run_script(a)
 
     def test_combined4(self):
         second_message = "Dear super, Test RMS is experiencing the following problems: stockouts Male Condom; " \
                          "below reorder level Micro-G"
+        last_message = "Dear stella, these items are stocked out: mc. these items need to be reordered: mg. " \
+                       "Please order mc 22 mg 40."
         a = """
-           5551234 > soh mc 0.0 mg 1.0 ng 300.0
+           5551234 > soh mc 0.0 mg 1.0 ng 60.0
            222222 < %s
-           5551234 < Dear stella, these items are stocked out: mc. these items need to be reordered: mg.
-           """ % second_message
+           5551234 < %s
+           """ % (second_message, last_message)
         self.run_script(a)
 
     def test_combined5(self):
         a = """
-           5551234 > soh mc 25.0 lf 31.0 mg 300.0
+           5551234 > soh mc 25.0 lf 50.0 mg 300.0
            222222 < Dear super, Test RMS is experiencing the following problems: overstocked Micro-G
            5551234 < Dear stella, these items are overstocked: mg. The district admin has been informed.
            """
@@ -132,6 +142,8 @@ class StockOnHandTest(EWSScriptTest):
             5551234 < Dear stella, thank you for reporting the commodities you have in stock.
         """
         self.run_script(a)
+        location.products = [mg]
+        location.save()
 
     def test_incomplete_report2(self):
         ng = SQLProduct.objects.get(domain=TEST_DOMAIN, code='ng')
@@ -145,3 +157,5 @@ class StockOnHandTest(EWSScriptTest):
             5551234 < Dear stella, thank you for reporting the commodities you have in stock.
         """
         self.run_script(a)
+        location.products = [mg]
+        location.save()

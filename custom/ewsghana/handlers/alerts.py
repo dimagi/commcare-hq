@@ -29,7 +29,7 @@ class AlertsHandler(KeywordHandler):
                 raise
             send_sms_to_verified_number(verified_contact, 'problem with stock report: %s' % str(e))
             return True
-        transactions = data['transactions']
         process(domain.name, data)
+        transactions = data['transactions']
         stock_alerts(transactions, user)
         return True
