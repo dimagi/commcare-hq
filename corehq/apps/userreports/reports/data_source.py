@@ -63,7 +63,11 @@ class ConfigurableReportDataSource(SqlData):
 
     @property
     def group_by(self):
-        return self.aggregation_columns
+        # ask each column for its group_by contribution and combine to a single list
+        return [
+            group_by for col_id in self.aggregation_columns
+            for group_by in self._column_configs[col_id].get_group_by_columns()
+        ]
 
     @property
     def columns(self):
