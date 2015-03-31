@@ -2,14 +2,13 @@ from django.utils.encoding import smart_str
 import pytz
 from corehq.const import USER_DATETIME_FORMAT
 from corehq.util.dates import safe_strftime
+from corehq.util.soft_assert import soft_assert
 
 
 # The timezone data migration happening some time in Apr-May 2015
 # will shift all phone times (form.timeEnd, case.modified_on, etc.) to UTC
 # so functions that deal with converting to or from phone times
 # use this variable to decide what type of timezone conversion is necessary
-from dimagi.utils.logging import notify_exception, get_traceback
-
 TIMEZONE_DATA_MIGRATION_COMPLETE = False
 
 
@@ -74,11 +73,10 @@ class PhoneTime(_HQTZTime):
 
 
 def _soft_assert_tz_not_string(tz):
-    try:
-        assert hasattr(tz, "localize")
-    except AssertionError:
+    if not soft_assert(hasattr(tz, "localize"),
+                       to=['droberts@dimagi.com'],
+                       msg='Timezone should be a tzinfo object, not a string'):
         # tz is a string, or at least string-like
-        # todo: log to figure out where this happens and fix
         return pytz.timezone(smart_str(tz))
     else:
         return tz
