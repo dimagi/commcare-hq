@@ -1,7 +1,5 @@
 from datetime import date, timedelta
 import re
-import dateutil
-from jsonobject.base_properties import DefaultProperty
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
 from casexml.apps.case.models import CommCareCase
 from django.utils.translation import ugettext as _
@@ -9,6 +7,7 @@ import logging
 from custom.bihar.calculations.utils.xmlns import BP, NEW, MTB_ABORT, DELIVERY, REGISTRATION, PNC
 from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.users.models import CommCareUser, CouchUser
+from dimagi.utils.parsing import string_to_utc_datetime
 
 EMPTY_FIELD = "---"
 
@@ -97,7 +96,7 @@ class MCHDisplay(CaseDisplay):
                 # assuming it's a date string or datetime string,
                 # DefaultProperty will wrap it as the correct type
                 # todo: there has to be a better way
-                return str(self.report.date_to_json(DefaultProperty().wrap(date_string)))
+                return str(self.report.date_to_json(string_to_utc_datetime(date_string)))
             except AttributeError:
                 return _("Bad date format!")
             except TypeError:
