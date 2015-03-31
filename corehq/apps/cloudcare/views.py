@@ -202,11 +202,9 @@ def form_context(request, domain, app_id, module_id, form_id):
     suite_gen = SuiteGenerator(app)
     datums = suite_gen.get_new_case_id_datums_meta(form)
     session_extras.update({datum['datum'].id: uuid.uuid4().hex for datum in datums})
-    try:
-        session_extras[USERCASE_ID] = get_case_by_domain_hq_user_id(
-            domain, request.couch_user.get_id, include_docs=False)['id']
-    except NoResultFound:
-        pass
+    usercase = get_case_by_domain_hq_user_id(domain, request.couch_user.get_id, include_docs=False)
+    if usercase:
+        session_extras[USERCASE_ID] = usercase['id']
 
     delegation = request.GET.get('task-list') == 'true'
     offline = request.GET.get('offline') == 'true'

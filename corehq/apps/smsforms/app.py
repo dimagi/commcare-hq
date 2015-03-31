@@ -63,11 +63,9 @@ def start_session(domain, contact, app, module, form, case_id=None, yield_respon
         datums = suite_gen.get_new_case_id_datums_meta(form)
         session_data.update({meta['datum'].id: uuid.uuid4().hex for meta in datums})
         if contact.doc_type == 'CommCareUser':
-            try:
-                session_data[USERCASE_ID] = get_case_by_domain_hq_user_id(
-                    domain, contact.get_id, include_docs=False)['id']
-            except NoResultFound:
-                pass
+            usercase = get_case_by_domain_hq_user_id(domain, contact.get_id, include_docs=False)
+            if usercase:
+                session_data[USERCASE_ID] = usercase['id']
 
     language = contact.get_language_code()
     config = XFormsConfig(form_content=form.render_xform(),
