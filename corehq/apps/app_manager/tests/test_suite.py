@@ -621,6 +621,7 @@ class AdvancedModuleAsChildTest(SimpleTestCase, TestFileMixin):
 
     def setUp(self):
         self.app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        update_toggle_cache(MODULE_FILTER.slug, self.app.domain, True, NAMESPACE_DOMAIN)
         self.module_0 = self.app.add_module(Module.new_module('parent', None))
         self.module_0.unique_id = 'm1'
         self.module_1 = self.app.add_module(AdvancedModule.new_module("Untitled Module", None))
@@ -628,6 +629,9 @@ class AdvancedModuleAsChildTest(SimpleTestCase, TestFileMixin):
 
         for m_id in range(2):
             self.app.new_form(m_id, "Form", None)
+
+    def tearDown(self):
+        clear_toggle_cache(MODULE_FILTER.slug, self.app.domain, NAMESPACE_DOMAIN)
 
     def test_basic_workflow(self):
         # make module_1 as submenu to module_0
