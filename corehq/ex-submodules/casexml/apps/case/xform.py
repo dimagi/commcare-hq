@@ -78,7 +78,7 @@ def process_cases(xform, config=None):
 
 def process_cases_with_casedb(xforms, case_db, config=None):
     config = config or CaseProcessingConfig()
-    case_processing_result = _get_or_update_cases(xforms, case_db).values()
+    case_processing_result = _get_or_update_cases(xforms, case_db)
     cases = case_processing_result.cases
     xform = xforms[0]
 
