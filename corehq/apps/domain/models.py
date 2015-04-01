@@ -793,6 +793,8 @@ class Domain(Document, SnapshotMixin):
         if self.is_snapshot and doc_type == 'Application':
             new_doc.prepare_multimedia_for_exchange()
 
+        # when copying from app-docs that don't have
+        # unique_id attribute on Modules
         new_doc.ensure_module_unique_ids(should_save=False)
         new_doc.save()
         return new_doc

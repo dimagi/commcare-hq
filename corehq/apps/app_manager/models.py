@@ -74,6 +74,7 @@ from .exceptions import (
     IncompatibleFormTypeException,
     LocationXpathValidationError,
     ModuleNotFoundException,
+    ModuleIdMissingException,
     RearrangeError,
     VersioningError,
     XFormException,
@@ -3931,7 +3932,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 if xmlns_count[xmlns] > 1:
                     errors.append({'type': "duplicate xmlns", "xmlns": xmlns})
 
-        self.ensure_module_unique_ids(should_save=True)
+        if any(not module.unique_id for module in self.get_modules()):
+            raise ModuleIdMissingException
         modules_dict = {m.unique_id: m for m in self.get_modules()}
 
         def _parent_select_fn(module):
