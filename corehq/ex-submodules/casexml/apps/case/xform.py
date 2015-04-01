@@ -23,6 +23,27 @@ from casexml.apps.case.xml.parser import case_update_from_block
 from dimagi.utils.logging import notify_exception
 
 
+class DirtinessFlag(object):
+    """
+    Lightweight class used to store the dirtyness of a case/owner pair.
+    """
+    def __init__(self, case_id, owner_id, is_dirty):
+        self.case_id = case_id
+        self.owner_id = owner_id
+        self.is_dirty = is_dirty
+
+
+class CaseProcessingResult(object):
+    """
+    Lightweight class used to collect results of case processing
+    """
+    def __init__(self, cases, dirtiness_flags):
+        self.cases = cases
+        self.dirtiness_flags = dirtiness_flags
+
+    def set_cases(self, cases):
+        self.cases = cases
+
 def process_cases(xform, config=None):
     """
     Creates or updates case objects which live outside of the form.
@@ -35,13 +56,15 @@ def process_cases(xform, config=None):
     domain = get_and_check_xform_domain(xform)
 
     with CaseDbCache(domain=domain, lock=True, deleted_ok=True) as case_db:
-        cases = process_cases_with_casedb(xform, case_db, config=config)
+        case_result = process_cases_with_casedb([xform], case_db, config=config)
 
+    cases = case_result.cases
     docs = [xform] + cases
     now = datetime.datetime.utcnow()
     for case in cases:
         case.server_modified_on = now
     XFormInstance.get_db().bulk_save(docs)
+
     for case in cases:
         case_post_save.send(CommCareCase, case=case)
     return cases
@@ -49,7 +72,8 @@ def process_cases(xform, config=None):
 
 def process_cases_with_casedb(xforms, case_db, config=None):
     config = config or CaseProcessingConfig()
-    cases = _get_or_update_cases(xforms, case_db).values()
+    case_processing_result = _get_or_update_cases(xforms, case_db).values()
+    cases = case_processing_result.cases
     xform = xforms[0]
 
     if config.reconcile:
@@ -115,7 +139,8 @@ def process_cases_with_casedb(xforms, case_db, config=None):
                 )
             )
 
-    return cases
+    case_processing_result.set_cases(cases)
+    return case_processing_result
 
 
 class CaseProcessingConfig(object):
@@ -285,11 +310,11 @@ def _get_or_update_cases(xforms, case_db):
     # once we've gotten through everything, validate all indices
     def _validate_indices(case):
         if case.indices:
+            any_dirty = False
             for index in case.indices:
                 # call get and not doc_exists to force domain checking
                 # see CaseDbCache.validate_doc
                 referenced_case = case_db.get(index.referenced_id)
-
                 if not referenced_case:
                     # just log, don't raise an error or modify the index
                     logging.error(
@@ -297,10 +322,13 @@ def _get_or_update_cases(xforms, case_db):
                         case.get_id,
                         index.referenced_id,
                     )
+                else:
+                    if referenced_case.owner_id != case.owner_id:
+                        any_dirty = True
+            return DirtinessFlag(case._id, case.owner_id, is_dirty=any_dirty)
 
-    [_validate_indices(case) for case in case_db.cache.values()]
-
-    return touched_cases
+    dirtiness_flags = [_validate_indices(case) for case in case_db.cache.values()]
+    return CaseProcessingResult(touched_cases, dirtiness_flags)
 
 
 def _get_or_update_model(case_update, xform, case_db):
