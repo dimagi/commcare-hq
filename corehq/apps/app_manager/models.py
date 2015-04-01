@@ -739,6 +739,9 @@ class FormBase(DocumentSchema):
             error.update(meta)
             errors.append(error)
 
+        if self.post_form_workflow == WORKFLOW_FORM and not self.form_links:
+            errors.append(dict(type="no form links", **meta))
+
         errors.extend(self.extended_build_validation(meta, xml_valid, validate_module))
 
         return errors
