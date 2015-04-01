@@ -88,8 +88,10 @@
         {% if report_table.slug != 'facility_report' %}
             var show_hide_table_columns = function (element) {
                 var col_idx = $(element).attr('data-column');
-                var bVis = datatable.fnSettings().aoColumns[col_idx].bVisible;
-                datatable.fnSetColumnVis(col_idx, !bVis);
+                if (col_idx !== '-1') {
+                    var bVis = datatable.fnSettings().aoColumns[col_idx].bVisible;
+                    datatable.fnSetColumnVis(col_idx, !bVis);
+                }
             };
         {% endif %}
 
