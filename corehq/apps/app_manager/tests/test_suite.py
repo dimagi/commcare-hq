@@ -782,6 +782,11 @@ class TestFormLinking(SimpleTestCase, TestFileMixin):
             }
         ]
     }
+    def setUp(self):
+        update_toggle_cache(MODULE_FILTER.slug, 'domain', True, NAMESPACE_DOMAIN)
+
+    def tearDown(self):
+        clear_toggle_cache(MODULE_FILTER.slug, 'domain', NAMESPACE_DOMAIN)
 
     def make_app(self, spec):
         app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
