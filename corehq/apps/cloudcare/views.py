@@ -1,7 +1,7 @@
 import uuid
 from corehq.apps.app_manager.const import USERCASE_ID
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
-from couchdbkit import ResourceConflict, NoResultFound
+from couchdbkit import ResourceConflict
 from django.utils.decorators import method_decorator
 from casexml.apps.stock.models import StockTransaction
 from casexml.apps.stock.utils import get_current_ledger_transactions

@@ -2,7 +2,6 @@ import uuid
 from corehq.apps.app_manager.const import USERCASE_ID
 from corehq.apps.app_manager.suite_xml import SuiteGenerator
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
-from couchdbkit import NoResultFound
 from .models import XFORMS_SESSION_SMS, SQLXFormsSession
 from datetime import datetime
 from corehq.apps.cloudcare.touchforms_api import get_session_data
