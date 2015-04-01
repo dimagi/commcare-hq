@@ -87,6 +87,12 @@ class CaseFactoryTest(TestCase):
         case = factory.create_case()
         self.assertEqual(owner_id, case.owner_id)
 
+    def test_override_defaults(self):
+        owner_id = uuid.uuid4().hex
+        factory = CaseFactory(case_defaults={'owner_id': owner_id})
+        case = factory.create_case(owner_id='notthedefault')
+        self.assertEqual('notthedefault', case.owner_id)
+
     def test_create_from_structure(self):
         owner_id = uuid.uuid4().hex
         factory = CaseFactory(case_defaults={
