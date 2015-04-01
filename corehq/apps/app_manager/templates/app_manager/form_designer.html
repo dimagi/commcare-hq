@@ -19,6 +19,13 @@
             plugins: {{ plugins|JSON }},
             features: {{ features|JSON }},
             core: {
+                dataSources: [
+                    {
+                        key: 'fixture',
+                        name: 'Fixtures',
+                        endpoint: '{% url 'fixture_metadata' domain=domain %}'
+                    }
+                ],
                 form: {{ form.source|to_javascript_string }},
                 formId: '{{ form.get_unique_id }}',
                 formName: "{{ form.name|trans:app.langs|escapejs }}",
