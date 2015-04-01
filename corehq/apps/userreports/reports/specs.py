@@ -1,3 +1,4 @@
+from django.utils.translation import ugettext as _
 from jsonobject import JsonObject, StringProperty, BooleanProperty, ListProperty, DictProperty, ObjectProperty
 from jsonobject.base import DefaultProperty
 from sqlagg import CountUniqueColumn, SumColumn
@@ -40,6 +41,7 @@ class ReportFilter(JsonObject):
 
 
 class ReportColumn(JsonObject):
+    type = StringProperty(required=True)
     column_id = StringProperty(required=True)
     display = StringProperty()
     description = StringProperty()
@@ -61,6 +63,9 @@ class ReportColumn(JsonObject):
         if self.transform:
             return TransformFactory.get_transform(self.transform).get_transform_function()
         return None
+
+    def get_group_by_columns(self):
+        raise NotImplementedError(_("You can't group by columns of type {}".format(self.type)))
 
 
 class FieldColumn(ReportColumn):
@@ -110,6 +115,9 @@ class FieldColumn(ReportColumn):
             )
         ])
 
+    def get_group_by_columns(self):
+        return [self.column_id]
+
 
 class ExpandedColumn(ReportColumn):
     type = TypeProperty('expanded')
@@ -140,17 +148,26 @@ class AggregateDateColumn(ReportColumn):
                 aggregate_fn=lambda year, month: {'year': year, 'month': month},
                 format_fn=self.get_format_fn(),
                 columns=[
-                    YearColumn(self.field, alias='{}_year'.format(self.column_id)),
-                    MonthColumn(self.field, alias='{}_month'.format(self.column_id)),
+                    YearColumn(self.field, alias=self._year_column_alias()),
+                    MonthColumn(self.field, alias=self._month_column_alias()),
                 ],
                 slug=self.column_id,
                 data_slug=self.column_id,
             )],
         )
 
+    def _year_column_alias(self):
+        return '{}_year'.format(self.column_id)
+
+    def _month_column_alias(self):
+        return '{}_month'.format(self.column_id)
+
     def get_format_fn(self):
         # todo: support more aggregation/more formats
         return lambda data: '{}-{:02d}'.format(int(data['year']), int(data['month']))
+
+    def get_group_by_columns(self):
+        return [self._year_column_alias(), self._month_column_alias()]
 
 
 class PercentageColumn(ReportColumn):

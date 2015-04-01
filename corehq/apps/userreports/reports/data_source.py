@@ -1,3 +1,4 @@
+from django.utils.datastructures import SortedDict
 from sqlagg import (
     ColumnNotFoundException,
     TableNotFoundException,
@@ -25,7 +26,18 @@ class ConfigurableReportDataSource(SqlData):
         self._filters = {f.slug: f for f in filters}
         self._filter_values = {}
         self.aggregation_columns = aggregation_columns
-        self.column_configs = columns
+        self._column_configs = SortedDict()
+        for column in columns:
+            # should be caught in validation prior to reaching this
+            assert column.column_id not in self._column_configs, \
+                'Report {} in domain {} has more than one {} column defined!'.format(
+                    self._config_id, self.domain, column.column_id,
+                )
+            self._column_configs[column.column_id] = column
+
+    @property
+    def column_configs(self):
+        return self._column_configs.values()
 
     @property
     def config(self):
@@ -51,7 +63,11 @@ class ConfigurableReportDataSource(SqlData):
 
     @property
     def group_by(self):
-        return self.aggregation_columns
+        # ask each column for its group_by contribution and combine to a single list
+        return [
+            group_by for col_id in self.aggregation_columns
+            for group_by in self._column_configs[col_id].get_group_by_columns()
+        ]
 
     @property
     def columns(self):

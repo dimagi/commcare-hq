@@ -11,7 +11,7 @@ from corehq.apps.userreports.models import (
     ReportConfiguration,
 )
 from corehq.apps.userreports.reports.factory import ReportFactory, ReportColumnFactory
-from corehq.apps.userreports.reports.specs import FieldColumn, PercentageColumn
+from corehq.apps.userreports.reports.specs import FieldColumn, PercentageColumn, AggregateDateColumn
 from corehq.apps.userreports.sql import _expand_column, _get_distinct_values
 
 from casexml.apps.case.mock import CaseBlock
@@ -199,6 +199,29 @@ class TestExpandedColumn(TestCase):
         self.assertEqual(len(cols), 2)
         self.assertEqual(type(cols[0].view), SumWhen)
         self.assertEqual(cols[1].view.whens, {'negative': 1})
+
+
+class TestAggregateDateColumn(SimpleTestCase):
+
+    def setUp(self):
+        self._spec = {
+            'type': 'aggregate_date',
+            'column_id': 'a_date',
+            'field': 'a_date',
+        }
+
+    def test_wrap(self):
+        wrapped = ReportColumnFactory.from_spec(self._spec)
+        self.assertTrue(isinstance(wrapped, AggregateDateColumn))
+        self.assertEqual('a_date', wrapped.column_id)
+
+    def test_group_by(self):
+        wrapped = ReportColumnFactory.from_spec(self._spec)
+        self.assertEqual(['a_date_year', 'a_date_month'], wrapped.get_group_by_columns())
+
+    def test_format(self):
+        wrapped = ReportColumnFactory.from_spec(self._spec)
+        self.assertEqual('2015-03', wrapped.get_format_fn()({'year': 2015, 'month': 3}))
 
 
 class TestPercentageColumn(SimpleTestCase):

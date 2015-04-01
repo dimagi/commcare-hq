@@ -17,7 +17,8 @@ class CaseAttachmentAPI(View):
         max_image_width	The largest width in pixels for an an image attachment
         max_image_height	The largest width in pixels for an an image attachment
         """
-        if self.request.couch_user.is_web_user and not can_view_attachments(self.request):
+
+        if self.request.couch_user.is_web_user() and not can_view_attachments(self.request):
             return HttpResponseForbidden()
         max_filesize = int(self.request.GET.get('max_size', 0)) #todo
 

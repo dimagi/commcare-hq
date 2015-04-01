@@ -280,7 +280,7 @@ class BatchedCaseSyncOperation(object):
     Global sync state is also available via the 'global_state' field.
 
     Usage:
-    op = BatchedCaseSyncOperation(user, last_sync, chunk_size)
+    op = BatchedCaseSyncOperation(user, last_synclog, chunk_size)
     for batch in op.batches():
         case_updates = batch.case_updates_to_sync
 
@@ -296,9 +296,9 @@ class BatchedCaseSyncOperation(object):
     # use class variable to allow patching in tests
     chunk_size = 1000
 
-    def __init__(self, user, last_sync, chunk_size=None):
+    def __init__(self, user, last_synclog, chunk_size=None):
         self.user = user
-        self.last_sync = last_sync
+        self.last_synclog = last_synclog
         if chunk_size:
             self.chunk_size = chunk_size
         self.domain = self.user.domain
@@ -309,14 +309,14 @@ class BatchedCaseSyncOperation(object):
             self.owner_keys = [[self.user.user_id, False]]
 
         self.case_sharing = len(self.owner_keys) > 1
-        self.global_state = GlobalSyncState(self.last_sync, self.case_sharing)
+        self.global_state = GlobalSyncState(self.last_synclog, self.case_sharing)
 
     def batches(self):
         for key in self.owner_keys:
             batch = CaseSyncCouchBatch(
                 self.global_state,
                 self.domain,
-                self.last_sync,
+                self.last_synclog,
                 self.chunk_size,
                 key,
                 case_sharing=self.case_sharing
@@ -335,11 +335,11 @@ class BatchedCaseSyncOperation(object):
             case_sharing=self.case_sharing
         )
 
-        if self.last_sync:
+        if self.last_synclog:
             yield CaseSyncPhoneBatch(
                 self.global_state,
                 self.domain,
-                self.last_sync,
+                self.last_synclog,
                 self.chunk_size,
                 case_sharing=self.case_sharing
             )

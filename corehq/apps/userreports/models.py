@@ -16,7 +16,8 @@ from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
 from corehq.apps.userreports.indicators import CompoundIndicator
-from corehq.apps.userreports.reports.factory import ReportFactory, ChartFactory, ReportFilterFactory
+from corehq.apps.userreports.reports.factory import ReportFactory, ChartFactory, ReportFilterFactory, \
+    ReportColumnFactory
 from corehq.apps.userreports.reports.specs import FilterSpec
 from django.utils.translation import ugettext as _
 from corehq.apps.userreports.specs import EvaluationContext
@@ -269,26 +270,32 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         return None
 
     def validate(self, required=True):
-        def _check_for_duplicate_slugs(filters):
-            slugs = [FilterSpec.wrap(f).slug for f in filters]
+        def _check_for_duplicates(supposedly_unique_list, error_msg):
             # http://stackoverflow.com/questions/9835762/find-and-list-duplicates-in-python-list
-            duplicated_slugs = set(
-                [slug for slug in slugs if slugs.count(slug) > 1]
+            duplicate_items = set(
+                [item for item in supposedly_unique_list if supposedly_unique_list.count(item) > 1]
             )
-            if len(duplicated_slugs) > 0:
+            if len(duplicate_items) > 0:
                 raise BadSpecError(
-                    _('Filters cannot contain duplicate slugs: %s')
-                    % ', '.join(sorted(duplicated_slugs))
+                    _(error_msg).format(', '.join(sorted(duplicate_items)))
                 )
 
         super(ReportConfiguration, self).validate(required)
 
-        # these calls implicitly do validation
+        # check duplicates before passing to factory since it chokes on them
+        _check_for_duplicates(
+            [FilterSpec.wrap(f).slug for f in self.filters],
+            'Filters cannot contain duplicate slugs: {}',
+        )
+        _check_for_duplicates(
+            [ReportColumnFactory.from_spec(c).column_id for c in self.columns],
+            'Columns cannot contain duplicate column_ids: {}',
+        )
+
+        # these calls all implicitly do validation
         ReportFactory.from_spec(self)
         self.ui_filters
         self.charts
-
-        _check_for_duplicate_slugs(self.filters)
 
     @classmethod
     def by_domain(cls, domain):
