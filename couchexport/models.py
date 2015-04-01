@@ -307,9 +307,16 @@ class SplitColumn(ComplexExportColumn):
             )
 
     def get_data(self, value):
-        row = [None] * len(self.options)
+        from couchexport.export import Constant
+
+        opts_len = len(self.options)
+        if isinstance(value, Constant):
+            row = [value] * opts_len
+        else:
+            row = [None] * opts_len
+
         if not isinstance(value, basestring):
-            return row + [value]
+            return row if self.ignore_extras else row + [value]
 
         values = value.split(' ') if value else []
         for index, option in enumerate(self.options):
@@ -322,7 +329,6 @@ class SplitColumn(ComplexExportColumn):
         else:
             remainder = ' '.join(values) if values else None
             return row + [remainder]
-
 
     def to_config_format(self, selected=True):
         config = super(SplitColumn, self).to_config_format(selected)
