@@ -117,8 +117,9 @@
         line_chart.margin(chart_config.margin);
         line_chart.tooltips(chart_config.tooltips);
 
-        line_chart.legend.dispatch.legendClick = function(d, i){
-        };
+        for (var property in line_chart.legend.dispatch) {
+            line_chart.legend.dispatch[property] = function() { };
+        }
 
         d3.select(line_chart_id + ' svg')
                 .datum(line_chart_data)
