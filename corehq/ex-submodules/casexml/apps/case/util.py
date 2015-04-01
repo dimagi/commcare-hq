@@ -53,7 +53,7 @@ def reprocess_form_cases(form, config=None, case_db=None):
     from casexml.apps.case.xform import process_cases, process_cases_with_casedb
 
     if case_db:
-        process_cases_with_casedb(form, case_db, config=config)
+        process_cases_with_casedb([form], case_db, config=config)
     else:
         process_cases(form, config)
     # mark cleaned up now that we've reprocessed it

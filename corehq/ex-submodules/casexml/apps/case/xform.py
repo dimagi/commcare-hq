@@ -47,12 +47,7 @@ def process_cases(xform, config=None):
     return cases
 
 
-def process_cases_with_casedb(xform, case_db, config=None):
-    # this is a convenience/legacy API. all the work happens in bulk now
-    return process_cases_with_casedb_bulk([xform], case_db, config)
-
-
-def process_cases_with_casedb_bulk(xforms, case_db, config=None):
+def process_cases_with_casedb(xforms, case_db, config=None):
     config = config or CaseProcessingConfig()
     cases = _get_or_update_cases(xforms, case_db).values()
     xform = xforms[0]
