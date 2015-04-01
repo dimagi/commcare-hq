@@ -119,8 +119,7 @@ class ReportingRatesData(EWSData):
                 location_type__name__in=location_types,
                 parent=location
             )
-        locations = locations.exclude(is_archived=True)
-        return locations.exclude(supply_point_id__isnull=True)
+        return locations.exclude(supply_point_id__isnull=True).exclude(is_archived=True)
 
     def supply_points_list(self, location_id=None):
         return self.get_supply_points(location_id).values_list('supply_point_id')

@@ -128,7 +128,7 @@ class MonthOfStockProduct(EWSData):
                 ).order_by('name').exclude(supply_point_id__isnull=True)
             else:
                 supply_points = SQLLocation.objects.filter(
-                    parent__location_id=self.config['location_id']
+                    parent__location_id=self.config['location_id'], is_archived=False
                 ).order_by('name').exclude(supply_point_id__isnull=True)
         return supply_points
 
@@ -254,11 +254,11 @@ class StockoutTable(EWSData):
                 supply_points = SQLLocation.objects.filter(
                     Q(parent__location_id=self.config['location_id']) |
                     Q(location_type__name='Regional Medical Store', domain=self.config['domain'])
-                ).order_by('name').exclude(supply_point_id__isnull=True)
+                ).order_by('name').exclude(supply_point_id__isnull=True).exclude(is_archived=True)
             else:
                 supply_points = SQLLocation.objects.filter(
                     parent__location_id=self.config['location_id']
-                ).order_by('name').exclude(supply_point_id__isnull=True)
+                ).order_by('name').exclude(supply_point_id__isnull=True).exclude(is_archived=True)
 
             products = set(self.unique_products(supply_points))
             for supply_point in supply_points:
