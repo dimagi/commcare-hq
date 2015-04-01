@@ -4,6 +4,9 @@
 {% load i18n %}
 
 {% block reportcontent %}
+    {% if report.slug|safe == 'stock_summary_report' or report.slug|safe == 'cms_rms_summary_report' %}
+        <h2 style="background-color: black; color: white">{{ title }}</h2>
+    {% endif %}
 {% block pretable %}
     {% if not report.needs_filters %}
         {% if rendered_as == 'print' %}
@@ -34,6 +37,12 @@
     {% include 'reports/standard/partials/description.html' %}
 {% else %}
     <style>
+        {% if rendered_as == "email" %}
+            td {
+                border: 1px solid black;
+            }
+        {% endif %}
+
         .firstreport, .inventory_chart {
             width: 68%;
             float: left;
@@ -221,9 +230,6 @@
     <script>
         var report_slug = "{{ report.slug | safe }}";
         if ( report_slug === 'stock_summary_report' || report_slug === 'cms_rms_summary_report') {
-            var headings = $("#report-content > h4");
-            $(headings[0]).text($(headings[2]).text());
-            $(headings[2]).remove();
             $('.dataTables_filter').remove();
         }
     </script>

@@ -36,17 +36,17 @@ class EmailReportData(EWSData):
     @property
     def rows(self):
         def percent(x, y):
-            return "%d%% (%d)" % (x * 100 / (y or 1), x)
+            return "%d%% <small>(%d)</small>" % (x * 100 / (y or 1), x)
 
         def stock_status(status, loc):
             if status == 0.0:
-                return 'Stockout'
+                return '<div style="background-color: rgba(255, 47, 54, 0.5);"><b>Stockout</b></div>'
             elif status < loc.location_type.understock_threshold:
-                return 'Low'
-            elif status < loc.location_type.overstock_threshold:
-                return 'Adequate'
+                return '<div style="background-color: rgba(255, 234, 112, 0.5)"><b>Low</b></div>'
+            elif status < loc.location_type.overstock_threshold + 7:
+                return '<div style="background-color: rgba(17, 148, 16, 0.5)"><b>Adequate</b></div>'
             else:
-                return 'Overstock'
+                return '<div style="background-color: rgba(179, 80, 255, 0.5)"><b>Overstock</b></div>'
 
         locations = self.get_locations(self.config['location_id'], self.config['domain'])
 
@@ -76,18 +76,13 @@ class EmailReportData(EWSData):
             months_of_stock = float(v['total_stock']) / float(v['monthly_consumption'] or 1)
             rows.append([k, percent(v['fac_with_stockout'], v['total_fac']),
                         v['total_fac'], v['total_stock'], percent(v['fac_with_consumption'], v['total_fac']),
-                        v['monthly_consumption'], "%.1f" % months_of_stock, stock_status(months_of_stock,
+                        v['monthly_consumption'], "<b>%.1f</b>" % months_of_stock, stock_status(months_of_stock,
                                                                                          location)])
         return rows
 
 
 class StockSummaryReportData(EmailReportData):
     slug = 'stock_summary'
-
-    @property
-    def title(self):
-        return 'Weekly Stock Summary Report - ' + SQLLocation.objects.get(
-            location_id=self.config['location_id']).name
 
     def get_locations(self, loc_id, domain):
         return get_supply_points(loc_id, domain)
@@ -114,15 +109,12 @@ class EmailReportingData(EWSData):
 
     @property
     def headers(self):
-        return DataTablesHeader(*[
-            DataTablesColumn(_('% of facilities are reporting')),
-            DataTablesColumn(_('% of submitted reports are complete')),
-        ])
+        return DataTablesHeader(*[])
 
     @property
     def rows(self):
-        def percent(x, y):
-            return "%d%% (%d/%d)" % (x * 100 / (y or 1), x, y)
+        def percent(x, y, text):
+            return "%d%s<small> (%d/%d)</small>" % (x * 100 / (y or 1), text, x, y)
 
         locations = self.get_locations(self.config['location_id'], self.config['domain'])
         reported = StockTransaction.objects.filter(
@@ -139,7 +131,8 @@ class EmailReportingData(EWSData):
             if products_count == st:
                 completed += 1
 
-        return [[percent(reported, len(locations)), percent(completed, reported)]]
+        return [[percent(reported, len(locations), '% of facilities are reporting'),
+                 percent(completed, reported, '% of submitted reports are complete')]]
 
 
 class StockSummaryReportingData(EmailReportingData):
@@ -159,13 +152,17 @@ class CMSRMSSummaryReportingData(EmailReportingData):
 
 
 class StockSummaryReport(MultiReport):
-    title = "Weekly Stock Summary Report"
     fields = [AsyncLocationFilter, DatespanFilter]
     name = "Stock Summary Report"
     slug = 'stock_summary_report'
     exportable = False
     is_exportable = False
     split = False
+
+    @property
+    def title(self):
+        return 'Weekly Stock Summary Report - ' + SQLLocation.objects.get(
+            location_id=self.report_config['location_id']).name
 
     @property
     def report_config(self):
