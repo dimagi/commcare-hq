@@ -1375,3 +1375,5 @@ COMPRESS_OFFLINE_CONTEXT = {
     'less_debug': LESS_DEBUG,
     'less_watch': LESS_WATCH,
 }
+
+COMPRESS_CSS_HASHING_METHOD = 'content'
