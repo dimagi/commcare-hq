@@ -137,7 +137,6 @@ class SyncPerformanceTest(SyncBaseTest):
                 version=V2,
                 index={'parent': (PARENT_TYPE, parent_case_id)}
             ).as_xml())
-            print("created child case", case_id)
         self._postFakeWithSyncToken(caseblocks, self.sync_log.get_id)
 
         referreal_cases = []
@@ -154,7 +153,6 @@ class SyncPerformanceTest(SyncBaseTest):
                 version=V2,
                 index={'parent': ('child', child_case_id)}
             ).as_xml())
-            print("created referral case", case_id)
         self._postFakeWithSyncToken(caseblocks, self.sync_log.get_id)
 
         all_cases = parent_cases + child_cases + referreal_cases
