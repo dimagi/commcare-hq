@@ -23,6 +23,7 @@ import os
 import posixpath
 import sys
 import time
+import random
 from collections import defaultdict
 from distutils.util import strtobool
 
@@ -703,9 +704,38 @@ def force_update_static():
     execute(services_restart)
 
 
+def is_bad_day():
+    today = datetime.date.today()
+    if (today.month, today.day) == (4, 1):
+        return True
+    if random.random() < 0.05:
+        return True
+    return False
+
+
+@task
+def terrible_deploy():
+    """
+    SIKE!
+    """
+    if not console.confirm(
+            'Are you sure you want to preindex and deploy to '
+            'production?'.format(env=env), default=False):
+        utils.abort('Deployment aborted.')
+    with open('fab/deploy_template.txt') as f:
+        lines = f.readlines()
+    for line in lines:
+        print line.strip().format(start_red="\033[1;31m", end="\033[0m")
+        if random.random() < 0.2:
+            time.sleep(random.expovariate(0.5))
+        time.sleep(0.1)
+
+
 @task
 def awesome_deploy(confirm="yes"):
     """preindex and deploy if it completes quickly enough, otherwise abort"""
+    if is_bad_day():
+        return terrible_deploy()
     _require_target()
     if strtobool(confirm) and not console.confirm(
             'Are you sure you want to preindex and deploy to '
