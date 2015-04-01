@@ -7,9 +7,14 @@ from casexml.apps.case.models import CommCareCase
 class CaseRelationshipTest(SimpleTestCase):
 
     def test_defaults(self):
-        relationship = CaseRelationship(CaseStructure())
-        self.assertEqual(relationship.relationship, relationship.DEFAULT_RELATIONSHIP)
-        self.assertEqual(relationship.related_type, relationship.DEFAULT_RELATED_CASE_TYPE)
+        relationship = CaseRelationship()
+        self.assertIsNotNone(relationship.related_structure.case_id)
+        self.assertEqual(relationship.DEFAULT_RELATIONSHIP, relationship.relationship)
+        self.assertEqual(relationship.DEFAULT_RELATED_CASE_TYPE, relationship.related_type)
+
+    def test_default_type_from_relationship(self):
+        relationship = CaseRelationship(CaseStructure(attrs={'case_type': 'custom_type'}))
+        self.assertEqual('custom_type', relationship.related_type)
 
 
 class CaseStructureTest(SimpleTestCase):

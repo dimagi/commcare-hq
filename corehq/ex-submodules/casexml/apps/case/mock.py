@@ -291,11 +291,11 @@ class CaseRelationship(object):
     DEFAULT_RELATIONSHIP = 'parent'
     DEFAULT_RELATED_CASE_TYPE = 'default_related_case_type'
 
-    def __init__(self, related_structure, relationship=DEFAULT_RELATIONSHIP, related_type=None):
-        self.related_structure = related_structure
+    def __init__(self, related_structure=None, relationship=DEFAULT_RELATIONSHIP, related_type=None):
+        self.related_structure = related_structure or CaseStructure()
         self.relationship = relationship
         if related_type is None:
-            related_type = related_structure.attrs.get('case_type', self.DEFAULT_RELATED_CASE_TYPE)
+            related_type = self.related_structure.attrs.get('case_type', self.DEFAULT_RELATED_CASE_TYPE)
         self.related_type = related_type
 
     @property
