@@ -1,3 +1,4 @@
+from datetime import timedelta
 from corehq import Domain
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.models import SQLLocation
@@ -127,7 +128,7 @@ class MonthOfStockProduct(EWSData):
                 ).order_by('name').exclude(supply_point_id__isnull=True)
             else:
                 supply_points = SQLLocation.objects.filter(
-                    parent__location_id=self.config['location_id']
+                    parent__location_id=self.config['location_id'], is_archived=False
                 ).order_by('name').exclude(supply_point_id__isnull=True)
         return supply_points
 
@@ -200,7 +201,9 @@ class StockoutsProduct(EWSData):
             for product in products:
                 rows[product.code] = []
 
-            for d in get_second_week(self.config['startdate'], self.config['enddate']):
+            enddate = self.config['enddate']
+            startdate = self.config['startdate'] if 'custom_date' in self.config else enddate - timedelta(days=90)
+            for d in get_second_week(startdate, enddate):
                 for product in products:
                     st = StockTransaction.objects.filter(
                         case_id__in=supply_points.values_list('supply_point_id', flat=True),
@@ -251,11 +254,11 @@ class StockoutTable(EWSData):
                 supply_points = SQLLocation.objects.filter(
                     Q(parent__location_id=self.config['location_id']) |
                     Q(location_type__name='Regional Medical Store', domain=self.config['domain'])
-                ).order_by('name').exclude(supply_point_id__isnull=True)
+                ).order_by('name').exclude(supply_point_id__isnull=True).exclude(is_archived=True)
             else:
                 supply_points = SQLLocation.objects.filter(
                     parent__location_id=self.config['location_id']
-                ).order_by('name').exclude(supply_point_id__isnull=True)
+                ).order_by('name').exclude(supply_point_id__isnull=True).exclude(is_archived=True)
 
             products = set(self.unique_products(supply_points))
             for supply_point in supply_points:

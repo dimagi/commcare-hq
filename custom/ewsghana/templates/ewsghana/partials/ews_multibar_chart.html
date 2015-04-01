@@ -1,24 +1,5 @@
 {% load hq_shared_tags %}
 <script type="text/javascript">
-    $('#selection_pane_apply').on('click', function(e) {
-        e.preventDefault();
-        $('.hq-loading').fadeIn();
-        var data = JSON.parse(JSON.stringify(multibar_chart_data));
-        var productCodes = $("#report_table_product_selection_pane input:not(:checked)").map(function() {
-          return $(this).val();
-        });
-
-        for(var i = 0; i < data.length; i++) {
-            data[i].values = jQuery.grep(data[i].values, function(value) {
-                return !_.contains(productCodes, value.x)
-            });
-        }
-        d3.select(multibar_chart_id + ' svg')
-                .datum(data)
-                .transition().duration(500).call(multibar_chart);
-        $('.hq-loading').fadeOut();
-    });
-
     nv.addGraph(function() {
         var chart_config = {{ chart.config_dict|JSON }};
         multibar_chart_data = {{ chart.data|JSON }};
