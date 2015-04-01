@@ -264,7 +264,7 @@ def get_num_missed_windows(case):
     # unlike in most other projects, case.opened_on is actually in UTC
     # because it was submitted from cloudcare
     opened_timestamp = (PhoneTime(case.opened_on, pytz.UTC)
-                        .user_time(domain_obj.default_timezone).done())
+                        .user_time(domain_obj.get_default_timezone()).done())
     day_of_week = opened_timestamp.weekday()
     time_of_day = opened_timestamp.time()
 
