@@ -8,6 +8,7 @@ from psycopg2._psycopg import DatabaseError
 
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack.models import StockState
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import Product
 from custom.ilsgateway.api import ILSGatewayEndpoint, ILSGatewayAPI
 from custom.logistics.commtrack import bootstrap_domain as ils_bootstrap_domain, save_stock_data_checkpoint
@@ -89,7 +90,6 @@ def sync_supply_point_status(domain, endpoint, facility, checkpoint, date, limit
         )
         # set the checkpoint right before the data we are about to process
         if not supply_point_statuses:
-            print 'test'
             return None
         save_stock_data_checkpoint(checkpoint,
                                    'supply_point_status',
@@ -97,7 +97,10 @@ def sync_supply_point_status(domain, endpoint, facility, checkpoint, date, limit
                                    meta.get('offset') or offset, date, facility, True)
         for sps in supply_point_statuses:
             try:
-                SupplyPointStatus.objects.get(external_id=sps.external_id, supply_point=facility)
+                SupplyPointStatus.objects.get(
+                    external_id=int(sps.external_id),
+                    supply_point=SQLLocation.objects.get(domain=domain, external_id=facility).location_id
+                )
             except SupplyPointStatus.DoesNotExist:
                 sps.save()
 

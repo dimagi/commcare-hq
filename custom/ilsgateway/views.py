@@ -4,7 +4,7 @@ from datetime import datetime
 import json
 from django.contrib import messages
 from django.core.urlresolvers import reverse
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.http.response import HttpResponseRedirect, Http404
 from django.utils.decorators import method_decorator
 from django.views.generic.base import TemplateView
@@ -25,8 +25,9 @@ from custom.ilsgateway.tanzania.reminders.delivery import send_delivery_reminder
 from custom.ilsgateway.tanzania.reminders.randr import send_ror_reminder
 from custom.ilsgateway.tanzania.reminders.stockonhand import send_soh_reminder
 from custom.ilsgateway.tanzania.reminders.supervision import send_supervision_reminder
+from custom.ilsgateway.tanzania.warehouse_updater import TEST_REGION_ID
 
-from custom.ilsgateway.tasks import ILS_FACILITIES, get_ilsgateway_data_migrations
+from custom.ilsgateway.tasks import get_ilsgateway_data_migrations
 from casexml.apps.stock.models import StockTransaction
 from custom.logistics.tasks import sms_users_fix, fix_groups_in_location_task
 from custom.ilsgateway.api import ILSGatewayAPI
@@ -239,7 +240,11 @@ def ils_sync_stock_data(request, domain):
     domain = config.domain
     endpoint = ILSGatewayEndpoint.from_config(config)
     apis = get_ilsgateway_data_migrations()
-    stock_data_task.delay(domain, endpoint, apis, config, ILS_FACILITIES)
+    test_region = SQLLocation.objects.get(domain=domain, external_id=TEST_REGION_ID)
+    facilities = SQLLocation.objects.filter(
+        Q(domain=domain) & (Q(parent=test_region) | Q(parent__parent=test_region))
+    ).order_by('id').values_list('external_id', flat=True)
+    stock_data_task.delay(domain, endpoint, apis, config, facilities)
     return HttpResponse('OK')
 
 
