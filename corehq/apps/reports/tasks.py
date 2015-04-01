@@ -77,7 +77,7 @@ def check_es_index():
         message.append(
             "This alert can give false alarms due to timing lag, so please double check "
             + absolute_reverse("system_info")
-            + " and the Elasticsarch Status section to make sure."
+            + " and the Elasticsearch Status section to make sure."
         )
         notify_exception(None, message='\n'.join(message))
 
