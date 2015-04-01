@@ -72,8 +72,12 @@ class SyncBaseTest(TestCase):
         process_cases(form)
         return form
 
-    def _postFakeWithSyncToken(self, caseblock, token_id):
-        return post_case_blocks(list(caseblock), form_extras={"last_sync_token": token_id})
+    def _postFakeWithSyncToken(self, caseblocks, token_id):
+        if not isinstance(caseblocks, list):
+            # can't use list(caseblocks) since that returns children of the node
+            # http://lxml.de/tutorial.html#elements-are-lists
+            caseblocks = [caseblocks]
+        return post_case_blocks(caseblocks, form_extras={"last_sync_token": token_id})
 
     def _checkLists(self, l1, l2):
         self.assertEqual(len(l1), len(l2))
