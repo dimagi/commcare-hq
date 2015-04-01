@@ -1,6 +1,4 @@
-from corehq.apps.locations.models import SQLLocation
-from corehq.apps.products.models import SQLProduct
-from custom.ewsghana.tests.handlers.utils import EWSScriptTest, TEST_DOMAIN, restore_location_products, \
+from custom.ewsghana.tests.handlers.utils import EWSScriptTest, restore_location_products, \
     assign_products_to_location
 
 
