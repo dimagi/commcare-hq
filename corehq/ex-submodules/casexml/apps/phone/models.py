@@ -1,7 +1,9 @@
 from collections import defaultdict
 from copy import copy
+from datetime import datetime
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from couchdbkit.ext.django.schema import *
+from django.db import models
 from dimagi.utils.couch.database import SafeSaveDocument
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
@@ -354,3 +356,22 @@ class SyncLog(SafeSaveDocument, UnicodeMixIn):
 
     def __unicode__(self):
         return "%s synced on %s (%s)" % (self.user_id, self.date.date(), self.get_id)
+
+
+class OwnershipCleanliness(models.Model):
+    """
+    Stores whether an owner_id is "clean" aka has a case universe only belonging
+    to that ID.
+
+    We use this field to optimize restores.
+    """
+    owner_id = models.CharField(max_length=100, db_index=True, primary_key=True)
+    domain = models.CharField(max_length=100, db_index=True)
+    is_clean = models.BooleanField(default=False)
+    last_checked = models.DateTimeField()
+    hint = models.CharField(max_length=100, null=True, blank=True)
+
+    def save(self, force_insert=False, force_update=False, using=None,
+             update_fields=None):
+        self.last_checked = datetime.utcnow()
+        super(OwnershipCleanliness, self).save(force_insert, force_update, using, update_fields)
