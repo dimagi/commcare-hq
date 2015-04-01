@@ -365,8 +365,8 @@ class OwnershipCleanliness(models.Model):
 
     We use this field to optimize restores.
     """
-    owner_id = models.CharField(max_length=100, db_index=True, primary_key=True)
     domain = models.CharField(max_length=100, db_index=True)
+    owner_id = models.CharField(max_length=100, db_index=True, primary_key=True)
     is_clean = models.BooleanField(default=False)
     last_checked = models.DateTimeField()
     hint = models.CharField(max_length=100, null=True, blank=True)
@@ -375,3 +375,7 @@ class OwnershipCleanliness(models.Model):
              update_fields=None):
         self.last_checked = datetime.utcnow()
         super(OwnershipCleanliness, self).save(force_insert, force_update, using, update_fields)
+
+    @classmethod
+    def get_for_owner(cls, domain, owner_id):
+        return cls.objects.get_or_create(domain=domain, owner_id=owner_id)[0]

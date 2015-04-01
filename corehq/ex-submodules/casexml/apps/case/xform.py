@@ -4,8 +4,10 @@ import warnings
 
 from couchdbkit import ResourceNotFound
 import datetime
+from django.db.models import Q
 import redis
 from casexml.apps.case.signals import cases_received, case_post_save
+from casexml.apps.phone.models import OwnershipCleanliness
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
 from casexml.apps.case.util import iter_cases
 from couchforms.models import XFormInstance
@@ -28,10 +30,9 @@ class DirtinessFlag(object):
     """
     Lightweight class used to store the dirtyness of a case/owner pair.
     """
-    def __init__(self, case_id, owner_id, is_dirty):
+    def __init__(self, case_id, owner_id):
         self.case_id = case_id
         self.owner_id = owner_id
-        self.is_dirty = is_dirty
 
 
 class CaseProcessingResult(object):
@@ -44,6 +45,20 @@ class CaseProcessingResult(object):
 
     def set_cases(self, cases):
         self.cases = cases
+
+    def commit_dirtiness_flags(self):
+        """
+        Updates any dirtiness flags in the database.
+        """
+        flags_to_save = {f.owner_id: f.case_id for f in self.dirtiness_flags}
+        flags_to_update = OwnershipCleanliness.objects.filter(
+            Q(owner_id__in=flags_to_save.keys()),
+            Q(is_clean=True) | Q(hint__isnull=True)
+        )
+        for flag in flags_to_update:
+            flag.is_clean = False
+            flag.hint = flags_to_save[flag.owner_id]
+            flag.save()
 
 
 def process_cases(xform, config=None):
@@ -73,6 +88,8 @@ def process_cases(xform, config=None):
 
     for case in cases:
         case_post_save.send(CommCareCase, case=case)
+
+    case_result.commit_dirtiness_flags()
     return cases
 
 
@@ -315,8 +332,8 @@ def _get_or_update_cases(xforms, case_db):
 
     # once we've gotten through everything, validate all indices
     def _validate_indices(case):
+        dirtiness_flags = []
         if case.indices:
-            any_dirty = False
             for index in case.indices:
                 # call get and not doc_exists to force domain checking
                 # see CaseDbCache.validate_doc
@@ -330,11 +347,11 @@ def _get_or_update_cases(xforms, case_db):
                     )
                 else:
                     if referenced_case.owner_id != case.owner_id:
-                        any_dirty = True
-            return DirtinessFlag(case._id, case.owner_id, is_dirty=any_dirty)
+                        dirtiness_flags.append(DirtinessFlag(index.referenced_id, case.owner_id))
+        return dirtiness_flags
 
-    dirtiness_flags = [_validate_indices(case) for case in case_db.cache.values()]
-    return CaseProcessingResult(touched_cases, dirtiness_flags)
+    dirtiness_flags = [flag for case in case_db.cache.values() for flag in _validate_indices(case)]
+    return CaseProcessingResult(touched_cases.values(), dirtiness_flags)
 
 
 def _get_or_update_model(case_update, xform, case_db):
