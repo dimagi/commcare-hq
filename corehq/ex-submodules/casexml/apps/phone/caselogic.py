@@ -329,7 +329,7 @@ class BatchedCaseSyncOperation(object):
             self.user,
             self.global_state,
             self.domain,
-            self.last_sync,
+            self.last_synclog,
             self.chunk_size,
             case_sharing=self.case_sharing
         )
