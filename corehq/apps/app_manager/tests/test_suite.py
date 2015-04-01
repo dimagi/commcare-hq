@@ -782,6 +782,7 @@ class TestFormLinking(SimpleTestCase, TestFileMixin):
             }
         ]
     }
+
     def setUp(self):
         update_toggle_cache(MODULE_FILTER.slug, 'domain', True, NAMESPACE_DOMAIN)
 
