@@ -10,7 +10,6 @@ from casexml.apps.case import const
 from casexml.apps.case.util import reverse_indices
 from casexml.apps.case.xform import CaseDbCache
 from casexml.apps.phone.models import CaseState
-from couchdbkit import NoResultFound
 from dimagi.utils.decorators.memoized import memoized
 
 logger = logging.getLogger(__name__)
