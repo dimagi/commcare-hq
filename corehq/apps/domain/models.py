@@ -764,6 +764,9 @@ class Domain(Document, SnapshotMixin):
         if doc_type in ('Application', 'RemoteApp'):
             new_doc = import_app(id, new_domain_name)
             new_doc.copy_history.append(id)
+            # when copying from app-docs that don't have
+            # unique_id attribute on Modules
+            new_doc.ensure_module_unique_ids(should_save=False)
         else:
             cls = str_to_cls[doc_type]
 
@@ -793,9 +796,6 @@ class Domain(Document, SnapshotMixin):
         if self.is_snapshot and doc_type == 'Application':
             new_doc.prepare_multimedia_for_exchange()
 
-        # when copying from app-docs that don't have
-        # unique_id attribute on Modules
-        new_doc.ensure_module_unique_ids(should_save=False)
         new_doc.save()
         return new_doc
 
