@@ -565,7 +565,7 @@ class UserCaseSyncCouchBatch(CaseSyncCouchBatch):
     def _actual_owned_cases(self):
         from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 
-        usercase = get_case_by_domain_hq_user_id(self.domain, self.user.user_id, include_docs=False)
+        usercase = get_case_by_domain_hq_user_id(self.domain, self.user.user_id)
         return [usercase] if usercase else []
 
 
