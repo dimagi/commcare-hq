@@ -422,7 +422,7 @@ For all payments, include "Invoice #" (displayed in top right corner).<br />
             "Bank: %(bank_name)s "
             "Bank Address: %(bank_address)s "
             "Account Number: %(account_number)s "
-            "Routing Number or ABA: %(routing_number_wire)s"
+            "Routing Number or ABA: %(routing_number_wire)s "
             "Swift Code: %(swift_code)s<br/>"
         ) % {
             'bank_name': self.bank_name,

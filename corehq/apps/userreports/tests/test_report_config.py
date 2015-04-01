@@ -2,6 +2,7 @@ import json
 import os
 from django.test import SimpleTestCase, TestCase
 from jsonobject.exceptions import BadValueError
+from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import ReportConfiguration, DataSourceConfiguration
 
 
@@ -19,6 +20,20 @@ class ReportConfigurationTest(SimpleTestCase):
     def test_sample_config_is_valid(self):
         self.config.validate()
 
+    def test_duplicate_filter_slugs(self):
+        spec = self.config._doc
+        spec['filters'].append(spec['filters'][-1])
+        wrapped = ReportConfiguration.wrap(spec)
+        with self.assertRaises(BadSpecError):
+            wrapped.validate()
+
+    def test_duplicate_column_ids(self):
+        spec = self.config._doc
+        spec['columns'].append(spec['columns'][-1])
+        wrapped = ReportConfiguration.wrap(spec)
+        with self.assertRaises(BadSpecError):
+            wrapped.validate()
+
 
 class ReportConfigurationDbTest(TestCase):
 
@@ -35,7 +50,7 @@ class ReportConfigurationDbTest(TestCase):
         for config in ReportConfiguration.all():
             config.delete()
 
-    def testGetByDomain(self):
+    def test_get_by_domain(self):
         results = ReportConfiguration.by_domain('foo')
         self.assertEqual(2, len(results))
         for item in results:
@@ -44,18 +59,18 @@ class ReportConfigurationDbTest(TestCase):
         results = ReportConfiguration.by_domain('not-foo')
         self.assertEqual(0, len(results))
 
-    def testGetAll(self):
+    def test_get_all(self):
         self.assertEqual(3, len(list(ReportConfiguration.all())))
 
-    def testDomainIsRequired(self):
+    def test_domain_is_required(self):
         with self.assertRaises(BadValueError):
             ReportConfiguration(config_id='foo').save()
 
-    def testConfigIdIsRequired(self):
+    def test_config_id_is_required(self):
         with self.assertRaises(BadValueError):
             ReportConfiguration(domain='foo').save()
 
-    def testSampleConfigIsValid(self):
+    def test_sample_config_is_valid(self):
         config = _get_sample_config()
         config.validate()
 

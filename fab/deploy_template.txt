@@ -1,0 +1,394 @@
+code_branch not specified, using 'master'. You can set it with '--set code_branch=<branch>'
+[hqdb0.internal.commcarehq.org] Executing task 'preindex_views'
+[hqdb0.internal.commcarehq.org] sudo: git remote prune origin
+[hqdb0.internal.commcarehq.org] out: Pruning origin
+[hqdb0.internal.commcarehq.org] out: URL: git://github.com/dimagi/commcare-hq.git
+[hqdb0.internal.commcarehq.org] out:  * [pruned] origin/ownership-cleanliness
+[hqdb0.internal.commcarehq.org] out:
+
+[hqdb0.internal.commcarehq.org] sudo: git fetch
+[hqdb0.internal.commcarehq.org] out: remote: Counting objects: 51, done.[K
+[hqdb0.internal.commcarehq.org] out: remote: Compressing objects:   3% (1/26)   [K
+[hqdb0.internal.commcarehq.org] out: remote: Compressing objects:   7% (2/26)   [K
+[hqdb0.internal.commcarehq.org] out: remote: Compressing objects:  11% (3/26)   [K
+[hqdb0.internal.commcarehq.org] out: remote: Compressing objects:  15% (4/26)   [K
+[hqdb0.internal.commcarehq.org] out: remote: Compressing objects:  19% (5/26)   [K
+[hqdb0.internal.commcarehq.org] out: remote: Compressing objects:  23% (6/26)   [K
+[hqdb0.internal.commcarehq.org] out: remote: Compressing objects:  26% (7/26)   [K
+[hqdb0.internal.commcarehq.org] out: remote: Compressing objects:  30% (8/26)   [K
+[hqdb0.internal.commcarehq.org] out: remote: Compressing objects:  34% (9/26)   [K
+[hqdb0.internal.commcarehq.org] out: remote: Compressing objects:  38% (10/26)   [K
+[hqdb0.internal.commcarehq.org] out: remote: Compressing objects:  42% (11/26)   [K
+[hqdb0.internal.commcarehq.org] out: remote: Compressing objects:  46% (12/26)   [K
+[hqdb0.internal.commcarehq.org] out: remote: Compressing objects:  50% (13/26)   [K
+[hqdb0.internal.commcarehq.org] out: remote: Compressing objects:  53% (14/26)   [K
+[hqdb0.internal.commcarehq.org] out: remote: Compressing objects:  57% (15/26)   [K
+[hqdb0.internal.commcarehq.org] out: remote: Compressing objects:  61% (16/26)   [K
+[hqdb0.internal.commcarehq.org] out: remote: Compressing objects:  65% (17/26)   [K
+[hqdb0.internal.commcarehq.org] out: remote: Compressing objects:  69% (18/26)   [K
+[hqdb0.internal.commcarehq.org] out: remote: Compressing objects:  73% (19/26)   [K
+[hqdb0.internal.commcarehq.org] out: remote: Compressing objects:  76% (20/26)   [K
+[hqdb0.internal.commcarehq.org] out: remote: Compressing objects:  80% (21/26)   [K
+[hqdb0.internal.commcarehq.org] out: remote: Compressing objects:  84% (22/26)   [K
+[hqdb0.internal.commcarehq.org] out: remote: Compressing objects:  88% (23/26)   [K
+[hqdb0.internal.commcarehq.org] out: remote: Compressing objects:  92% (24/26)   [K
+[hqdb0.internal.commcarehq.org] out: remote: Compressing objects:  96% (25/26)   [K
+[hqdb0.internal.commcarehq.org] out: remote: Compressing objects: 100% (26/26)   [K
+[hqdb0.internal.commcarehq.org] out: remote: Compressing objects: 100% (26/26), done.[K
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:   1% (1/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:   3% (2/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:   5% (3/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:   7% (4/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:   9% (5/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  11% (6/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  13% (7/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  15% (8/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  17% (9/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  19% (10/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  21% (11/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  23% (12/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  25% (13/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  27% (14/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  29% (15/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  31% (16/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  33% (17/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  35% (18/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  37% (19/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  39% (20/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  41% (21/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  43% (22/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  45% (23/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  47% (24/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  49% (25/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  50% (26/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  52% (27/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  54% (28/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  56% (29/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  58% (30/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  60% (31/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  62% (32/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  64% (33/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  66% (34/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  68% (35/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  70% (36/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  72% (37/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  74% (38/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  76% (39/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  78% (40/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  80% (41/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  82% (42/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  84% (43/51)
+[hqdb0.internal.commcarehq.org] out: remote: Total 51 (delta 9), reused 5 (delta 5), pack-reused 20[K
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  86% (44/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  88% (45/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  90% (46/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  92% (47/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  94% (48/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  96% (49/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  98% (50/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects: 100% (51/51)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects: 100% (51/51), done.
+[hqdb0.internal.commcarehq.org] out: From git://github.com/dimagi/commcare-hq
+[hqdb0.internal.commcarehq.org] out:    2ea7e0d..20da738  master     -> origin/master
+[hqdb0.internal.commcarehq.org] out:  * [new branch]      fix-string-tz-calls -> origin/fix-string-tz-calls
+[hqdb0.internal.commcarehq.org] out:  * [new branch]      global-request -> origin/global-request
+[hqdb0.internal.commcarehq.org] out:    be06203..5de1675  module_uniqueid -> origin/module_uniqueid
+[hqdb0.internal.commcarehq.org] out: Fetching submodule submodules/dimagi-utils-src
+[hqdb0.internal.commcarehq.org] out: remote: Counting objects: 1, done.[K
+[hqdb0.internal.commcarehq.org] out: remote: Total 1 (delta 0), reused 0 (delta 0), pack-reused 0[K
+[hqdb0.internal.commcarehq.org] out: Unpacking objects: 100% (1/1)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects: 100% (1/1), done.
+[hqdb0.internal.commcarehq.org] out: From git://github.com/dimagi/dimagi-utils
+[hqdb0.internal.commcarehq.org] out:    1f3b195..ee1cf00  master     -> origin/master
+[hqdb0.internal.commcarehq.org] out:
+
+[hqdb0.internal.commcarehq.org] sudo: git submodule foreach 'git fetch'
+[hqdb0.internal.commcarehq.org] out: Entering 'corehq/apps/hqmedia/static/hqmedia/MediaUploader'
+[hqdb0.internal.commcarehq.org] out: Entering 'corehq/apps/style/static/style/lib/bootstrap-3.2.0'
+[hqdb0.internal.commcarehq.org] out: remote: Counting objects: 8, done.[K
+[hqdb0.internal.commcarehq.org] out: remote: Total 8 (delta 1), reused 1 (delta 1), pack-reused 6[K
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  12% (1/8)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  25% (2/8)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  37% (3/8)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  50% (4/8)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  62% (5/8)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  75% (6/8)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  87% (7/8)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects: 100% (8/8)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects: 100% (8/8), done.
+[hqdb0.internal.commcarehq.org] out: From https://github.com/twbs/bootstrap
+[hqdb0.internal.commcarehq.org] out:  * [new branch]      normalize.css -> origin/normalize.css
+[hqdb0.internal.commcarehq.org] out: Entering 'corehq/apps/style/static/style/lib/fontawesome-4.1.0'
+[hqdb0.internal.commcarehq.org] out: Entering 'corehq/apps/style/static/style/lib/jquery-cookie'
+[hqdb0.internal.commcarehq.org] out: Entering 'corehq/apps/style/static/style/lib/select2'
+[hqdb0.internal.commcarehq.org] out: Entering 'corehq/apps/style/static/style/lib/ui-select'
+[hqdb0.internal.commcarehq.org] out: Entering 'submodules/auditcare-src'
+[hqdb0.internal.commcarehq.org] out: Entering 'submodules/bootstrap3_crispy'
+[hqdb0.internal.commcarehq.org] out: Entering 'submodules/commcare-translations'
+[hqdb0.internal.commcarehq.org] out: Entering 'submodules/couchdbkit-aggregate'
+[hqdb0.internal.commcarehq.org] out: Entering 'submodules/couchexport-src'
+[hqdb0.internal.commcarehq.org] out: remote: Counting objects: 6, done.[K
+[hqdb0.internal.commcarehq.org] out: remote: Compressing objects:  16% (1/6)   [K
+[hqdb0.internal.commcarehq.org] out: remote: Compressing objects:  33% (2/6)   [K
+[hqdb0.internal.commcarehq.org] out: remote: Compressing objects:  50% (3/6)   [K
+[hqdb0.internal.commcarehq.org] out: remote: Compressing objects:  66% (4/6)   [K
+[hqdb0.internal.commcarehq.org] out: remote: Compressing objects:  83% (5/6)   [K
+[hqdb0.internal.commcarehq.org] out: remote: Compressing objects: 100% (6/6)   [K
+[hqdb0.internal.commcarehq.org] out: remote: Compressing objects: 100% (6/6), done.[K
+[hqdb0.internal.commcarehq.org] out: remote: Total 6 (delta 0), reused 0 (delta 0), pack-reused 0[K
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  16% (1/6)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  33% (2/6)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  50% (3/6)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  66% (4/6)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects:  83% (5/6)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects: 100% (6/6)
+[hqdb0.internal.commcarehq.org] out: Unpacking objects: 100% (6/6), done.
+[hqdb0.internal.commcarehq.org] out: From git://github.com/dimagi/couchexport
+[hqdb0.internal.commcarehq.org] out:  * [new branch]      split      -> origin/split
+[hqdb0.internal.commcarehq.org] out: Entering 'submodules/couchlog-src'
+[hqdb0.internal.commcarehq.org] out: Entering 'submodules/ctable-src'
+[hqdb0.internal.commcarehq.org] out: Entering 'submodules/dimagi-utils-src'
+[hqdb0.internal.commcarehq.org] out: Entering 'submodules/django-digest-src'
+[hqdb0.internal.commcarehq.org] out: Entering 'submodules/django-no-exceptions'
+[hqdb0.internal.commcarehq.org] out: Entering 'submodules/django-prbac-src'
+[hqdb0.internal.commcarehq.org] out: Entering 'submodules/django-soil-src'
+[hqdb0.internal.commcarehq.org] out: Entering 'submodules/djangocouch-src'
+[hqdb0.internal.commcarehq.org] out: Entering 'submodules/fluff-src'
+[hqdb0.internal.commcarehq.org] out: Entering 'submodules/formtranslate-src'
+[hqdb0.internal.commcarehq.org] out: Entering 'submodules/freddy'
+[hqdb0.internal.commcarehq.org] out: Entering 'submodules/langcodes'
+[hqdb0.internal.commcarehq.org] out: Entering 'submodules/pillowtop-src'
+[hqdb0.internal.commcarehq.org] out: Entering 'submodules/python-digest'
+[hqdb0.internal.commcarehq.org] out: Entering 'submodules/toggle'
+[hqdb0.internal.commcarehq.org] out: Entering 'submodules/touchforms-src'
+[hqdb0.internal.commcarehq.org] out: Entering 'submodules/xml2json'
+[hqdb0.internal.commcarehq.org] out:
+
+[hqdb0.internal.commcarehq.org] sudo: git checkout master
+[hqdb0.internal.commcarehq.org] out: Already on 'master'
+[hqdb0.internal.commcarehq.org] out: Your branch is behind 'origin/master' by 4 commits, and can be fast-forwarded.
+[hqdb0.internal.commcarehq.org] out:
+
+[hqdb0.internal.commcarehq.org] sudo: git reset --hard origin/master
+[hqdb0.internal.commcarehq.org] out: HEAD is now at 20da738 Merge pull request #6128 from dimagi/ownership-cleanliness
+[hqdb0.internal.commcarehq.org] out:
+
+[hqdb0.internal.commcarehq.org] sudo: git submodule sync
+[hqdb0.internal.commcarehq.org] out: Synchronizing submodule url for 'corehq/apps/hqmedia/static/hqmedia/MediaUploader'
+[hqdb0.internal.commcarehq.org] out: Synchronizing submodule url for 'corehq/apps/style/static/style/lib/bootstrap-3.2.0'
+[hqdb0.internal.commcarehq.org] out: Synchronizing submodule url for 'corehq/apps/style/static/style/lib/fontawesome-4.1.0'
+[hqdb0.internal.commcarehq.org] out: Synchronizing submodule url for 'corehq/apps/style/static/style/lib/jquery-cookie'
+[hqdb0.internal.commcarehq.org] out: Synchronizing submodule url for 'corehq/apps/style/static/style/lib/select2'
+[hqdb0.internal.commcarehq.org] out: Synchronizing submodule url for 'corehq/apps/style/static/style/lib/ui-select'
+[hqdb0.internal.commcarehq.org] out: Synchronizing submodule url for 'submodules/auditcare-src'
+[hqdb0.internal.commcarehq.org] out: Synchronizing submodule url for 'submodules/bootstrap3_crispy'
+[hqdb0.internal.commcarehq.org] out: Synchronizing submodule url for 'submodules/commcare-translations'
+[hqdb0.internal.commcarehq.org] out: Synchronizing submodule url for 'submodules/couchdbkit-aggregate'
+[hqdb0.internal.commcarehq.org] out: Synchronizing submodule url for 'submodules/couchexport-src'
+[hqdb0.internal.commcarehq.org] out: Synchronizing submodule url for 'submodules/couchlog-src'
+[hqdb0.internal.commcarehq.org] out: Synchronizing submodule url for 'submodules/ctable-src'
+[hqdb0.internal.commcarehq.org] out: Synchronizing submodule url for 'submodules/dimagi-utils-src'
+[hqdb0.internal.commcarehq.org] out: Synchronizing submodule url for 'submodules/django-digest-src'
+[hqdb0.internal.commcarehq.org] out: Synchronizing submodule url for 'submodules/django-no-exceptions'
+[hqdb0.internal.commcarehq.org] out: Synchronizing submodule url for 'submodules/django-prbac-src'
+[hqdb0.internal.commcarehq.org] out: Synchronizing submodule url for 'submodules/django-soil-src'
+[hqdb0.internal.commcarehq.org] out: Synchronizing submodule url for 'submodules/djangocouch-src'
+[hqdb0.internal.commcarehq.org] out: Synchronizing submodule url for 'submodules/fluff-src'
+[hqdb0.internal.commcarehq.org] out: Synchronizing submodule url for 'submodules/formtranslate-src'
+[hqdb0.internal.commcarehq.org] out: Synchronizing submodule url for 'submodules/freddy'
+[hqdb0.internal.commcarehq.org] out: Synchronizing submodule url for 'submodules/langcodes'
+[hqdb0.internal.commcarehq.org] out: Synchronizing submodule url for 'submodules/pillowtop-src'
+[hqdb0.internal.commcarehq.org] out: Synchronizing submodule url for 'submodules/python-digest'
+[hqdb0.internal.commcarehq.org] out: Synchronizing submodule url for 'submodules/toggle'
+[hqdb0.internal.commcarehq.org] out: Synchronizing submodule url for 'submodules/touchforms-src'
+[hqdb0.internal.commcarehq.org] out: Synchronizing submodule url for 'submodules/xml2json'
+[hqdb0.internal.commcarehq.org] out:
+
+[hqdb0.internal.commcarehq.org] sudo: git submodule update --init --recursive
+[hqdb0.internal.commcarehq.org] out: Submodule 'corehq/apps/hqmedia/static/hqmedia/MediaUploader' () registered for path 'corehq/apps/hqmedia/static/hqmedia/MediaUploader'
+[hqdb0.internal.commcarehq.org] out: Submodule 'corehq/apps/style/static/style/lib/bootstrap-3.2.0' () registered for path 'corehq/apps/style/static/style/lib/bootstrap-3.2.0'
+[hqdb0.internal.commcarehq.org] out: Submodule 'corehq/apps/style/static/style/lib/fontawesome-4.1.0' () registered for path 'corehq/apps/style/static/style/lib/fontawesome-4.1.0'
+[hqdb0.internal.commcarehq.org] out: Submodule 'corehq/apps/style/static/style/lib/jquery-cookie' () registered for path 'corehq/apps/style/static/style/lib/jquery-cookie'
+[hqdb0.internal.commcarehq.org] out: Submodule 'corehq/apps/style/static/style/lib/select2' () registered for path 'corehq/apps/style/static/style/lib/select2'
+[hqdb0.internal.commcarehq.org] out: Submodule 'corehq/apps/style/static/style/lib/ui-select' () registered for path 'corehq/apps/style/static/style/lib/ui-select'
+[hqdb0.internal.commcarehq.org] out: Submodule 'submodules/auditcare-src' () registered for path 'submodules/auditcare-src'
+[hqdb0.internal.commcarehq.org] out: Submodule 'submodules/bootstrap3_crispy' () registered for path 'submodules/bootstrap3_crispy'
+[hqdb0.internal.commcarehq.org] out: Submodule 'submodules/commcare-translations' () registered for path 'submodules/commcare-translations'
+[hqdb0.internal.commcarehq.org] out: Submodule 'submodules/couchdbkit-aggregate' () registered for path 'submodules/couchdbkit-aggregate'
+[hqdb0.internal.commcarehq.org] out: Submodule 'submodules/couchexport-src' () registered for path 'submodules/couchexport-src'
+[hqdb0.internal.commcarehq.org] out: Submodule 'submodules/couchlog-src' () registered for path 'submodules/couchlog-src'
+[hqdb0.internal.commcarehq.org] out: Submodule 'submodules/ctable-src' () registered for path 'submodules/ctable-src'
+[hqdb0.internal.commcarehq.org] out: Submodule 'submodules/dimagi-utils-src' () registered for path 'submodules/dimagi-utils-src'
+[hqdb0.internal.commcarehq.org] out: Submodule 'submodules/django-digest-src' () registered for path 'submodules/django-digest-src'
+[hqdb0.internal.commcarehq.org] out: Submodule 'submodules/django-no-exceptions' () registered for path 'submodules/django-no-exceptions'
+[hqdb0.internal.commcarehq.org] out: Submodule 'submodules/django-prbac-src' () registered for path 'submodules/django-prbac-src'
+[hqdb0.internal.commcarehq.org] out: Submodule 'submodules/django-soil-src' () registered for path 'submodules/django-soil-src'
+[hqdb0.internal.commcarehq.org] out: Submodule 'submodules/djangocouch-src' () registered for path 'submodules/djangocouch-src'
+[hqdb0.internal.commcarehq.org] out: Submodule 'submodules/fluff-src' () registered for path 'submodules/fluff-src'
+[hqdb0.internal.commcarehq.org] out: Submodule 'submodules/formtranslate-src' () registered for path 'submodules/formtranslate-src'
+[hqdb0.internal.commcarehq.org] out: Submodule 'submodules/freddy' () registered for path 'submodules/freddy'
+[hqdb0.internal.commcarehq.org] out: Submodule 'submodules/langcodes' () registered for path 'submodules/langcodes'
+[hqdb0.internal.commcarehq.org] out: Submodule 'submodules/pillowtop-src' () registered for path 'submodules/pillowtop-src'
+[hqdb0.internal.commcarehq.org] out: Submodule 'submodules/python-digest' () registered for path 'submodules/python-digest'
+[hqdb0.internal.commcarehq.org] out: Submodule 'submodules/toggle' () registered for path 'submodules/toggle'
+[hqdb0.internal.commcarehq.org] out: Submodule 'submodules/touchforms-src' () registered for path 'submodules/touchforms-src'
+[hqdb0.internal.commcarehq.org] out: Submodule 'submodules/xml2json' () registered for path 'submodules/xml2json'
+[hqdb0.internal.commcarehq.org] out:
+
+[hqdb0.internal.commcarehq.org] sudo: git clean -ffd
+[hqdb0.internal.commcarehq.org] sudo: find . -name '*.pyc' -delete
+[hqdb0.internal.commcarehq.org] sudo: export HOME=/home/cchq && source /home/cchq/www/production/python_env_preindex/bin/activate &&  bash scripts/uninstall-requirements.sh
+[hqdb0.internal.commcarehq.org] sudo: export HOME=/home/cchq && source /home/cchq/www/production/python_env_preindex/bin/activate &&  pip install --timeout 60 --requirement /home/cchq/www/production/code_root_preindex/requirements/prod-requirements.txt --requirement /home/cchq/www/production/code_root_preindex/requirements/requirements.txt
+[hqdb0.internal.commcarehq.org] out: Downloading/unpacking https://github.com/dimagi/files/raw/master/python-requirements/pygooglechart-0.3.0.tar.gz (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 33))
+[hqdb0.internal.commcarehq.org] out:   Downloading pygooglechart-0.3.0.tar.gz
+[hqdb0.internal.commcarehq.org] out:   Running setup.py egg_info for package from https://github.com/dimagi/files/raw/master/python-requirements/pygooglechart-0.3.0.tar.gz
+[hqdb0.internal.commcarehq.org] out:
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): flower==0.7.0 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/prod-requirements.txt (line 1))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): newrelic in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages/newrelic-2.42.0.35 (from -r /home/cchq/www/production/code_root_preindex/requirements/prod-requirements.txt (line 2))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): Cython==0.17.4 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 2))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): restkit==4.2.0 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 3))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): jsonobject-couchdbkit==0.6.5.6 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 4))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): jsonobject==0.6.3 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 5))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): celery==3.1.17 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 6))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): decorator==3.3.2 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 7))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): django==1.5.6 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 8))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): django-braces==1.3.1 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 9))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): django-celery==3.1.16 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 10))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): django-crispy-forms==1.4.0 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 11))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): django-json-field==0.5.5 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 12))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): kombu==3.0.24 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 13))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): billiard==3.3.0.19 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 14))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): defusedxml==0.4.1 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 15))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): diff-match-patch==20120106 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 16))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): django-kombu==0.9.1 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 17))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): django-rosetta==0.7.1 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 18))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): django-tastypie==0.12.1 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 19))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): djtables==0.1.1 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 20))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): eulxml==0.18.0 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 22))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): feedparser==5.1.3 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 23))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): gunicorn==18.0 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 24))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): lxml==3.2.1 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 25))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): mock==0.8.0 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 26))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): mocker==1.1.1 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 27))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): openpyxl==1.5.6 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 28))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): Pillow==2.1.0 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 29))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): phonenumberslite==6.0.0a in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 30))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): poster==0.8.1 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 31))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): psycopg2==2.5.1 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 32))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): python-dateutil==1.5 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 34))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): python-magic==0.4.2 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 35))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): pytz==2014.10 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 36))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): PyYAML==3.10 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 37))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): raven==3.1.10 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 38))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): requests==2.0.0 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 39))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): south==0.7.3 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 40))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): tropo-webapi-python==0.1.3 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 41))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): tornado==3.1.1 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 42))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): xlutils==1.4.1 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 43))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): Unidecode==0.04.9 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 44))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): xlrd==0.7.3 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 45))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): simplejson==2.6.1 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 46))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): GitPython==0.3.2.RC1 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 47))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): gitdb==0.5.4 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 48))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): sh==1.09 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 49))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): gevent==1.0 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 50))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): greenlet==0.4.2 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 51))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): rawes==0.4.0 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 52))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): numpy==1.7.1 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 53))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): six==1.4.1 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 54))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): socketpool==0.5.2 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 55))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): markdown==2.2.1 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 56))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): django-markup-deprecated in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 57))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): amqp==1.4.6 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 58))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): amqplib==1.0.2 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 59))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): sqlagg==0.2.3 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 60))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): django-redis==3.3 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 61))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): redis==2.8.0 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 62))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): unittest2 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 63))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): fakecouch==0.0.8 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 64))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): twilio==3.6.4 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 66))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): django-countries==1.5 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 67))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): reportlab==3.0 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 68))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): stripe==1.12.2 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 69))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): mailchimp==2.0.7 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 70))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): django-compressor==1.4 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 71))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): django-angular==0.7.8 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 72))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): Pycco==0.3.0 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 73))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): django-mptt==0.6.1 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 74))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): jsonpath-rw==1.3.0 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 75))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): SQLAlchemy==0.8.2 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 78))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): alembic==0.6.4 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from -r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 79))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): http-parser>=0.7.7 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from restkit==4.2.0->-r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 3))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): nose in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from restkit==4.2.0->-r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 3))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): webob in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from restkit==4.2.0->-r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 3))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): anyjson>=0.3.3 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from kombu==3.0.24->-r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 13))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): python-mimeparse>=0.1.4 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from django-tastypie==0.12.1->-r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 19))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): ply in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from eulxml==0.18.0->-r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 22))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): xlwt>=0.7.2 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from xlutils==1.4.1->-r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 43))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): errorhandler in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from xlutils==1.4.1->-r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 43))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): async>=0.6.1 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from gitdb==0.5.4->-r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 48))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): smmap>=0.8.0 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from gitdb==0.5.4->-r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 48))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): thrift==0.8.0 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from rawes==0.4.0->-r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 52))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): httplib2>=0.7 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from twilio==3.6.4->-r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 66))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): docopt==0.4.0 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from mailchimp==2.0.7->-r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 70))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): django-appconf>=0.4 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from django-compressor==1.4->-r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 71))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): pygments in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from Pycco==0.3.0->-r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 73))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): pystache in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from Pycco==0.3.0->-r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 73))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): smartypants in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from Pycco==0.3.0->-r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 73))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): Mako in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from alembic==0.6.4->-r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 79))
+[hqdb0.internal.commcarehq.org] out: Requirement already satisfied (use --upgrade to upgrade): MarkupSafe>=0.9.2 in /home/cchq/www/production/python_env_preindex/lib/python2.7/site-packages (from Mako->alembic==0.6.4->-r /home/cchq/www/production/code_root_preindex/requirements/requirements.txt (line 79))
+[hqdb0.internal.commcarehq.org] out: Cleaning up...
+[hqdb0.internal.commcarehq.org] out:
+
+[hqdb0.internal.commcarehq.org] sudo: echo "/home/cchq/www/production/python_env_preindex/bin/python /home/cchq/www/production/code_root_preindex/manage.py preindex_everything 8 esoergel" --mail | at -t `date -d "5 seconds" +%m%d%H%M.%S`
+[hqdb0.internal.commcarehq.org] out: warning: commands will be executed using /bin/sh
+[hqdb0.internal.commcarehq.org] out: job 861 at Wed Apr  1 08:44:00 2015
+[hqdb0.internal.commcarehq.org] out:
+
+[hqdb0.internal.commcarehq.org] sudo: rm -f tmp.sh resource_versions.py; /home/cchq/www/production/python_env_preindex/bin/python manage.py resource_static clear
+[hqdb0.internal.commcarehq.org] out: Current commit SHA: 20da7388822347fafa1ab57bc937bf12a865bfe5
+[hqdb0.internal.commcarehq.org] out: clearing resource cache
+[hqdb0.internal.commcarehq.org] out:
+
+[hqdb0.internal.commcarehq.org] - PreconditionFailed: The database 'commcarehq' is corrupted
+[hqdb0.internal.commcarehq.org] wiping database
+[hqdb0.internal.commcarehq.org] {start_red}WARNING! This operation is not reversible.{end}
+[hqdb0.internal.commcarehq.org] {start_red}WARNING! This operation is not reversible.{end}
+[hqdb0.internal.commcarehq.org] {start_red}WARNING! This operation is not reversible.{end}
+[hqdb0.internal.commcarehq.org] {start_red}WARNING! This operation is not reversible.{end}
+[hqdb0.internal.commcarehq.org] {start_red}WARNING! This operation is not reversible.{end}
+[hqdb0.internal.commcarehq.org] {start_red}WARNING! This operation is not reversible.{end}
+[hqdb0.internal.commcarehq.org] {start_red}WARNING! This operation is not reversible.{end}
+[hqdb0.internal.commcarehq.org] {start_red}WARNING! This operation is not reversible.{end}
+[hqdb0.internal.commcarehq.org] {start_red}WARNING! This operation is not reversible.{end}
+[hqdb0.internal.commcarehq.org] {start_red}WARNING! This operation is not reversible.{end}
+[hqdb0.internal.commcarehq.org] {start_red}WARNING! This operation is not reversible.{end}
+[hqdb0.internal.commcarehq.org] {start_red}WARNING! This operation is not reversible.{end}
+[hqdb0.internal.commcarehq.org] {start_red}WARNING! This operation is not reversible.{end}
+[hqdb0.internal.commcarehq.org] GET /commcarehq/00001311-1498-440b-9959-d365fb0191ba?revs_info=true 200
+[hqdb0.internal.commcarehq.org] GET /_session 200
+[hqdb0.internal.commcarehq.org] HEAD /commcarehq/ 404
+[hqdb0.internal.commcarehq.org] HEAD /commcarehq/ 404
+[hqdb0.internal.commcarehq.org] HEAD /commcarehq/ 404
+[hqdb0.internal.commcarehq.org] HEAD /commcarehq/ 404
+[hqdb0.internal.commcarehq.org] HEAD /commcarehq/ 404
+[hqdb0.internal.commcarehq.org] HEAD /commcarehq/ 404
+[hqdb0.internal.commcarehq.org] HEAD /commcarehq/ 404
+[hqdb0.internal.commcarehq.org] HEAD /commcarehq/ 404
+[hqdb0.internal.commcarehq.org] HEAD /commcarehq/ 404
+[hqdb0.internal.commcarehq.org] HEAD /commcarehq/ 404
+[hqdb0.internal.commcarehq.org] HEAD /commcarehq/ 404
+[hqdb0.internal.commcarehq.org] HEAD /commcarehq/ 404
+[hqdb0.internal.commcarehq.org] HEAD /commcarehq/ 404
+[hqdb0.internal.commcarehq.org] HEAD /commcarehq/ 404
+[hqdb0.internal.commcarehq.org] {start_red}NoResultFound: database 'commcarehq' not found{end}
+[hqdb0.internal.commcarehq.org] {start_red}NoResultFound: _design/views does not exist.{end}
+[hqdb0.internal.commcarehq.org] Please contact your systems administrator to restore your data.
+
+
+Aborting.
+Disconnecting from hqdb0.internal.commcarehq.org...
+
+
+
+April Fools!
