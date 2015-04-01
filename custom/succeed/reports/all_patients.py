@@ -137,7 +137,7 @@ class PatientListReport(SqlTabularReport, CustomProjectReport, ProjectReportPara
             'domain': self.domain,
             'is_active': is_active,
             'care_site': cate_site.lower() if cate_site else None,
-            'owner_id': owner_ids
+            'owner_id': tuple(owner_ids)
         }
 
     @property

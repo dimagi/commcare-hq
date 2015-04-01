@@ -989,7 +989,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
             'case_properties': get_all_case_properties(app),
         })
 
-        if toggles.FORM_LINK_WORKFLOW.enabled(request.user.username):
+        if toggles.FORM_LINK_WORKFLOW.enabled(domain):
             def qualified_form_name(form):
                 module_name = trans(form.get_module().name, app.langs)
                 form_name = trans(form.name, app.langs)
@@ -1820,7 +1820,7 @@ def edit_form_attr(request, domain, app_id, unique_form_id, attr):
         form.no_vellum = request.POST['no_vellum'] == 'true'
     if (should_edit("form_links_xpath_expressions") and
             should_edit("form_links_form_ids") and
-            toggles.FORM_LINK_WORKFLOW.enabled(request.user.username)):
+            toggles.FORM_LINK_WORKFLOW.enabled(domain)):
         form_links = zip(
             request.POST.getlist('form_links_xpath_expressions'),
             request.POST.getlist('form_links_form_ids')
