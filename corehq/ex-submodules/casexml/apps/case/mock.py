@@ -1,7 +1,11 @@
 from __future__ import absolute_import
 import copy
 from datetime import datetime
+import uuid
 from xml.etree import ElementTree
+from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.util import post_case_blocks
+from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.xml import V1, NS_VERSION_MAP, V2
 from casexml.apps.case.xml.generator import date_to_xml_string
@@ -255,3 +259,108 @@ class CaseBlock(dict):
 
 class CaseBlockError(Exception):
     pass
+
+
+class CaseStructure(object):
+    """
+    A structure representing a case and its related cases.
+
+    Can recursively nest parents/grandparents inside here.
+    """
+
+    def __init__(self, case_id=None, relationships=None, attrs=None):
+        self.case_id = case_id or uuid.uuid4().hex
+        self.relationships = relationships if relationships is not None else []
+        self.attrs = attrs if attrs is not None else {}
+
+    @property
+    def index(self):
+        return {
+            r.relationship: (r.related_type, r.related_id)
+            for r in self.relationships
+        }
+
+    def walk_ids(self):
+        yield self.case_id
+        for relationship in self.relationships:
+            for id in relationship.related_structure.walk_ids():
+                yield id
+
+
+class CaseRelationship(object):
+    DEFAULT_RELATIONSHIP = 'parent'
+    DEFAULT_RELATED_CASE_TYPE = 'default_related_case_type'
+
+    def __init__(self, related_structure, relationship=DEFAULT_RELATIONSHIP, related_type=None):
+        self.related_structure = related_structure
+        self.relationship = relationship
+        if related_type is None:
+            related_type = related_structure.attrs.get('case_type', self.DEFAULT_RELATED_CASE_TYPE)
+        self.related_type = related_type
+
+    @property
+    def related_id(self):
+        return self.related_structure.case_id
+
+
+class CaseFactory(object):
+    """
+    A case factory makes and updates cases for you using CaseStructures.
+
+    The API is a wrapper around the CaseBlock utility and is designed to be
+    easier to work with to setup parent/child structures or default properties.
+    """
+
+    def __init__(self, domain=None, case_defaults=None, form_extras=None):
+        self.domain = domain
+        self.case_defaults = case_defaults if case_defaults is not None else {}
+        self.form_extras = form_extras
+        # almost everything is V2 so override the default for this unless explicitly set
+        if 'version' not in self.case_defaults:
+            self.case_defaults['version'] = V2
+
+    def get_case_block(self, case_id, **kwargs):
+        for k, v in self.case_defaults.items():
+            if k not in kwargs:
+                kwargs[k] = v
+        return CaseBlock(
+            case_id=case_id,
+            **kwargs
+        ).as_xml()
+
+    def post_case_blocks(self, caseblocks):
+        return post_case_blocks(
+            caseblocks,
+            form_extras=self.form_extras,
+            domain=self.domain,
+        )
+
+    def create_case(self, **kwargs):
+        """
+        Shortcut to create a simple case without needing to make a structure for it.
+        """
+        kwargs['create'] = True
+        return self.create_or_update_case(CaseStructure(case_id=uuid.uuid4().hex, attrs=kwargs))[0]
+
+    def create_or_update_case(self, case_structure):
+        return self.create_or_update_cases([case_structure])
+
+    def create_or_update_cases(self, case_structures):
+        def _get_case_block(substructure):
+            return self.get_case_block(substructure.case_id, index=substructure.index, **substructure.attrs)
+
+        def _get_case_blocks(substructure):
+            return [_get_case_block(substructure)] + [
+                block for relationship in substructure.relationships
+                for block in _get_case_blocks(relationship.related_structure)
+            ]
+
+        self.post_case_blocks(
+            [block for structure in case_structures for block in _get_case_blocks(structure)]
+        )
+        return [
+            CommCareCase.wrap(doc) for doc in iter_docs(
+                CommCareCase.get_db(),
+                [id for structure in case_structures for id in structure.walk_ids()]
+            )
+        ]
