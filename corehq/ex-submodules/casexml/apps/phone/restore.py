@@ -5,7 +5,7 @@ from couchdbkit import ResourceConflict, ResourceNotFound
 from casexml.apps.phone.caselogic import BatchedCaseSyncOperation
 from casexml.apps.stock.consumption import compute_consumption_or_default
 from casexml.apps.stock.utils import get_current_ledger_transactions_multi
-from corehq.toggles import BATCHED_RESTORE, LOOSE_SYNC_TOKEN_VALIDATION
+from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.exceptions import BadStateException, RestoreException
@@ -349,8 +349,6 @@ class RestoreConfig(object):
         new_synclog.save(**get_safe_write_kwargs())
 
         # start with standard response
-        batch_enabled = BATCHED_RESTORE.enabled(self.user.domain) or BATCHED_RESTORE.enabled(self.user.username)
-        logger.debug('Batch restore enabled: %s', batch_enabled)
         with StringRestoreResponse(user.username, items=self.items) as response:
             # add sync token info
             response.append(xml.get_sync_element(new_synclog.get_id))
@@ -361,8 +359,7 @@ class RestoreConfig(object):
             for fixture in generator.get_fixtures(user, self.version, last_synclog):
                 response.append(fixture)
 
-            payload_fn = get_case_payload_batched if batch_enabled else get_case_payload
-            case_response, self.num_batches = payload_fn(
+            case_response, self.num_batches = get_case_payload_batched(
                 self.domain, self.stock_settings, self.version, user, last_synclog, new_synclog
             )
             combined_response = response + case_response

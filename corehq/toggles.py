@@ -221,13 +221,6 @@ DOUBLE_MANAGEMENT = StaticToggle(
     [NAMESPACE_USER, NAMESPACE_DOMAIN]
 )
 
-BATCHED_RESTORE = PredicatablyRandomToggle(
-    'batched_restore',
-    'Batch OTA restore response generation',
-    [NAMESPACE_DOMAIN, NAMESPACE_USER],
-    0.5
-)
-
 SPLIT_MULTISELECT_EXPORT = StaticToggle(
     'split_multiselect_export',
     'Split multiselect columns in custom exports',
