@@ -159,6 +159,7 @@ def inventory_management(request, domain):
         mimetype='application/json'
     )
 
+
 @require_GET
 def stockouts_product(request, domain):
 

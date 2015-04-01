@@ -202,7 +202,7 @@ class StockoutsProduct(EWSData):
                 rows[product.code] = []
 
             enddate = self.config['enddate']
-            startdate =self.config['startdate'] if 'custom_date' in self.config else enddate - timedelta(days=90)
+            startdate = self.config['startdate'] if 'custom_date' in self.config else enddate - timedelta(days=90)
             for d in get_second_week(startdate, enddate):
                 for product in products:
                     st = StockTransaction.objects.filter(
