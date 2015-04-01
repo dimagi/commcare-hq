@@ -108,7 +108,7 @@ class ReportDispatcher(View):
 
     @datespan_default
     def dispatch(self, request, domain=None, report_slug=None, render_as=None,
-                 *args, **kwargs):
+                 permissions_check=None, *args, **kwargs):
         render_as = render_as or 'view'
         domain = domain or getattr(request, 'domain', None)
 
@@ -129,7 +129,8 @@ class ReportDispatcher(View):
         cls = self.get_report(domain, report_slug)
         class_name = cls.__module__ + '.' + cls.__name__ if cls else ''
 
-        if cls and (self.permissions_check(class_name, request, domain=domain)):
+        permissions_check = permissions_check or self.permissions_check
+        if cls and (permissions_check(class_name, request, domain=domain)):
             report = cls(request, domain=domain, **report_kwargs)
             report.rendered_as = render_as
             try:

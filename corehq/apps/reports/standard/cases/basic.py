@@ -5,6 +5,7 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
 from couchdbkit import RequestFailed
+from corehq.util.timezones.conversions import PhoneTime
 from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.api.es import CaseES
@@ -321,10 +322,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
 
     def date_to_json(self, date):
         if date:
-            return date.strftime('%Y-%m-%d %H:%M:%S')
-            # temporary band aid solution for http://manage.dimagi.com/default.asp?80262
-            # return tz_utils.adjust_datetime_to_timezone(
-            #     date, pytz.utc.zone, self.timezone.zone
-            # ).strftime('%Y-%m-%d %H:%M:%S')
+            return (PhoneTime(date, self.timezone).user_time(self.timezone)
+                    .ui_string('%Y-%m-%d %H:%M:%S'))
         else:
             return ''

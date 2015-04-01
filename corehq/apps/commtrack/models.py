@@ -958,7 +958,7 @@ class StockState(models.Model):
     @property
     def resupply_quantity_needed(self):
         monthly_consumption = self.get_monthly_consumption()
-        if monthly_consumption is not None:
+        if monthly_consumption is not None and self.sql_location is not None:
             overstock = self.sql_location.location_type.overstock_threshold
             needed_quantity = int(
                 monthly_consumption * overstock

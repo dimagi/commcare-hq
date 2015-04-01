@@ -16,7 +16,7 @@
     ],
     "columns": [
         {
-            "type": "owner",
+            "type": "field",
             "display": "Owner",
             "field": "owner",
             "aggregation": "simple"

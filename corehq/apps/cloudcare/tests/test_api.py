@@ -217,16 +217,22 @@ class CaseAPITest(TestCase):
         self.assertEqual(self.expectedOpenByUserWithFootprint + self.expectedClosedByUserWithFootprint, len(list))
 
     def testCaseAPIResultJSON(self):
-        case = _create_case(self.users[0], None, close=False)
-        res_sanitized = CaseAPIResult(id=case._id, couch_doc=case, sanitize=True)
-        res_unsanitized = CaseAPIResult(id=case._id, couch_doc=case, sanitize=False)
+        try:
+            case = CommCareCase()
+            # because of how setattr is overridden you have to set it to None in this wacky way
+            case._doc['type'] = None
+            case.save()
+            self.assertEqual(None, CommCareCase.get(case._id).type)
+            res_sanitized = CaseAPIResult(id=case._id, couch_doc=case, sanitize=True)
+            res_unsanitized = CaseAPIResult(id=case._id, couch_doc=case, sanitize=False)
 
-        json = res_sanitized.case_json
-        self.assertEqual(json['properties']['case_type'], '')
+            json = res_sanitized.case_json
+            self.assertEqual(json['properties']['case_type'], '')
 
-        json = res_unsanitized.case_json
-        self.assertEqual(json['properties']['case_type'], None)
-        case.delete()
+            json = res_unsanitized.case_json
+            self.assertEqual(json['properties']['case_type'], None)
+        finally:
+            case.delete()
 
 
 def _child_case_type(type):

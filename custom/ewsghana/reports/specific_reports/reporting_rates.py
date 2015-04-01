@@ -329,13 +329,13 @@ class AlertsData(ReportingRatesData):
                 )
                 if sp.supply_point_id not in reported:
                     rows.append(['<div style="background-color: rgba(255, 0, 0, 0.2)">%s has not reported last '
-                                 'month. <a href="%s">[details]</a></div>' % (sp.name, url)])
+                                 'month. <a href="%s" target="_blank">[details]</a></div>' % (sp.name, url)])
                 if sp.location_id not in with_reporters:
                     rows.append(['<div style="background-color: rgba(255, 0, 0, 0.2)">%s has not no reporters'
-                                 ' registered. <a href="%s">[details]</a></div>' % (sp.name, url)])
+                                 ' registered. <a href="%s" target="_blank">[details]</a></div>' % (sp.name, url)])
                 if sp.location_id not in with_in_charge:
                     rows.append(['<div style="background-color: rgba(255, 0, 0, 0.2)">%s has not no in-charge '
-                                 'registered. <a href="%s">[details]</a></div>' % (sp.name, url)])
+                                 'registered. <a href="%s" target="_blank">[details]</a></div>' % (sp.name, url)])
 
         if not rows:
             rows.append(['<div style="background-color: rgba(0, 255, 0, 0.2)">No current alerts</div>'])

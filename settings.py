@@ -556,6 +556,7 @@ COUCHLOG_DISPLAY_COLS = ["id", "archived?", "date", "exception type", "message",
                          "domain", "user", "url", "actions", "report"]
 COUCHLOG_RECORD_WRAPPER = "corehq.apps.hqcouchlog.wrapper"
 COUCHLOG_DATABASE_NAME = "commcarehq-couchlog"
+COUCHLOG_AUTH_DECORATOR = 'corehq.apps.domain.decorators.require_superuser_or_developer'
 
 # couchlog/case search
 LUCENE_ENABLED = False
@@ -675,6 +676,7 @@ ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_ID': '',
     'PINGDOM_ID': '',
     'ANALYTICS_ID_PUBLIC_COMMCARE': '',
+    'SEGMENT_ANALYTICS_KEY': '',
 }
 
 OPEN_EXCHANGE_RATES_ID = ''
@@ -868,7 +870,8 @@ INVOICE_FROM_ADDRESS = {}
 BANK_ADDRESS = {}
 BANK_NAME = ''
 BANK_ACCOUNT_NUMBER = ''
-BANK_ROUTING_NUMBER = ''
+BANK_ROUTING_NUMBER_ACH = ''
+BANK_ROUTING_NUMBER_WIRE = ''
 BANK_SWIFT_CODE = ''
 
 STRIPE_PUBLIC_KEY = ''

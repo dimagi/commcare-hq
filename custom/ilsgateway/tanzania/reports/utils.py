@@ -98,7 +98,7 @@ def format_percent(float_number):
 
 
 def link_format(text, url):
-    return '<a href=%s>%s</a>' % (url, text)
+    return '<a href=%s target="_blank">%s</a>' % (url, text)
 
 
 def decimal_format(value):

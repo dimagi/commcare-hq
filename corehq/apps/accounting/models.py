@@ -1444,6 +1444,10 @@ class Invoice(models.Model):
             )
         return contact_emails
 
+    @property
+    def is_paid(self):
+        return bool(self.date_paid)
+
 
 class SubscriptionAdjustment(models.Model):
     """
@@ -1555,12 +1559,13 @@ class BillingRecord(models.Model):
             'domain_url': absolute_reverse(DefaultProjectSettingsView.urlname,
                                            args=[domain]),
             'statement_number': self.invoice.invoice_number,
-            'payment_status': (_("Paid") if self.invoice.date_paid is not None
+            'payment_status': (_("Paid") if self.invoice.is_paid
                                else _("Payment Required")),
             'amount_due': fmt_dollar_amount(self.invoice.balance),
             'statements_url': absolute_reverse(
                 DomainBillingStatementsView.urlname, args=[domain]),
             'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
+            'accounts_email': settings.ACCOUNTS_EMAIL,
         }
 
         contact_emails = contact_emails or self.invoice.email_recipients

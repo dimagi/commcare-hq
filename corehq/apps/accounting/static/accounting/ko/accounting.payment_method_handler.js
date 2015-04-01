@@ -163,21 +163,13 @@ var BaseCostItem = function (initData) {
 
 };
 
-var Invoice = function (initData) {
+var ChargedCostItem = function (initData) {
     'use strict';
     BaseCostItem.call(this, initData);
     var self = this;
-    self.paginatedItem = initData.paginatedItem;
-    self.paginatedList = initData.paginatedList;
-    self.id = ko.computed(function () {
-        return self.paginatedItem.itemData().id;
-    });
-    self.balance = ko.computed(function () {
-        return self.paginatedItem.itemData().balance;
-    });
-    self.invoiceNumber = ko.computed(function () {
-        return self.paginatedItem.itemData().invoice_number;
-    });
+
+    self.balance = ko.observable();
+
     self.customPaymentAmount = ko.observable(self.balance());
     self.paymentAmountType = ko.observable('full');
 
@@ -234,7 +226,6 @@ var Invoice = function (initData) {
     self.reset =  function (response) {
         self.customPaymentAmount(self.balance());
         self.paymentAmountType('full');
-        self.paginatedList.refreshList(self.paginatedItem);
     };
 
     self.isValid = ko.computed(function () {
@@ -242,8 +233,51 @@ var Invoice = function (initData) {
     });
 };
 
-Invoice.prototype = Object.create( BaseCostItem.prototype );
+ChargedCostItem.prototype = Object.create( BaseCostItem.prototype );
+ChargedCostItem.prototype.constructor = ChargedCostItem;
+
+
+var Invoice = function (initData) {
+    'use strict';
+    ChargedCostItem.call(this, initData);
+    var self = this;
+
+    self.paginatedItem = initData.paginatedItem;
+    self.paginatedList = initData.paginatedList;
+    self.balance(self.paginatedItem.itemData().balance);
+    self.customPaymentAmount(self.balance());
+
+    self.id = ko.computed(function () {
+        return self.paginatedItem.itemData().id;
+    });
+    self.invoiceNumber = ko.computed(function () {
+        return self.paginatedItem.itemData().invoice_number;
+    });
+
+    self.reset = function (response) {
+        // TODO - use inheritance instead of duplicating code (tricky)
+        self.customPaymentAmount(self.balance());
+        self.paymentAmountType('full');
+        self.paginatedList.refreshList(self.paginatedItem);
+    };
+};
+
+Invoice.protoptye = Object.create( ChargedCostItem.prototype );
 Invoice.prototype.constructor = Invoice;
+
+var TotalCostItem = function (initData) {
+    'use strict';
+    ChargedCostItem.call(this, initData);
+    var self = this;
+
+    self.balance(initData.totalBalance);
+    self.customPaymentAmount(self.balance());
+
+    self.id = null; // TODO remove once cost-item-template does not need this
+};
+
+TotalCostItem.protoptye = Object.create( ChargedCostItem.prototype );
+TotalCostItem.prototype.constructor = TotalCostItem;
 
 var CreditCostItem = function (initData) {
    'use strict';
