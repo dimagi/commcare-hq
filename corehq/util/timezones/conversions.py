@@ -88,6 +88,15 @@ def _adjust_datetime_to_utc(value, from_tz):
     Takes a timezone-naive datetime that represents
     something other than a UTC time and converts it to UTC (timezone-naive)
 
+    In timezones with DST, there is one hour per year where a time plus
+    timezone (i.e. 'America/New_York' w/o specifying EST vs EDT)
+    could represent one of two actual points in time, separated by an hour.
+    This function does not attempt to deal with the
+    (literally impossible) problem of figuring out which was intended,
+    and simply returns one arbitrarily.
+    (This is of course one of many reasons that storing datetimes
+    as timezone-naive local wall-clock times is, always, a very bad idea.)
+
     """
     from_tz = _soft_assert_tz_not_string(from_tz)
     assert value.tzinfo is None
