@@ -51,7 +51,6 @@ branches:
   - fixtures-spike  # cz 1/29
   - static-updates # Biyeun 2/9
   - loc-type-stock-rates  # Ethan 3/6
- # - pricingSMS # sravan 3/23
   - usercase # Norman 3/27
   - usercase_batch # Norman 3/31
 submodules:
