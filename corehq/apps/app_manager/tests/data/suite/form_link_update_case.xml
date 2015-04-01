@@ -11,7 +11,7 @@
             <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='frog'][@status='open']" value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
         </session>
         <stack>
-          <create if="true()">
+          <create if="(today() - dob) &gt; 7">
             <command value="'m1'"/>
             <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
             <command value="'m1-f0'"/>
