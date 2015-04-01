@@ -43,7 +43,7 @@
 trunk: master
 name: autostaging
 branches:
-  - test-global-request  # danny 4/1
+#  - test-global-request  # danny 4/1
   - subscription-no-contact-info # bb 8/4
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
   - vellum-staging # J$ 11/13
