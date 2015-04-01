@@ -1,5 +1,6 @@
 import copy
 import logging
+import warnings
 
 from couchdbkit import ResourceNotFound
 import datetime
@@ -44,6 +45,7 @@ class CaseProcessingResult(object):
     def set_cases(self, cases):
         self.cases = cases
 
+
 def process_cases(xform, config=None):
     """
     Creates or updates case objects which live outside of the form.
@@ -51,6 +53,10 @@ def process_cases(xform, config=None):
     If reconcile is true it will perform an additional step of
     reconciling the case update history after the case is processed.
     """
+    warnings.warn(
+        'This function is deprecated. You should be using SubmissionPost.',
+        DeprecationWarning,
+    )
 
     assert getattr(settings, 'UNIT_TESTING', False)
     domain = get_and_check_xform_domain(xform)
