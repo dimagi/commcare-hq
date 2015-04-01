@@ -200,8 +200,11 @@ class ProductsReportHelper(object):
     def sql_location(self):
         return self.location.sql_location
 
+    def reported_products_ids(self):
+        return {transaction.product_id for transaction in self.transactions}
+
     def reported_products(self):
-        return [SQLProduct.objects.get(product_id=transaction.product_id) for transaction in self.transactions]
+        return SQLProduct.objects.filter(product_id__in=self.reported_products_ids())
 
     def missing_products(self):
         products_ids = SQLProduct.objects.filter(
@@ -209,14 +212,16 @@ class ProductsReportHelper(object):
             is_archived=False
         ).values_list('product_id')
         date = datetime.now() - timedelta(days=7)
-        stock_states = StockState.objects.filter(
+        earlier_reported_products = StockState.objects.filter(
             product_id__in=products_ids,
             case_id=self.location.sql_location.supply_point_id
-        ).exclude(last_modified_date__lte=date)
-        reported_products = {stock_state.sql_product for stock_state in stock_states}
-        location_products = set(self.location.sql_location.products)
-        not_reported_location_products = location_products - reported_products
-        return not_reported_location_products - set(self.reported_products())
+        ).exclude(last_modified_date__lte=date).values_list('product_id', flat=True).distinct()
+        missing_products = self.location.sql_location.products.distinct().values_list(
+            'product_id', flat=True
+        ).exclude(product_id__in=earlier_reported_products).exclude(product_id__in=self.reported_products_ids())
+        if not missing_products:
+            return []
+        return SQLProduct.objects.filter(product_id__in=missing_products)
 
     def stock_states(self):
         product_ids = [product.product_id for product in self.reported_products()]

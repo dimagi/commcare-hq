@@ -1,6 +1,7 @@
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
-from custom.ewsghana.tests.handlers.utils import EWSScriptTest, TEST_DOMAIN
+from custom.ewsghana.tests.handlers.utils import EWSScriptTest, TEST_DOMAIN, restore_location_products, \
+    assign_products_to_location
 
 
 class StockOnHandTest(EWSScriptTest):
@@ -127,12 +128,7 @@ class StockOnHandTest(EWSScriptTest):
         self.run_script(a)
 
     def test_incomplete_report(self):
-        ng = SQLProduct.objects.get(domain=TEST_DOMAIN, code='ng')
-        jd = SQLProduct.objects.get(domain=TEST_DOMAIN, code='jd')
-        mg = SQLProduct.objects.get(domain=TEST_DOMAIN, code='mg')
-        location = SQLLocation.objects.get(domain=TEST_DOMAIN, site_code='garms')
-        location.products = [ng, jd, mg]
-        location.save()
+        assign_products_to_location()
         a = """
             5551234 > soh mg 31.0
             5551234 < Dear stella, still missing jd ng.
@@ -142,20 +138,13 @@ class StockOnHandTest(EWSScriptTest):
             5551234 < Dear stella, thank you for reporting the commodities you have in stock.
         """
         self.run_script(a)
-        location.products = [mg]
-        location.save()
+        restore_location_products()
 
     def test_incomplete_report2(self):
-        ng = SQLProduct.objects.get(domain=TEST_DOMAIN, code='ng')
-        jd = SQLProduct.objects.get(domain=TEST_DOMAIN, code='jd')
-        mg = SQLProduct.objects.get(domain=TEST_DOMAIN, code='mg')
-        location = SQLLocation.objects.get(domain=TEST_DOMAIN, site_code='garms')
-        location.products = [ng, jd, mg]
-        location.save()
+        assign_products_to_location()
         a = """
             5551234 > soh mg 25.0 jd 25.0 ng 25.0
             5551234 < Dear stella, thank you for reporting the commodities you have in stock.
         """
         self.run_script(a)
-        location.products = [mg]
-        location.save()
+        restore_location_products()

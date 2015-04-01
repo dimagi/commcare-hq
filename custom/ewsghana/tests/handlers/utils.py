@@ -128,3 +128,19 @@ class EWSScriptTest(TestScript):
         Location.by_site_code(TEST_DOMAIN, 'garms').delete()
         generator.delete_all_subscriptions()
         Domain.get_by_name(TEST_DOMAIN).delete()
+
+
+def assign_products_to_location():
+    ng = SQLProduct.objects.get(domain=TEST_DOMAIN, code='ng')
+    jd = SQLProduct.objects.get(domain=TEST_DOMAIN, code='jd')
+    mg = SQLProduct.objects.get(domain=TEST_DOMAIN, code='mg')
+    location = SQLLocation.objects.get(domain=TEST_DOMAIN, site_code='garms')
+    location.products = [ng, jd, mg]
+    location.save()
+
+
+def restore_location_products():
+    location = SQLLocation.objects.get(domain=TEST_DOMAIN, site_code='garms')
+    mg = SQLProduct.objects.get(domain=TEST_DOMAIN, code='mg')
+    location.products = [mg]
+    location.save()
