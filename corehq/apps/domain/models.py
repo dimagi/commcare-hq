@@ -59,7 +59,10 @@ class _StrictQuickCache(QuickCache):
         if not strict:
             return super(_StrictQuickCache, self).__call__(*args, **kwargs)
         else:
-            return self.fn(*args, **kwargs)
+            key = self.get_cache_key(*args, **kwargs)
+            content = self.fn(*args, **kwargs)
+            self.cache.set(key, content)
+            return content
 
 
 class DomainMigrations(DocumentSchema):
