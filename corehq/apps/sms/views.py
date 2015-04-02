@@ -52,10 +52,10 @@ from corehq.apps.domain.decorators import (
     require_superuser,
 )
 from corehq.apps.translations.models import StandaloneTranslationDoc
+from corehq.util.timezones.conversions import ServerTime, UserTime
 from dimagi.utils.couch.database import get_db
 from django.contrib import messages
-from corehq.apps.reports import util as report_utils
-from dimagi.utils.timezones import utils as tz_utils
+from corehq.util.timezones.utils import get_timezone_for_user
 from django.views.decorators.csrf import csrf_exempt
 from corehq.apps.domain.models import Domain
 from django.utils.translation import ugettext as _, ugettext_noop
@@ -106,7 +106,7 @@ def messaging(request, domain, template="sms/default.html"):
     context['domain'] = domain
     context['messagelog'] = SMSLog.by_domain_dsc(domain)
     context['now'] = datetime.utcnow()
-    tz = report_utils.get_timezone(request.couch_user, domain)
+    tz = get_timezone_for_user(request.couch_user, domain)
     context['timezone'] = tz
     context['timezone_now'] = datetime.now(tz=tz)
     context['layout_flush_content'] = True
@@ -119,7 +119,7 @@ def compose_message(request, domain, template="sms/compose.html"):
     context = get_sms_autocomplete_context(request, domain)
     context['domain'] = domain
     context['now'] = datetime.utcnow()
-    tz = report_utils.get_timezone(request.couch_user, domain)
+    tz = get_timezone_for_user(request.couch_user, domain)
     context['timezone'] = tz
     context['timezone_now'] = datetime.now(tz=tz)
     return render(request, template, context)
@@ -332,7 +332,7 @@ def message_test(request, domain, phone_number):
     context['domain'] = domain
     context['messagelog'] = SMSLog.by_domain_dsc(domain)
     context['now'] = datetime.utcnow()
-    tz = report_utils.get_timezone(request.couch_user, domain)
+    tz = get_timezone_for_user(request.couch_user, domain)
     context['timezone'] = tz
     context['timezone_now'] = datetime.now(tz=tz)
     context['layout_flush_content'] = True
@@ -699,7 +699,7 @@ def chat_contacts(request, domain):
 @requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
 def chat(request, domain, contact_id):
     domain_obj = Domain.get_by_name(domain, strict=True)
-    timezone = report_utils.get_timezone(None, domain)
+    timezone = get_timezone_for_user(None, domain)
 
     # floored_utc_timestamp is the datetime in UTC representing
     # midnight today in local time. This is used to calculate
@@ -707,11 +707,10 @@ def chat(request, domain, contact_id):
     # "Yesterday", for example, gives you data from yesterday at
     # midnight local time.
     local_date = datetime.now(timezone).date()
-    floored_utc_timestamp = tz_utils.adjust_datetime_to_timezone(
-        datetime.combine(local_date, time(0,0)),
-        timezone.zone,
-        pytz.utc.zone
-    ).replace(tzinfo=None)
+    floored_utc_timestamp = UserTime(
+        datetime.combine(local_date, time(0, 0)),
+        timezone
+    ).server_time().done()
 
     def _fmt(d):
         return json_format_datetime(floored_utc_timestamp - timedelta(days=d))
@@ -737,7 +736,7 @@ def api_history(request, domain):
     result = []
     contact_id = request.GET.get("contact_id", None)
     start_date = request.GET.get("start_date", None)
-    timezone = report_utils.get_timezone(None, domain)
+    timezone = get_timezone_for_user(None, domain)
     domain_obj = Domain.get_by_name(domain, strict=True)
 
     try:
@@ -810,10 +809,13 @@ def api_history(request, domain):
             sender = _("System")
         last_sms = sms
         result.append({
-            "sender" : sender,
-            "text" : sms.text,
-            "timestamp" : tz_utils.adjust_datetime_to_timezone(sms.date, pytz.utc.zone, timezone.zone).strftime("%I:%M%p %m/%d/%y").lower(),
-            "utc_timestamp" : json_format_datetime(sms.date),
+            "sender": sender,
+            "text": sms.text,
+            "timestamp": (
+                ServerTime(sms.date).user_time(timezone)
+                .ui_string("%I:%M%p %m/%d/%y").lower()
+            ),
+            "utc_timestamp": json_format_datetime(sms.date),
             "sent_by_requester": (sms.chat_user_id == request.couch_user.get_id),
         })
     if last_sms:

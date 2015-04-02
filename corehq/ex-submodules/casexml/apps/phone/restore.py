@@ -10,7 +10,7 @@ from couchdbkit import ResourceConflict, ResourceNotFound
 from casexml.apps.phone.caselogic import BatchedCaseSyncOperation
 from casexml.apps.stock.consumption import compute_consumption_or_default
 from casexml.apps.stock.utils import get_current_ledger_transactions_multi
-from corehq.toggles import BATCHED_RESTORE, LOOSE_SYNC_TOKEN_VALIDATION, FILE_RESTORE
+from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, FILE_RESTORE
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.exceptions import BadStateException, RestoreException
@@ -23,7 +23,6 @@ from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from couchforms.xml import (
     ResponseNature,
-    get_response_element,
     get_simple_response_xml,
 )
 from casexml.apps.case.xml import check_version, V1
@@ -307,7 +306,7 @@ def get_case_payload_batched(domain, stock_settings, version, user, last_sync, s
     response = get_restore_class(user)()
 
     batch_count = 0
-    sync_operation = BatchedCaseSyncOperation(user, last_sync)
+    sync_operation = BatchedCaseSyncOperation(user, last_synclog)
     for batch in sync_operation.batches():
         batch_count += 1
         logger.debug(batch)
@@ -418,7 +417,7 @@ class RestoreConfig(object):
         the filename, otherwise it will return the full string payload
         """
         user = self.user
-        last_sync = self.sync_log
+        last_synclog = self.sync_log
 
         self.validate()
 
@@ -430,32 +429,29 @@ class RestoreConfig(object):
         last_seq = str(get_db().info()["update_seq"])
 
         # create a sync log for this
-        previous_log_id = last_sync.get_id if last_sync else None
-        synclog = SyncLog(
+        previous_log_id = last_synclog.get_id if last_synclog else None
+        new_synclog = SyncLog(
             user_id=user.user_id,
             last_seq=last_seq,
             owner_ids_on_phone=user.get_owner_ids(),
             date=datetime.utcnow(),
             previous_log_id=previous_log_id
         )
-        synclog.save(**get_safe_write_kwargs())
+        new_synclog.save(**get_safe_write_kwargs())
 
         # start with standard response
-        batch_enabled = BATCHED_RESTORE.enabled(self.user.domain) or BATCHED_RESTORE.enabled(self.user.username)
-        logger.debug('Batch restore enabled: %s', batch_enabled)
         with get_restore_class(user)(user.username, items=self.items) as response:
             # add sync token info
-            response.append(xml.get_sync_element(synclog.get_id))
+            response.append(xml.get_sync_element(new_synclog.get_id))
             # registration block
             response.append(xml.get_registration_element(user))
 
             # fixture block
-            for fixture in generator.get_fixtures(user, self.version, last_sync):
+            for fixture in generator.get_fixtures(user, self.version, last_synclog):
                 response.append(fixture)
 
-            payload_fn = get_case_payload_batched if batch_enabled else get_case_payload
-            case_response, self.num_batches = payload_fn(
-                self.domain, self.stock_settings, self.version, user, last_sync, synclog
+            case_response, self.num_batches = get_case_payload_batched(
+                self.domain, self.stock_settings, self.version, user, last_synclog, new_synclog
             )
             combined_response = response + case_response
             case_response.close()
@@ -463,8 +459,8 @@ class RestoreConfig(object):
             combined_response.close()
 
         duration = datetime.utcnow() - start_time
-        synclog.duration = duration.seconds
-        synclog.save()
+        new_synclog.duration = duration.seconds
+        new_synclog.save()
         add_custom_parameter('restore_response_size', response.num_items)
         self.set_cached_payload_if_necessary(resp, duration)
         return resp

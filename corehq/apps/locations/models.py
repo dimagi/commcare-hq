@@ -1,3 +1,4 @@
+from functools import partial
 from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django.schema import *
 import itertools
@@ -9,7 +10,9 @@ from django.db import models
 import json_field
 from casexml.apps.case.cleanup import close_case
 from corehq.apps.commtrack.const import COMMTRACK_USERNAME
+from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import SQLProduct
+from corehq.toggles import LOCATION_TYPE_STOCK_RATES
 from mptt.models import MPTTModel, TreeForeignKey
 
 
@@ -62,6 +65,9 @@ class LocationTypeManager(models.Manager):
         return ordered_loc_types
 
 
+StockLevelField = partial(models.DecimalField, max_digits=10, decimal_places=1)
+
+
 class LocationType(models.Model):
     domain = models.CharField(max_length=255, db_index=True)
     name = models.CharField(max_length=255)
@@ -71,12 +77,31 @@ class LocationType(models.Model):
     shares_cases = models.BooleanField(default=False)
     view_descendants = models.BooleanField(default=False)
 
+    emergency_level = StockLevelField(default=0.5)
+    understock_threshold = StockLevelField(default=1.5)
+    overstock_threshold = StockLevelField(default=3.0)
+
     objects = LocationTypeManager()
+
+    def _populate_stock_levels(self):
+        from corehq.apps.commtrack.models import CommtrackConfig
+        ct_config = CommtrackConfig.for_domain(self.domain)
+        if (
+            (ct_config is None)
+            or (not Domain.get_by_name(self.domain).commtrack_enabled)
+            or LOCATION_TYPE_STOCK_RATES.enabled(self.domain)
+        ):
+            return
+        config = ct_config.stock_levels_config
+        self.emergency_level = config.emergency_level
+        self.understock_threshold = config.understock_threshold
+        self.overstock_threshold = config.overstock_threshold
 
     def save(self, *args, **kwargs):
         if not self.code:
             from corehq.apps.commtrack.util import unicode_slug
             self.code = unicode_slug(self.name)
+        self._populate_stock_levels()
         return super(LocationType, self).save(*args, **kwargs)
 
     def __unicode__(self):

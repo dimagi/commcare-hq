@@ -16,6 +16,7 @@ class ILSGatewayConfig(Document):
     username = StringProperty()
     password = StringProperty()
     steady_sync = BooleanProperty(default=False)
+    all_stock_data = BooleanProperty(default=False)
 
     @classmethod
     def for_domain(cls, name):
@@ -381,21 +382,21 @@ class DeliveryGroups(object):
             facs = self.facs
         if not facs:
             return []
-        return filter(lambda f: self.current_delivering_group(month) in f.metadata.get('groups', []), facs)
+        return filter(lambda f: self.current_delivering_group(month) == f.metadata.get('group', None), facs)
 
     def processing(self, facs=None, month=None):
         if not facs:
             facs = self.facs
         if not facs:
             return []
-        return filter(lambda f: self.current_processing_group(month) in f.metadata.get('groups', []), facs)
+        return filter(lambda f: self.current_processing_group(month) == f.metadata.get('group', None), facs)
 
     def submitting(self, facs=None, month=None):
         if not facs:
             facs = self.facs
         if not facs:
             return []
-        return filter(lambda f: self.current_submitting_group(month) in f.metadata.get('groups', []), facs)
+        return filter(lambda f: self.current_submitting_group(month) == f.metadata.get('group', None), facs)
 
 
 # Ported from:

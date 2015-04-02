@@ -88,20 +88,21 @@
         {% if report_table.slug != 'facility_report' %}
             var show_hide_table_columns = function (element) {
                 var col_idx = $(element).attr('data-column');
-                var bVis = datatable.fnSettings().aoColumns[col_idx].bVisible;
-                datatable.fnSetColumnVis(col_idx, bVis ? false : true);
+                if (col_idx !== '-1') {
+                    var bVis = datatable.fnSettings().aoColumns[col_idx].bVisible;
+                    datatable.fnSetColumnVis(col_idx, !bVis);
+                }
             };
         {% endif %}
 
         var show_hide_multibar_chart_data = function() {
             var data =  JSON.parse(JSON.stringify(multibar_chart_data));
-            var productCodes = [];
-            $("#report_table_product_selection_pane input:not(:checked)").each(function () {
-                productCodes.push($(this).attr('value'));
+            var productCodes = $("#report_table_product_selection_pane input:not(:checked)").map(function() {
+              return $(this).val();
             });
             for(var i = 0; i < data.length; i++) {
                 data[i].values = jQuery.grep(data[i].values, function(value) {
-                    return jQuery.inArray(value.x, productCodes) === -1;
+                    return !_.contains(productCodes, value.x)
                 });
             }
             d3.select(multibar_chart_id + ' svg')
@@ -119,7 +120,7 @@
 
             for(var i = 0; i < data.length; i++) {
                 data = jQuery.grep(data, function(value) {
-                    return jQuery.inArray(value.key, productCodes) === -1
+                    return !_.contains(productCodes, value.key)
                 });
             }
             d3.select(line_chart_id + ' svg')
@@ -139,12 +140,6 @@
             }
             if (typeof line_chart_data !== 'undefined') {
                 show_hide_line_chart_data();
-            }
-
-            if ($('.toggle-column:checked').length == 6) {
-                $(".toggle-column:checkbox:not(:checked)").prop('disabled', true)
-            } else {
-                $(".toggle-column:checkbox:not(:checked)").prop('disabled', false)
             }
         });
 

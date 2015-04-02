@@ -4,6 +4,9 @@
 {% load i18n %}
 
 {% block reportcontent %}
+    {% if report.slug|safe == 'stock_summary_report' or report.slug|safe == 'cms_rms_summary_report' %}
+        <h2 style="background-color: black; color: white">{{ title }}</h2>
+    {% endif %}
 {% block pretable %}
     {% if not report.needs_filters %}
         {% if rendered_as == 'print' %}
@@ -34,6 +37,12 @@
     {% include 'reports/standard/partials/description.html' %}
 {% else %}
     <style>
+        {% if rendered_as == "email" %}
+            td {
+                border: 1px solid black;
+            }
+        {% endif %}
+
         .firstreport, .inventory_chart {
             width: 68%;
             float: left;
@@ -95,7 +104,7 @@
         }
 
         #report_table_product_selection_pane tr.program {
-            width: 100%;
+            width: 60%;
             display: inline-block;
             font-size: 12px;
             font-weight: bold;
@@ -153,6 +162,16 @@
         {% else %}
             <span class="report">
                 <h4 class="media-heading">{{ thisreport.report_table.title }}<br/><small>{{ subtitle1 }}</small><br/><small>{{ subtitle2 }}</small></h4>
+                {% if thisreport.report_table.slug == 'stockouts_product' %}
+                    <div class="row" style="margin: 0 !important">
+                        <form>
+                            <div style="display: inline-block">
+                                <input type="text" id="stockouts_filter" class="date-range-picker" value="{{ datespan.enddate|add_days:-90|date:'Y-m-d' }} to {{ datespan.enddate|date:'Y-m-d' }}" />
+                                <button style="margin-bottom: 9px;" id="stockouts_filter_btn" class="filters btn">Apply</button>
+                            </div>
+                        </form>
+                    </div>
+                {% endif %}
                 {% include 'ewsghana/partials/report_table.html' with report_table=thisreport.report_table charts=thisreport.charts chart_span=thisreport.chart_span show_table=thisreport.show_table%}
             </span>
         {% endif %}
@@ -211,9 +230,6 @@
     <script>
         var report_slug = "{{ report.slug | safe }}";
         if ( report_slug === 'stock_summary_report' || report_slug === 'cms_rms_summary_report') {
-            var headings = $("#report-content > h4");
-            $(headings[0]).text($(headings[2]).text());
-            $(headings[2]).remove();
             $('.dataTables_filter').remove();
         }
     </script>

@@ -4,6 +4,7 @@ from corehq.apps.reports.standard import DatespanMixin, ProjectReport,\
     ProjectReportParametersMixin
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
+from corehq.util.timezones.conversions import ServerTime
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.sms.models import (
@@ -21,7 +22,6 @@ from corehq.apps.reports.standard.sms import BaseCommConnectLogReport
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase
 from django.conf import settings
-from dimagi.utils.timezones import utils as tz_utils
 from corehq.apps.reminders.util import get_form_name
 import pytz
 from math import ceil
@@ -97,7 +97,7 @@ class CallLogReport(BaseCommConnectLogReport):
             if abbreviate_phone_number and phone_number is not None:
                 phone_number = phone_number[0:7] if phone_number[0:1] == "+" else phone_number[0:6]
             
-            timestamp = tz_utils.adjust_datetime_to_timezone(call.date, pytz.utc.zone, self.timezone.zone)
+            timestamp = ServerTime(call.date).user_time(self.timezone).done()
             
             if call.direction == INCOMING:
                 answered = "-"
@@ -208,7 +208,7 @@ class ExpectedCallbackReport(ProjectReport, ProjectReportParametersMixin, Generi
                
                 username_map[recipient_id] = username
             
-            timestamp = tz_utils.adjust_datetime_to_timezone(event.date, pytz.utc.zone, self.timezone.zone)
+            timestamp = ServerTime(event.date).user_time(self.timezone).done()
             
             row = [
                 self._fmt_timestamp(timestamp),

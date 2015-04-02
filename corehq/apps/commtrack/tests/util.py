@@ -9,6 +9,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import Location
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.models import Domain
+from corehq.apps.commtrack.sms import StockReportParser, process
 from corehq.apps.commtrack.util import get_default_requisition_config, \
     bootstrap_location_types
 from corehq.apps.commtrack.models import SupplyPointCase, CommtrackConfig, ConsumptionConfig
@@ -188,3 +189,18 @@ def extract_balance_xml(xml_payload):
     if balance_blocks:
         return [etree.tostring(bb) for bb in balance_blocks]
     return []
+
+
+def fake_sms(user, text):
+    """
+    Fake a commtrack SMS submission for a user.
+    `text` might be "soh myproduct 100"
+    Don't use this with a real user
+    """
+    if not user.phone_number:
+        raise ValueError("User does not have a phone number")
+    if not user.get_verified_number():
+        user.save_verified_number(user.domain, user.phone_number, True, None)
+    domain_obj = Domain.get_by_name(user.domain)
+    parser = StockReportParser(domain_obj, user.get_verified_number())
+    process(user.domain, parser.parse(text.lower()))

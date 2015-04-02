@@ -255,8 +255,11 @@ class InCompleteReports(ReportingRatesData):
         rows = []
         if self.location_id:
             last_period_st, last_period_end = calculate_last_period(self.config['enddate'])
-            locations = self.reporting_supply_points(self.all_reporting_locations())
-            for location in SQLLocation.objects.filter(supply_point_id__in=locations):
+            if self.location.location_type.name == 'country':
+                supply_points = self.reporting_supply_points(self.all_reporting_locations())
+            else:
+                supply_points = self.reporting_supply_points()
+            for location in SQLLocation.objects.filter(supply_point_id__in=supply_points):
                 st = StockTransaction.objects.filter(
                     case_id=location.supply_point_id,
                     report__date__range=[last_period_st, last_period_end]
@@ -288,11 +291,11 @@ class AlertsData(ReportingRatesData):
         return []
 
     def supply_points_reporting_last_month(self, supply_points):
-        self.config['enddate'] = datetime.today()
-        self.config['startdate'] = self.config['enddate'] - timedelta(days=30)
+        enddate = datetime.today()
+        startdate = enddate - timedelta(days=30)
         result = StockTransaction.objects.filter(
             case_id__in=supply_points,
-            report__date__range=[self.config['startdate'], self.config['enddate']]
+            report__date__range=[startdate, enddate]
         ).distinct('case_id').values_list('case_id', flat=True)
         return result
 
@@ -326,13 +329,13 @@ class AlertsData(ReportingRatesData):
                 )
                 if sp.supply_point_id not in reported:
                     rows.append(['<div style="background-color: rgba(255, 0, 0, 0.2)">%s has not reported last '
-                                 'month. <a href="%s">[details]</a></div>' % (sp.name, url)])
+                                 'month. <a href="%s" target="_blank">[details]</a></div>' % (sp.name, url)])
                 if sp.location_id not in with_reporters:
                     rows.append(['<div style="background-color: rgba(255, 0, 0, 0.2)">%s has not no reporters'
-                                 ' registered. <a href="%s">[details]</a></div>' % (sp.name, url)])
+                                 ' registered. <a href="%s" target="_blank">[details]</a></div>' % (sp.name, url)])
                 if sp.location_id not in with_in_charge:
                     rows.append(['<div style="background-color: rgba(255, 0, 0, 0.2)">%s has not no in-charge '
-                                 'registered. <a href="%s">[details]</a></div>' % (sp.name, url)])
+                                 'registered. <a href="%s" target="_blank">[details]</a></div>' % (sp.name, url)])
 
         if not rows:
             rows.append(['<div style="background-color: rgba(0, 255, 0, 0.2)">No current alerts</div>'])
@@ -358,8 +361,7 @@ class ReportingRatesReport(MultiReport):
             domain=self.domain,
             startdate=self.datespan.startdate_utc,
             enddate=self.datespan.enddate_utc,
-            location_id=self.request.GET.get('location_id') if self.request.GET.get('location_id')
-            else get_country_id(self.domain),
+            location_id=self.request.GET.get('location_id') or get_country_id(self.domain),
             products=None,
             program=program if program != ALL_OPTION else None,
         )

@@ -46,16 +46,16 @@ def migration_task():
             apis = (
                 ('stock_transaction', sync_stock_transactions),
             )
-            stock_data_task.delay(config.domain, endpoint, apis, EWS_FACILITIES)
+            stock_data_task.delay(config.domain, endpoint, apis, config, EWS_FACILITIES)
 
 
-@task
+@task(queue='background_queue')
 def ews_bootstrap_domain_task(domain):
     ews_config = EWSGhanaConfig.for_domain(domain)
     return bootstrap_domain(EWSApi(domain, GhanaEndpoint.from_config(ews_config)))
 
 
-@task
+@task(queue='background_queue')
 def ews_clear_stock_data_task():
     StockTransaction.objects.filter(report__domain='ewsghana-test-1').delete()
     StockReport.objects.filter(domain='ewsghana-test-1').delete()

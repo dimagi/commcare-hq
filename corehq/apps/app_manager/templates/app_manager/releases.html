@@ -58,6 +58,7 @@
         el.show();
     });
 
+    analytics.track("Visited Releases-page");
 </script>
 <script>
     function track_deploy_type(type) {
@@ -135,24 +136,20 @@
                 {% endblocktrans %}
             </small></p>
         </div>
-        {% if edit %}
         <button class="btn btn-primary" data-bind="
-            click: makeNewBuild,
+            click: function() {analytics.track('Clicked Make-New-Version'); return makeNewBuild();},
             attr: {disabled: !buildButtonEnabled() ? 'disabled' : undefined},
             css: {disabled: !buildButtonEnabled()}
         ">{% trans 'Make New Version' %}</button>
 
         <div id="build-errors-wrapper"></div>
-        {% endif %}
         <table class="table">
             <tr>
                 <th colspan="2">{% trans "Version" %}</th>
                 <th colspan="2">{% trans "Date &amp; Time" %}</th>
                 <th>{% trans "CommCare Version" %}</th>
                 <th></th>
-                {% if edit %}
                 <th></th>
-                {% endif %}
                 <th>{% trans "Comment" %}</th>
                 <th class="help_popover" data-help-key="Released">
                     <a href="#">{% trans "Released" %} <i class="icon icon-question-sign"></i></a>
@@ -186,7 +183,6 @@
                     'error': build_broken
                 }">
                     <td>
-                        {% if edit %}
                         <a href="#" data-bind="
                             openModal: 'delete-build-modal-template',
                             visible: !_deleteState()
@@ -200,7 +196,6 @@
                         <div class="icon icon-exclamation-sign" data-bind="
                             visible: _deleteState() == 'error'
                         "></div>
-                        {% endif %}
                     </td>
                     <td class="nowrap" data-bind="text: version"></td>
                     <td class="nowrap" data-bind="text: built_on_date"></td>
@@ -215,21 +210,19 @@
                             <a class="btn" data-bind="
                                 openModal: 'deploy-build-modal-template',
                                 css: {'btn-primary': !build_broken(), 'btn-danger': build_broken},
-                                click: function() { ga_track_event('App Manager', 'Deploy Button', '{{ app.id }}'); }
+                                click: function() { ga_track_event('App Manager', 'Deploy Button', '{{ app.id }}'); analytics.identify('Clicked Deploy-Button');}
                             ">
                                 <span class="icon icon-exclamation-sign" data-bind="visible: build_broken"></span>
                                 {% trans "Deploy" %}
                             </a>
                         </div>
                     </td>
-                    {% if edit %}
                     <td>
                         <button class="btn" data-bind="
                             openModal: 'revert-build-modal-template',
                             visible: version() !== $root.currentAppVersion()
                         ">{% trans "Revert" %}</button>
                     </td>
-                    {% endif %}
                     <td>
                         <div data-bind="visible: !editing_comment()">
                             <b data-bind="visible: comment_user_name, text: comment_user_name"></b>
@@ -241,13 +234,16 @@
                             </a>
                         </div>
                         <div data-bind="visible: editing_comment()">
-                            <input type="text" data-bind="value: new_comment"></input>
-                            <a href="#" data-bind="click: submit_new_comment, visible: !pending_comment_update()">
-                                <span class="icon-ok"></span>
-                            </a>
-                            <a href="#" data-bind="click: function () {editing_comment(false);}, visible: !pending_comment_update()">
-                                <span class="icon-remove"></span>
-                            </a>
+                            <form data-bind="submit: submit_new_comment">
+                                <input type="text" data-bind="value: new_comment"></input>
+                                <a href="#" data-bind="click: submit_new_comment,
+                                                       visible: !pending_comment_update()">
+                                    <span class="icon-ok"></span>
+                                </a>
+                                <a href="#" data-bind="click: function () {editing_comment(false);}, visible: !pending_comment_update()">
+                                    <span class="icon-remove"></span>
+                                </a>
+                            </form>
                             <span data-bind="visible: pending_comment_update()">
                                 <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}"/>
                             </span>
@@ -257,7 +253,7 @@
                         </div>
                     </td>
                     <td class="build-is-released">
-                        <div data-bind="starred: is_released{% if edit %}, click: $root.toggleRelease{% endif %}"></div>
+                        <div data-bind="starred: is_released, click: $root.toggleRelease"></div>
                     </td>
                 </tr>
             </tbody>

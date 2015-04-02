@@ -558,6 +558,7 @@ COUCHLOG_DISPLAY_COLS = ["id", "archived?", "date", "exception type", "message",
                          "domain", "user", "url", "actions", "report"]
 COUCHLOG_RECORD_WRAPPER = "corehq.apps.hqcouchlog.wrapper"
 COUCHLOG_DATABASE_NAME = "commcarehq-couchlog"
+COUCHLOG_AUTH_DECORATOR = 'corehq.apps.domain.decorators.require_superuser_or_developer'
 
 # couchlog/case search
 LUCENE_ENABLED = False
@@ -677,6 +678,7 @@ ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_ID': '',
     'PINGDOM_ID': '',
     'ANALYTICS_ID_PUBLIC_COMMCARE': '',
+    'SEGMENT_ANALYTICS_KEY': '',
 }
 
 OPEN_EXCHANGE_RATES_ID = ''
@@ -870,7 +872,8 @@ INVOICE_FROM_ADDRESS = {}
 BANK_ADDRESS = {}
 BANK_NAME = ''
 BANK_ACCOUNT_NUMBER = ''
-BANK_ROUTING_NUMBER = ''
+BANK_ROUTING_NUMBER_ACH = ''
+BANK_ROUTING_NUMBER_WIRE = ''
 BANK_SWIFT_CODE = ''
 
 STRIPE_PUBLIC_KEY = ''
@@ -1048,7 +1051,6 @@ COUCHDB_APPS = [
     ('cvsu', 'fluff-cvsu'),
     ('mc', 'fluff-mc'),
     ('m4change', 'm4change'),
-    ('wvindia2', 'wvindia2'),
     ('export', 'meta'),
     'tdhtesting'
 ]
@@ -1217,6 +1219,7 @@ PILLOWTOPS = {
         'custom.tdh.models.TDHNewbornTreatmentFluffPillow',
         'custom.tdh.models.TDHChildClassificationFluffPillow',
         'custom.tdh.models.TDHChildTreatmentFluffPillow',
+        'custom.succeed.models.UCLAPatientFluffPillow'
     ],
     'mvp_indicators': [
         'mvp_docs.pillows.MVPFormIndicatorPillow',
@@ -1228,6 +1231,7 @@ PILLOWTOPS = {
 CUSTOM_DATA_SOURCES = [
     os.path.join('custom', 'up_nrhm', 'data_sources', 'location_hierarchy.json'),
     os.path.join('custom', 'up_nrhm', 'data_sources', 'asha_facilitators.json'),
+    os.path.join('custom', 'succeed', 'data_sources', 'submissions.json'),
 ]
 
 
@@ -1328,9 +1332,8 @@ DOMAIN_MODULE_MAP = {
     'succeed': 'custom.succeed',
     'ilsgateway-test-1': 'custom.ilsgateway',
     'ilsgateway-test-2': 'custom.ilsgateway',
-    'ews-ghana-test': 'custom.ewsghana',
     'ewsghana-test-1': 'custom.ewsghana',
-    'stock-status-test-1': 'custom.ewsghana',
+    'ewsghana-test-2': 'custom.ewsghana',
     'test-pathfinder': 'custom.m4change',
     'wvindia2': 'custom.world_vision',
     'pathways-india-mis': 'custom.care_pathways',
@@ -1374,3 +1377,5 @@ COMPRESS_OFFLINE_CONTEXT = {
     'less_debug': LESS_DEBUG,
     'less_watch': LESS_WATCH,
 }
+
+COMPRESS_CSS_HASHING_METHOD = 'content'

@@ -1,6 +1,4 @@
 import math
-import pytz
-import logging
 from datetime import datetime, timedelta
 from celery.task import task
 from time import sleep
@@ -15,7 +13,7 @@ from corehq.apps.sms.api import (send_message_via_backend, process_incoming,
 from django.conf import settings
 from corehq.apps.domain.models import Domain
 from corehq.apps.smsbillables.models import SmsBillable
-from dimagi.utils.timezones import utils as tz_utils
+from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch.cache import cache_core
 from threading import Thread
 
@@ -63,8 +61,7 @@ def handle_domain_specific_delays(msg, domain_object, utcnow):
 
     Returns True if a delay was made, False if not.
     """
-    domain_now = tz_utils.adjust_datetime_to_timezone(utcnow, pytz.utc.zone,
-        domain_object.default_timezone)
+    domain_now = ServerTime(utcnow).user_time(domain_object.get_default_timezone()).done()
 
     if len(domain_object.restricted_sms_times) > 0:
         if not time_within_windows(domain_now, domain_object.restricted_sms_times):

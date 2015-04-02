@@ -10,7 +10,7 @@ from corehq.apps.userreports.specs import EvaluationContext
 
 class ConstantExpressionTest(SimpleTestCase):
 
-    def test_property_name_expression(self):
+    def test_constant_expression(self):
         for constant in (7.2, 'hello world', ['a', 'list'], {'a': 'dict'}):
             getter = ExpressionFactory.from_spec({
                 'type': 'constant',

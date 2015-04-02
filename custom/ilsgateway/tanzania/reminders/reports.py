@@ -20,5 +20,5 @@ def _construct_status_dict(status_type, status_values, supply_points, datespan):
 
 def construct_summary(supply_point, status_type, values, cutoff):
     children = supply_point.location.children
-    children = filter(lambda sp: get_current_group() in sp.metadata.get('groups', []), children)
+    children = filter(lambda sp: get_current_group() in sp.metadata.get('group', None), children)
     return _construct_status_dict(status_type, values, children, DateSpan(cutoff, datetime.utcnow()))

@@ -14,12 +14,13 @@ from corehq.apps.locations.models import Location, SQLLocation
 from custom.ewsghana.utils import get_supply_points, calculate_last_period
 from casexml.apps.stock.models import StockTransaction
 
-REORDER_LEVEL = 1.5
-MAXIMUM_LEVEL = 3
-
 
 def get_url(view_name, text, domain):
     return '<a href="%s">%s</a>' % (reverse(view_name, args=[domain]), text)
+
+
+def get_url_with_location(view_name, text, location_id, domain):
+    return '<a href="%s?location_id=%s">%s</a>' % (reverse(view_name, args=[domain]), location_id, text)
 
 
 class EWSLineChart(LineChart):
@@ -86,13 +87,13 @@ class EWSData(object):
         else:
             return [location]
 
-    def unique_products(self, locations):
+    def unique_products(self, locations, all=False):
         products = list()
         for loc in locations:
-            if self.config['products']:
+            if self.config['products'] and not all:
                 products.extend([p for p in loc.products if p.product_id in self.config['products'] and
                                  not p.is_archived])
-            elif self.config['program']:
+            elif self.config['program'] and not all:
                 products.extend([p for p in loc.products if p.program_id == self.config['program'] and
                                  not p.is_archived])
             else:
@@ -118,8 +119,7 @@ class ReportingRatesData(EWSData):
                 location_type__name__in=location_types,
                 parent=location
             )
-        locations.exclude(is_archived=True)
-        return locations.exclude(supply_point_id__isnull=True)
+        return locations.exclude(supply_point_id__isnull=True).exclude(is_archived=True)
 
     def supply_points_list(self, location_id=None):
         return self.get_supply_points(location_id).values_list('supply_point_id')
@@ -161,7 +161,7 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
             if dm.program_id:
                 program_id = dm.program_id
             else:
-                program_id = Program.default_for_domain(domain)._id
+                program_id = 'all'
 
             url = '%s?location_id=%s&filter_by_program=%s' % (
                 url,
@@ -285,14 +285,19 @@ class ProductSelectionPane(EWSData):
     @property
     def rows(self):
         locations = get_supply_points(self.config['location_id'], self.config['domain'])
-        products = self.unique_products(locations)
+        products = self.unique_products(locations, all=True)
         programs = {program.get_id: program.name for program in Program.by_domain(self.domain)}
+        headers = []
+        if 'report_type' in self.config:
+            from custom.ewsghana.reports.specific_reports.stock_status_report import MonthOfStockProduct
+            headers = [h.html for h in MonthOfStockProduct(self.config).headers]
         result = [
             [
                 '<input class=\"toggle-column\" name=\"{1} ({0})\" data-column={2} value=\"{0}\" type=\"checkbox\"'
-                '{3}>{1} ({0})</input>'
-                .format(p.code, p.name, idx, 'checked' if 1 <= idx <= 6 else 'disabled'), programs[p.program_id],
-                p.code
+                '{3}>{1} ({0})</input>'.format(
+                    p.code, p.name, idx if not headers else headers.index(p.code) if p.code in headers else -1,
+                    'checked' if self.config['program'] is None or self.config['program'] == p.program_id else ''),
+                programs[p.program_id], p.code
             ] for idx, p in enumerate(products, start=1)
         ]
 

@@ -43,8 +43,7 @@
 trunk: master
 name: autostaging
 branches:
-  - request-cache-refactor  # danny 3/23
-  - app-manager-cleanup # danny 3/13
+#  - test-global-request  # danny 4/1
   - subscription-no-contact-info # bb 8/4
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
   - vellum-staging # J$ 11/13
@@ -52,8 +51,7 @@ branches:
   - fixtures-spike  # cz 1/29
   - static-updates # Biyeun 2/9
   - loc-type-stock-rates  # Ethan 3/6
-  - refactor-payment-modal # Nick P 3/19
- # - pricingSMS # sravan 3/23
+  - usercase # Norman 3/27
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

@@ -1,3 +1,4 @@
+from django.utils.datastructures import SortedDict
 from sqlagg import (
     ColumnNotFoundException,
     TableNotFoundException,
@@ -6,7 +7,7 @@ from sqlalchemy.exc import ProgrammingError
 from corehq.apps.reports.sqlreport import SqlData
 from corehq.apps.userreports.exceptions import UserReportsError
 from corehq.apps.userreports.models import DataSourceConfiguration
-from corehq.apps.userreports.sql import get_table_name, get_expanded_columns
+from corehq.apps.userreports.sql import get_table_name
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -25,7 +26,18 @@ class ConfigurableReportDataSource(SqlData):
         self._filters = {f.slug: f for f in filters}
         self._filter_values = {}
         self.aggregation_columns = aggregation_columns
-        self.column_configs = columns
+        self._column_configs = SortedDict()
+        for column in columns:
+            # should be caught in validation prior to reaching this
+            assert column.column_id not in self._column_configs, \
+                'Report {} in domain {} has more than one {} column defined!'.format(
+                    self._config_id, self.domain, column.column_id,
+                )
+            self._column_configs[column.column_id] = column
+
+    @property
+    def column_configs(self):
+        return self._column_configs.values()
 
     @property
     def config(self):
@@ -51,41 +63,38 @@ class ConfigurableReportDataSource(SqlData):
 
     @property
     def group_by(self):
-        return self.aggregation_columns
-
-    @property
-    @memoized
-    def columns(self):
-        self._column_warnings = []
-        ret = []
-        for col in self.column_configs:
-            if col.aggregation == "expand":
-                ret += get_expanded_columns(self.config, col, self._column_warnings)
+        def _contributions(column_id):
+            # ask each column for its group_by contribution and combine to a single list
+            # if the column isn't found just treat it as a normal field
+            if column_id in self._column_configs:
+                return self._column_configs[col_id].get_group_by_columns()
             else:
-                ret.append(col.get_sql_column())
-        return ret
+                return [column_id]
+
+        return [
+            group_by for col_id in self.aggregation_columns
+            for group_by in _contributions(col_id)
+        ]
+
+    @property
+    def columns(self):
+        return [c for sql_conf in self.sql_column_configs for c in sql_conf.columns]
 
     @property
     @memoized
+    def sql_column_configs(self):
+        return [col.get_sql_column_config(self.config) for col in self.column_configs]
+
+    @property
     def column_warnings(self):
-        # self.columns is a property, and self._column_warnings is not computed
-        # until the body of self.columns is executed. Therefore, we access the
-        # property first to insure that self._column_warnings has been calculated.
-        self.columns
-        return self._column_warnings
+        return [w for sql_conf in self.sql_column_configs for w in sql_conf.warnings]
 
     @memoized
     def get_data(self, slugs=None):
         try:
             ret = super(ConfigurableReportDataSource, self).get_data(slugs)
             for report_column in self.column_configs:
-                if report_column.format == 'percent_of_total':
-                    column_name = report_column.get_sql_column().view.name
-                    total = sum(row[column_name] for row in ret)
-                    for row in ret:
-                        row[column_name] = '{:.0%}'.format(
-                            float(row[column_name]) / total
-                        )
+                report_column.format_data(ret)
         except (
             ColumnNotFoundException,
             TableNotFoundException,
@@ -95,7 +104,7 @@ class ConfigurableReportDataSource(SqlData):
         # arbitrarily sort by the first column in memory
         # todo: should get pushed to the database but not currently supported in sqlagg
         return sorted(ret, key=lambda x: x.get(
-            self.column_configs[0].report_column_id,
+            self.column_configs[0].column_id,
             next(x.itervalues())
         ))
 

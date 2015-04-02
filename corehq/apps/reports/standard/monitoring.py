@@ -21,12 +21,13 @@ from corehq.apps.sofabed.models import FormData, CaseData
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import es_query
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
+from corehq.util.timezones.conversions import ServerTime, PhoneTime
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import string_to_datetime
-from dimagi.utils.timezones import utils as tz_utils
+from corehq.util.timezones import utils as tz_utils
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
@@ -187,7 +188,17 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
     @property
     @memoized
     def utc_now(self):
-        return tz_utils.adjust_datetime_to_timezone(datetime.datetime.utcnow(), self.timezone.zone, pytz.utc.zone)
+        # Fun story:
+        # this function was wrong since 2012. Through a convoluted series
+        # of refactors where no one was really thinking hard about this
+        # it at some point morphed into translating by self.timezone
+        # in the opposite direction.
+        # Additionally, when I (Danny) re-wrote this report in 2012
+        # I had no conception that the dates were suffering from this
+        # timezone stripping problem, and so I hadn't factored that in.
+        # As a result, this was two timezones off from correct
+        # and no one noticed all these years...
+        return datetime.datetime.utcnow()
 
     @property
     def headers(self):
@@ -267,9 +278,9 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
         if closed is not None:
             kwargs['closed'] = bool(closed)
         if modified_after:
-            kwargs['modified_on__gte'] = modified_after
+            kwargs['modified_on__gte'] = ServerTime(modified_after).phone_time(self.timezone).done()
         if modified_before:
-            kwargs['modified_on__lt'] = modified_before
+            kwargs['modified_on__lt'] = ServerTime(modified_before).phone_time(self.timezone).done()
         if self.case_type:
             kwargs['type'] = self.case_type
 
@@ -781,15 +792,10 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, Mu
                 )
 
             for row in results:
-                completion_time = row['time_end'].replace(tzinfo=None)
-                completion_dst = False if self.timezone == pytz.utc else\
-                    tz_utils.is_timezone_in_dst(self.timezone, completion_time)
-                completion_time = self.timezone.localize(completion_time, is_dst=completion_dst)
-
-                submission_time = row['received_on'].replace(tzinfo=pytz.utc)
-                submission_time = tz_utils.adjust_datetime_to_timezone(submission_time, pytz.utc.zone, self.timezone.zone)
-
-                td = submission_time-completion_time
+                completion_time = (PhoneTime(row['time_end'], self.timezone)
+                                   .server_time().done())
+                submission_time = row['received_on']
+                td = submission_time - completion_time
                 td_total = (td.seconds + td.days * 24 * 3600)
                 rows.append([
                             self.get_user_link(user_map.get(row['user_id'])),
@@ -809,10 +815,14 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, Mu
         self.total_row = [_("Average"), "-", "-", "-", "-", self._format_td_status(int(total_seconds/total), False) if total > 0 else "--"]
         return rows
 
-    def _format_date(self, date, d_format="%d %b %Y, %H:%M:%S"):
+    def _format_date(self, date):
+        """
+        date is a datetime
+        """
+
         return self.table_cell(
             date,
-            "%s (%s)" % (date.strftime(d_format), date.tzinfo._tzname)
+            ServerTime(date).user_time(self.timezone).ui_string()
         )
 
     def _format_td_status(self, td, use_label=True):
@@ -897,8 +907,12 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
                 ).all()
                 all_times.extend([dateutil.parser.parse(d['key'][-1]) for d in data])
         if self.by_submission_time:
-            # completion time is assumed to be in the phone's timezone until we can send proper timezone info
-            all_times = [tz_utils.adjust_datetime_to_timezone(t, pytz.utc.zone, self.timezone.zone) for t in all_times]
+            all_times = [ServerTime(t).user_time(self.timezone).done()
+                         for t in all_times]
+        else:
+            all_times = [PhoneTime(t, self.timezone).user_time(self.timezone).done()
+                         for t in all_times]
+
         return [(t.weekday(), t.hour) for t in all_times]
 
     @property

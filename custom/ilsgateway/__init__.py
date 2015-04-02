@@ -25,9 +25,6 @@ CUSTOM_REPORTS = (
     )),
 )
 
-# For QA purposes it should be set to true.
-TEST = True
-
 LOCATION_TYPES = ["MOHSW", "REGION", "DISTRICT", "FACILITY"]
 
 PRODUCTS_CODES_PROGRAMS_MAPPING = {

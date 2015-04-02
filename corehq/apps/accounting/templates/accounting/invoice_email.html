@@ -71,6 +71,28 @@
 
 <p>
     {% blocktrans %}
+    You can pay this bill by credit card or by wire:
+    <ul>
+        <li>
+            To pay by credit card, please go to your
+            <a href="{{ statements_url }}">Billing Statements</a> page, click
+            on the green "Make Payment" button in front of your unpaid
+            invoice(s), and fill in the amount you want to pay as well as your
+            credit card details.
+        </li>
+        <li>
+            To pay by wire, find Dimagi's bank account details on your invoice.
+            Please include the invoice number in your wire payment and make
+            sure to send an email to {{ accounts_email }} after you have made
+            the payment, mentioning the date of the payment, the amount, the
+            invoice number, and the project space.
+        </li>
+    </ul>
+    {% endblocktrans %}
+</p>
+
+<p>
+    {% blocktrans %}
     Thank you for using {{ plan_name }}. If you have any questions, please don't
     hesitate to contact {{ invoicing_contact_email }}.
     {% endblocktrans %}

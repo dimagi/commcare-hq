@@ -221,13 +221,6 @@ DOUBLE_MANAGEMENT = StaticToggle(
     [NAMESPACE_USER, NAMESPACE_DOMAIN]
 )
 
-BATCHED_RESTORE = PredicatablyRandomToggle(
-    'batched_restore',
-    'Batch OTA restore response generation',
-    [NAMESPACE_DOMAIN, NAMESPACE_USER],
-    0.5
-)
-
 SPLIT_MULTISELECT_EXPORT = StaticToggle(
     'split_multiselect_export',
     'Split multiselect columns in custom exports',
@@ -294,12 +287,6 @@ LOCATION_TYPE_STOCK_RATES = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-APP_SUMMARY = StaticToggle(
-    'app_summary',
-    'Form and Case summary of an application',
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
 BULK_ARCHIVE_FORMS = StaticToggle(
     'bulk_archive_forms',
     'Bulk archive forms with excel',
@@ -326,6 +313,7 @@ PRIME_RESTORE = StaticToggle(
 FORM_LINK_WORKFLOW = StaticToggle(
     'form_link_workflow',
     'Form linking workflow available on forms',
+    [NAMESPACE_DOMAIN],
 )
 
 # not referenced in code directly but passed through to vellum
@@ -371,4 +359,16 @@ GLOBAL_SMS_RATES = StaticToggle(
 BULK_SMS_VERIFICATION = StaticToggle(
     'bulk_sms_verification',
     'Allow initiating the SMS phone verification workflow for all users in a group.',
+    [NAMESPACE_USER, NAMESPACE_DOMAIN],
+)
+
+BULK_PAYMENTS = StaticToggle(
+    'bulk_payments',
+    'Enable payment of invoices by bulk credit payments and invoice generation for wire tranfers',
+)
+
+MODULE_FILTER = StaticToggle(
+    'module_filter',
+    'Enable module filtering',
+    [NAMESPACE_DOMAIN],
 )

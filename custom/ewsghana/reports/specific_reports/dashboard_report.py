@@ -20,8 +20,7 @@ class DashboardReport(MultiReport):
             domain=self.domain,
             startdate=self.datespan.startdate_utc,
             enddate=self.datespan.enddate_utc,
-            location_id=self.request.GET.get('location_id') if self.request.GET.get('location_id')
-            else get_country_id(self.domain),
+            location_id=self.request.GET.get('location_id') or get_country_id(self.domain),
             program=None,
             products=None
         )

@@ -75,7 +75,8 @@ class ProductFilter(BaseSingleOptionFilter):
 
     @property
     def options(self):
-        return SQLProduct.objects.filter(domain=self.domain).values_list('product_id', 'name').order_by('name')
+        return SQLProduct.objects.filter(domain=self.domain, is_archived=False).values_list('product_id', 'name')\
+            .order_by('name')
 
 
 class EWSLocationFilter(AsyncLocationFilter):

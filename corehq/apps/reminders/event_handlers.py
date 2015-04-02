@@ -284,7 +284,7 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers):
             form = Form.get_form(form_unique_id)
             app = form.get_app()
             module = form.get_module()
-        except Exception as e:
+        except Exception:
             raise_error(reminder, ERROR_FORM)
             return False
 
@@ -416,10 +416,10 @@ def raise_error(reminder, error_msg):
 # The dictionary which maps an event type to its event handling method
 
 EVENT_HANDLER_MAP = {
-    METHOD_SMS : fire_sms_event,
-    METHOD_SMS_CALLBACK : fire_sms_callback_event,
-    METHOD_SMS_SURVEY : fire_sms_survey_event,
-    METHOD_IVR_SURVEY : fire_ivr_survey_event,
+    METHOD_SMS: fire_sms_event,
+    METHOD_SMS_CALLBACK: fire_sms_callback_event,
+    METHOD_SMS_SURVEY: fire_sms_survey_event,
+    METHOD_IVR_SURVEY: fire_ivr_survey_event,
     # METHOD_EMAIL is a placeholder at the moment; it's not implemented yet anywhere in the framework
 }
 

@@ -19,12 +19,14 @@
                     {% if account %}
                     <td>
                         {% if credit.subscription %}
-                        Subscription to {{ credit.subscription.subscriber.domain }}
-                        {% if credit.subscription.date_end %}
-                        ({{ credit.subscription.date_start }} - {{ credit.subscription.date_end }})
-                        {% else %}
-                        (start date: {{ credit.subscription.date_start }})
-                        {% endif %}
+                        <a href="{% url 'edit_subscription' credit.subscription.id %}">
+                            Subscription to {{ credit.subscription.subscriber.domain }}
+                            {% if credit.subscription.date_end %}
+                            ({{ credit.subscription.date_start }} - {{ credit.subscription.date_end }})
+                            {% else %}
+                            (start date: {{ credit.subscription.date_start }})
+                            {% endif %}
+                        </a>
                         {% else %}
                         {% trans "Any" %}
                         {% endif %}

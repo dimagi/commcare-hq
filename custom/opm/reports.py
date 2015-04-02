@@ -660,7 +660,7 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
         return {}
 
     @property
-    @request_cache("raw")
+    @request_cache()
     def print_response(self):
         """
         Returns the report for printing.
@@ -926,7 +926,7 @@ class MetReport(CaseReportMixin, BaseReport):
                 ])
 
     @property
-    @request_cache("raw")
+    @request_cache()
     def print_response(self):
         """
         Returns the report for printing.
@@ -1287,7 +1287,7 @@ class HealthStatusReport(DatespanMixin, BaseReport):
         return dict(num=2, width=300)
 
     @property
-    @request_cache("raw")
+    @request_cache()
     def print_response(self):
         """
         Returns the report for printing.

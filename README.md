@@ -265,6 +265,16 @@ If you want to use CloudCare you will also need to run the Touchforms server and
     # on Windows use CherryPy
     > manage.py runcpserver port=8000
 
+Running Formdesigner in Development mode
+----------------------------------------
+By default, HQ uses vellum minified build files to render form-designer. To use files from Vellum directly, do following
+
+    # in localsettings
+    VELLUM_DEBUG = "dev"
+
+    # simlink your Vellum code to submodules/formdesigner
+    ln -s absolute/path/to/Vellum absolute/path/to/submodules/formdesigner/
+
 Building CommCare Mobile Apps
 -----------------------------
 

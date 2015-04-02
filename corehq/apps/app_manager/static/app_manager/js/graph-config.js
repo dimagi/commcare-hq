@@ -19,7 +19,7 @@ uiElement.GraphConfiguration = function(moduleOptions, serverRepresentationOfGra
 
     var $editButtonDiv = $(
         '<div>' +
-            '<button class="btn" data-bind="click: openModal, visible: $data.edit">' +
+            '<button class="btn" data-bind="click: openModal">' +
                 '<i class="icon-pencil"></i>' +
                 ' Edit Graph' +
             '</button>' +
@@ -30,7 +30,6 @@ uiElement.GraphConfiguration = function(moduleOptions, serverRepresentationOfGra
     self.graphViewModel = new GraphViewModel(moduleOptions);
     self.graphViewModel.populate(getGraphViewModelJS(serverRepresentationOfGraph, moduleOptions));
 
-    self.edit = ko.observable(true);
     self.openModal = function (uiElementViewModel){
 
         // make a copy of the view model

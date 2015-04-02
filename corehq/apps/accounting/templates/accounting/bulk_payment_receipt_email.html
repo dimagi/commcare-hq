@@ -1,0 +1,60 @@
+{% load i18n %}
+
+<p>
+    {% blocktrans %}
+    Dear {{ name }},
+    {% endblocktrans %}
+</p>
+
+<p>
+    {% blocktrans %}
+    This email is a receipt for your payment of {{ amount }} toward
+    your project {{ project }}.
+    {% endblocktrans %}
+</p>
+
+{% if is_paid %}
+<p>
+    {% blocktrans %}
+    Invoices for project space {{ domain }} are now marked as paid as of {{ date_paid }}.
+    {% endblocktrans %}
+</p>
+
+<ul>
+    <li><strong>{% trans 'Project Space' %}:</strong> {{ domain }}</li>
+    <li><strong>{% trans 'Amount Paid' %}:</strong> {{ amount }}</li>
+    <li><strong>{% trans 'Payment Date' %}:</strong> {{ date_paid }}</li>
+    <li><strong>{% trans 'Transaction No.' %}:</strong> {{ transaction_id }}</li>
+</ul>
+{% else %}
+<ul>
+    <li><strong>{% trans 'Project Space' %}:</strong> {{ domain }}</li>
+    <li><strong>{% trans 'Amount Paid' %}:</strong> {{ amount }}</li>
+    <li><strong>{% trans 'Payment Date' %}:</strong> {{ date_paid }}</li>
+    <li><strong>{% trans 'Transaction No.' %}:</strong> {{ transaction_id }}</li>
+    <li><strong>{% trans 'Remaining Balance' %}:</strong> {{ balance }}</li>
+</ul>
+{% endif %}
+
+<p>
+    {% blocktrans %}
+    Thank you for using {{ product }}. If you have any questions, please don't
+    hesitate to contact {{ invoicing_contact_email }}.
+    {% endblocktrans %}
+</p>
+
+<p>
+    {% blocktrans %}
+    Best Regards,<br />
+    The {{ product }} HQ Team<br />
+    <a href="http://www.commcarehq.org/">www.commcarehq.org</a>
+    {% endblocktrans %}
+</p>
+
+<p>
+    {% blocktrans %}
+    Email From:<br />
+    CommCare HQ and the corporation Dimagi, Inc.<br />
+    585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA
+    {% endblocktrans %}
+</p>

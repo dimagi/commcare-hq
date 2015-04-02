@@ -6,3 +6,4 @@ from .test_smsusers_sync import *
 from .handlers.receipt import *
 from .handlers.requisition_status import *
 from .handlers.stock_on_hand import *
+from .handlers.handler import *

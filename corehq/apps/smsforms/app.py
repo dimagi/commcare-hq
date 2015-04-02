@@ -1,4 +1,5 @@
 import uuid
+from corehq.apps.app_manager.suite_xml import SuiteGenerator
 from .models import XFORMS_SESSION_SMS, SQLXFormsSession
 from datetime import datetime
 from corehq.apps.cloudcare.touchforms_api import get_session_data
@@ -54,6 +55,11 @@ def start_session(domain, contact, app, module, form, case_id=None, yield_respon
             "footprint": "True"
         }
     
+    if app and form:
+        suite_gen = SuiteGenerator(app)
+        datums = suite_gen.get_new_case_id_datums_meta(form)
+        session_data.update({meta['datum'].id: uuid.uuid4().hex for meta in datums})
+
     language = contact.get_language_code()
     config = XFormsConfig(form_content=form.render_xform(),
                           language=language,
@@ -64,6 +70,7 @@ def start_session(domain, contact, app, module, form, case_id=None, yield_respon
 
     # just use the contact id as the connection id
     connection_id = contact.get_id
+
     session_start_info = tfsms.start_session(config)
     session = SQLXFormsSession(
         couch_id=uuid.uuid4().hex,  # for legacy reasons we just generate a couch_id for now

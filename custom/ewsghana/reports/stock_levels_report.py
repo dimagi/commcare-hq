@@ -1,10 +1,11 @@
+from collections import OrderedDict
 from datetime import timedelta
 from django.utils.timesince import timesince
 from math import ceil
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.es import UserES
 from corehq import Domain
-from corehq.apps.commtrack.models import StockState, CommtrackConfig
+from corehq.apps.commtrack.models import StockState
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.dates import DatespanFilter
@@ -12,12 +13,10 @@ from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.graph_models import Axis
 from custom.common import ALL_OPTION
 from custom.ewsghana.filters import ProductByProgramFilter
-from custom.ewsghana.reports import EWSData, REORDER_LEVEL, MAXIMUM_LEVEL, MultiReport, get_url, EWSLineChart, \
-    ProductSelectionPane
+from custom.ewsghana.reports import EWSData, MultiReport, get_url_with_location, EWSLineChart, ProductSelectionPane
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 from corehq.apps.locations.models import Location, SQLLocation
-from corehq.apps.locations.models import Location
 
 
 class StockLevelsLegend(EWSData):
@@ -63,21 +62,19 @@ class FacilityReportData(EWSData):
         ])
 
     def get_prod_data(self):
-        def get_months_until_stockout_icon(value):
-            stock_levels = CommtrackConfig.for_domain(self.config['domain']).stock_levels_config
+        def get_months_until_stockout_icon(value, loc):
             if float(value) == 0.0:
                 return '%s <span class="icon-remove" style="color:red"/>' % value
-            elif float(value) < stock_levels.understock_threshold:
+            elif float(value) < loc.location_type.understock_threshold:
                 return '%s <span class="icon-warning-sign" style="color:orange"/>' % value
-            elif stock_levels.understock_threshold < float(value) < stock_levels.overstock_threshold:
+            elif loc.location_type.understock_threshold < float(value) < loc.location_type.overstock_threshold:
                 return '%s <span class="icon-ok" style="color:green"/>' % value
-            elif float(value) >= stock_levels.overstock_threshold:
+            elif float(value) >= loc.location_type.overstock_threshold:
                 return '%s <span class="icon-arrow-up" style="color:purple"/>' % value
 
         state_grouping = {}
 
         loc = SQLLocation.objects.get(location_id=self.config['location_id'])
-
         stock_states = StockState.objects.filter(
             case_id=loc.supply_point_id,
             section_id=STOCK_SECTION_TYPE,
@@ -101,8 +98,8 @@ class FacilityReportData(EWSData):
                     'stockout_duration_helper': True,
                     'current_stock': state.stock_on_hand,
                     'monthly_consumption': monthly_consumption,
-                    'reorder_level': int(monthly_consumption * REORDER_LEVEL),
-                    'maximum_level': int(monthly_consumption * MAXIMUM_LEVEL),
+                    'reorder_level': int(monthly_consumption * loc.location_type.overstock_threshold) / 2,
+                    'maximum_level': int(monthly_consumption * loc.location_type.overstock_threshold),
                     'date_of_last_report': state.last_modified_date.strftime("%Y-%m-%d")
                 }
 
@@ -121,7 +118,7 @@ class FacilityReportData(EWSData):
                 else 'not enough data',
                 'months_until_stockout': get_months_until_stockout_icon(values['months_until_stockout']
                                                                         if values['months_until_stockout']
-                                                                        else 0.0),
+                                                                        else 0.0, loc),
                 'stockout_duration': values['stockout_duration'],
                 'date_of_last_report': values['date_of_last_report'],
                 'reorder_level': values['reorder_level'] if values['reorder_level'] != 0.00
@@ -170,34 +167,29 @@ class InventoryManagementData(EWSData):
         stoke_states = StockState.objects.filter(
             case_id=loc.supply_point_id,
             section_id=STOCK_SECTION_TYPE,
-            sql_product__in=self.unique_products([loc]),
-            last_modified_date__lte=self.config['enddate']
+            sql_product__in=self.unique_products([loc], all=True),
         )
 
         consumptions = {ss.product_id: ss.daily_consumption for ss in stoke_states}
-
         st = StockTransaction.objects.filter(
             case_id=loc.supply_point_id,
-            sql_product__in=self.unique_products([loc]),
+            sql_product__in=self.unique_products([loc], all=True),
             type='stockonhand',
             report__date__lte=self.config['enddate']
         ).order_by('report__date')
 
-        rows = {}
+        rows = OrderedDict()
         weeks = ceil((self.config['enddate'] - self.config['startdate']).days / 7.0)
-        stock_levels = CommtrackConfig.for_domain(self.config['domain']).stock_levels_config
-
-        for state in stoke_states:
-            consumptions[state.product_id] = state.daily_consumption
-            product_name = '{0} ({1})'.format(state.sql_product.name, state.sql_product.code)
-            rows[product_name] = {}
 
         for state in st:
             product_name = '{0} ({1})'.format(state.sql_product.name, state.sql_product.code)
+            if product_name not in rows:
+                rows[product_name] = {}
             for i in range(1, int(weeks + 1)):
                 date = self.config['startdate'] + timedelta(weeks=i)
                 if state.report.date < date:
-                    rows[product_name][i] = calculate_weeks_remaining(state, consumptions[state.product_id], date)
+                    rows[product_name][i] = calculate_weeks_remaining(
+                        state, consumptions.get(state.product_id, None), date)
 
         for k, v in rows.iteritems():
             rows[k] = [{'x': key, 'y': value} for key, value in v.iteritems()]
@@ -205,8 +197,8 @@ class InventoryManagementData(EWSData):
         rows['Understock'] = []
         rows['Overstock'] = []
         for i in range(1, int(weeks + 1)):
-            rows['Understock'].append({'x': i, 'y': stock_levels.understock_threshold})
-            rows['Overstock'].append({'x': i, 'y': stock_levels.overstock_threshold})
+            rows['Understock'].append({'x': i, 'y': float(loc.location_type.understock_threshold)})
+            rows['Overstock'].append({'x': i, 'y': float(loc.location_type.overstock_threshold)})
 
         return rows
 
@@ -215,8 +207,9 @@ class InventoryManagementData(EWSData):
         if self.show_chart:
             chart = EWSLineChart("Inventory Management Trends", x_axis=Axis(self.chart_x_label, 'd'),
                                  y_axis=Axis(self.chart_y_label, '.1f'))
+            chart.height = 600
             for product, value in self.chart_data.iteritems():
-                chart.add_dataset(product, value)
+                chart.add_dataset(product, value, color='red' if product in ['Understock', 'Overstock'] else None)
             return [chart]
         return []
 
@@ -254,7 +247,8 @@ class FacilitySMSUsers(EWSData):
             if (hit['first_name'] or hit['last_name']) and hit['phone_numbers']:
                 yield [hit['first_name'] + ' ' + hit['last_name'], hit['phone_numbers'][0]]
 
-        yield [get_url(CreateCommCareUserView.urlname, 'Create new Mobile Worker', self.config['domain'])]
+        yield [get_url_with_location(CreateCommCareUserView.urlname, 'Create new Mobile Worker',
+                                     self.config['location_id'], self.config['domain'])]
 
 
 class FacilityUsers(EWSData):

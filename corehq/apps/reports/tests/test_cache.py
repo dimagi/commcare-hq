@@ -2,21 +2,22 @@ import uuid
 from django.http import HttpRequest
 from django.test import TestCase
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.reports.cache import CacheableRequestMixIn, request_cache
+from corehq.apps.reports.cache import request_cache
 from corehq.apps.users.models import WebUser
 
 
-class MockReport(CacheableRequestMixIn):
+class MockReport(object):
+    is_cacheable = False
 
     def __init__(self, request, is_cacheable=True):
         self.request = request
         self.is_cacheable = is_cacheable
 
-    @request_cache('v1')
+    @request_cache()
     def v1(self):
         return uuid.uuid4().hex
 
-    @request_cache('v2')
+    @request_cache()
     def v2(self):
         return uuid.uuid4().hex
 

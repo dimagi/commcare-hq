@@ -9,6 +9,7 @@ import cStringIO
 import itertools
 from datetime import datetime, timedelta, date
 from urllib2 import URLError
+from corehq.util.timezones.utils import get_timezone_for_user
 from dimagi.utils.decorators.memoized import memoized
 from unidecode import unidecode
 from dateutil.parser import parse
@@ -49,11 +50,10 @@ from couchexport.exceptions import (
     CouchExportException,
     SchemaMismatchException
 )
-from couchexport.groupexports import rebuild_export
 from couchexport.models import FakeSavedExportSchema, SavedBasicExport
 from couchexport.shortcuts import (export_data_shared, export_raw_data,
     export_response)
-from couchexport.tasks import rebuild_schemas
+from couchexport.tasks import rebuild_schemas, rebuild_export_task
 from couchexport.util import SerializableFunction
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import wrapped_docs
@@ -421,11 +421,14 @@ def hq_download_saved_export(req, domain, export_id):
 def hq_update_saved_export(req, domain):
     group_id = req.POST['group_export_id']
     index = int(req.POST['index'])
-    group_config = HQGroupExportConfiguration.get(group_id)
-    assert domain == group_config.domain
+    group_config = get_document_or_404(HQGroupExportConfiguration, domain, group_id)
     config, schema = group_config.all_exports[index]
-    rebuild_export(config, schema, 'couch')
-    messages.success(req, _('The data for {} has been refreshed!').format(config.name))
+    rebuild_export_task.delay(group_id, index)
+    messages.success(
+        req,
+        _('Data update for {} has started and the saved export will be automatically updated soon. '
+          'Please refresh the page periodically to check the status.').format(config.name)
+    )
     return HttpResponseRedirect(reverse(DataInterfaceDispatcher.name(),
                                         args=[domain, req.POST['report_slug']]))
 
@@ -877,7 +880,7 @@ def view_scheduled_report(request, domain, scheduled_report_id):
 @login_and_domain_required
 @require_GET
 def case_details(request, domain, case_id):
-    timezone = util.get_timezone(request.couch_user, domain)
+    timezone = get_timezone_for_user(request.couch_user, domain)
 
     try:
         case = get_document_or_404(CommCareCase, domain, case_id)
@@ -1129,7 +1132,7 @@ def download_cases(request, domain):
 
 
 def _get_form_context(request, domain, instance_id):
-    timezone = util.get_timezone(request.couch_user, domain)
+    timezone = get_timezone_for_user(request.couch_user, domain)
     instance = _get_form_or_404(instance_id)
     try:
         assert domain == instance.domain

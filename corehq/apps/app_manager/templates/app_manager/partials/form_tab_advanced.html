@@ -4,7 +4,6 @@
 <div class="tab-pane" id="advanced">
     <h4>XForm</h4>
     <ul class="nav nav-pills nav-stacked">
-    {% if edit %}
         <li>
             <a class="dialog_opener" href="#">
                 <i class="icon-arrow-up"></i>
@@ -18,7 +17,6 @@
                 </form>
             </div>
         </li>
-        {% endif %}
         <li>
             <a {% if not form.source %}class="disabled"{% endif %}{% if is_user_registration %}
                href="{% url "get_user_registration_source" domain app.id %}?download=true"
@@ -60,7 +58,7 @@
             </div>
         </li>
     </ul>
-    {% if edit and allow_form_copy%}
+    {% if allow_form_copy%}
     <form class="form-inline" method='POST' action='{% url "copy_form" domain app.id module.id form.id %}'>
         <p>
         <i class="icon-share"></i> {% trans "Copy form to: " %}
