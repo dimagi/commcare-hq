@@ -309,7 +309,13 @@
                                         transform: column.transform() || null, // it doesn't save '' well
                                         is_sensitive: Boolean(is_sensitive)
                                 };
-                                if (column.doc_type() === 'SplitColumn'){
+                                if (self.export_type() === 'form') {
+                                    if (self.custom_export.split_multiselects() && column.allOptions()) {
+                                        col.doc_type = 'SplitColumn';
+                                    } else {
+                                        col.doc_type = 'ExportColumn';
+                                    }
+                                } else if (column.doc_type() === 'SplitColumn'){
                                     col.doc_type = column.doc_type();
                                     col.options = column.options();
                                 }
@@ -420,6 +426,7 @@
 
         $(function () {
             var customExportView = CustomExportView.wrap({
+                export_type: {{ custom_export.type|JSON }},
                 custom_export: {{ custom_export|JSON }},
                 table_configuration: {{ table_configuration|JSON }},
                 presave: {{ presave|JSON }},
