@@ -8,7 +8,7 @@ from casexml.apps.stock.utils import get_current_ledger_transactions
 from corehq.apps.accounting.decorators import requires_privilege_for_commcare_user, requires_privilege_with_fallback
 from corehq.apps.app_manager.exceptions import FormNotFoundException, \
     ModuleNotFoundException
-from corehq.apps.app_manager.util import get_usercase_type
+from corehq.apps.app_manager.util import is_usercase_enabled
 from corehq.util.couch import get_document_or_404
 from couchforms.const import ATTACHMENT_NAME
 from couchforms.models import XFormInstance
@@ -285,8 +285,7 @@ def filter_cases(request, domain, app_id, module_id, parent_id=None):
     delegation = request.GET.get('task-list') == 'true'
     auth_cookie = request.COOKIES.get('sessionid')
 
-    usercase_type = get_usercase_type(domain)
-    suite_gen = SuiteGenerator(app, usercase_type)
+    suite_gen = SuiteGenerator(app, is_usercase_enabled(domain))
     xpath = suite_gen.get_filter_xpath(module, delegation=delegation)
     extra_instances = [{'id': inst.id, 'src': inst.src}
                        for inst in suite_gen.get_instances_for_module(module, additional_xpaths=[xpath])]

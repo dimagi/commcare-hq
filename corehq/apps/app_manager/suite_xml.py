@@ -22,7 +22,7 @@ from .exceptions import (
 from corehq.toggles import MODULE_FILTER
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE_LAST_VISIT, SCHEDULE_PHASE, \
-    CASE_ID, RETURN_TO, USERCASE_ID
+    CASE_ID, RETURN_TO, USERCASE_ID, USERCASE_TYPE
 from corehq.apps.app_manager.exceptions import UnknownInstanceError, ScheduleError, FormNotFoundException
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.util import split_path, create_temp_sort_column, languages_mapping, \
@@ -740,9 +740,9 @@ class SuiteGenerator(SuiteGeneratorBase):
         'fixtures',
     )
 
-    def __init__(self, app, usercase_type=None):
+    def __init__(self, app, is_usercase_enabled=None):
         super(SuiteGenerator, self).__init__(app)
-        self.usercase_type = usercase_type
+        self.is_usercase_enabled = is_usercase_enabled
 
     def post_process(self, suite):
         if self.app.enable_post_form_workflow:
@@ -1504,12 +1504,12 @@ class SuiteGenerator(SuiteGeneratorBase):
             return False
 
         datums = []
-        if form.form_type == 'module_form' and uses_usercase(form) and self.usercase_type:
-            case_type = CaseTypeXpath(self.usercase_type).case()
+        if form.form_type == 'module_form' and uses_usercase(form) and self.is_usercase_enabled:
+            case_type = CaseTypeXpath(USERCASE_TYPE).case()
             case = UserCaseXPath(case_type).case()
             datums.append({
                 'datum': SessionDatum(id=USERCASE_ID, function=('%s/@case_id' % case)),
-                'case_type': self.usercase_type,
+                'case_type': USERCASE_TYPE,
                 'requires_selection': False,
                 'action': None  # action and user case are independent.
             })

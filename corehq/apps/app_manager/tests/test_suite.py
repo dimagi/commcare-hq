@@ -25,12 +25,12 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         update_toggle_cache(MODULE_FILTER.slug, 'skelly', True, NAMESPACE_DOMAIN)
         update_toggle_cache(MODULE_FILTER.slug, 'domain', True, NAMESPACE_DOMAIN)
         update_toggle_cache(MODULE_FILTER.slug, 'example', True, NAMESPACE_DOMAIN)
-        self.usercase_type_patch = patch('corehq.apps.app_manager.models.get_usercase_type')
-        self.usercase_type_mock = self.usercase_type_patch.start()
-        self.usercase_type_mock.return_value = 'user_case'
+        self.usercase_enabled_patch = patch('corehq.apps.app_manager.models.is_usercase_enabled')
+        self.usercase_enabled_mock = self.usercase_enabled_patch.start()
+        self.usercase_enabled_mock.return_value = True
 
     def tearDown(self):
-        self.usercase_type_patch.stop()
+        self.usercase_enabled_patch.stop()
         clear_toggle_cache(MODULE_FILTER.slug, 'skelly', NAMESPACE_DOMAIN)
         clear_toggle_cache(MODULE_FILTER.slug, 'domain', NAMESPACE_DOMAIN)
         clear_toggle_cache(MODULE_FILTER.slug, 'example', NAMESPACE_DOMAIN)
@@ -663,11 +663,11 @@ class AdvancedModuleAsChildTest(SimpleTestCase, TestFileMixin):
         for m_id in range(2):
             self.app.new_form(m_id, "Form", None)
 
-        self.usercase_type_patch = patch('corehq.apps.app_manager.models.get_usercase_type')
-        self.usercase_type_mock = self.usercase_type_patch.start()
+        self.usercase_enabled_patch = patch('corehq.apps.app_manager.models.is_usercase_enabled')
+        self.usercase_enabled_mock = self.usercase_enabled_patch.start()
 
     def tearDown(self):
-        self.usercase_type_patch.stop()
+        self.usercase_enabled_patch.stop()
         clear_toggle_cache(MODULE_FILTER.slug, self.app.domain, NAMESPACE_DOMAIN)
 
     def test_basic_workflow(self):
@@ -822,11 +822,11 @@ class TestFormLinking(SimpleTestCase, TestFileMixin):
 
     def setUp(self):
         update_toggle_cache(MODULE_FILTER.slug, 'domain', True, NAMESPACE_DOMAIN)
-        self.get_usercase_type_patch = patch('corehq.apps.app_manager.models.get_usercase_type')
-        self.get_usercase_type_patch.start()
+        self.is_usercase_enabled_patch = patch('corehq.apps.app_manager.models.is_usercase_enabled')
+        self.is_usercase_enabled_patch.start()
 
     def tearDown(self):
-        self.get_usercase_type_patch.stop()
+        self.is_usercase_enabled_patch.stop()
         clear_toggle_cache(MODULE_FILTER.slug, 'domain', NAMESPACE_DOMAIN)
 
     def make_app(self, spec):

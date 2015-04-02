@@ -6,7 +6,7 @@ from corehq.apps.builds.models import CommCareBuildConfig
 from couchdbkit.exceptions import DocTypeError
 from corehq import Domain
 from corehq.apps.app_manager.const import CT_REQUISITION_MODE_3, CT_LEDGER_STOCK, CT_LEDGER_REQUESTED, \
-    CT_REQUISITION_MODE_4, CT_LEDGER_APPROVED, CT_LEDGER_PREFIX, USERCASE_PREFIX
+    CT_REQUISITION_MODE_4, CT_LEDGER_APPROVED, CT_LEDGER_PREFIX, USERCASE_PREFIX, USERCASE_TYPE
 from corehq.apps.app_manager.xform import XForm, XFormException, parse_xml
 import re
 from dimagi.utils.decorators.memoized import memoized
@@ -121,9 +121,7 @@ class ParentCasePropertyBuilder(object):
         return [a for a in apps if a.case_sharing and a.id != self.app.id]
 
     @memoized
-    def get_properties(self, case_type, already_visited=(),
-                       include_shared_properties=True,
-                       usercase_type=None):
+    def get_properties(self, case_type, already_visited=(), include_shared_properties=True):
         if case_type in already_visited:
             return ()
 
@@ -131,7 +129,6 @@ class ParentCasePropertyBuilder(object):
             self.get_properties,
             already_visited=already_visited + (case_type,),
             include_shared_properties=include_shared_properties,
-            usercase_type=usercase_type
         )
 
         case_properties = set(self.defaults)
@@ -149,13 +146,11 @@ class ParentCasePropertyBuilder(object):
             from corehq.apps.app_manager.models import get_apps_in_domain
             for app in self.get_other_case_sharing_apps_in_domain():
                 case_properties.update(
-                    get_case_properties(
-                        app, [case_type], include_shared_properties=False, usercase_type=usercase_type
-                    ).get(case_type, [])
+                    get_case_properties(app, [case_type], include_shared_properties=False).get(case_type, [])
                 )
 
         # prefix user case properties with "user:".
-        prefix_user = lambda p: USERCASE_PREFIX + p if case_type == usercase_type else p
+        prefix_user = lambda p: USERCASE_PREFIX + p if case_type == USERCASE_TYPE else p
 
         # .. note:: if the user case type has a parent case type, its
         #           properties will be returned as `user:parent/property`
@@ -191,44 +186,38 @@ class ParentCasePropertyBuilder(object):
 
         return parent_map
 
-    def get_case_property_map(self, case_types, include_shared_properties=True, usercase_type=None):
+    def get_case_property_map(self, case_types, include_shared_properties=True):
         case_types = sorted(case_types)
         return {
             case_type: sorted(self.get_properties(
-                case_type, include_shared_properties=include_shared_properties, usercase_type=usercase_type
+                case_type, include_shared_properties=include_shared_properties
             ))
             for case_type in case_types
         }
 
 
-def get_case_properties(app, case_types, defaults=(),
-                        include_shared_properties=True,
-                        usercase_type=None):
+def get_case_properties(app, case_types, defaults=(), include_shared_properties=True):
     builder = ParentCasePropertyBuilder(app, defaults)
     return builder.get_case_property_map(
         case_types,
         include_shared_properties=include_shared_properties,
-        usercase_type=usercase_type
     )
 
 
-def get_usercase_type(domain_name):
+def is_usercase_enabled(domain_name):
     domain = Domain.get_by_name(domain_name)
-    if not domain:
-        return None
-    return domain.call_center_config.case_type if domain.call_center_config.enabled else None
+    # TODO: This will change to domain.usercase.enabled or something
+    return domain and domain.call_center_config.enabled
 
 
 def get_all_case_properties(app):
     case_types = set(itertools.chain.from_iterable(m.get_case_types() for m in app.modules))
-    usercase_type = get_usercase_type(app.domain)
-    if usercase_type:
-        case_types.add(usercase_type)
+    if is_usercase_enabled(app.domain):
+        case_types.add(USERCASE_TYPE)
     return get_case_properties(
         app,
         case_types,
         defaults=('name',),
-        usercase_type=usercase_type
     )
 
 
