@@ -507,6 +507,9 @@ class HQMediaMixin(Document):
     # keys are the paths to each file in the final application media zip
     multimedia_map = SchemaDictProperty(HQMediaMapItem)
 
+    # paths to custom logos
+    logo_refs = DictProperty()
+
     @property
     @memoized
     def all_media(self):
