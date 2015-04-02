@@ -9,6 +9,8 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.suite_xml import dot_interpolate
+from corehq.toggles import MODULE_FILTER, NAMESPACE_DOMAIN
+from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
 
 from lxml import etree
 import commcare_translations
@@ -20,12 +22,18 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
     file_path = ('data', 'suite')
 
     def setUp(self):
+        update_toggle_cache(MODULE_FILTER.slug, 'skelly', True, NAMESPACE_DOMAIN)
+        update_toggle_cache(MODULE_FILTER.slug, 'domain', True, NAMESPACE_DOMAIN)
+        update_toggle_cache(MODULE_FILTER.slug, 'example', True, NAMESPACE_DOMAIN)
         self.usercase_type_patch = patch('corehq.apps.app_manager.models.get_usercase_type')
         self.usercase_type_mock = self.usercase_type_patch.start()
         self.usercase_type_mock.return_value = 'user_case'
 
     def tearDown(self):
         self.usercase_type_patch.stop()
+        clear_toggle_cache(MODULE_FILTER.slug, 'skelly', NAMESPACE_DOMAIN)
+        clear_toggle_cache(MODULE_FILTER.slug, 'domain', NAMESPACE_DOMAIN)
+        clear_toggle_cache(MODULE_FILTER.slug, 'example', NAMESPACE_DOMAIN)
 
     def assertHasAllStrings(self, app, strings):
         et = etree.XML(app)
@@ -646,6 +654,7 @@ class AdvancedModuleAsChildTest(SimpleTestCase, TestFileMixin):
 
     def setUp(self):
         self.app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        update_toggle_cache(MODULE_FILTER.slug, self.app.domain, True, NAMESPACE_DOMAIN)
         self.module_0 = self.app.add_module(Module.new_module('parent', None))
         self.module_0.unique_id = 'm1'
         self.module_1 = self.app.add_module(AdvancedModule.new_module("Untitled Module", None))
@@ -659,6 +668,7 @@ class AdvancedModuleAsChildTest(SimpleTestCase, TestFileMixin):
 
     def tearDown(self):
         self.usercase_type_patch.stop()
+        clear_toggle_cache(MODULE_FILTER.slug, self.app.domain, NAMESPACE_DOMAIN)
 
     def test_basic_workflow(self):
         # make module_1 as submenu to module_0
@@ -811,11 +821,13 @@ class TestFormLinking(SimpleTestCase, TestFileMixin):
     }
 
     def setUp(self):
+        update_toggle_cache(MODULE_FILTER.slug, 'domain', True, NAMESPACE_DOMAIN)
         self.get_usercase_type_patch = patch('corehq.apps.app_manager.models.get_usercase_type')
         self.get_usercase_type_patch.start()
 
     def tearDown(self):
         self.get_usercase_type_patch.stop()
+        clear_toggle_cache(MODULE_FILTER.slug, 'domain', NAMESPACE_DOMAIN)
 
     def make_app(self, spec):
         app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)

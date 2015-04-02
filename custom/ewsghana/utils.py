@@ -34,7 +34,7 @@ def get_supply_points(location_id, domain):
         locations = SQLLocation.objects.filter(id=loc.id)
     else:
         locations = SQLLocation.objects.filter(domain=domain, location_type__name__in=location_types)
-    return locations.exclude(supply_point_id__isnull=True)
+    return locations.exclude(supply_point_id__isnull=True).exclude(is_archived=True)
 
 
 def get_second_week(start_date, end_date):
@@ -102,7 +102,7 @@ def get_products_ids_assigned_to_rel_sp(domain, active_location=None):
 
         return products
     else:
-        return filter_relevant(SQLLocation.objects.filter(domain=domain))
+        return filter_relevant(SQLLocation.objects.filter(domain=domain, is_archived=False))
 
 
 def prepare_domain(domain_name):

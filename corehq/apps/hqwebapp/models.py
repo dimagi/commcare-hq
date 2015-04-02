@@ -597,10 +597,7 @@ class ApplicationsTab(UITab):
 
     @property
     def title(self):
-        if self.project.commconnect_enabled:
-            return _("Surveys")
-        else:
-            return _("Applications")
+        return _("Applications")
 
     @classmethod
     def make_app_title(cls, app_name, doc_type):
@@ -691,7 +688,6 @@ class CloudcareTab(UITab):
             has_privilege(self._request, privileges.CLOUDCARE)
             and self.domain
             and (self.couch_user.can_edit_data() or self.couch_user.is_commcare_user())
-            and not self.project.commconnect_enabled
         )
 
 

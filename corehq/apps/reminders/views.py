@@ -282,13 +282,14 @@ def delete_reminder(request, domain, handler_id):
     view_name = "one_time_reminders" if handler.reminder_type == REMINDER_TYPE_ONE_TIME else "list_reminders"
     return HttpResponseRedirect(reverse(view_name, args=[domain]))
 
+
 @reminders_framework_permission
 def scheduled_reminders(request, domain, template="reminders/partial/scheduled_reminders.html"):
-    timezone = Domain.get_by_name(domain).default_timezone
+    timezone = Domain.get_by_name(domain).get_default_timezone()
     reminders = CaseReminderHandler.get_all_reminders(domain)
     dates = []
     now = datetime.utcnow()
-    timezone_now = datetime.now(pytz.timezone(timezone))
+    timezone_now = datetime.now(timezone)
     today = timezone_now.date()
 
     def adjust_next_fire_to_timezone(reminder_utc):

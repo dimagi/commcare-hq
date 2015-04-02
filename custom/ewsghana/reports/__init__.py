@@ -119,8 +119,7 @@ class ReportingRatesData(EWSData):
                 location_type__name__in=location_types,
                 parent=location
             )
-        locations = locations.exclude(is_archived=True)
-        return locations.exclude(supply_point_id__isnull=True)
+        return locations.exclude(supply_point_id__isnull=True).exclude(is_archived=True)
 
     def supply_points_list(self, location_id=None):
         return self.get_supply_points(location_id).values_list('supply_point_id')
@@ -288,11 +287,17 @@ class ProductSelectionPane(EWSData):
         locations = get_supply_points(self.config['location_id'], self.config['domain'])
         products = self.unique_products(locations, all=True)
         programs = {program.get_id: program.name for program in Program.by_domain(self.domain)}
+        headers = []
+        if 'report_type' in self.config:
+            from custom.ewsghana.reports.specific_reports.stock_status_report import MonthOfStockProduct
+            headers = [h.html for h in MonthOfStockProduct(self.config).headers]
         result = [
             [
                 '<input class=\"toggle-column\" name=\"{1} ({0})\" data-column={2} value=\"{0}\" type=\"checkbox\"'
-                '{3}>{1} ({0})</input>'.format(p.code, p.name, idx, 'checked' if self.config['program'] is None or
-                self.config['program'] == p.program_id else ''), programs[p.program_id], p.code
+                '{3}>{1} ({0})</input>'.format(
+                    p.code, p.name, idx if not headers else headers.index(p.code) if p.code in headers else -1,
+                    'checked' if self.config['program'] is None or self.config['program'] == p.program_id else ''),
+                programs[p.program_id], p.code
             ] for idx, p in enumerate(products, start=1)
         ]
 

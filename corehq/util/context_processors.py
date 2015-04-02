@@ -9,8 +9,6 @@ from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 
 COMMCARE = 'commcare'
 
-COMMCONNECT = 'commconnect'
-
 COMMTRACK = 'commtrack'
 
 RAVEN = bool(getattr(settings, 'SENTRY_DSN', None))
@@ -39,15 +37,9 @@ def is_commtrack(project, request):
         return False
 
 
-def is_commconnect(project):
-    return project and project.commconnect_enabled
-
-
 def get_domain_type(project, request):
     if is_commtrack(project, request):
         return COMMTRACK
-    elif is_commconnect(project):
-        return COMMCONNECT
     else:
         return COMMCARE
 
@@ -59,12 +51,6 @@ def get_per_domain_context(project, request=None):
         site_name = "CommTrack"
         public_site = "http://www.commtrack.org"
         can_be_your = _("mobile logistics solution")
-    elif domain_type == COMMCONNECT:
-        domain_type = 'commconnect'
-        logo_url = static('hqstyle/img/commconnect-logo.png')
-        site_name = "CommConnect"
-        public_site = "http://www.commcarehq.org"
-        can_be_your = _("mobile solution for your frontline workforce")
     else:
         logo_url = static('hqstyle/img/commcare-logo.png')
         site_name = "CommCare HQ"

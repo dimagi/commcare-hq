@@ -43,7 +43,7 @@
 trunk: master
 name: autostaging
 branches:
-  - test-soft-assert  # Danny 3/31
+#  - test-global-request  # danny 4/1
   - subscription-no-contact-info # bb 8/4
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
   - vellum-staging # J$ 11/13
@@ -51,8 +51,6 @@ branches:
   - fixtures-spike  # cz 1/29
   - static-updates # Biyeun 2/9
   - loc-type-stock-rates  # Ethan 3/6
- # - pricingSMS # sravan 3/23
-  - bulk-payments # Nick P 3/26
   - usercase # Norman 3/27
   - usercase_batch # Norman 3/31
 submodules:

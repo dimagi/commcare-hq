@@ -792,13 +792,9 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, Mu
                 )
 
             for row in results:
-                completion_time = row['time_end'].replace(tzinfo=None)
-                completion_dst = False if self.timezone == pytz.utc else\
-                    tz_utils.is_timezone_in_dst(self.timezone, completion_time)
-                completion_time = self.timezone.localize(completion_time, is_dst=completion_dst)
-
-                submission_time = ServerTime(row['received_on']).phone_time(self.timezone).done()
-
+                completion_time = (PhoneTime(row['time_end'], self.timezone)
+                                   .server_time().done())
+                submission_time = row['received_on']
                 td = submission_time - completion_time
                 td_total = (td.seconds + td.days * 24 * 3600)
                 rows.append([
@@ -819,10 +815,14 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, Mu
         self.total_row = [_("Average"), "-", "-", "-", "-", self._format_td_status(int(total_seconds/total), False) if total > 0 else "--"]
         return rows
 
-    def _format_date(self, date, d_format="%d %b %Y, %H:%M:%S"):
+    def _format_date(self, date):
+        """
+        date is a datetime
+        """
+
         return self.table_cell(
             date,
-            "%s (%s)" % (date.strftime(d_format), date.tzinfo._tzname)
+            ServerTime(date).user_time(self.timezone).ui_string()
         )
 
     def _format_td_status(self, td, use_label=True):

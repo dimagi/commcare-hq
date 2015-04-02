@@ -19,21 +19,6 @@ def validate_timezone_max_length(max_length, zones):
         raise Exception("corehq.apps.timezones.fields.TimeZoneField MAX_TIMEZONE_LENGTH is too small")
 
 
-def is_timezone_in_dst(tz, compare_time=None):
-    now = datetime.datetime.now(tz=tz) if not compare_time else tz.localize(compare_time)
-    transitions = []
-    if not hasattr(tz, '_utc_transition_times'):
-        return False
-
-    # todo: should be cleaned up to not rely on the internals of pytz
-    for dst_transition in tz._utc_transition_times:
-        if dst_transition.year == now.year:
-            transitions.append(tz.localize(dst_transition))
-    if len(transitions) >= 2 and (transitions[0] <= now <= transitions[1]):
-        return True
-    return False
-
-
 def get_timezone_for_user(couch_user_or_id, domain):
     # todo cleanup
     timezone = None

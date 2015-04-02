@@ -1,5 +1,6 @@
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
+import pytz
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
@@ -53,33 +54,35 @@ class MissedCallbackReport(CustomProjectReport, GenericTabularReport):
 
             # If a site coordinator is viewing the report, only show participants from that site (group)
             if group_id is None or group_id == case.owner_id:
+                timezone = pytz.timezone(case.get_case_property("time_zone"))
                 data[case._id] = {
-                    "name" : case.name,
-                    "time_zone" : case.get_case_property("time_zone"),
-                    "dates" : [None for x in range(14)],
+                    "name": case.name,
+                    "time_zone": timezone,
+                    "dates": [None] * 14,
                 }
-        
+
         dates = self.get_past_two_weeks()
         date_strings = [date.strftime("%Y-%m-%d") for date in dates]
-        
+
         start_date = dates[0] - timedelta(days=1)
         end_date = dates[-1] + timedelta(days=2)
-        
+
         start_utc_timestamp = json_format_datetime(start_date)
         end_utc_timestamp = json_format_datetime(end_date)
-        
+
         expected_callback_events = ExpectedCallbackEventLog.view("sms/expected_callback_event",
                                                                  startkey=[self.domain, start_utc_timestamp],
                                                                  endkey=[self.domain, end_utc_timestamp],
                                                                  include_docs=True).all()
-        
+
         for event in expected_callback_events:
             if event.couch_recipient in data:
-                event_date = ServerTime(event.date).user_time(data[event.couch_recipient]["time_zone"]).done().date()
-                event_date = event_date.strftime("%Y-%m-%d")
+                timezone = data[event.couch_recipient]["time_zone"]
+                event_date = (ServerTime(event.date).user_time(timezone)
+                              .ui_string("%Y-%m-%d"))
                 if event_date in date_strings:
                     data[event.couch_recipient]["dates"][date_strings.index(event_date)] = event.status
-        
+
         result = []
         for case_id, data_dict in data.items():
             row = [

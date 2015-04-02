@@ -221,13 +221,6 @@ DOUBLE_MANAGEMENT = StaticToggle(
     [NAMESPACE_USER, NAMESPACE_DOMAIN]
 )
 
-BATCHED_RESTORE = PredicatablyRandomToggle(
-    'batched_restore',
-    'Batch OTA restore response generation',
-    [NAMESPACE_DOMAIN, NAMESPACE_USER],
-    0.5
-)
-
 SPLIT_MULTISELECT_EXPORT = StaticToggle(
     'split_multiselect_export',
     'Split multiselect columns in custom exports',
@@ -366,4 +359,10 @@ BULK_SMS_VERIFICATION = StaticToggle(
 BULK_PAYMENTS = StaticToggle(
     'bulk_payments',
     'Enable payment of invoices by bulk credit payments and invoice generation for wire tranfers',
+)
+
+MODULE_FILTER = StaticToggle(
+    'module_filter',
+    'Enable module filtering',
+    [NAMESPACE_DOMAIN],
 )
