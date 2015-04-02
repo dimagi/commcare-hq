@@ -13,6 +13,7 @@ from corehq.pillows.reportxform import ReportXFormPillow
 from corehq.pillows.xform import XFormPillow
 from couchforms.models import XFormInstance
 from django.conf import settings
+from dimagi.utils.logging import notify_error
 
 
 CLUSTER_HEALTH = 'cluster_health'
@@ -233,7 +234,7 @@ def _check_es_rev(index, doc_id, couch_revs):
         else:
             status = False
             message = "Not in sync - query failed"
-            logging.error("%s: %s" % message, str(res))
+            notify_error("%s: %s" % message, str(res))
     except Exception, ex:
         message = "ES Error: %s" % ex
         status = False
