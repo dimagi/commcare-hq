@@ -1,11 +1,9 @@
 from collections import defaultdict
 import datetime
 from urllib import urlencode
-import dateutil
 import math
 from django.db.models.aggregates import Max, Min, Avg, StdDev, Count
 import operator
-import pytz
 from corehq.apps.es import filters
 from corehq.apps.es.cases import CaseES
 from corehq.apps.es.forms import FormES
@@ -26,8 +24,7 @@ from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.parsing import string_to_datetime
-from corehq.util.timezones import utils as tz_utils
+from dimagi.utils.parsing import string_to_datetime, string_to_utc_datetime
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
@@ -905,7 +902,8 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
                     startkey=key+[self.datespan.startdate_param_utc],
                     endkey=key+[self.datespan.enddate_param_utc],
                 ).all()
-                all_times.extend([dateutil.parser.parse(d['key'][-1]) for d in data])
+                all_times.extend([string_to_utc_datetime(d['key'][-1])
+                                  for d in data])
         if self.by_submission_time:
             all_times = [ServerTime(t).user_time(self.timezone).done()
                          for t in all_times]
