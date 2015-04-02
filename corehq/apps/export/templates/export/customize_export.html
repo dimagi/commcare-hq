@@ -340,7 +340,7 @@
                     return tables;
                 };
 
-                self.output = ko.computed(function () {
+                self.output = function () {
                     var output = ko.mapping.toJS({
                         custom_export: self.custom_export,
                         presave: self.presave,
@@ -348,7 +348,7 @@
                     });
                     output.custom_export.tables = self.make_tables();
                     return JSON.stringify(output);
-                });
+                };
 
                 self.save = function () {
                     self.save.state('saving');
