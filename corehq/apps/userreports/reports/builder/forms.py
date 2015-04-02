@@ -311,6 +311,9 @@ class ConfigureNewReportBase(forms.Form):
     button_text = 'Done'
 
     def __init__(self, report_name, app_id, source_type, report_source_id, existing_report=None, *args, **kwargs):
+        """
+        This form can be used to create a new ReportConfiguration, or to modify an existing one if existing_report is set.
+        """
         super(ConfigureNewReportBase, self).__init__(*args, **kwargs)
         self.existing_report = existing_report
 
@@ -341,6 +344,7 @@ class ConfigureNewReportBase(forms.Form):
         self.helper.form_id = "report-config-form"
 
         buttons = [crispy.Submit('submit', _(self.button_text))]
+        # Add a back button if we aren't editing an existing report
         if not self.existing_report:
             buttons.insert(
                 0,
@@ -354,6 +358,7 @@ class ConfigureNewReportBase(forms.Form):
                     )
                 ),
             )
+        # Add a "delete report" button if we are editing an existing report
         else:
             buttons.insert(
                 0,
@@ -529,6 +534,8 @@ class ConfigureNewReportBase(forms.Form):
         filter_configs = self.cleaned_data['filters']
         filters = [_make_report_filter(f) for f in filter_configs]
         if self.source_type == 'case':
+            # The UI doesn't support specifying "choice_list" filters, only "dynamic_choice_list" filters.
+            # But, we want to make the open/closed filter a cleaner "choice_list" filter, so we do that here.
             self._convert_closed_filter_to_choice_list(filters)
         return filters
 
@@ -720,7 +727,7 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
 
 
 class ConfigureWorkerReportForm(ConfigureTableReportForm):
-    # It's a ConfigureTableReportForm, but with a predetermined aggregation
+    # This is a ConfigureTableReportForm, but with a predetermined aggregation
     report_type = 'worker'
 
     def __init__(self, *args, **kwargs):
