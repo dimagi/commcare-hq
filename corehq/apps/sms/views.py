@@ -690,7 +690,7 @@ def get_mobile_worker_contact_info(domain_obj, user_ids):
     data = {}
     for doc in iter_docs(CommCareUser.get_db(), user_ids):
         user = CommCareUser.wrap(doc)
-        data[user.get_id] = user.raw_username
+        data[user.get_id] = [user.raw_username]
     return data
 
 
