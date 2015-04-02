@@ -116,7 +116,7 @@ class TestTransferDomainModel(BaseDomainTest):
         newer = TransferDomainRequest(
             to_username=self.mugglename,
             from_username=self.username,
-            request_time=datetime.now(),
+            request_time=datetime.utcnow(),
             domain=self.domain.name)
         newer.save()
 

@@ -150,7 +150,7 @@ def post(request, domain):
                  #couch_recipient=id, 
                  phone_number=to,
                  direction=INCOMING,
-                 date = datetime.now(),
+                 date = datetime.utcnow(),
                  text = text)
     msg.save()
     return HttpResponse('OK')

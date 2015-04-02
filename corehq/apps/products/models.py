@@ -70,7 +70,7 @@ class Product(Document):
         product.
         """
         # mark modified time stamp for selective syncing
-        self.last_modified = datetime.now()
+        self.last_modified = datetime.utcnow()
 
         # generate code if user didn't specify one
         if not self.code:

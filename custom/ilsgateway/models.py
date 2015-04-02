@@ -160,7 +160,7 @@ class SupplyPointStatus(models.Model):
 class DeliveryGroupReport(models.Model):
     supply_point = models.CharField(max_length=100, db_index=True)
     quantity = models.IntegerField()
-    report_date = models.DateTimeField(default=datetime.now())
+    report_date = models.DateTimeField(default=datetime.utcnow())
     message = models.CharField(max_length=100, db_index=True)
     delivery_group = models.CharField(max_length=1)
     external_id = models.PositiveIntegerField(null=True, db_index=True)

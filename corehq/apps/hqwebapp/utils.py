@@ -103,7 +103,7 @@ class InvitationView():
 
         self.validate_invitation(invitation)
 
-        if invitation.invited_on.date() + relativedelta(months=1) < datetime.now().date()  and isinstance(invitation, DomainInvitation):
+        if invitation.invited_on.date() + relativedelta(months=1) < datetime.utcnow().date()  and isinstance(invitation, DomainInvitation):
             return HttpResponseRedirect(reverse("no_permissions"))
 
         if request.user.is_authenticated():

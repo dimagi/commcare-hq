@@ -532,7 +532,7 @@ class MultiUserSyncTest(SyncBaseTest):
         self.assertTrue("Hello!" in ElementTree.tostring(match))
 
     def testOtherUserAddsIndex(self):
-        time = datetime.now()
+        time = datetime.utcnow()
 
         # create a case from one user
         case_id = "other_user_adds_index"
@@ -592,7 +592,7 @@ class MultiUserSyncTest(SyncBaseTest):
         self.assertTrue("index" in ElementTree.tostring(orig))
 
     def testMultiUserEdits(self):
-        time = datetime.now()
+        time = datetime.utcnow()
 
         # create a case from one user
         case_id = "multi_user_edits"

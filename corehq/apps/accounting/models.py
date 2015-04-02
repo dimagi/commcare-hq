@@ -1662,7 +1662,7 @@ class InvoicePdf(SafeSaveDocument):
         pdf_data.close()
 
         self.invoice_id = str(invoice.id)
-        self.date_created = datetime.datetime.now()
+        self.date_created = datetime.datetime.utcnow()
         self.save()
 
     def get_filename(self, invoice):

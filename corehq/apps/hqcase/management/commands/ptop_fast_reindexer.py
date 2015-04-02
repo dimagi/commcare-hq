@@ -108,7 +108,7 @@ class PtopReindexer(NoArgsCommand):
         if hasattr(self, '_seq_prefix'):
             datestring = self._seq_prefix
         else:
-            datestring = datetime.now().strftime("%Y-%m-%d-%H%M")
+            datestring = datetime.utcnow().strftime("%Y-%m-%d-%H%M")
             self._seq_prefix = datestring
         return datestring
 
@@ -324,9 +324,9 @@ class PtopReindexer(NoArgsCommand):
             except Exception as ex:
                 retries += 1
                 retry_time = (datetime.utcnow() - bulk_start).seconds + retries * RETRY_TIME_DELAY_FACTOR
-                self.log("\t%s: Exception sending slice %d:%d, %s, retrying in %s seconds" % (datetime.now().isoformat(), start, end, ex, retry_time))
+                self.log("\t%s: Exception sending slice %d:%d, %s, retrying in %s seconds" % (datetime.utcnow().isoformat(), start, end, ex, retry_time))
                 time.sleep(retry_time)
-                self.log("\t%s: Retrying again %d:%d..." % (datetime.now().isoformat(), start, end))
+                self.log("\t%s: Retrying again %d:%d..." % (datetime.utcnow().isoformat(), start, end))
                 # reset timestamp when looping again
                 bulk_start = datetime.utcnow()
 

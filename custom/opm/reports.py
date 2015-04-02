@@ -1196,7 +1196,7 @@ def this_month_if_none(month, year):
             "You must pass either nothing or a month AND a year"
         return month, year
     else:
-        this_month = datetime.datetime.now()
+        this_month = datetime.datetime.utcnow()
         return this_month.month, this_month.year
 
 

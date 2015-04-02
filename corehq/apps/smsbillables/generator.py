@@ -170,7 +170,7 @@ def arbitrary_messages_by_backend_and_direction(backend_ids,
                 backend_api=api_id,
                 backend_id=instance_id,
                 text=arbitrary_message(),
-                date=datetime.datetime.now()
+                date=datetime.datetime.utcnow()
             )
             sms_log.save()
             messages.append(sms_log)
