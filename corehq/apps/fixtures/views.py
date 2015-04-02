@@ -430,4 +430,4 @@ def fixture_metadata(request, domain):
     """
     Returns list of fixtures and metadata needed for itemsets in vellum
     """
-    return HttpResponse(json.dumps(item_lists_by_domain(domain)))
+    return json_response(item_lists_by_domain(domain))
