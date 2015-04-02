@@ -630,6 +630,11 @@ class HQMediaMixin(Document):
             'is_menu_media': is_menu_media,
         }
 
+    @property
+    @memoized
+    def logo_paths(self):
+        return set(value['path'] for value in self.logo_refs.values())
+
     def remove_unused_mappings(self, additional_permitted_paths=()):
         """
             This checks to see if the paths specified in the multimedia map still exist in the Application.
