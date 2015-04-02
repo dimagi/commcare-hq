@@ -68,6 +68,7 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 from dimagi.utils.excel import WorkbookJSONReader
 from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.couch.cache import cache_core
 from django.conf import settings
 from couchdbkit.resource import ResourceNotFound
 from couchexport.models import Format
@@ -695,6 +696,17 @@ def get_mobile_worker_contact_info(domain_obj, user_ids):
 
 
 def get_contact_info(domain):
+    # If the data has been cached, just retrieve it from there
+    cache_key = 'sms-chat-contact-list-%s' % domain
+    cache_expiration = 30 * 60
+    try:
+        client = cache_core.get_redis_client()
+        cached_data = client.get(cache_key)
+        if cached_data:
+            return json.loads(cached_data)
+    except:
+        pass
+
     verified_number_ids = VerifiedNumber.by_domain(domain, ids_only=True)
     domain_obj = Domain.get_by_name(domain, strict=True)
     case_ids = []
@@ -723,6 +735,15 @@ def get_contact_info(domain):
     for row in data:
         contact_info = contact_data.get(row[3])
         row[0] = contact_info[0] if contact_info else _('(unknown)')
+
+    # Save the data to the cache for faster lookup next time
+    try:
+        client = cache_core.get_redis_client()
+        client.set(cache_key, json.dumps(data))
+        client.expire(cache_key, cache_expiration)
+    except:
+        pass
+
     return data
 
 
