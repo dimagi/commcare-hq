@@ -1,5 +1,16 @@
 {% extends "registration/base.html" %}
 {% load i18n %}
+
+{% if track_domain_registration %}
+{% block js-inline %}{{ block.super }}
+<script>
+    $(function () {
+        analytics.track("User requested a new Project");
+    });
+</script>
+{% endblock js-inline %}
+{% endif %}
+
 {% block title %}Confirmation Email Sent{% endblock title %}
 
 {% block step-title %}

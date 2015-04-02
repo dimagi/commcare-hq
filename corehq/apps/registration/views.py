@@ -154,7 +154,8 @@ def register_domain(request, domain_type=None):
             if is_new:
                 context.update({
                     'alert_message': _("An email has been sent to %s.") % request.user.username,
-                    'requested_domain': requested_domain
+                    'requested_domain': requested_domain,
+                    'track_domain_registration': True,
                 })
                 return render(request, 'registration/confirmation_sent.html',
                         context)
