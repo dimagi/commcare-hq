@@ -40,3 +40,6 @@ hqdb0.internal.commcarehq.org
 [elasticsearch]
 hqes1.internal.commcarehq.org
 hqes0.internal.commcarehq.org
+
+[shared_dir_host]
+hqdb0.internal.commcarehq.org
