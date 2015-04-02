@@ -84,14 +84,16 @@ def REPORTS(project):
         messaging_reports.extend([
             sms.MessagesReport,
         ])
-    # always have this historical report visible
-    messaging_reports.append(sms.MessageLogReport)
+    # always have these historical reports visible
+    messaging_reports.extend([
+        sms.MessageLogReport,
+        ivr.CallLogReport,
+        ivr.ExpectedCallbackReport,
+    ])
 
     project_can_use_inbound_sms = domain_has_privilege(project.name, privileges.INBOUND_SMS)
     if project_can_use_inbound_sms:
         messaging_reports.extend([
-            ivr.CallLogReport,
-            ivr.ExpectedCallbackReport,
             system_overview.SystemOverviewReport,
             system_overview.SystemUsersReport,
         ])
