@@ -331,6 +331,7 @@ def _get_or_update_cases(xforms, case_db):
     touched_cases = copy.copy(case_db.cache)
 
     # once we've gotten through everything, validate all indices
+    # and check for new dirtiness flags
     def _validate_indices(case):
         dirtiness_flags = []
         if case.indices:
