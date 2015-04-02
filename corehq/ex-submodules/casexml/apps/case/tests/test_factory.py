@@ -168,6 +168,15 @@ class CaseFactoryTest(TestCase):
         self.assertEqual(1, len(child_updates))
         self.assertEqual(parent._id, child_updates[0].indices[0].referenced_id)
 
+    def test_form_extras(self):
+        domain = uuid.uuid4().hex
+        LOOSE_SYNC_TOKEN_VALIDATION.set(domain, True, namespace='domain')
+        token_id = uuid.uuid4().hex
+        factory = CaseFactory(domain=domain)
+        [case] = factory.create_or_update_case(CaseStructure(), form_extras={'last_sync_token': token_id})
+        form = XFormInstance.get(case.xform_ids[0])
+        self.assertEqual(token_id, form.last_sync_token)
+
     def test_form_extras_default(self):
         domain = uuid.uuid4().hex
         # have to enable loose sync token validation for the domain or create actual SyncLog documents.
