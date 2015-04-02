@@ -278,9 +278,11 @@ def confirm_domain(request, guid=None):
     context['message_body'] = _(
         'Your account has been successfully activated.  Thank you for taking '
         'the time to confirm your email address: %s.'
-    ) % requesting_user.username 
+    ) % requesting_user.username
     context['is_error'] = False
+    context['valid_confirmation'] = True
     return render(request, 'registration/confirmation_complete.html', context)
+
 
 @retry_resource(3)
 def eula_agreement(request):
