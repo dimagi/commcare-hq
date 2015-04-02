@@ -414,14 +414,8 @@ class RestoreConfig(object):
     def get_payload(self):
         """
         This function currently returns either a full string payload or a string name of a file
-        that contains the contents of the payload.
-
-        Cases that will return a full string response:
-        - FILE_RESTORE toggle has not been enabled for the user
-        - The payload was found in the cache
-
-        Cases that will return a filename as the response:
-        - FILE_RESTORE is enabled and the cache missed
+        that contains the contents of the payload. If FILE_RESTORE toggle is enabled, then this will return
+        the filename, otherwise it will return the full string payload
         """
         user = self.user
         last_sync = self.sync_log
