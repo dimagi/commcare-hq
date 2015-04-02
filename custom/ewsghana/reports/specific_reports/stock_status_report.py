@@ -37,7 +37,10 @@ class ProductAvailabilityData(EWSData):
             for p in self.unique_products(locations, all=True):
                 supply_points = locations.values_list('supply_point_id', flat=True)
                 if supply_points:
-                    stocks = StockState.objects.filter(sql_product=p, case_id__in=supply_points)
+                    stocks = StockTransaction.objects.filter(
+                        type='stockonhand', product_id=p.product_id, case_id__in=supply_points,
+                        report__date__lte=self.config['enddate'], report__date__gte=self.config['startdate']
+                    ).order_by('case_id', '-report__date').distinct('case_id')
                     total = supply_points.count()
                     with_stock = stocks.filter(stock_on_hand__gt=0).count()
                     without_stock = stocks.filter(stock_on_hand=0).count()
@@ -164,13 +167,18 @@ class MonthOfStockProduct(EWSData):
 
                 row = [link_format(sp.name, url)]
                 for p in self.unique_products(self.get_supply_points, all=True):
-                    stock = StockState.objects.filter(sql_product=p, case_id=sp.supply_point_id)\
+                    transaction = StockTransaction.objects.filter(
+                        type='stockonhand', product_id=p.product_id, case_id=sp.supply_point_id,
+                        report__date__lte=self.config['enddate'], report__date__gte=self.config['startdate']
+                    ).order_by('-report__date')
+
+                    state = StockState.objects.filter(sql_product=p, case_id=sp.supply_point_id)\
                         .order_by('-last_modified_date')
 
-                    if stock:
-                        monthly = stock[0].get_monthly_consumption()
+                    if transaction and state:
+                        monthly = state[0].get_monthly_consumption()
                         if monthly:
-                            row.append(int(stock[0].stock_on_hand / monthly))
+                            row.append(int(transaction[0].stock_on_hand / monthly))
                         else:
                             row.append(0)
                     else:
@@ -262,12 +270,15 @@ class StockoutTable(EWSData):
 
             products = set(self.unique_products(supply_points))
             for supply_point in supply_points:
-                stockout = StockState.objects.filter(
-                    sql_product__in=products.intersection(set(supply_point.products)),
-                    case_id=supply_point.supply_point_id,
-                    stock_on_hand=0).values_list('sql_product__name', flat=True)
+                product_map = {p.product_id: p.name for p in products.intersection(set(supply_point.products))}
+                stockout = StockTransaction.objects.filter(
+                    type='stockonhand', product_id__in=product_map.keys(), case_id=supply_point.supply_point_id,
+                    report__date__lte=self.config['enddate'], report__date__gte=self.config['startdate'],
+                    stock_on_hand=0
+                ).order_by('product_id', '-report__date').distinct('product_id').values_list('product_id',
+                                                                                             flat=True)
                 if stockout:
-                    rows.append([supply_point.name, ', '.join(stockout)])
+                    rows.append([supply_point.name, ', '.join(product_map[id] for id in stockout)])
         return rows
 
 
