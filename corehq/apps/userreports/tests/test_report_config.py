@@ -4,6 +4,7 @@ from django.test import SimpleTestCase, TestCase
 from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import ReportConfiguration, DataSourceConfiguration
+from corehq.apps.userreports.reports.factory import ReportFactory
 
 
 class ReportConfigurationTest(SimpleTestCase):
@@ -33,6 +34,23 @@ class ReportConfigurationTest(SimpleTestCase):
         wrapped = ReportConfiguration.wrap(spec)
         with self.assertRaises(BadSpecError):
             wrapped.validate()
+
+    def test_group_by_missing_from_columns(self):
+        report_config = ReportConfiguration(
+            domain='somedomain',
+            config_id='someconfig',
+            aggregation_columns=['doc_id'],
+            columns=[{
+                "type": "field",
+                "field": "somefield",
+                "format": "default",
+                "aggregation": "sum"
+            }],
+            filters=[],
+            configured_charts=[]
+        )
+        data_source = ReportFactory.from_spec(report_config)
+        self.assertEqual(['doc_id'], data_source.group_by)
 
 
 class ReportConfigurationDbTest(TestCase):
