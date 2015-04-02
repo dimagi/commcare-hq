@@ -334,6 +334,7 @@ def _get_or_update_cases(xforms, case_db):
     # and check for new dirtiness flags
     def _validate_indices(case):
         dirtiness_flags = []
+        is_dirty = False
         if case.indices:
             for index in case.indices:
                 # call get and not doc_exists to force domain checking
@@ -348,7 +349,9 @@ def _get_or_update_cases(xforms, case_db):
                     )
                 else:
                     if referenced_case.owner_id != case.owner_id:
-                        dirtiness_flags.append(DirtinessFlag(index.referenced_id, case.owner_id))
+                        is_dirty = True
+        if is_dirty:
+            dirtiness_flags.append(DirtinessFlag(case._id, case.owner_id))
         return dirtiness_flags
 
     dirtiness_flags = [flag for case in case_db.cache.values() for flag in _validate_indices(case)]

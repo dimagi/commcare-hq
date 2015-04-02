@@ -84,7 +84,7 @@ class OwnerCleanlinessTest(SyncBaseTest):
             )
         )
         self.assert_owner_dirty()
-        self.assertEqual(parent._id, self.owner_cleanliness.hint)
+        self.assertEqual(child._id, self.owner_cleanliness.hint)
 
     def test_add_dirty_parent_makes_dirty(self):
         # add parent with a different owner and make sure the owner becomes dirty
@@ -98,11 +98,11 @@ class OwnerCleanlinessTest(SyncBaseTest):
             )
         )
         self.assert_owner_dirty()
-        self.assertEqual(parent._id, self.owner_cleanliness.hint)
+        self.assertEqual(child._id, self.owner_cleanliness.hint)
 
     def test_change_parent_owner_makes_dirty(self):
         # change the owner id of a parent case and make sure the owner becomes dirty
         new_owner = uuid.uuid4().hex
         self._set_owner(self.parent._id, new_owner)
         self.assert_owner_dirty()
-        self.assertEqual(self.parent._id, self.owner_cleanliness.hint)
+        self.assertEqual(self.child._id, self.owner_cleanliness.hint)
