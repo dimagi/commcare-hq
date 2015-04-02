@@ -441,27 +441,22 @@
 {% block main_column %}
 <div id="customize-export" style="display: none;" data-bind="visible: true">
     {# content for multi-select help popover #}
+    {% if custom_export.type == 'case' %}
     <div id="popover_content_wrapper" style="display: none">
         {% blocktrans %}
             These options allow you to configure how CommCare exports data from multi-select questions.
             If you do not want to split the options into multiple columns select the 'plain' option.
         {% endblocktrans %}
         <br/>
-        {% if custom_export.type == 'form' %}
         {% blocktrans %}
-            When the export is run a new column will be added to the export file
-            for each item in the multi-select field.
-        {% endblocktrans %}
-        {% else %}
-            {% blocktrans %}
             Each item that is selected in the select list will appear as a column in the exported data.
             Any options not selected will be in an "extra" column.
         {% endblocktrans %}
-        {% endif %}
         <a href='https://help.commcarehq.org/display/commcarepublic/Splitting+multi-select+data+in+exports' target="_blank" class="allow-click">
             {% trans "More info" %}
         </a>
     </div>
+    {% endif %}
     <form class="form-horizontal" method="post">
         <fieldset>
             <legend>{% trans "Export Settings" %}</legend>
@@ -556,7 +551,7 @@
                                         {% trans "Question" %}
                                     </th>
                                     <th>{% trans "Display" %}</th>
-                                    {% if request|toggle_enabled:'SPLIT_MULTISELECT_EXPORT' %}
+                                    {% if custom_export.type == 'case' and request|toggle_enabled:'SPLIT_MULTISELECT_EXPORT' %}
                                     <th>{% trans "Type" %}</th>
                                     {% endif %}
                                     {% if helper.allow_deid %}
@@ -581,7 +576,7 @@
 
                                         </td>
                                         <td><input class="input-xlarge" type="text" data-bind="value: display" /></td>
-                                        {% if request|toggle_enabled:'SPLIT_MULTISELECT_EXPORT' %}
+                                        {% if custom_export.type == 'case' and request|toggle_enabled:'SPLIT_MULTISELECT_EXPORT' %}
                                         <td class="input">
                                             <div data-bind="if: !allOptions()">
                                                 <select disabled>
@@ -596,7 +591,6 @@
                                                     <option data-bind="value: value, text: label"></option>
                                                 </select>
                                                 <span data-bind="makeHqHelp: {name: '{% trans "Split multi-select data" %}', placement: 'left', trigger: 'click'}"></span>
-                                                {% if custom_export.type == 'case' %}
                                                 <div data-bind="if: doc_type() === 'SplitColumn'">
                                                     <a href="#" data-bind="visible: !showOptions(), click: function() {showOptions(true);}">{% trans "Show Options" %}</a>
                                                     <div data-bind="visible: showOptions">
@@ -607,7 +601,6 @@
                                                         <button class="btn" data-bind="click: addOption">{% trans "Add" %}</button>
                                                     </div>
                                                 </div>
-                                                {% endif %}
                                             </div>
                                         </td>
                                         {% endif %}
