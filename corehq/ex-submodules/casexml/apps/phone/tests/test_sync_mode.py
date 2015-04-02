@@ -3,8 +3,9 @@ from django.test.utils import override_settings
 from django.test import TestCase
 import os
 from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
-from casexml.apps.case.mock import CaseBlock
-from casexml.apps.phone.tests.utils import synclog_from_restore_payload, generate_restore_payload
+from casexml.apps.phone.tests.utils import generate_restore_payload
+from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure
+from casexml.apps.phone.tests.utils import synclog_from_restore_payload
 from corehq.apps.domain.models import Domain
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, FILE_RESTORE
 from couchforms.tests.testutils import post_xform_to_couch
@@ -46,24 +47,24 @@ class SyncBaseTest(TestCase):
         # this creates the initial blank sync token in the database
         restore_config = RestoreConfig(self.user)
         self.sync_log = synclog_from_restore_payload(restore_config.get_payload().as_string())
+        self.factory = CaseFactory(case_defaults={
+            'user_id': USER_ID,
+            'owner_id': USER_ID,
+            'case_type': PARENT_TYPE,
+        })
 
     def tearDown(self):
         restore_config = RestoreConfig(self.user)
         restore_config.cache.delete(restore_config._initial_cache_key())
 
-    def _createCaseStubs(self, id_list, user_id=USER_ID, owner_id=USER_ID):
-        caseblocks = [
-            CaseBlock(
-                create=True,
-                case_id=case_id,
-                user_id=user_id,
-                owner_id=owner_id,
-                case_type=PARENT_TYPE,
-                version=V2
-            ).as_xml()
-            for case_id in id_list
-        ]
-        self._postFakeWithSyncToken(caseblocks, self.sync_log.get_id)
+    def _createCaseStubs(self, id_list, **kwargs):
+        case_attrs = {'create': True}
+        form_extras = {'last_sync_token': self.sync_log._id}
+        case_attrs.update(kwargs)
+        return self.factory.create_or_update_cases(
+            [CaseStructure(case_id=case_id, attrs=case_attrs) for case_id in id_list],
+            form_extras=form_extras
+        )
 
     def _postWithSyncToken(self, filename, token_id):
         file_path = os.path.join(os.path.dirname(__file__), "data", filename)
