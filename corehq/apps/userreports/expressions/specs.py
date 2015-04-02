@@ -115,3 +115,17 @@ class RelatedDocExpressionSpec(JsonObject):
             return self._value_expression(doc, EvaluationContext(doc, 0))
         except ResourceNotFound:
             return None
+
+
+class AbtSupervisorExpressionSpec(JsonObject):
+    type = TypeProperty('abt_supervisor')
+
+    def __call__(self, item, context=None):
+        # TODO: What does context do (I think I can ignore it)?
+        # TODO: Instead, take a list of tuples which are paths and flag answers.
+        docs = []
+        if item['form']['breakfast'] == 'no':
+            docs.append({'flag': 'breakfast'})
+        if item['form']['equipment'] == 'yes':
+            docs.append({'flag': 'equipment'})
+        return docs

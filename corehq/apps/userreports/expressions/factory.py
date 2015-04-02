@@ -4,7 +4,8 @@ from django.utils.translation import ugettext as _
 from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.specs import PropertyNameGetterSpec, PropertyPathGetterSpec, \
-    ConditionalExpressionSpec, ConstantGetterSpec, RootDocExpressionSpec, RelatedDocExpressionSpec
+    ConditionalExpressionSpec, ConstantGetterSpec, RootDocExpressionSpec, RelatedDocExpressionSpec, \
+    AbtSupervisorExpressionSpec
 
 
 def _simple_expression_generator(wrapper_class, spec, context):
@@ -42,6 +43,10 @@ def _related_doc_expression(spec, context):
     )
     return wrapped
 
+def _abt_supervisor_expression(spec, context):
+    wrapped = AbtSupervisorExpressionSpec.wrap(spec)
+    return wrapped
+
 
 class ExpressionFactory(object):
     spec_map = {
@@ -51,6 +56,7 @@ class ExpressionFactory(object):
         'conditional': _conditional_expression,
         'root_doc': _root_doc_expression,
         'related_doc': _related_doc_expression,
+        'abt_supervisor': _abt_supervisor_expression,
     }
     # Additional items are added to the spec_map by use of the `register` method.
 
