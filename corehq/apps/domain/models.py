@@ -18,6 +18,7 @@ from django.core.urlresolvers import reverse
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.appstore.models import SnapshotMixin
+from corehq.util.quickcache import QuickCache, quickcache
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import (
     iter_docs, get_db, get_safe_write_kwargs, apply_update, iter_bulk_delete
@@ -46,6 +47,19 @@ for lang in all_langs:
     lang_lookup[lang['three']] = lang['names'][0] # arbitrarily using the first name if there are multiple
     if lang['two'] != '':
         lang_lookup[lang['two']] = lang['names'][0]
+
+
+class _StrictQuickCache(QuickCache):
+    """
+    Just like QuickCache, but intercepts the function call to abort caching
+    under certain conditions
+    """
+    def __call__(self, *args, **kwargs):
+        strict = kwargs.get('strict', False)
+        if not strict:
+            return super(_StrictQuickCache, self).__call__(*args, **kwargs)
+        else:
+            return self.fn(*args, **kwargs)
 
 
 class DomainMigrations(DocumentSchema):
@@ -517,6 +531,7 @@ class Domain(Document, SnapshotMixin):
         return self.name
 
     @classmethod
+    @quickcache(['name'], timeout=30*60, helper_class=_StrictQuickCache)
     def get_by_name(cls, name, strict=False):
         if not name:
             # get_by_name should never be called with name as None (or '', etc)
@@ -534,16 +549,7 @@ class Domain(Document, SnapshotMixin):
                     notify_exception(None, '%r is not a valid domain name' % name)
                     return None
 
-        cache_key = _domain_cache_key(name)
-        if not strict:
-            MISSING = object()
-            res = cache.get(cache_key, MISSING)
-            if res != MISSING:
-                return res
-
         domain = cls._get_by_name(name, strict)
-        # 30 mins, so any unforeseen invalidation bugs aren't too bad.
-        cache.set(cache_key, domain, 30*60)
         return domain
 
     @classmethod
@@ -633,7 +639,7 @@ class Domain(Document, SnapshotMixin):
 
     def save(self, **params):
         super(Domain, self).save(**params)
-        cache.delete(_domain_cache_key(self.name))
+        self.get_by_name.clear(Domain, self.name)  # clear the domain cache
 
         from corehq.apps.domain.signals import commcare_domain_post_save
         results = commcare_domain_post_save.send_robust(sender='domain', domain=self)
@@ -1248,7 +1254,3 @@ class TransferDomainRequest(models.Model):
             'deactivate_url': self.deactivate_url(),
             'activate_url': self.activate_url(),
         }
-
-
-def _domain_cache_key(name):
-    return hashlib.md5(u'cchq:domain:{name}'.format(name=name).encode('utf-8')).hexdigest()
