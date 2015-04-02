@@ -314,8 +314,12 @@ def stock_alerts(transactions, user):
     stockouts = report_helper.stockouts()
     overstocked = report_helper.overstocked()
     receipts = report_helper.receipts()
+    missings = report_helper.missing_products()
     message = ""
     super_message = ""
+    if missings:
+        products_codes_str = ' '.join(sorted([missing.code for missing in missings]))
+        message += " still missing %s. " % products_codes_str
 
     if stockouts:
         products_codes_str = ' '.join([stockout.sql_product.code for stockout in stockouts])
@@ -328,6 +332,15 @@ def stock_alerts(transactions, user):
         products_names_str = ' '.join([product.sql_product.name for product in products_below])
         message += " " + LOW_SUPPLY_MESSAGE % {'low_supply': products_codes_str}
         super_message += _("below reorder level %s; ") % products_names_str
+
+    if stockouts or products_below:
+        reorders = [
+            u'%s %s' % (code, amount)
+            for (code, amount) in report_helper.reorders()
+            if amount
+        ]
+        if reorders:
+            message += " Please order %s." % ' '.join(reorders)
 
     if overstocked:
         if not message:
@@ -353,8 +366,8 @@ def stock_alerts(transactions, user):
     if super_message:
         stripped_message = super_message.strip().strip(';')
         super_message = _('Dear %s, %s is experiencing the following problems: ') + stripped_message
-        send_message_to_admins(user, super_message)
-    send_sms_to_verified_number(user.get_verified_number(), message)
+        send_message_to_admins(user, super_message.rstrip())
+    send_sms_to_verified_number(user.get_verified_number(), message.rstrip())
 
 
 def send_message_to_admins(user, message):
