@@ -50,8 +50,8 @@
                                '<span class="btn btn-primary pull-right" '+
                                'onClick="window.open(\''+obj.aData[5]+'\', \'_blank\', \'location=no,menubar=no,scrollbars=no,status=no,toolbar=no,height=400,width=400\');">'+
                                '{% trans "Chat" %} <i class="icon icon-white icon-share-alt"></i></span>';
-                    },
-                },
+                    }
+                }
             ],
             "bProcessing": true,
             "bServerSide": true,
@@ -65,7 +65,7 @@
             },
             "sAjaxSource": "{% url "chat_contact_list" domain %}",
             "sDom": "lrtip",
-            "sPaginationType": "bootstrap",
+            "sPaginationType": "bootstrap"
         });
         var filterViewModel = new FilterViewModel();
         ko.applyBindings(filterViewModel, $('#id_filter').get(0));
