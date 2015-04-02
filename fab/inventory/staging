@@ -32,3 +32,6 @@ hqdb0-staging.internal.commcarehq.org
 
 [elasticsearch]
 hqdjango1-staging.internal.commcarehq.org
+
+[shared_dir_host]
+hqdb0-staging.internal.commcarehq.org
