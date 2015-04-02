@@ -10,6 +10,7 @@ from casexml.apps.case import const
 from casexml.apps.case.util import reverse_indices
 from casexml.apps.case.xform import CaseDbCache
 from casexml.apps.phone.models import CaseState
+from corehq import Domain
 from dimagi.utils.decorators.memoized import memoized
 
 logger = logging.getLogger(__name__)
@@ -325,14 +326,15 @@ class BatchedCaseSyncOperation(object):
                 batch = batch.next_batch
                 yield batch
 
-        yield UserCaseSyncCouchBatch(
-            self.user,
-            self.global_state,
-            self.domain,
-            self.last_synclog,
-            self.chunk_size,
-            case_sharing=self.case_sharing
-        )
+        if self.domain and Domain.get_by_name(self.domain).call_center_config.enabled:
+            yield UserCaseSyncCouchBatch(
+                self.user,
+                self.global_state,
+                self.domain,
+                self.last_synclog,
+                self.chunk_size,
+                case_sharing=self.case_sharing
+            )
 
         if self.last_synclog:
             yield CaseSyncPhoneBatch(
