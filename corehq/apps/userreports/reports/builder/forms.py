@@ -312,7 +312,8 @@ class ConfigureNewReportBase(forms.Form):
 
     def __init__(self, report_name, app_id, source_type, report_source_id, existing_report=None, *args, **kwargs):
         """
-        This form can be used to create a new ReportConfiguration, or to modify an existing one if existing_report is set.
+        This form can be used to create a new ReportConfiguration, or to modify
+        an existing one if existing_report is set.
         """
         super(ConfigureNewReportBase, self).__init__(*args, **kwargs)
         self.existing_report = existing_report
