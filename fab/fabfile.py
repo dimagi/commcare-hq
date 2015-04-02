@@ -712,7 +712,7 @@ def awesome_deploy(confirm="yes"):
             '{env.environment}?'.format(env=env), default=False):
         utils.abort('Deployment aborted.')
 
-    if datetime.datetime.utcnow().isoweekday() == 5:
+    if datetime.datetime.now().isoweekday() == 5:
         print('')
         print('┓┏┓┏┓┃')
         print('┛┗┛┗┛┃＼○／')
