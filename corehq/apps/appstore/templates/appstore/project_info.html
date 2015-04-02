@@ -50,6 +50,8 @@
                 $('#agree-button').attr('data-form', new_form);
             });
             $('#agree-button').click(function() {
+                $('#agree-button').unbind()
+                                  .addClass('disabled');
                 $('#download-new-project').removeAttr('data-toggle');
                 $('#download-new-project').removeAttr('href');
                 $('#import-into-button').removeAttr('data-toggle');
