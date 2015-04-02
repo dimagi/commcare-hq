@@ -69,6 +69,14 @@ class RawIndicatorSpec(PropertyReferenceIndicatorSpecBase):
         return TransformedGetter(getter, transform)
 
 
+class RepeatIterationIndicatorSpec(RawIndicatorSpec):
+    type = TypeProperty('repeat_iteration')
+
+    @property
+    def getter(self):
+        return lambda doc, context:  context.iteration
+
+
 class ExpressionIndicatorSpec(IndicatorSpecBase):
     type = TypeProperty('expression')
     datatype = DataTypeProperty(required=True)

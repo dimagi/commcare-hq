@@ -13,7 +13,8 @@ def TypeProperty(value):
 class EvaluationContext(object):
     """
     An evaluation context. Necessary for repeats to pass both the row of the repeat as well
-    as the root document.
+    as the root document and the iteration number.
     """
-    def __init__(self, root_doc):
+    def __init__(self, root_doc, iteration):
         self.root_doc = root_doc
+        self.iteration = iteration

@@ -43,8 +43,9 @@ class RepeatDataSourceConfigurationTest(RepeatDataSourceTestMixin, SimpleTestCas
             "start_time": start, "end_time": end, "person": "al"
         }}))
         self.assertEqual(1, len(rows))
-        doc_id_ind, start_ind, end_ind, person_ind, created_base_ind = rows[0]
+        doc_id_ind, repeat_iteration, start_ind, end_ind, person_ind, created_base_ind = rows[0]
         self.assertEqual(DOC_ID, doc_id_ind.value)
+        self.assertEqual(0, repeat_iteration.value)
         self.assertEqual(start, start_ind.value)
         self.assertEqual(end, end_ind.value)
         self.assertEqual('al', person_ind.value)
@@ -61,9 +62,10 @@ class RepeatDataSourceConfigurationTest(RepeatDataSourceTestMixin, SimpleTestCas
         rows = self.config.get_all_values(_test_doc(form={"time_logs": logs}))
         self.assertEqual(len(logs), len(rows))
         for i, row in enumerate(rows):
-            doc_id_ind, start_ind, end_ind, person_ind, created_base_ind = row
+            doc_id_ind, repeat_iteration, start_ind, end_ind, person_ind, created_base_ind = row
             self.assertEqual(DOC_ID, doc_id_ind.value)
             self.assertEqual(logs[i]['start_time'], start_ind.value)
+            self.assertEqual(i, repeat_iteration.value)
             self.assertEqual(logs[i]['end_time'], end_ind.value)
             self.assertEqual(logs[i]['person'], person_ind.value)
             self.assertEqual(DAY_OF_WEEK, created_base_ind.value)
@@ -96,9 +98,10 @@ class RepeatDataSourceBuildTest(RepeatDataSourceTestMixin, TestCase):
             rows = connection.execute(adapter.get_table().select())
         retrieved_logs = [
             {
-                'start_time': r[1],
-                'end_time': r[2],
-                'person': r[3],
+                'start_time': r[2],
+                'end_time': r[3],
+                'person': r[4],
+
             } for r in rows
         ]
         # Clean up

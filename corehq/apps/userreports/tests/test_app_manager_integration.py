@@ -35,8 +35,8 @@ class AppManagerDataSourceConfigTest(SimpleTestCase):
 
         # check the indicators
         expected_columns = set(
-            ["doc_id", "modified_on", "user_id", "opened_on", "owner_id",
-             "name", "category", "priority", "starred", "estimate"]
+            ["doc_id", "repeat_iteration", "modified_on", "user_id", "opened_on",
+             "owner_id", "name", "category", "priority", "starred", "estimate"]
         )
         self.assertEqual(expected_columns, set(col_back.id for col_back in data_source.get_columns()))
 
@@ -62,12 +62,13 @@ class AppManagerDataSourceConfigTest(SimpleTestCase):
         default_case_property_datatypes = DEFAULT_CASE_PROPERTY_DATATYPES
         [row] = data_source.get_all_values(sample_doc)
         for result in row:
-            self.assertEqual(sample_doc[_get_column_property(result.column)], result.value)
-            if result.column.id in default_case_property_datatypes:
-                self.assertEqual(
-                    result.column.datatype,
-                    default_case_property_datatypes[result.column.id]
-                )
+            if result.column.id != "repeat_iteration":
+                self.assertEqual(sample_doc[_get_column_property(result.column)], result.value)
+                if result.column.id in default_case_property_datatypes:
+                    self.assertEqual(
+                        result.column.datatype,
+                        default_case_property_datatypes[result.column.id]
+                    )
 
     def test_simple_form_management(self):
         app = Application.wrap(self.get_json('simple_app.json'))

@@ -3,8 +3,11 @@ from django.test import SimpleTestCase
 from fakecouch import FakeCouchDb
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
-from corehq.apps.userreports.expressions.specs import PropertyNameGetterSpec, PropertyPathGetterSpec, \
-    RelatedDocExpressionSpec
+from corehq.apps.userreports.expressions.specs import (
+    PropertyNameGetterSpec,
+    PropertyPathGetterSpec,
+    RelatedDocExpressionSpec,
+)
 from corehq.apps.userreports.specs import EvaluationContext
 
 
@@ -175,7 +178,7 @@ class RootDocExpressionTest(SimpleTestCase):
             None,
             self.expression(
                 {"base_property": "item_value"},
-                context=EvaluationContext({})
+                context=EvaluationContext({}, 0)
             )
         )
 
@@ -184,7 +187,7 @@ class RootDocExpressionTest(SimpleTestCase):
             "base_value",
             self.expression(
                 {"base_property": "item_value"},
-                context=EvaluationContext({"base_property": "base_value"})
+                context=EvaluationContext({"base_property": "base_value"}, 0)
             )
         )
 
@@ -243,7 +246,7 @@ class DocJoinExpressionTest(SimpleTestCase):
             'my-id': my_doc,
             related_id: related_doc
         }
-        self.assertEqual('foo', self.expression(my_doc, EvaluationContext(my_doc)))
+        self.assertEqual('foo', self.expression(my_doc, EvaluationContext(my_doc, 0)))
 
     def test_related_doc_not_found(self):
         self.assertEqual(None, self.expression({'parent_id': 'some-missing-id'}))
@@ -262,7 +265,7 @@ class DocJoinExpressionTest(SimpleTestCase):
             'my-id': my_doc,
             related_id: related_doc
         }
-        self.assertEqual(None, self.expression(my_doc, EvaluationContext(my_doc)))
+        self.assertEqual(None, self.expression(my_doc, EvaluationContext(my_doc, 0)))
 
     def test_nested_lookup(self):
         related_id = 'nested-id-1'
@@ -285,7 +288,7 @@ class DocJoinExpressionTest(SimpleTestCase):
             related_id: related_doc,
             related_id_2: related_doc_2
         }
-        self.assertEqual('bar', self.nested_expression(my_doc, EvaluationContext(my_doc)))
+        self.assertEqual('bar', self.nested_expression(my_doc, EvaluationContext(my_doc, 0)))
 
     def test_nested_lookup_cross_domains(self):
         related_id = 'cross-nested-id-1'
@@ -308,7 +311,7 @@ class DocJoinExpressionTest(SimpleTestCase):
             related_id: related_doc,
             related_id_2: related_doc_2
         }
-        self.assertEqual(None, self.nested_expression(my_doc, EvaluationContext(my_doc)))
+        self.assertEqual(None, self.nested_expression(my_doc, EvaluationContext(my_doc, 0)))
 
     def test_caching(self):
         self.test_simple_lookup()
@@ -317,7 +320,7 @@ class DocJoinExpressionTest(SimpleTestCase):
         self.database.mock_docs.clear()
 
         self.assertEqual({}, self.database.mock_docs)
-        self.assertEqual('foo', self.expression(my_doc, EvaluationContext(my_doc)))
+        self.assertEqual('foo', self.expression(my_doc, EvaluationContext(my_doc, 0)))
 
         same_expression = ExpressionFactory.from_spec(self.spec)
-        self.assertEqual('foo', same_expression(my_doc, EvaluationContext(my_doc)))
+        self.assertEqual('foo', same_expression(my_doc, EvaluationContext(my_doc, 0)))

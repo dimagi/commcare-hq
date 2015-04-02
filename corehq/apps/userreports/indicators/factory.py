@@ -4,8 +4,14 @@ from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.filters import SinglePropertyValueFilter, CustomFilter
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.indicators import BooleanIndicator, CompoundIndicator, RawIndicator, Column
-from corehq.apps.userreports.indicators.specs import (RawIndicatorSpec, ChoiceListIndicatorSpec,
-    BooleanIndicatorSpec, IndicatorSpecBase, ExpressionIndicatorSpec)
+from corehq.apps.userreports.indicators.specs import (
+    RawIndicatorSpec,
+    ChoiceListIndicatorSpec,
+    BooleanIndicatorSpec,
+    IndicatorSpecBase,
+    ExpressionIndicatorSpec,
+    RepeatIterationIndicatorSpec
+)
 
 
 def _build_count_indicator(spec, context):
@@ -80,6 +86,23 @@ def _build_choice_list_indicator(spec, context):
     return CompoundIndicator(base_display_name, choice_indicators)
 
 
+def _build_repeat_iteration_indicator(spec, context):
+    # NOTE: This is exactly the same as _build_raw_indicator but with a different spec class...
+    wrapped = RepeatIterationIndicatorSpec.wrap(spec)
+    column = Column(
+        id=wrapped.column_id,
+        datatype=wrapped.datatype,
+        is_nullable=wrapped.is_nullable,
+        is_primary_key=wrapped.is_primary_key,
+    )
+    return RawIndicator(
+        wrapped.display_name,
+        column,
+        getter=wrapped.getter
+    )
+    # NOTE: I define the getter function in the RepeatIterationIndicatorSpec, but I could also just define it here. Which is better?
+
+
 class IndicatorFactory(object):
     constructor_map = {
         'boolean': _build_boolean_indicator,
@@ -87,6 +110,7 @@ class IndicatorFactory(object):
         'count': _build_count_indicator,
         'expression': _build_expression_indicator,
         'raw': _build_raw_indicator,
+        'repeat_iteration': _build_repeat_iteration_indicator,
     }
 
     @classmethod

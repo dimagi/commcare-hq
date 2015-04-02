@@ -37,6 +37,7 @@ class DataSourceConfigurationTest(SimpleTestCase):
         # columns
         expected_columns = [
             'doc_id',
+            'repeat_iteration',
             'date',
             'owner',
             'count',
@@ -90,6 +91,7 @@ def get_sample_doc_and_indicators():
     )
     expected_indicators = {
         'doc_id': 'some-doc-id',
+        'repeat_iteration': 0,
         'date': datetime.datetime.strptime(date_opened, '%Y-%m-%d').date(),
         'owner': 'some-user-id',
         'count': 1,
@@ -232,7 +234,10 @@ class IndicatorNamedFilterTest(SimpleTestCase):
             'mother_state': 'pregnant',
             'evil': 'yes'
         })
-        self.assertEqual(1, values[1].value)
+        # Confirm that 2 is the right values index:
+        i = 2
+        self.assertEqual('is_evil', values[i].column.id)
+        self.assertEqual(1, values[i].value)
 
     def test_simple_indicator_nomatch(self):
         [values] = self.indicator_configuration.get_all_values({
@@ -242,7 +247,10 @@ class IndicatorNamedFilterTest(SimpleTestCase):
             'mother_state': 'pregnant',
             'evil': 'no'
         })
-        self.assertEqual(0, values[1].value)
+        # Confirm that 2 is the right values index:
+        i = 2
+        self.assertEqual('is_evil', values[i].column.id)
+        self.assertEqual(0, values[i].value)
 
     def test_expression_match(self):
         [values] = self.indicator_configuration.get_all_values({
@@ -252,7 +260,10 @@ class IndicatorNamedFilterTest(SimpleTestCase):
             'mother_state': 'pregnant',
             'evil': 'yes'
         })
-        self.assertEqual('mwa-ha-ha', values[2].value)
+        # Confirm that 3 is the right values index:
+        i = 3
+        self.assertEqual('laugh_sound', values[i].column.id)
+        self.assertEqual('mwa-ha-ha', values[i].value)
 
     def test_expression_nomatch(self):
         [values] = self.indicator_configuration.get_all_values({
@@ -262,4 +273,8 @@ class IndicatorNamedFilterTest(SimpleTestCase):
             'mother_state': 'pregnant',
             'evil': 'no'
         })
-        self.assertEqual('hehe', values[2].value)
+        # Confirm that 3 is the right values index:
+        i = 3
+        self.assertEqual('laugh_sound', values[i].column.id)
+        self.assertEqual('hehe', values[i].value)
+
