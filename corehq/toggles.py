@@ -356,11 +356,10 @@ CUSTOM_PROPERTIES = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-FILE_RESTORE = PredicatablyRandomToggle(
+FILE_RESTORE = StaticToggle(
     'file_restore',
     'Use files to do phone restore',
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
-    0.05,
 )
 
 GLOBAL_SMS_RATES = StaticToggle(
