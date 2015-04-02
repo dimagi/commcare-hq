@@ -124,6 +124,8 @@ class Product(Document):
         Gets all products in a domain.
 
         By default this filters out any archived products.
+        WARNING: this doesn't paginate correctly; it filters after the query
+        If you need pagination, use SQLProduct instead
         """
         kwargs.update(dict(
             view_name='commtrack/products',

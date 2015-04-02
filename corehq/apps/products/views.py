@@ -17,7 +17,7 @@ from dimagi.utils.web import json_response
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.products.tasks import import_products_async
-from corehq.apps.products.models import Product
+from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.products.forms import ProductForm
 from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.commtrack.util import encode_if_needed
@@ -76,20 +76,25 @@ class ProductListView(BaseCommTrackManageView):
 
     @property
     def page(self):
-        return self.request.GET.get('page', 1)
+        return int(self.request.GET.get('page', 1))
 
     @property
     def limit(self):
-        return self.request.GET.get('limit', self.DEFAULT_LIMIT)
+        return int(self.request.GET.get('limit', self.DEFAULT_LIMIT))
 
     @property
-    def show_inactive(self):
-        return json.loads(self.request.GET.get('show_inactive', 'false'))
+    def show_only_inactive(self):
+        return bool(json.loads(self.request.GET.get('show_inactive', 'false')))
+
+    @property
+    def product_queryset(self):
+        return SQLProduct.objects.filter(domain=self.domain,
+                                         is_archived=self.show_only_inactive)
 
     @property
     @memoized
     def total(self):
-        return Product.count_by_domain(self.domain)
+        return self.product_queryset.count()
 
     @property
     def page_context(self):
@@ -105,7 +110,7 @@ class ProductListView(BaseCommTrackManageView):
                 completely reversible, so you can always reactivate \
                 it later."
             ),
-            'show_inactive': self.show_inactive,
+            'show_inactive': self.show_only_inactive,
             'pagination_limit_options': range(self.DEFAULT_LIMIT, 51, self.DEFAULT_LIMIT)
         }
 
@@ -113,51 +118,63 @@ class ProductListView(BaseCommTrackManageView):
 class FetchProductListView(ProductListView):
     urlname = 'commtrack_product_fetch'
 
-    def skip(self):
-        return (int(self.page) - 1) * int(self.limit)
-
-    def get_archive_text(self, is_archived):
-        if is_archived:
-            return _("This will re-activate the product, and the product will show up in reports again.")
-        return _("As a result of archiving, this product will no longer appear in reports. "
-                 "This action is reversable; you can reactivate this product by viewing "
-                 "Show Archived Products and clicking 'Unarchive'.")
-
     @property
     def product_data(self):
-        data = []
-        if self.show_inactive:
-            products = Product.archived_by_domain(
-                domain=self.domain,
-                limit=self.limit,
-                skip=self.skip(),
-            )
+        start = (self.page - 1) * self.limit
+        end = start + self.limit
+        return map(self.make_product_dict, self.product_queryset[start:end])
+
+    def make_product_dict(self, product):
+        archive_config = self.get_archive_config()
+        return {
+            'name': product.name,
+            'product_id': product.product_id,
+            'code': product.code,
+            'unit': product.units,
+            'description': product.description,
+            'program': self.program_name(product),
+            'edit_url': reverse(
+                'commtrack_product_edit',
+                kwargs={'domain': self.domain, 'prod_id': product.product_id}
+            ),
+            'archive_action_desc': archive_config['archive_text'],
+            'archive_action_text': archive_config['archive_action'],
+            'archive_url': reverse(
+                archive_config['archive_url'],
+                kwargs={'domain': self.domain, 'prod_id': product.product_id}
+            ),
+        }
+
+    def program_name(self, product):
+        if product.program_id:
+            return Program.get(product.program_id).name
         else:
-            products = Product.by_domain(
-                domain=self.domain,
-                limit=self.limit,
-                skip=self.skip(),
-            )
+            program = get_or_create_default_program(self.domain)
+            product.program_id = program.get_id
+            product.save()
+            return program.name
 
-        for p in products:
-            if p.program_id:
-                program = Program.get(p.program_id)
-            else:
-                program = get_or_create_default_program(self.domain)
-                p.program_id = program.get_id
-                p.save()
-
-            info = p._doc
-            info['program'] = program.name
-            info['edit_url'] = reverse('commtrack_product_edit', kwargs={'domain': self.domain, 'prod_id': p._id})
-            info['archive_action_desc'] = self.get_archive_text(self.show_inactive)
-            info['archive_action_text'] = _("Un-Archive") if self.show_inactive else _("Archive")
-            info['archive_url'] = reverse(
-                'unarchive_product' if self.show_inactive else 'archive_product',
-                kwargs={'domain': self.domain, 'prod_id': p._id}
-            )
-            data.append(info)
-        return data
+    def get_archive_config(self):
+        if self.show_only_inactive:
+            return {
+                'archive_action': _("Un-Archive"),
+                'archive_url': 'unarchive_product',
+                'archive_text': _(
+                    "This will re-activate the product, and the product will "
+                    "show up in reports again."
+                ),
+            }
+        else:
+            return {
+                'archive_action': _("Archive"),
+                'archive_url': 'archive_product',
+                'archive_text': _(
+                    "As a result of archiving, this product will no longer "
+                    "appear in reports. This action is reversable; you can "
+                    "reactivate this product by viewing Show Archived "
+                    "Products and clicking 'Unarchive'."
+                ),
+            }
 
     def get(self, request, *args, **kwargs):
         return HttpResponse(json.dumps({
