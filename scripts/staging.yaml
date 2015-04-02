@@ -52,6 +52,7 @@ branches:
   - static-updates # Biyeun 2/9
   - loc-type-stock-rates  # Ethan 3/6
   - usercase # Norman 3/27
+  - update-inventories #ts 4/2
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
