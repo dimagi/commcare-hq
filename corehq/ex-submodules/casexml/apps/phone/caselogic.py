@@ -10,6 +10,7 @@ from casexml.apps.case import const
 from casexml.apps.case.util import reverse_indices
 from casexml.apps.case.xform import CaseDbCache
 from casexml.apps.phone.models import CaseState
+from corehq import Domain
 from dimagi.utils.decorators.memoized import memoized
 
 logger = logging.getLogger(__name__)
@@ -325,6 +326,16 @@ class BatchedCaseSyncOperation(object):
                 batch = batch.next_batch
                 yield batch
 
+        if self.domain and Domain.get_by_name(self.domain).call_center_config.enabled:
+            yield UserCaseSyncCouchBatch(
+                self.user,
+                self.global_state,
+                self.domain,
+                self.last_synclog,
+                self.chunk_size,
+                case_sharing=self.case_sharing
+            )
+
         if self.last_synclog:
             yield CaseSyncPhoneBatch(
                 self.global_state,
@@ -545,6 +556,19 @@ class CaseSyncCouchBatch(CaseSyncBatch):
             self.chunksize,
             self.use_minimal_cases
         )
+
+
+class UserCaseSyncCouchBatch(CaseSyncCouchBatch):
+    def __init__(self, user, global_state, domain, last_sync, chunksize, case_sharing=False):
+        super(UserCaseSyncCouchBatch, self).__init__(
+            global_state, domain, last_sync, chunksize, None, case_sharing=case_sharing)
+        self.user = user  # phone.models.User instance
+
+    def _actual_owned_cases(self):
+        from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
+
+        usercase = get_case_by_domain_hq_user_id(self.domain, self.user.user_id)
+        return [usercase] if usercase else []
 
 
 def get_case_updates(user, last_sync):
