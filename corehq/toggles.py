@@ -367,3 +367,9 @@ BULK_PAYMENTS = StaticToggle(
     'bulk_payments',
     'Enable payment of invoices by bulk credit payments and invoice generation for wire tranfers',
 )
+
+MODULE_FILTER = StaticToggle(
+    'module_filter',
+    'Enable module filtering',
+    [NAMESPACE_DOMAIN],
+)
