@@ -503,6 +503,10 @@
                         <input type="checkbox" id="include-errors-checkbox" data-bind="checked: custom_export.include_errors" />
                         {% trans "Include duplicates and other unprocessed forms" %}
                     </label>
+                    <label class="checkbox">
+                        <input type="checkbox" id="split-multiselects-checkbox" data-bind="checked: custom_export.split_multiselects" />
+                        {% trans "Split multi-selects" %}
+                    </label>
                 {% endif %}
                 </div>
             </div>
