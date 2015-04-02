@@ -738,7 +738,6 @@ def get_contact_info(domain):
 
     # Save the data to the cache for faster lookup next time
     try:
-        client = cache_core.get_redis_client()
         client.set(cache_key, json.dumps(data))
         client.expire(cache_key, cache_expiration)
     except:
