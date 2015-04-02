@@ -106,6 +106,7 @@ def _to_case_id_set(cases):
     return set([c.case_id for c in cases])
 
 
+# TODO remove this in favour of BatchedCaseSyncOperation
 class CaseSyncOperation(object):
     """
     A record of a user's sync operation
@@ -236,18 +237,31 @@ class GlobalSyncState(object):
 
     @property
     def actual_owned_cases(self):
+        """
+        Cases directly owned by the user or one of the user's groups.
+        """
         return self.actual_owned_cases_dict.values()
 
     @property
     def actual_extended_cases(self):
+        """
+        Cases that are indexed by any cases owned by the user (but now owned directly)
+        """
         return list(set(self.actual_relevant_cases) - set(self.actual_owned_cases))
 
     @property
     def actual_relevant_cases(self):
+        """
+        All cases relevant to the user (owned and linked to)
+        """
         return self.actual_relevant_cases_dict.values()
 
     @property
     def all_synced_cases(self):
+        """
+        All cases that were included in the restore response i.e. cases that have updates
+        which the phone doesn't know about
+        """
         return self.all_synced_cases_dict.values()
 
     def update_owned_cases(self, cases):
