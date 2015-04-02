@@ -380,7 +380,10 @@ class ConfigureNewReportBase(forms.Form):
         form. This method is used when editing an existing report.
         """
         self.report_name = existing_report.title
-        self.source_type = {"CommCareCase": "case", "XFormInstance": "form"}[existing_report.config.referenced_doc_type]
+        self.source_type = {
+            "CommCareCase": "case",
+            "XFormInstance": "form"
+        }[existing_report.config.referenced_doc_type]
         self.report_source_id = existing_report.config.meta.build.source_id
         self.app = Application.get(existing_report.config.meta.build.app_id)
 
@@ -473,7 +476,8 @@ class ConfigureNewReportBase(forms.Form):
         if self.source_type == 'case':
             return [
                 {'property': 'closed', 'display_text': 'closed', 'format': 'Choice'},
-                # TODO: Allow users to filter by owner name, not just id. Will likely require implementing data source filters.
+                # TODO: Allow users to filter by owner name, not just id.
+                # This will likely require implementing data source filters.
                 {'property': 'owner_id', 'display_text': 'owner id', 'format': 'Choice'},
             ]
         else:
@@ -489,7 +493,7 @@ class ConfigureNewReportBase(forms.Form):
         """
         filter_type_map = {
             'dynamic_choice_list': 'Choice',
-            'choice_list': 'Choice', # This exists to handle the `closed` filter that might exist
+            'choice_list': 'Choice',  # This exists to handle the `closed` filter that might exist
             'date': 'Date',
             'numeric': 'Numeric'
         }
@@ -559,7 +563,9 @@ class ConfigureBarChartReportForm(ConfigureNewReportBase):
     report_type = 'chart'
 
     def __init__(self, report_name, app_id, source_type, report_source_id, existing_report=None, *args, **kwargs):
-        super(ConfigureBarChartReportForm, self).__init__(report_name, app_id, source_type, report_source_id, existing_report, *args, **kwargs)
+        super(ConfigureBarChartReportForm, self).__init__(
+            report_name, app_id, source_type, report_source_id, existing_report, *args, **kwargs
+        )
         self.fields['group_by'].choices = self._group_by_choices
 
         # Set initial value of group_by
