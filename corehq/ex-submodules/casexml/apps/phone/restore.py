@@ -302,7 +302,7 @@ def get_case_payload(domain, stock_settings, version, user, last_sync, synclog):
     return response, batch_count
 
 
-def get_case_payload_batched(domain, stock_settings, version, user, last_sync, synclog):
+def get_case_payload_batched(domain, stock_settings, version, user, last_synclog, synclog):
     response = get_restore_class(user)()
 
     batch_count = 0
