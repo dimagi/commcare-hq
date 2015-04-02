@@ -521,16 +521,7 @@ class RestoreConfig(object):
         if self.sync_log:
             # if there is a sync token, always cache
             try:
-                if path.exists(resp):
-                    try:
-                        with open(resp, 'r') as f:
-                            self.sync_log.set_cached_payload(f.read(), self.version)
-                    except IOError as e:
-                        # Don't want to fail hard on cache setting, but should log error
-                        logger.exception(e)
-                else:
-                    self.sync_log.set_cached_payload(resp, self.version)
-
+                self.sync_log.set_cached_payload(resp, self.version)
             except ResourceConflict:
                 # if one sync takes a long time and another one updates the sync log
                 # this can fail. in this event, don't fail to respond, since it's just
@@ -539,16 +530,7 @@ class RestoreConfig(object):
         else:
             # on initial sync, only cache if the duration was longer than the threshold
             if self.force_cache or duration > timedelta(seconds=INITIAL_SYNC_CACHE_THRESHOLD):
-                if path.exists(resp):
-                    try:
-                        with open(resp, 'r') as f:
-                            for payload_bytes in iter(lambda: f.readline(MAX_BYTES), ''):
-                                self.cache.append(self._initial_cache_key(), payload_bytes)
-                    except IOError as e:
-                        # Don't want to fail hard on cache setting, but should log error
-                        logger.exception(e)
-                else:
-                    self.cache.set(self._initial_cache_key(), resp, self.cache_timeout)
+                self.cache.set(self._initial_cache_key(), resp, self.cache_timeout)
 
 
 def generate_restore_payload(user, restore_id="", version=V1, state_hash="",

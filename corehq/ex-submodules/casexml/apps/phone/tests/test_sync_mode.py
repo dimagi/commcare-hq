@@ -520,28 +520,6 @@ class FileRestoreSyncTokenCachingTest(SyncTokenCachingTest):
         self.assertTrue(self.sync_log.has_cached_payload(V2))
         self.assertNotEqual(original_file, next_file)
 
-    def testCacheValidation(self):
-        # first request should populate the cache
-        original_file = RestoreConfig(
-            self.user, version=V2,
-            restore_id=self.sync_log._id,
-            force_cache=True,
-        ).get_payload()
-        self.sync_log = SyncLog.get(self.sync_log._id)
-        self.assertTrue(self.sync_log.has_cached_payload(V2))
-
-        # resyncing should recreate the cache
-        next_payload = RestoreConfig(
-            self.user, version=V2,
-            restore_id=self.sync_log._id,
-            force_cache=True,
-        ).get_payload()
-        self.sync_log = SyncLog.get(self.sync_log._id)
-        self.assertTrue(self.sync_log.has_cached_payload(V2))
-        with open(original_file, 'r') as f:
-            original_payload = f.read()
-            self.assertEqual(original_payload, next_payload)
-
 
 class MultiUserSyncTest(SyncBaseTest):
     """
