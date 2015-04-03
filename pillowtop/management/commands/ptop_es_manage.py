@@ -13,34 +13,33 @@ class Command(LabelCommand):
     args = ""
     label = ""
 
-    option_list = LabelCommand.option_list + \
-                  (
-                      make_option('--code_red',
-                                  action='store_true',
-                                  dest='code_red',
-                                  default=False,
-                                  help="Code red! Delete all indices and pillow checkpoints and start afresh."),
-                      make_option('--flip_all_aliases',
-                                  action='store_true',
-                                  dest='flip_all',
-                                  default=False,
-                                  help="Flip all aliases"),
-                      make_option('--flip_alias',
-                                  action='store',
-                                  dest='pillow_class',
-                                  default=None,
-                                  help="Single Pillow class to flip alias"),
-                      make_option('--list',
-                                  action='store_true',
-                                  dest='list_pillows',
-                                  default=False,
-                                  help="Print AliasedElasticPillows that can be operated on"),
-                      make_option('--info',
-                                  action='store_true',
-                                  dest='show_info',
-                                  default=True,
-                                  help="Debug printout of ES indices and aliases"),
-                  )
+    option_list = LabelCommand.option_list + (
+        make_option('--code_red',
+                    action='store_true',
+                    dest='code_red',
+                    default=False,
+                    help="Code red! Delete all indices and pillow checkpoints and start afresh."),
+        make_option('--flip_all_aliases',
+                    action='store_true',
+                    dest='flip_all',
+                    default=False,
+                    help="Flip all aliases"),
+        make_option('--flip_alias',
+                    action='store',
+                    dest='pillow_class',
+                    default=None,
+                    help="Single Pillow class to flip alias"),
+        make_option('--list',
+                    action='store_true',
+                    dest='list_pillows',
+                    default=False,
+                    help="Print AliasedElasticPillows that can be operated on"),
+        make_option('--info',
+                    action='store_true',
+                    dest='show_info',
+                    default=True,
+                    help="Debug printout of ES indices and aliases"),
+    )
 
     def handle(self, *args, **options):
         if len(args) != 0: raise CommandError("This command doesn't expect arguments!")
