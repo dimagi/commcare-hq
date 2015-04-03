@@ -34,12 +34,16 @@ def string_to_datetime(val):
 
 def string_to_utc_datetime(val):
     val = string_to_datetime(val)
+    if val.tzinfo is None:
+        return val
     return val.astimezone(dateutil.tz.tzutc()).replace(tzinfo=None)
-  
 
-# some date to json tricks from 
+
+# some date to json tricks from
 # http://stackoverflow.com/questions/455580/json-datetime-between-python-and-javascript
 ISO_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
+
+
 def json_format_datetime(time):
     return time.strftime(ISO_FORMAT)
 
