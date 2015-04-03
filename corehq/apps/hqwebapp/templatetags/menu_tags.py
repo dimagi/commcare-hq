@@ -1,11 +1,12 @@
 from django import template
 from django.template.loader import render_to_string
+from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
 from corehq.apps.domain.models import Domain
 import corehq.apps.style.utils as style_utils
 import corehq
-
+from corehq.apps.hqwebapp.models import MaintenanceAlert
 
 register = template.Library()
 
@@ -144,3 +145,18 @@ def format_sidebar(context):
     return mark_safe(render_to_string(template, {
         'sections': sections
     }))
+
+
+@register.simple_tag
+def maintenance_alert():
+    try:
+        alert = (MaintenanceAlert.objects
+                 .filter(active=True)
+                 .order_by('modified'))[0]
+    except IndexError:
+        return ''
+    else:
+        return format_html(
+            '<div class="alert alert-warning" style="text-align: center; margin-bottom: 0;">{}</div>',
+            mark_safe(alert.html),
+        )
