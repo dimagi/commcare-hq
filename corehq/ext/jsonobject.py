@@ -1,6 +1,9 @@
 from __future__ import absolute_import
 import datetime
+import decimal
 from jsonobject import AbstractDateProperty
+import re
+from jsonobject.api import re_date, re_time, re_decimal
 
 
 class TransitionalExactDateTimeProperty(AbstractDateProperty):
@@ -32,3 +35,19 @@ class TransitionalExactDateTimeProperty(AbstractDateProperty):
 
     def _unwrap(self, value):
         return value, value.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+
+
+re_trans_datetime = re.compile(r'^\d{4}-0[1-9]|1[0-2]-[12]\d|0[1-9]|3[01]T'
+                               r'[01]\d|2[0-3]:[0-5]\d:[0-5]\d(\.\d{6})?Z$')
+
+
+class TransDateTimeMeta(object):
+    update_properties = {
+        datetime.datetime: TransitionalExactDateTimeProperty,
+    }
+    string_conversions = (
+        (re_date, datetime.date),
+        (re_time, datetime.time),
+        (re_trans_datetime, datetime.datetime),
+        (re_decimal, decimal.Decimal),
+    )
