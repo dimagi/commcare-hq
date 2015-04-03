@@ -344,6 +344,12 @@ CUSTOM_PROPERTIES = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+FILE_RESTORE = StaticToggle(
+    'file_restore',
+    'Use files to do phone restore',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+)
+
 GLOBAL_SMS_RATES = StaticToggle(
     'global_sms_rates',
     'Global SMS Rates page',

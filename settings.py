@@ -496,6 +496,8 @@ FIXTURE_GENERATORS = {
     ]
 }
 
+RESTORE_PAYLOAD_DIR = None  # Defaults to tempfile.gettempdir()
+
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
 
 SMS_GATEWAY_URL = "http://localhost:8001/"

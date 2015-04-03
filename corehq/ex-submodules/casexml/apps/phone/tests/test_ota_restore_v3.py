@@ -8,6 +8,7 @@ from casexml.apps.case.tests.util import check_xml_line_by_line, delete_all_case
 from casexml.apps.case.xform import process_cases
 from casexml.apps.phone.models import SyncLog
 from casexml.apps.phone.restore import generate_restore_payload, StringRestoreResponse
+from casexml.apps.phone.util import get_payload_content
 from casexml.apps.phone.tests.dummy import dummy_restore_xml, dummy_user
 
 
@@ -39,11 +40,11 @@ class OtaV3RestoreTest(TestCase):
             </update>
         </case>"""
 
-        restore_payload = generate_restore_payload(
+        restore_payload = get_payload_content(generate_restore_payload(
             user=dummy_user(),
             items=True,
             version=V3
-        )
+        ))
         sync_log_id = SyncLog.view(
             "phone/sync_logs_by_user",
             include_docs=True,

@@ -1,10 +1,18 @@
 from datetime import datetime
 from casexml.apps.phone.models import User
 
+DUMMY_USERNAME = "mclovin"
+DUMMY_ID = "foo"
+DUMMY_PASSWORD = "changeme"
+
+
 def dummy_user():
-    return User(user_id="foo", username="mclovin", 
-                password="changeme", date_joined=datetime(2011, 6, 9), 
+    return User(user_id=DUMMY_ID,
+                username=DUMMY_USERNAME,
+                password=DUMMY_PASSWORD,
+                date_joined=datetime(2011, 6, 9),
                 user_data={"something": "arbitrary"})
+
 
 def dummy_user_xml():
         return """
