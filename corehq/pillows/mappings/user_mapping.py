@@ -1,4 +1,4 @@
-USER_INDEX = "hqusers_20c5ecb8d99b11e498b63c970e7be43b"
+USER_INDEX = "hqusers_20150403_1454"
 USER_MAPPING={'_all': {'analyzer': 'standard'},
  '_meta': {'comment': 'Ethan modified on 2015-01-29',
            'created': None},
