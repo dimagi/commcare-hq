@@ -232,6 +232,15 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
 
 class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
 
+    def __init__(self, *args, **kwargs):
+        super(UpdateCommCareUserInfoForm, self).__init__(*args, **kwargs)
+        self.fields['role'].help_text = _(mark_safe(
+            "<i class=\"icon-info-sign\"></i> "
+            "Only applies to mobile workers that will be entering data using "
+            "<a href='https://help.commcarehq.org/display/commcarepublic/CloudCare+-+Web+Data+Entry'>"
+            "CloudCare</a>"
+        ))
+
     @property
     def direct_properties(self):
         indirect_props = ['role']
