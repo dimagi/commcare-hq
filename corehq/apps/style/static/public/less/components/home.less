@@ -1,0 +1,68 @@
+.home-bg-img (@gType, @gName, @gSize) {
+  background-image: url('@{pub-images}/home-@{gType}/@{gName}-@{gSize}.png');
+}
+
+.make-home-icon (@type, @name) {
+  background-position: center center;
+  background-repeat: no-repeat;
+  .home-bg-img(@type, @name, 'sm');
+  @media (min-width: @screen-sm-min) {
+    .home-bg-img(@type, @name, 'sm');
+  }
+  @media (min-width: @screen-md-min) {
+    .home-bg-img(@type, @name, 'md');
+  }
+  @media (min-width: @screen-lg-min) {
+    .home-bg-img(@type, @name, 'lg');
+  }
+}
+
+.home-icon-cloud {
+  .make-home-icon('double', 'cloud');
+}
+.home-icon-collect {
+  .make-home-icon('double', 'collect');
+}
+.home-icon-open {
+  .make-home-icon('double', 'open');
+}
+.home-icon-privacy {
+  .make-home-icon('double', 'privacy');
+}
+.home-icon-reports {
+  .make-home-icon('double', 'reports');
+}
+.home-icon-sync {
+  .make-home-icon('double', 'sync');
+}
+.home-icon-wheel {
+  .make-home-icon('double', 'wheel');
+}
+.home-icon-apps {
+  .make-home-icon('triple', 'apps');
+}
+.home-icon-client {
+  .make-home-icon('triple', 'client');
+}
+.home-icon-languages {
+  .make-home-icon('triple', 'languages');
+}
+.home-icon-multimedia {
+  .make-home-icon('triple', 'multimedia');
+}
+.home-icon-offline {
+  .make-home-icon('triple', 'offline');
+}
+.home-icon-sms {
+  .make-home-icon('triple', 'sms');
+}
+.home-icon-worker {
+  .make-home-icon('triple', 'worker');
+}
+.home-icon-workflows {
+  .make-home-icon('triple', 'workflows');
+}
+.home-icon-analytics {
+  .make-home-icon('quad', 'analytics');
+}
+
