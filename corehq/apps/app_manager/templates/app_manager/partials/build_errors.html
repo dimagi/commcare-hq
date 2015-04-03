@@ -56,6 +56,10 @@
                             Module
                             <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
                             has no forms.
+                        {% case "no forms or case list" %}
+                            Module
+                            <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
+                            has no forms or case list.
                         {% case "no case type" %}
                             Module
                             <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
