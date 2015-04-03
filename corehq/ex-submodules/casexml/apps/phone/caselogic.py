@@ -10,6 +10,7 @@ from casexml.apps.case import const
 from casexml.apps.case.util import reverse_indices
 from casexml.apps.case.xform import CaseDbCache
 from casexml.apps.phone.models import CaseState
+from corehq.ext.couchdbkit import USecDateTimeProperty
 from dimagi.utils.decorators.memoized import memoized
 
 logger = logging.getLogger(__name__)
@@ -603,8 +604,9 @@ def filter_cases_modified_elsewhere_since_sync(cases, last_sync):
             #   'key': ['[case id]', '[sync token id]']
             # }
             if row['value']:
+                dt = USecDateTimeProperty().wrap(row['value'])
                 all_case_updates_by_sync_token[row['key'][0]].append(
-                    {'token': row['key'][1], 'date': datetime.strptime(row['value'], '%Y-%m-%dT%H:%M:%SZ')}
+                    {'token': row['key'][1], 'date': dt}
                 )
 
         def case_modified_elsewhere_since_sync(case_id):
