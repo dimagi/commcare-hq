@@ -277,4 +277,3 @@ class IndicatorNamedFilterTest(SimpleTestCase):
         i = 3
         self.assertEqual('laugh_sound', values[i].column.id)
         self.assertEqual('hehe', values[i].value)
-

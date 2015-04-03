@@ -74,7 +74,7 @@ class RepeatIterationIndicatorSpec(RawIndicatorSpec):
 
     @property
     def getter(self):
-        return lambda doc, context:  context.iteration
+        return lambda doc, context: context.iteration
 
 
 class ExpressionIndicatorSpec(IndicatorSpecBase):
