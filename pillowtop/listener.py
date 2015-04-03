@@ -683,7 +683,7 @@ class AliasedElasticPillow(BulkPillow):
         domain and case type
         """
         try:
-            if not self.type_exists(doc_dict):
+            if not self._type_exists(doc_dict):
                 # if type is never seen, apply mapping for said type
                 type_mapping = self.get_mapping_from_type(doc_dict)
                 # update metadata
@@ -801,8 +801,7 @@ class AliasedElasticPillow(BulkPillow):
                     "Error on change: %s, %s" % (change['id'], ex)
                 )
 
-    # todo: make private and remove extra agruments that are never called
-    def type_exists(self, doc_dict, server=False):
+    def _type_exists(self, doc_dict):
         """
         Verify whether the server has indexed this type
         We can assume at startup that the mapping from the server is loaded,
@@ -811,20 +810,7 @@ class AliasedElasticPillow(BulkPillow):
         server = False:
             if true, override to always call server
         """
-        es = self.get_es()
-        type_string = self.get_type_string(doc_dict)
-
-        if server and self.online:
-            type_path = "%(index)s/%(type_string)s" % (
-                {
-                    'index': self.es_index,
-                    'type_string': type_string
-                })
-            head_result = es.head(type_path)
-            self.seen_types[type_string] = head_result
-            return head_result
-        else:
-            return type_string in self.seen_types
+        return self.get_type_string(doc_dict) in self.seen_types
 
     def get_type_string(self, doc_dict):
         raise NotImplementedError("Please implement a custom type string resolver")
