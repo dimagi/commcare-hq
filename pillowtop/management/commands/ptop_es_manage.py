@@ -34,11 +34,6 @@ class Command(LabelCommand):
                     dest='show_info',
                     default=True,
                     help="Debug printout of ES indices and aliases"),
-        make_option('--prune',
-                    action='store_true',
-                    dest='prune',
-                    default=False,
-                    help="Prune all unknown indices from the database."),
         make_option('--code_red',
                     action='store_true',
                     dest='code_red',
@@ -58,8 +53,6 @@ class Command(LabelCommand):
         pillows = get_all_pillows()
         aliased_pillows = filter(lambda x: isinstance(x, AliasedElasticPillow), pillows)
 
-        if options['prune']:
-            pass
         if code_red:
             if raw_input('\n'.join([
                 'CODE RED!!!',
