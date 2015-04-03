@@ -66,9 +66,9 @@ class CallcenterFixtureTests(SimpleTestCase):
     def test_should_sync_timezone(self):
         domain = Domain(name='test', default_timezone='Africa/Johannesburg')
         # yesterday at 21:59:59 = yesterday at 23:59:59 locally
-        last_sync = datetime.combine(date.today() - timedelta(days=1), time(21, 59, 59)).replace(tzinfo=pytz.utc)
+        last_sync = datetime.combine(date.today() - timedelta(days=1), time(21, 59, 59))
         # yesterday at 21:59:59 = today at 00:00:00 locally
-        utcnow = datetime.combine(date.today() - timedelta(days=1), time(22, 00, 00)).replace(tzinfo=pytz.utc)
+        utcnow = datetime.combine(date.today() - timedelta(days=1), time(22, 00, 00))
         self.assertTrue(should_sync(domain, SyncLog(date=last_sync), utcnow=utcnow))
 
         domain = Domain(name='test', default_timezone='UTC')
