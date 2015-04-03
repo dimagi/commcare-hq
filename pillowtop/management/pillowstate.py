@@ -1,4 +1,4 @@
-from corehq.elastic import get_es
+from corehq.elastic import get_es, get_es_new
 from pillowtop.listener import AliasedElasticPillow
 
 
@@ -52,10 +52,8 @@ def get_pillow_states(pillows):
     # pointing to the same alias or indices
     master_aliases = dict((x.es_index, x.es_alias) for x in aliased_pillows)
 
-    es = get_es()
-    system_status = es.get('_status')
-    indices = system_status['indices'].keys()
-    active_aliases = es.get('_aliases')
+    es = get_es_new()
+    active_aliases = es.indices.get_aliases()
 
     unseen_masters = master_aliases.keys()
     mapped_masters = []
@@ -85,5 +83,5 @@ def get_pillow_states(pillows):
     unmapped_masters.extend([(x, master_aliases[x]) for x in unseen_masters])
 
     return ElasticPillowStatus(
-        indices, mapped_masters, unmapped_masters, stale_indices,
+        active_aliases.keys(), mapped_masters, unmapped_masters, stale_indices,
     )
