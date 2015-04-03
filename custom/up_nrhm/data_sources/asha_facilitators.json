@@ -24,6 +24,15 @@
                 "datatype": "datetime"
             },
             {
+                "column_id": "completed_on",
+                "type": "expression",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": ["form", "meta", "timeEnd"]
+                },
+                "datatype": "datetime"
+            },
+            {
                 "column_id": "case_id",
                 "type": "expression",
                 "expression": {
