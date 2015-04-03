@@ -3,74 +3,17 @@
 {% load hq_shared_tags %}
 
 {% block posttable %}
-    <div id="printable">
-        <h5 id="selected_af" style="margin-top: 30px"></h5>
-        <h5 id="selected_asha"></h5>
-        <h5 id="selected_date"></h5>
-        <table class="table table-striped datatable" id="af_checklist"></table>
-    </div>
-    <button id="print_button" class="btn" onclick="printASHATable()" style="display: none">Print</button>
+    <button id="print_button" class="btn" onclick="printASHATable()">Print</button>
 {% endblock posttable %}
 
 {% block js-inline %}
     <script>
     function printASHATable(){
             var restorepage = $('body').html();
-            var printcontent = $('#printable').clone();
+            var printcontent = $('#report_table_asha_functionality_checklist_report').clone();
             $('body').empty().html(printcontent);
             window.print();
             $('body').html(restorepage);
         }
-
-        function generateTable(data) {
-            var table = '<thead><tr>' +
-                    '<th>S. No.</th>' +
-                    '<th>Indicator</th>' +
-                    '<th>Functional/Not functional/Not applicable</th>' +
-                    ' </tr></thead><tbody>'
-            $.each(data, function(index) {
-                table += '<tr>';
-                $.each(this, function(index) {
-                    table += '<td>' + this + '</td>'
-                });
-                table += '</tr>';
-            });
-            table += '</tbody>';
-            return table;
-        }
-
-        function get_selected_af(name){
-            var results = new RegExp('[\\?&]hierarchy_af=([^&#]*)').exec(window.location.href);
-            var af_id = results[1] || 0;
-            return $('option[value=' + af_id + ']').text();
-        }
-
-        $("#report_table_asha_functionality_checklist_report tbody tr").on('click', function(e) {
-            var selected_asha_id = $(this).children()[1].children[0].id;
-            var selected_asha = $(this).children()[1].innerText;
-            var selected_date = $(this).children()[2].innerText;
-            var selected_af = get_selected_af();
-
-            $.ajax({
-                type: 'GET',
-                datatype: 'json',
-                url: '{% url "asha_af_report" domain %}',
-                data: {
-                    date: selected_date,
-                    doc_id: selected_asha_id
-                },
-                success: function(response) {
-                    $('#af_checklist').empty();
-                    $('#selected_af').text("Name of AF: " +  selected_af);
-                    $('#selected_asha').text("Name of ASHA: " +  selected_asha);
-                    $('#selected_date').text("Date when checklist was filled: " + selected_date);
-                    $('#af_checklist').append(generateTable(response));
-                    $('.hq-loading').fadeOut();
-                    $('#print_button').css('display', 'block');
-                },
-                error: function() {
-                }
-            });
-        });
     </script>
 {% endblock %}
