@@ -14,11 +14,6 @@ class Command(LabelCommand):
     label = ""
 
     option_list = LabelCommand.option_list + (
-        make_option('--code_red',
-                    action='store_true',
-                    dest='code_red',
-                    default=False,
-                    help="Code red! Delete all indices and pillow checkpoints and start afresh."),
         make_option('--flip_all_aliases',
                     action='store_true',
                     dest='flip_all',
@@ -39,6 +34,11 @@ class Command(LabelCommand):
                     dest='show_info',
                     default=True,
                     help="Debug printout of ES indices and aliases"),
+        make_option('--code_red',
+                    action='store_true',
+                    dest='code_red',
+                    default=False,
+                    help="Code red! Delete all indices and pillow checkpoints and start afresh."),
     )
 
     def handle(self, *args, **options):
