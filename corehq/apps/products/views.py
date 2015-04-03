@@ -145,9 +145,14 @@ class FetchProductListView(ProductListView):
             ),
         }
 
+    @property
+    @memoized
+    def programs_by_id(self):
+        return {p._id: p.name for p in Program.by_domain(self.domain)}
+
     def program_name(self, product):
         if product.program_id:
-            return Program.get(product.program_id).name
+            return self.programs_by_id[product.program_id]
         else:
             program = get_or_create_default_program(self.domain)
             product.program_id = program.get_id
