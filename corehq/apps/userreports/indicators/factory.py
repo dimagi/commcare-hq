@@ -87,7 +87,6 @@ def _build_choice_list_indicator(spec, context):
 
 
 def _build_repeat_iteration_indicator(spec, context):
-    # NOTE: This is exactly the same as _build_raw_indicator but with a different spec class...
     wrapped = RepeatIterationIndicatorSpec.wrap(spec)
     column = Column(
         id=wrapped.column_id,
@@ -100,7 +99,6 @@ def _build_repeat_iteration_indicator(spec, context):
         column,
         getter=wrapped.getter
     )
-    # NOTE: I define the getter function in the RepeatIterationIndicatorSpec, but I could also just define it here. Which is better?
 
 
 class IndicatorFactory(object):
