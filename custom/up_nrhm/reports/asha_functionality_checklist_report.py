@@ -40,7 +40,8 @@ class ASHAFunctionalityChecklistReport(GenericTabularReport, DatespanMixin, Cust
 
         for index, v in enumerate(self.model.data.values()):
             self.doc_ids.append(v['doc_id'])
-            headers.add_column(DataTablesColumnGroup(index+1, DataTablesColumn(v['hv_asha_name'], sortable=False)))
+            headers.add_column(DataTablesColumnGroup(index + 1,
+                                                     DataTablesColumn(v['hv_asha_name'], sortable=False)))
         headers.add_column(DataTablesColumn('', sortable=False))
         return headers
 
