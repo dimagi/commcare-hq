@@ -34,6 +34,11 @@ class Command(LabelCommand):
                     dest='show_info',
                     default=True,
                     help="Debug printout of ES indices and aliases"),
+        make_option('--prune',
+                    action='store_true',
+                    dest='prune',
+                    default=False,
+                    help="Prune all unknown indices from the database."),
         make_option('--code_red',
                     action='store_true',
                     dest='code_red',
@@ -53,6 +58,8 @@ class Command(LabelCommand):
         pillows = get_all_pillows()
         aliased_pillows = filter(lambda x: isinstance(x, AliasedElasticPillow), pillows)
 
+        if options['prune']:
+            pass
         if code_red:
             if raw_input('\n'.join([
                 'CODE RED!!!',
@@ -74,24 +81,9 @@ class Command(LabelCommand):
             return
 
         if show_info:
-            print "\n\tHQ ES Index Alias Mapping Status"
-            mapped_masters, unmapped_masters, stale_indices = get_pillow_states(pillows)
-
-            print "\t## Current ES Indices in Source Control ##"
-            for m in mapped_masters:
-                print "\t\t%s => %s [OK]" % (m[0], m[1])
-
-            print "\t## Current ES Indices in Source Control needing preindexing ##"
-            for m in unmapped_masters:
-                print "\t\t%s != %s [Run ES Preindex]" % (m[0], m[1])
-
-            print "\t## Stale indices on ES ##"
-            for m in stale_indices:
-                print "\t\t%s: %s" % (m[0], "Holds [%s]" % ','.join(m[1]) if len(m[1]) > 0 else "No Alias, stale")
-            print "done"
+            get_pillow_states(aliased_pillows).dump_info()
         if list_pillows:
             print aliased_pillows
-
         if flip_all:
             for pillow in aliased_pillows:
                 pillow.assume_alias()
