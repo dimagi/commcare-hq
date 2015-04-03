@@ -241,7 +241,7 @@ def reminder_to_visit_website():
     domains = EWSGhanaConfig.get_all_enabled_domains()
     for domain in domains:
         for user in CommCareUser.by_domain(domain):
-            thirteen_days_ago = datetime.datetime.now() - datetime.timedelta(weeks=13)
+            thirteen_days_ago = datetime.datetime.utcnow() - datetime.timedelta(weeks=13)
             if user.location and user.last_login < thirteen_days_ago and user.get_verified_number()\
                     and user.location.location_type.name in ['district', 'region', 'country']:
                     message = WEB_REMINDER % user.name

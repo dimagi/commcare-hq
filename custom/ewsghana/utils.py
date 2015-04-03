@@ -211,7 +211,7 @@ class ProductsReportHelper(object):
             domain=self.location.domain,
             is_archived=False
         ).values_list('product_id')
-        date = datetime.now() - timedelta(days=7)
+        date = datetime.utcnow() - timedelta(days=7)
         earlier_reported_products = StockState.objects.filter(
             product_id__in=products_ids,
             case_id=self.location.sql_location.supply_point_id

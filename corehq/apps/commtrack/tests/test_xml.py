@@ -514,7 +514,7 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
         initial_amounts = [(p._id, float(100)) for p in self.products]
         self.submit_xml_form(
             balance_submission(initial_amounts),
-            timestamp=datetime.now() + timedelta(-30)
+            timestamp=datetime.utcnow() + timedelta(-30)
         )
 
         final_amounts = [(p._id, float(50)) for i, p in enumerate(self.products)]

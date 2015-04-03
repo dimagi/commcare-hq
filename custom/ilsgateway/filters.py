@@ -104,4 +104,4 @@ class MonthAndQuarterFilter(MonthFilter):
     @property
     @memoized
     def selected(self):
-        return self.get_value(self.request, self.domain) or "%02d" % datetime.now().month
+        return self.get_value(self.request, self.domain) or "%02d" % datetime.utcnow().month

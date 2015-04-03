@@ -28,7 +28,7 @@ class StockReportDomainTest(TestCase):
         form.save()
         report = NewStockReport(
             form,
-            date or datetime.now(),
+            date or datetime.utcnow(),
             tag or REPORT_TYPE_BALANCE,
             transactions or [],
         )
@@ -94,7 +94,7 @@ class StockReportDomainTest(TestCase):
     def _test_get_current_ledger_transactions(self, tester_fn):
         tester_fn(self.transactions)
 
-        date = datetime.now()
+        date = datetime.utcnow()
         report, _ = self.create_report([
             STrans(
                 case_id='c1',

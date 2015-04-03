@@ -17,7 +17,7 @@ def get_results(key):
 
 @periodic_task(run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def purge_old_logs():
-    key = datetime.now() - timedelta(weeks=52)
+    key = datetime.utcnow() - timedelta(weeks=52)
 
     db = ExceptionRecord.get_db()
 

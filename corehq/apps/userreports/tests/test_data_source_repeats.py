@@ -33,7 +33,7 @@ class RepeatDataSourceConfigurationTest(SimpleTestCase):
         self.assertEqual([], self.config.get_all_values(_test_doc(form={"time_logs": []})))
 
     def test_dict_property(self):
-        start = datetime.datetime.now()
+        start = datetime.datetime.utcnow()
         end = start + datetime.timedelta(minutes=30)
         rows = self.config.get_all_values(_test_doc(form={"time_logs": {
             "start_time": start, "end_time": end, "person": "al"
@@ -47,7 +47,7 @@ class RepeatDataSourceConfigurationTest(SimpleTestCase):
         self.assertEqual(DAY_OF_WEEK, created_base_ind.value)
 
     def test_list_property(self):
-        now = datetime.datetime.now()
+        now = datetime.datetime.utcnow()
         one_hour = datetime.timedelta(hours=1)
         logs = [
             {"start_time": now, "end_time": now + one_hour, "person": "al"},

@@ -24,7 +24,7 @@ class FormDataTestCase(TestCase):
             instance=xml_data,
             domain='sofabed',
             app_id='12345',
-            received_on=datetime.now()
+            received_on=datetime.utcnow()
         ).get_response()
 
         self.instance = XFormInstance.get('THIS_IS_THE_INSTANCEID')
