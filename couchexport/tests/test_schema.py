@@ -13,7 +13,7 @@ class ExportSchemaTest(TestCase):
 
     def testSaveAndLoad(self):
         index = ["foo", 2]
-        schema = ExportSchema(index=index, timestamp=datetime.now())
+        schema = ExportSchema(index=index, timestamp=datetime.utcnow())
         inner = {"dict": {"bar": 1, "baz": [2,3]},
                  "list": ["foo", "bar"],
                  "dictlist": [{"bip": 1, "bop": "blah"},
