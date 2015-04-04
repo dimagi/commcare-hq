@@ -1,5 +1,35 @@
-from corehq.elastic import get_es
+from corehq.elastic import get_es, get_es_new
 from pillowtop.listener import AliasedElasticPillow
+
+
+class ElasticPillowStatus(object):
+
+    def __init__(self, indices, mapped_masters, unmapped_masters, stale_indices):
+        self.indices = indices
+        self.mapped_masters = mapped_masters
+        self.unmapped_masters = unmapped_masters
+        self.stale_indices = stale_indices
+
+    def dump_info(self):
+        print "\n\tHQ ES Index Alias Mapping Status"
+        print ""
+        print "\tActive indices on ES"
+        for index in self.indices:
+            print "\t\t%s" % index
+        print ""
+
+        print "\t## Current ES Indices in Source Control ##"
+        for m in self.mapped_masters:
+            print "\t\t%s => %s [OK]" % (m[0], m[1])
+
+        print "\t## Current ES Indices in Source Control needing preindexing ##"
+        for m in self.unmapped_masters:
+            print "\t\t%s != %s [Run ES Preindex]" % (m[0], m[1])
+
+        print "\t## Stale indices on ES ##"
+        for m in self.stale_indices:
+            print "\t\t%s: %s" % (m[0], "Holds [%s]" % ','.join(m[1]) if len(m[1]) > 0 else "No Alias, stale")
+        print "done"
 
 
 def get_pillow_states(pillows):
@@ -21,18 +51,9 @@ def get_pillow_states(pillows):
     # this maybe problematic in the future if we have multiple pillows
     # pointing to the same alias or indices
     master_aliases = dict((x.es_index, x.es_alias) for x in aliased_pillows)
-    print master_aliases
 
-    es = get_es()
-    system_status = es.get('_status')
-    indices = system_status['indices'].keys()
-    print ""
-    print "\tActive indices on ES"
-    for index in indices:
-        print "\t\t%s" % index
-    print ""
-
-    active_aliases = es.get('_aliases')
+    es = get_es_new()
+    active_aliases = es.indices.get_aliases()
 
     unseen_masters = master_aliases.keys()
     mapped_masters = []
@@ -61,4 +82,6 @@ def get_pillow_states(pillows):
             stale_indices.append(stale_tuple)
     unmapped_masters.extend([(x, master_aliases[x]) for x in unseen_masters])
 
-    return mapped_masters, unmapped_masters, stale_indices
+    return ElasticPillowStatus(
+        active_aliases.keys(), mapped_masters, unmapped_masters, stale_indices,
+    )
