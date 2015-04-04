@@ -26,7 +26,7 @@ class DebugDatabase(Database):
         @return: dict, representation of CouchDB document as
          a dict.
         """
-        start = datetime.now()
+        start = datetime.utcnow()
 
         ############################
         #Start Database.open_doc
@@ -50,7 +50,7 @@ class DebugDatabase(Database):
 
         #############################
         #Debug Panel data collection
-        stop = datetime.now()
+        stop = datetime.utcnow()
         duration = ms_from_timedelta(stop - start)
         stacktrace = tidy_stacktrace(traceback.extract_stack())
 
@@ -130,7 +130,7 @@ class DebugViewResults64(ViewResults):
         else:
             self.debug_view = view_args[0]
 
-        start = datetime.now()
+        start = datetime.utcnow()
 
         if not self._result_cache:
             result_cached = False
@@ -138,7 +138,7 @@ class DebugViewResults64(ViewResults):
         else:
             result_cached = True
 
-        stop = datetime.now()
+        stop = datetime.utcnow()
         duration = ms_from_timedelta(stop - start)
         stacktrace = tidy_stacktrace(traceback.extract_stack())
 
@@ -187,12 +187,12 @@ class DebugViewResults57(ViewResults):
                 setattr(self, key, self._result_cache[key])
 
     def _debug_fetch_if_needed(self):
-        start = datetime.now()
+        start = datetime.utcnow()
 
         if not self._result_cache:
             self.debug_fetch()
 
-        stop = datetime.now()
+        stop = datetime.utcnow()
         duration = ms_from_timedelta(stop - start)
         stacktrace = tidy_stacktrace(traceback.extract_stack())
 
