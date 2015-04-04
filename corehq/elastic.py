@@ -1,5 +1,6 @@
 import copy
 from urllib import unquote
+from elasticsearch import Elasticsearch
 import rawes
 from django.conf import settings
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
@@ -14,9 +15,23 @@ from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 
 
+def get_es_new():
+    """
+    Get a handle to the configured elastic search DB.
+    Returns an elasticsearch.Elasticsearch instance.
+    """
+    return Elasticsearch([{
+        'host': settings.ELASTICSEARCH_HOST,
+        'port': settings.ELASTICSEARCH_PORT,
+    }])
+
+
 def get_es(timeout=30):
     """
     Get a handle to the configured elastic search DB
+    Returns a rawes.Elastic instance.
+
+    We are hoping to deprecate and retire this method soonish.
     """
     return rawes.Elastic('%s:%s' % (settings.ELASTICSEARCH_HOST,
                                     settings.ELASTICSEARCH_PORT),

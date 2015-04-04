@@ -71,11 +71,10 @@ class Command(BaseCommand):
 
         reindex_all = options['replace']
 
-        pillow_states = get_pillow_states(aliasable_pillows)
-        mapped_masters, unmapped_masters, stale_indices = pillow_states
+        pillow_state_results = get_pillow_states(aliasable_pillows)
 
         print "Master indices missing aliases:"
-        unmapped_indices = [x[0] for x in unmapped_masters]
+        unmapped_indices = [x[0] for x in pillow_state_results.unmapped_masters]
         print unmapped_indices
 
         if reindex_all:

@@ -2,6 +2,7 @@ from optparse import make_option
 from django.conf import settings
 from django.core.management import BaseCommand
 from elasticsearch import Elasticsearch
+from corehq.elastic import get_es_new
 from pillowtop import get_all_pillows
 from pillowtop.listener import AliasedElasticPillow
 
@@ -17,10 +18,7 @@ class Command(BaseCommand):
     )
 
     def handle(self, *args, **options):
-        es = Elasticsearch([{
-            'host': settings.ELASTICSEARCH_HOST,
-            'port': settings.ELASTICSEARCH_PORT,
-        }])
+        es = get_es_new()
         # call this before getting existing indices because apparently getting the pillow will create the index
         # if it doesn't exist
         found_indices = set(es.indices.get_aliases().keys())
