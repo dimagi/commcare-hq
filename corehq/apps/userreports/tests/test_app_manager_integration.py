@@ -35,7 +35,7 @@ class AppManagerDataSourceConfigTest(SimpleTestCase):
 
         # check the indicators
         expected_columns = set(
-            ["doc_id", "repeat_iteration", "modified_on", "user_id", "opened_on",
+            ["doc_id", "modified_on", "user_id", "opened_on",
              "owner_id", "name", "category", "priority", "starred", "estimate"]
         )
         self.assertEqual(expected_columns, set(col_back.id for col_back in data_source.get_columns()))

@@ -136,7 +136,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
 
     @property
     def indicators(self):
-        doc_id_indicator = IndicatorFactory.from_spec({
+        default_indicators = [IndicatorFactory.from_spec({
             "column_id": "doc_id",
             "type": "expression",
             "display_name": "document id",
@@ -150,18 +150,19 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
                     "property_name": "_id"
                 }
             }
-        }, self.named_filter_objects)
-        repeat_iteration_indicator = IndicatorFactory.from_spec({
-            "column_id": "repeat_iteration",
-            "type": "repeat_iteration",
-            "display_name": "base document iteration",
-            "datatype": "integer",
-            "is_nullable": False,
-            "is_primary_key": True,
-        }, self.named_filter_objects)
+        }, self.named_filter_objects)]
+        if self.base_item_expression:
+            default_indicators.append(IndicatorFactory.from_spec({
+                "column_id": "repeat_iteration",
+                "type": "repeat_iteration",
+                "display_name": "base document iteration",
+                "datatype": "integer",
+                "is_nullable": False,
+                "is_primary_key": True,
+            }, self.named_filter_objects))
         return CompoundIndicator(
             self.display_name,
-            [doc_id_indicator, repeat_iteration_indicator] + [
+            default_indicators + [
                 IndicatorFactory.from_spec(indicator, self.named_filter_objects)
                 for indicator in self.configured_indicators
             ]

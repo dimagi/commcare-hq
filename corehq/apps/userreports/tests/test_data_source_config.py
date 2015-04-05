@@ -37,7 +37,6 @@ class DataSourceConfigurationTest(SimpleTestCase):
         # columns
         expected_columns = [
             'doc_id',
-            'repeat_iteration',
             'date',
             'owner',
             'count',
@@ -234,8 +233,8 @@ class IndicatorNamedFilterTest(SimpleTestCase):
             'mother_state': 'pregnant',
             'evil': 'yes'
         })
-        # Confirm that 2 is the right values index:
-        i = 2
+        # Confirm that 1 is the right values index:
+        i = 1
         self.assertEqual('is_evil', values[i].column.id)
         self.assertEqual(1, values[i].value)
 
@@ -247,8 +246,8 @@ class IndicatorNamedFilterTest(SimpleTestCase):
             'mother_state': 'pregnant',
             'evil': 'no'
         })
-        # Confirm that 2 is the right values index:
-        i = 2
+        # Confirm that 1 is the right values index:
+        i = 1
         self.assertEqual('is_evil', values[i].column.id)
         self.assertEqual(0, values[i].value)
 
@@ -260,8 +259,8 @@ class IndicatorNamedFilterTest(SimpleTestCase):
             'mother_state': 'pregnant',
             'evil': 'yes'
         })
-        # Confirm that 3 is the right values index:
-        i = 3
+        # Confirm that 2 is the right values index:
+        i = 2
         self.assertEqual('laugh_sound', values[i].column.id)
         self.assertEqual('mwa-ha-ha', values[i].value)
 
@@ -273,7 +272,7 @@ class IndicatorNamedFilterTest(SimpleTestCase):
             'mother_state': 'pregnant',
             'evil': 'no'
         })
-        # Confirm that 3 is the right values index:
-        i = 3
+        # Confirm that 2 is the right values index:
+        i = 2
         self.assertEqual('laugh_sound', values[i].column.id)
         self.assertEqual('hehe', values[i].value)
