@@ -121,11 +121,20 @@ class AbtSupervisorExpressionSpec(JsonObject):
     type = TypeProperty('abt_supervisor')
 
     def __call__(self, item, context=None):
-        # TODO: What does context do (I think I can ignore it)?
+        """
+        Given a document (item), return a list of documents representing each
+        of the flagged questions.
+        """
         # TODO: Instead, take a list of tuples which are paths and flag answers.
+        flag_specs = [
+            (['breakfast'], 'no'),
+            (['equipment'], 'yes'),
+        ]
         docs = []
-        if item['form']['breakfast'] == 'no':
-            docs.append({'flag': 'breakfast'})
-        if item['form']['equipment'] == 'yes':
-            docs.append({'flag': 'equipment'})
+        for path, danger_value in flag_specs:
+            v = item['form']
+            for key in path:
+                v = v[key]
+            if v == danger_value:
+                docs.append({'flag': path[-1]})
         return docs
