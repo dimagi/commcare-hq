@@ -199,8 +199,6 @@ HQ_APPS = (
     'django_digest',
     'rosetta',
     'auditcare',
-    'djangocouch',
-    'djangocouchuser',
     'hqscripts',
     'casexml.apps.case',
     'casexml.apps.phone',
@@ -1355,7 +1353,7 @@ TRAVIS_TEST_GROUPS = (
     (
         'care_sa', 'case', 'cleanup', 'cloudcare', 'commtrack', 'consumption',
         'couchapps', 'couchlog', 'crud', 'cvsu', 'dca', 'django_digest',
-        'djangocouch', 'djangocouchuser', 'domain', 'domainsync', 'export',
+        'domain', 'domainsync', 'export',
         'facilities', 'fixtures', 'fluff_filter', 'formplayer',
         'formtranslate', 'fri', 'grapevine', 'groups', 'gsid', 'hope',
         'hqadmin', 'hqcase', 'hqcouchlog', 'hqmedia',
