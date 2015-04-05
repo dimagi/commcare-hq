@@ -1,21 +1,25 @@
 import json
 import os
 import datetime
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 from corehq.apps.userreports.models import DataSourceConfiguration
+from corehq.apps.userreports.sql import IndicatorSqlAdapter, get_engine
 
 
 DOC_ID = 'repeat-id'
 DAY_OF_WEEK = 'monday'
 
 
-class RepeatDataSourceConfigurationTest(SimpleTestCase):
+class RepeatDataSourceTestMixin(object):
 
     def setUp(self):
         folder = os.path.join(os.path.dirname(__file__), 'data', 'configs')
         sample_file = os.path.join(folder, 'data_source_with_repeat.json')
         with open(sample_file) as f:
             self.config = DataSourceConfiguration.wrap(json.loads(f.read()))
+
+
+class RepeatDataSourceConfigurationTest(RepeatDataSourceTestMixin, SimpleTestCase):
 
     def test_test_doc_matches(self):
         self.assertTrue(self.config.filter(_test_doc()))
@@ -39,8 +43,9 @@ class RepeatDataSourceConfigurationTest(SimpleTestCase):
             "start_time": start, "end_time": end, "person": "al"
         }}))
         self.assertEqual(1, len(rows))
-        doc_id_ind, start_ind, end_ind, person_ind, created_base_ind = rows[0]
+        doc_id_ind, repeat_iteration, start_ind, end_ind, person_ind, created_base_ind = rows[0]
         self.assertEqual(DOC_ID, doc_id_ind.value)
+        self.assertEqual(0, repeat_iteration.value)
         self.assertEqual(start, start_ind.value)
         self.assertEqual(end, end_ind.value)
         self.assertEqual('al', person_ind.value)
@@ -57,12 +62,57 @@ class RepeatDataSourceConfigurationTest(SimpleTestCase):
         rows = self.config.get_all_values(_test_doc(form={"time_logs": logs}))
         self.assertEqual(len(logs), len(rows))
         for i, row in enumerate(rows):
-            doc_id_ind, start_ind, end_ind, person_ind, created_base_ind = row
+            doc_id_ind, repeat_iteration, start_ind, end_ind, person_ind, created_base_ind = row
             self.assertEqual(DOC_ID, doc_id_ind.value)
             self.assertEqual(logs[i]['start_time'], start_ind.value)
+            self.assertEqual(i, repeat_iteration.value)
             self.assertEqual(logs[i]['end_time'], end_ind.value)
             self.assertEqual(logs[i]['person'], person_ind.value)
             self.assertEqual(DAY_OF_WEEK, created_base_ind.value)
+
+
+class RepeatDataSourceBuildTest(RepeatDataSourceTestMixin, TestCase):
+
+    def test_table_population(self):
+
+        engine = get_engine()
+        adapter = IndicatorSqlAdapter(engine, self.config)
+        # Delete and create table
+        adapter.rebuild_table()
+
+        # Create a doc
+        now = datetime.datetime.now()
+        one_hour = datetime.timedelta(hours=1)
+        logs = [
+            {"start_time": now, "end_time": now + one_hour, "person": "al"},
+            {"start_time": now + one_hour, "end_time": now + (one_hour * 2), "person": "chris"},
+            {"start_time": now + (one_hour * 2), "end_time": now + (one_hour * 3), "person": "katie"},
+        ]
+        doc = _test_doc(form={'time_logs': logs})
+
+        # Save this document into the table
+        adapter.save(doc)
+
+        # Get rows from the table
+        with engine.connect() as connection:
+            rows = connection.execute(adapter.get_table().select())
+        retrieved_logs = [
+            {
+                'start_time': r[2],
+                'end_time': r[3],
+                'person': r[4],
+
+            } for r in rows
+        ]
+        # Clean up
+        engine.dispose()
+
+        # Check those rows against the expected result
+        self.assertItemsEqual(
+            retrieved_logs,
+            logs,
+            "The repeat data saved in the data source table did not match the expected data!"
+        )
 
 
 def _test_doc(**extras):
