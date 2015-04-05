@@ -153,12 +153,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         }, self.named_filter_objects)]
         if self.base_item_expression:
             default_indicators.append(IndicatorFactory.from_spec({
-                "column_id": "repeat_iteration",
                 "type": "repeat_iteration",
-                "display_name": "base document iteration",
-                "datatype": "integer",
-                "is_nullable": False,
-                "is_primary_key": True,
             }, self.named_filter_objects))
         return CompoundIndicator(
             self.display_name,

@@ -71,6 +71,11 @@ class RawIndicatorSpec(PropertyReferenceIndicatorSpecBase):
 
 class RepeatIterationIndicatorSpec(RawIndicatorSpec):
     type = TypeProperty('repeat_iteration')
+    datatype = DataTypeProperty(default='integer')
+    is_nullable = BooleanProperty(default=False)
+    is_primary_key = BooleanProperty(default=True)
+    column_id = StringProperty(default="repeat_iteration")
+    display_name = StringProperty(default="base document iteration")
 
     @property
     def getter(self):
