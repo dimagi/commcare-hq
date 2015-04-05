@@ -10,7 +10,6 @@ from corehq.apps.userreports.indicators.specs import (
     BooleanIndicatorSpec,
     IndicatorSpecBase,
     ExpressionIndicatorSpec,
-    RepeatIterationIndicatorSpec
 )
 
 
@@ -87,17 +86,15 @@ def _build_choice_list_indicator(spec, context):
 
 
 def _build_repeat_iteration_indicator(spec, context):
-    wrapped = RepeatIterationIndicatorSpec.wrap(spec)
-    column = Column(
-        id=wrapped.column_id,
-        datatype=wrapped.datatype,
-        is_nullable=wrapped.is_nullable,
-        is_primary_key=wrapped.is_primary_key,
-    )
     return RawIndicator(
-        wrapped.display_name,
-        column,
-        getter=wrapped.getter
+        "base document iteration",
+        Column(
+            id="repeat_iteration",
+            datatype="integer",
+            is_nullable=False,
+            is_primary_key=True,
+        ),
+        getter=lambda doc, ctx: ctx.iteration
     )
 
 
