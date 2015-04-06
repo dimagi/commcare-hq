@@ -1543,7 +1543,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
             if column.format in ('enum', 'enum-image'):
                 for item in column.enum:
                     key = item.key
-                    if not re.match('^([\w_-]*)$', key):
+                    if not re.match('^([\w_ -]*)$', key):
                         yield {
                             'type': 'invalid id key',
                             'key': key,
