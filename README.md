@@ -45,6 +45,7 @@ individual project sites when necessary.
 + Python 2.6 or 2.7 (use 32 bit if you're on Windows see `Alternate steps for Windows` section below)
 + pip
 + CouchDB >= 1.0 (1.2 recommended) ([installation instructions][couchdb])
+  - Note that when installing erlang, you do NOT need to check out an older version of erlang.rb
 + PostgreSQL >= 8.4 - (install from OS package manager or [here][postgres])
 + [elasticsearch][elasticsearch] (including Java 7).
   - The version we run is `Version: 0.90.5, JVM: 1.7.0_05`.
