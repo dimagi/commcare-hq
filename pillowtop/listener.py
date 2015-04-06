@@ -1,6 +1,7 @@
 from functools import wraps
 import logging
 from couchdbkit.exceptions import ResourceNotFound
+from elasticsearch import Elasticsearch
 from psycopg2._psycopg import InterfaceError
 import pytz
 from datetime import datetime
@@ -582,6 +583,16 @@ class AliasedElasticPillow(BulkPillow):
     def get_es(self):
         return rawes.Elastic('%s:%s' % (self.es_host, self.es_port), timeout=self.es_timeout)
 
+    @memoized
+    def get_es_new(self):
+        return Elasticsearch(
+            [{
+                'host': self.es_host,
+                'port': self.es_port,
+            }],
+            timeout=self.es_timeout,
+        )
+
     def delete_index(self):
         """
         Coarse way of deleting an index - a todo is to set aliases where need be
@@ -615,16 +626,6 @@ class AliasedElasticPillow(BulkPillow):
                 )
             return None
         return super(AliasedElasticPillow, self).change_trigger(changes_dict)
-
-    def doc_exists(self, doc_id):
-        """
-        Using the HEAD 404/200 result API for document existence
-        Returns True if 200(exists)
-        """
-        es = self.get_es()
-        doc_path = self.get_doc_path(doc_id)
-        head_result = es.head(doc_path)
-        return head_result
 
     def send_robust(self, path, data=None, retries=MAX_RETRIES,
             except_on_failure=False, update=False):
@@ -781,13 +782,18 @@ class AliasedElasticPillow(BulkPillow):
                 'id': doc_dict['_id']
             })
 
-    def doc_exists(self, doc_dict):
+    def doc_exists(self, doc_id_or_dict):
         """
-        Overridden based upon the doc type
+        Check if a document exists, by ID or the whole document.
         """
-        es = self.get_es()
-        head_result = es.head(self.get_doc_path_typed(doc_dict))
-        return head_result
+        if isinstance(doc_id_or_dict, basestring):
+            doc_id = doc_id_or_dict
+            doc_type = self.es_type
+        else:
+            assert isinstance(doc_id_or_dict, dict)
+            doc_id = doc_id_or_dict['_id']
+            doc_type = self.get_type_string(doc_id_or_dict)
+        return self.get_es_new().exists(self.es_index, doc_id, doc_type)
 
     @memoized
     def get_name(self):
