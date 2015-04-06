@@ -44,6 +44,7 @@ from corehq.apps.sms.forms import (ForwardingRuleForm, BackendMapForm,
     DEFAULT, CUSTOM)
 from corehq.apps.sms.util import get_available_backends, get_contact
 from corehq.apps.sms.messages import _MESSAGES
+from corehq.apps.smsbillables.utils import country_name_from_isd_code_or_empty as country_name_from_code
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
@@ -951,17 +952,17 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
         is_editable = not backend.is_global and backend.domain == self.domain
         if len(backend.supported_countries) > 0:
             if backend.supported_countries[0] == '*':
-                supported_countries = _('Multiple%s') % '*'
+                supported_countrie_names = _('Multiple%s') % '*'
             else:
-                supported_countries = ', '.join(
-                    [_(c) for c in backend.supported_countries])
+                supported_countrie_names = ', '.join(
+                    [_(country_name_from_code(int(c))) for c in backend.supported_countries])
         else:
-            supported_countries = ''
+            supported_countrie_names = ''
         return {
             'id': backend._id,
             'name': backend.name,
             'description': backend.description,
-            'supported_countries': supported_countries,
+            'supported_countries': supported_countrie_names,
             'editUrl': reverse(
                 EditDomainGatewayView.urlname,
                 args=[self.domain, backend.__class__.__name__, backend._id]
