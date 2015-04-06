@@ -67,6 +67,7 @@ def configurable_reports_home(request, domain):
 
 
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
+@login_and_domain_required
 def edit_report(request, domain, report_id):
     config = get_document_or_404(ReportConfiguration, domain, report_id)
     return _edit_report_shared(request, domain, config)
