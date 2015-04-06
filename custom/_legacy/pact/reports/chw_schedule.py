@@ -48,7 +48,7 @@ class CHWPatientSchedule(object):
         cached_schedules = None
 
         if override_date == None:
-            nowdate = datetime.now()
+            nowdate = datetime.utcnow()
         else:
             nowdate = override_date
 
@@ -137,7 +137,7 @@ def get_schedule_tally(username, total_interval, override_date=None):
     where visit = XFormInstance
     """
     if override_date is None:
-        nowdate = datetime.now()
+        nowdate = datetime.utcnow()
         chw_schedule = CHWPatientSchedule.get_schedule(username)
     else:
         nowdate = override_date

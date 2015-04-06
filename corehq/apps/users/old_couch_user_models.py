@@ -314,7 +314,7 @@ class CouchUser(Document, UnicodeMixIn):
     def unlink_commcare_account(self, domain, commcare_user_index, **kwargs):
         commcare_user_index = int(commcare_user_index)
         c = CouchUser()
-        c.created_on = datetime.now()
+        c.created_on = datetime.utcnow()
         original = self.commcare_accounts[commcare_user_index]
         c.commcare_accounts.append(original)
         c.status = 'unlinked from %s' % self._id

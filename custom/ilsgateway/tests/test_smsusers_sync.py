@@ -43,8 +43,8 @@ class SMSUsersSyncTest(TestCase):
     def test_smsusers_migration(self):
         checkpoint = MigrationCheckpoint(
             domain=TEST_DOMAIN,
-            start_date=datetime.now(),
-            date=datetime.now(),
+            start_date=datetime.utcnow(),
+            date=datetime.utcnow(),
             api='product',
             limit=100,
             offset=0

@@ -400,7 +400,7 @@ class ReportingRatesReport(MultiReport):
 
     @property
     def default_datespan(self):
-        last_period_st, last_period_end = calculate_last_period(datetime.now())
+        last_period_st, last_period_end = calculate_last_period(datetime.utcnow())
         datespan = DateSpan(startdate=last_period_st, enddate=last_period_end)
         datespan.is_default = True
         return datespan

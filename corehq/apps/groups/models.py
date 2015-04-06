@@ -30,7 +30,7 @@ class Group(UndoableDocument):
     metadata = DictProperty()
 
     def save(self, *args, **kwargs):
-        self.last_modified = datetime.now()
+        self.last_modified = datetime.utcnow()
         return super(Group, self).save(*args, **kwargs)
 
     def add_user(self, couch_user_id, save=True):

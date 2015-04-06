@@ -464,7 +464,7 @@ def noneulized_users(request, template="hqadmin/noneulized_users.html"):
 
     days = request.GET.get("days", None)
     days = int(days) if days else 60
-    days_ago = datetime.now() - timedelta(days=days)
+    days_ago = datetime.utcnow() - timedelta(days=days)
 
     users = WebUser.view("eula_report/noneulized_users",
         reduce=False,

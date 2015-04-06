@@ -1543,7 +1543,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
             if column.format in ('enum', 'enum-image'):
                 for item in column.enum:
                     key = item.key
-                    if not re.match('^([\w_-]*)$', key):
+                    if not re.match('^([\w_ -]*)$', key):
                         yield {
                             'type': 'invalid id key',
                             'key': key,
@@ -1568,11 +1568,6 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
 
     def validate_for_build(self):
         errors = []
-        if not self.forms:
-            errors.append({
-                'type': 'no forms',
-                'module': self.get_module_info(),
-            })
         if self.requires_case_details():
             errors.extend(self.get_case_errors(
                 needs_case_type=True,
@@ -1732,6 +1727,11 @@ class Module(ModuleBase):
 
     def validate_for_build(self):
         errors = super(Module, self).validate_for_build()
+        if not self.forms and not self.case_list.show:
+            errors.append({
+                'type': 'no forms or case list',
+                'module': self.get_module_info(),
+            })
         for sort_element in self.detail_sort_elements:
             try:
                 validate_detail_screen_field(sort_element.field)
@@ -2255,7 +2255,11 @@ class AdvancedModule(ModuleBase):
 
     def validate_for_build(self):
         errors = super(AdvancedModule, self).validate_for_build()
-
+        if not self.forms and not self.case_list.show:
+            errors.append({
+                'type': 'no forms or case list',
+                'module': self.get_module_info(),
+            })
         if self.case_list_form.form_id:
             forms = self.forms
 
@@ -2608,6 +2612,15 @@ class CareplanModule(ModuleBase):
             errors = self.validate_detail_columns(columns)
             for error in errors:
                 yield error
+
+    def validate_for_build(self):
+        errors = super(CareplanModule, self).validate_for_build()
+        if not self.forms:
+            errors.append({
+                'type': 'no forms',
+                'module': self.get_module_info(),
+            })
+        return errors
 
 
 class VersionedDoc(LazyAttachmentDoc):
@@ -3338,7 +3351,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     commtrack_enabled = BooleanProperty(default=False)
     commtrack_requisition_mode = StringProperty(choices=CT_REQUISITION_MODES)
     auto_gps_capture = BooleanProperty(default=False)
-    logo_refs = DictProperty()
 
     @classmethod
     def wrap(cls, data):

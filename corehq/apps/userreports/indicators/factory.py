@@ -4,8 +4,13 @@ from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.filters import SinglePropertyValueFilter, CustomFilter
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.indicators import BooleanIndicator, CompoundIndicator, RawIndicator, Column
-from corehq.apps.userreports.indicators.specs import (RawIndicatorSpec, ChoiceListIndicatorSpec,
-    BooleanIndicatorSpec, IndicatorSpecBase, ExpressionIndicatorSpec)
+from corehq.apps.userreports.indicators.specs import (
+    RawIndicatorSpec,
+    ChoiceListIndicatorSpec,
+    BooleanIndicatorSpec,
+    IndicatorSpecBase,
+    ExpressionIndicatorSpec,
+)
 
 
 def _build_count_indicator(spec, context):
@@ -80,6 +85,19 @@ def _build_choice_list_indicator(spec, context):
     return CompoundIndicator(base_display_name, choice_indicators)
 
 
+def _build_repeat_iteration_indicator(spec, context):
+    return RawIndicator(
+        "base document iteration",
+        Column(
+            id="repeat_iteration",
+            datatype="integer",
+            is_nullable=False,
+            is_primary_key=True,
+        ),
+        getter=lambda doc, ctx: ctx.iteration
+    )
+
+
 class IndicatorFactory(object):
     constructor_map = {
         'boolean': _build_boolean_indicator,
@@ -87,6 +105,7 @@ class IndicatorFactory(object):
         'count': _build_count_indicator,
         'expression': _build_expression_indicator,
         'raw': _build_raw_indicator,
+        'repeat_iteration': _build_repeat_iteration_indicator,
     }
 
     @classmethod

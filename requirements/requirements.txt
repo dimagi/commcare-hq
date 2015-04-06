@@ -19,6 +19,7 @@ django-kombu==0.9.1
 django-rosetta==0.7.1
 django-tastypie==0.12.1
 djtables==0.1.1
+elasticsearch==0.4.4
 #egenix-mx-base==3.2.8
 eulxml==0.18.0
 feedparser==5.1.3

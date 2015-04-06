@@ -25,7 +25,7 @@ class EWSScriptTest(TestScript):
     def _create_stock_state(self, product, consumption):
         xform = XFormInstance.get('test-xform')
         loc = Location.by_site_code(TEST_DOMAIN, 'garms')
-        now = datetime.datetime.now()
+        now = datetime.datetime.utcnow()
         report = StockReport(
             form_id=xform._id,
             date=(now - datetime.timedelta(days=10)).replace(second=0, microsecond=0),

@@ -153,6 +153,7 @@ class DomainInvoiceFactory(object):
                     product_rate.monthly_fee,
                     subscription=subscription,
                     product_type=product_rate.product.product_type,
+                    permit_inactive=True,
                 )
 
         days_until_due = DEFAULT_DAYS_UNTIL_DUE

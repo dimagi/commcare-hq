@@ -204,7 +204,7 @@ class HBNCMotherReport(BaseHNBCReport):
 
     @property
     def case_filter(self):
-        now = datetime.datetime.now()
+        now = datetime.datetime.utcnow()
         fromdate = now - timedelta(days=42)
         filters = BaseHNBCReport.base_filters(self)
         filters.append({'term': {'pp_case_filter.#value': "1"}})

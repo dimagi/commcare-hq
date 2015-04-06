@@ -372,6 +372,7 @@ datatype        | The datatype of the indicator. Current valid choices are: "dat
 is_nullable     | Whether the database column should allow null values.
 is_primary_key  | Whether the database column should be (part of?) the primary key. (TODO: this needs to be confirmed)
 expression      | Any expression.
+transform       | (optional) transform to be applied to the result of the expression. (see "Report Columns > Transforms" section below)
 
 Here is a sample expression indicator that just saves the "age" property to an integer column in the database:
 

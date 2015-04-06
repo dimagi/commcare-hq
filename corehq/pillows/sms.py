@@ -16,7 +16,6 @@ class SMSPillow(AliasedElasticPillow):
     es_host = settings.ELASTICSEARCH_HOST
     es_port = settings.ELASTICSEARCH_PORT
     es_timeout = 60
-    es_index_prefix = "smslogs"
     es_alias = "smslogs"
     es_type = "sms"
     es_meta = {

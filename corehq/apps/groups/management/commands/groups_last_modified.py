@@ -19,7 +19,7 @@ class Command(BaseCommand):
         for group in iter_docs(Group.get_db(), relevant_ids):
             if 'last_modified' not in group or not group['last_modified']:
                 print group['_id']
-                group['last_modified'] = datetime.now().isoformat()
+                group['last_modified'] = datetime.utcnow().isoformat()
                 to_save.append(group)
 
                 if len(to_save) > 500:

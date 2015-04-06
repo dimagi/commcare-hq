@@ -25,7 +25,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         start = parser.parse(options['startdate'])
         enddate = options['enddate']
-        end = parser.parse(enddate) if enddate else datetime.now()
+        end = parser.parse(enddate) if enddate else datetime.utcnow()
 
         ds = HqDeploy.get_list('production', start, end)
         ids = [d['id'] for d in ds]

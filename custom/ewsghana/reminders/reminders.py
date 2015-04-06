@@ -135,7 +135,7 @@ def third_soh_to_super():
 
 
 def third_soh_process_users_and_facilities(users, facilities, test=False):
-    date = datetime.datetime.now() - datetime.timedelta(days=DAYS_UNTIL_LATE)
+    date = datetime.datetime.utcnow() - datetime.timedelta(days=DAYS_UNTIL_LATE)
     for facility in facilities:
         if not facility.supply_point_id:
             continue
@@ -211,7 +211,7 @@ def stockout_process_user(user, test=False):
                         STOCKOUT_REPORT % {
                             'name': user.name,
                             'facility': supply_point.name,
-                            'date': datetime.datetime.now().strftime('%b %d'),
+                            'date': datetime.datetime.utcnow().strftime('%b %d'),
                             'products': ", ".join(products)
                         }
                     )
@@ -221,7 +221,7 @@ def stockout_process_user(user, test=False):
                         STOCKOUT_REPORT % {
                             'name': user.name,
                             'facility': supply_point.name,
-                            'date': datetime.datetime.now().strftime('%b %d'),
+                            'date': datetime.datetime.utcnow().strftime('%b %d'),
                             'products': ", ".join(products)
                         }
                     )
@@ -255,7 +255,7 @@ def reminder_to_visit_website():
 
 
 def visit_website_process_user(user, test=False):
-    date = datetime.datetime.now() - datetime.timedelta(weeks=13)
+    date = datetime.datetime.utcnow() - datetime.timedelta(weeks=13)
     if user.last_login < date and user.get_verified_number():
         if not test:
             send_sms_to_verified_number(user.get_verified_number(), WEB_REMINDER % {'name': user.name})

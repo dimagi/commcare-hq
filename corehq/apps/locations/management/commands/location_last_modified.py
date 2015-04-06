@@ -23,7 +23,7 @@ class Command(BaseCommand):
                 not location.get('last_modified', False) and
                 'psi' not in location.get('domain', '')
             ):
-                location['last_modified'] = datetime.now().isoformat()
+                location['last_modified'] = datetime.utcnow().isoformat()
                 to_save.append(location)
 
                 if len(to_save) > 500:

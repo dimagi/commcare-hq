@@ -355,7 +355,7 @@ class HSPHCaseDisplay(CaseDisplay):
             else:
                 return UNKNOWN
         else:
-            today = datetime.datetime.now()
+            today = datetime.datetime.utcnow()
             if today <= self._date_admission + datetime.timedelta(days=21):
                 return CALL_CENTER
             else:

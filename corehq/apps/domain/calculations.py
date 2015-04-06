@@ -41,7 +41,7 @@ def active_mobile_users(domain, *args):
     Returns the number of mobile users who have submitted a form or SMS in the
     last 30 days
     """
-    now = datetime.now()
+    now = datetime.utcnow()
     then = (now - timedelta(days=30))
 
     user_ids = get_mobile_users(domain)
@@ -80,7 +80,7 @@ def cases_in_last(domain, days):
     """
     Returns the number of open cases that have been modified in the last <days> days
     """
-    now = datetime.now()
+    now = datetime.utcnow()
     then = (now - timedelta(days=int(days))).strftime(DATE_FORMAT)
     now = now.strftime(DATE_FORMAT)
 
@@ -96,7 +96,7 @@ def inactive_cases_in_last(domain, days):
     """
     Returns the number of open cases that have been modified in the last <days> days
     """
-    now = datetime.now()
+    now = datetime.utcnow()
     then = (now - timedelta(days=int(days))).strftime(DATE_FORMAT)
     now = now.strftime(DATE_FORMAT)
 
@@ -137,7 +137,7 @@ def sms_in_last_bool(domain, days=None):
 
 
 def active(domain, *args):
-    now = datetime.now()
+    now = datetime.utcnow()
     then = (now - timedelta(days=30)).strftime(DATE_FORMAT)
     now = now.strftime(DATE_FORMAT)
 

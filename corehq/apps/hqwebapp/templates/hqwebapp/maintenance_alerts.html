@@ -1,0 +1,34 @@
+{% extends 'hqwebapp/base.html' %}
+{% load hq_shared_tags %}
+{% block js-inline %}
+<script>
+$(function () {
+    var alerts = {{ alerts|JSON }};
+    ko.applyBindings({
+        alerts: alerts,
+        save: function (alert) {
+            var self = this;
+            $.post({
+                url: '',
+                data: alert
+            });
+        }
+    }, $('#main_container').get(0));
+});
+</script>
+{% endblock %}
+{% block content %}
+<div id="main_container">
+    <input type="text"/>
+    <table class="table">
+        <tr>
+            <th>Created</th>
+            <th>Message</th>
+        </tr>
+        <tr data-bind="foreach: alerts">
+            <td data-bind="text: created"></td>
+            <td class="alert alert-warning" data-bind="html: html"></td>
+        </tr>
+    </table>
+</div>
+{% endblock %}

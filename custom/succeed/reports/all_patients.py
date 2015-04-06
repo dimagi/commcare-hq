@@ -20,7 +20,7 @@ from custom.succeed.utils import is_succeed_admin, SUCCEED_CM_APPNAME, has_any_r
 
 def target_date(visit_name, visit_days, randomization_date):
         if visit_name != 'last':
-            tg_date = ((randomization_date + timedelta(days=int(visit_days))) - datetime.now().date()).days
+            tg_date = ((randomization_date + timedelta(days=int(visit_days))) - datetime.utcnow().date()).days
             if tg_date >= 7:
                 output_html = (randomization_date + timedelta(days=int(visit_days))).strftime("%m/%d/%Y")
             elif 7 > tg_date > 0:
