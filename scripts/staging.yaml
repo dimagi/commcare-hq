@@ -43,6 +43,7 @@
 trunk: master
 name: autostaging
 branches:
+  - rm-djangocouch  # danny 4/6
   - test-global-request  # danny 4/1
   - utcNOW  # danny 4/2
   - subscription-no-contact-info # bb 8/4
