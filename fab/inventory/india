@@ -52,3 +52,6 @@ _indiacloud5
 
 [touchforms:children]
 _indiacloud5
+
+[shared_dir_host:children]
+_indiacloud3
