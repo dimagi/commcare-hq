@@ -14,7 +14,6 @@ class DomainPillow(HQPillow):
     """
     document_class = Domain
     couch_filter = "domain/domains_inclusive"
-    es_index_prefix = "hqdomains"
     es_alias = "hqdomains"
     es_type = "hqdomain"
     es_index = DOMAIN_INDEX
