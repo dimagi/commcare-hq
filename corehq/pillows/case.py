@@ -21,7 +21,6 @@ class CasePillow(HQPillow):
     """
     document_class = CommCareCase
     couch_filter = "case/casedocs"
-    es_index_prefix = "hqcases"
     es_alias = "hqcases"
     es_type = "case"
 

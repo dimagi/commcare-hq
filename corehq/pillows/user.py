@@ -20,7 +20,6 @@ class UserPillow(AliasedElasticPillow):
     es_host = settings.ELASTICSEARCH_HOST
     es_port = settings.ELASTICSEARCH_PORT
     es_timeout = 60
-    es_index_prefix = "hqusers"
     es_alias = "hqusers"
     es_type = "user"
     es_meta = {

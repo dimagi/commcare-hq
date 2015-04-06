@@ -10,7 +10,6 @@ class ReportCasePillow(CasePillow):
     Simple/Common Case properties Indexer
     an extension to CasePillow that provides for indexing of custom case properties
     """
-    es_index_prefix = "report_cases"
     es_alias = "report_cases"
     es_type = "report_case"
     es_index = REPORT_CASE_INDEX
