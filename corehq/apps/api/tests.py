@@ -53,6 +53,7 @@ class FakeXFormES(object):
             }
         }
 
+
 class APIResourceTest(TestCase):
     """
     Base class for shared API tests. Sets up a domain and user and provides
@@ -60,23 +61,25 @@ class APIResourceTest(TestCase):
     """
     resource = None # must be set by subclasses
     api_name = 'v0.4' # can be overridden by subclasses
+    maxDiff = None
 
-    def setUp(self):
-        self.maxDiff = None
-        self.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
-        self.list_endpoint = reverse('api_dispatch_list',
-                kwargs=dict(domain=self.domain.name,
-                            api_name=self.api_name,
-                            resource_name=self.resource.Meta.resource_name))
-        self.username = 'rudolph@qwerty.commcarehq.org'
-        self.password = '***'
-        self.user = WebUser.create(self.domain.name, self.username, self.password)
-        self.user.set_role(self.domain.name, 'admin')
-        self.user.save()
+    @classmethod
+    def setUpClass(cls):
+        cls.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
+        cls.list_endpoint = reverse('api_dispatch_list',
+                kwargs=dict(domain=cls.domain.name,
+                            api_name=cls.api_name,
+                            resource_name=cls.resource.Meta.resource_name))
+        cls.username = 'rudolph@qwerty.commcarehq.org'
+        cls.password = '***'
+        cls.user = WebUser.create(cls.domain.name, cls.username, cls.password)
+        cls.user.set_role(cls.domain.name, 'admin')
+        cls.user.save()
 
-    def tearDown(self):
-        self.user.delete()
-        self.domain.delete()
+    @classmethod
+    def tearDownClass(cls):
+        cls.user.delete()
+        cls.domain.delete()
 
     def single_endpoint(self, id):
         return reverse('api_dispatch_detail', kwargs=dict(domain=self.domain.name,
@@ -347,6 +350,8 @@ class TestCommCareUserResource(APIResourceTest):
 
         api_user = json.loads(response.content)
         self.assertEqual(api_user['id'], backend_id)
+
+        commcare_user.delete()
 
     def test_create(self):
         self.client.login(username=self.username, password=self.password)
@@ -1071,6 +1076,7 @@ class TestGroupResource(APIResourceTest):
 
         api_groups = json.loads(response.content)
         self.assertEqual(api_groups['id'], backend_id)
+        group.delete()
 
     def test_create(self):
         self.client.login(username=self.username, password=self.password)
@@ -1144,24 +1150,27 @@ class TestBulkUserAPI(APIResourceTest):
     resource = v0_5.BulkUserResource
     api_name = 'v0.5'
 
-    def setUp(self):
-        self.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
-        self.username = 'rudolph@qwerty.commcarehq.org'
-        self.password = '***'
-        self.admin_user = WebUser.create(self.domain.name, self.username, self.password)
-        self.admin_user.set_role(self.domain.name, 'admin')
-        self.admin_user.save()
+    @classmethod
+    def setUpClass(cls):
+        cls.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
+        cls.username = 'rudolph@qwerty.commcarehq.org'
+        cls.password = '***'
+        cls.admin_user = WebUser.create(cls.domain.name, cls.username, cls.password)
+        cls.admin_user.set_role(cls.domain.name, 'admin')
+        cls.admin_user.save()
 
-        self.fake_user_es = FakeUserES()
-        v0_5.MOCK_BULK_USER_ES = self.mock_es_wrapper
-        self.make_users()
+        cls.fake_user_es = FakeUserES()
+        v0_5.MOCK_BULK_USER_ES = cls.mock_es_wrapper
+        cls.make_users()
 
-    def tearDown(self):
-        self.admin_user.delete()
-        self.domain.delete()
+    @classmethod
+    def tearDownClass(cls):
+        cls.admin_user.delete()
+        cls.domain.delete()
         v0_5.MOCK_BULK_USER_ES = None
 
-    def make_users(self):
+    @classmethod
+    def make_users(cls):
         users = [
             ('Robb', 'Stark'),
             ('Jon', 'Snow'),
@@ -1176,7 +1185,7 @@ class TestBulkUserAPI(APIResourceTest):
         for first, last in users:
             username = '_'.join([first.lower(), last.lower()])
             email = username + '@qwerty.commcarehq.org'
-            self.fake_user_es.add_doc({
+            cls.fake_user_es.add_doc({
                 'id': 'lskdjflskjflaj',
                 'email': email,
                 'username': username,
@@ -1185,8 +1194,9 @@ class TestBulkUserAPI(APIResourceTest):
                 'phone_numbers': ['9042411080'],
             })
 
-    def mock_es_wrapper(self, *args, **kwargs):
-        return self.fake_user_es.make_query(**kwargs)
+    @classmethod
+    def mock_es_wrapper(cls, *args, **kwargs):
+        return cls.fake_user_es.make_query(**kwargs)
 
     @property
     def list_endpoint(self):
