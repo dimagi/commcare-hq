@@ -7,6 +7,11 @@ import datetime
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator, classonlymethod
 from django.views.generic import View
+from corehq.pillows.mappings.case_mapping import CASE_INDEX
+from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
+from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
+from corehq.pillows.mappings.user_mapping import USER_INDEX
+from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 
 from no_exceptions.exceptions import Http400
 from dimagi.utils.logging import notify_exception
@@ -21,11 +26,14 @@ from no_exceptions.exceptions import Http400
 
 DEFAULT_SIZE = 10
 
+
 class ESUserError(Http400):
     pass
 
+
 class DateTimeError(ValueError):
     pass
+
 
 class ESView(View):
     """
@@ -214,15 +222,15 @@ class CaseES(ESView):
     Expressive CaseES interface. Yes, this is redundant with pieces of the v0_1.py CaseAPI - todo to merge these applications
     Which this should be the final say on ES access for Casedocs
     """
-    index = "hqcases"
+    index = CASE_INDEX
 
 
 class ReportCaseES(ESView):
-    index = 'report_cases'
+    index = REPORT_CASE_INDEX
 
 
 class XFormES(ESView):
-    index = "xforms"
+    index = XFORM_INDEX
 
     def base_query(self, terms=None, doc_type='xforminstance', fields=None, start=0, size=DEFAULT_SIZE):
         """
@@ -275,8 +283,7 @@ class UserES(ESView):
     """
     self.run_query accepts a structured elasticsearch query
     """
-
-    index = "hqusers"
+    index = USER_INDEX
 
     def validate_query(self, query):
         if 'password' in query['fields']:
@@ -372,10 +379,8 @@ def get_report_script_field(field_path, is_known=False):
     return ret
 
 
-
 class ReportXFormES(XFormES):
-    index = 'report_xforms'
-
+    index = REPORT_XFORM_INDEX
 
     def base_query(self, terms=None, doc_type='xforminstance', fields=None, start=0, size=DEFAULT_SIZE):
         """
