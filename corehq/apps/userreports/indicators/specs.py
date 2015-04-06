@@ -4,6 +4,7 @@ from corehq.apps.userreports.expressions.getters import TransformedGetter, gette
     transform_from_datatype
 from corehq.apps.userreports.operators import IN_MULTISELECT, EQUAL
 from corehq.apps.userreports.specs import TypeProperty
+from corehq.apps.userreports.transforms.factory import TransformFactory
 
 
 DATA_TYPE_CHOICES = ['date', 'datetime', 'string', 'integer', 'decimal']
@@ -75,12 +76,18 @@ class ExpressionIndicatorSpec(IndicatorSpecBase):
     is_nullable = BooleanProperty(default=True)
     is_primary_key = BooleanProperty(default=False)
     expression = DictProperty(required=True)
+    transform = DictProperty(required=False)
 
     def parsed_expression(self, context):
         from corehq.apps.userreports.expressions.factory import ExpressionFactory
-        transform = transform_from_datatype(self.datatype)
         expression = ExpressionFactory.from_spec(self.expression, context)
-        return TransformedGetter(expression, transform)
+        datatype_transform = transform_from_datatype(self.datatype)
+        if self.transform:
+            generic_transform = TransformFactory.get_transform(self.transform).get_transform_function()
+            inner_getter = TransformedGetter(expression, generic_transform)
+        else:
+            inner_getter = expression
+        return TransformedGetter(inner_getter, datatype_transform)
 
 
 class ChoiceListIndicatorSpec(PropertyReferenceIndicatorSpecBase):
