@@ -955,7 +955,7 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
                 supported_countrie_names = _('Multiple%s') % '*'
             else:
                 supported_countrie_names = ', '.join(
-                    [_(c) for country_name_from_code(int(c)) in backend.supported_countries])
+                    [_(country_name_from_code(int(c))) for c in backend.supported_countries])
         else:
             supported_countrie_names = ''
         return {
