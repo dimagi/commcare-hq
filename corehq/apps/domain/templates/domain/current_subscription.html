@@ -15,7 +15,7 @@
 
         var paymentHandler = new PaymentMethodHandler(
             {{ payment_error_messages|JSON }},
-            "{% trans "Buy Credits" %}"
+            { submitBtnText: "{% trans "Buy Credits" %}" }
         );
         {% if plan.cards %}
             paymentHandler.loadCards({{ plan.cards|JSON }});

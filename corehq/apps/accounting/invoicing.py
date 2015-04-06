@@ -10,9 +10,9 @@ from corehq.apps.accounting.utils import ensure_domain_instance
 from dimagi.utils.decorators.memoized import memoized
 
 from corehq import Domain
-from corehq.apps.accounting.exceptions import LineItemError, InvoiceError, InvoiceEmailThrottledError, BillingContactInfoError
+from corehq.apps.accounting.exceptions import LineItemError, InvoiceError, InvoiceEmailThrottledError, BillingContactInfoError, BulkInvoiceNoInvoicesError
 from corehq.apps.accounting.models import (
-    LineItem, FeatureType, Invoice, DefaultProductPlan, Subscriber,
+    LineItem, FeatureType, BulkInvoice, Invoice, DefaultProductPlan, Subscriber,
     Subscription, BillingAccount, SubscriptionAdjustment,
     SubscriptionAdjustmentMethod, BillingRecord,
     BillingContactInfo, SoftwarePlanEdition, CreditLine,
@@ -217,6 +217,41 @@ class DomainInvoiceFactory(object):
             )
             feature_factory = feature_factory_class(subscription, feature_rate, invoice)
             feature_factory.create()
+
+
+class DomainBulkInvoiceFactory(object):
+
+    def __init__(self, domain, contact_emails=None):
+        self.logged_throttle_error = False
+        self.contact_emails = contact_emails
+        self.domain = ensure_domain_instance(domain)
+        self.logged_throttle_error = False
+        if self.domain is None:
+            raise InvoiceError("Domain '{}' is not a valid domain on HQ!".format(self.domain))
+
+    def create_bulk_invoice(self):
+        invoices = Invoice.objects.filter(
+            subscription__subscriber__domain=self.domain,
+            is_hidden=False,
+            date_paid__exact=None,
+            bulk_invoice_id__isnull=True,
+        )
+
+        if not invoices:
+            raise BulkInvoiceNoInvoicesError("Cannot create bulk invoice with no invoices")
+        bulk_invoice = BulkInvoice.objects.create()
+        bulk_invoice.invoice_set = invoices
+
+        record = BillingRecord.generate_record(bulk_invoice)
+
+        try:
+            record.send_email(contact_emails=self.contact_emails)
+        except InvoiceEmailThrottledError as e:
+            if not self.logged_throttle_error:
+                logger.error("[BILLING] %s" % e)
+                self.logged_throttle_error = True
+
+        return bulk_invoice
 
 
 class LineItemFactory(object):

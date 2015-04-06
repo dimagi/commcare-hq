@@ -677,7 +677,7 @@ class InvoiceSummaryView(AccountingSectionView):
     @property
     @memoized
     def billing_records(self):
-        return self.invoice.billingrecord_set.all()
+        return self.invoice.billing_records.all()
 
     @property
     @memoized

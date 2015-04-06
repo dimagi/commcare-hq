@@ -1,3 +1,5 @@
+from itertools import chain
+
 from corehq.apps.accounting.dispatcher import (
     AccountingAdminInterfaceDispatcher
 )
@@ -492,29 +494,20 @@ class InvoiceInterface(GenericTabularReport):
         )
         rows = []
         for invoice in self.invoices:
-            new_this_month = (invoice.date_created.month == invoice.subscription.account.date_created.month
-                              and invoice.date_created.year == invoice.subscription.account.date_created.year)
+            account = invoice.get_account()
+            new_this_month = (invoice.date_created.month == account.date_created.month
+                              and invoice.date_created.year == account.date_created.year)
             try:
                 contact_info = BillingContactInfo.objects.get(
-                    account=invoice.subscription.account,
+                    account=account,
                 )
             except BillingContactInfo.DoesNotExist:
                 contact_info = BillingContactInfo()
 
-            columns = [
-                invoice.invoice_number,
-                format_datatables_data(
-                    mark_safe(
-                        '<a href="%(account_url)s">%(name)s</a>' % {
-                            'account_url': reverse(
-                                ManageBillingAccountView.urlname,
-                                args=[invoice.subscription.account.id]),
-                            'name': invoice.subscription.account.name,
-                        }
-                    ),
-                    invoice.subscription.account.name
-                ),
-                format_datatables_data(
+            if invoice.is_bulk:
+                plan = 'N/A'
+            else:
+                plan = format_datatables_data(
                     mark_safe(
                         '<a href="%(sub_url)s">%(name)s v%(version)d</a>' % {
                             'name': invoice.subscription.plan_version.plan.name,
@@ -525,8 +518,23 @@ class InvoiceInterface(GenericTabularReport):
                             }
                     ),
                     invoice.subscription.plan_version.plan.name
+                )
+
+            columns = [
+                invoice.invoice_number,
+                format_datatables_data(
+                    mark_safe(
+                        '<a href="%(account_url)s">%(name)s</a>' % {
+                            'account_url': reverse(
+                                ManageBillingAccountView.urlname,
+                                args=[account.id]),
+                            'name': account.name,
+                        }
+                    ),
+                    account.name
                 ),
-                invoice.subscription.subscriber.domain,
+                plan,
+                invoice.get_project_name(),
                 "YES" if new_this_month else "no",
                 contact_info.company_name,
                 contact_info.emails,
@@ -539,23 +547,21 @@ class InvoiceInterface(GenericTabularReport):
                 contact_info.state_province_region,
                 contact_info.postal_code,
                 contact_info.country,
-                invoice.subscription.account.salesforce_account_id or "--",
-                invoice.subscription.salesforce_contract_id or "--",
+                account.salesforce_account_id or "--",
+                "--",  # invoice.subscription.salesforce_contract_id or "--",
                 invoice.date_start.strftime("%d %B %Y"),
                 invoice.date_end.strftime("%d %B %Y"),
                 invoice.date_due.strftime("%d %B %Y"),
             ]
 
             plan_subtotal, plan_deduction = get_subtotal_and_deduction(
-                invoice.lineitem_set.get_products().all()
+                invoice.get_products()
             )
             sms_subtotal, sms_deduction = get_subtotal_and_deduction(
-                invoice.lineitem_set.get_feature_by_type(FeatureType.SMS).all()
+                invoice.get_feature_by_type(FeatureType.SMS)
             )
             user_subtotal, user_deduction = get_subtotal_and_deduction(
-                invoice.lineitem_set.get_feature_by_type(
-                    FeatureType.USER
-                ).all()
+                invoice.get_feature_by_type(FeatureType.USER)
             )
 
             columns.extend([
@@ -574,19 +580,25 @@ class InvoiceInterface(GenericTabularReport):
 
             if not self.is_rendered_as_email:
                 # TODO - Create helper function for action button HTML
-                columns.extend([
-                    mark_safe(
-                        '<a data-toggle="modal"'
-                        '   data-target="#adjustBalanceModal-%(invoice_id)d"'
-                        '   href="#adjustBalanceModal-%(invoice_id)d"'
-                        '   class="btn">Adjust Balance</a>' % {
-                            'invoice_id': invoice.id
-                        }),
-                    mark_safe(
-                        '<a href="%s" class="btn">Go to Invoice</a>'
-                        % reverse(InvoiceSummaryView.urlname, args=(invoice.id,))
-                    )
-                ])
+                if not invoice.is_bulk:
+                    columns.extend([
+                        mark_safe(
+                            '<a data-toggle="modal"'
+                            '   data-target="#adjustBalanceModal-%(invoice_id)d"'
+                            '   href="#adjustBalanceModal-%(invoice_id)d"'
+                            '   class="btn">Adjust Balance</a>' % {
+                                'invoice_id': invoice.id
+                            }),
+                        mark_safe(
+                            '<a href="%s" class="btn">Go to Invoice</a>'
+                            % reverse(InvoiceSummaryView.urlname, args=(invoice.id,))
+                        )
+                    ])
+                else:
+                    columns.extend([
+                        'N/A',
+                        'N/A',
+                    ])
             rows.append(columns)
         return rows
 
@@ -678,7 +690,11 @@ class InvoiceInterface(GenericTabularReport):
     @property
     @memoized
     def invoices(self):
-        return Invoice.objects.filter(**self.filters)
+        invoices = Invoice.objects.filter(**self.filters)
+        bulk_invoices = BulkInvoice.objects.filter(
+            id__in=invoices.values('bulk_invoice_id')
+        )
+        return list(chain(bulk_invoices, invoices))
 
     @property
     @memoized

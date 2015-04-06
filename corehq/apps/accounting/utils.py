@@ -151,7 +151,7 @@ def get_address_from_invoice(invoice):
     from corehq.apps.accounting.models import BillingContactInfo
     try:
         contact_info = BillingContactInfo.objects.get(
-            account=invoice.subscription.account,
+            account=invoice.get_account(),
         )
         return Address(
             name=(
@@ -178,6 +178,10 @@ def get_dimagi_from_email_by_product(product):
         'product': product,
         'email': settings.INVOICING_CONTACT_EMAIL,
     })
+
+
+def get_dimagi_from_email():
+    return "Dimagi <{email}>".format(email=settings.INVOICING_CONTACT_EMAIL)
 
 
 def quantize_accounting_decimal(decimal_value):

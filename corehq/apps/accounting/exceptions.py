@@ -30,6 +30,18 @@ class InvoiceEmailThrottledError(Exception):
     pass
 
 
+class BulkInvoiceMultipleAccountsError(Exception):
+    pass
+
+
+class BulkInvoiceMultipleProjectsError(Exception):
+    pass
+
+
+class BulkInvoiceNoInvoicesError(Exception):
+    pass
+
+
 class SubscriptionReminderError(Exception):
     pass
 

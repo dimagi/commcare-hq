@@ -1527,7 +1527,7 @@ class TriggerInvoiceForm(forms.Form):
             subscription__subscriber__domain=domain_name
         ).all()
         for invoice in last_generated_invoices:
-            for record in invoice.billingrecord_set.all():
+            for record in invoice.billing_records.all():
                 record.pdf.delete()
                 record.delete()
             invoice.subscriptionadjustment_set.all().delete()
@@ -1735,10 +1735,11 @@ class AdjustBalanceForm(forms.Form):
                                   % adjustment_type)
 
     def adjust_balance(self, web_user=None):
+        account = self.invoice.get_account()
         CreditLine.add_credit(
             -self.amount,
-            account=self.invoice.subscription.account,
-            subscription=self.invoice.subscription,
+            account=account,
+            subscription=self.invoice.subscription if not self.invoice.is_bulk else None,
             note=self.cleaned_data['note'],
             invoice=self.invoice,
             reason=self.cleaned_data['method'],

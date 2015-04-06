@@ -1,9 +1,13 @@
-var PaymentMethodHandler = function (errorMessages, submitBtnText) {
+var PaymentMethodHandler = function (errorMessages, opts) {
     'use strict';
     var self = this;
+    opts = opts ? opts : {};
 
+    self.name = name;
     self.errorMessages = errorMessages || {};
-    self.submitBtnText = submitBtnText;
+    self.submitBtnText = opts.submitBtnText;
+    self.isWire = ko.observable(opts.isWire || false);
+    self.wireEmails = ko.observable('');
 
     self.costItem = ko.observable();
     self.hasCostItem = ko.computed(function () {
@@ -34,7 +38,7 @@ var PaymentMethodHandler = function (errorMessages, submitBtnText) {
         return self.newCard();
     });
     self.hasAgreedToPrivacy = ko.computed(function() {
-        return self.selectedCard() && self.selectedCard().cardFormIsValid();
+        return (self.selectedCard() && self.selectedCard().cardFormIsValid()) || self.isWire();
     });
 
     self.paymentIsComplete = ko.observable(false);
@@ -75,14 +79,16 @@ var PaymentMethodHandler = function (errorMessages, submitBtnText) {
         self.newCard(new StripeCard());
     };
 
-    self.processPayment = function () {
-        if (self.costItem().isValid()) {
-            self.selectedCard().process(self.submitForm);
+    self.processPayment = function (formEl) {
+        if (self.isWire()) {
+           self.submitForm(formEl);
+        } else if (self.costItem().isValid()) {
+           self.selectedCard().process(function() { self.submitForm(formEl) });
         }
     };
 
-    self.submitForm = function () {
-        $('#payment-form').ajaxSubmit({
+    self.submitForm = function (formEl) {
+        $(formEl).ajaxSubmit({
             success: function (response) {
                 if (response.success) {
                     self.costItem().reset(response);
@@ -108,7 +114,7 @@ var PaymentMethodHandler = function (errorMessages, submitBtnText) {
     self.removeSavedCard = function () {
         self.isRemovingCard(true);
         self.showConfirmRemoveCard(false);
-        $('#payment-form').ajaxSubmit({
+        $('.payment-form').ajaxSubmit({
             data: {
                 removeCard: true
             },

@@ -13,11 +13,18 @@
 
         var bulkPaymentHandler = new PaymentMethodHandler(
             {{ payment_error_messages|JSON }},
-            "{% trans "Submit Payment" %}"
+            { submitBtnText: "{% trans "Submit Payment" %}" }
+        );
+        var bulkWirePaymentHandler = new PaymentMethodHandler(
+            {{ payment_error_messages|JSON }},
+            {
+                submitBtnText: "{% trans "Submit Invoice Request" %}",
+                isWire: true
+            }
         );
         var paymentHandler = new PaymentMethodHandler(
             {{ payment_error_messages|JSON }},
-            "{% trans "Submit Payment" %}"
+            { submitBtnText: "{% trans "Submit Payment" %}" }
         );
 
         {% if stripe_cards %}
@@ -28,6 +35,7 @@
 
         $(function () {
             ko.applyBindings(bulkPaymentHandler, $('#bulkPaymentModal').get(0));
+            ko.applyBindings(bulkWirePaymentHandler, $('#bulkWirePaymentModal').get(0));
             ko.applyBindings(paymentHandler, $('#paymentModal').get(0));
         });
 
@@ -36,6 +44,12 @@
                 totalBalance: {{ total_balance }}
             }));
             bulkPaymentHandler.reset();
+        });
+        $('#bulkWirePaymentBtn').click(function () {
+            bulkWirePaymentHandler.costItem(new TotalCostItem({
+                totalBalance: {{ total_balance }}
+            }));
+            bulkWirePaymentHandler.reset();
         });
 
         paginatedListModel.showUnpaidBills = ko.observable(true);
@@ -88,6 +102,15 @@
                     data-target="#bulkPaymentModal"
                     id="bulkPaymentBtn">
                 {% trans 'Pay with Credit Card' %}
+            </button>
+        </p>
+        <p>
+            <button type="button"
+                    class="btn btn-success"
+                    data-toggle="modal"
+                    data-target="#bulkWirePaymentModal"
+                    id="bulkWirePaymentBtn">
+                {% trans 'Pay by Wire' %}
             </button>
         </p>
     </div>
@@ -214,14 +237,22 @@
             {% trans 'Bulk Payment' %}
         </h3>
     </script>
+
+    <script type="text/html" id="bulk-wire-payment-method-modal-title">
+        <h3>{% trans 'Bulk Wire Payment' %}</h3>
+    </script>
 {% endblock %}
 
 {% block modals %}{{ block.super }}
     {% with process_invoice_payment_url as process_payment_url %}
         {% include 'domain/partials/payment_modal.html' with payment_modal_id="paymentModal" title_template="payment-method-modal-title" cost_item_template="cost-item-template" %}
     {% endwith %}
+
     {% with process_bulk_payment_url as process_payment_url %}
         {% include 'domain/partials/payment_modal.html' with payment_modal_id="bulkPaymentModal" title_template="bulk-payment-method-modal-title" cost_item_template="cost-item-template" %}
     {% endwith %}
 
+    {% with process_bulk_wire_invoice_url as process_payment_url %}
+        {% include 'domain/partials/payment_modal.html' with payment_modal_id="bulkWirePaymentModal" title_template="bulk-wire-payment-method-modal-title" cost_item_template="cost-item-template" %}
+    {% endwith %}
 {% endblock %}

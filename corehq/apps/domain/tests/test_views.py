@@ -1,4 +1,5 @@
 from __future__ import print_function, unicode_literals
+import json
 
 from django.core.urlresolvers import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -10,7 +11,7 @@ from corehq.apps.users.models import WebUser
 from corehq.apps.receiverwrapper.models import AppStructureRepeater
 from corehq.apps.domain.models import Domain
 from corehq.apps.app_manager.models import Application, APP_V1
-from corehq.apps.domain.views import CreateNewExchangeSnapshotView
+from corehq.apps.domain.views import CreateNewExchangeSnapshotView, BulkWireInvoiceView
 
 class TestDomainViews(TestCase):
     def setUp(self):
@@ -100,3 +101,19 @@ class TestDomainViews(TestCase):
         self.assertEqual(len(snapshots), 2)
         self.assertEqual(snapshots[0].documentation_file_path, filename)
         self.assertEqual(snapshots[1].documentation_file_path, filename)
+
+    def test_bulk_wire_no_invoice_view(self):
+
+        data = {
+            'invoice_ids': [1, 2, 3]  # None of these exist
+        }
+
+        self.client.login(username=self.username, password=self.password)
+
+        response = self.client.post(
+            reverse(BulkWireInvoiceView.urlname, args=[self.domain.name]),
+            data,
+        )
+
+        content = json.loads(response.content)
+        self.assertIsNotNone(content['error'], "Should raise no invoice error")

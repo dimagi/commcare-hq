@@ -1,6 +1,8 @@
 import copy
 import datetime
 from decimal import Decimal
+from itertools import chain
+from operator import attrgetter
 import logging
 import uuid
 from couchdbkit import ResourceNotFound
@@ -12,11 +14,12 @@ from django.core.paginator import Paginator
 from django.views.generic import View
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
+from corehq.apps.accounting.invoicing import DomainBulkInvoiceFactory
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.decorators import (
     require_billing_admin, requires_privilege_with_fallback,
 )
-from corehq.apps.accounting.exceptions import PaymentRequestError
+from corehq.apps.accounting.exceptions import PaymentRequestError, BulkInvoiceNoInvoicesError
 from corehq.apps.accounting.payment_handlers import (
     BulkStripePaymentHandler,
     CreditStripePaymentHandler,
@@ -50,7 +53,7 @@ from corehq.apps.accounting.models import (
     DefaultProductPlan, SoftwarePlanEdition, BillingAccount,
     BillingAccountType, BillingAccountAdmin,
     Invoice, BillingRecord, InvoicePdf, PaymentMethodType,
-    PaymentMethod,
+    PaymentMethod, BulkInvoice,
     EntryPoint,
 )
 from corehq.apps.accounting.usage import FeatureUsageCalculator
@@ -912,7 +915,10 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
             invoices = invoices.filter(is_hidden=False)
         if self.show_unpaid:
             invoices = invoices.filter(date_paid__exact=None)
-        return invoices.order_by('-date_start', '-date_end')
+        bulk_invoices = BulkInvoice.objects.filter(
+            id__in=invoices.values('bulk_invoice_id')
+        )
+        return sorted(list(chain(bulk_invoices, invoices)), key=attrgetter('date_start', 'date_end'))
 
     @property
     def total(self):
@@ -948,6 +954,10 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                 BulkStripePaymentView.urlname,
                 args=[self.domain],
             ),
+            'process_bulk_wire_invoice_url': reverse(
+                BulkWireInvoiceView.urlname,
+                args=[self.domain],
+            ),
             'stripe_cards': self.stripe_cards,
             'total_balance': "%.2f" % sum(invoice.get_total() for invoice in self.invoices)
         })
@@ -975,13 +985,14 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                     payment_class = "label label-important"
                 date_due = (invoice.date_due.strftime("%d %B %Y")
                             if not invoice.is_paid else _("Already Paid"))
+                plan = 'N/A' if invoice.is_bulk else invoice.subscription.plan_version.user_facing_description
                 yield {
                     'itemData': {
                         'id': invoice.id,
                         'invoice_number': invoice.invoice_number,
                         'start': invoice.date_start.strftime("%d %B %Y"),
                         'end': invoice.date_end.strftime("%d %B %Y"),
-                        'plan': invoice.subscription.plan_version.user_facing_description,
+                        'plan': plan,
                         'payment_status': payment_status,
                         'payment_class': payment_class,
                         'date_due': date_due,
@@ -1020,7 +1031,7 @@ class BaseStripePaymentView(DomainAccountingSettings):
 
     @property
     def account(self):
-        raise NotImplementedError("you must impmement the property account")
+        raise NotImplementedError("you must implement the property account")
 
     @property
     @memoized
@@ -1146,6 +1157,29 @@ class BulkStripePaymentView(BaseStripePaymentView):
         )
 
 
+class BulkWireInvoiceView(View):
+    http_method_names = ['post']
+    urlname = 'domain_bulk_wire_invoice'
+
+    @method_decorator(login_and_domain_required)
+    @method_decorator(require_billing_admin())
+    def dispatch(self, request, *args, **kwargs):
+        return super(BulkWireInvoiceView, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        emails = request.POST.get('emails', None)
+        if emails:
+            emails.split(' ')
+        bulk_invoice_factory = DomainBulkInvoiceFactory(request.domain, contact_emails=emails)
+
+        try:
+            bulk_invoice = bulk_invoice_factory.create_bulk_invoice()
+        except BulkInvoiceNoInvoicesError as e:
+            return json_response({'error': e.message})
+
+        return json_response({'success': True, 'bulk_invoice': bulk_invoice.as_dict()})
+
+
 class BillingStatementPdfView(View):
     urlname = 'domain_billing_statement_download'
 
@@ -1168,14 +1202,22 @@ class BillingStatementPdfView(View):
         try:
             invoice = Invoice.objects.get(pk=invoice_pdf.invoice_id)
         except Invoice.DoesNotExist:
+            try:
+                invoice = BulkInvoice.objects.get(pk=invoice_pdf.invoice_id)
+            except BulkInvoice.DoesNotExist:
+                raise Http404()
+        if invoice.get_project_name() != domain:
             raise Http404()
-        if invoice.subscription.subscriber.domain != domain:
-            raise Http404()
+
+        if invoice.is_bulk:
+            edition = 'N/A'
+        else:
+            edition = DESC_BY_EDITION[invoice.subscription.plan_version.plan.edition]['name']
 
         filename = "%(pdf_id)s_%(domain)s_%(edition)s_%(filename)s" % {
             'pdf_id': invoice_pdf._id,
             'domain': domain,
-            'edition': DESC_BY_EDITION[invoice.subscription.plan_version.plan.edition]['name'],
+            'edition': edition,
             'filename': invoice_pdf.get_filename(invoice),
         }
         try:
