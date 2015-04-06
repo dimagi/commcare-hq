@@ -515,7 +515,6 @@ class AliasedElasticPillow(BulkPillow):
     es_index = ""
     es_type = ""
     es_alias = ''
-    es_index_prefix = ''
     seen_types = {}
     es_meta = {}
     es_timeout = 3  # in seconds
