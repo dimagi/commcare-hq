@@ -1,4 +1,3 @@
-import logging
 from django.utils.encoding import smart_str
 import pytz
 from corehq.const import USER_DATETIME_FORMAT
@@ -17,18 +16,16 @@ def get_timezone_data_migration_complete():
 
     """
     _default = False
-    request = get_request()
-    if not request or not request.domain:
-        return _default
+    _assert = soft_assert(['droberts' + '@' + 'dimagi.com'])
     try:
-        return USE_NEW_TIMEZONE_BEHAVIOR.enabled(request.domain)
+        request = get_request()
+        try:
+            domain = request.domain
+        except AttributeError:
+            return _default
+        return USE_NEW_TIMEZONE_BEHAVIOR.enabled(domain)
     except Exception:
-        # Danny Mar 31, 2015
-        # I don't expect this to happen
-        # but this code is going to be called from hundreds of places
-        # and I'd rather get lots of Sentry emails than lots of 500s
-        # todo: remove this once all is quiet for a while
-        logging.exception('Error in get_timezone_data_migration_complete')
+        _assert(False, 'Error in get_timezone_data_migration_complete')
         return _default
 
 
