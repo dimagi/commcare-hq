@@ -4,8 +4,8 @@ from couchdbkit.ext.django.schema import (
     DecimalProperty,
     DictProperty,
     BooleanProperty,
-    DateTimeProperty,
 )
+from corehq.ext.couchdbkit import USecDateTimeProperty
 from datetime import datetime
 from decimal import Decimal
 from django.db import models
@@ -30,7 +30,7 @@ class Product(Document):
     cost = DecimalProperty()
     product_data = DictProperty()
     is_archived = BooleanProperty(default=False)
-    last_modified = DateTimeProperty()
+    last_modified = USecDateTimeProperty()
 
     def sync_to_sql(self):
         properties_to_sync = [
