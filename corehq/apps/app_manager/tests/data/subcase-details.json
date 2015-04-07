@@ -312,7 +312,8 @@
                 "doc_type": "CaseList",
                 "label": {},
                 "show": false
-            }
+            },
+            "unique_id": "m1"
         },
         {
             "case_label": {
@@ -566,7 +567,8 @@
                 "doc_type": "CaseList",
                 "label": {},
                 "show": false
-            }
+            },
+            "unique_id": "m2"
         }
     ],
     "multimedia_map": {},
