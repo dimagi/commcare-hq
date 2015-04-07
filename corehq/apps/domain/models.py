@@ -552,28 +552,15 @@ class Domain(Document, SnapshotMixin):
                     notify_exception(None, '%r is not a valid domain name' % name)
                     return None
 
-        domain = cls._get_by_name(name, strict)
-        return domain
+        def _get_by_name(stale=False):
+            extra_args = {'stale': settings.COUCH_STALE_QUERY} if stale else {}
+            return cls.view("domain/domains", key=name, reduce=False, include_docs=True, **extra_args).first()
 
-    @classmethod
-    def _get_by_name(cls, name, strict=False):
-        extra_args = {'stale': settings.COUCH_STALE_QUERY} if not strict else {}
-
-        db = cls.get_db()
-        res = cache_core.cached_view(db, "domain/domains", key=name, reduce=False,
-                                     include_docs=True, wrapper=cls.wrap, force_invalidate=strict,
-                                     **extra_args)
-
-        if len(res) > 0:
-            result = res[0]
-        else:
-            result = None
-
-        if result is None and not strict:
+        domain = _get_by_name(stale=(not strict))
+        if domain is None and not strict:
             # on the off chance this is a brand new domain, try with strict
-            return cls.get_by_name(name, strict=True)
-
-        return result
+            domain = _get_by_name(stale=False)
+        return domain
 
     @classmethod
     def get_by_organization(cls, organization):
