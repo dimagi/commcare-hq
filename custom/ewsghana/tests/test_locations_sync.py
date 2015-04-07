@@ -35,6 +35,7 @@ class LocationSyncTest(TestCase):
         self.assertEqual(ewsghana_location.longitude, float(location.longitude))
         self.assertEqual(ewsghana_location.latitude, float(location.latitude))
         self.assertEqual(ewsghana_location.parent, location.parent_id)
+        self.assertFalse(ewsghana_location.is_archived)
 
         sql_location = ewsghana_location.sql_location
         self.assertEqual(ewsghana_location.get_id, sql_location.location_id)
@@ -55,6 +56,7 @@ class LocationSyncTest(TestCase):
         self.assertEqual("Hospital", ewsghana_location.location_type)
         self.assertEqual(ewsghana_location.longitude, float(location.longitude))
         self.assertEqual(ewsghana_location.latitude, float(location.latitude))
+        self.assertFalse(ewsghana_location.is_archived)
 
         sql_location = ewsghana_location.sql_location
         self.assertEqual(ewsghana_location.get_id, sql_location.location_id)
@@ -80,6 +82,7 @@ class LocationSyncTest(TestCase):
         self.assertIsNone(ewsghana_location.sql_location.supply_point_id)
         self.assertEqual(location.name, ewsghana_location.sql_location.name)
         self.assertEqual(location.code, ewsghana_location.sql_location.site_code)
+        self.assertFalse(ewsghana_location.is_archived)
 
     def test_facility_without_supply_point(self):
         with open(os.path.join(self.datapath, 'sample_locations.json')) as f:
@@ -92,6 +95,7 @@ class LocationSyncTest(TestCase):
         )
         self.assertEqual(ewsghana_location.name, location.name)
         self.assertEqual(ewsghana_location.site_code, location.code)
+        self.assertTrue(ewsghana_location.is_archived)
 
     def test_facility_with_inactive_and_active_supply_point(self):
         with open(os.path.join(self.datapath, 'sample_locations.json')) as f:
@@ -100,3 +104,4 @@ class LocationSyncTest(TestCase):
         ewsghana_location = self.api_object.location_sync(location)
         self.assertEqual("tsactive", ewsghana_location.site_code)
         self.assertEqual("Active Test hospital", ewsghana_location.name)
+        self.assertFalse(ewsghana_location.is_archived)
