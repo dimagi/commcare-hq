@@ -74,7 +74,7 @@ class BillingAccountBasicForm(forms.Form):
     currency = forms.ChoiceField(label="Currency")
 
     emails = forms.CharField(
-        label=_('Additional Contact Emails'),
+        label=_('Client Contact Emails'),
         widget=forms.Textarea,
         max_length=BillingContactInfo._meta.get_field('emails').max_length,
     )
