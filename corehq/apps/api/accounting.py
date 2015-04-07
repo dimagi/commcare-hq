@@ -212,6 +212,7 @@ class SubscriptionAndAdjustmentResource(ModelResource):
 
     subscription = fields.ToOneField(SubscriptionResource, 'subscription', full=True, null=True)
     related_subscription = fields.ToOneField(SubscriptionResource, 'related_subscription', full=True, null=True)
+    invoice = fields.ToOneField(InvoiceResource, 'invoice', full=True, null=True)
 
     class Meta(AccountingResourceMeta):
         queryset = SubscriptionAdjustment.objects.all()
