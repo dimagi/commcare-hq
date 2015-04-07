@@ -545,14 +545,6 @@ class SubscriptionForm(forms.Form):
                 raise forms.ValidationError("A valid project space is required.")
         return domain_name
 
-    def clean_end_date(self):
-        start_date = self.subscription.date_start \
-            if self.is_existing else self.cleaned_data['start_date']
-        if (self.cleaned_data['end_date'] is not None
-            and start_date > self.cleaned_data['end_date']):
-            raise ValidationError("End date must be after start date.")
-        return self.cleaned_data['end_date']
-
     def clean(self):
         account_id = self.cleaned_data['active_accounts'] or self.cleaned_data['account']
         account = BillingAccount.objects.get(id=account_id)
@@ -567,6 +559,12 @@ class SubscriptionForm(forms.Form):
                     account.name,
                 )
             ))
+
+        start_date = self.subscription.date_start \
+            if self.is_existing else self.cleaned_data['start_date']
+        if (self.cleaned_data['end_date'] is not None
+            and start_date > self.cleaned_data['end_date']):
+            raise ValidationError("End date must be after start date.")
 
     def create_subscription(self):
         account = BillingAccount.objects.get(id=self.cleaned_data['account'])
