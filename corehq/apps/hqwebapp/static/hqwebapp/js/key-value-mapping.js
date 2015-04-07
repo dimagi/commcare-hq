@@ -82,8 +82,9 @@ function MapList(o) {
 
     self._keys_equal = function (v1, v2) {
         // Return true if the given ID Mapping keys should be considered equal.
-        // On the backend, spaces will be replaced with underscores, so
-        // "foo_bar" should be considered equal to "foo bar"
+        // On the server, spaces will be replaced with underscores to create
+        // xpath variable names.
+        // Therefore, "foo_bar" should be considered equal to "foo bar"
         return self._normalizedKey(v1) === self._normalizedKey(v2);
     };
 
