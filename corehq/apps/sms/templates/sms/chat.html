@@ -24,7 +24,6 @@
         {% endcompress %}
         <script src="{% static 'hqstyle/js/jquery/jquery-1.7.1.min.js' %}"></script>
         <script type="text/javascript" src="{% static 'hqwebapp/js/lib/knockout-2.3.0.js' %}"></script>
-        <script type="text/javascript" src="{% static 'hqwebapp/ko/global.handlers.js' %}"></script>
         <style>
             html, body {
                 height: 100%;
@@ -70,6 +69,7 @@
             #message_history_choices {
                 border-bottom: 1px solid #CCC;
                 text-align: center;
+                background-color: #FFF;
             }
             .message_history_choice {
                 cursor: pointer;
@@ -117,18 +117,18 @@
                 <tbody>
                     <tr>
                         <td>{% block chat_header %}{% endblock %}</td>
-                        <td><div id="message_counter_container"><div><strong><span id="message_count" data-bind="text: message_count"></span></strong></div><div><span class="btn btn-primary" data-bind="click: reset_message_count">Reset</span></div></div></td>
+                        <td><div id="message_counter_container" data-bind="visible: {{ use_message_counter|JSON }}"><div><strong><span id="message_count" data-bind="text: message_count"></span></strong></div><div><span class="btn btn-primary" data-bind="click: reset_message_count">Reset</span></div></div></td>
                     </tr>
                 </tbody>
             </table>
-        </div>
-        <div id="chat_messages">
             <div id="message_history_choices">
                 <span>Message History</span>
                 <span data-bind="foreach: history_choices">
                     &#8901; <span data-bind="text: description, css: {message_history_choice_selected: selected(), message_history_choice: !selected()}, click: function(data, event) {$parent.update_history_choice($index(), true);}"></span>
                 </span>
             </div>
+        </div>
+        <div id="chat_messages">
             <table id="message_table">
                 <tbody data-bind="foreach: messages">
                     <tr data-bind="visible: (utc_timestamp > $parent.selected_history_choice().utc_timestamp) || (unread_message && !$parent.history_choice_selected)">
@@ -156,7 +156,6 @@
                     chat_footer_height = $("#chat_footer").height();
                     $("#chat_messages").height(body_height - chat_header_height - chat_footer_height);
                 }
-                resize_messages();
                 function MessageHistoryChoice(description, utc_timestamp) {
                     var self = this;
                     self.description = description;
@@ -196,7 +195,22 @@
                     self.first_update = true;
                     self.last_read_message_utc_timestamp = null;
                     self.allow_highlights_to_disappear = false;
-                    
+
+                    //After we send a message, we need to wait for it to actually be sent
+                    //before it shows up in the history. Normally, we update the chat
+                    //history every regular_update_interval milliseconds. But right after
+                    //we send a message, we'll update the chat history every
+                    //quick_update_interval milliseconds (and do it the number of times
+                    //specified by quick_update_cycles), and then go back to updating on the
+                    //regular_update_interval. This makes messages show up faster in the
+                    //chat history after you click Send.
+                    self.quick_update_countdown = 0;
+                    self.quick_update_cycles = 15;
+                    self.regular_update_interval = 15000;
+                    self.quick_update_interval = 1000;
+                    self.update_messages_timeout_handle = null;
+                    self.update_in_progress = false;
+
                     self.history_choices = ko.observableArray([]);
                     {% for description, timestamp in history_choices %}
                     self.history_choices.push(new MessageHistoryChoice("{{ description }}", "{{ timestamp }}"));
@@ -221,6 +235,7 @@
                     self.update_history_choice(0, false);
                     
                     self.update_messages = function(set_next_timeout) {
+                        self.update_in_progress = true;
                         payload = {
                             contact_id : "{{ contact_id }}"
                         };
@@ -277,8 +292,14 @@
                             },
                             complete : function(jqXHR, textStatus) {
                                 if(set_next_timeout) {
-                                    setTimeout(self.update_messages_timeout, 15000);
+                                    var time_to_wait = self.regular_update_interval;
+                                    if(self.quick_update_countdown > 0) {
+                                        self.quick_update_countdown--;
+                                        time_to_wait = self.quick_update_interval;
+                                    }
+                                    self.update_messages_timeout_handle = setTimeout(self.update_messages_timeout, time_to_wait);
                                 }
+                                self.update_in_progress = false;
                             },
                         });
                     };
@@ -297,6 +318,13 @@
                             if(response == "OK") {
                                 $("#text_box").val("");
                                 self.update_message_length(null);
+                                self.quick_update_countdown = self.quick_update_cycles;
+                                if(!self.update_in_progress) {
+                                    //If the update is not in progress, then force a new
+                                    //update to start immediately.
+                                    clearTimeout(self.update_messages_timeout_handle);
+                                    self.update_messages_timeout();
+                                }
                             } else {
                             }
                         });
@@ -307,10 +335,19 @@
                     self.update_messages_timeout = function() {
                         self.update_messages(true);
                     };
+                    self.get_max_message_length = function() {
+                        var msg = $("#text_box").val();
+                        var is_ascii = /^[\x00-\x7F]*$/.test(msg);
+                        if(is_ascii) {
+                            return 160;
+                        } else {
+                            return 70;
+                        }
+                    };
                     self.update_message_length = function(event) {
                         setTimeout(function() {
                             len = $("#text_box").val().length;
-                            max_len = 160;
+                            max_len = self.get_max_message_length();
                             self.message_length(len + " / " + max_len);
                             if(len > max_len) {
                                 $("#message_length_label").css("background-color", "#F00");
@@ -407,6 +444,7 @@
                 chat_window_view_model.update_messages_timeout();
                 $("#text_box").bind("paste", chat_window_view_model.update_message_length);
                 $("#text_box").keyup(chat_window_view_model.update_message_length);
+                resize_messages();
             });
         </script>
     </body>

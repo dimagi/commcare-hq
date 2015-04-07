@@ -27,7 +27,7 @@ class CaseDataTests(TestCase):
         ], {'domain': TEST_DOMAIN})
 
         self.case_id = 'test_case_1'
-        self.date_modified = datetime.now() - timedelta(hours=1)
+        self.date_modified = datetime.utcnow() - timedelta(hours=1)
         self.date_modified = self.date_modified.replace(microsecond=0)
         post_case_blocks([
             CaseBlock(
@@ -89,7 +89,7 @@ class CaseDataTests(TestCase):
             ).as_xml(format_datetime=None)
         ], {'domain': TEST_DOMAIN})
 
-        date_modified = datetime.now().replace(microsecond=0)
+        date_modified = datetime.utcnow().replace(microsecond=0)
         post_case_blocks([
             CaseBlock(
                 close=True,

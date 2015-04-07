@@ -536,7 +536,7 @@ def requisition_case_xml(data, stock_blocks):
         update={'requisition_status': status},
     ).as_xml())
 
-    timestamp = data['transactions'][0].timestamp or datetime.now()
+    timestamp = data['transactions'][0].timestamp or datetime.utcnow()
     device_id = get_device_id(data)
 
     return """

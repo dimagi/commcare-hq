@@ -102,7 +102,7 @@ class StockStateBehaviorTest(StockStateTest):
             section_id='stock',
             case_id=self.sp._id,
             product_id=self.products[0]._id,
-            last_modified_date=datetime.now(),
+            last_modified_date=datetime.utcnow(),
             sql_product=SQLProduct.objects.get(product_id=self.products[0]._id),
         ).save()
 

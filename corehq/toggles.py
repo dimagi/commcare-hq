@@ -344,6 +344,12 @@ CUSTOM_PROPERTIES = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+FILE_RESTORE = StaticToggle(
+    'file_restore',
+    'Use files to do phone restore',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+)
+
 GLOBAL_SMS_RATES = StaticToggle(
     'global_sms_rates',
     'Global SMS Rates page',
@@ -364,5 +370,14 @@ BULK_PAYMENTS = StaticToggle(
 MODULE_FILTER = StaticToggle(
     'module_filter',
     'Enable module filtering',
+    [NAMESPACE_DOMAIN],
+)
+
+USE_NEW_TIMEZONE_BEHAVIOR = StaticToggle(
+    'use_new_timezone_behavior',
+    ("Enable properly dealing with timezones in phone timestamps "
+     "during submission and in reports. "
+     "(Please do not set manually, "
+     "because it has to be accompanied by a migration.)"),
     [NAMESPACE_DOMAIN],
 )

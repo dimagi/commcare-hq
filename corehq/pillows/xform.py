@@ -38,7 +38,6 @@ def flatten(d, parent_key='', delimiter='/'):
 class XFormPillow(HQPillow):
     document_class = XFormInstance
     couch_filter = "couchforms/xforms"
-    es_index_prefix = "xforms"
     es_alias = "xforms"
     es_type = "xform"
     es_index = XFORM_INDEX

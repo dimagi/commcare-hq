@@ -44,7 +44,7 @@ class IncomingPostTest(TestCase):
     def testPostToIncomingAscii(self):
         fake_post = {InboundParams.SENDER: str(self.number),
                      InboundParams.MESSAGE: self.message_ascii,
-                     InboundParams.TIMESTAMP: datetime.now().strftime(DATE_FORMAT),
+                     InboundParams.TIMESTAMP: datetime.utcnow().strftime(DATE_FORMAT),
                      InboundParams.DCS: self.dcs,
                      InboundParams.UDHI: '0'}
         response, log = post(fake_post)
@@ -58,7 +58,7 @@ class IncomingPostTest(TestCase):
     def testPostToIncomingUtf(self):
         fake_post = {InboundParams.SENDER: str(self.number),
                      InboundParams.MESSAGE: self.message_utf_hex,
-                     InboundParams.TIMESTAMP: datetime.now().strftime(DATE_FORMAT),
+                     InboundParams.TIMESTAMP: datetime.utcnow().strftime(DATE_FORMAT),
                      InboundParams.DCS: self.dcs,
                      InboundParams.UDHI: '1'}
         response, log = post(fake_post)

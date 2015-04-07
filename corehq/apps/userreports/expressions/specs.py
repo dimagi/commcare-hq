@@ -112,6 +112,6 @@ class RelatedDocExpressionSpec(JsonObject):
             if context.root_doc['domain'] != doc.get('domain'):
                 return None
             # explicitly use a new evaluation context since this is a new document
-            return self._value_expression(doc, EvaluationContext(doc))
+            return self._value_expression(doc, EvaluationContext(doc, 0))
         except ResourceNotFound:
             return None

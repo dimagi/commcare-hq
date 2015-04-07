@@ -12,6 +12,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
+from casexml.apps.case.models import CommCareCase
 from corehq import privileges
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.reminders.util import can_use_survey_reminders
@@ -29,7 +30,7 @@ from corehq.apps.sms.api import (
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import CouchUser, Permissions
+from corehq.apps.users.models import CouchUser, Permissions, CommCareUser
 from corehq.apps.users import models as user_models
 from corehq.apps.users.views.mobile.users import EditCommCareUserView
 from corehq.apps.sms.models import (
@@ -44,6 +45,7 @@ from corehq.apps.sms.forms import (ForwardingRuleForm, BackendMapForm,
     DEFAULT, CUSTOM)
 from corehq.apps.sms.util import get_available_backends, get_contact
 from corehq.apps.sms.messages import _MESSAGES
+from corehq.apps.smsbillables.utils import country_name_from_isd_code_or_empty as country_name_from_code
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
@@ -66,14 +68,14 @@ from dimagi.utils.decorators.view import get_file
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 from dimagi.utils.excel import WorkbookJSONReader
+from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.couch.cache import cache_core
 from django.conf import settings
 from couchdbkit.resource import ResourceNotFound
 from couchexport.models import Format
 from couchexport.export import export_raw
 from couchexport.shortcuts import export_response
 
-
-DEFAULT_MESSAGE_COUNT_THRESHOLD = 50
 
 # Tuple of (description, days in the past)
 SMS_CHAT_HISTORY_CHOICES = (
@@ -150,7 +152,7 @@ def post(request, domain):
                  #couch_recipient=id, 
                  phone_number=to,
                  direction=INCOMING,
-                 date = datetime.now(),
+                 date = datetime.utcnow(),
                  text = text)
     msg.save()
     return HttpResponse('OK')
@@ -665,35 +667,128 @@ def global_backend_map(request):
     }
     return render(request, "sms/backend_map.html", context)
 
+
 @require_permission(Permissions.edit_data)
 @requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
 def chat_contacts(request, domain):
-    domain_obj = Domain.get_by_name(domain, strict=True)
-    verified_numbers = VerifiedNumber.by_domain(domain)
-    contacts = []
-    for vn in verified_numbers:
-        owner = vn.owner
-        if owner is not None and owner.doc_type in ('CommCareCase','CommCareUser'):
-            if owner.doc_type == "CommCareUser":
-                url = reverse(EditCommCareUserView.urlname, args=[domain, owner._id])
-                name = owner.raw_username
-            else:
-                url = reverse("case_details", args=[domain, owner._id])
-                if domain_obj.custom_case_username:
-                    name = owner.get_case_property(domain_obj.custom_case_username) or _("(unknown)")
-                else:
-                    name = owner.name
-            contacts.append({
-                "id" : owner._id,
-                "doc_type" : owner.doc_type,
-                "url" : url,
-                "name" : name,
-            })
     context = {
         "domain" : domain,
-        "contacts" : contacts,
     }
     return render(request, "sms/chat_contacts.html", context)
+
+
+def get_case_contact_info(domain_obj, case_ids):
+    data = {}
+    for doc in iter_docs(CommCareCase.get_db(), case_ids):
+        if domain_obj.custom_case_username:
+            name = doc.get(domain_obj.custom_case_username, _('unknown'))
+        else:
+            name = doc.get('name', _('unknown'))
+        data[doc['_id']] = [name]
+    return data
+
+
+def get_mobile_worker_contact_info(domain_obj, user_ids):
+    data = {}
+    for doc in iter_docs(CommCareUser.get_db(), user_ids):
+        user = CommCareUser.wrap(doc)
+        data[user.get_id] = [user.raw_username]
+    return data
+
+
+def get_contact_info(domain):
+    # If the data has been cached, just retrieve it from there
+    cache_key = 'sms-chat-contact-list-%s' % domain
+    cache_expiration = 30 * 60
+    try:
+        client = cache_core.get_redis_client()
+        cached_data = client.get(cache_key)
+        if cached_data:
+            return json.loads(cached_data)
+    except:
+        pass
+
+    verified_number_ids = VerifiedNumber.by_domain(domain, ids_only=True)
+    domain_obj = Domain.get_by_name(domain, strict=True)
+    case_ids = []
+    mobile_worker_ids = []
+    data = []
+    for doc in iter_docs(VerifiedNumber.get_db(), verified_number_ids):
+        owner_id = doc['owner_id']
+        if doc['owner_doc_type'] == 'CommCareCase':
+            case_ids.append(owner_id)
+            data.append([
+                None,
+                'case',
+                doc['phone_number'],
+                owner_id,
+            ])
+        elif doc['owner_doc_type'] == 'CommCareUser':
+            mobile_worker_ids.append(owner_id)
+            data.append([
+                None,
+                'mobile_worker',
+                doc['phone_number'],
+                owner_id,
+            ])
+    contact_data = get_case_contact_info(domain_obj, case_ids)
+    contact_data.update(get_mobile_worker_contact_info(domain_obj, mobile_worker_ids))
+    for row in data:
+        contact_info = contact_data.get(row[3])
+        row[0] = contact_info[0] if contact_info else _('(unknown)')
+
+    # Save the data to the cache for faster lookup next time
+    try:
+        client.set(cache_key, json.dumps(data))
+        client.expire(cache_key, cache_expiration)
+    except:
+        pass
+
+    return data
+
+
+def format_contact_data(domain, data):
+    for row in data:
+        contact_id = row[3]
+        if row[1] == 'case':
+            row[1] = _('Case')
+            row.append(reverse('case_details', args=[domain, contact_id]))
+        elif row[1] == 'mobile_worker':
+            row[1] = _('Mobile Worker')
+            row.append(reverse(EditCommCareUserView.urlname, args=[domain, contact_id]))
+        else:
+            row.append('#')
+        row.append(reverse('sms_chat', args=[domain, contact_id]))
+
+
+@require_permission(Permissions.edit_data)
+@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
+def chat_contact_list(request, domain):
+    sEcho = request.GET.get('sEcho')
+    iDisplayStart = int(request.GET.get('iDisplayStart'))
+    iDisplayLength = int(request.GET.get('iDisplayLength'))
+    sSearch = request.GET.get('sSearch', '').strip()
+
+    data = get_contact_info(domain)
+    total_records = len(data)
+
+    if sSearch:
+        regex = re.compile('^.*%s.*$' % sSearch)
+        data = filter(lambda row: regex.match(row[0]) or regex.match(row[2]), data)
+    filtered_records = len(data)
+
+    data.sort(key=lambda row: row[0])
+    data = data[iDisplayStart:iDisplayStart + iDisplayLength]
+    format_contact_data(domain, data)
+    result = {
+        'sEcho': sEcho,
+        'aaData': data,
+        'iTotalRecords': total_records,
+        'iTotalDisplayRecords': filtered_records,
+    }
+
+    return HttpResponse(json.dumps(result))
+
 
 @require_permission(Permissions.edit_data)
 @requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
@@ -720,12 +815,13 @@ def chat(request, domain, contact_id):
     )
 
     context = {
-        "domain" : domain,
-        "contact_id" : contact_id,
-        "contact" : get_contact(contact_id),
-        "message_count_threshold" : domain_obj.chat_message_count_threshold or DEFAULT_MESSAGE_COUNT_THRESHOLD,
-        "custom_case_username" : domain_obj.custom_case_username,
-        "history_choices" : history_choices,
+        "domain": domain,
+        "contact_id": contact_id,
+        "contact": get_contact(contact_id),
+        "use_message_counter": domain_obj.chat_message_count_threshold is not None,
+        "message_count_threshold": domain_obj.chat_message_count_threshold or 0,
+        "custom_case_username": domain_obj.custom_case_username,
+        "history_choices": history_choices,
     }
     template = settings.CUSTOM_CHAT_TEMPLATES.get(domain_obj.custom_chat_template) or "sms/chat.html"
     return render(request, template, context)
@@ -951,17 +1047,17 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
         is_editable = not backend.is_global and backend.domain == self.domain
         if len(backend.supported_countries) > 0:
             if backend.supported_countries[0] == '*':
-                supported_countries = _('Multiple%s') % '*'
+                supported_country_names = _('Multiple%s') % '*'
             else:
-                supported_countries = ', '.join(
-                    [_(c) for c in backend.supported_countries])
+                supported_country_names = ', '.join(
+                    [_(country_name_from_code(int(c))) for c in backend.supported_countries])
         else:
-            supported_countries = ''
+            supported_country_names = ''
         return {
             'id': backend._id,
             'name': backend.name,
             'description': backend.description,
-            'supported_countries': supported_countries,
+            'supported_countries': supported_country_names,
             'editUrl': reverse(
                 EditDomainGatewayView.urlname,
                 args=[self.domain, backend.__class__.__name__, backend._id]

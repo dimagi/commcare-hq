@@ -81,11 +81,11 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
 
     def filter(self, document):
         filter_fn = self._get_main_filter()
-        return filter_fn(document, EvaluationContext(document))
+        return filter_fn(document, EvaluationContext(document, 0))
 
     def deleted_filter(self, document):
         filter_fn = self._get_deleted_filter()
-        return filter_fn and filter_fn(document, EvaluationContext(document))
+        return filter_fn and filter_fn(document, EvaluationContext(document, 0))
 
     def _get_main_filter(self):
         return self._get_filter([self.referenced_doc_type])
@@ -137,7 +137,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
 
     @property
     def indicators(self):
-        doc_id_indicator = IndicatorFactory.from_spec({
+        default_indicators = [IndicatorFactory.from_spec({
             "column_id": "doc_id",
             "type": "expression",
             "display_name": "document id",
@@ -151,10 +151,14 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
                     "property_name": "_id"
                 }
             }
-        }, self.named_filter_objects)
+        }, self.named_filter_objects)]
+        if self.base_item_expression:
+            default_indicators.append(IndicatorFactory.from_spec({
+                "type": "repeat_iteration",
+            }, self.named_filter_objects))
         return CompoundIndicator(
             self.display_name,
-            [doc_id_indicator] + [
+            default_indicators + [
                 IndicatorFactory.from_spec(indicator, self.named_filter_objects)
                 for indicator in self.configured_indicators
             ]
@@ -191,8 +195,10 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             return []
 
     def get_all_values(self, doc):
-        context = EvaluationContext(doc)
-        return [self.indicators.get_values(item, context) for item in self.get_items(doc)]
+        return [
+            self.indicators.get_values(item, EvaluationContext(doc, i))
+            for i, item in enumerate(self.get_items(doc))
+        ]
 
     def validate(self, required=True):
         super(DataSourceConfiguration, self).validate(required)

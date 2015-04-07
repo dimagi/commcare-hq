@@ -1,4 +1,15 @@
 {% extends "registration/base.html" %}
+
+{% if valid_confirmation %}
+{% block js-inline %}{{ block.super }}
+<script>
+    $(function () {
+        analytics.track("User confirmed a new Project");
+    });
+</script>
+{% endblock js-inline %}
+{% endif %}
+
 {% block title %}Account Confirmed{% endblock title %}
 
 {% block step-title %}

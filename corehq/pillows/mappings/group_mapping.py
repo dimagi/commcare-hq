@@ -1,4 +1,4 @@
-GROUP_INDEX = "hqgroups_htj2o87ep2rugag3k46hh2a67tn0r8d9"
+GROUP_INDEX = "hqgroups_20150403_1501"
 GROUP_MAPPING = {
     "date_formats": [
         "yyyy-MM-dd",

@@ -21,7 +21,7 @@ class Program(Document):
     is_archived = BooleanProperty(default=False)
 
     def save(self, *args, **kwargs):
-        self.last_modified = datetime.now()
+        self.last_modified = datetime.utcnow()
 
         return super(Program, self).save(*args, **kwargs)
 

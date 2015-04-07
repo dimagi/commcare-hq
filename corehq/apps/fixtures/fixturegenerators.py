@@ -6,6 +6,22 @@ from corehq.apps.users.models import CommCareUser
 from dimagi.utils.modules import to_function
 
 
+def item_lists_by_domain(domain):
+    ret = list()
+    for data_type in FixtureDataType.by_domain(domain):
+        ret.append({
+            'sourceUri': 'jr://fixture/item-list:%s' % data_type.tag,
+            'defaultId': data_type.tag,
+            'initialQuery': "instance('{tag}')/item-list:{tag}/{tag}".format(tag=data_type.tag),
+            'name': data_type.tag,
+            'structure': {
+                f.field_name: {
+                    'name': f.field_name,
+                    'no_option': True
+                } for f in data_type.fields},
+        })
+    return ret
+
 def item_lists(user, version, last_sync=None):
     assert isinstance(user, CommCareUser)
 

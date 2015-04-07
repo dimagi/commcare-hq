@@ -14,7 +14,7 @@ class Command(BaseCommand):
         else:
             raise CommandError('Usage: %s\n%s' % (self.args, self.help))
 
-        next_year = datetime.datetime.now() + datetime.timedelta(days=365)
+        next_year = datetime.datetime.utcnow() + datetime.timedelta(days=365)
         records = RepeatRecord.all(domain=domain, due_before=next_year)
         for record in records:
             record.fire(post_fn=simple_post)

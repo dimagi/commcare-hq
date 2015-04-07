@@ -131,16 +131,16 @@
                         <tr>
                             <td data-bind="text: $parent.get_data_index($index)"></td>
                             <td><a data-bind="attr: {href: edit_url}, text: name"></a></td>
-                            <td data-bind="text: code_"></td>
+                            <td data-bind="text: code"></td>
                             <td data-bind="text: program"></td>
                             <td data-bind="text: description"></td>
                             <td data-bind="text: unit"></td>
                             <td>
-                                <a data-bind="attr: {href: '#'+_id}, text: archive_action_text"
+                                <a data-bind="attr: {href: '#'+product_id}, text: archive_action_text"
                                    class="btn {% if not show_inactive %}btn-inverse{% endif %}"
                                    data-toggle="modal"></a>
 
-                                <div class="modal hide fade" data-bind="attr: {id: _id}">
+                                <div class="modal hide fade" data-bind="attr: {id: product_id}">
                                     <div class="modal-header">
                                         <a class="close" data-dismiss="modal">&times;</a>
                                         <h4>
@@ -177,7 +177,7 @@
                     <tr>
                         <td data-bind="text: $index()+1"></td>
                         <td><a data-bind="attr: {href: edit_url}, text: name"></a></td>
-                        <td data-bind="text: code_"></td>
+                        <td data-bind="text: code"></td>
                         <td data-bind="text: program"></td>
                         <td data-bind="text: description"></td>
                         <td data-bind="text: unit"></td>

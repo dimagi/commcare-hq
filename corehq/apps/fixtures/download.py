@@ -68,7 +68,7 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
     # a small number of tables it renders more accurate progress
     total_events = (total_tables + (0 if total_tables < 4 else 1)) * 10
 
-    now = datetime.now
+    now = datetime.utcnow
     last_update = [now()]
     upate_period = timedelta(seconds=1)  # do not update progress more than once a second
 

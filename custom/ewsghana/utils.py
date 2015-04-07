@@ -200,11 +200,28 @@ class ProductsReportHelper(object):
     def sql_location(self):
         return self.location.sql_location
 
+    def reported_products_ids(self):
+        return {transaction.product_id for transaction in self.transactions}
+
     def reported_products(self):
-        return [SQLProduct.objects.get(product_id=transaction.product_id) for transaction in self.transactions]
+        return SQLProduct.objects.filter(product_id__in=self.reported_products_ids())
 
     def missing_products(self):
-        return set(self.location.products) - set(self.reported_products())
+        products_ids = SQLProduct.objects.filter(
+            domain=self.location.domain,
+            is_archived=False
+        ).values_list('product_id')
+        date = datetime.utcnow() - timedelta(days=7)
+        earlier_reported_products = StockState.objects.filter(
+            product_id__in=products_ids,
+            case_id=self.location.sql_location.supply_point_id
+        ).exclude(last_modified_date__lte=date).values_list('product_id', flat=True).distinct()
+        missing_products = self.location.sql_location.products.distinct().values_list(
+            'product_id', flat=True
+        ).exclude(product_id__in=earlier_reported_products).exclude(product_id__in=self.reported_products_ids())
+        if not missing_products:
+            return []
+        return SQLProduct.objects.filter(product_id__in=missing_products)
 
     def stock_states(self):
         product_ids = [product.product_id for product in self.reported_products()]
@@ -215,9 +232,8 @@ class ProductsReportHelper(object):
 
     def stockouts(self):
         return self.stock_states().filter(
-            stock_on_hand=0,
-            case_id=self.sql_location.supply_point_id
-        ).order_by('sql_product__code')
+            stock_on_hand=0
+        ).distinct('sql_product__code').order_by('sql_product__code')
 
     def reorders(self):
         reorders = []
@@ -230,13 +246,9 @@ class ProductsReportHelper(object):
         return reorders
 
     def _get_facilities_with_stock_category(self, category):
-        product_ids = [product.product_id for product in self.reported_products()]
         return [
             stock_state
-            for stock_state in StockState.objects.filter(
-                product_id__in=product_ids,
-                case_id=self.sql_location.supply_point_id
-            ).order_by('sql_product__code')
+            for stock_state in self.stock_states().distinct('sql_product__code').order_by('sql_product__code')
             if stock_state.stock_category == category
         ]
 

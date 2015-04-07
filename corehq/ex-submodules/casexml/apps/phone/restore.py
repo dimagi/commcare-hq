@@ -1,11 +1,16 @@
 from StringIO import StringIO
+from io import FileIO
+from os import path
+from uuid import uuid4
 from collections import defaultdict
+import shutil
 import hashlib
+import tempfile
 from couchdbkit import ResourceConflict, ResourceNotFound
 from casexml.apps.phone.caselogic import BatchedCaseSyncOperation
 from casexml.apps.stock.consumption import compute_consumption_or_default
 from casexml.apps.stock.utils import get_current_ledger_transactions_multi
-from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
+from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, FILE_RESTORE
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.exceptions import BadStateException, RestoreException
@@ -22,7 +27,8 @@ from couchforms.xml import (
 )
 from casexml.apps.case.xml import check_version, V1
 from casexml.apps.phone.fixtures import generator
-from django.http import HttpResponse
+from django.http import HttpResponse, StreamingHttpResponse
+from django.conf import settings
 from casexml.apps.phone.checksum import CaseStateHash
 from no_exceptions.exceptions import HttpException
 
@@ -42,6 +48,9 @@ INITIAL_SYNC_CACHE_TIMEOUT = 60 * 60  # 1 hour
 # for rapid iteration on fixtures/cases/etc.
 INITIAL_SYNC_CACHE_THRESHOLD = 60  # 1 minute
 
+# Max amount of bytes to have in memory when streaming a file
+MAX_BYTES = 10000000  # 10MB
+
 
 class StockSettings(object):
 
@@ -58,7 +67,7 @@ class StockSettings(object):
         self.force_consumption_case_filter = force_consumption_case_filter or (lambda case: False)
 
 
-class StringRestoreResponse(object):
+class RestoreResponse(object):
     start_tag_template = (
         '<OpenRosaResponse xmlns="http://openrosa.org/http/response"{items}>'
         '<message nature="{nature}">Successfully restored account {username}!</message>'
@@ -70,7 +79,6 @@ class StringRestoreResponse(object):
         self.username = username
         self.items = items
         self.num_items = 0
-        self.response_body = StringIO()
 
     def close(self):
         self.response_body.close()
@@ -92,17 +100,72 @@ class StringRestoreResponse(object):
         for element in iterable:
             self.append(element)
 
-    def __str__(self):
+    def compose(self):
+        raise NotImplemented()
+
+
+class FileRestoreResponse(RestoreResponse):
+
+    BODY_TAG_SUFFIX = '-body'
+    EXTENSION = 'xml'
+
+    def __init__(self, username=None, items=False):
+        super(FileRestoreResponse, self).__init__(username, items)
+        self.filename = path.join(settings.RESTORE_PAYLOAD_DIR or tempfile.gettempdir(), uuid4().hex)
+
+        self.response_body = FileIO(self.get_filename(self.BODY_TAG_SUFFIX), 'w+')
+        self.response = FileIO(self.get_filename(), 'w+')
+
+    def get_filename(self, suffix=None):
+        return "{filename}{suffix}.{ext}".format(
+            filename=self.filename,
+            suffix=suffix or '',
+            ext=self.EXTENSION
+        )
+
+    def __add__(self, other):
+        if not isinstance(other, FileRestoreResponse):
+            raise NotImplemented()
+
+        response = FileRestoreResponse(self.username, self.items)
+        response.num_items = self.num_items + other.num_items
+
+        self.response_body.seek(0)
+        other.response_body.seek(0)
+
+        shutil.copyfileobj(self.response_body, response.response_body)
+        shutil.copyfileobj(other.response_body, response.response_body)
+
+        return response
+
+    def compose(self):
+        """
+        Creates the final file with start and ending tag
+        """
         # Add 1 to num_items to account for message element
         items = self.items_template.format(self.num_items + 1) if self.items else ''
-        return '{start}{body}{end}'.format(
-            start=self.start_tag_template.format(
-                items=items,
-                username=self.username,
-                nature=ResponseNature.OTA_RESTORE_SUCCESS),
-            body=self.response_body.getvalue(),
-            end=self.closing_tag
-        )
+        self.response.write(self.start_tag_template.format(
+            items=items,
+            username=self.username,
+            nature=ResponseNature.OTA_RESTORE_SUCCESS
+        ))
+
+        self.response_body.seek(0)
+        shutil.copyfileobj(self.response_body, self.response)
+
+        self.response.write(self.closing_tag)
+        return self.get_filename()
+
+    def close(self):
+        self.response_body.close()
+        self.response.close()
+
+
+class StringRestoreResponse(RestoreResponse):
+
+    def __init__(self, username=None, items=False):
+        super(StringRestoreResponse, self).__init__(username, items)
+        self.response_body = StringIO()
 
     def __add__(self, other):
         if not isinstance(other, StringRestoreResponse):
@@ -114,6 +177,21 @@ class StringRestoreResponse(object):
         response.response_body.write(other.response_body.getvalue())
 
         return response
+
+    def compose(self):
+        # Add 1 to num_items to account for message element
+        items = self.items_template.format(self.num_items + 1) if self.items else ''
+        return '{start}{body}{end}'.format(
+            start=self.start_tag_template.format(
+                items=items,
+                username=self.username,
+                nature=ResponseNature.OTA_RESTORE_SUCCESS),
+            body=self.response_body.getvalue(),
+            end=self.closing_tag
+        )
+
+    def __str__(self):
+        return self.compose()
 
 
 def get_stock_payload(domain, stock_settings, case_state_list):
@@ -186,9 +264,17 @@ def get_stock_payload(domain, stock_settings, case_state_list):
                     )
 
 
-def get_case_payload(domain, stock_settings, version, user, last_synclog, synclog):
-    response = StringRestoreResponse()
-    sync_operation = user.get_case_updates(last_synclog)
+def get_restore_class(user):
+    restore_class = StringRestoreResponse
+    if FILE_RESTORE.enabled(user.domain) or FILE_RESTORE.enabled(user.username):
+        restore_class = FileRestoreResponse
+
+    return restore_class
+
+
+def get_case_payload(domain, stock_settings, version, user, last_sync, synclog):
+    response = get_restore_class(user)()
+    sync_operation = user.get_case_updates(last_sync)
     synclog.cases_on_phone = [
         CaseState.from_case(c) for c in sync_operation.actual_owned_cases
     ]
@@ -217,7 +303,7 @@ def get_case_payload(domain, stock_settings, version, user, last_synclog, synclo
 
 
 def get_case_payload_batched(domain, stock_settings, version, user, last_synclog, synclog):
-    response = StringRestoreResponse()
+    response = get_restore_class(user)()
 
     batch_count = 0
     sync_operation = BatchedCaseSyncOperation(user, last_synclog)
@@ -325,6 +411,11 @@ class RestoreConfig(object):
                                         case_ids=self.sync_log.get_footprint_of_cases_on_phone())
 
     def get_payload(self):
+        """
+        This function currently returns either a full string payload or a string name of a file
+        that contains the contents of the payload. If FILE_RESTORE toggle is enabled, then this will return
+        the filename, otherwise it will return the full string payload
+        """
         user = self.user
         last_synclog = self.sync_log
 
@@ -349,7 +440,7 @@ class RestoreConfig(object):
         new_synclog.save(**get_safe_write_kwargs())
 
         # start with standard response
-        with StringRestoreResponse(user.username, items=self.items) as response:
+        with get_restore_class(user)(user.username, items=self.items) as response:
             # add sync token info
             response.append(xml.get_sync_element(new_synclog.get_id))
             # registration block
@@ -364,8 +455,7 @@ class RestoreConfig(object):
             )
             combined_response = response + case_response
             case_response.close()
-
-            resp = str(combined_response)
+            resp = combined_response.compose()
             combined_response.close()
 
         duration = datetime.utcnow() - start_time
@@ -377,7 +467,17 @@ class RestoreConfig(object):
 
     def get_response(self):
         try:
-            return HttpResponse(self.get_payload(), mimetype="text/xml")
+            payload = self.get_payload()
+            if path.exists(payload):
+                try:
+                    with open(payload, 'r') as f:
+                        # Since payload file is all one line, need to readline based on bytes
+                        return StreamingHttpResponse(iter(lambda: f.readline(MAX_BYTES), ''),
+                                                     mimetype="text/xml")
+                except IOError as e:
+                    return HttpResponse(e, status=500)
+            else:
+                return HttpResponse(payload, mimetype="text/xml")
         except RestoreException, e:
             logging.exception("%s error during restore submitted by %s: %s" %
                               (type(e).__name__, self.user.username, str(e)))
@@ -399,9 +499,13 @@ class RestoreConfig(object):
             return
 
         if self.sync_log:
-            return self.sync_log.get_cached_payload(self.version)
+            payload = self.sync_log.get_cached_payload(self.version)
         else:
-            return self.cache.get(self._initial_cache_key())
+            payload = self.cache.get(self._initial_cache_key())
+
+        if payload and payload.endswith(FileRestoreResponse.EXTENSION) and not path.exists(payload):
+            return
+        return payload
 
     def set_cached_payload_if_necessary(self, resp, duration):
         if self.sync_log:
