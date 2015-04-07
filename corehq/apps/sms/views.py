@@ -952,17 +952,17 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
         is_editable = not backend.is_global and backend.domain == self.domain
         if len(backend.supported_countries) > 0:
             if backend.supported_countries[0] == '*':
-                supported_countrie_names = _('Multiple%s') % '*'
+                supported_country_names = _('Multiple%s') % '*'
             else:
-                supported_countrie_names = ', '.join(
+                supported_country_names = ', '.join(
                     [_(country_name_from_code(int(c))) for c in backend.supported_countries])
         else:
-            supported_countrie_names = ''
+            supported_country_names = ''
         return {
             'id': backend._id,
             'name': backend.name,
             'description': backend.description,
-            'supported_countries': supported_countrie_names,
+            'supported_countries': supported_country_names,
             'editUrl': reverse(
                 EditDomainGatewayView.urlname,
                 args=[self.domain, backend.__class__.__name__, backend._id]
