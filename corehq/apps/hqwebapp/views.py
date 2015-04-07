@@ -922,3 +922,14 @@ def osdd(request, template='osdd.xml'):
     response = render(request, template, {'url_base': get_url_base()})
     response['Content-Type'] = 'application/xml'
     return response
+
+
+def maintenance_alerts(request, template='hqwebapp/maintenance_alerts.html'):
+    from corehq.apps.hqwebapp.models import MaintenanceAlert
+
+    return render(request, template, {
+        'alerts': [{
+            'created': unicode(alert.created),
+            'html': alert.html,
+        } for alert in MaintenanceAlert.objects.all()[:5]]
+    })

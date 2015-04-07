@@ -212,7 +212,7 @@ class ASHAFunctionalityChecklistData(SqlData):
         return [
             DatabaseColumn("Total number of ASHAs under the Facilitator", SimpleColumn("doc_id",)),
             DatabaseColumn("ASHA name", SimpleColumn("hv_asha_name",)),
-            DatabaseColumn("Date of last for submission", SimpleColumn("date",)),
+            DatabaseColumn("Date of last for submission", SimpleColumn("completed_on",)),
         ]
 
     @property
@@ -241,6 +241,7 @@ class ASHAAFChecklistData(SqlData):
             return "%d%%" % value
 
         return [
+            DatabaseColumn("Date", SimpleColumn('completed_on')),
             DatabaseColumn("Newborn visits within first day of birth in case of home deliveries",
                            SimpleColumn("hv_fx_home_birth_visits"), format_fn=convert_value),
             DatabaseColumn("Set of home visits for newborn care as specified in the HBNC guidelines "

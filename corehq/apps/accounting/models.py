@@ -1834,7 +1834,7 @@ class CreditLine(models.Model):
     def add_credit(cls, amount, account=None, subscription=None,
                    product_type=None, feature_type=None, payment_record=None,
                    invoice=None, line_item=None, related_credit=None,
-                   note=None, reason=None, web_user=None):
+                   note=None, reason=None, web_user=None, permit_inactive=False):
         if account is None and subscription is None:
             raise CreditLineError(
                 "You must specify either a subscription "
@@ -1852,7 +1852,7 @@ class CreditLine(models.Model):
                 product_type__exact=product_type,
                 feature_type__exact=feature_type,
             )
-            if not credit_line.is_active and not invoice:
+            if not permit_inactive and not credit_line.is_active and not invoice:
                 raise CreditLineError(
                     "Could not add credit to CreditLine %s because it is "
                     "inactive." % credit_line.__str__()

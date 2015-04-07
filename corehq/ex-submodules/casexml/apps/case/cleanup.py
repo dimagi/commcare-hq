@@ -104,12 +104,15 @@ def reset_state(case):
         except KeyError:
             pass
         except AttributeError:
-            logging.error(
-                "Cannot delete attribute '%(attribute)s' from case '%(case_id)s'" % {
-                    'case_id': case._id,
-                    'attribute': k,
-                }
-            )
+            # 'case_id' is not a valid property so don't worry about spamming
+            # this error.
+            if k != 'case_id':
+                logging.error(
+                    "Cannot delete attribute '%(attribute)s' from case '%(case_id)s'" % {
+                        'case_id': case._id,
+                        'attribute': k,
+                    }
+                )
 
     # already deleted means it was explicitly set to "deleted",
     # as opposed to getting set to that because it has no actions

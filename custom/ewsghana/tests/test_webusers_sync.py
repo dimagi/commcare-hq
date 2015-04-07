@@ -41,18 +41,14 @@ class WebUsersSyncTest(TestCase):
                          ewsghana_webuser.get_domain_membership(TEST_DOMAIN).role_id)
 
     def test_create_facility_manager(self):
-        """
-            Facility manager in EWS is created as web user but in HQ
-            is converted to CommTrackUser
-        """
         with open(os.path.join(self.datapath, 'sample_webusers.json')) as f:
             webuser = EWSUser(json.loads(f.read())[1])
 
         self.assertEqual(0, len(WebUser.by_domain(TEST_DOMAIN)))
         self.api_object.web_user_sync(webuser)
-        self.assertEqual(0, len(list(WebUser.by_domain(TEST_DOMAIN))))
-        users = CommCareUser.by_domain(TEST_DOMAIN)
-        self.assertEqual(1, len(list(users)))
+        web_users = list(WebUser.by_domain(TEST_DOMAIN))
+        self.assertEqual(1, len(web_users))
+        self.assertEqual(0, len(CommCareUser.by_domain(TEST_DOMAIN)))
         facility_manager_role = UserRole.by_domain_and_name(TEST_DOMAIN, 'Facility manager')[0]
-        dm = users[0].get_domain_membership(TEST_DOMAIN)
+        dm = web_users[0].get_domain_membership(TEST_DOMAIN)
         self.assertEqual(facility_manager_role.get_id, dm.role_id)
