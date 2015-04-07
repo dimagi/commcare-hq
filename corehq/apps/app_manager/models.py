@@ -1551,6 +1551,10 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
             if column.format in ('enum', 'enum-image'):
                 for item in column.enum:
                     key = item.key
+                    # key cannot contain certain characters because it is used
+                    # to generate an xpath variable name within suite.xml
+                    # todo: I think the space here will break xpath generation
+                    # todo: which relies on 'k{key}' being a valid xpath token
                     if not re.match('^([\w_ -]*)$', key):
                         yield {
                             'type': 'invalid id key',

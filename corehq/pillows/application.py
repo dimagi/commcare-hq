@@ -15,7 +15,6 @@ class AppPillow(AliasedElasticPillow):
     es_host = settings.ELASTICSEARCH_HOST
     es_port = settings.ELASTICSEARCH_PORT
     es_timeout = 60
-    es_index_prefix = "hqapps"
     es_alias = "hqapps"
     es_type = "app"
     es_meta = {

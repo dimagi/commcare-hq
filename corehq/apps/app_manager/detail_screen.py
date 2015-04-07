@@ -310,11 +310,10 @@ class Enum(FormattedDetailColumn):
     def variables(self):
         variables = {}
         for item in self.column.enum:
+            # prefix with k to make valid tokens of numeral-initial keys
             v_key = u"k{key}".format(key=item.escaped_key)
-            v_val = self.id_strings.detail_column_enum_variable(self.module,
-                                                                self.detail_type,
-                                                                self.column,
-                                                                item.escaped_key)
+            v_val = self.id_strings.detail_column_enum_variable(
+                self.module, self.detail_type, self.column, item.escaped_key)
             variables[v_key] = v_val
         return variables
 

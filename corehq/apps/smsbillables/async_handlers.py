@@ -1,9 +1,6 @@
 import json
 import logging
 from couchdbkit import ResourceNotFound
-from django.utils.encoding import force_unicode
-from django_countries.countries import COUNTRIES
-from phonenumbers import COUNTRY_CODE_TO_REGION_CODE
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.accounting.utils import fmt_dollar_amount
 from corehq.apps.hqwebapp.async_handler import BaseAsyncHandler
@@ -13,6 +10,7 @@ from corehq.apps.sms.models import INCOMING, OUTGOING
 from corehq.apps.sms.util import get_backend_by_class_name
 from corehq.apps.smsbillables.exceptions import SMSRateCalculatorError
 from corehq.apps.smsbillables.models import SmsGatewayFeeCriteria, SmsGatewayFee, SmsUsageFee
+from corehq.apps.smsbillables.utils import country_name_from_isd_code_or_empty
 from corehq.util.quickcache import quickcache
 
 
@@ -76,10 +74,8 @@ class SMSRatesSelect2AsyncHandler(BaseAsyncHandler):
             country_code__exact=None
         ).values_list('country_code', flat=True).distinct()
         final_codes = []
-        countries = dict(COUNTRIES)
         for code in country_codes:
-            cc = COUNTRY_CODE_TO_REGION_CODE.get(code)
-            country_name = force_unicode(countries.get(cc[0])) if cc else ''
+            country_name = country_name_from_isd_code_or_empty(code)
             final_codes.append((code, country_name))
 
         search_term = self.data.get('searchString')

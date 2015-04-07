@@ -43,8 +43,8 @@
 trunk: master
 name: autostaging
 branches:
+  - rm-djangocouch  # danny 4/6
   - test-global-request  # danny 4/1
-  - utcNOW  # danny 4/2
   - subscription-no-contact-info # bb 8/4
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
   - vellum-staging # J$ 11/13
@@ -53,7 +53,6 @@ branches:
   - static-updates # Biyeun 2/9
   - loc-type-stock-rates  # Ethan 3/6
   - usercase # Norman 3/27
-  - update-inventories #ts 4/2
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

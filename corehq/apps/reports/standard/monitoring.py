@@ -32,15 +32,19 @@ from django.utils.translation import ugettext_noop
 class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
     exportable = True
 
-    def get_raw_user_link(self, user, link=None):
-        from corehq.apps.reports.standard.cases.basic import CaseListReport
+    def get_raw_user_link(self, user):
         user_link_template = '<a href="%(link)s?%(params)s">%(username)s</a>'
         user_link = user_link_template % {
-            'link': link or CaseListReport.get_url(domain=self.domain),
+            'link': self.raw_user_link_url,
             'params': urlencode(EMWF.for_user(user.user_id)),
             'username': user.username_in_report,
         }
         return user_link
+
+    @property
+    def raw_user_link_url(self):
+        from corehq.apps.reports.standard.cases.basic import CaseListReport
+        return CaseListReport.get_url(domain=self.domain)
 
     def get_user_link(self, user):
         user_link = self.get_raw_user_link(user)
@@ -586,10 +590,10 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
         first_col = self.get_raw_user_link(user) if user else _("Total")
         return [first_col] + styled_date_cols + [sum(date_cols)]
 
-    def get_raw_user_link(self, user):
+    @property
+    def raw_user_link_url(self):
         from corehq.apps.reports.standard.inspect import SubmitHistory
-        url = SubmitHistory.get_url(domain=self.domain)
-        return super(DailyFormStatsReport, self).get_raw_user_link(user, url)
+        return SubmitHistory.get_url(domain=self.domain)
 
 class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin,
                                CompletionOrSubmissionTimeMixin):
