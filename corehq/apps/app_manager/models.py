@@ -79,6 +79,7 @@ from .exceptions import (
     IncompatibleFormTypeException,
     LocationXpathValidationError,
     ModuleNotFoundException,
+    ModuleIdMissingException,
     RearrangeError,
     VersioningError,
     XFormException,
@@ -1548,6 +1549,10 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
             if column.format in ('enum', 'enum-image'):
                 for item in column.enum:
                     key = item.key
+                    # key cannot contain certain characters because it is used
+                    # to generate an xpath variable name within suite.xml
+                    # todo: I think the space here will break xpath generation
+                    # todo: which relies on 'k{key}' being a valid xpath token
                     if not re.match('^([\w_ -]*)$', key):
                         yield {
                             'type': 'invalid id key',
@@ -3492,6 +3497,21 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             else:
                 map_item.version = self.version
 
+    def ensure_module_unique_ids(self, should_save=False):
+        """
+            Creates unique_ids for modules that don't have unique_id attributes
+            should_save: the doc will be saved only if should_save is set to True
+
+            WARNING: If called on the same doc in different requests without saving,
+            this function will set different uuid each time,
+            likely causing unexpected behavior
+        """
+        if any(not mod.unique_id for mod in self.modules):
+            for mod in self.modules:
+                mod.get_or_create_unique_id()
+            if should_save:
+                self.save()
+
     def create_app_strings(self, lang):
         gen = app_strings.CHOICES[self.translation_strategy]
         if lang == 'default':
@@ -3922,6 +3942,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 if xmlns_count[xmlns] > 1:
                     errors.append({'type': "duplicate xmlns", "xmlns": xmlns})
 
+        if any(not module.unique_id for module in self.get_modules()):
+            raise ModuleIdMissingException
         modules_dict = {m.unique_id: m for m in self.get_modules()}
 
         def _parent_select_fn(module):

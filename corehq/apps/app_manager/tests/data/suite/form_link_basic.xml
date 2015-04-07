@@ -6,7 +6,7 @@
             </text>
         </command>
         <stack>
-          <create if="true()">
+          <create if="(today() - dob) &lt; 7">
             <command value="'m1'"/>
             <command value="'m1-f0'"/>
           </create>
