@@ -83,7 +83,7 @@ class BillingAccountBasicForm(forms.Form):
         required=False,
         initial=True,
     )
-    active_accounts = forms.CharField(
+    active_accounts = forms.IntegerField(
         label=_("Transfer Subscriptions To"),
         help_text=_("Transfer any existing subscriptions to the "
                     "Billing Account specified here."),
@@ -193,7 +193,7 @@ class BillingAccountBasicForm(forms.Form):
                 _("This account has subscriptions associated with it. "
                   "Please specify a transfer account before deactivating.")
             )
-        if self.account is not None and transfer_subs == self.account.name:
+        if self.account is not None and transfer_subs == self.account.id:
             raise ValidationError(
                 _("The transfer account can't be the same one you're trying "
                   "to deactivate.")
@@ -225,9 +225,9 @@ class BillingAccountBasicForm(forms.Form):
     def update_basic_info(self, account):
         account.name = self.cleaned_data['name']
         account.is_active = self.cleaned_data['is_active']
-        transfer_name = self.cleaned_data['active_accounts']
-        if transfer_name:
-            transfer_account = BillingAccount.objects.get(name=transfer_name)
+        transfer_id = self.cleaned_data['active_accounts']
+        if not transfer_id:
+            transfer_account = BillingAccount.objects.get(id=transfer_id)
             for sub in account.subscription_set.all():
                 sub.account = transfer_account
                 sub.save()
@@ -359,7 +359,7 @@ class SubscriptionForm(forms.Form):
     auto_generate_credits = forms.BooleanField(
         label=_("Auto-generate Plan Credits"), required=False
     )
-    active_accounts = forms.CharField(
+    active_accounts = forms.IntegerField(
         label=_("Transfer Subscription To"),
         required=False,
     )
@@ -583,7 +583,7 @@ class SubscriptionForm(forms.Form):
 
     def clean_active_accounts(self):
         transfer_account = self.cleaned_data.get('active_accounts')
-        if transfer_account and transfer_account == self.subscription.account.name:
+        if transfer_account and transfer_account == self.subscription.account.id:
             raise ValidationError("Please select an account other than the "
                                   "current account to transfer to.")
         return transfer_account
@@ -602,7 +602,7 @@ class SubscriptionForm(forms.Form):
         )
         transfer_account = self.cleaned_data.get('active_accounts')
         if transfer_account:
-            acct = BillingAccount.objects.get(name=transfer_account)
+            acct = BillingAccount.objects.get(id=transfer_account)
             self.subscription.account = acct
             self.subscription.save()
 
