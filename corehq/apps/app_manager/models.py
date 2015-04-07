@@ -1233,6 +1233,14 @@ class MappingItem(DocumentSchema):
     # lang => localized string
     value = DictProperty()
 
+    @property
+    def escaped_key(self):
+        """
+        Return the key with spaces replaces by underscores for use in xml
+        variable names
+        """
+        return self.key.replace(" ", "_")
+
 
 class GraphAnnotations(IndexedSchema):
     display_text = DictProperty()

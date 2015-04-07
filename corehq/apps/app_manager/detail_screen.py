@@ -289,7 +289,7 @@ class Enum(FormattedDetailColumn):
             parts.append(
                 xpath_fragment_template.format(
                     key=item.key,
-                    key_as_var=item.key.replace(" ", "_"),
+                    key_as_var=item.escaped_key,
                     xpath=self.xpath,
                     i=i,
                 )
@@ -310,12 +310,11 @@ class Enum(FormattedDetailColumn):
     def variables(self):
         variables = {}
         for item in self.column.enum:
-            escaped_key = item.key.replace(" ", "_")
-            v_key = u"k{key}".format(key=escaped_key)
-            v_val= self.id_strings.detail_column_enum_variable(self.module,
-                                                               self.detail_type,
-                                                               self.column,
-                                                               escaped_key)
+            v_key = u"k{key}".format(key=item.escaped_key)
+            v_val = self.id_strings.detail_column_enum_variable(self.module,
+                                                                self.detail_type,
+                                                                self.column,
+                                                                item.escaped_key)
             variables[v_key] = v_val
         return variables
 
