@@ -4,6 +4,7 @@ import inspect
 from inspect import isfunction
 import logging
 from django.core.cache import get_cache
+from corehq.util.soft_assert.api import soft_assert
 
 logger = logging.getLogger('quickcache')
 
@@ -65,6 +66,12 @@ class QuickCache(object):
                         'no such argument'.format(arg, self.fn.__name__)
                     )
 
+        self.encoding_assert = soft_assert(
+            to=['{}@{}'.format('skelly', 'dimagi.com')],
+            fail_if_debug=False,
+            skip_frames=5,
+        )
+
         self.vary_on = vary_on
 
     def __call__(self, *args, **kwargs):
@@ -95,7 +102,11 @@ class QuickCache(object):
             if isinstance(value, unicode):
                 encoded = value.encode('utf-8')
             else:
-                encoded = value
+                try:
+                    encoded = value.decode('utf-8').encode('utf-8')
+                except UnicodeDecodeError:
+                    self.encoding_assert(False, 'Non-utf8 encoded string used as cache vary on')
+                    encoded = value
             return 'u' + self._hash(encoded)
         elif isinstance(value, bool):
             return 'b' + str(int(value))
