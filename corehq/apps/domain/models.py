@@ -629,7 +629,7 @@ class Domain(Document, SnapshotMixin):
 
     def save(self, **params):
         super(Domain, self).save(**params)
-        self.get_by_name.clear(Domain, self.name)  # clear the domain cache
+        Domain.get_by_name.clear(Domain, self.name)  # clear the domain cache
 
         from corehq.apps.domain.signals import commcare_domain_post_save
         results = commcare_domain_post_save.send_robust(sender='domain', domain=self)
@@ -923,6 +923,7 @@ class Domain(Document, SnapshotMixin):
         )]
         iter_bulk_delete(db, related_doc_ids, chunksize=500)
         super(Domain, self).delete()
+        Domain.get_by_name.clear(Domain, self.name)  # clear the domain cache
 
     def all_media(self, from_apps=None): #todo add documentation or refactor
         from corehq.apps.hqmedia.models import CommCareMultimedia
