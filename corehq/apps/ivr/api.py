@@ -190,8 +190,16 @@ def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_
         msg.couch_recipient_doc_type = v.owner_doc_type
         msg.couch_recipient = v.owner_id
     msg.save()
-    
-    return HttpResponse("")
+
+    if backend_module:
+        return HttpResponse(backend_module.get_http_response_string(
+            gateway_session_id,
+            [],
+            collect_input=False,
+            hang_up=True
+        ))
+    else:
+        return HttpResponse("")
 
 
 def get_ivr_backend(recipient, verified_number=None, unverified_number=None):
