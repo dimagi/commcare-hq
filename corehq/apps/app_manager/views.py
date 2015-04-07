@@ -27,6 +27,7 @@ from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
     IncompatibleFormTypeException,
     ModuleNotFoundException,
+    ModuleIdMissingException,
     RearrangeError,
 )
 
@@ -785,14 +786,6 @@ def get_module_view_context_and_template(app, module):
     child_case_types = list(child_case_types)
     fixtures = [f.tag for f in FixtureDataType.by_domain(app.domain)]
 
-    def ensure_unique_ids():
-        # make sure all modules have unique ids
-        modules = app.modules
-        if any(not mod.unique_id for mod in modules):
-            for mod in modules:
-                mod.get_or_create_unique_id()
-            app.save()
-
     def get_parent_modules(case_type):
         parent_types = builder.get_parent_types(case_type)
         modules = app.modules
@@ -820,7 +813,8 @@ def get_module_view_context_and_template(app, module):
 
         return options
 
-    ensure_unique_ids()
+    # make sure all modules have unique ids
+    app.ensure_module_unique_ids(should_save=True)
     if isinstance(module, CareplanModule):
         return "app_manager/module_view_careplan.html", {
             'parent_modules': get_parent_modules(CAREPLAN_GOAL),
@@ -2276,7 +2270,12 @@ def save_copy(request, domain, app_id):
     """
     comment = request.POST.get('comment')
     app = get_app(domain, app_id)
-    errors = app.validate_app()
+    try:
+        errors = app.validate_app()
+    except ModuleIdMissingException:
+        # For apps (mainly Exchange apps) that lost unique_id attributes on Module
+        app.ensure_module_unique_ids(should_save=True)
+        errors = app.validate_app()
 
     if not errors:
         try:
