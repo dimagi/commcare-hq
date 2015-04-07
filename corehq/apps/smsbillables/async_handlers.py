@@ -147,10 +147,11 @@ class PublicSMSRatesAsyncHandler(BaseAsyncHandler):
             if isinstance(backend_instance, TestSMSBackend):
                 continue
 
-            # skip if backend supports selected countries only
-            supported_in_country = country_code in [int(code) for code in backend_instance.supported_countries]
-            if backend_instance.supported_countries and not supported_in_country:
-                continue
+            # skip country is not in supported countries
+            if backend_instance.supported_countries:
+                supported_country_codes = [code for code in backend_instance.supported_countries]
+                if '*' not in supported_country_codes and str(country_code) not in supported_country_codes:
+                    continue
 
             gateway_fee_incoming = _directed_fee(
                 INCOMING,
