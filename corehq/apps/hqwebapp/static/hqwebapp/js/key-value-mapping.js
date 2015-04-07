@@ -77,7 +77,7 @@ function MapList(o) {
         // i.e. self.duplicatedItems.push(self._normalizedKey(foo))
         //      not self.duplicatedItems.push(self._normalizedKey(foo))
         // TODO: Create a type that inherits from ko.observableArray that does the normalization automatically
-        return str.replace(" ", "_")
+        return str.replace(" ", "_");
     };
 
     self._keys_equal = function (v1, v2) {
