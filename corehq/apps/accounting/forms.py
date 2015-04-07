@@ -547,24 +547,26 @@ class SubscriptionForm(forms.Form):
 
     def clean(self):
         account_id = self.cleaned_data['active_accounts'] or self.cleaned_data['account']
-        account = BillingAccount.objects.get(id=account_id)
-        if not self.cleaned_data['do_not_invoice'] and not account.billingcontactinfo.emails:
-            from corehq.apps.accounting.views import ManageBillingAccountView
-            raise forms.ValidationError(mark_safe(
-                "Please update 'Client Contact Emails' "
-                '<strong><a href=%s target="_blank">here</a></strong> '
-                "before using Billing Account <strong>%s</strong>."
-                % (
-                    reverse(ManageBillingAccountView.urlname, args=[account.id]),
-                    account.name,
-                )
-            ))
+        if account_id:
+            account = BillingAccount.objects.get(id=account_id)
+            if not self.cleaned_data['do_not_invoice'] and not account.billingcontactinfo.emails:
+                from corehq.apps.accounting.views import ManageBillingAccountView
+                raise forms.ValidationError(mark_safe(
+                    "Please update 'Client Contact Emails' "
+                    '<strong><a href=%s target="_blank">here</a></strong> '
+                    "before using Billing Account <strong>%s</strong>."
+                    % (
+                        reverse(ManageBillingAccountView.urlname, args=[account.id]),
+                        account.name,
+                    )
+                ))
 
-        start_date = self.subscription.date_start \
-            if self.is_existing else self.cleaned_data['start_date']
+        start_date = self.cleaned_data['start_date'] or self.subscription.date_start
         if (self.cleaned_data['end_date'] is not None
             and start_date > self.cleaned_data['end_date']):
             raise ValidationError("End date must be after start date.")
+
+        return self.cleaned_data
 
     def create_subscription(self):
         account = BillingAccount.objects.get(id=self.cleaned_data['account'])
