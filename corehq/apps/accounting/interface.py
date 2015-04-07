@@ -37,11 +37,10 @@ class AddItemInterface(GenericTabularReport):
 
 class AccountingInterface(AddItemInterface):
     section_name = "Accounting"
+    name = "Billing Accounts"
+    description = "List of all billing accounts"
+    slug = "accounts"
     dispatcher = AccountingAdminInterfaceDispatcher
-
-    item_name = "Billing Account"
-
-    crud_form_update_url = "/accounting/form/"
 
     fields = ['corehq.apps.accounting.interface.DateCreatedFilter',
               'corehq.apps.accounting.interface.NameFilter',
@@ -52,6 +51,8 @@ class AccountingInterface(AddItemInterface):
               'corehq.apps.accounting.interface.EntryPointFilter',
               ]
     hide_filters = False
+
+    item_name = "Billing Account"
 
     def validate_document_class(self):
         return True
@@ -134,20 +135,13 @@ class AccountingInterface(AddItemInterface):
         )
         return context
 
-    name = "Billing Accounts"
-    description = "List of all billing accounts"
-    slug = "accounts"
-
-    crud_item_type = "Billing Account"
-
 
 class SubscriptionInterface(AddItemInterface):
     section_name = "Accounting"
+    name = "Subscriptions"
+    description = "List of all subscriptions"
+    slug = "subscriptions"
     dispatcher = AccountingAdminInterfaceDispatcher
-
-    item_name = "Subscription"
-
-    crud_form_update_url = "/accounting/form/"
 
     fields = [
         'corehq.apps.accounting.interface.StartDateFilter',
@@ -163,6 +157,8 @@ class SubscriptionInterface(AddItemInterface):
         'corehq.apps.accounting.interface.ProBonoStatusFilter',
     ]
     hide_filters = False
+
+    item_name = "Subscription"
 
     def validate_document_class(self):
         return True
@@ -302,20 +298,13 @@ class SubscriptionInterface(AddItemInterface):
         )
         return context
 
-    name = "Subscriptions"
-    description = "List of all subscriptions"
-    slug = "subscriptions"
-
-    crud_item_type = "Subscription"
-
 
 class SoftwarePlanInterface(AddItemInterface):
     section_name = "Accounting"
+    name = "Software Plans"
+    description = "List of all software plans"
+    slug = "software_plans"
     dispatcher = AccountingAdminInterfaceDispatcher
-
-    item_name = "Software Plan"
-
-    crud_form_update_url = "/accounting/form/"
 
     fields = [
         'corehq.apps.accounting.interface.SoftwarePlanNameFilter',
@@ -323,6 +312,8 @@ class SoftwarePlanInterface(AddItemInterface):
         'corehq.apps.accounting.interface.SoftwarePlanVisibilityFilter',
     ]
     hide_filters = False
+
+    item_name = "Software Plan"
 
     def validate_document_class(self):
         return True
@@ -382,12 +373,6 @@ class SoftwarePlanInterface(AddItemInterface):
             hideButton=True,
         )
         return context
-
-    name = "Software Plans"
-    description = "List of all software plans"
-    slug = "software_plans"
-
-    crud_item_type = "Software_Plan"
 
 
 def get_exportable_column(amount):
