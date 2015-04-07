@@ -72,7 +72,16 @@ def hang_up_response(gateway_session_id, backend_module=None):
         return HttpResponse("")
 
 
-def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_data=None):
+def add_metadata(call_log_entry, duration=None):
+    try:
+        call_log_entry.duration = int(round(float(duration)))
+        call_log_entry.save()
+    except (TypeError, ValueError):
+        pass
+
+
+def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_data=None,
+    duration=None):
     # Look up the call if one already exists
     call_log_entry = CallLog.view("sms/call_by_session",
                                   startkey=[gateway_session_id, {}],
@@ -83,6 +92,9 @@ def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_
     
     answer_is_valid = False # This will be set to True if IVR validation passes
     error_occurred = False # This will be set to False if touchforms validation passes (i.e., no form constraints fail)
+
+    if call_log_entry:
+        add_metadata(call_log_entry, duration)
 
     if call_log_entry and call_log_entry.xforms_session_id is None:
         # If this request is for a call with no touchforms session,
