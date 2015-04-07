@@ -87,14 +87,16 @@ class QuickCache(object):
         return hashlib.md5(value).hexdigest()[-length:]
 
     def _serialize_for_key(self, value):
-        if isinstance(value, unicode):
-            return 'u' + self._hash(value.encode('utf-8'))
-        elif isinstance(value, str):
-            if len(value) <= 32 and value.isalnum():
-                return 's' + value
+        if isinstance(value, basestring):
+            # Unicode and string values should generate the same key since users generally
+            # intend them to mean the same thing. If a use case for differentiating
+            # them presents itself add a 'lenient_strings=False' option to allow
+            # the user to explicitly request the different behaviour.
+            if isinstance(value, unicode):
+                encoded = value.encode('utf-8')
             else:
-                # for long or non-alphanumeric text
-                return 't' + self._hash(value)
+                encoded = value
+            return 'u' + self._hash(encoded)
         elif isinstance(value, bool):
             return 'b' + str(int(value))
         elif isinstance(value, (int, long, float)):
