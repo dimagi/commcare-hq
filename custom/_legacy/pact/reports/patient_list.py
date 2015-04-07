@@ -5,7 +5,7 @@ from corehq.apps.api.es import ReportCaseES, ReportXFormES
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.users.models import CommCareUser
-from dimagi.utils.decorators.memoized import memoized
+from corehq.elastic import SIZE_LIMIT
 from pact.enums import PACT_DOMAIN, PACT_HP_CHOICES, PACT_DOT_CHOICES, PACT_CASE_TYPE
 from pact.reports import PactElasticTabularReportMixin
 from pact.reports.dot import PactDOTReport
@@ -77,9 +77,7 @@ class PatientListDashboardReport(PactElasticTabularReportMixin):
     xform_es = ReportXFormES(PACT_DOMAIN)
 
     def get_pact_cases(self):
-        domain = PACT_DOMAIN
         query = self.case_es.base_query(start=0, size=None)
-
         query['fields'] = ['_id', 'name', 'pactid.#value']
         results = self.case_es.run_query(query)
         for res in results['hits']['hits']:
@@ -116,8 +114,6 @@ class PatientListDashboardReport(PactElasticTabularReportMixin):
             Returns 2D list of rows.
             [['row1'],[row2']]
         """
-        rows = []
-
         def _format_row(row_field_dict):
             yield row_field_dict.get("pactid.#value", '---').replace('_', ' ').title()
             yield self.pact_case_link(row_field_dict['_id'], row_field_dict.get("name", "---")),
@@ -140,7 +136,7 @@ class PatientListDashboardReport(PactElasticTabularReportMixin):
             pass
         else:
             #hack, do a facet query here
-            facet_dict = self.case_submits_facet_dict(self.es_results['hits']['total'])
+            facet_dict = self.case_submits_facet_dict(SIZE_LIMIT)
             for result in res['hits']['hits']:
                 yield list(_format_row(result['fields']))
 
