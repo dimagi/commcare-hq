@@ -32,8 +32,10 @@ from django.template.loader import render_to_string
 from restkit.errors import ResourceError
 from couchdbkit.resource import ResourceNotFound
 from corehq import toggles, privileges
+from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
 from corehq.util.quickcache import quickcache
+from corehq.util.timezones.conversions import ServerTime
 from django_prbac.exceptions import PermissionDenied
 from corehq.apps.accounting.utils import domain_has_privilege
 
@@ -54,7 +56,6 @@ from corehq.util import view_utils
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildSpec, CommCareBuildConfig, BuildRecord
 from corehq.apps.hqmedia.models import HQMediaMixin
-from corehq.apps.reports.templatetags.timezone_tags import utc_to_timezone
 from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import cc_user_domain
@@ -737,6 +738,9 @@ class FormBase(DocumentSchema):
             error = {'type': 'validation error', 'validation_message': msg}
             error.update(meta)
             errors.append(error)
+
+        if self.post_form_workflow == WORKFLOW_FORM and not self.form_links:
+            errors.append(dict(type="no form links", **meta))
 
         errors.extend(self.extended_build_validation(meta, xml_valid, validate_module))
 
@@ -1539,7 +1543,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
             if column.format in ('enum', 'enum-image'):
                 for item in column.enum:
                     key = item.key
-                    if not re.match('^([\w_-]*)$', key):
+                    if not re.match('^([\w_ -]*)$', key):
                         yield {
                             'type': 'invalid id key',
                             'key': key,
@@ -1564,11 +1568,6 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
 
     def validate_for_build(self):
         errors = []
-        if not self.forms:
-            errors.append({
-                'type': 'no forms',
-                'module': self.get_module_info(),
-            })
         if self.requires_case_details():
             errors.extend(self.get_case_errors(
                 needs_case_type=True,
@@ -1728,6 +1727,11 @@ class Module(ModuleBase):
 
     def validate_for_build(self):
         errors = super(Module, self).validate_for_build()
+        if not self.forms and not self.case_list.show:
+            errors.append({
+                'type': 'no forms or case list',
+                'module': self.get_module_info(),
+            })
         for sort_element in self.detail_sort_elements:
             try:
                 validate_detail_screen_field(sort_element.field)
@@ -2251,7 +2255,11 @@ class AdvancedModule(ModuleBase):
 
     def validate_for_build(self):
         errors = super(AdvancedModule, self).validate_for_build()
-
+        if not self.forms and not self.case_list.show:
+            errors.append({
+                'type': 'no forms or case list',
+                'module': self.get_module_info(),
+            })
         if self.case_list_form.form_id:
             forms = self.forms
 
@@ -2604,6 +2612,15 @@ class CareplanModule(ModuleBase):
             errors = self.validate_detail_columns(columns)
             for error in errors:
                 yield error
+
+    def validate_for_build(self):
+        errors = super(CareplanModule, self).validate_for_build()
+        if not self.forms:
+            errors.append({
+                'type': 'no forms',
+                'module': self.get_module_info(),
+            })
+        return errors
 
 
 class VersionedDoc(LazyAttachmentDoc):
@@ -3293,10 +3310,11 @@ class SavedAppBuild(ApplicationBase):
                     '_attachments', 'profile', 'translations'
                     'description', 'short_description'):
             data.pop(key, None)
+        built_on_user_time = ServerTime(self.built_on).user_time(timezone)
         data.update({
             'id': self.id,
-            'built_on_date': utc_to_timezone(data['built_on'], timezone, "%b %d, %Y"),
-            'built_on_time': utc_to_timezone(data['built_on'], timezone, "%H:%M %Z"),
+            'built_on_date': built_on_user_time.ui_string(USER_DATE_FORMAT),
+            'built_on_time': built_on_user_time.ui_string(USER_TIME_FORMAT),
             'build_label': self.built_with.get_label(),
             'jar_path': self.get_jar_path(),
             'short_name': self.short_name,
@@ -3333,7 +3351,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     commtrack_enabled = BooleanProperty(default=False)
     commtrack_requisition_mode = StringProperty(choices=CT_REQUISITION_MODES)
     auto_gps_capture = BooleanProperty(default=False)
-    logo_refs = DictProperty()
 
     @classmethod
     def wrap(cls, data):

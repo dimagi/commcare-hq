@@ -1,0 +1,3 @@
+USER_DATETIME_FORMAT = "%b %d, %Y %H:%M %Z"
+USER_DATE_FORMAT = "%b %d, %Y"
+USER_TIME_FORMAT = "%H:%M %Z"

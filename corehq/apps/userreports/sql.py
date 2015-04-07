@@ -11,6 +11,20 @@ from fluff.util import get_column_type
 metadata = sqlalchemy.MetaData()
 
 
+class SqlColumnConfig(object):
+    """
+    Stub object to send column information to the data source
+    """
+    def __init__(self, columns, headers=None, warnings=None):
+        self.columns = columns
+        # default headers to column headers, but allow subclasses to override
+        if headers is not None:
+            self.headers = [c.header for c in self.columns]
+        else:
+            self.headers = headers
+        self.warnings = warnings if warnings is not None else []
+
+
 class IndicatorSqlAdapter(object):
 
     def __init__(self, engine, config):
@@ -32,11 +46,11 @@ class IndicatorSqlAdapter(object):
         indicator_rows = self.config.get_all_values(doc)
         if indicator_rows:
             table = self.get_table()
-            for indicator_row in indicator_rows:
-                with self.engine.begin() as connection:
-                    # delete all existing rows for this doc to ensure we aren't left with stale data
-                    delete = table.delete(table.c.doc_id == doc['_id'])
-                    connection.execute(delete)
+            with self.engine.begin() as connection:
+                # delete all existing rows for this doc to ensure we aren't left with stale data
+                delete = table.delete(table.c.doc_id == doc['_id'])
+                connection.execute(delete)
+                for indicator_row in indicator_rows:
                     all_values = {i.column.id: i.value for i in indicator_row}
                     insert = table.insert().values(**all_values)
                     try:
@@ -105,7 +119,7 @@ def get_table_name(domain, table_id):
     return 'config_report_{0}_{1}_{2}'.format(domain, table_id, _hash(domain, table_id))
 
 
-def get_expanded_columns(data_source_configuration, column_config, column_warnings):
+def get_expanded_column_config(data_source_configuration, column_config):
     """
     Given a ReportColumn, return a list of DatabaseColumn objects. Each DatabaseColumn
     is configured to show the number of occurrences of one of the values present for
@@ -119,6 +133,7 @@ def get_expanded_columns(data_source_configuration, column_config, column_warnin
     :return:
     """
     MAXIMUM_EXPANSION = 10
+    column_warnings = []
     vals, over_expansion_limit = _get_distinct_values(
         data_source_configuration, column_config, MAXIMUM_EXPANSION
     )
@@ -129,7 +144,7 @@ def get_expanded_columns(data_source_configuration, column_config, column_warnin
                 column_config.display, MAXIMUM_EXPANSION
             )
         )
-    return _expand_column(column_config, vals)
+    return SqlColumnConfig(_expand_column(column_config, vals), warnings=column_warnings)
 
 
 def _get_distinct_values(data_source_configuration, column_config, expansion_limit=10):
@@ -186,10 +201,10 @@ def _expand_column(report_column, distinct_values):
                 report_column.field,
                 whens={val: 1},
                 else_=0,
-                alias=u"{}-{}".format(report_column.report_column_id, val),
+                alias=u"{}-{}".format(report_column.column_id, val),
             ),
             sortable=False,
-            data_slug=u"{}-{}".format(report_column.report_column_id, val),
+            data_slug=u"{}-{}".format(report_column.column_id, val),
             format_fn=report_column.get_format_fn(),
             help_text=report_column.description
         ))

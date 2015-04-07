@@ -23,6 +23,7 @@ from corehq.apps.hqwebapp.crispy import (
     BootstrapMultiField, FieldsetAccordionGroup, HiddenFieldWithErrors,
     FieldWithHelpBubble, InlineColumnField, ErrorsOnlyField,
 )
+from corehq.util.timezones.conversions import UserTime
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from .models import (
@@ -76,8 +77,7 @@ from openpyxl.shared.exc import InvalidFileException
 from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.app_manager.models import Form as CCHQForm
 from dimagi.utils.django.fields import TrimmedCharField
-from corehq.apps.reports import util as report_utils
-from corehq.util.timezones import utils as tz_utils
+from corehq.util.timezones.utils import get_timezone_for_user
 from langcodes import get_name as get_language_name
 
 ONE_MINUTE_OFFSET = time(0, 1)
@@ -1796,7 +1796,7 @@ class OneTimeReminderForm(Form):
 
     def clean_datetime(self):
         utcnow = datetime.utcnow()
-        timezone = report_utils.get_timezone(None, self._cchq_domain) # Use project timezone only
+        timezone = get_timezone_for_user(None, self._cchq_domain) # Use project timezone only
         if self.cleaned_data.get("send_type") == SEND_NOW:
             start_datetime = utcnow + timedelta(minutes=1)
         else:
@@ -1805,8 +1805,7 @@ class OneTimeReminderForm(Form):
             if dt is None or tm is None:
                 return None
             start_datetime = datetime.combine(dt, tm)
-            start_datetime = tz_utils.adjust_datetime_to_timezone(start_datetime, timezone.zone, pytz.utc.zone)
-            start_datetime = start_datetime.replace(tzinfo=None)
+            start_datetime = UserTime(start_datetime, timezone).server_time().done()
             if start_datetime < utcnow:
                 raise ValidationError(_("Date and time cannot occur in the past."))
         return start_datetime

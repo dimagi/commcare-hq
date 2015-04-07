@@ -15,7 +15,7 @@ def get_table(mapping):
 
 
 def get_formdata(days_ago, domain, user_id, xmlns=None, duration=1):
-    now = datetime.now()
+    now = datetime.utcnow()
     return FormData(
         doc_type='XFormInstance',
         domain=domain,
@@ -33,7 +33,7 @@ CaseInfo = namedtuple('CaseInfo', 'id, days_ago, case_type, is_closed')
 
 
 def get_casedata(case_info, domain, user_id, owner_id, opened_by, closed_by):
-    now = datetime.now()
+    now = datetime.utcnow()
     date_ago = now - timedelta(days=case_info.days_ago)
     return CaseData(
         case_id=case_info.id,

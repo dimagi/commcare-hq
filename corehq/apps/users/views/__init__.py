@@ -709,7 +709,7 @@ def reinvite_web_user(request, domain):
     invitation_id = request.POST['invite']
     try:
         invitation = DomainInvitation.get(invitation_id)
-        invitation.invited_on = datetime.now()
+        invitation.invited_on = datetime.utcnow()
         invitation.save()
         invitation.send_activation_email()
         return json_response({'response': _("Invitation resent"), 'status': 'ok'})

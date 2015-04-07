@@ -902,19 +902,19 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
                             "expr": "opened_on",
                             "name": _("Opened On"),
                             "parse_date": True,
-                            "is_utc": False,
+                            'is_phone_time': True,
                         },
                         {
                             "expr": "modified_on",
                             "name": _("Modified On"),
                             "parse_date": True,
-                            "is_utc": False,
+                            "is_phone_time": True,
                         },
                         {
                             "expr": "closed_on",
                             "name": _("Closed On"),
                             "parse_date": True,
-                            "is_utc": False,
+                            "is_phone_time": True,
                         },
                     ],
                     [
@@ -953,13 +953,13 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
                 'name': _('Date Opened'),
                 'expr': "opened_on",
                 'parse_date': True,
-                "is_utc": False,
+                "is_phone_time": True,
             },
             {
                 'name': _('Date Modified'),
                 'expr': "modified_on",
                 'parse_date': True,
-                "is_utc": False,
+                "is_phone_time": True,
             }
         ]
 

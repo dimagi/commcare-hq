@@ -221,7 +221,7 @@ class RemindersTester(BaseRemindersTester):
                 if not user:
                     return self.get(request, *args, **kwargs)
                 reminder_function = self.reminders.get(reminder)
-                reminder_function(self.domain, datetime.now(), test_list=[user])
+                reminder_function(self.domain, datetime.utcnow(), test_list=[user])
         messages.success(request, "Reminder was sent successfully")
         return self.get(request, *args, **kwargs)
 
@@ -301,7 +301,7 @@ def save_ils_note(request, domain):
         user_name=user.username,
         user_role=user.user_data['role'] if 'role' in user.user_data else '',
         user_phone=user.default_phone_number,
-        date=datetime.now(),
+        date=datetime.utcnow(),
         text=post_data['text']
     ).save()
     data = []

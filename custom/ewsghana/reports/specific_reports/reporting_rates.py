@@ -255,8 +255,11 @@ class InCompleteReports(ReportingRatesData):
         rows = []
         if self.location_id:
             last_period_st, last_period_end = calculate_last_period(self.config['enddate'])
-            locations = self.reporting_supply_points(self.all_reporting_locations())
-            for location in SQLLocation.objects.filter(supply_point_id__in=locations):
+            if self.location.location_type.name == 'country':
+                supply_points = self.reporting_supply_points(self.all_reporting_locations())
+            else:
+                supply_points = self.reporting_supply_points()
+            for location in SQLLocation.objects.filter(supply_point_id__in=supply_points):
                 st = StockTransaction.objects.filter(
                     case_id=location.supply_point_id,
                     report__date__range=[last_period_st, last_period_end]
@@ -326,13 +329,13 @@ class AlertsData(ReportingRatesData):
                 )
                 if sp.supply_point_id not in reported:
                     rows.append(['<div style="background-color: rgba(255, 0, 0, 0.2)">%s has not reported last '
-                                 'month. <a href="%s">[details]</a></div>' % (sp.name, url)])
+                                 'month. <a href="%s" target="_blank">[details]</a></div>' % (sp.name, url)])
                 if sp.location_id not in with_reporters:
                     rows.append(['<div style="background-color: rgba(255, 0, 0, 0.2)">%s has not no reporters'
-                                 ' registered. <a href="%s">[details]</a></div>' % (sp.name, url)])
+                                 ' registered. <a href="%s" target="_blank">[details]</a></div>' % (sp.name, url)])
                 if sp.location_id not in with_in_charge:
                     rows.append(['<div style="background-color: rgba(255, 0, 0, 0.2)">%s has not no in-charge '
-                                 'registered. <a href="%s">[details]</a></div>' % (sp.name, url)])
+                                 'registered. <a href="%s" target="_blank">[details]</a></div>' % (sp.name, url)])
 
         if not rows:
             rows.append(['<div style="background-color: rgba(0, 255, 0, 0.2)">No current alerts</div>'])
@@ -397,7 +400,7 @@ class ReportingRatesReport(MultiReport):
 
     @property
     def default_datespan(self):
-        last_period_st, last_period_end = calculate_last_period(datetime.now())
+        last_period_st, last_period_end = calculate_last_period(datetime.utcnow())
         datespan = DateSpan(startdate=last_period_st, enddate=last_period_end)
         datespan.is_default = True
         return datespan

@@ -48,6 +48,6 @@ def resend_pending_invitations():
     for domain in domains:
         invitations = DomainInvitation.by_domain(domain.name)
         for invitation in invitations:
-            days = (datetime.now() - invitation.invited_on).days
+            days = (datetime.utcnow() - invitation.invited_on).days
             if days in days_to_resend:
                 invitation.send_activation_email(days_to_expire - days)

@@ -28,7 +28,7 @@ class BlockLevelMonthReport(GenericTabularReport, DatespanMixin, CustomProjectRe
 
     @property
     def report_config(self):
-        startdate = datetime.datetime.now()
+        startdate = datetime.datetime.utcnow()
         if not self.needs_filters:
             year = int(self.request.GET.get('year'))
             month = int(self.request.GET.get('month'))

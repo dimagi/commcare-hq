@@ -25,6 +25,11 @@
                         {% case "validation error" %}
                             {{ error.validation_message|linebreaksbr }} in form
                             {% include "app_manager/partials/form_error_message.html" %}
+                        {% case "no form links" %}
+                            {% blocktrans %}
+                            Link to other form is selected, but no form links have been provided
+                            {% endblocktrans %}
+                            {% include "app_manager/partials/form_error_message.html" %}
                         {% case "no ref detail" %}
                             Module
                             <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
@@ -44,13 +49,17 @@
                             Module
                             <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
                             has an incorrectly formatted ID key ({{ error.key }}).
-                            Make sure your key has only letters and numbers and no spaces.
+                            Make sure your key has only letters, numbers, space characters, underscores, and dashes.
                         {% case "no modules" %}
                             This application has no modules.
                         {% case "no forms" %}
                             Module
                             <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
                             has no forms.
+                        {% case "no forms or case list" %}
+                            Module
+                            <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
+                            has no forms or case list.
                         {% case "no case type" %}
                             Module
                             <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>

@@ -171,14 +171,14 @@ class MonthQuarterYearMixin(object):
         if 'month' in self.request_params:
             return int(self.request_params['month'])
         else:
-            return datetime.now().month
+            return datetime.utcnow().month
 
     @property
     def year(self):
         if 'year' in self.request_params:
             return int(self.request_params['year'])
         else:
-            return datetime.now().year
+            return datetime.utcnow().year
 
 
 class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport,

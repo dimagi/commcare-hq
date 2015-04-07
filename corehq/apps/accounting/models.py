@@ -1444,6 +1444,10 @@ class Invoice(models.Model):
             )
         return contact_emails
 
+    @property
+    def is_paid(self):
+        return bool(self.date_paid)
+
 
 class SubscriptionAdjustment(models.Model):
     """
@@ -1555,12 +1559,13 @@ class BillingRecord(models.Model):
             'domain_url': absolute_reverse(DefaultProjectSettingsView.urlname,
                                            args=[domain]),
             'statement_number': self.invoice.invoice_number,
-            'payment_status': (_("Paid") if self.invoice.date_paid is not None
+            'payment_status': (_("Paid") if self.invoice.is_paid
                                else _("Payment Required")),
             'amount_due': fmt_dollar_amount(self.invoice.balance),
             'statements_url': absolute_reverse(
                 DomainBillingStatementsView.urlname, args=[domain]),
             'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
+            'accounts_email': settings.ACCOUNTS_EMAIL,
         }
 
         contact_emails = contact_emails or self.invoice.email_recipients
@@ -1657,7 +1662,7 @@ class InvoicePdf(SafeSaveDocument):
         pdf_data.close()
 
         self.invoice_id = str(invoice.id)
-        self.date_created = datetime.datetime.now()
+        self.date_created = datetime.datetime.utcnow()
         self.save()
 
     def get_filename(self, invoice):
@@ -1829,7 +1834,7 @@ class CreditLine(models.Model):
     def add_credit(cls, amount, account=None, subscription=None,
                    product_type=None, feature_type=None, payment_record=None,
                    invoice=None, line_item=None, related_credit=None,
-                   note=None, reason=None, web_user=None):
+                   note=None, reason=None, web_user=None, permit_inactive=False):
         if account is None and subscription is None:
             raise CreditLineError(
                 "You must specify either a subscription "
@@ -1847,7 +1852,7 @@ class CreditLine(models.Model):
                 product_type__exact=product_type,
                 feature_type__exact=feature_type,
             )
-            if not credit_line.is_active and not invoice:
+            if not permit_inactive and not credit_line.is_active and not invoice:
                 raise CreditLineError(
                     "Could not add credit to CreditLine %s because it is "
                     "inactive." % credit_line.__str__()

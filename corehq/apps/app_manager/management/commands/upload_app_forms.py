@@ -58,7 +58,7 @@ class Command(BaseCommand):
         print 'successfully updated {}'.format(app.name)
         if options['deploy']:
             # make build and star it
-            comment = options.get('comment', 'form changes from {0}'.format(datetime.now().strftime("%Y-%m-%d %H:%M")))
+            comment = options.get('comment', 'form changes from {0}'.format(datetime.utcnow().strftime("%Y-%m-%d %H:%M")))
             copy = app.make_build(
                 comment=comment,
                 user_id=user._id,

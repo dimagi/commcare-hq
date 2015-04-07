@@ -106,6 +106,7 @@ def _to_case_id_set(cases):
     return set([c.case_id for c in cases])
 
 
+# TODO remove this in favour of BatchedCaseSyncOperation
 class CaseSyncOperation(object):
     """
     A record of a user's sync operation
@@ -236,18 +237,31 @@ class GlobalSyncState(object):
 
     @property
     def actual_owned_cases(self):
+        """
+        Cases directly owned by the user or one of the user's groups.
+        """
         return self.actual_owned_cases_dict.values()
 
     @property
     def actual_extended_cases(self):
+        """
+        Cases that are indexed by any cases owned by the user (but now owned directly)
+        """
         return list(set(self.actual_relevant_cases) - set(self.actual_owned_cases))
 
     @property
     def actual_relevant_cases(self):
+        """
+        All cases relevant to the user (owned and linked to)
+        """
         return self.actual_relevant_cases_dict.values()
 
     @property
     def all_synced_cases(self):
+        """
+        All cases that were included in the restore response i.e. cases that have updates
+        which the phone doesn't know about
+        """
         return self.all_synced_cases_dict.values()
 
     def update_owned_cases(self, cases):
@@ -279,7 +293,7 @@ class BatchedCaseSyncOperation(object):
     Global sync state is also available via the 'global_state' field.
 
     Usage:
-    op = BatchedCaseSyncOperation(user, last_sync, chunk_size)
+    op = BatchedCaseSyncOperation(user, last_synclog, chunk_size)
     for batch in op.batches():
         case_updates = batch.case_updates_to_sync
 
@@ -295,9 +309,9 @@ class BatchedCaseSyncOperation(object):
     # use class variable to allow patching in tests
     chunk_size = 1000
 
-    def __init__(self, user, last_sync, chunk_size=None):
+    def __init__(self, user, last_synclog, chunk_size=None):
         self.user = user
-        self.last_sync = last_sync
+        self.last_synclog = last_synclog
         if chunk_size:
             self.chunk_size = chunk_size
         self.domain = self.user.domain
@@ -308,14 +322,14 @@ class BatchedCaseSyncOperation(object):
             self.owner_keys = [[self.user.user_id, False]]
 
         self.case_sharing = len(self.owner_keys) > 1
-        self.global_state = GlobalSyncState(self.last_sync, self.case_sharing)
+        self.global_state = GlobalSyncState(self.last_synclog, self.case_sharing)
 
     def batches(self):
         for key in self.owner_keys:
             batch = CaseSyncCouchBatch(
                 self.global_state,
                 self.domain,
-                self.last_sync,
+                self.last_synclog,
                 self.chunk_size,
                 key,
                 case_sharing=self.case_sharing
@@ -325,11 +339,11 @@ class BatchedCaseSyncOperation(object):
                 batch = batch.next_batch
                 yield batch
 
-        if self.last_sync:
+        if self.last_synclog:
             yield CaseSyncPhoneBatch(
                 self.global_state,
                 self.domain,
-                self.last_sync,
+                self.last_synclog,
                 self.chunk_size,
                 case_sharing=self.case_sharing
             )

@@ -340,6 +340,23 @@ class ExpressionIndicatorTest(SingleIndicatorTestBase):
         }, 'incorrect')
         self._check_result(indicator, {}, None)
 
+    def test_datasource_transform(self):
+        indicator = IndicatorFactory.from_spec({
+            "type": "expression",
+            "column_id": "transformed_value",
+            "display_name": "transformed value",
+            "expression": {
+                "type": "property_name",
+                "property_name": "month",
+            },
+            "datatype": "string",
+            "transform": {
+                "type": "custom",
+                "custom_type": "month_display"
+            },
+        })
+        self._check_result(indicator, {'month': "3"}, "March")
+
 
 class ChoiceListIndicatorTest(SimpleTestCase):
     def setUp(self):

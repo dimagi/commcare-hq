@@ -7,6 +7,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig
+from casexml.apps.phone.util import get_payload_content
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import format_username
@@ -55,6 +56,6 @@ class OtaRestoreBugTest(TestCase):
         restore_config = RestoreConfig(
             user.to_casexml_user(), version=V2,
         )
-        payload = restore_config.get_payload()
+        payload = get_payload_content(restore_config.get_payload())
         self.assertTrue(good_case._id in payload)
         self.assertFalse(bad_case._id in payload)

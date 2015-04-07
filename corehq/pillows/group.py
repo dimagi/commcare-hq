@@ -14,8 +14,10 @@ class GroupPillow(HQPillow):
 
     document_class = Group
     couch_filter = "groups/all_groups"
-    es_index_prefix = "hqgroups"
     es_alias = "hqgroups"
     es_type = "group"
     es_index = GROUP_INDEX
     default_mapping = GROUP_MAPPING
+
+    def get_unique_id(self):
+        return GROUP_INDEX

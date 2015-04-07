@@ -2113,7 +2113,7 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
         return self.email or self.username
 
     def get_time_zone(self):
-        from corehq.apps.reports import util as report_utils
+        from corehq.util.timezones.utils import get_timezone_for_user
 
         if hasattr(self, 'current_domain'):
             domain = self.current_domain
@@ -2122,7 +2122,7 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
         else:
             return None
 
-        timezone = report_utils.get_timezone(self.user_id, domain)
+        timezone = get_timezone_for_user(self.user_id, domain)
         return timezone.zone
 
     def get_language_code(self):

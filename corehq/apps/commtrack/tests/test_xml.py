@@ -9,6 +9,7 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig
 from casexml.apps.phone.tests.utils import synclog_id_from_restore_payload
+from casexml.apps.phone.util import get_payload_content
 from corehq.apps.commtrack.models import ConsumptionConfig, StockRestoreConfig, RequisitionCase, StockState
 from corehq.apps.products.models import Product
 from corehq.apps.consumption.shortcuts import set_default_monthly_consumption_for_domain
@@ -493,7 +494,7 @@ class CommTrackSyncTest(CommTrackSubmissionTest):
             version=V2,
             stock_settings=self.ota_settings,
         )
-        self.sync_log_id = synclog_id_from_restore_payload(restore_config.get_payload())
+        self.sync_log_id = synclog_id_from_restore_payload(get_payload_content(restore_config.get_payload()))
 
     def testStockSyncToken(self):
         # first restore should not have the updated case
@@ -514,7 +515,7 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
         initial_amounts = [(p._id, float(100)) for p in self.products]
         self.submit_xml_form(
             balance_submission(initial_amounts),
-            timestamp=datetime.now() + timedelta(-30)
+            timestamp=datetime.utcnow() + timedelta(-30)
         )
 
         final_amounts = [(p._id, float(50)) for i, p in enumerate(self.products)]
@@ -605,4 +606,4 @@ def _get_ota_balance_blocks(ct_settings, user):
         version=V2,
         stock_settings=ota_settings,
     )
-    return extract_balance_xml(restore_config.get_payload())
+    return extract_balance_xml(get_payload_content(restore_config.get_payload()))

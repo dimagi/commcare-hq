@@ -7,12 +7,13 @@ from couchdbkit import ResourceNotFound
 from casexml.apps.case.models import CommCareCase
 from corehq import Domain
 from corehq.elastic import get_es
-from corehq.pillows.case import CasePillow
-from corehq.pillows.reportcase import ReportCasePillow
-from corehq.pillows.reportxform import ReportXFormPillow
-from corehq.pillows.xform import XFormPillow
+from corehq.pillows.mappings.case_mapping import CASE_INDEX
+from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
+from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
+from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from couchforms.models import XFormInstance
 from django.conf import settings
+from dimagi.utils.logging import notify_error
 
 
 CLUSTER_HEALTH = 'cluster_health'
@@ -71,9 +72,9 @@ def check_reportxform_es_index(doc_id=None, interval=10):
 
     if do_check:
         db = XFormInstance.get_db()
-        es_index = ReportXFormPillow.es_alias
+        es_index = REPORT_XFORM_INDEX
 
-        check_doc_id = doc_id if doc_id else  _get_latest_doc_from_index(es_index, 'received_on')
+        check_doc_id = doc_id if doc_id else _get_latest_doc_from_index(es_index, 'received_on')
         return check_index_by_doc(es_index, db, check_doc_id, interval=interval)
     else:
         return {}
@@ -81,10 +82,8 @@ def check_reportxform_es_index(doc_id=None, interval=10):
 
 def check_xform_es_index(doc_id=None, interval=10):
     db = XFormInstance.get_db()
-    es_index = XFormPillow.es_alias
-
     check_doc_id = doc_id if doc_id else _get_latest_doc_id(db, 'XFormInstance', skipfunc=is_real_submission)
-    return check_index_by_doc(es_index, db, check_doc_id, interval=interval)
+    return check_index_by_doc(XFORM_INDEX, db, check_doc_id, interval=interval)
 
 
 def is_case_recent(case_view_row):
@@ -108,8 +107,7 @@ def check_reportcase_es_index(doc_id=None, interval=10):
 
     if do_check:
         db = CommCareCase.get_db()
-        es_index = ReportCasePillow.es_alias
-
+        es_index = REPORT_CASE_INDEX
         check_doc_id = doc_id if doc_id else _get_latest_doc_from_index(es_index, sort_field='opened_on')
         return check_index_by_doc(es_index, db, check_doc_id, interval=interval)
     else:
@@ -118,10 +116,8 @@ def check_reportcase_es_index(doc_id=None, interval=10):
 
 def check_case_es_index(doc_id=None, interval=10):
     db = CommCareCase.get_db()
-    es_index = CasePillow.es_alias
-
     check_doc_id = doc_id if doc_id else _get_latest_doc_id(db, 'CommCareCase', skipfunc=is_case_recent)
-    return check_index_by_doc(es_index, db, check_doc_id, interval=interval)
+    return check_index_by_doc(CASE_INDEX, db, check_doc_id, interval=interval)
 
 
 def _get_latest_doc_from_index(es_index, sort_field):
@@ -233,6 +229,7 @@ def _check_es_rev(index, doc_id, couch_revs):
         else:
             status = False
             message = "Not in sync - query failed"
+            notify_error("%s: %s" % (message, str(res)))
     except Exception, ex:
         message = "ES Error: %s" % ex
         status = False

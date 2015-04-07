@@ -197,4 +197,4 @@ def report_run(domain):
         run.end_run = datetime.utcnow()
         run.complete = True
         run.save()
-        logging.info("ILSGateway report runner end time: %s" % datetime.now())
+        logging.info("ILSGateway report runner end time: %s" % datetime.utcnow())

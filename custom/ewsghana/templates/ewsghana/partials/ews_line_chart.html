@@ -20,13 +20,55 @@
             },
             success: function(response) {
                 $(line_chart_id + ' svg').empty();
+                line_chart_data = response;
+                $('#inventory_filter_btn').removeAttr('disabled');
+                $('.hq-loading').fadeOut();
 
                 d3.select(line_chart_id + ' svg')
                         .datum(response)
                         .transition().duration(500).call(line_chart);
                 show_hide_line_chart_data();
-                $('#inventory_filter_btn').removeAttr('disabled');
+            },
+            error: function() {
+            }
+        });
+    });
+
+    $stockout_filter = $('#stockouts_filter');
+    $stockout_filter.createDefaultDateRangePicker();
+    $('#stockouts_filter_btn').on('click', function(e) {
+        e.preventDefault();
+        $('.hq-loading').fadeIn();
+
+        $(this).prop('disabled', true);
+        var dates = $($stockout_filter).val().split($stockout_filter.getDateRangeSeparator());
+        $.ajax({
+            type: 'GET',
+            datatype: 'json',
+            url: '{% url 'stockouts_product' domain %}',
+            data: {
+                startdate: dates[0],
+                enddate: dates[1],
+                location_id: '{{ location_id }}'
+            },
+            success: function(response) {
+
+                $(line_chart_id + ' svg').empty();
+                $.each(response, function( index, value ) {
+                    $.each(value.values, function( id, v ) {
+                        v.x = Date.parse(v.x);
+                    });
+                });
+
+                line_chart_data = response;
+                $('#stockouts_filter_btn').removeAttr('disabled');
                 $('.hq-loading').fadeOut();
+
+                d3.select(line_chart_id + ' svg')
+                        .datum(response)
+                        .transition().duration(500).call(line_chart);
+                show_hide_line_chart_data();
+
             },
             error: function() {
             }
@@ -74,6 +116,10 @@
 
         line_chart.margin(chart_config.margin);
         line_chart.tooltips(chart_config.tooltips);
+
+        for (var property in line_chart.legend.dispatch) {
+            line_chart.legend.dispatch[property] = function() { };
+        }
 
         d3.select(line_chart_id + ' svg')
                 .datum(line_chart_data)

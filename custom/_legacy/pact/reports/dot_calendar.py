@@ -104,8 +104,8 @@ class DOTCalendarReporter(object):
             endmonth = observations[-1].observed_date.month
             endyear = observations[0].observed_date.year
         else:
-            startmonth = datetime.now().month
-            startyear = datetime.now().year
+            startmonth = datetime.utcnow().month
+            startyear = datetime.utcnow().year
 
         currmonth = startmonth
         curryear = startyear

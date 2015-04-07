@@ -5,7 +5,6 @@ import pytz
 import json
 
 from celery.utils.log import get_task_logger
-from django.core.urlresolvers import reverse
 from django.http import HttpResponse, Http404
 from django.template.context import RequestContext
 from django.template.loader import render_to_string
@@ -13,10 +12,10 @@ from django.shortcuts import render
 
 from corehq.apps.reports.tasks import export_all_rows_task
 from corehq.apps.reports.models import ReportConfig
-from corehq.apps.reports import util
 from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.users.models import CouchUser
+from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import absolute_reverse
 from couchexport.export import export_from_tables
 from couchexport.shortcuts import export_response
@@ -237,9 +236,9 @@ class GenericReportView(object):
             return pytz.utc
         else:
             try:
-                return util.get_timezone(self.request.couch_user, self.domain)
+                return get_timezone_for_user(self.request.couch_user, self.domain)
             except AttributeError:
-                return util.get_timezone(None, self.domain)
+                return get_timezone_for_user(None, self.domain)
 
     @property
     @memoized

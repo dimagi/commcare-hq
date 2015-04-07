@@ -105,14 +105,13 @@ from corehq.apps.app_manager.xform import (
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.decorators.view import get_file
 from dimagi.utils.django.cache import make_template_fragment_key
 from dimagi.utils.excel import WorkbookJSONReader
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.subprocess_timeout import ProcessTimedOut
 from dimagi.utils.web import json_response, json_request
-from corehq.apps.reports import util as report_utils
+from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.app_manager.models import (
@@ -648,7 +647,7 @@ def get_apps_base_context(request, domain, app):
     lang, langs = get_langs(request, app)
 
     if getattr(request, 'couch_user', None):
-        timezone = report_utils.get_timezone(request.couch_user, domain)
+        timezone = get_timezone_for_user(request.couch_user, domain)
     else:
         timezone = None
 
@@ -695,7 +694,7 @@ def paginate_releases(request, domain, app_id):
         assert isinstance(start_build, int)
     else:
         start_build = {}
-    timezone = report_utils.get_timezone(request.couch_user, domain)
+    timezone = get_timezone_for_user(request.couch_user, domain)
     saved_apps = get_db().view('app_manager/saved_app',
         startkey=[domain, app_id, start_build],
         endkey=[domain, app_id],
@@ -986,7 +985,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
             'case_properties': get_all_case_properties(app),
         })
 
-        if toggles.FORM_LINK_WORKFLOW.enabled(request.user.username):
+        if toggles.FORM_LINK_WORKFLOW.enabled(domain):
             def qualified_form_name(form):
                 module_name = trans(form.get_module().name, app.langs)
                 form_name = trans(form.name, app.langs)
@@ -1530,7 +1529,9 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         parent_module = request.POST.get("parent_module")
         module.parent_select.module_id = parent_module
 
-    if app.enable_module_filtering and should_edit('module_filter'):
+    if (toggles.MODULE_FILTER.enabled(app.domain) and
+            app.enable_module_filtering and
+            should_edit('module_filter')):
         module['module_filter'] = request.POST.get('module_filter')
 
     if should_edit('case_list_form_id'):
@@ -1816,7 +1817,7 @@ def edit_form_attr(request, domain, app_id, unique_form_id, attr):
         form.no_vellum = request.POST['no_vellum'] == 'true'
     if (should_edit("form_links_xpath_expressions") and
             should_edit("form_links_form_ids") and
-            toggles.FORM_LINK_WORKFLOW.enabled(request.user.username)):
+            toggles.FORM_LINK_WORKFLOW.enabled(domain)):
         form_links = zip(
             request.POST.getlist('form_links_xpath_expressions'),
             request.POST.getlist('form_links_form_ids')
@@ -2292,7 +2293,7 @@ def save_copy(request, domain, app_id):
     else:
         copy = None
     copy = copy and SavedAppBuild.wrap(copy.to_json()).to_saved_build_json(
-        report_utils.get_timezone(request.couch_user, domain)
+        get_timezone_for_user(request.couch_user, domain)
     )
     lang, langs = get_langs(request, app)
     return json_response({

@@ -363,6 +363,11 @@ class Domain(Document, SnapshotMixin):
             self.save()
         return self
 
+    def get_default_timezone(self):
+        """return a timezone object from self.default_timezone"""
+        import pytz
+        return pytz.timezone(self.default_timezone)
+
     @staticmethod
     def active_for_user(user, is_active=True):
         if isinstance(user, AnonymousUser):
@@ -494,7 +499,7 @@ class Domain(Document, SnapshotMixin):
             include_docs=False,
             limit=1).all()
         if len(res) > 0: # if there have been any submissions in the past 30 days
-            return (datetime.now() <=
+            return (datetime.utcnow() <=
                     datetime.strptime(res[0]['key'][2], "%Y-%m-%dT%H:%M:%SZ")
                     + timedelta(days=30))
         else:
@@ -799,7 +804,7 @@ class Domain(Document, SnapshotMixin):
             if copy is None:
                 return None
             copy.is_snapshot = True
-            copy.snapshot_time = datetime.now()
+            copy.snapshot_time = datetime.utcnow()
             del copy.deployment
             copy.save()
             return copy
@@ -1160,7 +1165,7 @@ class TransferDomainRequest(models.Model):
     @requires_active_transfer
     def send_transfer_request(self):
         self.transfer_guid = uuid.uuid4().hex
-        self.request_time = datetime.now()
+        self.request_time = datetime.utcnow()
         self.save()
 
         self.email_to_request()
@@ -1208,7 +1213,7 @@ class TransferDomainRequest(models.Model):
     @requires_active_transfer
     def transfer_domain(self, *args, **kwargs):
 
-        self.confirm_time = datetime.now()
+        self.confirm_time = datetime.utcnow()
         if 'ip' in kwargs:
             self.confirm_ip = kwargs['ip']
 

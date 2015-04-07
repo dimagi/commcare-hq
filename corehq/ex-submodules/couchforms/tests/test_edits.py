@@ -204,11 +204,13 @@ class EditFormTest(TestCase):
         for a in case.actions:
             self.assertEqual(create_form_id, a.xform_id)
 
+        edit_date = datetime.utcnow()
         # set some property value
         case_block = CaseBlock(
             create=False,
             case_id=case_id,
             version=V2,
+            date_modified=edit_date,
             update={
                 'property': 'first value',
             }
@@ -243,6 +245,7 @@ class EditFormTest(TestCase):
             create=False,
             case_id=case_id,
             version=V2,
+            date_modified=edit_date,  # need to use the previous edit date for action sort comparisons
             update={
                 'property': 'edited value',
                 'added_property': 'added value',

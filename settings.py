@@ -124,6 +124,7 @@ MIDDLEWARE_CLASSES = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'corehq.middleware.OpenRosaMiddleware',
+    'corehq.util.global_request.middleware.GlobalRequestMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
     'corehq.apps.domain.middleware.CCHQPRBACMiddleware',
     'casexml.apps.phone.middleware.SyncTokenMiddleware',
@@ -495,6 +496,8 @@ FIXTURE_GENERATORS = {
         "corehq.apps.locations.fixtures.location_fixture_generator",
     ]
 }
+
+RESTORE_PAYLOAD_DIR = None  # Defaults to tempfile.gettempdir()
 
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
 
@@ -870,7 +873,8 @@ INVOICE_FROM_ADDRESS = {}
 BANK_ADDRESS = {}
 BANK_NAME = ''
 BANK_ACCOUNT_NUMBER = ''
-BANK_ROUTING_NUMBER = ''
+BANK_ROUTING_NUMBER_ACH = ''
+BANK_ROUTING_NUMBER_WIRE = ''
 BANK_SWIFT_CODE = ''
 
 STRIPE_PUBLIC_KEY = ''
@@ -1374,3 +1378,5 @@ COMPRESS_OFFLINE_CONTEXT = {
     'less_debug': LESS_DEBUG,
     'less_watch': LESS_WATCH,
 }
+
+COMPRESS_CSS_HASHING_METHOD = 'content'

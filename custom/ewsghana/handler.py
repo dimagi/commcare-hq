@@ -62,4 +62,5 @@ def handle(verified_contact, text, msg=None):
         else:
             handler.help()
             return True
-    return False
+    else:
+        return AlertsHandler(**params).handle()

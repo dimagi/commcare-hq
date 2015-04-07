@@ -194,7 +194,7 @@ class SQLLocation(MPTTModel):
         g = UnsavableGroup()
         g.domain = self.domain
         g.users = [user_id] if user_id else []
-        g.last_modified = datetime.now()
+        g.last_modified = datetime.utcnow()
 
         if case_sharing:
             g.name = group_name() + '-Cases'
@@ -430,7 +430,7 @@ class Location(CachedCouchDocumentMixin, Document):
         one way syncing to the SQLLocation version of this
         location.
         """
-        self.last_modified = datetime.now()
+        self.last_modified = datetime.utcnow()
 
         # lazy migration for site_code
         if not self.site_code:

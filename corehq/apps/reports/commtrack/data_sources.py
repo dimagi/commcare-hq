@@ -54,11 +54,11 @@ class CommtrackDataSourceMixin(object):
 
     @property
     def start_date(self):
-        return self.config.get('startdate') or (datetime.now() - timedelta(30)).date()
+        return self.config.get('startdate') or (datetime.utcnow() - timedelta(30)).date()
 
     @property
     def end_date(self):
-        return self.config.get('enddate') or datetime.now().date()
+        return self.config.get('enddate') or datetime.utcnow().date()
 
     @property
     def request(self):
@@ -83,7 +83,7 @@ class SimplifiedInventoryDataSource(ReportDataSource, CommtrackDataSourceMixin):
         try:
             date = parser.parse(date).date()
         except ValueError:
-            date = datetime.now().date()
+            date = datetime.utcnow().date()
 
         return datetime(date.year, date.month, date.day, 23, 59, 59)
 

@@ -303,8 +303,10 @@ class EWSApi(APISynchronization):
         location.external_id = str(ews_location.id)
 
     def _set_up_supply_point(self, location, ews_location):
-        supply_point_with_stock_data = filter(lambda x: x.last_reported, ews_location.supply_points)
         if location.location_type in ['country', 'region', 'district']:
+            supply_point_with_stock_data = filter(
+                lambda x: x.last_reported and x.active, ews_location.supply_points
+            )
             for supply_point in supply_point_with_stock_data:
                 created_location = self._create_location_from_supply_point(supply_point, location)
                 fake_location = Loc(
@@ -320,7 +322,13 @@ class EWSApi(APISynchronization):
                                 domain=self.domain)
             SupplyPointCase.get_or_create_by_location(fake_location)
         elif ews_location.supply_points:
-            supply_point = ews_location.supply_points[0]
+            active_supply_points = filter(lambda sp: sp.active, ews_location.supply_points)
+            if active_supply_points:
+                supply_point = active_supply_points[0]
+            else:
+                supply_point = ews_location.supply_points[0]
+            location.name = supply_point.name
+            location.site_code = supply_point.code
             location.location_type = supply_point.type
             self._create_supply_point_from_location(supply_point, location)
             location.save()
@@ -384,39 +392,7 @@ class EWSApi(APISynchronization):
                     sql_location.save()
         return location
 
-    def convert_web_user_to_sms_user(self, ews_webuser):
-        sms_user = SMSUser()
-        sms_user.username = ews_webuser.username
-        sms_user.email = ews_webuser.email
-
-        if ews_webuser.contact and ews_webuser.contact.supply_point:
-            sms_user.supply_point = ews_webuser.contact.supply_point
-        elif ews_webuser.location:
-            sms_user.supply_point = SupplyPoint(
-                location_id=ews_webuser.location
-            )
-
-        sms_user.is_active = str(ews_webuser.is_active)
-        sms_user.name = ews_webuser.first_name + " " + ews_webuser.last_name
-        if ews_webuser.contact:
-            sms_user.backend = ews_webuser.contact.backend
-            sms_user.to = ews_webuser.contact.to
-            sms_user.phone_numbers = ews_webuser.contact.phone_numbers
-        sms_user.role = 'facility_manager'
-        return self.sms_user_sync(
-            sms_user,
-            username_part=ews_webuser.username.lower() if ews_webuser.username else None,
-            password=ews_webuser.password,
-            first_name=ews_webuser.first_name,
-            last_name=ews_webuser.last_name
-        )
-
     def web_user_sync(self, ews_webuser):
-        if not ews_webuser.is_superuser and ews_webuser.groups:
-            group = ews_webuser.groups[0]
-            if group.name == 'facility_manager':
-                return self.convert_web_user_to_sms_user(ews_webuser)
-
         username = ews_webuser.email.lower()
         if not username:
             try:
@@ -455,6 +431,8 @@ class EWSApi(APISynchronization):
         dm = user.get_domain_membership(self.domain)
         if ews_webuser.is_superuser:
             dm.role_id = UserRole.by_domain_and_name(self.domain, 'Administrator')[0].get_id
+        elif ews_webuser.groups and ews_webuser.groups[0].name == 'facility_manager':
+            dm.role_id = UserRole.by_domain_and_name(self.domain, 'Facility manager')[0].get_id
         else:
             dm.role_id = UserRole.get_read_only_role_by_domain(self.domain).get_id
         user.save()
@@ -465,14 +443,6 @@ class EWSApi(APISynchronization):
         if not sms_user:
             return None
         sms_user.user_data['to'] = ews_smsuser.to
-
-        if ews_smsuser.role == 'facility_manager':
-            sms_user.user_data['role'] = None
-            role = UserRole.by_domain_and_name(self.domain, 'Facility manager')
-            if role:
-                dm = sms_user.get_domain_membership(self.domain)
-                dm.role_id = role[0].get_id
-
         sms_user.save()
         if ews_smsuser.supply_point:
             if ews_smsuser.supply_point.id:

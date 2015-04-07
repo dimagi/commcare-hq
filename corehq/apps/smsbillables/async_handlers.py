@@ -1,9 +1,6 @@
 import json
 import logging
 from couchdbkit import ResourceNotFound
-from django.utils.encoding import force_unicode
-from django_countries.countries import COUNTRIES
-from phonenumbers import COUNTRY_CODE_TO_REGION_CODE
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.accounting.utils import fmt_dollar_amount
 from corehq.apps.hqwebapp.async_handler import BaseAsyncHandler
@@ -13,6 +10,7 @@ from corehq.apps.sms.models import INCOMING, OUTGOING
 from corehq.apps.sms.util import get_backend_by_class_name
 from corehq.apps.smsbillables.exceptions import SMSRateCalculatorError
 from corehq.apps.smsbillables.models import SmsGatewayFeeCriteria, SmsGatewayFee, SmsUsageFee
+from corehq.apps.smsbillables.utils import country_name_from_isd_code_or_empty
 from corehq.util.quickcache import quickcache
 
 
@@ -76,10 +74,8 @@ class SMSRatesSelect2AsyncHandler(BaseAsyncHandler):
             country_code__exact=None
         ).values_list('country_code', flat=True).distinct()
         final_codes = []
-        countries = dict(COUNTRIES)
         for code in country_codes:
-            cc = COUNTRY_CODE_TO_REGION_CODE.get(code)
-            country_name = force_unicode(countries.get(cc[0])) if cc else ''
+            country_name = country_name_from_isd_code_or_empty(code)
             final_codes.append((code, country_name))
 
         search_term = self.data.get('searchString')
@@ -138,11 +134,20 @@ class PublicSMSRatesAsyncHandler(BaseAsyncHandler):
             return fmt_dollar_amount(usage_fee.amount + usd_gateway_fee)
 
         rate_table = []
-        for backend_instance in backends:
-            backend_type = get_backend_by_class_name(backend_instance.doc_type)
 
-            gateway_fee_incoming = _directed_fee(INCOMING, backend_type.get_api_id(), backend_instance._id)
-            gateway_fee_outgoing = _directed_fee(OUTGOING, backend_type.get_api_id(), backend_instance._id)
+        from corehq.apps.sms.test_backend import TestSMSBackend
+
+        for backend_instance in backends:
+            backend_instance = backend_instance.wrap_correctly()
+            if isinstance(backend_instance, TestSMSBackend):
+                continue
+
+            gateway_fee_incoming = _directed_fee(
+                INCOMING,
+                backend_instance.incoming_api_id or backend_instance.get_api_id(),
+                backend_instance._id
+            )
+            gateway_fee_outgoing = _directed_fee(OUTGOING, backend_instance.get_api_id(), backend_instance._id)
 
             if gateway_fee_outgoing or gateway_fee_incoming:
                 rate_table.append({

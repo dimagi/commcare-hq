@@ -28,6 +28,7 @@ from corehq.apps.indicators.utils import get_indicator_domains
 from corehq.apps.reminders.util import can_use_survey_reminders
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from django_prbac.utils import has_privilege
+from corehq.util.markup import mark_up_urls
 
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
@@ -40,6 +41,28 @@ from corehq.apps.adm.dispatcher import (ADMAdminInterfaceDispatcher,
                                         ADMSectionDispatcher)
 from corehq.apps.announcements.dispatcher import (
     HQAnnouncementAdminInterfaceDispatcher)
+from django.db import models
+
+
+def format_submenu_context(title, url=None, html=None,
+                           is_header=False, is_divider=False, data_id=None):
+    return {
+        'title': title,
+        'url': url,
+        'html': html,
+        'is_header': is_header,
+        'is_divider': is_divider,
+        'data_id': data_id,
+    }
+
+
+def format_second_level_context(title, url, menu):
+    return {
+        'title': title,
+        'url': url,
+        'is_second_level': True,
+        'submenu': menu,
+    }
 
 
 class GaTracker(namedtuple('GaTracking', 'category action label')):
@@ -597,10 +620,7 @@ class ApplicationsTab(UITab):
 
     @property
     def title(self):
-        if self.project.commconnect_enabled:
-            return _("Surveys")
-        else:
-            return _("Applications")
+        return _("Applications")
 
     @classmethod
     def make_app_title(cls, app_name, doc_type):
@@ -691,7 +711,6 @@ class CloudcareTab(UITab):
             has_privilege(self._request, privileges.CLOUDCARE)
             and self.domain
             and (self.couch_user.can_edit_data() or self.couch_user.is_commcare_user())
-            and not self.project.commconnect_enabled
         )
 
 
@@ -1624,3 +1643,15 @@ class OrgSettingsTab(OrgTab):
                 _("Members"),
                 url=reverse("orgs_stats", args=(self.org.name,))),
         ]
+
+
+class MaintenanceAlert(models.Model):
+    created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now_add=True)
+    active = models.BooleanField(default=False)
+
+    text = models.TextField()
+
+    @property
+    def html(self):
+        return mark_up_urls(self.text)

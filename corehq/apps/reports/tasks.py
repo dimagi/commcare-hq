@@ -74,7 +74,11 @@ def check_es_index():
                 "Elasticsearch %s Index Issue: %s" % (index, es_status[index]['message']))
 
     if do_notify:
-        message.append("This alert can give false alarms due to timing lag, so please double check https://www.commcarehq.org/hq/admin/system/ and the Elasticsarch Status section to make sure.")
+        message.append(
+            "This alert can give false alarms due to timing lag, so please double check "
+            + absolute_reverse("system_info")
+            + " and the Elasticsearch Status section to make sure."
+        )
         notify_exception(None, message='\n'.join(message))
 
 
@@ -167,7 +171,7 @@ def update_calculated_properties():
             "cp_last_form": CALC_FNS["last_form_submission"](dom, False),
             "cp_is_active": CALC_FNS["active"](dom),
             "cp_has_app": CALC_FNS["has_app"](dom),
-            "cp_last_updated": datetime.now().strftime(DATE_FORMAT),
+            "cp_last_updated": datetime.utcnow().strftime(DATE_FORMAT),
             "cp_n_in_sms": int(CALC_FNS["sms"](dom, "I")),
             "cp_n_out_sms": int(CALC_FNS["sms"](dom, "O")),
             "cp_n_sms_ever": int(CALC_FNS["sms_in_last"](dom)),
@@ -182,7 +186,7 @@ def update_calculated_properties():
 
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 def is_app_active(app_id, domain):
-    now = datetime.now()
+    now = datetime.utcnow()
     then = (now - timedelta(days=30)).strftime(DATE_FORMAT)
     now = now.strftime(DATE_FORMAT)
 

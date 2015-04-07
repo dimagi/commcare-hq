@@ -13,6 +13,7 @@ from custom.ewsghana.api import GhanaEndpoint, EWSApi
 from custom.ewsghana.models import EWSGhanaConfig
 from custom.ewsghana.reminders.reminders import first_soh_process_user, second_soh_process_user, \
     third_soh_process_users_and_facilities, stockout_process_user, rrirv_process_user, visit_website_process_user
+from custom.ewsghana.reports.specific_reports.stock_status_report import StockoutsProduct
 from custom.ewsghana.reports.stock_levels_report import InventoryManagementData
 from custom.ewsghana.tasks import ews_bootstrap_domain_task, ews_clear_stock_data_task, \
     EWS_FACILITIES
@@ -21,6 +22,7 @@ from custom.logistics.tasks import sms_users_fix, add_products_to_loc, locations
 from custom.logistics.tasks import stock_data_task
 from custom.logistics.views import BaseConfigView, BaseRemindersTester
 from dimagi.utils.dates import force_to_datetime
+from dimagi.utils.web import json_handler
 
 
 class EWSGlobalStats(GlobalStats):
@@ -153,6 +155,23 @@ def inventory_management(request, domain):
         )
     )
     return HttpResponse(
-        json.dumps(inventory_management_ds.charts[0].data),
+        json.dumps(inventory_management_ds.charts[0].data, default=json_handler),
+        mimetype='application/json'
+    )
+
+
+@require_GET
+def stockouts_product(request, domain):
+
+    stockout_graph = StockoutsProduct(
+        config=dict(
+            program=None, products=None, domain=domain,
+            startdate=force_to_datetime(request.GET.get('startdate')),
+            enddate=force_to_datetime(request.GET.get('enddate')), location_id=request.GET.get('location_id'),
+            custom_date=True
+        )
+    )
+    return HttpResponse(
+        json.dumps(stockout_graph.charts[0].data, default=json_handler),
         mimetype='application/json'
     )
