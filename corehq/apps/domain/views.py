@@ -2087,7 +2087,8 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             messages.success(request, _("The internal information for project %s was successfully updated!")
                                       % self.domain)
         else:
-            messages.error(request, _("There seems to have been an error. Please try again!"))
+            messages.error(request, _(
+                "Your settings are not valid, see below for errors. Correct them and try again!"))
         return self.get(request, *args, **kwargs)
 
 
