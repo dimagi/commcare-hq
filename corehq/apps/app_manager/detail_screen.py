@@ -280,7 +280,7 @@ class Enum(FormattedDetailColumn):
         if type == 'sort':
             xpath_fragment_template = u"if({xpath} = '{key}', {i}, "
         elif type == 'display':
-            xpath_fragment_template = u"if({xpath} = '{key}', $k{key}, "
+            xpath_fragment_template = u"if({xpath} = '{key}', $k{key_as_var}, "
         else:
             raise ValueError('type must be in sort, display')
 
@@ -289,6 +289,7 @@ class Enum(FormattedDetailColumn):
             parts.append(
                 xpath_fragment_template.format(
                     key=item.key,
+                    key_as_var=item.key.replace(" ", "_"),
                     xpath=self.xpath,
                     i=i,
                 )
@@ -309,11 +310,12 @@ class Enum(FormattedDetailColumn):
     def variables(self):
         variables = {}
         for item in self.column.enum:
-            v_key = u"k{key}".format(key=item.key)
+            escaped_key = item.key.replace(" ", "_")
+            v_key = u"k{key}".format(key=escaped_key)
             v_val= self.id_strings.detail_column_enum_variable(self.module,
                                                                self.detail_type,
                                                                self.column,
-                                                               item.key)
+                                                               escaped_key)
             variables[v_key] = v_val
         return variables
 
