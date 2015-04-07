@@ -622,6 +622,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
     countries = forms.MultipleChoiceField(
         label=ugettext_noop("Countries"),
         choices=COUNTRIES,
+        required=False,
     )
     commtrack_domain = ChoiceField(
         label=ugettext_noop("CommCare Supply Project"),
