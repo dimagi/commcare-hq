@@ -96,7 +96,7 @@ def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_
     if call_log_entry:
         add_metadata(call_log_entry, duration)
 
-    if call_log_entry and call_log_entry.xforms_session_id is None:
+    if call_log_entry and call_log_entry.form_unique_id is None:
         # If this request is for a call with no touchforms session,
         # then just short circuit everything and hang up
         return hang_up_response(gateway_session_id, backend_module=backend_module)
