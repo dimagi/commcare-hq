@@ -332,6 +332,8 @@ class EWSApi(APISynchronization):
             location.location_type = supply_point.type
             self._create_supply_point_from_location(supply_point, location)
             location.save()
+        else:
+            location.archive()
 
     def location_sync(self, ews_location):
         try:
