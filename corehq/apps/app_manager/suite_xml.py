@@ -1324,6 +1324,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                 menu_by_command[command.id] = menu.id
                 if command.relevant:
                     relevance_by_menu[menu.id].append(command.relevant)
+            if menu.relevant:
+                relevance_by_menu[menu.id].append(menu.relevant)
 
         return relevance_by_menu, menu_by_command
 
