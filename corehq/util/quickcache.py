@@ -1,3 +1,4 @@
+# coding=utf-8
 import functools
 import hashlib
 import inspect
@@ -181,6 +182,19 @@ def quickcache(vary_on, timeout=None, memoize_timeout=None, cache=None,
 
         - Allows you to vary on an attribute of an object,
           multiple attrs of the same object, attrs of attrs of an object, etc
+
+        - Allows you to pass in a function as the vary_on arg which will get called
+          with the same args and kwargs as the function. It should return a list of simple
+          values to be used for generating the cache key.
+
+        Note on unicode and strings in vary_on:
+          When strings and unicode values are used as vary on parameters they will result in the
+          same cache key if and only if the string values are UTF-8 or ascii encoded.
+          e.g.
+          u'namé' and 'nam\xc3\xa9' (UTF-8 encoding) will result in the same cache key
+          BUT
+          u'namé' and 'nam\xe9' (latin-1 encoding) will NOT result in the same cache key
+
 
     """
     if cache and timeout:
