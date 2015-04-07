@@ -591,11 +591,15 @@ def filter_cases_modified_elsewhere_since_sync(cases, last_sync_token):
     else:
         # we can start by filtering out our base set of cases to check for only
         # things that have been modified since we last synced
-        recently_modified_case_ids = [
-            case['_id'] for case in cases
-            if case and string_to_utc_datetime(case['server_modified_on']) >= last_sync_token.date
-        ]
+        def _is_relevant(case_or_case_state_dict):
+            if case_or_case_state_dict:
+                # only case-like things have this.
+                if 'server_modified_on' in case_or_case_state_dict:
+                    return string_to_utc_datetime(case['server_modified_on']) >= last_sync_token.date
+            # for case states default to always checking for recent updates
+            return True
 
+        recently_modified_case_ids = [case['_id'] for case in cases if _is_relevant(case)]
         # create a mapping of all cases to sync logs for all cases that were modified
         # in the appropriate ranges.
         # todo: this should really have a better way to filter out updates from sync logs
