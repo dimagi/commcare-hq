@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from django.core.cache.backends.locmem import LocMemCache
 from django.test import SimpleTestCase
 import time
@@ -180,3 +182,25 @@ class QuickcacheTest(SimpleTestCase):
 
         key = cached_fn.get_cache_key({'name': 'a1'})
         self.assertRegexpMatches(key, 'quickcache.cached_fn.[a-z0-9]{8}/sa1')
+
+    def test_unicode_string(self):
+        @quickcache(['name'], cache=_cache)
+        def by_name(name):
+            BUFFER.append('called')
+            return 'VALUE'
+
+        name_unicode = u'namé'
+        name_utf8 = name_unicode.encode('utf-8')
+        name_latin1 = name_unicode.encode('latin-1')
+
+        self.assertEqual(by_name(name_unicode), 'VALUE')
+        self.assertEqual(self.consume_buffer(), ['local miss', 'shared miss', 'called'])
+        self.assertEqual(by_name(name_unicode), 'VALUE')
+        self.assertEqual(self.consume_buffer(), ['local hit'])
+
+        self.assertEqual(by_name(name_utf8), 'VALUE')
+        self.assertEqual(self.consume_buffer(), ['local hit'])
+
+        # values with encodings other than utf-8 still produce different keys
+        self.assertEqual(by_name(name_latin1), 'VALUE')
+        self.assertEqual(self.consume_buffer(), ['local miss', 'shared miss', 'called'])
