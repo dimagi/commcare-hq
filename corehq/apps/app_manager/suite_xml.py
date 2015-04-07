@@ -9,7 +9,7 @@ import urllib
 
 from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, NodeField, load_xmlobject_from_string
 from lxml import etree
-from xml.sax.saxutils import escape
+from xml.sax.saxutils import escape, unescape
 
 from django.core.urlresolvers import reverse
 
@@ -787,6 +787,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 template = '({{}}) and ({})'.format(if_clause) if if_clause else '{}'
                 if_clause = template.format(if_prefix)
 
+            if_clause = unescape(if_clause) if if_clause else None
             frame = CreateFrame(if_clause=if_clause)
             entry.stack.add_frame(frame)
 

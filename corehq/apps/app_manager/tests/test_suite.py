@@ -860,7 +860,7 @@ class TestFormLinking(SimpleTestCase, TestFileMixin):
 
         m0f0.post_form_workflow = WORKFLOW_FORM
         m0f0.form_links = [
-            FormLink(xpath='true()', form_id=m1f0.unique_id)
+            FormLink(xpath="(today() - dob) &lt; 7", form_id=m1f0.unique_id)
         ]
         self.assertXmlPartialEqual(self.get_xml('form_link_basic'), app.create_suite(), "./entry[1]")
 
@@ -874,7 +874,7 @@ class TestFormLinking(SimpleTestCase, TestFileMixin):
 
         m0f0.post_form_workflow = WORKFLOW_FORM
         m0f0.form_links = [
-            FormLink(xpath='true()', form_id=m1f0.unique_id)
+            FormLink(xpath="(today() - dob) > 7", form_id=m1f0.unique_id)
         ]
 
         self.assertXmlPartialEqual(self.get_xml('form_link_update_case'), app.create_suite(), "./entry[1]")
