@@ -328,7 +328,7 @@ class BillingAccountContactForm(forms.Form):
 
 
 class SubscriptionForm(forms.Form):
-    account = forms.CharField(
+    account = forms.IntegerField(
         label=_("Billing Account")
     )
     start_date = forms.DateField(
@@ -348,7 +348,7 @@ class SubscriptionForm(forms.Form):
         label=_("Edition"), initial=SoftwarePlanEdition.ENTERPRISE,
         choices=SoftwarePlanEdition.CHOICES,
     )
-    plan_version = forms.CharField(label=_("Software Plan"))
+    plan_version = forms.IntegerField(label=_("Software Plan"))
     domain = forms.CharField(label=_("Project Space"))
     salesforce_contract_id = forms.CharField(
         label=_("Salesforce Deployment ID"), max_length=80, required=False
