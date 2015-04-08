@@ -1,10 +1,12 @@
 from datetime import datetime
+from decimal import Decimal
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.models import RequisitionCase, StockState
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack.tests.util import CommTrackTest, bootstrap_user, FIXED_USER, ROAMING_USER
 from corehq.apps.commtrack.sms import handle, SMSError
+from corehq.toggles import STOCK_AND_RECEIPT_SMS_HANDLER, NAMESPACE_DOMAIN
 
 
 class SMSTests(CommTrackTest):
@@ -388,6 +390,25 @@ class StockRequisitionTest(SMSTests):
 
         # should still be no open requisitions
         self.assertEqual(0, len(RequisitionCase.open_for_location(self.domain.name, self.loc._id)))
+
+
+class StockAndReceiptTest(SMSTests):
+    user_definitions = [FIXED_USER]
+
+    def setUp(self):
+        super(StockAndReceiptTest, self).setUp()
+        STOCK_AND_RECEIPT_SMS_HANDLER.set(self.domain, True, NAMESPACE_DOMAIN)
+
+    def test_soh_and_receipt(self):
+        handled = handle(self.users[0].get_verified_number(), 'pp 20.30')
+        self.assertTrue(handled)
+
+        self.check_stock('pp', Decimal(20))
+
+    def tearDown(self):
+        super(StockAndReceiptTest, self).tearDown()
+        STOCK_AND_RECEIPT_SMS_HANDLER.set(self.domain, False, NAMESPACE_DOMAIN)
+
 
 
 def _get_location_from_form(form):
