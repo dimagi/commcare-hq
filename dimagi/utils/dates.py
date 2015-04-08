@@ -10,7 +10,7 @@ except ImportError:
     from celery.utils.log import get_task_logger
 import dateutil
 import pytz
-from dimagi.utils.parsing import string_to_datetime
+from dimagi.utils.parsing import string_to_datetime, ISO_DATE_FORMAT
 from dateutil.rrule import *
 
 
@@ -119,13 +119,13 @@ def secs_to_days(seconds):
 
 def utcnow_sans_milliseconds():
     return datetime.datetime.utcnow().replace(microsecond=0)
-    
-DEFAULT_DATE_FORMAT = "%Y-%m-%d"
+
 
 def today_or_tomorrow(date, inclusive=True):
     today = datetime.datetime.combine(datetime.datetime.today(), datetime.time())
     day_after_tomorrow = today + datetime.timedelta(days=2)
     return today <= date + datetime.timedelta(days=1 if inclusive else 0) < day_after_tomorrow
+
 
 class DateSpan(object):
     """
@@ -137,7 +137,7 @@ class DateSpan(object):
     inclusive = True
     is_default = False
 
-    def __init__(self, startdate, enddate, format=DEFAULT_DATE_FORMAT, inclusive=True, timezone=pytz.utc):
+    def __init__(self, startdate, enddate, format=ISO_DATE_FORMAT, inclusive=True, timezone=pytz.utc):
         self.startdate = startdate
         self.enddate = enddate
         self.format = format
@@ -167,7 +167,7 @@ class DateSpan(object):
             self.enddate = dateutil.parser.parse(state.get('enddate')) if state.get('enddate') else None
         except Exception as e:
             logging.error("Could not unpack start and end dates for DateSpan. Error: %s" % e)
-        self.format = state.get('format', DEFAULT_DATE_FORMAT)
+        self.format = state.get('format', ISO_DATE_FORMAT)
         self.inclusive = state.get('inclusive', True)
         self.timezone = pytz.utc
         self.is_default = state.get('is_default', False)
@@ -327,7 +327,7 @@ class DateSpan(object):
                              self.enddate_display)
 
     @classmethod
-    def since(cls, days, enddate=None, format=DEFAULT_DATE_FORMAT, inclusive=True, timezone=pytz.utc):
+    def since(cls, days, enddate=None, format=ISO_DATE_FORMAT, inclusive=True, timezone=pytz.utc):
         """
         Generate a DateSpan ending with a certain date, and starting at a date that will
         include N number of days.
@@ -355,7 +355,7 @@ class DateSpan(object):
 
 
     @classmethod
-    def from_month(cls, month=None, year=None, format=DEFAULT_DATE_FORMAT,
+    def from_month(cls, month=None, year=None, format=ISO_DATE_FORMAT,
         inclusive=True, timezone=pytz.utc):
         """
         Generate a DateSpan object given a numerical month and year.
