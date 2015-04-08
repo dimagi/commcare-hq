@@ -181,7 +181,7 @@ class Select2BillingInfoHandler(BaseSelect2AsyncHandler):
         accounts = BillingAccount.objects.filter(is_active=True)
         if self.search_string:
             accounts = accounts.filter(name__contains=self.search_string)
-        return [(a.name, a.name) for a in accounts]
+        return [(a.id, a.name) for a in accounts]
 
     @property
     def domain_response(self):

@@ -1,7 +1,6 @@
 from couchdbkit import ResourceNotFound
 import datetime
 import dateutil
-from dimagi.utils.parsing import string_to_utc_datetime
 from django.core import cache
 from django.core.urlresolvers import reverse, NoReverseMatch
 from django.template.defaultfilters import yesno
@@ -11,6 +10,7 @@ import json
 from casexml.apps.case.models import CommCareCaseAction
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.util.dates import iso_string_to_datetime
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
@@ -179,7 +179,7 @@ class CaseInfo(object):
 
     def parse_date(self, date_string):
         try:
-            return string_to_utc_datetime(date_string)
+            return iso_string_to_datetime(date_string)
         except:
             try:
                 date_obj = dateutil.parser.parse(date_string)
