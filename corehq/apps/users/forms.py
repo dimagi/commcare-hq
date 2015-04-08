@@ -14,12 +14,11 @@ from django.template import Context
 from django_countries.countries import COUNTRIES
 from corehq.apps.domain.forms import EditBillingAccountInfoForm
 from corehq.apps.domain.models import Domain
-from corehq.apps.locations.models import Location, LOCATION_SHARING_PREFIX
+from corehq.apps.locations.models import Location
 from corehq.apps.registration.utils import handle_changed_mailchimp_email
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.app_manager.models import validate_lang
-from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.programs.models import Program
 
 # Bootstrap 3 Crispy Forms
@@ -387,19 +386,14 @@ class SupplyPointSelectWidget(forms.Widget):
         super(SupplyPointSelectWidget, self).__init__(attrs)
         self.domain = domain
         self.id = id
-        if attrs:
-            self.is_admin = attrs.get('is_admin', False)
-        else:
-            self.is_admin = False
 
     def render(self, name, value, attrs=None):
         return get_template('locations/manage/partials/autocomplete_select_widget.html').render(Context({
-                    'id': self.id,
-                    'name': name,
-                    'value': value or '',
-                    'is_admin': self.is_admin,
-                    'query_url': reverse('corehq.apps.commtrack.views.api_query_supply_point', args=[self.domain]),
-                }))
+            'id': self.id,
+            'name': name,
+            'value': value or '',
+            'query_url': reverse('corehq.apps.commtrack.views.api_query_supply_point', args=[self.domain]),
+        }))
 
 
 class CommtrackUserForm(forms.Form):
@@ -411,13 +405,8 @@ class CommtrackUserForm(forms.Form):
         if 'domain' in kwargs:
             domain = kwargs['domain']
             del kwargs['domain']
-        if 'is_admin' in kwargs:
-            attrs = {'is_admin': kwargs['is_admin']}
-            del kwargs['is_admin']
-        else:
-            attrs = {'is_admin': False}
         super(CommtrackUserForm, self).__init__(*args, **kwargs)
-        self.fields['location'].widget = SupplyPointSelectWidget(domain=domain, attrs=attrs)
+        self.fields['location'].widget = SupplyPointSelectWidget(domain=domain)
         if Domain.get_by_name(domain).commtrack_enabled:
             programs = Program.by_domain(domain, wrap=False)
             choices = list((prog['_id'], prog['name']) for prog in programs)
@@ -428,24 +417,10 @@ class CommtrackUserForm(forms.Form):
 
     def save(self, user):
         location_id = self.cleaned_data['location']
-        if location_id:
-            loc = Location.get(location_id)
-
-            # This means it will clear the location associations
-            # set in a domain with multiple locations configured.
-            # It is acceptable for now because multi location
-            # config is a not really supported special flag for
-            # IPM.
-            user.set_location(loc)
-
-            # add the supply point case id to user data fields
-            # so that the phone can auto select
-            supply_point = SupplyPointCase.get_by_location(loc)
-            if supply_point:
-                user.user_data['commtrack-supply-point'] = supply_point._id
-
-            user.user_data['commcare_primary_case_sharing_id'] = \
-                LOCATION_SHARING_PREFIX + location_id
+        # This means it will clear the location associations set in a domain
+        # with multiple locations configured. It is acceptable for now because
+        # multi location config is a not really supported special flag for IPM.
+        user.set_location(Location.get(location_id) if location_id else None)
 
 
 class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):

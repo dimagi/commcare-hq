@@ -1334,6 +1334,13 @@ class LocationUserMixin(DocumentSchema):
         Set the location, and all important user data, for
         the user.
         """
+        if not location:
+            # Remove associated info
+            self.user_data.pop('commtrack-supply-point', None)
+            self.user_data.pop('commcare_primary_case_sharing_id', None)
+            self.location_id = None
+            return
+
         from corehq.apps.commtrack.models import SupplyPointCase
         from corehq.apps.locations.models import LOCATION_SHARING_PREFIX
 
