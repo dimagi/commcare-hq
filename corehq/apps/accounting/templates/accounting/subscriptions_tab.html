@@ -24,7 +24,7 @@
                 <th>{% trans "Edit" %}</th>
             </tr>
         </thead>
-        <tbody data-bind="foreach: subscription_list">
+        <tbody>
             {% for subscription, last_due_date in subscription_list %}
                 <tr>
                     <td>{{ subscription.subscriber.domain }}</td>
