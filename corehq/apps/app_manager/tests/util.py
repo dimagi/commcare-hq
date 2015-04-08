@@ -31,6 +31,11 @@ class TestFileMixin(object):
             return f.read()
 
     @classmethod
+    def write_xml(cls, name, xml):
+        with open(cls.get_path(name, 'xml'), 'w') as f:
+            return f.write(xml)
+
+    @classmethod
     def get_json(cls, name):
         return json.loads(cls.get_file(name, 'json'))
 
