@@ -162,6 +162,9 @@ class InventoryManagementData(EWSData):
                 return quantity / consumption
             return 0
 
+        enddate = self.config['enddate']
+        startdate = self.config['startdate'] if 'custom_date' in self.config else enddate - timedelta(days=30)
+
         loc = SQLLocation.objects.get(location_id=self.config['location_id'])
 
         stoke_states = StockState.objects.filter(
@@ -175,18 +178,18 @@ class InventoryManagementData(EWSData):
             case_id=loc.supply_point_id,
             sql_product__in=self.unique_products([loc], all=True),
             type='stockonhand',
-            report__date__lte=self.config['enddate']
+            report__date__lte=enddate
         ).order_by('report__date')
 
         rows = OrderedDict()
-        weeks = ceil((self.config['enddate'] - self.config['startdate']).days / 7.0)
+        weeks = ceil((enddate - startdate).days / 7.0)
 
         for state in st:
             product_name = '{0} ({1})'.format(state.sql_product.name, state.sql_product.code)
             if product_name not in rows:
                 rows[product_name] = {}
             for i in range(1, int(weeks + 1)):
-                date = self.config['startdate'] + timedelta(weeks=i)
+                date = startdate + timedelta(weeks=i)
                 if state.report.date < date:
                     rows[product_name][i] = calculate_weeks_remaining(
                         state, consumptions.get(state.product_id, None), date)
