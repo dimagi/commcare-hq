@@ -12,6 +12,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
+from corehq.const import USER_DATE_FORMAT
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.web import get_site_domain
 
@@ -818,8 +819,8 @@ class Subscription(models.Model):
                 "[%(date_start)s - %(date_end)s]" % {
                     'plan_version': self.plan_version,
                     'subscriber': self.subscriber,
-                    'date_start': self.date_start.strftime("%d %B %Y"),
-                    'date_end': (self.date_end.strftime("%d %B %Y")
+                    'date_start': self.date_start.strftime(USER_DATE_FORMAT),
+                    'date_end': (self.date_end.strftime(USER_DATE_FORMAT)
                                  if self.date_end is not None else "--"),
                 })
 

@@ -24,6 +24,7 @@ from corehq.apps.accounting.utils import (
     get_change_status,
 )
 from corehq.apps.users.models import FakeUser, WebUser
+from corehq.const import USER_DATE_FORMAT, USER_MONTH_FORMAT
 from couchexport.export import export_from_tables
 from couchexport.models import Format
 from dimagi.utils.couch.database import iter_docs
@@ -88,8 +89,8 @@ def generate_invoices(based_on_date=None, check_existing=False, is_test=False):
     today = based_on_date or datetime.date.today()
     invoice_start, invoice_end = utils.get_previous_month_date_range(today)
     logger.info("[Billing] Starting up invoices for %(start)s - %(end)s" % {
-        'start': invoice_start.strftime("%d %B %Y"),
-        'end': invoice_end.strftime("%d %B %Y"),
+        'start': invoice_start.strftime(USER_DATE_FORMAT),
+        'end': invoice_end.strftime(USER_DATE_FORMAT),
     })
     all_domain_ids = [d['id'] for d in Domain.get_all(include_docs=False)]
     for domain_doc in iter_docs(Domain.get_db(), all_domain_ids):
@@ -177,7 +178,7 @@ def send_bookkeeper_email(month=None, year=None, emails=None):
     emails = emails or settings.BOOKKEEPER_CONTACT_EMAILS
     for email in emails:
         send_HTML_email(
-            "Invoices for %s" % datetime.date(year, month, 1).strftime("%B %Y"),
+            "Invoices for %s" % datetime.date(year, month, 1).strftime(USER_MONTH_FORMAT),
             email,
             email_content,
             email_from=settings.DEFAULT_FROM_EMAIL,
@@ -188,7 +189,7 @@ def send_bookkeeper_email(month=None, year=None, emails=None):
     logger.info(
         "[BILLING] Sent Bookkeeper Invoice Summary for %(month)s "
         "to %(emails)s." % {
-            'month': first_of_month.strftime("%B %Y"),
+            'month': first_of_month.strftime(USER_MONTH_FORMAT),
             'emails': ", ".join(emails)
         })
 
@@ -249,7 +250,7 @@ def send_purchase_receipt(payment_record, core_product,
         'name': name,
         'amount': fmt_dollar_amount(payment_record.amount),
         'project': payment_record.payment_method.billing_admin.domain,
-        'date_paid': payment_record.date_created.strftime('%d %B %Y'),
+        'date_paid': payment_record.date_created.strftime(USER_DATE_FORMAT),
         'product': core_product,
         'transaction_id': payment_record.public_transaction_id,
     }
