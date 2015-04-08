@@ -22,6 +22,8 @@ from dimagi.utils.parsing import json_format_date
 from touchforms.formplayer.models import EntrySession
 from django.core.urlresolvers import reverse
 
+CLOUDCARE_API_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S'  # todo: add '.%fZ'?
+
 
 def api_closed_to_status(closed_string):
     # legacy api support
@@ -376,8 +378,8 @@ def get_open_form_sessions(user, skip=0, limit=10):
             'app_id': sess.app_id,
             'name': sess.session_name,
             'display': u'{name} ({when})'.format(name=sess.session_name, when=naturaltime(sess.last_activity_date)),
-            'created_date': sess.created_date.strftime('%Y-%m-%dT%H:%M:%S'),
-            'last_activity_date': sess.last_activity_date.strftime('%Y-%m-%dT%H:%M:%S'),
+            'created_date': sess.created_date.strftime(CLOUDCARE_API_DATETIME_FORMAT),
+            'last_activity_date': sess.last_activity_date.strftime(CLOUDCARE_API_DATETIME_FORMAT),
         }
     return [session_to_json(sess) for sess in EntrySession.objects.filter(
         last_activity_date__isnull=False,

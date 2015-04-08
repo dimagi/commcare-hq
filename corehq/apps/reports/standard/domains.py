@@ -1,6 +1,4 @@
-from datetime import datetime
 from corehq.elastic import es_query
-from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
@@ -9,11 +7,16 @@ from corehq.apps.reports.generic import GenericTabularReport
 from django.utils.translation import ugettext as _
 from corehq.apps.reports.util import numcell
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
+from corehq.util.dates import iso_string_to_datetime
 from corehq.util.view_utils import absolute_reverse
 
 
 def format_date(dstr, default):
-    return datetime.strptime(dstr, '%Y-%m-%dT%H:%M:%SZ').strftime('%Y/%m/%d %H:%M:%S') if dstr else default
+    if dstr:
+        return iso_string_to_datetime(dstr).strftime('%Y/%m/%d %H:%M:%S')
+    else:
+        return default
+
 
 class DomainStatsReport(GenericTabularReport):
     dispatcher = BasicReportDispatcher

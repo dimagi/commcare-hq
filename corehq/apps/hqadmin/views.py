@@ -466,11 +466,12 @@ def noneulized_users(request, template="hqadmin/noneulized_users.html"):
     days = int(days) if days else 60
     days_ago = datetime.utcnow() - timedelta(days=days)
 
-    users = WebUser.view("eula_report/noneulized_users",
+    users = WebUser.view(
+        "eula_report/noneulized_users",
         reduce=False,
         include_docs=True,
-        startkey =["WebUser", days_ago.strftime("%Y-%m-%dT%H:%M:%SZ")],
-        endkey =["WebUser", {}]
+        startkey=["WebUser", json_format_datetime(days_ago)],
+        endkey=["WebUser", {}]
     ).all()
 
     context.update({"users": filter(lambda user: not user.is_dimagi, users), "days": days})

@@ -1,7 +1,8 @@
 import datetime
 import time
+
 from corehq.util.soft_assert import soft_assert
-from dimagi.utils.parsing import ISO_DATE_FORMAT
+from dimagi.utils.parsing import ISO_DATE_FORMAT, ISO_DATETIME_FORMAT
 
 
 def unix_time(dt):
@@ -74,7 +75,7 @@ def iso_string_to_datetime(iso_string):
     datetime.datetime(2015, 4, 7, 19, 7, 55, 437086)
 
     """
-    for fmt in ['%Y-%m-%dT%H:%M:%SZ', '%Y-%m-%dT%H:%M:%S.%fZ']:
+    for fmt in ['%Y-%m-%dT%H:%M:%SZ', ISO_DATETIME_FORMAT]:
         try:
             return datetime.datetime.strptime(iso_string, fmt)
         except ValueError:
