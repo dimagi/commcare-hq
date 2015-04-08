@@ -1518,7 +1518,6 @@ class BillingRecord(models.Model):
         record._pdf = invoice_pdf
         if record.invoice.subscription.do_not_invoice:
             record.skipped_email = True
-            invoice.is_hidden = True
         record.save()
         return record
 
