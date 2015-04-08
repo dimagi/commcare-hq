@@ -16,6 +16,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.reports.models import HQUserType, TempCommCareUser
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import user_id_to_username
+from corehq.util.dates import iso_string_to_datetime
 from corehq.util.timezones.utils import get_timezone_for_user
 from couchexport.util import SerializableFunction
 from dimagi.utils.couch.cache import cache_core
@@ -23,7 +24,7 @@ from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
 from corehq.apps.domain.models import Domain
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.parsing import string_to_datetime, string_to_utc_datetime
+from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.web import json_request
 
 
@@ -272,7 +273,7 @@ def datespan_export_filter(doc, datespan):
     if isinstance(datespan, dict):
         datespan = DateSpan(**datespan)
     try:
-        received_on = string_to_utc_datetime(doc['received_on']).replace(tzinfo=pytz.utc)
+        received_on = iso_string_to_datetime(doc['received_on']).replace(tzinfo=pytz.utc)
     except Exception:
         if settings.DEBUG:
             raise
