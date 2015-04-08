@@ -11,48 +11,54 @@
   background-color: @cc-text;
 }
 
+.make-bg (@location, @order) {
+  background-image: url('@{pub-images}/bg-@{location}/bg-@{location}-@{order}-lg.jpg');
+
+  // todo scale for screen
+}
+
 .bg-home-main {
-  background-image: url('@{pub-images}/bg-home/bg-home-main-lg.jpg');
+  .make-bg('home', 'main');
   background-position: bottom;
 }
 
 .bg-home-first {
-  background-image: url('@{pub-images}/bg-home/bg-home-first-lg.jpg');
+  .make-bg('home', 'first');
   background-position: bottom;
 }
 
 .bg-home-second {
-  background-image: url('@{pub-images}/bg-home/bg-home-second-lg.jpg');
+  .make-bg('home', 'second');
   background-position: center;
 }
 
 .bg-home-third {
-  background-image: url('@{pub-images}/bg-home/bg-home-fourth-lg.jpg');
+  .make-bg('home', 'fourth');
   background-position: center;
 }
 
 .bg-home-fourth {
-  background-image: url('@{pub-images}/bg-home/bg-home-third-lg.jpg');
+  .make-bg('home', 'third');
   background-position: center;
 }
 
 .bg-impact-first{
-  background-image: url('@{pub-images}/bg-impact/bg-impact-first-lg.jpg');
+  .make-bg('impact', 'first');
   background-position: center;
 }
 
 .bg-impact-second {
-  background-image: url('@{pub-images}/bg-impact/bg-impact-second-lg.jpg');
+  .make-bg('impact', 'second');
   background-position: center;
 }
 
 .bg-impact-third {
-  background-image: url('@{pub-images}/bg-impact/bg-impact-third-lg.jpg');
+  .make-bg('impact', 'third');
   background-position: center;
 }
 
 .bg-impact-fourth {
-  background-image: url('@{pub-images}/bg-impact/bg-impact-fourth-lg.jpg');
+  .make-bg('impact', 'fourth');
   background-position: center;
 }
 
@@ -63,4 +69,47 @@
 
 .bg-pricing-odd {
   background-color: @cc-neutral-low;
+}
+
+.bg-services-first {
+  .make-bg('services', 'first');
+  background-position: bottom;
+}
+
+.bg-services-second {
+  .make-bg('services', 'second');
+  background-position: center;
+}
+
+.bg-services-third {
+  .make-bg('services', 'third');
+  background-position: center;
+}
+
+.bg-pricing-first {
+  .make-bg('pricing', 'mobile');
+}
+
+.bg-pricing-second {
+  .make-bg('pricing', 'web');
+}
+
+.bg-pricing-third {
+  .make-bg('pricing', 'analytics');
+}
+
+.bg-pricing-fourth {
+  .make-bg('pricing', 'sms');
+}
+
+.bg-pricing-fifth {
+  .make-bg('pricing', 'users');
+}
+
+.bg-pricing-sixth {
+  .make-bg('pricing', 'support');
+}
+
+.bg-pricing-seventh {
+  .make-bg('pricing', 'last');
 }
