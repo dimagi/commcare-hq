@@ -7,14 +7,14 @@ from .views import (
     FacilitySyncView,
     LocationImportView,
     LocationImportStatusView,
-    LocationSettingsView,
+    LocationTypesView,
     LocationFieldsView,
 )
 
 settings_urls = patterns('corehq.apps.locations.views',
     url(r'^$', 'default', name='default_locations_view'),
     url(r'^list/$', LocationsListView.as_view(), name=LocationsListView.urlname),
-    url(r'^location_settings/$', LocationSettingsView.as_view(), name=LocationSettingsView.urlname),
+    url(r'^location_types/$', LocationTypesView.as_view(), name=LocationTypesView.urlname),
     url(r'^sync_facilities/$', FacilitySyncView.as_view(), name=FacilitySyncView.urlname),
     url(r'^import/$', LocationImportView.as_view(), name=LocationImportView.urlname),
     url(r'^import_status/(?P<download_id>[0-9a-fA-Z]{25,32})/$', LocationImportStatusView.as_view(), name=LocationImportStatusView.urlname),
