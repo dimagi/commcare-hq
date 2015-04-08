@@ -181,7 +181,7 @@ class QuickcacheTest(SimpleTestCase):
             pass
 
         key = cached_fn.get_cache_key({'name': 'a1'})
-        self.assertRegexpMatches(key, 'quickcache.cached_fn.[a-z0-9]{8}/sa1')
+        self.assertRegexpMatches(key, 'quickcache.cached_fn.[a-z0-9]{8}/u[a-z0-9]{32}')
 
     def test_unicode_string(self):
         @quickcache(['name'], cache=_cache)
