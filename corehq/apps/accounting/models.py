@@ -1139,7 +1139,7 @@ class Subscription(models.Model):
         if num_days_left == 1:
             ending_on = _("tomorrow!")
         else:
-            ending_on = _("on %s." % self.date_end.strftime("%B %d, %Y"))
+            ending_on = _("on %s." % self.date_end.strftime(USER_DATE_FORMAT))
 
         user_desc = self.plan_version.user_facing_description
         plan_name = user_desc['name']

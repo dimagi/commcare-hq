@@ -776,7 +776,7 @@ class PaymentRecordInterface(GenericTabularReport):
         for record in self.payment_records:
             rows.append([
                 format_datatables_data(
-                    text=record.date_created.strftime("%B %d %Y"),
+                    text=record.date_created.strftime(USER_DATE_FORMAT),
                     sort_key=record.date_created.isoformat(),
                 ),
                 record.payment_method.account.name,
