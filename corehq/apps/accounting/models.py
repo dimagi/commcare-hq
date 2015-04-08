@@ -1530,7 +1530,7 @@ class BillingRecord(models.Model):
         ).count() > MAX_INVOICE_COMMUNICATIONS
 
     def send_email(self, contact_emails=None):
-        if self.invoice.subscription.do_not_invoice:
+        if self.skipped_email:
             return
         pdf_attachment = {
             'title': self.pdf.get_filename(self.invoice),
