@@ -4,6 +4,8 @@ from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from custom.fri.models import PROFILE_A, PROFILE_B, PROFILE_C, PROFILE_D, PROFILE_E, PROFILE_F, PROFILE_G, PROFILE_H, PROFILE_DESC
 from custom.fri.api import get_interactive_participants
 from datetime import datetime, date, timedelta
+from dimagi.utils.parsing import json_format_date
+
 
 class InteractiveParticipantFilter(BaseSingleOptionFilter):
     slug = "participant"
@@ -43,7 +45,7 @@ class SurveyDateSelector(BaseSingleOptionFilter):
 
     @classmethod
     def get_value(cls, *args, **kwargs):
-        default = cls.get_date_choices()[-1].strftime("%Y-%m-%d")
+        default = json_format_date(cls.get_date_choices()[-1])
         return super(SurveyDateSelector, cls).get_value(*args, **kwargs) or default
 
     @classmethod
@@ -66,6 +68,6 @@ class SurveyDateSelector(BaseSingleOptionFilter):
     def options(self):
         result = []
         for date in sorted(self._date_choices, reverse=True):
-            result.append((date.strftime("%Y-%m-%d"), date.strftime("%m/%d/%y")))
+            result.append((json_format_date(date), date.strftime("%m/%d/%y")))
         return result
 

@@ -18,6 +18,7 @@ from couchexport.schema import build_latest_schema
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.parsing import json_format_date
 from dimagi.utils.web import json_response
 
 require_form_export_permission = require_permission(
@@ -125,7 +126,7 @@ class BaseCreateCustomExportView(BaseExportView):
                 name="%s: %s" % (
                     xmlns_to_name(self.domain, export_tag[1], app_id=app_id)
                         if self.export_helper.export_type == "form" else export_tag[1],
-                    datetime.utcnow().strftime("%Y-%m-%d")
+                    json_format_date(datetime.utcnow())
                 ),
                 type=self.export_helper.export_type
             )

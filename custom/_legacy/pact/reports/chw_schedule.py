@@ -1,10 +1,11 @@
-from datetime import datetime, timedelta
-import time
+from datetime import datetime, timedelta, time
 from dateutil.parser import parser
 from django.core.cache import cache
 import json
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.api.es import ReportXFormES, get_report_script_field
+from corehq.util.dates import iso_string_to_date
+from dimagi.utils.parsing import json_format_date
 from pact.enums import PACT_DOMAIN
 from pact.lib.quicksect import IntervalNode
 from pact.utils import get_patient_display_cache
@@ -13,6 +14,7 @@ import logging
 cached_schedules = {}
 
 def get_seconds(d):
+    import time
     return time.mktime(d.utctimetuple())
 
 
@@ -211,15 +213,15 @@ def chw_calendar_submit_report(request, username, interval=7):
 
     #secret date ranges
     if 'enddate' in request.GET:
-        end_date_str = request.GET.get('enddate', datetime.utcnow().strftime('%Y-%m-%d'))
-        end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+        end_date_str = request.GET.get('enddate', json_format_date(datetime.utcnow()))
+        end_date = iso_string_to_date(end_date_str)
     else:
-        end_date = datetime.utcnow()
+        end_date = datetime.utcnow().date()
 
     if 'startdate' in request.GET:
         #if there's a startdate, trump interval
-        start_date_str = request.GET.get('startdate', datetime.utcnow().strftime('%Y-%m-%d'))
-        start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+        start_date_str = request.GET.get('startdate', json_format_date(datetime.utcnow()))
+        start_date = iso_string_to_date(start_date_str)
         total_interval = (end_date - start_date).days
 
     ret, patients, total_scheduled, total_visited = get_schedule_tally(username,

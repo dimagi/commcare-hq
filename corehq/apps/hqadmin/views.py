@@ -76,7 +76,7 @@ from corehq.db import Session
 from corehq.elastic import parse_args_for_es, ES_URLS, run_query
 from dimagi.utils.couch.database import get_db, is_bigcouch
 from dimagi.utils.decorators.datespan import datespan_in_request
-from dimagi.utils.parsing import json_format_datetime
+from dimagi.utils.parsing import json_format_datetime, json_format_date
 from dimagi.utils.web import json_response, get_url_base
 from dimagi.utils.django.email import send_HTML_email
 
@@ -790,7 +790,7 @@ def callcenter_test(request):
     context = {
         "error": error,
         "mobile_user": user,
-        "date": query_date.strftime("%Y-%m-%d"),
+        "date": json_format_date(query_date),
         "enable_caching": enable_caching,
         "data": data,
         "doc_id": doc_id

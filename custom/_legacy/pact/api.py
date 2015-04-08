@@ -8,6 +8,7 @@ from lxml import etree
 from django.core.servers.basehttp import FileWrapper
 from django.utils.decorators import method_decorator
 from casexml.apps.phone.middleware import LAST_SYNCTOKEN_HEADER
+from dimagi.utils.parsing import json_format_date
 from django_digest.decorators import httpdigest
 import json
 from django.http import Http404, HttpResponse
@@ -251,7 +252,8 @@ def submit_case_update_form(casedoc, update_dict, couch_user, submit_date=None, 
 
     update_block = prepare_case_update_xml_block(casedoc, couch_user, update_dict, submit_date)
     form.append(update_block)
-    encounter_date = etree.XML('<encounter_date>%s</encounter_date>' % datetime.utcnow().strftime('%Y-%m-%d'))
+    # todo: this date is based off midnight UTC not local time...
+    encounter_date = etree.XML('<encounter_date>%s</encounter_date>' % json_format_date(datetime.utcnow()))
     form.append(encounter_date)
 
     submission_xml_string = etree.tostring(form)

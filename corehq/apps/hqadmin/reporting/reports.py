@@ -57,7 +57,7 @@ from corehq.elastic import (
 )
 
 from casexml.apps.stock.models import StockReport, StockTransaction
-from corehq.util.dates import get_timestamp_millis
+from corehq.util.dates import get_timestamp_millis, iso_string_to_date
 
 CASE_COUNT_UPPER_BOUND = 1000 * 1000 * 10
 COUNTRY_COUNT_UPPER_BOUND = 1000 * 1000 * 10
@@ -848,11 +848,8 @@ def _histo_data_non_cumulative(domain_list, histogram_type, start_date,
         # TODO - add to configs
         return 90 if histogram_type == 'active_cases' else 30
 
-    timestamps = daterange(
-        interval,
-        datetime.strptime(start_date, "%Y-%m-%d").date(),
-        datetime.strptime(end_date, "%Y-%m-%d").date(),
-    )
+    timestamps = daterange(interval, iso_string_to_date(start_date),
+                           iso_string_to_date(end_date))
     histo_data = {}
     for domain_name_data in domain_list:
         display_name = domain_name_data['display_name']

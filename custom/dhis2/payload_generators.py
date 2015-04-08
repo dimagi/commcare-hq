@@ -30,6 +30,7 @@ from custom.dhis2.const import NUTRITION_ASSESSMENT_EVENT_FIELDS, RISK_ASSESSMEN
     RISK_ASSESSMENT_PROGRAM_FIELDS, REGISTER_CHILD_XMLNS, GROWTH_MONITORING_XMLNS, RISK_ASSESSMENT_XMLNS, \
     NUTRITION_ASSESSMENT_PROGRAM_FIELDS, CASE_TYPE
 from custom.dhis2.tasks import push_case
+from dimagi.utils.parsing import json_format_date
 
 
 logger = logging.getLogger(__name__)
@@ -98,7 +99,7 @@ class FormRepeaterDhis2EventPayloadGenerator(BasePayloadGenerator):
             # Check whether the case needs to be enrolled in the Risk Assessment Program
             program_id = dhis2_api.get_program_id('Underlying Risk Assessment')
             if not dhis2_api.enrolled_in(case['external_id'], 'Underlying Risk Assessment'):
-                today = date.today().strftime('%Y-%m-%d')
+                today = json_format_date(date.today())
                 program_data = {dhis2_attr: case[cchq_attr]
                                 for cchq_attr, dhis2_attr in RISK_ASSESSMENT_PROGRAM_FIELDS.iteritems()}
                 dhis2_api.enroll_in_id(case['external_id'], program_id, today, program_data)

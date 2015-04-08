@@ -8,7 +8,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.sms.models import ExpectedCallbackEventLog, CALLBACK_PENDING, CALLBACK_RECEIVED, CALLBACK_MISSED
 from datetime import datetime, timedelta
 from corehq.util.timezones.conversions import ServerTime
-from dimagi.utils.parsing import json_format_datetime
+from dimagi.utils.parsing import json_format_datetime, json_format_date
 
 
 class MissedCallbackReport(CustomProjectReport, GenericTabularReport):
@@ -62,7 +62,7 @@ class MissedCallbackReport(CustomProjectReport, GenericTabularReport):
                 }
 
         dates = self.get_past_two_weeks()
-        date_strings = [date.strftime("%Y-%m-%d") for date in dates]
+        date_strings = [json_format_date(date) for date in dates]
 
         start_date = dates[0] - timedelta(days=1)
         end_date = dates[-1] + timedelta(days=2)

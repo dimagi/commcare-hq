@@ -1,5 +1,6 @@
 from ctable.fixtures import CtableMappingFixture
 from ctable.models import ColumnDef, KeyMatcher
+from dimagi.utils.parsing import ISO_DATE_FORMAT
 
 
 class PatientSummaryMapping(CtableMappingFixture):
@@ -19,7 +20,7 @@ class PatientSummaryMapping(CtableMappingFixture):
             ColumnDef(name="district", data_type="string", value_source="key", value_index=5),
             ColumnDef(name="clinic", data_type="string", value_source="key", value_index=6),
             ColumnDef(name="gender", data_type="string", value_source="key", value_index=7),
-            ColumnDef(name="date", data_type="date", value_source="key", value_index=8, date_format="%Y-%m-%d"),
+            ColumnDef(name="date", data_type="date", value_source="key", value_index=8, date_format=ISO_DATE_FORMAT),
             ColumnDef(name="diagnosis", data_type="string", value_source="key", value_index=9),
             ColumnDef(name="lot_number", data_type="string", value_source="key", value_index=10),
             ColumnDef(name="gps", data_type="string", value_source="key", value_index=11),

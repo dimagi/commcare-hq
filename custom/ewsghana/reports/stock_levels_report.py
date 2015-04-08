@@ -17,6 +17,7 @@ from custom.ewsghana.reports import EWSData, MultiReport, get_url_with_location,
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 from corehq.apps.locations.models import Location, SQLLocation
+from dimagi.utils.parsing import json_format_date
 
 
 class StockLevelsLegend(EWSData):
@@ -100,7 +101,7 @@ class FacilityReportData(EWSData):
                     'monthly_consumption': monthly_consumption,
                     'reorder_level': int(monthly_consumption * loc.location_type.overstock_threshold) / 2,
                     'maximum_level': int(monthly_consumption * loc.location_type.overstock_threshold),
-                    'date_of_last_report': state.last_modified_date.strftime("%Y-%m-%d")
+                    'date_of_last_report': json_format_date(state.last_modified_date)
                 }
 
         for state in st:

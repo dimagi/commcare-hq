@@ -21,6 +21,7 @@ from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.adm.reports.supervisor import SupervisorReportsADMSection
 from custom.bihar.reports.indicators.mixins import IndicatorConfigMixIn
+from dimagi.utils.parsing import json_format_date
 
 
 def shared_bihar_context(report):
@@ -301,8 +302,8 @@ class WorkerRankSelectionReport(SubCenterSelectionReport):
         start = end - timedelta(days=30)
         params = {
             "ufilter": 0,
-            "startdate": start.strftime("%Y-%m-%d"),
-            "enddate": end.strftime("%Y-%m-%d")
+            "startdate": json_format_date(start),
+            "enddate": json_format_date(end)
         }
         def _awcc_link(g):
             params["group"] = g.get_id
