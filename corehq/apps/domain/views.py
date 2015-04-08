@@ -2023,7 +2023,8 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
         initial = {
             'deployment_date': self.domain_object.deployment.date.date
             if self.domain_object.deployment.date else '',
-            'countries': self.domain_object.deployment.countries
+            'countries': self.domain_object.deployment.countries,
+            'is_test': self.domain_object.is_test,
         }
         internal_attrs = [
             'sf_contract_id',
@@ -2087,7 +2088,8 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             messages.success(request, _("The internal information for project %s was successfully updated!")
                                       % self.domain)
         else:
-            messages.error(request, _("There seems to have been an error. Please try again!"))
+            messages.error(request, _(
+                "Your settings are not valid, see below for errors. Correct them and try again!"))
         return self.get(request, *args, **kwargs)
 
 
