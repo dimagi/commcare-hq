@@ -10,7 +10,6 @@ env:
   matrix:
     - TEST_RUNNER=testrunner.GroupTestRunnerCatchall
     - TEST_RUNNER=testrunner.GroupTestRunner0
-    - TEST_RUNNER=testrunner.GroupTestRunner1
 branches:
   only:
     - master
