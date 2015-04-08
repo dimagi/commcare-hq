@@ -5,6 +5,7 @@ from django.core.cache import cache
 import json
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.api.es import ReportXFormES, get_report_script_field
+from corehq.util.dates import iso_string_to_datetime
 from pact.enums import PACT_DOMAIN
 from pact.lib.quicksect import IntervalNode
 from pact.utils import get_patient_display_cache
@@ -77,9 +78,9 @@ class CHWPatientSchedule(object):
             if single_sched['ended_date'] == None:
                 enddate = nowdate + timedelta(days=9)
             else:
-                enddate = datetime.strptime(single_sched['ended_date'], "%Y-%m-%dT%H:%M:%SZ")
+                enddate = iso_string_to_datetime(single_sched['ended_date'])
 
-            startdate = datetime.strptime(single_sched['active_date'], "%Y-%m-%dT%H:%M:%SZ")
+            startdate = iso_string_to_datetime(single_sched['active_date'])
             case_id = single_sched['case_id']
             if single_sched.has_key('error'):
                 #this is a non-showstopping issue due to quirks with older submissions

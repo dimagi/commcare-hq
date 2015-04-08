@@ -185,6 +185,8 @@ def update_calculated_properties():
         es.post("%s/hqdomain/%s/_update" % (DOMAIN_INDEX, r["_id"]), data={"doc": calced_props})
 
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
+
+
 def is_app_active(app_id, domain):
     now = datetime.utcnow()
     then = (now - timedelta(days=30)).strftime(DATE_FORMAT)
