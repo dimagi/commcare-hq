@@ -240,8 +240,14 @@ class EWSApi(APISynchronization):
             "custom.ewsghana.reports.specific_reports.reporting_rates.ReportingRatesReport",
             "custom.ewsghana.reports.maps.EWSMapReport",
             "custom.ewsghana.reports.email_reports.CMSRMSReport",
-            "custom.ewsghana.reports.email_reports.StockSummaryReport"
+            "custom.ewsghana.reports.email_reports.StockSummaryReport",
+            "custom.ewsghana.comparison_report.ProductsCompareReport",
+            "custom.ewsghana.comparison_report.LocationsCompareReport",
+            "custom.ewsghana.comparison_report.SupplyPointsCompareReport",
+            "custom.ewsghana.comparison_report.WebUsersCompareReport",
+            "custom.ewsghana.comparison_report.SMSUsersCompareReport"
         ]
+
         if administrator_role:
             permissions = Permissions(
                 edit_web_users=True,
@@ -332,6 +338,8 @@ class EWSApi(APISynchronization):
             location.location_type = supply_point.type
             self._create_supply_point_from_location(supply_point, location)
             location.save()
+        else:
+            location.archive()
 
     def location_sync(self, ews_location):
         try:

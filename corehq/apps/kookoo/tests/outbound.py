@@ -3,6 +3,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.sms.tests.util import TouchformsTestCase
 from corehq.apps.sms.mixin import MobileBackend
 from corehq.apps.sms.models import CallLog
+from corehq.apps.sms.util import register_sms_contact
 from corehq.apps.reminders.models import (CaseReminderHandler,
     METHOD_IVR_SURVEY, RECIPIENT_CASE, REMINDER_TYPE_DEFAULT,
     CASE_CRITERIA, CaseReminderEvent, FIRE_TIME_DEFAULT,
@@ -30,16 +31,6 @@ class KooKooTestCase(TouchformsTestCase):
         self.user1 = self.create_mobile_worker("user1", "123", "91001", save_vn=False)
         self.user2 = self.create_mobile_worker("user2", "123", "91002", save_vn=False)
         self.create_group("group1", [self.user1, self.user2])
-
-        self.case = CommCareCase(
-            domain=self.domain,
-            type="participant",
-            owner_id=self.groups[0]._id,
-        )
-        self.case.set_case_property("contact_phone_number", "91000")
-        self.case.set_case_property("contact_phone_number_is_verified", "1")
-        self.case.set_case_property("contact_ivr_backend_id", "MOBILE_BACKEND_KOOKOO")
-        self.case.save()
 
         dirname = os.path.dirname(os.path.abspath(__file__))
         self.load_app("app1.json", dirname)
@@ -148,8 +139,14 @@ class KooKooTestCase(TouchformsTestCase):
         # Send an outbound call using self.reminder1 to self.case
         # and answer it
         CaseReminderHandler.now = datetime(2014, 6, 23, 10, 0)
-        self.case.name = "case1"
-        self.case.save()
+        self.case = CommCareCase.get(register_sms_contact(
+            self.domain,
+            'participant',
+            'case1',
+            self.user1._id,
+            '91000',
+            owner_id=self.groups[0]._id,
+        ))
         CaseReminderHandler.now = datetime(2014, 6, 23, 12, 0)
         CaseReminderHandler.fire_reminders()
         reminder = self.reminder1.get_reminder(self.case)
@@ -264,9 +261,14 @@ class KooKooTestCase(TouchformsTestCase):
         self.domain_obj.save()
 
         CaseReminderHandler.now = datetime(2014, 6, 24, 10, 0)
-        self.case = CommCareCase.get(self.case._id)
-        self.case.name = "case2"
-        self.case.save()
+        self.case = CommCareCase.get(register_sms_contact(
+            self.domain,
+            'participant',
+            'case2',
+            self.user1._id,
+            '91003',
+            owner_id=self.groups[0]._id,
+        ))
         reminder = self.reminder2.get_reminder(self.case)
         self.assertEquals(reminder.next_fire, datetime(2014, 6, 24, 12, 0))
 

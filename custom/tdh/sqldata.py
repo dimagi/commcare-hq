@@ -245,7 +245,7 @@ class InfantClassification(BaseSqlData):
                 'inf_bac_qh', 'inf_bac_qj', 'inf_bac_qk', 'inf_bac_ql', 'inf_bac_qm', 'diarrhee_qa',
                 'alimentation_qa', 'alimentation_qb', 'alimentation_qc', 'alimentation_qd', 'alimentation_qf',
                 'alimentation_qg', 'alimentation_qh', 'vih_qa', 'vih_qb', 'vih_qc', 'vih_qd', 'vih_qe', 'vih_qf',
-                'vih_qg', 'vih_qh', 'vih_qi', 'vih_qj', 'vih_qk', 'vih_qk', 'vih_ql', 'other_comments']
+                'vih_qg', 'vih_qh', 'vih_qi', 'vih_qj', 'vih_qk', 'vih_ql', 'other_comments']
 
 
 class InfantClassificationExtended(BaseSqlData):

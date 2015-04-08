@@ -397,12 +397,17 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         json['build_spec']['version'] = '2.20.0'
 
         app = Application.wrap(json)
-        module = app.get_module(1)
+        module = app.get_module(0)
         module.module_filter = "./user/mod/filter = '123'"
         self.assertXmlPartialEqual(
             self.get_xml('module-filter-user'),
             app.create_suite(),
-            "./menu[@id='m1']"
+            "./menu[@id='m0']"
+        )
+        self.assertXmlPartialEqual(
+            self.get_xml('module-filter-user-entry'),
+            app.create_suite(),
+            "./entry[1]"
         )
 
     def test_tiered_select_with_advanced_module_as_parent(self):
@@ -860,7 +865,7 @@ class TestFormLinking(SimpleTestCase, TestFileMixin):
 
         m0f0.post_form_workflow = WORKFLOW_FORM
         m0f0.form_links = [
-            FormLink(xpath='true()', form_id=m1f0.unique_id)
+            FormLink(xpath="(today() - dob) &lt; 7", form_id=m1f0.unique_id)
         ]
         self.assertXmlPartialEqual(self.get_xml('form_link_basic'), app.create_suite(), "./entry[1]")
 
@@ -874,7 +879,7 @@ class TestFormLinking(SimpleTestCase, TestFileMixin):
 
         m0f0.post_form_workflow = WORKFLOW_FORM
         m0f0.form_links = [
-            FormLink(xpath='true()', form_id=m1f0.unique_id)
+            FormLink(xpath="(today() - dob) > 7", form_id=m1f0.unique_id)
         ]
 
         self.assertXmlPartialEqual(self.get_xml('form_link_update_case'), app.create_suite(), "./entry[1]")

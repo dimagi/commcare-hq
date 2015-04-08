@@ -51,7 +51,7 @@ class HNBCReportDisplay(CaseDisplay):
         if 'date_birth' not in self.case:
             return '---'
         else:
-            return self.report.date_to_json(self.case.date_birth)
+            return self.report.date_to_json(self.case['date_birth'])
 
     @property
     def visit_completion(self):

@@ -21,6 +21,7 @@ def ivr(request):
     circle = request.GET.get("circle", None)
     event = request.GET.get("event", None)
     data = request.GET.get("data", None)
+    total_call_duration = request.GET.get("total_call_duration", None)
     
     phone_number = cid
     if phone_number is not None and phone_number.startswith("0"):
@@ -40,7 +41,7 @@ def ivr(request):
 
     with CriticalSection([gateway_session_id], timeout=300):
         result = incoming(phone_number, backend_module, gateway_session_id,
-            ivr_event, input_data=data)
+            ivr_event, input_data=data, duration=total_call_duration)
     return result
 
 """

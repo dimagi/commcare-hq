@@ -43,6 +43,11 @@ DEFAULT_CUSTOM_CHOICES = (
     (CUSTOM, ugettext_noop("Specify:")),
 )
 
+MESSAGE_COUNTER_CHOICES = (
+    (DEFAULT, ugettext_noop("Don't use counter")),
+    (CUSTOM, ugettext_noop("Use counter with threshold:")),
+)
+
 SMS_CONVERSATION_LENGTH_CHOICES = (
     (5, 5),
     (10, 10),
@@ -147,7 +152,7 @@ class SettingsForm(Form):
     )
     use_custom_message_count_threshold = ChoiceField(
         required=False,
-        choices=DEFAULT_CUSTOM_CHOICES,
+        choices=MESSAGE_COUNTER_CHOICES,
     )
     custom_message_count_threshold = IntegerField(
         required=False,
@@ -338,7 +343,7 @@ class SettingsForm(Form):
                 css_id="custom-case-username-group",
             ),
             BootstrapMultiField(
-                _("Counter Threshold"),
+                _("Message Counter"),
                 InlineField(
                     "use_custom_message_count_threshold",
                     data_bind="value: use_custom_message_count_threshold",
@@ -348,10 +353,11 @@ class SettingsForm(Form):
                     css_class="input-large",
                     data_bind="visible: showCustomMessageCountThreshold",
                 ),
-                help_bubble_text=_("The chat window keeps track of how many "
-                    "messages are being sent and received, and will "
-                    "highlight the counter after it reaches 50. To use a "
-                    "different threshold than 50, enter it here."),
+                help_bubble_text=_("The chat window can use a counter to keep "
+                    "track of how many messages are being sent and received "
+                    "and highlight that number after a certain threshold is "
+                    "reached. By default, the counter is disabled. To enable "
+                    "it, enter the desired threshold here."),
                 css_id="custom-message-count-threshold-group",
             ),
             FieldWithHelpBubble(
