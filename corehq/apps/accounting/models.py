@@ -1516,7 +1516,7 @@ class BillingRecord(models.Model):
         invoice_pdf.generate_pdf(record.invoice)
         record.pdf_data_id = invoice_pdf._id
         record._pdf = invoice_pdf
-        record.skipped_email = record.invoice.subscription.do_not_invoice
+        record.skipped_email = invoice.is_hidden
         record.save()
         return record
 
