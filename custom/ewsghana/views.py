@@ -151,7 +151,8 @@ def inventory_management(request, domain):
         config=dict(
             program=None, products=None, domain=domain,
             startdate=force_to_datetime(request.GET.get('startdate')),
-            enddate=force_to_datetime(request.GET.get('enddate')), location_id=request.GET.get('location_id')
+            enddate=force_to_datetime(request.GET.get('enddate')), location_id=request.GET.get('location_id'),
+            custom_date=True
         )
     )
     return HttpResponse(
