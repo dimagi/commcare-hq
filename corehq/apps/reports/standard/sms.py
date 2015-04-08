@@ -6,6 +6,7 @@ from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader,\
     DTSortType
 from corehq.apps.sms.filters import MessageTypeFilter
+from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.parsing import json_format_datetime
@@ -118,7 +119,7 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
     def _fmt_timestamp(self, timestamp):
         return self.table_cell(
             timestamp,
-            timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+            timestamp.strftime(SERVER_DATETIME_FORMAT),
         )
 
     def _fmt_contact_link(self, msg, doc_info):

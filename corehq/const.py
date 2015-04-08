@@ -1,3 +1,6 @@
 USER_DATETIME_FORMAT = "%b %d, %Y %H:%M %Z"
 USER_DATE_FORMAT = "%b %d, %Y"
 USER_TIME_FORMAT = "%H:%M %Z"
+
+SERVER_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
+SERVER_DATETIME_FORMAT_NO_SEC = "%Y-%m-%d %H:%M"

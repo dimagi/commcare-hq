@@ -12,6 +12,7 @@ from corehq.apps.reports.datatables import (
     DTSortType,
 )
 from corehq.apps.reports.util import format_datatables_data
+from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime, UserTime
 from custom.fri.models import FRISMSLog, PROFILE_DESC
 from custom.fri.reports.filters import (InteractiveParticipantFilter,
@@ -268,7 +269,7 @@ class MessageReport(FRIReport, DatespanMixin):
     def _fmt_timestamp(self, timestamp):
         return self.table_cell(
             timestamp,
-            timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+            timestamp.strftime(SERVER_DATETIME_FORMAT),
         )
 
 class PHEDashboardReport(FRIReport):
@@ -446,6 +447,6 @@ class SurveyResponsesReport(FRIReport):
     def _fmt_timestamp(self, timestamp):
         return self.table_cell(
             timestamp,
-            timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+            timestamp.strftime(SERVER_DATETIME_FORMAT),
         )
 

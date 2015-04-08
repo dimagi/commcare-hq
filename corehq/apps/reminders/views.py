@@ -8,6 +8,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponse
 from django.shortcuts import render
 from corehq.apps.translations.models import StandaloneTranslationDoc
+from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch import CriticalSection
@@ -1312,7 +1313,7 @@ def reminders_in_error(request, domain):
             "handler_name" : handler.nickname,
             "case_id" : case.get_id if case is not None else None,
             "case_name" : case.name if case is not None else None,
-            "next_fire" : ServerTime(reminder.next_fire).user_time(timezone).ui_string("%Y-%m-%d %H:%M:%S"),
+            "next_fire" : ServerTime(reminder.next_fire).user_time(timezone).ui_string(SERVER_DATETIME_FORMAT),
             "error_msg" : reminder.error_msg or "-",
             "recipient_name" : get_recipient_name(recipient),
         })
