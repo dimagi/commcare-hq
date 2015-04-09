@@ -206,18 +206,19 @@ class MessageLogReport(BaseCommConnectLogReport):
     def get_location_filter(self):
         locations = []
         location = AsyncLocationFilter.get_value(self.request, self.domain)
-        reporting_types = LocationType.objects.filter(domain=self.domain, administrative=False)
-        loc = SQLLocation.objects.get(location_id=location)
-        if loc.location_type in reporting_types:
-            locations.append(loc.location_id)
+        if location:
+            reporting_types = LocationType.objects.filter(domain=self.domain, administrative=False)
+            loc = SQLLocation.objects.get(location_id=location)
+            if loc.location_type in reporting_types:
+                locations.append(loc.location_id)
 
-        def get_reporting_locations_ids(parent_loc):
-            for children_location in SQLLocation.objects.filter(parent=parent_loc):
-                if children_location.location_type in reporting_types:
-                    locations.append(children_location.location_id)
-                get_reporting_locations_ids(children_location)
+            def get_reporting_locations_ids(parent_loc):
+                for children_location in SQLLocation.objects.filter(parent=parent_loc):
+                    if children_location.location_type in reporting_types:
+                        locations.append(children_location.location_id)
+                    get_reporting_locations_ids(children_location)
 
-        get_reporting_locations_ids(loc)
+            get_reporting_locations_ids(loc)
         return locations
 
     @staticmethod
@@ -279,7 +280,7 @@ class MessageLogReport(BaseCommConnectLogReport):
             if not message_type_filter(message_types):
                 continue
 
-            if message.location_id not in reporting_locations_id:
+            if reporting_locations_id and message.location_id not in reporting_locations_id:
                 continue
 
             doc_info = self.get_recipient_info(message, contact_cache)
