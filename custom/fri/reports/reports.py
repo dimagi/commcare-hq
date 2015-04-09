@@ -36,7 +36,7 @@ class FRIReport(CustomProjectReport, GenericTabularReport):
 
     @property
     def timezone(self):
-        return pytz.timezone(self.domain_obj.default_timezone)
+        return self.domain_obj.get_default_timezone()
 
     @property
     def domain_obj(self):
@@ -250,7 +250,7 @@ class MessageReport(FRIReport, DatespanMixin):
             if message.couch_recipient_doc_type == "CommCareCase":
                 study_arm = case_cache.get(message.couch_recipient).get_case_property("study_arm")
 
-            timestamp = ServerTime(message.date).user_time(self.domain_obj.default_timezone).done()
+            timestamp = ServerTime(message.date).user_time(self.timezone).done()
             result.append([
                 self._fmt(self._participant_id(recipient)),
                 self._fmt(study_arm or "-"),
@@ -384,7 +384,7 @@ class SurveyResponsesReport(FRIReport):
                 elif response == NO_RESPONSE:
                     row.append(self._fmt(_("No Response")))
                 else:
-                    response_timestamp = ServerTime(response.date).user_time(self.domain_obj.default_timezone).done()
+                    response_timestamp = ServerTime(response.date).user_time(self.timezone).done()
                     row.append(self._fmt_timestamp(response_timestamp))
             result.append(row)
         return result
@@ -416,12 +416,12 @@ class SurveyResponsesReport(FRIReport):
     def get_first_survey_response(self, case, dt):
         timestamp_start = datetime.combine(dt, time(20, 45))
         timestamp_start = UserTime(
-            timestamp_start, self.domain_obj.default_timezone).server_time().done()
+            timestamp_start, self.timezone).server_time().done()
         timestamp_start = json_format_datetime(timestamp_start)
 
         timestamp_end = datetime.combine(dt + timedelta(days=1), time(11, 45))
         timestamp_end = UserTime(
-            timestamp_end, self.domain_obj.default_timezone).server_time().done()
+            timestamp_end, self.timezone).server_time().done()
         if timestamp_end > datetime.utcnow():
             return RESPONSE_NOT_APPLICABLE
         timestamp_end = json_format_datetime(timestamp_end)
