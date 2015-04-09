@@ -1,5 +1,5 @@
 from datetime import datetime
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 
 DELETED_SUFFIX = '-Deleted'
 
