@@ -194,7 +194,7 @@ class ScheduleTests(TestCase):
         api_schedules = test_patient.get_schedules(raw_json=True)
         self.assertIsNone(api_schedules[-1]['ended'])
         self.assertEquals(api_schedules[-1]['started'],
-                          '2011-02-25T14:05:32.000000Z')
+                          '2011-02-25T14:05:32Z')
 
         self.assertEquals(len(api_schedules), len(WEEKLY_SCHEDULE_EXAMPLES))
 
@@ -221,4 +221,4 @@ class ScheduleTests(TestCase):
         self.assertEquals(len(removed_schedules), len(WEEKLY_SCHEDULE_EXAMPLES))
         self.assertIsNone(removed_schedules[-1]['ended'])
         self.assertEquals(removed_schedules[-1]['started'],
-                          '2011-02-25T14:05:32.000000Z')
+                          '2011-02-25T14:05:32Z')
