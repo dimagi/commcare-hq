@@ -3,7 +3,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import YearFilter
-from custom.ilsgateway.filters import ProductByProgramFilter, MSDZoneFilter, MonthAndQuarterFilter, ProgramFilter
+from custom.ilsgateway.filters import MSDZoneFilter, MonthAndQuarterFilter, ProgramFilter
 from custom.ilsgateway.models import GroupSummary, SupplyPointStatusTypes, OrganizationSummary
 from custom.ilsgateway.tanzania import ILSData, DetailsReport
 from custom.ilsgateway.tanzania.reports.utils import make_url, format_percent, link_format, latest_status_or_none

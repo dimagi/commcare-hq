@@ -226,7 +226,6 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport,
             return '{0} - {1}'.format(self.datespan.startdate.strftime('%B'),
                                       self.datespan.enddate.strftime('%B, %Y'))
 
-
     @property
     def report_config(self):
         org_summary = OrganizationSummary.objects.filter(date__range=(self.datespan.startdate,

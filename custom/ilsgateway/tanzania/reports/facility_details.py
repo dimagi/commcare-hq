@@ -164,7 +164,6 @@ class RecentMessages(ILSData):
             DataTablesColumn('Text')
         ])
 
-
     @property
     def rows(self):
         data = SMSLog.by_domain_date(self.config['domain'])

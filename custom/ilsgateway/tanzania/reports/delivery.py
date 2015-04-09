@@ -2,7 +2,7 @@ from dateutil import rrule
 from django.db.models.aggregates import Avg
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from custom.ilsgateway.filters import ProductByProgramFilter, MSDZoneFilter, MonthAndQuarterFilter, ProgramFilter
+from custom.ilsgateway.filters import MSDZoneFilter, MonthAndQuarterFilter, ProgramFilter
 from custom.ilsgateway.tanzania import ILSData, DetailsReport
 from custom.ilsgateway.tanzania.reports.facility_details import FacilityDetailsReport, InventoryHistoryData, \
     RegistrationData, RandRHistory, Notes, RecentMessages
