@@ -464,9 +464,21 @@
         </a>
     </div>
     {% endif %}
+    <header>
+        <div class="row-fluid">
+            <div class="span12">
+                <h3>{% trans "Export Settings" %}</h3>
+                <p>
+                    {% blocktrans %}
+                    Learn more about exports on our <a href="https://help.commcarehq.org/display/commcarepublic/Data+Export+Overview" target="_blank">Help Site</a>.
+                    {% endblocktrans %}
+                </p>
+                <hr/>
+            </div>
+        </div>
+    </header>
     <form class="form-horizontal" method="post">
         <fieldset>
-            <legend>{% trans "Export Settings" %}</legend>
             <div class="control-group">
                 <label for="export-name" class="control-label">{% trans "Export Name" %}</label>
                 <div class="controls">
@@ -507,7 +519,7 @@
                     </label>
                     <label class="checkbox">
                         <input type="checkbox" id="split-multiselects-checkbox" data-bind="checked: custom_export.split_multiselects" />
-                        {% trans "Split multi-selects" %}
+                        {% trans "Expand Multiple Answer Questions" %}
                     </label>
                 {% endif %}
                 </div>
