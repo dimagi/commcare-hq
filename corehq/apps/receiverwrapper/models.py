@@ -14,6 +14,7 @@ import hashlib
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2, LEGAL_VERSIONS
 from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException, IgnoreDocument
+from corehq.util.dates import iso_string_to_datetime, datetime_to_iso_string
 
 from couchforms.models import XFormInstance
 from dimagi.utils.decorators.memoized import memoized
@@ -378,13 +379,15 @@ class RepeatRecord(Document, LockableMixIn):
 
     @classmethod
     def wrap(cls, data):
+        # todo: I think this can all be avoided by making
+        # todo: last_checked and next_check both USecDateTimeProperty
         for attr in ('last_checked', 'next_check'):
             value = data.get(attr)
             if not value:
                 continue
             try:
-                dt = datetime.strptime(value, '%Y-%m-%dT%H:%M:%SZ')
-                data[attr] = dt.isoformat() + '.000000Z'
+                data[attr] = datetime_to_iso_string(
+                    iso_string_to_datetime(value))
             except ValueError:
                 pass
         return super(RepeatRecord, cls).wrap(data)

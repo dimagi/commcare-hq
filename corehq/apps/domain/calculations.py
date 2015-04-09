@@ -13,6 +13,7 @@ from corehq.apps.hqadmin.reporting.reports import (
     USER_COUNT_UPPER_BOUND,
     get_mobile_users,
 )
+from corehq.util.dates import datetime_to_iso_string
 
 from dimagi.utils.couch.database import get_db
 from corehq.apps.domain.models import Domain
@@ -33,7 +34,6 @@ def num_mobile_users(domain, *args):
     row = get_db().view('users/by_domain', startkey=[domain], endkey=[domain, {}]).one()
     return row["value"] if row else 0
 
-DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 DISPLAY_DATE_FORMAT = '%Y/%m/%d %H:%M:%S'
 
 def active_mobile_users(domain, *args):
@@ -76,13 +76,14 @@ def cases(domain, *args):
     row = get_db().view("hqcase/types_by_domain", startkey=[domain], endkey=[domain, {}]).one()
     return row["value"] if row else 0
 
+
 def cases_in_last(domain, days):
     """
     Returns the number of open cases that have been modified in the last <days> days
     """
     now = datetime.utcnow()
-    then = (now - timedelta(days=int(days))).strftime(DATE_FORMAT)
-    now = now.strftime(DATE_FORMAT)
+    then = datetime_to_iso_string(now - timedelta(days=int(days)))
+    now = datetime_to_iso_string(now)
 
     q = {"query": {
         "range": {
@@ -97,8 +98,8 @@ def inactive_cases_in_last(domain, days):
     Returns the number of open cases that have been modified in the last <days> days
     """
     now = datetime.utcnow()
-    then = (now - timedelta(days=int(days))).strftime(DATE_FORMAT)
-    now = now.strftime(DATE_FORMAT)
+    then = datetime_to_iso_string(now - timedelta(days=int(days)))
+    now = datetime_to_iso_string(now)
 
     q = {"query":
              {"bool": {
@@ -138,8 +139,8 @@ def sms_in_last_bool(domain, days=None):
 
 def active(domain, *args):
     now = datetime.utcnow()
-    then = (now - timedelta(days=30)).strftime(DATE_FORMAT)
-    now = now.strftime(DATE_FORMAT)
+    then = datetime_to_iso_string(now - timedelta(days=30))
+    now = datetime_to_iso_string(now)
 
     key = ['submission', domain]
     row = get_db().view(

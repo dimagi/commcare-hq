@@ -12,6 +12,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.models import SyncLog
+from corehq.util.dates import datetime_to_iso_string
 import couchforms
 from couchforms.models import XFormInstance, XFormDeprecated
 
@@ -44,15 +45,13 @@ class BaseCaseMultimediaTest(TestCase):
 
     def _formatXForm(self, doc_id, raw_xml, attachment_block):
         final_xml = raw_xml % ({
-                                   "attachments": attachment_block,
-                                   "time_start": (
-                                       datetime.utcnow() - timedelta(minutes=4)).strftime(
-                                       '%Y-%m-%dT%H:%M:%SZ'),
-                                   "time_end": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
-                                   "date_modified": datetime.utcnow().strftime(
-                                       '%Y-%m-%dT%H:%M:%SZ'),
-                                   "doc_id": doc_id
-                               })
+            "attachments": attachment_block,
+            "time_start": datetime_to_iso_string(datetime.utcnow()
+                                                 - timedelta(minutes=4)),
+            "time_end": datetime_to_iso_string(datetime.utcnow()),
+            "date_modified": datetime_to_iso_string(datetime.utcnow()),
+            "doc_id": doc_id
+        })
         return final_xml
 
     def _prepAttachments(self, new_attachments, removes=[]):

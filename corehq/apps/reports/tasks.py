@@ -5,6 +5,7 @@ import uuid
 from celery.schedules import crontab
 from celery.task import periodic_task
 from corehq.apps.reports.scheduled import get_scheduled_reports
+from corehq.util.dates import datetime_to_iso_string
 from corehq.util.view_utils import absolute_reverse
 from couchexport.files import Temp
 from couchexport.groupexports import export_for_group, rebuild_export
@@ -171,7 +172,7 @@ def update_calculated_properties():
             "cp_last_form": CALC_FNS["last_form_submission"](dom, False),
             "cp_is_active": CALC_FNS["active"](dom),
             "cp_has_app": CALC_FNS["has_app"](dom),
-            "cp_last_updated": datetime.utcnow().strftime(DATE_FORMAT),
+            "cp_last_updated": datetime_to_iso_string(datetime.utcnow()),
             "cp_n_in_sms": int(CALC_FNS["sms"](dom, "I")),
             "cp_n_out_sms": int(CALC_FNS["sms"](dom, "O")),
             "cp_n_sms_ever": int(CALC_FNS["sms_in_last"](dom)),
@@ -184,13 +185,11 @@ def update_calculated_properties():
             del calced_props['cp_last_form']
         es.post("%s/hqdomain/%s/_update" % (DOMAIN_INDEX, r["_id"]), data={"doc": calced_props})
 
-DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
-
 
 def is_app_active(app_id, domain):
     now = datetime.utcnow()
-    then = (now - timedelta(days=30)).strftime(DATE_FORMAT)
-    now = now.strftime(DATE_FORMAT)
+    then = datetime_to_iso_string(now - timedelta(days=30))
+    now = datetime_to_iso_string(now)
 
     key = ['submission app', domain, app_id]
     row = get_db().view("reports_forms/all_forms", startkey=key+[then], endkey=key+[now]).all()

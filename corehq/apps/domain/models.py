@@ -503,9 +503,7 @@ class Domain(Document, SnapshotMixin):
         # if there have been any submissions in the past 30 days
         if len(res) > 0:
             received_on = iso_string_to_datetime(res[0]['key'][2])
-            return (datetime.utcnow() <=
-                    received_on
-                    + timedelta(days=30))
+            return datetime.utcnow() <= received_on + timedelta(days=30)
         else:
             return False
 
