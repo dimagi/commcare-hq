@@ -472,18 +472,16 @@ var AdvancedCase = (function () {
                 }
             };
         },
-        propertyCounts: function (self) {
-            return function () {
-                var count = {};
-                _(self.case_properties()).each(function (p) {
-                    var key = p.key();
-                    if (!count.hasOwnProperty(key)) {
-                        count[key] = 0;
-                    }
-                    return count[key] += 1;
-                });
-                return count;
-            };
+        propertyCounts: function (properties, count_field) {
+            var count = {};
+            _(properties).each(function (p) {
+                var key = p[count_field]();
+                if (!count.hasOwnProperty(key)) {
+                    count[key] = 0;
+                }
+                return count[key] += 1;
+            });
+            return count;
         },
         clean_condition: function (condition) {
             if (condition.type() !== 'if') {
@@ -660,18 +658,16 @@ var AdvancedCase = (function () {
                 return self.preload();
             });
 
-            self.propertyCounts = ko.computed(ActionBase.propertyCounts(self));
+            self.propertyCounts = ko.computed(function() {
+                return ActionBase.propertyCounts(self.case_properties(), 'key')
+            });
 
-            self.preloadCounts = ko.computed(function () {
-                var count = {};
-                _(self.preload()).each(function (p) {
-                    var path = p.path();
-                    if (!count.hasOwnProperty(path)) {
-                        count[path] = 0;
-                    }
-                    return count[path] += 1;
-                });
-                return count;
+            self.preloadPathCounts =  ko.computed(function() {
+                return ActionBase.propertyCounts(self.preload(), 'path')
+            });
+            
+            self.preloadPropertyCounts =  ko.computed(function() {
+                return ActionBase.propertyCounts(self.preload(), 'key')
             });
 
             self.suggestedProperties = ko.computed(function () {
@@ -838,7 +834,9 @@ var AdvancedCase = (function () {
                 return ActionBase.header(self);
             });
 
-            self.propertyCounts = ko.computed(ActionBase.propertyCounts(self));
+            self.propertyCounts = ko.computed(function() {
+                return ActionBase.propertyCounts(self.case_properties(), 'key')
+            });
 
             self.name_path = ko.computed(function() {
                 try {
@@ -1013,13 +1011,15 @@ var AdvancedCase = (function () {
                         return '<strong>' + self.key() + '</strong> is a reserved word';
                     } else if (action.subcase() && _(self.key()).contains('/')) {
                         return 'Parent property references not allowed for subcases';
+                    } else if (action.preloadPropertyCounts()[self.key()] > 1) {
+                        return "Case property loaded twice.";
                     }
                 }
                 return null;
             });
             self.validateQuestion = ko.computed(function () {
                 if (self.path()) {
-                    if (action.preloadCounts()[self.path()] > 1) {
+                    if (action.preloadPathCounts()[self.path()] > 1) {
                         return "Two properties load to the same question";
                     }
                 }
