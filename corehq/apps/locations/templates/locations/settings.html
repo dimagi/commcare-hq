@@ -38,7 +38,7 @@
 {% block main_column %}
     <div class="row-fluid">
         <div class="span8">
-            <h2>{% trans "Location Hierarchy" %}</h2>
+            <h2>{% trans "Location Types" %}</h2>
             <p>
                 {% blocktrans %}
                     Location Types allow you to configure the different types
@@ -69,8 +69,16 @@
                             {% if commtrack_enabled %}
                             <th>{% trans "Tracks Stock" %}</th>
                             {% endif %}
-                            <th>{% trans "Shares Cases" %}</th>
-                            <th>{% trans "View Child Cases" %}</th>
+                            <th>{% trans "Owns Cases" %}</th>
+                            <th>
+                                {% trans "View Sub-Locations" %}
+                                <span class="hq-help-template"
+                                      data-title="View Sub-Locations"
+                                      data-content="{% blocktrans %}
+                                          Gives mobile users access to case data for all sub-locations
+                                      {% endblocktrans %}">
+                                </span>
+                            </th>
                             <th></th>
                         </tr>
                     </thead>
@@ -112,7 +120,7 @@
         </fieldset>
 
         <button type="submit" class="btn btn-primary">
-            {% trans "Save Location Hierarchy" %}
+            {% trans "Save Location Types" %}
         </button>
         <input name="json" type="hidden" data-bind="value: json_payload" />
     </form>

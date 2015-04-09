@@ -1086,7 +1086,7 @@ class ProjectUsersTab(UITab):
                     LocationImportView,
                     LocationImportStatusView,
                     LocationFieldsView,
-                    LocationSettingsView,
+                    LocationTypesView,
                 )
 
                 locations_config = {
@@ -1117,8 +1117,8 @@ class ProjectUsersTab(UITab):
                     ]
                 }
                 advanced_locations_config = {
-                    'title': LocationSettingsView.page_title,
-                    'url': reverse(LocationSettingsView.urlname, args=[self.domain]),
+                    'title': LocationTypesView.page_title,
+                    'url': reverse(LocationTypesView.urlname, args=[self.domain]),
                     'show_in_dropdown': True,
                 }
 
