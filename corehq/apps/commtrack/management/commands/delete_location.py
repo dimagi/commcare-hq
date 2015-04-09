@@ -6,7 +6,7 @@ from dimagi.utils.couch.database import get_db
 
 class Command(BaseCommand):
     args = 'loc_uuid'
-    help = 'DELETE a location, all its sub-locations, and all associated data'
+    help = 'DELETE a location, all its child locations, and all associated data'
     option_list = BaseCommand.option_list + (
         make_option('--dryrun',
                     action='store_true',
