@@ -96,6 +96,8 @@ from corehq.apps.app_manager.util import (
     save_xform,
     get_settings_values,
     is_usercase_enabled,
+    enable_usercase,
+    actions_use_usercase,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import LoginAndDomainMixin
@@ -1881,6 +1883,8 @@ def edit_form_actions(request, domain, app_id, module_id, form_id):
     form = app.get_module(module_id).get_form(form_id)
     form.actions = FormActions.wrap(json.loads(request.POST['actions']))
     form.requires = request.POST.get('requires', form.requires)
+    if actions_use_usercase(form.actions):
+        enable_usercase(domain)
     response_json = {}
     app.save(response_json)
     response_json['propertiesMap'] = get_all_case_properties(app)

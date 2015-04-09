@@ -3,19 +3,21 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 import uuid
 from xml.etree import ElementTree
+from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.hqcase.utils import submit_case_blocks, get_case_by_domain_hq_user_id
 from couchdbkit.exceptions import MultipleResultsFound
 from corehq.elastic import es_query
 
 
-def sync_user_cases(commcare_user):
+def sync_user_cases(commcare_user, case_type, owner_id):
     """
     Each time a CommCareUser is saved this method gets called and creates or updates
     a case associated with the user with the user's details.
+
+    This is also called to create user cases when the usercase is used for the
+    first time.
     """
     domain = commcare_user.project
-    if not (domain and domain.call_center_config.enabled):
-        return
 
     def valid_element_name(name):
         try:
@@ -45,13 +47,12 @@ def sync_user_cases(commcare_user):
 
     close = commcare_user.to_be_deleted() or not commcare_user.is_active
 
-    owner_id = domain.call_center_config.case_owner_id
     caseblock = None
     if found:
         props = dict(case.dynamic_case_properties())
 
         changed = close != case.closed
-        changed = changed or case.type != domain.call_center_config.case_type
+        changed = changed or case.type != case_type
         changed = changed or case.name != fields['name']
 
         if not changed:
@@ -65,7 +66,7 @@ def sync_user_cases(commcare_user):
                 create=False,
                 case_id=case._id,
                 version=V2,
-                case_type=domain.call_center_config.case_type,
+                case_type=case_type,
                 close=close,
                 update=fields
             )
@@ -77,13 +78,33 @@ def sync_user_cases(commcare_user):
             owner_id=owner_id,
             user_id=owner_id,
             version=V2,
-            case_type=domain.call_center_config.case_type,
+            case_type=case_type,
             update=fields
         )
 
     if caseblock:
         casexml = ElementTree.tostring(caseblock.as_xml())
         submit_case_blocks(casexml, domain.name)
+
+
+def sync_call_center_user_cases(user):
+    domain = user.project
+    if domain and domain.call_center_config.enabled:
+        sync_user_cases(
+            user,
+            domain.call_center_config.case_type,
+            domain.call_center_config.case_owner_id
+        )
+
+
+def sync_usercase(user):
+    domain = user.project
+    if domain and domain.usercase_enabled:
+        sync_user_cases(
+            user,
+            USERCASE_TYPE,
+            user.get_id
+        )
 
 
 def get_call_center_domains():

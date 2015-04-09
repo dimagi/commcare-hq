@@ -3,6 +3,7 @@ import functools
 import json
 import itertools
 from corehq.apps.builds.models import CommCareBuildConfig
+from corehq.apps.users.models import CommCareUser
 from couchdbkit.exceptions import DocTypeError
 from corehq import Domain
 from corehq.apps.app_manager.const import CT_REQUISITION_MODE_3, CT_LEDGER_STOCK, CT_LEDGER_REQUESTED, \
@@ -205,9 +206,7 @@ def get_case_properties(app, case_types, defaults=(), include_shared_properties=
 
 
 def is_usercase_enabled(domain_name):
-    domain = Domain.get_by_name(domain_name)
-    # TODO: This will change to domain.usercase.enabled or something
-    return domain and domain.call_center_config.enabled
+    return getattr(Domain.get_by_name(domain_name), 'usercase_enabled')
 
 
 def get_all_case_properties(app):
@@ -393,3 +392,28 @@ def get_usercase_values(items):
 
 def any_usercase_items(items):
     return any(i.startswith(USERCASE_PREFIX) for i in items)
+
+
+def actions_use_usercase(actions):
+    return (any(k.startswith(USERCASE_PREFIX) for k in actions['update_case']['update'].keys()) or
+            any(v.startswith(USERCASE_PREFIX) for v in actions['case_preload']['preload'].values()))
+
+
+# TODO: Where should this go?
+# Should it be here in app_manager.util because it's used in
+# app_manager.views, or in domain.utils because it relates to the domain, or
+# should it be a method on Domain, because we like classes more than lots of
+# utility functions?
+def enable_usercase(domain_name):
+    domain = Domain.get_by_name(domain_name)
+    if not domain.usercase_enabled:
+        domain.usercase_enabled = True
+        domain.save()
+        create_user_cases(domain_name)
+
+
+def create_user_cases(domain_name):
+    from corehq.apps.callcenter.utils import sync_usercase
+
+    for user in CommCareUser.by_domain(domain_name):
+        sync_usercase(user)
