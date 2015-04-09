@@ -43,6 +43,7 @@
 trunk: master
 name: autostaging
 branches:
+  - iso_datetime  # danny 4/9
   - microseconds+iso_date+standardize-date-formats  # danny 4/8
   - microseconds  # danny 4/7
   - rm-djangocouch  # danny 4/6
