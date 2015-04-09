@@ -517,10 +517,12 @@
                         <input type="checkbox" id="include-errors-checkbox" data-bind="checked: custom_export.include_errors" />
                         {% trans "Include duplicates and other unprocessed forms" %}
                     </label>
+                    {% if request|toggle_enabled:'SPLIT_MULTISELECT_EXPORT' %}
                     <label class="checkbox">
                         <input type="checkbox" id="split-multiselects-checkbox" data-bind="checked: custom_export.split_multiselects" />
                         {% trans "Expand Multiple Answer Questions" %}
                     </label>
+                    {% endif %}
                 {% endif %}
                 </div>
             </div>
