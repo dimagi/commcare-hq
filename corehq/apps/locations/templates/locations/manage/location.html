@@ -79,6 +79,14 @@
     {% if products_per_location_form %}
       <li><a href="#products" data-toggle="tab">{% trans "Products" %}</a></li>
     {% endif %}
+
+    {% if location.get_id %}
+    <li>
+      <a href="{% url "create_location" domain %}?parent={{ location.get_id }}">
+        {% trans "New Child Location" %}
+      </a>
+    </li>
+    {% endif %}
   </ul>
 
   <div class="tab-content">
