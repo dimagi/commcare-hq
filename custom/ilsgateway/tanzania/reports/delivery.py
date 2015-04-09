@@ -2,10 +2,10 @@ from dateutil import rrule
 from django.db.models.aggregates import Avg
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from custom.ilsgateway.filters import ProductByProgramFilter, MSDZoneFilter, MonthAndQuarterFilter
+from custom.ilsgateway.filters import ProductByProgramFilter, MSDZoneFilter, MonthAndQuarterFilter, ProgramFilter
 from custom.ilsgateway.tanzania import ILSData, DetailsReport
 from custom.ilsgateway.tanzania.reports.facility_details import FacilityDetailsReport, InventoryHistoryData, \
-    RegistrationData, RandRHistory
+    RegistrationData, RandRHistory, Notes, RecentMessages
 from custom.ilsgateway.models import OrganizationSummary, DeliveryGroups, SupplyPointStatusTypes
 from custom.ilsgateway.tanzania.reports.mixins import DeliverySubmissionData
 from custom.ilsgateway.tanzania.reports.utils import make_url, link_format, latest_status_or_none,\
@@ -50,10 +50,10 @@ class LeadTimeHistory(ILSData):
             else:
                 avg_lead_time = "None"
 
-            args = (loc.location_id, self.config['month'],
-                    self.config['year'], self.config['program'], self.config['prd_part_url'])
             url = make_url(DeliveryReport, self.config['domain'],
-                           '?location_id=%s&month=%s&year=%s&filter_by_program=%s%s', args)
+                           '?location_id=%s&month=%s&year=%s&filter_by_program=%s&msd=%s',
+                           (loc.location_id, self.config['month'], self.config['year'],
+                           self.config['program'], self.config['msd_code']))
 
             rows.append([link_format(loc.name, url), avg_lead_time])
         return rows
@@ -106,8 +106,9 @@ class DeliveryStatus(ILSData):
             status_date = latest.status_date.strftime("%d-%m-%Y") if latest else "None"
 
             url = make_url(FacilityDetailsReport, self.config['domain'],
-                           '?location_id=%s&filter_by_program=%s%s',
-                           (child.location_id, self.config['program'], self.config['prd_part_url']))
+                           '?location_id=%s&month=%s&year=%s&filter_by_program=%s&msd=%s',
+                           (self.config['location_id'], self.config['month'], self.config['year'],
+                           self.config['program'], self.config['msd_code']))
 
             cycle_lead_time = get_this_lead_time(
                 child.location_id,
@@ -149,7 +150,7 @@ class DeliveryData(ILSData):
 
         if data:
             dg = data[0]
-            percent_format = lambda x, y: x * 100 / y
+            percent_format = lambda x, y: x * 100 / (y or 1)
 
             return [
                 [_('Didn\'t Respond'), dg.not_responding, '%.2f%%' % percent_format(dg.not_responding, dg.total)],
@@ -168,14 +169,16 @@ class DeliveryReport(DetailsReport):
     def title(self):
         title = _('Delivery Report')
         if self.location and self.location.location_type.name.upper() == 'FACILITY':
-            title = _('Facility Details')
+            return "{0} ({1}) Group {2}".format(self.location.name,
+                                                self.location.site_code,
+                                                self.location.metadata.get('group', '---'))
         return title
 
     @property
     def fields(self):
-        fields = [AsyncLocationFilter, MonthAndQuarterFilter, YearFilter, ProductByProgramFilter, MSDZoneFilter]
+        fields = [AsyncLocationFilter, MonthAndQuarterFilter, YearFilter, ProgramFilter, MSDZoneFilter]
         if self.location and self.location.location_type.name.upper() == 'FACILITY':
-            fields = [AsyncLocationFilter, ProductByProgramFilter]
+            fields = []
         return fields
 
     @property
@@ -194,6 +197,8 @@ class DeliveryReport(DetailsReport):
                 return [
                     InventoryHistoryData(config=config),
                     RandRHistory(config=config),
+                    Notes(config=config),
+                    RecentMessages(config=config),
                     RegistrationData(config=dict(loc_type='FACILITY', **config), css_class='row_chart_all'),
                     RegistrationData(config=dict(loc_type='DISTRICT', **config), css_class='row_chart_all'),
                     RegistrationData(config=dict(loc_type='REGION', **config), css_class='row_chart_all')

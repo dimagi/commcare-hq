@@ -1,9 +1,9 @@
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
+from corehq.apps.sms.models import SMSLog
 from corehq.apps.users.models import CommCareUser
-from custom.ilsgateway.filters import ProductByProgramFilter
+from corehq.util.timezones.conversions import ServerTime
 from custom.ilsgateway.models import SupplyPointStatusTypes, ILSNotes
 from custom.ilsgateway.tanzania import ILSData, MultiReport
 from custom.ilsgateway.tanzania.reports.utils import decimal_format, float_format, latest_status
@@ -17,6 +17,7 @@ class InventoryHistoryData(ILSData):
     slug = 'inventory_history'
     show_chart = False
     show_table = True
+    default_rows = 100
 
     @property
     def headers(self):
@@ -135,26 +136,68 @@ class Notes(ILSData):
             ]
 
 
+def _fmt_timestamp(timestamp):
+    return dict(
+        sort_key=timestamp,
+        html=timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+    )
+
+
+def _fmt(val):
+    if val is None:
+        val = '-'
+    return dict(sort_key=val, html=val)
+
+
 class RecentMessages(ILSData):
-    slug = 'ils_notes'
+    slug = 'recent_messages'
     title = 'Recent messages'
     show_chart = False
     show_table = True
+    default_rows = 5
 
     @property
     def headers(self):
         return DataTablesHeader(*[
-            DataTablesColumn()
+            DataTablesColumn('Date'),
+            DataTablesColumn('Direction'),
+            DataTablesColumn('Text')
         ])
+
+
+    @property
+    def rows(self):
+        data = SMSLog.by_domain_date(self.config['domain'])
+        messages = []
+        location_id = self.config['location_id']
+        for message in data:
+            if message.location_id != location_id:
+                continue
+
+            timestamp = ServerTime(message.date).user_time(self.config['timezone']).done()
+            messages.append([
+                _fmt_timestamp(timestamp),
+                _fmt(message.direction),
+                _fmt(message.text),
+            ])
+        return sorted(messages, key=lambda x: x[0]['sort_key']) if messages else messages
 
 
 class FacilityDetailsReport(MultiReport):
 
-    title = "Facility Details Report"
-    fields = [AsyncLocationFilter, ProductByProgramFilter]
+    fields = []
+    hide_filters = True
     name = "Facility Details"
     slug = 'facility_details'
     use_datatables = True
+
+    @property
+    def title(self):
+        if self.location and self.location.location_type.name.upper() == 'FACILITY':
+            return "{0} ({1}) Group {2}".format(self.location.name,
+                                                self.location.site_code,
+                                                self.location.metadata.get('group', '---'))
+        return 'Facility Details Report'
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
@@ -169,6 +212,7 @@ class FacilityDetailsReport(MultiReport):
             InventoryHistoryData(config=config),
             RandRHistory(config=config),
             Notes(config=config),
+            RecentMessages(config=config),
             RegistrationData(config=dict(loc_type='FACILITY', **config), css_class='row_chart_all'),
             RegistrationData(config=dict(loc_type='DISTRICT', **config), css_class='row_chart_all'),
             RegistrationData(config=dict(loc_type='REGION', **config), css_class='row_chart_all')

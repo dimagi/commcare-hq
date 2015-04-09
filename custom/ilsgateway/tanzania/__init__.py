@@ -25,6 +25,7 @@ class ILSData(object):
     title_url = None
     title_url_name = None
     subtitle = None
+    default_rows = 10
 
     chart_config = {
         'on_time': {
@@ -105,7 +106,11 @@ class ILSData(object):
                     entry['description'] = "%.2f%% (%d) %s (%s)" % params
 
                     ret.append(entry)
-        return [PieChart('', '', ret, color=colors)]
+        chart = PieChart('', '', ret, color=colors)
+        chart.marginLeft = 10
+        chart.marginRight = 10
+        chart.height = 500
+        return [chart]
 
 
 class ILSMixin(object):
@@ -133,7 +138,10 @@ class ILSDateSpan(DateSpan):
         if year is None:
             year = datetime.datetime.date.today().year
         assert isinstance(month_or_quarter, int) and isinstance(year, int)
-        if month_or_quarter < 0:
+        if month_or_quarter == -5:
+            start = datetime(int(year), 1, 1)
+            end = datetime(int(year), 12, 31)
+        elif month_or_quarter < 0:
             quarters = list(rrule.rrule(rrule.MONTHLY,
                                         bymonth=(1, 4, 7, 10),
                                         bysetpos=-1,
@@ -153,6 +161,7 @@ class MonthQuarterYearMixin(object):
         Similar to DatespanMixin, but works with MonthAndQuarterFilter and YearField
         months = 1:12
         quarters = -1:-4
+        annual = -5
     """
     fields = [MonthAndQuarterFilter, YearFilter]
     _datespan = None
@@ -226,7 +235,8 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport,
             products=[],
             program='',
             prd_part_url='',
-            msd_code=self.request.GET.get('msd', '')
+            msd_code=self.request.GET.get('msd', ''),
+            timezone=self.timezone
         )
 
         if 'filter_by_program' in self.request.GET:
@@ -263,6 +273,7 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport,
             'reports': [self.get_report_context(dp) for dp in self.data_providers],
             'title': self.title,
             'report_facilities_url': self.report_facilities_url,
+            'location_type': self.location.location_type.name if self.location else None
         }
 
         return context
@@ -290,12 +301,13 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport,
                 start_at_row=0,
                 subtitle=data_provider.subtitle,
                 location=self.location.id if self.location else '',
+                default_rows=data_provider.default_rows
             ),
             show_table=data_provider.show_table,
             show_chart=data_provider.show_chart,
             charts=data_provider.charts if data_provider.show_chart else [],
             chart_span=12,
-            css_class=data_provider.css_class
+            css_class=data_provider.css_class,
         )
         return context
 
@@ -363,33 +375,32 @@ class DetailsReport(MultiReport):
         return context
 
     def ils_make_url(self, cls):
-        params = '?location_id=%s&month=%s&year=%s&filter_by_program=%s&msd=%s&'
+        params = '?location_id=%s&month=%s&year=%s&filter_by_program=%s&msd=%s'
         return make_url(cls, self.domain, params, (
             self.request.GET.get('location_id'),
             self.request.GET.get('month'),
             self.request.GET.get('year'),
             self.request.GET.get('filter_by_program'),
             self.request.GET.get('msd')
-        )
-        ) + self.report_config['prd_part_url']
+        ))
 
 
     @property
     def report_stockonhand_url(self):
         from custom.ilsgateway.tanzania.reports.stock_on_hand import StockOnHandReport
-        return html.escape(self.ils_make_url(StockOnHandReport))
+        return self.ils_make_url(StockOnHandReport)
 
     @property
     def report_rand_url(self):
         from custom.ilsgateway.tanzania.reports.randr import RRreport
-        return html.escape(self.ils_make_url(RRreport))
+        return self.ils_make_url(RRreport)
 
     @property
     def report_supervision_url(self):
         from custom.ilsgateway.tanzania.reports.supervision import SupervisionReport
-        return html.escape(self.ils_make_url(SupervisionReport))
+        return self.ils_make_url(SupervisionReport)
 
     @property
     def report_delivery_url(self):
         from custom.ilsgateway.tanzania.reports.delivery import DeliveryReport
-        return html.escape(self.ils_make_url(DeliveryReport))
+        return self.ils_make_url(DeliveryReport)

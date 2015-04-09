@@ -9,10 +9,7 @@
     <div style="float: left;" class="{{ thisreport.css_class }}">
         <div class="media">
           <div class="media-body" style="height: 64px">
-             <h4 class="media-heading">{{ report_table.title }}</h4>
-              {% if report_table.title_url %}
-                <a href="{{ report_table.title_url }}">{{ report_table.title_url_name }}</a>
-              {% endif %}
+             <h4 class="media-heading">{{ report_table.title }}</h4>{% if report_table.title_url %}<a href="{{ report_table.title_url }}">{{ report_table.title_url_name }}</a>{% endif %}
               {% if report_table.subtitle %}
                 <span style="color: slategray">{{ report_table.subtitle }}</span>
               {% endif %}
@@ -105,7 +102,7 @@
                 var params = {
                     sDom: dataTablesDom,
                     "sPaginationType": "bootstrap",
-                    iDisplayLength: 10,
+                    iDisplayLength: {{ report_table.default_rows }},
                     iDisplayStart: 0,
                     sScrollX: "100%",
                     autoWidth: true

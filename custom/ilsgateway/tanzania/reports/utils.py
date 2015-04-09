@@ -119,16 +119,16 @@ def float_format(value):
         return '%.2f' % value
 
 
-def reporting_window(year, month):
+def reporting_window(start_date, end_date):
     """
     Returns the range of time when people are supposed to report
     """
-    last_of_last_month = datetime(year, month, 1) - timedelta(days=1)
+    last_of_last_month = datetime(start_date.year, start_date.month, 1) - timedelta(days=1)
     last_bd_of_last_month = datetime.combine(
         get_business_day_of_month(last_of_last_month.year, last_of_last_month.month, -1),
         time()
     )
-    last_bd_of_the_month = get_business_day_of_month(year, month, -1)
+    last_bd_of_the_month = get_business_day_of_month(end_date.year, end_date.month, -1)
     return last_bd_of_last_month, last_bd_of_the_month
 
 
@@ -137,7 +137,9 @@ def latest_status(location_id, type, value=None, start_date=None, end_date=None)
     if value:
         qs = qs.filter(status_value=value)
     if start_date and end_date:
-        qs = qs.filter(status_date__gt=start_date, status_date__lte=end_date)
+        rr = reporting_window(start_date, end_date)
+        qs = qs.filter(status_date__gt=rr[0],
+                       status_date__lte=rr[1])
     if qs.exclude(status_value="reminder_sent").exists():
         # HACK around bad data.
         qs = qs.exclude(status_value="reminder_sent")

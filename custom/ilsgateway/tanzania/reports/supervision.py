@@ -3,12 +3,12 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import YearFilter
-from custom.ilsgateway.filters import ProductByProgramFilter, MSDZoneFilter, MonthAndQuarterFilter
+from custom.ilsgateway.filters import ProductByProgramFilter, MSDZoneFilter, MonthAndQuarterFilter, ProgramFilter
 from custom.ilsgateway.models import GroupSummary, SupplyPointStatusTypes, OrganizationSummary
 from custom.ilsgateway.tanzania import ILSData, DetailsReport
 from custom.ilsgateway.tanzania.reports.utils import make_url, format_percent, link_format, latest_status_or_none
 from custom.ilsgateway.tanzania.reports.facility_details import FacilityDetailsReport, InventoryHistoryData, \
-    RegistrationData, RandRHistory
+    RegistrationData, RandRHistory, Notes, RecentMessages
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 
@@ -80,8 +80,9 @@ class SupervisionData(ILSData):
                     response_rate = "<span class='no_data'>None</span>"
 
                 url = make_url(SupervisionReport, self.config['domain'],
-                               '?location_id=%s&month=%s&year=%s',
-                               (loc.location_id, self.config['month'], self.config['year']))
+                               '?location_id=%s&month=%s&year=%s&filter_by_program=%s&msd=%s',
+                               (loc.location_id, self.config['month'], self.config['year'],
+                               self.config['program'], self.config['msd_code']))
 
                 rows.append([
                     link_format(loc.name, url),
@@ -131,8 +132,9 @@ class DistrictSupervisionData(ILSData):
                     response_rate = "<span class='no_data'>None</span>"
 
                 url = make_url(FacilityDetailsReport, self.config['domain'],
-                               '?location_id=%s&filter_by_program=%s%s',
-                               (loc.location_id, self.config['program'], self.config['prd_part_url']))
+                               '?location_id=%s&month=%s&year=%s&filter_by_program=%s&msd=%s',
+                               (self.config['location_id'], self.config['month'], self.config['year'],
+                                self.config['program'], self.config['msd_code']))
 
                 latest = latest_status_or_none(loc.location_id, SupplyPointStatusTypes.SUPERVISION_FACILITY,
                                                self.config['startdate'], self.config['enddate'])
@@ -141,7 +143,7 @@ class DistrictSupervisionData(ILSData):
                     loc.site_code,
                     link_format(loc.name, url),
                     latest.name if latest else None,
-                    latest.status_date if latest else None,
+                    latest.status_date.strftime('%b. %d, %Y') if latest else '',
                     response_rate
                 ])
         return rows
@@ -156,14 +158,16 @@ class SupervisionReport(DetailsReport):
     def title(self):
         title = _('Supervision')
         if self.location and self.location.location_type.name.upper() == 'FACILITY':
-            title = _('Facility Details')
+            return "{0} ({1}) Group {2}".format(self.location.name,
+                                                self.location.site_code,
+                                                self.location.metadata.get('group', '---'))
         return title
 
     @property
     def fields(self):
-        fields = [AsyncLocationFilter, MonthAndQuarterFilter, YearFilter, ProductByProgramFilter, MSDZoneFilter]
+        fields = [AsyncLocationFilter, MonthAndQuarterFilter, YearFilter, ProgramFilter, MSDZoneFilter]
         if self.location and self.location.location_type.name.upper() == 'FACILITY':
-            fields = [AsyncLocationFilter, ProductByProgramFilter]
+            fields = []
         return fields
 
     @property
@@ -184,6 +188,8 @@ class SupervisionReport(DetailsReport):
                 return [
                     InventoryHistoryData(config=config),
                     RandRHistory(config=config),
+                    Notes(config=config),
+                    RecentMessages(config=config),
                     RegistrationData(config=dict(loc_type='FACILITY', **config), css_class='row_chart_all'),
                     RegistrationData(config=dict(loc_type='DISTRICT', **config), css_class='row_chart_all'),
                     RegistrationData(config=dict(loc_type='REGION', **config), css_class='row_chart_all')

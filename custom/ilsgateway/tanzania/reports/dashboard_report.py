@@ -1,15 +1,14 @@
-from custom.ilsgateway.filters import ProductByProgramFilter
+from custom.ilsgateway.filters import ProgramFilter, MonthAndQuarterFilter
 from custom.ilsgateway.tanzania import MultiReport
 from custom.ilsgateway.tanzania.reports.facility_details import InventoryHistoryData, RegistrationData, \
-    RandRHistory
+    RandRHistory, Notes, RecentMessages
 from custom.ilsgateway.tanzania.reports.mixins import RandRSubmissionData, DistrictSummaryData, \
     SohSubmissionData, DeliverySubmissionData, ProductAvailabilitySummary
 from custom.ilsgateway.tanzania.reports.stock_on_hand import StockOnHandReport
 from custom.ilsgateway.tanzania.reports.utils import make_url
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
-from corehq.apps.reports.filters.select import YearFilter, MonthFilter
+from corehq.apps.reports.filters.select import YearFilter
 from dimagi.utils.decorators.memoized import memoized
-from django.utils import html
 from django.utils.translation import ugettext as _
 
 
@@ -21,14 +20,16 @@ class DashboardReport(MultiReport):
     def title(self):
         title = _("Dashboard report")
         if self.location and self.location.location_type.name.upper() == 'FACILITY':
-            title = _('Facility Details')
+            return "{0} ({1}) Group {2}".format(self.location.name,
+                                                self.location.site_code,
+                                                self.location.metadata.get('group', '---'))
         return title
 
     @property
     def fields(self):
-        fields = [AsyncLocationFilter, MonthFilter, YearFilter, ProductByProgramFilter]
+        fields = [AsyncLocationFilter, MonthAndQuarterFilter, YearFilter, ProgramFilter]
         if self.location and self.location.location_type.name.upper() == 'FACILITY':
-            fields = [AsyncLocationFilter, ProductByProgramFilter]
+            fields = []
         return fields
 
     @property
@@ -41,6 +42,8 @@ class DashboardReport(MultiReport):
                 return [
                     InventoryHistoryData(config=config),
                     RandRHistory(config=config),
+                    Notes(config=config),
+                    RecentMessages(config=config),
                     RegistrationData(config=dict(loc_type='FACILITY', **config), css_class='row_chart_all'),
                     RegistrationData(config=dict(loc_type='DISTRICT', **config), css_class='row_chart_all'),
                     RegistrationData(config=dict(loc_type='REGION', **config), css_class='row_chart_all')
@@ -60,9 +63,9 @@ class DashboardReport(MultiReport):
     @property
     def report_facilities_url(self):
         config = self.report_config
-        return html.escape(make_url(
+        return make_url(
             StockOnHandReport,
             self.domain,
-            '?location_id=%s&month=%s&year=%s&filter_by_program=%s%s',
-            (config['location_id'], config['month'], config['year'], config['program'], config['prd_part_url'])
-        ))
+            '?location_id=%s&month=%s&year=%s&filter_by_program=%s&msd=%s',
+            (config['location_id'], config['month'], config['year'], config['program'], config['msd_code'])
+        )

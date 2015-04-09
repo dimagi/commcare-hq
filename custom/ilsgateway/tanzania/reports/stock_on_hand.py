@@ -13,7 +13,7 @@ from custom.ilsgateway.models import SupplyPointStatusTypes, ProductAvailability
     OrganizationSummary, SupplyPointStatus, SupplyPointStatusValues
 from custom.ilsgateway.tanzania import ILSData, DetailsReport
 from custom.ilsgateway.tanzania.reports.facility_details import FacilityDetailsReport, InventoryHistoryData, \
-    RegistrationData, RandRHistory
+    RegistrationData, RandRHistory, RecentMessages, Notes
 from custom.ilsgateway.tanzania.reports.mixins import ProductAvailabilitySummary, SohSubmissionData
 from django.utils.translation import ugettext as _
 from custom.ilsgateway.tanzania.reports.utils import link_format, format_percent, make_url
@@ -25,13 +25,13 @@ from django.db.models.aggregates import Avg, Max
 def get_facilities(location, domain):
 
     if location.location_type.name.upper() == 'DISTRICT':
-        locations = SQLLocation.objects.filter(parent=location)
+        locations = SQLLocation.objects.filter(parent=location, is_archived=False)
     elif location.location_type.name.upper() == 'REGION':
-        locations = SQLLocation.objects.filter(parent__parent=location)
+        locations = SQLLocation.objects.filter(parent__parent=location, is_archived=False)
     elif location.location_type.name.upper() == 'FACILITY':
-        locations = SQLLocation.objects.filter(id=location.id)
+        locations = SQLLocation.objects.filter(id=location.id, is_archived=False)
     else:
-        locations = SQLLocation.objects.filter(domain=domain)
+        locations = SQLLocation.objects.filter(domain=domain, is_archived=False)
     return locations
 
 def product_format(ret, srs, month):
@@ -126,11 +126,10 @@ class SohPercentageTableData(ILSData):
                     type='stockonhand').order_by('case_id').distinct('case_id').count()
                 percent_stockouts = (stockouts or 0) * 100 / float(facs_count)
 
-                url = make_url(
-                    StockOnHandReport,
-                    self.config['domain'],
-                    '?location_id=%s&month=%s&year=%s',
-                    (loc.location_id, self.config['month'], self.config['year']))
+                url = make_url(StockOnHandReport, self.config['domain'],
+                               '?location_id=%s&month=%s&year=%s&filter_by_program=%s&msd=%s&soh_month=',
+                               (loc.location_id, self.config['month'], self.config['year'],
+                               self.config['program'], self.config['msd_code']))
 
                 row_data = [
                     link_format(loc.name, url),
@@ -204,15 +203,10 @@ class DistrictSohPercentageTableData(ILSData):
         soh_month = True
         if self.config['soh_month']:
             soh_month = False
-        return html.escape(make_url(StockOnHandReport,
-                                    self.config['domain'],
-                                    '?location_id=%s&month=%s&year=%s&soh_month=%s&filter_by_program=%s%s',
-                                    (self.config['location_id'],
-                                     self.config['month'],
-                                     self.config['year'],
-                                     soh_month,
-                                     self.config['program'],
-                                     self.config['prd_part_url'])))
+        return html.escape(make_url(StockOnHandReport, self.config['domain'],
+                           '?location_id=%s&month=%s&year=%s&filter_by_program=%s&msd=%s&soh_month=%s',
+                           (self.config['location_id'], self.config['month'], self.config['year'],
+                           self.config['program'], self.config['msd_code'], soh_month)))
 
     @property
     def title_url_name(self):
@@ -286,7 +280,7 @@ class DistrictSohPercentageTableData(ILSData):
             return float(num) / float(denom), num, denom
 
         if not self.config['products']:
-            products = SQLProduct.objects.filter(domain=self.config['domain']).order_by('code')
+            products = SQLProduct.objects.filter(domain=self.config['domain'], is_archived=False).order_by('code')
         else:
             products = SQLProduct.objects.filter(product_id__in=self.config['products'],
                                                  domain=self.config['domain']).order_by('code')
@@ -301,8 +295,9 @@ class DistrictSohPercentageTableData(ILSData):
                 hisp = get_hisp_resp_rate(loc)
 
                 url = make_url(FacilityDetailsReport, self.config['domain'],
-                           '?location_id=%s&filter_by_program=%s%s',
-                           (loc.location_id, self.config['program'], self.config['prd_part_url']))
+                               '?location_id=%s&month=%s&year=%s&filter_by_program=%s&msd=%s',
+                               (loc.location_id, self.config['month'], self.config['year'],
+                               self.config['program'], self.config['msd_code']))
 
                 row_data = [
                     loc.site_code,
@@ -378,14 +373,16 @@ class StockOnHandReport(DetailsReport):
     def title(self):
         title = _('Stock On Hand')
         if self.location and self.location.location_type.name.upper() == 'FACILITY':
-            title = _('Facility Details')
+            return "{0} ({1}) Group {2}".format(self.location.name,
+                                                self.location.site_code,
+                                                self.location.metadata.get('group', '---'))
         return title
 
     @property
     def fields(self):
         fields = [AsyncLocationFilter, MonthAndQuarterFilter, YearFilter, ProgramFilter, MSDZoneFilter]
         if self.location and self.location.location_type.name.upper() == 'FACILITY':
-            fields = [AsyncLocationFilter, ProductByProgramFilter]
+            fields = []
         return fields
 
     @property
@@ -408,6 +405,8 @@ class StockOnHandReport(DetailsReport):
                 return [
                     InventoryHistoryData(config=config),
                     RandRHistory(config=config),
+                    Notes(config=config),
+                    RecentMessages(config=config),
                     RegistrationData(config=dict(loc_type='FACILITY', **config), css_class='row_chart_all'),
                     RegistrationData(config=dict(loc_type='DISTRICT', **config), css_class='row_chart_all'),
                     RegistrationData(config=dict(loc_type='REGION', **config), css_class='row_chart_all')
