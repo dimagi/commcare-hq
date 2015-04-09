@@ -554,7 +554,13 @@ class Domain(Document, SnapshotMixin):
 
         def _get_by_name(stale=False):
             extra_args = {'stale': settings.COUCH_STALE_QUERY} if stale else {}
-            return cls.view("domain/domains", key=name, reduce=False, include_docs=True, **extra_args).first()
+            result = cls.view("domain/domains", key=name, reduce=False, include_docs=True, **extra_args).first()
+            if not isinstance(result, Domain):
+                # A stale view may return a result with no doc if the doc has just been deleted.
+                # In this case couchdbkit just returns the raw view result as a dict
+                return None
+            else:
+                return result
 
         domain = _get_by_name(stale=(not strict))
         if domain is None and not strict:
