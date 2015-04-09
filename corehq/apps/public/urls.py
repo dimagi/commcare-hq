@@ -12,4 +12,6 @@ urlpatterns = patterns(
         name=ServicesPublicView.urlname),
     url(r'^pricing/$', PricingPublicView.as_view(),
         name=PricingPublicView.urlname),
+    url(r'^solutions/$', SolutionsPublicView.as_view(),
+        name=SolutionsPublicView.urlname),
 )

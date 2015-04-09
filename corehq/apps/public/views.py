@@ -78,3 +78,12 @@ class ServicesDetailsPublicView(TemplateView):
         kwargs['is_services'] = True
         return super(ServicesDetailsPublicView, self).get_context_data(**kwargs)
 
+
+class SolutionsPublicView(TemplateView):
+    urlname = 'public_solutions'
+    template_name = 'public/solutions.html'
+
+    def get_context_data(self, **kwargs):
+        kwargs['is_solutions'] = True
+        return super(SolutionsPublicView, self).get_context_data(**kwargs)
+
