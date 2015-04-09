@@ -47,5 +47,34 @@ var CC_UTILS = {
             return x.key();
         });
         return _(suggestedProperties).difference(used_properties);
+    },
+    propertyDictToArray: function (required, property_dict, caseConfig, keyIsPath) {
+        var property_array = _(property_dict).map(function (value, key) {
+            return {
+                path: !keyIsPath ? value : key,
+                key: !keyIsPath ? key : value,
+                required: false
+            };
+        });
+        property_array = _(property_array).sortBy(function (property) {
+            return caseConfig.questionScores[property.path] * 2 + (property.required ? 0 : 1);
+        });
+        return required.concat(property_array);
+    },
+    propertyArrayToDict: function (required, property_array, keyIsPath) {
+        var property_dict = {},
+            extra_dict = {};
+        _(property_array).each(function (case_property) {
+            var key = case_property[!keyIsPath ? 'key' : 'path'];
+            var path = case_property[!keyIsPath ? 'path' : 'key'];
+            if (key || path) {
+                if (_(required).contains(key) && case_property.required) {
+                    extra_dict[key] = path;
+                } else {
+                    property_dict[key] = path;
+                }
+            }
+        });
+        return [property_dict, extra_dict];
     }
 };
