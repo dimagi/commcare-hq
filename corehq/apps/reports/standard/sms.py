@@ -1,5 +1,8 @@
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
+from corehq.apps.locations.models import LocationType, SQLLocation
+from corehq.apps.reports.filters.dates import DatespanFilter
+from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.standard import DatespanMixin, ProjectReport,\
     ProjectReportParametersMixin
 from corehq.apps.reports.generic import GenericTabularReport
@@ -189,8 +192,7 @@ class MessageLogReport(BaseCommConnectLogReport):
     name = ugettext_noop('Message Log')
     slug = 'message_log'
     fields = [
-        'corehq.apps.reports.filters.dates.DatespanFilter',
-        'corehq.apps.sms.filters.MessageTypeFilter',
+        AsyncLocationFilter, DatespanFilter, MessageTypeFilter,
     ]
     exportable = True
 
@@ -200,6 +202,23 @@ class MessageLogReport(BaseCommConnectLogReport):
             filtered_types = set([mt.lower() for mt in filtered_types])
             return lambda message_types: len(filtered_types.intersection(message_types)) > 0
         return lambda message_types: True
+
+    def get_location_filter(self):
+        locations = []
+        location = AsyncLocationFilter.get_value(self.request, self.domain)
+        reporting_types = LocationType.objects.filter(domain=self.domain, administrative=False)
+        loc = SQLLocation.objects.get(location_id=location)
+        if loc.location_type in reporting_types:
+            locations.append(loc.location_id)
+
+        def get_reporting_locations_ids(parent_loc):
+            for children_location in SQLLocation.objects.filter(parent=parent_loc):
+                if children_location.location_type in reporting_types:
+                    locations.append(children_location.location_id)
+                get_reporting_locations_ids(children_location)
+
+        get_reporting_locations_ids(loc)
+        return locations
 
     @staticmethod
     def _get_message_types(message):
@@ -243,7 +262,7 @@ class MessageLogReport(BaseCommConnectLogReport):
             INCOMING: _("Incoming"),
             OUTGOING: _("Outgoing"),
         }
-
+        reporting_locations_id = self.get_location_filter()
         # Retrieve message log options
         message_log_options = getattr(settings, "MESSAGE_LOG_OPTIONS", {})
         abbreviated_phone_number_domains = message_log_options.get("abbreviated_phone_number_domains", [])
@@ -258,6 +277,9 @@ class MessageLogReport(BaseCommConnectLogReport):
 
             message_types = self._get_message_types(message)
             if not message_type_filter(message_types):
+                continue
+
+            if message.location_id not in reporting_locations_id:
                 continue
 
             doc_info = self.get_recipient_info(message, contact_cache)
