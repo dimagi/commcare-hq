@@ -323,10 +323,6 @@ class EWSApi(APISynchronization):
                 )
                 SupplyPointCase.get_or_create_by_location(fake_location)
                 created_location.save()
-            fake_location = Loc(_id=location._id,
-                                name=location.name,
-                                domain=self.domain)
-            SupplyPointCase.get_or_create_by_location(fake_location)
         elif ews_location.supply_points:
             active_supply_points = filter(lambda sp: sp.active, ews_location.supply_points)
             if active_supply_points:
@@ -339,6 +335,8 @@ class EWSApi(APISynchronization):
             self._create_supply_point_from_location(supply_point, location)
             location.save()
         else:
+            SupplyPointCase.get_or_create_by_location(location)
+            location.save()
             location.archive()
 
     def location_sync(self, ews_location):
