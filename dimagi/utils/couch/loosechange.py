@@ -3,6 +3,8 @@ import tempfile
 import time
 import re
 from datetime import datetime, timedelta, tzinfo
+from dimagi.utils.parsing import ISO_DATE_FORMAT
+
 try:
     import simplejson as json
 except ImportError:
@@ -168,7 +170,7 @@ def parse_date(s):
     raise ValueError('did not match any date pattern')
 
 def parse_iso_date(p):
-    return datetime.strptime(p, '%Y-%m-%d').date()
+    return datetime.strptime(p, ISO_DATE_FORMAT).date()
 
 def parse_iso_timestamp(p, frac, tz):
     return parse_full_timestamp('%Y-%m-%dT%H:%M:%S', p, frac, tz)

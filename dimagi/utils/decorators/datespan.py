@@ -2,10 +2,11 @@ from datetime import datetime
 from django.http import HttpRequest, HttpResponseBadRequest
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.django.request import request_from_args_or_kwargs
+from dimagi.utils.parsing import ISO_DATE_FORMAT
 
 
 def datespan_in_request(from_param="from", to_param="to",
-                        format_string="%Y-%m-%d", default_days=30,
+                        format_string=ISO_DATE_FORMAT, default_days=30,
                         inclusive=True, default_function=None):
     """
     Wraps a request with dates based on url params or defaults and
