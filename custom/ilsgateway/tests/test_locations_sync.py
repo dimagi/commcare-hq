@@ -36,7 +36,7 @@ class LocationSyncTest(TestCase):
         self.assertEqual(ilsgateway_location.latitude, float(location.latitude))
         self.assertEqual(int(ilsgateway_location.parent.sql_location.external_id), location.parent_id)
         self.assertIsNotNone(ilsgateway_location.linked_supply_point())
-        self.assertIsNone(ilsgateway_location.sql_location.supply_point_id)
+        self.assertIsNotNone(ilsgateway_location.sql_location.supply_point_id)
 
     def test_create_non_facility_location(self):
         with open(os.path.join(self.datapath, 'sample_locations.json')) as f:
