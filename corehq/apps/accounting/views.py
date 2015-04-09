@@ -64,6 +64,9 @@ from corehq import privileges, toggles
 from django_prbac.decorators import requires_privilege_raise404
 from django_prbac.models import Role, Grant
 
+from urllib import urlencode
+
+
 logger = logging.getLogger('accounting')
 
 
@@ -343,17 +346,16 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
 
         invoice_report = InvoiceInterface(self.request)
         invoice_report.filters.update(subscription__subscriber__domain=subscriber_domain)
-
-        invoice_report_url = invoice_report.get_url()
-        invoice_export_url = invoice_report.get_url(render_as='export')
-        # Tied to InvoiceInterface. Not a neat way of constructing URL with GET params
-        get_params_string = "?subscriber={domain_name}".format(domain_name=subscriber_domain)
+        # Tied to InvoiceInterface.
+        encoded_params = urlencode({'subscriber': subscriber_domain})
+        invoice_report_url = "{}?{}".format(invoice_report.get_url(), encoded_params)
+        invoice_export_url = "{}?{}".format(invoice_report.get_url(render_as='export'), encoded_params)
 
         return {
             'invoice_headers': invoice_report.headers,
             'invoice_rows': invoice_report.rows,
-            'invoice_export_url': invoice_export_url + get_params_string,
-            'invoice_report_url': invoice_report_url + get_params_string,
+            'invoice_export_url': invoice_export_url,
+            'invoice_report_url': invoice_report_url,
         }
 
     @property

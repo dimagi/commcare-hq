@@ -653,6 +653,48 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
             "./entry/session"
         )
 
+    def test_subcase_repeat_mixed(self):
+        app = Application.new_app(None, "Untitled Application", application_version=APP_V2)
+        module_0 = app.add_module(Module.new_module('parent', None))
+        module_0.unique_id = 'm0'
+        module_0.case_type = 'parent'
+        form = app.new_form(0, "Form", None)
+
+        form.actions.open_case = OpenCaseAction(name_path="/data/question1")
+        form.actions.open_case.condition.type = 'always'
+
+        child_case_type = 'child'
+        form.actions.subcases.append(OpenSubCaseAction(
+            case_type=child_case_type,
+            case_name="/data/question1",
+            condition=FormActionCondition(type='always')
+        ))
+        # subcase in the middle that has a repeat context
+        form.actions.subcases.append(OpenSubCaseAction(
+            case_type=child_case_type,
+            case_name="/data/repeat/question1",
+            repeat_context='/data/repeat',
+            condition=FormActionCondition(type='always')
+        ))
+        form.actions.subcases.append(OpenSubCaseAction(
+            case_type=child_case_type,
+            case_name="/data/question1",
+            condition=FormActionCondition(type='always')
+        ))
+
+        expected = """
+        <partial>
+            <session>
+              <datum id="case_id_new_parent_0" function="uuid()"/>
+              <datum id="case_id_new_child_1" function="uuid()"/>
+              <datum id="case_id_new_child_3" function="uuid()"/>
+            </session>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected,
+                                   app.create_suite(),
+                                   './entry[1]/session')
+
 
 class AdvancedModuleAsChildTest(SimpleTestCase, TestFileMixin):
     file_path = ('data', 'suite')

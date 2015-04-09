@@ -52,8 +52,8 @@ class StockOnHandTest(EWSScriptTest):
 
     def test_soh_and_receipt(self):
         a = """
-           5551234 > soh lf 25.20 mc 25.0
-           5551234 < Dear stella, thank you for reporting the commodities you have. You received lf 20.
+           5551234 > soh lf 90.90 mc 25.0
+           5551234 < Dear stella, thank you for reporting the commodities you have. You received lf 90.
            """
         self.run_script(a)
 
@@ -94,15 +94,17 @@ class StockOnHandTest(EWSScriptTest):
         third_message = "Dear stella, these items are stocked out: mc. these items need to be reordered: mg. " \
                         "Please order mc 22 mg 40."
         fifth_message = "Dear super, Test RMS is experiencing the following problems: " \
-                        "below reorder level Male Condom Micro-G"
+                        "stockouts Male Condom; below reorder level Micro-G"
+        last_message = "Dear stella, these items are stocked out: mc. these items need to be reordered: mg. " \
+                       "Please order mc 22 mg 40."
         a = """
            5551234 > soh mc 0.0 mg 1.0 ng 25.0
            222222 < %s
            5551234 < %s
            5551234 > soh mc 0.2 mg 1.0
            222222 < %s
-           5551234 <  Dear stella, these items need to be reordered: mc mg. Please order mc 22 mg 40.
-           """ % (second_message, third_message, fifth_message)
+           5551234 < %s
+           """ % (second_message, third_message, fifth_message, last_message)
         self.run_script(a)
 
     def test_combined4(self):

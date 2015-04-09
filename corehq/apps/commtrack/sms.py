@@ -410,7 +410,7 @@ def process_transactions(E, transactions):
         else:
             transfers.append(tx)
 
-    return process_balances(E, balances), process_transfers(E, transfers)
+    return process_transfers(E, transfers), process_balances(E, balances)
 
 
 def process_balances(E, balances):

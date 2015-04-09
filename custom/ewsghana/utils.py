@@ -20,20 +20,16 @@ TEST_DOMAIN = 'ewsghana-receipts-test'
 
 def get_supply_points(location_id, domain):
     loc = SQLLocation.objects.get(location_id=location_id)
-    location_types = [loc_type.name for loc_type in filter(
-        lambda loc_type: not loc_type.administrative,
-        Domain.get_by_name(domain).location_types
-    )]
     if loc.location_type.name == 'district':
         locations = SQLLocation.objects.filter(parent=loc)
     elif loc.location_type.name == 'region':
         locations = SQLLocation.objects.filter(
-            Q(parent__parent=loc) | Q(parent=loc, location_type__name__in=location_types)
+            Q(parent__parent=loc) | Q(parent=loc, location_type__administrative=False)
         )
-    elif loc.location_type.name in location_types:
+    elif not loc.location_type.administrative:
         locations = SQLLocation.objects.filter(id=loc.id)
     else:
-        locations = SQLLocation.objects.filter(domain=domain, location_type__name__in=location_types)
+        locations = SQLLocation.objects.filter(domain=domain, location_type__administrative=False)
     return locations.exclude(supply_point_id__isnull=True).exclude(is_archived=True)
 
 
