@@ -1421,7 +1421,7 @@ class XForm(WrappedNode):
             session_case_id = CaseIDXPath(session_var(var_name))
             if action.preload:
                 self.add_casedb()
-                for property, nodeset in action.preload.items():
+                for nodeset, property, in action.preload.items():
                     parent_path, property = split_path(property)
                     property_xpath = {
                         'name': 'case_name',
