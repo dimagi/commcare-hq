@@ -172,8 +172,8 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
             'basic_form': self.basic_account_form,
             'contact_form': self.contact_form,
             'subscription_list': [
-                (sub, Invoice.objects.filter(subscription=sub).latest('date_due').date_due # TODO - check query
-                      if len(Invoice.objects.filter(subscription=sub)) != 0 else 'None on record',
+                (sub, Invoice.objects.filter(subscription=sub).latest('date_due').date_due
+                      if Invoice.objects.filter(subscription=sub).count() else 'None on record',
                 ) for sub in Subscription.objects.filter(account=self.account)
             ],
         }
