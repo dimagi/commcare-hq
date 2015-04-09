@@ -126,22 +126,6 @@ class SubcaseRepeatTest(TestCase, TestFileMixin):
         self.assertXmlEqual(self.get_xml('subcase_repeat_mixed_form'),
                             self.app.get_module(0).get_form(0).render_xform())
 
-    def test_subcase_repeat_mixed_suite(self):
-        # should this be in the suite test?
-        self.app = Application.wrap(self.get_json('subcase_repeat_mixed'))
-        expected = """
-        <partial>
-            <session>
-              <datum id="case_id_new_parent_0" function="uuid()"/>
-              <datum id="case_id_new_subcase_1" function="uuid()"/>
-              <datum id="case_id_new_subcase_3" function="uuid()"/>
-            </session>
-        </partial>
-        """
-        self.assertXmlPartialEqual(expected,
-                                   self.app.create_suite(),
-                                   './entry[1]/session')
-
 
 class SubcaseParentRefTeset(TestCase, TestFileMixin):
     file_path = ('data', 'form_preparation_v2')
