@@ -145,7 +145,7 @@ class Version2CaseParsingTest(TestCase):
         # quick test for ota restore
         v2response = phone_views.xml_for_case(HttpRequest(), case.get_id, version="2.0")
         expected_v2_response = """
-        <case case_id="foo-case-id" date_modified="2011-12-07T13:42:50Z" user_id="bar-user-id" xmlns="http://commcarehq.org/case/transaction/v2">
+        <case case_id="foo-case-id" date_modified="2011-12-07T13:42:50.000000Z" user_id="bar-user-id" xmlns="http://commcarehq.org/case/transaction/v2">
                 <create>
                     <case_type>v2_case_type</case_type>
                     <case_name>test case name</case_name>

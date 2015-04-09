@@ -23,7 +23,7 @@ from datetime import datetime
 from eulxml.xmlmap import XmlObject, StringField, DateTimeField, NodeListField, NodeField
 
 def CustomDateTimeField(*args, **kwargs):
-    return DateTimeField(format='%Y-%m-%dT%H:%M:%SZ', *args, **kwargs)
+    return DateTimeField(format='%Y-%m-%dT%H:%M:%S.%fZ', *args, **kwargs)
 
 class KeyRecord(XmlObject):
     ROOT_NAME = 'key_record'
