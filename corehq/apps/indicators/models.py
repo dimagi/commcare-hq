@@ -6,7 +6,6 @@ import numpy
 import datetime
 from couchdbkit.ext.django.schema import Document, StringProperty, IntegerProperty, DateTimeProperty
 from couchdbkit.schema.base import DocumentSchema
-from couchdbkit.schema.properties import LazyDict
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.crud.models import AdminCRUDDocumentMixin
 from corehq.apps.indicators.admin.crud import (IndicatorAdminCRUDManager,
@@ -452,11 +451,11 @@ class CouchIndicatorDef(DynamicIndicatorDefinition):
 
     def _get_value_from_result(self, result):
         value = 0
-        if isinstance(result, dict) or isinstance(result, LazyDict):
+        if isinstance(result, dict):
             result = [result]
         for item in result:
             new_val = item.get('value')
-            if isinstance(new_val, dict) or isinstance(new_val, LazyDict):
+            if isinstance(new_val, dict):
                 if '_total_unique' in new_val:
                     value += new_val.get('_total_unique', 0)
                 elif '_sum_unique':
@@ -731,7 +730,7 @@ class BaseDocumentIndicatorDefinition(IndicatorDefinition):
         """
         update_computed = True
         existing_indicator = computed.get(self.slug)
-        if isinstance(existing_indicator, dict) or isinstance(existing_indicator, LazyDict):
+        if isinstance(existing_indicator, dict):
             update_computed = existing_indicator.get('version') != self.version
         if update_computed:
             computed[self.slug] = self.get_doc_dict(document)
@@ -761,7 +760,7 @@ class FormDataIndicatorDefinitionMixin(DocumentSchema):
             question_id = question_id.split('.')
         if len(question_id) > 0 and form_data:
             return self.get_from_form(form_data.get(question_id[0]), question_id[1:])
-        if (isinstance(form_data, dict) or isinstance(form_data, LazyDict)) and '#text' in form_data:
+        if isinstance(form_data, dict) and '#text' in form_data:
             return form_data['#text']
         return form_data
 
@@ -926,7 +925,7 @@ class FormDataInCaseIndicatorDefinition(CaseIndicatorDefinition, FormDataIndicat
 
     def get_value(self, doc):
         existing_value = self.get_existing_value(doc)
-        if not (isinstance(existing_value, dict) or isinstance(existing_value, LazyDict)):
+        if not isinstance(existing_value, dict):
             existing_value = dict()
         forms = self.get_related_forms(doc)
         for form in forms:
