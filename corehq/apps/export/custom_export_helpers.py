@@ -216,6 +216,7 @@ class FormCustomExportHelper(CustomExportHelper):
         p = self.post_data['custom_export']
         e = self.custom_export
         e.include_errors = p['include_errors']
+        e.split_multiselects = p['split_multiselects']
         e.app_id = p['app_id']
 
         super(FormCustomExportHelper, self).update_custom_params()

@@ -116,7 +116,7 @@ $(function() {
             <a class="btn btn-info" href="{% url "location_import" domain %}">
                 <i class="icon-upload"></i> {% trans 'Bulk Import Locations' %}
             </a>
-            <a class="btn" href="{% url "location_settings" domain %}">
+            <a class="btn" href="{% url "location_types" domain %}">
                 {% trans "Edit Location Types" %}
             </a>
             <a class="btn" href="{% url "location_fields_view" domain %}">
@@ -203,10 +203,10 @@ $(function() {
     </script>
 {% else %}
   <div class="loc_child no_children alert alert-info">
-    {% url "location_settings" domain as location_settings_url%}
+    {% url "location_types" domain as location_types_url %}
     {% blocktrans %}
     Please define the location types
-    <a href="{{ location_settings_url }}">here</a>
+    <a href="{{ location_types_url }}">here</a>
     for your project before creating any locations.
     {% endblocktrans %}
   </div>

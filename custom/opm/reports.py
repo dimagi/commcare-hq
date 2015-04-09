@@ -1009,9 +1009,14 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
     report_template_path = "opm/beneficiary_report.html"
     # report_template_path = "opm/hsr_report.html"
     model = AWCHealthStatus
+    fix_left_col = True
 
     def get_row_data(self, row, **kwargs):
         return OPMCaseRow(row, self)
+
+    @property
+    def fixed_cols_spec(self):
+        return dict(num=7, width=600)
 
     @property
     def headers(self):

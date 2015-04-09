@@ -131,7 +131,8 @@ class MonthOfStockProduct(EWSData):
                 ).order_by('name').exclude(supply_point_id__isnull=True)
             else:
                 supply_points = SQLLocation.objects.filter(
-                    parent__location_id=self.config['location_id'], is_archived=False
+                    parent__location_id=self.config['location_id'], is_archived=False,
+                    location_type__administrative=False,
                 ).order_by('name').exclude(supply_point_id__isnull=True)
         return supply_points
 

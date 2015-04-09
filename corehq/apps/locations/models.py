@@ -305,7 +305,7 @@ class Location(CachedCouchDocumentMixin, Document):
         super(Document, self).__init__(*args, **kwargs)
 
     def __repr__(self):
-        return "%s (%s)" % (self.name, self.location_type_object.name)
+        return "%s (%s)" % (self.name, self.location_type)
 
     def __eq__(self, other):
         if isinstance(other, Location):

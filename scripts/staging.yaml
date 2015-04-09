@@ -43,6 +43,7 @@
 trunk: master
 name: autostaging
 branches:
+  - microseconds+iso_date+standardize-date-formats  # danny 4/8
   - microseconds  # danny 4/7
   - rm-djangocouch  # danny 4/6
   - subscription-no-contact-info # bb 8/4
@@ -53,6 +54,7 @@ branches:
   - static-updates # Biyeun 2/9
   - loc-type-stock-rates  # Ethan 3/6
   - usercase # Norman 3/27
+  - django1.6 # SK 4/9
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
