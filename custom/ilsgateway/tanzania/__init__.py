@@ -218,6 +218,16 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport,
         return []
 
     @property
+    def title_month(self):
+        days = self.datespan.enddate - self.datespan.startdate
+        if days.days <= 31:
+            return self.datespan.startdate.strftime('%B, %Y')
+        else:
+            return '{0} - {1}'.format(self.datespan.startdate.strftime('%B'),
+                                      self.datespan.enddate.strftime('%B, %Y'))
+
+
+    @property
     def report_config(self):
         org_summary = OrganizationSummary.objects.filter(date__range=(self.datespan.startdate,
                                                                       self.datespan.enddate),

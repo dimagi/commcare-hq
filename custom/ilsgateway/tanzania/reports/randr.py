@@ -178,7 +178,7 @@ class RRreport(DetailsReport):
 
     @property
     def title(self):
-        title = _('R & R')
+        title = _('R & R {0}'.format(self.title_month))
         if self.location and self.location.location_type.name.upper() == 'FACILITY':
             return "{0} ({1}) Group {2}".format(self.location.name,
                                                 self.location.site_code,

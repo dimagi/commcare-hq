@@ -18,7 +18,7 @@ class DashboardReport(MultiReport):
 
     @property
     def title(self):
-        title = _("Dashboard report")
+        title = _("Dashboard report {0}".format(self.title_month))
         if self.location and self.location.location_type.name.upper() == 'FACILITY':
             return "{0} ({1}) Group {2}".format(self.location.name,
                                                 self.location.site_code,
