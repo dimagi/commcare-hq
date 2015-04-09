@@ -8,6 +8,7 @@ from corehq.util.translation import localize
 from custom.intrahealth.sqldata import NombreData, TauxConsommationData
 from django.utils.translation import ugettext as _
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.parsing import json_format_date
 
 
 def get_localized_months():
@@ -41,8 +42,8 @@ class IntraHealthReportConfigMixin(object):
             startdate=self.datespan.startdate,
             enddate=self.datespan.enddate,
             visit="''",
-            strsd=self.datespan.startdate.strftime("%Y-%m-%d"),
-            stred=self.datespan.enddate.strftime("%Y-%m-%d")
+            strsd=json_format_date(self.datespan.startdate),
+            stred=json_format_date(self.datespan.enddate)
         )
         self.config_update(config)
         return config

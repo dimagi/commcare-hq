@@ -1,7 +1,8 @@
 from collections import namedtuple
-from datetime import datetime
+from datetime import datetime, time
 from corehq.apps.userreports.expressions.getters import transform_from_datatype
 from corehq.apps.userreports.reports.filters import SHOW_ALL_CHOICE
+from corehq.util.dates import iso_string_to_date
 
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
@@ -118,8 +119,10 @@ class DatespanFilter(BaseFilter):
         date_range_inclusive = kwargs.get('date_range_inclusive', True)
 
         def date_or_nothing(param):
-            return datetime.strptime(param, "%Y-%m-%d") \
-                if param else None
+            if param:
+                return datetime.combine(iso_string_to_date(param), time())
+            else:
+                return None
         try:
             startdate = date_or_nothing(startdate)
             enddate = date_or_nothing(enddate)

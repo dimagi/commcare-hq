@@ -13,10 +13,11 @@ from custom.common import ALL_OPTION
 from custom.ilsgateway.filters import MonthAndQuarterFilter
 from custom.ilsgateway.models import SupplyPointStatusTypes, OrganizationSummary
 from corehq.apps.reports.graph_models import PieChart
-from dimagi.utils.dates import DateSpan, DEFAULT_DATE_FORMAT
+from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 from custom.ilsgateway.tanzania.reports.utils import make_url
 from django.utils import html
+from dimagi.utils.parsing import ISO_DATE_FORMAT
 
 
 class ILSData(object):
@@ -119,7 +120,7 @@ class ILSMixin(object):
 class ILSDateSpan(DateSpan):
 
     @classmethod
-    def from_month_or_quarter(cls, month_or_quarter=None, year=None, format=DEFAULT_DATE_FORMAT,
+    def from_month_or_quarter(cls, month_or_quarter=None, year=None, format=ISO_DATE_FORMAT,
                               inclusive=True, timezone=pytz.utc):
         """
         Generate a DateSpan object given a numerical month and year.

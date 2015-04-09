@@ -9,6 +9,7 @@ from custom.m4change.constants import NUMBER_OF_MONTHS_FOR_FIXTURES, M4CHANGE_DO
 from custom.m4change.fixtures.report_fixtures import get_last_n_months
 from custom.m4change.models import FixtureReportResult
 from custom.m4change.reports.reports import M4ChangeReportDataSource
+from dimagi.utils.parsing import json_format_date
 import settings
 
 
@@ -42,8 +43,8 @@ def generate_fixtures_for_domain(domain, db, data_source):
 
                 # Remove cached fixture docs
                 db.delete_docs(FixtureReportResult.all_by_composite_key(domain, location_id,
-                                                                        date[0].strftime("%Y-%m-%d"),
-                                                                        date[1].strftime("%Y-%m-%d"), report_slug))
+                                                                        json_format_date(date[0]),
+                                                                        json_format_date(date[1]), report_slug))
 
                 FixtureReportResult.save_result(domain, location_id, date[0].date(), date[1].date(),
                                                 report_slug, rows, name)
@@ -82,8 +83,11 @@ def generate_fixtures_for_locations():
             for report_slug in report_data:
 
                 # Remove cached fixture docs
-                db.delete_docs(FixtureReportResult.all_by_composite_key(domain, location_id, start_date.strftime("%Y-%m-%d"),
-                                                                   end_date.strftime("%Y-%m-%d"), report_slug))
+                db.delete_docs(
+                    FixtureReportResult.all_by_composite_key(
+                        domain, location_id, json_format_date(start_date),
+                        json_format_date(end_date), report_slug)
+                )
                 rows = dict(report_data[report_slug].get("data", []))
                 name = report_data[report_slug].get("name")
                 FixtureReportResult.save_result(domain, location_id, start_date.date(), end_date.date(),

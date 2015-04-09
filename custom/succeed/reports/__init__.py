@@ -1,5 +1,6 @@
 from django.utils.translation import ugettext as _
 from custom.succeed.utils import CONFIG
+from dimagi.utils.parsing import ISO_DATE_FORMAT
 
 PM1 = 'http://openrosa.org/formdesigner/111B09EB-DFFA-4613-9A16-A19BA6ED7D04'
 PM2 = 'http://openrosa.org/formdesigner/4B52ADB2-AA79-4056-A13E-BB34871876A1'
@@ -56,7 +57,7 @@ EMPTY_FIELD = "---"
 
 OUTPUT_DATE_FORMAT = "%m/%d/%Y"
 INTERACTION_OUTPUT_DATE_FORMAT = "%m/%d/%Y %H:%M"
-INPUT_DATE_FORMAT = "%Y-%m-%d"
+INPUT_DATE_FORMAT = ISO_DATE_FORMAT
 
 CM_APP_CM_MODULE = 0
 CM_APP_HUD_MODULE = 1

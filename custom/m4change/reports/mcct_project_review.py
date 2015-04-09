@@ -15,12 +15,14 @@ from corehq.apps.reports.dont_use.fields import StrongFilterUsersField
 from corehq.apps.reports.generic import ElasticProjectInspectionReport
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
 from corehq.elastic import es_query
+from corehq.util.dates import iso_string_to_datetime
 from custom.m4change.constants import REJECTION_REASON_DISPLAY_NAMES, MCCT_SERVICE_TYPES
 from custom.m4change.filters import ServiceTypeFilter
 from custom.m4change.models import McctStatus
 from custom.m4change.reports import get_location_hierarchy_by_id
 from custom.m4change.utils import get_case_by_id, get_property, get_form_ids_by_status
 from custom.m4change.constants import EMPTY_FIELD
+from dimagi.utils.parsing import json_format_date
 
 
 def _get_date_range(range):
@@ -246,7 +248,7 @@ class McctProjectReview(BaseReport):
         for form in submissions:
             data = calculate_form_data(self, form)
             row = [
-                DateTimeProperty().wrap(form["form"]["meta"]["timeEnd"]).strftime("%Y-%m-%d"),
+                json_format_date(iso_string_to_datetime(form["form"]["meta"]["timeEnd"])),
                 self._get_case_name_html(data.get('case'), with_checkbox),
                 self._get_service_type_html(form, data.get('service_type'), with_checkbox),
                 data.get('location_name'),
@@ -349,7 +351,7 @@ class McctRejectedClientPage(McctClientApprovalPage):
             except McctStatus.DoesNotExist:
                 reason = None
             row = [
-                DateTimeProperty().wrap(form["form"]["meta"]["timeEnd"]).strftime("%Y-%m-%d %H:%M"),
+                iso_string_to_datetime(form["form"]["meta"]["timeEnd"]).strftime("%Y-%m-%d %H:%M"),
                 self._get_case_name_html(data.get('case'), with_checkbox),
                 self._get_service_type_html(form, data.get('service_type'), with_checkbox),
                 data.get('location_name'),

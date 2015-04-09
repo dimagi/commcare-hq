@@ -12,6 +12,7 @@ from sqlagg.filters import EQ, BETWEEN, AND, GTE, LTE
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn
 from django.utils.translation import ugettext as _
 from sqlalchemy import select
+from dimagi.utils.parsing import json_format_date
 
 PRODUCT_NAMES = {
     u'diu': [u"diu"],
@@ -388,11 +389,11 @@ class RecapPassageData(BaseSqlData):
 
     @property
     def slug(self):
-        return 'recap_passage_%s' % self.config['startdate'].strftime("%Y-%m-%d")
+        return 'recap_passage_%s' % json_format_date(self.config['startdate'])
 
     @property
     def title(self):
-        return 'Recap Passage %s' % self.config['startdate'].strftime("%Y-%m-%d")
+        return 'Recap Passage %s' % json_format_date(self.config['startdate'])
 
     @property
     def filters(self):

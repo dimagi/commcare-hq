@@ -109,8 +109,6 @@ from corehq.apps.domain.decorators import login_and_domain_required
 
 from casexml.apps.case.xform import extract_case_blocks
 
-DATE_FORMAT = "%Y-%m-%d"
-
 datespan_default = datespan_in_request(
     from_param="startdate",
     to_param="enddate",

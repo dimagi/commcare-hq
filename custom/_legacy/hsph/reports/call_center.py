@@ -4,6 +4,7 @@ import numbers
 import time
 
 from django.utils.datastructures import SortedDict
+from corehq.util.dates import iso_string_to_date
 
 from dimagi.utils.couch.database import get_db
 
@@ -17,9 +18,16 @@ from corehq.apps.groups.models import Group
 
 import hsph.const as const
 
+
 def datestring_minus_days(datestring, days):
-    date = datetime.datetime.strptime(datestring[:10], '%Y-%m-%d')
+    """
+    returns e.g. '2015-04-08T00:00:00' (date + zeroed out time)
+    """
+    # todo: should this return '2015-04-08' instead?
+    date = datetime.datetime.combine(
+        iso_string_to_date(datestring[:10]), datetime.time())
     return (date - datetime.timedelta(days=days)).isoformat()
+
 
 def numeric_cell(val):
     if isinstance(val, numbers.Number):

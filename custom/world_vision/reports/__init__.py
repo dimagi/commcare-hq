@@ -8,6 +8,7 @@ from custom.world_vision.sqldata.main_sqldata import ImmunizationOverview
 from custom.world_vision.sqldata.mother_sqldata import PostnatalCareOverview, AnteNatalCareServiceOverviewExtended, \
     DeliveryPlaceDetailsExtended
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.parsing import json_format_date
 
 
 class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
@@ -74,18 +75,18 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
             config['stred'] = self.request.GET['enddate']
 
         today = datetime.date.today()
-        config['today'] = today.strftime("%Y-%m-%d")
+        config['today'] = json_format_date(today)
 
         for d in [35, 56, 84, 85, 112, 196]:
-            config['today_plus_%d' % d] = (today + datetime.timedelta(days=d)).strftime("%Y-%m-%d")
+            config['today_plus_%d' % d] = json_format_date(today + datetime.timedelta(days=d))
 
         for d in [2, 4, 21, 25, 40, 42, 75, 106, 182, 183, 273, 365, 547, 548, 700, 730]:
-            config['today_minus_%d' % d] = (today - datetime.timedelta(days=d)).strftime("%Y-%m-%d")
+            config['today_minus_%d' % d] = json_format_date(today - datetime.timedelta(days=d))
 
         for d in [1, 3, 5, 6]:
             config['%d' % d] = '%d' % d
 
-        config['last_month'] = (today - datetime.timedelta(days=30)).strftime("%Y-%m-%d")
+        config['last_month'] = json_format_date(today - datetime.timedelta(days=30))
 
         for k, v in sorted(LOCATION_HIERARCHY.iteritems(), reverse=True):
             req_prop = 'location_%s' % v['prop']

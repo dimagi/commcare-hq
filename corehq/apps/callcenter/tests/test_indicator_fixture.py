@@ -20,7 +20,7 @@ class MockIndicatorSet(object):
 
     @property
     def reference_date(self):
-        return datetime.strptime("2014-01-01T00:00:00", "%Y-%m-%dT%H:%M:%S")
+        return datetime(2014, 1, 1, 0, 0)
 
 
 class CallcenterFixtureTests(SimpleTestCase):

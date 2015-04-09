@@ -5,6 +5,7 @@ from decimal import Decimal
 from django.test import SimpleTestCase, TestCase
 from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.models import DataSourceConfiguration
+from corehq.util.dates import iso_string_to_date
 
 
 class DataSourceConfigurationTest(SimpleTestCase):
@@ -91,7 +92,7 @@ def get_sample_doc_and_indicators():
     expected_indicators = {
         'doc_id': 'some-doc-id',
         'repeat_iteration': 0,
-        'date': datetime.datetime.strptime(date_opened, '%Y-%m-%d').date(),
+        'date': iso_string_to_date(date_opened),
         'owner': 'some-user-id',
         'count': 1,
         'category_bug': 1, 'category_feature': 0, 'category_app': 0, 'category_schedule': 0,
