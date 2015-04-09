@@ -1,11 +1,11 @@
-from couchdbkit.ext.django.schema import (
+from dimagi.ext.couchdbkit import (
     Document,
     StringProperty,
     DecimalProperty,
     DictProperty,
     BooleanProperty,
 )
-from corehq.ext.couchdbkit import USecDateTimeProperty
+from dimagi.ext.couchdbkit import DateTimeProperty
 from datetime import datetime
 from decimal import Decimal
 from django.db import models
@@ -30,7 +30,7 @@ class Product(Document):
     cost = DecimalProperty()
     product_data = DictProperty()
     is_archived = BooleanProperty(default=False)
-    last_modified = USecDateTimeProperty()
+    last_modified = DateTimeProperty()
 
     def sync_to_sql(self):
         properties_to_sync = [

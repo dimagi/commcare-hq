@@ -292,7 +292,7 @@ HQ_APPS = (
     'corehq.apps.dashboard',
     'corehq.apps.public',
     'corehq.util',
-    'corehq.ext',
+    'dimagi.ext',
 
     # custom reports
     'a5288',

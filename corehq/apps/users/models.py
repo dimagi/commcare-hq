@@ -11,7 +11,7 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 from couchdbkit.resource import ResourceNotFound
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.chunked import chunked

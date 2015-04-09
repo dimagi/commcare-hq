@@ -15,10 +15,11 @@ from django.http import (
 )
 import iso8601
 from redis import ConnectionError
-from corehq.ext.jsonobject import TARGET_DATETIME_FORMAT, re_loose_datetime
+from dimagi.ext.jsonobject import re_loose_datetime
 
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import uid, LockManager, ReleaseOnError
+from dimagi.utils.parsing import json_format_datetime
 import xml2json
 
 import couchforms
@@ -120,8 +121,8 @@ def adjust_datetimes(data, parent=None, key=None):
     # todo: in the future this will convert to UTC
     if isinstance(data, basestring):
         if re_loose_datetime.match(data):
-            parent[key] = (iso8601.parse_date(data).replace(tzinfo=None)
-                           .strftime(TARGET_DATETIME_FORMAT))
+            parent[key] = json_format_datetime(
+                iso8601.parse_date(data).replace(tzinfo=None))
     elif isinstance(data, dict):
         for key, value in data.items():
             adjust_datetimes(value, parent=data, key=key)

@@ -12,16 +12,16 @@ from lxml import etree
 
 from django.utils.datastructures import SortedDict
 from couchdbkit.exceptions import PreconditionFailed, BadValueError
-from couchdbkit.ext.django.schema import (
+from dimagi.ext.couchdbkit import (
     StringProperty,
     DictProperty,
     SchemaListProperty,
     BooleanProperty
 )
-from corehq.ext.couchdbkit import (
-    USecDateTimeProperty,
-    USecDocumentSchema,
-    USecSafeSaveDocument
+from dimagi.ext.couchdbkit import (
+    DateTimeProperty,
+    DocumentSchema,
+    SafeSaveDocument
 )
 from couchdbkit import ResourceNotFound
 from lxml.etree import XMLSyntaxError
@@ -65,7 +65,7 @@ def get(doc_id):
     return couchforms.fetch_and_wrap_form(doc_id)
 
 
-class Metadata(USecDocumentSchema):
+class Metadata(DocumentSchema):
     """
     Metadata of an xform, from a meta block structured like:
 
@@ -87,8 +87,8 @@ class Metadata(USecDocumentSchema):
 
     username is not part of the spec but included for convenience
     """
-    timeStart = USecDateTimeProperty()
-    timeEnd = USecDateTimeProperty()
+    timeStart = DateTimeProperty()
+    timeEnd = DateTimeProperty()
     instanceID = StringProperty()
     userID = StringProperty()
     deviceID = StringProperty()
@@ -98,25 +98,25 @@ class Metadata(USecDocumentSchema):
     location = GeoPointProperty()
 
 
-class XFormOperation(USecDocumentSchema):
+class XFormOperation(DocumentSchema):
     """
     Simple structure to represent something happening to a form.
 
     Currently used just by the archive workflow.
     """
     user = StringProperty()
-    date = USecDateTimeProperty(default=datetime.datetime.utcnow)
+    date = DateTimeProperty(default=datetime.datetime.utcnow)
     operation = StringProperty()  # e.g. "archived", "unarchived"
 
 
-class XFormInstance(USecSafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
+class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
                     CouchDocLockableMixIn):
     """An XForms instance."""
     domain = StringProperty()
     app_id = StringProperty()
     xmlns = StringProperty()
     form = DictProperty()
-    received_on = USecDateTimeProperty()
+    received_on = DateTimeProperty()
     # Used to tag forms that were forcefully submitted
     # without a touchforms session completing normally
     partial_submission = BooleanProperty(default=False)
@@ -201,9 +201,9 @@ class XFormInstance(USecSafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
                                     meta_block[key] += 'T00:00:00.000000Z'
                                 try:
                                     # try to parse to ensure correctness
-                                    parsed = USecDateTimeProperty().wrap(meta_block[key])
+                                    parsed = DateTimeProperty().wrap(meta_block[key])
                                     # and set back in the right format in case it was a date, not a datetime
-                                    _, ret[key] = USecDateTimeProperty().unwrap(parsed)
+                                    _, ret[key] = DateTimeProperty().unwrap(parsed)
                                 except BadValueError:
                                     # we couldn't parse it
                                     del ret[key]
@@ -396,7 +396,7 @@ class XFormDeprecated(XFormError):
     """
     After an edit, the old versions go here.
     """
-    deprecated_date = USecDateTimeProperty(default=datetime.datetime.utcnow)
+    deprecated_date = DateTimeProperty(default=datetime.datetime.utcnow)
     orig_id = StringProperty()
 
     def save(self, *args, **kwargs):
@@ -452,7 +452,7 @@ class SubmissionErrorLog(XFormError):
         return error
 
 
-class DefaultAuthContext(USecDocumentSchema):
+class DefaultAuthContext(DocumentSchema):
 
     def is_valid(self):
         return True

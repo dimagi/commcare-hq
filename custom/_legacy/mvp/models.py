@@ -1,6 +1,6 @@
 import datetime
 import copy
-from couchdbkit.ext.django.schema import IntegerProperty, BooleanProperty, StringProperty
+from dimagi.ext.couchdbkit import IntegerProperty, BooleanProperty, StringProperty
 import dateutil
 import logging
 import pytz

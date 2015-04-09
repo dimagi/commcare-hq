@@ -1,4 +1,4 @@
-from couchdbkit.ext.django.schema import (Document, StringProperty,
+from dimagi.ext.couchdbkit import (Document, StringProperty,
     BooleanProperty, SchemaListProperty, StringListProperty)
 from jsonobject import JsonObject
 from django.core.exceptions import ValidationError

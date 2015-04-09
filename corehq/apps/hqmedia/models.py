@@ -5,7 +5,7 @@ from PIL import Image
 from datetime import datetime
 import hashlib
 from couchdbkit.exceptions import ResourceConflict
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 from corehq.apps.app_manager.exceptions import XFormException
 from dimagi.utils.couch.resource_conflict import retry_resource
 from django.contrib import messages

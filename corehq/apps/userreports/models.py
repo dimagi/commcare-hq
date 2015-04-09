@@ -1,14 +1,15 @@
 from copy import copy
 import json
-from couchdbkit import ResourceNotFound, SchemaProperty
-from couchdbkit.ext.django.schema import (
+from couchdbkit import ResourceNotFound
+from dimagi.ext.couchdbkit import (
     BooleanProperty,
+    DateTimeProperty,
     Document,
     DocumentSchema,
+    SchemaProperty,
     StringListProperty,
-    DateTimeProperty
 )
-from couchdbkit.ext.django.schema import StringProperty, DictProperty, ListProperty, IntegerProperty
+from dimagi.ext.couchdbkit import StringProperty, DictProperty, ListProperty, IntegerProperty
 from jsonobject import JsonObject
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.userreports.exceptions import BadSpecError

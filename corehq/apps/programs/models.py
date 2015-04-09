@@ -1,4 +1,4 @@
-from couchdbkit.ext.django.schema import (
+from dimagi.ext.couchdbkit import (
     Document,
     StringProperty,
     BooleanProperty,
@@ -6,7 +6,7 @@ from couchdbkit.ext.django.schema import (
 from datetime import datetime
 from corehq.apps.products.models import Product, SQLProduct
 from django.utils.translation import ugettext as _
-from corehq.ext.couchdbkit import USecDateTimeProperty
+from dimagi.ext.couchdbkit import DateTimeProperty
 
 
 class Program(Document):
@@ -16,7 +16,7 @@ class Program(Document):
     domain = StringProperty()
     name = StringProperty()
     code = StringProperty()
-    last_modified = USecDateTimeProperty()
+    last_modified = DateTimeProperty()
     default = BooleanProperty(default=False)
     is_archived = BooleanProperty(default=False)
 

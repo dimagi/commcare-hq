@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4
 import logging
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 
 from datetime import datetime
 from django.db import models

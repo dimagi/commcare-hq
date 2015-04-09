@@ -12,7 +12,7 @@ from django.core.cache import cache
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
-from corehq.ext.couchdbkit import *
+from dimagi.ext.couchdbkit import *
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
 from PIL import Image
 from casexml.apps.case.exceptions import MissingServerDate, ReconciliationError
@@ -39,10 +39,10 @@ from dimagi.utils.couch import (
     LooselyEqualDocumentSchema,
 )
 
-from corehq.ext.couchdbkit import (
-    USecDateTimeProperty,
-    USecDocument,
-    USecSafeSaveDocument,
+from dimagi.ext.couchdbkit import (
+    DateTimeProperty,
+    Document,
+    SafeSaveDocument,
 )
 
 
@@ -67,8 +67,8 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
     """
     action_type = StringProperty(choices=list(const.CASE_ACTIONS))
     user_id = StringProperty()
-    date = USecDateTimeProperty()
-    server_date = USecDateTimeProperty()
+    date = DateTimeProperty()
+    server_date = DateTimeProperty()
     xform_id = StringProperty()
     xform_xmlns = StringProperty()
     xform_name = StringProperty()
@@ -177,7 +177,7 @@ class CaseQueryMixin(object):
         return [prefix] + key
 
 
-class CommCareCase(USecSafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
+class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
                    CaseQueryMixin, CouchDocLockableMixIn):
     """
     A case, taken from casexml.  This represents the latest
@@ -189,11 +189,11 @@ class CommCareCase(USecSafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixi
     xform_ids = StringListProperty()
 
     external_id = StringProperty()
-    opened_on = USecDateTimeProperty()
-    modified_on = USecDateTimeProperty()
+    opened_on = DateTimeProperty()
+    modified_on = DateTimeProperty()
     type = StringProperty()
     closed = BooleanProperty(default=False)
-    closed_on = USecDateTimeProperty()
+    closed_on = DateTimeProperty()
     user_id = StringProperty()
     owner_id = StringProperty()
     opened_by = StringProperty()
@@ -205,7 +205,7 @@ class CommCareCase(USecSafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixi
     indices = SchemaListProperty(CommCareCaseIndex)
     case_attachments = SchemaDictProperty(CommCareCaseAttachment)
     
-    server_modified_on = USecDateTimeProperty()
+    server_modified_on = DateTimeProperty()
 
     def __unicode__(self):
         return "CommCareCase: %s (%s)" % (self.case_id, self.get_id)
@@ -977,7 +977,7 @@ class CommCareCase(USecSafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixi
 import casexml.apps.case.signals
 
 
-class CommCareCaseGroup(USecDocument):
+class CommCareCaseGroup(Document):
     """
         This is a group of CommCareCases. Useful for managing cases in larger projects.
     """

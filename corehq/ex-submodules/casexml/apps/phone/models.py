@@ -1,7 +1,7 @@
 from collections import defaultdict
 from copy import copy
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import LooselyEqualDocumentSchema
@@ -11,7 +11,7 @@ from casexml.apps.phone.checksum import Checksum, CaseStateHash
 import logging
 
 # override a few values with our own
-from corehq.ext.couchdbkit import USecDateTimeProperty, USecSafeSaveDocument
+from dimagi.ext.couchdbkit import DateTimeProperty, SafeSaveDocument
 
 
 class User(object):
@@ -87,11 +87,11 @@ class SyncLogAssertionError(AssertionError):
         super(SyncLogAssertionError, self).__init__(*args, **kwargs)
 
 
-class SyncLog(USecSafeSaveDocument, UnicodeMixIn):
+class SyncLog(SafeSaveDocument, UnicodeMixIn):
     """
     A log of a single sync operation.
     """
-    date = USecDateTimeProperty()
+    date = DateTimeProperty()
     user_id = StringProperty()
     previous_log_id = StringProperty()  # previous sync log, forming a chain
     last_seq = StringProperty()         # the last_seq of couch during this sync

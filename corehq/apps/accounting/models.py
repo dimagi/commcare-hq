@@ -4,7 +4,7 @@ import logging
 from tempfile import NamedTemporaryFile
 from decimal import Decimal
 from couchdbkit import ResourceNotFound
-from couchdbkit.ext.django.schema import DateTimeProperty, StringProperty
+from dimagi.ext.couchdbkit import DateTimeProperty, StringProperty
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError

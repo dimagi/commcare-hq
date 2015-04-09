@@ -1,4 +1,4 @@
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 from corehq.util.dates import datetime_to_iso_string
 
 

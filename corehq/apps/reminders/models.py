@@ -2,7 +2,7 @@ import pytz
 from pytz import timezone
 from datetime import timedelta, datetime, date, time
 import re
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 from casexml.apps.case.models import CommCareCase, CommCareCaseGroup
 from corehq.apps.sms.models import CommConnectCase
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner

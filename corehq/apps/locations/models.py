@@ -1,9 +1,9 @@
 from functools import partial
 from couchdbkit import ResourceNotFound
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 import itertools
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
-from corehq.ext.couchdbkit import USecDateTimeProperty
+from dimagi.ext.couchdbkit import DateTimeProperty
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from datetime import datetime
@@ -276,7 +276,7 @@ class Location(CachedCouchDocumentMixin, Document):
     # unique id from some external data source
     external_id = StringProperty()
     metadata = DictProperty()
-    last_modified = USecDateTimeProperty()
+    last_modified = DateTimeProperty()
     is_archived = BooleanProperty(default=False)
 
     latitude = FloatProperty()

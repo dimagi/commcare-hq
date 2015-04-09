@@ -5,7 +5,7 @@ import logging
 import urllib
 import urlparse
 
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 from couchdbkit.exceptions import ResourceNotFound
 from django.core.cache import cache
 import socket
