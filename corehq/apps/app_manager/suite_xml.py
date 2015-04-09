@@ -1534,14 +1534,16 @@ class SuiteGenerator(SuiteGeneratorBase):
                 })
 
             if 'subcases' in actions:
-                non_repeat_actions = [a for a in actions['subcases'] if not a.repeat_context]
-                for i, subcase in enumerate(non_repeat_actions):
-                    datums.append({
-                        'datum': SessionDatum(id=form.session_var_for_action('subcase', i), function='uuid()'),
-                        'case_type': subcase.case_type,
-                        'requires_selection': False,
-                        'action': subcase
-                    })
+                for i, subcase in enumerate(actions['subcases']):
+                    # don't put this in the loop to be consistent with the form's indexing
+                    # see XForm.create_casexml_2
+                    if not subcase.repeat_context:
+                        datums.append({
+                            'datum': SessionDatum(id=form.session_var_for_action('subcase', i), function='uuid()'),
+                            'case_type': subcase.case_type,
+                            'requires_selection': False,
+                            'action': subcase
+                        })
         elif form.form_type == 'advanced_form':
             for action in form.actions.get_open_actions():
                 if not action.repeat_context:

@@ -45,6 +45,7 @@
 {% block main_column %}
     <ul class="nav nav-tabs" id="user-settings-tabs">
         <li><a href="#subscription" data-toggle="tab">{% trans "Subscription" %}</a></li>
+        <li><a href="#invoices" data-toggle="tab">{% trans "Invoices" %}</a></li>
         {% if can_change_subscription %}
         <li><a href="#change-subscription-plan"
                data-toggle="tab">{% trans "Upgrade / Downgrade" %}</a>
@@ -57,6 +58,10 @@
     <div class="tab-content">
         <div class="tab-pane" id="subscription">
             {{ block.super }}
+        </div>
+
+        <div class="tab-pane" id="invoices">
+            {% include 'accounting/partials/invoice_table.html' with headers=invoice_headers rows=invoice_rows invoice_export_url=invoice_export_url invoice_report_url=invoice_report_url%}
         </div>
 
         {% if can_change_subscription %}

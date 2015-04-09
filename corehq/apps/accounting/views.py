@@ -172,8 +172,8 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
             'basic_form': self.basic_account_form,
             'contact_form': self.contact_form,
             'subscription_list': [
-                (sub, Invoice.objects.filter(subscription=sub).latest('date_due').date_due # TODO - check query
-                      if len(Invoice.objects.filter(subscription=sub)) != 0 else 'None on record',
+                (sub, Invoice.objects.filter(subscription=sub).latest('date_due').date_due
+                      if Invoice.objects.filter(subscription=sub).count() else 'None on record',
                 ) for sub in Subscription.objects.filter(account=self.account)
             ],
         }
@@ -338,8 +338,27 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
         return CancelForm()
 
     @property
-    def page_context(self):
+    def invoice_context(self):
+        subscriber_domain = self.subscription.subscriber.domain
+
+        invoice_report = InvoiceInterface(self.request)
+        invoice_report.filters.update(subscription__subscriber__domain=subscriber_domain)
+
+        invoice_report_url = invoice_report.get_url()
+        invoice_export_url = invoice_report.get_url(render_as='export')
+        # Tied to InvoiceInterface. Not a neat way of constructing URL with GET params
+        get_params_string = "?subscriber={domain_name}".format(domain_name=subscriber_domain)
+
         return {
+            'invoice_headers': invoice_report.headers,
+            'invoice_rows': invoice_report.rows,
+            'invoice_export_url': invoice_export_url + get_params_string,
+            'invoice_report_url': invoice_report_url + get_params_string,
+        }
+
+    @property
+    def page_context(self):
+        context = {
             'cancel_form': self.cancel_form,
             'credit_form': self.credit_form,
             'can_change_subscription': self.subscription.is_active,
@@ -348,8 +367,12 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
             'disable_cancel': has_subscription_already_ended(self.subscription),
             'form': self.subscription_form,
             'subscription': self.subscription,
-            'subscription_canceled': self.subscription_canceled if hasattr(self, 'subscription_canceled') else False,
+            'subscription_canceled':
+                self.subscription_canceled if hasattr(self, 'subscription_canceled') else False,
         }
+
+        context.update(self.invoice_context)
+        return context
 
     @property
     def page_url(self):

@@ -1345,15 +1345,13 @@ DOMAIN_MODULE_MAP = {
 
 CASEXML_FORCE_DOMAIN_CHECK = True
 
-# arbitrarily split up tests into three chunks
+# arbitrarily split up tests into two chunks
 # that have approximately equal run times,
-# The two groups shown here, plus a third group consisting of everything else
+# the group shown here, plus a second group consisting of everything else
 TRAVIS_TEST_GROUPS = (
     (
         'accounting', 'adm', 'announcements', 'api', 'app_manager', 'appstore',
         'auditcare', 'bihar', 'builds', 'cachehq', 'callcenter', 'care_benin',
-    ),
-    (
         'care_sa', 'case', 'cleanup', 'cloudcare', 'commtrack', 'consumption',
         'couchapps', 'couchlog', 'crud', 'cvsu', 'dca', 'django_digest',
         'djangocouch', 'djangocouchuser', 'domain', 'domainsync', 'export',

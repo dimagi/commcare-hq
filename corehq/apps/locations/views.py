@@ -85,8 +85,8 @@ class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
     entity_string = _("Location")
 
 
-class LocationSettingsView(BaseCommTrackManageView):
-    urlname = 'location_settings'
+class LocationTypesView(BaseCommTrackManageView):
+    urlname = 'location_types'
     page_title = ugettext_noop("Location Types")
     template_name = 'locations/settings.html'
 
