@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa" xmlns:vellum="http://commcarehq.org/xforms/vellum">
+	<h:head>
+		<h:title>create parent</h:title>
+		<model>
+			<instance>
+				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/E3EC2605-2A97-41AD-8716-374F4A30A78E" uiVersion="1" version="1" name="create parent">
+					<parent_name />
+					<first_child_name />
+					<repeat_child jr:template="">
+						<repeat_child_name />
+					</repeat_child>
+					<last_child_name />
+				</data>
+			</instance>
+			<bind nodeset="/data/parent_name" type="xsd:string" required="true()" />
+			<bind nodeset="/data/first_child_name" type="xsd:string" required="false()" />
+			<bind nodeset="/data/repeat_child" />
+			<bind nodeset="/data/repeat_child/repeat_child_name" type="xsd:string" />
+			<bind nodeset="/data/last_child_name" type="xsd:string" />
+			<itext>
+				<translation lang="en" default="">
+					<text id="parent_name-label">
+						<value>Parent name</value>
+					</text>
+					<text id="first_child_name-label">
+						<value>First child name</value>
+					</text>
+					<text id="repeat_child-label">
+						<value>repeat_child</value>
+					</text>
+					<text id="repeat_child/repeat_child_name-label">
+						<value>Repeat child name:</value>
+					</text>
+					<text id="last_child_name-label">
+						<value>Last child name</value>
+					</text>
+				</translation>
+			</itext>
+		</model>
+	</h:head>
+	<h:body>
+		<input ref="/data/parent_name">
+			<label ref="jr:itext('parent_name-label')" />
+		</input>
+		<input ref="/data/first_child_name">
+			<label ref="jr:itext('first_child_name-label')" />
+		</input>
+		<group>
+			<label ref="jr:itext('repeat_child-label')" />
+			<repeat nodeset="/data/repeat_child">
+				<input ref="/data/repeat_child/repeat_child_name">
+					<label ref="jr:itext('repeat_child/repeat_child_name-label')" />
+				</input>
+			</repeat>
+		</group>
+		<input ref="/data/last_child_name">
+			<label ref="jr:itext('last_child_name-label')" />
+		</input>
+	</h:body>
+</h:html>
