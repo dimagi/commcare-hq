@@ -5,16 +5,22 @@ from dimagi.ext.jsonobject import USecDateTimeMeta, \
 from dimagi.utils.couch.database import SafeSaveDocument
 
 
+OldDateTimeProperty = DateTimeProperty
+OldDocument = Document
+OldDocumentSchema = DocumentSchema
+OldSafeSaveDocument = SafeSaveDocument
+
+
 DateTimeProperty = USecDateTimeProperty
 
 
-class Document(Document):
+class Document(OldDocument):
     Meta = USecDateTimeMeta
 
 
-class DocumentSchema(DocumentSchema):
+class DocumentSchema(OldDocumentSchema):
     Meta = USecDateTimeMeta
 
 
-class SafeSaveDocument(SafeSaveDocument):
+class SafeSaveDocument(OldSafeSaveDocument):
     Meta = USecDateTimeMeta
