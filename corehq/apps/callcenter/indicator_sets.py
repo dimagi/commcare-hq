@@ -101,7 +101,7 @@ class CallCenterIndicators(object):
         self.override_cases = override_cases
 
         try:
-            self.timezone = pytz.timezone(self.domain.default_timezone)
+            self.timezone = self.domain.get_default_timezone()
         except pytz.UnknownTimeZoneError:
             self.timezone = pytz.utc
 
