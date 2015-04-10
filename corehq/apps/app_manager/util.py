@@ -206,7 +206,7 @@ def get_case_properties(app, case_types, defaults=(), include_shared_properties=
 
 
 def is_usercase_enabled(domain_name):
-    return getattr(Domain.get_by_name(domain_name), 'usercase_enabled')
+    return getattr(Domain.get_by_name(domain_name), 'usercase_enabled', None)
 
 
 def get_all_case_properties(app):
