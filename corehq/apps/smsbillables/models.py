@@ -303,6 +303,10 @@ class SmsBillable(models.Model):
                 else:
                     smsbillables_logging.error("Gateway fee conversion rate for currency %s is 0",
                                                billable.gateway_fee.currency.code)
+            else:
+                smsbillables_logging.error(
+                    "No matching gateway fee criteria for SMSLog %s" % message_log._id
+                )
 
         # Fetch usage_fee todo
         domain = message_log.domain
