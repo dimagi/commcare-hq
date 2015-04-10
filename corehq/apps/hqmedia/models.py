@@ -14,7 +14,7 @@ import magic
 from corehq.apps.app_manager.xform import XFormValidationError
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.domain.models import LICENSES, LICENSE_LINKS
-from dimagi.utils.couch.database import get_db, SafeSaveDocument, get_safe_read_kwargs, iter_docs
+from dimagi.utils.couch.database import get_db, get_safe_read_kwargs, iter_docs
 from django.utils.translation import ugettext as _
 
 MULTIMEDIA_PREFIX = "jr://file/"

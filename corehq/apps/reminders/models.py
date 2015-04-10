@@ -16,7 +16,6 @@ from couchdbkit.resource import ResourceNotFound
 from corehq.apps.sms.util import create_task, close_task, update_task
 from corehq.apps.smsforms.app import submit_unfinished_form
 from dimagi.utils.couch import LockableMixIn, CriticalSection
-from dimagi.utils.couch.database import SafeSaveDocument
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.multithreading import process_fast
 from dimagi.utils.logging import notify_exception

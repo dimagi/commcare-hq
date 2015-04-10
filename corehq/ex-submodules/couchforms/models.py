@@ -30,7 +30,6 @@ from dimagi.utils.couch import CouchDocLockableMixIn
 from dimagi.utils.decorators.memoized import memoized
 
 from dimagi.utils.indicators import ComputedDocumentMixin
-from dimagi.utils.parsing import string_to_datetime, json_format_datetime
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.database import get_safe_read_kwargs
 from dimagi.utils.mixins import UnicodeMixIn
