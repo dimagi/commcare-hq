@@ -960,7 +960,10 @@ def rebuild_case_view(request, domain, case_id):
 def resave_case(request, domain, case_id):
     case = get_document_or_404(CommCareCase, domain, case_id)
     CommCareCase.get_db().save_doc(case._doc)  # don't just call save to avoid signals
-    messages.success(request, _(u'Case %s was successfully saved. Hopefully it will show up in all reports momentarily.' % case.name))
+    messages.success(
+        request,
+        _(u'Case %s was successfully saved. Hopefully it will show up in all reports momentarily.' % case.name),
+    )
     return HttpResponseRedirect(reverse('case_details', args=[domain, case_id]))
 
 
