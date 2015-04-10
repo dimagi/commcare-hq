@@ -171,7 +171,7 @@ class PatientListReport(SqlTabularReport, CustomProjectReport, ProjectReportPara
                                 AliasColumn('rand_date')
                             ], sort_type=DTSortType.NUMERIC),
             DatabaseColumn('Most Recent', SimpleColumn('bp_category')),
-            DatabaseColumn('Patient Info', SimpleColumn('last_interaction'), format_fn=date_format),
+            DatabaseColumn('Last Interaction Date', SimpleColumn('last_interaction'), format_fn=date_format),
             DatabaseColumn('Tasks', AliasColumn('case_id'), format_fn=tasks),
             DatabaseColumn('Care Team', SimpleColumn('owner_id'), format_fn=group_name)
         ]
