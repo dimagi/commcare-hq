@@ -1366,6 +1366,16 @@ class LocationUserMixin(DocumentSchema):
 
         self.save()
 
+    def unset_location(self):
+        """
+        Unset the location and remove all associated user data and cases
+        """
+        self.user_data.pop('commtrack-supply-point', None)
+        self.user_data.pop('commcare_primary_case_sharing_id', None)
+        self.location_id = None
+        self.clear_locations()
+        self.save()
+
     @property
     def _locations(self):
         """
