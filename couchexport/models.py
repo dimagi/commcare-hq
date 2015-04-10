@@ -946,3 +946,12 @@ class SavedBasicExport(Document):
 
     def get_payload(self):
         return self.fetch_attachment(self.get_attachment_name())
+
+    @classmethod
+    def by_index(cls, index):
+        return SavedBasicExport.view(
+            "couchexport/saved_exports",
+            key=json.dumps(index),
+            include_docs=True,
+            reduce=False,
+        ).all()
