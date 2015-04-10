@@ -1312,7 +1312,7 @@ def reminders_in_error(request, domain):
             "handler_name" : handler.nickname,
             "case_id" : case.get_id if case is not None else None,
             "case_name" : case.name if case is not None else None,
-            "next_fire" : ServerTime(reminder.next_fire).user_time(timezone).done().strftime("%Y-%m-%d %H:%M:%S"),
+            "next_fire" : ServerTime(reminder.next_fire).user_time(timezone).ui_string("%Y-%m-%d %H:%M:%S"),
             "error_msg" : reminder.error_msg or "-",
             "recipient_name" : get_recipient_name(recipient),
         })

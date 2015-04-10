@@ -372,7 +372,7 @@ class AutoSelectCase(DocumentSchema):
 class LoadUpdateAction(AdvancedAction):
     """
     details_module:     Use the case list configuration from this module to show the cases.
-    preload:            Value from the case to load into the form.
+    preload:            Value from the case to load into the form. Keys are question paths, values are case properties.
     auto_select:        Configuration for auto-selecting the case
     show_product_stock: If True list the product stock using the module's Product List configuration.
     product_program:    Only show products for this CommTrack program.
@@ -387,12 +387,12 @@ class LoadUpdateAction(AdvancedAction):
         for path in super(LoadUpdateAction, self).get_paths():
             yield path
 
-        for path in self.preload.values():
+        for path in self.preload.keys():
             yield path
 
     def get_property_names(self):
         names = super(LoadUpdateAction, self).get_property_names()
-        names.update(self.preload.keys())
+        names.update(self.preload.values())
         return names
 
     @property
@@ -1860,6 +1860,18 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
     actions = SchemaProperty(AdvancedFormActions)
     schedule = SchemaProperty(FormSchedule, default=None)
 
+    @classmethod
+    def wrap(cls, data):
+        # lazy migration to swap keys with values in action preload dict.
+        # http://manage.dimagi.com/default.asp?162213
+        load_actions = data.get('actions', {}).get('load_update_cases', [])
+        for action in load_actions:
+            preload = action['preload']
+            if preload and preload.values()[0].startswith('/'):
+                action['preload'] = {v: k for k, v in preload.items()}
+
+        return super(AdvancedForm, cls).wrap(data)
+
     def add_stuff_to_xform(self, xform):
         super(AdvancedForm, self).add_stuff_to_xform(xform)
         xform.add_case_and_meta_advanced(self)
@@ -2025,7 +2037,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                     questions,
                     question_path
                 )
-            for name, question_path in action.preload.items():
+            for question_path, name in action.preload.items():
                 self.add_property_load(
                     app_case_meta,
                     action.case_type,
@@ -2142,9 +2154,6 @@ class AdvancedModule(ModuleBase):
             subcases = actions.get('subcases', None)
             case_type = from_module.case_type
 
-            def convert_preload(preload):
-                return dict(zip(preload.values(),preload.keys()))
-
             base_action = None
             if open:
                 base_action = AdvancedOpenCaseAction(
@@ -2160,7 +2169,7 @@ class AdvancedModule(ModuleBase):
                     case_type=case_type,
                     case_tag='load_{0}_0'.format(case_type),
                     case_properties=update.update if update else {},
-                    preload=convert_preload(preload.preload) if preload else {}
+                    preload=preload.preload if preload else {}
                 )
 
                 if from_module.parent_select.active:

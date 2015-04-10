@@ -18,6 +18,7 @@ from custom.ilsgateway.tanzania import make_url
 from custom.ilsgateway.tanzania.reports.utils import link_format
 from django.utils.translation import ugettext as _
 from dimagi.utils.dates import DateSpan
+from dimagi.utils.parsing import json_format_date
 
 
 class ReportingRates(ReportingRatesData):
@@ -324,8 +325,8 @@ class AlertsData(ReportingRatesData):
             for sp in supply_points:
                 url = make_url(
                     StockLevelsReport, self.config['domain'], '?location_id=%s&startdate=%s&enddate=%s',
-                    (sp.location_id, self.config['startdate'].strftime("%Y-%m-%d"),
-                     self.config['enddate'].strftime("%Y-%m-%d"))
+                    (sp.location_id, json_format_date(self.config['startdate']),
+                     json_format_date(self.config['enddate']))
                 )
                 if sp.supply_point_id not in reported:
                     rows.append(['<div style="background-color: rgba(255, 0, 0, 0.2)">%s has not reported last '

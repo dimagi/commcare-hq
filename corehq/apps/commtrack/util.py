@@ -19,6 +19,7 @@ from casexml.apps.case.xml import V2
 from django.utils.text import slugify
 from unidecode import unidecode
 from corehq.feature_previews import enable_commtrack_previews
+from corehq.util.dates import iso_string_to_date
 from dimagi.utils.parsing import json_format_datetime
 from django.utils.translation import ugettext as _
 import re
@@ -239,7 +240,7 @@ def due_date_monthly(day, from_end=False, past_period=0):
 
 
 def num_periods_late(product_case, schedule, *schedule_args):
-    last_reported = datetime.strptime(getattr(product_case, 'last_reported', '2000-01-01')[:10], '%Y-%m-%d').date()
+    last_reported = iso_string_to_date(getattr(product_case, 'last_reported', '2000-01-01')[:10])
 
     class DueDateStream(object):
         """mimic an array of due dates to perform a binary search"""

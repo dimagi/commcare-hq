@@ -816,11 +816,8 @@ def get_module_view_context_and_template(app, module):
             for form in mod.get_forms() if form.is_registration_form(case_type)
         ]
         if forms or module.case_list_form.form_id:
-            options['disabled'] = _("Don't show")
+            options['disabled'] = _("Don't Show")
             options.update({f.unique_id: trans(f.name, app.langs) for f in forms})
-
-        if not options:
-            options['disabled'] = _("No suitable forms available")
 
         return options
 
@@ -892,11 +889,12 @@ def get_module_view_context_and_template(app, module):
         }
     elif isinstance(module, AdvancedModule):
         case_type = module.case_type
+        form_options = case_list_form_options(case_type)
         return "app_manager/module_view_advanced.html", {
             'fixtures': fixtures,
             'details': get_details(),
-            'case_list_form_options': case_list_form_options(case_type),
-            'case_list_form_allowed': module.all_forms_require_a_case,
+            'case_list_form_options': form_options,
+            'case_list_form_allowed': bool(module.all_forms_require_a_case and form_options),
             'valid_parent_modules': [
                 parent_module for parent_module in app.modules
                 if not getattr(parent_module, 'root_module_id', None)
@@ -905,12 +903,15 @@ def get_module_view_context_and_template(app, module):
         }
     else:
         case_type = module.case_type
+        form_options = case_list_form_options(case_type)
         return "app_manager/module_view.html", {
             'parent_modules': get_parent_modules(case_type),
             'fixtures': fixtures,
             'details': get_details(),
-            'case_list_form_options': case_list_form_options(case_type),
-            'case_list_form_allowed': module.all_forms_require_a_case and not module.parent_select.active,
+            'case_list_form_options': form_options,
+            'case_list_form_allowed': bool(
+                module.all_forms_require_a_case and not module.parent_select.active and form_options
+            ),
         }
 
 

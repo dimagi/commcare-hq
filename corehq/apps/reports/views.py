@@ -109,8 +109,6 @@ from corehq.apps.domain.decorators import login_and_domain_required
 
 from casexml.apps.case.xform import extract_case_blocks
 
-DATE_FORMAT = "%Y-%m-%d"
-
 datespan_default = datespan_in_request(
     from_param="startdate",
     to_param="enddate",
@@ -655,7 +653,7 @@ def recalculate_hour(hour, hour_difference, minute_difference):
 
 
 def get_timezone_difference(domain):
-    return datetime.now(pytz.timezone(Domain._get_by_name(domain)['default_timezone'])).strftime('%z')
+    return datetime.now(pytz.timezone(Domain.get_by_name(domain)['default_timezone'])).strftime('%z')
 
 
 def calculate_day(interval, day, day_change):
@@ -733,7 +731,7 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
     form.fields['recipient_emails'].choices = web_user_emails
 
     form.fields['hour'].help_text = "This scheduled report's timezone is %s (%s GMT)"  % \
-                                    (Domain._get_by_name(domain)['default_timezone'],
+                                    (Domain.get_by_name(domain)['default_timezone'],
                                     get_timezone_difference(domain)[:3] + ':' + get_timezone_difference(domain)[3:])
 
 

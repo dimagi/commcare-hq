@@ -1,11 +1,13 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 import uuid
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.api.es import ReportCaseES, ReportXFormES
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
+from corehq.util.dates import iso_string_to_date
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.parsing import json_format_date
 
 from pact.enums import PACT_DOMAIN, PACT_CASE_TYPE, XMLNS_DOTS_FORM
 from pact.models import PactPatientCase, DOTSubmission, CObservation
@@ -68,12 +70,11 @@ class PactDOTReport(GenericTabularReport, CustomProjectReport, ProjectReportPara
         casedoc = PactPatientCase.get(ret['dot_case_id'])
         ret['patient_case'] = casedoc
         start_date_str = self.request.GET.get('startdate',
-                                              (datetime.utcnow() - timedelta(days=7)).strftime(
-                                                  '%Y-%m-%d'))
-        end_date_str = self.request.GET.get('enddate', datetime.utcnow().strftime("%Y-%m-%d"))
+                                              json_format_date(datetime.utcnow() - timedelta(days=7)))
+        end_date_str = self.request.GET.get('enddate', json_format_date(datetime.utcnow()))
 
-        start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
-        end_date = datetime.strptime(end_date_str, "%Y-%m-%d")
+        start_date = datetime.combine(iso_string_to_date(start_date_str), time())
+        end_date = datetime.combine(iso_string_to_date(end_date_str), time())
 
         ret['startdate'] = start_date_str
         ret['enddate'] = end_date_str
