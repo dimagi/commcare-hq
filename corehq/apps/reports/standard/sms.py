@@ -205,20 +205,16 @@ class MessageLogReport(BaseCommConnectLogReport):
 
     def get_location_filter(self):
         locations = []
-        location = AsyncLocationFilter.get_value(self.request, self.domain)
-        if location:
-            reporting_types = LocationType.objects.filter(domain=self.domain, administrative=False)
-            loc = SQLLocation.objects.get(location_id=location)
-            if loc.location_type in reporting_types:
-                locations.append(loc.location_id)
+        location_id = AsyncLocationFilter.get_value(self.request, self.domain)
+        if location_id:
+            locations = SQLLocation.objects.get(
+                location_id=location_id
+            ).get_descendants(
+                include_self=True
+            ).filter(
+                location_type__administrative=False
+            ).values_list('location_id', flat=True)
 
-            def get_reporting_locations_ids(parent_loc):
-                for children_location in SQLLocation.objects.filter(parent=parent_loc):
-                    if children_location.location_type in reporting_types:
-                        locations.append(children_location.location_id)
-                    get_reporting_locations_ids(children_location)
-
-            get_reporting_locations_ids(loc)
         return locations
 
     @staticmethod
