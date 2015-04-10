@@ -57,15 +57,15 @@ def make_url(report_class, domain, string_params, args):
         return None
 
 
-#Calculate last full period (Friday - Thursday)
+# Calculate last full period (Friday - Thursday)
 def calculate_last_period(enddate):
-    #checking if Thursday was already in this week
+    # checking if Thursday was already in this week
     i = enddate.weekday() - 3
     if i < 0:
-        #today is Monday, Tuesday or Wednesday -> calculate Thursday from previous week
+        # today is Monday, Tuesday or Wednesday -> calculate Thursday from previous week
         last_th = enddate + timedelta(days=-i, weeks=-1)
     else:
-        #today is Thursday, Friday, Saturday or Sunday -> calculate Thursday from this week
+        # today is Thursday, Friday, Saturday or Sunday -> calculate Thursday from this week
         last_th = enddate - timedelta(days=i)
     fr_before = last_th - timedelta(days=6)
     return fr_before, last_th
