@@ -140,6 +140,59 @@ class QuickCache(object):
         return 'quickcache.{}/{}'.format(self.prefix, args_string)
 
 
+class SkippableQuickCache(QuickCache):
+    """
+    QuickCache extension that allows skipping the cache base on a function argument.
+    """
+    def __init__(self, fn, vary_on, cache, skip_arg=None):
+        super(SkippableQuickCache, self).__init__(fn, vary_on, cache)
+
+        if not skip_arg:
+            raise ValueError('"skip_arg" required')
+
+        self.skip_arg = skip_arg
+
+        arg_spec = inspect.getargspec(self.fn)
+        if self.skip_arg not in arg_spec.args:
+            raise ValueError(
+                'We cannot use "{}" as the "skip" parameter because the function {} has '
+                'no such argument'.format(self.skip_arg, self.fn.__name__)
+            )
+
+        if not isfunction(self.vary_on):
+            for arg, attrs in self.vary_on:
+                if arg == self.skip_arg:
+                    raise ValueError(
+                        'You cannot use the "{}" argument as a vary on parameter and '
+                        'as the "skip cache" parameter in the function: {}'.format(arg, self.fn.__name__)
+                    )
+
+    def __call__(self, *args, **kwargs):
+        callargs = inspect.getcallargs(self.fn, *args, **kwargs)
+        skip = callargs[self.skip_arg]
+        if not skip:
+            return super(SkippableQuickCache, self).__call__(*args, **kwargs)
+        else:
+            key = self.get_cache_key(*args, **kwargs)
+            content = self.fn(*args, **kwargs)
+            self.cache.set(key, content)
+            return content
+
+
+def skippable_quickcache(vary_on, skip_arg, timeout=None, memoize_timeout=None, cache=None):
+    """
+    Alternative to quickcache decorator that allows skipping the cache based on 'skip_arg' argument.
+
+    @skippable_quickcache(['name'], skip_arg='force')
+    def get_by_name(name, force=False):
+        ...
+    """
+    skippable_cache = functools.partial(SkippableQuickCache, skip_arg=skip_arg)
+
+    return quickcache(vary_on, timeout=timeout, memoize_timeout=memoize_timeout,
+                      cache=cache, helper_class=skippable_cache)
+
+
 def quickcache(vary_on, timeout=None, memoize_timeout=None, cache=None,
                helper_class=QuickCache):
     """
