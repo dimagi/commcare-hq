@@ -182,19 +182,21 @@ class SkippableQuickCache(QuickCache):
             return content
 
 
-def skippable_quick_cache(custom_skip_arg):
+def skippable_quickcache(vary_on, timeout=None, memoize_timeout=None, cache=None, skip_arg='skip_cache'):
     """
-    Helper function to allow customizing the 'skip' keyword arg to use
-    for skipping the cache check.
+    Alternative to quickcache decorator that allows skipping the cache based on 'skip_arg' argument.
 
-    @quickcache(['name'], helper=skippable_quick_cache('force'))
+    @skippable_quickcache(['name'], skip_arg='force')
     def get_by_name(name, force=False):
         ...
     """
+    custom_skip_arg = skip_arg
+
     class CustomSkippableQuickCache(SkippableQuickCache):
         skip_arg = custom_skip_arg
 
-    return CustomSkippableQuickCache
+    return quickcache(vary_on, timeout=timeout, memoize_timeout=memoize_timeout,
+                      cache=cache, helper_class=CustomSkippableQuickCache)
 
 
 def quickcache(vary_on, timeout=None, memoize_timeout=None, cache=None,

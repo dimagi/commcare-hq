@@ -3,7 +3,7 @@
 from django.core.cache.backends.locmem import LocMemCache
 from django.test import SimpleTestCase
 import time
-from corehq.util.quickcache import quickcache, TieredCache, SkippableQuickCache, skippable_quick_cache
+from corehq.util.quickcache import quickcache, TieredCache, SkippableQuickCache, skippable_quickcache
 
 BUFFER = []
 
@@ -233,8 +233,8 @@ class QuickcacheTest(SimpleTestCase):
 
         self._test_skippable(by_name, skip_kwarg='skip_cache')
 
-    def test_custom_skippable(self):
-        @quickcache(['name'], cache=_cache_with_set, helper_class=skippable_quick_cache('force'))
+    def test_skippable_decorator(self):
+        @skippable_quickcache(['name'], cache=_cache_with_set, skip_arg='force')
         def by_name(name, force=False):
             BUFFER.append('called')
             return 'VALUE'

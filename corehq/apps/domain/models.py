@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 from itertools import imap
-import hashlib
 import json
 import logging
 import uuid
@@ -13,12 +12,11 @@ from couchdbkit.ext.django.schema import (
     DocumentSchema, SchemaProperty, DictProperty,
     StringListProperty, SchemaListProperty, TimeProperty, DecimalProperty
 )
-from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.appstore.models import SnapshotMixin
-from corehq.util.quickcache import skippable_quick_cache, quickcache
+from corehq.util.quickcache import skippable_quickcache
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import (
     iter_docs, get_db, get_safe_write_kwargs, apply_update, iter_bulk_delete
@@ -518,7 +516,7 @@ class Domain(Document, SnapshotMixin):
         return self.name
 
     @classmethod
-    @quickcache(['name'], timeout=30*60, helper_class=skippable_quick_cache('strict'))
+    @skippable_quickcache(['name'], timeout=30*60, skip_arg='strict')
     def get_by_name(cls, name, strict=False):
         if not name:
             # get_by_name should never be called with name as None (or '', etc)
