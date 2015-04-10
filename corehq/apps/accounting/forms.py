@@ -1693,8 +1693,6 @@ class AdjustBalanceForm(forms.Form):
         self.fields['invoice_id'].initial = invoice.id
         self.helper = FormHelper()
         self.helper.form_class = "form-horizontal"
-        # circular import
-        from corehq.apps.accounting.views import InvoiceSummaryView
         self.helper.form_action = reverse('invoice_summary', args=[self.invoice.id])
         self.helper.layout = crispy.Layout(
             crispy.Div(
