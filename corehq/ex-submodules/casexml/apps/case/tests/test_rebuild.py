@@ -1,14 +1,17 @@
+import uuid
 from couchdbkit.exceptions import ResourceNotFound
 from django.test import TestCase, SimpleTestCase
 from casexml.apps.case import const
 from casexml.apps.case.cleanup import rebuild_case
 from casexml.apps.case.exceptions import MissingServerDate
+from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction, _action_sort_key_function
 from datetime import datetime, timedelta
 from copy import deepcopy
 from casexml.apps.case.tests.util import post_util as real_post_util, delete_all_cases
-from casexml.apps.case.util import primary_actions
+from casexml.apps.case.util import primary_actions, post_case_blocks
 from couchforms.models import XFormInstance
+from dimagi.utils.parsing import json_format_datetime
 
 
 def post_util(**kwargs):
@@ -350,6 +353,25 @@ class CaseRebuildTest(TestCase):
         self.assertEqual(case.p4, 'p4-2')  # loses third form update
         # self.assertFalse('p5' in case._doc) # todo: should disappear entirely
         _reset(f3)
+
+    def testArchiveModifiedOn(self):
+        case_id = uuid.uuid4().hex
+        now = datetime.utcnow().replace(microsecond=0)
+        earlier = now - timedelta(hours=1)
+        way_earlier = now - timedelta(days=1)
+        # make sure we timestamp everything so they have the right order
+        create_block = CaseBlock(case_id, create=True, date_modified=way_earlier)
+        post_case_blocks([create_block.as_xml(json_format_datetime)], form_extras={'received_on': way_earlier})
+        update_block = CaseBlock(case_id, update={'foo': 'bar'}, date_modified=earlier)
+        post_case_blocks([update_block.as_xml(json_format_datetime)], form_extras={'received_on': earlier})
+
+        case = CommCareCase.get(case_id)
+        self.assertEqual(earlier, case.modified_on)
+
+        second_form = XFormInstance.get(case.xform_ids[-1])
+        second_form.archive()
+        case = CommCareCase.get(case_id)
+        self.assertEqual(way_earlier, case.modified_on)
 
     def testArchiveAgainstDeletedCases(self):
         now = datetime.utcnow()
