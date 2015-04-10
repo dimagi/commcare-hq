@@ -350,12 +350,12 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
         encoded_params = urlencode({'subscriber': subscriber_domain})
         invoice_report_url = "{}?{}".format(invoice_report.get_url(), encoded_params)
         invoice_export_url = "{}?{}".format(invoice_report.get_url(render_as='export'), encoded_params)
-
         return {
             'invoice_headers': invoice_report.headers,
             'invoice_rows': invoice_report.rows,
             'invoice_export_url': invoice_export_url,
             'invoice_report_url': invoice_report_url,
+            'adjust_balance_forms': invoice_report.adjust_balance_forms,
         }
 
     @property
@@ -733,7 +733,7 @@ class InvoiceSummaryView(AccountingSectionView):
                 self.adjust_balance_form.adjust_balance(
                     web_user=self.request.user.username,
                 )
-                return HttpResponseRedirect(self.page_url)
+                return HttpResponseRedirect(request.META.get('HTTP_REFERER') or self.page_url)
         elif 'resend_email' in self.request.POST:
             if self.resend_email_form.is_valid():
                 try:
