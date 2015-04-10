@@ -3,7 +3,7 @@ import functools
 import json
 import itertools
 from corehq.apps.builds.models import CommCareBuildConfig
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.app_manager.tasks import create_user_cases
 from couchdbkit.exceptions import DocTypeError
 from corehq import Domain
 from corehq.apps.app_manager.const import CT_REQUISITION_MODE_3, CT_LEDGER_STOCK, CT_LEDGER_REQUESTED, \
@@ -409,11 +409,4 @@ def enable_usercase(domain_name):
     if not domain.usercase_enabled:
         domain.usercase_enabled = True
         domain.save()
-        create_user_cases(domain_name)
-
-
-def create_user_cases(domain_name):
-    from corehq.apps.callcenter.utils import sync_usercase
-
-    for user in CommCareUser.by_domain(domain_name):
-        sync_usercase(user)
+        create_user_cases.delay(domain_name)
