@@ -3,6 +3,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.users.models import CommCareUser
+from corehq.const import SERVER_DATETIME_FORMAT_NO_SEC
 from custom.ilsgateway.filters import ProductByProgramFilter
 from custom.ilsgateway.models import SupplyPointStatusTypes, ILSNotes
 from custom.ilsgateway.tanzania import ILSData, MultiReport
@@ -129,7 +130,7 @@ class Notes(ILSData):
             yield [
                 row.user_name,
                 row.user_role,
-                row.date.strftime('%Y-%m-%d %H:%M'),
+                row.date.strftime(SERVER_DATETIME_FORMAT_NO_SEC),
                 row.user_phone,
                 row.text
             ]

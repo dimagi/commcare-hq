@@ -12,6 +12,7 @@ from corehq.apps.reports.filters.base import (
     BaseReportFilter, BaseSingleOptionFilter
 )
 from corehq.apps.reports.filters.search import SearchFilter
+from corehq.util.dates import iso_string_to_date
 from dimagi.utils.dates import DateSpan
 from django.utils.translation import ugettext_noop as _
 
@@ -197,7 +198,8 @@ class DateRangeFilter(BaseReportFilter):
         date_str = cls.get_date_str(request, date_type)
         if date_str is not None:
             try:
-                return datetime.datetime.strptime(date_str, "%Y-%m-%d")
+                return datetime.datetime.combine(
+                    iso_string_to_date(date_str), datetime.time())
             except ValueError:
                 if date_type == cls.START_DATE:
                     return datetime.datetime.today() - datetime.timedelta(days=cls.default_days)
@@ -220,7 +222,6 @@ class DateRangeFilter(BaseReportFilter):
     def datespan(self):
         datespan = DateSpan.since(self.default_days,
                                   enddate=datetime.date.today(),
-                                  format="%Y-%m-%d",
                                   timezone=self.timezone)
         if self.get_start_date(self.request) is not None:
             datespan.startdate = self.get_start_date(self.request)

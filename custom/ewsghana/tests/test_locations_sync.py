@@ -40,6 +40,7 @@ class LocationSyncTest(TestCase):
         sql_location = ewsghana_location.sql_location
         self.assertEqual(ewsghana_location.get_id, sql_location.location_id)
         self.assertIsNotNone(sql_location.id)
+        self.assertIsNone(ewsghana_location.linked_supply_point())
         self.assertIsNone(sql_location.supply_point_id)
 
     def test_create_facility_location(self):
@@ -79,6 +80,7 @@ class LocationSyncTest(TestCase):
             domain=TEST_DOMAIN,
             location_type__administrative=False).count()
         )
+        self.assertIsNone(ewsghana_location.linked_supply_point())
         self.assertIsNone(ewsghana_location.sql_location.supply_point_id)
         self.assertEqual(location.name, ewsghana_location.sql_location.name)
         self.assertEqual(location.code, ewsghana_location.sql_location.site_code)
@@ -93,6 +95,8 @@ class LocationSyncTest(TestCase):
             domain=TEST_DOMAIN,
             location_type__administrative=False).count()
         )
+        self.assertIsNotNone(ewsghana_location.linked_supply_point())
+        self.assertIsNotNone(ewsghana_location.sql_location.supply_point_id)
         self.assertEqual(ewsghana_location.name, location.name)
         self.assertEqual(ewsghana_location.site_code, location.code)
         self.assertTrue(ewsghana_location.is_archived)

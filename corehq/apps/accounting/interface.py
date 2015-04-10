@@ -15,6 +15,7 @@ from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.util import format_datatables_data
+from corehq.const import USER_DATE_FORMAT
 from couchexport.models import Format
 
 
@@ -526,9 +527,9 @@ class InvoiceInterface(GenericTabularReport):
                 contact_info.country,
                 invoice.subscription.account.salesforce_account_id or "--",
                 invoice.subscription.salesforce_contract_id or "--",
-                invoice.date_start.strftime("%d %B %Y"),
-                invoice.date_end.strftime("%d %B %Y"),
-                invoice.date_due.strftime("%d %B %Y"),
+                invoice.date_start.strftime(USER_DATE_FORMAT),
+                invoice.date_end.strftime(USER_DATE_FORMAT),
+                invoice.date_due.strftime(USER_DATE_FORMAT),
             ]
 
             plan_subtotal, plan_deduction = get_subtotal_and_deduction(
@@ -775,7 +776,7 @@ class PaymentRecordInterface(GenericTabularReport):
         for record in self.payment_records:
             rows.append([
                 format_datatables_data(
-                    text=record.date_created.strftime("%B %d %Y"),
+                    text=record.date_created.strftime(USER_DATE_FORMAT),
                     sort_key=record.date_created.isoformat(),
                 ),
                 record.payment_method.account.name,

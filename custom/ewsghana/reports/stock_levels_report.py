@@ -1,5 +1,6 @@
 from collections import OrderedDict
 from datetime import timedelta
+from django.core.urlresolvers import reverse
 from django.utils.timesince import timesince
 from math import ceil
 from casexml.apps.stock.models import StockTransaction
@@ -17,6 +18,7 @@ from custom.ewsghana.reports import EWSData, MultiReport, get_url_with_location,
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 from corehq.apps.locations.models import Location, SQLLocation
+from dimagi.utils.parsing import json_format_date
 
 
 class StockLevelsLegend(EWSData):
@@ -100,7 +102,7 @@ class FacilityReportData(EWSData):
                     'monthly_consumption': monthly_consumption,
                     'reorder_level': int(monthly_consumption * loc.location_type.overstock_threshold) / 2,
                     'maximum_level': int(monthly_consumption * loc.location_type.overstock_threshold),
-                    'date_of_last_report': state.last_modified_date.strftime("%Y-%m-%d")
+                    'date_of_last_report': json_format_date(state.last_modified_date)
                 }
 
         for state in st:
@@ -223,8 +225,24 @@ class InputStock(EWSData):
 
     @property
     def rows(self):
-        # TODO: change text to get_url(form_name, "Input Stock", self.config['domain']) and add params
-        return [["Input Stock"]]
+        link = reverse('input_stock', args=[self.domain, self.location.site_code])
+        transactions = StockTransaction.objects.filter(
+            case_id=self.location.supply_point_id
+        ).order_by('-report__date', 'pk')
+        rows = [
+            [u"<a href='{}'>INPUT STOCK for {}</a>".format(link, self.location.name)]
+        ]
+
+        if transactions:
+            rows.append(
+                [
+                    u'The last report received was at <b>{}.</b>'.format(
+                        transactions[0].report.date.strftime("%X on %a %d, %Y")
+                    )
+                ]
+            )
+
+        return rows
 
 
 class FacilitySMSUsers(EWSData):

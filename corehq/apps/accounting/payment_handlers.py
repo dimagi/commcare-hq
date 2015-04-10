@@ -13,6 +13,7 @@ from corehq.apps.accounting.models import (
 )
 from corehq.apps.accounting.user_text import get_feature_name
 from corehq.apps.accounting.utils import fmt_dollar_amount
+from corehq.const import USER_DATE_FORMAT
 from dimagi.utils.decorators.memoized import memoized
 
 stripe.api_key = settings.STRIPE_PRIVATE_KEY
@@ -220,7 +221,7 @@ class InvoiceStripePaymentHandler(BaseStripePaymentHandler):
         context.update({
             'balance': fmt_dollar_amount(self.invoice.balance),
             'is_paid': self.invoice.is_paid,
-            'date_due': self.invoice.date_due.strftime("%d %B %Y"),
+            'date_due': self.invoice.date_due.strftime(USER_DATE_FORMAT),
             'invoice_num': self.invoice.invoice_number,
         })
         return context

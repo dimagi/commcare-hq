@@ -8,6 +8,7 @@ import dateutil.parser as dparser
 import csv
 import logging
 from dimagi.utils.chunked import chunked
+from dimagi.utils.parsing import json_format_date
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +24,7 @@ def forms_with_cases(domain=None, since=None, chunksize=500):
     if since:
         q["filter"]["and"][0]["bool"]["must"] = {
             "range": {
-                "received_on": {"from": since.strftime("%Y-%m-%d")}}}
+                "received_on": {"from": json_format_date(since)}}}
     q["filter"]["and"].extend(ADD_TO_ES_FILTER["forms"][:])
     return stream_es_query(params=params, q=q, es_url=ES_URLS["forms"],
                            fields=["__retrieved_case_ids", "domain", "received_on"], chunksize=chunksize)

@@ -19,6 +19,7 @@ from corehq.apps.reports.generic import GenericTabularReport, ProjectInspectionR
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin, CompletionOrSubmissionTimeMixin
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.users.models import CouchUser
+from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.elastic import es_query, ADD_TO_ES_FILTER
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from corehq.util.view_utils import absolute_reverse
@@ -208,7 +209,7 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport,
             init_cells = [
                 form_data_link(form["_id"]),
                 (username or _('No data for username')) + (" %s" % name if name else ""),
-                DateTimeProperty().wrap(safe_index(form, self.time_field.split('.'))).strftime("%Y-%m-%d %H:%M:%S"),
+                DateTimeProperty().wrap(safe_index(form, self.time_field.split('.'))).strftime(SERVER_DATETIME_FORMAT),
                 xmlns_to_name(self.domain, form.get("xmlns"), app_id=form.get("app_id")),
             ]
             def cell(field):

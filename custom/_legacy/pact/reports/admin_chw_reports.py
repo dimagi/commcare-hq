@@ -2,6 +2,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.users.models import CommCareUser
+from dimagi.utils.parsing import json_format_date
 from pact.enums import PACT_DOMAIN
 from pact.reports import chw_schedule
 
@@ -53,9 +54,8 @@ class PactCHWAdminReport(GenericTabularReport, CustomProjectReport):
             rowdata = []
             if len(patient_visits) > 0:
                 for patient_case, visit in patient_visits:
-                    rowdata = [visit_date.strftime('%Y-%m-%d')]
-                    rowdata.append(username)
-                    rowdata.append(patient_case['pactid'])
+                    rowdata = [json_format_date(visit_date), username,
+                               patient_case['pactid']]
                     if visit is not None:
                         ####is scheduled
                         if visit.get('scheduled', '---') == 'yes':
@@ -87,7 +87,7 @@ class PactCHWAdminReport(GenericTabularReport, CustomProjectReport):
                     yield finish_row_blanks(rowdata)
             # else:
             #     no patients scheduled, skipping day altogether - matches chw schedule view
-                # nopatient_row = [visit_date.strftime('%Y-%m-%d'), username, 'nopatient']
+                # nopatient_row = [json_format_date(visit_date), username, 'nopatient']
                 # yield finish_row_blanks(nopatient_row)
 
 

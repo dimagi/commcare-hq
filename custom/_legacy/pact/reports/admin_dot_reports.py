@@ -1,10 +1,12 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 import logging
 import uuid
 from couchdbkit import ResourceNotFound
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport
+from corehq.util.dates import iso_string_to_date
+from dimagi.utils.parsing import json_format_date
 from pact.models import PactPatientCase, CObservation
 from pact.reports.dot import PactDOTPatientField
 
@@ -94,16 +96,19 @@ class PactDOTAdminReport(GenericTabularReport, CustomProjectReport):
         """
         case_id = self.request.GET.get('dot_patient', '')
         start_date_str = self.request.GET.get('startdate',
-                                              (datetime.utcnow() - timedelta(days=7)).strftime(
-                                                  '%Y-%m-%d'))
-        end_date_str = self.request.GET.get('enddate', datetime.utcnow().strftime('%Y-%m-%d'))
+                                              json_format_date(datetime.utcnow() - timedelta(days=7)))
+        end_date_str = self.request.GET.get('enddate', json_format_date(datetime.utcnow()))
 
         if case_id == '':
             mode = 'all'
         else:
             mode = ''
 
-        for num, obs in enumerate(self.tabular_data(mode, case_id, datetime.strptime(start_date_str, '%Y-%m-%d'), datetime.strptime(end_date_str, '%Y-%m-%d'))):
+        start_datetime = datetime.combine(iso_string_to_date(start_date_str),
+                                          time())
+        end_datetime = datetime.combine(iso_string_to_date(end_date_str),
+                                        time())
+        for num, obs in enumerate(self.tabular_data(mode, case_id, start_datetime, end_datetime)):
             dict_obj = obs.to_json()
             row = [dict_obj[x.prop_name].encode('utf-8') if isinstance(dict_obj[x.prop_name], unicode) else dict_obj[x.prop_name] for x in self.headers]
             yield row

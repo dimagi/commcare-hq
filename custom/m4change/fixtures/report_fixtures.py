@@ -11,6 +11,7 @@ from corehq.apps.locations.models import Location
 from custom.m4change.constants import M4CHANGE_DOMAINS, NUMBER_OF_MONTHS_FOR_FIXTURES
 from custom.m4change.models import FixtureReportResult
 from custom.m4change.reports.reports import M4ChangeReportDataSource
+from dimagi.utils.parsing import json_format_date
 
 
 def get_last_n_months(months):
@@ -132,9 +133,9 @@ class ReportFixtureProvider(object):
             })
             report_data = {}
             for report_slug in self.report_slugs:
-                report_data[report_slug] = FixtureReportResult.by_composite_key(self.domain.name, facility_id,
-                                                                                startdate.strftime("%Y-%m-%d"),
-                                                                                enddate.strftime("%Y-%m-%d"), report_slug)
+                report_data[report_slug] = FixtureReportResult.by_composite_key(
+                    self.domain.name, facility_id, json_format_date(startdate),
+                    json_format_date(enddate), report_slug)
                 if report_data[report_slug] is None:
                     name = self.reports[report_slug].name
                     rows = self.reports[report_slug].get_initial_row_data()
@@ -147,8 +148,8 @@ class ReportFixtureProvider(object):
 
         def _month_to_fixture(date_tuple, locations):
             monthly_report_element = ElementTree.Element('monthly-report', attrib={
-                'startdate': date_tuple[0].strftime('%Y-%m-%d'),
-                'enddate': date_tuple[1].strftime('%Y-%m-%d'),
+                'startdate': json_format_date(date_tuple[0]),
+                'enddate': json_format_date(date_tuple[1]),
                 'month_year_label': date_tuple[0].strftime('%b %Y')
             })
 

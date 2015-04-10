@@ -18,6 +18,7 @@ import urllib
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.chunked import chunked
 from django.utils.translation import ugettext as _
+from dimagi.utils.parsing import json_format_date
 from touchforms.formplayer.models import EntrySession
 from django.core.urlresolvers import reverse
 
@@ -238,19 +239,19 @@ class ElasticCaseQuery(object):
         
     @property
     def date_modified_start(self):
-        return self._date_modified_start or datetime(1970,1,1).strftime("%Y-%m-%d")
+        return self._date_modified_start or json_format_date(datetime(1970, 1, 1))
         
     @property
     def date_modified_end(self):
-        return self._date_modified_end or datetime.max.strftime("%Y-%m-%d")
+        return self._date_modified_end or json_format_date(datetime.max)
         
     @property
     def server_date_modified_start(self):
-        return self._server_date_modified_start or datetime(1970,1,1).strftime("%Y-%m-%d")
+        return self._server_date_modified_start or json_format_date(datetime(1970, 1, 1))
         
     @property
     def server_date_modified_end(self):
-        return self._server_date_modified_end or datetime.max.strftime("%Y-%m-%d")
+        return self._server_date_modified_end or json_format_date(datetime.max)
         
     @property
     def scrubbed_filters(self):

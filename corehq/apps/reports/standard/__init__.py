@@ -1,9 +1,8 @@
-from datetime import timedelta, datetime
+from datetime import datetime
 import dateutil
 from django.core.cache import cache
 from django.core.urlresolvers import reverse
 import operator
-import pytz
 from casexml.apps.case.models import CommCareCaseGroup
 from corehq.apps.groups.models import Group
 from corehq.apps.reports import util
@@ -18,7 +17,6 @@ from dimagi.utils.dates import DateSpan
 from django.utils.translation import ugettext_noop
 from dimagi.utils.decorators.memoized import memoized
 
-DATE_FORMAT = "%Y-%m-%d"
 
 class ProjectReport(GenericReportView):
     # overriding properties from GenericReportView

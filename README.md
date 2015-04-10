@@ -79,7 +79,7 @@ To set up CouchDB from the command line
 
 Create the database:
 
-    curl -X PUT "http://localhost:5984/commcarehq
+    curl -X PUT "http://localhost:5984/commcarehq"
 
 Add the required user:
 
@@ -90,6 +90,8 @@ Add the required user:
     createuser -U postgres commcarehq
     createdb -U postgres commcarehq
     createdb -U postgres commcarehq_reporting
+
+If these commands give you difficulty, particularly for Mac users running Postgres.app, verify that the default postgres role has been created. If not, `createuser -s -r postgres` will create it.
 
 
 ### Setting up a virtualenv
@@ -165,6 +167,7 @@ that you have a 32bit version of Python installed.
     # This will do some basic setup, create a superuser, and create a project.
     # The project-name, email, and password given here are specific to your
     # local development environment.
+    # Ignore warnings related to Raven.
     ./manage.py bootstrap <project-name> <email> <password>
 
     # To set up elasticsearch indexes, first run (and then kill once you see the
