@@ -14,8 +14,8 @@ PRODUCT_ID = StockStatusDataSource.SLUG_PRODUCT_ID
 LOCATION_ID = StockStatusDataSource.SLUG_LOCATION_ID
 
 
-format_string = "%Y-%m-%d"
 TEST_DOMAIN = 'commtrack-test1'
+
 
 class DataSourceTest(object):
     # fixme: need to make a test again

@@ -1,9 +1,10 @@
 from django import template
 from django.core.urlresolvers import reverse
 from datetime import datetime, timedelta
+from corehq.const import SERVER_DATETIME_FORMAT_NO_SEC
 
 xmldate_format= '%Y-%m-%dT%H:%M:%S'
-output_format = '%Y-%m-%d %H:%M'
+output_format = SERVER_DATETIME_FORMAT_NO_SEC
 username_datecount_cache = {}
 
 register = template.Library()

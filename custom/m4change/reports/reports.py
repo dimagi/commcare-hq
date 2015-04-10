@@ -50,7 +50,7 @@ class M4ChangeReportDataSource(ReportDataSource):
     def get_data(self, slugs=None):
         startdate = self.config['startdate']
         enddate = self.config['enddate']
-        datespan = DateSpan(startdate, enddate, format='%Y-%m-%d')
+        datespan = DateSpan(startdate, enddate)
         location_id = self.config['location_id']
         domain = self.config['domain']
 

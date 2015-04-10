@@ -26,6 +26,10 @@ class AppEditingError(AppManagerException):
     pass
 
 
+class ModuleIdMissingException(AppManagerException):
+    pass
+
+
 class RearrangeError(AppEditingError):
     pass
 

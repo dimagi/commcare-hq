@@ -74,7 +74,7 @@ class BillingAccountBasicForm(forms.Form):
     currency = forms.ChoiceField(label="Currency")
 
     emails = forms.CharField(
-        label=_('Additional Contact Emails'),
+        label=_('Client Contact Emails'),
         widget=forms.Textarea,
         max_length=BillingContactInfo._meta.get_field('emails').max_length,
     )
@@ -83,7 +83,7 @@ class BillingAccountBasicForm(forms.Form):
         required=False,
         initial=True,
     )
-    active_accounts = forms.CharField(
+    active_accounts = forms.IntegerField(
         label=_("Transfer Subscriptions To"),
         help_text=_("Transfer any existing subscriptions to the "
                     "Billing Account specified here."),
@@ -193,7 +193,7 @@ class BillingAccountBasicForm(forms.Form):
                 _("This account has subscriptions associated with it. "
                   "Please specify a transfer account before deactivating.")
             )
-        if self.account is not None and transfer_subs == self.account.name:
+        if self.account is not None and transfer_subs == self.account.id:
             raise ValidationError(
                 _("The transfer account can't be the same one you're trying "
                   "to deactivate.")
@@ -225,9 +225,9 @@ class BillingAccountBasicForm(forms.Form):
     def update_basic_info(self, account):
         account.name = self.cleaned_data['name']
         account.is_active = self.cleaned_data['is_active']
-        transfer_name = self.cleaned_data['active_accounts']
-        if transfer_name:
-            transfer_account = BillingAccount.objects.get(name=transfer_name)
+        transfer_id = self.cleaned_data['active_accounts']
+        if not transfer_id:
+            transfer_account = BillingAccount.objects.get(id=transfer_id)
             for sub in account.subscription_set.all():
                 sub.account = transfer_account
                 sub.save()
@@ -328,7 +328,7 @@ class BillingAccountContactForm(forms.Form):
 
 
 class SubscriptionForm(forms.Form):
-    account = forms.CharField(
+    account = forms.IntegerField(
         label=_("Billing Account")
     )
     start_date = forms.DateField(
@@ -348,7 +348,7 @@ class SubscriptionForm(forms.Form):
         label=_("Edition"), initial=SoftwarePlanEdition.ENTERPRISE,
         choices=SoftwarePlanEdition.CHOICES,
     )
-    plan_version = forms.CharField(label=_("Software Plan"))
+    plan_version = forms.IntegerField(label=_("Software Plan"))
     domain = forms.CharField(label=_("Project Space"))
     salesforce_contract_id = forms.CharField(
         label=_("Salesforce Deployment ID"), max_length=80, required=False
@@ -359,7 +359,7 @@ class SubscriptionForm(forms.Form):
     auto_generate_credits = forms.BooleanField(
         label=_("Auto-generate Plan Credits"), required=False
     )
-    active_accounts = forms.CharField(
+    active_accounts = forms.IntegerField(
         label=_("Transfer Subscription To"),
         required=False,
     )
@@ -545,13 +545,31 @@ class SubscriptionForm(forms.Form):
                 raise forms.ValidationError("A valid project space is required.")
         return domain_name
 
-    def clean_end_date(self):
-        start_date = self.subscription.date_start \
-            if self.is_existing else self.cleaned_data['start_date']
+    def clean(self):
+        account_id = self.cleaned_data['active_accounts'] or self.cleaned_data['account']
+        if account_id:
+            account = BillingAccount.objects.get(id=account_id)
+            if not self.cleaned_data['do_not_invoice'] and not account.billingcontactinfo.emails:
+                from corehq.apps.accounting.views import ManageBillingAccountView
+                raise forms.ValidationError(mark_safe(
+                    "Please update 'Client Contact Emails' "
+                    '<strong><a href=%s target="_blank">here</a></strong> '
+                    "before using Billing Account <strong>%s</strong>."
+                    % (
+                        reverse(ManageBillingAccountView.urlname, args=[account.id]),
+                        account.name,
+                    )
+                ))
+
+        start_date = self.cleaned_data['start_date'] or self.subscription.date_start
         if (self.cleaned_data['end_date'] is not None
             and start_date > self.cleaned_data['end_date']):
             raise ValidationError("End date must be after start date.")
-        return self.cleaned_data['end_date']
+
+        if self.cleaned_data['end_date'] <= datetime.date.today():
+            raise ValidationError("End date must be in the future.")
+
+        return self.cleaned_data
 
     def create_subscription(self):
         account = BillingAccount.objects.get(id=self.cleaned_data['account'])
@@ -583,7 +601,7 @@ class SubscriptionForm(forms.Form):
 
     def clean_active_accounts(self):
         transfer_account = self.cleaned_data.get('active_accounts')
-        if transfer_account and transfer_account == self.subscription.account.name:
+        if transfer_account and transfer_account == self.subscription.account.id:
             raise ValidationError("Please select an account other than the "
                                   "current account to transfer to.")
         return transfer_account
@@ -602,7 +620,7 @@ class SubscriptionForm(forms.Form):
         )
         transfer_account = self.cleaned_data.get('active_accounts')
         if transfer_account:
-            acct = BillingAccount.objects.get(name=transfer_account)
+            acct = BillingAccount.objects.get(id=transfer_account)
             self.subscription.account = acct
             self.subscription.save()
 
@@ -1678,6 +1696,7 @@ class AdjustBalanceForm(forms.Form):
         self.fields['invoice_id'].initial = invoice.id
         self.helper = FormHelper()
         self.helper.form_class = "form-horizontal"
+        self.helper.form_action = reverse('invoice_summary', args=[self.invoice.id])
         self.helper.layout = crispy.Layout(
             crispy.Div(
                 crispy.Field(

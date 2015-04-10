@@ -4,6 +4,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.sms.models import SMSLog
 from corehq.apps.users.models import CommCareUser
 from corehq.util.timezones.conversions import ServerTime
+from corehq.const import SERVER_DATETIME_FORMAT_NO_SEC
 from custom.ilsgateway.models import SupplyPointStatusTypes, ILSNotes
 from custom.ilsgateway.tanzania import ILSData, MultiReport
 from custom.ilsgateway.tanzania.reports.utils import decimal_format, float_format, latest_status
@@ -130,7 +131,7 @@ class Notes(ILSData):
             yield [
                 row.user_name,
                 row.user_role,
-                row.date.strftime('%Y-%m-%d %H:%M'),
+                row.date.strftime(SERVER_DATETIME_FORMAT_NO_SEC),
                 row.user_phone,
                 row.text
             ]

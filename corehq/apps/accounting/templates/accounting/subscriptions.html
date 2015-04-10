@@ -6,6 +6,8 @@
 {% block js %}{{ block.super }}
     <script src="{% static 'accounting/js/stay-on-tab.js' %}"></script>
     <script src="{% static 'accounting/js/accounting.billing_info_handler.js' %}"></script>
+    <script src="{% static 'accounting/js/adjust-balance-modal.js' %}"></script>
+
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -39,12 +41,19 @@
             "{% trans "Please enter a valid email." %}"
         );
         billingInfoHandler.init();
+
+    {% for adjust_balance_form in adjust_balance_forms %}
+            var adjustBalanceFormModel = new AdjustBalanceFormModel();
+            ko.applyBindings(adjustBalanceFormModel, $('#adjust-balance-form-{{ adjust_balance_form.invoice.id }}').get(0));
+    {% endfor %}
+
     </script>
 {% endblock %}
 
 {% block main_column %}
     <ul class="nav nav-tabs" id="user-settings-tabs">
         <li><a href="#subscription" data-toggle="tab">{% trans "Subscription" %}</a></li>
+        <li><a href="#invoices" data-toggle="tab">{% trans "Invoices" %}</a></li>
         {% if can_change_subscription %}
         <li><a href="#change-subscription-plan"
                data-toggle="tab">{% trans "Upgrade / Downgrade" %}</a>
@@ -58,6 +67,14 @@
         <div class="tab-pane" id="subscription">
             {{ block.super }}
         </div>
+
+        <div class="tab-pane" id="invoices">
+            {% include 'accounting/partials/invoice_table.html' with headers=invoice_headers rows=invoice_rows invoice_export_url=invoice_export_url invoice_report_url=invoice_report_url%}
+        </div>
+        <!-- Modal Forms for (Subscription -> Invoices ->) Adjust Balance -->
+        {% for adjust_balance_form in adjust_balance_forms %}
+            {% include 'accounting/adjust_balance.html' %}
+        {% endfor %}
 
         {% if can_change_subscription %}
         <div class="tab-pane" id="change-subscription-plan">

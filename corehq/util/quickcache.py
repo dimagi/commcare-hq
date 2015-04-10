@@ -1,9 +1,11 @@
+# coding=utf-8
 import functools
 import hashlib
 import inspect
 from inspect import isfunction
 import logging
 from django.core.cache import get_cache
+from corehq.util.soft_assert.api import soft_assert
 
 logger = logging.getLogger('quickcache')
 
@@ -65,6 +67,12 @@ class QuickCache(object):
                         'no such argument'.format(arg, self.fn.__name__)
                     )
 
+        self.encoding_assert = soft_assert(
+            to=['{}@{}'.format('skelly', 'dimagi.com')],
+            fail_if_debug=False,
+            skip_frames=5,
+        )
+
         self.vary_on = vary_on
 
     def __call__(self, *args, **kwargs):
@@ -87,14 +95,20 @@ class QuickCache(object):
         return hashlib.md5(value).hexdigest()[-length:]
 
     def _serialize_for_key(self, value):
-        if isinstance(value, unicode):
-            return 'u' + self._hash(value.encode('utf-8'))
-        elif isinstance(value, str):
-            if len(value) <= 32 and value.isalnum():
-                return 's' + value
+        if isinstance(value, basestring):
+            # Unicode and string values should generate the same key since users generally
+            # intend them to mean the same thing. If a use case for differentiating
+            # them presents itself add a 'lenient_strings=False' option to allow
+            # the user to explicitly request the different behaviour.
+            if isinstance(value, unicode):
+                encoded = value.encode('utf-8')
             else:
-                # for long or non-alphanumeric text
-                return 't' + self._hash(value)
+                try:
+                    encoded = value.decode('utf-8').encode('utf-8')
+                except UnicodeDecodeError:
+                    self.encoding_assert(False, 'Non-utf8 encoded string used as cache vary on')
+                    encoded = value
+            return 'u' + self._hash(encoded)
         elif isinstance(value, bool):
             return 'b' + str(int(value))
         elif isinstance(value, (int, long, float)):
@@ -168,6 +182,19 @@ def quickcache(vary_on, timeout=None, memoize_timeout=None, cache=None,
 
         - Allows you to vary on an attribute of an object,
           multiple attrs of the same object, attrs of attrs of an object, etc
+
+        - Allows you to pass in a function as the vary_on arg which will get called
+          with the same args and kwargs as the function. It should return a list of simple
+          values to be used for generating the cache key.
+
+        Note on unicode and strings in vary_on:
+          When strings and unicode values are used as vary on parameters they will result in the
+          same cache key if and only if the string values are UTF-8 or ascii encoded.
+          e.g.
+          u'namé' and 'nam\xc3\xa9' (UTF-8 encoding) will result in the same cache key
+          BUT
+          u'namé' and 'nam\xe9' (latin-1 encoding) will NOT result in the same cache key
+
 
     """
     if cache and timeout:

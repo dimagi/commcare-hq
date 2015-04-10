@@ -1,7 +1,8 @@
 from casexml.apps.case.xml import V1, V2, V3, check_version, V2_NAMESPACE
 from xml.etree import ElementTree
 import logging
-from dimagi.utils.parsing import json_format_datetime
+from dimagi.utils.parsing import json_format_datetime, json_format_date
+
 
 def safe_element(tag, text=None):
     # shortcut for commonly used functionality
@@ -13,9 +14,9 @@ def safe_element(tag, text=None):
     else:
         return ElementTree.Element(tag)
 
+
 def date_to_xml_string(date):
-    if date: return date.strftime("%Y-%m-%d")
-    return ""
+    return json_format_date(date) if date else ''
 
 
 def get_dynamic_element(key, val):

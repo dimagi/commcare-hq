@@ -1,16 +1,17 @@
-from datetime import datetime
+from datetime import datetime, time
 from django import test as unittest
 from django.test.client import RequestFactory
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
 from corehq.db import Session
+from corehq.util.dates import iso_string_to_date
 from dimagi.utils.dates import DateSpan
+from dimagi.utils.parsing import json_format_date
 
 from .sql_fixture import load_data
 from .sql_reports import test_report, UserTestReport, RegionTestReport
 
 DOMAIN = "test"
-format_string = "%Y-%m-%d"
 
 
 class BaseReportTest(unittest.TestCase):
@@ -51,11 +52,11 @@ class BaseReportTest(unittest.TestCase):
     def _get_request(self, startdate, enddate):
         request = self.factory.get('/')
         request.couch_user = self.couch_user
-        request.datespan = DateSpan(self.date(startdate), self.date(enddate), format_string)
+        request.datespan = DateSpan(self.date(startdate), self.date(enddate))
         return request
 
     def date(self, d):
-        return datetime.strptime(d, format_string)
+        return datetime.combine(iso_string_to_date(d), time())
 
 
 class SimpleReportTest(BaseReportTest):

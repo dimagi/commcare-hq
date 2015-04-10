@@ -18,6 +18,7 @@ from corehq.apps.reports.dispatcher import AdminReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
 from corehq.apps.reports.standard import DatespanMixin
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.parsing import json_format_date
 from dimagi.utils.web import get_url_base
 from pillow_retry.models import PillowError
 from django.conf import settings
@@ -31,7 +32,7 @@ ACTIONS = [ACTION_RESET, ACTION_DELETE, ACTION_SEND]
 
 
 def safe_format_date(date):
-    return date.strftime("%Y-%m-%d") if date else date
+    return json_format_date(date) if date else date
 
 
 class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):

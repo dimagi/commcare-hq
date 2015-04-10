@@ -409,45 +409,16 @@ cloudCare.CaseSelectionView = Backbone.View.extend({
         var childCase = self.model.get("childCase");
         var data = {parentCase: null, childCase: null};
 
-        if (window.toggles.CASEDETAILS_IN_CLOUDCARE_FORMS){
-            if (parentCase){
-                data.parentCase = {};
-                data.parentCase.text = parentCase.caseDetailsLabel(self.language);
-                data.parentCase.href = parentCase.childCaseUrl();
-                data.parentCase.properties = parentCase.caseProperties(self.language);
-            }
-            if (childCase){
-                data.childCase = {};
-                data.childCase.text = childCase.caseDetailsLabel(self.language);
-                data.childCase.properties = childCase.caseProperties(self.language);
-            }
+        if (parentCase){
+            data.parentCase = {};
+            data.parentCase.text = parentCase.caseDetailsLabel(self.language);
+            data.parentCase.href = parentCase.childCaseUrl();
+            data.parentCase.properties = parentCase.caseProperties(self.language);
         }
-        else{
-            if (parentCase){
-                data.parentCase = {};
-                var caseLabel = parentCase.get("appConfig").module.get("case_label")[self.language] + ": ";
-                if (caseLabel === "Cases: "){
-                    caseLabel = "";
-                }
-                var caseName = parentCase.get("properties").case_name;
-                data.parentCase.text = caseLabel + caseName; 
-
-                // This is hacky and I hate it
-                var root = window.location.href.replace(Backbone.history.getFragment(), '');
-                data.parentCase.href = root + "view/" + parentCase.get("appConfig").app_id
-                            + "/" + parentCase.get("appConfig").module_index
-                            + "/" + parentCase.get("appConfig").form_index
-                     + "/parent/" + parentCase.id;
-            }
-            if (childCase){
-                data.childCase = {};
-                var caseLabel = childCase.get("module").get("case_label")[self.language] + ": ";
-                if (caseLabel === "Cases: "){
-                    caseLabel = "";
-                }
-                var caseName = childCase.get("properties").case_name;
-                data.childCase.text = caseLabel + caseName
-            }
+        if (childCase){
+            data.childCase = {};
+            data.childCase.text = childCase.caseDetailsLabel(self.language);
+            data.childCase.properties = childCase.caseProperties(self.language);
         }
         self.$el.html(self.template(data));
         return self;

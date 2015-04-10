@@ -20,6 +20,7 @@ from django.http import HttpResponse
 from django.utils.translation import ugettext_noop
 from django.views.decorators.http import require_POST
 from corehq.apps.domain.decorators import domain_admin_required
+from corehq.const import SERVER_DATETIME_FORMAT_NO_SEC
 from custom.ilsgateway.forms import SupervisionDocumentForm
 from custom.ilsgateway.tanzania.reminders.delivery import send_delivery_reminder
 from custom.ilsgateway.tanzania.reminders.randr import send_ror_reminder
@@ -309,7 +310,7 @@ def save_ils_note(request, domain):
         data.append([
             row.user_name,
             row.user_role,
-            row.date.strftime('%Y-%m-%d %H:%M'),
+            row.date.strftime(SERVER_DATETIME_FORMAT_NO_SEC),
             row.user_phone,
             row.text
         ])

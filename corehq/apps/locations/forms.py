@@ -134,7 +134,7 @@ class LocationForm(forms.Form):
 
             if self.location.descendants:
                 raise forms.ValidationError(
-                    'only locations that have no sub-locations can be '
+                    'only locations that have no child locations can be '
                     'moved to a different parent'
                 )
 
@@ -181,7 +181,7 @@ class LocationForm(forms.Form):
 
         if not child_types:
             assert False, \
-                'the selected parent location cannot have sub-locations!'
+                'the selected parent location cannot have child locations!'
         elif loc_type not in child_types:
             assert False, 'not valid for the select parent location'
 

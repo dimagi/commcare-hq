@@ -8,7 +8,6 @@ from .sql_fixture import load_data
 from .sql_reports import combine_indicator
 
 DOMAIN = "test"
-format_string = "%Y-%m-%d"''
 
 unity = lambda x: x
 

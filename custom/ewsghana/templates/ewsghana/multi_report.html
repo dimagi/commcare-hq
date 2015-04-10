@@ -140,7 +140,7 @@
                         <div class="row" style="margin: 0 !important">
                             <form>
                                 <div style="display: inline-block">
-                                    <input type="text" id="inventory_filter" class="date-range-picker" value="{{ datespan.startdate|date:'Y-m-d' }} to {{ datespan.enddate|date:'Y-m-d' }}" />
+                                    <input type="text" id="inventory_filter" class="date-range-picker" value="{{ datespan.enddate|add_days:-30|date:'Y-m-d' }} to {{ datespan.enddate|date:'Y-m-d' }}" />
                                     <button style="margin-bottom: 9px;" id="inventory_filter_btn" class="filters btn">Apply</button>
                                 </div>
                             </form>

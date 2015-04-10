@@ -19,12 +19,6 @@ class BaseComparisonReport(GenericTabularReport, CustomProjectReport, ProjectRep
     def endpoint(self):
         return GhanaEndpoint.from_config(EWSGhanaConfig.for_domain(self.domain))
 
-    @classmethod
-    def show_in_navigation(cls, domain=None, project=None, user=None):
-        if user and user.is_domain_admin(domain):
-            return True
-        return False
-
 
 class ProductsCompareReport(BaseComparisonReport):
     name = "Products comparison"

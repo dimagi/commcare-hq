@@ -36,6 +36,7 @@ from corehq.apps.users.util import (
     smart_query_string,
 )
 from corehq.apps.custom_data_fields import CustomDataEditor
+from corehq.const import USER_DATE_FORMAT
 from corehq.elastic import es_query, ES_URLS, ADD_TO_ES_FILTER
 from corehq.util.couch import get_document_or_404
 
@@ -421,7 +422,7 @@ class AsyncListCommCareUsersView(ListCommCareUsersView):
                 'edit_url': reverse(EditCommCareUserView.urlname, args=[self.domain, user.user_id]),
                 'username': user.raw_username,
                 'full_name': user.full_name,
-                'joined_on': user.date_joined.strftime("%d %b %Y"),
+                'joined_on': user.date_joined.strftime(USER_DATE_FORMAT),
                 'phone_numbers': user.phone_numbers,
                 'form_count': '--',
                 'case_count': '--',

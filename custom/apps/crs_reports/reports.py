@@ -14,6 +14,7 @@ from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
 from corehq.pillows.base import restore_property_dict
 from corehq.util.timezones.conversions import PhoneTime
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.parsing import json_format_date
 
 
 def visit_completion_counter(case):
@@ -51,7 +52,7 @@ class HNBCReportDisplay(CaseDisplay):
         if 'date_birth' not in self.case:
             return '---'
         else:
-            return self.report.date_to_json(self.case.date_birth)
+            return self.report.date_to_json(self.case['date_birth'])
 
     @property
     def visit_completion(self):
@@ -208,7 +209,7 @@ class HBNCMotherReport(BaseHNBCReport):
         fromdate = now - timedelta(days=42)
         filters = BaseHNBCReport.base_filters(self)
         filters.append({'term': {'pp_case_filter.#value': "1"}})
-        filters.append({'range': {'date_birth.#value': {"gte": fromdate.strftime("%Y-%m-%d")}}})
+        filters.append({'range': {'date_birth.#value': {"gte": json_format_date(fromdate)}}})
         status = self.request_params.get('PNC_status', '')
 
         or_stmt = []

@@ -4,6 +4,7 @@ from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from corehq.apps.crud.models import BaseAdminHQTabularCRUDManager
 from corehq.apps.indicators.utils import get_namespace_name
+from corehq.const import USER_DATE_FORMAT
 from dimagi.utils.data.crud import CRUDFormRequestManager
 
 
@@ -30,7 +31,7 @@ class IndicatorAdminCRUDManager(BaseAdminHQTabularCRUDManager):
 
     def format_property(self, key, property):
         if isinstance(property, datetime.datetime):
-            return property.strftime("%d %B %Y")
+            return property.strftime(USER_DATE_FORMAT)
         if key == "namespace":
             return get_namespace_name(self.document_instance.domain, property)
         return super(IndicatorAdminCRUDManager, self).format_property(key, property)

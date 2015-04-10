@@ -13,6 +13,7 @@ from corehq.apps.app_manager.models import (
     OpenCaseAction,
     PreloadAction,
     UpdateCaseAction,
+    OpenSubCaseAction,
 )
 from django.test import SimpleTestCase as TestCase
 from corehq.apps.app_manager.tests.util import TestFileMixin
@@ -108,18 +109,53 @@ class SubcaseRepeatTest(TestCase, TestFileMixin):
         self.app = Application.wrap(self.get_json('subcase-repeat'))
         self.app.case_sharing = False
         self.assertXmlEqual(self.app.get_module(0).get_form(0).render_xform(),
-                              self.get_xml('subcase-repeat'))
+                            self.get_xml('subcase-repeat'))
 
     def test_subcase_repeat_sharing(self):
         self.app = Application.wrap(self.get_json('subcase-repeat'))
         self.app.case_sharing = True
         self.assertXmlEqual(self.app.get_module(0).get_form(0).render_xform(),
-                              self.get_xml('subcase-repeat-sharing'))
+                            self.get_xml('subcase-repeat-sharing'))
 
     def test_subcase_multiple_repeats(self):
         self.app = Application.wrap(self.get_json('multiple_subcase_repeat'))
         self.assertXmlEqual(self.app.get_module(0).get_form(0).render_xform(),
-                              self.get_xml('multiple_subcase_repeat'))
+                            self.get_xml('multiple_subcase_repeat'))
+
+    def test_subcase_repeat_mixed_form(self):
+        app = Application.new_app(None, "Untitled Application", application_version=APP_V2)
+        module_0 = app.add_module(Module.new_module('parent', None))
+        module_0.unique_id = 'm0'
+        module_0.case_type = 'parent'
+        form = app.new_form(0, "Form", None, attachment=self.get_xml('subcase_repeat_mixed_form_pre'))
+
+        module_1 = app.add_module(Module.new_module('subcase', None))
+        module_1.unique_id = 'm1'
+        module_1.case_type = 'subcase'
+
+        form.actions.open_case = OpenCaseAction(name_path="/data/parent_name")
+        form.actions.open_case.condition.type = 'always'
+
+        form.actions.subcases.append(OpenSubCaseAction(
+            case_type=module_1.case_type,
+            case_name="/data/first_child_name",
+            condition=FormActionCondition(type='always')
+        ))
+        # subcase in the middle that has a repeat context
+        form.actions.subcases.append(OpenSubCaseAction(
+            case_type=module_1.case_type,
+            case_name="/data/repeat_child/repeat_child_name",
+            repeat_context='/data/repeat_child',
+            condition=FormActionCondition(type='always')
+        ))
+        form.actions.subcases.append(OpenSubCaseAction(
+            case_type=module_1.case_type,
+            case_name="/data/last_child_name",
+            condition=FormActionCondition(type='always')
+        ))
+
+        self.assertXmlEqual(self.get_xml('subcase_repeat_mixed_form_post'),
+                            app.get_module(0).get_form(0).render_xform())
 
 
 class SubcaseParentRefTeset(TestCase, TestFileMixin):
@@ -253,7 +289,7 @@ class FormPreparationV2TestAdvanced(TestCase, TestFileMixin):
             case_type=self.module.case_type,
             case_tag='load_1',
             case_properties={'question1': '/data/question1'},
-            preload={'question1': '/data/question1'}
+            preload={'/data/question1': 'question1'}
         ))
         self.assertXmlEqual(self.get_xml('update_preload_case'), self.form.render_xform())
 
@@ -270,13 +306,13 @@ class FormPreparationV2TestAdvanced(TestCase, TestFileMixin):
             case_type=self.module.case_type,
             case_tag='load_1',
             case_properties={'question1': '/data/question1'},
-            preload={'question1': '/data/question1'}
+            preload={'/data/question1': 'question1'}
         ))
         self.form.actions.load_update_cases.append(LoadUpdateAction(
             case_type=self.module.case_type,
             case_tag='load_2',
             case_properties={'question2': '/data/question2'},
-            preload={'question2': '/data/question2'}
+            preload={'/data/question2': 'question2'}
         ))
         self.assertXmlEqual(self.get_xml('update_preload_case_multiple'), self.form.render_xform())
 

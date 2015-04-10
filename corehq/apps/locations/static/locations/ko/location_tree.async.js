@@ -146,7 +146,7 @@ function LocationModel(data, root, depth) {
             var top_level = (this.name() == '_root');
 
             // TODO replace 'location' with proper type as applicable (what about pluralization?)
-            return (top_level ? 'No locations created in this project yet' : 'No sub-locations inside ' + this.name());
+            return (top_level ? 'No locations created in this project yet' : 'No child locations inside ' + this.name());
         }, this);
 
     this.show_archive_action_button = ko.computed(function() {

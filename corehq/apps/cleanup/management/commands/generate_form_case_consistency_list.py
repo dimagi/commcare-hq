@@ -5,11 +5,14 @@ import sys
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.models import Domain
 from corehq.elastic import get_es
+from corehq.util.dates import iso_string_to_date
 from couchforms.models import XFormInstance
 from casexml.apps.case.xform import get_case_ids_from_form
 
 # NOTE: these are referenced by other management commands so don't change
 # the names without fixing the references
+from dimagi.utils.parsing import json_format_date
+
 HEADERS = [
     'domain',
     'received_on',
@@ -59,8 +62,8 @@ class Command(BaseCommand):
         chunk = 500
         start = 0
 
-        sk = [domain, "by_date", from_date.strftime("%Y-%m-%d")]
-        ek = [domain, "by_date", (datetime.utcnow() + timedelta(days=10)).strftime("%Y-%m%d")]
+        sk = [domain, "by_date", json_format_date(from_date)]
+        ek = [domain, "by_date", json_format_date(datetime.utcnow() + timedelta(days=10))]
 
         def call_view(sk, ek, skip, limit):
             return db.view('couchforms/all_submissions_by_domain',
@@ -116,7 +119,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         self.es = get_es()
         try:
-            from_date = datetime.strptime(options['from_date'], "%Y-%m-%d")
+            from_date = iso_string_to_date(options['from_date'])
         except Exception, ex:
             self.printerr("need a valid date string --from_date YYYY-mm-dd: %s" % ex)
             sys.exit()

@@ -5,6 +5,7 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
 from couchdbkit import RequestFailed
+from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import PhoneTime
 from dimagi.utils.decorators.memoized import memoized
 
@@ -323,6 +324,6 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
     def date_to_json(self, date):
         if date:
             return (PhoneTime(date, self.timezone).user_time(self.timezone)
-                    .ui_string('%Y-%m-%d %H:%M:%S'))
+                    .ui_string(SERVER_DATETIME_FORMAT))
         else:
             return ''
