@@ -6,17 +6,10 @@
 .sectors-icon {
   margin: 0 auto;
   background-color: @cc-neutral-mid;
-  .border-top-radius(@sectors-icon-size-xs/2);
-  .border-bottom-radius(@sectors-icon-size-xs/2);
-  width: @sectors-icon-size-xs;
-  height: @sectors-icon-size-xs;
-
-  @media (min-width: @screen-xs-min) {
-    .border-top-radius(@sectors-icon-size-xs/2);
-    .border-bottom-radius(@sectors-icon-size-xs/2);
-    width: @sectors-icon-size-xs;
-    height: @sectors-icon-size-xs;
-  }
+  .border-top-radius(@sectors-icon-size-md/2);
+  .border-bottom-radius(@sectors-icon-size-md/2);
+  width: @sectors-icon-size-md;
+  height: @sectors-icon-size-md;
 
   @media (min-width: @screen-sm-min) {
     .border-top-radius(@sectors-icon-size-sm/2);
@@ -64,6 +57,10 @@
 .sectors-title {
   font-size: 18px;
   text-align: center;
+  @media (max-width: @screen-xs-max) {
+    font-size: 24px !important;
+    margin: 10px 0;
+  }
 }
 
 .sectors-title-health {
@@ -83,7 +80,7 @@
 .make-sectors-icon (@name) {
   background-position: center center;
   background-repeat: no-repeat;
-  .sectors-bg-img(@name, 'sm');
+  .sectors-bg-img(@name, 'md');
 
   @media (min-width: @screen-sm-min) {
     .sectors-bg-img(@name, 'sm');
@@ -166,4 +163,21 @@
   &.sectors-text-details-dev {
     color: @cc-light-cool-accent-low;
   }
+  @media (max-width: @screen-sm-max) {
+    font-size: 10px;
+  }
+  @media (max-width: @screen-xs-max) {
+    margin-bottom: 20px !important;
+    font-size: 16px;
+  }
 }
+
+.sectors-row-sector {
+  @media (max-width: @screen-xs-max) {
+    > .col-sm-4 {
+      margin-bottom: 20px;
+    }
+  }
+}
+
+

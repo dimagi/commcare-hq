@@ -75,10 +75,10 @@
                     </button>
                     <ul class="nav navbar-nav">
                         <li{% if is_home %} class="active"{% endif %}><a href="{% url 'public_home' %}">CommCare</a></li>
+                        <li{% if is_solutions %} class="active"{% endif %}><a href="{% url 'public_solutions' %}">{% trans "Solutions" %}</a></li>
                         <li{% if is_impact %} class="active"{% endif %}><a href="{% url 'public_impact' %}">{% trans "Impact" %}</a></li>
                         <li{% if is_services %} class="active"{% endif %}><a href="{% url 'public_services' %}">{% trans "Services" %}</a></li>
                         <li{% if is_pricing %} class="active"{% endif %}><a href="{% url 'public_pricing' %}">{% trans "Pricing" %}</a></li>
-                        <li{% if is_solutions %} class="active"{% endif %}><a href="{% url 'public_solutions' %}">{% trans "Solutions" %}</a></li>
                     </ul>
                     <ul class="nav navbar-nav navbar-right">
                         <li class="dropdown">
