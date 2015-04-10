@@ -223,11 +223,6 @@ var ChargedCostItem = function (initData) {
         self.paymentAmountType('partial');
     };
 
-    self.reset =  function (response) {
-        self.customPaymentAmount(self.balance());
-        self.paymentAmountType('full');
-    };
-
     self.isValid = ko.computed(function () {
         return self.isLeftoverAmountEnough() && self.isAmountWithinRange();
     });
@@ -255,9 +250,6 @@ var Invoice = function (initData) {
     });
 
     self.reset = function (response) {
-        // TODO - use inheritance instead of duplicating code (tricky)
-        self.customPaymentAmount(self.balance());
-        self.paymentAmountType('full');
         self.paginatedList.refreshList(self.paginatedItem);
     };
 };
@@ -276,8 +268,6 @@ var TotalCostItem = function (initData) {
     self.id = null; // TODO remove once cost-item-template does not need this
 
     self.reset =  function (response) {
-        self.customPaymentAmount(self.balance());
-        self.paymentAmountType('full');
         paginatedListModel.refreshList();
     };
 };
