@@ -598,6 +598,9 @@ cloudCare.AppView = Backbone.View.extend({
     playSession: function (session) {
         var self = this;
         var session_id = session.get('id');
+
+        sess.buildInstance($('#xml-instance'), session_id);
+
         var resp = $.ajax({
             url: getSessionContextUrl(self.options.sessionUrlRoot, session_id),
             async: false,
@@ -690,12 +693,14 @@ cloudCare.AppView = Backbone.View.extend({
             }
         };
         var loadSession = function() {
+            // mark
             var sess = new WebFormSession(data);
             // TODO: probably shouldn't hard code these divs
             sess.load($('#webforms'), self.options.language, {
                 onLoading: tfLoading,
                 onLoadingComplete: tfLoadingComplete
             });
+            //sess.buildInstance($('#xml-instance'));
         };
         var promptForOffline = function(show) {
             $('#offline-prompt')[show ? 'show' : 'hide']();
