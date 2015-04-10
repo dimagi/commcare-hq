@@ -1,4 +1,4 @@
-from corehq.apps.app_manager.management.commands.migrate_graph_configuration_properties import AppMigrationCommandBase
+from corehq.apps.app_manager.management.commands.helpers import AppMigrationCommandBase
 from corehq.apps.app_manager.models import Application
 
 
