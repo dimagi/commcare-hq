@@ -32,17 +32,7 @@ class User(object):
         ret = [self.user_id]
         ret.extend(self.additional_owner_ids)
         return list(set(ret))
-        
-    def get_case_updates(self, last_sync):
-        """
-        Get open cases associated with the user. This method
-        can be overridden to change case-syncing behavior
-        
-        returns: A CaseSyncOperation object
-        """
-        from casexml.apps.phone.caselogic import CaseSyncOperation
-        return CaseSyncOperation(self, last_sync)
-    
+
     @classmethod
     def from_django_user(cls, django_user):
         return cls(user_id=str(django_user.pk), username=django_user.username,
