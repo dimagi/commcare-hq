@@ -1,9 +1,10 @@
-var PaymentMethodHandler = function (errorMessages, submitBtnText) {
+var PaymentMethodHandler = function (errorMessages, submitBtnText, form_id) {
     'use strict';
     var self = this;
 
     self.errorMessages = errorMessages || {};
     self.submitBtnText = submitBtnText;
+    self.form_id = form_id;
 
     self.costItem = ko.observable();
     self.hasCostItem = ko.computed(function () {
@@ -82,7 +83,7 @@ var PaymentMethodHandler = function (errorMessages, submitBtnText) {
     };
 
     self.submitForm = function () {
-        $('#payment-form').ajaxSubmit({
+        $('#' + self.form_id).ajaxSubmit({
             success: function (response) {
                 if (response.success) {
                     self.costItem().reset(response);
@@ -108,7 +109,7 @@ var PaymentMethodHandler = function (errorMessages, submitBtnText) {
     self.removeSavedCard = function () {
         self.isRemovingCard(true);
         self.showConfirmRemoveCard(false);
-        $('#payment-form').ajaxSubmit({
+        $('#' + self.form_id).ajaxSubmit({
             data: {
                 removeCard: true
             },

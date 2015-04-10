@@ -13,11 +13,13 @@
 
         var bulkPaymentHandler = new PaymentMethodHandler(
             {{ payment_error_messages|JSON }},
-            "{% trans "Submit Payment" %}"
+            "{% trans "Submit Payment" %}",
+            "bulk-payment-form"
         );
         var paymentHandler = new PaymentMethodHandler(
             {{ payment_error_messages|JSON }},
-            "{% trans "Submit Payment" %}"
+            "{% trans "Submit Payment" %}",
+            "payment-form"
         );
 
         {% if stripe_cards %}
