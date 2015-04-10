@@ -5,9 +5,23 @@ from jsonobject import AbstractDateProperty
 import re
 from jsonobject.api import re_date, re_time, re_decimal
 from dimagi.utils.parsing import ISO_DATETIME_FORMAT
+from django.conf import settings
 
 
 HISTORICAL_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
+
+
+try:
+    # this isn't actually part of dimagi-utils
+    # but this is temporary and don't want to do a bigger reorg
+    from corehq.util.soft_assert import soft_assert
+except ImportError:
+    def _assert(assertion, msg):
+        assert assertion, msg
+else:
+    _assert = soft_assert('{}@{}'.format('droberts', 'dimagi.com'),
+                          # should still fail in tests
+                          fail_if_debug=settings.UNIT_TESTING)
 
 
 class USecDateTimeProperty(AbstractDateProperty):
@@ -40,11 +54,13 @@ class USecDateTimeProperty(AbstractDateProperty):
             raise ValueError(
                 'Invalid date/time {0!r} [{1}]'.format(value, e))
 
-        assert result.tzinfo is None
+        _assert(result.tzinfo is None,
+                "USecDateTimeProperty shouldn't ever return offset-aware!")
         return result
 
     def _unwrap(self, value):
-        assert value.tzinfo is None
+        _assert(value.tzinfo is None,
+                "Can't set a USecDateTimeProperty to an offset-aware datetime")
         return value, value.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
 
 
