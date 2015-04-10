@@ -1319,6 +1319,7 @@ DOMAIN_MODULE_MAP = {
     'mvp-ruhiira': 'mvp',
     'mvp-mwandama': 'mvp',
     'mvp-sada': 'mvp',
+    'mvp-tiby': 'mvp',
     'opm': 'custom.opm',
     'psi-unicef': 'psi',
     'project': 'custom.apps.care_benin',
