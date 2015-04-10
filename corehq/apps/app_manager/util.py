@@ -9,6 +9,7 @@ from corehq import Domain
 from corehq.apps.app_manager.const import CT_REQUISITION_MODE_3, CT_LEDGER_STOCK, CT_LEDGER_REQUESTED, \
     CT_REQUISITION_MODE_4, CT_LEDGER_APPROVED, CT_LEDGER_PREFIX, USERCASE_PREFIX, USERCASE_TYPE
 from corehq.apps.app_manager.xform import XForm, XFormException, parse_xml
+from dimagi.utils.couch import CriticalSection
 import re
 from dimagi.utils.decorators.memoized import memoized
 from django.core.cache import cache
@@ -401,8 +402,9 @@ def actions_use_usercase(actions):
 
 
 def enable_usercase(domain_name):
-    domain = Domain.get_by_name(domain_name, strict=True)
-    if not domain.usercase_enabled:
-        domain.usercase_enabled = True
-        domain.save()
-        create_user_cases.delay(domain_name)
+    with CriticalSection([domain_name + '_enable_usercase']):
+        domain = Domain.get_by_name(domain_name, strict=True)
+        if not domain.usercase_enabled:
+            domain.usercase_enabled = True
+            domain.save()
+            create_user_cases.delay(domain_name)
