@@ -1109,7 +1109,7 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
         def headers():
             headers = []
             for __, title, __, denom in self.model.method_map:
-                if denom == 'no_denom':
+                if denom == 'no_denom' or denom == 'one':
                     headers.append(DataTablesColumn(name=title))
                 else:
                     for template in [u"{}", u"{} - denominator", u"{} - percent"]:
