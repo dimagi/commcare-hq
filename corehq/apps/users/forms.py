@@ -420,7 +420,10 @@ class CommtrackUserForm(forms.Form):
         # This means it will clear the location associations set in a domain
         # with multiple locations configured. It is acceptable for now because
         # multi location config is a not really supported special flag for IPM.
-        user.set_location(Location.get(location_id) if location_id else None)
+        if location_id:
+            user.set_location(Location.get(location_id))
+        else:
+            user.unset_location()
 
 
 class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):

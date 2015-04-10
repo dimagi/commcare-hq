@@ -1334,13 +1334,6 @@ class LocationUserMixin(DocumentSchema):
         Set the location, and all important user data, for
         the user.
         """
-        if not location:
-            # Remove associated info
-            self.user_data.pop('commtrack-supply-point', None)
-            self.user_data.pop('commcare_primary_case_sharing_id', None)
-            self.location_id = None
-            return
-
         from corehq.apps.commtrack.models import SupplyPointCase
         from corehq.apps.locations.models import LOCATION_SHARING_PREFIX
 
@@ -1371,6 +1364,16 @@ class LocationUserMixin(DocumentSchema):
 
         self.location_id = location._id
 
+        self.save()
+
+    def unset_location(self):
+        """
+        Unset the location and remove all associated user data and cases
+        """
+        self.user_data.pop('commtrack-supply-point', None)
+        self.user_data.pop('commcare_primary_case_sharing_id', None)
+        self.location_id = None
+        self.clear_locations()
         self.save()
 
     @property
