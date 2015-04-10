@@ -520,6 +520,11 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
         return bool(self.request.GET.get('debug'))
 
     @property
+    def export_name(self):
+        return "%s %s/%s" % (super(BaseReport, self).export_name, self.request.GET.get('month'),
+                             self.request.GET.get('year'))
+
+    @property
     def show_html(self):
         return getattr(self, 'rendered_as', 'html') not in ('print', 'export')
 
@@ -1220,6 +1225,11 @@ class HealthStatusReport(DatespanMixin, BaseReport):
         ret = list(super(HealthStatusReport, self).rows)
         self.total_row = calculate_total_row(ret)
         return ret
+
+    @property
+    def export_name(self):
+        return "%s %s to %s" % (super(BaseReport, self).export_name, self.datespan.startdate_display,
+                             self.datespan.enddate_display)
 
     @property
     def fields(self):
