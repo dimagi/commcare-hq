@@ -1,3 +1,4 @@
+from collections import defaultdict
 from couchdbkit import ResourceNotFound
 from django.http import Http404
 from jsonobject.exceptions import WrappingAttributeError
@@ -23,3 +24,12 @@ def get_document_or_404(cls, domain, doc_id, additional_doc_types=None):
         return cls.wrap(unwrapped)
     except WrappingAttributeError:
         raise Http404()
+
+
+def categorize_bulk_save_errors(error):
+    result_map = defaultdict(list)
+    for result in error.results:
+        error = result.get('error', None)
+        result_map[error].append(result)
+
+    return result_map
