@@ -25,10 +25,7 @@ def export_for_group(export_id_or_group, output_dir, last_access_cutoff=None):
 
 def rebuild_export(config, schema, output_dir, last_access_cutoff=None):
     if output_dir == "couch":
-        saved = SavedBasicExport.view("couchexport/saved_exports",
-                                      key=json.dumps(config.index),
-                                      include_docs=True,
-                                      reduce=False).one()
+        saved = get_saved_export_and_delete_copies(config.index)
         if last_access_cutoff and saved and saved.last_accessed and \
                 saved.last_accessed < last_access_cutoff:
             # ignore exports that haven't been accessed since last_access_cutoff
@@ -57,3 +54,17 @@ def rebuild_export(config, schema, output_dir, last_access_cutoff=None):
         else:
             with open(os.path.join(output_dir, config.filename), "wb") as f:
                 f.write(payload)
+
+
+def get_saved_export_and_delete_copies(index):
+    matching = SavedBasicExport.by_index(index)
+    if not matching:
+        return None
+    if len(matching) == 1:
+        return matching[0]
+    else:
+        # delete all matches besides the last updated match
+        matching = sorted(matching, key=lambda x: x.last_updated)
+        for match in matching[:-1]:
+            match.delete()
+        return matching[-1]
