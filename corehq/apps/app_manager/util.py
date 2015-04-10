@@ -123,14 +123,15 @@ class ParentCasePropertyBuilder(object):
         return [a for a in apps if a.case_sharing and a.id != self.app.id]
 
     @memoized
-    def get_properties(self, case_type, already_visited=(), include_shared_properties=True):
+    def get_properties(self, case_type, already_visited=(),
+                       include_shared_properties=True):
         if case_type in already_visited:
             return ()
 
         get_properties_recursive = functools.partial(
             self.get_properties,
             already_visited=already_visited + (case_type,),
-            include_shared_properties=include_shared_properties,
+            include_shared_properties=include_shared_properties
         )
 
         case_properties = set(self.defaults)
@@ -148,7 +149,9 @@ class ParentCasePropertyBuilder(object):
             from corehq.apps.app_manager.models import get_apps_in_domain
             for app in self.get_other_case_sharing_apps_in_domain():
                 case_properties.update(
-                    get_case_properties(app, [case_type], include_shared_properties=False).get(case_type, [])
+                    get_case_properties(
+                        app, [case_type], include_shared_properties=False
+                    ).get(case_type, [])
                 )
 
         # prefix user case properties with "user:".
@@ -160,9 +163,7 @@ class ParentCasePropertyBuilder(object):
         # .. note:: if this case type is not the user case type, but it has a
         #           parent case type which is the user case type, then the
         #           parent case type's properties will be returned as
-        #           `parent/user:property`. That's probably unlikely, and a
-        #           good thing that it is, because that looks like a mess, and
-        #           will likely cause problems.
+        #           `parent/user:property`.
         #
         return {prefix_user(p) for p in case_properties}
 
@@ -198,11 +199,11 @@ class ParentCasePropertyBuilder(object):
         }
 
 
-def get_case_properties(app, case_types, defaults=(), include_shared_properties=True):
+def get_case_properties(app, case_types, defaults=(),
+                        include_shared_properties=True):
     builder = ParentCasePropertyBuilder(app, defaults)
     return builder.get_case_property_map(
-        case_types,
-        include_shared_properties=include_shared_properties,
+        case_types, include_shared_properties=include_shared_properties
     )
 
 
@@ -218,7 +219,7 @@ def get_all_case_properties(app):
     return get_case_properties(
         app,
         case_types,
-        defaults=('name',),
+        defaults=('name',)
     )
 
 
