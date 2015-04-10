@@ -9,6 +9,7 @@ from corehq.apps.accounting.models import (
     BillingAccountAdmin, DefaultProductPlan,
 )
 from django.http import Http404, HttpResponse
+from corehq.const import USER_DATE_FORMAT
 from django_prbac.decorators import requires_privilege
 from django_prbac.exceptions import PermissionDenied
 
@@ -61,7 +62,7 @@ def requires_privilege_with_fallback(slug, **assignment):
                         'current_plan': plan_name,
                         'feature_name': feature_name,
                         'required_plan': edition_req,
-                        'date_end': request.subscription.date_end.strftime("%d %B %Y")
+                        'date_end': request.subscription.date_end.strftime(USER_DATE_FORMAT)
                     }
                     request.is_billing_admin = (hasattr(request, 'couch_user')
                                                 and BillingAccountAdmin.get_admin_status_and_account(

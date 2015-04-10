@@ -19,6 +19,7 @@ from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop, ugettext as _
 from sqlagg.filters import RawFilter, IN, EQFilter
+from corehq.const import SERVER_DATETIME_FORMAT
 from couchexport.models import Format
 from custom.common import ALL_OPTION
 
@@ -547,9 +548,8 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
             sd = parser.parse(startdate)
             ed = parser.parse(enddate)
             subtitles.append(" From %s to %s" % (str(sd.date()), str(ed.date())))
-        datetime_format = "%Y-%m-%d %H:%M:%S"
         subtitles.append("Generated {}".format(
-            datetime.datetime.utcnow().strftime(datetime_format)))
+            datetime.datetime.utcnow().strftime(SERVER_DATETIME_FORMAT)))
         return subtitles
 
     def filter(self, fn, filter_fields=None):

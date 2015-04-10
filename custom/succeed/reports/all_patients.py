@@ -8,6 +8,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.reports.datatables import DTSortType
 from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn, SqlTabularReport, DataFormatter, \
     TableDataFormat
+from corehq.const import SERVER_DATETIME_FORMAT
 from custom.succeed.reports.patient_interactions import PatientInteractionsReport
 from custom.succeed.reports.patient_task_list import PatientTaskListReport
 from dimagi.utils.decorators.memoized import memoized
@@ -43,7 +44,7 @@ def target_date(visit_name, visit_days, randomization_date):
 
 def date_format(date_str):
     if date_str:
-        date = datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
+        date = datetime.strptime(date_str, SERVER_DATETIME_FORMAT)
         return date.strftime(OUTPUT_DATE_FORMAT)
     else:
         return EMPTY_FIELD
