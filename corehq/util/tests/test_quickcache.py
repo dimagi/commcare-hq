@@ -213,36 +213,25 @@ class QuickcacheTest(SimpleTestCase):
         self.assertEqual(by_name(name_latin1), 'VALUE')
         self.assertEqual(self.consume_buffer(), ['local miss', 'shared miss', 'called'])
 
-    def _test_skippable(self, fn, skip_kwarg):
-        name = 'name'
-        self.assertEqual(fn(name), 'VALUE')
-        self.assertEqual(self.consume_buffer(), ['cache miss', 'called', 'cache set'])
-        self.assertEqual(fn(name), 'VALUE')
-        self.assertEqual(self.consume_buffer(), ['cache hit'])
-
-        self.assertEqual(fn(name, **{skip_kwarg: True}), 'VALUE')
-        self.assertEqual(self.consume_buffer(), ['called', 'cache set'])
-        self.assertEqual(fn(name), 'VALUE')
-        self.assertEqual(self.consume_buffer(), ['cache hit'])
-
     def test_skippable(self):
-        @quickcache(['name'], cache=_cache_with_set, helper_class=SkippableQuickCache)
-        def by_name(name, skip_cache=False):
-            BUFFER.append('called')
-            return 'VALUE'
-
-        self._test_skippable(by_name, skip_kwarg='skip_cache')
-
-    def test_skippable_decorator(self):
         @skippable_quickcache(['name'], cache=_cache_with_set, skip_arg='force')
         def by_name(name, force=False):
             BUFFER.append('called')
             return 'VALUE'
 
-        self._test_skippable(by_name, skip_kwarg='force')
+        name = 'name'
+        self.assertEqual(by_name(name), 'VALUE')
+        self.assertEqual(self.consume_buffer(), ['cache miss', 'called', 'cache set'])
+        self.assertEqual(by_name(name), 'VALUE')
+        self.assertEqual(self.consume_buffer(), ['cache hit'])
+
+        self.assertEqual(by_name(name, force=True), 'VALUE')
+        self.assertEqual(self.consume_buffer(), ['called', 'cache set'])
+        self.assertEqual(by_name(name), 'VALUE')
+        self.assertEqual(self.consume_buffer(), ['cache hit'])
 
     def test_skippable_non_kwarg(self):
-        @quickcache(['name'], cache=_cache_with_set, helper_class=SkippableQuickCache)
+        @skippable_quickcache(['name'], cache=_cache_with_set, skip_arg='skip_cache')
         def by_name(name, skip_cache):
             BUFFER.append('called')
             return 'VALUE'
@@ -259,12 +248,20 @@ class QuickcacheTest(SimpleTestCase):
         self.assertEqual(self.consume_buffer(), ['cache hit'])
 
     def test_skippable_validation(self):
+        # skip_arg not supplied
         with self.assertRaises(ValueError):
-            @quickcache(['name', 'skip_cache'], helper_class=SkippableQuickCache)
+            @quickcache(['name'], helper_class=SkippableQuickCache)
             def by_name(name, skip_cache=False):
                 return 'VALUE'
 
+        # skip_arg also in vary_on
         with self.assertRaises(ValueError):
-            @quickcache(['name'], helper_class=SkippableQuickCache)
+            @skippable_quickcache(['name', 'skip_cache'], skip_arg='skip_cache')
+            def by_name(name, skip_cache=False):
+                return 'VALUE'
+
+        # skip_arg not in args
+        with self.assertRaises(ValueError):
+            @skippable_quickcache(['name'], skip_arg='missing')
             def by_name(name):
                 return 'VALUE'

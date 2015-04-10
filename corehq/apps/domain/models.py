@@ -516,7 +516,7 @@ class Domain(Document, SnapshotMixin):
         return self.name
 
     @classmethod
-    @skippable_quickcache(['name'], timeout=30*60, skip_arg='strict')
+    @skippable_quickcache(['name'], skip_arg='strict', timeout=30*60)
     def get_by_name(cls, name, strict=False):
         if not name:
             # get_by_name should never be called with name as None (or '', etc)

@@ -142,18 +142,15 @@ class QuickCache(object):
 
 class SkippableQuickCache(QuickCache):
     """
-    QuickCache extension that allows skipping the cache base on a function
-    keyword argument parameter.
-
-    @quickcache(['name'], helper=SkippableQuickCache)
-    def get_by_name(name, skip_cache=False):
-        ...
-
+    QuickCache extension that allows skipping the cache base on a function argument.
     """
-    skip_arg = 'skip_cache'
-
-    def __init__(self, fn, vary_on, cache):
+    def __init__(self, fn, vary_on, cache, skip_arg=None):
         super(SkippableQuickCache, self).__init__(fn, vary_on, cache)
+
+        if not skip_arg:
+            raise ValueError('"skip_arg" required')
+
+        self.skip_arg = skip_arg
 
         arg_spec = inspect.getargspec(self.fn)
         if self.skip_arg not in arg_spec.args:
@@ -182,7 +179,7 @@ class SkippableQuickCache(QuickCache):
             return content
 
 
-def skippable_quickcache(vary_on, timeout=None, memoize_timeout=None, cache=None, skip_arg='skip_cache'):
+def skippable_quickcache(vary_on, skip_arg, timeout=None, memoize_timeout=None, cache=None):
     """
     Alternative to quickcache decorator that allows skipping the cache based on 'skip_arg' argument.
 
@@ -190,13 +187,10 @@ def skippable_quickcache(vary_on, timeout=None, memoize_timeout=None, cache=None
     def get_by_name(name, force=False):
         ...
     """
-    custom_skip_arg = skip_arg
-
-    class CustomSkippableQuickCache(SkippableQuickCache):
-        skip_arg = custom_skip_arg
+    skippable_cache = functools.partial(SkippableQuickCache, skip_arg=skip_arg)
 
     return quickcache(vary_on, timeout=timeout, memoize_timeout=memoize_timeout,
-                      cache=cache, helper_class=CustomSkippableQuickCache)
+                      cache=cache, helper_class=skippable_cache)
 
 
 def quickcache(vary_on, timeout=None, memoize_timeout=None, cache=None,
