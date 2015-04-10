@@ -81,6 +81,9 @@
     {% render_case case case_display_options %}
     <section id="case-actions" >
     {% if show_case_rebuild %}
+        <form action="{% url 'resave_case' domain case_id %}" method="post" >
+             <button type="submit" class="btn btn-info disable-on-submit" >{% trans 'Resave Case' %}</button>
+        </form>
         <form action="{% url 'rebuild_case' domain case_id %}" method="post" >
              <button type="submit" class="btn btn-primary disable-on-submit" >{% trans 'Rebuild Case' %}</button>
         </form>
