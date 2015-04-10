@@ -274,6 +274,12 @@ var TotalCostItem = function (initData) {
     self.customPaymentAmount(self.balance());
 
     self.id = null; // TODO remove once cost-item-template does not need this
+
+    self.reset =  function (response) {
+        self.customPaymentAmount(self.balance());
+        self.paymentAmountType('full');
+        paginatedListModel.refreshList();
+    };
 };
 
 TotalCostItem.protoptye = Object.create( ChargedCostItem.prototype );
