@@ -18,13 +18,14 @@ def get_randomization_date(case):
 
 
 def get_next_visit(case):
+    actions = list(case['actions'])
     next_visit = VISIT_SCHEDULE[0]
     for visit_key, visit in enumerate(VISIT_SCHEDULE):
-        for key, action in enumerate(case['actions']):
+        for key, action in enumerate(actions):
             if visit['xmlns'] == action['xform_xmlns']:
                 try:
                     next_visit = VISIT_SCHEDULE[visit_key + 1]
-                    del case['actions'][key]
+                    del actions[key]
                     break
                 except IndexError:
                     next_visit = {
