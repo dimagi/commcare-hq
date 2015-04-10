@@ -59,7 +59,7 @@ submodules:
     # let's leave this here even when empty
     # just so we always get latest master
     branches: []
-#      - tf-persistence  # wsp 3/10
+      - tf-persistence  # wsp 3/10
 
   submodules/formtranslate-src:
     # let's leave this here even when empty
