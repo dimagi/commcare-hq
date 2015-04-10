@@ -399,13 +399,8 @@ def actions_use_usercase(actions):
             any_usercase_items(actions['case_preload']['preload'].itervalues()))
 
 
-# TODO: Where should this go?
-# Should it be here in app_manager.util because it's used in
-# app_manager.views, or in domain.utils because it relates to the domain, or
-# should it be a method on Domain, because we like classes more than lots of
-# utility functions?
 def enable_usercase(domain_name):
-    domain = Domain.get_by_name(domain_name)
+    domain = Domain.get_by_name(domain_name, strict=True)
     if not domain.usercase_enabled:
         domain.usercase_enabled = True
         domain.save()
