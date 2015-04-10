@@ -125,6 +125,7 @@ def reset_state(case):
         setattr(case, prop, default_value)
 
     case.closed = False
+    case.modified_on = None
     case.closed_on = None
     case.closed_by = ''
     return case
