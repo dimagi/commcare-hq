@@ -9,7 +9,7 @@ from couchdbkit.exceptions import MultipleResultsFound
 from corehq.elastic import es_query
 
 
-def sync_user_cases(commcare_user, case_type, owner_id):
+def sync_user_case(commcare_user, case_type, owner_id, copy_user_data=True):
     """
     Each time a CommCareUser is saved this method gets called and creates or updates
     a case associated with the user with the user's details.
@@ -27,7 +27,7 @@ def sync_user_cases(commcare_user, case_type, owner_id):
             return False
 
     # remove any keys that aren't valid XML element names
-    fields = {k: v for k, v in commcare_user.user_data.items() if valid_element_name(k)}
+    fields = {k: v for k, v in commcare_user.user_data.items() if valid_element_name(k)} if copy_user_data else {}
 
     # language or phone_number can be null and will break
     # case submission
@@ -87,10 +87,10 @@ def sync_user_cases(commcare_user, case_type, owner_id):
         submit_case_blocks(casexml, domain.name)
 
 
-def sync_call_center_user_cases(user):
+def sync_call_center_user_case(user):
     domain = user.project
     if domain and domain.call_center_config.enabled:
-        sync_user_cases(
+        sync_user_case(
             user,
             domain.call_center_config.case_type,
             domain.call_center_config.case_owner_id
@@ -100,10 +100,11 @@ def sync_call_center_user_cases(user):
 def sync_usercase(user):
     domain = user.project
     if domain and domain.usercase_enabled:
-        sync_user_cases(
+        sync_user_case(
             user,
             USERCASE_TYPE,
-            user.get_id
+            user.get_id,
+            copy_user_data=False
         )
 
 
