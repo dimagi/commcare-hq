@@ -1507,7 +1507,9 @@ class SuiteGenerator(SuiteGeneratorBase):
             return False
 
         datums = []
-        if form.form_type == 'module_form' and uses_usercase(form) and self.is_usercase_enabled:
+        if form.form_type == 'module_form' and uses_usercase(form):
+            if not self.is_usercase_enabled:
+                raise SuiteError('Form uses usercase, but usercase not enabled')
             case_type = CaseTypeXpath(USERCASE_TYPE).case()
             case = UserCaseXPath(case_type).case()
             datums.append({
@@ -1517,6 +1519,10 @@ class SuiteGenerator(SuiteGeneratorBase):
                 'action': None  # action and user case are independent.
             })
         return datums
+
+    @staticmethod
+    def any_usercase_datums(datums):
+        return any(d['case_type'] == USERCASE_TYPE for d in datums)
 
     def get_new_case_id_datums_meta(self, form):
         if not form:

@@ -1,7 +1,10 @@
 import uuid
 from corehq.apps.app_manager.const import USERCASE_ID
+from corehq.apps.app_manager.exceptions import SuiteError
 from corehq.apps.app_manager.suite_xml import SuiteGenerator
+from corehq.apps.app_manager.util import is_usercase_enabled
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
+from corehq.util.soft_assert import soft_assert
 from .models import XFORMS_SESSION_SMS, SQLXFormsSession
 from datetime import datetime
 from corehq.apps.cloudcare.touchforms_api import get_session_data
@@ -58,13 +61,20 @@ def start_session(domain, contact, app, module, form, case_id=None, yield_respon
         }
     
     if app and form:
-        suite_gen = SuiteGenerator(app)
+        suite_gen = SuiteGenerator(app, is_usercase_enabled(domain))
         datums = suite_gen.get_new_case_id_datums_meta(form)
         session_data.update({meta['datum'].id: uuid.uuid4().hex for meta in datums})
-        if contact.doc_type == 'CommCareUser':
-            usercase = get_case_by_domain_hq_user_id(domain, contact.get_id, include_docs=False)
-            if usercase:
-                session_data[USERCASE_ID] = usercase['id']
+        try:
+            extra_datums = suite_gen.get_extra_case_id_datums(form)
+        except SuiteError:
+            _assert = soft_assert(['nhooper_at_dimagi_dot_com'.replace('_at_', '@').replace('_dot_', '.')])
+            _assert(False, 'form uses usercase, but app_manager did not enable usercase for the domain')
+        else:
+            datums.extend(extra_datums)
+            if contact.doc_type == 'CommCareUser' and suite_gen.any_usercase_datums(extra_datums):
+                usercase = get_case_by_domain_hq_user_id(domain, contact.get_id, include_docs=False)
+                if usercase:
+                    session_data[USERCASE_ID] = usercase['id']
 
     language = contact.get_language_code()
     config = XFormsConfig(form_content=form.render_xform(),
