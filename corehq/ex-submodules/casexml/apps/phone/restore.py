@@ -272,51 +272,13 @@ def get_restore_class(user):
     return restore_class
 
 
-def get_case_payload(domain, stock_settings, version, user, last_sync, synclog):
-    response = get_restore_class(user)()
-    sync_operation = user.get_case_updates(last_sync)
-    synclog.cases_on_phone = [
-        CaseState.from_case(c) for c in sync_operation.actual_owned_cases
-    ]
-    synclog.dependent_cases_on_phone = [
-        CaseState.from_case(c) for c in sync_operation.actual_extended_cases
-    ]
-    synclog.save(**get_safe_write_kwargs())
-
-    # case blocks
-    case_xml_elements = (
-        xml.get_case_element(op.case, op.required_updates, version)
-        for op in sync_operation.actual_cases_to_sync
-    )
-    response.extend(case_xml_elements)
-
-    add_custom_parameter('restore_total_cases', len(sync_operation.all_potential_cases))
-    add_custom_parameter('restore_synced_cases', len(sync_operation.actual_cases_to_sync))
-
-    # commtrack balance sections
-    case_state_list = [CaseState.from_case(op.case) for op in sync_operation.actual_cases_to_sync]
-    commtrack_elements = get_stock_payload(domain, stock_settings, case_state_list)
-    response.extend(commtrack_elements)
-
-    batch_count = 1
-    return response, batch_count
-
-
 def get_case_payload_batched(domain, stock_settings, version, user, last_synclog, synclog):
     response = get_restore_class(user)()
 
-    batch_count = 0
     sync_operation = BatchedCaseSyncOperation(user, last_synclog)
-    for batch in sync_operation.batches():
-        batch_count += 1
-        logger.debug(batch)
-
-        # case blocks
-        case_xml_elements = (
-            xml.get_case_element(op.case, op.required_updates, version)
-            for op in batch.case_updates_to_sync()
-        )
-        response.extend(case_xml_elements)
+    for update in sync_operation.get_all_case_updates():
+        element = xml.get_case_element(update.case, update.required_updates, version)
+        response.append(element)
 
     sync_state = sync_operation.global_state
     synclog.cases_on_phone = sync_state.actual_owned_cases
@@ -330,7 +292,7 @@ def get_case_payload_batched(domain, stock_settings, version, user, last_synclog
     commtrack_elements = get_stock_payload(domain, stock_settings, sync_state.all_synced_cases)
     response.extend(commtrack_elements)
 
-    return response, batch_count
+    return response, sync_operation.batch_count
 
 
 class RestoreConfig(object):
@@ -526,15 +488,11 @@ class RestoreConfig(object):
 def generate_restore_payload(user, restore_id="", version=V1, state_hash="",
                              items=False):
     """
-    Gets an XML payload suitable for OTA restore. If you need to do something
-    other than find all cases matching user_id = user.user_id then you have
-    to pass in a user object that overrides the get_case_updates() method.
+    Gets an XML payload suitable for OTA restore.
 
-    It should match the same signature as models.user.get_case_updates():
-
-        user:          who the payload is for. must implement get_case_updates
-        restore_id:    sync token
-        version:       the CommCare version
+        user:          who the payload is for
+        restore_id:    last sync token for this user
+        version:       the restore API version
 
         returns: the xml payload of the sync operation
     """
