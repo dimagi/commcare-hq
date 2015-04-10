@@ -15,6 +15,7 @@ setup(
         "dimagi-utils",
         'django-soil',
         "openpyxl",
+        "unidecode",
         "xlwt",
     ],
     packages = find_packages(exclude=['*.pyc']),
