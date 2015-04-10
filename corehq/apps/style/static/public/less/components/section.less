@@ -569,6 +569,10 @@
 .section-details-lead {
   height: auto;
   padding-bottom: 40px;
+
+  @media (max-width: @screen-xs-max) {
+    min-height: 150px;
+  }
 }
 
 .section-details-bundles,
@@ -582,14 +586,33 @@
 }
 
 .section-details-bundles {
-  .bundles-container {
-    height: 1235px;
+  @media (max-width: @screen-xs-max) {
+    h3 {
+      text-align: left;
+      padding-left: 5px !important;
+    }
   }
 }
 
 .section-details-capacity {
   h3 {
     font-size: 20px;
+  }
+  @media (max-width: @screen-xs-max) {
+    h2 {
+      font-size: 30px;
+    }
+    h3 {
+      font-size: 24px;
+      text-align: left;
+    }
+    p:not(.lead) {
+      font-size: 14px;
+      margin-bottom: 0;
+    }
+    p {
+      text-align: left;
+    }
   }
 }
 
