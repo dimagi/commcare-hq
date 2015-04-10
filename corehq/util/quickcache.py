@@ -140,6 +140,63 @@ class QuickCache(object):
         return 'quickcache.{}/{}'.format(self.prefix, args_string)
 
 
+class SkippableQuickCache(QuickCache):
+    """
+    QuickCache extension that allows skipping the cache base on a function
+    keyword argument parameter.
+
+    @quickcache(['name'], helper=SkippableQuickCache)
+    def get_by_name(name, skip_cache=False):
+        ...
+
+    """
+    skip_arg = 'skip_cache'
+
+    def __init__(self, fn, vary_on, cache):
+        super(SkippableQuickCache, self).__init__(fn, vary_on, cache)
+
+        arg_spec = inspect.getargspec(self.fn)
+        if self.skip_arg not in arg_spec.args:
+            raise ValueError(
+                'We cannot use "{}" as the "skip" parameter because the function {} has '
+                'no such argument'.format(self.skip_arg, self.fn.__name__)
+            )
+
+        if not isfunction(self.vary_on):
+            for arg, attrs in self.vary_on:
+                if arg == self.skip_arg:
+                    raise ValueError(
+                        'You cannot use the "{}" argument as a vary on parameter and '
+                        'as the "skip cache" parameter in the function: {}'.format(arg, self.fn.__name__)
+                    )
+
+    def __call__(self, *args, **kwargs):
+        callargs = inspect.getcallargs(self.fn, *args, **kwargs)
+        skip = callargs[self.skip_arg]
+        if not skip:
+            return super(SkippableQuickCache, self).__call__(*args, **kwargs)
+        else:
+            key = self.get_cache_key(*args, **kwargs)
+            content = self.fn(*args, **kwargs)
+            self.cache.set(key, content)
+            return content
+
+
+def skippable_quick_cache(custom_skip_arg):
+    """
+    Helper function to allow customizing the 'skip' keyword arg to use
+    for skipping the cache check.
+
+    @quickcache(['name'], helper=skippable_quick_cache('force'))
+    def get_by_name(name, force=False):
+        ...
+    """
+    class CustomSkippableQuickCache(SkippableQuickCache):
+        skip_arg = custom_skip_arg
+
+    return CustomSkippableQuickCache
+
+
 def quickcache(vary_on, timeout=None, memoize_timeout=None, cache=None,
                helper_class=QuickCache):
     """

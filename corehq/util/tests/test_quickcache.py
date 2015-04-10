@@ -3,7 +3,7 @@
 from django.core.cache.backends.locmem import LocMemCache
 from django.test import SimpleTestCase
 import time
-from corehq.util.quickcache import quickcache, TieredCache
+from corehq.util.quickcache import quickcache, TieredCache, SkippableQuickCache, skippable_quick_cache
 
 BUFFER = []
 
@@ -21,11 +21,19 @@ class CacheMock(LocMemCache):
             BUFFER.append('{} hit'.format(self.name))
         return result
 
+
+class CacheMockWithSet(CacheMock):
+    def set(self, key, value, timeout=None, version=None):
+        super(CacheMockWithSet, self).set(key, value, timeout, version)
+        BUFFER.append('{} set'.format(self.name))
+
+
 SHORT_TIME_UNIT = 1
 
 _local_cache = CacheMock('local', {'timeout': SHORT_TIME_UNIT})
 _shared_cache = CacheMock('shared', {'timeout': 2 * SHORT_TIME_UNIT})
 _cache = TieredCache([_local_cache, _shared_cache])
+_cache_with_set = CacheMockWithSet('cache', {'timeout': SHORT_TIME_UNIT})
 
 
 class QuickcacheTest(SimpleTestCase):
@@ -204,3 +212,59 @@ class QuickcacheTest(SimpleTestCase):
         # values with encodings other than utf-8 still produce different keys
         self.assertEqual(by_name(name_latin1), 'VALUE')
         self.assertEqual(self.consume_buffer(), ['local miss', 'shared miss', 'called'])
+
+    def _test_skippable(self, fn, skip_kwarg):
+        name = 'name'
+        self.assertEqual(fn(name), 'VALUE')
+        self.assertEqual(self.consume_buffer(), ['cache miss', 'called', 'cache set'])
+        self.assertEqual(fn(name), 'VALUE')
+        self.assertEqual(self.consume_buffer(), ['cache hit'])
+
+        self.assertEqual(fn(name, **{skip_kwarg: True}), 'VALUE')
+        self.assertEqual(self.consume_buffer(), ['called', 'cache set'])
+        self.assertEqual(fn(name), 'VALUE')
+        self.assertEqual(self.consume_buffer(), ['cache hit'])
+
+    def test_skippable(self):
+        @quickcache(['name'], cache=_cache_with_set, helper_class=SkippableQuickCache)
+        def by_name(name, skip_cache=False):
+            BUFFER.append('called')
+            return 'VALUE'
+
+        self._test_skippable(by_name, skip_kwarg='skip_cache')
+
+    def test_custom_skippable(self):
+        @quickcache(['name'], cache=_cache_with_set, helper_class=skippable_quick_cache('force'))
+        def by_name(name, force=False):
+            BUFFER.append('called')
+            return 'VALUE'
+
+        self._test_skippable(by_name, skip_kwarg='force')
+
+    def test_skippable_non_kwarg(self):
+        @quickcache(['name'], cache=_cache_with_set, helper_class=SkippableQuickCache)
+        def by_name(name, skip_cache):
+            BUFFER.append('called')
+            return 'VALUE'
+
+        name = 'name'
+        self.assertEqual(by_name(name, False), 'VALUE')
+        self.assertEqual(self.consume_buffer(), ['cache miss', 'called', 'cache set'])
+        self.assertEqual(by_name(name, False), 'VALUE')
+        self.assertEqual(self.consume_buffer(), ['cache hit'])
+
+        self.assertEqual(by_name(name, True), 'VALUE')
+        self.assertEqual(self.consume_buffer(), ['called', 'cache set'])
+        self.assertEqual(by_name(name, False), 'VALUE')
+        self.assertEqual(self.consume_buffer(), ['cache hit'])
+
+    def test_skippable_validation(self):
+        with self.assertRaises(ValueError):
+            @quickcache(['name', 'skip_cache'], helper_class=SkippableQuickCache)
+            def by_name(name, skip_cache=False):
+                return 'VALUE'
+
+        with self.assertRaises(ValueError):
+            @quickcache(['name'], helper_class=SkippableQuickCache)
+            def by_name(name):
+                return 'VALUE'
