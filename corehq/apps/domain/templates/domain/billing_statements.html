@@ -33,11 +33,22 @@
 
         $('#bulkPaymentBtn').click(function () {
             bulkPaymentHandler.costItem(new TotalCostItem({
-                totalBalance: {{ total_balance }}
+                totalBalance: paginatedListModel.totalDue()
             }));
             bulkPaymentHandler.reset();
         });
 
+        paginatedListModel.totalDue = ko.computed(function() {
+            var totalBalance = 0;
+            var paginatedList = paginatedListModel.paginatedList();
+            for (var i = 0; i < paginatedList.length; i++) {
+                totalBalance += parseFloat(new Invoice({
+                    paginatedItem: paginatedList[i],
+                    paginatedList: paginatedListModel
+                }).balance());
+            }
+            return totalBalance;
+        });
         paginatedListModel.showUnpaidBills = ko.observable(true);
         paginatedListModel.showAllBills = ko.computed(function () {
             return ! paginatedListModel.showUnpaidBills();
@@ -69,6 +80,7 @@
                     e.preventDefault();
                 });
             }
+            $(".hide-while-loading").removeAttr("hidden");
         };
     </script>
 {% endblock %}
@@ -79,10 +91,10 @@
         <h2>{% trans 'Current Balance' %}</h2>
         <p>
             {% trans 'Total Due:' %}
-            {{ total_balance }}
+            <span class="hide-while-loading" hidden="true" data-bind="text: totalDue"></span>
         </p>
         {% if not is_ops_user_but_not_admin %}
-        <p>
+        <p class="hide-while-loading" hidden="true" data-bind="visible: totalDue">
             <button type="button"
                     class="btn btn-success"
                     data-toggle="modal"
