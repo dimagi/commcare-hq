@@ -104,8 +104,7 @@ class PatientListReport(SqlTabularReport, CustomProjectReport, ProjectReportPara
     report_template_path = 'succeed/ucla_table.html'
 
     fields = ['custom.succeed.fields.CareSite',
-              'custom.succeed.fields.PatientStatus',
-              'corehq.apps.reports.standard.cases.filters.CaseSearchFilter']
+              'custom.succeed.fields.PatientStatus']
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
