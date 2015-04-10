@@ -395,8 +395,8 @@ def any_usercase_items(items):
 
 
 def actions_use_usercase(actions):
-    return (any(k.startswith(USERCASE_PREFIX) for k in actions['update_case']['update'].keys()) or
-            any(v.startswith(USERCASE_PREFIX) for v in actions['case_preload']['preload'].values()))
+    return (any_usercase_items(actions['update_case']['update'].iterkeys()) or
+            any_usercase_items(actions['case_preload']['preload'].itervalues()))
 
 
 # TODO: Where should this go?
