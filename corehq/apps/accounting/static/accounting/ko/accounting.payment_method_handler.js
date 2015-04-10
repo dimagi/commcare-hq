@@ -87,7 +87,6 @@ var PaymentMethodHandler = function (errorMessages, submitBtnText, form_id) {
             success: function (response) {
                 if (response.success) {
                     self.costItem().reset(response);
-                    self.newCard(new StripeCard());
                     if (response.wasSaved) {
                         var stripe_card = new StripeCard();
                         stripe_card.loadSavedData(response.card);
