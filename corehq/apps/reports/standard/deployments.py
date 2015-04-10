@@ -65,6 +65,8 @@ def _build_html(version, version_source):
 class ApplicationStatusReport(DeploymentsReport):
     name = ugettext_noop("Application Status")
     slug = "app_status"
+    emailable = True
+    exportable = True
     fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
               'corehq.apps.reports.filters.select.GroupFilter',
               'corehq.apps.reports.filters.select.SelectApplicationFilter']
