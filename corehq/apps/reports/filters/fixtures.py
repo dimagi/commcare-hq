@@ -138,5 +138,10 @@ class AsyncLocationFilter(BaseReportFilter):
 
         return context
 
+    @classmethod
+    def get_value(cls, request, domain):
+        return request.GET.get('location_id')
+
+
 class MultiLocationFilter(AsyncDrillableFilter):
     template = "reports/filters/multi_location.html"
