@@ -58,7 +58,11 @@ def make_url(report_class, domain, string_params, args):
 
 
 def calculate_last_period(enddate):
-    last_th = enddate - timedelta(days=enddate.weekday()) + timedelta(days=3, weeks=-1)
+    i = enddate.weekday() - 3
+    if i < 0:
+        last_th = enddate + timedelta(days=-i, weeks=-1)
+    else:
+        last_th = enddate - timedelta(days=i)
     fr_before = last_th - timedelta(days=6)
     return fr_before, last_th
 

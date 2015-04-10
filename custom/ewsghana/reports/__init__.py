@@ -1,3 +1,4 @@
+from datetime import datetime
 from django.core.urlresolvers import reverse
 from django.db.models import Q
 from corehq import Domain
@@ -11,7 +12,7 @@ from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParam
 from custom.ewsghana.filters import ProductByProgramFilter
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import Location, SQLLocation
-from custom.ewsghana.utils import get_supply_points, calculate_last_period
+from custom.ewsghana.utils import get_supply_points
 from casexml.apps.stock.models import StockTransaction
 
 
@@ -127,11 +128,16 @@ class ReportingRatesData(EWSData):
     def reporting_supply_points(self, supply_points=None):
         all_supply_points = self.get_supply_points().values_list('supply_point_id', flat=True)
         supply_points = supply_points if supply_points else all_supply_points
-        last_period_st, last_period_end = calculate_last_period(self.config['enddate'])
         return StockTransaction.objects.filter(
             case_id__in=supply_points,
-            report__date__range=[last_period_st, last_period_end]
+            report__date__range=[self.config['startdate'], self.config['enddate']]
         ).distinct('case_id').values_list('case_id', flat=True)
+
+    def datetext(self):
+        today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        return "last %d days" % (today - self.config['startdate']).days if today == self.config['enddate'] else\
+            "%s to %s" % (self.config['startdate'].strftime("%Y-%m-%d"),
+                          self.config['enddate'].strftime("%Y-%m-%d"))
 
     @memoized
     def all_reporting_locations(self):
