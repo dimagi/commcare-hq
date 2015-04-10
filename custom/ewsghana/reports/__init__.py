@@ -134,7 +134,7 @@ class ReportingRatesData(EWSData):
         ).distinct('case_id').values_list('case_id', flat=True)
 
     def datetext(self):
-        today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
         return "last %d days" % (today - self.config['startdate']).days if today == self.config['enddate'] else\
             "%s to %s" % (self.config['startdate'].strftime("%Y-%m-%d"),
                           self.config['enddate'].strftime("%Y-%m-%d"))
