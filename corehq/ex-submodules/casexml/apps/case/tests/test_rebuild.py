@@ -20,7 +20,8 @@ def post_util(**kwargs):
 
 class CaseRebuildTest(TestCase):
 
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
         delete_all_cases()
 
     def _assertListEqual(self, l1, l2, include_ordering=True):
