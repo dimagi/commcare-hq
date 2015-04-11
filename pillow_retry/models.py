@@ -168,7 +168,7 @@ class PillowError(models.Model):
 
 
 # Stub models file, also used in tests
-from couchdbkit.ext.django.schema import Document
+from dimagi.ext.couchdbkit import Document
 
 
 class Stub(Document):
