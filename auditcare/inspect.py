@@ -1,6 +1,6 @@
 
 #inspector methods
-from couchdbkit.ext.django.schema import Document
+from dimagi.ext.couchdbkit import Document
 from datetime import datetime, timedelta
 from django.db.models.base import Model
 from auditcare.models import ModelActionAudit

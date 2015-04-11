@@ -1,5 +1,5 @@
 from django.db.models.signals import post_save
-from couchdbkit.ext.django.schema import Document
+from dimagi.ext.couchdbkit import Document
 from django.db import models
 from django.contrib.auth.models import User
 import logging
