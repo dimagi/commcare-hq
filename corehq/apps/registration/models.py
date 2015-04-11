@@ -1,4 +1,4 @@
-from couchdbkit.ext.django.schema import Document, StringProperty,\
+from dimagi.ext.couchdbkit import Document, StringProperty,\
     BooleanProperty, DateTimeProperty, IntegerProperty
 import datetime
 from corehq.apps.domain.models import Domain

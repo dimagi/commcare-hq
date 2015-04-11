@@ -1,6 +1,7 @@
 # needed to build gevent from source
 Cython==0.17.4
 restkit==4.2.0
+iso8601==0.1.10
 jsonobject-couchdbkit==0.6.5.6
 jsonobject==0.6.3
 celery==3.1.17

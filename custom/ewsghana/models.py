@@ -1,4 +1,4 @@
-from couchdbkit.ext.django.schema import Document, BooleanProperty, StringProperty
+from dimagi.ext.couchdbkit import Document, BooleanProperty, StringProperty
 from casexml.apps.stock.models import DocDomainMapping
 from corehq.toggles import STOCK_AND_RECEIPT_SMS_HANDLER
 from corehq.toggles import NAMESPACE_DOMAIN

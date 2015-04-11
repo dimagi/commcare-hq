@@ -1,4 +1,4 @@
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 from corehq.apps.sms.models import SMSLog
 
 PROFILE_A = "A"

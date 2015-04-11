@@ -59,6 +59,9 @@ def safe_strftime(val, fmt):
 _assert = soft_assert('droberts' + '@' + 'dimagi.com')
 
 
+ISO_DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
+
+
 def iso_string_to_datetime(iso_string):
     """
     parse datetime string in iso format with or without microseconds,
@@ -74,7 +77,7 @@ def iso_string_to_datetime(iso_string):
     datetime.datetime(2015, 4, 7, 19, 7, 55, 437086)
 
     """
-    for fmt in ['%Y-%m-%dT%H:%M:%SZ', '%Y-%m-%dT%H:%M:%S.%fZ']:
+    for fmt in ['%Y-%m-%dT%H:%M:%SZ', ISO_DATETIME_FORMAT]:
         try:
             return datetime.datetime.strptime(iso_string, fmt)
         except ValueError:
@@ -94,3 +97,13 @@ def iso_string_to_date(iso_string):
 
     """
     return datetime.datetime.strptime(iso_string, ISO_DATE_FORMAT).date()
+
+
+def datetime_to_iso_string(dt):
+    """
+    includes microseconds (always)
+    >>> datetime_to_iso_string(datetime.datetime(2015, 4, 8, 12, 0, 1))
+    '2015-04-08T12:00:01.000000Z'
+    """
+    assert isinstance(dt, datetime.datetime)
+    return dt.strftime(ISO_DATETIME_FORMAT)

@@ -28,7 +28,7 @@ class OtaV3RestoreTest(TestCase):
         process_cases(form)
 
         expected_case_block = """
-        <case case_id="asdf" date_modified="2010-06-29T13:42:50Z" user_id="foo"
+        <case case_id="asdf" date_modified="2010-06-29T13:42:50.000000Z" user_id="foo"
             xmlns="http://commcarehq.org/case/transaction/v2">
             <create>
                 <case_type>test_case_type</case_type>

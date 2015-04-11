@@ -3,7 +3,7 @@ import uuid
 import logging
 from xml.etree import ElementTree
 from couchdbkit.exceptions import ResourceNotFound
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 from django.db import transaction
 from django.utils.translation import ugettext as _
 from casexml.apps.case.mock import CaseBlock
@@ -19,6 +19,7 @@ from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.hqcase.utils import submit_case_blocks
 from casexml.apps.stock.utils import months_of_stock_remaining, state_stock_category
 from corehq.apps.domain.models import Domain
+from dimagi.ext.couchdbkit import DateTimeProperty
 from couchforms.signals import xform_archived, xform_unarchived
 from dimagi.utils import parsing as dateparse
 from copy import copy
@@ -327,6 +328,7 @@ class StringDataSchema(DocumentSchema):
                 IntegerProperty: force_int,
                 BooleanProperty: force_bool,
                 DateProperty: force_empty_string_to_null,
+                DateTimeProperty: force_empty_string_to_null,
                 DateTimeProperty: force_empty_string_to_null,
             }.get(property.__class__, lambda x: x)
             data[property.name] = transform(data.get(property.name))

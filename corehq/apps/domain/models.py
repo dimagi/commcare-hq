@@ -7,7 +7,7 @@ from couchdbkit.exceptions import ResourceConflict
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.template.loader import render_to_string
-from couchdbkit.ext.django.schema import (
+from dimagi.ext.couchdbkit import (
     Document, StringProperty, BooleanProperty, DateTimeProperty, IntegerProperty,
     DocumentSchema, SchemaProperty, DictProperty,
     StringListProperty, SchemaListProperty, TimeProperty, DecimalProperty
@@ -16,6 +16,7 @@ from django.core.urlresolvers import reverse
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.appstore.models import SnapshotMixin
+from corehq.util.dates import iso_string_to_datetime
 from corehq.util.quickcache import skippable_quickcache
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import (
@@ -490,17 +491,19 @@ class Domain(Document, SnapshotMixin):
     def recent_submissions(self):
         from corehq.apps.reports.util import make_form_couch_key
         key = make_form_couch_key(self.name)
-        res = get_db().view('reports_forms/all_forms',
-            startkey=key+[{}],
+        res = get_db().view(
+            'reports_forms/all_forms',
+            startkey=key + [{}],
             endkey=key,
             descending=True,
             reduce=False,
             include_docs=False,
-            limit=1).all()
-        if len(res) > 0: # if there have been any submissions in the past 30 days
-            return (datetime.utcnow() <=
-                    datetime.strptime(res[0]['key'][2], "%Y-%m-%dT%H:%M:%SZ")
-                    + timedelta(days=30))
+            limit=1
+        ).all()
+        # if there have been any submissions in the past 30 days
+        if len(res) > 0:
+            received_on = iso_string_to_datetime(res[0]['key'][2])
+            return datetime.utcnow() <= received_on + timedelta(days=30)
         else:
             return False
 

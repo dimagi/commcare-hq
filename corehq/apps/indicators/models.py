@@ -4,8 +4,7 @@ import copy
 import dateutil
 import numpy
 import datetime
-from couchdbkit.ext.django.schema import Document, StringProperty, IntegerProperty, DateTimeProperty
-from couchdbkit.schema.base import DocumentSchema
+from dimagi.ext.couchdbkit import Document, DocumentSchema, StringProperty, IntegerProperty, DateTimeProperty
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.crud.models import AdminCRUDDocumentMixin
 from corehq.apps.indicators.admin.crud import (IndicatorAdminCRUDManager,

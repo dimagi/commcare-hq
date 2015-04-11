@@ -1,12 +1,12 @@
-from couchdbkit.ext.django.schema import (
+from dimagi.ext.couchdbkit import (
     Document,
     StringProperty,
     BooleanProperty,
-    DateTimeProperty,
 )
 from datetime import datetime
 from corehq.apps.products.models import Product, SQLProduct
 from django.utils.translation import ugettext as _
+from dimagi.ext.couchdbkit import DateTimeProperty
 
 
 class Program(Document):

@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from itertools import imap
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.users.models import CouchUser, CommCareUser

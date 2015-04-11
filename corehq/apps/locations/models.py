@@ -1,8 +1,9 @@
 from functools import partial
 from couchdbkit import ResourceNotFound
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 import itertools
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
+from dimagi.ext.couchdbkit import DateTimeProperty
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from datetime import datetime

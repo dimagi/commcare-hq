@@ -1,11 +1,11 @@
-from couchdbkit.ext.django.schema import (
+from dimagi.ext.couchdbkit import (
     Document,
     StringProperty,
     DecimalProperty,
     DictProperty,
     BooleanProperty,
-    DateTimeProperty,
 )
+from dimagi.ext.couchdbkit import DateTimeProperty
 from datetime import datetime
 from decimal import Decimal
 from django.db import models
