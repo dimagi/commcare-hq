@@ -352,13 +352,13 @@ def incoming(phone_number, text, backend_api, timestamp=None,
         text = ""
     phone_number = clean_phone_number(phone_number)
     msg = SMSLog(
-        phone_number = phone_number,
-        direction = INCOMING,
-        date = timestamp or datetime.utcnow(),
-        text = text,
-        domain_scope = domain_scope,
-        backend_api = backend_api,
-        backend_message_id = backend_message_id,
+        phone_number=phone_number,
+        direction=INCOMING,
+        date=timestamp or datetime.utcnow(),
+        text=text,
+        domain_scope=domain_scope,
+        backend_api=backend_api,
+        backend_message_id=backend_message_id,
         raw_text=raw_text,
     )
     if backend_attributes:
