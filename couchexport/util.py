@@ -1,7 +1,7 @@
 import functools
 from inspect import isfunction
 import json
-from couchdbkit.ext.django.schema import Property
+from dimagi.ext.couchdbkit import Property
 from dimagi.utils.modules import to_function
 from dimagi.utils.web import json_handler
 

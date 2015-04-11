@@ -1,5 +1,5 @@
 from dateutil.parser import parse
-from couchdbkit.ext.django.schema import DateTimeProperty, Property
+from dimagi.ext.couchdbkit import DateTimeProperty, Property
 import json
 
 def parse_date_string(datestring, precise=False):

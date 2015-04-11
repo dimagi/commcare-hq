@@ -5,7 +5,7 @@ from itertools import islice
 import os
 import tempfile
 from urllib2 import URLError
-from couchdbkit.ext.django.schema import Document, DictProperty,\
+from dimagi.ext.couchdbkit import Document, DictProperty,\
     DocumentSchema, StringProperty, SchemaListProperty, ListProperty,\
     StringListProperty, DateTimeProperty, SchemaProperty, BooleanProperty, IntegerProperty
 import json
