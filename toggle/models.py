@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 
 
 TOGGLE_ID_PREFIX = 'hqFeatureToggle'
