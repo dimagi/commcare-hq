@@ -1353,7 +1353,7 @@ class LocationUserMixin(DocumentSchema):
 
             # we only add the new one because we don't know
             # if we can actually remove the old..
-            self.add_location(location)
+            self.add_location_delegate(location)
         else:
             self.create_location_delegates([location])
 
@@ -1440,7 +1440,7 @@ class LocationUserMixin(DocumentSchema):
                 "There was no linked supply point for the location."
             )
 
-    def add_location(self, location, create_sp_if_missing=False):
+    def add_location_delegate(self, location, create_sp_if_missing=False):
         """
         Add a single location to the delgate case access.
         """
@@ -1464,7 +1464,7 @@ class LocationUserMixin(DocumentSchema):
             self._id
         )
 
-    def remove_location(self, location):
+    def remove_location_delegate(self, location):
         """
         Remove a single location from the case delagate access.
         """
@@ -1485,7 +1485,7 @@ class LocationUserMixin(DocumentSchema):
 
                 self.submit_location_block(caseblock)
 
-    def clear_locations(self):
+    def clear_location_delgates(self):
         """
         Wipe all case delagate access.
         """
@@ -1510,7 +1510,7 @@ class LocationUserMixin(DocumentSchema):
                 # as we can't compare the location objects themself
                 return
 
-        self.clear_locations()
+        self.clear_location_delgates()
 
         if not locations:
             return
