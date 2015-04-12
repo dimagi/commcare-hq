@@ -1571,7 +1571,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin,
             self.domain_membership = DomainMembership(domain=data.get('domain', ""))
             if role_id:
                 self.domain_membership.role_id = role_id
-#            self.save() # will uncomment when I figure out what's happening with sheels commcareuser
 
         return self
 
