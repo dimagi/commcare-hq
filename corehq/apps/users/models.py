@@ -1492,9 +1492,10 @@ class LocationUserMixin(DocumentSchema):
         """
         Wipe all case delagate access.
         """
+        from casexml.apps.case.cleanup import safe_hard_delete
         mapping = self.get_location_map_case()
         if mapping:
-            mapping.delete()
+            safe_hard_delete(mapping)
 
     def create_location_delegates(self, locations):
         """
