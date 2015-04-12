@@ -1430,10 +1430,13 @@ class LocationUserMixin(DocumentSchema):
                 "There was no linked supply point for the location."
             )
 
-    def add_location_delegate(self, location, create_sp_if_missing=False):
+    def add_location_delegate(self, location):
         """
         Add a single location to the delgate case access.
+
+        This will dynamically create a supply point if the supply point isn't found.
         """
+        # todo: the dynamic supply point creation is bad and should be removed.
         from corehq.apps.commtrack.models import SupplyPointCase
 
         sp = SupplyPointCase.get_or_create_by_location(location)
