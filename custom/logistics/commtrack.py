@@ -80,7 +80,7 @@ def add_location(user, location_id):
     if location_id:
         loc = Location.get(location_id)
         user.clear_location_delgates()
-        user.add_location_delegate(loc, create_sp_if_missing=True)
+        user.add_location_delegate(loc)
 
 
 def check_hashes(webuser, django_user, password):
