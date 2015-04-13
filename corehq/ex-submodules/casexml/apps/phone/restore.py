@@ -266,7 +266,7 @@ def get_restore_class(user):
     return restore_class
 
 
-def get_case_payload_batched(domain, stock_settings, version, user, last_synclog, synclog):
+def get_case_payload_batched(domain, stock_settings, version, user, last_synclog, new_synclog):
     response = get_restore_class(user)()
 
     sync_operation = BatchedCaseSyncOperation(user, last_synclog)
@@ -275,9 +275,9 @@ def get_case_payload_batched(domain, stock_settings, version, user, last_synclog
         response.append(element)
 
     sync_state = sync_operation.global_state
-    synclog.cases_on_phone = sync_state.actual_owned_cases
-    synclog.dependent_cases_on_phone = sync_state.actual_extended_cases
-    synclog.save(**get_safe_write_kwargs())
+    new_synclog.cases_on_phone = sync_state.actual_owned_cases
+    new_synclog.dependent_cases_on_phone = sync_state.actual_extended_cases
+    new_synclog.save(**get_safe_write_kwargs())
 
     # commtrack balance sections
     commtrack_elements = get_stock_payload(domain, stock_settings, sync_state.all_synced_cases)
