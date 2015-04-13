@@ -217,7 +217,6 @@ var mk_translation_ui = function (spec) {
         $adder_tbody.append(adder.ui);
     };
     translation_ui.render = function () {
-console.log("in translation_ui.render, allowing autofill? " + translation_ui.allow_autofill);
         var key,
             keys = [],
             translation,
