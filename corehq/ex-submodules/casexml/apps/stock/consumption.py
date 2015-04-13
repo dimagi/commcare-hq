@@ -1,7 +1,9 @@
 import collections
-import functools
 import json
 import math
+from decimal import Decimal
+from corehq.apps.products.models import SQLProduct
+from corehq.toggles import LOGISTICS_CUSTOM_CONSUMPTION
 from dimagi.utils import parsing as dateparse
 from datetime import datetime, timedelta
 from casexml.apps.stock import const
@@ -89,8 +91,11 @@ def compute_daily_consumption(case_id,
         window_start,
         window_end
     )
+    sql_product = SQLProduct.objects.get(product_id=product_id)
+    domain = sql_product.domain
     return compute_daily_consumption_from_transactions(
-        transactions, window_start, configuration
+        transactions, window_start, configuration,
+        exclude_invalid_periods=LOGISTICS_CUSTOM_CONSUMPTION.enabled(domain)
     )
 
 
@@ -170,20 +175,31 @@ def get_transactions(case_id, product_id, section_id, window_start, window_end):
         yield _to_consumption_tx(db_tx)
 
 
-def compute_daily_consumption_from_transactions(transactions, window_start, configuration=None):
+def compute_daily_consumption_from_transactions(transactions, window_start, configuration=None,
+                                                exclude_invalid_periods=False):
     configuration = configuration or ConsumptionConfiguration()
 
     class ConsumptionPeriod(object):
         def __init__(self, tx):
             self.start = from_ts(tx.received_on)
+            self.start_soh = tx.value
+            self.end_soh = None
             self.end = None
             self.consumption = 0
+            self.receipts = 0
 
         def add(self, tx):
             self.consumption += tx.value
 
+        def receipt(self, receipt):
+            self.receipts += receipt
+
         def close_out(self, tx):
             self.end = from_ts(tx.received_on)
+            self.end_soh = tx.value
+
+        def is_valid(self):
+            return self.start_soh + Decimal(self.receipts) >= self.end_soh
 
         @property
         def length(self):
@@ -211,7 +227,8 @@ def compute_daily_consumption_from_transactions(transactions, window_start, conf
             if is_checkpoint:
                 if period:
                     period.close_out(tx)
-                    yield period
+                    if not exclude_invalid_periods or period.is_valid():
+                        yield period
                 period = ConsumptionPeriod(tx)
             elif is_stockout:
                 if period:
@@ -222,6 +239,9 @@ def compute_daily_consumption_from_transactions(transactions, window_start, conf
                 # different kinds of consumption: normal vs losses, etc.
                 if period:
                     period.add(tx)
+            elif exclude_invalid_periods and base_action_type == 'receipts':
+                if period and period.start:
+                    period.receipt(tx.value)
 
     periods = list(split_periods(transactions))
 
