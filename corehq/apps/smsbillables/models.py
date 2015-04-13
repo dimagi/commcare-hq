@@ -287,8 +287,7 @@ class SmsBillable(models.Model):
 
         country_code, national_number = get_country_code_and_national_number(phone_number)
 
-        backend = SMSBackend.get(backend_instance)
-        if backend.is_global:
+        if backend_instance is None or SMSBackend.get(backend_instance).is_global:
             billable.gateway_fee = SmsGatewayFee.get_by_criteria(
                 backend_api_id,
                 direction,
