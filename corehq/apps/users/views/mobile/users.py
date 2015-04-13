@@ -204,7 +204,7 @@ class EditCommCareUserView(BaseFullEditUserView):
         if request.POST['form_type'] == "commtrack":
             if self.update_commtrack_form.is_valid():
                 self.update_commtrack_form.save(self.editable_user)
-                messages.success(request, _("CommTrack information updated!"))
+                messages.success(request, _("CommCare Supply information updated!"))
         return super(EditCommCareUserView, self).post(request, *args, **kwargs)
 
     def custom_user_is_valid(self):

@@ -87,13 +87,13 @@ def commtrackify(domain_name, checked):
 
 COMMTRACK = FeaturePreview(
     slug='commtrack',
-    label=_("CommTrack"),
+    label=_("CommCare Supply"),
     description=_(
-        '<a href="http://www.commtrack.org/home/">CommTrack</a> '
+        '<a href="http://www.commtrack.org/home/">CommCare Supply</a> '
         "is a logistics and supply chain management module. It is designed "
         "to improve the management, transport, and resupply of a variety of "
         "goods and materials, from medication to food to bednets. <br/>"
-        "Note: You must also enable CommTrack on any CommTrack "
+        "Note: You must also enable CommCare Supply on any CommCare Supply "
         "application's settings page."),
     help_link='https://help.commcarehq.org/display/commtrack/CommTrack+Home',
     save_fn=commtrackify,
@@ -133,7 +133,8 @@ LOCATIONS = FeaturePreview(
     slug='locations',
     label=_("Locations"),
     description=_(
-        'Enable locations for this project. This must be enabled for CommTrack to work properly'
+        'Enable locations for this project. This must be enabled for '
+        'CommCare Supply to work properly'
     ),
     help_link='http://help.commcarehq.org/',
     save_fn=enable_locations,

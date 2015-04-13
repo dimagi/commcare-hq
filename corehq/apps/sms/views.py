@@ -1304,7 +1304,7 @@ class SubscribeSMSView(BaseMessagingSectionView):
     def post(self, request, *args, **kwargs):
         if self.form.is_valid():
             self.form.save(self.commtrack_settings)
-            messages.success(request, _("Updated CommTrack settings."))
+            messages.success(request, _("Updated CommCare Supply settings."))
             return HttpResponseRedirect(reverse(SubscribeSMSView.urlname, args=[self.domain]))
         return self.get(request, *args, **kwargs)
 

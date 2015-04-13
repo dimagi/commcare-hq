@@ -1,0 +1,113 @@
+let SessionLoad = 1
+let s:so_save = &so | let s:siso_save = &siso | set so=0 siso=0
+let v:this_session=expand("<sfile>:p")
+silent only
+cd ~/Dimagi/commcare-hq
+if expand('%') == '' && !&modified && line('$') <= 1 && getline(1) == ''
+  let s:wipebuf = bufnr('%')
+endif
+set shortmess=aoO
+badd +118 corehq/util/couch.py
+badd +55 submodules/dimagi-utils-src/dimagi/utils/couch/database.py
+badd +88 submodules/dimagi-utils-src/dimagi/utils/couch/bulk.py
+badd +24 corehq/apps/app_manager/management/commands/helpers.py
+badd +85 corehq/apps/app_manager/migrations/__init__.py
+badd +590 ~/virtualenvs/hq3/lib/python2.7/site-packages/couchdbkit/client.py
+badd +25 ~/virtualenvs/hq3/lib/python2.7/site-packages/couchdbkit/resource.py
+badd +823 ~/virtualenvs/hq3/lib/python2.7/site-packages/kombu/connection.py
+badd +115 ~/virtualenvs/hq3/lib/python2.7/site-packages/pip/_vendor/distlib/resources.py
+badd +132 ~/virtualenvs/hq3/lib/python2.7/site-packages/restkit/resource.py
+argglobal
+silent! argdel *
+argadd corehq/util/couch.py
+edit corehq/util/couch.py
+set splitbelow splitright
+wincmd _ | wincmd |
+vsplit
+1wincmd h
+wincmd w
+wincmd _ | wincmd |
+split
+1wincmd k
+wincmd w
+set nosplitbelow
+set nosplitright
+wincmd t
+set winheight=1 winwidth=1
+exe 'vert 1resize ' . ((&columns * 106 + 106) / 213)
+exe '2resize ' . ((&lines * 27 + 28) / 57)
+exe 'vert 2resize ' . ((&columns * 106 + 106) / 213)
+exe '3resize ' . ((&lines * 27 + 28) / 57)
+exe 'vert 3resize ' . ((&columns * 106 + 106) / 213)
+argglobal
+setlocal fdm=manual
+setlocal fde=0
+setlocal fmr={{{,}}}
+setlocal fdi=#
+setlocal fdl=0
+setlocal fml=1
+setlocal fdn=20
+setlocal fen
+silent! normal! zE
+let s:l = 118 - ((38 * winheight(0) + 27) / 55)
+if s:l < 1 | let s:l = 1 | endif
+exe s:l
+normal! zt
+118
+normal! 021|
+wincmd w
+argglobal
+edit submodules/dimagi-utils-src/dimagi/utils/couch/database.py
+setlocal fdm=manual
+setlocal fde=0
+setlocal fmr={{{,}}}
+setlocal fdi=#
+setlocal fdl=0
+setlocal fml=1
+setlocal fdn=20
+setlocal fen
+silent! normal! zE
+let s:l = 55 - ((13 * winheight(0) + 13) / 27)
+if s:l < 1 | let s:l = 1 | endif
+exe s:l
+normal! zt
+55
+normal! 020|
+wincmd w
+argglobal
+edit submodules/dimagi-utils-src/dimagi/utils/couch/bulk.py
+setlocal fdm=manual
+setlocal fde=0
+setlocal fmr={{{,}}}
+setlocal fdi=#
+setlocal fdl=0
+setlocal fml=1
+setlocal fdn=20
+setlocal fen
+silent! normal! zE
+let s:l = 81 - ((6 * winheight(0) + 13) / 27)
+if s:l < 1 | let s:l = 1 | endif
+exe s:l
+normal! zt
+81
+normal! 0
+wincmd w
+exe 'vert 1resize ' . ((&columns * 106 + 106) / 213)
+exe '2resize ' . ((&lines * 27 + 28) / 57)
+exe 'vert 2resize ' . ((&columns * 106 + 106) / 213)
+exe '3resize ' . ((&lines * 27 + 28) / 57)
+exe 'vert 3resize ' . ((&columns * 106 + 106) / 213)
+tabnext 1
+if exists('s:wipebuf') && getbufvar(s:wipebuf, '&buftype') isnot# 'terminal'
+  silent exe 'bwipe ' . s:wipebuf
+endif
+unlet! s:wipebuf
+set winheight=1 winwidth=20 shortmess=filnxtToO
+let s:sx = expand("<sfile>:p:r")."x.vim"
+if file_readable(s:sx)
+  exe "source " . fnameescape(s:sx)
+endif
+let &so = s:so_save | let &siso = s:siso_save
+doautoall SessionLoadPost
+unlet SessionLoad
+" vim: set ft=vim :

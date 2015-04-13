@@ -854,7 +854,7 @@ class SubscribeSMSForm(Form):
     non_report = BooleanField(
         label=ugettext_lazy("Receive non-reporting SMS alert"),
         required=False,
-        help_text=ugettext_lazy("This alert highlight users/facilities which have not submitted their CommTrack stock report.")
+        help_text=ugettext_lazy("This alert highlight users/facilities which have not submitted their CommCare Supply stock report.")
     )
 
     def save(self, commtrack_settings):

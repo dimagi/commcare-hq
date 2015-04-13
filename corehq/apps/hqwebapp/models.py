@@ -491,7 +491,7 @@ class SetupTab(UITab):
         from corehq.apps.locations.views import FacilitySyncView
 
         if self.project.commtrack_enabled:
-            return [[_('CommTrack Setup'), [
+            return [[_('CommCare Supply Setup'), [
                 # products
                 {
                     'title': ProductListView.page_title,
@@ -866,7 +866,7 @@ class MessagingTab(UITab):
         if self.project.commtrack_enabled:
             from corehq.apps.sms.views import SubscribeSMSView
             items.append(
-                (_("CommTrack"), [
+                (_("CommCare Supply"), [
                     {'title': ugettext_lazy("Subscribe to SMS Reports"),
                      'url': reverse(SubscribeSMSView.urlname, args=[self.domain])},
                 ])
