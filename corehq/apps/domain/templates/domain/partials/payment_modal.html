@@ -12,7 +12,9 @@
     <form action="{{ process_payment_url }}"
           method="POST"
           class="form form-horizontal"
-          id="payment-form">
+          data-bind="attr: {
+              id: form_id
+          }">
         <div class="modal-body">
             <div data-bind="template: {
                 data: costItem,
