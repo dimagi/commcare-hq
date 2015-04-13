@@ -3,8 +3,7 @@ from couchdbkit import ResourceNotFound
 from django.http import Http404
 from django.test import TestCase, SimpleTestCase
 from corehq.apps.groups.models import Group
-from corehq.util.couch import get_document_or_404, IterativeSaver, iter_update
-from dimagi.utils.couch.database import iter_docs
+from corehq.util.couch import get_document_or_404, IterDB, iter_update
 from jsonobject.exceptions import WrappingAttributeError
 from mock import Mock
 
@@ -91,10 +90,10 @@ class LoggingDB(object):
         return [{'id': 'unique_id'} for doc in docs]
 
 
-class IterativeSaverSimpleTest(SimpleTestCase):
+class IterDBSimpleTest(SimpleTestCase):
     def test_number_of_calls(self):
         db = LoggingDB()
-        with IterativeSaver(db, chunksize=50) as iter_db:
+        with IterDB(db, chunksize=50) as iter_db:
             all_docs = range(105)
             for doc in all_docs:
                 iter_db.save(doc)
@@ -107,7 +106,7 @@ class IterativeSaverSimpleTest(SimpleTestCase):
         self.assertEqual(db.num_writes, 3)
 
 
-class IterativeSaverTest(TestCase):
+class IterDBTest(TestCase):
     def setUp(self):
         self.domain = "TEST"
         # use Group just 'cause it's a simple model,
@@ -124,13 +123,13 @@ class IterativeSaverTest(TestCase):
             group.delete()
 
     def test_normal_usage(self):
-        with IterativeSaver(self.db, chunksize=5) as iter_db:
+        with IterDB(self.db, chunksize=5) as iter_db:
             for group in self.groups:
                 group['test_property'] = True
                 iter_db.save(group)
         for group in self.groups:
             new = self.db.get(group._id)
-            self.assertTrue(getattr(new, 'test_property', False))
+            self.assertTrue(new.get('test_property', False))
 
     def test_conflicted_doc(self):
         old = self.groups[3]
@@ -140,7 +139,7 @@ class IterativeSaverTest(TestCase):
         self.assertEqual(old._id, new._id)
         self.assertNotEqual(old._rev, new._rev)
         # now if you try to save 'old', it should conflict
-        with IterativeSaver(self.db, chunksize=5) as iter_db:
+        with IterDB(self.db, chunksize=5) as iter_db:
             for group in self.groups:
                 iter_db.save(group)
 
@@ -150,7 +149,7 @@ class IterativeSaverTest(TestCase):
         self.assertEqual([old._id], iter_db.error_ids)
 
     def test_delete(self):
-        with IterativeSaver(self.db, chunksize=5) as iter_db:
+        with IterDB(self.db, chunksize=5) as iter_db:
             deleted_groups = []
             for group in self.groups[:4]:
                 deleted_groups.append(group._id)
@@ -164,4 +163,35 @@ class IterativeSaverTest(TestCase):
         self.assertEqual(deleted_groups, iter_db.deleted_ids)
         self.assertEqual(saved_groups, iter_db.saved_ids)
         for group_id in deleted_groups:
-            self.assertRaises(ResourceNotFound, self.db.get(group_id))
+            self.assertRaises(ResourceNotFound, self.db.get, group_id)
+
+    def test_iter_update(self):
+        def desired_action(group):
+            i = group['index']
+            if i == 1:
+                return 'DELETE'
+            elif i % 2 == 0:
+                return 'UPDATE'
+            else:
+                return 'IGNORE'
+
+        def mark_cool(group):
+            action = desired_action(group)
+            if action == 'UPDATE':
+                group['is_cool'] = True
+                return group
+            elif action == 'DELETE':
+                return 'DELETE'
+
+        ids = [g._id for g in self.groups] + ['NOT_REAL_ID']
+        res = iter_update(self.db, mark_cool, ids)
+        self.assertEqual(res.not_found_ids, {'NOT_REAL_ID'})
+        for result_ids, action in [
+            (res.ignored_ids, 'IGNORE'),
+            (res.deleted_ids, 'DELETE'),
+            (res.updated_ids, 'UPDATE'),
+        ]:
+            self.assertEqual(
+                result_ids,
+                {g._id for g in self.groups if desired_action(g) == action}
+            )
