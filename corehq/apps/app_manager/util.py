@@ -403,7 +403,7 @@ def actions_use_usercase(actions):
 
 
 def enable_usercase(domain_name):
-    with CriticalSection([domain_name + '_enable_usercase']):
+    with CriticalSection(['enable_usercase_' + domain_name]):
         domain = Domain.get_by_name(domain_name, strict=True)
         if not domain.usercase_enabled:
             domain.usercase_enabled = True
