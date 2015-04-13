@@ -226,7 +226,7 @@ class BillingAccountBasicForm(forms.Form):
         account.name = self.cleaned_data['name']
         account.is_active = self.cleaned_data['is_active']
         transfer_id = self.cleaned_data['active_accounts']
-        if not transfer_id:
+        if transfer_id:
             transfer_account = BillingAccount.objects.get(id=transfer_id)
             for sub in account.subscription_set.all():
                 sub.account = transfer_account
