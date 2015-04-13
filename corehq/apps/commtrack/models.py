@@ -19,6 +19,7 @@ from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.hqcase.utils import submit_case_blocks
 from casexml.apps.stock.utils import months_of_stock_remaining, state_stock_category
 from corehq.apps.domain.models import Domain
+from corehq.ext.couchdbkit import USecDateTimeProperty
 from couchforms.signals import xform_archived, xform_unarchived
 from dimagi.utils import parsing as dateparse
 from copy import copy
@@ -328,6 +329,7 @@ class StringDataSchema(DocumentSchema):
                 BooleanProperty: force_bool,
                 DateProperty: force_empty_string_to_null,
                 DateTimeProperty: force_empty_string_to_null,
+                USecDateTimeProperty: force_empty_string_to_null,
             }.get(property.__class__, lambda x: x)
             data[property.name] = transform(data.get(property.name))
         return super(StringDataSchema, cls).wrap(data)
@@ -788,10 +790,10 @@ class RequisitionCase(CommCareCase):
     # TODO none of these properties are supported on mobile currently
     # we need to discuss what will be eventually so we know what we need
     # to support here
-    requested_on = DateTimeProperty()
-    approved_on = DateTimeProperty()
-    fulfilled_on = DateTimeProperty()
-    received_on = DateTimeProperty()
+    requested_on = USecDateTimeProperty()
+    approved_on = USecDateTimeProperty()
+    fulfilled_on = USecDateTimeProperty()
+    received_on = USecDateTimeProperty()
     requested_by = StringProperty()
     approved_by = StringProperty()
     fulfilled_by = StringProperty()

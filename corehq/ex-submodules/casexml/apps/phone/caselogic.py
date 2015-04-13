@@ -10,6 +10,7 @@ from casexml.apps.case import const
 from casexml.apps.case.util import reverse_indices
 from casexml.apps.case.xform import CaseDbCache
 from casexml.apps.phone.models import CaseState
+from corehq.ext.couchdbkit import USecDateTimeProperty
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import string_to_utc_datetime
 
@@ -533,7 +534,7 @@ def filter_cases_modified_elsewhere_since_sync(cases, last_sync_token):
             #   'key': ['case-id', 'sync-token-id']
             # }
             if row['value']:
-                modification_date = datetime.strptime(row['value'], '%Y-%m-%dT%H:%M:%SZ')
+                modification_date = USecDateTimeProperty().wrap(row['value'])
                 if modification_date >= last_sync_token.date:
                     case_id, sync_token_id = row['key']
                     all_case_updates_by_sync_token[case_id].append(

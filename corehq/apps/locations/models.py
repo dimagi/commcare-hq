@@ -3,6 +3,7 @@ from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django.schema import *
 import itertools
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
+from corehq.ext.couchdbkit import USecDateTimeProperty
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from datetime import datetime
@@ -279,7 +280,7 @@ class Location(CachedCouchDocumentMixin, Document):
     # unique id from some external data source
     external_id = StringProperty()
     metadata = DictProperty()
-    last_modified = DateTimeProperty()
+    last_modified = USecDateTimeProperty()
     is_archived = BooleanProperty(default=False)
 
     latitude = FloatProperty()
