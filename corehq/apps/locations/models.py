@@ -164,6 +164,10 @@ class SQLLocation(MPTTModel):
             self.name
         )
 
+    @property
+    def display_name(self):
+        return u"{} [{}]".format(self.name, self.location_type.name)
+
     def archived_descendants(self):
         """
         Returns a list of archived descendants for this location.

@@ -8,6 +8,7 @@ from corehq.apps.accounting.models import Currency
 from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES
 from corehq.apps.sms.models import DIRECTION_CHOICES
 from corehq.apps.sms.phonenumbers_helper import get_country_code_and_national_number
+from corehq.apps.sms.test_backend import TestSMSBackend
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.smsbillables.exceptions import AmbiguousPrefixException
 
@@ -313,6 +314,9 @@ class SmsBillable(models.Model):
 
         if api_response is not None:
             billable.api_response = api_response
+
+        if backend_api_id == TestSMSBackend.get_api_id():
+            billable.is_valid = False
 
         billable.save()
 

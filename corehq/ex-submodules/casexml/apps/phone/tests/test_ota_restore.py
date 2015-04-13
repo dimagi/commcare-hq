@@ -2,6 +2,7 @@ from django.test import TestCase
 import os
 import time
 from django.test.utils import override_settings
+from casexml.apps.phone.caselogic import BatchedCaseSyncOperation
 from couchforms.tests.testutils import post_xform_to_couch
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import check_xml_line_by_line, delete_all_cases, delete_all_sync_logs
@@ -77,7 +78,7 @@ class OtaRestoreTest(TestCase):
 
         # implicit length assertion
         [newcase] = CommCareCase.view("case/by_user", reduce=False, include_docs=True).all()
-        self.assertEqual(1, len(user.get_case_updates(None).actual_cases_to_sync))
+        self.assertEqual(1, len(list(BatchedCaseSyncOperation(user, None).get_all_case_updates())))
         expected_case_block = """
         <case>
             <case_id>asdf</case_id>

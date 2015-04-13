@@ -9,6 +9,7 @@ from corehq.apps.reports.sqlreport import DatabaseColumn, SummingSqlTabularRepor
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.reports.standard.maps import GenericMapReport
 from corehq.apps.reports.util import format_datatables_data, make_ctable_table_name
+from corehq.const import USER_MONTH_FORMAT
 from corehq.util.dates import iso_string_to_date
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_date
@@ -388,7 +389,7 @@ class GSIDSQLByDayReport(GSIDSQLReport):
         column_headers.append(DataTablesColumn("Disease"))
 
         prev_month = startdate.month
-        month_columns = [startdate.strftime("%B %Y")]
+        month_columns = [startdate.strftime(USER_MONTH_FORMAT)]
         for n, day in enumerate(self.daterange(startdate, enddate)):
             day_obj = iso_string_to_date(day)
             month = day_obj.month
@@ -399,7 +400,7 @@ class GSIDSQLByDayReport(GSIDSQLReport):
             else:
                 month_group = DataTablesColumnGroup(*month_columns)
                 column_headers.append(month_group)
-                month_columns = [day_obj.strftime("%B %Y"), day_column]
+                month_columns = [day_obj.strftime(USER_MONTH_FORMAT), day_column]
                 prev_month = month
         
         month_group = DataTablesColumnGroup(*month_columns)

@@ -91,6 +91,8 @@ Add the required user:
     createdb -U postgres commcarehq
     createdb -U postgres commcarehq_reporting
 
+If these commands give you difficulty, particularly for Mac users running Postgres.app, verify that the default postgres role has been created. If not, `createuser -s -r postgres` will create it.
+
 
 ### Setting up a virtualenv
 

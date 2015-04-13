@@ -6,6 +6,7 @@ import logging
 import numpy
 import pytz
 from corehq.apps.indicators.models import DynamicIndicatorDefinition, CombinedCouchViewIndicatorDefinition
+from corehq.const import USER_MONTH_FORMAT
 from dimagi.utils.decorators.memoized import memoized
 from mvp.models import MVP
 from mvp.reports import MVPIndicatorReport
@@ -258,7 +259,7 @@ class HealthCoordinatorReport(MVPIndicatorReport):
         )
         if self.is_debug:
             for result in retrospective:
-                result['date'] = result['date'].strftime("%B %Y")
+                result['date'] = result['date'].strftime(USER_MONTH_FORMAT)
             return retrospective
         if isinstance(indicator, CombinedCouchViewIndicatorDefinition):
             table = self.get_indicator_table(retrospective)

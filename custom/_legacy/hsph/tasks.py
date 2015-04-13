@@ -89,8 +89,7 @@ def new_update_case_properties():
     _domain = Domain.get_by_name(DOMAINS[0])
     if _domain is None:
         return
-    time_zone = _domain.default_timezone
-    time_zone = pytz.timezone(time_zone)
+    time_zone = _domain.get_default_timezone()
     past_21_date = past_x_date(time_zone, 21)
     past_42_date = past_x_date(time_zone, 42)
     setup_indices()

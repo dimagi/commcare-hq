@@ -5,6 +5,7 @@ from reportlab.pdfgen.canvas import Canvas
 from reportlab.platypus import Paragraph
 from corehq.apps.accounting.exceptions import InvoiceError
 from corehq.apps.accounting.utils import get_money_str
+from corehq.const import USER_DATE_FORMAT
 import settings
 
 
@@ -222,9 +223,9 @@ class InvoiceTemplate(object):
 
         self.canvas.drawString(
             0, 0, "Statement period from %s to %s" %
-                  (self.date_start.strftime("%d %B %Y")
+                  (self.date_start.strftime(USER_DATE_FORMAT)
                    if self.date_start is not None else "",
-                   self.date_end.strftime("%d %B %Y")
+                   self.date_end.strftime(USER_DATE_FORMAT)
                    if self.date_end is not None else ""))
 
         self.canvas.translate(-origin_x, -origin_y)

@@ -7,6 +7,7 @@ from jsonobject import DateTimeProperty
 
 from corehq.apps.locations.models import Location
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
+from corehq.const import SERVER_DATETIME_FORMAT_NO_SEC
 from corehq.elastic import ES_URLS
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
@@ -351,7 +352,7 @@ class McctRejectedClientPage(McctClientApprovalPage):
             except McctStatus.DoesNotExist:
                 reason = None
             row = [
-                iso_string_to_datetime(form["form"]["meta"]["timeEnd"]).strftime("%Y-%m-%d %H:%M"),
+                iso_string_to_datetime(form["form"]["meta"]["timeEnd"]).strftime(SERVER_DATETIME_FORMAT_NO_SEC),
                 self._get_case_name_html(data.get('case'), with_checkbox),
                 self._get_service_type_html(form, data.get('service_type'), with_checkbox),
                 data.get('location_name'),
@@ -439,7 +440,7 @@ class McctClientLogPage(McctProjectReview):
             except:
                 status, reason, status_date, username = ('eligible', None, None, None)
             row = [
-                status_date.strftime("%Y-%m-%d %H:%M") if status_date is not None else EMPTY_FIELD,
+                status_date.strftime(SERVER_DATETIME_FORMAT_NO_SEC) if status_date is not None else EMPTY_FIELD,
                 self._get_case_name_html(data.get('case'), with_checkbox),
                 self._get_service_type_html(form, data.get('service_type'), with_checkbox),
                 data.get('location_name'),

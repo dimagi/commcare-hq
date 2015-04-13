@@ -1,4 +1,6 @@
 from django.utils.html import escape
+from corehq.const import SERVER_DATETIME_FORMAT
+
 
 def wrapper(error):
     
@@ -8,7 +10,7 @@ def wrapper(error):
     domain = error.domain if hasattr(error, "domain") else ""
     return [error.get_id,
             error.archived, 
-            error.date.strftime('%Y-%m-%d %H:%M:%S') if error.date else "", 
+            error.date.strftime(SERVER_DATETIME_FORMAT) if error.date else "",
             escape(error.type), 
             truncate(error.message),
             domain,

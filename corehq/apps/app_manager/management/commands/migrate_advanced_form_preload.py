@@ -1,4 +1,4 @@
-from corehq.apps.app_manager.management.commands.migrate_graph_configuration_properties import AppMigrationCommandBase
+from corehq.apps.app_manager.management.commands.helpers import AppMigrationCommandBase
 from corehq.apps.app_manager.models import Application
 
 
@@ -9,7 +9,7 @@ class Command(AppMigrationCommandBase):
     include_builds = False
 
     def migrate_app(self, app_doc):
-        modules = [m for m in app_doc['modules'] if m['module_type'] == 'advanced']
+        modules = [m for m in app_doc['modules'] if m.get('module_type', '') == 'advanced']
         should_save = False
         for module in modules:
             forms = module['forms']

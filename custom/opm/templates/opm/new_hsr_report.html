@@ -1,0 +1,46 @@
+{% extends "opm/beneficiary_report.html" %}
+{% load hq_shared_tags %}
+{% load report_tags %}
+{% load i18n %}
+
+{% block js-inline %}
+    {{ block.super }}
+    <script>
+        var updateTotal = function (bodyRows, totalCells, begin) {
+            var total = {};
+            var totalValues= {};
+            $(bodyRows).each(function(id) {
+                $(this).children().each(function(idx) {
+                    var cell;
+                    if (idx >= begin) {
+                        if (id === 0) totalValues[idx] = [0, 0];
+                        cell = $(this).text().trim().split('/').map(function(x){return parseFloat(x)});
+                        if (cell.length === 2) {
+                            totalValues[idx][0] += cell[0];
+                            totalValues[idx][1] += cell[1];
+                            total[idx] = totalValues[idx][0] + "/" + totalValues[idx][1];
+                        } else {
+                            totalValues[idx][0] += cell[0];
+                            total[idx] = totalValues[idx][0]
+                        }
+                    }
+                });
+            });
+            $(totalCells).each(function(id) {
+                if (id in totalValues) $(this).text(total[id]);
+            });
+        };
+        var updateTotalRow = function () {
+            var fixedTotal = {};
+            var fixedTotalValues = {};
+            var bodyTotal = {};
+            var bodyTotalValues = {};
+            updateTotal($('.DTFC_LeftBodyWrapper tbody tr'), $('.DTFC_LeftFootWrapper tfoot td'), 3);
+            updateTotal($('.dataTables_scrollBody tbody tr'), $('.dataTables_scrollFoot tfoot td'), 0);
+        };
+        $('#report_table_health_status_report').on('draw.dt', function() {
+           updateTotalRow();
+        });
+        updateTotalRow();
+    </script>
+{% endblock %}

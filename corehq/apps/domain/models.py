@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 from itertools import imap
-import hashlib
 import json
 import logging
 import uuid
@@ -13,12 +12,11 @@ from couchdbkit.ext.django.schema import (
     DocumentSchema, SchemaProperty, DictProperty,
     StringListProperty, SchemaListProperty, TimeProperty, DecimalProperty
 )
-from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.appstore.models import SnapshotMixin
-from corehq.util.quickcache import QuickCache, quickcache
+from corehq.util.quickcache import skippable_quickcache
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import (
     iter_docs, get_db, get_safe_write_kwargs, apply_update, iter_bulk_delete
@@ -47,22 +45,6 @@ for lang in all_langs:
     lang_lookup[lang['three']] = lang['names'][0] # arbitrarily using the first name if there are multiple
     if lang['two'] != '':
         lang_lookup[lang['two']] = lang['names'][0]
-
-
-class _StrictQuickCache(QuickCache):
-    """
-    Just like QuickCache, but intercepts the function call to abort caching
-    under certain conditions
-    """
-    def __call__(self, *args, **kwargs):
-        strict = kwargs.get('strict', False)
-        if not strict:
-            return super(_StrictQuickCache, self).__call__(*args, **kwargs)
-        else:
-            key = self.get_cache_key(*args, **kwargs)
-            content = self.fn(*args, **kwargs)
-            self.cache.set(key, content)
-            return content
 
 
 class DomainMigrations(DocumentSchema):
@@ -535,7 +517,7 @@ class Domain(Document, SnapshotMixin):
         return self.name
 
     @classmethod
-    @quickcache(['name'], timeout=30*60, helper_class=_StrictQuickCache)
+    @skippable_quickcache(['name'], skip_arg='strict', timeout=30*60)
     def get_by_name(cls, name, strict=False):
         if not name:
             # get_by_name should never be called with name as None (or '', etc)
