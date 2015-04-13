@@ -473,24 +473,3 @@ class RestoreConfig(object):
             # on initial sync, only cache if the duration was longer than the threshold
             if self.force_cache or duration > timedelta(seconds=INITIAL_SYNC_CACHE_THRESHOLD):
                 self.cache.set(self._initial_cache_key(), resp, self.cache_timeout)
-
-
-def generate_restore_payload(user, restore_id="", version=V1, state_hash="",
-                             items=False):
-    """
-    Gets an XML payload suitable for OTA restore.
-
-        user:          who the payload is for
-        restore_id:    last sync token for this user
-        version:       the restore API version
-
-        returns: the xml payload of the sync operation
-    """
-    config = RestoreConfig(user, restore_id, version, state_hash, items=items)
-    return config.get_payload()
-
-
-def generate_restore_response(user, restore_id="", version=V1, state_hash="",
-                              items=False):
-    config = RestoreConfig(user, restore_id, version, state_hash, items=items)
-    return config.get_response()

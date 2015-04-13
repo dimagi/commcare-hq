@@ -2,6 +2,7 @@ from django.test import TestCase
 from casexml.apps.case.tests import delete_all_cases, delete_all_xforms
 from casexml.apps.case.tests.util import delete_all_sync_logs
 from casexml.apps.case.xml import V2
+from casexml.apps.phone.tests.utils import generate_restore_payload
 from casexml.apps.stock.models import StockReport, StockTransaction
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq.apps.commtrack import const
@@ -19,7 +20,6 @@ from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.products.models import Product
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_safe_write_kwargs
-from casexml.apps.phone.restore import generate_restore_payload
 from casexml.apps.phone.util import get_payload_content
 from lxml import etree
 

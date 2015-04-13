@@ -3,15 +3,15 @@ import os
 import time
 from django.test.utils import override_settings
 from casexml.apps.phone.caselogic import BatchedCaseSyncOperation
+from casexml.apps.phone.tests.utils import generate_restore_payload
 from couchforms.tests.testutils import post_xform_to_couch
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import check_xml_line_by_line, delete_all_cases, delete_all_sync_logs
 from casexml.apps.case.xform import process_cases
 from datetime import datetime, date
 from casexml.apps.phone.models import User, SyncLog
-from casexml.apps.phone import xml, views
+from casexml.apps.phone import xml
 from django.contrib.auth.models import User as DjangoUser
-from casexml.apps.phone.restore import generate_restore_payload
 from casexml.apps.phone.util import get_payload_content
 from django.http import HttpRequest
 from casexml.apps.phone.tests import const

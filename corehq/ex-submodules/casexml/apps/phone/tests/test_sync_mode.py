@@ -4,7 +4,7 @@ from django.test import TestCase
 import os
 from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.phone.tests.utils import synclog_from_restore_payload
+from casexml.apps.phone.tests.utils import synclog_from_restore_payload, generate_restore_payload
 from corehq.apps.domain.models import Domain
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, FILE_RESTORE
 from couchforms.tests.testutils import post_xform_to_couch
@@ -14,7 +14,7 @@ from casexml.apps.case.tests.util import (check_user_has_case, delete_all_sync_l
     assert_user_has_case)
 from casexml.apps.case.xform import process_cases
 from casexml.apps.phone.models import SyncLog, User
-from casexml.apps.phone.restore import generate_restore_payload, RestoreConfig
+from casexml.apps.phone.restore import RestoreConfig
 from casexml.apps.phone.util import get_payload_content
 from dimagi.utils.parsing import json_format_datetime
 from couchforms.models import XFormInstance
