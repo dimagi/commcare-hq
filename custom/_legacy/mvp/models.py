@@ -12,7 +12,18 @@ from mvp.indicator_admin.crud import MVPActiveCasesCRUDManager, MVPChildCasesByA
 
 class MVP(object):
     NAMESPACE = "mvp_indicators"
-    DOMAINS = ["mvp-tiby", "mvp-potou", "mvp-sauri", "mvp-bonsaaso", "mvp-ruhiira", "mvp-mwandama", "mvp-sada"]
+    DOMAINS = [
+        "mvp-tiby",
+        "mvp-potou",
+        "mvp-sauri",
+        "mvp-bonsaaso",
+        "mvp-ruhiira",
+        "mvp-mwandama",
+        "mvp-sada",
+        "mvp-mbola",
+        "mvp-koraro",
+        "mvp-pampaida",
+    ]
 
     VISIT_FORMS = dict(
         pregnancy_visit='http://openrosa.org/formdesigner/185A7E63-0ECD-4D9A-8357-6FD770B6F065',
