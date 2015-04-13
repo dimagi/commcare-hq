@@ -1,17 +1,16 @@
 from __future__ import absolute_import
 from couchdbkit.ext.django.schema import *
 from dimagi.ext.jsonobject import USecDateTimeMeta, \
-    USecDateTimeProperty
+    DateTimeProperty, OldDateTimeProperty
 from dimagi.utils.couch.database import SafeSaveDocument
 
 
-OldDateTimeProperty = DateTimeProperty
+OldDateTimeProperty = OldDateTimeProperty
 OldDocument = Document
 OldDocumentSchema = DocumentSchema
 OldSafeSaveDocument = SafeSaveDocument
 
-
-DateTimeProperty = USecDateTimeProperty
+DateTimeProperty = DateTimeProperty
 
 
 class Document(OldDocument):

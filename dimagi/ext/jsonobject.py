@@ -1,12 +1,16 @@
 from __future__ import absolute_import
 import datetime
 import decimal
-from jsonobject import AbstractDateProperty
+from jsonobject.base_properties import AbstractDateProperty
+from jsonobject import *
 import re
 from jsonobject.api import re_date, re_time, re_decimal
 from dimagi.utils.parsing import ISO_DATETIME_FORMAT
 from django.conf import settings
 
+
+OldJsonObject = JsonObject
+OldDateTimeProperty = DateTimeProperty
 
 HISTORICAL_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 
@@ -24,7 +28,7 @@ else:
                           fail_if_debug=settings.UNIT_TESTING)
 
 
-class USecDateTimeProperty(AbstractDateProperty):
+class DateTimeProperty(AbstractDateProperty):
     """
     Accepts and produces ISO8601 string in UTC (with the Z suffix)
     Accepts with or without microseconds (must have all six digits if any)
@@ -79,7 +83,7 @@ re_loose_datetime = re.compile(
 
 class USecDateTimeMeta(object):
     update_properties = {
-        datetime.datetime: USecDateTimeProperty,
+        datetime.datetime: DateTimeProperty,
     }
     string_conversions = (
         (re_date, datetime.date),
@@ -87,3 +91,7 @@ class USecDateTimeMeta(object):
         (re_trans_datetime, datetime.datetime),
         (re_decimal, decimal.Decimal),
     )
+
+
+class JsonObject(OldJsonObject):
+    Meta = USecDateTimeMeta

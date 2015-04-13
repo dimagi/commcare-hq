@@ -2,11 +2,11 @@ import datetime
 from django.test import SimpleTestCase
 import jsonobject
 from jsonobject.exceptions import BadValueError
-from dimagi.ext.jsonobject import USecDateTimeProperty
+from dimagi.ext.jsonobject import DateTimeProperty
 
 
 class Foo(jsonobject.JsonObject):
-    bar = USecDateTimeProperty()
+    bar = DateTimeProperty()
 
 
 class TransitionalExactDateTimePropertyTest(SimpleTestCase):
