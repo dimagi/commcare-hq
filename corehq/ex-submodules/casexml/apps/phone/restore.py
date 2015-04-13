@@ -73,6 +73,7 @@ class RestoreResponse(object):
         self.username = username
         self.items = items
         self.num_items = 0
+        self.finalized = False
 
     def close(self):
         self.response_body.close()
@@ -94,8 +95,17 @@ class RestoreResponse(object):
         for element in iterable:
             self.append(element)
 
-    def compose(self):
+    def finalize(self):
         raise NotImplemented()
+
+    def get_cache_payload(self):
+        raise NotImplemented()
+
+    def as_string(self):
+        return self.get_cache_payload()
+
+    def __str__(self):
+        return self.as_string()
 
 
 class FileRestoreResponse(RestoreResponse):
@@ -132,7 +142,7 @@ class FileRestoreResponse(RestoreResponse):
 
         return response
 
-    def compose(self):
+    def finalize(self):
         """
         Creates the final file with start and ending tag
         """
@@ -148,11 +158,28 @@ class FileRestoreResponse(RestoreResponse):
         shutil.copyfileobj(self.response_body, self.response)
 
         self.response.write(self.closing_tag)
-        return self.get_filename()
+        self.finalized = True
+        self.close()
 
     def close(self):
         self.response_body.close()
         self.response.close()
+
+    def get_cache_payload(self):
+        return self.get_filename()
+
+    def as_string(self):
+        with open(self.get_filename(), 'r') as f:
+            return f.read()
+
+    def get_http_response(self):
+        try:
+            with open(self.get_filename(), 'r') as f:
+                # Since payload file is all one line, need to readline based on bytes
+                return StreamingHttpResponse(iter(lambda: f.readline(MAX_BYTES), ''),
+                                             mimetype="text/xml")
+        except IOError as e:
+            return HttpResponse(e, status=500)
 
 
 class StringRestoreResponse(RestoreResponse):
@@ -160,6 +187,7 @@ class StringRestoreResponse(RestoreResponse):
     def __init__(self, username=None, items=False):
         super(StringRestoreResponse, self).__init__(username, items)
         self.response_body = StringIO()
+        self.response = None
 
     def __add__(self, other):
         if not isinstance(other, StringRestoreResponse):
@@ -172,10 +200,10 @@ class StringRestoreResponse(RestoreResponse):
 
         return response
 
-    def compose(self):
+    def finalize(self):
         # Add 1 to num_items to account for message element
         items = self.items_template.format(self.num_items + 1) if self.items else ''
-        return '{start}{body}{end}'.format(
+        self.response = '{start}{body}{end}'.format(
             start=self.start_tag_template.format(
                 items=items,
                 username=self.username,
@@ -183,9 +211,30 @@ class StringRestoreResponse(RestoreResponse):
             body=self.response_body.getvalue(),
             end=self.closing_tag
         )
+        self.finalized = True
+        self.close()
 
-    def __str__(self):
-        return self.compose()
+    def get_cache_payload(self):
+        return self.response
+
+    def get_http_response(self):
+        return HttpResponse(self.response, mimetype="text/xml")
+
+
+class CachedResponse(object):
+    def __init__(self, payload):
+        self.payload = payload
+        self.is_file = payload.endswith(FileRestoreResponse.EXTENSION) and path.exists(payload)
+
+    def as_string(self):
+        if self.is_file:
+            with open(self.payload, 'r') as f:
+                return f.read()
+        else:
+            return self.payload
+
+    def get_http_response(self):
+        return HttpResponse(self.payload, mimetype="text/xml")
 
 
 def get_stock_payload(domain, stock_settings, case_state_list):
@@ -376,7 +425,7 @@ class RestoreConfig(object):
 
         cached_payload = self.get_cached_payload()
         if cached_payload:
-            return cached_payload
+            return CachedResponse(cached_payload)
 
         start_time = datetime.utcnow()
         last_seq = str(get_db().info()["update_seq"])
@@ -408,28 +457,18 @@ class RestoreConfig(object):
             )
             combined_response = response + case_response
             case_response.close()
-            resp = combined_response.compose()
-            combined_response.close()
+            combined_response.finalize()
 
         duration = datetime.utcnow() - start_time
         new_synclog.duration = duration.seconds
         new_synclog.save()
-        self.set_cached_payload_if_necessary(resp, duration)
-        return resp
+        self.set_cached_payload_if_necessary(combined_response, duration)
+        return combined_response
 
     def get_response(self):
         try:
             payload = self.get_payload()
-            if path.exists(payload):
-                try:
-                    with open(payload, 'r') as f:
-                        # Since payload file is all one line, need to readline based on bytes
-                        return StreamingHttpResponse(iter(lambda: f.readline(MAX_BYTES), ''),
-                                                     mimetype="text/xml")
-                except IOError as e:
-                    return HttpResponse(e, status=500)
-            else:
-                return HttpResponse(payload, mimetype="text/xml")
+            return payload.get_http_response()
         except RestoreException, e:
             logging.exception("%s error during restore submitted by %s: %s" %
                               (type(e).__name__, self.user.username, str(e)))
@@ -463,7 +502,7 @@ class RestoreConfig(object):
         if self.sync_log:
             # if there is a sync token, always cache
             try:
-                self.sync_log.set_cached_payload(resp, self.version)
+                self.sync_log.set_cached_payload(resp.get_cache_payload(), self.version)
             except ResourceConflict:
                 # if one sync takes a long time and another one updates the sync log
                 # this can fail. in this event, don't fail to respond, since it's just
@@ -472,4 +511,4 @@ class RestoreConfig(object):
         else:
             # on initial sync, only cache if the duration was longer than the threshold
             if self.force_cache or duration > timedelta(seconds=INITIAL_SYNC_CACHE_THRESHOLD):
-                self.cache.set(self._initial_cache_key(), resp, self.cache_timeout)
+                self.cache.set(self._initial_cache_key(), resp.get_cache_payload(), self.cache_timeout)

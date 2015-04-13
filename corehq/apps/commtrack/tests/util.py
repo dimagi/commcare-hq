@@ -20,7 +20,6 @@ from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.products.models import Product
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_safe_write_kwargs
-from casexml.apps.phone.util import get_payload_content
 from lxml import etree
 
 
@@ -180,7 +179,7 @@ class CommTrackTest(TestCase):
 
 
 def get_ota_balance_xml(user):
-    xml = get_payload_content(generate_restore_payload(user.to_casexml_user(), version=V2))
+    xml = generate_restore_payload(user.to_casexml_user(), version=V2)
     return extract_balance_xml(xml)
 
 

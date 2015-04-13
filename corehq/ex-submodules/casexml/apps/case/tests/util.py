@@ -17,7 +17,6 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xform import process_cases
 from casexml.apps.phone.restore import RestoreConfig
 from casexml.apps.case.util import post_case_blocks
-from casexml.apps.phone.util import get_payload_etree
 
 
 def bootstrap_case_from_xml(test_class, filename, case_id_override=None, domain=None):
@@ -115,8 +114,8 @@ def check_user_has_case(testcase, user, case_blocks, should_have=True,
     if restore_id and purge_restore_cache:
         SyncLog.get(restore_id).invalidate_cached_payloads()
     restore_config = RestoreConfig(user, restore_id, version=version)
-    payload_string = restore_config.get_payload()
-    payload = get_payload_etree(payload_string)
+    payload_string = restore_config.get_payload().as_string()
+    payload = ElementTree.fromstring(payload_string)
 
     blocks = payload.findall('{{{0}}}case'.format(XMLNS))
 

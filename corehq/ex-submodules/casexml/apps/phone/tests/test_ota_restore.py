@@ -12,8 +12,6 @@ from datetime import datetime, date
 from casexml.apps.phone.models import User, SyncLog
 from casexml.apps.phone import xml
 from django.contrib.auth.models import User as DjangoUser
-from casexml.apps.phone.util import get_payload_content
-from django.http import HttpRequest
 from casexml.apps.phone.tests import const
 from casexml.apps.case import const as case_const
 from casexml.apps.phone.tests.dummy import dummy_restore_xml, dummy_user,\
@@ -55,7 +53,7 @@ class OtaRestoreTest(TestCase):
             include_docs=True,
             reduce=False,
         ).count())
-        restore_payload = get_payload_content(generate_restore_payload(dummy_user(), items=True))
+        restore_payload = generate_restore_payload(dummy_user(), items=True)
         sync_log = SyncLog.view(
             "phone/sync_logs_by_user",
             include_docs=True,
@@ -115,10 +113,10 @@ class OtaRestoreTest(TestCase):
             ),
         )
 
-        restore_payload = get_payload_content(generate_restore_payload(
+        restore_payload = generate_restore_payload(
             user=dummy_user(),
             items=True,
-        ))
+        )
         sync_log_id = SyncLog.view(
             "phone/sync_logs_by_user",
             include_docs=True,
@@ -148,7 +146,7 @@ class OtaRestoreTest(TestCase):
         process_cases(form)
 
         time.sleep(1)
-        restore_payload = get_payload_content(generate_restore_payload(dummy_user(), items=items))
+        restore_payload = generate_restore_payload(dummy_user(), items=items)
 
         sync_log_id = SyncLog.view(
             "phone/sync_logs_by_user",
@@ -163,11 +161,11 @@ class OtaRestoreTest(TestCase):
         check_xml_line_by_line(self, expected_restore_payload, restore_payload)
 
         time.sleep(1)
-        sync_restore_payload = get_payload_content(generate_restore_payload(
+        sync_restore_payload = generate_restore_payload(
             user=dummy_user(),
             restore_id=sync_log_id,
             items=items,
-        ))
+        )
         all_sync_logs = SyncLog.view(
             "phone/sync_logs_by_user",
             include_docs=True,
@@ -193,11 +191,11 @@ class OtaRestoreTest(TestCase):
         process_cases(form)
 
         time.sleep(1)
-        sync_restore_payload = get_payload_content(generate_restore_payload(
+        sync_restore_payload = generate_restore_payload(
             user=dummy_user(),
             restore_id=latest_log.get_id,
             items=items,
-        ))
+        )
         all_sync_logs = SyncLog.view(
             "phone/sync_logs_by_user",
             include_docs=True,
@@ -234,7 +232,7 @@ class OtaRestoreTest(TestCase):
         self.assertTrue(isinstance(newcase.stringattr, dict))
         self.assertEqual("neither should this", newcase.stringattr["#text"])
         self.assertEqual("i am a string", newcase.stringattr["@somestring"])
-        restore_payload = get_payload_content(generate_restore_payload(dummy_user()))
+        restore_payload = generate_restore_payload(dummy_user())
         # ghetto
         self.assertTrue('<dateattr somedate="2012-01-01">' in restore_payload)
         self.assertTrue('<stringattr somestring="i am a string">' in restore_payload)
