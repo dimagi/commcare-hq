@@ -2,6 +2,7 @@ from contextlib import contextmanager
 from couchdbkit import ResourceNotFound
 from django.http import Http404
 from django.test import TestCase, SimpleTestCase
+from corehq.apps.groups.models import Group
 from corehq.util.couch import get_document_or_404, IterativeSaver, iter_update
 from dimagi.utils.couch.database import iter_docs
 from jsonobject.exceptions import WrappingAttributeError
@@ -79,9 +80,6 @@ class GetDocMockTestCase(TestCase):
         self.assertEqual(doc, {'wrapped': {'_id': '123', 'domain': 'ham', 'doc_type': 'MockModel'}})
 
 
-from corehq.apps.groups.models import Group
-
-
 class LoggingDB(object):
     def __init__(self):
         self.docs_saved = []
@@ -111,24 +109,30 @@ class IterativeSaverSimpleTest(SimpleTestCase):
 
 class IterativeSaverTest(TestCase):
     def setUp(self):
+        self.domain = "TEST"
+        # use Group just 'cause it's a simple model,
+        # and I can't create new models within tests
         self.db = Group.get_db()
-        self.groups = [
-            Group(domain="TEST", name="test-{}".format(i))
-            for i in range(11)
-        ]
+        self.groups = []
+        for i in range(11):
+            group = Group(domain=self.domain, name="test{}".format(i), index=i)
+            group.save()
+            self.groups.append(group)
+
+    def tearDown(self):
+        for group in Group.by_domain(self.domain):
+            group.delete()
 
     def test_normal_usage(self):
-        # use group just 'cause it's a simple model,
-        # and I can't create new models within tests
         with IterativeSaver(self.db, chunksize=5) as iter_db:
             for group in self.groups:
+                group['test_property'] = True
                 iter_db.save(group)
-        # Make sure each of those groups has an id and is in the db
         for group in self.groups:
-            self.db.get(group._id)
+            new = self.db.get(group._id)
+            self.assertTrue(getattr(new, 'test_property', False))
 
     def test_conflicted_doc(self):
-        self.db.bulk_save(self.groups)
         old = self.groups[3]
         new = Group.get(old._id)
         new.name = "bwahahaha"
@@ -140,7 +144,24 @@ class IterativeSaverTest(TestCase):
             for group in self.groups:
                 iter_db.save(group)
 
-        should_succeed = {g._id for g in self.groups if g._id != old._id}
+        should_succeed = [g._id for g in self.groups if g._id != old._id]
         self.assertEqual(should_succeed, iter_db.saved_ids)
 
         self.assertEqual([old._id], iter_db.error_ids)
+
+    def test_delete(self):
+        with IterativeSaver(self.db, chunksize=5) as iter_db:
+            deleted_groups = []
+            for group in self.groups[:4]:
+                deleted_groups.append(group._id)
+                iter_db.delete(group)
+
+            saved_groups = []
+            for group in self.groups[4:]:
+                saved_groups.append(group._id)
+                iter_db.save(group)
+
+        self.assertEqual(deleted_groups, iter_db.deleted_ids)
+        self.assertEqual(saved_groups, iter_db.saved_ids)
+        for group_id in deleted_groups:
+            self.assertRaises(ResourceNotFound, self.db.get(group_id))

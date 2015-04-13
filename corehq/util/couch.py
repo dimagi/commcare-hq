@@ -54,35 +54,52 @@ class IterativeSaver(object):
         self.chunksize = chunksize
         self.throttle_secs = throttle_secs
         self.saved_ids = []
-        # TODO
         self.deleted_ids = []
         self.error_ids = []
 
     def __enter__(self):
         self.to_save = []
+        self.to_delete = []
         return self
 
-    def commit(self):
+    def commit(self, cmd, docs):
         try:
-            results = self.db.bulk_save(self.to_save)
+            results = self.db.bulk_save(docs)
         except BulkSaveError as e:
             results = e.results
             error_ids = {d['id'] for d in e.errors}
             self.error_ids.extend(error_ids)
-            self.saved_ids.extend(d['id'] for d in results
-                                  if d['id'] not in error_ids)
+            success_ids = [d['id'] for d in results
+                           if d['id'] not in error_ids]
         else:
-            self.saved_ids.extend(d['id'] for d in results)
+            success_ids = [d['id'] for d in results]
 
-        self.to_save = []
         if self.throttle_secs:
             sleep(self.throttle_secs)
+        return success_ids
+
+    def commit_save(self):
+        success_ids = self.commit(self.db.bulk_save, self.to_save)
+        self.saved_ids.extend(success_ids)
+        self.to_save = []
+
+    def commit_delete(self):
+        success_ids = self.commit(self.db.bulk_delete, self.to_delete)
+        self.deleted_ids.extend(success_ids)
+        self.to_delete = []
 
     def save(self, doc):
         self.to_save.append(doc)
         if len(self.to_save) >= self.chunksize:
-            self.commit()
+            self.commit_save()
+
+    def delete(self, doc):
+        self.to_delete.append(doc)
+        if len(self.to_delete) >= self.chunksize:
+            self.commit_delete()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.to_save:
-            self.commit()
+            self.commit_save()
+        if self.to_delete:
+            self.commit_delet()
