@@ -20,8 +20,6 @@ class Command(BaseCommand):
                     report_config.reports = [r for r in report_config.reports if r.report != report_type]
                     if len(report_config.reports) != old_report_count:
                         save_domain = True
-                    else:
-                        print [r.report for r in report_config.reports]
                 if save_domain:
                     print 'removing reports from {}'.format(domain.name)
                     domain.save()
