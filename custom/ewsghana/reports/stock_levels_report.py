@@ -12,6 +12,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.graph_models import Axis
+from corehq.apps.users.models import CommCareUser
 from custom.common import ALL_OPTION
 from custom.ewsghana.filters import ProductByProgramFilter
 from custom.ewsghana.reports import EWSData, MultiReport, get_url_with_location, EWSLineChart, ProductSelectionPane
@@ -261,12 +262,18 @@ class FacilitySMSUsers(EWSData):
     def rows(self):
         from corehq.apps.users.views.mobile import CreateCommCareUserView
 
-        query = (UserES().mobile_users().domain(self.config['domain'])
-                 .term("domain_membership.location_id", self.config['location_id']))
+        users = CommCareUser.view(
+            'locations/users_by_location_id',
+            startkey=[self.config['location_id']],
+            endkey=[self.config['location_id'], {}],
+            include_docs=True
+        ).all()
 
-        for hit in query.run().hits:
-            if (hit['first_name'] or hit['last_name']) and hit['phone_numbers']:
-                yield [hit['first_name'] + ' ' + hit['last_name'], hit['phone_numbers'][0]]
+        for user in users:
+            if user.full_name and user.phone_numbers:
+                yield ['<div val="%s" sel=%s>%s</div>' % (
+                    user._id, 'true' if user.user_data.get('role') == 'In Charge' else 'false',
+                    user.full_name), user.phone_numbers[0]]
 
         yield [get_url_with_location(CreateCommCareUserView.urlname, 'Create new Mobile Worker',
                                      self.config['location_id'], self.config['domain'])]
@@ -307,12 +314,18 @@ class FacilityInChargeUsers(EWSData):
 
     @property
     def rows(self):
-        query = (UserES().mobile_users().domain(self.config['domain'])
-                 .term("domain_membership.location_id", self.config['location_id']))
+        users = CommCareUser.view(
+            'locations/users_by_location_id',
+            startkey=[self.config['location_id']],
+            endkey=[self.config['location_id'], {}],
+            include_docs=True
+        ).all()
 
-        for hit in query.run().hits:
-            if hit['user_data'].get('role') == 'In Charge' and (hit['first_name'] or hit['last_name']):
-                yield [hit['first_name'] + ' ' + hit['last_name']]
+        for user in users:
+            if user.user_data.get('role') == 'In Charge' and user.full_name:
+                yield [user.full_name]
+        yield ['<button id="in-charge-button" class="btn" data-target="#configureInCharge" data-toggle="modal">'
+               'Configure In Charge</button>']
 
 
 class StockLevelsReport(MultiReport):
