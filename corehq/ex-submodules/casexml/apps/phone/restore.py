@@ -118,7 +118,6 @@ class FileRestoreResponse(RestoreResponse):
         self.filename = path.join(settings.RESTORE_PAYLOAD_DIR or tempfile.gettempdir(), uuid4().hex)
 
         self.response_body = FileIO(self.get_filename(self.BODY_TAG_SUFFIX), 'w+')
-        self.response = FileIO(self.get_filename(), 'w+')
 
     def get_filename(self, suffix=None):
         return "{filename}{suffix}.{ext}".format(
@@ -146,24 +145,22 @@ class FileRestoreResponse(RestoreResponse):
         """
         Creates the final file with start and ending tag
         """
-        # Add 1 to num_items to account for message element
-        items = self.items_template.format(self.num_items + 1) if self.items else ''
-        self.response.write(self.start_tag_template.format(
-            items=items,
-            username=self.username,
-            nature=ResponseNature.OTA_RESTORE_SUCCESS
-        ))
+        with open(self.get_filename(), 'w') as response:
+            # Add 1 to num_items to account for message element
+            items = self.items_template.format(self.num_items + 1) if self.items else ''
+            response.write(self.start_tag_template.format(
+                items=items,
+                username=self.username,
+                nature=ResponseNature.OTA_RESTORE_SUCCESS
+            ))
 
-        self.response_body.seek(0)
-        shutil.copyfileobj(self.response_body, self.response)
+            self.response_body.seek(0)
+            shutil.copyfileobj(self.response_body, response)
 
-        self.response.write(self.closing_tag)
+            self.response.write(self.closing_tag)
+        
         self.finalized = True
         self.close()
-
-    def close(self):
-        self.response_body.close()
-        self.response.close()
 
     def get_cache_payload(self):
         return self.get_filename()
