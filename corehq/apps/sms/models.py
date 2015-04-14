@@ -6,7 +6,8 @@ from couchdbkit.ext.django.schema import *
 from datetime import datetime
 from django.db import models
 from corehq.apps.users.models import CouchUser, CommCareUser
-from casexml.apps.case.models import CommCareCase
+from corehq.apps.groups.models import Group
+from casexml.apps.case.models import CommCareCase, CommCareCaseGroup
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.signals import case_post_save
@@ -555,11 +556,13 @@ class MessagingEvent(models.Model):
     SOURCE_BROADCAST = 'BRD'
     SOURCE_KEYWORD = 'KWD'
     SOURCE_REMINDER = 'RMD'
+    SOURCE_OTHER = 'OTH'
 
     SOURCE_CHOICES = (
         (SOURCE_BROADCAST, ugettext_noop('Broadcast')),
         (SOURCE_KEYWORD, ugettext_noop('Keyword')),
         (SOURCE_REMINDER, ugettext_noop('Reminder')),
+        (SOURCE_OTHER, ugettext_noop('Other')),
     )
 
     CONTENT_SMS = 'SMS'
@@ -586,6 +589,8 @@ class MessagingEvent(models.Model):
         (RECIPIENT_VARIOUS, ugettext_noop('Multiple Recipients')),
     )
 
+    ERROR_NO_RECIPIENT = 'NO_RECIPIENT'
+
     domain = models.CharField(max_length=255, null=False, db_index=True)
     date = models.DateTimeField(null=False, db_index=True)
     source = models.CharField(max_length=3, choices=SOURCE_CHOICES, null=False)
@@ -597,8 +602,58 @@ class MessagingEvent(models.Model):
     # If any of the MessagingSubEvent status's are STATUS_ERROR, this is STATUS_ERROR
     status = models.CharField(max_length=3, choices=STATUS_CHOICES, null=False)
     error_code = models.CharField(max_length=255, null=True)
-    recipient_type = models.CharField(max_length=3, choices=RECIPIENT_CHOICES, null=False, db_index=True)
+    recipient_type = models.CharField(max_length=3, choices=RECIPIENT_CHOICES, null=True, db_index=True)
     recipient_id = models.CharField(max_length=255, null=True, db_index=True)
+
+    def set_error(self, error_code):
+        self.status = STATUS_ERROR
+        self.error_code = error_code
+        self.save()
+
+    def create_sub_event(self):
+        pass
+
+    @classmethod
+    def create_from_reminder(cls, reminder_definition, reminder, recipient):
+        from corehq.apps.reminders.models import (REMINDER_TYPE_ONE_TIME,
+            REMINDER_TYPE_KEYWORD_INITIATED, REMINDER_TYPE_DEFAULT, METHOD_SMS,
+            METHOD_SMS_SURVEY, METHOD_IVR_SURVEY)
+
+        source = {
+            REMINDER_TYPE_ONE_TIME: SOURCE_BROADCAST,
+            REMINDER_TYPE_KEYWORD_INITIATED: SOURCE_KEYWORD,
+            REMINDER_TYPE_DEFAULT: SOURCE_REMINDER,
+        }.get(reminder_definition.reminder_type, SOURCE_OTHER)
+
+        content_type = {
+            METHOD_SMS: CONTENT_SMS,
+            METHOD_SMS_SURVEY: CONTENT_SMS_SURVEY,
+            METHOD_IVR_SURVEY: CONTENT_IVR_SURVEY,
+        }.get(reminder_definition.method, '')
+
+        if isinstance(recipient, CouchUser):
+            recipient_type = RECIPIENT_USER
+        elif isinstance(recipient, CommCareCase):
+            recipient_type = RECIPIENT_CASE
+        elif isinstance(recipient, Group):
+            recipient_type = RECIPIENT_USER_GROUP
+        elif isinstance(recipient, CommCareCaseGroup):
+            recipient_type = RECIPIENT_CASE_GROUP
+        else:
+            recipient_type = None
+
+        return cls.objects.create(
+            domain=reminder_definition.domain,
+            date=datetime.utcnow(),
+            source=source,
+            content_type=content_type,
+            form_unique_id=(reminder.current_event.form_unique_id
+                if reminder_definition.method in (METHOD_SMS_SURVEY, METHOD_IVR_SURVEY)
+                else None),
+            status=STATUS_IN_PROGRESS,
+            recipient_type=recipient_type,
+            recipient_id=recipient.get_id if recipient_type else None
+        )
 
 
 class MessagingSubEvent(models.Model):

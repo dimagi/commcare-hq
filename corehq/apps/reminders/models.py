@@ -4,7 +4,8 @@ from datetime import timedelta, datetime, date, time
 import re
 from couchdbkit.ext.django.schema import *
 from casexml.apps.case.models import CommCareCase, CommCareCaseGroup
-from corehq.apps.sms.models import CommConnectCase
+from corehq.apps.sms.models import (CommConnectCase, MessagingEvent,
+    MessagingSubEvent)
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CouchUser
 from corehq.apps.groups.models import Group
@@ -838,7 +839,8 @@ class CaseReminderHandler(Document):
 
         # Retrieve the list of individual recipients
         recipient = reminder.recipient
-        
+        logged_event = MessagingEvent.create_from_reminder(self, reminder, recipient)
+
         if isinstance(recipient, list) and len(recipient) > 0:
             recipients = recipient
         elif isinstance(recipient, CouchUser) or isinstance(recipient, CommCareCase):
@@ -848,10 +850,9 @@ class CaseReminderHandler(Document):
         elif isinstance(recipient, CommCareCaseGroup):
             recipients = [CommConnectCase.get(case_id) for case_id in recipient.cases]
         else:
-            from corehq.apps.reminders.event_handlers import raise_error, ERROR_NO_RECIPIENTS
-            raise_error(reminder, ERROR_NO_RECIPIENTS)
-            return False
-        
+            logged_event.set_error(MessagingEvent.ERROR_NO_RECIPIENT)
+            return True
+
         # Retrieve the corresponding verified number entries for all individual recipients
         verified_numbers = {}
         for r in recipients:
