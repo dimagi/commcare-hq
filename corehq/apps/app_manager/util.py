@@ -414,8 +414,10 @@ def any_usercase_items(iter_):
 
 
 def actions_use_usercase(actions):
-    return (any_usercase_items(actions.get('update_case', {}).get('update', {}).iterkeys()) or
-            any_usercase_items(actions.get('case_preload', {}).get('preload', {}).itervalues()))
+    # actions is a dict, action['update_case'] is an object, actions['update_case].update is a dict
+    # ditto actions['case_preload'].preload
+    return (any_usercase_items(getattr(actions.get('update_case', object()), 'update', {}).iterkeys()) or
+            any_usercase_items(getattr(actions.get('case_preload', object()), 'preload', {}).itervalues()))
 
 
 def enable_usercase(domain_name):
