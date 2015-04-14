@@ -1464,9 +1464,6 @@ class XForm(WrappedNode):
             if action.preload:
                 self.add_casedb()
                 for nodeset, property in action.preload.items():
-                    if property.startswith(USERCASE_PREFIX):
-                        # Ignore usercase properties
-                        continue
                     parent_path, property = split_path(property)
                     property_xpath = {
                         'name': 'case_name',
