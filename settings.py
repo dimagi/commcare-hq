@@ -51,6 +51,7 @@ COUCHDB_DATABASES = [ (app, COUCH_DATABASE) for app in [
     'pillowtop',
     'pillow_retry',
     'couch',
+    'ext',
     # This is necessary for abstract classes in dimagi.utils.couch.undo
     # otherwise breaks tests
 ]]
