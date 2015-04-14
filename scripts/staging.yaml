@@ -83,6 +83,6 @@ submodules:
   submodules/pillowtop-src:
     branches:
       - usec  # danny 4/13
-  submodules/toggle-src:
+  submodules/toggle:
     branches:
       - usec  # danny 4/13
