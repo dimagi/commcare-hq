@@ -252,7 +252,6 @@ class BatchedCaseSyncOperation(object):
         Iterating through the updates also has the effect of updating this object's GlobalSyncState.
         """
         def get_updates(batch):
-            logger.debug(batch)
             self.batch_count += 1
             return batch.case_updates_to_sync()
 
