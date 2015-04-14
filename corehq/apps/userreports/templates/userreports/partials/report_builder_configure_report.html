@@ -68,11 +68,11 @@
         var propertyList = function(options) {
             var that = this;
             options = options || {};
-            this.buttonText = options.buttonText != undefined ? options.buttonText : "Add property";
-            this.hasFormatCol = ko.observable(options.hasFormatCol != undefined ? options.hasFormatCol : true);
+            this.buttonText = options.buttonText !== undefined ? options.buttonText : "Add property";
+            this.hasFormatCol = ko.observable(options.hasFormatCol !== undefined ? options.hasFormatCol : true);
             this.formatOptions = ko.observableArray(["Choice", "Date", "Numeric"]);
             this.propertyOptions = ko.observableArray({{ property_options|JSON }});
-            this.columns = ko.observableArray(options.initialCols != undefined ? options.initialCols : []);
+            this.columns = ko.observableArray(options.initialCols !== undefined ? options.initialCols : []);
             this.serializedProperties = ko.computed(function(){
                 return JSON.stringify(
                     _.map(that.columns(), function(c){return c.toJS()})
