@@ -111,9 +111,9 @@ class SyncLog(SafeSaveDocument, UnicodeMixIn):
     def has_cached_payload(self, version):
         return self.get_payload_attachment_name(version) in self._doc.get('_attachments', {})
 
-    def get_cached_payload(self, version):
+    def get_cached_payload(self, version, stream=False):
         try:
-            return self.fetch_attachment(self.get_payload_attachment_name(version))
+            return self.fetch_attachment(self.get_payload_attachment_name(version), stream=stream)
         except ResourceNotFound:
             return None
 

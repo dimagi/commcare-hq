@@ -46,12 +46,14 @@ INITIAL_SYNC_CACHE_THRESHOLD = 60  # 1 minute
 MAX_BYTES = 10000000  # 10MB
 
 
-def stream_response(filename):
+def stream_response(payload, is_file=True):
     try:
-        with open(filename, 'r') as f:
-            # Since payload file is all one line, need to readline based on bytes
-            return StreamingHttpResponse(iter(lambda: f.readline(MAX_BYTES), ''),
-                                         mimetype="text/xml")
+        if is_file:
+            with open(payload, 'r') as f:
+                # Since payload file is all one line, need to read based on bytes
+                return StreamingHttpResponse(iter(lambda: f.read(MAX_BYTES), ''), mimetype="text/xml")
+        else:
+            return StreamingHttpResponse(iter(lambda: payload.read(MAX_BYTES), ''), mimetype="text/xml")
     except IOError as e:
         return HttpResponse(e, status=500)
 
@@ -233,17 +235,21 @@ class StringRestoreResponse(RestoreResponse):
 
 class CachedResponse(object):
     def __init__(self, payload):
+        self.is_file = False
+        self.is_stream = False
+        self.payload = payload
         if isinstance(payload, dict):
             self.payload = payload['data']
             self.is_file = payload['is_file']
-        else:
-            self.payload = payload
-            self.is_file = False
+        elif hasattr(payload, 'read'):
+            self.is_stream = True
 
     def exists(self):
         return self.payload and (not self.is_file or path.exists(self.payload))
 
     def as_string(self):
+        if self.is_stream:
+            return self.payload.read()
         if self.is_file:
             with open(self.payload, 'r') as f:
                 return f.read()
@@ -251,8 +257,10 @@ class CachedResponse(object):
             return self.payload
 
     def get_http_response(self):
+        if self.is_stream:
+            return stream_response(self.payload, is_file=False)
         if self.is_file:
-            return stream_response(self.payload)
+            return stream_response(self.payload, is_file=True)
         else:
             return HttpResponse(self.payload, mimetype="text/xml")
 
@@ -510,7 +518,7 @@ class RestoreConfig(object):
             return
 
         if self.sync_log:
-            payload = self.sync_log.get_cached_payload(self.version)
+            payload = self.sync_log.get_cached_payload(self.version, stream=True)
         else:
             payload = self.cache.get(self._initial_cache_key())
 
