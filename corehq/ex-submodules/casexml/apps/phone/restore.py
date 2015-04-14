@@ -46,6 +46,16 @@ INITIAL_SYNC_CACHE_THRESHOLD = 60  # 1 minute
 MAX_BYTES = 10000000  # 10MB
 
 
+def stream_response(filename):
+    try:
+        with open(filename, 'r') as f:
+            # Since payload file is all one line, need to readline based on bytes
+            return StreamingHttpResponse(iter(lambda: f.readline(MAX_BYTES), ''),
+                                         mimetype="text/xml")
+    except IOError as e:
+        return HttpResponse(e, status=500)
+
+
 class StockSettings(object):
 
     def __init__(self, section_to_consumption_types=None, consumption_config=None,
@@ -170,13 +180,7 @@ class FileRestoreResponse(RestoreResponse):
             return f.read()
 
     def get_http_response(self):
-        try:
-            with open(self.get_filename(), 'r') as f:
-                # Since payload file is all one line, need to readline based on bytes
-                return StreamingHttpResponse(iter(lambda: f.readline(MAX_BYTES), ''),
-                                             mimetype="text/xml")
-        except IOError as e:
-            return HttpResponse(e, status=500)
+        return stream_response(self.get_filename())
 
 
 class StringRestoreResponse(RestoreResponse):
@@ -231,7 +235,10 @@ class CachedResponse(object):
             return self.payload
 
     def get_http_response(self):
-        return HttpResponse(self.payload, mimetype="text/xml")
+        if self.is_file:
+            return stream_response(self.payload)
+        else:
+            return HttpResponse(self.payload, mimetype="text/xml")
 
 
 def get_stock_payload(domain, stock_settings, case_state_list):
