@@ -1011,14 +1011,14 @@ class XForm(WrappedNode):
     def add_usercase(self, form):
         from corehq.apps.app_manager.util import get_usercase_keys, get_usercase_values
 
-        usercase_path = 'usercase/'
+        usercase_path = 'commcare_usercase/'
         actions = form.active_actions()
 
         if 'update_case' in actions:
             usercase_updates = get_usercase_keys(actions['update_case'].update)
             if usercase_updates:
                 self._add_usercase_bind(usercase_path)
-                usercase_block = _make_elem('{x}usercase')
+                usercase_block = _make_elem('{x}commcare_usercase')
                 case_block = CaseBlock(self, usercase_path)
                 case_block.add_update_block(usercase_updates)
                 usercase_block.append(case_block.elem)
