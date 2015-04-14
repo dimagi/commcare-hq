@@ -15,6 +15,7 @@ from corehq.apps.sms import util as smsutil
 from dimagi.utils.couch.database import SafeSaveDocument
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.couch import CouchDocLockableMixIn
+from django.utils.translation import ugettext_noop
 
 INCOMING = "I"
 OUTGOING = "O"
@@ -532,3 +533,86 @@ class PhoneNumber(models.Model):
             phone_obj.save()
             return True
         return False
+
+
+class MessagingEvent(models.Model):
+    """
+    Used to track the status of high-level events in the messaging
+    framework. Examples of such high-level events include the firing
+    of a reminder instance, the invoking of a keyword, or the sending
+    of a broadcast.
+    """
+    STATUS_IN_PROGRESS = 'PRG'
+    STATUS_COMPLETED = 'CMP'
+    STATUS_ERROR = 'ERR'
+
+    STATUS_CHOICES = (
+        (STATUS_IN_PROGRESS, ugettext_noop('In Progress')),
+        (STATUS_COMPLETED, ugettext_noop('Completed')),
+        (STATUS_ERROR, ugettext_noop('Error')),
+    )
+
+    SOURCE_BROADCAST = 'BRD'
+    SOURCE_KEYWORD = 'KWD'
+    SOURCE_REMINDER = 'RMD'
+
+    SOURCE_CHOICES = (
+        (SOURCE_BROADCAST, ugettext_noop('Broadcast')),
+        (SOURCE_KEYWORD, ugettext_noop('Keyword')),
+        (SOURCE_REMINDER, ugettext_noop('Reminder')),
+    )
+
+    CONTENT_SMS = 'SMS'
+    CONTENT_SMS_SURVEY = 'SVY'
+    CONTENT_IVR_SURVEY = 'IVR'
+
+    CONTENT_CHOICES = (
+        (CONTENT_SMS, ugettext_noop('SMS')),
+        (CONTENT_SMS_SURVEY, ugettext_noop('SMS Survey')),
+        (CONTENT_IVR_SURVEY, ugettext_noop('IVR Survey')),
+    )
+
+    RECIPIENT_CASE = 'CAS'
+    RECIPIENT_USER = 'USR'
+    RECIPIENT_USER_GROUP = 'UGP'
+    RECIPIENT_CASE_GROUP = 'CGP'
+    RECIPIENT_VARIOUS = 'MUL'
+
+    RECIPIENT_CHOICES = (
+        (RECIPIENT_CASE, ugettext_noop('Case')),
+        (RECIPIENT_USER, ugettext_noop('User')),
+        (RECIPIENT_USER_GROUP, ugettext_noop('User Group')),
+        (RECIPIENT_CASE_GROUP, ugettext_noop('Case Group')),
+        (RECIPIENT_VARIOUS, ugettext_noop('Multiple Recipients')),
+    )
+
+    domain = models.CharField(max_length=255, null=False, db_index=True)
+    date = models.DateTimeField(null=False, db_index=True)
+    source = models.CharField(max_length=3, choices=SOURCE_CHOICES, null=False)
+    content_type = models.CharField(max_length=3, choices=CONTENT_CHOICES, null=False)
+
+    # Only used when content_type is CONTENT_SMS_SURVEY or CONTENT_IVR_SURVEY
+    form_unique_id = models.CharField(max_length=255, null=True)
+
+    # If any of the MessagingSubEvent status's are STATUS_ERROR, this is STATUS_ERROR
+    status = models.CharField(max_length=3, choices=STATUS_CHOICES, null=False)
+    recipient_type = models.CharField(max_length=3, choices=RECIPIENT_CHOICES, null=False, db_index=True)
+    recipient_id = models.CharField(max_length=255, null=True, db_index=True)
+
+
+class MessagingSubEvent(models.Model):
+    """
+    Used to track the status of a MessagingEvent for each of its recipients.
+    """
+    RECIPIENT_CHOICES = (
+        (MessagingEvent.RECIPIENT_CASE, ugettext_noop('Case')),
+        (MessagingEvent.RECIPIENT_USER, ugettext_noop('User')),
+    )
+
+    parent = models.ForeignKey('MessagingEvent')
+    recipient_type = models.CharField(max_length=3, choices=RECIPIENT_CHOICES, null=False)
+    recipient_id = models.CharField(max_length=255, null=True)
+
+    # If this was a reminder that spawned off of a case, this is the case's id
+    case_id = models.CharField(max_length=255, null=True)
+    status = models.CharField(max_length=3, choices=MessagingEvent.STATUS_CHOICES, null=False)
