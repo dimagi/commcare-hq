@@ -6,7 +6,6 @@ function MapList(o) {
     self.langs = [o.lang].concat(o.langs);
     self.items = ko.observableArray();
     self.duplicatedItems = ko.observableArray();
-    // Note: Keys should be normalized with _normalizedKey before being added to duplicatedItems
 
     self.setItems = function (items) {
         self.items(_(items).map(function (item) {
@@ -32,23 +31,22 @@ function MapList(o) {
     };
     self.removeItem = function (item) {
         self.items.remove(item);
-        var key_value = ko.utils.unwrapObservable(item.key);
-        if(!self._isItemDuplicated(key_value))
-            self.duplicatedItems.remove(self._normalizedKey(key_value));
+        if(!self._isItemDuplicated(ko.utils.unwrapObservable(item.key)))
+            self.duplicatedItems.remove(ko.utils.unwrapObservable(item.key));
     };
     self.addItem = function () {
         var item = {key: ko.observable(''), value: {}};
         item.key.subscribe(function(newValue) {
-            if(self.duplicatedItems.indexOf(self._normalizedKey(newValue)) === -1 && self._isItemDuplicated(newValue)) {
-                self.duplicatedItems.push(self._normalizedKey(newValue));
+            if(self.duplicatedItems.indexOf(newValue) === -1 && self._isItemDuplicated(newValue)) {
+                self.duplicatedItems.push(newValue);
             }
 
         });
 
         item.key.subscribe(function(oldValue) {
-            var index = self.duplicatedItems.indexOf(self._normalizedKey(oldValue));
+            var index = self.duplicatedItems.indexOf(oldValue);
             if(index !== -1 && !self._isItemDuplicated(oldValue, 2)) {
-                self.duplicatedItems.remove(self._normalizedKey(oldValue));
+                self.duplicatedItems.remove(oldValue);
             }
         }, null, "beforeChange");
         item.value[self.lang] = ko.observable('');
@@ -64,7 +62,7 @@ function MapList(o) {
         var counter = 0;
         for(var i = 0; i < items.length; i++) {
             var item = items[i];
-            if(self._keys_equal(ko.utils.unwrapObservable(item.key), key)) {
+            if(ko.utils.unwrapObservable(item.key) === key) {
                 counter++;
                 if(counter > max_counts) return true;
             }
@@ -72,24 +70,8 @@ function MapList(o) {
         return false;
     };
 
-    self._normalizedKey = function (str) {
-        // Use this function before performing operations on self.duplicatedItems
-        // i.e. self.duplicatedItems.push(self._normalizedKey(foo))
-        //      not self.duplicatedItems.push(self._normalizedKey(foo))
-        // TODO: Create a type that inherits from ko.observableArray that does the normalization automatically
-        return str.replace(" ", "_");
-    };
-
-    self._keys_equal = function (v1, v2) {
-        // Return true if the given ID Mapping keys should be considered equal.
-        // On the server, spaces will be replaced with underscores to create
-        // xpath variable names.
-        // Therefore, "foo_bar" should be considered equal to "foo bar"
-        return self._normalizedKey(v1) === self._normalizedKey(v2);
-    };
-
     self.isItemDuplicated = function(key) {
-        return self.duplicatedItems.indexOf(self._normalizedKey(key)) !== -1;
+        return self.duplicatedItems.indexOf(key) !== -1;
     };
 
     self.getItems = function () {

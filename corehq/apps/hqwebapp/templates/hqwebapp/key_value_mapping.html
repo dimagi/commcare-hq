@@ -22,18 +22,8 @@
                 <a href="#" data-bind="click: $parent.removeItem" class="btn btn-danger">
                     <i class="icon icon-white icon-remove"></i> Delete
                 </a>
-                <div class="help-inline"
-                      data-bind='visible: $parent.isItemDuplicated(ko.utils.unwrapObservable(key))
-                '>
-                    <div>
-                        Key is duplicated.
-                    </div>
-                    <div data-bind="
-                        visible: key().indexOf(' ') > -1 || key().indexOf('_') > -1
-                    ">
-                        (Note that space and underscore are considered equal in ID mapping keys)
-                    </div>
-                </div>
+                <span class="help-inline"
+                      data-bind='visible: $parent.isItemDuplicated(ko.utils.unwrapObservable(key))'>Key is duplicated.</span>
             </div>
         </fieldset>
 

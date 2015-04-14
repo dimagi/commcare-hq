@@ -85,10 +85,10 @@ def detail_column_header_locale(module, detail_type, column):
     )
 
 
-@pattern('m%d.%s.%s_%s_%s.enum.k%s')
+@pattern('m%d.%s.%s_%s_%s.enum.%s')
 def detail_column_enum_variable(module, detail_type, column, key):
     field = column.field.replace('#', '')
-    return u"m{module.id}.{detail_type}.{d.model}_{field}_{d_id}.enum.k{key}".format(
+    return u"m{module.id}.{detail_type}.{d.model}_{field}_{d_id}.enum.{key}".format(
         module=module,
         detail_type=detail_type,
         d=column,

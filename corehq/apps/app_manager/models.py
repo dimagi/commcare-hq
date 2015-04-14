@@ -1234,12 +1234,18 @@ class MappingItem(DocumentSchema):
     value = DictProperty()
 
     @property
-    def escaped_key(self):
+    def key_as_variable(self):
         """
-        Return the key with spaces replaces by underscores for use in xml
-        variable names
+        Return an xml variable name to represent this key.
+        If the key has no spaces, return the key with "k" prepended.
+        If the key does contain spaces, return a hash of the key with "h" prepended.
+        The prepended characters prevent the variable name from starting with a
+        numeral, which is illegal.
         """
-        return self.key.replace(" ", "_")
+        if " " not in self.key:
+            return 'k{key}'.format(key=self.key)
+        else:
+            return 'h{hash}'.format(hash=hashlib.md5(self.key).hexdigest()[:8])
 
 
 class GraphAnnotations(IndexedSchema):
@@ -1553,9 +1559,8 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
                     key = item.key
                     # key cannot contain certain characters because it is used
                     # to generate an xpath variable name within suite.xml
-                    # spaces will be replaces by underscores in the xpath
-                    # variable name.
-                    # 'k{key}' must be a valid xpath token
+                    # (names with spaces will be hashed to form the xpath
+                    # variable name)
                     if not re.match('^([\w_ -]*)$', key):
                         yield {
                             'type': 'invalid id key',
