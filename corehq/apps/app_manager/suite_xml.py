@@ -1243,10 +1243,9 @@ class SuiteGenerator(SuiteGeneratorBase):
             if column.format == "enum":
                 template_args[template_field]["enum_keys"] = {}
                 for mapping in column.enum:
-                    key = mapping.key
-                    template_args[template_field]["enum_keys"][key] = \
+                    template_args[template_field]["enum_keys"][mapping.key] = \
                         self.id_strings.detail_column_enum_variable(
-                            module, detail_type, column, key
+                            module, detail_type, column, mapping.key_as_variable
                         )
         # Populate the template
         detail_as_string = self._case_tile_template_string.format(**template_args)
