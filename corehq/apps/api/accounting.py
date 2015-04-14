@@ -178,7 +178,8 @@ class LineItemResource(ModelResource):
 
     class Meta(AccountingResourceMeta):
         queryset = LineItem.objects.all()
-        fields = ['id', 'base_description', 'base_cost', 'unit_description', 'unit_cost', 'quantity', 'last_modified']
+        fields = ['id', 'base_description', 'base_cost', 'unit_description', 'unit_cost', 'quantity',
+                  'last_modified']
         resource_name = 'accounting_line_items'
 
 
