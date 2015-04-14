@@ -233,12 +233,12 @@ class StringRestoreResponse(RestoreResponse):
 
 class CachedResponse(object):
     def __init__(self, payload):
-        if isinstance(payload, basestring):
-            self.payload = payload
-            self.is_file = False
-        else:
+        if isinstance(payload, dict):
             self.payload = payload['data']
             self.is_file = payload['is_file']
+        else:
+            self.payload = payload
+            self.is_file = False
 
     def exists(self):
         return self.payload and (not self.is_file or path.exists(self.payload))
