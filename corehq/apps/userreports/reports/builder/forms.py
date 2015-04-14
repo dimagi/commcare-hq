@@ -309,7 +309,7 @@ class DataSourceForm(forms.Form):
 
 class ConfigureNewReportBase(forms.Form):
     filters = FilterField(required=False)
-    button_text = 'Done'
+    button_text = _('Done')
 
     def __init__(self, report_name, app_id, source_type, report_source_id, existing_report=None, *args, **kwargs):
         """
@@ -345,7 +345,7 @@ class ConfigureNewReportBase(forms.Form):
         self.helper.attrs['data_bind'] = "submit: submitHandler"
         self.helper.form_id = "report-config-form"
 
-        buttons = [crispy.Submit('submit', _(self.button_text))]
+        buttons = [crispy.Submit('submit', self.button_text)]
         # Add a back button if we aren't editing an existing report
         if not self.existing_report:
             buttons.insert(
