@@ -85,7 +85,7 @@ def format_date(date_string, OUTPUT_FORMAT, localize=None):
             return ''
 
     if localize:
-        tz = timezone(Domain.get_by_name(SUCCEED_DOMAIN).default_timezone)
+        tz = Domain.get_by_name(SUCCEED_DOMAIN).get_default_timezone()
         if date_string.tzname() is None:
             date_string = timezone('UTC').localize(date_string)
         date_string = date_string.astimezone(tz)

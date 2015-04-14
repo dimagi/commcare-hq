@@ -410,7 +410,7 @@ def process_transactions(E, transactions):
         else:
             transfers.append(tx)
 
-    return process_transfers(E, transfers), process_balances(E, balances)
+    return process_balances(E, balances), process_transfers(E, transfers)
 
 
 def process_balances(E, balances):
@@ -477,10 +477,10 @@ def convert_transactions_to_blocks(E, transactions):
     balances, transfers = process_transactions(E, transactions)
 
     stock_blocks = []
-    if balances:
-        stock_blocks.append(balances)
     if transfers:
         stock_blocks.append(transfers)
+    if balances:
+        stock_blocks.append(balances)
 
     return stock_blocks
 

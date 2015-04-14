@@ -13,11 +13,13 @@
 
         var bulkPaymentHandler = new PaymentMethodHandler(
             {{ payment_error_messages|JSON }},
-            "{% trans "Submit Payment" %}"
+            "{% trans "Submit Payment" %}",
+            "bulk-payment-form"
         );
         var paymentHandler = new PaymentMethodHandler(
             {{ payment_error_messages|JSON }},
-            "{% trans "Submit Payment" %}"
+            "{% trans "Submit Payment" %}",
+            "payment-form"
         );
 
         {% if stripe_cards %}
@@ -48,6 +50,9 @@
                 }).balance());
             }
             return totalBalance;
+        });
+        paginatedListModel.displayTotalDue = ko.computed(function() {
+            return "$" + paginatedListModel.totalDue().toFixed(2);
         });
         paginatedListModel.showUnpaidBills = ko.observable(true);
         paginatedListModel.showAllBills = ko.computed(function () {
@@ -91,7 +96,7 @@
         <h2>{% trans 'Current Balance' %}</h2>
         <p>
             {% trans 'Total Due:' %}
-            <span class="hide-while-loading" hidden="true" data-bind="text: totalDue"></span>
+            <span class="hide-while-loading" hidden="true" data-bind="text: displayTotalDue"></span>
         </p>
         {% if not is_ops_user_but_not_admin %}
         <p class="hide-while-loading" hidden="true" data-bind="visible: totalDue">

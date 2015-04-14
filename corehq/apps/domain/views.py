@@ -887,7 +887,6 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                 args=[self.domain],
             ),
             'stripe_cards': self.stripe_cards,
-            'total_balance': "%.2f" % sum(invoice.get_total() for invoice in self.invoices)
         })
         return pagination_context
 

@@ -3,7 +3,6 @@ from django.test import TestCase
 
 from corehq.apps.smsbillables.models import *
 from corehq.apps.smsbillables import generator
-from corehq.apps.sms.models import SMSLog
 
 
 class TestUsageFee(TestCase):
@@ -17,6 +16,7 @@ class TestUsageFee(TestCase):
 
         self.least_specific_fees = generator.arbitrary_fees_by_direction()
         self.most_specific_fees = generator.arbitrary_fees_by_direction_and_domain()
+        self.backend_ids = generator.arbitrary_backend_ids()
 
     def apply_direction_fee(self):
         for direction, amount in self.least_specific_fees.items():
@@ -29,7 +29,7 @@ class TestUsageFee(TestCase):
 
     def test_only_direction(self):
         self.apply_direction_fee()
-        messages = generator.arbitrary_messages_by_backend_and_direction(generator.arbitrary_backend_ids())
+        messages = generator.arbitrary_messages_by_backend_and_direction(self.backend_ids)
 
         for message in messages:
             billable = SmsBillable.create(message)
@@ -45,8 +45,10 @@ class TestUsageFee(TestCase):
 
         for direction, domain_fee in self.most_specific_fees.items():
             for domain in domain_fee:
-                messages = generator.arbitrary_messages_by_backend_and_direction(generator.arbitrary_backend_ids(),
-                                                                                 domain=domain)
+                messages = generator.arbitrary_messages_by_backend_and_direction(
+                    self.backend_ids,
+                    domain=domain,
+                )
                 for message in messages:
                     billable = SmsBillable.create(message)
                     self.assertIsNotNone(billable)
@@ -61,9 +63,11 @@ class TestUsageFee(TestCase):
 
         for direction, domain_fee in self.most_specific_fees.items():
             for domain in domain_fee:
-                messages = generator.arbitrary_messages_by_backend_and_direction(generator.arbitrary_backend_ids(),
-                                                                                 domain=domain,
-                                                                                 directions=['X', 'Y'])
+                messages = generator.arbitrary_messages_by_backend_and_direction(
+                    self.backend_ids,
+                    domain=domain,
+                    directions=['X', 'Y'],
+                )
                 for message in messages:
                     billable = SmsBillable.create(message)
                     self.assertIsNotNone(billable)
@@ -74,3 +78,5 @@ class TestUsageFee(TestCase):
         SmsUsageFee.objects.all().delete()
         SmsUsageFeeCriteria.objects.all().delete()
         self.currency_usd.delete()
+        for backend_instance in self.backend_ids.values():
+            SMSBackend.get(backend_instance).delete()

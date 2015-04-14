@@ -79,8 +79,8 @@ def save_stock_data_checkpoint(checkpoint, api, limit, offset, date, external_id
 def add_location(user, location_id):
     if location_id:
         loc = Location.get(location_id)
-        user.clear_locations()
-        user.add_location(loc, create_sp_if_missing=True)
+        user.clear_location_delgates()
+        user.add_location_delegate(loc)
 
 
 def check_hashes(webuser, django_user, password):

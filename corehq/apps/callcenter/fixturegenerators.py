@@ -14,7 +14,7 @@ def should_sync(domain, last_sync, utcnow=None):
         return True
 
     try:
-        timezone = pytz.timezone(domain.default_timezone)
+        timezone = domain.get_default_timezone()
     except pytz.UnknownTimeZoneError:
         timezone = utc
 
