@@ -25,7 +25,7 @@ def make_uuid():
     return uuid.uuid4().hex
 
 from datetime import datetime, timedelta
-from couchdbkit.ext.django.schema import (
+from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateProperty,
     DateTimeProperty,

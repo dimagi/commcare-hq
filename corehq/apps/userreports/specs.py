@@ -1,4 +1,4 @@
-from jsonobject import StringProperty
+from dimagi.ext.jsonobject import StringProperty
 
 
 def TypeProperty(value):

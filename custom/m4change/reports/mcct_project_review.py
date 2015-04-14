@@ -3,7 +3,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
-from jsonobject import DateTimeProperty
+from dimagi.ext.jsonobject import DateTimeProperty
 
 from corehq.apps.locations.models import Location
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter

@@ -16,7 +16,7 @@ import datetime
 import itertools
 import types
 
-from jsonobject import DateTimeProperty, DateProperty
+from dimagi.ext.jsonobject import DateTimeProperty, DateProperty
 from jsonobject.exceptions import BadValueError
 from dimagi.utils.chunked import chunked
 import pytz

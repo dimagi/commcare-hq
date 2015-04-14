@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from datetime import datetime
-from couchdbkit.ext.django.schema import Document, StringProperty, DateTimeProperty
+from dimagi.ext.couchdbkit import Document, StringProperty, DateTimeProperty
 from dimagi.utils.parsing import json_format_datetime
 from .utils import generate_aes_key
 

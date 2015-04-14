@@ -1,6 +1,6 @@
 import os
 import requests
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.sms.mixin import SMSBackend
 from corehq.apps.telerivet.forms import TelerivetBackendForm

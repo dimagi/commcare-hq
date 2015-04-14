@@ -1,7 +1,7 @@
 from corehq.apps.sms.forms import BackendForm
 from corehq.apps.sms.mixin import SMSBackend
 from dimagi.utils.couch.database import get_safe_write_kwargs
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 
 # TODO: What uses this? There already is a test backend
 

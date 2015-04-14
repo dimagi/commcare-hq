@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4
 import logging
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 
 from datetime import datetime
 from django.db import models
@@ -12,7 +12,6 @@ from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.signals import case_post_save
 from .mixin import CommCareMobileContactMixin, MobileBackend, PhoneNumberInUseException, InvalidFormatException
 from corehq.apps.sms import util as smsutil
-from dimagi.utils.couch.database import SafeSaveDocument
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.couch import CouchDocLockableMixIn
 

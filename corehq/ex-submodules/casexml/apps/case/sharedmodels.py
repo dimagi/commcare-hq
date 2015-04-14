@@ -1,5 +1,5 @@
 import mimetypes
-from couchdbkit.ext.django.schema import StringProperty, IntegerProperty, DictProperty
+from dimagi.ext.couchdbkit import StringProperty, IntegerProperty, DictProperty
 
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import LooselyEqualDocumentSchema

@@ -3,8 +3,7 @@ from datetime import timedelta, datetime
 from django.core.cache import cache
 from django.db.models.aggregates import Count, Avg
 from django.db.models.query_utils import Q
-from jsonobject import JsonObject
-from jsonobject.properties import DictProperty, StringProperty
+from dimagi.ext.jsonobject import JsonObject, DictProperty, StringProperty
 import pytz
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.groups.models import Group

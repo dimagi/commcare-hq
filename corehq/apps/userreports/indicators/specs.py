@@ -1,4 +1,4 @@
-from jsonobject import JsonObject, StringProperty, ListProperty, BooleanProperty, DictProperty
+from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, BooleanProperty, DictProperty
 from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.expressions.getters import TransformedGetter, getter_from_property_reference, \
     transform_from_datatype

@@ -11,7 +11,7 @@ from lxml import etree
 
 from django.utils.datastructures import SortedDict
 from couchdbkit.exceptions import PreconditionFailed
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 from couchdbkit import ResourceNotFound
 from lxml.etree import XMLSyntaxError
 from couchforms.jsonobject_extensions import GeoPointProperty
@@ -19,9 +19,8 @@ from dimagi.utils.couch import CouchDocLockableMixIn
 from dimagi.utils.decorators.memoized import memoized
 
 from dimagi.utils.indicators import ComputedDocumentMixin
-from dimagi.utils.parsing import string_to_datetime, json_format_datetime
 from dimagi.utils.couch.safe_index import safe_index
-from dimagi.utils.couch.database import get_safe_read_kwargs, SafeSaveDocument
+from dimagi.utils.couch.database import get_safe_read_kwargs
 from dimagi.utils.mixins import UnicodeMixIn
 
 from couchforms.signals import xform_archived, xform_unarchived

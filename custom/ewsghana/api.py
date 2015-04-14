@@ -9,9 +9,8 @@ from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.users.models import WebUser, UserRole, Permissions
 from custom.api.utils import apply_updates
 from custom.ewsghana.extensions import ews_product_extension, ews_webuser_extension
-from jsonobject.properties import StringProperty, BooleanProperty, ListProperty, IntegerProperty, ObjectProperty
+from dimagi.ext.jsonobject import JsonObject, StringProperty, BooleanProperty, ListProperty, IntegerProperty, ObjectProperty
 from custom.ilsgateway.api import ProductStock, StockTransaction
-from jsonobject import JsonObject
 from custom.logistics.api import LogisticsEndpoint, APISynchronization
 from corehq.apps.locations.models import Location as Loc
 from django.core.exceptions import ValidationError

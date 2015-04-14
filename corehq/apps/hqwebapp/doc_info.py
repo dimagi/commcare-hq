@@ -1,7 +1,7 @@
 from couchdbkit import ResourceNotFound
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
-from jsonobject import *
+from dimagi.ext.jsonobject import *
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import raw_username
 from couchforms import models as couchforms_models

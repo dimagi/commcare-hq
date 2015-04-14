@@ -1,6 +1,5 @@
 import logging
-from jsonobject import JsonObject
-from jsonobject.properties import StringProperty, BooleanProperty, DecimalProperty, ListProperty, IntegerProperty,\
+from dimagi.ext.jsonobject import JsonObject, StringProperty, BooleanProperty, DecimalProperty, ListProperty, IntegerProperty,\
     FloatProperty, DictProperty
 from requests.exceptions import ConnectionError
 from corehq import Domain

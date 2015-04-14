@@ -1,6 +1,6 @@
 import hashlib
 from couchdbkit.exceptions import ResourceNotFound
-from couchdbkit.ext.django.schema import (
+from dimagi.ext.couchdbkit import (
     Document, DocumentSchema, ListProperty, StringProperty,
     IntegerProperty, SetProperty, SchemaDictProperty
 )

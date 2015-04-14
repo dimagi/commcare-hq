@@ -1,5 +1,5 @@
 # Stub models file
-from couchdbkit.ext.django.schema import Document
+from dimagi.ext.couchdbkit import Document
 # ensure our signals get loaded at django bootstrap time
 from . import signals
 from corehq.apps.users.models import CommCareCase

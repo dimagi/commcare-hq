@@ -1,8 +1,7 @@
 from collections import defaultdict
 from copy import copy
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
-from couchdbkit.ext.django.schema import *
-from dimagi.utils.couch.database import SafeSaveDocument
+from dimagi.ext.couchdbkit import *
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import LooselyEqualDocumentSchema
