@@ -1,3 +1,4 @@
+from collections import namedtuple
 import uuid
 from django import forms
 from django.core.urlresolvers import reverse
@@ -472,19 +473,20 @@ class ConfigureNewReportBase(forms.Form):
     @property
     @memoized
     def initial_filters(self):
+        FilterViewModel = namedtuple("FilterViewModel", ['property', 'display_text', 'format'])
         if self.existing_report:
             return [self._get_view_model(f) for f in self.existing_report.filters]
         if self.source_type == 'case':
             return [
-                {'property': 'closed', 'display_text': 'closed', 'format': 'Choice'},
+                FilterViewModel('closed', 'closed', 'Choice'),
                 # TODO: Allow users to filter by owner name, not just id.
                 # This will likely require implementing data source filters.
-                {'property': 'owner_id', 'display_text': 'owner id', 'format': 'Choice'},
+                FilterViewModel('owner_id', "owner id", "Choice"),
             ]
         else:
             # self.source_type == 'form'
             return [
-                {'property': 'timeEnd', 'display_text': 'Form completion time', 'format': 'Date'}
+                FilterViewModel('timeEnd', "Form completion time", "Date"),
             ]
 
     def _get_view_model(self, filter):

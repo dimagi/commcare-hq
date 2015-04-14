@@ -187,7 +187,7 @@ class ConfigureChartReport(ReportBuilderView):
             },
             'form': self.report_form,
             'property_options': self.report_form.data_source_properties.values(),
-            'initial_filters': self.report_form.initial_filters,
+            'initial_filters': [f._asdict() for f in self.report_form.initial_filters],
             'initial_columns': getattr(self.report_form, 'initial_columns', []),
         }
         return context
