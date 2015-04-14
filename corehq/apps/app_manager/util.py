@@ -398,8 +398,8 @@ def any_usercase_items(items):
 
 
 def actions_use_usercase(actions):
-    return (any_usercase_items(actions['update_case']['update'].iterkeys()) or
-            any_usercase_items(actions['case_preload']['preload'].itervalues()))
+    return (any_usercase_items(actions.get('update_case', {}).get('update', {}).iterkeys()) or
+            any_usercase_items(actions.get('case_preload', {}).get('preload', {}).itervalues()))
 
 
 def enable_usercase(domain_name):

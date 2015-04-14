@@ -26,7 +26,7 @@ from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE
 from corehq.apps.app_manager.exceptions import UnknownInstanceError, ScheduleError, FormNotFoundException
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.util import split_path, create_temp_sort_column, languages_mapping, \
-    any_usercase_items
+    actions_use_usercase
 from corehq.apps.app_manager.xform import SESSION_CASE_ID, autoset_owner_id_for_open_case, \
     autoset_owner_id_for_subcase
 from corehq.apps.app_manager.xpath import dot_interpolate, CaseIDXPath, session_var, \
@@ -1497,17 +1497,8 @@ class SuiteGenerator(SuiteGeneratorBase):
         ]
 
     def get_extra_case_id_datums(self, form):
-
-        def uses_usercase(form_):
-            actions = form_.active_actions()
-            if 'update_case' in actions and hasattr(actions['update_case'], 'update'):
-                return any_usercase_items(actions['update_case'].update.keys())
-            if 'case_preload' in actions:
-                return any_usercase_items(actions['case_preload'].preload.values())
-            return False
-
         datums = []
-        if form.form_type == 'module_form' and uses_usercase(form):
+        if form.form_type == 'module_form' and actions_use_usercase(form.active_actions()):
             if not self.is_usercase_enabled:
                 raise SuiteError('Form uses usercase, but usercase not enabled')
             case_type = CaseTypeXpath(USERCASE_TYPE).case()
