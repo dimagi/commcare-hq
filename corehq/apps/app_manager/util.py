@@ -395,18 +395,22 @@ def get_commcare_versions(request_user):
     return sorted(versions, key=version_key)
 
 
-def get_usercase_keys(items):
+def get_usercase_keys(dict_):
     n = len(USERCASE_PREFIX)
-    return {k[n:]: v for k, v in items if k.startswith(USERCASE_PREFIX)}
+    return {k[n:]: v for k, v in dict_.items() if k.startswith(USERCASE_PREFIX)}
 
 
-def get_usercase_values(items):
+def get_usercase_values(dict_):
     n = len(USERCASE_PREFIX)
-    return {k: v[n:] for k, v in items if v.startswith(USERCASE_PREFIX)}
+    return {k: v[n:] for k, v in dict_.items() if v.startswith(USERCASE_PREFIX)}
 
 
-def any_usercase_items(items):
-    return any(i.startswith(USERCASE_PREFIX) for i in items)
+def skip_usercase_values(dict_):
+    return {k: v for k, v in dict_.items() if not v.startswith(USERCASE_PREFIX)}
+
+
+def any_usercase_items(iter_):
+    return any(i.startswith(USERCASE_PREFIX) for i in iter_)
 
 
 def actions_use_usercase(actions):

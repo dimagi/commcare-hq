@@ -991,14 +991,31 @@ class XForm(WrappedNode):
             calculate=SESSION_USERCASE_ID,
         )
 
+    def add_case_preloads(self, preloads, case_id_xpath=None):
+        from corehq.apps.app_manager.util import split_path
+
+        self.add_casedb()
+        for nodeset, property_ in preloads.items():
+            parent_path, property_ = split_path(property_)
+            property_xpath = {
+                'name': 'case_name',
+                'owner_id': '@owner_id'
+            }.get(property_, property_)
+
+            id_xpath = get_case_parent_id_xpath(parent_path, case_id_xpath=case_id_xpath)
+            self.add_setvalue(
+                ref=nodeset,
+                value=id_xpath.case().property(property_xpath),
+            )
+
     def add_usercase(self, form):
-        from corehq.apps.app_manager.util import split_path, get_usercase_keys, get_usercase_values
+        from corehq.apps.app_manager.util import get_usercase_keys, get_usercase_values
 
         usercase_path = 'usercase/'
         actions = form.active_actions()
 
         if 'update_case' in actions:
-            usercase_updates = get_usercase_keys(actions['update_case'].update.items())
+            usercase_updates = get_usercase_keys(actions['update_case'].update)
             if usercase_updates:
                 self._add_usercase_bind(usercase_path)
                 usercase_block = _make_elem('{x}usercase')
@@ -1008,20 +1025,10 @@ class XForm(WrappedNode):
                 self.data_node.append(usercase_block)
 
         if 'case_preload' in actions:
-            self.add_casedb()
-            usercase_preloads = get_usercase_values(actions['case_preload'].preload.items())
-            for nodeset, property_ in usercase_preloads.items():
-                parent_path, property_ = split_path(property_)
-                property_xpath = {
-                    'name': 'case_name',
-                    'owner_id': '@owner_id'
-                }.get(property_, property_)
-
-                id_xpath = get_case_parent_id_xpath(parent_path, case_id_xpath=SESSION_USERCASE_ID)
-                self.add_setvalue(
-                    ref=nodeset,
-                    value=id_xpath.case().property(property_xpath),
-                )
+            self.add_case_preloads(
+                get_usercase_values(actions['case_preload'].preload),
+                case_id_xpath=SESSION_USERCASE_ID
+            )
 
     def add_meta_2(self, form):
         case_parent = self.data_node
@@ -1229,7 +1236,7 @@ class XForm(WrappedNode):
             return 'false()'
 
     def create_casexml_2(self, form):
-        from corehq.apps.app_manager.util import split_path
+        from corehq.apps.app_manager.util import skip_usercase_values
 
         actions = form.active_actions()
 
@@ -1299,22 +1306,7 @@ class XForm(WrappedNode):
                 case_block.add_close_block(self.action_relevance(actions['close_case'].condition))
 
             if 'case_preload' in actions:
-                self.add_casedb()
-                for nodeset, property in actions['case_preload'].preload.items():
-                    # Skip usercase properties
-                    if property.startswith(USERCASE_PREFIX):
-                        continue
-                    parent_path, property = split_path(property)
-                    property_xpath = {
-                        'name': 'case_name',
-                        'owner_id': '@owner_id'
-                    }.get(property, property)
-
-                    id_xpath = get_case_parent_id_xpath(parent_path)
-                    self.add_setvalue(
-                        ref=nodeset,
-                        value=id_xpath.case().property(property_xpath),
-                    )
+                self.add_case_preloads(skip_usercase_values(actions['case_preload'].preload))
 
         if 'subcases' in actions:
             subcases = actions['subcases']
