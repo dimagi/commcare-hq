@@ -14,7 +14,6 @@ import hashlib
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2, LEGAL_VERSIONS
 from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException, IgnoreDocument
-from corehq.util.dates import iso_string_to_datetime
 
 from couchforms.models import XFormInstance
 from dimagi.utils.decorators.memoized import memoized
@@ -371,26 +370,11 @@ class RepeatRecord(Document, LockableMixIn):
     repeater_type = StringProperty()
     domain = StringProperty()
 
-    last_checked = DateTimeProperty(exact=True)
-    next_check = DateTimeProperty(exact=True)
+    last_checked = DateTimeProperty()
+    next_check = DateTimeProperty()
     succeeded = BooleanProperty(default=False)
 
     payload_id = StringProperty()
-
-    @classmethod
-    def wrap(cls, data):
-        # todo: I think this can all be avoided by making
-        # todo: last_checked and next_check both USecDateTimeProperty
-        for attr in ('last_checked', 'next_check'):
-            value = data.get(attr)
-            if not value:
-                continue
-            try:
-                data[attr] = json_format_datetime(
-                    iso_string_to_datetime(value))
-            except ValueError:
-                pass
-        return super(RepeatRecord, cls).wrap(data)
 
     @property
     @memoized
