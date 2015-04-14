@@ -2,12 +2,24 @@ from collections import defaultdict
 import functools
 import json
 import itertools
+import uuid
+from corehq.apps.app_manager.exceptions import SuiteError
 from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.app_manager.tasks import create_user_cases
+from corehq.util.soft_assert import soft_assert
 from couchdbkit.exceptions import DocTypeError
 from corehq import Domain
-from corehq.apps.app_manager.const import CT_REQUISITION_MODE_3, CT_LEDGER_STOCK, CT_LEDGER_REQUESTED, \
-    CT_REQUISITION_MODE_4, CT_LEDGER_APPROVED, CT_LEDGER_PREFIX, USERCASE_PREFIX, USERCASE_TYPE
+from corehq.apps.app_manager.const import (
+    CT_REQUISITION_MODE_3,
+    CT_LEDGER_STOCK,
+    CT_LEDGER_REQUESTED,
+    CT_REQUISITION_MODE_4,
+    CT_LEDGER_APPROVED,
+    CT_LEDGER_PREFIX,
+    USERCASE_PREFIX,
+    USERCASE_TYPE,
+    USERCASE_ID
+)
 from corehq.apps.app_manager.xform import XForm, XFormException, parse_xml
 from dimagi.utils.couch import CriticalSection
 import re
@@ -409,3 +421,22 @@ def enable_usercase(domain_name):
             domain.usercase_enabled = True
             domain.save()
             create_user_cases.delay(domain_name)
+
+
+def get_cloudcare_session_data(suite_gen, domain_name, form, couch_user):
+    from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
+
+    datums = suite_gen.get_new_case_id_datums_meta(form)
+    session_data = {datum['datum'].id: uuid.uuid4().hex for datum in datums}
+    if couch_user.doc_type == 'CommCareUser':  # smsforms.app.start_session could pass a CommCareCase
+        try:
+            extra_datums = suite_gen.get_extra_case_id_datums(form)
+        except SuiteError as err:
+            _assert = soft_assert(['nhooper_at_dimagi_dot_com'.replace('_at_', '@').replace('_dot_', '.')])
+            _assert(False, 'Domain "%s": %s' % (domain_name, err))
+        else:
+            if suite_gen.any_usercase_datums(extra_datums):
+                usercase = get_case_by_domain_hq_user_id(domain_name, couch_user.get_id, include_docs=False)
+                if usercase:
+                    session_data[USERCASE_ID] = usercase['id']
+    return session_data
