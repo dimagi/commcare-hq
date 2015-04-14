@@ -87,6 +87,7 @@ class FacilityReportData(EWSData):
         st = StockTransaction.objects.filter(
             case_id=loc.supply_point_id,
             sql_product__in=self.unique_products([loc]),
+            report__date__lte=self.config['enddate'],
             type='stockonhand',
         ).order_by('-report__date')
 
@@ -103,15 +104,20 @@ class FacilityReportData(EWSData):
                     'monthly_consumption': monthly_consumption,
                     'reorder_level': int(monthly_consumption * loc.location_type.overstock_threshold) / 2,
                     'maximum_level': int(monthly_consumption * loc.location_type.overstock_threshold),
-                    'date_of_last_report': json_format_date(state.last_modified_date)
+                    'last_report': ''
                 }
 
         for state in st:
             if state_grouping[state.product_id]['stockout_duration_helper']:
                 if not state.stock_on_hand:
-                    state_grouping[state.product_id]['stockout_duration'] = timesince(state.report.date)
+                    state_grouping[state.product_id]['stockout_duration'] = timesince(state.report.date,
+                                                                                      now=self.config['enddate'])
                 else:
                     state_grouping[state.product_id]['stockout_duration_helper'] = False
+
+                if not state_grouping[state.product_id]['last_report']:
+                    state_grouping[state.product_id]['last_report'] = json_format_date(state.report.date)
+
 
         for values in state_grouping.values():
             yield {
@@ -123,7 +129,7 @@ class FacilityReportData(EWSData):
                                                                         if values['months_until_stockout']
                                                                         else 0.0, loc),
                 'stockout_duration': values['stockout_duration'],
-                'date_of_last_report': values['date_of_last_report'],
+                'last_report': values['last_report'],
                 'reorder_level': values['reorder_level'] if values['reorder_level'] != 0.00
                 else 'unknown',
                 'maximum_level': values['maximum_level'] if values['maximum_level'] != 0.00
@@ -139,7 +145,7 @@ class FacilityReportData(EWSData):
                    row['monthly_consumption'],
                    row['reorder_level'],
                    row['maximum_level'],
-                   row['date_of_last_report']]
+                   row['last_report']]
 
 
 class InventoryManagementData(EWSData):
@@ -228,7 +234,8 @@ class InputStock(EWSData):
     def rows(self):
         link = reverse('input_stock', args=[self.domain, self.location.site_code])
         transactions = StockTransaction.objects.filter(
-            case_id=self.location.supply_point_id
+            case_id=self.location.supply_point_id,
+            report__date__lte=self.config['enddate']
         ).order_by('-report__date', 'pk')
         rows = [
             [u"<a href='{}'>INPUT STOCK for {}</a>".format(link, self.location.name)]
@@ -238,7 +245,7 @@ class InputStock(EWSData):
             rows.append(
                 [
                     u'The last report received was at <b>{}.</b>'.format(
-                        transactions[0].report.date.strftime("%X on %a %d, %Y")
+                        transactions[0].report.date.strftime("%X on %b %d, %Y")
                     )
                 ]
             )
