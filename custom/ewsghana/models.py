@@ -1,6 +1,7 @@
 from couchdbkit.ext.django.schema import Document, BooleanProperty, StringProperty
+from custom.utils.utils import add_to_module_map
 from casexml.apps.stock.models import DocDomainMapping
-from corehq.toggles import STOCK_AND_RECEIPT_SMS_HANDLER
+from corehq.toggles import STOCK_AND_RECEIPT_SMS_HANDLER, LOGISTICS_CUSTOM_CONSUMPTION
 from corehq.toggles import NAMESPACE_DOMAIN
 from django.db import models
 
@@ -57,6 +58,7 @@ class EWSGhanaConfig(Document):
             DocDomainMapping.objects.create(doc_id=self._id,
                                             domain_name=self.domain,
                                             doc_type='EWSGhanaConfig')
+            add_to_module_map(self.domain, 'custom.ewsghana')
 
     def update_toggle(self):
         """
@@ -64,6 +66,7 @@ class EWSGhanaConfig(Document):
         """
 
         if self.enabled:
+            LOGISTICS_CUSTOM_CONSUMPTION.set(self.domain, True, NAMESPACE_DOMAIN)
             STOCK_AND_RECEIPT_SMS_HANDLER.set(self.domain, True, NAMESPACE_DOMAIN)
 
 
