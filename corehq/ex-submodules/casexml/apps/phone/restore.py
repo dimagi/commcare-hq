@@ -108,11 +108,11 @@ class RestoreResponse(object):
     def finalize(self):
         raise NotImplemented()
 
-    def get_cache_payload(self):
+    def get_cache_payload(self, full=False):
         raise NotImplemented()
 
     def as_string(self):
-        return self.get_cache_payload()
+        raise NotImplemented()
 
     def __str__(self):
         return self.as_string()
@@ -167,13 +167,16 @@ class FileRestoreResponse(RestoreResponse):
             self.response_body.seek(0)
             shutil.copyfileobj(self.response_body, response)
 
-            self.response.write(self.closing_tag)
+            response.write(self.closing_tag)
         
         self.finalized = True
         self.close()
 
-    def get_cache_payload(self):
-        return self.get_filename()
+    def get_cache_payload(self, full=False):
+        return {
+            'is_file': True,
+            'data': self.get_filename() if not full else open(self.get_filename(), 'r')
+        }
 
     def as_string(self):
         with open(self.get_filename(), 'r') as f:
@@ -215,7 +218,13 @@ class StringRestoreResponse(RestoreResponse):
         self.finalized = True
         self.close()
 
-    def get_cache_payload(self):
+    def get_cache_payload(self, full=False):
+        return {
+            'is_file': False,
+            'data': self.response
+        }
+
+    def as_string(self):
         return self.response
 
     def get_http_response(self):
@@ -224,8 +233,15 @@ class StringRestoreResponse(RestoreResponse):
 
 class CachedResponse(object):
     def __init__(self, payload):
-        self.payload = payload
-        self.is_file = payload.endswith(FileRestoreResponse.EXTENSION) and path.exists(payload)
+        if isinstance(payload, basestring):
+            self.payload = payload
+            self.is_file = False
+        else:
+            self.payload = payload['data']
+            self.is_file = payload['is_file']
+
+    def exists(self):
+        return self.payload and (not self.is_file or path.exists(self.payload))
 
     def as_string(self):
         if self.is_file:
@@ -427,9 +443,9 @@ class RestoreConfig(object):
 
         self.validate()
 
-        cached_payload = self.get_cached_payload()
-        if cached_payload:
-            return CachedResponse(cached_payload)
+        cached_response = self.get_cached_payload()
+        if cached_response.exists():
+            return cached_response
 
         start_time = datetime.utcnow()
         last_seq = str(get_db().info()["update_seq"])
@@ -498,15 +514,19 @@ class RestoreConfig(object):
         else:
             payload = self.cache.get(self._initial_cache_key())
 
-        if payload and payload.endswith(FileRestoreResponse.EXTENSION) and not path.exists(payload):
-            return
-        return payload
+        return CachedResponse(payload)
 
     def set_cached_payload_if_necessary(self, resp, duration):
+        cache_payload = resp.get_cache_payload(bool(self.sync_log))
         if self.sync_log:
             # if there is a sync token, always cache
             try:
-                self.sync_log.set_cached_payload(resp.get_cache_payload(), self.version)
+                data = cache_payload['data']
+                self.sync_log.set_cached_payload(data, self.version)
+                try:
+                    data.close()
+                except AttributeError:
+                    pass
             except ResourceConflict:
                 # if one sync takes a long time and another one updates the sync log
                 # this can fail. in this event, don't fail to respond, since it's just
@@ -515,4 +535,4 @@ class RestoreConfig(object):
         else:
             # on initial sync, only cache if the duration was longer than the threshold
             if self.force_cache or duration > timedelta(seconds=INITIAL_SYNC_CACHE_THRESHOLD):
-                self.cache.set(self._initial_cache_key(), resp.get_cache_payload(), self.cache_timeout)
+                self.cache.set(self._initial_cache_key(), cache_payload, self.cache_timeout)

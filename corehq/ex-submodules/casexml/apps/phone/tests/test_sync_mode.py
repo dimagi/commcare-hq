@@ -14,7 +14,7 @@ from casexml.apps.case.tests.util import (check_user_has_case, delete_all_sync_l
     assert_user_has_case)
 from casexml.apps.case.xform import process_cases
 from casexml.apps.phone.models import SyncLog, User
-from casexml.apps.phone.restore import RestoreConfig
+from casexml.apps.phone.restore import RestoreConfig, CachedResponse
 from dimagi.utils.parsing import json_format_datetime
 from couchforms.models import XFormInstance
 from casexml.apps.case.xml import V2, V1
@@ -47,6 +47,10 @@ class SyncBaseTest(TestCase):
         # this creates the initial blank sync token in the database
         restore_config = RestoreConfig(self.user)
         self.sync_log = synclog_from_restore_payload(restore_config.get_payload().as_string())
+
+    def tearDown(self):
+        restore_config = RestoreConfig(self.user)
+        restore_config.cache.delete(restore_config._initial_cache_key())
 
     def _createCaseStubs(self, id_list, user_id=USER_ID, owner_id=USER_ID):
         caseblocks = [
@@ -437,6 +441,17 @@ class SyncTokenCachingTest(SyncBaseTest):
         versioned_sync_log = synclog_from_restore_payload(versioned_payload)
         self.assertNotEqual(next_sync_log._id, versioned_sync_log._id)
 
+    def test_initial_cache(self):
+        restore_config = RestoreConfig(self.user, force_cache=True)
+        original_payload = restore_config.get_payload()
+        self.assertNotIsInstance(original_payload, CachedResponse)
+
+        restore_config = RestoreConfig(self.user)
+        cached_payload = restore_config.get_payload()
+        self.assertIsInstance(cached_payload, CachedResponse)
+
+        self.assertEqual(original_payload.as_string(), cached_payload.as_string())
+
     def testCacheInvalidation(self):
         original_payload = RestoreConfig(
             self.user, version=V2,
@@ -504,24 +519,16 @@ class FileRestoreSyncTokenCachingTest(SyncTokenCachingTest):
 
     def testCacheInvalidationAfterFileDelete(self):
         # first request should populate the cache
-        original_file = RestoreConfig(
-            self.user, version=V2,
-            restore_id=self.sync_log._id,
-        ).get_payload()
-        self.sync_log = SyncLog.get(self.sync_log._id)
-        self.assertTrue(self.sync_log.has_cached_payload(V2))
+        original_payload = RestoreConfig(self.user, force_cache=True).get_payload()
+        self.assertNotIsInstance(original_payload, CachedResponse)
 
         # Delete cached file
-        os.remove(original_file.get_filename())
+        os.remove(original_payload.get_filename())
 
         # resyncing should recreate the cache
-        next_file = RestoreConfig(
-            self.user, version=V2,
-            restore_id=self.sync_log._id,
-        ).get_payload()
-        self.sync_log = SyncLog.get(self.sync_log._id)
-        self.assertTrue(self.sync_log.has_cached_payload(V2))
-        self.assertNotEqual(original_file.get_filename(), next_file.get_filename())
+        next_file = RestoreConfig(self.user).get_payload()
+        self.assertNotIsInstance(next_file, CachedResponse)
+        self.assertNotEqual(original_payload.get_filename(), next_file.get_filename())
 
 
 class MultiUserSyncTest(SyncBaseTest):
