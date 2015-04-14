@@ -18,6 +18,7 @@ class Migration(SchemaMigration):
             ('content_type', self.gf('django.db.models.fields.CharField')(max_length=3, null=False)),
             ('form_unique_id', self.gf('django.db.models.fields.CharField')(max_length=255, null=True)),
             ('status', self.gf('django.db.models.fields.CharField')(max_length=3, null=False)),
+            ('error_code', self.gf('django.db.models.fields.CharField')(max_length=255, null=True)),
             ('recipient_type', self.gf('django.db.models.fields.CharField')(max_length=3, null=False, db_index=True)),
             ('recipient_id', self.gf('django.db.models.fields.CharField')(max_length=255, null=True, db_index=True)),
         ))
@@ -31,6 +32,7 @@ class Migration(SchemaMigration):
             ('recipient_id', self.gf('django.db.models.fields.CharField')(max_length=255, null=True)),
             ('case_id', self.gf('django.db.models.fields.CharField')(max_length=255, null=True)),
             ('status', self.gf('django.db.models.fields.CharField')(max_length=3, null=False)),
+            ('error_code', self.gf('django.db.models.fields.CharField')(max_length=255, null=True)),
         ))
         db.send_create_signal('sms', ['MessagingSubEvent'])
 
@@ -60,6 +62,7 @@ class Migration(SchemaMigration):
             'content_type': ('django.db.models.fields.CharField', [], {'max_length': '3', 'null': 'False'}),
             'form_unique_id': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True'}),
             'status': ('django.db.models.fields.CharField', [], {'max_length': '3', 'null': 'False'}),
+            'error_code': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True'}),
             'recipient_type': ('django.db.models.fields.CharField', [], {'max_length': '3', 'null': 'False', 'db_index': 'True'}),
             'recipient_id': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True', 'db_index': 'True'}),
         },
@@ -71,6 +74,7 @@ class Migration(SchemaMigration):
             'recipient_id': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True'}),
             'case_id': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True'}),
             'status': ('django.db.models.fields.CharField', [], {'max_length': '3', 'null': 'False'}),
+            'error_code': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True'}),
         },
     }
 

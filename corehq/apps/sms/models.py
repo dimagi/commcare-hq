@@ -596,6 +596,7 @@ class MessagingEvent(models.Model):
 
     # If any of the MessagingSubEvent status's are STATUS_ERROR, this is STATUS_ERROR
     status = models.CharField(max_length=3, choices=STATUS_CHOICES, null=False)
+    error_code = models.CharField(max_length=255, null=True)
     recipient_type = models.CharField(max_length=3, choices=RECIPIENT_CHOICES, null=False, db_index=True)
     recipient_id = models.CharField(max_length=255, null=True, db_index=True)
 
@@ -616,3 +617,4 @@ class MessagingSubEvent(models.Model):
     # If this was a reminder that spawned off of a case, this is the case's id
     case_id = models.CharField(max_length=255, null=True)
     status = models.CharField(max_length=3, choices=MessagingEvent.STATUS_CHOICES, null=False)
+    error_code = models.CharField(max_length=255, null=True)
