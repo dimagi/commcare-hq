@@ -160,10 +160,10 @@ class EWSApi(APISynchronization):
                 sql_loc = location.sql_location
                 sql_loc.products = SQLProduct.objects.filter(domain=self.domain, code__in=supply_point.products)
                 sql_loc.save()
-            SupplyPointCase.get_or_create_by_location(Loc(_id=location._id,
-                                                          name=supply_point.name,
-                                                          external_id=str(supply_point.id),
-                                                          domain=self.domain))
+            return SupplyPointCase.get_or_create_by_location(Loc(_id=location._id,
+                                                             name=supply_point.name,
+                                                             external_id=str(supply_point.id),
+                                                             domain=self.domain))
 
     def _make_loc_type(self, name, administrative=False, parent_type=None):
         return LocationType.objects.get_or_create(
@@ -313,6 +313,7 @@ class EWSApi(APISynchronization):
             supply_point_with_stock_data = filter(
                 lambda x: x.last_reported and x.active, ews_location.supply_points
             )
+            location.save()
             for supply_point in supply_point_with_stock_data:
                 created_location = self._create_location_from_supply_point(supply_point, location)
                 fake_location = Loc(
@@ -321,8 +322,10 @@ class EWSApi(APISynchronization):
                     external_id=str(supply_point.id),
                     domain=self.domain
                 )
-                SupplyPointCase.get_or_create_by_location(fake_location)
-                created_location.save()
+                case = SupplyPointCase.get_or_create_by_location(fake_location)
+                sql_location = created_location.sql_location
+                sql_location.supply_point_id = case.get_id
+                sql_location.save()
         elif ews_location.supply_points:
             active_supply_points = filter(lambda sp: sp.active, ews_location.supply_points)
             if active_supply_points:
@@ -332,11 +335,25 @@ class EWSApi(APISynchronization):
             location.name = supply_point.name
             location.site_code = supply_point.code
             location.location_type = supply_point.type
-            self._create_supply_point_from_location(supply_point, location)
+            try:
+                sql_location = SQLLocation.objects.get(domain=self.domain, site_code=supply_point.code)
+                couch_location = sql_location.couch_location
+                couch_location.site_code = None
+                couch_location.save()
+            except SQLLocation.DoesNotExist:
+                pass
             location.save()
+            supply_point = self._create_supply_point_from_location(supply_point, location)
+            if supply_point:
+                sql_location = location.sql_location
+                sql_location.supply_point_id = supply_point.get_id
+                sql_location.save()
         else:
-            SupplyPointCase.get_or_create_by_location(location)
             location.save()
+            supply_point = SupplyPointCase.get_or_create_by_location(location)
+            sql_location = location.sql_location
+            sql_location.supply_point_id = supply_point.get_id
+            sql_location.save()
             location.archive()
 
     def location_sync(self, ews_location):
@@ -348,7 +365,6 @@ class EWSApi(APISynchronization):
             location = Loc.get(sql_loc.location_id)
         except SQLLocation.DoesNotExist:
             location = None
-
         if not location:
             if ews_location.parent_id:
                 try:
@@ -368,18 +384,38 @@ class EWSApi(APISynchronization):
                 location.lineage = []
 
             self._set_location_properties(location, ews_location)
-            location.save()
             self._set_up_supply_point(location, ews_location)
         else:
-            location_dict = {
-                'name': ews_location.name,
-                'latitude': float(ews_location.latitude) if ews_location.latitude else None,
-                'longitude': float(ews_location.longitude) if ews_location.longitude else None,
-                'site_code': ews_location.code.lower(),
-                'external_id': str(ews_location.id),
-            }
+            location_dict = {}
+            if location.sql_location.location_type.administrative:
+                location_dict = {
+                    'name': ews_location.name,
+                    'latitude': float(ews_location.latitude) if ews_location.latitude else None,
+                    'longitude': float(ews_location.longitude) if ews_location.longitude else None,
+                }
+                try:
+                    SQLLocation.objects.get(domain=self.domain, site_code=ews_location.code.lower())
+                except SQLLocation.DoesNotExist:
+                    location_dict['site_code'] = ews_location.code.lower()
+            else:
+                supply_point_with_stock_data = filter(
+                    lambda x: x.last_reported and x.active, ews_location.supply_points
+                )
+                supply_point = None
+                if supply_point_with_stock_data:
+                    supply_point = supply_point_with_stock_data[0]
+                elif ews_location.supply_points:
+                    supply_point = ews_location.supply_points[0]
 
-            if apply_updates(location, location_dict):
+                if supply_point:
+                    location_dict = {
+                        'name': supply_point.name,
+                        'latitude': float(ews_location.latitude) if ews_location.latitude else None,
+                        'longitude': float(ews_location.longitude) if ews_location.longitude else None,
+                        'site_code': supply_point.code.lower(),
+                    }
+
+            if location_dict and apply_updates(location, location_dict):
                 location.save()
         for supply_point in ews_location.supply_points:
             sp = SupplyPointCase.view('hqcase/by_domain_external_id',
