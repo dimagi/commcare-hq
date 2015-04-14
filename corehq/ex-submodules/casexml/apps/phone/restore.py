@@ -32,12 +32,6 @@ from django.conf import settings
 from casexml.apps.phone.checksum import CaseStateHash
 from no_exceptions.exceptions import HttpException
 
-try:
-    from newrelic.agent import add_custom_parameter
-except ImportError:
-    def add_custom_parameter(key, value):
-        pass
-
 logger = logging.getLogger(__name__)
 
 # how long a cached payload sits around for (in seconds).
@@ -285,9 +279,6 @@ def get_case_payload_batched(domain, stock_settings, version, user, last_synclog
     synclog.dependent_cases_on_phone = sync_state.actual_extended_cases
     synclog.save(**get_safe_write_kwargs())
 
-    add_custom_parameter('restore_total_cases', len(sync_state.actual_relevant_cases))
-    add_custom_parameter('restore_synced_cases', len(sync_state.all_synced_cases))
-
     # commtrack balance sections
     commtrack_elements = get_stock_payload(domain, stock_settings, sync_state.all_synced_cases)
     response.extend(commtrack_elements)
@@ -423,7 +414,6 @@ class RestoreConfig(object):
         duration = datetime.utcnow() - start_time
         new_synclog.duration = duration.seconds
         new_synclog.save()
-        add_custom_parameter('restore_response_size', response.num_items)
         self.set_cached_payload_if_necessary(resp, duration)
         return resp
 
