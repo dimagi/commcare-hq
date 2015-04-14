@@ -1885,7 +1885,7 @@ def edit_form_actions(request, domain, app_id, module_id, form_id):
     form = app.get_module(module_id).get_form(form_id)
     form.actions = FormActions.wrap(json.loads(request.POST['actions']))
     form.requires = request.POST.get('requires', form.requires)
-    if actions_use_usercase(form.actions):
+    if actions_use_usercase(form.actions) and not is_usercase_enabled(domain):
         if toggle_enabled_shortcut('user_as_a_case', domain, namespace='domain'):
             enable_usercase(domain)
         else:
