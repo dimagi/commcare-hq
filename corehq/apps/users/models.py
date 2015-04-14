@@ -1337,6 +1337,8 @@ class LocationUserMixin(DocumentSchema):
         from corehq.apps.commtrack.models import SupplyPointCase
         from corehq.apps.locations.models import LOCATION_SHARING_PREFIX
 
+        self.user_data['commcare_location_id'] = location._id
+
         if not location.location_type_object.administrative:
             # just need to trigger a get or create to make sure
             # this exists, otherwise things blow up
@@ -1370,6 +1372,7 @@ class LocationUserMixin(DocumentSchema):
         """
         Unset the location and remove all associated user data and cases
         """
+        self.user_data.pop('commcare_location_id', None)
         self.user_data.pop('commtrack-supply-point', None)
         self.user_data.pop('commcare_primary_case_sharing_id', None)
         self.location_id = None
