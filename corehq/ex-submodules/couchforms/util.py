@@ -2,6 +2,7 @@ from __future__ import absolute_import
 import hashlib
 import datetime
 import logging
+import pytz
 
 from StringIO import StringIO
 from django.test.client import Client
@@ -16,6 +17,8 @@ from django.http import (
 import iso8601
 from redis import ConnectionError
 from dimagi.ext.jsonobject import re_loose_datetime
+from corehq.util.timezones.conversions import \
+    phone_timezones_should_be_processed
 
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import uid, LockManager, ReleaseOnError
@@ -121,8 +124,15 @@ def adjust_datetimes(data, parent=None, key=None):
     # todo: in the future this will convert to UTC
     if isinstance(data, basestring):
         if re_loose_datetime.match(data):
-            parent[key] = json_format_datetime(
-                iso8601.parse_date(data).replace(tzinfo=None))
+            if phone_timezones_should_be_processed():
+                parent[key] = json_format_datetime(
+                    iso8601.parse_date(data).astimezone(pytz.utc)
+                    .replace(tzinfo=None)
+                )
+            else:
+                parent[key] = json_format_datetime(
+                    iso8601.parse_date(data).replace(tzinfo=None))
+
     elif isinstance(data, dict):
         for key, value in data.items():
             adjust_datetimes(value, parent=data, key=key)
