@@ -139,7 +139,7 @@ def _types_to_fixture(location_db, type, locs, type_lookup_function):
 def _get_metadata_node(location):
     node = Element('location_data')
     for key, value in location.metadata.items():
-        element = Element('data', attrib={'key': unicode(key)})
+        element = Element(key)
         element.text = value
         node.append(element)
     return node

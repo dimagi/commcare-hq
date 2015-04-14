@@ -17,6 +17,6 @@ class LocationFixturesTest(SimpleTestCase):
         location_db = _location_footprint([location])
         fixture = _location_to_fixture(location_db, location, id)
         location_data = {
-            e.attrib['key']: e.text for e in fixture.find('location_data')
+            e.tag: e.text for e in fixture.find('location_data')
         }
         self.assertEquals(location_data, location.metadata)
