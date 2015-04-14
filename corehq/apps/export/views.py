@@ -118,6 +118,10 @@ class BaseCreateCustomExportView(BaseExportView):
         if not schema and self.export_helper.export_type == "form":
             schema = create_basic_form_checkpoint(export_tag)
 
+        if request.GET.get('minimal', False):
+            messages.warning(request,
+                _("Warning you are using minimal mode, some things may not be functional"))
+
         if schema:
             app_id = request.GET.get('app_id')
             self.export_helper.custom_export = self.export_helper.ExportSchemaClass.default(
