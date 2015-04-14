@@ -7,7 +7,7 @@ install:
  - "uname -a"
  - "lsb_release -a"
  - "curl http://127.0.0.1:5984/"
- - "pip install -e ."
+ - "pip install -e . --process-dependency-links"
  - "pip install coverage coveralls unittest2 mock"
 script: coverage run `which django-admin.py` test --settings settings --traceback couchexport
 after_success:
