@@ -67,7 +67,7 @@ def get_restore_response(domain, couch_user, since=None, version='1.0',
         cache_timeout=cache_timeout,
         overwrite_cache=overwrite_cache
     )
-    return restore_config.get_response().as_string()
+    return restore_config.get_response()
 
 
 @login_or_digest_ex(allow_cc_users=True)
