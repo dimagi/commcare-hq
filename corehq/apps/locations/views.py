@@ -291,6 +291,7 @@ class NewLocationView(BaseLocationView):
             'form': self.location_form,
             'location': self.location,
             'consumption': consumption,
+            'locations': load_locs_json(self.domain, self.parent_id),
         }
 
     def form_valid(self):

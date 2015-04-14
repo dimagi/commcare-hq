@@ -56,6 +56,10 @@
             });
         });
 
+      var locs = {{ locations|JSON }};
+      var selected_parent = '{{ location.parent.get_id }}';
+      model.load(locs, selected_parent);
+      model.orig_parent_id = model.selected_locid();
 
       $("#loc_form :button[type='submit']").click(function(e) {
           if (loc_id != null && model.selected_locid() != model.orig_parent_id) {
@@ -93,7 +97,7 @@
     <div class="tab-pane active" id="basic-info">
       <form id="loc_form" class="form form-horizontal" name="product" method="post">
         {% bootstrap_form_errors form %}
-        {% bootstrap_fieldset form "Location Information" %}
+        {% crispy form %}
 
         {% crispy form.custom_data.form %}
         <input type="hidden" name="form_type" value="location-settings" />

@@ -5,6 +5,9 @@ from django.template import Context
 from django.template.loader import get_template
 from django.utils.translation import ugettext as _
 
+from crispy_forms.helper import FormHelper
+from crispy_forms import layout as crispy
+
 from corehq.apps.custom_data_fields import CustomDataEditor
 
 from .models import Location
@@ -40,7 +43,7 @@ class LocationForm(forms.Form):
         widget=ParentLocWidget(),
     )
     name = forms.CharField(max_length=100)
-    location_type = forms.CharField(widget=LocTypeWidget())
+    location_type = forms.CharField(widget=LocTypeWidget(), required=False)
     coordinates = forms.CharField(
         max_length=30,
         required=False,
@@ -68,7 +71,7 @@ class LocationForm(forms.Form):
 
         # seed form data from couch doc
         kwargs['initial'] = dict(self.location._doc)
-        kwargs['initial']['parent_id'] = self.cur_parent_id
+        kwargs['initial']['parent_id'] = self.location.parent_id
         lat, lon = (getattr(self.location, k, None)
                     for k in ('latitude', 'longitude'))
         kwargs['initial']['coordinates'] = ('%s, %s' % (lat, lon)
@@ -81,6 +84,33 @@ class LocationForm(forms.Form):
 
         if not self.location.external_id:
             self.fields['external_id'].widget = forms.HiddenInput()
+
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(*self.get_fields(is_new))
+        )
+
+    def get_fields(self, is_new):
+        if is_new:
+            parent = (Location.get(self.location.parent_id)
+                      if self.location.parent_id else None)
+            child_types = allowed_child_types(self.location.domain, parent)
+            return filter(None, [
+                _("Location Information"),
+                'name',
+                'location_type' if len(child_types) > 1 else None,
+            ])
+        else:
+            return [
+                _("Location Information"),
+                'name',
+                'parent_id',
+                'location_type',
+                'coordinates',
+                'site_code',
+                'external_id',
+            ]
 
     def get_custom_data(self, bound_data, is_new):
         from .views import LocationFieldsView
@@ -100,13 +130,6 @@ class LocationForm(forms.Form):
             post_dict=bound_data,
         )
 
-    @property
-    def cur_parent_id(self):
-        try:
-            return self.location.lineage[0]
-        except Exception:
-            return None
-
     def is_valid(self):
         return all([
             super(LocationForm, self).is_valid(),
@@ -120,13 +143,11 @@ class LocationForm(forms.Form):
         return errors
 
     def clean_parent_id(self):
-        parent_id = self.cleaned_data['parent_id']
-        if not parent_id:
-            parent_id = None  # normalize ''
+        parent_id = self.cleaned_data['parent_id'] or self.location.parent_id
         parent = Location.get(parent_id) if parent_id else None
         self.cleaned_data['parent'] = parent
 
-        if self.location._id is not None and self.cur_parent_id != parent_id:
+        if self.location._id is not None and self.location.parent_id != parent_id:
             # location is being re-parented
 
             if parent and self.location._id in parent.path:
@@ -138,7 +159,7 @@ class LocationForm(forms.Form):
                     'moved to a different parent'
                 )
 
-            self.cleaned_data['orig_parent_id'] = self.cur_parent_id
+            self.cleaned_data['orig_parent_id'] = self.location.parent_id
 
         return parent_id
 
@@ -178,6 +199,10 @@ class LocationForm(forms.Form):
 
         child_types = allowed_child_types(self.location.domain,
                                           self.cleaned_data.get('parent'))
+        if not loc_type:
+            if len(child_types) == 1:
+                return child_types[0]
+            assert False, 'You must select a location type'
 
         if not child_types:
             assert False, \
