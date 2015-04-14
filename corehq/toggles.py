@@ -375,3 +375,9 @@ USE_NEW_TIMEZONE_BEHAVIOR = StaticToggle(
      "because it has to be accompanied by a migration.)"),
     [NAMESPACE_DOMAIN],
 )
+
+USER_AS_A_CASE = StaticToggle(
+    'user_as_a_case',
+    'Enable "User-As-A-Case" to store user properties in a case and use them in forms',
+    [NAMESPACE_DOMAIN]
+)
