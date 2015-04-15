@@ -1,22 +1,35 @@
+from datetime import datetime
 import json
 from django.contrib import messages
-from django.http import HttpResponse
+from django.core.exceptions import PermissionDenied
+from django.forms.formsets import formset_factory
+from django.http import HttpResponse, HttpResponseRedirect
+from django.http.response import Http404
 from django.utils.translation import ugettext_noop
 from django.views.decorators.http import require_POST, require_GET
+from corehq.apps.commtrack import const
+from corehq.apps.commtrack.models import StockState, StockTransaction
+from corehq.apps.commtrack.sms import process
 from corehq.apps.domain.decorators import domain_admin_required
+from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.products.models import Product
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.models import CommCareUser
+from custom.common import ALL_OPTION
 from custom.ewsghana.alerts.alerts import on_going_process_user, on_going_stockout_process_user, \
     urgent_non_reporting_process_user, urgent_stockout_process_user, report_reminder_process_user
 from custom.ewsghana.api import GhanaEndpoint, EWSApi
+from custom.ewsghana.forms import InputStockForm
 from custom.ewsghana.models import EWSGhanaConfig
 from custom.ewsghana.reminders.reminders import first_soh_process_user, second_soh_process_user, \
     third_soh_process_users_and_facilities, stockout_process_user, rrirv_process_user, visit_website_process_user
 from custom.ewsghana.reports.specific_reports.stock_status_report import StockoutsProduct
-from custom.ewsghana.reports.stock_levels_report import InventoryManagementData
+from custom.ewsghana.reports.stock_levels_report import InventoryManagementData, StockLevelsReport
 from custom.ewsghana.tasks import ews_bootstrap_domain_task, ews_clear_stock_data_task, \
     EWS_FACILITIES
+from custom.ewsghana.utils import make_url, has_input_stock_permissions
 from custom.ilsgateway.views import GlobalStats
 from custom.logistics.tasks import sms_users_fix, add_products_to_loc, locations_fix, sync_stock_transactions
 from custom.logistics.tasks import stock_data_task
@@ -80,6 +93,110 @@ class RemindersTester(BaseRemindersTester):
                         reminder_function(user, test=True)
         messages.success(request, "Reminder was sent successfully")
         return self.get(request, *args, **kwargs)
+
+
+class InputStockView(BaseDomainView):
+    section_name = 'Input stock data'
+    section_url = ""
+    template_name = 'ewsghana/input_stock.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        couch_user = self.request.couch_user
+        site_code = kwargs['site_code']
+        try:
+            sql_location = SQLLocation.objects.get(site_code=site_code, domain=self.domain)
+            if not has_input_stock_permissions(couch_user, sql_location, self.domain):
+                raise PermissionDenied()
+        except SQLLocation.DoesNotExist:
+            raise Http404()
+
+        return super(InputStockView, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        InputStockFormSet = formset_factory(InputStockForm)
+        formset = InputStockFormSet(request.POST)
+        if formset.is_valid():
+            try:
+                location = SQLLocation.objects.get(site_code=kwargs['site_code'], domain=self.domain)
+            except SQLLocation.DoesNotExist:
+                raise Http404()
+            data = []
+            for form in formset:
+                product = Product.get(docid=form.cleaned_data['product_id'])
+                if form.cleaned_data['receipts']:
+                    data.append(
+                        StockTransaction(
+                            domain=self.domain,
+                            location_id=location.location_id,
+                            case_id=location.supply_point_id,
+                            product=product,
+                            action=const.StockActions.RECEIPTS,
+                            quantity=form.cleaned_data['receipts']
+                        ),
+                    )
+                if form.cleaned_data['stock_on_hand'] is not None:
+                    data.append(
+                        StockTransaction(
+                            domain=self.domain,
+                            location_id=location.location_id,
+                            case_id=location.supply_point_id,
+                            product=product,
+                            action=const.StockActions.STOCKONHAND,
+                            quantity=form.cleaned_data['stock_on_hand']
+                        ),
+                    )
+            if data:
+                unpacked_data = {
+                    'timestamp': datetime.utcnow(),
+                    'user': self.request.couch_user,
+                    'phone': 'ewsghana-input-stock',
+                    'location': location.couch_location,
+                    'transactions': data,
+                }
+                process(self.domain, unpacked_data)
+            url = make_url(
+                StockLevelsReport,
+                self.domain,
+                '?location_id=%s&filter_by_program=%s&startdate='
+                '&enddate=&report_type=&filter_by_product=%s',
+                (location.location_id, ALL_OPTION, ALL_OPTION)
+            )
+            return HttpResponseRedirect(url)
+        context = self.get_context_data(**kwargs)
+        context['formset'] = formset
+        return self.render_to_response(context)
+
+    def get_context_data(self, **kwargs):
+        context = super(InputStockView, self).get_context_data(**kwargs)
+        try:
+            sql_location = SQLLocation.objects.get(domain=self.domain, site_code=kwargs.get('site_code'))
+        except SQLLocation.DoesNotExist:
+            raise Http404()
+        InputStockFormSet = formset_factory(InputStockForm, extra=0)
+        initial_data = []
+
+        for product in sql_location.products.order_by('name'):
+            try:
+                stock_state = StockState.objects.get(
+                    case_id=sql_location.supply_point_id,
+                    product_id=product.product_id
+                )
+                stock_on_hand = stock_state.stock_on_hand
+                monthly_consumption = stock_state.get_monthly_consumption()
+            except StockState.DoesNotExist:
+                stock_on_hand = 0
+                monthly_consumption = 0
+            initial_data.append(
+                {
+                    'product_id': product.product_id,
+                    'product': product.name,
+                    'stock_on_hand': int(stock_on_hand),
+                    'monthly_consumption': int(monthly_consumption) if monthly_consumption else 0,
+                    'units': product.units
+                }
+            )
+        context['formset'] = InputStockFormSet(initial=initial_data)
+        return context
 
 
 @domain_admin_required
@@ -151,7 +268,8 @@ def inventory_management(request, domain):
         config=dict(
             program=None, products=None, domain=domain,
             startdate=force_to_datetime(request.GET.get('startdate')),
-            enddate=force_to_datetime(request.GET.get('enddate')), location_id=request.GET.get('location_id')
+            enddate=force_to_datetime(request.GET.get('enddate')), location_id=request.GET.get('location_id'),
+            custom_date=True
         )
     )
     return HttpResponse(
@@ -175,3 +293,21 @@ def stockouts_product(request, domain):
         json.dumps(stockout_graph.charts[0].data, default=json_handler),
         mimetype='application/json'
     )
+
+
+@require_POST
+def configure_in_charge(request, domain):
+    in_charge_ids = request.POST.getlist('users[]')
+    location_id = request.POST.get('location_id')
+    all_users = CommCareUser.view(
+        'locations/users_by_location_id',
+        startkey=[location_id],
+        endkey=[location_id, {}],
+        include_docs=True
+    ).all()
+
+    for u in all_users:
+        if (u.user_data.get('role') == 'In Charge') != (u._id in in_charge_ids):
+            u.user_data['role'] = 'In Charge' if u._id in in_charge_ids else 'Other'
+            u.save()
+    return HttpResponse('OK')

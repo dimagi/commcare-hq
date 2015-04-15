@@ -12,6 +12,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
+from corehq.const import USER_DATE_FORMAT
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.web import get_site_domain
 
@@ -818,8 +819,8 @@ class Subscription(models.Model):
                 "[%(date_start)s - %(date_end)s]" % {
                     'plan_version': self.plan_version,
                     'subscriber': self.subscriber,
-                    'date_start': self.date_start.strftime("%d %B %Y"),
-                    'date_end': (self.date_end.strftime("%d %B %Y")
+                    'date_start': self.date_start.strftime(USER_DATE_FORMAT),
+                    'date_end': (self.date_end.strftime(USER_DATE_FORMAT)
                                  if self.date_end is not None else "--"),
                 })
 
@@ -1138,7 +1139,7 @@ class Subscription(models.Model):
         if num_days_left == 1:
             ending_on = _("tomorrow!")
         else:
-            ending_on = _("on %s." % self.date_end.strftime("%B %d, %Y"))
+            ending_on = _("on %s." % self.date_end.strftime(USER_DATE_FORMAT))
 
         user_desc = self.plan_version.user_facing_description
         plan_name = user_desc['name']
@@ -1516,9 +1517,7 @@ class BillingRecord(models.Model):
         invoice_pdf.generate_pdf(record.invoice)
         record.pdf_data_id = invoice_pdf._id
         record._pdf = invoice_pdf
-        if record.invoice.subscription.do_not_invoice:
-            record.skipped_email = True
-            invoice.is_hidden = True
+        record.skipped_email = invoice.is_hidden
         record.save()
         return record
 
@@ -1532,7 +1531,7 @@ class BillingRecord(models.Model):
         ).count() > MAX_INVOICE_COMMUNICATIONS
 
     def send_email(self, contact_emails=None):
-        if self.invoice.subscription.do_not_invoice:
+        if self.skipped_email:
             return
         pdf_attachment = {
             'title': self.pdf.get_filename(self.invoice),

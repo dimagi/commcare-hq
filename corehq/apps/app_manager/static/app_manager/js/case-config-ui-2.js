@@ -470,37 +470,6 @@ var CaseConfig = (function () {
         operator: null
     };
 
-    var propertyDictToArray = function (required, property_dict, caseConfig, keyIsPath) {
-        var property_array = _(property_dict).map(function (value, key) {
-            return {
-                path: !keyIsPath ? value : key,
-                key: !keyIsPath ? key : value,
-                required: false
-            };
-        });
-        property_array = _(property_array).sortBy(function (property) {
-            return caseConfig.questionScores[property.path] * 2 + (property.required ? 0 : 1);
-        });
-        return required.concat(property_array);
-    };
-
-    var propertyArrayToDict = function (required, property_array, keyIsPath) {
-        var property_dict = {},
-            extra_dict = {};
-        _(property_array).each(function (case_property) {
-            var key = case_property[!keyIsPath ? 'key' : 'path'];
-            var path = case_property[!keyIsPath ? 'path' : 'key'];
-            if (key || path) {
-                if (_(required).contains(key) && case_property.required) {
-                    extra_dict[key] = path;
-                } else {
-                    property_dict[key] = path;
-                }
-            }
-        });
-        return [property_dict, extra_dict];
-    };
-
     var cleanCondition = function(condition) {
         if (condition.type !== 'if') {
             condition.question = null;
@@ -535,12 +504,12 @@ var CaseConfig = (function () {
                 path: self.open_case.name_path,
                 required: true
             }] : [];
-            var case_properties = propertyDictToArray(
+            var case_properties = CC_UTILS.propertyDictToArray(
                 required_properties,
                 self.update_case.update,
                 caseConfig
             );
-            var case_preload = propertyDictToArray(
+            var case_preload = CC_UTILS.propertyDictToArray(
                 [],
                 self.case_preload.preload,
                 caseConfig,
@@ -578,9 +547,9 @@ var CaseConfig = (function () {
         },
         from_case_transaction: function (case_transaction) {
             var o = CaseTransaction.unwrap(case_transaction);
-            var x = propertyArrayToDict(['name'], o.case_properties);
+            var x = CC_UTILS.propertyArrayToDict(['name'], o.case_properties);
             var case_properties = x[0], case_name = x[1].name;
-            var case_preload = propertyArrayToDict([], o.case_preload, true)[0];
+            var case_preload = CC_UTILS.propertyArrayToDict([], o.case_preload, true)[0];
             var open_condition = o.condition;
             var close_condition = o.close_condition;
             var update_condition = DEFAULT_CONDITION_ALWAYS;
@@ -635,7 +604,7 @@ var CaseConfig = (function () {
         },
         to_case_transaction: function (o, caseConfig) {
             var self = HQOpenSubCaseAction.normalize(o);
-            var case_properties = propertyDictToArray([{
+            var case_properties = CC_UTILS.propertyDictToArray([{
                     path: self.case_name,
                     key: 'name',
                     required: true
@@ -676,7 +645,7 @@ var CaseConfig = (function () {
         },
         from_case_transaction: function (case_transaction) {
             var o = CaseTransaction.unwrap(case_transaction);
-            var x = propertyArrayToDict(['name'], o.case_properties);
+            var x = CC_UTILS.propertyArrayToDict(['name'], o.case_properties);
             var case_properties = x[0], case_name = x[1].name;
 
             return {

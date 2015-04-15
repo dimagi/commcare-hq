@@ -655,16 +655,17 @@ class FormExportSchema(HQExportSchema):
     doc_type = 'SavedExportSchema'
     app_id = StringProperty()
     include_errors = BooleanProperty(default=False)
+    split_multiselects = BooleanProperty(default=False)
 
     def update_schema(self):
         super(FormExportSchema, self).update_schema()
-        self.update_question_schema()
-        # update SplitColumn options
-        for column in [column for table in self.tables for column in table.columns]:
-            if isinstance(column, SplitColumn):
-                question = self.question_schema.question_schema.get(column.index)
-                column.options = question.options
-                column.ignore_extras = True
+        if self.split_multiselects:
+            self.update_question_schema()
+            for column in [column for table in self.tables for column in table.columns]:
+                if isinstance(column, SplitColumn):
+                    question = self.question_schema.question_schema.get(column.index)
+                    column.options = question.options
+                    column.ignore_extras = True
 
     def update_question_schema(self):
         schema = self.question_schema

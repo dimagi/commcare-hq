@@ -2,6 +2,7 @@ import dateutil
 from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
 from corehq.apps.reports.generic import ElasticProjectInspectionReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
+from dimagi.utils.parsing import ISO_DATE_FORMAT
 
 
 class PactPatientDispatcher(CustomProjectReportDispatcher):
@@ -16,7 +17,7 @@ class PactPatientDispatcher(CustomProjectReportDispatcher):
 
 
 class PactElasticTabularReportMixin(CustomProjectReport, ElasticProjectInspectionReport, ProjectReportParametersMixin):
-    def format_date(self, date_string, format="%Y-%m-%d"):
+    def format_date(self, date_string, format=ISO_DATE_FORMAT):
         try:
             date_obj = dateutil.parser.parse(date_string)
             return date_obj.strftime(format)

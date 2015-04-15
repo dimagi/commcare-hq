@@ -614,10 +614,8 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
             self.apply_close(action)
         elif action.action_type == const.CASE_ACTION_ATTACHMENT:
             self.apply_attachments(action, xform)
-        elif action.action_type == const.CASE_ACTION_COMMTRACK:
-            pass  # no action needed here, it's just a placeholder stub
-        elif action.action_type == const.CASE_ACTION_REBUILD:
-            pass
+        elif action.action_type in (const.CASE_ACTION_COMMTRACK, const.CASE_ACTION_REBUILD):
+            return  # no action needed here, it's just a placeholder stub
         else:
             raise ValueError("Can't apply action of type %s: %s" % (
                 action.action_type,

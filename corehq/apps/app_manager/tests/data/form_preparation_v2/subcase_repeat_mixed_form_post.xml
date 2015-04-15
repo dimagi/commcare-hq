@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns="http://www.w3.org/2002/xforms" xmlns:jr="http://openrosa.org/javarosa" xmlns:orx="http://openrosa.org/jr/xforms" xmlns:vellum="http://commcarehq.org/xforms/vellum" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <h:head>
+        <h:title>create parent</h:title>
+        <model>
+            <instance>
+                <data xmlns="http://openrosa.org/formdesigner/E3EC2605-2A97-41AD-8716-374F4A30A78E" xmlns:jrm="http://dev.commcarehq.org/jr/xforms" uiVersion="1" version="None" name="create parent">
+                    <parent_name />
+                    <first_child_name />
+                    <repeat_child jr:template="">
+                        <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="" date_modified="" user_id="">
+                            <create>
+                                <case_name />
+                                <owner_id />
+                                <case_type>subcase</case_type>
+                            </create>
+                            <update />
+                            <index>
+                                <parent case_type="parent" />
+                            </index>
+                        </case>
+                        <repeat_child_name />
+                    </repeat_child>
+                    <last_child_name />
+                    <subcase_0>
+                        <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="" date_modified="" user_id="">
+                            <create>
+                                <case_name />
+                                <owner_id />
+                                <case_type>subcase</case_type>
+                            </create>
+                            <update />
+                            <index>
+                                <parent case_type="parent" />
+                            </index>
+                        </case>
+                    </subcase_0>
+                    <subcase_2>
+                        <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="" date_modified="" user_id="">
+                            <create>
+                                <case_name />
+                                <owner_id />
+                                <case_type>subcase</case_type>
+                            </create>
+                            <update />
+                            <index>
+                                <parent case_type="parent" />
+                            </index>
+                        </case>
+                    </subcase_2>
+                    <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="" date_modified="" user_id="">
+                        <create>
+                            <case_name />
+                            <owner_id />
+                            <case_type>parent</case_type>
+                        </create>
+                    </case>
+                    <orx:meta xmlns:cc="http://commcarehq.org/xforms">
+                        <orx:deviceID />
+                        <orx:timeStart />
+                        <orx:timeEnd />
+                        <orx:username />
+                        <orx:userID />
+                        <orx:instanceID />
+                        <cc:appVersion />
+                    </orx:meta>
+                </data>
+            </instance>
+            <instance id="commcaresession" src="jr://instance/session" />
+            <bind nodeset="/data/parent_name" type="xsd:string" required="true()" />
+            <bind nodeset="/data/first_child_name" type="xsd:string" required="true()" />
+            <bind nodeset="/data/repeat_child" />
+            <bind nodeset="/data/repeat_child/repeat_child_name" type="xsd:string" required="true()" />
+            <bind nodeset="/data/last_child_name" type="xsd:string" required="true()" />
+            <itext>
+                <translation lang="en" default="">
+                    <text id="parent_name-label">
+                        <value>Parent name</value>
+                    </text>
+                    <text id="first_child_name-label">
+                        <value>First child name</value>
+                    </text>
+                    <text id="repeat_child-label">
+                        <value>repeat_child</value>
+                    </text>
+                    <text id="repeat_child/repeat_child_name-label">
+                        <value>Repeat child name:</value>
+                    </text>
+                    <text id="last_child_name-label">
+                        <value>Last child name</value>
+                    </text>
+                </translation>
+            </itext>
+            <bind calculate="/data/meta/timeEnd" nodeset="/data/case/@date_modified" type="xsd:dateTime" />
+            <bind calculate="/data/meta/userID" nodeset="/data/case/@user_id" />
+            <setvalue event="xforms-ready" ref="/data/case/@case_id" value="instance('commcaresession')/session/data/case_id_new_parent_0" />
+            <bind calculate="/data/parent_name" nodeset="/data/case/create/case_name" />
+            <bind calculate="/data/meta/userID" nodeset="/data/case/create/owner_id" />
+            <bind calculate="/data/meta/timeEnd" nodeset="/data/subcase_0/case/@date_modified" type="xsd:dateTime" />
+            <bind calculate="/data/meta/userID" nodeset="/data/subcase_0/case/@user_id" />
+            <setvalue event="xforms-ready" ref="/data/subcase_0/case/@case_id" value="instance('commcaresession')/session/data/case_id_new_subcase_1" />
+            <bind calculate="/data/first_child_name" nodeset="/data/subcase_0/case/create/case_name" />
+            <bind calculate="/data/meta/userID" nodeset="/data/subcase_0/case/create/owner_id" />
+            <bind calculate="/data/case/@case_id" nodeset="/data/subcase_0/case/index/parent" />
+            <bind calculate="/data/meta/timeEnd" nodeset="/data/repeat_child/case/@date_modified" type="xsd:dateTime" />
+            <bind calculate="/data/meta/userID" nodeset="/data/repeat_child/case/@user_id" />
+            <bind calculate="uuid()" nodeset="/data/repeat_child/case/@case_id" />
+            <bind calculate="/data/repeat_child/repeat_child_name" nodeset="/data/repeat_child/case/create/case_name" />
+            <bind calculate="/data/meta/userID" nodeset="/data/repeat_child/case/create/owner_id" />
+            <bind calculate="/data/case/@case_id" nodeset="/data/repeat_child/case/index/parent" />
+            <bind calculate="/data/meta/timeEnd" nodeset="/data/subcase_2/case/@date_modified" type="xsd:dateTime" />
+            <bind calculate="/data/meta/userID" nodeset="/data/subcase_2/case/@user_id" />
+            <setvalue event="xforms-ready" ref="/data/subcase_2/case/@case_id" value="instance('commcaresession')/session/data/case_id_new_subcase_3" />
+            <bind calculate="/data/last_child_name" nodeset="/data/subcase_2/case/create/case_name" />
+            <bind calculate="/data/meta/userID" nodeset="/data/subcase_2/case/create/owner_id" />
+            <bind calculate="/data/case/@case_id" nodeset="/data/subcase_2/case/index/parent" />
+            <setvalue event="xforms-ready" ref="/data/meta/deviceID" value="instance('commcaresession')/session/context/deviceid" />
+            <setvalue event="xforms-ready" ref="/data/meta/timeStart" value="now()" />
+            <bind nodeset="/data/meta/timeStart" type="xsd:dateTime" />
+            <setvalue event="xforms-revalidate" ref="/data/meta/timeEnd" value="now()" />
+            <bind nodeset="/data/meta/timeEnd" type="xsd:dateTime" />
+            <setvalue event="xforms-ready" ref="/data/meta/username" value="instance('commcaresession')/session/context/username" />
+            <setvalue event="xforms-ready" ref="/data/meta/userID" value="instance('commcaresession')/session/context/userid" />
+            <setvalue event="xforms-ready" ref="/data/meta/instanceID" value="uuid()" />
+            <setvalue event="xforms-ready" ref="/data/meta/appVersion" value="instance('commcaresession')/session/context/appversion" />
+        </model>
+    </h:head>
+    <h:body>
+        <input ref="/data/parent_name">
+            <label ref="jr:itext('parent_name-label')" />
+        </input>
+        <input ref="/data/first_child_name">
+            <label ref="jr:itext('first_child_name-label')" />
+        </input>
+        <group>
+            <label ref="jr:itext('repeat_child-label')" />
+            <repeat nodeset="/data/repeat_child">
+                <input ref="/data/repeat_child/repeat_child_name">
+                    <label ref="jr:itext('repeat_child/repeat_child_name-label')" />
+                </input>
+            </repeat>
+        </group>
+        <input ref="/data/last_child_name">
+            <label ref="jr:itext('last_child_name-label')" />
+        </input>
+    </h:body>
+</h:html>

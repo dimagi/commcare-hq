@@ -1,20 +1,21 @@
-from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpResponseNotFound
+import json
+import copy
+
+from django.contrib import messages
+from django.core.urlresolvers import reverse
+from django.http import HttpResponseRedirect, Http404
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
+
+from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.web import json_response
+
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_and_domain_required,
 )
-from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import BaseDomainView
-from corehq.apps.locations.models import Location, LocationType
-from dimagi.utils.decorators.memoized import memoized
-from django.core.urlresolvers import reverse
-from django.contrib import messages
-import json
-from couchdbkit import ResourceNotFound
-import itertools
-import copy
+from corehq.apps.locations.models import SQLLocation, LocationType
 
 from .forms import ConsumptionForm, StockLevelsForm, CommTrackSettingsForm
 from .models import CommtrackActionConfig, StockRestoreConfig
@@ -168,42 +169,26 @@ class DefaultConsumptionView(BaseCommTrackManageView):
 @login_and_domain_required
 def api_query_supply_point(request, domain):
     id = request.GET.get('id')
-    query = request.GET.get('name', '')
-    
+    query = request.GET.get('name', '').lower()
+
     def loc_to_payload(loc):
-        return {'id': loc._id, 'name': loc.name}
+        return {'id': loc.location_id, 'name': loc.display_name}
 
     if id:
         try:
-            loc = Location.get(id)
-            return HttpResponse(json.dumps(loc_to_payload(loc)), 'text/json')
-
-        except ResourceNotFound:
-            return HttpResponseNotFound(json.dumps({'message': 'no location with id %s found' % id}, 'text/json'))
-
+            loc = SQLLocation.objects.get(location_id=id)
+        except SQLLocation.DoesNotExist:
+            return json_response(
+                {'message': 'no location with id %s found' % id},
+                status_code=404,
+            )
+        else:
+            return json_response(loc_to_payload(loc))
     else:
-        LIMIT = 100
-        loc_types = [loc_type.name for loc_type in Domain.get_by_name(domain).location_types]
-
-        def get_locs(type):
-            # TODO use ES instead?
-            q = query.lower()
-            startkey = [domain, type, q]
-            endkey = [domain, type, q + 'zzzzzz']
-            return [loc for loc in Location.view(
-                'locations/by_name',
-                startkey=startkey,
-                endkey=endkey,
-                limit=LIMIT,
-                reduce=False,
-                include_docs=True,
-            ) if not loc.is_archived]
-
-        locs = sorted(
-            itertools.chain(*(get_locs(loc_type) for loc_type in loc_types)),
-            key=lambda e: e.name
-        )[:LIMIT]
-        return HttpResponse(json.dumps(map(loc_to_payload, locs)), 'text/json')
+        locs = SQLLocation.objects.filter(domain=domain)
+        if query:
+            locs = locs.filter(name__icontains=query)
+        return json_response(map(loc_to_payload, locs[:10]))
 
 
 class SMSSettingsView(BaseCommTrackManageView):

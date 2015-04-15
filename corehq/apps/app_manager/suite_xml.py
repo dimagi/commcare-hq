@@ -9,7 +9,7 @@ import urllib
 
 from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, NodeField, load_xmlobject_from_string
 from lxml import etree
-from xml.sax.saxutils import escape
+from xml.sax.saxutils import escape, unescape
 
 from django.core.urlresolvers import reverse
 
@@ -787,6 +787,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 template = '({{}}) and ({})'.format(if_clause) if if_clause else '{}'
                 if_clause = template.format(if_prefix)
 
+            if_clause = unescape(if_clause) if if_clause else None
             frame = CreateFrame(if_clause=if_clause)
             entry.stack.add_frame(frame)
 
@@ -1322,6 +1323,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                 menu_by_command[command.id] = menu.id
                 if command.relevant:
                     relevance_by_menu[menu.id].append(command.relevant)
+            if menu.relevant:
+                relevance_by_menu[menu.id].append(menu.relevant)
 
         return relevance_by_menu, menu_by_command
 
@@ -1502,14 +1505,16 @@ class SuiteGenerator(SuiteGeneratorBase):
                 })
 
             if 'subcases' in actions:
-                non_repeat_actions = [a for a in actions['subcases'] if not a.repeat_context]
-                for i, subcase in enumerate(non_repeat_actions):
-                    datums.append({
-                        'datum': SessionDatum(id=form.session_var_for_action('subcase', i), function='uuid()'),
-                        'case_type': subcase.case_type,
-                        'requires_selection': False,
-                        'action': subcase
-                    })
+                for i, subcase in enumerate(actions['subcases']):
+                    # don't put this in the loop to be consistent with the form's indexing
+                    # see XForm.create_casexml_2
+                    if not subcase.repeat_context:
+                        datums.append({
+                            'datum': SessionDatum(id=form.session_var_for_action('subcase', i), function='uuid()'),
+                            'case_type': subcase.case_type,
+                            'requires_selection': False,
+                            'action': subcase
+                        })
         elif form.form_type == 'advanced_form':
             for action in form.actions.get_open_actions():
                 if not action.repeat_context:

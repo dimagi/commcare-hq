@@ -6,6 +6,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.users.models import CommCareUser
 from couchforms.models import XFormInstance
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.parsing import json_format_date
 from pact import enums
 
 from pact.enums import (
@@ -512,10 +513,10 @@ class CObservation(Document):
         app_label = 'pact'
 
     def __unicode__(self):
-        return "Obs %s [%s] %d/%d" % (self.observed_date.strftime("%Y-%m-%d"), "ART" if self.is_art else "NonART", self.dose_number+1, self.total_doses)
+        return "Obs %s [%s] %d/%d" % (json_format_date(self.observed_date), "ART" if self.is_art else "NonART", self.dose_number+1, self.total_doses)
 
     def __str__(self):
-        return "Obs %s [%s] %d/%d" % (self.observed_date.strftime("%Y-%m-%d"), "ART" if self.is_art else "NonART", self.dose_number+1, self.total_doses)
+        return "Obs %s [%s] %d/%d" % (json_format_date(self.observed_date), "ART" if self.is_art else "NonART", self.dose_number+1, self.total_doses)
 
     def __repr__(self):
         return json.dumps(self.to_json(), indent=4)

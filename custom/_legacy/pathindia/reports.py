@@ -1,4 +1,5 @@
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
+from corehq.const import USER_DATE_FORMAT, USER_MONTH_FORMAT
 from dimagi.utils.couch.database import get_db
 
 class PathIndiaKrantiReport(CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
@@ -101,9 +102,9 @@ class PathIndiaKrantiReport(CustomProjectReport, ProjectReportParametersMixin, D
         )
 
         kranti_percentages = self._get_percentages(report_data, kranti_expected)
-        month_reporting_range = self.datespan.enddate.strftime("%B %Y")
-        if self.datespan.enddate.strftime("%B %Y") != self.datespan.startdate.strftime("%B %Y"):
-            month_reporting_range = "%s to %s" % (self.datespan.startdate.strftime("%B %Y"), month_reporting_range)
+        month_reporting_range = self.datespan.enddate.strftime(USER_MONTH_FORMAT)
+        if self.datespan.enddate.strftime(USER_MONTH_FORMAT) != self.datespan.startdate.strftime(USER_MONTH_FORMAT):
+            month_reporting_range = "%s to %s" % (self.datespan.startdate.strftime(USER_MONTH_FORMAT), month_reporting_range)
 
         return dict(
             kranti=report_data,
@@ -111,7 +112,7 @@ class PathIndiaKrantiReport(CustomProjectReport, ProjectReportParametersMixin, D
             general_info=dict(
                 total_link_workers=len(self.users),
                 month_of_reporting=month_reporting_range,
-                date_of_sending_report=self.datespan.enddate.strftime("%d %B %Y"),
+                date_of_sending_report=self.datespan.enddate.strftime(USER_DATE_FORMAT),
                 total_preg_women_monitored=get_db().view("pathindia/kranti_cases",
                     reduce=True
                 ).first().get('value', 0),

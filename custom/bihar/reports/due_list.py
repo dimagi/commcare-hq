@@ -1,5 +1,6 @@
 from copy import copy
 import logging
+from corehq.util.dates import iso_string_to_date
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
@@ -11,12 +12,12 @@ from custom.bihar.reports.supervisor import (SubCenterSelectionReport, BiharNavR
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.reports.generic import summary_context
 from corehq.apps.api.es import ReportCaseES
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
+from dimagi.utils.parsing import json_format_date
 
 BIHAR_DOMAIN = 'care-bihar' # TODO: where should this go?
 BIHAR_CHILD_CASE_TYPE = 'cc_bihar_newborn'
 MAX_ES_RESULTS = 1000000
-DATE_FORMAT = '%Y-%m-%d'
 
 DUE_LIST_CONFIG = [
     {
@@ -127,7 +128,7 @@ class VaccinationSummary(GroupReferenceMixIn, BiharSummaryReport):
         def _fmt_result(item_config, value):
             params = copy(self.request_params)
             params['category'] = item_config['slug']
-            params['date'] = self.get_date().strftime(DATE_FORMAT)
+            params['date'] = json_format_date(self.get_date())
             return format_html(u'<a href="{next}">{val}</a>',
                 val=value,
                 next=url_and_params(
@@ -163,7 +164,10 @@ class VaccinationClientList(ClientListBase):
 
     @memoized
     def get_date(self):
-        return datetime.strptime(self.request_params.get('date'), DATE_FORMAT)
+        return datetime.combine(
+            iso_string_to_date(self.request_params.get('date')),
+            time()
+        )
 
     @property
     def rendered_report_title(self):
@@ -232,8 +236,8 @@ def get_due_list_by_task_name(target_date, owner_id=None, case_es=None, size=0, 
             owner_filter,
             {"term": {"closed": False}},
             {"term": {"type": case_type}},
-            {"range": {"date_eligible.#value": {"to": target_date.strftime('%Y-%m-%d') }}},
-            {"range": {"date_expires.#value": {"from": target_date.strftime('%Y-%m-%d')}}},
+            {"range": {"date_eligible.#value": {"to": json_format_date(target_date)}}},
+            {"range": {"date_expires.#value": {"from": json_format_date(target_date)}}},
         ]
     }
 

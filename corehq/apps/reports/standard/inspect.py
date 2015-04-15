@@ -19,6 +19,7 @@ from corehq.apps.reports.generic import GenericTabularReport, ProjectInspectionR
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin, CompletionOrSubmissionTimeMixin
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.users.models import CouchUser
+from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.elastic import es_query, ADD_TO_ES_FILTER
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from corehq.util.view_utils import absolute_reverse
@@ -208,142 +209,10 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport,
             init_cells = [
                 form_data_link(form["_id"]),
                 (username or _('No data for username')) + (" %s" % name if name else ""),
-                DateTimeProperty().wrap(safe_index(form, self.time_field.split('.'))).strftime("%Y-%m-%d %H:%M:%S"),
+                DateTimeProperty().wrap(safe_index(form, self.time_field.split('.'))).strftime(SERVER_DATETIME_FORMAT),
                 xmlns_to_name(self.domain, form.get("xmlns"), app_id=form.get("app_id")),
             ]
             def cell(field):
                 return form["form"].get(field)
             init_cells.extend([cell(field) for field in self.other_fields])
             yield init_cells
-
-
-class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):
-    """this is a report TEMPLATE to conduct analytics on an arbitrary case property
-    or form question. all values for the property/question from cases/forms matching
-    the filters are tabulated and displayed as a pie chart. values are compared via
-    string comparison only.
-
-    this report class is a TEMPLATE -- it must be subclassed and configured with the
-    actual case/form info to be useful. coming up with a better way to configure this
-    is a work in progress. for now this report is effectively de-activated, with no
-    way to reach it from production HQ.
-
-    see the reports app readme for a configuration example
-    """
-
-    name = ugettext_noop('Generic Pie Chart (sandbox)')
-    slug = 'generic_pie'
-    fields = ['corehq.apps.reports.filters.dates.DatespanFilter',
-              'corehq.apps.reports.filters.fixtures.AsyncLocationFilter']
-    # define in subclass
-    #mode = 'case' or 'form'
-    #submission_type = <case type> or <xform xmlns>
-    #field = <case property> or <path to form instance node>
-
-    @classmethod
-    def show_in_navigation(cls, domain=None, project=None, user=None):
-        return True
-
-    @property
-    def headers(self):
-        return DataTablesHeader(*(DataTablesColumn(text) for text in [
-                    _('Response'), _('# Responses'), _('% of responses'),
-                ]))
-
-    def _es_query(self):
-        es_config_case = {
-            'index': 'report_cases',
-            'type': 'report_case',
-            'field_to_path': lambda f: '%s.#value' % f,
-            'fields': {
-                'date': 'server_modified_on',
-                'submission_type': 'type',
-            }
-        }
-        es_config_form = {
-            'index': 'report_xforms',
-            'type': 'report_xform',
-            'field_to_path': lambda f: 'form.%s.#value' % f,
-            'fields': {
-                'date': 'received_on',
-                'submission_type': 'xmlns',
-            }
-        }
-        es_config = {
-            'case': es_config_case,
-            'form': es_config_form,
-        }[self.mode]
-
-        MAX_DISTINCT_VALUES = 50
-
-        es = elastic.get_es()
-        filter_criteria = [
-            {"term": {"domain": self.domain}},
-            {"term": {es_config['fields']['submission_type']: self.submission_type}},
-            {"range": {es_config['fields']['date']: {
-                    "from": self.start_date,
-                    "to": self.end_date,
-                }}},
-        ]
-        if self.location_id:
-            filter_criteria.append({"term": {"location_id": self.location_id}})
-        result = es.get('%s/_search' % es_config['index'], data={
-                "query": {"match_all": {}}, 
-                "size": 0, # no hits; only aggregated data
-                "facets": {
-                    "blah": {
-                        "terms": {
-                            "field": "%s.%s" % (es_config['type'], es_config['field_to_path'](self.field)),
-                            "size": MAX_DISTINCT_VALUES
-                        },
-                        "facet_filter": {
-                            "and": filter_criteria
-                        }
-                    }
-                },
-            })
-        result = result['facets']['blah']
-
-        raw = dict((k['term'], k['count']) for k in result['terms'])
-        if result['other']:
-            raw[_('Other')] = result['other']
-        return raw
-
-    def _data(self):
-        raw = self._es_query()
-        return sorted(raw.iteritems())
-
-    @property
-    def rows(self):
-        data = self._data()
-        total = sum(v for k, v in data)
-        def row(k, v):
-            pct = v / float(total) if total > 0 else None
-            fmtpct = ('%.1f%%' % (100. * pct)) if pct is not None else u'\u2014'
-            return (k, v, fmtpct)
-        return [row(*r) for r in data]
-
-    def _chart_data(self):
-        return {
-                'key': _('Tallied by Response'),
-                'values': [{'label': k, 'value': v} for k, v in self._data()],
-        }
-
-    @property
-    def location_id(self):
-        return self.request.GET.get('location_id')
-
-    @property
-    def start_date(self):
-        return self.request.GET.get('startdate')
-
-    @property
-    def end_date(self):
-        return self.request.GET.get('enddate')
-
-    @property
-    def charts(self):
-        if 'location_id' in self.request.GET: # hack: only get data if we're loading an actual report
-            return [PieChart(None, **self._chart_data())]
-        return []
-

@@ -12,6 +12,7 @@ from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
+from dimagi.utils.parsing import ISO_DATE_FORMAT
 
 from no_exceptions.exceptions import Http400
 from dimagi.utils.logging import notify_exception
@@ -434,7 +435,8 @@ class ReportXFormES(XFormES):
 
     @classmethod
     def by_case_id_query(cls, domain, case_id, terms=None, doc_type='xforminstance',
-                         date_field=None, startdate=None, enddate=None, date_format='%Y-%m-%d'):
+                         date_field=None, startdate=None, enddate=None,
+                         date_format=ISO_DATE_FORMAT):
         """
         Run a case_id query on both case properties (supporting old and new) for xforms.
 
@@ -609,7 +611,7 @@ class ESQuerySet(object):
 
 def validate_date(date):
     try:
-        datetime.datetime.strptime(date, '%Y-%m-%d')
+        datetime.datetime.strptime(date, ISO_DATE_FORMAT)
     except ValueError:
         try:
             datetime.datetime.strptime(date, '%Y-%m-%dT%H:%M:%S')

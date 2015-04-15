@@ -26,7 +26,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from dimagi.utils.couch.database import get_db
 from django.contrib.auth.forms import SetPasswordForm
 from django.core.urlresolvers import reverse
-from django.http import Http404, HttpResponseRedirect, HttpResponse, HttpResponseForbidden
+from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.views.decorators.http import require_POST
@@ -190,7 +190,10 @@ class BaseEditUserView(BaseUserSettingsView):
         user_domain_membership = self.editable_user.get_domain_membership(self.domain)
         linked_loc = user_domain_membership.location_id
         linked_prog = user_domain_membership.program_id
-        return CommtrackUserForm(domain=self.domain, is_admin=self.request.couch_user.is_domain_admin(self.domain), initial={'location': linked_loc, 'program_id': linked_prog})
+        return CommtrackUserForm(
+            domain=self.domain,
+            initial={'location': linked_loc, 'program_id': linked_prog}
+        )
 
     def update_user(self):
         if self.form_user_update.is_valid():
@@ -613,6 +616,7 @@ def remove_web_user(request, domain, couch_user_id):
     return HttpResponseRedirect(
         reverse(get_web_user_list_view(request).urlname, args=[domain]))
 
+
 @require_can_edit_web_users
 def undo_remove_web_user(request, domain, record_id):
     record = DomainRemovalRecord.get(record_id)
@@ -623,6 +627,7 @@ def undo_remove_web_user(request, domain, record_id):
 
     return HttpResponseRedirect(
         reverse(get_web_user_list_view(request).urlname, args=[domain]))
+
 
 # If any permission less than domain admin were allowed here, having that permission would give you the permission
 # to change the permissions of your own role such that you could do anything, and would thus be equivalent to having
@@ -716,6 +721,7 @@ def reinvite_web_user(request, domain):
     except ResourceNotFound:
         return json_response({'response': _("Error while attempting resend"), 'status': 'error'})
 
+
 @require_POST
 @require_can_edit_web_users
 def delete_invitation(request, domain):
@@ -803,6 +809,7 @@ def make_phone_number_default(request, domain, couch_user_id):
         redirect = reverse(EditMyAccountDomainView.urlname, args=[domain])
     return HttpResponseRedirect(redirect)
 
+
 @require_POST
 @require_permission_to_edit_user
 def delete_phone_number(request, domain, couch_user_id):
@@ -821,6 +828,7 @@ def delete_phone_number(request, domain, couch_user_id):
     else:
         redirect = reverse(EditMyAccountDomainView.urlname, args=[domain])
     return HttpResponseRedirect(redirect)
+
 
 @require_permission_to_edit_user
 def verify_phone_number(request, domain, couch_user_id):
@@ -850,30 +858,6 @@ def verify_phone_number(request, domain, couch_user_id):
     return HttpResponseRedirect(redirect)
 
 
-#@require_POST
-#@require_permission_to_edit_user
-#def link_commcare_account_to_user(request, domain, couch_user_id, commcare_login_id):
-#    user = WebUser.get_by_user_id(couch_user_id, domain)
-#    if 'commcare_couch_user_id' not in request.POST:
-#        return Http404("Poorly formed link request")
-#    user.link_commcare_account(domain,
-#                               request.POST['commcare_couch_user_id'],
-#                               commcare_login_id)
-#    return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id)))
-#
-#@require_POST
-#@require_permission_to_edit_user
-#def unlink_commcare_account(request, domain, couch_user_id, commcare_user_index):
-#    user = WebUser.get_by_user_id(couch_user_id, domain)
-#    if commcare_user_index:
-#        user.unlink_commcare_account(domain, commcare_user_index)
-#        user.save()
-#    return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id )))
-
-#@login_and_domain_required
-#def my_domains(request, domain):
-#    return HttpResponseRedirect(reverse("domain_accounts", args=(domain, request.couch_user._id)))
-
 @require_superuser
 @login_and_domain_required
 def domain_accounts(request, domain, couch_user_id, template="users/domain_accounts.html"):
@@ -883,9 +867,10 @@ def domain_accounts(request, domain, couch_user_id, template="users/domain_accou
         domain = request.POST['domain']
         couch_user.add_domain_membership(domain)
         couch_user.save()
-        messages.success(request,'Domain added')
+        messages.success(request, 'Domain added')
     context.update({"user": request.user})
     return render(request, template, context)
+
 
 @require_POST
 @require_superuser
@@ -931,7 +916,6 @@ def test_httpdigest(request, domain):
 
 @require_superuser
 def audit_logs(request, domain):
-    from auditcare.models import NavigationEventAudit
     usernames = [user.username for user in WebUser.by_domain(domain)]
     data = {}
     for username in usernames:
@@ -949,6 +933,7 @@ def audit_logs(request, domain):
             except Exception:
                 pass
     return json_response(data)
+
 
 @domain_admin_required
 @require_POST

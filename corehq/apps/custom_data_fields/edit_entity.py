@@ -97,16 +97,15 @@ class CustomDataEditor(object):
         CustomDataForm = type('CustomDataForm', (forms.Form,), fields)
         CustomDataForm.helper = FormHelper()
         CustomDataForm.helper.form_tag = False
-        CustomDataForm.helper.layout = Layout(
-            Fieldset(
-                _("Additional Information"),
-                *field_names
-            ) if field_names else '',
-            self.get_uncategorized_form(),
-        )
-        CustomDataForm._has_uncategorized = bool(
-            self.get_uncategorized_form()
-        )
+        if field_names:  # has custom data
+            CustomDataForm.helper.layout = Layout(
+                Fieldset(_("Additional Information"), *field_names),
+                self.uncategorized_form,
+            )
+        else:
+            CustomDataForm.helper.layout = Layout(self.uncategorized_form)
+
+        CustomDataForm._has_uncategorized = bool(self.uncategorized_form)
 
         if post_dict:
             fields = post_dict
@@ -118,7 +117,9 @@ class CustomDataEditor(object):
         self.form = CustomDataForm(fields, prefix=CUSTOM_DATA_FIELD_PREFIX)
         return self.form
 
-    def get_uncategorized_form(self):
+    @property
+    @memoized
+    def uncategorized_form(self):
 
         def FakeInput(val):
             return HTML(u'<span class="input-xlarge uneditable-input">{}</span>'

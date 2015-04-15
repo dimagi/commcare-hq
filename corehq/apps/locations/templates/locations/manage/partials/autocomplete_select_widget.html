@@ -7,8 +7,8 @@
 $(function() {
 
 $("#{{ id }}").select2({
-    placeholder: "Enter Name of Location",
-    minimumInputLength: 1,
+    placeholder: '{% trans "Select a Location" %}',
+    allowClear: true,
     ajax: {
         url: "{{ query_url }}",
         dataType: 'json',
@@ -35,15 +35,7 @@ $("#{{ id }}").select2({
     formatSelection: function(e) { return e.name; }
 });
 
-$('#clear_location').click(function() {
-    $("#{{ id }}").val('');
-    $("#commtrack_form").submit();
-})
-
 });
 
 </script>
 <input type="hidden" id="{{ id }}" name="{{ name }}" value="{{ value }}" style="width: 30em;" />
-{% if value and is_admin %}
-    <button id="clear_location" class="btn btn-danger"><i class="icon-remove"></i> {% trans 'Delete' %}</button>
-{% endif %}

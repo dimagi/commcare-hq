@@ -1,5 +1,6 @@
 from collections import OrderedDict
 from datetime import timedelta
+from django.core.urlresolvers import reverse
 from django.utils.timesince import timesince
 from math import ceil
 from casexml.apps.stock.models import StockTransaction
@@ -11,12 +12,15 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.graph_models import Axis
+from corehq.apps.users.models import CommCareUser
 from custom.common import ALL_OPTION
 from custom.ewsghana.filters import ProductByProgramFilter
 from custom.ewsghana.reports import EWSData, MultiReport, get_url_with_location, EWSLineChart, ProductSelectionPane
+from custom.ewsghana.utils import has_input_stock_permissions
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 from corehq.apps.locations.models import Location, SQLLocation
+from dimagi.utils.parsing import json_format_date
 
 
 class StockLevelsLegend(EWSData):
@@ -84,6 +88,7 @@ class FacilityReportData(EWSData):
         st = StockTransaction.objects.filter(
             case_id=loc.supply_point_id,
             sql_product__in=self.unique_products([loc]),
+            report__date__lte=self.config['enddate'],
             type='stockonhand',
         ).order_by('-report__date')
 
@@ -100,15 +105,20 @@ class FacilityReportData(EWSData):
                     'monthly_consumption': monthly_consumption,
                     'reorder_level': int(monthly_consumption * loc.location_type.overstock_threshold) / 2,
                     'maximum_level': int(monthly_consumption * loc.location_type.overstock_threshold),
-                    'date_of_last_report': state.last_modified_date.strftime("%Y-%m-%d")
+                    'last_report': ''
                 }
 
         for state in st:
             if state_grouping[state.product_id]['stockout_duration_helper']:
                 if not state.stock_on_hand:
-                    state_grouping[state.product_id]['stockout_duration'] = timesince(state.report.date)
+                    state_grouping[state.product_id]['stockout_duration'] = timesince(state.report.date,
+                                                                                      now=self.config['enddate'])
                 else:
                     state_grouping[state.product_id]['stockout_duration_helper'] = False
+
+                if not state_grouping[state.product_id]['last_report']:
+                    state_grouping[state.product_id]['last_report'] = json_format_date(state.report.date)
+
 
         for values in state_grouping.values():
             yield {
@@ -120,7 +130,7 @@ class FacilityReportData(EWSData):
                                                                         if values['months_until_stockout']
                                                                         else 0.0, loc),
                 'stockout_duration': values['stockout_duration'],
-                'date_of_last_report': values['date_of_last_report'],
+                'last_report': values['last_report'],
                 'reorder_level': values['reorder_level'] if values['reorder_level'] != 0.00
                 else 'unknown',
                 'maximum_level': values['maximum_level'] if values['maximum_level'] != 0.00
@@ -136,7 +146,7 @@ class FacilityReportData(EWSData):
                    row['monthly_consumption'],
                    row['reorder_level'],
                    row['maximum_level'],
-                   row['date_of_last_report']]
+                   row['last_report']]
 
 
 class InventoryManagementData(EWSData):
@@ -162,6 +172,9 @@ class InventoryManagementData(EWSData):
                 return quantity / consumption
             return 0
 
+        enddate = self.config['enddate']
+        startdate = self.config['startdate'] if 'custom_date' in self.config else enddate - timedelta(days=30)
+
         loc = SQLLocation.objects.get(location_id=self.config['location_id'])
 
         stoke_states = StockState.objects.filter(
@@ -175,18 +188,18 @@ class InventoryManagementData(EWSData):
             case_id=loc.supply_point_id,
             sql_product__in=self.unique_products([loc], all=True),
             type='stockonhand',
-            report__date__lte=self.config['enddate']
+            report__date__lte=enddate
         ).order_by('report__date')
 
         rows = OrderedDict()
-        weeks = ceil((self.config['enddate'] - self.config['startdate']).days / 7.0)
+        weeks = ceil((enddate - startdate).days / 7.0)
 
         for state in st:
             product_name = '{0} ({1})'.format(state.sql_product.name, state.sql_product.code)
             if product_name not in rows:
                 rows[product_name] = {}
             for i in range(1, int(weeks + 1)):
-                date = self.config['startdate'] + timedelta(weeks=i)
+                date = startdate + timedelta(weeks=i)
                 if state.report.date < date:
                     rows[product_name][i] = calculate_weeks_remaining(
                         state, consumptions.get(state.product_id, None), date)
@@ -220,8 +233,28 @@ class InputStock(EWSData):
 
     @property
     def rows(self):
-        # TODO: change text to get_url(form_name, "Input Stock", self.config['domain']) and add params
-        return [["Input Stock"]]
+        link = reverse('input_stock', args=[self.domain, self.location.site_code])
+        transactions = StockTransaction.objects.filter(
+            case_id=self.location.supply_point_id,
+            report__date__lte=self.config['enddate']
+        ).order_by('-report__date', 'pk')
+        rows = []
+
+        if has_input_stock_permissions(self.config['user'],
+                                       SQLLocation.objects.get(location_id=self.config['location_id']),
+                                       self.domain):
+            rows.append([u"<a href='{}'>INPUT STOCK for {}</a>".format(link, self.location.name)])
+
+        if transactions:
+            rows.append(
+                [
+                    u'The last report received was at <b>{}.</b>'.format(
+                        transactions[0].report.date.strftime("%X on %b %d, %Y")
+                    )
+                ]
+            )
+
+        return rows
 
 
 class FacilitySMSUsers(EWSData):
@@ -240,12 +273,18 @@ class FacilitySMSUsers(EWSData):
     def rows(self):
         from corehq.apps.users.views.mobile import CreateCommCareUserView
 
-        query = (UserES().mobile_users().domain(self.config['domain'])
-                 .term("domain_membership.location_id", self.config['location_id']))
+        users = CommCareUser.view(
+            'locations/users_by_location_id',
+            startkey=[self.config['location_id']],
+            endkey=[self.config['location_id'], {}],
+            include_docs=True
+        ).all()
 
-        for hit in query.run().hits:
-            if (hit['first_name'] or hit['last_name']) and hit['phone_numbers']:
-                yield [hit['first_name'] + ' ' + hit['last_name'], hit['phone_numbers'][0]]
+        for user in users:
+            if user.full_name and user.phone_numbers:
+                yield ['<div val="%s" sel=%s>%s</div>' % (
+                    user._id, 'true' if user.user_data.get('role') == 'In Charge' else 'false',
+                    user.full_name), user.phone_numbers[0]]
 
         yield [get_url_with_location(CreateCommCareUserView.urlname, 'Create new Mobile Worker',
                                      self.config['location_id'], self.config['domain'])]
@@ -286,12 +325,18 @@ class FacilityInChargeUsers(EWSData):
 
     @property
     def rows(self):
-        query = (UserES().mobile_users().domain(self.config['domain'])
-                 .term("domain_membership.location_id", self.config['location_id']))
+        users = CommCareUser.view(
+            'locations/users_by_location_id',
+            startkey=[self.config['location_id']],
+            endkey=[self.config['location_id'], {}],
+            include_docs=True
+        ).all()
 
-        for hit in query.run().hits:
-            if hit['user_data'].get('role') == 'In Charge' and (hit['first_name'] or hit['last_name']):
-                yield [hit['first_name'] + ' ' + hit['last_name']]
+        for user in users:
+            if user.user_data.get('role') == 'In Charge' and user.full_name:
+                yield [user.full_name]
+        yield ['<button id="in-charge-button" class="btn" data-target="#configureInCharge" data-toggle="modal">'
+               'Configure In Charge</button>']
 
 
 class StockLevelsReport(MultiReport):
@@ -313,6 +358,7 @@ class StockLevelsReport(MultiReport):
             location_id=self.request.GET.get('location_id'),
             program=program if program != ALL_OPTION else None,
             products=products if products and products[0] != ALL_OPTION else [],
+            user=self.request.couch_user
         )
 
     @property

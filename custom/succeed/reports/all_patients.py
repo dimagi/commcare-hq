@@ -8,6 +8,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.reports.datatables import DTSortType
 from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn, SqlTabularReport, DataFormatter, \
     TableDataFormat
+from corehq.const import SERVER_DATETIME_FORMAT
 from custom.succeed.reports.patient_interactions import PatientInteractionsReport
 from custom.succeed.reports.patient_task_list import PatientTaskListReport
 from dimagi.utils.decorators.memoized import memoized
@@ -43,7 +44,7 @@ def target_date(visit_name, visit_days, randomization_date):
 
 def date_format(date_str):
     if date_str:
-        date = datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
+        date = datetime.strptime(date_str, SERVER_DATETIME_FORMAT)
         return date.strftime(OUTPUT_DATE_FORMAT)
     else:
         return EMPTY_FIELD
@@ -104,8 +105,7 @@ class PatientListReport(SqlTabularReport, CustomProjectReport, ProjectReportPara
     report_template_path = 'succeed/ucla_table.html'
 
     fields = ['custom.succeed.fields.CareSite',
-              'custom.succeed.fields.PatientStatus',
-              'corehq.apps.reports.standard.cases.filters.CaseSearchFilter']
+              'custom.succeed.fields.PatientStatus']
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
@@ -171,7 +171,7 @@ class PatientListReport(SqlTabularReport, CustomProjectReport, ProjectReportPara
                                 AliasColumn('rand_date')
                             ], sort_type=DTSortType.NUMERIC),
             DatabaseColumn('Most Recent', SimpleColumn('bp_category')),
-            DatabaseColumn('Patient Info', SimpleColumn('last_interaction'), format_fn=date_format),
+            DatabaseColumn('Last Interaction Date', SimpleColumn('last_interaction'), format_fn=date_format),
             DatabaseColumn('Tasks', AliasColumn('case_id'), format_fn=tasks),
             DatabaseColumn('Care Team', SimpleColumn('owner_id'), format_fn=group_name)
         ]

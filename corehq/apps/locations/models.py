@@ -164,6 +164,10 @@ class SQLLocation(MPTTModel):
             self.name
         )
 
+    @property
+    def display_name(self):
+        return u"{} [{}]".format(self.name, self.location_type.name)
+
     def archived_descendants(self):
         """
         Returns a list of archived descendants for this location.
@@ -304,7 +308,7 @@ class Location(CachedCouchDocumentMixin, Document):
         super(Document, self).__init__(*args, **kwargs)
 
     def __repr__(self):
-        return "%s (%s)" % (self.name, self.location_type_object.name)
+        return "%s (%s)" % (self.name, self.location_type)
 
     def __eq__(self, other):
         if isinstance(other, Location):

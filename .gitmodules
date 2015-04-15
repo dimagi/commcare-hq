@@ -4,9 +4,6 @@
 [submodule "submodules/couchexport-src"]
 	path = submodules/couchexport-src
 	url = git://github.com/dimagi/couchexport.git
-[submodule "submodules/djangocouch-src"]
-	path = submodules/djangocouch-src
-	url = git://github.com/dimagi/djangocouch.git
 [submodule "submodules/dimagi-utils-src"]
 	path = submodules/dimagi-utils-src
 	url = git://github.com/dimagi/dimagi-utils.git
@@ -84,7 +81,7 @@
 	url = https://github.com/angular-ui/ui-select.git
 [submodule "corehq/apps/style/static/style/lib/select2"]
 	path = corehq/apps/style/static/style/lib/select2
-	url = https://github.com/ivaynberg/select2.git
+	url = https://github.com/dimagi/select2.git
 [submodule "corehq/apps/style/static/style/lib/jquery-cookie"]
 	path = corehq/apps/style/static/style/lib/jquery-cookie
 	url = https://github.com/carhartl/jquery-cookie.git

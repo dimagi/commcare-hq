@@ -14,7 +14,10 @@ def get_records_to_process(search_key, batch_size):
         id = row["id"]
         doc = ExceptionRecord.get(id)
         domain = doc.domain if hasattr(doc, "domain") else ""
-        domain, case_id = domain.split(',')
+        try:
+            domain, case_id = domain.split(',')
+        except ValueError:
+            return {'exception': doc}
         return {
             'domain': domain,
             'case_id': case_id,
@@ -62,6 +65,9 @@ class Command(BaseCommand):
                 print 'Fetching new batch'
             total, records = get_records_to_process('CASE XFORM MISMATCH', batch)
             for record in records:
+                if 'case_id' not in record:
+                    record['exception'].archive('system')
+                    continue
                 case_id = record['case_id']
                 try:
                     rebuild_case(case_id)

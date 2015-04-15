@@ -397,12 +397,17 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         json['build_spec']['version'] = '2.20.0'
 
         app = Application.wrap(json)
-        module = app.get_module(1)
+        module = app.get_module(0)
         module.module_filter = "./user/mod/filter = '123'"
         self.assertXmlPartialEqual(
             self.get_xml('module-filter-user'),
             app.create_suite(),
-            "./menu[@id='m1']"
+            "./menu[@id='m0']"
+        )
+        self.assertXmlPartialEqual(
+            self.get_xml('module-filter-user-entry'),
+            app.create_suite(),
+            "./entry[1]"
         )
 
     def test_tiered_select_with_advanced_module_as_parent(self):
@@ -614,6 +619,48 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
             app.create_suite(),
             "./entry/session"
         )
+
+    def test_subcase_repeat_mixed(self):
+        app = Application.new_app(None, "Untitled Application", application_version=APP_V2)
+        module_0 = app.add_module(Module.new_module('parent', None))
+        module_0.unique_id = 'm0'
+        module_0.case_type = 'parent'
+        form = app.new_form(0, "Form", None)
+
+        form.actions.open_case = OpenCaseAction(name_path="/data/question1")
+        form.actions.open_case.condition.type = 'always'
+
+        child_case_type = 'child'
+        form.actions.subcases.append(OpenSubCaseAction(
+            case_type=child_case_type,
+            case_name="/data/question1",
+            condition=FormActionCondition(type='always')
+        ))
+        # subcase in the middle that has a repeat context
+        form.actions.subcases.append(OpenSubCaseAction(
+            case_type=child_case_type,
+            case_name="/data/repeat/question1",
+            repeat_context='/data/repeat',
+            condition=FormActionCondition(type='always')
+        ))
+        form.actions.subcases.append(OpenSubCaseAction(
+            case_type=child_case_type,
+            case_name="/data/question1",
+            condition=FormActionCondition(type='always')
+        ))
+
+        expected = """
+        <partial>
+            <session>
+              <datum id="case_id_new_parent_0" function="uuid()"/>
+              <datum id="case_id_new_child_1" function="uuid()"/>
+              <datum id="case_id_new_child_3" function="uuid()"/>
+            </session>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected,
+                                   app.create_suite(),
+                                   './entry[1]/session')
 
 
 class AdvancedModuleAsChildTest(SimpleTestCase, TestFileMixin):
@@ -860,7 +907,7 @@ class TestFormLinking(SimpleTestCase, TestFileMixin):
 
         m0f0.post_form_workflow = WORKFLOW_FORM
         m0f0.form_links = [
-            FormLink(xpath='true()', form_id=m1f0.unique_id)
+            FormLink(xpath="(today() - dob) &lt; 7", form_id=m1f0.unique_id)
         ]
         self.assertXmlPartialEqual(self.get_xml('form_link_basic'), app.create_suite(), "./entry[1]")
 
@@ -874,7 +921,7 @@ class TestFormLinking(SimpleTestCase, TestFileMixin):
 
         m0f0.post_form_workflow = WORKFLOW_FORM
         m0f0.form_links = [
-            FormLink(xpath='true()', form_id=m1f0.unique_id)
+            FormLink(xpath="(today() - dob) > 7", form_id=m1f0.unique_id)
         ]
 
         self.assertXmlPartialEqual(self.get_xml('form_link_update_case'), app.create_suite(), "./entry[1]")

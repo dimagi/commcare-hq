@@ -10,7 +10,7 @@ from corehq.apps.es.forms import FormES
 from corehq.apps.reports import util
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.reports.standard import ProjectReportParametersMixin, \
-    DatespanMixin, ProjectReport, DATE_FORMAT
+    DatespanMixin, ProjectReport
 from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, FormsByApplicationFilter, SingleFormByApplicationFilter, MISSING_APP_ID
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType, DataTablesColumnGroup
 from corehq.apps.reports.generic import GenericTabularReport
@@ -19,12 +19,13 @@ from corehq.apps.sofabed.models import FormData, CaseData
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import es_query
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
+from corehq.util.dates import iso_string_to_datetime
 from corehq.util.timezones.conversions import ServerTime, PhoneTime
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.parsing import string_to_datetime, string_to_utc_datetime
+from dimagi.utils.parsing import string_to_datetime, json_format_date
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
@@ -439,7 +440,7 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
     def headers(self):
         headers = DataTablesHeader(DataTablesColumn(_("Username"), span=3))
         for d in self.dates:
-            headers.add_column(DataTablesColumn(d.strftime(DATE_FORMAT), sort_type=DTSortType.NUMERIC))
+            headers.add_column(DataTablesColumn(json_format_date(d), sort_type=DTSortType.NUMERIC))
         headers.add_column(DataTablesColumn(_("Total"), sort_type=DTSortType.NUMERIC))
         return headers
 
@@ -583,7 +584,7 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
         count_field = '%s__count' % self.date_field
         counts_by_date = dict((result['date'].isoformat(), result[count_field]) for result in results)
         date_cols = [
-            counts_by_date.get(date.strftime(DATE_FORMAT), 0)
+            counts_by_date.get(json_format_date(date), 0)
             for date in self.dates
         ]
         styled_date_cols = ['<span class="muted">0</span>' if c == 0 else c for c in date_cols]
@@ -910,7 +911,7 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
                     startkey=key+[self.datespan.startdate_param_utc],
                     endkey=key+[self.datespan.enddate_param_utc],
                 ).all()
-                all_times.extend([string_to_utc_datetime(d['key'][-1])
+                all_times.extend([iso_string_to_datetime(d['key'][-1])
                                   for d in data])
         if self.by_submission_time:
             all_times = [ServerTime(t).user_time(self.timezone).done()

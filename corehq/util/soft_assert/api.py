@@ -64,6 +64,9 @@ def soft_assert(to, notify_admins=False,
 
     """
 
+    if isinstance(to, basestring):
+        to = [to]
+
     def send_to_recipients(subject, message):
         send_mail(
             # this prefix is automatically added in mail_admins

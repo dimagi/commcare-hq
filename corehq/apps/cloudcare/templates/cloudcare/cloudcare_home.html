@@ -41,12 +41,6 @@
 
     GMAPS_API_KEY = '{{ maps_api_key|safe }}'; // maps api is loaded on-demand
 
-    if (window.toggles === undefined) {
-        window.toggles = {};
-    }
-
-    window.toggles.CASEDETAILS_IN_CLOUDCARE_FORMS =  {{ request|toggle_enabled:"CASEDETAILS_IN_CLOUDCARE_FORMS"|BOOL }};
-
     var translatedStrings = {
         saved : "{% trans "Form successfully saved" %}",
         loading : "{% trans "Loading..." %}",
@@ -191,33 +185,6 @@
         <section id="webforms" style="min-width: 800px;"></section>
     </div>
 
-    {% if request|toggle_enabled:'CASEDETAILS_IN_CLOUDCARE_FORMS' %}
     {% include 'cloudcare/includes/case_details.html' %}
-    {% else %}
-    <script type="text/html" id="template-crumbs">
-        <% if (childCase || parentCase ){ %>
-        <ul class='breadcrumb'>
-            <li>Selected Case:</li>
-                <% if (parentCase){ %>
-                <li <% if (childCase == null){ %> class="active" <% } %>>
-                    <% if (parentCase.href){ %>
-                    <a href="<%= parentCase.href %>">
-                        <%= parentCase.text %>
-                    </a>
-                    <% } else { %>
-                        <%= parentCase.text %>
-                    <% } %>
-                    <% if (parentCase && childCase) { %>
-                    <span class="divider">/</span>
-                    <% } %>
-                </li>
-                <% } %>
-            <% if (childCase) { %>
-            <li class="active"><%= childCase.text %></li>
-            <% } %>
-        </ul>
-        <% } %>
-    </script>
-    {% endif %}
 
 {% endblock %}

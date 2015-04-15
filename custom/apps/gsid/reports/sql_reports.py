@@ -9,7 +9,10 @@ from corehq.apps.reports.sqlreport import DatabaseColumn, SummingSqlTabularRepor
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.reports.standard.maps import GenericMapReport
 from corehq.apps.reports.util import format_datatables_data, make_ctable_table_name
+from corehq.const import USER_MONTH_FORMAT
+from corehq.util.dates import iso_string_to_date
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.parsing import json_format_date
 from util import get_unique_combinations,  capitalize_fn
 from django.conf import settings
 
@@ -372,7 +375,7 @@ class GSIDSQLByDayReport(GSIDSQLReport):
 
     def daterange(self, start_date, end_date):
         for n in range(int((end_date - start_date).days) + 1):
-            yield (start_date + timedelta(n)).strftime("%Y-%m-%d")
+            yield json_format_date(start_date + timedelta(n))
 
     @property
     def headers(self):
@@ -386,9 +389,9 @@ class GSIDSQLByDayReport(GSIDSQLReport):
         column_headers.append(DataTablesColumn("Disease"))
 
         prev_month = startdate.month
-        month_columns = [startdate.strftime("%B %Y")]
+        month_columns = [startdate.strftime(USER_MONTH_FORMAT)]
         for n, day in enumerate(self.daterange(startdate, enddate)):
-            day_obj = datetime.strptime(day, "%Y-%m-%d")
+            day_obj = iso_string_to_date(day)
             month = day_obj.month
             day_column = DataTablesColumn("Day%(n)s (%(day)s)" % {'n':n+1, 'day': day})
 
@@ -397,8 +400,7 @@ class GSIDSQLByDayReport(GSIDSQLReport):
             else:
                 month_group = DataTablesColumnGroup(*month_columns)
                 column_headers.append(month_group)
-                month_columns = [day_obj.strftime("%B %Y")]
-                month_columns.append(day_column)
+                month_columns = [day_obj.strftime(USER_MONTH_FORMAT), day_column]
                 prev_month = month
         
         month_group = DataTablesColumnGroup(*month_columns)
@@ -424,7 +426,7 @@ class GSIDSQLByDayReport(GSIDSQLReport):
                 row.append(disease_names[index])
                 for n, day in enumerate(self.daterange(startdate, enddate)):
                     temp_key = [loc for loc in loc_key]
-                    temp_key.append(datetime.strptime(day, "%Y-%m-%d").date())
+                    temp_key.append(iso_string_to_date(day))
                     temp_key.append(disease)
                     keymap = old_data.get(tuple(temp_key), None)
                     day_count = (keymap["day_count"] if keymap else None)

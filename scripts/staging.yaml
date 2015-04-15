@@ -43,24 +43,46 @@
 trunk: master
 name: autostaging
 branches:
-  - rm-djangocouch  # danny 4/6
-  - test-global-request  # danny 4/1
+  - usec  # danny 4/13
   - subscription-no-contact-info # bb 8/4
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
   - vellum-staging # J$ 11/13
   - locations-as-groups # tw 1/20
   - fixtures-spike  # cz 1/29
   - static-updates # Biyeun 2/9
-  - loc-type-stock-rates  # Ethan 3/6
   - usercase # Norman 3/27
+  - django1.6 # SK 4/9
+  - commcare-supply  # Ethan 4/13
+  - new-location  # Ethan 4/14
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
     branches: []
-#      - tf-persistence  # wsp 3/10
+    #  - tf-persistence  # wsp 3/10
 
   submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master
     branches: []
+  submodules/auditcare-src:
+    branches:
+      - usec  # danny 4/13
+  submodules/couchexport-src:
+    branches:
+      - usec  # danny 4/13
+  submodules/couchlog-src:
+    branches:
+      - usec  # danny 4/13
+  submodules/ctable-src:
+    branches:
+      - usec  # danny 4/13
+  submodules/fluff-src:
+    branches:
+      - usec  # danny 4/13
+  submodules/pillowtop-src:
+    branches:
+      - usec  # danny 4/13
+  submodules/toggle:
+    branches:
+      - usec  # danny 4/13
