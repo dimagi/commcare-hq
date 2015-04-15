@@ -105,7 +105,13 @@ class IterDB(object):
             self.commit_delete()
 
 
-def iter_update(db, fn, ids):
+class IterUpdateError(Exception):
+    def __init__(self, results, *args, **kwargs):
+        self.results = results
+        super(IterUpdateError, self).__init__(*args, **kwargs)
+
+
+def iter_update(db, fn, ids, max_retries=None):
     """
     Map `fn` over every doc in `db` matching `ids`
 
@@ -134,11 +140,12 @@ def iter_update(db, fn, ids):
     event of a BulkSaveError, it will re-process the unsaved documents.
     Wrapping is optional, and this function will unwrap if needed.
     """
-    IterResults = namedtuple('IterResults', ['ignored_ids', 'not_found_ids',
-                                             'deleted_ids', 'updated_ids'])
-    results = IterResults(set(), set(), set(), set())
+    fields = ['ignored_ids', 'not_found_ids', 'deleted_ids', 'updated_ids',
+              'error_ids']
+    IterResults = namedtuple('IterResults', fields)
+    results = IterResults(set(), set(), set(), set(), set())
 
-    def _iter_update(doc_ids):
+    def _iter_update(doc_ids, try_num):
         with IterDB(db, chunksize=100) as iter_db:
             for chunk in chunked(set(doc_ids), 100):
                 for res in get_docs(db, keys=chunk):
@@ -159,7 +166,13 @@ def iter_update(db, fn, ids):
         results.deleted_ids.update(iter_db.deleted_ids)
 
         if iter_db.error_ids:
-            _iter_update(iter_db.error_ids)
+            if try_num >= (max_retries if max_retries is not None else 3):
+                results.error_ids.update(iter_db.error_ids)
+                msg = ("The following documents did not correctly save:\n"
+                       ", ".join(results.error_ids))
+                raise IterUpdateError(results, msg)
+            else:
+                _iter_update(iter_db.error_ids, try_num + 1)
 
-    _iter_update(ids)
+    _iter_update(ids, 0)
     return results

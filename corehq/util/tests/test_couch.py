@@ -3,9 +3,10 @@ from couchdbkit import ResourceNotFound
 from django.http import Http404
 from django.test import TestCase, SimpleTestCase
 from corehq.apps.groups.models import Group
-from corehq.util.couch import get_document_or_404, IterDB, iter_update
 from jsonobject.exceptions import WrappingAttributeError
 from mock import Mock
+
+from ..couch import get_document_or_404, IterDB, iter_update, IterUpdateError
 
 
 class MockDb(object):
@@ -195,3 +196,21 @@ class IterDBTest(TestCase):
                 result_ids,
                 {g._id for g in self.groups if desired_action(g) == action}
             )
+
+    def test_no_retries(self):
+        visited_ids = set()  # Only fail the first time
+
+        def conflict_evens(group):
+            if group['index'] % 2 == 0 and group['_id'] not in visited_ids:
+                group['_rev'] = group['_rev'] + 'bad'
+                visited_ids.add(group['_id'])
+            return group
+
+        ids = [g._id for g in self.groups]
+        error_ids = {g._id for g in self.groups if g.index % 2 == 0}
+        try:
+            iter_update(self.db, conflict_evens, ids, max_retries=0)
+        except IterUpdateError as e:
+            self.assertEqual(e.results.error_ids, error_ids)
+        else:
+            assert False, "iter_update did now throw an IterUpdateError"
