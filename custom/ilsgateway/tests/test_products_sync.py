@@ -5,6 +5,7 @@ from django.test import TestCase
 from corehq.apps.commtrack.models import Product as Prod
 from corehq.apps.commtrack.tests.util import bootstrap_domain as initial_bootstrap
 from custom.ilsgateway.api import Product, ILSGatewayAPI
+from custom.logistics.api import ApiSyncObject
 from custom.logistics.commtrack import synchronization
 from custom.logistics.models import MigrationCheckpoint
 from custom.ilsgateway.tests.mock_endpoint import MockEndpoint
@@ -32,7 +33,7 @@ class ProductSyncTest(TestCase):
         self.assertEqual(product.description, ilsgateway_product.description)
         self.assertEqual(product.units, str(ilsgateway_product.unit))
 
-    def test_locations_migration(self):
+    def test_products_migration(self):
         checkpoint = MigrationCheckpoint(
             domain=TEST_DOMAIN,
             start_date=datetime.utcnow(),
@@ -41,9 +42,12 @@ class ProductSyncTest(TestCase):
             limit=100,
             offset=0
         )
-        synchronization('product',
-                        self.endpoint.get_products,
-                        self.api_object.product_sync, checkpoint, None, 100, 0)
+        product_api = ApiSyncObject(
+            'product',
+            self.endpoint.get_products,
+            self.api_object.product_sync
+        )
+        synchronization(product_api, checkpoint, None, 100, 0)
         self.assertEqual('product', checkpoint.api)
         self.assertEqual(100, checkpoint.limit)
         self.assertEqual(0, checkpoint.offset)
