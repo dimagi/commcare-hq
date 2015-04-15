@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.utils.encoding import smart_str
 import pytz
 from corehq.const import USER_DATETIME_FORMAT
@@ -16,10 +17,20 @@ def phone_timezones_have_been_processed():
     use this function to decide what type of timezone conversion is necessary
 
     """
+    if settings.UNIT_TESTING:
+        override = getattr(
+            settings, 'PHONE_TIMEZONES_HAVE_BEEN_PROCESSED', None)
+        if override is not None:
+            return override
     return _get_timezone_flag(PHONE_TIMEZONES_HAVE_BEEN_PROCESSED)
 
 
 def phone_timezones_should_be_processed():
+    if settings.UNIT_TESTING:
+        override = getattr(
+            settings, 'PHONE_TIMEZONES_SHOULD_BE_PROCESSED', None)
+        if override is not None:
+            return override
     return _get_timezone_flag(PHONE_TIMEZONES_SHOULD_BE_PROCESSED)
 
 
