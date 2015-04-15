@@ -109,6 +109,7 @@ class LocationTypesView(BaseCommTrackManageView):
         return {
             'pk': loctype.pk,
             'name': loctype.name,
+            'code': loctype.code,
             'allowed_parents': [loctype.parent_type.name
                                 if loctype.parent_type else None],
             'administrative': loctype.administrative,
