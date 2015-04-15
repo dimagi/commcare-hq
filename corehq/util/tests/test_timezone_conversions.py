@@ -60,11 +60,12 @@ class TimezoneConversionTest(SimpleTestCase):
         ]
         for in_, tz, out in cases:
             server_dt = dateutil.parser.parse(in_)
+            phone_dt = ServerTime(server_dt).phone_time(tz).done()
             if phone_timezones_have_been_processed():
-                phone_dt = server_dt
+                # no change
+                self.assertEqual(phone_dt.isoformat(), in_)
             else:
-                phone_dt = ServerTime(server_dt).phone_time(tz).done()
-            self.assertEqual(phone_dt.isoformat(), out)
+                self.assertEqual(phone_dt.isoformat(), out)
 
     def test_phone_to_server(self):
         cases = [
@@ -75,11 +76,12 @@ class TimezoneConversionTest(SimpleTestCase):
         ]
         for in_, tz, out in cases:
             phone_dt = dateutil.parser.parse(in_)
+            server_dt = PhoneTime(phone_dt, tz).server_time().done()
             if phone_timezones_have_been_processed():
-                server_dt = phone_dt
+                # no change
+                self.assertEqual(server_dt.isoformat(), in_)
             else:
-                server_dt = PhoneTime(phone_dt, tz).server_time().done()
-            self.assertEqual(server_dt.isoformat(), out)
+                self.assertEqual(server_dt.isoformat(), out)
 
 
 class CloudCareTimeTest(SimpleTestCase):
