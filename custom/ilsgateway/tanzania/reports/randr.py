@@ -3,7 +3,7 @@ from dateutil import rrule
 from corehq.apps.locations.models import SQLLocation, Location
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.users.models import CommCareUser
-from custom.ilsgateway.filters import ProductByProgramFilter, MSDZoneFilter, MonthAndQuarterFilter
+from custom.ilsgateway.filters import MSDZoneFilter, MonthAndQuarterFilter, ProgramFilter
 from custom.ilsgateway.models import OrganizationSummary, GroupSummary, SupplyPointStatusTypes, DeliveryGroups
 from custom.ilsgateway.tanzania import ILSData, DetailsReport
 from custom.ilsgateway.tanzania.reports.mixins import RandRSubmissionData
@@ -13,7 +13,7 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import YearFilter
 from custom.ilsgateway.tanzania.reports.facility_details import FacilityDetailsReport, InventoryHistoryData, \
-    RegistrationData, RandRHistory
+    RegistrationData, RandRHistory, Notes, RecentMessages
 from django.utils.translation import ugettext as _
 
 
@@ -58,9 +58,10 @@ class RRStatus(ILSData):
                         total_possible += g.total
                 hist_resp_rate = rr_format_percent(total_responses, total_possible)
 
-                args = (child.location_id, self.config['month'], self.config['year'])
-
-                url = make_url(RRreport, self.config['domain'], '?location_id=%s&month=%s&year=%s', args)
+                url = make_url(RRreport, self.config['domain'],
+                               '?location_id=%s&month=%s&year=%s&filter_by_program=%s&msd=%s',
+                               (child.location_id, self.config['month'], self.config['year'],
+                               self.config['program'], self.config['msd_code']))
 
                 rows.append(
                     [
@@ -127,8 +128,9 @@ class RRReportingHistory(ILSData):
             hist_resp_rate = rr_format_percent(total_responses, total_possible)
 
             url = make_url(FacilityDetailsReport, self.config['domain'],
-                           '?location_id=%s&filter_by_program=%s%s',
-                           (child.location_id, self.config['program'], self.config['prd_part_url']))
+                           '?location_id=%s&month=%s&year=%s&filter_by_program=%s&msd=%s',
+                           (self.config['location_id'], self.config['month'], self.config['year'],
+                           self.config['program'], self.config['msd_code']))
 
             rr_value = randr_value(child.location_id, self.config['startdate'], self.config['enddate'])
             contact = CommCareUser.get_db().view(
@@ -150,7 +152,7 @@ class RRReportingHistory(ILSData):
                 [
                     child.site_code,
                     link_format(child.name, url),
-                    get_span(rr_value) % (format(rr_value, "d M Y") if rr_value else "Not reported"),
+                    get_span(rr_value) % (rr_value.strftime("%d %b %Y") if rr_value else "Not reported"),
                     contact_string,
                     hist_resp_rate
                 ]
@@ -176,16 +178,18 @@ class RRreport(DetailsReport):
 
     @property
     def title(self):
-        title = _('R & R')
+        title = _('R & R {0}'.format(self.title_month))
         if self.location and self.location.location_type.name.upper() == 'FACILITY':
-            title = _('Facility Details')
+            return "{0} ({1}) Group {2}".format(self.location.name,
+                                                self.location.site_code,
+                                                self.location.metadata.get('group', '---'))
         return title
 
     @property
     def fields(self):
-        fields = [AsyncLocationFilter, MonthAndQuarterFilter, YearFilter, ProductByProgramFilter, MSDZoneFilter]
+        fields = [AsyncLocationFilter, MonthAndQuarterFilter, YearFilter, ProgramFilter, MSDZoneFilter]
         if self.location and self.location.location_type.name.upper() == 'FACILITY':
-            fields = [AsyncLocationFilter, ProductByProgramFilter]
+            fields = []
         return fields
 
     @property
@@ -202,6 +206,8 @@ class RRreport(DetailsReport):
                 return [
                     InventoryHistoryData(config=config),
                     RandRHistory(config=config),
+                    Notes(config=config),
+                    RecentMessages(config=config),
                     RegistrationData(config=dict(loc_type='FACILITY', **config), css_class='row_chart_all'),
                     RegistrationData(config=dict(loc_type='DISTRICT', **config), css_class='row_chart_all'),
                     RegistrationData(config=dict(loc_type='REGION', **config), css_class='row_chart_all')

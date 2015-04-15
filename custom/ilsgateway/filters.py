@@ -97,7 +97,8 @@ class MonthAndQuarterFilter(MonthFilter):
             ('-1', 'Quarter 1'),
             ('-2', 'Quarter 2'),
             ('-3', 'Quarter 3'),
-            ('-4', 'Quarter 4')
+            ('-4', 'Quarter 4'),
+            ('-5', 'All')
         ])
         return options
 

@@ -106,9 +106,12 @@ class ILSGatewayEndpoint(LogisticsEndpoint):
 
     def get_supplypointstatuses(self, domain, facility, **kwargs):
         meta, supplypointstatuses = self.get_objects(self.supplypointstatuses_url, **kwargs)
-        location_id = SQLLocation.objects.get(domain=domain, external_id=facility).location_id
-        return meta, [SupplyPointStatus.wrap_from_json(supplypointstatus, location_id) for supplypointstatus in
-                      supplypointstatuses]
+        try:
+            location_id = SQLLocation.objects.get(domain=domain, external_id=facility).location_id
+            return meta, [SupplyPointStatus.wrap_from_json(supplypointstatus, location_id) for supplypointstatus in
+                          supplypointstatuses]
+        except SQLLocation.DoesNotExist:
+            return None, None
 
     def get_deliverygroupreports(self, domain, facility, **kwargs):
         meta, deliverygroupreports = self.get_objects(self.deliverygroupreports_url, **kwargs)
