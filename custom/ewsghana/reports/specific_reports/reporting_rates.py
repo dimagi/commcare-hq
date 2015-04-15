@@ -406,3 +406,12 @@ class ReportingRatesReport(MultiReport):
         datespan = DateSpan(startdate=last_period_st, enddate=last_period_end)
         datespan.is_default = True
         return datespan
+
+    @property
+    def datespan(self):
+        url = self.request.META.get('HTTP_REFERER')
+        if not url or 'startdate' in url:
+            return self.request.datespan
+
+        self.request.datespan = self.default_datespan
+        return self.default_datespan
