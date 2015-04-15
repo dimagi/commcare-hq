@@ -27,13 +27,14 @@ class ILSSoHTest(ILSTestScript):
     def test_soh_in_swahili(self):
         self.user_fac1.language = 'en'
         self.user_fac1.save()
-        language_message = """
-            5551234 > language sw
-            5551234 < {0}
-        """.format(LANGUAGE_CONFIRM % dict(language='Swahili'))
-        self.run_script(language_message)
-
         with localize('sw'):
+            language_message = """
+                5551234 > language sw
+                5551234 < {0}
+            """.format(LANGUAGE_CONFIRM % dict(language='Swahili'))
+            self.run_script(language_message)
+
+
             soh_script = """
                 5551234 > hmk jd 400 mc 569
                 5551234 < {0}
