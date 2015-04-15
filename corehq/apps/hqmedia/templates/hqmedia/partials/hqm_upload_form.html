@@ -1,15 +1,4 @@
 {% load i18n %}
-<fieldset>
-    <legend>{% trans "Upload Options" %}</legend>
-    {% block additional_options %}
-    {% endblock %}
-    <div class="control-group">
-        <label class="control-label">{% trans 'Share Multimedia' %}</label>
-        <div class="controls">
-            <label class="checkbox"><input class="hqm-share-media" name="shared" value="t" type="checkbox" /> {% trans 'Yes, share my multimedia.' %}</label>
-        </div>
-    </div>
-</fieldset>
 <fieldset class="hqm-sharing hide">
     <legend>{% trans "Multimedia Sharing Options" %}</legend>
     <div class="control-group">

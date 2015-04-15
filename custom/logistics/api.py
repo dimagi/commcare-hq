@@ -94,6 +94,26 @@ class LogisticsEndpoint(EndpointMixin):
                       for stock_transaction in stock_transactions]
 
 
+class ApiSyncObject(object):
+    name = None
+    get_objects_function = None
+    sync_function = None
+    filters = {}
+
+    def __init__(self, name, get_objects_function, sync_function, date_filter_name=None, filters=None,
+                 migrate_once=False):
+        self.name = name
+        self.get_objects_function = get_objects_function
+        self.sync_function = sync_function
+        self.date_filter_name = date_filter_name
+        self.filters = filters or {}
+        self.migrate_once = migrate_once
+
+    def add_date_filter(self, date):
+        if self.date_filter_name:
+            self.filters[self.date_filter_name] = date
+
+
 class APISynchronization(object):
 
     LOCATION_CUSTOM_FIELDS = []
@@ -103,6 +123,44 @@ class APISynchronization(object):
     def __init__(self, domain, endpoint):
         self.domain = domain
         self.endpoint = endpoint
+
+    @property
+    def apis(self):
+        return [
+            ApiSyncObject('product', self.endpoint.get_products, self.product_sync),
+            ApiSyncObject(
+                'location_region',
+                self.endpoint.get_locations,
+                self.location_sync,
+                'date_updated__gte',
+                filters={
+                    'type': 'region',
+                    'is_active': True
+                }
+            ),
+            ApiSyncObject(
+                'location_district',
+                self.endpoint.get_locations,
+                self.location_sync,
+                'date_updated__gte',
+                filters={
+                    'type': 'district',
+                    'is_active': True
+                }
+            ),
+            ApiSyncObject(
+                'location_facility',
+                self.endpoint.get_locations,
+                self.location_sync,
+                'date_updated__gte',
+                filters={
+                    'type': 'facility',
+                    'is_active': True
+                }
+            ),
+            ApiSyncObject('webuser', self.endpoint.get_webusers, self.web_user_sync, 'user__date_joined__gte'),
+            ApiSyncObject('smsuser', self.endpoint.get_smsusers, self.sms_user_sync, 'date_updated__gte')
+        ]
 
     def prepare_commtrack_config(self):
         """

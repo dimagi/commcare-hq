@@ -7,6 +7,7 @@ from corehq.apps.commtrack.tests.util import bootstrap_domain as initial_bootstr
 from corehq.apps.locations.models import Location, SQLLocation
 from custom.ilsgateway.api import Location as Loc, ILSGatewayAPI
 from custom.ilsgateway.tests.mock_endpoint import MockEndpoint
+from custom.logistics.api import ApiSyncObject
 from custom.logistics.commtrack import synchronization
 from custom.logistics.models import MigrationCheckpoint
 
@@ -60,9 +61,13 @@ class LocationSyncTest(TestCase):
             limit=100,
             offset=0
         )
-        synchronization('location_facility',
-                        self.endpoint.get_locations,
-                        self.api_object.location_sync, checkpoint, None, 100, 0, filters=dict(type='facility'))
+        location_api = ApiSyncObject(
+            'location_facility',
+            self.endpoint.get_locations,
+            self.api_object.location_sync,
+            filters=dict(type='facility')
+        )
+        synchronization(location_api, checkpoint, None, 100, 0)
         self.assertEqual('location_facility', checkpoint.api)
         self.assertEqual(100, checkpoint.limit)
         self.assertEqual(0, checkpoint.offset)

@@ -50,7 +50,7 @@ def _create_custom_app_strings(app, lang):
 
                 if column.format in ('enum', 'enum-image'):
                     for item in column.enum:
-                        yield id_strings.detail_column_enum_variable(module, detail_type, column, item.key), trans(item.value)
+                        yield id_strings.detail_column_enum_variable(module, detail_type, column, item.key_as_variable), trans(item.value)
                 elif column.format == "graph":
                     for index, item in enumerate(column.graph_configuration.annotations):
                         yield id_strings.graph_annotation(module, detail_type, column, index), trans(item.values)
