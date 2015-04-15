@@ -178,15 +178,7 @@
                         }
                     },
                     putInDefaultOrder: function (index, columns) {
-                        // http://stackoverflow.com/questions/2998784/how-to-output-integers-with-leading-zeros-in-javascript
-                        // [11] < [2], so have to pad numbers
-                        function pad10(a){return(1e15+a+"").slice(-10)}
-
                         var order = ko.utils.unwrapObservable(self.default_order[index]);
-                        var order_index = {};
-                        _(order).each(function (index, i) {
-                            order_index[index] = pad10(i);
-                        });
                         var tag_order = {
                             '': 0,
                             'case': 1,
@@ -196,14 +188,29 @@
                             'tag': 4,
                             'row': 5
                         };
-                        return _(columns).sortBy(function (column) {
-                            var key;
-                            if (order_index.hasOwnProperty(column.index())) {
-                                key = [0, order_index[column.index()]];
-                            } else {
-                                key = [1, tag_order[column._niceField.tags[0]], column._niceField.field];
+
+                        function compare(x, y) {
+                            if (x === y) {
+                                return 0;
                             }
-                            return key;
+                            return x > y ? 1 : -1;
+                        }
+
+                        return columns.sort(function(x, y) {
+                            var x_selected = x.selected(),
+                                y_selected = y.selected(),
+                                x_tag = tag_order[x._niceField.tags[0]],
+                                y_tag = tag_order[y._niceField.tags[0]],
+                                x_index = x.index(),
+                                y_index = y.index();
+
+                            result = compare(y_selected, x_selected)
+                                    || compare(x_tag, y_tag);
+                            result = result || (x_tag || order === undefined) ?
+                                    result || compare(x_index, y_index) :
+                                    result || compare(order.indexOf(x_index), order.indexOf(y_index));
+
+                            return result
                         });
                     }
                 };
@@ -248,17 +255,8 @@
                         }.bind(column);
                     });
 
-                    for (var i = 0; i < columns.length; i++) {
-                        if (!columns[i].selected()) {
-                            break;
-                        }
-                    }
-                    unselected = table.column_configuration.splice(i, columns.length);
-                    unselected = self.utils.putInDefaultOrder(table.index(), unselected);
-                    table.column_configuration.push.apply(
-                        table.column_configuration,
-                        unselected
-                    );
+                    var sorted = self.utils.putInDefaultOrder(table.index(), columns);
+                    table.column_configuration(sorted);
                 });
 
                 self.showDeidColumn = ko.observable(function () {
