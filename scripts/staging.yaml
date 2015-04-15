@@ -53,6 +53,7 @@ branches:
   - usercase # Norman 3/27
   - django1.6 # SK 4/9
   - commcare-supply  # Ethan 4/13
+  - new-location  # Ethan 4/14
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
@@ -64,3 +65,24 @@ submodules:
     # let's leave this here even when empty
     # just so we always get latest master
     branches: []
+  submodules/auditcare-src:
+    branches:
+      - usec  # danny 4/13
+  submodules/couchexport-src:
+    branches:
+      - usec  # danny 4/13
+  submodules/couchlog-src:
+    branches:
+      - usec  # danny 4/13
+  submodules/ctable-src:
+    branches:
+      - usec  # danny 4/13
+  submodules/fluff-src:
+    branches:
+      - usec  # danny 4/13
+  submodules/pillowtop-src:
+    branches:
+      - usec  # danny 4/13
+  submodules/toggle:
+    branches:
+      - usec  # danny 4/13

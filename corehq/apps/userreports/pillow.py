@@ -70,7 +70,7 @@ class ConfigurableIndicatorPillow(PythonPillow):
             doc = changes_dict.get('doc', None)
             if doc:
                 for table in self.tables:
-                    table.delete(changes_dict['doc'])
+                    table.delete(doc)
         return super(ConfigurableIndicatorPillow, self).change_trigger(changes_dict)
 
     def change_transport(self, doc):
