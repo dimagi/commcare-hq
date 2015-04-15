@@ -1,9 +1,10 @@
 from datetime import datetime
 import json
 from django.contrib import messages
+from django.core.exceptions import PermissionDenied
 from django.forms.formsets import formset_factory
 from django.http import HttpResponse, HttpResponseRedirect
-from django.http.response import Http404, HttpResponseForbidden
+from django.http.response import Http404
 from django.utils.translation import ugettext_noop
 from django.views.decorators.http import require_POST, require_GET
 from corehq.apps.commtrack import const
@@ -27,7 +28,7 @@ from custom.ewsghana.reports.specific_reports.stock_status_report import Stockou
 from custom.ewsghana.reports.stock_levels_report import InventoryManagementData, StockLevelsReport
 from custom.ewsghana.tasks import ews_bootstrap_domain_task, ews_clear_stock_data_task, \
     EWS_FACILITIES
-from custom.ewsghana.utils import make_url
+from custom.ewsghana.utils import make_url, has_input_stock_permissions
 from custom.ilsgateway.views import GlobalStats
 from custom.logistics.tasks import sms_users_fix, add_products_to_loc, locations_fix, sync_stock_transactions
 from custom.logistics.tasks import stock_data_task
@@ -100,22 +101,11 @@ class InputStockView(BaseDomainView):
 
     def dispatch(self, request, *args, **kwargs):
         couch_user = self.request.couch_user
-        domain_membership = couch_user.get_domain_membership(self.domain)
-        if not couch_user.is_web_user() or not domain_membership or not domain_membership.location_id:
-            return HttpResponseForbidden()
-
         site_code = kwargs['site_code']
         try:
             sql_location = SQLLocation.objects.get(site_code=site_code, domain=self.domain)
-            user_location = SQLLocation.objects.get(location_id=domain_membership.location_id)
-            if not user_location.location_type.administrative:
-                if user_location.location_id != sql_location.location_id:
-                    return HttpResponseForbidden()
-            else:
-                parents = sql_location.get_ancestors().values_list('location_id', flat=True)
-                if user_location.location_id not in parents:
-                    return HttpResponseForbidden()
-
+            if not has_input_stock_permissions(couch_user, sql_location, self.domain):
+                raise PermissionDenied()
         except SQLLocation.DoesNotExist:
             raise Http404()
 
