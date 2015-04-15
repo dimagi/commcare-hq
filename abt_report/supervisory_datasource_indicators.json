@@ -150,6 +150,26 @@
     "type": "expression"
   }, 
   {
+    "display_name": "form_name", 
+    "datatype": "string", 
+    "expression": {
+      "expression": {
+        "datatype": null, 
+        "type": "property_path", 
+        "property_path": [
+          "form", 
+          "@name"
+        ]
+      }, 
+      "type": "root_doc"
+    }, 
+    "transform": {}, 
+    "is_nullable": true, 
+    "is_primary_key": false, 
+    "column_id": "form_name", 
+    "type": "expression"
+  }, 
+  {
     "display_name": "timeStart", 
     "datatype": "datetime", 
     "expression": {

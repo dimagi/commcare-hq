@@ -1,0 +1,25 @@
+{
+  "type": "or", 
+  "filters": [
+    {
+      "operator": "eq", 
+      "expression": {
+        "datatype": null, 
+        "type": "property_name", 
+        "property_name": "xmlns"
+      }, 
+      "type": "boolean_expression", 
+      "property_value": "http://openrosa.org/formdesigner/BB2BF979-BD8F-4B8D-BCF8-A46451228BA9"
+    }, 
+    {
+      "operator": "eq", 
+      "expression": {
+        "datatype": null, 
+        "type": "property_name", 
+        "property_name": "xmlns"
+      }, 
+      "type": "boolean_expression", 
+      "property_value": "http://openrosa.org/formdesigner/54338047-CFB6-4D5B-861B-2256A10BBBC8"
+    }
+  ]
+}
