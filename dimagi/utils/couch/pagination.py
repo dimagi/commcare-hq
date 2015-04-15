@@ -258,7 +258,7 @@ class LucenePaginator(object):
 
         to_return = {"sEcho": params.echo,
                      "iTotalDisplayRecords": total_rows,
-                     "aaData": all_json}
+                     "aaData": list(all_json)}
         
         for key, val in extras.items():
             to_return[key] = val
