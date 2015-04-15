@@ -127,14 +127,17 @@ class AbtSupervisorExpressionSpec(JsonObject):
         """
         # TODO: Instead, take a list of tuples which are paths and flag answers.
         flag_specs = [
-            (['breakfast'], 'no'),
-            (['equipment'], 'yes'),
+            ("adequate_distance", ['q2'], 'No'),
+            ("leak_free", ['q5'], 'No'),
         ]
         docs = []
-        for path, danger_value in flag_specs:
-            v = item['form']
-            for key in path:
-                v = v[key]
-            if v == danger_value:
-                docs.append({'flag': path[-1]})
+        try:
+            for flag_id, path, danger_value in flag_specs:
+                v = item['form']
+                for key in path:
+                    v = v[key]
+                if v == danger_value:
+                    docs.append({'flag': flag_id})
+        except KeyError as e:
+            pass
         return docs
