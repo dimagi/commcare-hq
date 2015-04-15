@@ -143,21 +143,21 @@ class IterDBTest(TestCase):
             for group in self.groups:
                 iter_db.save(group)
 
-        should_succeed = [g._id for g in self.groups if g._id != old._id]
+        should_succeed = {g._id for g in self.groups if g._id != old._id}
         self.assertEqual(should_succeed, iter_db.saved_ids)
 
-        self.assertEqual([old._id], iter_db.error_ids)
+        self.assertEqual({old._id}, iter_db.error_ids)
 
     def test_delete(self):
         with IterDB(self.db, chunksize=5) as iter_db:
-            deleted_groups = []
+            deleted_groups = set()
             for group in self.groups[:4]:
-                deleted_groups.append(group._id)
+                deleted_groups.add(group._id)
                 iter_db.delete(group)
 
-            saved_groups = []
+            saved_groups = set()
             for group in self.groups[4:]:
-                saved_groups.append(group._id)
+                saved_groups.add(group._id)
                 iter_db.save(group)
 
         self.assertEqual(deleted_groups, iter_db.deleted_ids)

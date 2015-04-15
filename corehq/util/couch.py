@@ -53,39 +53,39 @@ class IterDB(object):
         self.db = database
         self.chunksize = chunksize
         self.throttle_secs = throttle_secs
-        self.saved_ids = []
-        self.deleted_ids = []
-        self.error_ids = []
+        self.saved_ids = set()
+        self.deleted_ids = set()
+        self.error_ids = set()
+        self.errors_by_type = defaultdict(list)
 
     def __enter__(self):
         self.to_save = []
         self.to_delete = []
         return self
 
-    def commit(self, cmd, docs):
+    def _commit(self, cmd, docs):
         try:
             results = cmd(docs)
         except BulkSaveError as e:
-            results = e.results
-            error_ids = {d['id'] for d in e.errors}
-            self.error_ids.extend(error_ids)
-            success_ids = [d['id'] for d in results
-                           if d['id'] not in error_ids]
+            categorized_errors = categorize_bulk_save_errors(e)
+            success_ids = {r['id'] for r in categorized_errors.pop(None, [])}
+            self.errors_by_type = categorized_errors
+            self.error_ids.update(d['id'] for d in e.errors)
         else:
-            success_ids = [d['id'] for d in results]
+            success_ids = {d['id'] for d in results}
 
         if self.throttle_secs:
             sleep(self.throttle_secs)
         return success_ids
 
     def commit_save(self):
-        success_ids = self.commit(self.db.bulk_save, self.to_save)
-        self.saved_ids.extend(success_ids)
+        success_ids = self._commit(self.db.bulk_save, self.to_save)
+        self.saved_ids.update(success_ids)
         self.to_save = []
 
     def commit_delete(self):
-        success_ids = self.commit(self.db.bulk_delete, self.to_delete)
-        self.deleted_ids.extend(success_ids)
+        success_ids = self._commit(self.db.bulk_delete, self.to_delete)
+        self.deleted_ids.update(success_ids)
         self.to_delete = []
 
     def save(self, doc):
