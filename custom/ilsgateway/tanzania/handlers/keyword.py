@@ -21,4 +21,4 @@ class KeywordHandler(object):
     def respond(self, message, **kwargs):
         owner = self.verified_contact.owner
         with localize(owner.get_language_code()):
-            send_sms_to_verified_number(self.verified_contact, _(message) % kwargs)
+            send_sms_to_verified_number(self.verified_contact, message % kwargs)
