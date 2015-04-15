@@ -45,7 +45,6 @@ name: autostaging
 branches:
   - usec  # danny 4/13
   - subscription-no-contact-info # bb 8/4
-  - revert-4205-revert-3841-86347-2 # Daniel 9/11
   - vellum-staging # J$ 11/13
   - locations-as-groups # tw 1/20
   - fixtures-spike  # cz 1/29
