@@ -63,7 +63,7 @@ class IterDB(object):
         self.to_delete = []
         return self
 
-    def _commit(self, cmd, docs):
+    def _write(self, cmd, docs):
         try:
             results = cmd(docs)
         except BulkSaveError as e:
@@ -78,31 +78,34 @@ class IterDB(object):
             sleep(self.throttle_secs)
         return success_ids
 
-    def commit_save(self):
-        success_ids = self._commit(self.db.bulk_save, self.to_save)
+    def _commit_save(self):
+        success_ids = self._write(self.db.bulk_save, self.to_save)
         self.saved_ids.update(success_ids)
         self.to_save = []
 
-    def commit_delete(self):
-        success_ids = self._commit(self.db.bulk_delete, self.to_delete)
+    def _commit_delete(self):
+        success_ids = self._write(self.db.bulk_delete, self.to_delete)
         self.deleted_ids.update(success_ids)
         self.to_delete = []
 
     def save(self, doc):
         self.to_save.append(doc)
         if len(self.to_save) >= self.chunksize:
-            self.commit_save()
+            self._commit_save()
 
     def delete(self, doc):
         self.to_delete.append(doc)
         if len(self.to_delete) >= self.chunksize:
-            self.commit_delete()
+            self._commit_delete()
+
+    def commit(self):
+        if self.to_save:
+            self._commit_save()
+        if self.to_delete:
+            self._commit_delete()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.to_save:
-            self.commit_save()
-        if self.to_delete:
-            self.commit_delete()
+        self.commit()
 
 
 class IterUpdateError(Exception):
@@ -111,7 +114,7 @@ class IterUpdateError(Exception):
         super(IterUpdateError, self).__init__(*args, **kwargs)
 
 
-def iter_update(db, fn, ids, max_retries=None):
+def iter_update(db, fn, ids, max_retries=3):
     """
     Map `fn` over every doc in `db` matching `ids`
 
@@ -166,7 +169,7 @@ def iter_update(db, fn, ids, max_retries=None):
         results.deleted_ids.update(iter_db.deleted_ids)
 
         if iter_db.error_ids:
-            if try_num >= (max_retries if max_retries is not None else 3):
+            if try_num >= max_retries:
                 results.error_ids.update(iter_db.error_ids)
                 msg = ("The following documents did not correctly save:\n"
                        ", ".join(results.error_ids))
