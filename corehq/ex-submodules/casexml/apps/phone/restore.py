@@ -10,7 +10,7 @@ from couchdbkit import ResourceConflict, ResourceNotFound
 from casexml.apps.phone.caselogic import BatchedCaseSyncOperation
 from casexml.apps.stock.consumption import compute_consumption_or_default
 from casexml.apps.stock.utils import get_current_ledger_transactions_multi
-from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, FILE_RESTORE
+from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, FILE_RESTORE, STREAM_RESTORE_CACHE
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.exceptions import BadStateException, RestoreException
@@ -518,7 +518,8 @@ class RestoreConfig(object):
             return
 
         if self.sync_log:
-            payload = self.sync_log.get_cached_payload(self.version, stream=True)
+            stream = STREAM_RESTORE_CACHE.enabled(self.user.domain)
+            payload = self.sync_log.get_cached_payload(self.version, stream=stream)
         else:
             payload = self.cache.get(self._initial_cache_key())
 

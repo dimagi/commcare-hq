@@ -393,3 +393,9 @@ USER_AS_A_CASE = StaticToggle(
     'Enable "User-As-A-Case" to store user properties in a case and use them in forms',
     [NAMESPACE_DOMAIN]
 )
+
+STREAM_RESTORE_CACHE = StaticToggle(
+    'stream_cached_restore',
+    'Stream cached restore from couchdb',
+    [NAMESPACE_DOMAIN]
+)
