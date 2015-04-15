@@ -123,7 +123,7 @@ class CouchPaginator(object):
         
 
     def get_ajax_response(self, request, default_display_length=DEFAULT_DISPLAY_LENGTH, 
-                          default_start=DEFAULT_START, extras={}):
+                          default_start=DEFAULT_START, extras=None):
         """
         From a datatables generated ajax request, return the appropriate
         httpresponse containing the appropriate objects objects.
@@ -131,6 +131,7 @@ class CouchPaginator(object):
         Extras allows you to override any individual paramater that gets 
         returned
         """
+        extras = extras or {}
         query = request.REQUEST
         params = DatatablesParams.from_request_dict(query)
         
@@ -189,8 +190,7 @@ class CouchPaginator(object):
                      "iTotalRecords": total_rows,
                      "aaData": all_json}
 
-        for key, val in extras.items():
-            to_return[key] = val
+        to_return.update(extras)
         
         return HttpResponse(json.dumps(to_return))
 
@@ -244,7 +244,7 @@ class LucenePaginator(object):
             return 0, []
 
 
-    def get_ajax_response(self, request, search_query, extras={}):
+    def get_ajax_response(self, request, search_query, extras=None):
         """
         From a datatables generated ajax request, return the appropriate
         httpresponse containing the appropriate objects objects.
@@ -252,16 +252,16 @@ class LucenePaginator(object):
         Extras allows you to override any individual paramater that gets 
         returned
         """
+        extras = extras or {}
         query = request.POST if request.method == "POST" else request.GET
         params = DatatablesParams.from_request_dict(query)
         total_rows, all_json = self.get_results(search_query, params.count, params.start)
 
         to_return = {"sEcho": params.echo,
                      "iTotalDisplayRecords": total_rows,
-                     "aaData": all_json}
+                     "aaData": list(all_json)}
         
-        for key, val in extras.items():
-            to_return[key] = val
+        to_return.update(extras)
         
         return HttpResponse(json.dumps(to_return))
 
