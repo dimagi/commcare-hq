@@ -221,10 +221,10 @@ def _fmt_date(date):
         return _bootstrap_class(delta, timedelta(days=7), timedelta(days=3))
 
     if not date:
-        return format_datatables_data('<span class="label">{0}</span>'.format(_("Never")), -1)
+        return format_datatables_data(u'<span class="label">{0}</span>'.format(_("Never")), -1)
     else:
         return format_datatables_data(
-            '<span class="{cls}">{text}</span>'.format(
+            u'<span class="{cls}">{text}</span>'.format(
                 cls=_timedelta_class(datetime.utcnow() - date),
                 text=naturaltime(date),
             ),
