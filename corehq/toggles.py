@@ -403,13 +403,18 @@ BULK_PAYMENTS = StaticToggle(
     TAG_PRODUCT_CORE
 )
 
-USE_NEW_TIMEZONE_BEHAVIOR = StaticToggle(
-    'use_new_timezone_behavior',
-    ("Enable properly dealing with timezones in phone timestamps "
-     "during submission and in reports. "
-     "(Please do not set manually, "
-     "because it has to be accompanied by a migration.)"),
-    TAG_EXPERIMENTAL,
+
+PHONE_TIMEZONES_SHOULD_BE_PROCESSED = StaticToggle(
+    'phone_timezones_should_be_processed',
+    "Process timezones correctly in (DO NOT SET MANUALLY)",
+    TAG_UNKNOWN,
+    [NAMESPACE_DOMAIN],
+)
+
+PHONE_TIMEZONES_HAVE_BEEN_PROCESSED = StaticToggle(
+    'phone_timezones_have_been_processed',
+    "Treat phone times as meaning UTC in reports, etc. (DO NOT SET MANUALLY)",
+    TAG_UNKNOWN,
     [NAMESPACE_DOMAIN],
 )
 

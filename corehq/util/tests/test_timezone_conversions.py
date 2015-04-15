@@ -4,7 +4,7 @@ from django.test import SimpleTestCase
 import pytz
 from corehq.const import USER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime, PhoneTime, \
-    UserTime, get_timezone_data_migration_complete
+    UserTime, phone_timezones_have_been_processed
 from dimagi.utils.dates import safe_strftime
 
 
@@ -60,7 +60,7 @@ class TimezoneConversionTest(SimpleTestCase):
         ]
         for in_, tz, out in cases:
             server_dt = dateutil.parser.parse(in_)
-            if get_timezone_data_migration_complete():
+            if phone_timezones_have_been_processed():
                 phone_dt = server_dt
             else:
                 phone_dt = ServerTime(server_dt).phone_time(tz).done()
@@ -75,7 +75,7 @@ class TimezoneConversionTest(SimpleTestCase):
         ]
         for in_, tz, out in cases:
             phone_dt = dateutil.parser.parse(in_)
-            if get_timezone_data_migration_complete():
+            if phone_timezones_have_been_processed():
                 server_dt = phone_dt
             else:
                 server_dt = PhoneTime(phone_dt, tz).server_time().done()

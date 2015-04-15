@@ -1,13 +1,14 @@
 from django.utils.encoding import smart_str
 import pytz
 from corehq.const import USER_DATETIME_FORMAT
-from corehq.toggles import USE_NEW_TIMEZONE_BEHAVIOR
+from corehq.toggles import PHONE_TIMEZONES_HAVE_BEEN_PROCESSED, \
+    PHONE_TIMEZONES_SHOULD_BE_PROCESSED
 from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import get_request
 from dimagi.utils.dates import safe_strftime
 
 
-def get_timezone_data_migration_complete():
+def phone_timezones_have_been_processed():
     """
     The timezone data migration happening some time in Apr-May 2015
     will shift all phone times (form.timeEnd, case.modified_on, etc.) to UTC
@@ -15,6 +16,14 @@ def get_timezone_data_migration_complete():
     use this function to decide what type of timezone conversion is necessary
 
     """
+    return _get_timezone_flag(PHONE_TIMEZONES_HAVE_BEEN_PROCESSED)
+
+
+def phone_timezones_should_be_processed():
+    return _get_timezone_flag(PHONE_TIMEZONES_SHOULD_BE_PROCESSED)
+
+
+def _get_timezone_flag(flag):
     _default = False
     _assert = soft_assert(['droberts' + '@' + 'dimagi.com'])
     try:
@@ -23,9 +32,9 @@ def get_timezone_data_migration_complete():
             domain = request.domain
         except AttributeError:
             return _default
-        return USE_NEW_TIMEZONE_BEHAVIOR.enabled(domain)
+        return flag.enabled(domain)
     except Exception:
-        _assert(False, 'Error in get_timezone_data_migration_complete')
+        _assert(False, 'Error in _get_timezone_flag')
         return _default
 
 
@@ -140,7 +149,7 @@ def _adjust_phone_datetime_to_utc(value, phone_tz):
     """
     phone_tz = _soft_assert_tz_not_string(phone_tz)
     assert value.tzinfo is None
-    if get_timezone_data_migration_complete():
+    if phone_timezones_have_been_processed():
         return value
     else:
         return _adjust_datetime_to_utc(value, phone_tz)
@@ -156,7 +165,7 @@ def _adjust_utc_datetime_to_phone_datetime(value, phone_tz):
     """
     phone_tz = _soft_assert_tz_not_string(phone_tz)
     assert value.tzinfo is None
-    if get_timezone_data_migration_complete():
+    if phone_timezones_have_been_processed():
         return value.replace(tzinfo=pytz.utc)
     else:
         return _adjust_utc_datetime_to_timezone(value, phone_tz)
