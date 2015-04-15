@@ -34,7 +34,6 @@ class ILSSoHTest(ILSTestScript):
             """.format(LANGUAGE_CONFIRM % dict(language='Swahili'))
             self.run_script(language_message)
 
-
             soh_script = """
                 5551234 > hmk jd 400 mc 569
                 5551234 < {0}
