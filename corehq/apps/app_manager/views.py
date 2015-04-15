@@ -1202,6 +1202,8 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None,
         vellum_plugins.append("itemset")
     if toggles.VELLUM_TRANSACTION_QUESTION_TYPES.enabled(domain):
         vellum_plugins.append("commtrack")
+    if toggles.VELLUM_SAVE_TO_CASE.enabled(domain):
+        vellum_plugins.append("saveToCase")
 
     vellum_features = toggles.toggles_dict(username=request.user.username,
                                            domain=domain)
