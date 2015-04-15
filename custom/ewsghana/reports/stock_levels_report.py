@@ -15,6 +15,7 @@ from corehq.apps.reports.graph_models import Axis
 from custom.common import ALL_OPTION
 from custom.ewsghana.filters import ProductByProgramFilter
 from custom.ewsghana.reports import EWSData, MultiReport, get_url_with_location, EWSLineChart, ProductSelectionPane
+from custom.ewsghana.utils import has_input_stock_permissions
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 from corehq.apps.locations.models import Location, SQLLocation
@@ -229,9 +230,12 @@ class InputStock(EWSData):
         transactions = StockTransaction.objects.filter(
             case_id=self.location.supply_point_id
         ).order_by('-report__date', 'pk')
-        rows = [
-            [u"<a href='{}'>INPUT STOCK for {}</a>".format(link, self.location.name)]
-        ]
+        rows = []
+
+        if has_input_stock_permissions(self.config['user'],
+                                       SQLLocation.objects.get(location_id=self.config['location_id']),
+                                       self.domain):
+            rows.append([u"<a href='{}'>INPUT STOCK for {}</a>".format(link, self.location.name)])
 
         if transactions:
             rows.append(
@@ -334,6 +338,7 @@ class StockLevelsReport(MultiReport):
             location_id=self.request.GET.get('location_id'),
             program=program if program != ALL_OPTION else None,
             products=products if products and products[0] != ALL_OPTION else [],
+            user=self.request.couch_user
         )
 
     @property
