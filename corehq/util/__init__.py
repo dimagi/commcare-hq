@@ -1,5 +1,7 @@
 import re
 
+from .view_utils import reverse
+
 
 def fix_urls(text):
     """
