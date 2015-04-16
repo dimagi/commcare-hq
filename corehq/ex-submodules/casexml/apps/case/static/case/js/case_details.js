@@ -179,7 +179,6 @@ function XFormListViewModel() {
         });
     };
 
-
     self.xform_history_cb = function(data) {
         //callback for rendering the xforms list
         //todo until indexing is fixed for nested case blocks
@@ -193,22 +192,25 @@ function XFormListViewModel() {
         self.selected_xform_idx(-1);
     };
 
+    self.refresh_forms = function () {
+        self.run_es_query(self.xform_id_query(), self.xform_history_cb);
+    };
 
     self.calc_page_count = function() {
         self.page_count(Math.ceil(self.total_rows()/self.page_size()));
     };
 
     //main function data collection - entry point if you will
-    self.run_es_query(self.xform_id_query(), self.xform_history_cb);
+    self.refresh_forms();
 
     self.nextPage = function() {
         self.disp_page_index(self.disp_page_index() + 1);
-        self.run_es_query(self.xform_id_query(), self.xform_history_cb);
+        self.refresh_forms();
     };
 
     self.prevPage = function() {
         self.disp_page_index(self.disp_page_index() - 1);
-        self.run_es_query(self.xform_id_query(), self.xform_history_cb);
+        self.refresh_forms();
     };
 
     self.clickRow = function(item) {
@@ -248,14 +250,13 @@ function XFormListViewModel() {
         if (disp_index > self.page_count()) {
             self.disp_page_index(self.page_count());
         } else {
-            self.run_es_query(self.xform_id_query(), self.xform_history_cb);
+            self.refresh_forms();
         }
     });
 
     self.disp_page_index_changed = self.disp_page_index.subscribe(function () {
-        self.run_es_query(self.xform_id_query(), self.xform_history_cb);
+        self.refresh_forms();
     });
-
 
     self.all_pages = function() {
         return _.range(1, self.page_count()+1);
