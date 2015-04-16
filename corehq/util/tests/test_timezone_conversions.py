@@ -6,6 +6,8 @@ from corehq.const import USER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime, PhoneTime, \
     UserTime, phone_timezones_have_been_processed
 from dimagi.utils.dates import safe_strftime
+from corehq.util.timezones.test_utils import \
+    run_pre_and_post_timezone_migration
 
 
 class UIStringTest(SimpleTestCase):
@@ -51,6 +53,7 @@ class TimezoneConversionTest(SimpleTestCase):
             server_dt = UserTime(user_dt, tz).server_time().done()
             self.assertEqual(server_dt.isoformat(), out)
 
+    @run_pre_and_post_timezone_migration
     def test_server_to_phone(self):
         cases = [
             ('2015-03-20T12:00:00', pytz.FixedOffset(-4 * 60),
@@ -67,6 +70,7 @@ class TimezoneConversionTest(SimpleTestCase):
             else:
                 self.assertEqual(phone_dt.isoformat(), out)
 
+    @run_pre_and_post_timezone_migration
     def test_phone_to_server(self):
         cases = [
             ('2015-03-20T08:00:00', pytz.FixedOffset(-4 * 60),
