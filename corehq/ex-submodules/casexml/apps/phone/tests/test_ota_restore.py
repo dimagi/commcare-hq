@@ -65,6 +65,13 @@ class OtaRestoreTest(TestCase):
             restore_payload,
         )
 
+    def testOverwriteCache(self):
+        restore_payload = generate_restore_payload(dummy_user(), items=True, force_cache=True)
+        restore_payload_cached = generate_restore_payload(dummy_user(), items=True)
+        restore_payload_overwrite = generate_restore_payload(dummy_user(), items=True, overwrite_cache=True)
+        self.assertEqual(restore_payload, restore_payload_cached)
+        self.assertNotEqual(restore_payload, restore_payload_overwrite)
+
     def testUserRestoreWithCase(self):
         file_path = os.path.join(os.path.dirname(__file__),
                                  "data", "create_short.xml")
