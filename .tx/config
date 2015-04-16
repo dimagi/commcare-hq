@@ -2,7 +2,7 @@
 host = https://www.transifex.com
 
 [commcare-hq.djangopo]
-file_filter = po/<lang><lang>.po
+file_filter = locale/<lang>/LC_MESSAGES/django.po
 source_file = locale/en/LC_MESSAGES/django.po
 source_lang = en
 trans.fr = locale/fra/LC_MESSAGES/django.po
