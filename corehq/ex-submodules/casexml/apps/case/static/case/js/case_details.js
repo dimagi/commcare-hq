@@ -140,26 +140,6 @@ function XFormListViewModel() {
     };
 
 
-    self.stats_query = function () {
-        var q = self.xform_id_query();
-        q["facets"] = {
-            "received_facets": {
-                "date_histogram": {
-                    "field": "received_on",
-                    "interval": "day"
-                }
-            }, "form_type_facets": {
-                "terms": {
-                    "field": "form.#type"
-                }
-            }
-        }
-        q['size'] = 0;
-        q['from'] = 0;
-        return q;
-    };
-
-
     self.get_xform_data = function(xform_id) {
         //method for getting individual xform via GET
         $.cachedAjax({
@@ -218,71 +198,7 @@ function XFormListViewModel() {
         self.page_count(Math.ceil(self.total_rows()/self.page_size()));
     };
 
-    self.stats_data_cb = function(data) {
-        var term_facets_mapped = $.map(data['facets']['form_type_facets']['terms'], function (item) {
-            return new FormTypeFacetModel(item);
-        });
-        self.form_type_facets(term_facets_mapped);
-        var recv_facets_mapped = $.map(data['facets']['received_facets']['entries'], function (item) {
-            return new FormDateHistogram(item);
-        });
-        self.form_recv_facets(recv_facets_mapped);
-
-        nv.addGraph(function () {
-            var chart = nv.models.multiBarChart();
-
-            chart.xAxis
-            .tickFormat(function (d) {
-                return d3.time.format('%x')(new Date(d))
-            });
-
-
-            chart.yAxis.tickFormat(d3.format('.1f'));
-
-            var chart_data = function() {
-                var start_date = new Date(self.form_recv_facets()[0].es_time());
-                var end_date = new Date(self.form_recv_facets()[self.form_recv_facets().length - 1].es_time());
-                var ms_delta = end_date - start_date;
-                var retdata = [];
-
-                for (var i = 0; i < self.form_recv_facets().length; i++) {
-                    var item = self.form_recv_facets()[i];
-                    if (retdata.length == 0) {
-                        retdata.push({ x:item.es_time(), y:item.form_count()});
-                    }
-                    else {
-                        var last_time = retdata[retdata.length - 1].x;
-                        var last_time_dt = new Date(last_time);
-                        var curr_time = new Date(item.es_time());
-                        var d = (curr_time - last_time) / 86400000;
-                        if (d > 1) {
-                            for (var j = 1; j <= d; j++) {
-                                //fill in blank dates
-                                retdata.push({x:last_time+(j*86400000), y: 0});
-                            }
-                        }
-                        retdata.push({x:item.es_time(), y:item.form_count()});
-                    }
-                }
-
-                return {
-                    key: "submissions",
-                    values: retdata
-                }};
-                d3.select('#submit_chart svg')
-                .datum([chart_data()]).transition().duration(500).call(chart);
-
-                nv.utils.windowResize(chart.update);
-
-                return chart;
-        });
-
-
-    };
-
-
     //main function data collection - entry point if you will
-    //self.run_es_query(self.stats_query(), self.stats_data_cb);
     self.run_es_query(self.xform_id_query(), self.xform_history_cb);
 
     self.nextPage = function() {
