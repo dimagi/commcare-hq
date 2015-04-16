@@ -22,22 +22,11 @@ from corehq.apps.userreports.reports.specs import FilterSpec
 from django.utils.translation import ugettext as _
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.sql import IndicatorSqlAdapter, get_engine
+from corehq.pillows.utils import get_deleted_doc_types
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
 from django.conf import settings
-
-
-DELETED_DOC_TYPES = {
-    'CommCareCase': [
-        'CommCareCase-Deleted',
-    ],
-    'XFormInstance': [
-        'XFormInstance-Deleted',
-        'XFormArchived',
-        'XFormDeprecated',
-    ],
-}
 
 
 class DataSourceBuildInformation(DocumentSchema):
@@ -91,11 +80,12 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         return self._get_filter([self.referenced_doc_type])
 
     def _get_deleted_filter(self):
-        if self.referenced_doc_type in DELETED_DOC_TYPES:
-            return self._get_filter(DELETED_DOC_TYPES[self.referenced_doc_type])
-        return None
+        return self._get_filter(get_deleted_doc_types(self.referenced_doc_type))
 
     def _get_filter(self, doc_types):
+        if not doc_types:
+            return None
+
         extras = (
             [self.configured_filter]
             if self.configured_filter else []
