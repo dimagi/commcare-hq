@@ -64,6 +64,7 @@ from corehq.apps.sms.views import get_sms_autocomplete_context
 from django.utils.http import urlencode as django_urlencode
 from couchdbkit.exceptions import ResourceConflict
 from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseForbidden
+from toggle.shortcuts import toggle_enabled as toggle_enabled_shortcut
 from unidecode import unidecode
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse, RegexURLResolver, Resolver404
@@ -83,11 +84,22 @@ from corehq.apps.app_manager.const import (
     CAREPLAN_GOAL,
     CAREPLAN_TASK,
     MAJOR_RELEASE_TO_VERSION,
+    USERCASE_TYPE,
 )
 from corehq.apps.app_manager.success_message import SuccessMessage
-from corehq.apps.app_manager.util import is_valid_case_type, get_all_case_properties, add_odk_profile_after_build, ParentCasePropertyBuilder, commtrack_ledger_sections, \
-    get_commcare_versions
-from corehq.apps.app_manager.util import save_xform, get_settings_values
+from corehq.apps.app_manager.util import (
+    is_valid_case_type,
+    get_all_case_properties,
+    add_odk_profile_after_build,
+    ParentCasePropertyBuilder,
+    commtrack_ledger_sections,
+    get_commcare_versions,
+    save_xform,
+    get_settings_values,
+    is_usercase_enabled,
+    enable_usercase,
+    actions_use_usercase,
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import LoginAndDomainMixin
 from corehq.util.compression import decompress
@@ -810,6 +822,41 @@ def get_module_view_context_and_template(app, module):
 
         return options
 
+    def get_details():
+        item = {
+            'label': _('Case List'),
+            'detail_label': _('Case Detail'),
+            'type': 'case',
+            'model': 'case',
+            'sort_elements': module.case_details.short.sort_elements,
+            'short': module.case_details.short,
+            'long': module.case_details.long,
+            'child_case_types': child_case_types,
+        }
+        if is_usercase_enabled(app.domain):
+            item['properties'] = sorted(builder.get_properties(case_type) | builder.get_properties(USERCASE_TYPE))
+        else:
+            item['properties'] = sorted(builder.get_properties(case_type))
+
+        if isinstance(module, AdvancedModule):
+            details = [item]
+            if app.commtrack_enabled:
+                details.append({
+                    'label': _('Product List'),
+                    'detail_label': _('Product Detail'),
+                    'type': 'product',
+                    'model': 'product',
+                    'properties': ['name'] + commtrack_ledger_sections(app.commtrack_requisition_mode),
+                    'sort_elements': module.product_details.short.sort_elements,
+                    'short': module.product_details.short,
+                    'child_case_types': child_case_types,
+                })
+        else:
+            item['parent_select'] = module.parent_select
+            details = [item]
+
+        return details
+
     # make sure all modules have unique ids
     app.ensure_module_unique_ids(should_save=True)
     if isinstance(module, CareplanModule):
@@ -843,33 +890,6 @@ def get_module_view_context_and_template(app, module):
         }
     elif isinstance(module, AdvancedModule):
         case_type = module.case_type
-        def get_details():
-            details = [{
-                'label': _('Case List'),
-                'detail_label': _('Case Detail'),
-                'type': 'case',
-                'model': 'case',
-                'properties': sorted(builder.get_properties(case_type)),
-                'sort_elements': module.case_details.short.sort_elements,
-                'short': module.case_details.short,
-                'long': module.case_details.long,
-                'child_case_types': child_case_types,
-            }]
-
-            if app.commtrack_enabled:
-                details.append({
-                    'label': _('Product List'),
-                    'detail_label': _('Product Detail'),
-                    'type': 'product',
-                    'model': 'product',
-                    'properties': ['name'] + commtrack_ledger_sections(app.commtrack_requisition_mode),
-                    'sort_elements': module.product_details.short.sort_elements,
-                    'short': module.product_details.short,
-                    'child_case_types': child_case_types,
-                })
-
-            return details
-
         form_options = case_list_form_options(case_type)
         return "app_manager/module_view_advanced.html", {
             'fixtures': fixtures,
@@ -888,20 +908,7 @@ def get_module_view_context_and_template(app, module):
         return "app_manager/module_view.html", {
             'parent_modules': get_parent_modules(case_type),
             'fixtures': fixtures,
-            'details': [
-                {
-                    'label': _('Case List'),
-                    'detail_label': _('Case Detail'),
-                    'type': 'case',
-                    'model': 'case',
-                    'properties': sorted(builder.get_properties(case_type)),
-                    'sort_elements': module.case_details.short.sort_elements,
-                    'short': module.case_details.short,
-                    'long': module.case_details.long,
-                    'parent_select': module.parent_select,
-                    'child_case_types': child_case_types,
-                },
-            ],
+            'details': get_details(),
             'case_list_form_options': form_options,
             'case_list_form_allowed': bool(
                 module.all_forms_require_a_case and not module.parent_select.active and form_options
@@ -1060,6 +1067,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
     })
 
     context['latest_commcare_version'] = get_commcare_versions(request.user)[-1]
+    context['usercase_enabled'] = is_usercase_enabled(domain)
 
     if app and app.doc_type == 'Application' and has_privilege(request, privileges.COMMCARE_LOGO_UPLOADER):
         uploader_slugs = ANDROID_LOGO_PROPERTY_MAPPING.keys()
@@ -1202,6 +1210,8 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None,
         vellum_plugins.append("itemset")
     if toggles.VELLUM_TRANSACTION_QUESTION_TYPES.enabled(domain):
         vellum_plugins.append("commtrack")
+    if toggles.VELLUM_SAVE_TO_CASE.enabled(domain):
+        vellum_plugins.append("saveToCase")
 
     vellum_features = toggles.toggles_dict(username=request.user.username,
                                            domain=domain)
@@ -1877,6 +1887,13 @@ def edit_form_actions(request, domain, app_id, module_id, form_id):
     form = app.get_module(module_id).get_form(form_id)
     form.actions = FormActions.wrap(json.loads(request.POST['actions']))
     form.requires = request.POST.get('requires', form.requires)
+    if actions_use_usercase(form.actions) and not is_usercase_enabled(domain):
+        if toggle_enabled_shortcut('user_as_a_case', domain, namespace='domain'):
+            enable_usercase(domain)
+        else:
+            return HttpResponseBadRequest(json.dumps({
+                'reason': _('This form uses usercase properties, but User-As-A-Case is not enabled for this '
+                            'project. To use this feature, please enable the "User-As-A-Case" Feature Flag.')}))
     response_json = {}
     app.save(response_json)
     response_json['propertiesMap'] = get_all_case_properties(app)

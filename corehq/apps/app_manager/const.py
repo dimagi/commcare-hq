@@ -28,5 +28,8 @@ SCHEDULE_LAST_VISIT_DATE = 'last_visit_date_{}'
 ATTACHMENT_PREFIX = 'attachment:'
 
 CASE_ID = 'case_id'
+USERCASE_TYPE = 'commcare-user'
+USERCASE_ID = 'usercase_id'
+USERCASE_PREFIX = 'user:'
 
 RETURN_TO = 'return_to'

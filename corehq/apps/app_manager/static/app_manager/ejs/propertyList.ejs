@@ -24,7 +24,7 @@
             <td>
                 [% if (propertyName === "") { %]
                     <span class="invalid">Can't be blank</span>
-                [% } else if (!/^[a-zA-Z][\w_-]*(\/[a-zA-Z][\w_-]*)*$/.test(propertyName)) { %]
+                [% } else if (!/^[a-zA-Z][\w_-]*([\/:][a-zA-Z][\w_-]*)*$/.test(propertyName)) { %]
                     <span class="invalid">Must start with letter and contain only letters, numbers, '-', and '_': "[%= propertyName %]"</span>
                 [% } else if (reservedWords.indexOf(propertyName) !== -1) { %]
                     <span class="text-error"><strong>[%= propertyName %]</strong> is a reserved word</span>
