@@ -76,52 +76,43 @@
                 return;
             });
 
-            function success(name, id, gaEventLabel) {
+            function outcome(success, name, id, gaEventLabel) {
                 return function() {
-                    unsavedChanges[name] = false;
-                    $('.alert').removeClass('alert-error alert-info').addClass('alert-success');
-                    $('.alert')[0].innerHTML = name + " was successfully saved";
-                    $('.alert').show();
-                    $(id).find(':button').enableButton();
+                    var alertClass, message;
+                    if (success) {
+                        alertClass = 'alert-success';
+                        message = 'Successfully saved ' + name.toLowerCase() + '.';
+                        unsavedChanges[name] = false;
+                    }
+                    else {
+                        alertClass = 'alert-error';
+                        message = 'Failed to save ' + name.toLowerCase() + '.';
+                        $(id).find(':button').enableButton();
+                    }
+                    $('.alert').removeClass('alert-error alert-success alert-info').addClass(alertClass);
+                    $('.alert').html(message).show();
                     $('#editGroupSettings').modal('hide');
+
                     if (gaEventLabel){
-                        ga_track_event("Editing Group", gaEventLabel, "{{group.get_id|escapejs}}");
+                        ga_track_event('Editing Group', gaEventLabel, '{{group.get_id|escapejs}}');
                     }
                 }
             }
-
-            var edit_membership_succ = success("Group membership", "#edit_membership", "Edit Group Membership");
-            var edit_settings_succ = success("Group settings", "#edit-group-settings", "Edit Settings");
-            var edit_data_succ = success("Group data", "#group-data-form", "Edit Group Data");
-
-            function failure(name, id) {
-                return function() {
-                    $('.alert').removeClass('alert-success alert-info').addClass('alert-error');
-                    $('.alert')[0].innerHTML = name + " was not successfully saved";
-                    $('.alert').show();
-                    $(id).find(':button').enableButton();
-                    $('#editGroupSettings').modal('hide')
-                }
-            }
-
-            var edit_membership_fail = failure("Group membership", "#edit_membership");
-            var edit_settings_fail = failure("Group settings", "#edit-group-settings");
-            var edit_data_fail = failure("Group data", "#group-data-form");
 
             $(document).ready(function() {
                 $('#edit_membership').submit(function() {
                     $(this).find(':button').attr('disabled', 'disabled');
                     $(this).ajaxSubmit({
-                        success: edit_membership_succ,
-                        error: edit_membership_fail
+                        success: outcome(true, "Group membership", "#edit_membership", "Edit Group Membership"),
+                        error: outcome(false, "Group membership", "#edit_membership")
                     });
                     return false;
                 });
                 $('#edit-group-settings').submit(function() {
                     $(this).find(':button').disableButton();
                     $(this).ajaxSubmit({
-                        success: edit_settings_succ,
-                        error: edit_settings_fail
+                        success: outcome(true, "Group settings", "#edit-group-settings", "Edit Settings"),
+                        error: outcome(false, "Group settings", "#edit-group-settings")
                     });
                     return false;
                 });
@@ -135,8 +126,8 @@
                 $('#group-data-form').submit(function() {
                     $(this).find(':button').attr('disabled', 'disabled');
                     $(this).ajaxSubmit({
-                        success: edit_data_succ,
-                        error: edit_data_fail
+                        success: outcome(true, "Group data", "#group-data-form", "Edit Group Data"),
+                        error: outcome(false, "Group data", "#group-data-form")
                     });
                     return false;
                 });
