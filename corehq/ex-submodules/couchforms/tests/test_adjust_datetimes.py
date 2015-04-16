@@ -1,4 +1,6 @@
 from django.test import SimpleTestCase
+from corehq.util.timezones.conversions import \
+    phone_timezones_should_be_processed
 from couchforms.util import adjust_datetimes
 
 
@@ -14,7 +16,13 @@ class AdjustDatetimesTest(SimpleTestCase):
         )
 
     def test_strip_tz(self):
-        self.assertEqual(
-            adjust_datetimes({'datetime': '2013-03-09T06:30:09.007+03'}),
-            {'datetime': '2013-03-09T06:30:09.007000Z'}
-        )
+        if phone_timezones_should_be_processed():
+            self.assertEqual(
+                adjust_datetimes({'datetime': '2013-03-09T06:30:09.007+03'}),
+                {'datetime': '2013-03-09T03:30:09.007000Z'}
+            )
+        else:
+            self.assertEqual(
+                adjust_datetimes({'datetime': '2013-03-09T06:30:09.007+03'}),
+                {'datetime': '2013-03-09T06:30:09.007000Z'}
+            )
