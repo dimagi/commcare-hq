@@ -107,6 +107,11 @@ class LocationType(models.Model):
     def __unicode__(self):
         return self.name
 
+    @property
+    @memoized
+    def can_have_children(self):
+        return LocationType.objects.filter(parent_type=self).exists()
+
 
 class SQLLocation(MPTTModel):
     domain = models.CharField(max_length=255, db_index=True)
