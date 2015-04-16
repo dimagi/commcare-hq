@@ -1,5 +1,6 @@
 from django.conf import settings
 import itertools
+import pytz
 
 PACT_DOMAIN = "pact"
 PACT_HP_GROUPNAME = "PACT-HPS"
@@ -18,6 +19,8 @@ XMLNS_PATIENT_UPDATE_DOT="http://dev.commcarehq.org/pact/patientupdate_dot"
 XMLNS_PATIENT_PROVIDER_UPDATE="http://dev.commcarehq.org/pact/patient_provider"
 
 PACT_PROVIDER_FIXTURE_TAG = 'provider'
+
+PACT_TIMEZONE = pytz.timezone('America/New_York')
 
 
 #Deprecated static sequence of time labels. needed to support legacy data pre labeling
