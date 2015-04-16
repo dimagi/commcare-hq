@@ -515,7 +515,7 @@ class RestoreConfig(object):
 
     def get_cached_payload(self):
         if self.overwrite_cache:
-            return
+            return CachedResponse(None)
 
         if self.sync_log:
             stream = STREAM_RESTORE_CACHE.enabled(self.user.domain)
