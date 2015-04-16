@@ -111,15 +111,6 @@ function XFormListViewModel() {
 
     var api_url = CASE_DETAILS.xform_api_url;
 
-    self.xform_query = function () {
-        //elastic query based upon case id
-        var id_query = self.xform_id_query();
-        return id_query;
-        //todo once the xform index is updated with embedded case properties
-        //real query to be filled out here below once index is modified
-
-    };
-
     self.xform_id_query = function () {
         //hacky query based upon xform_ids due to nested case properties not being indexed in pillowtop at the moment
 
@@ -150,7 +141,7 @@ function XFormListViewModel() {
 
 
     self.stats_query = function () {
-        var q = self.xform_query();
+        var q = self.xform_id_query();
         q["facets"] = {
             "received_facets": {
                 "date_histogram": {
@@ -292,16 +283,16 @@ function XFormListViewModel() {
 
     //main function data collection - entry point if you will
     //self.run_es_query(self.stats_query(), self.stats_data_cb);
-    self.run_es_query(self.xform_query(), self.xform_history_cb);
+    self.run_es_query(self.xform_id_query(), self.xform_history_cb);
 
     self.nextPage = function() {
         self.disp_page_index(self.disp_page_index() + 1);
-        self.run_es_query(self.xform_query(), self.xform_history_cb);
+        self.run_es_query(self.xform_id_query(), self.xform_history_cb);
     };
 
     self.prevPage = function() {
         self.disp_page_index(self.disp_page_index() - 1);
-        self.run_es_query(self.xform_query(), self.xform_history_cb);
+        self.run_es_query(self.xform_id_query(), self.xform_history_cb);
     };
 
     self.clickRow = function(item) {
@@ -341,12 +332,12 @@ function XFormListViewModel() {
         if (disp_index > self.page_count()) {
             self.disp_page_index(self.page_count());
         } else {
-            self.run_es_query(self.xform_query(), self.xform_history_cb);
+            self.run_es_query(self.xform_id_query(), self.xform_history_cb);
         }
     });
 
     self.disp_page_index_changed = self.disp_page_index.subscribe(function () {
-        self.run_es_query(self.xform_query(), self.xform_history_cb);
+        self.run_es_query(self.xform_id_query(), self.xform_history_cb);
     });
 
 
