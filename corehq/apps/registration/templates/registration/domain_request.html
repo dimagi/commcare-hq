@@ -1,7 +1,22 @@
 {% extends "registration/base.html" %}
 {% load i18n %}
+{% load hq_shared_tags %}
 
 {% block title %}New Project Space{% endblock title %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static 'hqwebapp/js/lib/select2/select2.js' %}"></script>
+{% endblock %}
+
+{% block head %}{{ block.super }}
+    <link href="{% static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet" />
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+    <script type="text/javascript">
+        $("#id_domain_timezone").select2();
+    </script>
+{% endblock %}
 
 {% block step-title %}
     {% if is_new %}
