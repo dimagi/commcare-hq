@@ -92,35 +92,6 @@ function XFormListViewModel() {
 
     var api_url = CASE_DETAILS.xform_api_url;
 
-    self.xform_id_query = function () {
-        //hacky query based upon xform_ids due to nested case properties not being indexed in pillowtop at the moment
-
-        var start_num = self.disp_page_index() || 1;
-        var start_range = (start_num - 1) * self.page_size();
-        var end_range = start_range + self.page_size();
-        var xform_ids = CASE_DETAILS.xform_ids;
-
-        if (end_range > xform_ids.length) {
-            end_range = xform_ids.length;
-        }
-        xform_ids.reverse();
-
-        return {
-            "filter": {
-                "ids": {
-                    "values": _.map(_.range(start_range, end_range),
-                                    function(idx) {
-                                        return xform_ids[idx];
-                                    })
-                }
-            },
-            "from": 0,
-            "size": self.page_size(),
-            "sort": [{"received_on": "desc"}]
-        };
-    };
-
-
     self.get_xform_data = function(xform_id) {
         //method for getting individual xform via GET
         $.cachedAjax({
@@ -137,27 +108,6 @@ function XFormListViewModel() {
             "complete": function(data) {
             }
         })
-    };
-
-    self.run_es_query = function(query, success_cb) {
-        //generic caller for ES query
-        self.data_loading(true);
-        $.ajax({
-            "type": "POST",
-            "url":  api_url,
-            "data": ko.toJSON(query),
-            "success": function(data) {
-                success_cb(data);
-            }, //end success
-            "error": function(data) {
-                console.log("Error");
-                console.log(data);
-            },
-            "complete": function(data){
-                //{#                        self.is_loading(false);#}
-                self.data_loading(false);
-            }
-        });
     };
 
     self.xform_history_cb = function(data) {
