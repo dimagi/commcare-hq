@@ -525,8 +525,6 @@ CELERY_REMINDER_RULE_QUEUE = CELERY_MAIN_QUEUE
 # on its own queue.
 CELERY_REMINDER_CASE_UPDATE_QUEUE = CELERY_MAIN_QUEUE
 
-SKIP_SOUTH_TESTS = True
-#AUTH_PROFILE_MODULE = 'users.HqUserProfile'
 TEST_RUNNER = 'testrunner.TwoStageTestRunner'
 # this is what gets appended to @domain after your accounts
 HQ_ACCOUNT_ROOT = "commcarehq.org"
@@ -942,8 +940,8 @@ INDICATOR_CONFIG = {
 }
 
 ####### South Settings #######
-#SKIP_SOUTH_TESTS=True
-#SOUTH_TESTS_MIGRATE=False
+SKIP_SOUTH_TESTS = True
+SOUTH_TESTS_MIGRATE = False
 
 ####### Couch Forms & Couch DB Kit Settings #######
 from settingshelper import get_dynamic_db_settings, make_couchdb_tuples, get_extra_couchdbs
