@@ -12,7 +12,7 @@ from couchforms.models import XFormInstance
 from custom.logistics.commtrack import save_stock_data_checkpoint, synchronization
 from custom.logistics.models import StockDataCheckpoint
 from celery.task.base import task
-from custom.logistics.utils import get_supply_point_by_external_id, get_reporting_types
+from custom.logistics.utils import get_supply_point_by_external_id
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import force_to_datetime
 
@@ -53,7 +53,7 @@ def stock_data_task(domain, endpoint, apis, config, test_facilities=None):
     else:
         supply_points_ids = SQLLocation.objects.filter(
             domain=domain,
-            location_type__in=get_reporting_types(domain)
+            location_type__administrative=False
         ).order_by('created_at').values_list('supply_point_id', flat=True)
         facilities = [doc['external_id'] for doc in iter_docs(SupplyPointCase.get_db(), supply_points_ids)]
 

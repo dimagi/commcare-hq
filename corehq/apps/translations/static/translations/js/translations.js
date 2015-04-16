@@ -16,7 +16,7 @@ var mk_translation_ui = function (spec) {
             var Translation = function (key, value) {
                 var that = this;
                 this.key = uiElement.input().val(key).setEdit(false);
-                this.value = uiElement.input().val(value).setEdit(translation_ui.edit);
+                this.value = uiElement.input().val(value);
                 this.solid = true;
 
                 this.$delete = $('<i></i>').addClass(COMMCAREHQ.icons.DELETE).click(function () {
@@ -44,11 +44,6 @@ var mk_translation_ui = function (spec) {
                 $('<td/>').append(this.$add).appendTo(this.ui);
                 $('<td/>').append(this.$error).appendTo(this.ui);
                 this.$error.hide()
-                if (!translation_ui.edit) {
-                    this.$delete.hide();
-                    this.$add.hide();
-                    this.$error.hide();
-                }
 
                 var helperFunction = function () {
                     if (that.solid) {
@@ -150,9 +145,7 @@ var mk_translation_ui = function (spec) {
             translation_ui.save()
         }
     });
-    if (translation_ui.edit) {
-        translation_ui.$home.prepend(translation_ui.saveButton.ui);
-    }
+    translation_ui.$home.prepend(translation_ui.saveButton.ui);
     translation_ui.$home.append($home);
 
     translation_ui.translate = function (key) {
@@ -240,15 +233,11 @@ var mk_translation_ui = function (spec) {
                 translation = translation_ui.translations[key];
                 translation.ui.appendTo($list_tbody);
             }
-        } else if (!translation_ui.edit) {
-            $home.append($("<p>No translations</p>"));
         }
-        if (translation_ui.edit) {
-            if (translation_ui.allow_autofill) {
-                $home.append($bootstrap);
-            }
-            translation_ui.appendAdder();
+        if (translation_ui.allow_autofill) {
+            $home.append($bootstrap);
         }
+        translation_ui.appendAdder();
         $home.append($table);
     };
     translation_ui.validate_translation = function(translation) {

@@ -268,10 +268,11 @@ class CaseStructure(object):
     Can recursively nest parents/grandparents inside here.
     """
 
-    def __init__(self, case_id=None, relationships=None, attrs=None):
+    def __init__(self, case_id=None, relationships=None, attrs=None, walk_related=True):
         self.case_id = case_id or uuid.uuid4().hex
         self.relationships = relationships if relationships is not None else []
         self.attrs = attrs if attrs is not None else {}
+        self.walk_related = walk_related  # whether to walk related cases in operations
 
     @property
     def index(self):
@@ -282,9 +283,10 @@ class CaseStructure(object):
 
     def walk_ids(self):
         yield self.case_id
-        for relationship in self.relationships:
-            for id in relationship.related_structure.walk_ids():
-                yield id
+        if self.walk_related:
+            for relationship in self.relationships:
+                for id in relationship.related_structure.walk_ids():
+                    yield id
 
 
 class CaseRelationship(object):
@@ -350,14 +352,18 @@ class CaseFactory(object):
             return self.get_case_block(substructure.case_id, index=substructure.index, **substructure.attrs)
 
         def _get_case_blocks(substructure):
-            return [_get_case_block(substructure)] + [
-                block for relationship in substructure.relationships
-                for block in _get_case_blocks(relationship.related_structure)
-            ]
+            blocks = [_get_case_block(substructure)]
+            if substructure.walk_related:
+                blocks += [
+                    block for relationship in substructure.relationships
+                    for block in _get_case_blocks(relationship.related_structure)
+                ]
+            return blocks
 
         self.post_case_blocks(
             [block for structure in case_structures for block in _get_case_blocks(structure)]
         )
+
         return [
             CommCareCase.wrap(doc) for doc in iter_docs(
                 CommCareCase.get_db(),

@@ -36,7 +36,7 @@ class UserLocMapTest(CommTrackTest):
 
     def test_removing_a_location(self):
         # first make sure there is one to remove
-        self.user.add_location(self.loc)
+        self.user.add_location_delegate(self.loc)
         self.assertEqual(len(self.user.locations), 1)
 
         self.mapping.to_remove.add(self.loc.site_code)
@@ -46,7 +46,7 @@ class UserLocMapTest(CommTrackTest):
     def test_should_not_add_what_is_already_there(self):
         self.mapping.to_add.add(self.loc.site_code)
 
-        self.user.add_location(self.loc)
+        self.user.add_location_delegate(self.loc)
 
         with patch('corehq.apps.hqcase.utils.submit_case_blocks') as submit_blocks:
             self.mapping.save()

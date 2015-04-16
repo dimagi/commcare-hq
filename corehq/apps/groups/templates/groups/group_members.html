@@ -126,7 +126,7 @@
                     return false;
                 });
                 $('#group-case-sharing-input').change(function() {
-                    if($('#group-case-sharing-input').val() == 'true') {
+                    if($('#group-case-sharing-input').val() == 'true' && !{{ domain_uses_case_sharing|BOOL }}) {
                         $('#group-case-sharing-warning').removeAttr("hidden")
                     } else {
                         $('#group-case-sharing-warning').attr('hidden', 'hidden')

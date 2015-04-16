@@ -1,11 +1,10 @@
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.caselogic import filter_cases_modified_elsewhere_since_sync, get_related_cases
 from casexml.apps.phone.tests.test_sync_mode import SyncBaseTest, PARENT_TYPE
-from casexml.apps.phone.tests.utils import synclog_from_restore_payload
+from casexml.apps.phone.tests.utils import synclog_from_restore_payload, generate_restore_payload
 from casexml.apps.case.tests.util import assert_user_has_cases
 from casexml.apps.phone.models import User
-from casexml.apps.phone.restore import generate_restore_payload, RestoreConfig, get_case_payload, \
-    get_case_payload_batched
+from casexml.apps.phone.restore import RestoreConfig, get_case_payload_batched
 from dimagi.utils.decorators.profile import line_profile
 from casexml.apps.case.xml import V2
 from datetime import datetime
@@ -53,7 +52,6 @@ class SyncPerformanceTest(SyncBaseTest):
 
     @line_profile([
         RestoreConfig.get_payload,
-        get_case_payload,
         get_case_payload_batched,
         get_related_cases,
         filter_cases_modified_elsewhere_since_sync
@@ -80,7 +78,6 @@ class SyncPerformanceTest(SyncBaseTest):
 
     @line_profile([
         RestoreConfig.get_payload,
-        get_case_payload,
         get_case_payload_batched,
         get_related_cases,
         filter_cases_modified_elsewhere_since_sync
@@ -112,7 +109,6 @@ class SyncPerformanceTest(SyncBaseTest):
 
     @line_profile([
         RestoreConfig.get_payload,
-        get_case_payload,
         get_case_payload_batched,
         get_related_cases,
         filter_cases_modified_elsewhere_since_sync

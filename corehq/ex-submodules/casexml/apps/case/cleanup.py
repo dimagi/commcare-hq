@@ -4,6 +4,7 @@ from xml.etree import ElementTree
 from couchdbkit.exceptions import ResourceNotFound
 from datetime import datetime
 from casexml.apps.case import const
+from casexml.apps.case.exceptions import CommCareCaseError
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.util import get_case_xform_ids, primary_actions
@@ -61,8 +62,7 @@ def rebuild_case(case_id):
     case.xform_ids = []
     case.actions = []
 
-    form_ids = get_case_xform_ids(case_id)
-    forms = [fetch_and_wrap_form(id) for id in form_ids]
+    forms = get_case_forms(case_id)
     filtered_forms = [f for f in forms if f.doc_type == "XFormInstance"]
     sorted_forms = sorted(filtered_forms, key=lambda f: f.received_on)
     for form in sorted_forms:
@@ -129,6 +129,37 @@ def reset_state(case):
     case.closed_on = None
     case.closed_by = ''
     return case
+
+
+def safe_hard_delete(case):
+    """
+    Hard delete a case - by deleting the case itself as well as all forms associated with it
+    permanently from the database.
+
+    Will fail hard if the case has any reverse indices or if any of the forms associated with
+    the case also touch other cases.
+
+    This is used primarily for cleaning up system cases/actions (e.g. the location delegate case).
+    """
+    if case.reverse_indices:
+        raise CommCareCaseError("You can't hard delete a case that has other dependencies ({})!".format(case._id))
+    forms = get_case_forms(case._id)
+    for form in forms:
+        case_updates = get_case_updates(form)
+        if any([c.id != case._id for c in case_updates]):
+            raise CommCareCaseError("You can't hard delete a case that has shared forms with other cases!")
+
+    docs = [case._doc] + [f._doc for f in forms]
+    case.get_db().bulk_delete(docs)
+
+
+def get_case_forms(case_id):
+    """
+    Get all forms that have submitted against a case (including archived and deleted forms)
+    wrapped by the appropriate form type.
+    """
+    form_ids = get_case_xform_ids(case_id)
+    return [fetch_and_wrap_form(id) for id in form_ids]
 
 
 def _rebuild_action():

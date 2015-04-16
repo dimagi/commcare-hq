@@ -123,7 +123,7 @@ This expression returns `"legal" if doc["age"] > 21 else "underage"`:
         "operator": "gt",
         "expression": {
             "type": "property_name",
-            "property_name": "age"
+            "property_name": "age",
             "datatype": "integer"
         },
         "type": "boolean_expression",
@@ -131,11 +131,11 @@ This expression returns `"legal" if doc["age"] > 21 else "underage"`:
     },
     "expression_if_true": {
         "type": "constant",
-        "property_name": "legal"
+        "constant": "legal"
     },
     "expression_if_false": {
         "type": "constant",
-        "property_name": "underage"
+        "constant": "underage"
     }
 }
 ```
