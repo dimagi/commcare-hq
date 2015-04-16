@@ -258,6 +258,13 @@ class SQLLocation(MPTTModel):
     def couch_location(self):
         return Location.get(self.location_id)
 
+    def is_direct_ancestor_of(self, location):
+        if not (location and location.parent):
+            return False
+        elif location.parent == self:
+            return True
+        return self.is_direct_ancestor_of(location.parent, visited)
+
 
 def _filter_for_archived(locations, include_archive_ancestors):
     """

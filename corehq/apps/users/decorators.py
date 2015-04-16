@@ -46,6 +46,7 @@ require_can_edit_web_users = require_permission('edit_web_users')
 require_can_edit_commcare_users = require_permission('edit_commcare_users')
 
 def require_permission_to_edit_user(view_func):
+    # TODO add in location hierarchy permissions check
     @wraps(view_func)
     def _inner(request, domain, couch_user_id, *args, **kwargs):
         go_ahead = False

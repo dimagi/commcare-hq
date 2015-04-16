@@ -122,6 +122,7 @@ class DefaultProjectUserSettingsView(BaseUserSettingsView):
         return HttpResponseRedirect(self.redirect)
 
 
+# TODO add in location hierarchy permissions check
 class BaseEditUserView(BaseUserSettingsView):
     user_update_form_class = None
 
