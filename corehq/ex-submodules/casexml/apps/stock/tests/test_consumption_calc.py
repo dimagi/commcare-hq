@@ -43,7 +43,7 @@ class ConsumptionCalcTest(SimpleTestCase):
             ], 60), 5.4)
 
     def test_one_period_with_receipts(self):
-        consumption_with_receipts = partial(consumption, exclude_invalid_periods=True)
+        consumption_with_receipts = partial(consumption, params={'exclude_invalid_periods': True})
         self.assertIsNone(
             consumption_with_receipts([
                 _tx('stockonhand', 25, 5),

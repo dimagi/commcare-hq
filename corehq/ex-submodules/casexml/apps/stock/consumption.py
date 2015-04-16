@@ -19,7 +19,7 @@ class ConsumptionConfiguration(object):
 
 
     def __init__(self, min_periods=None, min_window=None, max_window=None,
-                 default_monthly_consumption_function=None):
+                 default_monthly_consumption_function=None, exclude_invalid_periods=False):
         def _default_if_none(value, default):
             return value if value is not None else default
 
@@ -38,6 +38,7 @@ class ConsumptionConfiguration(object):
 
         self.default_monthly_consumption_function = _default_if_none(default_monthly_consumption_function,
                                                              DEFAULT_CONSUMPTION_FUNCTION)
+        self.exclude_invalid_periods = exclude_invalid_periods
 
     @classmethod
     def test_config(cls):
@@ -48,7 +49,8 @@ class ConsumptionConfiguration(object):
             'min_periods': self.min_periods,
             'min_window': self.min_window,
             'max_window': self.max_window,
-            'has_default_monthly_consumption_function': bool(self.default_monthly_consumption_function)
+            'has_default_monthly_consumption_function': bool(self.default_monthly_consumption_function),
+            'exclude_invalid_periods': self.exclude_invalid_periods
         }, indent=2)
 
 def from_ts(dt):
@@ -91,12 +93,7 @@ def compute_daily_consumption(case_id,
         window_start,
         window_end
     )
-    sql_product = SQLProduct.objects.get(product_id=product_id)
-    domain = sql_product.domain
-    return compute_daily_consumption_from_transactions(
-        transactions, window_start, configuration,
-        exclude_invalid_periods=LOGISTICS_CUSTOM_CONSUMPTION.enabled(domain)
-    )
+    return compute_daily_consumption_from_transactions(transactions, window_start, configuration)
 
 
 def compute_consumption_or_default(case_id,
@@ -175,8 +172,7 @@ def get_transactions(case_id, product_id, section_id, window_start, window_end):
         yield _to_consumption_tx(db_tx)
 
 
-def compute_daily_consumption_from_transactions(transactions, window_start, configuration=None,
-                                                exclude_invalid_periods=False):
+def compute_daily_consumption_from_transactions(transactions, window_start, configuration=None):
     configuration = configuration or ConsumptionConfiguration()
 
     class ConsumptionPeriod(object):
@@ -227,7 +223,7 @@ def compute_daily_consumption_from_transactions(transactions, window_start, conf
             if is_checkpoint:
                 if period:
                     period.close_out(tx)
-                    if not exclude_invalid_periods or period.is_valid():
+                    if not configuration.exclude_invalid_periods or period.is_valid():
                         yield period
                 period = ConsumptionPeriod(tx)
             elif is_stockout:
@@ -239,7 +235,7 @@ def compute_daily_consumption_from_transactions(transactions, window_start, conf
                 # different kinds of consumption: normal vs losses, etc.
                 if period:
                     period.add(tx)
-            elif exclude_invalid_periods and base_action_type == 'receipts':
+            elif configuration.exclude_invalid_periods and base_action_type == 'receipts':
                 if period and period.start:
                     period.receipt(tx.value)
 

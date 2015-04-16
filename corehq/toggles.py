@@ -375,9 +375,3 @@ USE_NEW_TIMEZONE_BEHAVIOR = StaticToggle(
      "because it has to be accompanied by a migration.)"),
     [NAMESPACE_DOMAIN],
 )
-
-LOGISTICS_CUSTOM_CONSUMPTION = StaticToggle(
-    'LOGISTICS_CUSTOM_CONSUMPTION',
-    'Enable custom way of compute consumption that ignores invalid soh reports',
-    [NAMESPACE_DOMAIN]
-)

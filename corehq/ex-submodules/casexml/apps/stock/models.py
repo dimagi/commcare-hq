@@ -6,7 +6,6 @@ from casexml.apps.stock import const
 from decimal import Decimal
 from corehq.apps.products.models import SQLProduct
 from south.modelsinspector import add_introspection_rules
-from corehq.toggles import LOGISTICS_CUSTOM_CONSUMPTION
 
 
 class TruncatingCharField(models.CharField):
@@ -106,7 +105,13 @@ def create_reconciliation_transaction(sender, instance, *args, **kwargs):
         if previous_transaction and previous_transaction.stock_on_hand != instance.stock_on_hand:
             amt = instance.stock_on_hand - Decimal(previous_transaction.stock_on_hand)
             domain = instance.report.domain
-            if not domain or not LOGISTICS_CUSTOM_CONSUMPTION.enabled(domain) or amt < 0:
+            exclude_invalid_periods = False
+            if domain:
+                from corehq.apps.commtrack.models import CommtrackConfig
+                config = CommtrackConfig.for_domain(domain)
+                if config:
+                    exclude_invalid_periods = config.consumption_config.exclude_invalid_periods
+            if not domain or not exclude_invalid_periods or amt < 0:
                 StockTransaction.objects.create(
                     report=instance.report,
                     case_id=instance.case_id,

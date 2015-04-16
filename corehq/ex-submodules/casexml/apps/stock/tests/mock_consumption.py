@@ -15,7 +15,7 @@ def ago(days):
 
 
 # note that you must add inferred consumption transactions manually to txdata
-def mock_consumption(txdata, window, params=None, exclude_invalid_periods=False):
+def mock_consumption(txdata, window, params=None):
     default_params = {'min_window': 0, 'min_periods': 0}
     params = params or {}
     default_params.update(params)
@@ -24,7 +24,6 @@ def mock_consumption(txdata, window, params=None, exclude_invalid_periods=False)
         txdata,
         ago(window),
         config,
-        exclude_invalid_periods
     )
 
 
