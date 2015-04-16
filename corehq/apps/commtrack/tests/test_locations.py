@@ -167,7 +167,7 @@ class MultiLocationsTest(CommTrackTest):
 
     def test_can_clear_locations(self):
         user = self.user
-        user.clear_location_delgates()
+        user.clear_location_delegates()
 
         self.assertEqual(len(user.locations), 0)
 
@@ -206,7 +206,7 @@ class MultiLocationsTest(CommTrackTest):
     def test_setting_existing_list_does_not_submit(self):
         user = self.user
 
-        user.clear_location_delgates()
+        user.clear_location_delegates()
 
         loc1 = make_loc('secondloc')
         make_supply_point(self.domain.name, loc1)

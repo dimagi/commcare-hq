@@ -1,13 +1,10 @@
 import itertools
-from functools import partial
 import logging
 import traceback
 from corehq.apps.commtrack.models import SupplyPointCase
 
 from corehq.apps.locations.models import Location
-from corehq.apps.users.models import WebUser
 from custom.logistics.models import MigrationCheckpoint
-from dimagi.utils.dates import force_to_datetime
 from requests.exceptions import ConnectionError
 from datetime import datetime
 from custom.ilsgateway.utils import get_next_meta_url
@@ -85,7 +82,7 @@ def save_stock_data_checkpoint(checkpoint, api, limit, offset, date, external_id
 def add_location(user, location_id):
     if location_id:
         loc = Location.get(location_id)
-        user.clear_location_delgates()
+        user.clear_location_delegates()
         user.add_location_delegate(loc)
 
 
