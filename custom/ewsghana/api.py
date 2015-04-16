@@ -12,7 +12,7 @@ from custom.ewsghana.extensions import ews_product_extension, ews_webuser_extens
 from jsonobject.properties import StringProperty, BooleanProperty, ListProperty, IntegerProperty, ObjectProperty
 from custom.ilsgateway.api import ProductStock, StockTransaction
 from jsonobject import JsonObject
-from custom.logistics.api import LogisticsEndpoint, APISynchronization
+from custom.logistics.api import LogisticsEndpoint, APISynchronization, MigrationException
 from corehq.apps.locations.models import Location as Loc
 from django.core.exceptions import ValidationError
 
@@ -337,6 +337,10 @@ class EWSApi(APISynchronization):
             location.location_type = supply_point.type
             try:
                 sql_location = SQLLocation.objects.get(domain=self.domain, site_code=supply_point.code)
+                if not sql_location.location_type.administrative:
+                    raise MigrationException(
+                        u'Site code {} is already used by {}'.format(supply_point.code, sql_location.name)
+                    )
                 couch_location = sql_location.couch_location
                 couch_location.site_code = None
                 couch_location.save()
