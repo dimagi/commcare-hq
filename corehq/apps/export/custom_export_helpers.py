@@ -204,8 +204,8 @@ class FormCustomExportHelper(CustomExportHelper):
     def export_title(self):
         return _('Export Submissions to Excel')
 
-    def __init__(self, request, domain, export_id=None):
-        super(FormCustomExportHelper, self).__init__(request, domain, export_id)
+    def __init__(self, request, domain, export_id=None, minimal=False):
+        super(FormCustomExportHelper, self).__init__(request, domain, export_id, minimal)
         if not self.custom_export.app_id:
             self.custom_export.app_id = request.GET.get('app_id')
 
