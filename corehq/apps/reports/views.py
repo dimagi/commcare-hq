@@ -929,6 +929,11 @@ def case_details(request, domain, case_id):
 @require_GET
 def case_forms(request, domain, case_id):
     case = get_document_or_404(CommCareCase, domain, case_id)
+    try:
+        start_range = int(request.GET['start_range'])
+        end_range = int(request.GET['end_range'])
+    except (KeyError, ValueError):
+        raise HttpResponseBadRequest()
 
     def form_to_json(form):
         return {
@@ -940,8 +945,10 @@ def case_forms(request, domain, case_id):
             },
             'readable_name': form.form.get('@name') or _('unknown'),
         }
+
+    slice = list(reversed(case.xform_ids))[start_range:end_range]
     return json_response([
-        form_to_json(XFormInstance.get(form_id)) for form_id in reversed(case.xform_ids)
+        form_to_json(XFormInstance.get(form_id)) for form_id in slice
     ])
 
 

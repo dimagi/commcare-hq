@@ -122,9 +122,16 @@ function XFormListViewModel() {
 
     self.refresh_forms = function () {
         self.data_loading(true);
+        var start_num = self.disp_page_index() || 1;
+        var start_range = (start_num - 1) * self.page_size();
+        var end_range = start_range + self.page_size();
         $.ajax({
             "type": "GET",
             "url":  api_url,
+            "data": {
+                'start_range': start_range,
+                'end_range': end_range
+            },
             "success": function(data) {
                 self.xform_history_cb(data);
             },
