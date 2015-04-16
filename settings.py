@@ -889,6 +889,11 @@ SAVED_EXPORT_ACCESS_CUTOFF = 35
 # override for production
 DEFAULT_PROTOCOL = 'http'
 
+####### South Settings #######
+SKIP_SOUTH_TESTS = True
+SOUTH_TESTS_MIGRATE = False
+
+
 try:
     # try to see if there's an environmental variable set for local_settings
     if os.environ.get('CUSTOMSETTINGS', None) == "demo":
@@ -938,10 +943,6 @@ INDICATOR_CONFIG = {
     "mvp-sauri": ['mvp_indicators'],
     "mvp-potou": ['mvp_indicators'],
 }
-
-####### South Settings #######
-SKIP_SOUTH_TESTS = True
-SOUTH_TESTS_MIGRATE = False
 
 ####### Couch Forms & Couch DB Kit Settings #######
 from settingshelper import get_dynamic_db_settings, make_couchdb_tuples, get_extra_couchdbs
