@@ -3323,8 +3323,18 @@ def validate_lang(lang):
 
 
 def validate_property(property):
+    """
+    Validate a case property name
+
+    >>> validate_property('parent/maternal-grandmother_fullName')
+    >>> validate_property('user:full_name')
+    Traceback (most recent call last):
+      ...
+    ValueError: Invalid Property
+
+    """
     # this regex is also copied in propertyList.ejs
-    if not re.match(r'^[a-zA-Z][\w_-]*([/:][a-zA-Z][\w_-]*)*$', property):
+    if not re.match(r'^[a-zA-Z][\w_-]*(/[a-zA-Z][\w_-]*)*$', property):
         raise ValueError("Invalid Property")
 
 
