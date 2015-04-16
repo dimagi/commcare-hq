@@ -2,8 +2,6 @@ import collections
 import json
 import math
 from decimal import Decimal
-from corehq.apps.products.models import SQLProduct
-from corehq.toggles import LOGISTICS_CUSTOM_CONSUMPTION
 from dimagi.utils import parsing as dateparse
 from datetime import datetime, timedelta
 from casexml.apps.stock import const
@@ -16,7 +14,6 @@ class ConsumptionConfiguration(object):
     DEFAULT_MIN_PERIODS = 2
     DEFAULT_MIN_WINDOW = 10
     DEFAULT_MAX_WINDOW = 60
-
 
     def __init__(self, min_periods=None, min_window=None, max_window=None,
                  default_monthly_consumption_function=None, exclude_invalid_periods=False):
@@ -52,6 +49,7 @@ class ConsumptionConfiguration(object):
             'has_default_monthly_consumption_function': bool(self.default_monthly_consumption_function),
             'exclude_invalid_periods': self.exclude_invalid_periods
         }, indent=2)
+
 
 def from_ts(dt):
     # damn this is ugly

@@ -8,7 +8,6 @@ from casexml.apps.stock import const
 from corehq.apps.commtrack.models import CommtrackConfig, ConsumptionConfig
 from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import SQLProduct
-from corehq.toggles import LOGISTICS_CUSTOM_CONSUMPTION, NAMESPACE_DOMAIN
 
 
 class LogisticsConsumptionTest(TestCase):
@@ -97,4 +96,3 @@ class LogisticsConsumptionTest(TestCase):
         self.assertEqual(StockTransaction.objects.all().count(), 2)
         self.assertEqual(StockTransaction.objects.filter(type='receipts').count(), 0)
         commtrack_config.delete()
-
