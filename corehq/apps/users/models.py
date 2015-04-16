@@ -1376,7 +1376,7 @@ class LocationUserMixin(DocumentSchema):
         self.user_data.pop('commtrack-supply-point', None)
         self.user_data.pop('commcare_primary_case_sharing_id', None)
         self.location_id = None
-        self.clear_locations()
+        self.clear_location_delegates()
         self.save()
 
     @property
@@ -1491,7 +1491,7 @@ class LocationUserMixin(DocumentSchema):
 
                 self.submit_location_block(caseblock)
 
-    def clear_location_delgates(self):
+    def clear_location_delegates(self):
         """
         Wipe all case delagate access.
         """
@@ -1517,7 +1517,7 @@ class LocationUserMixin(DocumentSchema):
                 # as we can't compare the location objects themself
                 return
 
-        self.clear_location_delgates()
+        self.clear_location_delegates()
 
         if not locations:
             return
