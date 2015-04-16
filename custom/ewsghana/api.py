@@ -4,7 +4,7 @@ from corehq.apps.products.models import SQLProduct
 from custom.logistics.commtrack import add_location
 from dimagi.utils.dates import force_to_datetime
 from corehq import Domain
-from corehq.apps.commtrack.models import SupplyPointCase
+from corehq.apps.commtrack.models import SupplyPointCase, CommtrackConfig
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.users.models import WebUser, UserRole, Permissions
 from custom.api.utils import apply_updates
@@ -197,6 +197,10 @@ class EWSApi(APISynchronization):
         self._make_loc_type(name="Polyclinic", parent_type=district)
         self._make_loc_type(name="facility", parent_type=district)
 
+        config = CommtrackConfig.for_domain(self.domain)
+        config.consumption_config.exclude_invalid_periods = True
+        config.save()
+        
     def _create_or_edit_facility_manager_role(self):
         facility_manager_role = UserRole.by_domain_and_name(self.domain, 'Facility manager')
         reports_list = [

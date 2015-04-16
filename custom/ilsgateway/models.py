@@ -6,7 +6,6 @@ from django.db import models
 from casexml.apps.stock.models import DocDomainMapping
 from corehq.apps.products.models import Product
 from corehq.apps.locations.models import SQLLocation
-from corehq.toggles import LOGISTICS_CUSTOM_CONSUMPTION, NAMESPACE_DOMAIN
 from custom.utils.utils import add_to_module_map
 from dimagi.utils.dates import force_to_datetime
 
@@ -52,8 +51,6 @@ class ILSGatewayConfig(Document):
 
     def save(self, **params):
         super(ILSGatewayConfig, self).save(**params)
-
-        LOGISTICS_CUSTOM_CONSUMPTION.set(self.domain, True, NAMESPACE_DOMAIN)
         try:
             DocDomainMapping.objects.get(doc_id=self._id,
                                          domain_name=self.domain,
