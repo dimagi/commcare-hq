@@ -924,6 +924,27 @@ def case_details(request, domain, case_id):
     })
 
 
+@require_case_view_permission
+@login_and_domain_required
+@require_GET
+def case_forms(request, domain, case_id):
+    case = get_document_or_404(CommCareCase, domain, case_id)
+
+    def form_to_json(form):
+        return {
+            'id': form._id,
+            'received_on': json_format_datetime(form.received_on),
+            'user': {
+                "id": form.metadata.userID,
+                "username": form.metadata.username,
+            },
+            'readable_name': form.form.get('@name') or _('unknown'),
+        }
+    return json_response([
+        form_to_json(XFormInstance.get(form_id)) for form_id in reversed(case.xform_ids)
+    ])
+
+
 @login_and_domain_required
 @require_GET
 def case_attachments(request, domain, case_id):

@@ -51,30 +51,11 @@ function format_user(username) {
 
 function XFormDataModel(data) {
     var self = this;
-    self.id = ko.observable(data['_id']);
-    self.case_id = ko.observable(data.case_id); //helper populated
-    self.xmlns = ko.observable(data.xmlns);
-    self.domain = ko.observable(data.domain);
-    self.app_id = ko.observable(data.app_id);
+    self.id = ko.observable(data.id);
     self.received_on = ko.observable(format_date(data.received_on));
-
-    if (typeof data.form.meta !== 'undefined') {
-        self.timeStart = ko.observable(format_date(data.form.meta.timeStart));
-        self.timeEnd = ko.observable(format_date(data.form.meta.timeEnd));
-        self.userID = ko.observable(data.form.meta.userID);
-        self.username = ko.observable(format_user(data.form.meta.username));
-        self.deviceID = ko.observable(data.form.meta.deviceID);
-    } else {
-        self.timeStart = ko.observable(null);
-        self.timeEnd = ko.observable(null);
-        self.userID = ko.observable(null);
-        self.username = ko.observable(format_user(null));
-        self.deviceID = ko.observable(null);
-    }
-
-    self.form_type = ko.observable(data.form['#type']);
-    self.form_data = ko.observable(data.form);
-    self.readable_name = ko.observable(data.es_readable_name);
+    self.userID = ko.observable(data.user.id);
+    self.username = ko.observable(format_user(data.user.username));
+    self.readable_name = ko.observable(data.readable_name);
 };
 
 function FormTypeFacetModel(data) {
@@ -180,20 +161,31 @@ function XFormListViewModel() {
     };
 
     self.xform_history_cb = function(data) {
-        //callback for rendering the xforms list
-        //todo until indexing is fixed for nested case blocks
-        //self.total_rows(data['hits']['total']);
         self.total_rows(CASE_DETAILS.xform_ids.length);
         self.calc_page_count();
-        var mapped_xforms = $.map(data['hits']['hits'], function (item) {
-            return new XFormDataModel(item['_source']);
+        var mapped_xforms = $.map(data, function (item) {
+            return new XFormDataModel(item);
         });
         self.xforms(mapped_xforms);
         self.selected_xform_idx(-1);
     };
 
     self.refresh_forms = function () {
-        self.run_es_query(self.xform_id_query(), self.xform_history_cb);
+        self.data_loading(true);
+        $.ajax({
+            "type": "GET",
+            "url":  api_url,
+            "success": function(data) {
+                self.xform_history_cb(data);
+            },
+            "error": function(data) {
+                console.log("Error");
+                console.log(data);
+            },
+            "complete": function(data) {
+                self.data_loading(false);
+            }
+        });
     };
 
     self.calc_page_count = function() {
