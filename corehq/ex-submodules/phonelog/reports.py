@@ -50,119 +50,6 @@ class PhonelogReport(GetParamsMixin, DeploymentsReport, DatespanMixin,
     total_records = 0
 
 
-class FormErrorReport(PhonelogReport):
-    name = ugettext_noop("Errors & Warnings Summary")
-    slug = "form_errors"
-    fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
-              'corehq.apps.reports.filters.select.GroupFilter',
-              'corehq.apps.reports.filters.dates.DatespanFilter']
-
-    special_notice = DATA_NOTICE
-    is_cacheable = False
-    default_sort = {'users': 'asc'}
-
-    @property
-    def headers(self):
-        return DataTablesHeader(
-            DataTablesColumn("Username", span=4, prop_name='users'),
-            DataTablesColumn("Number of Warnings", span=2,
-                             sort_type=DTSortType.NUMERIC,
-                             prop_name='warnings'),
-            DataTablesColumn("Number of Errors", span=2,
-                             sort_type=DTSortType.NUMERIC, prop_name='errors')
-        )
-
-    @property
-    @memoized
-    def all_logs(self):
-        return DeviceReportEntry.objects.filter(
-            domain__exact=self.domain,
-            date__range=[self.datespan.startdate_param_utc,
-                         self.datespan.enddate_param_utc],
-        )
-
-    @property
-    @memoized
-    def error_logs(self):
-        return self.all_logs.filter(type__in=TAGS["error"])
-
-    @property
-    @memoized
-    def warning_logs(self):
-        return self.all_logs.filter(type__in=TAGS["warning"])
-
-    @property
-    def users_to_show(self):
-        by, direction = self.get_sorting_block()[0].items()[0]
-        paged = slice(self.pagination.start,
-                      self.pagination.start + self.pagination.count)
-        if by == 'users':
-            self.total_records = len(self.users)
-            return sorted(self.users, reverse=direction == 'desc')[paged]
-        logs = {"errors": self.error_logs, "warnings": self.warning_logs}[by]
-        self.total_records = logs.values('username').annotate(
-            usernames=Count('username')).count()
-
-        if direction == 'desc':
-            username_data = logs.values('username').annotate(
-                usernames=Count('username')).order_by('usernames')[paged]
-        else:
-            username_data = logs.values('username').annotate(
-                usernames=Count('username')).order_by('-usernames')[paged]
-        usernames = [uc["username"] for uc in username_data]
-
-        def make_user(username):
-            user = CommCareUser.get_by_username(
-                '%s@%s.commcarehq.org' % (username, self.domain))
-            if user:
-                return _report_user_dict(user)
-            return SimplifiedUserInfo(
-                raw_username=username,
-                username_in_report=username,
-                user_id=None,
-                is_active=None,
-            )
-
-        return [make_user(u) for u in usernames]
-
-    @property
-    def rows(self):
-        rows = []
-        query_string = self.request.META['QUERY_STRING']
-        child_report_url = DeviceLogDetailsReport.get_url(domain=self.domain)
-        for user in self.users_to_show:
-            error_count = self.error_logs.filter(
-                username__exact=user.raw_username).count()
-            warning_count = self.warning_logs.filter(
-                username__exact=user.raw_username).count()
-
-            formatted_warning_count = (
-                '<span class="label label-warning">%d</span>' % warning_count
-                if warning_count > 0
-                else '<span class="label">%d</span>' % warning_count
-            )
-            formatted_error_count = (
-                '<span class="label label-important">%d</span>' % error_count
-                if error_count > 0
-                else '<span class="label">%d</span>' % error_count
-            )
-
-            username_formatted = (
-                '<a href="%(url)s?%(query_string)s%(error_slug)s=True'
-                '&%(username_slug)s=%(raw_username)s">%(username)s</a>'
-            ) % {
-                "url": child_report_url,
-                "error_slug": DeviceLogTagFilter.errors_only_slug,
-                "username_slug": DeviceLogUsersFilter.slug,
-                "username": user.username_in_report,
-                "raw_username": user.raw_username,
-                "query_string": "%s&" % query_string if query_string else ""
-            }
-            rows.append([username_formatted, formatted_warning_count,
-                         formatted_error_count])
-        return rows
-
-
 class DeviceLogDetailsReport(PhonelogReport):
     name = ugettext_noop("Device Log Details")
     slug = "log_details"
@@ -250,12 +137,7 @@ class DeviceLogDetailsReport(PhonelogReport):
     @property
     def breadcrumbs(self):
         breadcrumbs = None
-        if self.errors_only:
-            breadcrumbs = dict(
-                title=FormErrorReport.name,
-                link=FormErrorReport.get_url(domain=self.domain)
-            )
-        elif self.goto_key:
+        if self.goto_key:
             breadcrumbs = dict(
                 title=self.name,
                 link=self.get_url(domain=self.domain)
