@@ -45,10 +45,10 @@ class ApplicationDataSourceUIHelper(object):
             source_choices.append(("form", _("Form")))
 
         self.application_field = forms.ChoiceField(label=_('Application'), widget=forms.Select())
-        self.source_type_field = forms.ChoiceField(label=_('Source Type'),
+        self.source_type_field = forms.ChoiceField(label=_('Type of Data'),
                                                    choices=source_choices,
                                                    widget=forms.Select(choices=source_choices))
-        self.source_field = forms.ChoiceField(label=_('Source'), widget=forms.Select())
+        self.source_field = forms.ChoiceField(label=_('Data Source'), widget=forms.Select())
 
     def bootstrap(self, domain):
         self.all_sources = get_app_sources(domain)
@@ -84,9 +84,9 @@ class ApplicationDataSourceUIHelper(object):
         '''}
 
     def get_fields(self):
-        fields = SortedDict()
-        fields['application'] = self.application_field
+        fields = collections.OrderedDict()
         fields['source_type'] = self.source_type_field
+        fields['application'] = self.application_field
         fields['source'] = self.source_field
         return fields
 
