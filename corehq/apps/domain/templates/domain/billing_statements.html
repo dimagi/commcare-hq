@@ -22,6 +22,13 @@
             "payment-form"
         );
 
+        // A sign that the data model isn't exactly right - credit cards are shared data.
+        // Consider refactoring at some point.
+        var handlers = [bulkPaymentHandler, paymentHandler];
+        for (var i = 0; i < handlers.length; i++) {
+            handlers[i].handlers = handlers;
+        }
+
         {% if stripe_cards %}
             var stripe_cards = {{ stripe_cards|JSON }};
             bulkPaymentHandler.loadCards(stripe_cards);
