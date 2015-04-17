@@ -35,6 +35,7 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^saved_reports', 'old_saved_reports'),
 
     url(r'^case_data/(?P<case_id>[\w\-]+)/$', 'case_details', name="case_details"),
+    url(r'^case_data/(?P<case_id>[\w\-]+)/forms/$', 'case_forms', name="single_case_forms"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/attachments/$', 'case_attachments', name="single_case_attachments"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/view/xml/$', 'case_xml', name="single_case_xml"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/rebuild/$', 'rebuild_case_view', name="rebuild_case"),
