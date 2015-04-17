@@ -34,9 +34,6 @@ class CommTrackSettingsForm(forms.Form):
         required=False
     )
 
-    sync_location_fixtures = forms.BooleanField(
-        label=ugettext_lazy("Sync location fixtures"), required=False)
-
     sync_consumption_fixtures = forms.BooleanField(
         label=ugettext_lazy("Sync consumption fixtures"), required=False)
 
@@ -87,7 +84,6 @@ class CommTrackSettingsForm(forms.Form):
             ),
             Fieldset(
                 _('Phone Settings'),
-                'sync_location_fixtures',
                 'sync_consumption_fixtures',
             ),
             ButtonHolder(

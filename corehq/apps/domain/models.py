@@ -1040,6 +1040,14 @@ class Domain(Document, SnapshotMixin):
         return LocationType.objects.filter(domain=self.name).all()
 
     @property
+    @memoized
+    def uses_locations(self):
+        if self.commtrack_enabled:
+            return True
+        from corehq.apps.locations.models import LocationType
+        return LocationType.objects.filter(domain=self.name).exists()
+
+    @property
     def supports_multiple_locations_per_user(self):
         """
         This method is a wrapper around the toggle that
