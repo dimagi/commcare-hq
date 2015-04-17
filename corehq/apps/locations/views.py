@@ -250,11 +250,26 @@ class NewLocationView(BaseLocationView):
 
     @property
     def parent_pages(self):
-        return [{
+        selected = self.location._id or self.location.parent_id
+        breadcrumbs = [{
             'title': LocationsListView.page_title,
-            'url': reverse(LocationsListView.urlname, args=[self.domain]),
+            'url': reverse(
+                LocationsListView.urlname,
+                args=[self.domain],
+                params={"selected": selected} if selected else None,
+            )
         }]
-
+        if self.location.parent:
+            sql_parent = self.location.parent.sql_location
+            for loc in sql_parent.get_ancestors(include_self=True):
+                breadcrumbs.append({
+                    'title': loc.name,
+                    'url': reverse(
+                        EditLocationView.urlname,
+                        args=[self.domain, loc.location_id],
+                    )
+                })
+        return breadcrumbs
 
     @property
     @memoized
@@ -347,26 +362,6 @@ def unarchive_location(request, domain, loc_id):
 class EditLocationView(NewLocationView):
     urlname = 'edit_location'
     page_title = ugettext_noop("Edit Location")
-
-    @property
-    def parent_pages(self):
-        breadcrumbs = [{
-            'title': LocationsListView.page_title,
-            'url': reverse(
-                LocationsListView.urlname,
-                args=[self.domain],
-                params={"selected": self.location._id}
-            )
-        }]
-        if self.location.parent_id:
-            breadcrumbs.append({
-                'title': self.location.parent.name,
-                'url': reverse(
-                    EditLocationView.urlname,
-                    args=[self.domain, self.location.parent_id],
-                )
-            })
-        return breadcrumbs
 
     @property
     def location_id(self):
