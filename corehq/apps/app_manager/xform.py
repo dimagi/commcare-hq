@@ -1,6 +1,7 @@
 from collections import defaultdict, OrderedDict
 from functools import wraps
 import logging
+from django.utils.translation import ugettext_lazy as _
 from casexml.apps.case.xml import V2_NAMESPACE
 from corehq.apps.app_manager.const import APP_V1, SCHEDULE_PHASE, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE, \
     CASE_ID, USERCASE_ID, USERCASE_PREFIX
@@ -20,7 +21,7 @@ def parse_xml(string):
     try:
         return ET.fromstring(string, parser=ET.XMLParser(encoding="utf-8", remove_comments=True))
     except ET.ParseError, e:
-        raise XFormException("Error parsing XML" + (": %s" % str(e)))
+        raise XFormException(_("Error parsing XML: %s") % str(e))
 
 
 namespaces = dict(
@@ -197,7 +198,7 @@ class ItextNodeGroup(object):
 
     def add_node(self, node):
         if self.nodes.get(node.lang):
-            raise XFormException("Group already has node for lang: {0}".format(node.lang))
+            raise XFormException(_("Group already has node for lang: {0}").format(node.lang))
         else:
             self.nodes[node.lang] = node
 
@@ -670,9 +671,9 @@ class XForm(WrappedNode):
         duplicate_node = self.translations().get(new_code)
 
         if not trans_node or not trans_node.exists():
-            raise XFormException("There's no language called '%s'" % old_code)
+            raise XFormException(_("There's no language called '%s'") % old_code)
         if duplicate_node and duplicate_node.exists():
-            raise XFormException("There's already a language called '%s'" % new_code)
+            raise XFormException(_("There's already a language called '%s'") % new_code)
         trans_node.attrib['lang'] = new_code
 
         self._reset_translations_cache()
@@ -717,7 +718,7 @@ class XForm(WrappedNode):
         if value_node:
             text = ItextValue.from_node(value_node)
         else:
-            raise XFormException('<translation lang="%s"><text id="%s"> node has no <value>' % (
+            raise XFormException(_('<translation lang="%s"><text id="%s"> node has no <value>') % (
                 lang, id
             ))
 
@@ -824,7 +825,7 @@ class XForm(WrappedNode):
                     try:
                         value = item.findtext('{f}value').strip()
                     except AttributeError:
-                        raise XFormException("<item> (%r) has no <value>" % translation)
+                        raise XFormException(_("<item> (%r) has no <value>") % translation)
                     option = {
                         'label': translation,
                         'value': value
@@ -945,7 +946,7 @@ class XForm(WrappedNode):
         elif node.tag_name == "repeat":
             path = node.attrib['nodeset']
         else:
-            raise XFormException("Node <%s> has no 'ref' or 'bind'" % node.tag_name)
+            raise XFormException(_("Node <%s> has no 'ref' or 'bind'") % node.tag_name)
         return path
     
     def get_leaf_data_nodes(self):
@@ -1111,15 +1112,10 @@ class XForm(WrappedNode):
             # casexml has to be valid, 'cuz *I* made it
             casexml = parse_xml(casexml)
             case_parent.append(casexml)
-            # if DEBUG: tree = ET.fromstring(ET.tostring(tree))
             for bind in bind_parent.findall('{f}bind'):
                 if bind.attrib['nodeset'].startswith('case/'):
                     bind_parent.remove(bind.xml)
             for bind in binds:
-#                if DEBUG:
-#                    xpath = ".//{x}" + bind.attrib['nodeset'].replace("/", "/{x}")
-#                    if tree.find(fmt(xpath)) is None:
-#                        raise Exception("Invalid XPath Expression %s" % xpath)
                 conflicting = bind_parent.find('{f}bind[@nodeset="%s"]' % bind.attrib['nodeset'])
                 if conflicting.exists():
                     for a in bind.attrib:
@@ -1128,11 +1124,11 @@ class XForm(WrappedNode):
                     bind_parent.append(bind)
 
         if not case_parent.exists():
-            raise XFormException("Couldn't get the case XML from one of your forms. "
+            raise XFormException(_("Couldn't get the case XML from one of your forms. "
                              "A common reason for this is if you don't have the "
                              "xforms namespace defined in your form. Please verify "
                              'that the xmlns="http://www.w3.org/2002/xforms" '
-                             "attribute exists in your form.")
+                             "attribute exists in your form."))
 
         # Test all of the possibilities so that we don't end up with two "meta" blocks
         for meta in self.already_has_meta():
@@ -1370,18 +1366,18 @@ class XForm(WrappedNode):
 
         if case_block is not None:
             if case.exists():
-                raise XFormException("You cannot use the Case Management UI if you already have a case block in your form.")
+                raise XFormException(_("You cannot use the Case Management UI if you already have a case block in your form."))
             else:
                 case_parent.append(case_block.elem)
                 if delegation_case_block is not None:
                     case_parent.append(delegation_case_block.elem)
 
         if not case_parent.exists():
-            raise XFormException("Couldn't get the case XML from one of your forms. "
+            raise XFormException(_("Couldn't get the case XML from one of your forms. "
                              "A common reason for this is if you don't have the "
                              "xforms namespace defined in your form. Please verify "
                              'that the xmlns="http://www.w3.org/2002/xforms" '
-                             "attribute exists in your form.")
+                             "attribute exists in your form."))
 
     def create_casexml_2_advanced(self, form):
         from corehq.apps.app_manager.util import split_path
