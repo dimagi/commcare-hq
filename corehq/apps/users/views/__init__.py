@@ -187,6 +187,7 @@ class BaseEditUserView(BaseUserSettingsView):
     def commtrack_form(self):
         if self.request.method == "POST" and self.request.POST['form_type'] == "commtrack":
             return CommtrackUserForm(self.request.POST, domain=self.domain)
+
         user_domain_membership = self.editable_user.get_domain_membership(self.domain)
         linked_loc = user_domain_membership.location_id
         linked_prog = user_domain_membership.program_id

@@ -120,6 +120,7 @@ def render_case(case, options):
         "ledgers": ledgers,
         "timezone_offset": tz_offset_ms,
         "show_transaction_export": show_transaction_export,
+        "xform_api_url": reverse('single_case_forms', args=[case.domain, case._id]),
     })
 
 

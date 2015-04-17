@@ -240,6 +240,7 @@ class BillingAccountAdmin(models.Model):
     domain = models.CharField(
         max_length=256, null=True, blank=True, db_index=True
     )
+    last_modified = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return "Billing Admin %(web_user)s for domain %(domain)s" % {
@@ -297,6 +298,7 @@ class BillingAccount(models.Model):
         default=EntryPoint.NOT_SET,
         choices=EntryPoint.CHOICES,
     )
+    last_modified = models.DateTimeField(auto_now=True)
 
     @property
     def balance(self):
@@ -404,6 +406,7 @@ class BillingContactInfo(models.Model):
     country = models.CharField(
         max_length=50, null=False, verbose_name=_("Country")
     )
+    last_modified = models.DateTimeField(auto_now=True)
 
     @property
     def full_name(self):
@@ -421,6 +424,7 @@ class SoftwareProduct(models.Model):
     """
     name = models.CharField(max_length=40, unique=True)
     product_type = models.CharField(max_length=25, db_index=True, choices=SoftwareProductType.CHOICES)
+    last_modified = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return "Software Product '%s' of type '%s'" % (self.name, self.product_type)
@@ -441,6 +445,7 @@ class SoftwareProductRate(models.Model):
     monthly_fee = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2)
     date_created = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
+    last_modified = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return '%s @ $%s /month' % (self.product.name, self.monthly_fee)
@@ -469,6 +474,7 @@ class Feature(models.Model):
     """
     name = models.CharField(max_length=40, unique=True)
     feature_type = models.CharField(max_length=10, db_index=True, choices=FeatureType.CHOICES)
+    last_modified = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return "Feature '%s' of type '%s'" % (self.name, self.feature_type)
@@ -495,6 +501,7 @@ class FeatureRate(models.Model):
                                          verbose_name="Fee Per Excess of Limit")
     date_created = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
+    last_modified = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return '%s @ $%s /month, $%s /excess, limit: %d' % (
@@ -545,6 +552,7 @@ class SoftwarePlan(models.Model):
         default=SoftwarePlanVisibility.INTERNAL,
         choices=SoftwarePlanVisibility.CHOICES,
     )
+    last_modified = models.DateTimeField(auto_now=True)
 
     def get_version(self):
         try:
@@ -567,6 +575,7 @@ class DefaultProductPlan(models.Model):
     )
     plan = models.ForeignKey(SoftwarePlan, on_delete=models.PROTECT)
     is_trial = models.BooleanField(default=False)
+    last_modified = models.DateTimeField(auto_now=True)
 
     @classmethod
     def get_default_plan_by_domain(cls, domain, edition=None, is_trial=False):
@@ -607,6 +616,7 @@ class SoftwarePlanVersion(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
     role = models.ForeignKey(Role)
+    last_modified = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return "%(plan_name)s (v%(version_num)d)" % {
@@ -712,6 +722,7 @@ class Subscriber(models.Model):
     """
     domain = models.CharField(max_length=256, null=True, db_index=True)
     organization = models.CharField(max_length=256, null=True, db_index=True)
+    last_modified = models.DateTimeField(auto_now=True)
 
     objects = SubscriberManager()
 
@@ -812,6 +823,7 @@ class Subscription(models.Model):
         choices=ProBonoStatus.CHOICES,
         default=SubscriptionType.NOT_SET,
     )
+    last_modified = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return ("Subscription to %(plan_version)s for %(subscriber)s. "
@@ -1365,6 +1377,7 @@ class Invoice(models.Model):
     # If set to True invoice will not appear in invoice report. There is no UI to
     # control this filter
     is_hidden_to_ops = models.BooleanField(default=False)
+    last_modified = models.DateTimeField(auto_now=True)
 
     @property
     def subtotal(self):
@@ -1477,6 +1490,7 @@ class SubscriptionAdjustment(models.Model):
     new_date_end = models.DateField(blank=True, null=True)
     new_date_delay_invoicing = models.DateField(blank=True, null=True)
     new_salesforce_contract_id = models.CharField(blank=True, null=True, max_length=80)
+    last_modified = models.DateTimeField(auto_now=True)
 
     @classmethod
     def record_adjustment(cls, subscription, **kwargs):
@@ -1501,6 +1515,7 @@ class BillingRecord(models.Model):
     emailed_to = models.CharField(max_length=254, db_index=True)
     skipped_email = models.BooleanField(default=False)
     pdf_data_id = models.CharField(max_length=48)
+    last_modified = models.DateTimeField(auto_now=True)
 
     _pdf = None
     @property
@@ -1702,6 +1717,7 @@ class LineItem(models.Model):
     unit_description = models.TextField(blank=True, null=True)
     unit_cost = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
     quantity = models.IntegerField(default=1)
+    last_modified = models.DateTimeField(auto_now=True)
 
     objects = LineItemManager()
 
@@ -1746,6 +1762,7 @@ class CreditLine(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
     balance = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
     is_active = models.BooleanField(default=True)
+    last_modified = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         credit_level = ("Account-Level" if self.subscription is None
@@ -1926,6 +1943,7 @@ class PaymentMethod(models.Model):
                                    db_index=True)
     customer_id = models.CharField(max_length=255, null=True, blank=True)
     date_created = models.DateTimeField(auto_now_add=True)
+    last_modified = models.DateTimeField(auto_now=True)
 
 
 class PaymentRecord(models.Model):
@@ -1937,6 +1955,7 @@ class PaymentRecord(models.Model):
     transaction_id = models.CharField(max_length=255)
     amount = models.DecimalField(default=Decimal('0.0000'),
                                  max_digits=10, decimal_places=4)
+    last_modified = models.DateTimeField(auto_now=True)
 
     @property
     def public_transaction_id(self):
@@ -1970,6 +1989,7 @@ class CreditAdjustment(models.Model):
                                        null=True, related_name='creditadjustment_related')
     date_created = models.DateTimeField(auto_now_add=True)
     web_user = models.CharField(max_length=80, null=True)
+    last_modified = models.DateTimeField(auto_now=True)
 
     def clean(self):
         """

@@ -221,6 +221,12 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             yield cls.wrap(result)
 
 
+class ReportMeta(DocumentSchema):
+    # `True` if this report was initially constructed by the report builder.
+    created_by_builder = BooleanProperty(default=False)
+    builder_report_type = StringProperty(choices=['chart', 'list', 'table', 'worker'])
+
+
 class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     """
     A report configuration. These map 1:1 with reports that show up in the UI.
@@ -234,6 +240,7 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     filters = ListProperty()
     columns = ListProperty()
     configured_charts = ListProperty()
+    report_meta = SchemaProperty(ReportMeta)
 
     def __unicode__(self):
         return u'{} - {}'.format(self.domain, self.title)

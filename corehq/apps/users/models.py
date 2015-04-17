@@ -777,10 +777,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     device_ids = ListProperty()
     phone_numbers = ListProperty()
     created_on = DateTimeProperty(default=datetime(year=1900, month=1, day=1))
-#    For now, 'status' is things like:
-#        ('auto_created',     'Automatically created from form submission.'),
-#        ('phone_registered', 'Registered from phone'),
-#        ('site_edited',     'Manually added or edited from the HQ website.'),
+    #    For now, 'status' is things like:
+    #        ('auto_created',     'Automatically created from form submission.'),
+    #        ('phone_registered', 'Registered from phone'),
+    #        ('site_edited',     'Manually added or edited from the HQ website.'),
     status = StringProperty()
     language = StringProperty()
     email_opt_out = BooleanProperty(default=False)
@@ -1320,241 +1320,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             self.__class__.__name__, item))
 
 
-class LocationUserMixin(DocumentSchema):
-    @property
-    def location(self):
-        from corehq.apps.locations.models import Location
-        if self.location_id:
-            return Location.get(self.location_id)
-        else:
-            return None
-
-    def set_location(self, location):
-        """
-        Set the location, and all important user data, for
-        the user.
-        """
-        from corehq.apps.commtrack.models import SupplyPointCase
-        from corehq.apps.locations.models import LOCATION_SHARING_PREFIX
-
-        self.user_data['commcare_location_id'] = location._id
-
-        if not location.location_type_object.administrative:
-            # just need to trigger a get or create to make sure
-            # this exists, otherwise things blow up
-            SupplyPointCase.get_or_create_by_location(location)
-
-            self.user_data.update({
-                'commtrack-supply-point': location.sql_location.supply_point_id
-            })
-
-        if self.project.supports_multiple_locations_per_user:
-            # TODO is it possible to only remove this
-            # access if it was not previously granted by
-            # the bulk upload?
-
-            # we only add the new one because we don't know
-            # if we can actually remove the old..
-            self.add_location_delegate(location)
-        else:
-            self.create_location_delegates([location])
-
-        self.user_data.update({
-            'commcare_primary_case_sharing_id':
-            LOCATION_SHARING_PREFIX + location._id
-        })
-
-        self.location_id = location._id
-
-        self.save()
-
-    def unset_location(self):
-        """
-        Unset the location and remove all associated user data and cases
-        """
-        self.user_data.pop('commcare_location_id', None)
-        self.user_data.pop('commtrack-supply-point', None)
-        self.user_data.pop('commcare_primary_case_sharing_id', None)
-        self.location_id = None
-        self.clear_locations()
-        self.save()
-
-    @property
-    def _locations(self):
-        """
-        Hidden access to a users delgate location list.
-
-        Should be removed (and this code moved back under
-        self.location) sometime after migration and things
-        are settled.
-        """
-        from corehq.apps.locations.models import Location
-        from corehq.apps.commtrack.models import SupplyPointCase
-
-        def _get_linked_supply_point_ids():
-            mapping = self.get_location_map_case()
-            if mapping:
-                return [index.referenced_id for index in mapping.indices]
-            return []
-
-        def _get_linked_supply_points():
-            for doc in iter_docs(
-                CommCareCase.get_db(),
-                _get_linked_supply_point_ids()
-            ):
-                yield SupplyPointCase.wrap(doc)
-
-        def _gen():
-            location_ids = [sp.location_id for sp in _get_linked_supply_points()]
-            for doc in iter_docs(Location.get_db(), location_ids):
-                yield Location.wrap(doc)
-
-        return list(_gen())
-
-    @property
-    def locations(self):
-        """
-        This method is only used for domains with the multiple
-        locations per user flag set. It will error if you try
-        to call it on a normal domain.
-        """
-        if not self.project.supports_multiple_locations_per_user:
-            raise InvalidLocationConfig(
-                "Attempting to access multiple locations for a user in a domain that does not support this."
-            )
-
-        return self._locations
-
-    def supply_point_index_mapping(self, supply_point, clear=False):
-        from corehq.apps.commtrack.exceptions import (
-            LinkedSupplyPointNotFoundError
-        )
-
-        if supply_point:
-            return {
-                'supply_point-' + supply_point._id:
-                (
-                    supply_point.type,
-                    supply_point._id if not clear else ''
-                )
-            }
-        else:
-            raise LinkedSupplyPointNotFoundError(
-                "There was no linked supply point for the location."
-            )
-
-    def add_location_delegate(self, location):
-        """
-        Add a single location to the delgate case access.
-
-        This will dynamically create a supply point if the supply point isn't found.
-        """
-        # todo: the dynamic supply point creation is bad and should be removed.
-        from corehq.apps.commtrack.models import SupplyPointCase
-
-        sp = SupplyPointCase.get_or_create_by_location(location)
-
-        if not location.location_type_object.administrative:
-            from corehq.apps.commtrack.util import submit_mapping_case_block
-            submit_mapping_case_block(self, self.supply_point_index_mapping(sp))
-
-    def submit_location_block(self, caseblock):
-        from corehq.apps.hqcase.utils import submit_case_blocks
-
-        submit_case_blocks(
-            ElementTree.tostring(
-                caseblock.as_xml(format_datetime=json_format_datetime)
-            ),
-            self.domain,
-            self.username,
-            self._id
-        )
-
-    def remove_location_delegate(self, location):
-        """
-        Remove a single location from the case delagate access.
-        """
-        from corehq.apps.commtrack.models import SupplyPointCase
-
-        sp = SupplyPointCase.get_by_location(location)
-
-        mapping = self.get_location_map_case()
-
-        if not location.location_type_object.administrative:
-            if mapping and location._id in [loc._id for loc in self.locations]:
-                caseblock = CaseBlock(
-                    create=False,
-                    case_id=mapping._id,
-                    version=V2,
-                    index=self.supply_point_index_mapping(sp, True)
-                )
-
-                self.submit_location_block(caseblock)
-
-    def clear_location_delgates(self):
-        """
-        Wipe all case delagate access.
-        """
-        from casexml.apps.case.cleanup import safe_hard_delete
-        mapping = self.get_location_map_case()
-        if mapping:
-            safe_hard_delete(mapping)
-
-    def create_location_delegates(self, locations):
-        """
-        Submit the case blocks creating the delgate case access
-        for the location(s).
-        """
-        from corehq.apps.commtrack.models import SupplyPointCase
-
-        if self.project.supports_multiple_locations_per_user:
-            new_locs_set = set([loc._id for loc in locations])
-            old_locs_set = set([loc._id for loc in self.locations])
-
-            if new_locs_set == old_locs_set:
-                # don't do anything if the list passed is the same
-                # as the users current locations. the check is a little messy
-                # as we can't compare the location objects themself
-                return
-
-        self.clear_location_delgates()
-
-        if not locations:
-            return
-
-        index = {}
-        for location in locations:
-            if not location.location_type_object.administrative:
-                sp = SupplyPointCase.get_by_location(location)
-                index.update(self.supply_point_index_mapping(sp))
-
-        from corehq.apps.commtrack.util import location_map_case_id
-        caseblock = CaseBlock(
-            create=True,
-            case_type=USER_LOCATION_OWNER_MAP_TYPE,
-            case_id=location_map_case_id(self),
-            version=V2,
-            owner_id=self._id,
-            index=index
-        )
-
-        self.submit_location_block(caseblock)
-
-    def get_location_map_case(self):
-        """
-        Returns the location mapping case for this supply point.
-
-        That lets us give access to the supply point via
-        delagate access.
-        """
-        try:
-            from corehq.apps.commtrack.util import location_map_case_id
-            return CommCareCase.get(location_map_case_id(self))
-        except ResourceNotFound:
-            return None
-
-
-class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin, LocationUserMixin):
+class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin):
 
     domain = StringProperty()
     registering_device_id = StringProperty()
@@ -1989,6 +1755,237 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin,
             return self.user_data["language_code"]
         else:
             return self.language
+
+    @property
+    def location(self):
+        from corehq.apps.locations.models import Location
+        if self.location_id:
+            return Location.get(self.location_id)
+        else:
+            return None
+
+    def set_location(self, location):
+        """
+        Set the location, and all important user data, for
+        the user.
+        """
+        from corehq.apps.commtrack.models import SupplyPointCase
+        from corehq.apps.locations.models import LOCATION_SHARING_PREFIX
+
+        self.user_data['commcare_location_id'] = location._id
+
+        if not location.location_type_object.administrative:
+            # just need to trigger a get or create to make sure
+            # this exists, otherwise things blow up
+            SupplyPointCase.get_or_create_by_location(location)
+
+            self.user_data.update({
+                'commtrack-supply-point': location.sql_location.supply_point_id
+            })
+
+        if self.project.supports_multiple_locations_per_user:
+            # TODO is it possible to only remove this
+            # access if it was not previously granted by
+            # the bulk upload?
+
+            # we only add the new one because we don't know
+            # if we can actually remove the old..
+            self.add_location_delegate(location)
+        else:
+            self.create_location_delegates([location])
+
+        self.user_data.update({
+            'commcare_primary_case_sharing_id':
+            LOCATION_SHARING_PREFIX + location._id
+        })
+
+        self.location_id = location._id
+        self.save()
+
+    def unset_location(self):
+        """
+        Unset the location and remove all associated user data and cases
+        """
+        self.user_data.pop('commcare_location_id', None)
+        self.user_data.pop('commtrack-supply-point', None)
+        self.user_data.pop('commcare_primary_case_sharing_id', None)
+        self.location_id = None
+        self.clear_location_delegates()
+        self.save()
+
+    @property
+    def _locations(self):
+        """
+        Hidden access to a users delgate location list.
+
+        Should be removed (and this code moved back under
+        self.location) sometime after migration and things
+        are settled.
+        """
+        from corehq.apps.locations.models import Location
+        from corehq.apps.commtrack.models import SupplyPointCase
+
+        def _get_linked_supply_point_ids():
+            mapping = self.get_location_map_case()
+            if mapping:
+                return [index.referenced_id for index in mapping.indices]
+            return []
+
+        def _get_linked_supply_points():
+            for doc in iter_docs(
+                CommCareCase.get_db(),
+                _get_linked_supply_point_ids()
+            ):
+                yield SupplyPointCase.wrap(doc)
+
+        def _gen():
+            location_ids = [sp.location_id for sp in _get_linked_supply_points()]
+            for doc in iter_docs(Location.get_db(), location_ids):
+                yield Location.wrap(doc)
+
+        return list(_gen())
+
+    @property
+    def locations(self):
+        """
+        This method is only used for domains with the multiple
+        locations per user flag set. It will error if you try
+        to call it on a normal domain.
+        """
+        if not self.project.supports_multiple_locations_per_user:
+            raise InvalidLocationConfig(
+                "Attempting to access multiple locations for a user in a domain that does not support this."
+            )
+
+        return self._locations
+
+    def supply_point_index_mapping(self, supply_point, clear=False):
+        from corehq.apps.commtrack.exceptions import (
+            LinkedSupplyPointNotFoundError
+        )
+
+        if supply_point:
+            return {
+                'supply_point-' + supply_point._id:
+                (
+                    supply_point.type,
+                    supply_point._id if not clear else ''
+                )
+            }
+        else:
+            raise LinkedSupplyPointNotFoundError(
+                "There was no linked supply point for the location."
+            )
+
+    def add_location_delegate(self, location):
+        """
+        Add a single location to the delgate case access.
+
+        This will dynamically create a supply point if the supply point isn't found.
+        """
+        # todo: the dynamic supply point creation is bad and should be removed.
+        from corehq.apps.commtrack.models import SupplyPointCase
+
+        sp = SupplyPointCase.get_or_create_by_location(location)
+
+        if not location.location_type_object.administrative:
+            from corehq.apps.commtrack.util import submit_mapping_case_block
+            submit_mapping_case_block(self, self.supply_point_index_mapping(sp))
+
+    def submit_location_block(self, caseblock):
+        from corehq.apps.hqcase.utils import submit_case_blocks
+
+        submit_case_blocks(
+            ElementTree.tostring(
+                caseblock.as_xml(format_datetime=json_format_datetime)
+            ),
+            self.domain,
+            self.username,
+            self._id
+        )
+
+    def remove_location_delegate(self, location):
+        """
+        Remove a single location from the case delagate access.
+        """
+        from corehq.apps.commtrack.models import SupplyPointCase
+
+        sp = SupplyPointCase.get_by_location(location)
+
+        mapping = self.get_location_map_case()
+
+        if not location.location_type_object.administrative:
+            if mapping and location._id in [loc._id for loc in self.locations]:
+                caseblock = CaseBlock(
+                    create=False,
+                    case_id=mapping._id,
+                    version=V2,
+                    index=self.supply_point_index_mapping(sp, True)
+                )
+
+                self.submit_location_block(caseblock)
+
+    def clear_location_delegates(self):
+        """
+        Wipe all case delagate access.
+        """
+        from casexml.apps.case.cleanup import safe_hard_delete
+        mapping = self.get_location_map_case()
+        if mapping:
+            safe_hard_delete(mapping)
+
+    def create_location_delegates(self, locations):
+        """
+        Submit the case blocks creating the delgate case access
+        for the location(s).
+        """
+        from corehq.apps.commtrack.models import SupplyPointCase
+
+        if self.project.supports_multiple_locations_per_user:
+            new_locs_set = set([loc._id for loc in locations])
+            old_locs_set = set([loc._id for loc in self.locations])
+
+            if new_locs_set == old_locs_set:
+                # don't do anything if the list passed is the same
+                # as the users current locations. the check is a little messy
+                # as we can't compare the location objects themself
+                return
+
+        self.clear_location_delegates()
+
+        if not locations:
+            return
+
+        index = {}
+        for location in locations:
+            if not location.location_type_object.administrative:
+                sp = SupplyPointCase.get_by_location(location)
+                index.update(self.supply_point_index_mapping(sp))
+
+        from corehq.apps.commtrack.util import location_map_case_id
+        caseblock = CaseBlock(
+            create=True,
+            case_type=USER_LOCATION_OWNER_MAP_TYPE,
+            case_id=location_map_case_id(self),
+            version=V2,
+            owner_id=self._id,
+            index=index
+        )
+
+        self.submit_location_block(caseblock)
+
+    def get_location_map_case(self):
+        """
+        Returns the location mapping case for this supply point.
+
+        That lets us give access to the supply point via
+        delagate access.
+        """
+        try:
+            from corehq.apps.commtrack.util import location_map_case_id
+            return CommCareCase.get(location_map_case_id(self))
+        except ResourceNotFound:
+            return None
 
     def __repr__(self):
         return ("{class_name}(username={self.username!r})".format(

@@ -366,6 +366,7 @@ class ReportingRatesReport(MultiReport):
             location_id=self.request.GET.get('location_id') or get_country_id(self.domain),
             products=None,
             program=program if program != ALL_OPTION else None,
+            user=self.request.couch_user
         )
 
     @property

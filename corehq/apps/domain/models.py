@@ -40,6 +40,7 @@ lang_lookup = defaultdict(str)
 DATA_DICT = settings.INTERNAL_DATA
 AREA_CHOICES = [a["name"] for a in DATA_DICT["area"]]
 SUB_AREA_CHOICES = reduce(list.__add__, [a["sub_areas"] for a in DATA_DICT["area"]], [])
+DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 
 
 for lang in all_langs:
@@ -309,6 +310,7 @@ class Domain(Document, SnapshotMixin):
     _dirty_fields = ('admin_password', 'admin_password_charset', 'city', 'countries', 'region', 'customer_type')
 
     default_mobile_worker_redirect = StringProperty(default=None)
+    last_modified = DateTimeProperty(default=datetime(2015, 1, 1))
 
     @property
     def domain_type(self):
@@ -620,6 +622,7 @@ class Domain(Document, SnapshotMixin):
         return self.case_sharing or reduce(lambda x, y: x or y, [getattr(app, 'case_sharing', False) for app in self.applications()], False)
 
     def save(self, **params):
+        self.last_modified = datetime.utcnow()
         super(Domain, self).save(**params)
         Domain.get_by_name.clear(Domain, self.name)  # clear the domain cache
 
