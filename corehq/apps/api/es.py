@@ -12,9 +12,8 @@ from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
-from dimagi.utils.parsing import ISO_DATE_FORMAT
+from dimagi.utils.parsing import ISO_DATE_FORMAT, json_format_datetime, string_to_datetime
 
-from no_exceptions.exceptions import Http400
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -616,7 +615,10 @@ def validate_date(date):
         try:
             datetime.datetime.strptime(date, '%Y-%m-%dT%H:%M:%S')
         except ValueError:
-            raise DateTimeError("Date not in the correct format")
+            try:
+                date = json_format_datetime(string_to_datetime(date))
+            except ValueError:
+                raise DateTimeError("Date not in the correct format")
     return date
 
 RESERVED_QUERY_PARAMS=set(['limit', 'offset', 'order_by', 'q', '_search'])
