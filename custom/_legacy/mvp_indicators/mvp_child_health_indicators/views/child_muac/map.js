@@ -10,13 +10,14 @@ function (doc) {
                 visit_indicators = {},
                 age = get_age_from_dob(indicators.child_dob.value, meta.timeEnd),
                 visit_date = new Date(meta.timeEnd),
-                case_id = get_case_id(doc);
+                case_id = get_case_id(doc),
+                visit_diff;
         
             if(indicators.last_muac && indicators.last_muac.value) {
                 var last_muac_date = new Date(indicators.last_muac.value);
 
                 if (visit_date >= last_muac_date) {
-                    var visit_diff = visit_date.getTime() - last_muac_date.getTime();
+                    visit_diff = visit_date.getTime() - last_muac_date.getTime();
                 }
 
                 if (age >= 180*MS_IN_DAY && age < 1825*MS_IN_DAY && visit_diff < 30*MS_IN_DAY) {
@@ -65,15 +66,15 @@ function (doc) {
                         // do nothing
                     }
                 }
+
+            emit_special(doc, last_muac_date, last_muac_indicators, [doc._id]);
+            emit_special(doc, visit_date, visit_indicators, [doc._id]);
             }
             //LengthIndicator
             if (age >= 90*MS_IN_DAY && age < 730*MS_IN_DAY && indicators.child_length && indicators.child_length.value) {
                 var length_date  =  (indicators.length_date && indicators.length_date.value) ? new Date(indicators.length_date.value) : visit_date;
                 emit_special(doc, length_date, {length_reading: case_id}, [doc._id]);
             }
-
-            emit_special(doc, last_muac_date, last_muac_indicators, [doc._id]);
-            emit_special(doc, visit_date, visit_indicators, [doc._id]);
         }
     }
 }
