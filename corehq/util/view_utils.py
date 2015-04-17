@@ -1,9 +1,9 @@
 from functools import wraps
 import json
-import inspect
 import logging
 import traceback
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse as _reverse
+from django.utils.http import urlencode
 from dimagi.utils.web import get_url_base
 
 from django import http
@@ -107,5 +107,18 @@ def get_request():
     return global_request.get_request()
 
 
+def reverse(viewname, params=None, absolute=False, **kwargs):
+    """
+    >>> reverse('create_location', args=["test"], params={"selected": "foo"})
+    '/a/test/settings/locations/new/?selected=foo'
+    """
+    url = _reverse(viewname, **kwargs)
+    if absolute:
+        url = "{}{}".format(get_url_base(), url)
+    if params:
+        url = "{}?{}".format(url, urlencode(params))
+    return url
+
+
 def absolute_reverse(*args, **kwargs):
-    return "{}{}".format(get_url_base(), reverse(*args, **kwargs))
+    return reverse(*args, absolute=True, **kwargs)
