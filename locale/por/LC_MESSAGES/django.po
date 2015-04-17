@@ -17721,7 +17721,7 @@ msgstr ""
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html:95
 msgid ""
 "\n"
-"                <p>This list shows what kind of items are checked agains "
+"                <p>This list shows what kind of items are checked against "
 "this flag.</p>\n"
 "                <p>Toggle items are by default assumed to be usernames but "
 "can also be namespaced items such as 'domain:somedomain'.</p>\n"
