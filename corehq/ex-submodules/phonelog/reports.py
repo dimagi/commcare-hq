@@ -39,18 +39,7 @@ TAGS = {
 }
 
 
-class PhonelogReport(GetParamsMixin, DeploymentsReport, DatespanMixin,
-                     PaginatedReportMixin):
-    fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
-              'corehq.apps.reports.filters.select.GroupFilter',
-              'corehq.apps.reports.filters.dates.DatespanFilter']
-
-    special_notice = DATA_NOTICE
-    ajax_pagination = True
-    total_records = 0
-
-
-class DeviceLogDetailsReport(PhonelogReport):
+class DeviceLogDetailsReport(GetParamsMixin, DeploymentsReport, DatespanMixin, PaginatedReportMixin):
     name = ugettext_noop("Device Log Details")
     slug = "log_details"
     fields = ['corehq.apps.reports.filters.dates.DatespanFilter',
@@ -66,6 +55,9 @@ class DeviceLogDetailsReport(PhonelogReport):
         "time message": "label-warning",
         "send-all": "label-info",
     }
+    special_notice = DATA_NOTICE
+    ajax_pagination = True
+    total_records = 0
     default_rows = 100
     default_sort = {'date': 'asc'}
     inclusive = False
