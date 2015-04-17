@@ -197,7 +197,7 @@ class ItextNodeGroup(object):
 
     def add_node(self, node):
         if self.nodes.get(node.lang):
-            raise Exception("Group already has node for lang: {0}".format(node.lang))
+            raise XFormException("Group already has node for lang: {0}".format(node.lang))
         else:
             self.nodes[node.lang] = node
 
