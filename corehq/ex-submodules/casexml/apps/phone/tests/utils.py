@@ -15,7 +15,7 @@ def synclog_from_restore_payload(restore_payload):
 
 
 def generate_restore_payload(user, restore_id="", version=V1, state_hash="",
-                             items=False):
+                             items=False, overwrite_cache=False, force_cache=False):
     """
     Gets an XML payload suitable for OTA restore.
 
@@ -25,7 +25,8 @@ def generate_restore_payload(user, restore_id="", version=V1, state_hash="",
 
         returns: the xml payload of the sync operation
     """
-    config = RestoreConfig(user, restore_id, version, state_hash, items=items)
+    config = RestoreConfig(user, restore_id, version, state_hash, items=items,
+            overwrite_cache=overwrite_cache, force_cache=force_cache)
     return config.get_payload().as_string()
 
 
