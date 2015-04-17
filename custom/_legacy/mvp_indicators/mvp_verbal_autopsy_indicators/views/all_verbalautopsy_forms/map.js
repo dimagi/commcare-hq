@@ -16,7 +16,7 @@ function (doc) {
             indicator_keys.push("va_neonate");
             indicator_keys.push("va_0to59");
             //deathplace
-            if (indicators.death_place && indicators.death_place) {
+            if (indicators.death_place && indicators.death_place.value) {
                 death_place = indicators.death_place.value;
                 if (death_place == 11) {
                     indicator_keys.push("death_hosp");
@@ -62,7 +62,7 @@ function (doc) {
             indicator_keys.push("va_child");
             indicator_keys.push("va_0to59");
             //deathplace
-            if (indicators.death_place && indicators.death_place) {
+            if (indicators.death_place && indicators.death_place.value) {
                 death_place = indicators.death_place.value;
                 if (death_place == 11) {
                     indicator_keys.push("death_hosp");

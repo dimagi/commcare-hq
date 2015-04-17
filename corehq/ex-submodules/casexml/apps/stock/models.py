@@ -104,16 +104,24 @@ def create_reconciliation_transaction(sender, instance, *args, **kwargs):
         # only soh reports that have changed the stock create inferred transactions
         if previous_transaction and previous_transaction.stock_on_hand != instance.stock_on_hand:
             amt = instance.stock_on_hand - Decimal(previous_transaction.stock_on_hand)
-            StockTransaction.objects.create(
-                report=instance.report,
-                case_id=instance.case_id,
-                section_id=instance.section_id,
-                product_id=instance.product_id,
-                type=const.TRANSACTION_TYPE_CONSUMPTION if amt < 0 else const.TRANSACTION_TYPE_RECEIPTS,
-                quantity=amt,
-                stock_on_hand=instance.stock_on_hand,
-                subtype=const.TRANSACTION_SUBTYPE_INFERRED,
-            )
+            domain = instance.report.domain
+            exclude_invalid_periods = False
+            if domain:
+                from corehq.apps.commtrack.models import CommtrackConfig
+                config = CommtrackConfig.for_domain(domain)
+                if config:
+                    exclude_invalid_periods = config.consumption_config.exclude_invalid_periods
+            if not domain or not exclude_invalid_periods or amt < 0:
+                StockTransaction.objects.create(
+                    report=instance.report,
+                    case_id=instance.case_id,
+                    section_id=instance.section_id,
+                    product_id=instance.product_id,
+                    type=const.TRANSACTION_TYPE_CONSUMPTION if amt < 0 else const.TRANSACTION_TYPE_RECEIPTS,
+                    quantity=amt,
+                    stock_on_hand=instance.stock_on_hand,
+                    subtype=const.TRANSACTION_SUBTYPE_INFERRED,
+                )
 
 
 @receiver(pre_save, sender=StockTransaction)

@@ -14,10 +14,10 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.indicators.models import CaseIndicatorDefinition, FormIndicatorDefinition, DocumentMismatchError, DocumentNotInDomainError
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
-from dimagi.utils.management.commands import prime_views
 from mvp.models import MVP
 
 POOL_SIZE = 10
+
 
 class Command(LabelCommand):
     help = "Update MVP indicators in existing cases and forms."
