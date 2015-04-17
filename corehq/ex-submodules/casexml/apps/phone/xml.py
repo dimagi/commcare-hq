@@ -87,8 +87,10 @@ def get_case_xml(case, updates, version=V1):
 
 def get_registration_element(user):
     root = safe_element("Registration")
-    root.attrib = { "xmlns": USER_REGISTRATION_XMLNS }
+    root.attrib = {"xmlns": USER_REGISTRATION_XMLNS}
     root.append(safe_element("username", user.username))
+    root.append(safe_element("full_name", user.full_name))
+    root.append(safe_element("phone_number", user.phone_number))
     root.append(safe_element("password", user.password))
     root.append(safe_element("uuid", user.user_id))
     root.append(safe_element("date", date_to_xml_string(user.date_joined)))
