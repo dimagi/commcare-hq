@@ -1,6 +1,4 @@
-from corehq.apps.api.accounting import LineItemResource, BillingContactInfoResource, PaymentRecordResource, \
-    DefaultProductPlanResource, CreditAdjustmentResource, SubscriptionAndAdjustmentResource,\
-    BillingRecordResource, CreditLineResource
+from corehq.apps.api.accounting import *
 from corehq.apps.api.domain_metadata import DomainMetadataResource
 from corehq.apps.api.object_fetch_api import CaseAttachmentAPI
 
@@ -111,15 +109,28 @@ urlpatterns = patterns('',
 ADMIN_API_LIST = (
     v0_5.AdminWebUserResource,
     DomainMetadataResource,
+    FeatureResource,
+    FutureRateResource,
+    RoleResource,
+    BillingAccountAdminResource,
+    AccountingCurrencyResource,
+    SoftwareProductResource,
+    SoftwarePlanResource,
+    DefaultProductPlanResource,
+    SoftwareProductRateResource,
+    SoftwarePlanVersionResource,
+    SubscriberResource,
+    BillingAccountResource,
+    SubscriptionResource,
+    InvoiceResource,
     LineItemResource,
+    PaymentMethodResource,
     BillingContactInfoResource,
     PaymentRecordResource,
-    DefaultProductPlanResource,
-    CreditAdjustmentResource,
     CreditLineResource,
+    CreditAdjustmentResource,
     SubscriptionAndAdjustmentResource,
-    BillingRecordResource
-
+    BillingRecordResource,
 )
 
 @inline
