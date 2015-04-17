@@ -85,7 +85,6 @@
                     e.preventDefault();
                 });
             }
-            $(".hide-while-loading").removeAttr("hidden");
         };
     </script>
 {% endblock %}
@@ -96,10 +95,10 @@
         <h2>{% trans 'Current Balance' %}</h2>
         <p>
             {% trans 'Total Due:' %}
-            <span class="hide-while-loading" hidden="true" data-bind="text: displayTotalDue"></span>
+            <span data-bind="text: displayTotalDue, visible: hasInitialLoadFinished"></span>
         </p>
         {% if not is_ops_user_but_not_admin %}
-        <p class="hide-while-loading" hidden="true" data-bind="visible: totalDue">
+        <p data-bind="visible: hasInitialLoadFinished() && totalDue()">
             <button type="button"
                     class="btn btn-success"
                     data-toggle="modal"
