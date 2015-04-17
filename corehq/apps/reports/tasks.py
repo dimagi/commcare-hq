@@ -83,9 +83,20 @@ def check_es_index():
 
 def send_delayed_report(report):
     """
-    Sends a scheduled report, via  celery background task
+    Sends a scheduled report, via  celery background task.
     """
-    send_report.delay(report._id)
+    send_report.apply_async(args=[report._id], queue=get_report_queue(report))
+
+
+def get_report_queue(report):
+    # This is a super-duper hacky, hard coded way to deal with the fact that MVP reports
+    # consistently crush the celery queue for everyone else.
+    # Just send them to their own longrunning background queue
+    from mvp.models import MVP
+    if report.domain in MVP.DOMAINS:
+        return 'background_queue'
+    else:
+        return 'celery'
 
 
 @task(ignore_result=True)
