@@ -222,6 +222,7 @@ class ILSGatewayAPI(APISynchronization):
             )
 
         config = CommtrackConfig.for_domain(self.domain)
+        config.consumption_config.exclude_invalid_periods = True
         actions = [action.keyword for action in config.actions]
         if 'delivered' not in actions:
             config.actions.append(

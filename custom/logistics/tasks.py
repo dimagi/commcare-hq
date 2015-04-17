@@ -185,26 +185,39 @@ def sync_stock_transactions_for_facility(domain, endpoint, facility, xform, chec
                     report = StockReport.objects.filter(**params)[0]
 
                 sql_product = SQLProduct.objects.get(code=stocktransaction.product, domain=domain)
-                if stocktransaction.quantity != 0:
+                if stocktransaction.report_type == 'Stock Received':
                     transactions_to_add.append(StockTransaction(
                         case_id=case._id,
                         product_id=sql_product.product_id,
                         sql_product=sql_product,
                         section_id=section_id,
-                        type='receipts' if stocktransaction.quantity > 0 else 'consumption',
+                        type='receipts',
                         stock_on_hand=Decimal(stocktransaction.ending_balance),
                         quantity=Decimal(stocktransaction.quantity),
                         report=report
                     ))
-                transactions_to_add.append(StockTransaction(
-                    case_id=case._id,
-                    product_id=sql_product.product_id,
-                    sql_product=sql_product,
-                    section_id=section_id,
-                    type='stockonhand',
-                    stock_on_hand=Decimal(stocktransaction.ending_balance),
-                    report=report
-                ))
+                elif stocktransaction.report_type == 'Stock on Hand':
+                    if stocktransaction.quantity < 0:
+                        transactions_to_add.append(StockTransaction(
+                            case_id=case._id,
+                            product_id=sql_product.product_id,
+                            sql_product=sql_product,
+                            section_id=section_id,
+                            type='consumption',
+                            stock_on_hand=Decimal(stocktransaction.ending_balance),
+                            quantity=Decimal(stocktransaction.quantity),
+                            report=report,
+                            subtype='inferred'
+                        ))
+                    transactions_to_add.append(StockTransaction(
+                        case_id=case._id,
+                        product_id=sql_product.product_id,
+                        sql_product=sql_product,
+                        section_id=section_id,
+                        type='stockonhand',
+                        stock_on_hand=Decimal(stocktransaction.ending_balance),
+                        report=report
+                    ))
                 products_saved.add(sql_product.product_id)
 
         if transactions_to_add:
