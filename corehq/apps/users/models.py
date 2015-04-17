@@ -777,10 +777,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     device_ids = ListProperty()
     phone_numbers = ListProperty()
     created_on = DateTimeProperty(default=datetime(year=1900, month=1, day=1))
-#    For now, 'status' is things like:
-#        ('auto_created',     'Automatically created from form submission.'),
-#        ('phone_registered', 'Registered from phone'),
-#        ('site_edited',     'Manually added or edited from the HQ website.'),
+    #    For now, 'status' is things like:
+    #        ('auto_created',     'Automatically created from form submission.'),
+    #        ('phone_registered', 'Registered from phone'),
+    #        ('site_edited',     'Manually added or edited from the HQ website.'),
     status = StringProperty()
     language = StringProperty()
     email_opt_out = BooleanProperty(default=False)
@@ -1800,7 +1800,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         })
 
         self.location_id = location._id
-
         self.save()
 
     def unset_location(self):
