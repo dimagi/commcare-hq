@@ -346,7 +346,7 @@ CACHE_AND_INDEX = StaticToggle(
 
 CUSTOM_PROPERTIES = StaticToggle(
     'custom_properties',
-    'Allow users to add arbitrary custom properties to their appliation',
+    'Allow users to add arbitrary custom properties to their application',
     [NAMESPACE_DOMAIN]
 )
 
@@ -370,7 +370,7 @@ BULK_SMS_VERIFICATION = StaticToggle(
 
 BULK_PAYMENTS = StaticToggle(
     'bulk_payments',
-    'Enable payment of invoices by bulk credit payments and invoice generation for wire tranfers',
+    'Enable payment of invoices by bulk credit payments and invoice generation for wire transfers',
 )
 
 MODULE_FILTER = StaticToggle(
