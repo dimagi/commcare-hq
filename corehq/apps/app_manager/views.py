@@ -991,7 +991,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
             def qualified_form_name(form):
                 module_name = trans(form.get_module().name, app.langs)
                 form_name = trans(form.name, app.langs)
-                return "{} -> {}".format(module_name, form_name)
+                return u"{} -> {}".format(module_name, form_name)
 
             modules = filter(lambda m: m.case_type == module.case_type, app.get_modules())
             if getattr(module, 'root_module_id', None) and module.root_module not in modules:
