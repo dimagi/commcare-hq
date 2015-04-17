@@ -210,3 +210,5 @@ class TestGatewayFee(TestCase):
         self.other_currency.delete()
         for log in SMSLog.by_domain_asc(generator.TEST_DOMAIN):
             log.delete()
+        for backend_instance in self.backend_ids.values():
+            SMSBackend.get(backend_instance).delete()

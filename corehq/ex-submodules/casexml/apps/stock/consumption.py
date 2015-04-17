@@ -1,7 +1,7 @@
 import collections
-import functools
 import json
 import math
+from decimal import Decimal
 from dimagi.utils import parsing as dateparse
 from datetime import datetime, timedelta
 from casexml.apps.stock import const
@@ -15,9 +15,8 @@ class ConsumptionConfiguration(object):
     DEFAULT_MIN_WINDOW = 10
     DEFAULT_MAX_WINDOW = 60
 
-
     def __init__(self, min_periods=None, min_window=None, max_window=None,
-                 default_monthly_consumption_function=None):
+                 default_monthly_consumption_function=None, exclude_invalid_periods=False):
         def _default_if_none(value, default):
             return value if value is not None else default
 
@@ -36,6 +35,7 @@ class ConsumptionConfiguration(object):
 
         self.default_monthly_consumption_function = _default_if_none(default_monthly_consumption_function,
                                                              DEFAULT_CONSUMPTION_FUNCTION)
+        self.exclude_invalid_periods = exclude_invalid_periods
 
     @classmethod
     def test_config(cls):
@@ -46,8 +46,10 @@ class ConsumptionConfiguration(object):
             'min_periods': self.min_periods,
             'min_window': self.min_window,
             'max_window': self.max_window,
-            'has_default_monthly_consumption_function': bool(self.default_monthly_consumption_function)
+            'has_default_monthly_consumption_function': bool(self.default_monthly_consumption_function),
+            'exclude_invalid_periods': self.exclude_invalid_periods
         }, indent=2)
+
 
 def from_ts(dt):
     # damn this is ugly
@@ -89,9 +91,7 @@ def compute_daily_consumption(case_id,
         window_start,
         window_end
     )
-    return compute_daily_consumption_from_transactions(
-        transactions, window_start, configuration
-    )
+    return compute_daily_consumption_from_transactions(transactions, window_start, configuration)
 
 
 def compute_consumption_or_default(case_id,
@@ -176,14 +176,24 @@ def compute_daily_consumption_from_transactions(transactions, window_start, conf
     class ConsumptionPeriod(object):
         def __init__(self, tx):
             self.start = from_ts(tx.received_on)
+            self.start_soh = tx.value
+            self.end_soh = None
             self.end = None
             self.consumption = 0
+            self.receipts = 0
 
         def add(self, tx):
             self.consumption += tx.value
 
+        def receipt(self, receipt):
+            self.receipts += receipt
+
         def close_out(self, tx):
             self.end = from_ts(tx.received_on)
+            self.end_soh = tx.value
+
+        def is_valid(self):
+            return self.start_soh + Decimal(self.receipts) >= self.end_soh
 
         @property
         def length(self):
@@ -211,7 +221,8 @@ def compute_daily_consumption_from_transactions(transactions, window_start, conf
             if is_checkpoint:
                 if period:
                     period.close_out(tx)
-                    yield period
+                    if not configuration.exclude_invalid_periods or period.is_valid():
+                        yield period
                 period = ConsumptionPeriod(tx)
             elif is_stockout:
                 if period:
@@ -222,6 +233,9 @@ def compute_daily_consumption_from_transactions(transactions, window_start, conf
                 # different kinds of consumption: normal vs losses, etc.
                 if period:
                     period.add(tx)
+            elif configuration.exclude_invalid_periods and base_action_type == 'receipts':
+                if period and period.start:
+                    period.receipt(tx.value)
 
     periods = list(split_periods(transactions))
 

@@ -210,7 +210,7 @@
                             <a class="btn" data-bind="
                                 openModal: 'deploy-build-modal-template',
                                 css: {'btn-primary': !build_broken(), 'btn-danger': build_broken},
-                                click: function() { ga_track_event('App Manager', 'Deploy Button', '{{ app.id }}'); analytics.identify('Clicked Deploy-Button');}
+                                click: function() { ga_track_event('App Manager', 'Deploy Button', '{{ app.id }}'); analytics.track('Clicked Deploy-Button');}
                             ">
                                 <span class="icon icon-exclamation-sign" data-bind="visible: build_broken"></span>
                                 {% trans "Deploy" %}

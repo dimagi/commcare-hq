@@ -12,7 +12,7 @@ from couchforms.models import XFormInstance
 from custom.logistics.commtrack import save_stock_data_checkpoint, synchronization
 from custom.logistics.models import StockDataCheckpoint
 from celery.task.base import task
-from custom.logistics.utils import get_supply_point_by_external_id, get_reporting_types
+from custom.logistics.utils import get_supply_point_by_external_id
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import force_to_datetime
 
@@ -53,7 +53,7 @@ def stock_data_task(domain, endpoint, apis, config, test_facilities=None):
     else:
         supply_points_ids = SQLLocation.objects.filter(
             domain=domain,
-            location_type__in=get_reporting_types(domain)
+            location_type__administrative=False
         ).order_by('created_at').values_list('supply_point_id', flat=True)
         facilities = [doc['external_id'] for doc in iter_docs(SupplyPointCase.get_db(), supply_points_ids)]
 
@@ -185,26 +185,39 @@ def sync_stock_transactions_for_facility(domain, endpoint, facility, xform, chec
                     report = StockReport.objects.filter(**params)[0]
 
                 sql_product = SQLProduct.objects.get(code=stocktransaction.product, domain=domain)
-                if stocktransaction.quantity != 0:
+                if stocktransaction.report_type == 'Stock Received':
                     transactions_to_add.append(StockTransaction(
                         case_id=case._id,
                         product_id=sql_product.product_id,
                         sql_product=sql_product,
                         section_id=section_id,
-                        type='receipts' if stocktransaction.quantity > 0 else 'consumption',
+                        type='receipts',
                         stock_on_hand=Decimal(stocktransaction.ending_balance),
                         quantity=Decimal(stocktransaction.quantity),
                         report=report
                     ))
-                transactions_to_add.append(StockTransaction(
-                    case_id=case._id,
-                    product_id=sql_product.product_id,
-                    sql_product=sql_product,
-                    section_id=section_id,
-                    type='stockonhand',
-                    stock_on_hand=Decimal(stocktransaction.ending_balance),
-                    report=report
-                ))
+                elif stocktransaction.report_type == 'Stock on Hand':
+                    if stocktransaction.quantity < 0:
+                        transactions_to_add.append(StockTransaction(
+                            case_id=case._id,
+                            product_id=sql_product.product_id,
+                            sql_product=sql_product,
+                            section_id=section_id,
+                            type='consumption',
+                            stock_on_hand=Decimal(stocktransaction.ending_balance),
+                            quantity=Decimal(stocktransaction.quantity),
+                            report=report,
+                            subtype='inferred'
+                        ))
+                    transactions_to_add.append(StockTransaction(
+                        case_id=case._id,
+                        product_id=sql_product.product_id,
+                        sql_product=sql_product,
+                        section_id=section_id,
+                        type='stockonhand',
+                        stock_on_hand=Decimal(stocktransaction.ending_balance),
+                        report=report
+                    ))
                 products_saved.add(sql_product.product_id)
 
         if transactions_to_add:

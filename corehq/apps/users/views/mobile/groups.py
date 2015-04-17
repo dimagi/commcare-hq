@@ -7,6 +7,7 @@ from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.views import BaseDomainView
+from corehq import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.util import _report_user_dict
 from corehq.apps.sms.verify import (
@@ -201,5 +202,11 @@ class EditGroupMembersView(BaseGroupsView):
             'group': self.group,
             'bulk_sms_verification_enabled': bulk_sms_verification_enabled,
             'num_users': len(self.member_ids),
-            'user_form': self.user_selection_form
+            'user_form': self.user_selection_form,
+            'domain_uses_case_sharing': self.domain_uses_case_sharing,
         }
+
+    @property
+    def domain_uses_case_sharing(self):
+        domain = Domain.get_by_name(Group.get(self.group_id).domain)
+        return domain.case_sharing_included()

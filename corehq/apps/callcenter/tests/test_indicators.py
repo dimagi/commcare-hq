@@ -3,7 +3,7 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 from corehq.apps.callcenter.indicator_sets import AAROHI_MOTHER_FORM, CallCenterIndicators, \
     cache_key, CachedIndicators
-from corehq.apps.callcenter.utils import sync_user_cases
+from corehq.apps.callcenter.utils import sync_call_center_user_case
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.callcenter.tests.sql_fixture import load_data, load_custom_data, clear_data
 from corehq.apps.groups.models import Group
@@ -25,7 +25,7 @@ def create_domain_and_user(domain_name, username):
     domain.call_center_config.case_type = 'cc_flw'
     domain.save()
 
-    sync_user_cases(user)
+    sync_call_center_user_case(user)
     return domain, user
 
 
@@ -244,7 +244,7 @@ class CallCenterSupervisorGroupTest(BaseCCTests):
         cls.domain.save()
 
         cls.user = CommCareUser.create(domain_name, 'user@' + domain_name, '***')
-        sync_user_cases(cls.user)
+        sync_call_center_user_case(cls.user)
 
         load_data(domain_name, cls.user.user_id)
 
@@ -281,7 +281,7 @@ class CallCenterCaseSharingTest(BaseCCTests):
         cls.domain.save()
 
         cls.user = CommCareUser.create(domain_name, 'user@' + domain_name, '***')
-        sync_user_cases(cls.user)
+        sync_call_center_user_case(cls.user)
 
         cls.group = Group(
             domain=domain_name,
@@ -333,7 +333,7 @@ class CallCenterTestOpenedClosed(BaseCCTests):
         cls.domain.save()
 
         cls.user = CommCareUser.create(domain_name, 'user@' + domain_name, '***')
-        sync_user_cases(cls.user)
+        sync_call_center_user_case(cls.user)
 
         load_data(domain_name, cls.user.user_id, case_opened_by='not me', case_closed_by='not me')
 

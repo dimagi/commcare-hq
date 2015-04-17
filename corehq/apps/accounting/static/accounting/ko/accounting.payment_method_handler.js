@@ -1,9 +1,10 @@
-var PaymentMethodHandler = function (errorMessages, submitBtnText) {
+var PaymentMethodHandler = function (errorMessages, submitBtnText, form_id) {
     'use strict';
     var self = this;
 
     self.errorMessages = errorMessages || {};
     self.submitBtnText = submitBtnText;
+    self.form_id = form_id;
 
     self.costItem = ko.observable();
     self.hasCostItem = ko.computed(function () {
@@ -23,6 +24,8 @@ var PaymentMethodHandler = function (errorMessages, submitBtnText) {
     });
 
     self.newCard = ko.observable(new StripeCard());
+
+    self.handlers = [self];
 
     self.showConfirmRemoveCard = ko.observable(false);
     self.isRemovingCard = ko.observable(false);
@@ -82,16 +85,18 @@ var PaymentMethodHandler = function (errorMessages, submitBtnText) {
     };
 
     self.submitForm = function () {
-        $('#payment-form').ajaxSubmit({
+        $('#' + self.form_id).ajaxSubmit({
             success: function (response) {
                 if (response.success) {
                     self.costItem().reset(response);
-                    self.newCard(new StripeCard());
                     if (response.wasSaved) {
-                        var stripe_card = new StripeCard();
-                        stripe_card.loadSavedData(response.card);
-                        self.savedCards.push(stripe_card);
-                        self.selectedCardType('saved');
+                        for (var i = 0; i < handlers.length; i++) {
+                            var handler = self.handlers[i];
+                            var stripe_card = new StripeCard();
+                            stripe_card.loadSavedData(response.card);
+                            handler.savedCards.push(stripe_card);
+                            handler.selectedCardType('saved');
+                        }
                     }
                     self.paymentIsComplete(true);
                 }
@@ -108,17 +113,20 @@ var PaymentMethodHandler = function (errorMessages, submitBtnText) {
     self.removeSavedCard = function () {
         self.isRemovingCard(true);
         self.showConfirmRemoveCard(false);
-        $('#payment-form').ajaxSubmit({
+        $('#' + self.form_id).ajaxSubmit({
             data: {
                 removeCard: true
             },
             success: function (response) {
                 self.handleProcessingErrors(response);
-                self.savedCards(_.filter(self.savedCards(), function (card) {
-                    return card.token() !== response.removedCard;
-                }));
-                if (self.savedCards().length == 0) {
-                    self.selectedCardType('new');
+                for (var i = 0; i < handlers.length; i++) {
+                    var handler = self.handlers[i];
+                    handler.savedCards(_.filter(handler.savedCards(), function (card) {
+                        return card.token() !== response.removedCard;
+                    }));
+                    if (!handler.savedCards().length) {
+                        handler.selectedCardType('new');
+                    }
                 }
                 self.isRemovingCard(false);
             },
@@ -223,11 +231,6 @@ var ChargedCostItem = function (initData) {
         self.paymentAmountType('partial');
     };
 
-    self.reset =  function (response) {
-        self.customPaymentAmount(self.balance());
-        self.paymentAmountType('full');
-    };
-
     self.isValid = ko.computed(function () {
         return self.isLeftoverAmountEnough() && self.isAmountWithinRange();
     });
@@ -255,9 +258,6 @@ var Invoice = function (initData) {
     });
 
     self.reset = function (response) {
-        // TODO - use inheritance instead of duplicating code (tricky)
-        self.customPaymentAmount(self.balance());
-        self.paymentAmountType('full');
         self.paginatedList.refreshList(self.paginatedItem);
     };
 };
@@ -274,6 +274,10 @@ var TotalCostItem = function (initData) {
     self.customPaymentAmount(self.balance());
 
     self.id = null; // TODO remove once cost-item-template does not need this
+
+    self.reset =  function (response) {
+        paginatedListModel.refreshList();
+    };
 };
 
 TotalCostItem.protoptye = Object.create( ChargedCostItem.prototype );

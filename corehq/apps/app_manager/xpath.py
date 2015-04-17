@@ -12,8 +12,9 @@ def dot_interpolate(string, replacement):
     return re.sub(pattern, repl, string)
 
 
-def session_var(var, subref=None):
-    return XPath(u"instance('commcaresession')/session/{0}data/{1}".format(subref + '/' if subref else '', var))
+def session_var(var, subref=None, data=u'data'):
+    return XPath(u"instance('commcaresession')/session/{0}{1}/{2}".format(
+        subref + '/' if subref else '', data, var))
 
 
 class XPath(unicode):
@@ -110,6 +111,11 @@ class CaseTypeXpath(CaseSelectionXPath):
 
     def case(self):
         return CaseXPath(u"instance('casedb')/casedb/case[%s='%s']" % (self.selector, self))
+
+
+class UserCaseXPath(XPath):
+    def case(self):
+        return CaseTypeXpath(self).select('hq_user_id', session_var(var='userid', data='context'))
 
 
 class CaseXPath(XPath):

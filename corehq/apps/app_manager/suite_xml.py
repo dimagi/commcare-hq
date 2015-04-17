@@ -21,14 +21,16 @@ from .exceptions import (
 )
 from corehq.toggles import MODULE_FILTER
 from corehq.apps.app_manager import id_strings
+from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE_LAST_VISIT, SCHEDULE_PHASE, \
+    CASE_ID, RETURN_TO, USERCASE_ID, USERCASE_TYPE
 from corehq.apps.app_manager.exceptions import UnknownInstanceError, ScheduleError, FormNotFoundException
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
-from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE_LAST_VISIT, SCHEDULE_PHASE, RETURN_TO
-from corehq.apps.app_manager.util import split_path, create_temp_sort_column, languages_mapping
+from corehq.apps.app_manager.util import split_path, create_temp_sort_column, languages_mapping, \
+    actions_use_usercase
 from corehq.apps.app_manager.xform import SESSION_CASE_ID, autoset_owner_id_for_open_case, \
     autoset_owner_id_for_subcase
 from corehq.apps.app_manager.xpath import dot_interpolate, CaseIDXPath, session_var, \
-    CaseTypeXpath, ItemListFixtureXpath, ScheduleFixtureInstance, XPath, ProductInstanceXpath
+    CaseTypeXpath, ItemListFixtureXpath, ScheduleFixtureInstance, XPath, ProductInstanceXpath, UserCaseXPath
 from corehq.apps.hqmedia.models import HQMediaMapItem
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base
@@ -738,6 +740,10 @@ class SuiteGenerator(SuiteGeneratorBase):
         'fixtures',
     )
 
+    def __init__(self, app, is_usercase_enabled=None):
+        super(SuiteGenerator, self).__init__(app)
+        self.is_usercase_enabled = is_usercase_enabled
+
     def post_process(self, suite):
         if self.app.enable_post_form_workflow:
             self.add_form_workflow(suite)
@@ -1244,10 +1250,9 @@ class SuiteGenerator(SuiteGeneratorBase):
             if column.format == "enum":
                 template_args[template_field]["enum_keys"] = {}
                 for mapping in column.enum:
-                    key = mapping.key
-                    template_args[template_field]["enum_keys"][key] = \
+                    template_args[template_field]["enum_keys"][mapping.key] = \
                         self.id_strings.detail_column_enum_variable(
-                            module, detail_type, column, key
+                            module, detail_type, column, mapping.key_as_variable
                         )
         # Populate the template
         detail_as_string = self._case_tile_template_string.format(**template_args)
@@ -1490,6 +1495,25 @@ class SuiteGenerator(SuiteGeneratorBase):
             )
         ]
 
+    def get_extra_case_id_datums(self, form):
+        datums = []
+        if form.form_type == 'module_form' and actions_use_usercase(form.active_actions()):
+            if not self.is_usercase_enabled:
+                raise SuiteError('Form uses usercase, but usercase not enabled')
+            case_type = CaseTypeXpath(USERCASE_TYPE).case()
+            case = UserCaseXPath(case_type).case()
+            datums.append({
+                'datum': SessionDatum(id=USERCASE_ID, function=('%s/@case_id' % case)),
+                'case_type': USERCASE_TYPE,
+                'requires_selection': False,
+                'action': None  # action and user case are independent.
+            })
+        return datums
+
+    @staticmethod
+    def any_usercase_datums(datums):
+        return any(d['case_type'] == USERCASE_TYPE for d in datums)
+
     def get_new_case_id_datums_meta(self, form):
         if not form:
             return []
@@ -1572,6 +1596,7 @@ class SuiteGenerator(SuiteGeneratorBase):
             datums.extend(self.get_datum_meta_module(module, use_filter=True))
 
         datums.extend(self.get_new_case_id_datums_meta(form))
+        datums.extend(self.get_extra_case_id_datums(form))
         for datum in datums:
             e.datums.append(datum['datum'])
 

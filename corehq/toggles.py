@@ -325,6 +325,18 @@ VELLUM_ITEMSETS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+VELLUM_HELP_MARKDOWN = StaticToggle(
+    'help_markdown',
+    "Use markdown for the help text in the form builder",
+    [NAMESPACE_DOMAIN]
+)
+
+VELLUM_SAVE_TO_CASE = StaticToggle(
+    'save_to_case',
+    "Adds save to case as a question to the form builder",
+    [NAMESPACE_DOMAIN]
+)
+
 CACHE_AND_INDEX = StaticToggle(
     'cache_and_index',
     'Enable the "Cache and Index" format option when choosing sort properties '
@@ -374,4 +386,16 @@ USE_NEW_TIMEZONE_BEHAVIOR = StaticToggle(
      "(Please do not set manually, "
      "because it has to be accompanied by a migration.)"),
     [NAMESPACE_DOMAIN],
+)
+
+USER_AS_A_CASE = StaticToggle(
+    'user_as_a_case',
+    'Enable "User-As-A-Case" to store user properties in a case and use them in forms',
+    [NAMESPACE_DOMAIN]
+)
+
+STREAM_RESTORE_CACHE = StaticToggle(
+    'stream_cached_restore',
+    'Stream cached restore from couchdb',
+    [NAMESPACE_DOMAIN]
 )

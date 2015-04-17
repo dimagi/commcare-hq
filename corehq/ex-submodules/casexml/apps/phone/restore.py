@@ -10,7 +10,7 @@ from couchdbkit import ResourceConflict, ResourceNotFound
 from casexml.apps.phone.caselogic import BatchedCaseSyncOperation
 from casexml.apps.stock.consumption import compute_consumption_or_default
 from casexml.apps.stock.utils import get_current_ledger_transactions_multi
-from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, FILE_RESTORE
+from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, FILE_RESTORE, STREAM_RESTORE_CACHE
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.exceptions import BadStateException, RestoreException
@@ -32,12 +32,6 @@ from django.conf import settings
 from casexml.apps.phone.checksum import CaseStateHash
 from no_exceptions.exceptions import HttpException
 
-try:
-    from newrelic.agent import add_custom_parameter
-except ImportError:
-    def add_custom_parameter(key, value):
-        pass
-
 logger = logging.getLogger(__name__)
 
 # how long a cached payload sits around for (in seconds).
@@ -50,6 +44,18 @@ INITIAL_SYNC_CACHE_THRESHOLD = 60  # 1 minute
 
 # Max amount of bytes to have in memory when streaming a file
 MAX_BYTES = 10000000  # 10MB
+
+
+def stream_response(payload, is_file=True):
+    try:
+        if is_file:
+            with open(payload, 'r') as f:
+                # Since payload file is all one line, need to read based on bytes
+                return StreamingHttpResponse(iter(lambda: f.read(MAX_BYTES), ''), mimetype="text/xml")
+        else:
+            return StreamingHttpResponse(iter(lambda: payload.read(MAX_BYTES), ''), mimetype="text/xml")
+    except IOError as e:
+        return HttpResponse(e, status=500)
 
 
 class StockSettings(object):
@@ -79,6 +85,7 @@ class RestoreResponse(object):
         self.username = username
         self.items = items
         self.num_items = 0
+        self.finalized = False
 
     def close(self):
         self.response_body.close()
@@ -100,8 +107,17 @@ class RestoreResponse(object):
         for element in iterable:
             self.append(element)
 
-    def compose(self):
+    def finalize(self):
         raise NotImplemented()
+
+    def get_cache_payload(self, full=False):
+        raise NotImplemented()
+
+    def as_string(self):
+        raise NotImplemented()
+
+    def __str__(self):
+        return self.as_string()
 
 
 class FileRestoreResponse(RestoreResponse):
@@ -114,7 +130,6 @@ class FileRestoreResponse(RestoreResponse):
         self.filename = path.join(settings.RESTORE_PAYLOAD_DIR or tempfile.gettempdir(), uuid4().hex)
 
         self.response_body = FileIO(self.get_filename(self.BODY_TAG_SUFFIX), 'w+')
-        self.response = FileIO(self.get_filename(), 'w+')
 
     def get_filename(self, suffix=None):
         return "{filename}{suffix}.{ext}".format(
@@ -138,27 +153,39 @@ class FileRestoreResponse(RestoreResponse):
 
         return response
 
-    def compose(self):
+    def finalize(self):
         """
         Creates the final file with start and ending tag
         """
-        # Add 1 to num_items to account for message element
-        items = self.items_template.format(self.num_items + 1) if self.items else ''
-        self.response.write(self.start_tag_template.format(
-            items=items,
-            username=self.username,
-            nature=ResponseNature.OTA_RESTORE_SUCCESS
-        ))
+        with open(self.get_filename(), 'w') as response:
+            # Add 1 to num_items to account for message element
+            items = self.items_template.format(self.num_items + 1) if self.items else ''
+            response.write(self.start_tag_template.format(
+                items=items,
+                username=self.username,
+                nature=ResponseNature.OTA_RESTORE_SUCCESS
+            ))
 
-        self.response_body.seek(0)
-        shutil.copyfileobj(self.response_body, self.response)
+            self.response_body.seek(0)
+            shutil.copyfileobj(self.response_body, response)
 
-        self.response.write(self.closing_tag)
-        return self.get_filename()
+            response.write(self.closing_tag)
+        
+        self.finalized = True
+        self.close()
 
-    def close(self):
-        self.response_body.close()
-        self.response.close()
+    def get_cache_payload(self, full=False):
+        return {
+            'is_file': True,
+            'data': self.get_filename() if not full else open(self.get_filename(), 'r')
+        }
+
+    def as_string(self):
+        with open(self.get_filename(), 'r') as f:
+            return f.read()
+
+    def get_http_response(self):
+        return stream_response(self.get_filename())
 
 
 class StringRestoreResponse(RestoreResponse):
@@ -166,6 +193,7 @@ class StringRestoreResponse(RestoreResponse):
     def __init__(self, username=None, items=False):
         super(StringRestoreResponse, self).__init__(username, items)
         self.response_body = StringIO()
+        self.response = None
 
     def __add__(self, other):
         if not isinstance(other, StringRestoreResponse):
@@ -178,10 +206,10 @@ class StringRestoreResponse(RestoreResponse):
 
         return response
 
-    def compose(self):
+    def finalize(self):
         # Add 1 to num_items to account for message element
         items = self.items_template.format(self.num_items + 1) if self.items else ''
-        return '{start}{body}{end}'.format(
+        self.response = '{start}{body}{end}'.format(
             start=self.start_tag_template.format(
                 items=items,
                 username=self.username,
@@ -189,9 +217,52 @@ class StringRestoreResponse(RestoreResponse):
             body=self.response_body.getvalue(),
             end=self.closing_tag
         )
+        self.finalized = True
+        self.close()
 
-    def __str__(self):
-        return self.compose()
+    def get_cache_payload(self, full=False):
+        return {
+            'is_file': False,
+            'data': self.response
+        }
+
+    def as_string(self):
+        return self.response
+
+    def get_http_response(self):
+        return HttpResponse(self.response, mimetype="text/xml")
+
+
+class CachedResponse(object):
+    def __init__(self, payload):
+        self.is_file = False
+        self.is_stream = False
+        self.payload = payload
+        if isinstance(payload, dict):
+            self.payload = payload['data']
+            self.is_file = payload['is_file']
+        elif hasattr(payload, 'read'):
+            self.is_stream = True
+
+    def exists(self):
+        return self.payload and (not self.is_file or path.exists(self.payload))
+
+    def as_string(self):
+        if self.is_stream:
+            return self.payload.read()
+        if self.is_file:
+            with open(self.payload, 'r') as f:
+                return f.read()
+        else:
+            return self.payload
+
+    def get_http_response(self):
+        if self.is_stream:
+            return stream_response(self.payload, is_file=False)
+        if self.is_file:
+            return stream_response(self.payload, is_file=True)
+        else:
+            return HttpResponse(self.payload, mimetype="text/xml")
 
 
 def get_stock_payload(domain, stock_settings, case_state_list):
@@ -272,7 +343,7 @@ def get_restore_class(user):
     return restore_class
 
 
-def get_case_payload_batched(domain, stock_settings, version, user, last_synclog, synclog):
+def get_case_payload_batched(domain, stock_settings, version, user, last_synclog, new_synclog):
     response = get_restore_class(user)()
 
     sync_operation = BatchedCaseSyncOperation(user, last_synclog)
@@ -281,12 +352,9 @@ def get_case_payload_batched(domain, stock_settings, version, user, last_synclog
         response.append(element)
 
     sync_state = sync_operation.global_state
-    synclog.cases_on_phone = sync_state.actual_owned_cases
-    synclog.dependent_cases_on_phone = sync_state.actual_extended_cases
-    synclog.save(**get_safe_write_kwargs())
-
-    add_custom_parameter('restore_total_cases', len(sync_state.actual_relevant_cases))
-    add_custom_parameter('restore_synced_cases', len(sync_state.all_synced_cases))
+    new_synclog.cases_on_phone = sync_state.actual_owned_cases
+    new_synclog.dependent_cases_on_phone = sync_state.actual_extended_cases
+    new_synclog.save(**get_safe_write_kwargs())
 
     # commtrack balance sections
     commtrack_elements = get_stock_payload(domain, stock_settings, sync_state.all_synced_cases)
@@ -383,9 +451,9 @@ class RestoreConfig(object):
 
         self.validate()
 
-        cached_payload = self.get_cached_payload()
-        if cached_payload:
-            return cached_payload
+        cached_response = self.get_cached_payload()
+        if cached_response.exists():
+            return cached_response
 
         start_time = datetime.utcnow()
         last_seq = str(get_db().info()["update_seq"])
@@ -417,29 +485,18 @@ class RestoreConfig(object):
             )
             combined_response = response + case_response
             case_response.close()
-            resp = combined_response.compose()
-            combined_response.close()
+            combined_response.finalize()
 
         duration = datetime.utcnow() - start_time
         new_synclog.duration = duration.seconds
         new_synclog.save()
-        add_custom_parameter('restore_response_size', response.num_items)
-        self.set_cached_payload_if_necessary(resp, duration)
-        return resp
+        self.set_cached_payload_if_necessary(combined_response, duration)
+        return combined_response
 
     def get_response(self):
         try:
             payload = self.get_payload()
-            if path.exists(payload):
-                try:
-                    with open(payload, 'r') as f:
-                        # Since payload file is all one line, need to readline based on bytes
-                        return StreamingHttpResponse(iter(lambda: f.readline(MAX_BYTES), ''),
-                                                     mimetype="text/xml")
-                except IOError as e:
-                    return HttpResponse(e, status=500)
-            else:
-                return HttpResponse(payload, mimetype="text/xml")
+            return payload.get_http_response()
         except RestoreException, e:
             logging.exception("%s error during restore submitted by %s: %s" %
                               (type(e).__name__, self.user.username, str(e)))
@@ -458,22 +515,27 @@ class RestoreConfig(object):
 
     def get_cached_payload(self):
         if self.overwrite_cache:
-            return
+            return CachedResponse(None)
 
         if self.sync_log:
-            payload = self.sync_log.get_cached_payload(self.version)
+            stream = STREAM_RESTORE_CACHE.enabled(self.user.domain)
+            payload = self.sync_log.get_cached_payload(self.version, stream=stream)
         else:
             payload = self.cache.get(self._initial_cache_key())
 
-        if payload and payload.endswith(FileRestoreResponse.EXTENSION) and not path.exists(payload):
-            return
-        return payload
+        return CachedResponse(payload)
 
     def set_cached_payload_if_necessary(self, resp, duration):
+        cache_payload = resp.get_cache_payload(bool(self.sync_log))
         if self.sync_log:
             # if there is a sync token, always cache
             try:
-                self.sync_log.set_cached_payload(resp, self.version)
+                data = cache_payload['data']
+                self.sync_log.set_cached_payload(data, self.version)
+                try:
+                    data.close()
+                except AttributeError:
+                    pass
             except ResourceConflict:
                 # if one sync takes a long time and another one updates the sync log
                 # this can fail. in this event, don't fail to respond, since it's just
@@ -482,25 +544,4 @@ class RestoreConfig(object):
         else:
             # on initial sync, only cache if the duration was longer than the threshold
             if self.force_cache or duration > timedelta(seconds=INITIAL_SYNC_CACHE_THRESHOLD):
-                self.cache.set(self._initial_cache_key(), resp, self.cache_timeout)
-
-
-def generate_restore_payload(user, restore_id="", version=V1, state_hash="",
-                             items=False):
-    """
-    Gets an XML payload suitable for OTA restore.
-
-        user:          who the payload is for
-        restore_id:    last sync token for this user
-        version:       the restore API version
-
-        returns: the xml payload of the sync operation
-    """
-    config = RestoreConfig(user, restore_id, version, state_hash, items=items)
-    return config.get_payload()
-
-
-def generate_restore_response(user, restore_id="", version=V1, state_hash="",
-                              items=False):
-    config = RestoreConfig(user, restore_id, version, state_hash, items=items)
-    return config.get_response()
+                self.cache.set(self._initial_cache_key(), cache_payload, self.cache_timeout)

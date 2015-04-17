@@ -88,7 +88,13 @@
         {% endblocktrans %}
     </div>
     {% if request|toggle_enabled:"USER_CONFIGURABLE_REPORTS" %}
-        <a class="btn btn-primary pull-right" href="{% url 'edit_configurable_report' domain report.report_config_id %}">{% trans "Edit Report" %}</a>
+        <a class="btn btn-primary pull-right" href="
+            {% if report.spec.report_meta.created_by_builder %}
+                {% url 'edit_report_in_builder' domain report.report_config_id %}
+            {% else %}
+                {% url 'edit_configurable_report' domain report.report_config_id %}
+            {% endif %}
+        ">{% trans "Edit Report" %}</a>
     {% endif %}
     {{ block.super }}
 {% endblock %}

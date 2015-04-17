@@ -51,30 +51,11 @@ function format_user(username) {
 
 function XFormDataModel(data) {
     var self = this;
-    self.id = ko.observable(data['_id']);
-    self.case_id = ko.observable(data.case_id); //helper populated
-    self.xmlns = ko.observable(data.xmlns);
-    self.domain = ko.observable(data.domain);
-    self.app_id = ko.observable(data.app_id);
+    self.id = ko.observable(data.id);
     self.received_on = ko.observable(format_date(data.received_on));
-
-    if (typeof data.form.meta !== 'undefined') {
-        self.timeStart = ko.observable(format_date(data.form.meta.timeStart));
-        self.timeEnd = ko.observable(format_date(data.form.meta.timeEnd));
-        self.userID = ko.observable(data.form.meta.userID);
-        self.username = ko.observable(format_user(data.form.meta.username));
-        self.deviceID = ko.observable(data.form.meta.deviceID);
-    } else {
-        self.timeStart = ko.observable(null);
-        self.timeEnd = ko.observable(null);
-        self.userID = ko.observable(null);
-        self.username = ko.observable(format_user(null));
-        self.deviceID = ko.observable(null);
-    }
-
-    self.form_type = ko.observable(data.form['#type']);
-    self.form_data = ko.observable(data.form);
-    self.readable_name = ko.observable(data.es_readable_name);
+    self.userID = ko.observable(data.user.id);
+    self.username = ko.observable(format_user(data.user.username));
+    self.readable_name = ko.observable(data.readable_name);
 };
 
 function FormTypeFacetModel(data) {
@@ -111,64 +92,6 @@ function XFormListViewModel() {
 
     var api_url = CASE_DETAILS.xform_api_url;
 
-    self.xform_query = function () {
-        //elastic query based upon case id
-        var id_query = self.xform_id_query();
-        return id_query;
-        //todo once the xform index is updated with embedded case properties
-        //real query to be filled out here below once index is modified
-
-    };
-
-    self.xform_id_query = function () {
-        //hacky query based upon xform_ids due to nested case properties not being indexed in pillowtop at the moment
-
-        var start_num = self.disp_page_index() || 1;
-        var start_range = (start_num - 1) * self.page_size();
-        var end_range = start_range + self.page_size();
-        var xform_ids = CASE_DETAILS.xform_ids;
-
-        if (end_range > xform_ids.length) {
-            end_range = xform_ids.length;
-        }
-        xform_ids.reverse();
-
-        return {
-            "filter": {
-                "ids": {
-                    "values": _.map(_.range(start_range, end_range),
-                                    function(idx) {
-                                        return xform_ids[idx];
-                                    })
-                }
-            },
-            "from": 0,
-            "size": self.page_size(),
-            "sort": [{"received_on": "desc"}]
-        };
-    };
-
-
-    self.stats_query = function () {
-        var q = self.xform_query();
-        q["facets"] = {
-            "received_facets": {
-                "date_histogram": {
-                    "field": "received_on",
-                    "interval": "day"
-                }
-            }, "form_type_facets": {
-                "terms": {
-                    "field": "form.#type"
-                }
-            }
-        }
-        q['size'] = 0;
-        q['from'] = 0;
-        return q;
-    };
-
-
     self.get_xform_data = function(xform_id) {
         //method for getting individual xform via GET
         $.cachedAjax({
@@ -187,121 +110,56 @@ function XFormListViewModel() {
         })
     };
 
-    self.run_es_query = function(query, success_cb) {
-        //generic caller for ES query
-        self.data_loading(true);
-        $.ajax({
-            "type": "POST",
-            "url":  api_url,
-            "data": ko.toJSON(query),
-            "success": function(data) {
-                success_cb(data);
-            }, //end success
-            "error": function(data) {
-                console.log("Error");
-                console.log(data);
-            },
-            "complete": function(data){
-                //{#                        self.is_loading(false);#}
-                self.data_loading(false);
-            }
-        });
-    };
-
-
     self.xform_history_cb = function(data) {
-        //callback for rendering the xforms list
-        //todo until indexing is fixed for nested case blocks
-        //self.total_rows(data['hits']['total']);
         self.total_rows(CASE_DETAILS.xform_ids.length);
         self.calc_page_count();
-        var mapped_xforms = $.map(data['hits']['hits'], function (item) {
-            return new XFormDataModel(item['_source']);
+        var mapped_xforms = $.map(data, function (item) {
+            return new XFormDataModel(item);
         });
         self.xforms(mapped_xforms);
         self.selected_xform_idx(-1);
     };
 
+    self.refresh_forms = function () {
+        self.data_loading(true);
+        var start_num = self.disp_page_index() || 1;
+        var start_range = (start_num - 1) * self.page_size();
+        var end_range = start_range + self.page_size();
+        $.ajax({
+            "type": "GET",
+            "url":  api_url,
+            "data": {
+                'start_range': start_range,
+                'end_range': end_range
+            },
+            "success": function(data) {
+                self.xform_history_cb(data);
+            },
+            "error": function(data) {
+                console.log("Error");
+                console.log(data);
+            },
+            "complete": function(data) {
+                self.data_loading(false);
+            }
+        });
+    };
 
     self.calc_page_count = function() {
         self.page_count(Math.ceil(self.total_rows()/self.page_size()));
     };
 
-    self.stats_data_cb = function(data) {
-        var term_facets_mapped = $.map(data['facets']['form_type_facets']['terms'], function (item) {
-            return new FormTypeFacetModel(item);
-        });
-        self.form_type_facets(term_facets_mapped);
-        var recv_facets_mapped = $.map(data['facets']['received_facets']['entries'], function (item) {
-            return new FormDateHistogram(item);
-        });
-        self.form_recv_facets(recv_facets_mapped);
-
-        nv.addGraph(function () {
-            var chart = nv.models.multiBarChart();
-
-            chart.xAxis
-            .tickFormat(function (d) {
-                return d3.time.format('%x')(new Date(d))
-            });
-
-
-            chart.yAxis.tickFormat(d3.format('.1f'));
-
-            var chart_data = function() {
-                var start_date = new Date(self.form_recv_facets()[0].es_time());
-                var end_date = new Date(self.form_recv_facets()[self.form_recv_facets().length - 1].es_time());
-                var ms_delta = end_date - start_date;
-                var retdata = [];
-
-                for (var i = 0; i < self.form_recv_facets().length; i++) {
-                    var item = self.form_recv_facets()[i];
-                    if (retdata.length == 0) {
-                        retdata.push({ x:item.es_time(), y:item.form_count()});
-                    }
-                    else {
-                        var last_time = retdata[retdata.length - 1].x;
-                        var last_time_dt = new Date(last_time);
-                        var curr_time = new Date(item.es_time());
-                        var d = (curr_time - last_time) / 86400000;
-                        if (d > 1) {
-                            for (var j = 1; j <= d; j++) {
-                                //fill in blank dates
-                                retdata.push({x:last_time+(j*86400000), y: 0});
-                            }
-                        }
-                        retdata.push({x:item.es_time(), y:item.form_count()});
-                    }
-                }
-
-                return {
-                    key: "submissions",
-                    values: retdata
-                }};
-                d3.select('#submit_chart svg')
-                .datum([chart_data()]).transition().duration(500).call(chart);
-
-                nv.utils.windowResize(chart.update);
-
-                return chart;
-        });
-
-
-    };
-
-
     //main function data collection - entry point if you will
-    //self.run_es_query(self.stats_query(), self.stats_data_cb);
-    self.run_es_query(self.xform_query(), self.xform_history_cb);
+    self.refresh_forms();
 
     self.nextPage = function() {
         self.disp_page_index(self.disp_page_index() + 1);
-        self.run_es_query(self.xform_query(), self.xform_history_cb);
+        self.refresh_forms();
     };
 
     self.prevPage = function() {
         self.disp_page_index(self.disp_page_index() - 1);
-        self.run_es_query(self.xform_query(), self.xform_history_cb);
+        self.refresh_forms();
     };
 
     self.clickRow = function(item) {
@@ -341,14 +199,13 @@ function XFormListViewModel() {
         if (disp_index > self.page_count()) {
             self.disp_page_index(self.page_count());
         } else {
-            self.run_es_query(self.xform_query(), self.xform_history_cb);
+            self.refresh_forms();
         }
     });
 
     self.disp_page_index_changed = self.disp_page_index.subscribe(function () {
-        self.run_es_query(self.xform_query(), self.xform_history_cb);
+        self.refresh_forms();
     });
-
 
     self.all_pages = function() {
         return _.range(1, self.page_count()+1);

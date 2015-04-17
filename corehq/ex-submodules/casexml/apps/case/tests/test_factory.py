@@ -66,6 +66,32 @@ class CaseStructureTest(SimpleTestCase):
             list(structure.walk_ids())
         )
 
+    def test_walk_ids_ignore_related(self):
+        case_id = uuid.uuid4().hex
+        parent_case_id = uuid.uuid4().hex
+        grandparent_case_id = uuid.uuid4().hex
+        structure = CaseStructure(
+            case_id=case_id,
+            relationships=[
+                CaseRelationship(CaseStructure(
+                    case_id=parent_case_id,
+                    relationships=[
+                        CaseRelationship(CaseStructure(case_id=grandparent_case_id))
+                    ]))
+            ]
+        )
+        structure.walk_related = False
+        self.assertEqual(
+            [case_id],
+            list(structure.walk_ids())
+        )
+        structure.walk_related = True
+        structure.relationships[0].related_structure.walk_related = False
+        self.assertEqual(
+            [case_id, parent_case_id],
+            list(structure.walk_ids())
+        )
+
 
 class CaseFactoryTest(TestCase):
 
@@ -128,3 +154,14 @@ class CaseFactoryTest(TestCase):
         self.assertEqual(2, len(regular.actions))  # create + update
         self.assertEqual(2, len(parent.actions))  # create + update
         self.assertEqual(3, len(child.actions))  # create + update + index
+
+    def test_no_walk_related(self):
+        factory = CaseFactory()
+        parent = factory.create_case()
+        child_updates = factory.create_or_update_case(
+            CaseStructure(attrs={'create': True}, walk_related=False, relationships=[
+                CaseRelationship(CaseStructure(case_id=parent._id))
+            ]),
+        )
+        self.assertEqual(1, len(child_updates))
+        self.assertEqual(parent._id, child_updates[0].indices[0].referenced_id)

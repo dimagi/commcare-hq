@@ -62,7 +62,12 @@ from corehq.apps.users.util import cc_user_domain
 from corehq.apps.domain.models import cached_property
 from corehq.apps.app_manager import current_builds, app_strings, remote_app
 from corehq.apps.app_manager import suite_xml, commcare_settings
-from corehq.apps.app_manager.util import split_path, save_xform, get_correct_app_class, ParentCasePropertyBuilder
+from corehq.apps.app_manager.util import (
+    split_path,
+    save_xform,
+    get_correct_app_class,
+    ParentCasePropertyBuilder,
+    is_usercase_enabled)
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
@@ -1234,6 +1239,20 @@ class MappingItem(DocumentSchema):
     # lang => localized string
     value = DictProperty()
 
+    @property
+    def key_as_variable(self):
+        """
+        Return an xml variable name to represent this key.
+        If the key has no spaces, return the key with "k" prepended.
+        If the key does contain spaces, return a hash of the key with "h" prepended.
+        The prepended characters prevent the variable name from starting with a
+        numeral, which is illegal.
+        """
+        if " " not in self.key:
+            return 'k{key}'.format(key=self.key)
+        else:
+            return 'h{hash}'.format(hash=hashlib.md5(self.key).hexdigest()[:8])
+
 
 class GraphAnnotations(IndexedSchema):
     display_text = DictProperty()
@@ -1546,8 +1565,8 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
                     key = item.key
                     # key cannot contain certain characters because it is used
                     # to generate an xpath variable name within suite.xml
-                    # todo: I think the space here will break xpath generation
-                    # todo: which relies on 'k{key}' being a valid xpath token
+                    # (names with spaces will be hashed to form the xpath
+                    # variable name)
                     if not re.match('^([\w_ -]*)$', key):
                         yield {
                             'type': 'invalid id key',
@@ -2168,7 +2187,8 @@ class AdvancedModule(ModuleBase):
                 )
 
                 if from_module.parent_select.active:
-                    gen = suite_xml.SuiteGenerator(self.get_app())
+                    app = self.get_app()
+                    gen = suite_xml.SuiteGenerator(app, is_usercase_enabled(app.domain))
                     select_chain = gen.get_select_chain(from_module, include_self=False)
                     for n, link in enumerate(reversed(list(enumerate(select_chain)))):
                         i, module = link
@@ -3304,7 +3324,7 @@ def validate_lang(lang):
 
 def validate_property(property):
     # this regex is also copied in propertyList.ejs
-    if not re.match(r'^[a-zA-Z][\w_-]*(/[a-zA-Z][\w_-]*)*$', property):
+    if not re.match(r'^[a-zA-Z][\w_-]*([/:][a-zA-Z][\w_-]*)*$', property):
         raise ValueError("Invalid Property")
 
 
@@ -3611,7 +3631,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 'langs': ["default"] + self.build_langs
             })
         else:
-            return suite_xml.SuiteGenerator(self).generate_suite()
+            return suite_xml.SuiteGenerator(self, is_usercase_enabled(self.domain)).generate_suite()
 
     def create_media_suite(self):
         return suite_xml.MediaSuiteGenerator(self).generate_suite()

@@ -2,7 +2,6 @@ import json
 import logging
 
 from django.contrib import messages
-from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.http.response import HttpResponseServerError
 from django.shortcuts import render
@@ -30,6 +29,7 @@ from corehq.apps.facilities.models import FacilityRegistry
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.users.forms import MultipleSelectionForm
+from corehq.util import reverse
 from custom.openlmis.tasks import bootstrap_domain_task
 
 from .models import Location, LocationType, SQLLocation
@@ -320,7 +320,7 @@ def archive_location(request, domain, loc_id):
         'success': True,
         'message': _("Location '{location_name}' has successfully been {action}.").format(
             location_name=loc.name,
-            action="archived",
+            action=_("archived"),
         )
     })
 
@@ -339,7 +339,7 @@ def unarchive_location(request, domain, loc_id):
         'success': True,
         'message': _("Location '{location_name}' has successfully been {action}.").format(
             location_name=loc.name,
-            action="unarchived",
+            action=_("unarchived"),
         )
     })
 
@@ -347,6 +347,26 @@ def unarchive_location(request, domain, loc_id):
 class EditLocationView(NewLocationView):
     urlname = 'edit_location'
     page_title = ugettext_noop("Edit Location")
+
+    @property
+    def parent_pages(self):
+        breadcrumbs = [{
+            'title': LocationsListView.page_title,
+            'url': reverse(
+                LocationsListView.urlname,
+                args=[self.domain],
+                params={"selected": self.location._id}
+            )
+        }]
+        if self.location.parent_id:
+            breadcrumbs.append({
+                'title': self.location.parent.name,
+                'url': reverse(
+                    EditLocationView.urlname,
+                    args=[self.domain, self.location.parent_id],
+                )
+            })
+        return breadcrumbs
 
     @property
     def location_id(self):
