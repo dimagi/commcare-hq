@@ -1366,7 +1366,8 @@ class XForm(WrappedNode):
 
         if case_block is not None:
             if case.exists():
-                raise XFormException(_("You cannot use the Case Management UI if you already have a case block in your form."))
+                raise XFormException(_("You cannot use the Case Management UI "
+                                       "if you already have a case block in your form."))
             else:
                 case_parent.append(case_block.elem)
                 if delegation_case_block is not None:
