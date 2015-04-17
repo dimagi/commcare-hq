@@ -34,7 +34,6 @@ from corehq.apps.reports.models import (
 from corehq.elastic import get_es, ES_URLS, stream_es_query
 from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
-from corehq.apps.users.models import WebUser
 import settings
 
 
@@ -82,6 +81,13 @@ def check_es_index():
         notify_exception(None, message='\n'.join(message))
 
 
+def send_delayed_report(report):
+    """
+    Sends a scheduled report, via  celery background task
+    """
+    send_report.delay(report._id)
+
+
 @task
 def send_report(notification_id):
     notification = ReportNotification.get(notification_id)
@@ -111,19 +117,19 @@ def create_metadata_export(download_id, domain, format, filename, datespan=None,
 @periodic_task(run_every=crontab(hour="*", minute="*/30", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def daily_reports():
     for rep in get_scheduled_reports('daily'):
-        send_report.delay(rep._id)
+        send_delayed_report(rep)
 
 
 @periodic_task(run_every=crontab(hour="*", minute="*/30", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def weekly_reports():
     for rep in get_scheduled_reports('weekly'):
-        send_report.delay(rep._id)
+        send_delayed_report(rep)
 
 
 @periodic_task(run_every=crontab(hour="*", minute="*/30", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def monthly_reports():
     for rep in get_scheduled_reports('monthly'):
-        send_report.delay(rep._id)
+        send_delayed_report(rep)
 
 
 @periodic_task(run_every=crontab(hour=[22], minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
