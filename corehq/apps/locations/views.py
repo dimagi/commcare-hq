@@ -29,7 +29,7 @@ from corehq.apps.facilities.models import FacilityRegistry
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.users.forms import MultipleSelectionForm
-from corehq.util import reverse
+from corehq.util import reverse, get_document_or_404
 from custom.openlmis.tasks import bootstrap_domain_task
 
 from .models import Location, LocationType, SQLLocation
@@ -255,14 +255,14 @@ class NewLocationView(BaseLocationView):
             'url': reverse(LocationsListView.urlname, args=[self.domain]),
         }]
 
-    @property
-    def parent_id(self):
-        return self.request.GET.get('parent')
 
     @property
     @memoized
     def location(self):
-        return Location(domain=self.domain, parent=self.parent_id)
+        parent_id = self.request.GET.get('parent')
+        parent = (get_document_or_404(Location, self.domain, parent_id)
+                  if parent_id else None)
+        return Location(domain=self.domain, parent=parent)
 
     @property
     def consumption(self):
