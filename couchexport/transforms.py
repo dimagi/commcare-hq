@@ -1,6 +1,6 @@
-from datetime import datetime
+import datetime
 
-COUCH_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
+COUCH_FORMATS = ['%Y-%m-%dT%H:%M:%SZ', '%Y-%m-%dT%H:%M:%S.%fZ']
 EXCEL_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 
@@ -8,14 +8,21 @@ def identity(val, doc):
     return val
 
 
-def auto_format_datetime(expected_format, output_format, val, doc):
-    if isinstance(val, basestring):
-        try:
-            return datetime.strptime(val, expected_format).strftime(output_format)
-        except ValueError:
-            pass
-    return val
-
-
 def couch_to_excel_datetime(val, doc):
-    return auto_format_datetime(COUCH_FORMAT, EXCEL_FORMAT, val, doc)
+    if isinstance(val, basestring):
+        # todo: subtree merge couchexport into commcare-hq
+        # todo: and replace this with iso_string_to_datetime
+        dt_val = None
+        for fmt in COUCH_FORMATS:
+            try:
+                val = datetime.datetime.strptime(val, fmt)
+            except ValueError:
+                pass
+            else:
+                break
+        if dt_val is not None:
+            try:
+                return dt_val.strftime(EXCEL_FORMAT)
+            except ValueError:
+                pass
+    return val
