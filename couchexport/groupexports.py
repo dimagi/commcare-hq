@@ -1,3 +1,4 @@
+from zipfile import LargeZipFile
 from couchexport.exceptions import SchemaMismatchException, ExportRebuildError
 from couchexport.models import GroupExportConfiguration, SavedBasicExport
 from couchdbkit.exceptions import ResourceNotFound
@@ -5,6 +6,7 @@ from datetime import datetime
 import os
 import json
 from couchexport.tasks import rebuild_schemas
+from dimagi.utils.logging import notify_exception
 
 
 def export_for_group(export_id_or_group, output_dir, last_access_cutoff=None):
@@ -21,6 +23,10 @@ def export_for_group(export_id_or_group, output_dir, last_access_cutoff=None):
             rebuild_export(subconfig, schema, output_dir, last_access_cutoff=last_access_cutoff)
         except ExportRebuildError:
             continue
+        except Exception, e:
+            notify_exception(None, 'Problem building export {} in domain {}: {}'.format(
+                subconfig.index, getattr(config, 'domain', 'unknown'), e
+            ))
 
 
 def rebuild_export(config, schema, output_dir, last_access_cutoff=None):
