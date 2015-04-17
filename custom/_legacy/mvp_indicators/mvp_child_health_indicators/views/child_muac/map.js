@@ -67,8 +67,8 @@ function (doc) {
                     }
                 }
 
-            emit_special(doc, last_muac_date, last_muac_indicators, [doc._id]);
-            emit_special(doc, visit_date, visit_indicators, [doc._id]);
+                emit_special(doc, last_muac_date, last_muac_indicators, [doc._id]);
+                emit_special(doc, visit_date, visit_indicators, [doc._id]);
             }
             //LengthIndicator
             if (age >= 90*MS_IN_DAY && age < 730*MS_IN_DAY && indicators.child_length && indicators.child_length.value) {
