@@ -324,6 +324,10 @@ class Location(CachedCouchDocumentMixin, Document):
     def __hash__(self):
         return hash(self._id)
 
+    # Method return a non save SQLLocation object, because when we want sync location in task, we can have some
+    # problems. For example: we can have location in SQL but without location type.
+    # this behavior causes problems when we want go to locations page - 500 error.
+    # SQLlocation object is saved together with Couch object in save method.
     def _sync_location(self):
         properties_to_sync = [
             ('location_id', '_id'),
@@ -449,13 +453,19 @@ class Location(CachedCouchDocumentMixin, Document):
             )
 
         sql_location = None
-        result = None
+        result = super(Location, self).save(*args, **kwargs)
+
+        # try sync locations and when SQLLocation doesn't returned, removed Couch object from database.
+        # added because when we sync location by tasks we can have behavior that the task can be
+        # killed in _sync_location method and this causes the problems
         try:
             sql_location = self._sync_location()
         finally:
             if sql_location:
-                result = super(Location, self).save(*args, **kwargs)
                 sql_location.save()
+            else:
+                self.delete()
+                result = None
 
         return result
 
