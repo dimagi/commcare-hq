@@ -93,7 +93,7 @@ class FacilityReportData(EWSData):
         ).order_by('-report__date')
 
         for state in stock_states:
-            monthly_consumption = int(state.get_monthly_consumption()) if state.get_monthly_consumption() else 0
+            monthly_consumption = round(state.get_monthly_consumption()) if state.get_monthly_consumption() else 0
             if state.product_id not in state_grouping:
                 state_grouping[state.product_id] = {
                     'commodity': state.sql_product.name,
@@ -166,7 +166,7 @@ class InventoryManagementData(EWSData):
         def calculate_weeks_remaining(state, daily_consumption, date):
             if not daily_consumption:
                 return 0
-            consumption = float(daily_consumption) * 30.0
+            consumption = round(float(daily_consumption) * 30.0)
             quantity = float(state.stock_on_hand) - int((date - state.report.date).days / 7.0) * consumption
             if consumption and consumption > 0 and quantity > 0:
                 return quantity / consumption

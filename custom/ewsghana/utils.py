@@ -242,11 +242,11 @@ class ProductsReportHelper(object):
     def reorders(self):
         reorders = []
         for stockout in list(self.stockouts()) + self.low_supply():
-            monthly_consumption = stockout.get_monthly_consumption()
+            monthly_consumption = round(stockout.get_monthly_consumption())
             if monthly_consumption is None:
                 reorders.append((stockout.sql_product.code, None))
             else:
-                reorders.append((stockout.sql_product.code, int(monthly_consumption * REORDER_LEVEL)))
+                reorders.append((stockout.sql_product.code, round(monthly_consumption * REORDER_LEVEL)))
         return reorders
 
     def _get_facilities_with_stock_category(self, category):
