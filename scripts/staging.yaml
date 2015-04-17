@@ -53,6 +53,7 @@ branches:
   - django1.6 # SK 4/9
   - commcare-supply  # Ethan 4/13
   - new-location  # Ethan 4/14
+  - create-maintenance-alerts # TS 4/17
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
