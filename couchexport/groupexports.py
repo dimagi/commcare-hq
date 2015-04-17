@@ -1,4 +1,3 @@
-from zipfile import LargeZipFile
 from couchexport.exceptions import SchemaMismatchException, ExportRebuildError
 from couchexport.models import GroupExportConfiguration, SavedBasicExport
 from couchdbkit.exceptions import ResourceNotFound
