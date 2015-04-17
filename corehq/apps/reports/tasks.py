@@ -88,7 +88,7 @@ def send_delayed_report(report):
     send_report.delay(report._id)
 
 
-@task
+@task(ignore_result=True)
 def send_report(notification_id):
     notification = ReportNotification.get(notification_id)
     try:
