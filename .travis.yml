@@ -21,7 +21,7 @@ install:
   - "sudo apt-get install moreutils libblas-dev liblapack-dev"
   - "function download-zip() { wget $1 -O temp.zip; unzip temp.zip; rm temp.zip; }"
   - "download-zip https://www.dropbox.com/s/ig7nl3mgu7um6gh/virtualenv.zip?dl=0"
-  - "mv virtualenv ~/virtualenv"
+  - "mv virtualenv/* ~/virtualenv"
   - "source ~/virtualenv/bin/activate"
   - "time (bash -e scripts/uninstall-requirements.sh | ts)"
   # set env variables for couch username/password, used by install.sh, to blank
