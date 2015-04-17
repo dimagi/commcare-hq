@@ -1,7 +1,18 @@
 {% extends "registration/base.html" %}
 {% load i18n %}
+{% load hq_shared_tags %}
 
 {% block title %}New Project Space{% endblock title %}
+
+{% block head %}{{ block.super }}
+    {{ form.media }}
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+    <script type="text/javascript">
+        $("#id_domain_timezone").select2();
+    </script>
+{% endblock %}
 
 {% block step-title %}
     {% if is_new %}
