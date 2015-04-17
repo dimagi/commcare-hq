@@ -938,6 +938,7 @@ def maintenance_alerts(request, template='hqwebapp/maintenance_alerts.html'):
 
 
 @require_POST
+@require_superuser
 def create_alert(request):
     from corehq.apps.hqwebapp.models import MaintenanceAlert
     alert_text = request.POST.get('alert_text')
@@ -946,6 +947,7 @@ def create_alert(request):
 
 
 @require_POST
+@require_superuser
 def activate_alert(request):
     from corehq.apps.hqwebapp.models import MaintenanceAlert
     ma = MaintenanceAlert.objects.get(id=request.POST.get('alert_id'))
@@ -955,6 +957,7 @@ def activate_alert(request):
 
 
 @require_POST
+@require_superuser
 def deactivate_alert(request):
     from corehq.apps.hqwebapp.models import MaintenanceAlert
     ma = MaintenanceAlert.objects.get(id=request.POST.get('alert_id'))
