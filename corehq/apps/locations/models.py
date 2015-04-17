@@ -337,13 +337,12 @@ class Location(CachedCouchDocumentMixin, Document):
             'metadata'
         ]
 
-        sql_location, is_new = SQLLocation.objects.get_or_create(
-            location_id=self._id,
-            defaults={
-                'domain': self.domain,
-                'site_code': self.site_code
-            }
-        )
+        try:
+            is_new = False
+            sql_location = SQLLocation.objects.get(location_id=self._id)
+        except SQLLocation.DoesNotExist:
+            is_new = True
+            sql_location = SQLLocation(domain=self.domain, site_code=self.site_code)
 
         if is_new or (sql_location.location_type.name != self.location_type):
             sql_location.location_type, _ = LocationType.objects.get_or_create(
@@ -370,7 +369,7 @@ class Location(CachedCouchDocumentMixin, Document):
         if parent_id:
             sql_location.parent = SQLLocation.objects.get(location_id=parent_id)
 
-        sql_location.save()
+        return sql_location
 
     @property
     def sql_location(self):
@@ -449,9 +448,14 @@ class Location(CachedCouchDocumentMixin, Document):
                 Location.site_codes_for_domain(self.domain)
             )
 
-        result = super(Location, self).save(*args, **kwargs)
-
-        self._sync_location()
+        sql_location = None
+        result = None
+        try:
+            sql_location = self._sync_location()
+        finally:
+            if sql_location:
+                result = super(Location, self).save(*args, **kwargs)
+                sql_location.save()
 
         return result
 
