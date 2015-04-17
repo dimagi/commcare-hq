@@ -85,7 +85,6 @@ function LocationTypeModel(data, root) {
     var self = this;
     this.pk = data.pk || null;
     this.name = ko.observable(name);
-    this.code = data.code;
 
     var allowed_parents = data.allowed_parents || [];
     $.each(allowed_parents, function(i, e) {

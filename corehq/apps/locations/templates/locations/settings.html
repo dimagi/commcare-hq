@@ -65,6 +65,9 @@
                         <tr>
                             <th>{% trans "Location Type" %}</th>
                             <th>{% trans "Allowed Parent Type" %}</th>
+                            {% if commtrack_enabled %}
+                            <th>{% trans "Tracks Stock" %}</th>
+                            {% endif %}
                             <th>{% trans "Owns Cases" %}</th>
                             <th>
                                 {% trans "View Child Locations" %}
@@ -75,10 +78,6 @@
                                       {% endblocktrans %}">
                                 </span>
                             </th>
-                            {% if commtrack_enabled %}
-                            <th>{% trans "Tracks Stock" %}</th>
-                            <th>{% trans "Code" %}</th>
-                            {% endif %}
                             <th></th>
                         </tr>
                     </thead>
@@ -93,20 +92,17 @@
                             </select>
                             <div class="help-inline" data-bind="text: allowed_parents_error"></div>
                         </td>
+                        {% if commtrack_enabled %}
+                        <td>
+                            <input data-bind="checked: tracks_stock" type="checkbox" />
+                        </td>
+                        {% endif %}
                         <td>
                             <input data-bind="checked: shares_cases" type="checkbox" />
                         </td>
                         <td>
                             <input data-bind="checked: view_descendants" type="checkbox" />
                         </td>
-                        {% if commtrack_enabled %}
-                        <td>
-                            <input data-bind="checked: tracks_stock" type="checkbox" />
-                        </td>
-                        <td>
-                            <code data-bind="text: code" />
-                        </td>
-                        {% endif %}
                         <td>
                             <button type="button" class="btn btn-danger" data-bind="click: $root.remove_loctype">
                                 <i class="icon-trash icon-white"></i> {% trans "Remove" %}
