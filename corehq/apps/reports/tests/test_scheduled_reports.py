@@ -2,6 +2,7 @@ from datetime import datetime
 from django.test import SimpleTestCase, TestCase
 from corehq.apps.reports.models import ReportNotification
 from corehq.apps.reports.scheduled import guess_reporting_minute, get_scheduled_reports
+from corehq.apps.reports.tasks import get_report_queue
 
 
 class GuessReportingMinuteTest(SimpleTestCase):
@@ -142,3 +143,12 @@ class ScheduledReportTest(TestCase):
         ReportNotification(hour=12, minute=None, day=31, interval='monthly').save()
         ReportNotification(hour=12, minute=None, day=32, interval='monthly').save()
         self._check('monthly', datetime(2014, 10, 31, 12, 0), 1)
+
+
+class TestMVPCeleryQueueHack(SimpleTestCase):
+
+    def test_queue_selection_mvp(self):
+        self.assertEqual('background_queue', get_report_queue(ReportNotification(domain='mvp-tiby')))
+
+    def test_queue_selection_normal(self):
+        self.assertEqual('celery', get_report_queue(ReportNotification(domain='not-mvp')))
