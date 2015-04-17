@@ -117,7 +117,7 @@ class SQLLocation(MPTTModel):
     domain = models.CharField(max_length=255, db_index=True)
     name = models.CharField(max_length=100, null=True)
     location_id = models.CharField(max_length=100, db_index=True, unique=True)
-    location_type = models.ForeignKey(LocationType, null=True)
+    location_type = models.ForeignKey(LocationType)
     site_code = models.CharField(max_length=255)
     external_id = models.CharField(max_length=255, null=True)
     metadata = json_field.JSONField(default={})
