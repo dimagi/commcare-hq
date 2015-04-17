@@ -4,6 +4,7 @@ import uuid
 
 from celery.schedules import crontab
 from celery.task import periodic_task
+from corehq.apps.indicators.utils import get_mvp_domains
 from corehq.apps.reports.scheduled import get_scheduled_reports
 from corehq.util.view_utils import absolute_reverse
 from couchexport.files import Temp
@@ -92,8 +93,7 @@ def get_report_queue(report):
     # This is a super-duper hacky, hard coded way to deal with the fact that MVP reports
     # consistently crush the celery queue for everyone else.
     # Just send them to their own longrunning background queue
-    from mvp.models import MVP
-    if report.domain in MVP.DOMAINS:
+    if report.domain in get_mvp_domains():
         return 'background_queue'
     else:
         return 'celery'
