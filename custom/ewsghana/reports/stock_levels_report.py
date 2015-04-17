@@ -370,14 +370,17 @@ class StockLevelsReport(MultiReport):
             Domain.get_by_name(self.domain).location_types
         )]
         if not self.needs_filters and Location.get(config['location_id']).location_type in location_types:
-            return [FacilityReportData(config),
-                    StockLevelsLegend(config),
-                    InputStock(config),
-                    FacilitySMSUsers(config),
-                    FacilityUsers(config),
-                    FacilityInChargeUsers(config),
-                    InventoryManagementData(config),
-                    ProductSelectionPane(config)]
+            if self.is_rendered_as_email:
+                return [FacilityReportData(config)]
+            else:
+                return [FacilityReportData(config),
+                        StockLevelsLegend(config),
+                        InputStock(config),
+                        FacilitySMSUsers(config),
+                        FacilityUsers(config),
+                        FacilityInChargeUsers(config),
+                        InventoryManagementData(config),
+                        ProductSelectionPane(config)]
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
