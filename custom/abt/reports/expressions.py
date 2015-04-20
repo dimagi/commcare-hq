@@ -12,6 +12,7 @@ class AbtSupervisorExpressionSpec(JsonObject):
     def __call__(self, item, context=None):
         return item
 
+
 @ExpressionFactory.register("abt_supervisor")
 def _abt_supervisor_expression(spec, context):
     wrapped = AbtSupervisorExpressionSpec.wrap(spec)

@@ -74,6 +74,7 @@ _property_path_expression = ExpressionFactory.register('property_path')(
     functools.partial(_simple_expression_generator, PropertyPathGetterSpec)
 )
 
+
 @ExpressionFactory.register("conditional")
 def _conditional_expression(spec, context):
     # no way around this since the two factories inherently depend on each other

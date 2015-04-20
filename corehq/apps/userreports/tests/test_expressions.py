@@ -15,7 +15,7 @@ class ExpressionPluginTest(SimpleTestCase):
 
     def test_custom_expression(self):
         """Confirm that plugin framework is being bootstrapped."""
-        expression = ExpressionFactory.from_spec({
+        ExpressionFactory.from_spec({
             "type": "abt_supervisor"
         })
 
