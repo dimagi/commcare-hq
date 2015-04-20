@@ -56,7 +56,7 @@ function LocationSettingsViewModel() {
                     top_level_loc = true;
                 }
             });
-        if (!top_level_loc) {
+        if (this.loc_types().length && !top_level_loc) {
             this.loc_types_error('at least one location type must have "top level" as an allowed parent type');
             valid = false;
         }
