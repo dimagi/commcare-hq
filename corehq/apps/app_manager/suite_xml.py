@@ -1675,7 +1675,7 @@ class SuiteGenerator(SuiteGeneratorBase):
         from corehq.apps.app_manager.models import AUTO_SELECT_USER, AUTO_SELECT_CASE, \
             AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW
         if auto_select.mode == AUTO_SELECT_USER:
-            xpath = session_var(auto_select.value_key, subref='user')
+            xpath = session_var(auto_select.value_key, path='user/data')
             assertions = self.get_auto_select_assertions(xpath, auto_select.mode, [auto_select.value_key])
             return SessionDatum(
                 id=action.case_session_var,
