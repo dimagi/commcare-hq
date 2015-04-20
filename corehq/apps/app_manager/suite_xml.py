@@ -2119,7 +2119,7 @@ class MediaSuiteGenerator(SuiteGeneratorBase):
                 )
 
             yield MediaResource(
-                id=self.id_strings.media_resource(m.unique_id, name),
+                id=self.id_strings.media_resource(install_path, name),
                 path=install_path,
                 version=m.version,
                 descriptor=descriptor,

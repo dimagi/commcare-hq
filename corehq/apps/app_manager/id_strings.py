@@ -1,3 +1,4 @@
+import hashlib
 import re
 
 ROOT = u'root'
@@ -168,8 +169,9 @@ def locale_resource(lang):
     return u'app_{lang}_strings'.format(lang=lang)
 
 
-def media_resource(multimedia_id, name):
-    return u'media-{id}-{name}'.format(id=multimedia_id, name=name)
+def media_resource(media_path, name):
+    return u'media-{id}-{name}'.format(id=hashlib.md5(media_path).hexdigest(),
+                                       name=name)
 
 
 def detail(module, detail_type):
