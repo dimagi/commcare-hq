@@ -42,5 +42,3 @@ def heartbeat():
     """
     write_file_heartbeat()
     write_cache_heartbeat()
-        
-    
