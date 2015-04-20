@@ -1,10 +1,14 @@
-var PaymentMethodHandler = function (errorMessages, submitBtnText, form_id) {
+var PaymentMethodHandler = function (formId, opts) {
     'use strict';
     var self = this;
+    opts = opts ? opts : {};
 
-    self.errorMessages = errorMessages || {};
-    self.submitBtnText = submitBtnText;
-    self.form_id = form_id;
+    self.name = name;
+    self.errorMessages = opts.errorMessages || {};
+    self.submitBtnText = opts.submitBtnText;
+    self.formId = formId;
+    self.isWire = ko.observable(opts.isWire || false);
+    self.wireEmails = ko.observable('');
 
     self.costItem = ko.observable();
     self.hasCostItem = ko.computed(function () {
@@ -37,7 +41,7 @@ var PaymentMethodHandler = function (errorMessages, submitBtnText, form_id) {
         return self.newCard();
     });
     self.hasAgreedToPrivacy = ko.computed(function() {
-        return self.selectedCard() && self.selectedCard().cardFormIsValid();
+        return (self.selectedCard() && self.selectedCard().cardFormIsValid()) || self.isWire();
     });
 
     self.paymentIsComplete = ko.observable(false);
@@ -78,14 +82,16 @@ var PaymentMethodHandler = function (errorMessages, submitBtnText, form_id) {
         self.newCard(new StripeCard());
     };
 
-    self.processPayment = function () {
-        if (self.costItem().isValid()) {
-            self.selectedCard().process(self.submitForm);
+    self.processPayment = function (formEl) {
+        if (self.isWire()) {
+           self.submitForm(formEl);
+        } else if (self.costItem().isValid()) {
+           self.selectedCard().process(function() { self.submitForm(formEl) });
         }
     };
 
     self.submitForm = function () {
-        $('#' + self.form_id).ajaxSubmit({
+        $('#' + self.formId).ajaxSubmit({
             success: function (response) {
                 if (response.success) {
                     self.costItem().reset(response);
@@ -113,7 +119,7 @@ var PaymentMethodHandler = function (errorMessages, submitBtnText, form_id) {
     self.removeSavedCard = function () {
         self.isRemovingCard(true);
         self.showConfirmRemoveCard(false);
-        $('#' + self.form_id).ajaxSubmit({
+        $('#' + self.formId).ajaxSubmit({
             data: {
                 removeCard: true
             },

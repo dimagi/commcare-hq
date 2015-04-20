@@ -406,6 +406,10 @@ def get_subtotal_and_deduction(line_items):
     return subtotal, deduction
 
 
+#class WireInvoiceInterface(GenericTabularReport):
+#    base_template = "accounting/invoice_list.html"
+
+
 class InvoiceInterface(GenericTabularReport):
     base_template = "accounting/invoice_list.html"
     section_name = "Accounting"

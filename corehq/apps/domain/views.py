@@ -14,6 +14,7 @@ from django.views.generic import View
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
+from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
 from corehq.apps.accounting.decorators import (
     require_billing_admin, requires_privilege_with_fallback,
 )
@@ -886,6 +887,10 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                 BulkStripePaymentView.urlname,
                 args=[self.domain],
             ),
+            'process_wire_invoice_url': reverse(
+                WireInvoiceView.urlname,
+                args=[self.domain],
+            ),
             'stripe_cards': self.stripe_cards,
         })
         return pagination_context
@@ -1081,6 +1086,27 @@ class BulkStripePaymentView(BaseStripePaymentView):
         return BulkStripePaymentHandler(
             self.get_or_create_payment_method(), self.domain
         )
+
+
+class WireInvoiceView(View):
+    http_method_names = ['post']
+    urlname = 'domain_wire_invoice'
+
+    @method_decorator(login_and_domain_required)
+    @method_decorator(require_billing_admin())
+    def dispatch(self, request, *args, **kwargs):
+        return super(WireInvoiceView, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        emails = request.POST.get('emails', None)
+        balance = request.POST.get('customPaymentAmount', 0)
+        if emails:
+            emails.split(' ')
+        wire_invoice_factory = DomainWireInvoiceFactory(request.domain, contact_emails=emails)
+
+        wire_invoice = wire_invoice_factory.create_bulk_invoice(balance)
+
+        return json_response({'success': True})
 
 
 class BillingStatementPdfView(View):

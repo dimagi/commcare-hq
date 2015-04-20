@@ -22,7 +22,7 @@ from corehq.apps.domain.views import (
     AddFormRepeaterView, AddOpsUserAsDomainAdminView,
     FeatureFlagsView, EditDhis2SettingsView, TransferDomainView,
     ActivateTransferDomainView, DeactivateTransferDomainView,
-    BulkStripePaymentView)
+    BulkStripePaymentView, WireInvoiceView)
 
 #
 # After much reading, I discovered that Django matches URLs derived from the environment
@@ -119,6 +119,8 @@ domain_settings = patterns(
         name=InvoiceStripePaymentView.urlname),
     url(r'^billing/make_bulk_payment/$', BulkStripePaymentView.as_view(),
         name=BulkStripePaymentView.urlname),
+    url(r'^billing/make_wire_invoice/$', WireInvoiceView.as_view(),
+        name=WireInvoiceView.urlname),
     url(r'^billing/join_billing_admins/$', AddOpsUserAsDomainAdminView.as_view(),
         name=AddOpsUserAsDomainAdminView.urlname),
     url(r'^subscription/$', DomainSubscriptionView.as_view(), name=DomainSubscriptionView.urlname),
