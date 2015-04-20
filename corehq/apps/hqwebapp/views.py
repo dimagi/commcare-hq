@@ -295,6 +295,15 @@ def no_permissions(request, redirect_to=None, template_name="403.html"):
         })))
 
 
+def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
+    t = loader.get_template(template_name)
+    return HttpResponseForbidden(
+        t.render(RequestContext(
+            request,
+            {'MEDIA_URL': settings.MEDIA_URL,
+             'STATIC_URL': settings.STATIC_URL
+             })))
+
 
 def _login(req, domain, template_name):
 
