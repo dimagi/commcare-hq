@@ -41,7 +41,7 @@ class TestScript(TestCase):
             phone_number = command['phone_number']
             v = VerifiedNumber.by_phone(phone_number)
             if command['direction'] == '>':
-                incoming(phone_number, command['text'], v.backend_id, domain_scope=v.domain)
+                incoming(phone_number, unicode(command['text']), v.backend_id, domain_scope=v.domain)
             else:
                 msg = self.get_last_outbound_sms(v.owner_doc_type, v.owner_id)
                 self.assertEqual(msg.text, command['text'])
