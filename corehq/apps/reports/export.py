@@ -103,6 +103,7 @@ class CustomBulkExport(BulkExport):
                 export_object = ExportSchemaClass.get(export_id)
                 export_object.sheet_name = sheet_name
                 if not self.safe_only or export_object.is_safe:
+                    export_object.update_schema()
                     self.export_objects.append(export_object)
 
     def generate_table_headers(self, schemas, checkpoints):
