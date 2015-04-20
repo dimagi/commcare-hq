@@ -41,27 +41,26 @@
             td {
                 border: 1px solid black;
             }
+        {% else %}
+            .firstreport, .inventory_chart {
+                width: 68%;
+                float: left;
+            }
+            .fpr_tables {
+                width: 100%;
+                display: inline-block;
+            }
+
+            .other_reports, .selection_pane {
+                width: 30%;
+                margin-bottom: 20px;
+                float: right;
+            }
+
+            #report_table_legend {
+                margin-top: -20px;
+            }
         {% endif %}
-
-        .firstreport, .inventory_chart {
-            width: 68%;
-            float: left;
-        }
-        .fpr_tables {
-            width: 100%;
-            display: inline-block;
-        }
-
-        .other_reports, .selection_pane {
-            width: 30%;
-            margin-bottom: 20px;
-            float: right;
-        }
-
-        #report_table_legend {
-            margin-top: -20px;
-        }
-
         {% if report.slug == "reporting_page" %}
             .report:nth-of-type(2), .report:nth-of-type(3), .report:last-of-type, .report:nth-last-of-type(2) {
                 display: inline-table !important;
@@ -177,7 +176,7 @@
         {% endif %}
     {% endfor %}
 
-    {% if split %}
+    {% if split and rendered_as != 'email' %}
         <div class="modal hide fade" id="configureInCharge">
             <div class="modal-header">
                 <a class="close" data-dismiss="modal">&times;</a>
