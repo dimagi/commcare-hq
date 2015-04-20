@@ -620,25 +620,25 @@ class MessagingEvent(models.Model):
             METHOD_SMS_SURVEY, METHOD_IVR_SURVEY)
 
         source = {
-            REMINDER_TYPE_ONE_TIME: SOURCE_BROADCAST,
-            REMINDER_TYPE_KEYWORD_INITIATED: SOURCE_KEYWORD,
-            REMINDER_TYPE_DEFAULT: SOURCE_REMINDER,
-        }.get(reminder_definition.reminder_type, SOURCE_OTHER)
+            REMINDER_TYPE_ONE_TIME: cls.SOURCE_BROADCAST,
+            REMINDER_TYPE_KEYWORD_INITIATED: cls.SOURCE_KEYWORD,
+            REMINDER_TYPE_DEFAULT: cls.SOURCE_REMINDER,
+        }.get(reminder_definition.reminder_type, cls.SOURCE_OTHER)
 
         content_type = {
-            METHOD_SMS: CONTENT_SMS,
-            METHOD_SMS_SURVEY: CONTENT_SMS_SURVEY,
-            METHOD_IVR_SURVEY: CONTENT_IVR_SURVEY,
+            METHOD_SMS: cls.CONTENT_SMS,
+            METHOD_SMS_SURVEY: cls.CONTENT_SMS_SURVEY,
+            METHOD_IVR_SURVEY: cls.CONTENT_IVR_SURVEY,
         }.get(reminder_definition.method, '')
 
         if isinstance(recipient, CouchUser):
-            recipient_type = RECIPIENT_USER
+            recipient_type = cls.RECIPIENT_USER
         elif isinstance(recipient, CommCareCase):
-            recipient_type = RECIPIENT_CASE
+            recipient_type = cls.RECIPIENT_CASE
         elif isinstance(recipient, Group):
-            recipient_type = RECIPIENT_USER_GROUP
+            recipient_type = cls.RECIPIENT_USER_GROUP
         elif isinstance(recipient, CommCareCaseGroup):
-            recipient_type = RECIPIENT_CASE_GROUP
+            recipient_type = cls.RECIPIENT_CASE_GROUP
         else:
             recipient_type = None
 
@@ -650,7 +650,7 @@ class MessagingEvent(models.Model):
             form_unique_id=(reminder.current_event.form_unique_id
                 if reminder_definition.method in (METHOD_SMS_SURVEY, METHOD_IVR_SURVEY)
                 else None),
-            status=STATUS_IN_PROGRESS,
+            status=cls.STATUS_IN_PROGRESS,
             recipient_type=recipient_type,
             recipient_id=recipient.get_id if recipient_type else None
         )
