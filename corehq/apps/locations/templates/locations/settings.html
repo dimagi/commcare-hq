@@ -92,10 +92,13 @@
                             <input class="loctype_code" data-bind="value: code" type="text" />
                             <div class="help-inline" data-bind="text: code_error"></div>
                         </td>
-                        <td class="control-group" data-bind="css: { 'error': allowed_parents_error }">
-                            <select data-bind="options: $root.loc_types, optionsText: 'name', optionsValue: 'name', selectedOptions: allowed_parents, optionsCaption: '\u2013top level\u2013'">
+                        <td class="control-group">
+                            <select data-bind="options: $root.loc_types,
+                                               optionsText: 'name',
+                                               optionsValue: 'name',
+                                               value: parent_type,
+                                               optionsCaption: '\u2013top level\u2013'">
                             </select>
-                            <div class="help-inline" data-bind="text: allowed_parents_error"></div>
                         </td>
                         {% if commtrack_enabled %}
                         <td>
