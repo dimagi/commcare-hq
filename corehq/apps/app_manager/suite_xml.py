@@ -29,7 +29,7 @@ from corehq.apps.app_manager.util import split_path, create_temp_sort_column, la
     actions_use_usercase
 from corehq.apps.app_manager.xform import SESSION_CASE_ID, autoset_owner_id_for_open_case, \
     autoset_owner_id_for_subcase
-from corehq.apps.app_manager.xpath import dot_interpolate, CaseIDXPath, session_var, \
+from corehq.apps.app_manager.xpath import interpolate_xpath, CaseIDXPath, session_var, \
     CaseTypeXpath, ItemListFixtureXpath, ScheduleFixtureInstance, XPath, ProductInstanceXpath, UserCaseXPath
 from corehq.apps.hqmedia.models import HQMediaMapItem
 from dimagi.utils.decorators.memoized import memoized
@@ -2009,8 +2009,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 if (self.app.domain and MODULE_FILTER.enabled(self.app.domain) and
                         self.app.enable_module_filtering and
                         getattr(module, 'module_filter', None)):
-                    menu_kwargs['relevant'] = dot_interpolate(module.module_filter,
-                                                              "instance('commcaresession')/session")
+                    menu_kwargs['relevant'] = interpolate_xpath(module.module_filter)
 
                 menu = Menu(**menu_kwargs)
 
@@ -2030,7 +2029,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                                 case = SESSION_CASE_ID.case()
 
                             if case:
-                                command.relevant = dot_interpolate(form.form_filter, case)
+                                command.relevant = interpolate_xpath(form.form_filter, case)
                         yield command
 
                     if hasattr(module, 'case_list') and module.case_list.show:

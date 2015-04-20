@@ -13,6 +13,26 @@ def dot_interpolate(string, replacement):
     return re.sub(pattern, repl, string)
 
 
+def interpolate_xpath(string, case_xpath=None):
+    """
+    Replace xpath shortcuts with full value.
+    """
+    replacements = {
+        '#user': UserCaseXPath().case(),
+        '#session/': session_var('', path=''),
+    }
+    if case_xpath:
+        replacements['#case'] = case_xpath
+
+    for pattern, repl in replacements.items():
+        string = string.replace(pattern, repl)
+
+    if case_xpath:
+        return dot_interpolate(string, case_xpath)
+
+    return string
+
+
 def session_var(var, path=u'data'):
     session = XPath(u"instance('commcaresession')/session")
     if path:
