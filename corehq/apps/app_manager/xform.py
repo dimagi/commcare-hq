@@ -21,7 +21,7 @@ def parse_xml(string):
     try:
         return ET.fromstring(string, parser=ET.XMLParser(encoding="utf-8", remove_comments=True))
     except ET.ParseError, e:
-        raise XFormException(_("Error parsing XML: %s") % str(e))
+        raise XFormException(_(u"Error parsing XML: {}").format(e))
 
 
 namespaces = dict(
@@ -198,7 +198,7 @@ class ItextNodeGroup(object):
 
     def add_node(self, node):
         if self.nodes.get(node.lang):
-            raise XFormException(_("Group already has node for lang: {0}").format(node.lang))
+            raise XFormException(_(u"Group already has node for lang: {0}").format(node.lang))
         else:
             self.nodes[node.lang] = node
 
@@ -671,9 +671,9 @@ class XForm(WrappedNode):
         duplicate_node = self.translations().get(new_code)
 
         if not trans_node or not trans_node.exists():
-            raise XFormException(_("There's no language called '%s'") % old_code)
+            raise XFormException(_(u"There's no language called '{}'").format(old_code))
         if duplicate_node and duplicate_node.exists():
-            raise XFormException(_("There's already a language called '%s'") % new_code)
+            raise XFormException(_(u"There's already a language called '{}'").format(new_code))
         trans_node.attrib['lang'] = new_code
 
         self._reset_translations_cache()
@@ -718,8 +718,8 @@ class XForm(WrappedNode):
         if value_node:
             text = ItextValue.from_node(value_node)
         else:
-            raise XFormException(_('<translation lang="%s"><text id="%s"> node has no <value>') % (
-                lang, id
+            raise XFormException(_(u'<translation lang="{lang}"><text id="{id}"> node has no <value>').format(
+                lang=lang, id=id
             ))
 
         return text
@@ -825,7 +825,7 @@ class XForm(WrappedNode):
                     try:
                         value = item.findtext('{f}value').strip()
                     except AttributeError:
-                        raise XFormException(_("<item> (%r) has no <value>") % translation)
+                        raise XFormException(_(u"<item> ({}) has no <value>").format(translation))
                     option = {
                         'label': translation,
                         'value': value
@@ -946,7 +946,7 @@ class XForm(WrappedNode):
         elif node.tag_name == "repeat":
             path = node.attrib['nodeset']
         else:
-            raise XFormException(_("Node <%s> has no 'ref' or 'bind'") % node.tag_name)
+            raise XFormException(_(u"Node <{}> has no 'ref' or 'bind'").format(node.tag_name))
         return path
     
     def get_leaf_data_nodes(self):
@@ -1124,7 +1124,7 @@ class XForm(WrappedNode):
                     bind_parent.append(bind)
 
         if not case_parent.exists():
-            raise XFormException(_("Couldn't get the case XML from one of your forms. "
+            raise XFormException(_(u"Couldn't get the case XML from one of your forms. "
                              "A common reason for this is if you don't have the "
                              "xforms namespace defined in your form. Please verify "
                              'that the xmlns="http://www.w3.org/2002/xforms" '
