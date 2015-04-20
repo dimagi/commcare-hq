@@ -45,10 +45,10 @@ function LocationSettingsViewModel() {
         var valid = true;
 
         $.each(this.loc_types(), function(i, e) {
-                if (!e.validate()) {
-                    valid = false;
-                }
-            });
+            if (!e.validate()) {
+                valid = false;
+            }
+        });
 
         var top_level_loc = false;
         $.each(this.loc_types(), function(i, e) {
@@ -60,9 +60,36 @@ function LocationSettingsViewModel() {
             this.loc_types_error('at least one location type must have "top level" as an allowed parent type');
             valid = false;
         }
-        // TODO check for cycles
-
+        if (this.has_cycles()) {
+            console.log("Woo, you found a cycle! Now add an error message");
+            valid = false;
+        }
         return valid;
+    };
+
+    this.has_cycles = function() {
+        var loc_type_parents = {};
+        $.each(this.loc_types(), function(i, loc_type) {
+            loc_type_parents[loc_type.name()] = loc_type.parent_type();
+        });
+
+        var already_visited = function(lt, visited) {
+            if (visited.indexOf(lt) !== -1) {
+                return true;
+            } else if (!loc_type_parents[lt]) {
+                return false;
+            } else {
+                visited.push(lt);
+                return already_visited(loc_type_parents[lt], visited);
+            }
+        };
+        for (var i = 0; i < this.loc_types().length; i++) {
+            var visited = [];
+                loc_type = this.loc_types()[i].name();
+            if (already_visited(loc_type, visited)) {
+                return true;
+            }
+        }
     };
 
     this.presubmit = function() {
