@@ -222,7 +222,7 @@ class DomainInvoiceFactory(object):
 
 class DomainWireInvoiceFactory(object):
 
-    def __init__(self, date_start, date_end, domain, contact_emails=None):
+    def __init__(self, domain, date_start=None, date_end=None, contact_emails=None):
         self.date_start = date_start
         self.date_end = date_end
         self.contact_emails = contact_emails
@@ -234,12 +234,17 @@ class DomainWireInvoiceFactory(object):
     def create_wire_invoice(self, balance):
 
         # Gather relevant invoices
-        invoices = Invoice.objects.filter(
-            subscription__subscriber__domain=self.domain,
+        invoices = Invoice.objects.filter( subscription__subscriber__domain=self.domain,
             is_hidden=False,
             date_paid__exact=None,
-            bulk_invoice_id__isnull=True,
         ).order_by('-date_start')
+
+        account = BillingAccount.get_or_create_account_by_domain(
+            self.domain.name,
+            created_by=self.__class__.__name__,
+            created_by_invoicing=True,
+            entry_point=EntryPoint.SELF_STARTED,
+        )[0]
 
         # If no start date supplied, default earliest start date of unpaid invoices
         if self.date_start:
@@ -253,15 +258,22 @@ class DomainWireInvoiceFactory(object):
         else:
             date_end = invoices.aggregate(Max('date_end'))['date_end__max']
 
+        if not date_end:
+            date_end = datetime.datetime.today() # todo check with danny to make sure this is correct (it's probably not)
+
+        date_due = date_end + datetime.timedelta(DEFAULT_DAYS_UNTIL_DUE)
 
         # TODO: figure out how to handle line items?
         # TODO: figure out difference between balance and subtotal for wire invoice
         wire_invoice = WireInvoice.objects.create(
+            domain=self.domain.name,
             date_start=date_start,
             date_end=date_end,
             date_due=date_due,
             balance=balance,
+            account=account
         )
+
         record = WireBillingRecord.generate_record(wire_invoice)
 
         try:

@@ -1099,12 +1099,12 @@ class WireInvoiceView(View):
 
     def post(self, request, *args, **kwargs):
         emails = request.POST.get('emails', None)
-        balance = request.POST.get('customPaymentAmount', 0)
+        balance = Decimal(request.POST.get('customPaymentAmount', 0))
         if emails:
             emails.split(' ')
         wire_invoice_factory = DomainWireInvoiceFactory(request.domain, contact_emails=emails)
 
-        wire_invoice = wire_invoice_factory.create_bulk_invoice(balance)
+        wire_invoice = wire_invoice_factory.create_wire_invoice(balance)
 
         return json_response({'success': True})
 

@@ -151,7 +151,7 @@ def get_address_from_invoice(invoice):
     from corehq.apps.accounting.models import BillingContactInfo
     try:
         contact_info = BillingContactInfo.objects.get(
-            account=invoice.subscription.account,
+            account=invoice.account,
         )
         return Address(
             name=(

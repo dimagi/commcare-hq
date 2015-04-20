@@ -12,10 +12,10 @@
         Stripe.setPublishableKey('{{ stripe_public_key }}');
 
         var bulkPaymentHandler = new PaymentMethodHandler(
-            "bulk-payment-form"
+            "bulk-payment-form",
             {
                 submitBtnText: "{% trans "Submit Payment" %}",
-                errorMessages: {{ payment_error_messages }}
+                errorMessages: {{ payment_error_messages|JSON }}
             }
         );
 
@@ -23,13 +23,13 @@
             "bulk-wire-payment-form",
             {
                 submitBtnText: "{% trans "Submit Invoice Request" %}",
-                isWire: true
+                isWire: true,
                 errorMessages: {{ payment_error_messages|JSON }},
             }
         );
 
         var paymentHandler = new PaymentMethodHandler(
-            "payment-form"
+            "payment-form",
             {
                 submitBtnText: "{% trans "Submit Payment" %}",
                 errorMessages: {{ payment_error_messages|JSON }},
@@ -63,7 +63,7 @@
         });
         $('#bulkWirePaymentBtn').click(function () {
             bulkWirePaymentHandler.costItem(new TotalCostItem({
-                totalBalance: {{ total_balance }}
+                totalBalance: paginatedListModel.totalDue()
             }));
             bulkWirePaymentHandler.reset();
         });

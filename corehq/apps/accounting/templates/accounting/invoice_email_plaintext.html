@@ -1,12 +1,34 @@
 {% load i18n %}
 {% blocktrans %}
 {{ greeting }}
+{% endblocktrans %}
 
+
+{% if plan_name %}
+
+{% blocktrans %}
 Your {{ plan_name }} Billing Statement is now available for {{ month_name }}.
+{% endblocktrans %}
 
+{% else %}
+
+{% blocktrans %}
+Your Bulk Billing Statement is now available for {{ month_name }}.
+{% endblocktrans %}
+
+{% endif %}
+
+
+{% blocktrans %}
 Statement No.: {{ statement_number }}
 Project Space: {{ domain }}
+{% endblocktrans %}
+{% if plan_name %}
+{% blocktrans %}
 Software Plan: {{ plan_name }}
+{% endblocktrans %}
+{% endif %}
+{% blocktrans %}
 Status: {{ payment_status }}
 Amount Due: {{ amount_due }}
 {% endblocktrans %}
@@ -24,23 +46,17 @@ Billing Statements at {{ statements_url }}
 {% endblocktrans %}
 {% endif %}
 
+{% if plan_name %}
 {% blocktrans %}
-To pay this bill, you can either choose a credit card or wire payment:
-    - To pay by credit card, please go to your Billing Statements page, click
-      on the green "Make Payment" button in front of your unpaid invoice(s),
-      and fill in the amount you want to pay as well as your credit card
-      details.
-    - To pay by wire, find Dimagi's bank account details on your invoice.
-      Please include the invoice number in your wire payment and make sure to
-      send an email to {{ accounts_email }} after you have made the payment,
-      mentioning the date of the payment, the amount, the invoice number, and
-      the project space.
+Thank you for using {{ plan_name }}. If you have any questions, please don't hesitate to contact {{ invoicing_contact_email }}.
 {% endblocktrans %}
+{% else %}
+{% blocktrans %}
+Thank you. If you have any questions, please don't hesitate to contact {{ invoicing_contact_email }}.
+{% endblocktrans %}
+{% endif %}
 
 {% blocktrans %}
-Thank you for using {{ plan_name }}. If you have any questions, please don't
-hesitate to contact {{ invoicing_contact_email }}.
-
 Best Regards,
 The CommCare HQ Team
 www.commcarehq.org
@@ -48,5 +64,5 @@ www.commcarehq.org
 
 Statement From:
 CommCare HQ and the corporation Dimagi, Inc.
-585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA
+585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA
 {% endblocktrans %}
