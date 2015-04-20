@@ -2,9 +2,11 @@ import os
 import tempfile
 from wsgiref.util import FileWrapper
 import zipfile
-from django.http import HttpResponse
+from django.http import StreamingHttpResponse
 from django.views.generic import View
 from corehq.util.view_utils import set_file_download
+
+CHUNK_SIZE = 8192
 
 
 def make_zip_tempfile(files, compress=True):
@@ -47,8 +49,7 @@ class DownloadZip(View):
         if errors:
             self.log_errors(errors)
 
-        wrapper = FileWrapper(open(fpath))
-        response = HttpResponse(wrapper, mimetype=self.zip_mimetype)
+        response = StreamingHttpResponse(FileWrapper(open(fpath), CHUNK_SIZE), mimetype=self.zip_mimetype)
         response['Content-Length'] = os.path.getsize(fpath)
         set_file_download(response, self.zip_name)
         return response
