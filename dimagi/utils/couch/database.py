@@ -53,14 +53,12 @@ def get_view_names(database):
 def iter_docs(database, ids, chunksize=100, **query_params):
     for doc_ids in chunked(ids, chunksize):
         for doc in get_docs(database, keys=doc_ids, **query_params):
-            doc_dict = doc.get('doc')
-            if doc_dict:
-                yield doc_dict
+            yield doc
 
 
 def iter_bulk_delete(database, ids, chunksize=100):
     for doc_ids in chunked(ids, chunksize):
-        doc_dicts = [doc.get('doc') for doc in get_docs(database, keys=doc_ids) if doc.get('doc')]
+        doc_dicts = get_docs(database, keys=doc_ids)
         database.bulk_delete(doc_dicts)
 
 

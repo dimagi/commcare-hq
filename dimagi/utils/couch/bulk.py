@@ -90,7 +90,7 @@ def get_docs(db, keys, **query_params):
                       params=query_params)
 
     try:
-        return r.json()['rows']
+        return [row.get('doc') for row in r.json()['rows'] if row.get('doc')]
     except KeyError:
         logging.exception('%r has no key %r' % (r.json(), 'rows'))
         raise
@@ -99,4 +99,4 @@ def get_docs(db, keys, **query_params):
 def wrapped_docs(cls, keys):
     rows = get_docs(cls.get_db(), keys)
     for row in rows:
-        yield cls.wrap(row['doc'])
+        yield cls.wrap(row)
