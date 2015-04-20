@@ -1500,8 +1500,7 @@ class SuiteGenerator(SuiteGeneratorBase):
         if form.form_type == 'module_form' and actions_use_usercase(form.active_actions()):
             if not self.is_usercase_enabled:
                 raise SuiteError('Form uses usercase, but usercase not enabled')
-            case_type = CaseTypeXpath(USERCASE_TYPE).case()
-            case = UserCaseXPath(case_type).case()
+            case = UserCaseXPath().case()
             datums.append({
                 'datum': SessionDatum(id=USERCASE_ID, function=('%s/@case_id' % case)),
                 'case_type': USERCASE_TYPE,

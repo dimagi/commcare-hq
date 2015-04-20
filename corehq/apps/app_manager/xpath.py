@@ -1,4 +1,5 @@
 import re
+from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.exceptions import LocationXpathValidationError
 from django.utils.translation import ugettext as _
 
@@ -115,7 +116,8 @@ class CaseTypeXpath(CaseSelectionXPath):
 
 class UserCaseXPath(XPath):
     def case(self):
-        return CaseTypeXpath(self).select('hq_user_id', session_var(var='userid', data='context'))
+        user_id = session_var(var='userid', data='context')
+        return CaseTypeXpath(USERCASE_TYPE).case().select('hq_user_id', user_id)
 
 
 class CaseXPath(XPath):
