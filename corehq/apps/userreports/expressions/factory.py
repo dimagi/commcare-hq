@@ -7,6 +7,32 @@ from corehq.apps.userreports.expressions.specs import PropertyNameGetterSpec, Pr
     ConditionalExpressionSpec, ConstantGetterSpec, RootDocExpressionSpec, RelatedDocExpressionSpec
 
 
+class ExpressionFactory(object):
+    spec_map = {
+        'constant': _constant_expression,
+        'property_name': _property_name_expression,
+        'property_path': _property_path_expression,
+        'conditional': _conditional_expression,
+        'root_doc': _root_doc_expression,
+        'related_doc': _related_doc_expression,
+    }
+
+    @classmethod
+    def from_spec(cls, spec, context=None):
+        try:
+            return cls.spec_map[spec['type']](spec, context)
+        except KeyError:
+            raise BadSpecError(_('Invalid or missing getter type: {}. Valid options are: {}').format(
+                spec.get('type', '[missing]'),
+                ', '.join(cls.spec_map.keys()),
+            ))
+        except BadValueError as e:
+            raise BadSpecError(_('Problem creating getter: {}. Message is: {}').format(
+                json.dumps(spec, indent=2),
+                str(e),
+            ))
+
+
 def _simple_expression_generator(wrapper_class, spec, context):
     return wrapper_class.wrap(spec)
 
@@ -40,29 +66,3 @@ def _related_doc_expression(spec, context):
         value_expression=ExpressionFactory.from_spec(wrapped.value_expression, context),
     )
     return wrapped
-
-
-class ExpressionFactory(object):
-    spec_map = {
-        'constant': _constant_expression,
-        'property_name': _property_name_expression,
-        'property_path': _property_path_expression,
-        'conditional': _conditional_expression,
-        'root_doc': _root_doc_expression,
-        'related_doc': _related_doc_expression,
-    }
-
-    @classmethod
-    def from_spec(cls, spec, context=None):
-        try:
-            return cls.spec_map[spec['type']](spec, context)
-        except KeyError:
-            raise BadSpecError(_('Invalid or missing getter type: {}. Valid options are: {}').format(
-                spec.get('type', '[missing]'),
-                ', '.join(cls.spec_map.keys()),
-            ))
-        except BadValueError as e:
-            raise BadSpecError(_('Problem creating getter: {}. Message is: {}').format(
-                json.dumps(spec, indent=2),
-                str(e),
-            ))
