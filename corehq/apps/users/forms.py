@@ -421,7 +421,8 @@ class CommtrackUserForm(forms.Form):
         # with multiple locations configured. It is acceptable for now because
         # multi location config is a not really supported special flag for IPM.
         if location_id:
-            user.set_location(Location.get(location_id))
+            if location_id != user.location_id:
+                user.set_location(Location.get(location_id))
         else:
             user.unset_location()
 

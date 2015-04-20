@@ -98,3 +98,5 @@ LOGGING = {
         }
     }
 }
+
+SOUTH_TESTS_MIGRATE = True

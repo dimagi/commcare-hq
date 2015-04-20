@@ -2,7 +2,6 @@ from collections import defaultdict
 import json
 import csv
 import io
-import re
 
 from couchdbkit import ResourceNotFound
 
@@ -79,11 +78,12 @@ class EditCommCareUserView(BaseFullEditUserView):
     @property
     @memoized
     def custom_data(self):
+        is_custom_data_post = self.request.method == "POST" and self.request.POST['form_type'] == "update-user"
         return CustomDataEditor(
             field_view=UserFieldsView,
             domain=self.domain,
             existing_custom_data=self.editable_user.user_data,
-            post_dict=self.request.POST if self.request.method == "POST" else None,
+            post_dict=self.request.POST if is_custom_data_post else None,
         )
 
     @property
@@ -140,6 +140,7 @@ class EditCommCareUserView(BaseFullEditUserView):
     def update_commtrack_form(self):
         if self.request.method == "POST" and self.request.POST['form_type'] == "commtrack":
             return CommtrackUserForm(self.request.POST, domain=self.domain)
+
         # currently only support one location on the UI
         linked_loc = self.editable_user.location
         initial_id = linked_loc._id if linked_loc else None
