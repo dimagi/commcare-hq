@@ -8,14 +8,42 @@ from corehq.apps.userreports.expressions.specs import PropertyNameGetterSpec, Pr
 
 
 class ExpressionFactory(object):
-    spec_map = {
-        'constant': _constant_expression,
-        'property_name': _property_name_expression,
-        'property_path': _property_path_expression,
-        'conditional': _conditional_expression,
-        'root_doc': _root_doc_expression,
-        'related_doc': _related_doc_expression,
-    }
+    spec_map = {}
+    # spec_map is populated by use of the `register` method.
+
+    @classmethod
+    def register(cls, type_name):
+        """
+        Return a decorator function that registers an expression factory function
+        for the given type_name.
+
+        Usage example:
+
+            @ExpressionFactory.register('conditional')
+            def _conditional_expression(spec, context):
+                ...
+
+            my_expression = ExpressionFactory.from_spec({
+                "type": "conditional",
+                ...
+            })
+
+        Don't forget that files containing the registration must be imported
+        for the registration to be executed.
+        Bootstrap custom expressions by importing their modules in
+        `expressions.__init__.py`.
+        """
+        if type_name in cls.spec_map:
+            raise ValueError(
+                "Expression factory function already "
+                "registered for type '{}'!".format(type_name)
+            )
+
+        def register_factory_function(func):
+            cls.spec_map[type_name] = func
+            return func
+
+        return register_factory_function
 
     @classmethod
     def from_spec(cls, spec, context=None):
@@ -36,10 +64,17 @@ class ExpressionFactory(object):
 def _simple_expression_generator(wrapper_class, spec, context):
     return wrapper_class.wrap(spec)
 
-_constant_expression = functools.partial(_simple_expression_generator, ConstantGetterSpec)
-_property_name_expression = functools.partial(_simple_expression_generator, PropertyNameGetterSpec)
-_property_path_expression = functools.partial(_simple_expression_generator, PropertyPathGetterSpec)
+_constant_expression = ExpressionFactory.register('constant')(
+    functools.partial(_simple_expression_generator, ConstantGetterSpec)
+)
+_property_name_expression = ExpressionFactory.register('property_name')(
+    functools.partial(_simple_expression_generator, PropertyNameGetterSpec)
+)
+_property_path_expression = ExpressionFactory.register('property_path')(
+    functools.partial(_simple_expression_generator, PropertyPathGetterSpec)
+)
 
+@ExpressionFactory.register("conditional")
 def _conditional_expression(spec, context):
     # no way around this since the two factories inherently depend on each other
     from corehq.apps.userreports.filters.factory import FilterFactory
@@ -52,12 +87,14 @@ def _conditional_expression(spec, context):
     return wrapped
 
 
+@ExpressionFactory.register("root_doc")
 def _root_doc_expression(spec, context):
     wrapped = RootDocExpressionSpec.wrap(spec)
     wrapped.configure(ExpressionFactory.from_spec(wrapped.expression, context))
     return wrapped
 
 
+@ExpressionFactory.register("related_doc")
 def _related_doc_expression(spec, context):
     wrapped = RelatedDocExpressionSpec.wrap(spec)
     wrapped.configure(
