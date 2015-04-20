@@ -97,6 +97,6 @@ def get_docs(db, keys, **query_params):
 
 
 def wrapped_docs(cls, keys):
-    rows = get_docs(cls.get_db(), keys)
-    for row in rows:
-        yield cls.wrap(row)
+    docs = get_docs(cls.get_db(), keys)
+    for doc in docs:
+        yield cls.wrap(doc)
