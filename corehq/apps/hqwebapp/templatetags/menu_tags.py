@@ -152,7 +152,7 @@ def maintenance_alert():
     try:
         alert = (MaintenanceAlert.objects
                  .filter(active=True)
-                 .order_by('modified'))[0]
+                 .order_by('-modified'))[0]
     except IndexError:
         return ''
     else:
