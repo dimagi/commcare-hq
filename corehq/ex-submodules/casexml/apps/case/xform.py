@@ -1,3 +1,4 @@
+from collections import namedtuple
 import copy
 import logging
 import warnings
@@ -26,13 +27,8 @@ from casexml.apps.case.xml.parser import case_update_from_block
 from dimagi.utils.logging import notify_exception
 
 
-class DirtinessFlag(object):
-    """
-    Lightweight class used to store the dirtyness of a case/owner pair.
-    """
-    def __init__(self, case_id, owner_id):
-        self.case_id = case_id
-        self.owner_id = owner_id
+# Lightweight class used to store the dirtyness of a case/owner pair.
+DirtinessFlag = namedtuple('DirtinessFlag', ['case_id', 'owner_id'])
 
 
 class CaseProcessingResult(object):
