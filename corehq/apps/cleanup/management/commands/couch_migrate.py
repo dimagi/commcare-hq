@@ -61,16 +61,17 @@ def _copy(config):
                 reduce=False,
                 include_docs=False,
             )]
-            for id_group in chunked(ids_of_this_type, 500):
-                docs = get_docs(database, id_group)
+            if ids_of_this_type:
                 new_revs = dict([
                     (row['id'], row['value']['rev'])
                     for row in config.dest_db.view('_all_docs', include_docs=False)
                 ])
-                for doc in docs:
-                    if doc['_id'] in new_revs:
-                        doc['_rev'] = new_revs[doc['_id']]
-                config.dest_db.bulk_save(docs)
+                for id_group in chunked(ids_of_this_type, 500):
+                    docs = get_docs(database, id_group)
+                    for doc in docs:
+                        if doc['_id'] in new_revs:
+                            doc['_rev'] = new_revs[doc['_id']]
+                    config.dest_db.bulk_save(docs)
 
             print 'copied {} {}s from {}'.format(len(ids_of_this_type), doc_type, domain)
     print 'copy docs complete'
