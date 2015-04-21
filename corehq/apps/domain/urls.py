@@ -85,8 +85,9 @@ urlpatterns =\
         url(r'^accounts/password_reset_email/done/$', 'password_reset_done', auth_pages_path('password_reset_done.html'),
             name='password_reset_done'),
 
-        url(r'^accounts/password_reset_confirm/(?P<uidb36>[0-9A-Za-z]+)-(?P<token>.+)/$', 'password_reset_confirm',
-            auth_pages_path('password_reset_confirm.html'), name="confirm_password_reset" ),
+        url(r'^accounts/password_reset_confirm/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>.+)/$',
+            'password_reset_confirm',
+            auth_pages_path('password_reset_confirm.html'), name="password_reset_confirm" ),
         url(r'^accounts/password_reset_confirm/done/$', 'password_reset_complete', auth_pages_path('password_reset_complete.html'),
             name='password_reset_complete')
     )
