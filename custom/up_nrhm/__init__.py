@@ -5,7 +5,6 @@ from custom.up_nrhm.reports.asha_reports import ASHAReports
 CUSTOM_REPORTS = (
     (_('Custom Reports'), (
         ASHAReports,
-        ASHAFunctionalityChecklistReport,
     )),
 )
 

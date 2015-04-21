@@ -11,7 +11,7 @@ from custom.up_nrhm.reports.district_functionality_report import DistrictFunctio
 
 
 def total_rows(report):
-    if not report.report_config.get('sf'):
+    if report.report_config.get('sf') == "sf2":
         return {
             "total_under_facilitator": getattr(report, 'total_under_facilitator', 0),
             "total_with_checklist": getattr(report, 'total_with_checklist', 0)
@@ -19,7 +19,7 @@ def total_rows(report):
     return {}
 
 
-class ASHAReports(GenericTabularReport, DatespanMixin, CustomProjectReport, ProjectReportParametersMixin):
+class ASHAReports(GenericTabularReport, DatespanMixin, CustomProjectReport):
     fields = [SampleFormatFilter, DatespanFilter, DrillDownOptionFilter, ASHAMonthFilter, YearFilter]
     name = "ASHA Reports"
     slug = "asha_reports"
@@ -47,15 +47,16 @@ class ASHAReports(GenericTabularReport, DatespanMixin, CustomProjectReport, Proj
     def report(self):
         config = self.report_config
         if config.get('sf') == 'sf5':
-            return ASHAFunctionalityChecklistReport(self.request, domain=self.domain)
-        elif config.get('sf') == 'sf4':
             return DistrictFunctionalityReport(self.request, domain=self.domain)
-        elif config.get('sf') == 'sf3':
+        elif config.get('sf') == 'sf4':
             return BlockLevelAFReport(self.request, domain=self.domain)
-        elif config.get('sf') == 'sf2':
+        elif config.get('sf') == 'sf3':
             return BlockLevelMonthReport(self.request, domain=self.domain)
-        else:
+        elif config.get('sf') == 'sf2':
             return ASHAFacilitatorsReport(self.request, domain=self.domain)
+        else:
+            return ASHAFunctionalityChecklistReport(self.request, domain=self.domain)
+
 
     @property
     def headers(self):
@@ -65,9 +66,9 @@ class ASHAReports(GenericTabularReport, DatespanMixin, CustomProjectReport, Proj
     def rows(self):
         config = self.report_config
         if not config.get('sf'):
-            rows, self.total_under_facilitator, self.total_with_checklist = self.report.rows
-        elif config.get('sf') == 'sf5':
             rows = self.report.rows
+        elif config.get('sf') == 'sf2':
+            rows, self.total_under_facilitator, self.total_with_checklist = self.report.rows
         else:
             rows = self.report.rows[0]
         return rows
