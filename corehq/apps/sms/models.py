@@ -536,7 +536,20 @@ class PhoneNumber(models.Model):
         return False
 
 
-class MessagingEvent(models.Model):
+class MessagingStatusMixin(object):
+
+    def error(self, error_code):
+        self.status = MessagingEvent.STATUS_ERROR
+        self.error_code = error_code
+        self.save()
+
+    def completed(self):
+        if self.status != MessagingEvent.STATUS_ERROR:
+            self.status = MessagingEvent.STATUS_COMPLETED
+            self.save()
+
+
+class MessagingEvent(models.Model, MessagingStatusMixin):
     """
     Used to track the status of high-level events in the messaging
     framework. Examples of such high-level events include the firing
@@ -590,6 +603,12 @@ class MessagingEvent(models.Model):
     )
 
     ERROR_NO_RECIPIENT = 'NO_RECIPIENT'
+    ERROR_CANNOT_RENDER_MESSAGE = 'CANNOT_RENDER_MESSAGE'
+    ERROR_NO_PHONE_NUMBER = 'NO_PHONE_NUMBER'
+    ERROR_NO_TWO_WAY_PHONE_NUMBER = 'NO_TWO_WAY_PHONE_NUMBER'
+    ERROR_INVALID_CUSTOM_CONTENT_HANDLER = 'INVALID_CUSTOM_CONTENT_HANDLER'
+    ERROR_CANNOT_LOAD_CUSTOM_CONTENT_HANDLER = 'CANNOT_LOAD_CUSTOM_CONTENT_HANDLER'
+    ERROR_CANNOT_FIND_FORM = 'CANNOT_FIND_FORM'
 
     domain = models.CharField(max_length=255, null=False, db_index=True)
     date = models.DateTimeField(null=False, db_index=True)
@@ -605,13 +624,35 @@ class MessagingEvent(models.Model):
     recipient_type = models.CharField(max_length=3, choices=RECIPIENT_CHOICES, null=True, db_index=True)
     recipient_id = models.CharField(max_length=255, null=True, db_index=True)
 
-    def set_error(self, error_code):
-        self.status = STATUS_ERROR
-        self.error_code = error_code
-        self.save()
+    @classmethod
+    def get_recipient_type(cls, recipient):
+        if isinstance(recipient, CouchUser):
+            recipient_type = cls.RECIPIENT_USER
+        elif isinstance(recipient, CommCareCase):
+            recipient_type = cls.RECIPIENT_CASE
+        elif isinstance(recipient, Group):
+            recipient_type = cls.RECIPIENT_USER_GROUP
+        elif isinstance(recipient, CommCareCaseGroup):
+            recipient_type = cls.RECIPIENT_CASE_GROUP
+        else:
+            recipient_type = None
+        return recipient_type
 
-    def create_sub_event(self):
-        pass
+    def create_sub_event(self, reminder_definition, reminder, recipient):
+        from corehq.apps.reminders.models import CASE_CRITERIA
+
+        recipient_type = MessagingEvent.get_recipient_type(recipient)
+        case_id = (reminder.case_id
+            if reminder_definition.start_condition_type == CASE_CRITERIA
+            else None)
+
+        return MessagingSubEvent.objects.create(
+            parent=self,
+            recipient_type=recipient_type,
+            recipient_id=recipient.get_id if recipient_type else None,
+            case_id=case_id,
+            status=MessagingEvent.STATUS_IN_PROGRESS,
+        )
 
     @classmethod
     def create_from_reminder(cls, reminder_definition, reminder, recipient):
@@ -631,16 +672,7 @@ class MessagingEvent(models.Model):
             METHOD_IVR_SURVEY: cls.CONTENT_IVR_SURVEY,
         }.get(reminder_definition.method, '')
 
-        if isinstance(recipient, CouchUser):
-            recipient_type = cls.RECIPIENT_USER
-        elif isinstance(recipient, CommCareCase):
-            recipient_type = cls.RECIPIENT_CASE
-        elif isinstance(recipient, Group):
-            recipient_type = cls.RECIPIENT_USER_GROUP
-        elif isinstance(recipient, CommCareCaseGroup):
-            recipient_type = cls.RECIPIENT_CASE_GROUP
-        else:
-            recipient_type = None
+        recipient_type = cls.get_recipient_type(recipient)
 
         return cls.objects.create(
             domain=reminder_definition.domain,
@@ -656,7 +688,7 @@ class MessagingEvent(models.Model):
         )
 
 
-class MessagingSubEvent(models.Model):
+class MessagingSubEvent(models.Model, MessagingStatusMixin):
     """
     Used to track the status of a MessagingEvent for each of its recipients.
     """

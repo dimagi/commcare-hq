@@ -850,7 +850,7 @@ class CaseReminderHandler(Document):
         elif isinstance(recipient, CommCareCaseGroup):
             recipients = [CommConnectCase.get(case_id) for case_id in recipient.cases]
         else:
-            logged_event.set_error(MessagingEvent.ERROR_NO_RECIPIENT)
+            logged_event.error(MessagingEvent.ERROR_NO_RECIPIENT)
             return True
 
         # Retrieve the corresponding verified number entries for all individual recipients
@@ -873,9 +873,9 @@ class CaseReminderHandler(Document):
         # Call the appropriate event handler
         event_handler = EVENT_HANDLER_MAP.get(self.method)
         last_fired = self.get_now() # Store the timestamp right before firing to ensure continuity in the callback lookups
-        result = event_handler(reminder, self, recipients, verified_numbers)
+        event_handler(reminder, self, recipients, verified_numbers, logged_event)
         reminder.last_fired = last_fired
-        return result
+        return True
 
     @classmethod
     def condition_reached(cls, case, case_property, now):
