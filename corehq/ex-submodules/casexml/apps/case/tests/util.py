@@ -37,6 +37,11 @@ class RestoreCaseBlock(object):
         else:
             return self.xml_element.get('case_id')
 
+    def get_case_name(self):
+        assert self.version == V2, 'get_case_name not yet supported for legacy V1 casexml'
+        # note: there has to be a better way to work with namespaced xpath.... right?!?!
+        return self.xml_element.findtext('{{{0}}}create/{{{0}}}case_name'.format(get_case_xmlns(self.version)))
+
 
 def bootstrap_case_from_xml(test_class, filename, case_id_override=None, domain=None):
     starttime = utcnow_sans_milliseconds()
