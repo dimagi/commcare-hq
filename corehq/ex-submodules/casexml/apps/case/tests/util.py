@@ -28,6 +28,9 @@ class RestoreCaseBlock(object):
         self.xml_element = xml_element
         self.version = version
 
+    def to_string(self):
+        return ElementTree.tostring(self.xml_element)
+
     def get_case_id(self):
         if self.version == V1:
             return self.xml_element.findtext('{{{0}}}case_id'.format(get_case_xmlns(self.version)))
@@ -158,8 +161,8 @@ def check_user_has_case(testcase, user, case_blocks, should_have=True,
                     if line_by_line:
                         check_xml_line_by_line(
                             testcase,
-                            ElementTree.tostring(case_block),
-                            ElementTree.tostring(block)
+                            case_block.to_string(),
+                            block.to_string(),
                         )
                     match = block
                     n += 1
