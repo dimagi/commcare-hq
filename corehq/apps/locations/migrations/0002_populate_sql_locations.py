@@ -26,10 +26,10 @@ def iter_location_join_supply_point(all_location_ids, chunksize=100):
     database = Location.get_db()
     for location_ids in chunked(all_location_ids, chunksize):
         # sync supply point id
-        locations = [row.get('doc')
-                     for row in get_docs(database, keys=location_ids)
-                     if row.get('doc')
-                     and row.get('doc')['domain'] not in EXCLUDE_DOMAINS]
+        locations = [
+            doc for doc in get_docs(database, keys=location_ids)
+            if doc['domain'] not in EXCLUDE_DOMAINS
+        ]
 
         supply_points = SupplyPointCase.view(
             'commtrack/supply_point_by_loc',
