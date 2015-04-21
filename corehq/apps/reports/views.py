@@ -939,8 +939,8 @@ def case_forms(request, domain, case_id):
             'id': form._id,
             'received_on': json_format_datetime(form.received_on),
             'user': {
-                "id": form.metadata.userID,
-                "username": form.metadata.username,
+                "id": form.metadata.userID if form.metadata else '',
+                "username": form.metadata.username if form.metadata else '',
             },
             'readable_name': form.form.get('@name') or _('unknown'),
         }
