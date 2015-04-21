@@ -1225,3 +1225,50 @@ def selenium_test():
         'pass': env.jenkins_password,
         'url': url,
     })
+
+
+# good to package all of transifex into a seperate module
+SOURCE_LANGUAGE = "en"
+
+
+@task
+def build_new_translation_source():
+    # if run repeatedly, will keep adding commits
+    # any way to check, before updating?
+    local("./manage.py makemessages -l {source_lang}".format(source_lang=SOURCE_LANGUAGE))
+    local("git add ./locale/{source_lang}/LC_MESSAGES/django.po".format(source_lang=SOURCE_LANGUAGE))
+    local("git commit -m 'Updated translation resource for source language'")
+
+
+@task
+def push_to_transifex():
+    build_new_translation_source()
+    # need to do some checks, so that we are not overriding transifex remote
+    local("tx push --source")
+
+
+@task
+def fetch_from_transifex(lang):
+    local("tx pull --language={language} -f".format(language=lang))
+
+
+@task
+def fetch_and_commit_translations_for_all_languages():
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    sys.path.append(project_root)
+    import settings
+
+    for lang_code, _ in settings.LANGUAGES:
+        if lang_code == SOURCE_LANGUAGE:
+            continue
+        fetch_from_transifex(lang_code)
+
+    local("./manage.py compilemessages")
+    local("git add locale")
+    local("git commit -m 'updated translations for target languages'")
+
+
+@task
+def sync_translations():
+    push_to_transifex()
+    fetch_and_commit_translations_for_all_languages()
