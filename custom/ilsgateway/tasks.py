@@ -151,7 +151,7 @@ def get_delivery_group_reports(domain, endpoint, facilities, checkpoint, date, l
 
 
 # Temporary for staging
-@task(queue='background_queue')
+@task(queue='background_queue', ignore_result=True)
 def ils_clear_stock_data_task():
     StockTransaction.objects.filter(report__domain='ilsgateway-test-1').delete()
     StockReport.objects.filter(domain='ilsgateway-test-1').delete()
@@ -160,7 +160,7 @@ def ils_clear_stock_data_task():
 
 
 # @periodic_task(run_every=timedelta(days=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
-@task(queue='background_queue')
+@task(queue='background_queue', ignore_result=True)
 def report_run(domain):
     last_successful_run = ReportRun.last_success(domain)
     last_run = ReportRun.last_run(domain)

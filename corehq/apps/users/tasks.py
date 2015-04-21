@@ -28,7 +28,7 @@ def bulk_upload_async(domain, user_specs, group_specs, location_specs):
         'messages': results
     }
 
-@task(rate_limit=2, queue='background_queue')  # limit this to two bulk saves a second so cloudant has time to reindex
+@task(rate_limit=2, queue='background_queue', ignore_result=True)  # limit this to two bulk saves a second so cloudant has time to reindex
 def tag_docs_as_deleted(cls, docs, deletion_id):
     for doc in docs:
         doc['doc_type'] += DELETED_SUFFIX
