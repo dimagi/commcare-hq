@@ -9,7 +9,7 @@ import redis
 from casexml.apps.case.signals import cases_received, case_post_save
 from casexml.apps.phone.models import OwnershipCleanliness
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
-from casexml.apps.case.util import iter_cases
+from casexml.apps.case.util import iter_cases, get_reverse_indexed_cases
 from couchforms.models import XFormInstance
 from casexml.apps.case.exceptions import (
     IllegalCaseId,
@@ -354,7 +354,16 @@ def _get_or_update_cases(xforms, case_db):
             dirtiness_flags.append(DirtinessFlag(case._id, case.owner_id))
         return dirtiness_flags
 
+    def _get_dirtiness_flags_for_child_cases(cases):
+        child_cases = get_reverse_indexed_cases(cases)
+        case_owner_map = dict((case._id, case.owner_id) for case in cases)
+        for child_case in child_cases:
+            for index in child_case.indices:
+                if index.referenced_id in case_owner_map and child_case.owner_id != case_owner_map[index.referenced_id]:
+                    yield DirtinessFlag(child_case._id, child_case.owner_id)
+
     dirtiness_flags = [flag for case in case_db.cache.values() for flag in _validate_indices(case)]
+    dirtiness_flags += list(_get_dirtiness_flags_for_child_cases(touched_cases.values()))
     return CaseProcessingResult(touched_cases.values(), dirtiness_flags)
 
 
