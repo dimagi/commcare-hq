@@ -23,7 +23,7 @@ class ExpressionPluginTest(SimpleTestCase):
 
         ExpressionFactory.register("foo", lambda x: x)
         with self.assertRaises(ValueError):
-            ExpressionFactory.register("foo", lambda x: x*2)
+            ExpressionFactory.register("foo", lambda x: x * 2)
 
 
 class ConstantExpressionTest(SimpleTestCase):

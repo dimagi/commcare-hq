@@ -58,7 +58,7 @@ class ExpressionFactory(object):
     def register(cls, type_name, factory_func):
         """
         Registers an expression factory function for the given type_name.
-        Use this method to add additional expression types to UCR. 
+        Use this method to add additional expression types to UCR.
         """
         if type_name in cls.spec_map:
             raise ValueError(
