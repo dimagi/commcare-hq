@@ -1,11 +1,12 @@
 [
   {
     "display_name": "country", 
+    "transform": {}, 
     "datatype": "string", 
     "type": "expression", 
     "is_primary_key": false, 
-    "transform": {}, 
     "is_nullable": true, 
+    "column_id": "country", 
     "expression": {
       "value_expression": {
         "datatype": null, 
@@ -23,16 +24,16 @@
           "@case_id"
         ]
       }
-    }, 
-    "column_id": "country"
+    }
   }, 
   {
     "display_name": "district", 
+    "transform": {}, 
     "datatype": "string", 
     "type": "expression", 
     "is_primary_key": false, 
-    "transform": {}, 
     "is_nullable": true, 
+    "column_id": "district", 
     "expression": {
       "value_expression": {
         "datatype": null, 
@@ -50,16 +51,16 @@
           "@case_id"
         ]
       }
-    }, 
-    "column_id": "district"
+    }
   }, 
   {
     "display_name": "worker_code", 
+    "transform": {}, 
     "datatype": "string", 
     "type": "expression", 
     "is_primary_key": false, 
-    "transform": {}, 
     "is_nullable": true, 
+    "column_id": "worker_code", 
     "expression": {
       "value_expression": {
         "datatype": null, 
@@ -77,8 +78,7 @@
           "@case_id"
         ]
       }
-    }, 
-    "column_id": "worker_code"
+    }
   }, 
   {
     "display_name": "commune_code", 
@@ -151,7 +151,7 @@
       "form", 
       "date_of_data_collection"
     ], 
-    "datatype": "string", 
+    "datatype": "date", 
     "is_primary_key": false, 
     "column_id": "date_of_data_collection", 
     "is_nullable": true, 
@@ -269,11 +269,12 @@
   }, 
   {
     "display_name": "target_number", 
+    "transform": {}, 
     "datatype": "integer", 
     "type": "expression", 
     "is_primary_key": false, 
-    "transform": {}, 
     "is_nullable": true, 
+    "column_id": "target_number", 
     "expression": {
       "test": {
         "operator": "eq", 
@@ -367,7 +368,6 @@
           }
         }
       }
-    }, 
-    "column_id": "target_number"
+    }
   }
 ]
