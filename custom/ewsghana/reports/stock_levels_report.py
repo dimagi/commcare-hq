@@ -1,5 +1,6 @@
 from collections import OrderedDict
 from datetime import timedelta
+from decimal import Decimal
 from django.core.urlresolvers import reverse
 from django.utils.timesince import timesince
 from math import ceil
@@ -94,6 +95,7 @@ class FacilityReportData(EWSData):
 
         for state in stock_states:
             monthly_consumption = round(state.get_monthly_consumption()) if state.get_monthly_consumption() else 0
+            monthly_consumption = Decimal(monthly_consumption)
             if state.product_id not in state_grouping:
                 state_grouping[state.product_id] = {
                     'commodity': state.sql_product.name,
