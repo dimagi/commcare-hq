@@ -13,7 +13,7 @@ function SavedApp(o, r) {
 
     self.generate_short_url = function(url_type){
         //accepted_url_types = ['short_odk_url', 'short_odk_media_url', 'short_url']
-        url_type = url_type || 'short_odk_url'
+        url_type = url_type || 'short_odk_url';
         var base_url = '/a/' + self.domain() + '/apps/odk/' + self.id() + '/',
             should_generate_url = ((url_type === 'short_odk_url') && self.short_odk_url && !self.short_odk_url()) ||
                                   ((url_type === 'short_odk_media_url') && self.short_odk_media_url && !self.short_odk_media_url()) ||
