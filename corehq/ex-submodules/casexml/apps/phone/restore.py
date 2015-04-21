@@ -1,6 +1,7 @@
 from StringIO import StringIO
 from io import FileIO
 from os import path
+import os
 from uuid import uuid4
 from collections import defaultdict
 import shutil
@@ -31,6 +32,7 @@ from django.http import HttpResponse, StreamingHttpResponse
 from django.conf import settings
 from casexml.apps.phone.checksum import CaseStateHash
 from no_exceptions.exceptions import HttpException
+from wsgiref.util import FileWrapper
 
 logger = logging.getLogger(__name__)
 
@@ -42,18 +44,15 @@ INITIAL_SYNC_CACHE_TIMEOUT = 60 * 60  # 1 hour
 # for rapid iteration on fixtures/cases/etc.
 INITIAL_SYNC_CACHE_THRESHOLD = 60  # 1 minute
 
-# Max amount of bytes to have in memory when streaming a file
-MAX_BYTES = 10000000  # 10MB
-
 
 def stream_response(payload, is_file=True):
     try:
         if is_file:
-            with open(payload, 'r') as f:
-                # Since payload file is all one line, need to read based on bytes
-                return StreamingHttpResponse(iter(lambda: f.read(MAX_BYTES), ''), mimetype="text/xml")
+            response = StreamingHttpResponse(FileWrapper(open(payload, 'r')), mimetype="text/xml")
+            response['Content-Length'] = os.path.getsize(payload)
+            return response
         else:
-            return StreamingHttpResponse(iter(lambda: payload.read(MAX_BYTES), ''), mimetype="text/xml")
+            return StreamingHttpResponse(FileWrapper(payload), mimetype="text/xml")
     except IOError as e:
         return HttpResponse(e, status=500)
 
