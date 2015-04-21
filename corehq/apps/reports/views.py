@@ -1401,7 +1401,7 @@ def form_multimedia_export(request, domain):
         enddate = json_format_date(string_to_datetime(enddate) + timedelta(days=1))
         app_id = request.GET.get("app_id", None)
         export_id = request.GET.get("export_id", None)
-        zip_name = request.GET.get("name", None)
+        zip_name = unidecode(request.GET.get("name", None))
     except (KeyError, ValueError):
         return HttpResponseBadRequest()
 
