@@ -1284,6 +1284,10 @@ ES_XFORM_FULL_INDEX_DOMAINS = [
     'succeed'
 ]
 
+CUSTOM_UCR_EXPRESSIONS = [
+    ('abt_supervisor', 'custom.abt.reports.expressions.abt_supervisor_expression'),
+]
+
 CUSTOM_MODULES = [
     'custom.apps.crs_reports',
     'custom.ilsgateway',
