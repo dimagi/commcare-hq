@@ -8,10 +8,11 @@ import shutil
 import hashlib
 import tempfile
 from couchdbkit import ResourceConflict, ResourceNotFound
-from casexml.apps.phone.caselogic import BatchedCaseSyncOperation
+from casexml.apps.case.models import CommCareCase
+from casexml.apps.phone.caselogic import BatchedCaseSyncOperation, CaseSyncUpdate
 from casexml.apps.stock.consumption import compute_consumption_or_default
 from casexml.apps.stock.utils import get_current_ledger_transactions_multi
-from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, FILE_RESTORE, STREAM_RESTORE_CACHE
+from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, FILE_RESTORE, STREAM_RESTORE_CACHE, ENABLE_LOADTEST_USERS
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.exceptions import BadStateException, RestoreException
@@ -342,13 +343,45 @@ def get_restore_class(user):
     return restore_class
 
 
+def _get_loadtest_factor(domain, user):
+    """
+    Gets the loadtest factor for a domain and user. Is always 1 unless
+    both the toggle is enabled for the domain, and the user has a non-zero,
+    non-null factor set.
+    """
+    if domain and ENABLE_LOADTEST_USERS.enabled(domain.name):
+        return getattr(user, 'loadtest_factor', 1) or 1
+    return 1
+
+
+def _transform_loadtest_update(update, factor):
+    """
+    Returns a new CaseSyncUpdate object (from an existing one) with all the
+    case IDs and names mapped to have the factor appended.
+    """
+    def _map_id(id, count):
+        return '{}-{}'.format(id, count)
+    case = CommCareCase.wrap(update.case._doc)
+    case._id = _map_id(case._id, factor)
+    for index in case.indices:
+        index.referenced_id = _map_id(index.referenced_id)
+    case.name = '{} ({})'.format(case.name, factor)
+    return CaseSyncUpdate(case, update.sync_token, required_updates=update.required_updates)
+
+
 def get_case_payload_batched(domain, stock_settings, version, user, last_synclog, new_synclog):
     response = get_restore_class(user)()
 
     sync_operation = BatchedCaseSyncOperation(user, last_synclog)
+    factor = _get_loadtest_factor(domain, user)
     for update in sync_operation.get_all_case_updates():
-        element = xml.get_case_element(update.case, update.required_updates, version)
-        response.append(element)
+        current_count = 0
+        while current_count < factor:
+            element = xml.get_case_element(update.case, update.required_updates, version)
+            response.append(element)
+            current_count += 1
+            if current_count < factor:
+                update = _transform_loadtest_update(update, current_count)
 
     sync_state = sync_operation.global_state
     new_synclog.cases_on_phone = sync_state.actual_owned_cases
