@@ -2562,6 +2562,17 @@ def odk_media_qr_code(request, domain, app_id):
     qr_code = get_app(domain, app_id).get_odk_qr_code(with_media=True)
     return HttpResponse(qr_code, mimetype="image/png")
 
+
+def short_url(request, domain, app_id):
+    short_url = get_app(domain, app_id).get_short_url()
+    return HttpResponse(short_url)
+
+
+def short_odk_url(request, domain, app_id, with_media=False):
+    short_url = get_app(domain, app_id).get_short_odk_url(with_media=with_media)
+    return HttpResponse(short_url)
+
+
 @safe_download
 def download_odk_profile(request, domain, app_id):
     """

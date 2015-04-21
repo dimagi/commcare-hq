@@ -3244,6 +3244,36 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                                          content_type="image/png")
             return png_data
 
+    def generate_shortened_url(self, url_type):
+        try:
+            if settings.BITLY_LOGIN:
+                long_url = get_url_base() + reverse('corehq.apps.app_manager.views.%s' % url_type, args=[self.domain, self._id])
+                shortened_url = bitly.shorten(long_url)
+            else:
+                shortened_url = None
+        except Exception:
+            logging.exception("Problem creating bitly url for app %s. Do you have network?" % self.get_id)
+        else:
+            return shortened_url
+
+    def get_short_url(self):
+        if not self.short_url:
+            self.short_url = self.generate_shortened_url('download_jad')
+            self.save()
+        return self.short_url
+
+    def get_short_odk_url(self, with_media=False):
+        if with_media:
+            if not self.short_odk_media_url:
+                self.short_odk_media_url = self.generate_shortened_url('download_odk_media_profile')
+                self.save()
+            return self.short_odk_media_url
+        else:
+            if not self.short_odk_url:
+                self.short_odk_url = self.generate_shortened_url('download_odk_profile')
+                self.save()
+            return self.short_odk_url
+
     def fetch_jar(self):
         return self.get_jadjar().fetch_jar()
 
@@ -3263,24 +3293,8 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             # I'm putting this assert here if copy._id is ever None
             # which makes tests error
             assert copy._id
-            if settings.BITLY_LOGIN:
-                copy.short_url = bitly.shorten(
-                    get_url_base() + reverse('corehq.apps.app_manager.views.download_jad', args=[copy.domain, copy._id])
-                )
-                copy.short_odk_url = bitly.shorten(
-                    get_url_base() + reverse('corehq.apps.app_manager.views.download_odk_profile', args=[copy.domain, copy._id])
-                )
-                copy.short_odk_media_url = bitly.shorten(
-                    get_url_base() + reverse('corehq.apps.app_manager.views.download_odk_media_profile', args=[copy.domain, copy._id])
-                )
         except AssertionError:
             raise
-        except Exception:  # URLError, BitlyError
-            # for offline only
-            logging.exception("Problem creating bitly url for app %s. Do you have network?" % self.get_id)
-            copy.short_url = None
-            copy.short_odk_url = None
-            copy.short_odk_media_url = None
 
         copy.build_comment = comment
         copy.comment_from = user_id
