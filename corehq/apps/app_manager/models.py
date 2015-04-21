@@ -3247,7 +3247,8 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     def generate_shortened_url(self, url_type):
         try:
             if settings.BITLY_LOGIN:
-                long_url = get_url_base() + reverse('corehq.apps.app_manager.views.%s' % url_type, args=[self.domain, self._id])
+                view_name = 'corehq.apps.app_manager.views.{}'.format(url_type)
+                long_url = "{}{}".format(get_url_base(), reverse(view_name, args=[self.domain, self._id]))
                 shortened_url = bitly.shorten(long_url)
             else:
                 shortened_url = None
