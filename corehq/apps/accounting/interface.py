@@ -461,7 +461,7 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
     @property
     def rows(self):
         from corehq.apps.accounting.views import (
-            InvoiceSummaryView, ManageBillingAccountView,
+            WireInvoiceSummaryView, ManageBillingAccountView,
         )
         rows = []
         for invoice in self.invoices:
@@ -504,7 +504,7 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
                 "YES" if invoice.is_hidden else "no",
             ])
 
-            invoice_url = reverse(InvoiceSummaryView.urlname, args=(invoice.id,))
+            invoice_url = reverse(WireInvoiceSummaryView.urlname, args=(invoice.id,))
             if not self.is_rendered_as_email:
                 columns.extend([
                     mark_safe(make_anchor_tag(invoice_url, 'Go to Invoice'))
