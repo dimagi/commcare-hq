@@ -12,6 +12,7 @@ from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from django.template.loader import get_template
 from django.template import Context
 from django_countries.countries import COUNTRIES
+from corehq import toggles
 from corehq.apps.domain.forms import EditBillingAccountInfoForm
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import Location
@@ -103,7 +104,7 @@ class BaseUpdateUserForm(forms.Form):
             existing_user.save()
         return is_update_successful
 
-    def initialize_form(self, existing_user=None, **kwargs):
+    def initialize_form(self, domain, existing_user=None):
         if existing_user is None:
             return
 
@@ -230,6 +231,11 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
 
 
 class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
+    loadtest_factor = forms.IntegerField(
+        required=False, min_value=1, max_value=50000,
+        help_text=_(u"Multiply this user's case load by a number for load testing on phones. "
+                    u"Leave blank for normal users."),
+        widget=forms.HiddenInput())
 
     def __init__(self, *args, **kwargs):
         super(UpdateCommCareUserInfoForm, self).__init__(*args, **kwargs)
@@ -244,6 +250,11 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
     def direct_properties(self):
         indirect_props = ['role']
         return [k for k in self.fields.keys() if k not in indirect_props]
+
+    def initialize_form(self, domain, existing_user=None):
+        if toggles.ENABLE_LOADTEST_USERS.enabled(domain):
+            self.fields['loadtest_factor'].widget = forms.TextInput()
+        super(UpdateCommCareUserInfoForm, self).initialize_form(domain, existing_user)
 
 
 class RoleForm(forms.Form):
