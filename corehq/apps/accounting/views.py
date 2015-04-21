@@ -47,6 +47,7 @@ from corehq.apps.accounting.async_handlers import (
     SubscriberFilterAsyncHandler,
     SubscriptionFilterAsyncHandler,
     AccountFilterAsyncHandler,
+    DomainFilterAsyncHandler,
     BillingContactInfoAsyncHandler,
     SoftwarePlanAsyncHandler,
 )
@@ -843,6 +844,7 @@ class AccountingSingleOptionResponseView(View, AsyncHandlerMixin):
         SubscriberFilterAsyncHandler,
         SubscriptionFilterAsyncHandler,
         AccountFilterAsyncHandler,
+        DomainFilterAsyncHandler,
         BillingContactInfoAsyncHandler,
         SoftwarePlanAsyncHandler,
     ]
