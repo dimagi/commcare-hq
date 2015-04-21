@@ -101,7 +101,7 @@ def bulk_export_async(bulk_export_helper, download_id,
         )
 
 
-@task(queue='background_queue')
+@task(queue='background_queue', ignore_result=True)
 def rebuild_export_task(groupexport_id, index, output_dir='couch', last_access_cutoff=None):
     from couchexport.groupexports import rebuild_export
     group_config = GroupExportConfiguration.get(groupexport_id)
