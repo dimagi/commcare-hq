@@ -98,7 +98,7 @@ class FacilityReportData(EWSData):
             if state.product_id not in state_grouping:
                 state_grouping[state.product_id] = {
                     'commodity': state.sql_product.name,
-                    'months_until_stockout': "%.2f" % (state.stock_on_hand / monthly_consumption)
+                    'months_until_stockout': "%.2f" % (float(state.stock_on_hand) / monthly_consumption)
                     if state.stock_on_hand and monthly_consumption else 0,
                     'stockout_duration': '',
                     'stockout_duration_helper': True,
