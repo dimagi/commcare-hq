@@ -257,10 +257,6 @@ class RoleForm(forms.Form):
         self.fields['role'].choices = role_choices
 
 
-class Meta:
-        app_label = 'users'
-
-
 class CommCareAccountForm(forms.Form):
     """
     Form for CommCareAccounts
@@ -276,9 +272,6 @@ class CommCareAccountForm(forms.Form):
     password_2 = forms.CharField(label='Password (reenter)', widget=PasswordInput(), required=True, min_length=1)
     domain = forms.CharField(widget=HiddenInput())
     phone_number = forms.CharField(max_length=80, required=False)
-
-    class Meta:
-        app_label = 'users'
 
     def __init__(self, *args, **kwargs):
         super(forms.Form, self).__init__(*args, **kwargs)
