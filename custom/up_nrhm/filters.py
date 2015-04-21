@@ -33,6 +33,7 @@ class HierarchySqlData(SqlData):
 
 class DrillDownOptionFilter(BaseDrilldownOptionFilter):
     label = ugettext_noop("Hierarchy")
+    template = "common/single_all_drilldown_options.html"
     slug = "hierarchy"
 
     @property
@@ -104,14 +105,15 @@ class DrillDownOptionFilter(BaseDrilldownOptionFilter):
 class SampleFormatFilter(BaseSingleOptionFilter):
     slug = 'sf'
     label = 'Report type'
-    default_text = "ASHA Facilitators"
+    default_text = "Format-1 for ASHA Sanginis"
 
     @property
     def options(self):
         return [
-            ('sf3', 'Block Level-Month wise'),
-            ('sf4', 'Block Level-AF wise'),
-            ('sf5', 'District (Functionality of ASHAs)'),
+            ('sf2', 'Format-2 Consolidation of the Functionality numbers'),
+            ('sf3', 'Format-3 Block Consolidation of the functionality status'),
+            ('sf4', 'Format-4 Block Consolidation of the functionality status'),
+            ('sf5', 'Format-5 Functionality of ASHAs in blocks')
         ]
 
 
