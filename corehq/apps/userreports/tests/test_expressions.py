@@ -20,14 +20,10 @@ class ExpressionPluginTest(SimpleTestCase):
         })
 
     def test_double_registration(self):
-        @ExpressionFactory.register("foo")
-        def foo():
-            pass
 
+        ExpressionFactory.register("foo", lambda x: x)
         with self.assertRaises(ValueError):
-            @ExpressionFactory.register("foo")
-            def double_foo():
-                pass
+            ExpressionFactory.register("foo", lambda x: x*2)
 
 
 class ConstantExpressionTest(SimpleTestCase):

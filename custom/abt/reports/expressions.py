@@ -1,5 +1,4 @@
 from jsonobject import JsonObject
-from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.specs import TypeProperty
 
 
@@ -13,7 +12,6 @@ class AbtSupervisorExpressionSpec(JsonObject):
         return item
 
 
-@ExpressionFactory.register("abt_supervisor")
-def _abt_supervisor_expression(spec, context):
+def abt_supervisor_expression(spec, context):
     wrapped = AbtSupervisorExpressionSpec.wrap(spec)
     return wrapped
