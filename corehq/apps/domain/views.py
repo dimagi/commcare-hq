@@ -52,8 +52,7 @@ from corehq.apps.accounting.models import (
     DefaultProductPlan, SoftwarePlanEdition, BillingAccount,
     BillingAccountType, BillingAccountAdmin,
     Invoice, BillingRecord, InvoicePdf, PaymentMethodType,
-    PaymentMethod,
-    EntryPoint,
+    PaymentMethod, EntryPoint, WireInvoice
 )
 from corehq.apps.accounting.usage import FeatureUsageCalculator
 from corehq.apps.accounting.user_text import get_feature_name, PricingTable, DESC_BY_EDITION
@@ -1131,14 +1130,21 @@ class BillingStatementPdfView(View):
         try:
             invoice = Invoice.objects.get(pk=invoice_pdf.invoice_id)
         except Invoice.DoesNotExist:
-            raise Http404()
-        if invoice.subscription.subscriber.domain != domain:
+            try:
+                invoice = WireInvoice.objects.get(pk=invoice_pdf.invoice_id)
+            except WireInvoice.DoesNotExist:
+                raise Http404()
+        if invoice.get_domain() != domain:
             raise Http404()
 
+        if invoice.is_wire:
+            edition = 'Bulk'
+        else:
+            edition = DESC_BY_EDITION[invoice.subscription.plan_version.plan.edition]['name']
         filename = "%(pdf_id)s_%(domain)s_%(edition)s_%(filename)s" % {
             'pdf_id': invoice_pdf._id,
             'domain': domain,
-            'edition': DESC_BY_EDITION[invoice.subscription.plan_version.plan.edition]['name'],
+            'edition': edition,
             'filename': invoice_pdf.get_filename(invoice),
         }
         try:
