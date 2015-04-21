@@ -230,7 +230,7 @@ def send_subscription_reminder_emails(num_days, exclude_trials=True):
             subscription.send_ending_reminder_email()
 
 
-@task
+@task(ignore_result=True)
 def send_purchase_receipt(payment_record, core_product,
                           template_html, template_plaintext,
                           additional_context):

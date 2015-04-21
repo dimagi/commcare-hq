@@ -17,7 +17,7 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import force_to_datetime
 
 
-@task(queue='background_queue')
+@task(queue='background_queue', ignore_result=True)
 def stock_data_task(domain, endpoint, apis, config, test_facilities=None):
     # checkpoint logic
     start_date = datetime.today()
@@ -86,7 +86,7 @@ def stock_data_task(domain, endpoint, apis, config, test_facilities=None):
     checkpoint.save()
 
 
-@task
+@task(ignore_result=True)
 def sms_users_fix(api):
     endpoint = api.endpoint
     api.set_default_backend()
@@ -94,7 +94,7 @@ def sms_users_fix(api):
                     None, None, 100, 0)
 
 
-@task
+@task(ignore_result=True)
 def fix_groups_in_location_task(domain):
     locations = Location.by_domain(domain=domain)
     for loc in locations:
@@ -105,7 +105,7 @@ def fix_groups_in_location_task(domain):
             loc.save()
 
 
-@task
+@task(ignore_result=True)
 def locations_fix(domain):
     locations = SQLLocation.objects.filter(domain=domain, location_type__in=['country', 'region', 'district'])
     for loc in locations:
@@ -122,7 +122,7 @@ def locations_fix(domain):
             SupplyPointCase.get_or_create_by_location(fake_location)
 
 
-@task
+@task(ignore_result=True)
 def add_products_to_loc(api):
     endpoint = api.endpoint
     synchronization(None, endpoint.get_locations, api.location_sync, None, None, 100, 0,
