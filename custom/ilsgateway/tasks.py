@@ -12,8 +12,10 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import Product
 from custom.ilsgateway.api import ILSGatewayEndpoint, ILSGatewayAPI
 from custom.logistics.commtrack import bootstrap_domain as ils_bootstrap_domain, save_stock_data_checkpoint
-from custom.ilsgateway.models import ILSGatewayConfig, SupplyPointStatus, DeliveryGroupReport, ReportRun
+from custom.ilsgateway.models import ILSGatewayConfig, SupplyPointStatus, DeliveryGroupReport, ReportRun, \
+    GroupSummary, OrganizationSummary, ProductAvailabilityData, Alert, SupplyPointWarehouseRecord
 from custom.ilsgateway.tanzania.warehouse_updater import populate_report_data
+from custom.logistics.models import StockDataCheckpoint
 from custom.logistics.tasks import stock_data_task, sync_stock_transactions
 
 
@@ -150,13 +152,38 @@ def get_delivery_group_reports(domain, endpoint, facilities, checkpoint, date, l
         offset = 0
 
 
-# Temporary for staging
 @task(queue='background_queue')
-def ils_clear_stock_data_task():
-    StockTransaction.objects.filter(report__domain='ilsgateway-test-1').delete()
-    StockReport.objects.filter(domain='ilsgateway-test-1').delete()
-    products = Product.ids_by_domain('ilsgateway-test-1')
+def ils_clear_stock_data_task(domain):
+    assert ILSGatewayConfig.for_domain(domain)
+    locations = SQLLocation.objects.filter(domain=domain)
+    SupplyPointStatus.objects.filter(supply_point__in=locations.values_list('location_id', flat=True)).delete()
+    DeliveryGroupReport.objects.filter(supply_point__in=locations.values_list('location_id', flat=True)).delete()
+    products = Product.ids_by_domain(domain)
     StockState.objects.filter(product_id__in=products).delete()
+    for supply_point in locations.exclude(supply_point_id__is_null=True).values_list('supply_point_id', flat=True):
+        StockTransaction.objects.filter(case_id=supply_point).delete()
+    StockReport.objects.filter(domain=domain).delete()
+    StockDataCheckpoint.objects.filter(domain=domain).delete()
+
+
+@task(queue='background_queue')
+def clear_report_data(domain):
+    locations_ids = SQLLocation.objects.filter(domain=domain).values_list('location_id', flat=True)
+    for location_id in locations_ids:
+        GroupSummary.objects.filter(org_summary__supply_point=location_id).delete()
+
+    for location_id in locations_ids:
+        OrganizationSummary.objects.filter(supply_point=location_id).delete()
+
+    for location_id in locations_ids:
+        ProductAvailabilityData.objects.filter(supply_point=location_id).delete()
+
+    for location_id in locations_ids:
+        Alert.objects.filter(supply_point=location_id).delete()
+
+    for location_id in locations_ids:
+        SupplyPointWarehouseRecord.objects.filter(supply_point=location_id).delete()
+    ReportRun.objects.filter(domain=domain).delete()
 
 
 # @periodic_task(run_every=timedelta(days=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))

@@ -4,6 +4,7 @@ from functools import partial
 import itertools
 from couchdbkit import ResourceNotFound
 from django.db import transaction
+from casexml.apps.stock.const import TRANSACTION_TYPE_LA
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack.models import SupplyPointCase, update_stock_state_for_transaction
 from corehq.apps.locations.models import SQLLocation, Location
@@ -217,6 +218,18 @@ def sync_stock_transactions_for_facility(domain, endpoint, facility, xform, chec
                         section_id=section_id,
                         type='stockonhand',
                         stock_on_hand=Decimal(stocktransaction.ending_balance),
+                        report=report
+                    ))
+                    products_saved.add(sql_product.product_id)
+                elif stocktransaction.report_type.lower() == 'loss or adjustment':
+                    transactions_to_add.append(StockTransaction(
+                        case_id=case._id,
+                        product_id=sql_product.product_id,
+                        sql_product=sql_product,
+                        section_id=section_id,
+                        type=TRANSACTION_TYPE_LA,
+                        stock_on_hand=Decimal(stocktransaction.ending_balance),
+                        quantity=stocktransaction.quantity,
                         report=report
                     ))
                     products_saved.add(sql_product.product_id)

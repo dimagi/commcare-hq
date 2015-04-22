@@ -48,6 +48,9 @@ def _is_valid_status(facility, date, status_type):
     if (not facility.metadata.get('group', None)) and (groups.count() == 0):
         return False
 
+    if status_type == SupplyPointStatusTypes.SUPERVISION_FACILITY:
+        return True
+
     if groups.count() > 0:
         codes = [group.group for group in groups]
     else:
@@ -376,8 +379,7 @@ def process_facility_warehouse_data(facility, start_date, end_date, runner):
         case_id=supply_point_id,
         report__date__gte=start_date,
         report__date__lt=end_date,
-        type='stockonhand'
-    ).order_by('report__date')
+    ).exclude(type='consumption').order_by('report__date')
     process_facility_transactions(location_id, new_trans)
 
     # go through all the possible values in the date ranges
