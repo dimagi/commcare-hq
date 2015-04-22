@@ -1241,19 +1241,23 @@ def new_app(request, domain):
     type = request.POST["type"]
     application_version = request.POST.get('application_version', APP_V1)
     cls = str_to_cls[type]
+    form_args = []
     if cls == Application:
         app = cls.new_app(domain, "Untitled Application", lang=lang, application_version=application_version)
-        app.add_module(Module.new_module("Untitled Module", lang))
-        app.new_form(0, "Untitled Form", lang)
+        module = Module.new_module("Untitled Module", lang)
+        app.add_module(module)
+        form = app.new_form(0, "Untitled Form", lang)
+        form_args = [module.id, form.id]
     else:
         app = cls.new_app(domain, "Untitled Application", lang=lang)
     if request.project.secure_submissions:
         app.secure_submissions = True
     app.save()
     _clear_app_cache(request, domain)
-    app_id = app.id
+    main_args = [request, domain, app.id]
+    main_args.extend(form_args)
 
-    return back_to_main(request, domain, app_id=app_id)
+    return back_to_main(*main_args)
 
 @require_can_edit_apps
 def default_new_app(request, domain):
@@ -1266,13 +1270,14 @@ def default_new_app(request, domain):
         domain, _("Untitled Application"), lang=lang,
         application_version=APP_V2
     )
-    app.add_module(Module.new_module(_("Untitled Module"), lang))
-    app.new_form(0, "Untitled Form", lang)
+    module = Module.new_module(_("Untitled Module"), lang)
+    app.add_module(module)
+    form = app.new_form(0, "Untitled Form", lang)
     if request.project.secure_submissions:
         app.secure_submissions = True
     _clear_app_cache(request, domain)
     app.save()
-    return back_to_main(request, domain, app_id=app.id)
+    return back_to_main(request, domain, app_id=app.id, module_id=module.id, form_id=form.id)
 
 
 @no_conflict_require_POST
