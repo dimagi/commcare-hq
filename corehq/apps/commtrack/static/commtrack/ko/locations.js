@@ -14,7 +14,7 @@ function LocationSettingsViewModel() {
 
     this.json_payload = ko.observable();
 
-    this.loc_types_error = ko.observable();
+    this.loc_types_error = ko.observable(false);
 
     this.load = function(data) {
         this.loc_types($.map(data.loc_types, function(e) {
@@ -39,7 +39,7 @@ function LocationSettingsViewModel() {
     };
 
     this.validate = function() {
-        this.loc_types_error(null);
+        this.loc_types_error(false);
 
         var that = this;
         var valid = true;
@@ -57,11 +57,11 @@ function LocationSettingsViewModel() {
             }
         });
         if (this.loc_types().length && !top_level_loc) {
-            this.loc_types_error('at least one location type must have "top level" as an allowed parent type');
+            this.loc_types_error(true);
             valid = false;
         }
         if (this.has_cycles()) {
-            console.log("Woo, you found a cycle! Now add an error message");
+            this.loc_types_error(true);
             valid = false;
         }
         return valid;
@@ -134,16 +134,16 @@ function LocationTypeModel(data, root) {
     this.shares_cases = ko.observable(data.shares_cases);
     this.view_descendants = ko.observable(data.view_descendants);
 
-    this.name_error = ko.observable();
+    this.name_error = ko.observable(false);
     this.code_error = ko.observable();
 
     this.validate = function() {
-        this.name_error(null);
+        this.name_error(false);
 
         valid = true;
 
         if (!this.name()) {
-            this.name_error('required');
+            this.name_error(false);
             valid = false;
         }
         if (!this.code()) {
