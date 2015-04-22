@@ -120,19 +120,24 @@ class SnapshotApplicationForm(forms.Form):
     user_type = CharField(label=ugettext_noop("User type"), required=False,
         help_text=ugettext_noop("e.g. CHW, ASHA, RA, etc"))
     attribution_notes = CharField(label=ugettext_noop("Attribution notes"), required=False,
-        help_text=ugettext_noop("Enter any special instructions to users here. This will be shown just before users copy your project."), widget=forms.Textarea)
+        help_text=ugettext_noop(
+            "Enter any special instructions to users here. "
+            "This will be shown just before users copy your project."),
+        widget=forms.Textarea)
 
     def __init__(self, *args, **kwargs):
         super(SnapshotApplicationForm, self).__init__(*args, **kwargs)
-        self.fields.keyOrder = [
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.layout = crispy.Layout(
             'publish',
             'name',
             'description',
             'deployment_date',
             'phone_model',
             'user_type',
-            'attribution_notes'
-        ]
+            'attribution_notes',
+        )
 
 
 class SnapshotFixtureForm(forms.Form):
@@ -142,10 +147,12 @@ class SnapshotFixtureForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super(SnapshotFixtureForm, self).__init__(*args, **kwargs)
-        self.fields.keyOrder = [
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.layout = crispy.Layout(
             'publish',
             'description',
-        ]
+        )
 
 
 class SnapshotSettingsForm(forms.Form):
@@ -170,30 +177,57 @@ class SnapshotSettingsForm(forms.Form):
         help_text=ugettext_noop("This will publish reminders along with this project"))
     image = forms.ImageField(label=ugettext_noop("Exchange image"), required=False,
         help_text=ugettext_noop("An optional image to show other users your logo or what your app looks like"))
+    old_image = forms.BooleanField(required=False)
+
     video = CharField(label=ugettext_noop("Youtube Video"), required=False,
         help_text=ugettext_noop("An optional youtube clip to tell users about your app. Please copy and paste a URL to a youtube video"))
     documentation_file = forms.FileField(label=ugettext_noop("Documentation File"), required=False,
         help_text=ugettext_noop("An optional file to tell users more about your app."))
+    old_documentation_file = forms.BooleanField(required=False)
     cda_confirmed = BooleanField(required=False, label=ugettext_noop("Content Distribution Agreement"))
 
     def __init__(self, *args, **kw):
-        self.dom = kw.pop("domain", None)
-        user = kw.pop("user", None)
-        super(SnapshotSettingsForm, self).__init__(*args, **kw)
-        self.fields.keyOrder = [
-            'title',
-            'short_description',
-            'description',
-            'project_type',
-            'image',
-            'video',
-            'share_multimedia',
-            'share_reminders',
-            'license',
-            'cda_confirmed',]
+        from corehq.apps.domain.views import CreateNewExchangeSnapshotView
 
-        if self.dom and toggles.DOCUMENTATION_FILE.enabled(user.username):
-            self.fields.keyOrder.insert(5, 'documentation_file')
+        self.dom = kw.pop("domain", None)
+        super(SnapshotSettingsForm, self).__init__(*args, **kw)
+
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                'Project Description',
+                'title',
+                'short_description',
+                'description',
+                'project_type',
+                'image',
+                crispy.Field(
+                    'old_image',
+                    template='domain/partials/old_snapshot_image.html'
+                )
+            ),
+            crispy.Fieldset(
+                'Documentation',
+                'video',
+                'documentation_file',
+                crispy.Field(
+                    'old_documentation_file',
+                    template='domain/partials/old_snapshot_documentation_file.html'
+                )
+            ),
+            crispy.Fieldset(
+                'Content',
+                'share_multimedia',
+                'share_reminders',
+            ),
+            crispy.Fieldset(
+                'Licensing',
+                'license',
+                'cda_confirmed',
+            ),
+        )
+
 
         self.fields['license'].help_text = \
             render_to_string('domain/partials/license_explanations.html', {
