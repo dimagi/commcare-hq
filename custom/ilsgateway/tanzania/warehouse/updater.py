@@ -11,6 +11,7 @@ from custom.ilsgateway.tanzania.warehouse import const
 from custom.ilsgateway.tanzania.warehouse.alerts import populate_no_primary_alerts, \
     populate_facility_stockout_alerts, create_alert
 from dimagi.utils.chunked import chunked
+from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.dates import get_business_day_of_month, add_months, months_between
 from casexml.apps.stock.models import StockReport, StockTransaction
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, DeliveryGroups, \
@@ -442,12 +443,10 @@ def process_facility_transactions(facility_id, transactions):
 
 
 def get_nested_children(location):
-    children = []
-    if not location.children:
-        return [location]
-    for child in location.children:
-        children.extend(get_nested_children(child))
-    return children
+    child_ids = location.sql_location.get_descendants().filter(
+        children__isnull=True
+    ).values_list('location_id', flat=True)
+    return [Location.wrap(doc) for doc in get_docs(Location.get_db(), child_ids)]
 
 
 @task(queue='background_queue')
