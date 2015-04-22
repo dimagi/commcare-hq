@@ -14,7 +14,7 @@ from custom.ilsgateway.api import ILSGatewayEndpoint, ILSGatewayAPI
 from custom.logistics.commtrack import bootstrap_domain as ils_bootstrap_domain, save_stock_data_checkpoint
 from custom.ilsgateway.models import ILSGatewayConfig, SupplyPointStatus, DeliveryGroupReport, ReportRun, \
     GroupSummary, OrganizationSummary, ProductAvailabilityData, Alert, SupplyPointWarehouseRecord
-from custom.ilsgateway.tanzania.warehouse_updater import populate_report_data
+from custom.ilsgateway.tanzania.warehouse.updater import populate_report_data
 from custom.logistics.models import StockDataCheckpoint
 from custom.logistics.tasks import stock_data_task, sync_stock_transactions
 

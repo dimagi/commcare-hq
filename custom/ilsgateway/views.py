@@ -26,7 +26,7 @@ from custom.ilsgateway.tanzania.reminders.delivery import send_delivery_reminder
 from custom.ilsgateway.tanzania.reminders.randr import send_ror_reminder
 from custom.ilsgateway.tanzania.reminders.stockonhand import send_soh_reminder
 from custom.ilsgateway.tanzania.reminders.supervision import send_supervision_reminder
-from custom.ilsgateway.tanzania.warehouse_updater import TEST_REGION_ID
+from custom.ilsgateway.tanzania.warehouse.updater import TEST_REGION_ID
 
 from custom.ilsgateway.tasks import get_ilsgateway_data_migrations, clear_report_data
 from casexml.apps.stock.models import StockTransaction
