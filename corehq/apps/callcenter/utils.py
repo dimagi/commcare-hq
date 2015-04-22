@@ -1,13 +1,26 @@
 from __future__ import absolute_import
+from collections import namedtuple
+from datetime import datetime, timedelta
+import pytz
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 import uuid
 from xml.etree import ElementTree
 from corehq.apps.app_manager.const import USERCASE_TYPE
+from corehq.apps.es.domains import DomainES
+from corehq.apps.es import filters
 from corehq.apps.hqcase.utils import submit_case_blocks, get_case_by_domain_hq_user_id
 from couchdbkit.exceptions import MultipleResultsFound
-from corehq.elastic import es_query
+from corehq.util.timezones.conversions import UserTime
 from dimagi.utils.couch import CriticalSection
+
+
+class DomainLite(namedtuple('DomainLite', 'name default_timezone cc_case_type')):
+    @property
+    def midnight(self):
+        tz = pytz.timezone(self.default_timezone)
+        midnight = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        return UserTime(midnight, tz).server_time().done()
 
 
 def sync_user_case(commcare_user, case_type, owner_id, copy_user_data=True):
@@ -111,11 +124,20 @@ def sync_usercase(user):
 
 
 def get_call_center_domains():
-    q = {'fields': ['name']}
-    result = es_query(params={
-        'internal.using_call_center': True,
-        'is_active': True,
-        'is_snapshot': False
-    }, q=q)
-    hits = result.get('hits', {}).get('hits', {})
-    return [hit['fields']['name'] for hit in hits]
+    result = (
+        DomainES()
+            .is_active()
+            .is_snapshot(False)
+            .filter(filters.term('call_center_config.enabled', True))
+            .fields(['name', 'default_timezone', 'call_center_config.case_type'])
+            .run()
+    )
+
+    def to_domain_lite(hit):
+        return DomainLite(
+            name=hit['name'],
+            default_timezone=hit['default_timezone'],
+            cc_case_type=hit.get('call_center_config.case_type', '')
+        )
+    return [to_domain_lite(hit) for hit in result.hits]
+
