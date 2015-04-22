@@ -1324,6 +1324,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     domain = StringProperty()
     registering_device_id = StringProperty()
+    # used by loadtesting framework - should typically be empty
+    loadtest_factor = IntegerProperty()
 
     @classmethod
     def wrap(cls, data):
@@ -1520,6 +1522,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             date_joined=self.date_joined,
             user_data=self.user_data,
             domain=self.domain,
+            loadtest_factor=self.loadtest_factor,
         )
 
         def get_owner_ids():

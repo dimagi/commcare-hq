@@ -939,8 +939,8 @@ def case_forms(request, domain, case_id):
             'id': form._id,
             'received_on': json_format_datetime(form.received_on),
             'user': {
-                "id": form.metadata.userID,
-                "username": form.metadata.username,
+                "id": form.metadata.userID if form.metadata else '',
+                "username": form.metadata.username if form.metadata else '',
             },
             'readable_name': form.form.get('@name') or _('unknown'),
         }
@@ -1401,7 +1401,7 @@ def form_multimedia_export(request, domain):
         enddate = json_format_date(string_to_datetime(enddate) + timedelta(days=1))
         app_id = request.GET.get("app_id", None)
         export_id = request.GET.get("export_id", None)
-        zip_name = request.GET.get("name", None)
+        zip_name = unidecode(request.GET.get("name", None))
     except (KeyError, ValueError):
         return HttpResponseBadRequest()
 

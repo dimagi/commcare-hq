@@ -187,7 +187,7 @@ def clear_report_data(domain):
 
 
 # @periodic_task(run_every=timedelta(days=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
-@task(queue='background_queue')
+@task(queue='background_queue', ignore_result=True)
 def report_run(domain):
     last_successful_run = ReportRun.last_success(domain)
     last_run = ReportRun.last_run(domain)

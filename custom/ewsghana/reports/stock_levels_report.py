@@ -94,17 +94,18 @@ class FacilityReportData(EWSData):
 
         for state in stock_states:
             monthly_consumption = round(state.get_monthly_consumption()) if state.get_monthly_consumption() else 0
+            max_level = round(monthly_consumption * float(loc.location_type.overstock_threshold))
             if state.product_id not in state_grouping:
                 state_grouping[state.product_id] = {
                     'commodity': state.sql_product.name,
-                    'months_until_stockout': "%.2f" % (state.stock_on_hand / monthly_consumption)
+                    'months_until_stockout': "%.2f" % (float(state.stock_on_hand) / monthly_consumption)
                     if state.stock_on_hand and monthly_consumption else 0,
                     'stockout_duration': '',
                     'stockout_duration_helper': True,
                     'current_stock': state.stock_on_hand,
                     'monthly_consumption': monthly_consumption,
-                    'reorder_level': int(monthly_consumption * loc.location_type.overstock_threshold) / 2,
-                    'maximum_level': int(monthly_consumption * loc.location_type.overstock_threshold),
+                    'reorder_level': round(max_level / 2.0),
+                    'maximum_level': max_level,
                     'last_report': ''
                 }
 
