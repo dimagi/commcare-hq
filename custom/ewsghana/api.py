@@ -1,6 +1,7 @@
 import logging
 from django.core.validators import validate_email
 from corehq.apps.products.models import SQLProduct
+from corehq.apps.reports.models import ReportNotification, ReportConfig
 from dimagi.utils.dates import force_to_datetime
 from corehq.apps.commtrack.models import SupplyPointCase, CommtrackConfig
 from corehq.apps.locations.models import SQLLocation, LocationType
@@ -10,7 +11,7 @@ from custom.ewsghana.extensions import ews_product_extension, ews_webuser_extens
 from jsonobject.properties import StringProperty, BooleanProperty, ListProperty, IntegerProperty, ObjectProperty
 from custom.ilsgateway.api import ProductStock, StockTransaction
 from jsonobject import JsonObject
-from custom.logistics.api import LogisticsEndpoint, APISynchronization, MigrationException
+from custom.logistics.api import LogisticsEndpoint, APISynchronization, MigrationException, ApiSyncObject
 from corehq.apps.locations.models import Location as Loc
 from django.core.exceptions import ValidationError
 
@@ -96,6 +97,21 @@ class Product(JsonObject):
     program = ObjectProperty(item_type=Program)
 
 
+class DailyReport(JsonObject):
+    hours = IntegerProperty()
+    report = StringProperty()
+    users = ListProperty()
+    view_args = StringProperty()
+
+
+class WeeklyReport(DailyReport):
+    day_of_week = IntegerProperty()
+
+
+class MonthlyReport(DailyReport):
+    day_of_month = IntegerProperty()
+
+
 class GhanaEndpoint(LogisticsEndpoint):
     models_map = {
         'product': Product,
@@ -103,16 +119,34 @@ class GhanaEndpoint(LogisticsEndpoint):
         'smsuser': SMSUser,
         'location': Location,
         'product_stock': ProductStock,
-        'stock_transaction': StockTransaction
+        'stock_transaction': StockTransaction,
+        'daily_report': DailyReport,
+        'weekly_report': WeeklyReport,
+        'monthly_report': MonthlyReport,
     }
 
     def __init__(self, base_uri, username, password):
         super(GhanaEndpoint, self).__init__(base_uri, username, password)
         self.supply_point_url = self._urlcombine(self.base_uri, '/supplypoints/')
+        self.dailyreports_url = self._urlcombine(self.base_uri, '/dailyscheduledreports/')
+        self.weeklyreports_url = self._urlcombine(self.base_uri, '/weeklyscheduledreports/')
+        self.monthlyreports_url = self._urlcombine(self.base_uri, '/monthlyscheduledreports/')
 
     def get_supply_points(self, **kwargs):
         meta, supply_points = self.get_objects(self.supply_point_url, **kwargs)
         return meta, [SupplyPoint(supply_point) for supply_point in supply_points]
+
+    def get_daily_reports(self, **kwargs):
+        meta, reports = self.get_objects(self.dailyreports_url, **kwargs)
+        return meta, [(self.models_map['daily_report'])(report) for report in reports]
+
+    def get_weekly_reports(self, **kwargs):
+        meta, reports = self.get_objects(self.weeklyreports_url, **kwargs)
+        return meta, [(self.models_map['weekly_report'])(report) for report in reports]
+
+    def get_monthly_reports(self, **kwargs):
+        meta, reports = self.get_objects(self.monthlyreports_url, **kwargs)
+        return meta, [(self.models_map['monthly_report'])(report) for report in reports]
 
 
 class EWSApi(APISynchronization):
@@ -131,6 +165,14 @@ class EWSApi(APISynchronization):
         }
     ]
     PRODUCT_CUSTOM_FIELDS = []
+
+    def apis(self):
+        apis = super(EWSApi, self).apis
+        apis.extend([
+            ApiSyncObject('dailyreports', self.endpoint.get_daily_reports, self.daily_report_sync),
+            ApiSyncObject('weeklyreports', self.endpoint.get_weekly_reports, self.weekly_report_sync),
+            ApiSyncObject('monthlyreports', self.endpoint.get_monthly_reports, self.monthly_report_sync)
+        ])
 
     def _create_location_from_supply_point(self, supply_point, location):
         try:
@@ -516,3 +558,56 @@ class EWSApi(APISynchronization):
             if couch_location:
                 sms_user.set_location(couch_location)
         return sms_user
+
+    REPORT_MAP = {
+        'SMS Reporting Rates': 'reporting_page',
+        'Stock Summary': 'stock_summary_report',
+        'RMS and CMS Summary': 'cms_rms_summary_report'
+    }
+
+    def _report_notfication_sync(self, report, interval, day):
+        user_id = report.users[0]
+        recipients = report.users[1:]
+        location_code = report.view_args.split()[1][1:-2]
+
+        user = WebUser.get_by_username(user_id)
+        if not user:
+            return None
+
+        try:
+            location = SQLLocation.objects.get(site_code=location_code, domain=self.domain)
+        except SQLLocation.DoesNotExist:
+            return None
+
+        notifications = ReportNotification.by_domain_and_owner(self.domain, user._id)
+        reports = []
+        for n in notifications:
+            for config_id in n.config_ids:
+                config = ReportConfig.get(config_id)
+                reports.append((config.filters.get('location_id'), config.report_slug, interval))
+
+        if report.report not in self.REPORT_MAP or (location.location_id, self.REPORT_MAP[report.report],
+                                                    interval) in reports:
+            return None
+
+        saved_config = ReportConfig(
+            report_type='custom_project_report', name=report.report, owner_id=user._id,
+            report_slug=self.REPORT_MAP[report.report], domain=self.domain,
+            filters={'filter_by_program': 'all', 'location_id': location.location_id}
+        )
+        saved_config.save()
+        saved_notification = ReportNotification(
+            hour=report.hours, day=day, interval=interval, owner_id=user._id, domain=self.domain,
+            recipient_emails=recipients, config_ids=[saved_config._id]
+        )
+        saved_notification.save()
+        return saved_notification
+
+    def daily_report_sync(self, daily_report):
+        return self._report_notfication_sync(daily_report, 'daily', 1)
+
+    def weekly_report_sync(self, weekly_report):
+        return self._report_notfication_sync(weekly_report, 'weekly', weekly_report.day_of_week)
+
+    def monthly_report_sync(self, monthly_report):
+        return self._report_notfication_sync(monthly_report, 'monthly', monthly_report.day_of_month)

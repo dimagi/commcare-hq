@@ -2,8 +2,8 @@ from decimal import Decimal
 import json
 import os
 from django.test.testcases import TestCase
-from custom.ewsghana.api import Location, EWSUser, SMSUser
-from custom.ilsgateway.api import Product, StockTransaction, ProductStock
+from custom.ewsghana.api import Location, EWSUser, SMSUser, MonthlyReport, WeeklyReport, DailyReport
+from custom.ilsgateway.api import Product, StockTransaction
 
 
 class ApisTest(TestCase):
@@ -74,3 +74,29 @@ class ApisTest(TestCase):
         self.assertEqual(Decimal(63), stock_transaction.quantity)
         self.assertEqual(39, stock_transaction.supply_point)
         self.assertEqual("stock on hand", stock_transaction.report_type)
+
+    def test_parse_dailyreports_json(self):
+        with open(os.path.join(self.datapath, 'sample_monthlyreports.json')) as f:
+            monthly_report = DailyReport(json.loads(f.read())[0])
+        self.assertEqual(8, monthly_report.hours)
+        self.assertEqual("RMS and CMS Summary", monthly_report.report)
+        self.assertEqual(["tonikams@yahoo.com"], monthly_report.users)
+        self.assertEqual("{\"place\": \"smhd\"}", monthly_report.view_args)
+
+    def test_parse_weeklyreports_json(self):
+        with open(os.path.join(self.datapath, 'sample_monthlyreports.json')) as f:
+            monthly_report = WeeklyReport(json.loads(f.read())[0])
+        self.assertEqual(1, monthly_report.day_of_week)
+        self.assertEqual(8, monthly_report.hours)
+        self.assertEqual("RMS and CMS Summary", monthly_report.report)
+        self.assertEqual(["tonikams@yahoo.com"], monthly_report.users)
+        self.assertEqual("{\"place\": \"smhd\"}", monthly_report.view_args)
+
+    def test_parse_monthlyreports_json(self):
+        with open(os.path.join(self.datapath, 'sample_monthlyreports.json')) as f:
+            monthly_report = MonthlyReport(json.loads(f.read())[0])
+        self.assertEqual(1, monthly_report.day_of_month)
+        self.assertEqual(8, monthly_report.hours)
+        self.assertEqual("RMS and CMS Summary", monthly_report.report)
+        self.assertEqual(["tonikams@yahoo.com"], monthly_report.users)
+        self.assertEqual("{\"place\": \"smhd\"}", monthly_report.view_args)
