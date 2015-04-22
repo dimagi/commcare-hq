@@ -187,8 +187,6 @@ class SnapshotSettingsForm(forms.Form):
     cda_confirmed = BooleanField(required=False, label=ugettext_noop("Content Distribution Agreement"))
 
     def __init__(self, *args, **kw):
-        from corehq.apps.domain.views import CreateNewExchangeSnapshotView
-
         self.dom = kw.pop("domain", None)
         super(SnapshotSettingsForm, self).__init__(*args, **kw)
 
