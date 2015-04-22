@@ -27,10 +27,9 @@ class FeaturePreview(StaticToggle):
     def __init__(self, slug, label, description, privilege=None,
             help_link=None, save_fn=None):
         self.description = description
-        self.help_link = help_link
         self.privilege = privilege
         self.save_fn = save_fn
-        super(FeaturePreview, self).__init__(slug, label, namespaces=[NAMESPACE_DOMAIN])
+        super(FeaturePreview, self).__init__(slug, label, namespaces=[NAMESPACE_DOMAIN], help_link=help_link)
 
     def has_privilege(self, request):
         if not self.privilege:

@@ -6,10 +6,10 @@ from toggle.shortcuts import toggle_enabled, set_toggle
 
 
 class StaticToggle(object):
-    def __init__(self, slug, label, namespaces=None, documentation_link=None):
+    def __init__(self, slug, label, namespaces=None, help_link=None):
         self.slug = slug
         self.label = label
-        self.documentation_link = documentation_link
+        self.help_link = help_link
         if namespaces:
             self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
         else:
@@ -405,5 +405,5 @@ ENABLE_LOADTEST_USERS = StaticToggle(
     'enable_loadtest_users',
     'Enable creating loadtest users on HQ',
     namespaces=[NAMESPACE_DOMAIN],
-    documentation_link='https://confluence.dimagi.com/display/ccinternal/Loadtest+Users'
+    help_link='https://confluence.dimagi.com/display/ccinternal/Loadtest+Users',
 )
