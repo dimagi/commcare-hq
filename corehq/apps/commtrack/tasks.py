@@ -15,6 +15,6 @@ def import_locations_async(domain, file_ref_id):
     }
 
 
-@task
+@task(ignore_result=True)
 def recalculate_domain_consumption_task(domain):
     recalculate_domain_consumption(domain)

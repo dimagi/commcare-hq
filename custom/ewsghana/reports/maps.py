@@ -65,14 +65,14 @@ class EWSStockStatusBySupplyPointDataSource(StockStatusBySupplyPointDataSource):
                 months_until_stockout = None
             else:
                 if stock_states[0].get_monthly_consumption():
-                    monthly_consumption = int(stock_states[0].get_monthly_consumption())
+                    monthly_consumption = round(stock_states[0].get_monthly_consumption())
                 else:
                     monthly_consumption = None
                 quantity = stock_states[0].stock_on_hand
                 if not monthly_consumption:
                     months_until_stockout = None
                 else:
-                    months_until_stockout = (stock_states[0].stock_on_hand / monthly_consumption)
+                    months_until_stockout = (float(stock_states[0].stock_on_hand) / monthly_consumption)
 
                 if quantity == 0:
                     category = 'stockout'

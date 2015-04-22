@@ -29,7 +29,7 @@ from corehq.apps.app_manager.util import split_path, create_temp_sort_column, la
     actions_use_usercase
 from corehq.apps.app_manager.xform import SESSION_CASE_ID, autoset_owner_id_for_open_case, \
     autoset_owner_id_for_subcase
-from corehq.apps.app_manager.xpath import dot_interpolate, CaseIDXPath, session_var, \
+from corehq.apps.app_manager.xpath import interpolate_xpath, CaseIDXPath, session_var, \
     CaseTypeXpath, ItemListFixtureXpath, ScheduleFixtureInstance, XPath, ProductInstanceXpath, UserCaseXPath
 from corehq.apps.hqmedia.models import HQMediaMapItem
 from dimagi.utils.decorators.memoized import memoized
@@ -1500,8 +1500,7 @@ class SuiteGenerator(SuiteGeneratorBase):
         if form.form_type == 'module_form' and actions_use_usercase(form.active_actions()):
             if not self.is_usercase_enabled:
                 raise SuiteError('Form uses usercase, but usercase not enabled')
-            case_type = CaseTypeXpath(USERCASE_TYPE).case()
-            case = UserCaseXPath(case_type).case()
+            case = UserCaseXPath().case()
             datums.append({
                 'datum': SessionDatum(id=USERCASE_ID, function=('%s/@case_id' % case)),
                 'case_type': USERCASE_TYPE,
@@ -1676,7 +1675,7 @@ class SuiteGenerator(SuiteGeneratorBase):
         from corehq.apps.app_manager.models import AUTO_SELECT_USER, AUTO_SELECT_CASE, \
             AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW
         if auto_select.mode == AUTO_SELECT_USER:
-            xpath = session_var(auto_select.value_key, subref='user')
+            xpath = session_var(auto_select.value_key, path='user/data')
             assertions = self.get_auto_select_assertions(xpath, auto_select.mode, [auto_select.value_key])
             return SessionDatum(
                 id=action.case_session_var,
@@ -2010,8 +2009,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 if (self.app.domain and MODULE_FILTER.enabled(self.app.domain) and
                         self.app.enable_module_filtering and
                         getattr(module, 'module_filter', None)):
-                    menu_kwargs['relevant'] = dot_interpolate(module.module_filter,
-                                                              "instance('commcaresession')/session")
+                    menu_kwargs['relevant'] = interpolate_xpath(module.module_filter)
 
                 menu = Menu(**menu_kwargs)
 
@@ -2031,7 +2029,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                                 case = SESSION_CASE_ID.case()
 
                             if case:
-                                command.relevant = dot_interpolate(form.form_filter, case)
+                                command.relevant = interpolate_xpath(form.form_filter, case)
                         yield command
 
                     if hasattr(module, 'case_list') and module.case_list.show:

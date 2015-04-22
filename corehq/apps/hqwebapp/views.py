@@ -295,6 +295,15 @@ def no_permissions(request, redirect_to=None, template_name="403.html"):
         })))
 
 
+def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
+    t = loader.get_template(template_name)
+    return HttpResponseForbidden(
+        t.render(RequestContext(
+            request,
+            {'MEDIA_URL': settings.MEDIA_URL,
+             'STATIC_URL': settings.STATIC_URL
+             })))
+
 
 def _login(req, domain, template_name):
 
@@ -923,13 +932,45 @@ def osdd(request, template='osdd.xml'):
     response['Content-Type'] = 'application/xml'
     return response
 
-
+@require_superuser
 def maintenance_alerts(request, template='hqwebapp/maintenance_alerts.html'):
     from corehq.apps.hqwebapp.models import MaintenanceAlert
 
     return render(request, template, {
         'alerts': [{
             'created': unicode(alert.created),
+            'active': alert.active,
             'html': alert.html,
-        } for alert in MaintenanceAlert.objects.all()[:5]]
+            'id': alert.id,
+        } for alert in MaintenanceAlert.objects.order_by('-created')[:5]]
     })
+
+
+@require_POST
+@require_superuser
+def create_alert(request):
+    from corehq.apps.hqwebapp.models import MaintenanceAlert
+    alert_text = request.POST.get('alert_text')
+    MaintenanceAlert(active=False, text=alert_text).save()
+    return HttpResponseRedirect(reverse('alerts'))
+
+
+@require_POST
+@require_superuser
+def activate_alert(request):
+    from corehq.apps.hqwebapp.models import MaintenanceAlert
+    ma = MaintenanceAlert.objects.get(id=request.POST.get('alert_id'))
+    ma.active = True
+    ma.save()
+    return HttpResponseRedirect(reverse('alerts'))
+
+
+@require_POST
+@require_superuser
+def deactivate_alert(request):
+    from corehq.apps.hqwebapp.models import MaintenanceAlert
+    ma = MaintenanceAlert.objects.get(id=request.POST.get('alert_id'))
+    ma.active = False
+    ma.save()
+    return HttpResponseRedirect(reverse('alerts'))
+
