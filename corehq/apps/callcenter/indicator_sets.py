@@ -7,6 +7,7 @@ from jsonobject import JsonObject
 from jsonobject.properties import DictProperty, StringProperty
 import pytz
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.callcenter.utils import get_call_center_cases
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.filters.select import CaseTypeMixin
 from corehq.apps.sofabed.models import FormData, CaseData
@@ -138,23 +139,7 @@ class CallCenterIndicators(object):
         if self.override_cases:
             return self.override_cases
 
-        keys = [
-            ["open type owner", self.domain.name, self.cc_case_type, owner_id]
-            for owner_id in self.user.get_owner_ids()
-        ]
-        all_owned_cases = []
-        for key in keys:
-            cases = CommCareCase.view(
-                'case/all_cases',
-                startkey=key,
-                endkey=key + [{}],
-                reduce=False,
-                include_docs=True
-            ).all()
-
-            all_owned_cases.extend(cases)
-
-        return all_owned_cases
+        return get_call_center_cases(self.domain, self.cc_case_type, self.user)
 
     @property
     @memoized
