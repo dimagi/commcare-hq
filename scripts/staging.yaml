@@ -50,7 +50,6 @@ branches:
   - fixtures-spike  # cz 1/29
   - static-updates # Biyeun 2/9
   - usercase # Norman 3/27
-  - django1.6 # SK 4/9
   - commcare-supply+master # Nick P 4/17
   - commcare-supply  # Ethan 4/13
   - new-location  # Ethan 4/14
