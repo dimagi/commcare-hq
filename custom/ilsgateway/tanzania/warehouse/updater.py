@@ -204,7 +204,7 @@ def _get_test_locations(domain):
            [test_region.couch_location]
 
 
-def populate_report_data(start_date, end_date, domain, runner, locations=None):
+def populate_report_data(start_date, end_date, domain, runner, locations=None, strict=True):
     # first populate all the warehouse tables for all facilities
     # hard coded to know this is the first date with data
     start_date = max(start_date, default_start_date())
@@ -246,7 +246,10 @@ def populate_report_data(start_date, end_date, domain, runner, locations=None):
 
     # then populate everything above a facility off a warehouse table
     for chunk in non_facilities_chunked_list:
-        res = chain(process_non_facility_warehouse_data.si(org, start_date, end_date, runner) for org in chunk)()
+        res = chain(
+            process_non_facility_warehouse_data.si(org, start_date, end_date, runner, strict)
+            for org in chunk
+        )()
         res.get()
     runner.location = None
     runner.save()

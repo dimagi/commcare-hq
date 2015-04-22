@@ -18,7 +18,7 @@ class Command(BaseCommand):
         config = ILSGatewayConfig.for_domain(domain)
         assert config.enabled, 'ilsgateway sync must be configured for this domain'
         locations = _get_locations_from_ilsgateway_id(domain, ilsgateway_id)
-        report_run(domain, locations)
+        report_run(domain, locations, strict=False)
 
 
 def _get_locations_from_ilsgateway_id(domain, ilsgateway_id):
