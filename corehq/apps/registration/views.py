@@ -40,7 +40,7 @@ def get_domain_context(domain_type='commcare'):
 def registration_default(request):
     return redirect(register_user)
 
-@transaction.commit_on_success
+@transaction.atomic
 def register_user(request, domain_type=None):
     domain_type = domain_type or 'commcare'
     if domain_type not in DOMAIN_TYPES:
@@ -76,7 +76,7 @@ def register_user(request, domain_type=None):
         return render(request, 'registration/create_new_user.html', context)
 
 
-@transaction.commit_on_success
+@transaction.atomic
 @login_required
 def register_org(request, template="registration/org_request.html"):
     referer_url = request.GET.get('referer', '')
@@ -110,7 +110,7 @@ def register_org(request, template="registration/org_request.html"):
     })
 
 
-@transaction.commit_on_success
+@transaction.atomic
 @login_required
 def register_domain(request, domain_type=None):
     domain_type = domain_type or 'commcare'
@@ -177,7 +177,7 @@ def register_domain(request, domain_type=None):
     })
     return render(request, 'registration/domain_request.html', context)
 
-@transaction.commit_on_success
+@transaction.atomic
 @login_required
 def resend_confirmation(request):
     try:
@@ -219,7 +219,7 @@ def resend_confirmation(request):
     })
     return render(request, 'registration/confirmation_resend.html', context)
 
-@transaction.commit_on_success
+@transaction.atomic
 def confirm_domain(request, guid=None):
     # Did we get a guid?
     vals = {}

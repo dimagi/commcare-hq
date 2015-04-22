@@ -170,7 +170,7 @@ def sync_stock_transactions_for_facility(domain, endpoint, facility, xform, chec
         meta_offset = meta.get('offset') or offset
         save_stock_data_checkpoint(checkpoint, 'stock_transaction', meta_limit, meta_offset, date, facility, True)
         transactions_to_add = []
-        with transaction.commit_on_success():
+        with transaction.atomic():
             for stocktransaction in stocktransactions:
                 params = dict(
                     form_id=xform._id,
