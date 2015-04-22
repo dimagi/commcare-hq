@@ -822,7 +822,7 @@ LOGGING = {
         },
         'django.security.DisallowedHost': {
             'handlers': ['null'],
-            'propogate': False,
+            'propagate': False,
         },
         'notify': {
             'handlers': ['mail_admins'],
