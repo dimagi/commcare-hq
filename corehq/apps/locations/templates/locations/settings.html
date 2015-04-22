@@ -64,7 +64,6 @@
                     <thead>
                         <tr>
                             <th>{% trans "Location Type" %}</th>
-                            <th>{% trans "Location Type Code" %}</th>
                             <th>
                                 {% trans "Parent Type" %}
                                 <span class="hq-help-template"
@@ -109,10 +108,6 @@
                         <td class="control-group" data-bind="css: { 'error': name_error }">
                             <input class="loctype_name" data-bind="value: name" type="text" />
                             <div class="help-inline" data-bind="text: name_error"></div>
-                        </td>
-                        <td class="control-group" data-bind="css: { 'error': code_error }">
-                            <input class="loctype_code" data-bind="value: code" type="text" />
-                            <div class="help-inline" data-bind="text: code_error"></div>
                         </td>
                         <td class="control-group" data-bind="css: { 'error': allowed_parents_error }">
                             <select data-bind="options: $root.loc_types, optionsText: 'name', optionsValue: 'name', selectedOptions: allowed_parents, optionsCaption: '\u2013top level\u2013'">

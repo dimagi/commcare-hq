@@ -20,7 +20,6 @@ from corehq import toggles
 from corehq.apps.commtrack.exceptions import MultipleSupplyPointException
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.commtrack.tasks import import_locations_async
-from corehq.apps.commtrack.util import unicode_slug
 from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.custom_data_fields import CustomDataModelMixin
@@ -110,7 +109,6 @@ class LocationTypesView(BaseCommTrackManageView):
         return {
             'pk': loctype.pk,
             'name': loctype.name,
-            'code': loctype.code,
             'allowed_parents': [loctype.parent_type.name
                                 if loctype.parent_type else None],
             'administrative': loctype.administrative,
@@ -119,34 +117,21 @@ class LocationTypesView(BaseCommTrackManageView):
         }
 
     def post(self, request, *args, **kwargs):
-        # This is really ugly, it needs a refactor.
-        # There are some changes coming to this UI, so I'm just gonna wait
-        # for that.  I intend to remove "code" from the UI altogether, and
-        # use the actual location_type pk to reference it, not the name.
         payload = json.loads(request.POST.get('json'))
         sql_loc_types = {}
 
-        def mk_loctype(name, code, allowed_parents, administrative,
+        def mk_loctype(name, allowed_parents, administrative,
                        shares_cases, view_descendants, pk):
             if allowed_parents and allowed_parents[0]:
                 parent = sql_loc_types[allowed_parents[0]]
             else:
                 parent = None
 
-            cleaned_code = unicode_slug(code)
-            if cleaned_code != code:
-                err = _('Location type code "{code}" is invalid. No spaces or '
-                        'special characters are allowed. It has been replaced '
-                        'with "{new_code}".')
-                messages.warning(request,
-                                 err.format(code=code, new_code=cleaned_code))
-
             try:
                 loc_type = LocationType.objects.get(domain=self.domain, pk=pk)
             except LocationType.DoesNotExist:
                 loc_type = LocationType(domain=self.domain)
             loc_type.name = name
-            loc_type.code = cleaned_code
             loc_type.administrative = administrative
             loc_type.parent_type = parent
             loc_type.shares_cases = shares_cases
@@ -157,7 +142,7 @@ class LocationTypesView(BaseCommTrackManageView):
         loc_types = payload['loc_types']
         pks = []
         for loc_type in loc_types:
-            for prop in ['name', 'code', 'allowed_parents', 'administrative',
+            for prop in ['name', 'allowed_parents', 'administrative',
                          'shares_cases', 'view_descendants', 'pk']:
                 assert prop in loc_type, "Missing a location type property!"
                 assert len(loc_type['allowed_parents']) <= 1, \
