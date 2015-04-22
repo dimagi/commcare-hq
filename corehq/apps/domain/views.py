@@ -1102,7 +1102,7 @@ class WireInvoiceView(View):
         balance = Decimal(request.POST.get('customPaymentAmount', 0))
         wire_invoice_factory = DomainWireInvoiceFactory(request.domain, contact_emails=emails)
         try:
-            wire_invoice = wire_invoice_factory.create_wire_invoice(balance)
+            wire_invoice_factory.create_wire_invoice(balance)
         except Exception, e:
             return json_response({'error': {'message', e}})
 

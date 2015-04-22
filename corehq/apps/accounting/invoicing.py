@@ -234,7 +234,8 @@ class DomainWireInvoiceFactory(object):
     def create_wire_invoice(self, balance):
 
         # Gather relevant invoices
-        invoices = Invoice.objects.filter( subscription__subscriber__domain=self.domain,
+        invoices = Invoice.objects.filter(
+            subscription__subscriber__domain=self.domain,
             is_hidden=False,
             date_paid__exact=None,
         ).order_by('-date_start')

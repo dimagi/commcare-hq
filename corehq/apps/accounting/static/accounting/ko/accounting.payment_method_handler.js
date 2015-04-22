@@ -49,14 +49,14 @@ var WireInvoiceHandler = function(formId, opts) {
               self.costItem().reset();
               self.paymentIsComplete(true);
           }
-    }
+    };
 
     self.isSubmitDisabled = ko.computed(function () {
         return !(self.costItem() && self.costItem().isValid());
     });
     self.processPayment = function () {
         self.submitForm();
-    }
+    };
     self.hasAgreedToPrivacy = true; // No privacy policy for wire
 };
 
@@ -197,7 +197,7 @@ var PaymentMethodHandler = function (formId, opts) {
               self.paymentIsComplete(true);
           }
           self.handleProcessingErrors(response);
-    }
+    };
 
 };
 

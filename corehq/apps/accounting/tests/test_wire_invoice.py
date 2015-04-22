@@ -2,9 +2,9 @@ from decimal import Decimal
 from django.core import mail
 
 from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
-from corehq.apps.accounting import generator, utils, tasks
+from corehq.apps.accounting import utils, tasks
 from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
-from corehq.apps.accounting.models import Invoice, WireInvoice
+from corehq.apps.accounting.models import Invoice
 
 
 class TestWireInvoice(BaseInvoiceTestCase):
