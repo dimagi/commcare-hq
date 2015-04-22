@@ -342,16 +342,16 @@ class Location(CachedCouchDocumentMixin, Document):
         ]
 
         try:
-            is_new = False
             sql_location = SQLLocation.objects.get(location_id=self._id)
         except SQLLocation.DoesNotExist:
-            is_new = True
-            sql_location = SQLLocation(domain=self.domain, site_code=self.site_code)
-
-        if is_new or (sql_location.location_type.name != self.location_type):
-            sql_location.location_type, _ = LocationType.objects.get_or_create(
+            # The location type must already exist
+            location_type = LocationType.objects.get(
                 domain=self.domain,
                 name=self.location_type,
+            )
+            sql_location = SQLLocation(
+                domain=self.domain,
+                location_type=location_type,
             )
 
         for prop in properties_to_sync:
