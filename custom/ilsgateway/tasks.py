@@ -152,7 +152,7 @@ def get_delivery_group_reports(domain, endpoint, facilities, checkpoint, date, l
         offset = 0
 
 
-@task(queue='background_queue')
+@task(queue='background_queue', ignore_result=True)
 def ils_clear_stock_data_task(domain):
     assert ILSGatewayConfig.for_domain(domain)
     locations = SQLLocation.objects.filter(domain=domain)
@@ -160,29 +160,21 @@ def ils_clear_stock_data_task(domain):
     DeliveryGroupReport.objects.filter(supply_point__in=locations.values_list('location_id', flat=True)).delete()
     products = Product.ids_by_domain(domain)
     StockState.objects.filter(product_id__in=products).delete()
-    for supply_point in locations.exclude(supply_point_id__is_null=True).values_list('supply_point_id', flat=True):
-        StockTransaction.objects.filter(case_id=supply_point).delete()
+    StockTransaction.objects.filter(
+        case_id__in=locations.exclude(supply_point_id__isnull=True).values_list('supply_point_id', flat=True)
+    ).delete()
     StockReport.objects.filter(domain=domain).delete()
     StockDataCheckpoint.objects.filter(domain=domain).delete()
 
 
-@task(queue='background_queue')
+@task(queue='background_queue', ignore_result=True)
 def clear_report_data(domain):
     locations_ids = SQLLocation.objects.filter(domain=domain).values_list('location_id', flat=True)
-    for location_id in locations_ids:
-        GroupSummary.objects.filter(org_summary__supply_point=location_id).delete()
-
-    for location_id in locations_ids:
-        OrganizationSummary.objects.filter(supply_point=location_id).delete()
-
-    for location_id in locations_ids:
-        ProductAvailabilityData.objects.filter(supply_point=location_id).delete()
-
-    for location_id in locations_ids:
-        Alert.objects.filter(supply_point=location_id).delete()
-
-    for location_id in locations_ids:
-        SupplyPointWarehouseRecord.objects.filter(supply_point=location_id).delete()
+    GroupSummary.objects.filter(org_summary__supply_point__in=locations_ids).delete()
+    OrganizationSummary.objects.filter(supply_point__in=locations_ids).delete()
+    ProductAvailabilityData.objects.filter(supply_point__in=locations_ids).delete()
+    Alert.objects.filter(supply_point__in=locations_ids).delete()
+    SupplyPointWarehouseRecord.objects.filter(supply_point__in=locations_ids).delete()
     ReportRun.objects.filter(domain=domain).delete()
 
 
