@@ -156,6 +156,9 @@ class CallCenterIndicators(object):
         """
         :return: Dictionary of user_id -> CachedIndicators
         """
+        if self.override_cache:
+            return {}
+
         keys = [cache_key(user_id, self.reference_date) for user_id in self.user_to_case_map.keys()]
         cached = self.cache.get_many(keys)
         data = {data['user_id']: CachedIndicators.wrap(data) for data in cached.values()}
