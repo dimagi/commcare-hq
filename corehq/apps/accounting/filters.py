@@ -44,7 +44,7 @@ class NameFilter(BaseAccountingSingleOptionFilter):
 
 class DomainFilter(BaseAccountingSingleOptionFilter):
     slug = 'domain_name'
-    label = _("Project Name")
+    label = _("Project Space")
     default_text = _("All")
     async_handler = DomainFilterAsyncHandler
     async_action = 'domain_name'

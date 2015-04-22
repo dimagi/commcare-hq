@@ -1754,7 +1754,6 @@ class InvoicePdf(SafeSaveDocument):
             total=invoice.get_total(),
         )
 
-        # Only do if not a wire
         if not invoice.is_wire:
             for line_item in LineItem.objects.filter(invoice=invoice):
                 is_unit = line_item.unit_description is not None
@@ -1811,7 +1810,6 @@ class LineItemManager(models.Manager):
 
 class LineItem(models.Model):
     invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT)
-    #wire_invoice = models.ForeignKey(WireInvoice, on_delete=models.PROTECT, null=True)
     feature_rate = models.ForeignKey(FeatureRate, on_delete=models.PROTECT, null=True)
     product_rate = models.ForeignKey(SoftwareProductRate, on_delete=models.PROTECT, null=True)
     base_description = models.TextField(blank=True, null=True)

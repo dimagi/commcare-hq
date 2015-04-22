@@ -495,14 +495,11 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
                 invoice.date_start.strftime(USER_DATE_FORMAT),
                 invoice.date_end.strftime(USER_DATE_FORMAT),
                 invoice.date_due.strftime(USER_DATE_FORMAT),
-            ]
-
-            columns.extend([
                 get_exportable_column(invoice.subtotal),
                 get_exportable_column(invoice.balance),
                 "Paid" if invoice.is_paid else "Not paid",
                 "YES" if invoice.is_hidden else "no",
-            ])
+            ]
 
             invoice_url = reverse(WireInvoiceSummaryView.urlname, args=(invoice.id,))
             if not self.is_rendered_as_email:

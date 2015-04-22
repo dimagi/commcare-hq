@@ -54,8 +54,8 @@ var WireInvoiceHandler = function(formId, opts) {
     self.isSubmitDisabled = ko.computed(function () {
         return !(self.costItem() && self.costItem().isValid());
     });
-    self.processPayment = function (formEl) {
-        self.submitForm(formEl);
+    self.processPayment = function () {
+        self.submitForm();
     }
     self.hasAgreedToPrivacy = true; // No privacy policy for wire
 };
@@ -93,7 +93,7 @@ var PaymentMethodHandler = function (formId, opts) {
         return self.newCard();
     });
     self.hasAgreedToPrivacy = ko.computed(function() {
-        return (self.selectedCard() && self.selectedCard().cardFormIsValid());
+        return self.selectedCard() && self.selectedCard().cardFormIsValid();
     });
 
 
@@ -125,9 +125,9 @@ var PaymentMethodHandler = function (formId, opts) {
         self.newCard(new StripeCard());
     };
 
-    self.processPayment = function (formEl) {
+    self.processPayment = function () {
         if (self.costItem().isValid()) {
-           self.selectedCard().process(function() { self.submitForm(formEl) });
+           self.selectedCard().process(self.submitForm);
         }
     };
 
