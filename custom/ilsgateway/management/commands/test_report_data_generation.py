@@ -7,6 +7,7 @@ from custom.ilsgateway.models import ILSGatewayConfig, ReportRun, SupplyPointSta
 from custom.ilsgateway.tasks import report_run
 from custom.ilsgateway.tanzania.warehouse import updater
 
+
 class Command(BaseCommand):
     """
     Manually test the stock data migration.
