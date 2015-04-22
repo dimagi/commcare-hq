@@ -5,7 +5,7 @@ from couchdbkit.ext.django.schema import *
 
 from datetime import datetime
 from django.db import models
-from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.apps.users.models import CouchUser, CommCareUser, WebUser
 from corehq.apps.groups.models import Group
 from casexml.apps.case.models import CommCareCase, CommCareCaseGroup
 from dimagi.utils.mixins import UnicodeMixIn
@@ -589,14 +589,16 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     )
 
     RECIPIENT_CASE = 'CAS'
-    RECIPIENT_USER = 'USR'
+    RECIPIENT_MOBILE_WORKER = 'MOB'
+    RECIPIENT_WEB_USER = 'WEB'
     RECIPIENT_USER_GROUP = 'UGP'
     RECIPIENT_CASE_GROUP = 'CGP'
     RECIPIENT_VARIOUS = 'MUL'
 
     RECIPIENT_CHOICES = (
         (RECIPIENT_CASE, ugettext_noop('Case')),
-        (RECIPIENT_USER, ugettext_noop('User')),
+        (RECIPIENT_MOBILE_WORKER, ugettext_noop('Mobile Worker')),
+        (RECIPIENT_WEB_USER, ugettext_noop('Web User')),
         (RECIPIENT_USER_GROUP, ugettext_noop('User Group')),
         (RECIPIENT_CASE_GROUP, ugettext_noop('Case Group')),
         (RECIPIENT_VARIOUS, ugettext_noop('Multiple Recipients')),
@@ -626,8 +628,10 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
 
     @classmethod
     def get_recipient_type(cls, recipient):
-        if isinstance(recipient, CouchUser):
-            recipient_type = cls.RECIPIENT_USER
+        if isinstance(recipient, CommCareUser):
+            recipient_type = cls.RECIPIENT_MOBILE_WORKER
+        elif isinstance(recipient, WebUser):
+            recipient_type = cls.RECIPIENT_WEB_USER
         elif isinstance(recipient, CommCareCase):
             recipient_type = cls.RECIPIENT_CASE
         elif isinstance(recipient, Group):
@@ -637,6 +641,15 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         else:
             recipient_type = None
         return recipient_type
+
+    def get_recipient_doc_type(self):
+        return {
+            MessagingEvent.RECIPIENT_MOBILE_WORKER: 'CommCareUser',
+            MessagingEvent.RECIPIENT_WEB_USER: 'WebUser',
+            MessagingEvent.RECIPIENT_CASE: 'CommCareCase',
+            MessagingEvent.RECIPIENT_USER_GROUP: 'Group',
+            MessagingEvent.RECIPIENT_CASE_GROUP: 'CommCareCaseGroup',
+        }.get(self.recipient_type, None)
 
     def create_sub_event(self, reminder_definition, reminder, recipient):
         from corehq.apps.reminders.models import CASE_CRITERIA
@@ -694,7 +707,8 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
     """
     RECIPIENT_CHOICES = (
         (MessagingEvent.RECIPIENT_CASE, ugettext_noop('Case')),
-        (MessagingEvent.RECIPIENT_USER, ugettext_noop('User')),
+        (MessagingEvent.RECIPIENT_MOBILE_WORKER, ugettext_noop('Mobile Worker')),
+        (MessagingEvent.RECIPIENT_WEB_USER, ugettext_noop('Web User')),
     )
 
     parent = models.ForeignKey('MessagingEvent')

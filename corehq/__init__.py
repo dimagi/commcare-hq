@@ -86,6 +86,7 @@ def REPORTS(project):
         ])
     # always have these historical reports visible
     messaging_reports.extend([
+        sms.MessagingEventsReport,
         sms.MessageLogReport,
         ivr.CallLogReport,
         ivr.ExpectedCallbackReport,

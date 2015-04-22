@@ -82,7 +82,8 @@ class CallLogReport(BaseCommConnectLogReport):
         abbreviate_phone_number = (self.domain in abbreviated_phone_number_domains)
         
         for call in data:
-            doc_info = self.get_recipient_info(call, contact_cache)
+            doc_info = self.get_recipient_info(call.couch_recipient_doc_type,
+                call.couch_recipient, contact_cache)
 
             form_unique_id = call.form_unique_id
             if form_unique_id in [None, ""]:
@@ -110,7 +111,7 @@ class CallLogReport(BaseCommConnectLogReport):
             row = [
                 call.xforms_session_id,
                 self._fmt_timestamp(timestamp),
-                self._fmt_contact_link(call, doc_info),
+                self._fmt_contact_link(call.couch_recipient, doc_info),
                 self._fmt(phone_number),
                 self._fmt(direction_map.get(call.direction,"-")),
                 self._fmt(form_name),

@@ -875,6 +875,7 @@ class CaseReminderHandler(Document):
         last_fired = self.get_now() # Store the timestamp right before firing to ensure continuity in the callback lookups
         event_handler(reminder, self, recipients, verified_numbers, logged_event)
         reminder.last_fired = last_fired
+        logged_event.completed()
         return True
 
     @classmethod

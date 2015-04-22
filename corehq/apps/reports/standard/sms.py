@@ -29,6 +29,7 @@ from corehq.apps.sms.models import (
     INCOMING,
     OUTGOING,
     SMSLog,
+    MessagingEvent,
 )
 
 class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
@@ -121,7 +122,7 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
             timestamp.strftime("%Y-%m-%d %H:%M:%S"),
         )
 
-    def _fmt_contact_link(self, msg, doc_info):
+    def _fmt_contact_link(self, recipient_id, doc_info):
         if doc_info:
             username, contact_type, url = (doc_info.display,
                 doc_info.type_display, doc_info.link)
@@ -134,21 +135,19 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
         else:
             ret = self.table_cell(username, username)
         ret['raw'] = "|||".join([username, contact_type,
-            msg.couch_recipient or ""])
+            recipient_id or ""])
         return ret
 
-    def get_recipient_info(self, message, contact_cache):
-        recipient_id = message.couch_recipient
-
+    def get_recipient_info(self, recipient_doc_type, recipient_id, contact_cache):
         if recipient_id in contact_cache:
             return contact_cache[recipient_id]
 
         doc = None
         if recipient_id not in [None, ""]:
             try:
-                if message.couch_recipient_doc_type == "CommCareCase":
+                if recipient_doc_type.startswith('CommCareCase'):
                     doc = CommCareCase.get(recipient_id)
-                else:
+                elif recipient_doc_type in ('CommCareUser', 'WebUser'):
                     doc = CouchUser.get_by_user_id(recipient_id)
             except Exception:
                 pass
@@ -260,7 +259,8 @@ class MessageLogReport(BaseCommConnectLogReport):
             if not message_type_filter(message_types):
                 continue
 
-            doc_info = self.get_recipient_info(message, contact_cache)
+            doc_info = self.get_recipient_info(message.couch_recipient_doc_type,
+                message.couch_recipient, contact_cache)
 
             phone_number = message.phone_number
             if abbreviate_phone_number and phone_number is not None:
@@ -269,11 +269,68 @@ class MessageLogReport(BaseCommConnectLogReport):
             timestamp = ServerTime(message.date).user_time(self.timezone).done()
             result.append([
                 self._fmt_timestamp(timestamp),
-                self._fmt_contact_link(message, doc_info),
+                self._fmt_contact_link(message.couch_recipient, doc_info),
                 self._fmt(phone_number),
                 self._fmt(direction_map.get(message.direction,"-")),
                 self._fmt(message.text),
                 self._fmt(", ".join(message_types)),
+            ])
+
+        return result
+
+
+class MessagingEventsReport(BaseCommConnectLogReport):
+    name = ugettext_noop('Messaging Events')
+    slug = 'messaging_events'
+    fields = [
+        'corehq.apps.reports.filters.dates.DatespanFilter',
+    ]
+
+    @property
+    def headers(self):
+        header = DataTablesHeader(
+            DataTablesColumn(_('Date')),
+            DataTablesColumn(_('Content')),
+            DataTablesColumn(_('Type')),
+            DataTablesColumn(_('Recipient')),
+            DataTablesColumn(_('Status')),
+            DataTablesColumn(_('Detail')),
+        )
+        header.custom_sort = [[0, 'desc']]
+        return header
+
+    def get_source_display(self, event):
+        source = dict(MessagingEvent.SOURCE_CHOICES).get(event.source)
+        content_type = dict(MessagingEvent.CONTENT_CHOICES).get(event.content_type)
+        return '%s | %s' % (_(source), _(content_type))
+
+    def get_status_display(self, event):
+        status = dict(MessagingEvent.STATUS_CHOICES).get(event.status)
+        return _(status)
+
+    @property
+    def rows(self):
+        data = MessagingEvent.objects.filter(
+            domain=self.domain,
+            date__gte=self.datespan.startdate_utc,
+            date__lte=self.datespan.enddate_utc,
+        )
+
+        result = []
+        contact_cache = {}
+
+        for event in data:
+            doc_info = self.get_recipient_info(event.get_recipient_doc_type(),
+                event.recipient_id, contact_cache)
+
+            timestamp = ServerTime(event.date).user_time(self.timezone).done()
+            result.append([
+                self._fmt_timestamp(timestamp),
+                '',
+                self.get_source_display(event),
+                self._fmt_contact_link(event.recipient_id, doc_info),
+                self.get_status_display(event),
+                '',
             ])
 
         return result
