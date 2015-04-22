@@ -54,7 +54,6 @@ branches:
   - commcare-supply+master # Nick P 4/17
   - commcare-supply  # Ethan 4/13
   - new-location  # Ethan 4/14
-  - create-maintenance-alerts # TS 4/17
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
