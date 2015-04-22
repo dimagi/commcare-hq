@@ -64,7 +64,8 @@ def _copy(config):
             if ids_of_this_type:
                 new_revs = dict([
                     (row['id'], row['value']['rev'])
-                    for row in config.dest_db.view('_all_docs', include_docs=False)
+                    for row in config.dest_db.view('_all_docs', keys=ids_of_this_type, include_docs=False)
+                    if 'error' not in row
                 ])
                 for id_group in chunked(ids_of_this_type, 500):
                     docs = get_docs(database, id_group)

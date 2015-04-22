@@ -1,4 +1,3 @@
-
 $(function() {
     var model = new LocationSettingsViewModel();
     $('#settings').submit(function() {
@@ -8,6 +7,7 @@ $(function() {
     model.load(settings);
     ko.applyBindings(model, $('#settings').get(0));
 });
+
 
 function LocationSettingsViewModel() {
     this.loc_types = ko.observableArray();
@@ -113,21 +113,6 @@ function LocationTypeModel(data, root) {
     var self = this;
     this.pk = data.pk || null;
     this.name = ko.observable(name);
-    this.code = ko.observable(data.code || name);
-    var code_autoset = this.name() == this.code();
-
-    // sync code to name if it looks autoset
-    this.name.subscribe(function (newValue) {
-        if (code_autoset) {
-            self.code(newValue);
-        }
-    });
-
-    // clear autoset if we explicitly change the code
-    this.code.subscribe(function (newValue) {
-        self.name() != self.code();
-        code_autoset = false;
-    });
 
     this.parent_type = ko.observable(data.parent_type);
     this.tracks_stock = ko.observable(!data.administrative);
@@ -135,7 +120,6 @@ function LocationTypeModel(data, root) {
     this.view_descendants = ko.observable(data.view_descendants);
 
     this.name_error = ko.observable(false);
-    this.code_error = ko.observable();
 
     this.validate = function() {
         this.name_error(false);
@@ -146,8 +130,6 @@ function LocationTypeModel(data, root) {
             this.name_error(false);
             valid = false;
         }
-        if (!this.code()) {
-            this.code_error('required');
             valid = false;
         }
 
@@ -158,7 +140,6 @@ function LocationTypeModel(data, root) {
         return {
             pk: this.pk,
             name: this.name(),
-            code: this.code(),
             parent_type: this.parent_type() || null,
             administrative: !this.tracks_stock(),
             shares_cases: this.shares_cases() === true,

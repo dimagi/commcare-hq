@@ -16,6 +16,8 @@ class DomainES(HQESQuery):
             commtrack_domains,
             created,
             in_domains,
+            is_active,
+            is_snapshot,
         ] + super(DomainES, self).builtin_filters
 
 
@@ -55,3 +57,12 @@ def created(gt=None, gte=None, lt=None, lte=None):
 
 def in_domains(domains):
     return filters.term('name', list(domains))
+
+
+def is_active(is_active=True):
+    return filters.term('is_active', is_active)
+
+
+def is_snapshot(is_snapshot=True):
+    return filters.term('is_snapshot', is_snapshot)
+
