@@ -366,6 +366,7 @@ class ReportingRatesReport(MultiReport):
             location_id=self.request.GET.get('location_id') or get_country_id(self.domain),
             products=None,
             program=program if program != ALL_OPTION else None,
+            user=self.request.couch_user
         )
 
     @property
@@ -373,16 +374,19 @@ class ReportingRatesReport(MultiReport):
         config = self.report_config
         if self.is_reporting_type():
             self.split = True
-            return [
-                FacilityReportData(config),
-                StockLevelsLegend(config),
-                InputStock(config),
-                FacilitySMSUsers(config),
-                FacilityUsers(config),
-                FacilityInChargeUsers(config),
-                InventoryManagementData(config),
-                ProductSelectionPane(config),
-            ]
+            if self.is_rendered_as_email:
+                return [FacilityReportData(config)]
+            else:
+                return [
+                    FacilityReportData(config),
+                    StockLevelsLegend(config),
+                    InputStock(config),
+                    FacilitySMSUsers(config),
+                    FacilityUsers(config),
+                    FacilityInChargeUsers(config),
+                    InventoryManagementData(config),
+                    ProductSelectionPane(config)
+                ]
         self.split = False
         data_providers = [
             AlertsData(config=config),
@@ -406,3 +410,12 @@ class ReportingRatesReport(MultiReport):
         datespan = DateSpan(startdate=last_period_st, enddate=last_period_end)
         datespan.is_default = True
         return datespan
+
+    @property
+    def datespan(self):
+        url = self.request.META.get('HTTP_REFERER')
+        if not url or 'startdate' in url:
+            return self.request.datespan
+
+        self.request.datespan = self.default_datespan
+        return self.default_datespan

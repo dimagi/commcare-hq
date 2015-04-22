@@ -2,7 +2,6 @@ import json
 import logging
 
 from django.contrib import messages
-from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.http.response import HttpResponseServerError
 from django.shortcuts import render
@@ -29,6 +28,7 @@ from corehq.apps.facilities.models import FacilityRegistry
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.users.forms import MultipleSelectionForm
+from corehq.util import reverse, get_document_or_404
 from custom.openlmis.tasks import bootstrap_domain_task
 
 from .models import Location, LocationType, SQLLocation
@@ -235,19 +235,34 @@ class NewLocationView(BaseLocationView):
 
     @property
     def parent_pages(self):
-        return [{
+        selected = self.location._id or self.location.parent_id
+        breadcrumbs = [{
             'title': LocationsListView.page_title,
-            'url': reverse(LocationsListView.urlname, args=[self.domain]),
+            'url': reverse(
+                LocationsListView.urlname,
+                args=[self.domain],
+                params={"selected": selected} if selected else None,
+            )
         }]
-
-    @property
-    def parent_id(self):
-        return self.request.GET.get('parent')
+        if self.location.parent:
+            sql_parent = self.location.parent.sql_location
+            for loc in sql_parent.get_ancestors(include_self=True):
+                breadcrumbs.append({
+                    'title': loc.name,
+                    'url': reverse(
+                        EditLocationView.urlname,
+                        args=[self.domain, loc.location_id],
+                    )
+                })
+        return breadcrumbs
 
     @property
     @memoized
     def location(self):
-        return Location(domain=self.domain, parent=self.parent_id)
+        parent_id = self.request.GET.get('parent')
+        parent = (get_document_or_404(Location, self.domain, parent_id)
+                  if parent_id else None)
+        return Location(domain=self.domain, parent=parent)
 
     @property
     def consumption(self):
@@ -305,7 +320,7 @@ def archive_location(request, domain, loc_id):
         'success': True,
         'message': _("Location '{location_name}' has successfully been {action}.").format(
             location_name=loc.name,
-            action="archived",
+            action=_("archived"),
         )
     })
 
@@ -324,7 +339,7 @@ def unarchive_location(request, domain, loc_id):
         'success': True,
         'message': _("Location '{location_name}' has successfully been {action}.").format(
             location_name=loc.name,
-            action="unarchived",
+            action=_("unarchived"),
         )
     })
 

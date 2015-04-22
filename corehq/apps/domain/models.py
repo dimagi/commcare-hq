@@ -39,6 +39,7 @@ lang_lookup = defaultdict(str)
 DATA_DICT = settings.INTERNAL_DATA
 AREA_CHOICES = [a["name"] for a in DATA_DICT["area"]]
 SUB_AREA_CHOICES = reduce(list.__add__, [a["sub_areas"] for a in DATA_DICT["area"]], [])
+DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 
 
 for lang in all_langs:
@@ -220,6 +221,7 @@ class Domain(Document, SnapshotMixin):
     has_careplan = BooleanProperty(default=False)
     restrict_superusers = BooleanProperty(default=False)
     location_restriction_for_users = BooleanProperty(default=True)
+    usercase_enabled = BooleanProperty(default=False)
 
     case_display = SchemaProperty(CaseDisplaySettings)
 
@@ -307,6 +309,7 @@ class Domain(Document, SnapshotMixin):
     _dirty_fields = ('admin_password', 'admin_password_charset', 'city', 'countries', 'region', 'customer_type')
 
     default_mobile_worker_redirect = StringProperty(default=None)
+    last_modified = DateTimeProperty(default=datetime(2015, 1, 1))
 
     @property
     def domain_type(self):
@@ -616,6 +619,7 @@ class Domain(Document, SnapshotMixin):
         return self.case_sharing or reduce(lambda x, y: x or y, [getattr(app, 'case_sharing', False) for app in self.applications()], False)
 
     def save(self, **params):
+        self.last_modified = datetime.utcnow()
         super(Domain, self).save(**params)
         Domain.get_by_name.clear(Domain, self.name)  # clear the domain cache
 
@@ -1037,6 +1041,14 @@ class Domain(Document, SnapshotMixin):
     def location_types(self):
         from corehq.apps.locations.models import LocationType
         return LocationType.objects.filter(domain=self.name).all()
+
+    @property
+    @memoized
+    def uses_locations(self):
+        if self.commtrack_enabled:
+            return True
+        from corehq.apps.locations.models import LocationType
+        return LocationType.objects.filter(domain=self.name).exists()
 
     @property
     def supports_multiple_locations_per_user(self):

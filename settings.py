@@ -433,6 +433,8 @@ BASE_ASYNC_TEMPLATE = "reports/async/basic.html"
 LOGIN_TEMPLATE = "login_and_password/login.html"
 LOGGEDOUT_TEMPLATE = LOGIN_TEMPLATE
 
+CSRF_FAILURE_VIEW = 'corehq.apps.hqwebapp.views.csrf_failure'
+
 # These are non-standard setting names that are used in localsettings
 # The standard variables are then set to these variables after localsettings
 # Todo: Change to use standard settings variables
@@ -525,8 +527,6 @@ CELERY_REMINDER_RULE_QUEUE = CELERY_MAIN_QUEUE
 # on its own queue.
 CELERY_REMINDER_CASE_UPDATE_QUEUE = CELERY_MAIN_QUEUE
 
-SKIP_SOUTH_TESTS = True
-#AUTH_PROFILE_MODULE = 'users.HqUserProfile'
 TEST_RUNNER = 'testrunner.TwoStageTestRunner'
 # this is what gets appended to @domain after your accounts
 HQ_ACCOUNT_ROOT = "commcarehq.org"
@@ -891,6 +891,11 @@ SAVED_EXPORT_ACCESS_CUTOFF = 35
 # override for production
 DEFAULT_PROTOCOL = 'http'
 
+####### South Settings #######
+SKIP_SOUTH_TESTS = True
+SOUTH_TESTS_MIGRATE = False
+
+
 try:
     # try to see if there's an environmental variable set for local_settings
     if os.environ.get('CUSTOMSETTINGS', None) == "demo":
@@ -940,10 +945,6 @@ INDICATOR_CONFIG = {
     "mvp-sauri": ['mvp_indicators'],
     "mvp-potou": ['mvp_indicators'],
 }
-
-####### South Settings #######
-#SKIP_SOUTH_TESTS=True
-#SOUTH_TESTS_MIGRATE=False
 
 ####### Couch Forms & Couch DB Kit Settings #######
 from settingshelper import get_dynamic_db_settings, make_couchdb_tuples, get_extra_couchdbs
@@ -1281,6 +1282,10 @@ ES_XFORM_FULL_INDEX_DOMAINS = [
     'pact',
     'uth-rhd-test',
     'succeed'
+]
+
+CUSTOM_UCR_EXPRESSIONS = [
+    ('abt_supervisor', 'custom.abt.reports.expressions.abt_supervisor_expression'),
 ]
 
 CUSTOM_MODULES = [

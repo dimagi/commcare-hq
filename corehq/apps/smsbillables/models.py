@@ -6,6 +6,7 @@ from django.db import models
 from corehq.apps.accounting import models as accounting
 from corehq.apps.accounting.models import Currency
 from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES
+from corehq.apps.sms.mixin import SMSBackend
 from corehq.apps.sms.models import DIRECTION_CHOICES
 from corehq.apps.sms.phonenumbers_helper import get_country_code_and_national_number
 from corehq.apps.sms.test_backend import TestSMSBackend
@@ -287,20 +288,25 @@ class SmsBillable(models.Model):
 
         country_code, national_number = get_country_code_and_national_number(phone_number)
 
-        billable.gateway_fee = SmsGatewayFee.get_by_criteria(
-            backend_api_id,
-            direction,
-            backend_instance=backend_instance,
-            country_code=country_code,
-            national_number=national_number,
-        )
-        if billable.gateway_fee is not None:
-            conversion_rate = billable.gateway_fee.currency.rate_to_default
-            if conversion_rate != 0:
-                billable.gateway_fee_conversion_rate = conversion_rate
+        if backend_instance is None or SMSBackend.get(backend_instance).is_global:
+            billable.gateway_fee = SmsGatewayFee.get_by_criteria(
+                backend_api_id,
+                direction,
+                backend_instance=backend_instance,
+                country_code=country_code,
+                national_number=national_number,
+            )
+            if billable.gateway_fee is not None:
+                conversion_rate = billable.gateway_fee.currency.rate_to_default
+                if conversion_rate != 0:
+                    billable.gateway_fee_conversion_rate = conversion_rate
+                else:
+                    smsbillables_logging.error("Gateway fee conversion rate for currency %s is 0",
+                                               billable.gateway_fee.currency.code)
             else:
-                smsbillables_logging.error("Gateway fee conversion rate for currency %s is 0",
-                                           billable.gateway_fee.currency.code)
+                smsbillables_logging.error(
+                    "No matching gateway fee criteria for SMSLog %s" % message_log._id
+                )
 
         # Fetch usage_fee todo
         domain = message_log.domain

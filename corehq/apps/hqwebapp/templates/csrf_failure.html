@@ -1,0 +1,11 @@
+{% extends "error_base.html" %}
+{% load i18n %}
+{% block title %}403 Forbidden {% endblock %}
+{% block tabs %}{% endblock tabs %}
+{% block tabs_3 %}{% endblock tabs_3 %}
+{% block centered-content %}
+    <div class="page-header">
+        <h2>{% trans "Cookies must be enabled to use CommCareHQ" %}</h2>
+    </div>
+    <p>{% trans "If you believe this is a mistake, please contact commcarehq-support@dimagi.com" %}</p>
+{% endblock %}

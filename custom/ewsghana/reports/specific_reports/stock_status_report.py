@@ -179,7 +179,7 @@ class MonthOfStockProduct(EWSData):
                     if transaction and state:
                         monthly = state[0].get_monthly_consumption()
                         if monthly:
-                            row.append(int(transaction[0].stock_on_hand / monthly))
+                            row.append(round(transaction[0].stock_on_hand / monthly))
                         else:
                             row.append(0)
                     else:
@@ -304,7 +304,8 @@ class StockStatus(MultiReport):
             location_id=location_id if location_id else get_country_id(self.domain),
             program=program if program != ALL_OPTION else None,
             products=products if products and products[0] != ALL_OPTION else [],
-            report_type=self.request.GET.get('report_type', None)
+            report_type=self.request.GET.get('report_type', None),
+            user=self.request.couch_user
         )
 
     @property
@@ -314,16 +315,19 @@ class StockStatus(MultiReport):
 
         if self.is_reporting_type():
             self.split = True
-            return [
-                FacilityReportData(config),
-                StockLevelsLegend(config),
-                InputStock(config),
-                FacilitySMSUsers(config),
-                FacilityUsers(config),
-                FacilityInChargeUsers(config),
-                InventoryManagementData(config),
-                ProductSelectionPane(config),
-            ]
+            if self.is_rendered_as_email:
+                return [FacilityReportData(config)]
+            else:
+                return [
+                    FacilityReportData(config),
+                    StockLevelsLegend(config),
+                    InputStock(config),
+                    FacilitySMSUsers(config),
+                    FacilityUsers(config),
+                    FacilityInChargeUsers(config),
+                    InventoryManagementData(config),
+                    ProductSelectionPane(config)
+                ]
         self.split = False
         if report_type == 'stockouts':
             return [

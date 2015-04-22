@@ -189,6 +189,8 @@ class ProductAvailabilitySummary(ILSData):
         chart = ILSMultiBarChart('', x_axis=Axis('Products'), y_axis=Axis(''))
         chart.rotateLabels = -45
         chart.marginBottom = 120
+        chart.marginRight = 10
+        chart.height = 350
         chart.stacked = self.chart_stacked
         for row in convert_product_data_to_stack_chart(product_availability, product_dashboard):
             chart.add_dataset(row['label'], [

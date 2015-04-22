@@ -2,11 +2,26 @@ from collections import defaultdict
 import functools
 import json
 import itertools
+import uuid
+from corehq.apps.app_manager.exceptions import SuiteError
 from corehq.apps.builds.models import CommCareBuildConfig
+from corehq.apps.app_manager.tasks import create_user_cases
+from corehq.util.soft_assert import soft_assert
 from couchdbkit.exceptions import DocTypeError
 from corehq import Domain
-from corehq.apps.app_manager.const import CT_REQUISITION_MODE_3, CT_LEDGER_STOCK, CT_LEDGER_REQUESTED, CT_REQUISITION_MODE_4, CT_LEDGER_APPROVED, CT_LEDGER_PREFIX
+from corehq.apps.app_manager.const import (
+    CT_REQUISITION_MODE_3,
+    CT_LEDGER_STOCK,
+    CT_LEDGER_REQUESTED,
+    CT_REQUISITION_MODE_4,
+    CT_LEDGER_APPROVED,
+    CT_LEDGER_PREFIX,
+    USERCASE_PREFIX,
+    USERCASE_TYPE,
+    USERCASE_ID
+)
 from corehq.apps.app_manager.xform import XForm, XFormException, parse_xml
+from dimagi.utils.couch import CriticalSection
 import re
 from dimagi.utils.decorators.memoized import memoized
 from django.core.cache import cache
@@ -151,7 +166,18 @@ class ParentCasePropertyBuilder(object):
                     ).get(case_type, [])
                 )
 
-        return case_properties
+        # prefix user case properties with "user:".
+        prefix_user = lambda p: USERCASE_PREFIX + p if case_type == USERCASE_TYPE else p
+
+        # .. note:: if the user case type has a parent case type, its
+        #           properties will be returned as `user:parent/property`
+        #
+        # .. note:: if this case type is not the user case type, but it has a
+        #           parent case type which is the user case type, then the
+        #           parent case type's properties will be returned as
+        #           `parent/user:property`.
+        #
+        return {prefix_user(p) for p in case_properties}
 
     @memoized
     def get_case_updates(self, form, case_type):
@@ -193,10 +219,18 @@ def get_case_properties(app, case_types, defaults=(),
     )
 
 
+def is_usercase_enabled(domain_name):
+    domain = Domain.get_by_name(domain_name) if domain_name else None
+    return domain and domain.usercase_enabled
+
+
 def get_all_case_properties(app):
+    case_types = set(itertools.chain.from_iterable(m.get_case_types() for m in app.modules))
+    if is_usercase_enabled(app.domain):
+        case_types.add(USERCASE_TYPE)
     return get_case_properties(
         app,
-        set(itertools.chain.from_iterable(m.get_case_types() for m in app.modules)),
+        case_types,
         defaults=('name',)
     )
 
@@ -359,3 +393,57 @@ def get_commcare_versions(request_user):
     versions = [i.build.version for i in CommCareBuildConfig.fetch().menu
                 if request_user.is_superuser or not i.superuser_only]
     return sorted(versions, key=version_key)
+
+
+def get_usercase_keys(dict_):
+    n = len(USERCASE_PREFIX)
+    return {k[n:]: v for k, v in dict_.items() if k.startswith(USERCASE_PREFIX)}
+
+
+def get_usercase_values(dict_):
+    n = len(USERCASE_PREFIX)
+    return {k: v[n:] for k, v in dict_.items() if v.startswith(USERCASE_PREFIX)}
+
+
+def skip_usercase_values(dict_):
+    return {k: v for k, v in dict_.items() if not v.startswith(USERCASE_PREFIX)}
+
+
+def any_usercase_items(iter_):
+    return any(i.startswith(USERCASE_PREFIX) for i in iter_)
+
+
+def actions_use_usercase(actions):
+    if 'update_case' in actions and hasattr(actions['update_case'], 'update'):
+        return any_usercase_items(actions['update_case'].update.iterkeys())
+    if 'case_preload' in actions:
+        return any_usercase_items(actions['case_preload'].preload.itervalues())
+    return False
+
+
+def enable_usercase(domain_name):
+    with CriticalSection(['enable_usercase_' + domain_name]):
+        domain = Domain.get_by_name(domain_name, strict=True)
+        if not domain.usercase_enabled:
+            domain.usercase_enabled = True
+            domain.save()
+            create_user_cases.delay(domain_name)
+
+
+def get_cloudcare_session_data(suite_gen, domain_name, form, couch_user):
+    from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
+
+    datums = suite_gen.get_new_case_id_datums_meta(form)
+    session_data = {datum['datum'].id: uuid.uuid4().hex for datum in datums}
+    if couch_user.doc_type == 'CommCareUser':  # smsforms.app.start_session could pass a CommCareCase
+        try:
+            extra_datums = suite_gen.get_extra_case_id_datums(form)
+        except SuiteError as err:
+            _assert = soft_assert(['nhooper_at_dimagi_dot_com'.replace('_at_', '@').replace('_dot_', '.')])
+            _assert(False, 'Domain "%s": %s' % (domain_name, err))
+        else:
+            if suite_gen.any_usercase_datums(extra_datums):
+                usercase = get_case_by_domain_hq_user_id(domain_name, couch_user.get_id, include_docs=False)
+                if usercase:
+                    session_data[USERCASE_ID] = usercase['id']
+    return session_data

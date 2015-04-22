@@ -92,7 +92,7 @@ from corehq.apps.reports.models import (
     HQGroupExportConfiguration
 )
 from corehq.apps.reports.standard.cases.basic import CaseListReport
-from corehq.apps.reports.tasks import create_metadata_export, rebuild_export_async
+from corehq.apps.reports.tasks import create_metadata_export, rebuild_export_async, send_delayed_report
 from corehq.apps.reports import util
 from corehq.apps.reports.util import (
     get_all_users_by_domain,
@@ -787,7 +787,6 @@ def delete_scheduled_report(request, domain, scheduled_report_id):
 
 @login_and_domain_required
 def send_test_scheduled_report(request, domain, scheduled_report_id):
-    from corehq.apps.reports.tasks import send_report
     from corehq.apps.users.models import CouchUser, CommCareUser, WebUser
 
     user_id = request.couch_user._id
@@ -799,7 +798,7 @@ def send_test_scheduled_report(request, domain, scheduled_report_id):
         user = CommCareUser.get_by_user_id(user_id, domain)
 
     try:
-        send_report.delay(notification._id)
+        send_delayed_report(notification)
     except Exception, e:
         import logging
         logging.exception(e)
@@ -922,6 +921,34 @@ def case_details(request, domain, case_id):
         },
         "show_case_rebuild": toggles.CASE_REBUILD.enabled(request.user.username),
     })
+
+
+@require_case_view_permission
+@login_and_domain_required
+@require_GET
+def case_forms(request, domain, case_id):
+    case = get_document_or_404(CommCareCase, domain, case_id)
+    try:
+        start_range = int(request.GET['start_range'])
+        end_range = int(request.GET['end_range'])
+    except (KeyError, ValueError):
+        raise HttpResponseBadRequest()
+
+    def form_to_json(form):
+        return {
+            'id': form._id,
+            'received_on': json_format_datetime(form.received_on),
+            'user': {
+                "id": form.metadata.userID if form.metadata else '',
+                "username": form.metadata.username if form.metadata else '',
+            },
+            'readable_name': form.form.get('@name') or _('unknown'),
+        }
+
+    slice = list(reversed(case.xform_ids))[start_range:end_range]
+    return json_response([
+        form_to_json(XFormInstance.get(form_id)) for form_id in slice
+    ])
 
 
 @login_and_domain_required
@@ -1374,7 +1401,7 @@ def form_multimedia_export(request, domain):
         enddate = json_format_date(string_to_datetime(enddate) + timedelta(days=1))
         app_id = request.GET.get("app_id", None)
         export_id = request.GET.get("export_id", None)
-        zip_name = request.GET.get("name", None)
+        zip_name = unidecode(request.GET.get("name", None))
     except (KeyError, ValueError):
         return HttpResponseBadRequest()
 

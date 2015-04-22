@@ -130,3 +130,11 @@ $(function() {
         output += super(AutocompleteTextarea, self).render(name, value,
                                                            attrs=attrs)
         return output
+
+
+class Select2Widget(forms.Select):
+    class Media:
+        css = {
+            'all': ('hqwebapp/js/lib/select2/select2.css',)
+        }
+        js = ('hqwebapp/js/lib/select2/select2.js',)
