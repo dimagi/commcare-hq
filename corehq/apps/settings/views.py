@@ -115,7 +115,7 @@ class MyAccountSettingsView(BaseMyAccountView):
             form = UpdateMyAccountInfoForm(
                 username=self.request.couch_user.username
             )
-        form.initialize_form(existing_user=self.request.couch_user)
+        form.initialize_form(self.request.domain, existing_user=self.request.couch_user)
         form.load_language(language_choices)
         return form
 

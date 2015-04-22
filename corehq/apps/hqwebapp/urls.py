@@ -21,7 +21,10 @@ urlpatterns = patterns(
     url(r'^search/$', 'quick_find', name="global_quick_find"),
     url(r'^searchDescription.xml$', 'osdd', name="osdd"),
     url(r'^messaging-pricing', PublicSMSRatesView.as_view(), name=PublicSMSRatesView.urlname),
-    url(r'^alerts/$', 'maintenance_alerts'),
+    url(r'^alerts/$', 'maintenance_alerts', name='alerts'),
+    url(r'^create_alert/$', 'create_alert', name='create_alert'),
+    url(r'^activate_alert/$', 'activate_alert', name='activate_alert'),
+    url(r'^deactivate_alert/$', 'deactivate_alert', name='deactivate_alert'),
 )
 
 urlpatterns += patterns('corehq.apps.orgs.views', url(r'^search_orgs/', 'search_orgs', name='search_orgs'))

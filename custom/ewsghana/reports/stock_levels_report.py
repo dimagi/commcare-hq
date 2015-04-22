@@ -93,18 +93,19 @@ class FacilityReportData(EWSData):
         ).order_by('-report__date')
 
         for state in stock_states:
-            monthly_consumption = int(state.get_monthly_consumption()) if state.get_monthly_consumption() else 0
+            monthly_consumption = round(state.get_monthly_consumption()) if state.get_monthly_consumption() else 0
+            max_level = round(monthly_consumption * float(loc.location_type.overstock_threshold))
             if state.product_id not in state_grouping:
                 state_grouping[state.product_id] = {
                     'commodity': state.sql_product.name,
-                    'months_until_stockout': "%.2f" % (state.stock_on_hand / monthly_consumption)
+                    'months_until_stockout': "%.2f" % (float(state.stock_on_hand) / monthly_consumption)
                     if state.stock_on_hand and monthly_consumption else 0,
                     'stockout_duration': '',
                     'stockout_duration_helper': True,
                     'current_stock': state.stock_on_hand,
                     'monthly_consumption': monthly_consumption,
-                    'reorder_level': int(monthly_consumption * loc.location_type.overstock_threshold) / 2,
-                    'maximum_level': int(monthly_consumption * loc.location_type.overstock_threshold),
+                    'reorder_level': round(max_level / 2.0),
+                    'maximum_level': max_level,
                     'last_report': ''
                 }
 
@@ -166,7 +167,7 @@ class InventoryManagementData(EWSData):
         def calculate_weeks_remaining(state, daily_consumption, date):
             if not daily_consumption:
                 return 0
-            consumption = float(daily_consumption) * 30.0
+            consumption = round(float(daily_consumption) * 30.0)
             quantity = float(state.stock_on_hand) - int((date - state.report.date).days / 7.0) * consumption
             if consumption and consumption > 0 and quantity > 0:
                 return quantity / consumption
@@ -370,14 +371,17 @@ class StockLevelsReport(MultiReport):
             Domain.get_by_name(self.domain).location_types
         )]
         if not self.needs_filters and Location.get(config['location_id']).location_type in location_types:
-            return [FacilityReportData(config),
-                    StockLevelsLegend(config),
-                    InputStock(config),
-                    FacilitySMSUsers(config),
-                    FacilityUsers(config),
-                    FacilityInChargeUsers(config),
-                    InventoryManagementData(config),
-                    ProductSelectionPane(config)]
+            if self.is_rendered_as_email:
+                return [FacilityReportData(config)]
+            else:
+                return [FacilityReportData(config),
+                        StockLevelsLegend(config),
+                        InputStock(config),
+                        FacilitySMSUsers(config),
+                        FacilityUsers(config),
+                        FacilityInChargeUsers(config),
+                        InventoryManagementData(config),
+                        ProductSelectionPane(config)]
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):

@@ -191,7 +191,7 @@ class InputStockView(BaseDomainView):
                     'product_id': product.product_id,
                     'product': product.name,
                     'stock_on_hand': int(stock_on_hand),
-                    'monthly_consumption': int(monthly_consumption) if monthly_consumption else 0,
+                    'monthly_consumption': round(monthly_consumption) if monthly_consumption else 0,
                     'units': product.units
                 }
             )

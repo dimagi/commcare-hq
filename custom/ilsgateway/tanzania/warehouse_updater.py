@@ -342,7 +342,7 @@ def populate_report_data(start_date, end_date, domain, runner):
     update_historical_data(domain)
 
 
-@task(queue='background_queue')
+@task(queue='background_queue', ignore_result=True)
 def process_facility_warehouse_data(facility, start_date, end_date, runner):
     """
     process all the facility-level warehouse tables
@@ -535,7 +535,7 @@ def get_nested_children(location):
     return children
 
 
-@task(queue='background_queue')
+@task(queue='background_queue', ignore_result=True)
 def process_non_facility_warehouse_data(location, start_date, end_date, runner, strict=True):
     runner.location = location.sql_location
     runner.save()

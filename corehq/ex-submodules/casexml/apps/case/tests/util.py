@@ -19,6 +19,30 @@ from casexml.apps.phone.restore import RestoreConfig
 from casexml.apps.case.util import post_case_blocks
 
 
+class RestoreCaseBlock(object):
+    """
+    Little shim class for working with XML case blocks in a restore payload
+    """
+
+    def __init__(self, xml_element, version=V2):
+        self.xml_element = xml_element
+        self.version = version
+
+    def to_string(self):
+        return ElementTree.tostring(self.xml_element)
+
+    def get_case_id(self):
+        if self.version == V1:
+            return self.xml_element.findtext('{{{0}}}case_id'.format(get_case_xmlns(self.version)))
+        else:
+            return self.xml_element.get('case_id')
+
+    def get_case_name(self):
+        assert self.version == V2, 'get_case_name not yet supported for legacy V1 casexml'
+        # note: there has to be a better way to work with namespaced xpath.... right?!?!
+        return self.xml_element.findtext('{{{0}}}create/{{{0}}}case_name'.format(get_case_xmlns(self.version)))
+
+
 def bootstrap_case_from_xml(test_class, filename, case_id_override=None, domain=None):
     starttime = utcnow_sans_milliseconds()
     
@@ -101,6 +125,16 @@ def assert_user_doesnt_have_cases(testcase, user, case_ids, **kwargs):
                                should_have=False, version=V2, **kwargs)
 
 
+def get_case_xmlns(version):
+    return NS_VERSION_MAP.get(version, 'http://openrosa.org/http/response')
+
+
+def extract_caseblocks_from_xml(payload_string, version=V2):
+    parsed_payload = ElementTree.fromstring(payload_string)
+    xml_blocks = parsed_payload.findall('{{{0}}}case'.format(get_case_xmlns(version)))
+    return [RestoreCaseBlock(b, version) for b in xml_blocks]
+
+
 def check_user_has_case(testcase, user, case_blocks, should_have=True,
                         line_by_line=True, restore_id="", version=V1,
                         purge_restore_cache=False, return_single=False):
@@ -115,33 +149,25 @@ def check_user_has_case(testcase, user, case_blocks, should_have=True,
         SyncLog.get(restore_id).invalidate_cached_payloads()
     restore_config = RestoreConfig(user, restore_id, version=version)
     payload_string = restore_config.get_payload().as_string()
-    payload = ElementTree.fromstring(payload_string)
-
-    blocks = payload.findall('{{{0}}}case'.format(XMLNS))
-
-    def get_case_id(block):
-        if version == V1:
-            return block.findtext('{{{0}}}case_id'.format(XMLNS))
-        else:
-            return block.get('case_id')
+    blocks = extract_caseblocks_from_xml(payload_string, version)
 
     def check_block(case_block):
         case_block.set('xmlns', XMLNS)
-        case_block = ElementTree.fromstring(ElementTree.tostring(case_block))
-        case_id = get_case_id(case_block)
+        case_block = RestoreCaseBlock(ElementTree.fromstring(ElementTree.tostring(case_block)), version=version)
+        case_id = case_block.get_case_id()
         n = 0
 
         def extra_info():
             return "\n%s\n%s" % (ElementTree.tostring(case_block), map(ElementTree.tostring, blocks))
         match = None
         for block in blocks:
-            if get_case_id(block) == case_id:
+            if block.get_case_id() == case_id:
                 if should_have:
                     if line_by_line:
                         check_xml_line_by_line(
                             testcase,
-                            ElementTree.tostring(case_block),
-                            ElementTree.tostring(block)
+                            case_block.to_string(),
+                            block.to_string(),
                         )
                     match = block
                     n += 1
@@ -164,7 +190,6 @@ def check_user_has_case(testcase, user, case_blocks, should_have=True,
     matches = [check_block(case_block) for case_block in case_blocks]
     return restore_config, matches[0] if return_single else matches
 
-DEFAULT_TEST_TYPE = 'test'
 
 def post_util(create=False, case_id=None, user_id=None, owner_id=None,
               case_type=None, version=V2, form_extras=None, close=False,
@@ -176,7 +201,7 @@ def post_util(create=False, case_id=None, user_id=None, owner_id=None,
                       case_id=case_id,
                       user_id=user_id or uid(),
                       owner_id=owner_id or uid(),
-                      case_type=case_type or DEFAULT_TEST_TYPE,
+                      case_type=case_type or 'test',
                       version=version,
                       update=kwargs,
                       close=close).as_xml()
