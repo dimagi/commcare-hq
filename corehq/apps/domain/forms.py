@@ -186,14 +186,12 @@ class SnapshotSettingsForm(forms.Form):
             'description',
             'project_type',
             'image',
+            'documentation_file',
             'video',
             'share_multimedia',
             'share_reminders',
             'license',
             'cda_confirmed',]
-
-        if self.dom and toggles.DOCUMENTATION_FILE.enabled(user.username):
-            self.fields.keyOrder.insert(5, 'documentation_file')
 
         self.fields['license'].help_text = \
             render_to_string('domain/partials/license_explanations.html', {
