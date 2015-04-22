@@ -1730,6 +1730,7 @@ class BillingRecord(BillingRecordBase):
     def email_from(self):
         return get_dimagi_from_email_by_product(self.invoice.subscription.plan_version.core_product)
 
+
 class InvoicePdf(SafeSaveDocument):
     invoice_id = StringProperty()
     date_created = DateTimeProperty()
@@ -1748,8 +1749,8 @@ class InvoicePdf(SafeSaveDocument):
             date_end=invoice.date_end,
             subtotal=invoice.subtotal,
             tax_rate=invoice.tax_rate,
-            applied_tax=getattr(invoice, 'applied_tax', None),
-            applied_credit=getattr(invoice, 'applied_credit', None),
+            applied_tax=getattr(invoice, 'applied_tax', Decimal('0.000')),
+            applied_credit=getattr(invoice, 'applied_credit', Decimal('0.000')),
             total=invoice.get_total(),
         )
 

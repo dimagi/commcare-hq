@@ -259,12 +259,11 @@ class DomainWireInvoiceFactory(object):
             date_end = invoices.aggregate(Max('date_end'))['date_end__max']
 
         if not date_end:
-            date_end = datetime.datetime.today() # todo check with danny to make sure this is correct (it's probably not)
+            date_end = datetime.datetime.today()
 
         date_due = date_end + datetime.timedelta(DEFAULT_DAYS_UNTIL_DUE)
 
-        # TODO: figure out how to handle line items?
-        # TODO: figure out difference between balance and subtotal for wire invoice
+        # TODO: figure out how to handle line items
         wire_invoice = WireInvoice.objects.create(
             domain=self.domain.name,
             date_start=date_start,
@@ -279,6 +278,7 @@ class DomainWireInvoiceFactory(object):
         try:
             record.send_email(contact_emails=self.contact_emails)
         except InvoiceEmailThrottledError as e:
+            # Currently wire invoices are never throttled
             if not self.logged_throttle_error:
                 logger.error("[BILLING] %s" % e)
                 self.logged_throttle_error = True

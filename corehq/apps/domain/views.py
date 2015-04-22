@@ -1020,6 +1020,7 @@ class BaseStripePaymentView(DomainAccountingSettings):
                     )
                 }
             }
+
         return json_response(response)
 
 
@@ -1097,13 +1098,13 @@ class WireInvoiceView(View):
         return super(WireInvoiceView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        emails = request.POST.get('emails', None)
+        emails = request.POST.get('emails', []).split()
         balance = Decimal(request.POST.get('customPaymentAmount', 0))
-        if emails:
-            emails.split(' ')
         wire_invoice_factory = DomainWireInvoiceFactory(request.domain, contact_emails=emails)
-
-        wire_invoice = wire_invoice_factory.create_wire_invoice(balance)
+        try:
+            wire_invoice = wire_invoice_factory.create_wire_invoice(balance)
+        except Exception, e:
+            return json_response({'error': {'message', e}})
 
         return json_response({'success': True})
 
@@ -1126,7 +1127,6 @@ class BillingStatementPdfView(View):
         except ResourceNotFound:
             raise Http404()
 
-        # verify domain
         try:
             invoice = Invoice.objects.get(pk=invoice_pdf.invoice_id)
         except Invoice.DoesNotExist:

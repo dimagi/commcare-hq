@@ -19,7 +19,7 @@
             }
         );
 
-        var bulkWirePaymentHandler = new PaymentMethodHandler(
+        var bulkWirePaymentHandler = new WireInvoiceHandler(
             "bulk-wire-payment-form",
             {
                 submitBtnText: "{% trans "Submit Invoice Request" %}",
@@ -65,7 +65,6 @@
             bulkWirePaymentHandler.costItem(new TotalCostItem({
                 totalBalance: paginatedListModel.totalDue()
             }));
-            bulkWirePaymentHandler.reset();
         });
 
         paginatedListModel.totalDue = ko.computed(function() {
@@ -135,7 +134,7 @@
                 {% trans 'Pay with Credit Card' %}
             </button>
         </p>
-        <p>
+        <p data-bind="visible: hasInitialLoadFinished() && totalDue()">
             <button type="button"
                     class="btn btn-success"
                     data-toggle="modal"
