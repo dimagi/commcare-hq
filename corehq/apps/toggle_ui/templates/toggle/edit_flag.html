@@ -82,8 +82,10 @@
     });
 </script>
 {% endblock %}
-
 {% block page_content %}
+    {% if toggle_meta.documentation_link %}
+    <p><a href="{{ toggle_meta.documentation_link }}" target="_blank">Documentation for this flag</a></p>
+    {% endif %}
     <div id="toggle_editing_ko">
         <div data-bind="saveButton: saveButton"></div>
         <h4>{% trans "Enabled toggle items" %}</h4>
