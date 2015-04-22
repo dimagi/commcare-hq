@@ -83,6 +83,9 @@
 </script>
 {% endblock %}
 {% block page_content %}
+    {% if toggle_meta.description %}
+        <p>{{ toggle_meta.description }}</p>
+    {% endif %}
     {% if toggle_meta.help_link %}
     <p><a href="{{ toggle_meta.help_link }}" target="_blank">{% trans "More information" %}</a></p>
     {% endif %}

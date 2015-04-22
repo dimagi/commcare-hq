@@ -6,10 +6,11 @@ from toggle.shortcuts import toggle_enabled, set_toggle
 
 
 class StaticToggle(object):
-    def __init__(self, slug, label, namespaces=None, help_link=None):
+    def __init__(self, slug, label, namespaces=None, help_link=None, description=None):
         self.slug = slug
         self.label = label
         self.help_link = help_link
+        self.description = description
         if namespaces:
             self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
         else:

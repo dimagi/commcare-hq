@@ -24,12 +24,11 @@ class FeaturePreview(StaticToggle):
         else:
             # do cool thing for BETA_FEATURE
     """
-    def __init__(self, slug, label, description, privilege=None,
-            help_link=None, save_fn=None):
-        self.description = description
+    def __init__(self, slug, label, description, help_link=None, privilege=None, save_fn=None):
         self.privilege = privilege
         self.save_fn = save_fn
-        super(FeaturePreview, self).__init__(slug, label, namespaces=[NAMESPACE_DOMAIN], help_link=help_link)
+        super(FeaturePreview, self).__init__(slug, label, description=description, help_link=help_link,
+                                             namespaces=[NAMESPACE_DOMAIN])
 
     def has_privilege(self, request):
         if not self.privilege:
