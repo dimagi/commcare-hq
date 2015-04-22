@@ -932,7 +932,7 @@ class ActiveManager(models.Manager):
     Filter any object that is associated to an archived product.
     """
 
-    def get_query_set(self):
+    def get_queryset(self):
         return super(ActiveManager, self).get_query_set() \
             .exclude(sql_product__is_archived=True) \
             .exclude(sql_location__is_archived=True)
