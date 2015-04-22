@@ -14,4 +14,3 @@ DELIVERY_NOT_RESPONDING = 'delivery_not_responding'
 SOH_NOT_RESPONDING = 'soh_not_responding'
 
 TEST_REGION_ID = 21
-

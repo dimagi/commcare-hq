@@ -24,7 +24,8 @@ def populate_facility_stockout_alerts(facility_id, date):
     # create stockout alerts
     product_data = ProductAvailabilityData.objects.filter(supply_point=facility_id, date=date, without_stock=1)
     for p in product_data:
-        create_multilevel_alert(facility_id, date, const.PRODUCT_STOCKOUT, {'org': facility_id, 'product': p.product})
+        create_multilevel_alert(facility_id, date, const.PRODUCT_STOCKOUT,
+                                {'org': facility_id, 'product': p.product})
 
 
 def create_multilevel_alert(location, date, alert_type, details):
