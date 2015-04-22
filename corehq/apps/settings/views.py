@@ -117,7 +117,7 @@ class MyAccountSettingsView(BaseMyAccountView):
             )
         try:
             domain = self.request.domain
-        except:
+        except AttributeError:
             domain = ''
         form.initialize_form(domain, existing_user=self.request.couch_user)
         form.load_language(language_choices)
