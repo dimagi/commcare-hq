@@ -142,7 +142,13 @@ class CallCenterTests(BaseCCTests):
         self._test_indicators(self.cc_user_no_data, data_set, expected_no_data)
 
     def test_standard_indicators(self):
-        indicator_set = CallCenterIndicators(self.cc_domain, self.cc_user, custom_cache=locmem_cache)
+        indicator_set = CallCenterIndicators(
+            self.cc_domain.name,
+            self.cc_domain.default_timezone,
+            self.cc_domain.call_center_config.case_type,
+            self.cc_user,
+            custom_cache=locmem_cache
+        )
         self.assertEqual(
             set(indicator_set.user_to_case_map.keys()),
             set([self.cc_user.get_id, self.cc_user_no_data.get_id])
@@ -159,7 +165,9 @@ class CallCenterTests(BaseCCTests):
         )
 
         indicator_set = CallCenterIndicators(
-            self.cc_domain,
+            self.cc_domain.name,
+            self.cc_domain.default_timezone,
+            self.cc_domain.call_center_config.case_type,
             self.cc_user,
             custom_cache=locmem_cache,
             override_cases=[user_case]
@@ -184,7 +192,13 @@ class CallCenterTests(BaseCCTests):
         expected.update(get_indicators('childForms', [0L, 0L, 0L, 0L], is_legacy=True))
         expected.update(get_indicators('motherDuration', [3L, 4L, 4L, 0L], is_legacy=True))
 
-        indicator_set = CallCenterIndicators(self.aarohi_domain, self.aarohi_user, custom_cache=locmem_cache)
+        indicator_set = CallCenterIndicators(
+            self.aarohi_domain.name,
+            self.aarohi_domain.default_timezone,
+            self.aarohi_domain.call_center_config.case_type,
+            self.aarohi_user,
+            custom_cache=locmem_cache
+        )
         self._test_indicators(
             self.aarohi_user,
             indicator_set.get_data(),
@@ -201,7 +215,13 @@ class CallCenterTests(BaseCCTests):
             indicators=expected_indicators
         )
 
-        indicator_set = CallCenterIndicators(self.cc_domain, self.cc_user, custom_cache=locmem_cache)
+        indicator_set = CallCenterIndicators(
+            self.cc_domain.name,
+            self.cc_domain.default_timezone,
+            self.cc_domain.call_center_config.case_type,
+            self.cc_user,
+            custom_cache=locmem_cache
+        )
         locmem_cache.set(cache_key(self.cc_user.get_id, indicator_set.reference_date), cached_data.to_json())
 
         self.assertEqual(
@@ -216,7 +236,13 @@ class CallCenterTests(BaseCCTests):
         """
         Test to verify that only data belonging to users managed by the supervisor is returned.
         """
-        indicator_set = CallCenterIndicators(self.cc_domain, self.cc_user_no_data, custom_cache=locmem_cache)
+        indicator_set = CallCenterIndicators(
+            self.cc_domain.name,
+            self.cc_domain.default_timezone,
+            self.cc_domain.call_center_config.case_type,
+            self.cc_user_no_data,
+            custom_cache=locmem_cache
+        )
         self.assertEqual(indicator_set.user_to_case_map.keys(), [])
         self.assertEqual(indicator_set.users_needing_data, set())
         self.assertEqual(indicator_set.owners_needing_data, set())
@@ -261,7 +287,13 @@ class CallCenterSupervisorGroupTest(BaseCCTests):
         Ensure that users who are assigned to the supervisor via a group are also included
         in final data set.
         """
-        indicator_set = CallCenterIndicators(self.domain, self.supervisor, custom_cache=locmem_cache)
+        indicator_set = CallCenterIndicators(
+            self.domain.name,
+            self.domain.default_timezone,
+            self.domain.call_center_config.case_type,
+            self.supervisor,
+            custom_cache=locmem_cache
+        )
         self.assertEqual(indicator_set.user_to_case_map.keys(), [self.user.get_id])
         self.assertEqual(indicator_set.users_needing_data, set([self.user.get_id]))
         self.assertEqual(indicator_set.owners_needing_data, set([self.user.get_id]))
@@ -311,7 +343,13 @@ class CallCenterCaseSharingTest(BaseCCTests):
         """
         Ensure that indicators include cases owned by a case sharing group the user is part of.
         """
-        indicator_set = CallCenterIndicators(self.domain, self.supervisor, custom_cache=locmem_cache)
+        indicator_set = CallCenterIndicators(
+            self.domain.name,
+            self.domain.default_timezone,
+            self.domain.call_center_config.case_type,
+            self.supervisor,
+            custom_cache=locmem_cache
+        )
         self.assertEqual(indicator_set.user_to_case_map.keys(), [self.user.get_id])
         self.assertEqual(indicator_set.users_needing_data, set([self.user.get_id]))
         self.assertEqual(indicator_set.owners_needing_data, set([self.user.get_id, self.group.get_id]))
@@ -350,7 +388,13 @@ class CallCenterTestOpenedClosed(BaseCCTests):
         Test that cases_closed and cases_opened indicators count based on the user that
         opened / closed the case and not the case owner.
         """
-        indicator_set = CallCenterIndicators(self.domain, self.supervisor, custom_cache=locmem_cache)
+        indicator_set = CallCenterIndicators(
+            self.domain.name,
+            self.domain.default_timezone,
+            self.domain.call_center_config.case_type,
+            self.supervisor,
+            custom_cache=locmem_cache
+        )
         expected = expected_standard_indicators()
 
         # cases opened / closed by another user so expect 0
