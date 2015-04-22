@@ -128,6 +128,12 @@ def sync_usercase(user):
         )
 
 
+def is_midnight_for_domain(midnight_form_domain, error_margin=15, current_time=None):
+    current_time = current_time or datetime.utcnow()
+    diff = current_time - midnight_form_domain
+    return diff.days >= 0 and diff < timedelta(minutes=error_margin)
+
+
 def get_call_center_domains():
     result = (
         DomainES()

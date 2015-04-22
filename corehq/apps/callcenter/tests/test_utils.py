@@ -1,10 +1,13 @@
-from corehq.apps.callcenter.utils import sync_call_center_user_case
+from datetime import datetime, timedelta
+import pytz
 from casexml.apps.case.mock import CaseFactory, CaseStructure
 from casexml.apps.case.tests.util import delete_all_cases
+from corehq.apps.callcenter.utils import sync_call_center_user_case, is_midnight_for_domain, get_call_center_cases, \
+    DomainLite
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.apps.users.models import CommCareUser
-from django.test import TestCase
+from django.test import TestCase, SimpleTestCase
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 TEST_DOMAIN = 'cc_util_test'
@@ -132,3 +135,35 @@ class CallCenterUtilsTests(TestCase):
         cases = get_call_center_cases(TEST_DOMAIN, CASE_TYPE)
         self.assertEqual(len(cases), 3)
 
+
+class DomainTimezoneTests(SimpleTestCase):
+    def test_midnight_for_domain(self):
+        midnight = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        timezones = [
+            ('Asia/Kolkata', 5.5),
+            ('UTC', 0),
+            ('Africa/Lagos', 1),
+            ('America/New_York', -5),
+            ('US/Eastern', -5),
+            ('Europe/London', 0),
+            ('Asia/Baghdad', 3),
+            ('America/Port-au-Prince', -5),
+            ('Africa/Porto-Novo', 1),
+            ('Africa/Nairobi', 3),
+        ]
+        for tz, offset in timezones:
+            offset += datetime.now(pytz.timezone(tz)).dst().total_seconds() / 3600
+            dom = DomainLite(name='', default_timezone=tz, cc_case_type='')
+            self.assertEqual(dom.midnight, midnight - timedelta(hours=offset), tz)
+
+    def test_is_midnight_for_domain(self):
+        midnight = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        midnights = [
+            (midnight, True),
+            (midnight + timedelta(minutes=10), True),
+            (midnight + timedelta(minutes=20), False),
+            (midnight - timedelta(minutes=1), False),
+        ]
+        for midnight_candidate, expected in midnights:
+            is_midnight = is_midnight_for_domain(midnight, current_time=midnight_candidate)
+            self.assertEqual(is_midnight, expected)
