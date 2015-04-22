@@ -528,7 +528,7 @@ def aggregate_response_alerts(location_id, date, alerts, alert_type):
         create_alert(location_id, date, alert_type, {'number': total})
 
 
-def update_historical_data(domain):
+def update_historical_data(domain, locations=None):
     """
     If we don't have a record of this supply point being updated, run
     through all historical data and just fill in with zeros.
@@ -539,10 +539,11 @@ def update_historical_data(domain):
 
     start_date = org_summaries[0].date
 
-    if not ILSGatewayConfig.for_domain(domain).all_stock_data:
-        locations = _get_test_locations(domain)
-    else:
-        locations = Location.by_domain(domain)
+    if locations is None:
+        if not ILSGatewayConfig.for_domain(domain).all_stock_data:
+            locations = _get_test_locations(domain)
+        else:
+            locations = Location.by_domain(domain)
 
     for sp in locations:
         try:
