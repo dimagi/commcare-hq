@@ -16,8 +16,8 @@ from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, 
 
 
 """
-    These functions and variables are ported from:
-    https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzania/reporting/run_reports.py
+These functions and variables are ported from:
+https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzania/reporting/run_reports.py
 """
 
 
