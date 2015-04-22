@@ -33,6 +33,14 @@ then
     fi
 fi
 
+
+# make sure staging.yaml parses as yaml
+python scripts/checkyaml.py $filename
+if [[ $? -ne 0 ]]
+then
+    abort "Fix staging.yml and try again"
+fi
+
 # make sure local is not ahead of origin
 git fetch
 if [[ -n $(git log --max-count=1 origin/$branch..$branch) ]]

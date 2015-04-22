@@ -53,8 +53,16 @@ def make_url(report_class, domain, string_params, args):
         return None
 
 
+# Calculate last full period (Friday - Thursday)
 def calculate_last_period(enddate):
-    last_th = enddate - timedelta(days=enddate.weekday()) + timedelta(days=3, weeks=-1)
+    # checking if Thursday was already in this week
+    i = enddate.weekday() - 3
+    if i < 0:
+        # today is Monday, Tuesday or Wednesday -> calculate Thursday from previous week
+        last_th = enddate + timedelta(days=-i, weeks=-1)
+    else:
+        # today is Thursday, Friday, Saturday or Sunday -> calculate Thursday from this week
+        last_th = enddate - timedelta(days=i)
     fr_before = last_th - timedelta(days=6)
     return fr_before, last_th
 
@@ -275,3 +283,22 @@ def can_receive_email(user, verified_number):
 
 def get_country_id(domain):
     return SQLLocation.objects.filter(domain=domain, location_type__name='country')[0].location_id
+
+
+def has_input_stock_permissions(couch_user, location, domain):
+    domain_membership = couch_user.get_domain_membership(domain)
+    if not couch_user.is_web_user() or not domain_membership or not domain_membership.location_id:
+        return False
+    try:
+        user_location = SQLLocation.objects.get(location_id=domain_membership.location_id)
+    except SQLLocation.DoesNotExist:
+        return False
+
+    if not user_location.location_type.administrative:
+        if user_location.location_id != location.location_id:
+            return False
+    else:
+        parents = location.get_ancestors().values_list('location_id', flat=True)
+        if user_location.location_id not in parents:
+            return False
+    return True

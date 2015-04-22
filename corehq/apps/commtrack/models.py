@@ -139,6 +139,7 @@ class ConsumptionConfig(DocumentSchema):
     min_window = IntegerProperty(default=10)
     optimal_window = IntegerProperty()
     use_supply_point_type_default_consumption = BooleanProperty(default=False)
+    exclude_invalid_periods = BooleanProperty(default=False)
 
 
 class StockLevelsConfig(DocumentSchema):
@@ -205,7 +206,6 @@ class CommtrackConfig(CachedCouchDocumentMixin, Document):
     # configured on Advanced Settings page
     use_auto_emergency_levels = BooleanProperty(default=False)
 
-    sync_location_fixtures = BooleanProperty(default=True)
     sync_consumption_fixtures = BooleanProperty(default=True)
     use_auto_consumption = BooleanProperty(default=False)
     consumption_config = SchemaProperty(ConsumptionConfig)
@@ -262,6 +262,7 @@ class CommtrackConfig(CachedCouchDocumentMixin, Document):
             min_window=self.consumption_config.min_window,
             max_window=self.consumption_config.optimal_window,
             default_monthly_consumption_function=_default_monthly_consumption,
+            exclude_invalid_periods=self.consumption_config.exclude_invalid_periods
         )
 
     def get_ota_restore_settings(self):
@@ -719,6 +720,14 @@ class SupplyPointCase(CommCareCase):
                 location.domain,
                 location
             )
+            # todo: if you come across this after july 2015 go search couchlog
+            # and see how frequently this is happening.
+            # if it's not happening at all we should remove it.
+            logging.warning('supply_point_dynamically_created, {}, {}, {}'.format(
+                location.name,
+                sp._id,
+                location.domain,
+            ))
 
         return sp
 

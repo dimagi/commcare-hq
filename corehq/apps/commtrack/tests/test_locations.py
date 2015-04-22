@@ -103,7 +103,7 @@ class MultiLocationsTest(CommTrackTest):
         self.user = self.users[0]
         MULTIPLE_LOCATIONS_PER_USER.set(self.user.domain, True, NAMESPACE_DOMAIN)
         # add the users location for delgate access as well
-        self.user.add_location(self.user.location)
+        self.user.add_location_delegate(self.user.location)
 
     def check_supply_point(self, user, sp, should_have=True):
         caseblock = CaseBlock(
@@ -132,7 +132,7 @@ class MultiLocationsTest(CommTrackTest):
 
         loc = make_loc('secondloc')
         sp = make_supply_point(self.domain.name, loc)
-        user.add_location(loc)
+        user.add_location_delegate(loc)
 
         self.check_supply_point(user, sp._id)
         self.assertTrue(len(user.locations), 2)
@@ -144,11 +144,11 @@ class MultiLocationsTest(CommTrackTest):
         # can't test with the original since the user already owns it
         loc = make_loc('secondloc')
         sp = make_supply_point(self.domain.name, loc)
-        user.add_location(loc)
+        user.add_location_delegate(loc)
 
         self.check_supply_point(user, sp._id)
 
-        user.remove_location(loc)
+        user.remove_location_delegate(loc)
 
         self.check_supply_point(user, sp._id, False)
         self.assertEqual(len(user.locations), 1)
@@ -161,13 +161,13 @@ class MultiLocationsTest(CommTrackTest):
         make_supply_point(self.domain.name, loc)
 
         with patch('corehq.apps.users.models.CommCareUser.submit_location_block') as submit_blocks:
-            user.remove_location(loc)
+            user.remove_location_delegate(loc)
             self.assertEqual(submit_blocks.call_count, 0)
 
 
     def test_can_clear_locations(self):
         user = self.user
-        user.clear_locations()
+        user.clear_location_delegates()
 
         self.assertEqual(len(user.locations), 0)
 
@@ -206,7 +206,7 @@ class MultiLocationsTest(CommTrackTest):
     def test_setting_existing_list_does_not_submit(self):
         user = self.user
 
-        user.clear_locations()
+        user.clear_location_delegates()
 
         loc1 = make_loc('secondloc')
         make_supply_point(self.domain.name, loc1)
@@ -214,8 +214,8 @@ class MultiLocationsTest(CommTrackTest):
         loc2 = make_loc('thirdloc')
         make_supply_point(self.domain.name, loc2)
 
-        user.add_location(loc1)
-        user.add_location(loc2)
+        user.add_location_delegate(loc1)
+        user.add_location_delegate(loc2)
 
         with patch('corehq.apps.users.models.CommCareUser.submit_location_block') as submit_blocks:
             user.create_location_delegates([loc1, loc2])

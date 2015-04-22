@@ -1011,8 +1011,7 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
     """
     name = "New Health Status Report"
     slug = 'health_status_report'
-    report_template_path = "opm/beneficiary_report.html"
-    # report_template_path = "opm/hsr_report.html"
+    report_template_path = "opm/new_hsr_report.html"
     model = AWCHealthStatus
     fix_left_col = True
 

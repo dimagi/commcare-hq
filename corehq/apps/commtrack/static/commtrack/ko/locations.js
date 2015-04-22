@@ -1,4 +1,3 @@
-
 $(function() {
     var model = new LocationSettingsViewModel();
     $('#settings').submit(function() {
@@ -8,6 +7,7 @@ $(function() {
     model.load(settings);
     ko.applyBindings(model, $('#settings').get(0));
 });
+
 
 function LocationSettingsViewModel() {
     this.loc_types = ko.observableArray();
@@ -85,21 +85,6 @@ function LocationTypeModel(data, root) {
     var self = this;
     this.pk = data.pk || null;
     this.name = ko.observable(name);
-    this.code = ko.observable(data.code || name);
-    var code_autoset = this.name() == this.code();
-
-    // sync code to name if it looks autoset
-    this.name.subscribe(function (newValue) {
-        if (code_autoset) {
-            self.code(newValue);
-        }
-    });
-
-    // clear autoset if we explicitly change the code
-    this.code.subscribe(function (newValue) {
-        self.name() != self.code();
-        code_autoset = false;
-    });
 
     var allowed_parents = data.allowed_parents || [];
     $.each(allowed_parents, function(i, e) {
@@ -107,7 +92,7 @@ function LocationTypeModel(data, root) {
             allowed_parents[i] = undefined;
         }
     });
-    if (allowed_parents.length == 0) {
+    if (allowed_parents.length === 0) {
         var last = root.loc_types.slice(-1)[0];
         allowed_parents = [last ? last.name() : undefined];
     }
@@ -117,7 +102,6 @@ function LocationTypeModel(data, root) {
     this.view_descendants = ko.observable(data.view_descendants);
 
     this.name_error = ko.observable();
-    this.code_error = ko.observable();
     this.allowed_parents_error = ko.observable();
 
     this.validate = function() {
@@ -130,11 +114,7 @@ function LocationTypeModel(data, root) {
             this.name_error('required');
             valid = false;
         }
-        if (!this.code()) {
-            this.code_error('required');
-            valid = false;
-        }
-        if (this.allowed_parents().length == 0) {
+        if (this.allowed_parents().length === 0) {
             this.allowed_parents_error('choose at least one parent type');
             valid = false;
         }
@@ -146,7 +126,6 @@ function LocationTypeModel(data, root) {
         return {
             pk: this.pk,
             name: this.name(),
-            code: this.code(),
             allowed_parents: this.allowed_parents(),
             administrative: !this.tracks_stock(),
             shares_cases: this.shares_cases() === true,

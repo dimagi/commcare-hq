@@ -19,7 +19,8 @@ class User(object):
     """
     
     def __init__(self, user_id, username, password, date_joined,
-                 user_data=None, additional_owner_ids=None, domain=None):
+                 user_data=None, additional_owner_ids=None, domain=None,
+                 loadtest_factor=1):
         self.user_id = user_id
         self.username = username
         self.password = password
@@ -27,6 +28,7 @@ class User(object):
         self.user_data = user_data or {}
         self.additional_owner_ids = additional_owner_ids or []
         self.domain = domain
+        self.loadtest_factor = loadtest_factor
 
     def get_owner_ids(self):
         ret = [self.user_id]
@@ -111,9 +113,9 @@ class SyncLog(SafeSaveDocument, UnicodeMixIn):
     def has_cached_payload(self, version):
         return self.get_payload_attachment_name(version) in self._doc.get('_attachments', {})
 
-    def get_cached_payload(self, version):
+    def get_cached_payload(self, version, stream=False):
         try:
-            return self.fetch_attachment(self.get_payload_attachment_name(version))
+            return self.fetch_attachment(self.get_payload_attachment_name(version), stream=stream)
         except ResourceNotFound:
             return None
 

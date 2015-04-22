@@ -1,24 +1,45 @@
-from datetime import datetime, timedelta, date, time
-from django.test.testcases import TestCase
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
+from corehq.apps.accounting.models import (
+    BillingAccount,
+    DefaultProductPlan,
+    SoftwarePlanEdition,
+    Subscription,
+    SubscriptionAdjustment,
+)
+from corehq.apps.accounting.tests import BaseAccountingTest
 from corehq.apps.reminders.models import *
 from corehq.apps.reminders.event_handlers import get_message_template_params
-from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.sms.models import CallLog, ExpectedCallbackEventLog, CALLBACK_RECEIVED, CALLBACK_PENDING, CALLBACK_MISSED
-from corehq.apps.sms.mixin import VerifiedNumber, BackendMapping
+from corehq.apps.sms.mixin import BackendMapping
 from corehq.apps.sms.test_backend import TestSMSBackend
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.couch import LOCK_EXPIRATION
 from corehq.apps.domain.models import Domain
 
 
-class BaseReminderTestCase(TestCase):
+class BaseReminderTestCase(BaseAccountingTest):
     def setUp(self):
+        super(BaseReminderTestCase, self).setUp()
         self.domain_obj = Domain(name="test")
         self.domain_obj.save()
         # Prevent resource conflict
         self.domain_obj = Domain.get(self.domain_obj._id)
+
+        self.account, _ = BillingAccount.get_or_create_account_by_domain(
+            self.domain_obj.name,
+            created_by="tests"
+        )
+        advanced_plan_version = DefaultProductPlan.get_default_plan_by_domain(
+            self.domain_obj, edition=SoftwarePlanEdition.ADVANCED)
+        self.subscription = Subscription.new_domain_subscription(
+            self.account,
+            self.domain_obj.name,
+            advanced_plan_version
+        )
+        self.subscription.is_active = True
+        self.subscription.save()
 
         self.sms_backend = TestSMSBackend(named="MOBILE_BACKEND_TEST", is_global=True)
         self.sms_backend.save()
@@ -29,6 +50,9 @@ class BaseReminderTestCase(TestCase):
     def tearDown(self):
         self.sms_backend_mapping.delete()
         self.sms_backend.delete()
+        SubscriptionAdjustment.objects.all().delete()
+        self.subscription.delete()
+        self.account.delete()
         self.domain_obj.delete()
 
 

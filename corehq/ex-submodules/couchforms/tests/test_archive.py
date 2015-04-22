@@ -71,4 +71,3 @@ class TestFormArchiving(TestCase):
         form.unarchive()
         self.assertEqual(1, archive_counter)
         self.assertEqual(1, restore_counter)
-

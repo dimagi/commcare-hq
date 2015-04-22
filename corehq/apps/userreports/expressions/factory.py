@@ -14,6 +14,7 @@ _constant_expression = functools.partial(_simple_expression_generator, ConstantG
 _property_name_expression = functools.partial(_simple_expression_generator, PropertyNameGetterSpec)
 _property_path_expression = functools.partial(_simple_expression_generator, PropertyPathGetterSpec)
 
+
 def _conditional_expression(spec, context):
     # no way around this since the two factories inherently depend on each other
     from corehq.apps.userreports.filters.factory import FilterFactory
@@ -51,6 +52,21 @@ class ExpressionFactory(object):
         'root_doc': _root_doc_expression,
         'related_doc': _related_doc_expression,
     }
+    # Additional items are added to the spec_map by use of the `register` method.
+
+    @classmethod
+    def register(cls, type_name, factory_func):
+        """
+        Registers an expression factory function for the given type_name.
+        Use this method to add additional expression types to UCR.
+        """
+        if type_name in cls.spec_map:
+            raise ValueError(
+                "Expression factory function already "
+                "registered for type '{}'!".format(type_name)
+            )
+
+        cls.spec_map[type_name] = factory_func
 
     @classmethod
     def from_spec(cls, spec, context=None):

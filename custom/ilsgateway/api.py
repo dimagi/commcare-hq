@@ -1,9 +1,7 @@
-import logging
+from django.db import transaction
 from jsonobject import JsonObject
 from jsonobject.properties import StringProperty, BooleanProperty, DecimalProperty, ListProperty, IntegerProperty,\
     FloatProperty, DictProperty
-from requests.exceptions import ConnectionError
-from corehq import Domain
 from corehq.apps.commtrack.models import SupplyPointCase, CommtrackConfig, CommtrackActionConfig
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.programs.models import Program
@@ -11,7 +9,7 @@ from corehq.apps.users.models import UserRole
 from custom.api.utils import apply_updates
 from custom.ilsgateway.models import SupplyPointStatus, DeliveryGroupReport, HistoricalLocationGroup
 from custom.logistics.utils import get_supply_point_by_external_id
-from custom.logistics.api import LogisticsEndpoint, APISynchronization
+from custom.logistics.api import LogisticsEndpoint, APISynchronization, ApiSyncObject
 from corehq.apps.locations.models import Location as Loc
 
 LOCATION_TYPES = ["MOHSW", "REGION", "DISTRICT", "FACILITY"]
@@ -83,6 +81,11 @@ class StockTransaction(JsonObject):
     supply_point = IntegerProperty()
 
 
+class Groups(JsonObject):
+    location_id = IntegerProperty()
+    groups = DictProperty()
+
+
 def _get_location_id(facility, domain):
     supply_point = get_supply_point_by_external_id(domain, facility)
     return supply_point.location_id if supply_point else None
@@ -103,18 +106,28 @@ class ILSGatewayEndpoint(LogisticsEndpoint):
         super(ILSGatewayEndpoint, self).__init__(base_uri, username, password)
         self.supplypointstatuses_url = self._urlcombine(self.base_uri, '/supplypointstatus/')
         self.deliverygroupreports_url = self._urlcombine(self.base_uri, '/deliverygroupreports/')
+        self.groups = self._urlcombine(self.base_uri, '/groups/')
 
     def get_supplypointstatuses(self, domain, facility, **kwargs):
         meta, supplypointstatuses = self.get_objects(self.supplypointstatuses_url, **kwargs)
-        location_id = SQLLocation.objects.get(domain=domain, external_id=facility).location_id
-        return meta, [SupplyPointStatus.wrap_from_json(supplypointstatus, location_id) for supplypointstatus in
-                      supplypointstatuses]
+        try:
+            location_id = SQLLocation.objects.get(domain=domain, external_id=facility).location_id
+            return meta, [SupplyPointStatus.wrap_from_json(supplypointstatus, location_id) for supplypointstatus in
+                          supplypointstatuses]
+        except SQLLocation.DoesNotExist:
+            return None, None
 
     def get_deliverygroupreports(self, domain, facility, **kwargs):
         meta, deliverygroupreports = self.get_objects(self.deliverygroupreports_url, **kwargs)
         location_id = SQLLocation.objects.filter(domain=domain, external_id=facility)
         return meta, [DeliveryGroupReport.wrap_from_json(deliverygroupreport, location_id)
                       for deliverygroupreport in deliverygroupreports]
+
+    def get_groups(self, **kwargs):
+        meta, groups_list = self.get_objects(self.groups, **kwargs)
+        return meta, [
+            Groups(obj) for obj in groups_list
+        ]
 
 
 class ILSGatewayAPI(APISynchronization):
@@ -143,6 +156,50 @@ class ILSGatewayAPI(APISynchronization):
     ]
     PRODUCT_CUSTOM_FIELDS = []
 
+    @property
+    def apis(self):
+        return [
+            ApiSyncObject('product', self.endpoint.get_products, self.product_sync),
+            ApiSyncObject(
+                'location_region',
+                self.endpoint.get_locations,
+                self.location_sync,
+                'date_updated__gte',
+                filters={
+                    'type': 'region',
+                    'is_active': True
+                }
+            ),
+            ApiSyncObject(
+                'location_district',
+                self.endpoint.get_locations,
+                self.location_sync,
+                'date_updated__gte',
+                filters={
+                    'type': 'district',
+                    'is_active': True
+                }
+            ),
+            ApiSyncObject(
+                'location_facility',
+                self.endpoint.get_locations,
+                self.location_sync,
+                'date_updated__gte',
+                filters={
+                    'type': 'facility',
+                    'is_active': True
+                }
+            ),
+            ApiSyncObject(
+                'location_groups',
+                self.endpoint.get_groups,
+                self.location_groups_sync,
+                migrate_once=True
+            ),
+            ApiSyncObject('webuser', self.endpoint.get_webusers, self.web_user_sync, 'user__date_joined__gte'),
+            ApiSyncObject('smsuser', self.endpoint.get_smsusers, self.sms_user_sync, 'date_updated__gte')
+        ]
+
     def create_or_edit_roles(self):
         pass
 
@@ -165,6 +222,7 @@ class ILSGatewayAPI(APISynchronization):
             )
 
         config = CommtrackConfig.for_domain(self.domain)
+        config.consumption_config.exclude_invalid_periods = True
         actions = [action.keyword for action in config.actions]
         if 'delivered' not in actions:
             config.actions.append(
@@ -216,7 +274,7 @@ class ILSGatewayAPI(APISynchronization):
                 pass
         return sms_user
 
-    def location_sync(self, ilsgateway_location, fetch_groups=False):
+    def location_sync(self, ilsgateway_location):
         try:
             sql_loc = SQLLocation.objects.get(
                 domain=self.domain,
@@ -278,28 +336,18 @@ class ILSGatewayAPI(APISynchronization):
                     case.update_from_location(location)
                 else:
                     SupplyPointCase.create_from_location(self.domain, location)
-
-        if ilsgateway_location.historical_groups:
-            historical_groups = ilsgateway_location.historical_groups
-        else:
-            counter = 0
-            historical_groups = {}
-            while counter != 5:
-                try:
-                    # todo: we may be able to avoid this call by passing the groups in as part of the original
-                    # location dict, though that may introduce slowness/timeouts
-                    location_object = self.endpoint.get_location(
-                        ilsgateway_location.id,
-                        params=dict(with_historical_groups=1)
-                    )
-                    historical_groups = Location(**location_object).historical_groups
-                    break
-                except ConnectionError as e:
-                    logging.error(e)
-                    counter += 1
-
-        for date, groups in historical_groups.iteritems():
-            for group in groups:
-                HistoricalLocationGroup.objects.get_or_create(date=date, group=group,
-                                                              location_id=location.sql_location)
         return location
+
+    def location_groups_sync(self, location_groups):
+        with transaction.commit_on_success():
+            for date, groups in location_groups.groups.iteritems():
+                try:
+                    sql_location = SQLLocation.objects.get(
+                        external_id=location_groups.location_id,
+                        domain=self.domain
+                    )
+                except SQLLocation.DoesNotExist:
+                    continue
+                for group in groups:
+                    HistoricalLocationGroup.objects.get_or_create(date=date, group=group,
+                                                                  location_id=sql_location)

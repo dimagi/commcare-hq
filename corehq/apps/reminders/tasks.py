@@ -26,7 +26,7 @@ def get_subcases(case):
             subcases.append(CommCareCase.get(index.referenced_id))
     return subcases
 
-@task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE)
+@task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, ignore_result=True)
 def case_changed(case_id, handler_ids, retry_num=0):
     try:
         _case_changed(case_id, handler_ids)
@@ -50,14 +50,20 @@ def _case_changed(case_id, handler_ids):
     case = CommCareCase.get(case_id)
     for handler in CaseReminderHandler.get_handlers_from_ids(handler_ids):
         if handler.start_condition_type == CASE_CRITERIA:
-            handler.case_changed(case)
+            kwargs = {}
+            if handler.uses_time_case_property:
+                kwargs = {
+                    'schedule_changed': True,
+                    'prev_definition': handler,
+                }
+            handler.case_changed(case, **kwargs)
             if handler.uses_parent_case_property:
                 if subcases is None:
                     subcases = get_subcases(case)
                 for subcase in subcases:
-                    handler.case_changed(subcase)
+                    handler.case_changed(subcase, **kwargs)
 
-@task(queue=settings.CELERY_REMINDER_RULE_QUEUE)
+@task(queue=settings.CELERY_REMINDER_RULE_QUEUE, ignore_result=True)
 def process_reminder_rule(handler, schedule_changed, prev_definition,
     send_immediately):
     try:
@@ -67,7 +73,7 @@ def process_reminder_rule(handler, schedule_changed, prev_definition,
             message="Error processing reminder rule for handler %s" % handler._id)
     handler.save(unlock=True)
 
-@task(queue=CELERY_REMINDERS_QUEUE)
+@task(queue=CELERY_REMINDERS_QUEUE, ignore_result=True)
 def fire_reminder(reminder_id):
     try:
         _fire_reminder(reminder_id)

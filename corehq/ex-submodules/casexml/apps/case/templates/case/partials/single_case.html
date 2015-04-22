@@ -7,7 +7,7 @@
 {# standalone template, js files included at bottom #}
 <script>
     var CASE_DETAILS = {};
-    CASE_DETAILS.xform_api_url = "/a/{{ case.domain }}/api/v0.1/xform_es/";
+    CASE_DETAILS.xform_api_url = "{{ xform_api_url }}";
     CASE_DETAILS.xform_ids = {{ case.xform_ids|JSON }};
     CASE_DETAILS.xform_ajax_url = "{% url 'case_form_data' case.domain case.get_id 'placeholder-form-id' %}".replace('placeholder-form-id/', '');
     CASE_DETAILS.timezone_offset = {{ timezone_offset }};
@@ -87,8 +87,6 @@
                 <span data-bind="text: form_count"></span>
             </li>
         </ul>
-
-
         <div class="hq-loading" data-bind="visible: $root.data_loading">Loading <img src="/static/hqwebapp/img/ajax-loader.gif" alt="loading indicator"></div>
         <table class="table table-bordered table-striped table-hover datatable dataTable">
             <thead>

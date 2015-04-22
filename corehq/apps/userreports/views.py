@@ -8,10 +8,14 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.http.response import Http404
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
-from corehq.apps.app_manager.models import Application, Form
+from corehq.apps.app_manager.models import(
+    Application,
+    Form,
+    get_apps_in_domain
+)
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, View
 
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq import ConfigurableReport, privileges, Session, toggles
@@ -19,10 +23,12 @@ from corehq.apps.domain.decorators import login_and_domain_required, login_or_ba
 from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.reports.builder.forms import (
-    ConfigureNewBarChartReport,
-    ConfigureNewPieChartReport,
-    ConfigureNewTableReport,
-    CreateNewReportForm,
+    ConfigurePieChartReportForm,
+    ConfigureTableReportForm,
+    DataSourceForm,
+    ConfigureBarChartReportForm,
+    ConfigureListReportForm,
+    ConfigureWorkerReportForm
 )
 from corehq.apps.userreports.models import (
     ReportConfiguration,
@@ -90,98 +96,163 @@ class ReportBuilderView(TemplateView):
         return super(ReportBuilderView, self).dispatch(request, domain, **kwargs)
 
 
-class CreateNewReportBuilderView(ReportBuilderView):
-    template_name = "userreports/create_new_report_builder.html"
+class ReportBuilderTypeSelect(ReportBuilderView):
+    template_name = "userreports/builder_report_type_select.html"
+
+    def get_context_data(self, **kwargs):
+        return {
+            "has_apps": len(get_apps_in_domain(self.domain)) > 0,
+            "domain": self.domain,
+            "report": {
+                "title": _("Create New Report")
+            }
+        }
+
+
+class ReportBuilderDataSourceSelect(ReportBuilderView):
+    template_name = 'userreports/builder_data_source_select.html'
+
+    def dispatch(self, request, domain, report_type, **kwargs):
+        self.report_type = report_type
+        return super(ReportBuilderDataSourceSelect, self).dispatch(request, domain, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = {
-            "sources_map": self.create_new_report_builder_form.sources_map,
+            "sources_map": self.form.sources_map,
             "domain": self.domain,
-            'report': {
-                "title": _("Create New Report"),
-            },
-            'form': self.create_new_report_builder_form,
+            'report': {"title": _("Create New Report")},
+            'form': self.form,
         }
         return context
 
     @property
     @memoized
-    def create_new_report_builder_form(self):
+    def form(self):
         if self.request.method == 'POST':
-            return CreateNewReportForm(self.domain, self.request.POST)
-        return CreateNewReportForm(self.domain)
+            return DataSourceForm(self.domain, self.report_type, self.request.POST)
+        return DataSourceForm(self.domain, self.report_type)
 
     def post(self, request, *args, **kwargs):
-        if self.create_new_report_builder_form.is_valid():
-            report_type = self.create_new_report_builder_form.cleaned_data['report_type']
+        if self.form.is_valid():
+            app_source = self.form.get_selected_source()
             url_names_map = {
-                'bar_chart': 'configure_bar_chart_report_builder',
-                'pie_chart': 'configure_pie_chart_report_builder',
-                'table': 'configure_table_report_builder',
+                'list': 'configure_list_report',
+                'chart': 'configure_chart_report',
+                'table': 'configure_table_report',
+                'worker': 'configure_worker_report',
             }
-            url_name = url_names_map[report_type]
-            app_source = self.create_new_report_builder_form.get_selected_source()
+            url_name = url_names_map[self.report_type]
+            url_args = [
+                (f, self.form.cleaned_data[f])
+                for f in ['report_name', 'chart_type']
+            ] + [
+                (f, getattr(app_source, f))
+                for f in ['application', 'source_type', 'source']
+            ]
             return HttpResponseRedirect(
-                reverse(url_name, args=[self.domain]) + '?' + '&'.join([
-                    '%(key)s=%(value)s' % {
-                        'key': field,
-                        'value': getattr(app_source, field),
-                    } for field in [
-                        'application',
-                        'source_type',
-                        'source',
-                    ]
-                ])
+                reverse(url_name, args=[self.domain]) + '?' + '&'.join(
+                    ["{}={}".format(k, v) for k, v in url_args]
+                )
             )
         else:
             return self.get(request, *args, **kwargs)
 
 
-class ConfigureBarChartReportBuilderView(ReportBuilderView):
+class EditReportInBuilder(View):
+
+    def dispatch(self, request, *args, **kwargs):
+        report_id = kwargs['report_id']
+        report = ReportConfiguration.get(report_id)
+        if report.report_meta.created_by_builder:
+            view_class = {
+                'chart': ConfigureChartReport,
+                'list': ConfigureListReport,
+                'worker': ConfigureWorkerReport,
+                'table': ConfigureTableReport
+            }[report.report_meta.builder_report_type]
+            return view_class.as_view(existing_report=report)(request, *args, **kwargs)
+        raise Http404("Report was not created by the report builder")
+
+
+class ConfigureChartReport(ReportBuilderView):
     template_name = "userreports/partials/report_builder_configure_report.html"
-    configure_report_form_class = ConfigureNewBarChartReport
-    report_title = _("Create New Report > Configure Bar Chart Report")
+    url_args = ['report_name', 'application', 'source_type', 'source']
+    report_title = _("Chart Report: {}")
+    existing_report = None
 
     def get_context_data(self, **kwargs):
         context = {
             "domain": self.domain,
-            'report': {"title": self.report_title},
+            'report': {
+                "title": self.report_title.format(
+                    self.request.GET.get('report_name', '')
+                )
+            },
             'form': self.report_form,
-            'property_options': self.report_form.data_source_properties.values()
+            'property_options': self.report_form.data_source_properties.values(),
+            'initial_filters': [f._asdict() for f in self.report_form.initial_filters],
+            'initial_columns': getattr(self.report_form, 'initial_columns', []),
         }
         return context
 
     @property
     @memoized
+    def configuration_form_class(self):
+        if self.existing_report:
+            type_ = self.existing_report.configured_charts[0]['type']
+        else:
+            type_ = self.request.GET.get('chart_type')
+        return {
+            'multibar': ConfigureBarChartReportForm,
+            'bar': ConfigureBarChartReportForm,
+            'pie': ConfigurePieChartReportForm,
+        }[type_]
+
+    @property
+    @memoized
     def report_form(self):
-        app_id = self.request.GET.get('application', '')
-        source_type = self.request.GET.get('source_type', '')
-        report_source = self.request.GET.get('source', '')
-        args = [app_id, source_type, report_source]
+        args = [self.request.GET.get(f, '') for f in self.url_args] + [self.existing_report]
         if self.request.method == 'POST':
             args.append(self.request.POST)
-        return self.configure_report_form_class(*args)
+        return self.configuration_form_class(*args)
 
     def post(self, *args, **kwargs):
         if self.report_form.is_valid():
-            report_configuration = self.report_form.create_report()
+            if self.report_form.existing_report:
+                report_configuration = self.report_form.update_report()
+            else:
+                report_configuration = self.report_form.create_report()
             return HttpResponseRedirect(
-                reverse(
-                    ConfigurableReport.slug,
-                    args=[self.domain, report_configuration._id]
-                )
+                reverse(ConfigurableReport.slug, args=[self.domain, report_configuration._id])
             )
         return self.get(*args, **kwargs)
 
 
-class ConfigurePieChartReportBuilderView(ConfigureBarChartReportBuilderView):
-    configure_report_form_class = ConfigureNewPieChartReport
-    report_title = _("Create New Report > Configure Pie Chart Report")
+class ConfigureListReport(ConfigureChartReport):
+    report_title = _("List Report: {}")
+
+    @property
+    @memoized
+    def configuration_form_class(self):
+        return ConfigureListReportForm
 
 
-class ConfigureTableReportBuilderView(ConfigureBarChartReportBuilderView):
-    configure_report_form_class = ConfigureNewTableReport
-    report_title = _("Create New Report > Configure Table Report")
+class ConfigureTableReport(ConfigureChartReport):
+    report_title = _("Table Report: {}")
+
+    @property
+    @memoized
+    def configuration_form_class(self):
+        return ConfigureTableReportForm
+
+
+class ConfigureWorkerReport(ConfigureChartReport):
+    report_title = _("Worker Report: {}")
+
+    @property
+    @memoized
+    def configuration_form_class(self):
+        return ConfigureWorkerReportForm
 
 
 def _edit_report_shared(request, domain, config):
@@ -202,7 +273,6 @@ def _edit_report_shared(request, domain, config):
 
 
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
-@require_POST
 def delete_report(request, domain, report_id):
     config = get_document_or_404(ReportConfiguration, domain, report_id)
 

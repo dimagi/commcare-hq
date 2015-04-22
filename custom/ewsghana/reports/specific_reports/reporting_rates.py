@@ -56,12 +56,13 @@ class ReportingRates(ReportingRatesData):
             chart_data = [
                 dict(value=reported_percent,
                      label=_('Reporting'),
-                     description=_("%.2f%% (%d) Reported (last 7 days)" % (reported_percent, data['reported'])),
+                     description=_("%.2f%% (%d) Reported (%s)" % (reported_percent, data['reported'],
+                                                                  self.datetext())),
                      color='green'),
                 dict(value=non_reported_percent,
                      label=_('Non-Reporting'),
-                     description=_("%.2f%% (%d) Non-Reported (last 7 days)" %
-                                   (non_reported_percent, data['non_reported'])),
+                     description=_("%.2f%% (%d) Non-Reported (%s)" %
+                                   (non_reported_percent, data['non_reported'], self.datetext())),
                      color='red'),
             ]
 
@@ -78,7 +79,6 @@ class ReportingDetails(ReportingRatesData):
     def rows(self):
         rows = {}
         if self.location_id:
-            last_period_st, last_period_end = calculate_last_period(self.config['enddate'])
             if self.location.location_type.name == 'country':
                 supply_points = self.reporting_supply_points(self.all_reporting_locations())
             else:
@@ -92,7 +92,7 @@ class ReportingDetails(ReportingRatesData):
                 }
                 st = StockTransaction.objects.filter(
                     case_id=supply_point,
-                    report__date__range=[last_period_st, last_period_end]
+                    report__date__range=[self.config['startdate'], self.config['enddate']]
                 ).distinct('product_id').values_list('product_id', flat=True)
                 if not (products - set(st)):
                     complete += 1
@@ -115,13 +115,13 @@ class ReportingDetails(ReportingRatesData):
             chart_data = [
                 dict(value=complete_percent,
                      label=_('Complete'),
-                     description=_("%.2f%% (%d) Complete Reports in last 7 days" %
-                                   (complete_percent, data['complete'])),
+                     description=_("%.2f%% (%d) Complete Reports in %s" %
+                                   (complete_percent, data['complete'], self.datetext())),
                      color='green'),
                 dict(value=incomplete_percent,
                      label=_('Incomplete'),
-                     description=_("%.2f%% (%d) Incomplete Reports in last 7 days" %
-                                   (incomplete_percent, data['incomplete'])),
+                     description=_("%.2f%% (%d) Incomplete Reports in %s" %
+                                   (incomplete_percent, data['incomplete'], self.datetext())),
                      color='purple'),
             ]
 
@@ -162,13 +162,12 @@ class SummaryReportingRates(ReportingRatesData):
     def rows(self):
         rows = []
         if self.location_id:
-            last_period_st, last_period_end = calculate_last_period(self.config['enddate'])
             for location in self.get_locations:
                 supply_points = self.get_supply_points(location.location_id)
                 sites = supply_points.count()
                 reported = StockTransaction.objects.filter(
                     case_id__in=supply_points.values_list('supply_point_id', flat=True),
-                    report__date__range=[last_period_st, last_period_end]
+                    report__date__range=[self.config['startdate'], self.config['enddate']]
                 ).distinct('case_id').count()
                 reporting_rates = '%.2f%%' % (reported * 100 / (float(sites) or 1.0))
 
@@ -224,7 +223,10 @@ class NonReporting(ReportingRatesData):
                     (location.location_id, self.config['startdate'], self.config['enddate'])
                 )
 
-                st = StockTransaction.objects.filter(case_id=location.supply_point_id).order_by('-report__date')
+                st = StockTransaction.objects.filter(
+                    case_id=location.supply_point_id,
+                    report__date__lte=self.config['startdate']
+                ).order_by('-report__date')
                 if st:
                     date = st[0].report.date.strftime("%m-%d-%Y")
                 else:
@@ -255,7 +257,6 @@ class InCompleteReports(ReportingRatesData):
     def rows(self):
         rows = []
         if self.location_id:
-            last_period_st, last_period_end = calculate_last_period(self.config['enddate'])
             if self.location.location_type.name == 'country':
                 supply_points = self.reporting_supply_points(self.all_reporting_locations())
             else:
@@ -263,7 +264,7 @@ class InCompleteReports(ReportingRatesData):
             for location in SQLLocation.objects.filter(supply_point_id__in=supply_points):
                 st = StockTransaction.objects.filter(
                     case_id=location.supply_point_id,
-                    report__date__range=[last_period_st, last_period_end]
+                    report__date__range=[self.config['startdate'], self.config['enddate']]
                 ).order_by('-report__date')
                 products_per_location = {product.product_id for product in location.products}
                 if products_per_location - set(st.values_list('product_id', flat=True)):
@@ -360,11 +361,12 @@ class ReportingRatesReport(MultiReport):
         program = self.request.GET.get('filter_by_program')
         return dict(
             domain=self.domain,
-            startdate=self.datespan.startdate_utc,
-            enddate=self.datespan.enddate_utc,
+            startdate=self.datespan.startdate,
+            enddate=self.datespan.enddate,
             location_id=self.request.GET.get('location_id') or get_country_id(self.domain),
             products=None,
             program=program if program != ALL_OPTION else None,
+            user=self.request.couch_user
         )
 
     @property
@@ -372,16 +374,19 @@ class ReportingRatesReport(MultiReport):
         config = self.report_config
         if self.is_reporting_type():
             self.split = True
-            return [
-                FacilityReportData(config),
-                StockLevelsLegend(config),
-                InputStock(config),
-                FacilitySMSUsers(config),
-                FacilityUsers(config),
-                FacilityInChargeUsers(config),
-                InventoryManagementData(config),
-                ProductSelectionPane(config),
-            ]
+            if self.is_rendered_as_email:
+                return [FacilityReportData(config)]
+            else:
+                return [
+                    FacilityReportData(config),
+                    StockLevelsLegend(config),
+                    InputStock(config),
+                    FacilitySMSUsers(config),
+                    FacilityUsers(config),
+                    FacilityInChargeUsers(config),
+                    InventoryManagementData(config),
+                    ProductSelectionPane(config)
+                ]
         self.split = False
         data_providers = [
             AlertsData(config=config),
@@ -405,3 +410,12 @@ class ReportingRatesReport(MultiReport):
         datespan = DateSpan(startdate=last_period_st, enddate=last_period_end)
         datespan.is_default = True
         return datespan
+
+    @property
+    def datespan(self):
+        url = self.request.META.get('HTTP_REFERER')
+        if not url or 'startdate' in url:
+            return self.request.datespan
+
+        self.request.datespan = self.default_datespan
+        return self.default_datespan

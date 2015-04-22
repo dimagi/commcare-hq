@@ -226,7 +226,7 @@ class BillingAccountBasicForm(forms.Form):
         account.name = self.cleaned_data['name']
         account.is_active = self.cleaned_data['is_active']
         transfer_id = self.cleaned_data['active_accounts']
-        if not transfer_id:
+        if transfer_id:
             transfer_account = BillingAccount.objects.get(id=transfer_id)
             for sub in account.subscription_set.all():
                 sub.account = transfer_account
@@ -561,12 +561,12 @@ class SubscriptionForm(forms.Form):
                     )
                 ))
 
-        start_date = self.cleaned_data['start_date'] or self.subscription.date_start
+        start_date = self.cleaned_data.get('start_date') or self.subscription.date_start
         if (self.cleaned_data['end_date'] is not None
             and start_date > self.cleaned_data['end_date']):
             raise ValidationError("End date must be after start date.")
 
-        if self.cleaned_data['end_date'] <= datetime.date.today():
+        if self.cleaned_data['end_date'] and self.cleaned_data['end_date'] <= datetime.date.today():
             raise ValidationError("End date must be in the future.")
 
         return self.cleaned_data

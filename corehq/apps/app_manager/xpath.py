@@ -1,4 +1,5 @@
 import re
+from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.exceptions import LocationXpathValidationError
 from django.utils.translation import ugettext as _
 
@@ -12,8 +13,32 @@ def dot_interpolate(string, replacement):
     return re.sub(pattern, repl, string)
 
 
-def session_var(var, subref=None):
-    return XPath(u"instance('commcaresession')/session/{0}data/{1}".format(subref + '/' if subref else '', var))
+def interpolate_xpath(string, case_xpath=None):
+    """
+    Replace xpath shortcuts with full value.
+    """
+    replacements = {
+        '#user': UserCaseXPath().case(),
+        '#session/': session_var('', path=''),
+    }
+    if case_xpath:
+        replacements['#case'] = case_xpath
+
+    for pattern, repl in replacements.items():
+        string = string.replace(pattern, repl)
+
+    if case_xpath:
+        return dot_interpolate(string, case_xpath)
+
+    return string
+
+
+def session_var(var, path=u'data'):
+    session = XPath(u"instance('commcaresession')/session")
+    if path:
+        session = session.slash(path)
+
+    return session.slash(var)
 
 
 class XPath(unicode):
@@ -110,6 +135,12 @@ class CaseTypeXpath(CaseSelectionXPath):
 
     def case(self):
         return CaseXPath(u"instance('casedb')/casedb/case[%s='%s']" % (self.selector, self))
+
+
+class UserCaseXPath(XPath):
+    def case(self):
+        user_id = session_var(var='userid', path='context')
+        return CaseTypeXpath(USERCASE_TYPE).case().select('hq_user_id', user_id)
 
 
 class CaseXPath(XPath):
