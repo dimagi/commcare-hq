@@ -399,3 +399,9 @@ STREAM_RESTORE_CACHE = StaticToggle(
     'Stream cached restore from couchdb',
     [NAMESPACE_DOMAIN]
 )
+
+ENABLE_LOADTEST_USERS = StaticToggle(
+    'enable_loadtest_users',
+    'Enable creating loadtest users on HQ',
+    [NAMESPACE_DOMAIN]
+)

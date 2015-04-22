@@ -81,11 +81,11 @@ class CaseSyncUpdate(object):
     """
     The record of how a case should sync
     """
-    def __init__(self, case, sync_token):
+    def __init__(self, case, sync_token, required_updates=None):
         self.case = case
         self.sync_token = sync_token
         # cache this property since computing it can be expensive
-        self.required_updates = self._get_required_updates()
+        self.required_updates = required_updates if required_updates is not None else self._get_required_updates()
         
     
     def _get_required_updates(self):

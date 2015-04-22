@@ -19,7 +19,8 @@ class User(object):
     """
     
     def __init__(self, user_id, username, password, date_joined,
-                 user_data=None, additional_owner_ids=None, domain=None):
+                 user_data=None, additional_owner_ids=None, domain=None,
+                 loadtest_factor=1):
         self.user_id = user_id
         self.username = username
         self.password = password
@@ -27,6 +28,7 @@ class User(object):
         self.user_data = user_data or {}
         self.additional_owner_ids = additional_owner_ids or []
         self.domain = domain
+        self.loadtest_factor = loadtest_factor
 
     def get_owner_ids(self):
         ret = [self.user_id]
