@@ -7,6 +7,7 @@ from django.db import transaction
 from django.db.models import Q
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.locations.models import Location, SQLLocation
+from custom.ilsgateway.tanzania.warehouse import const
 from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import get_business_day_of_month, add_months, months_between
 from casexml.apps.stock.models import StockReport, StockTransaction
@@ -21,24 +22,8 @@ https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzan
 """
 
 
-NEEDED_STATUS_TYPES = [SupplyPointStatusTypes.DELIVERY_FACILITY,
-                       SupplyPointStatusTypes.R_AND_R_FACILITY,
-                       SupplyPointStatusTypes.SUPERVISION_FACILITY,
-                       SupplyPointStatusTypes.SOH_FACILITY]
-
-NO_PRIMARY_CONTACT = 'no_primary_contact'
-PRODUCT_STOCKOUT = 'product_stockout'
-RR_NOT_SUBMITTED = 'rr_' + SupplyPointStatusValues.NOT_SUBMITTED
-RR_NOT_RESPONDED = 'rr_not_responded'
-DELIVERY_NOT_RECEIVED = 'delivery_' + SupplyPointStatusValues.NOT_RECEIVED
-DELIVERY_NOT_RESPONDING = 'delivery_not_responding'
-SOH_NOT_RESPONDING = 'soh_not_responding'
-
-TEST_REGION_ID = 21
-
-
 def _is_valid_status(facility, date, status_type):
-    if status_type not in NEEDED_STATUS_TYPES:
+    if status_type not in const.NEEDED_STATUS_TYPES:
         return False
     groups = HistoricalLocationGroup.objects.filter(
         date__month=date.month,
@@ -135,7 +120,7 @@ def average_lead_time(facility_id, window_date):
 
 def needed_status_types(org_summary):
     facility = Location.get(docid=org_summary.supply_point)
-    return [status_type for status_type in NEEDED_STATUS_TYPES if _is_valid_status(facility,
+    return [status_type for status_type in const.NEEDED_STATUS_TYPES if _is_valid_status(facility,
                                                                                    org_summary.date, status_type)]
 
 
@@ -285,7 +270,7 @@ def _get_test_locations(domain):
     """
         returns test region and all its children
     """
-    test_region = SQLLocation.objects.get(domain=domain, external_id=TEST_REGION_ID)
+    test_region = SQLLocation.objects.get(domain=domain, external_id=const.TEST_REGION_ID)
     sql_locations = SQLLocation.objects.filter(
         Q(domain=domain) & (Q(parent=test_region) | Q(parent__parent=test_region))
     ).order_by('id').only('location_id')
@@ -350,7 +335,7 @@ def process_facility_warehouse_data(facility, start_date, end_date, runner):
     logging.info("processing facility %s (%s)" % (facility.name, str(facility._id)))
     runner.location = facility.sql_location
     runner.save()
-    for alert_type in [SOH_NOT_RESPONDING, RR_NOT_RESPONDED, DELIVERY_NOT_RESPONDING]:
+    for alert_type in [const.SOH_NOT_RESPONDING, const.RR_NOT_RESPONDED, const.DELIVERY_NOT_RESPONDING]:
         alert = Alert.objects.filter(supply_point=facility._id, date__gte=start_date, date__lt=end_date,
                                      type=alert_type)
         alert.delete()
@@ -397,7 +382,7 @@ def process_facility_warehouse_data(facility, start_date, end_date, runner):
         org_summary.save()
 
         # create group_summary for every org_summary title combo
-        for title in NEEDED_STATUS_TYPES:
+        for title in const.NEEDED_STATUS_TYPES:
             GroupSummary.objects.get_or_create(org_summary=org_summary,
                                                title=title)
         # update all the non-response data
@@ -453,12 +438,12 @@ def process_facility_statuses(facility_id, statuses, alerts=True):
                 if alerts:
                     if status.status_value == SupplyPointStatusValues.NOT_SUBMITTED \
                             and status.status_type == SupplyPointStatusTypes.R_AND_R_FACILITY:
-                        create_alert(facility_id, status.status_date, RR_NOT_SUBMITTED,
+                        create_alert(facility_id, status.status_date, const.RR_NOT_SUBMITTED,
                                      {'number': 1})
 
                     if status.status_value == SupplyPointStatusValues.NOT_RECEIVED \
                             and status.status_type == SupplyPointStatusTypes.DELIVERY_FACILITY:
-                        create_alert(facility_id, status.status_date, DELIVERY_NOT_RECEIVED,
+                        create_alert(facility_id, status.status_date, const.DELIVERY_NOT_RECEIVED,
                                      {'number': 1})
 
 
@@ -578,7 +563,7 @@ def process_non_facility_warehouse_data(location, start_date, end_date, runner, 
             product_data.save()
 
         dg = DeliveryGroups(month=month, facs=facs)
-        for status_type in NEEDED_STATUS_TYPES:
+        for status_type in const.NEEDED_STATUS_TYPES:
             gsum = GroupSummary.objects.get_or_create(org_summary=org_summary, title=status_type)[0]
             sub_sums = GroupSummary.objects.filter(title=status_type, org_summary__in=sub_summaries).all()
 
@@ -601,8 +586,8 @@ def process_non_facility_warehouse_data(location, start_date, end_date, runner, 
             if gsum.total != expected:
                 logging.info("expected %s but was %s for %s" % (expected, gsum.total, gsum))
 
-        for alert_type in [RR_NOT_SUBMITTED, DELIVERY_NOT_RECEIVED,
-                           SOH_NOT_RESPONDING, RR_NOT_RESPONDED, DELIVERY_NOT_RESPONDING]:
+        for alert_type in [const.RR_NOT_SUBMITTED, const.DELIVERY_NOT_RECEIVED,
+                           const.SOH_NOT_RESPONDING, const.RR_NOT_RESPONDED, const.DELIVERY_NOT_RESPONDING]:
             sub_alerts = Alert.objects.filter(supply_point__in=fac_ids, date=window_date, type=alert_type)
             aggregate_response_alerts(location._id, window_date, sub_alerts, alert_type)
 
@@ -663,6 +648,6 @@ def _init_with_product(location, date):
 
 def _init_group_summary(location, date):
     org_summary = OrganizationSummary.objects.get(supply_point=location._id, date=date)
-    for title in NEEDED_STATUS_TYPES:
+    for title in const.NEEDED_STATUS_TYPES:
         GroupSummary.objects.get_or_create(org_summary=org_summary,
                                            title=title)
