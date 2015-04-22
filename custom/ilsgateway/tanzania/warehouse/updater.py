@@ -204,14 +204,15 @@ def _get_test_locations(domain):
            [test_region.couch_location]
 
 
-def populate_report_data(start_date, end_date, domain, runner):
+def populate_report_data(start_date, end_date, domain, runner, locations=None):
     # first populate all the warehouse tables for all facilities
     # hard coded to know this is the first date with data
     start_date = max(start_date, default_start_date())
 
     # For QA purposes generate reporting data for only some small part of data.
     if not ILSGatewayConfig.for_domain(domain).all_stock_data:
-        locations = _get_test_locations(domain)
+        if locations is None:
+            locations = _get_test_locations(domain)
         facilities = filter(lambda location: location.location_type == 'FACILITY', locations)
         non_facilities_types = ['DISTRICT', 'REGION', 'MOHSW']
         non_facilities = []
@@ -242,6 +243,7 @@ def populate_report_data(start_date, end_date, domain, runner):
         res.get()
 
     non_facilities_chunked_list = chunked(non_facilities, 50)
+
     # then populate everything above a facility off a warehouse table
     for chunk in non_facilities_chunked_list:
         res = chain(process_non_facility_warehouse_data.si(org, start_date, end_date, runner) for org in chunk)()
