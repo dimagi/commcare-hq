@@ -2,7 +2,6 @@ var BillingHandler = function (formId, opts) {
     'use strict';
     var self = this;
     self.formId = formId;
-    self.name = name;
     self.errorMessages = opts.errorMessages || {};
     self.submitBtnText = opts.submitBtnText;
     self.costItem = ko.observable();
@@ -127,7 +126,7 @@ var PaymentMethodHandler = function (formId, opts) {
 
     self.processPayment = function () {
         if (self.costItem().isValid()) {
-           self.selectedCard().process(self.submitForm);
+            self.selectedCard().process(self.submitForm);
         }
     };
 
