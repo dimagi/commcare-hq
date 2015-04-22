@@ -76,21 +76,21 @@ class ApisTest(TestCase):
         self.assertEqual("stock on hand", stock_transaction.report_type)
 
     def test_parse_dailyreports_json(self):
-        with open(os.path.join(self.datapath, 'sample_monthlyreports.json')) as f:
-            monthly_report = DailyReport(json.loads(f.read())[0])
-        self.assertEqual(8, monthly_report.hours)
-        self.assertEqual("RMS and CMS Summary", monthly_report.report)
-        self.assertEqual(["tonikams@yahoo.com"], monthly_report.users)
-        self.assertEqual("{\"place\": \"smhd\"}", monthly_report.view_args)
+        with open(os.path.join(self.datapath, 'sample_dailyreports.json')) as f:
+            daily_report = DailyReport(json.loads(f.read())[0])
+        self.assertEqual(8, daily_report.hours)
+        self.assertEqual("RMS and CMS Summary", daily_report.report)
+        self.assertEqual(["tonikams@yahoo.com"], daily_report.users)
+        self.assertEqual("{\"place\": \"smhd\"}", daily_report.view_args)
 
     def test_parse_weeklyreports_json(self):
-        with open(os.path.join(self.datapath, 'sample_monthlyreports.json')) as f:
-            monthly_report = WeeklyReport(json.loads(f.read())[0])
-        self.assertEqual(1, monthly_report.day_of_week)
-        self.assertEqual(8, monthly_report.hours)
-        self.assertEqual("RMS and CMS Summary", monthly_report.report)
-        self.assertEqual(["tonikams@yahoo.com"], monthly_report.users)
-        self.assertEqual("{\"place\": \"smhd\"}", monthly_report.view_args)
+        with open(os.path.join(self.datapath, 'sample_weeklyreports.json')) as f:
+            weekly_report = WeeklyReport(json.loads(f.read())[0])
+        self.assertEqual(1, weekly_report.day_of_week)
+        self.assertEqual(8, weekly_report.hours)
+        self.assertEqual("RMS and CMS Summary", weekly_report.report)
+        self.assertEqual(["tonikams@yahoo.com"], weekly_report.users)
+        self.assertEqual("{\"place\": \"smhd\"}", weekly_report.view_args)
 
     def test_parse_monthlyreports_json(self):
         with open(os.path.join(self.datapath, 'sample_monthlyreports.json')) as f:

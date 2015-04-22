@@ -168,11 +168,12 @@ class EWSApi(APISynchronization):
 
     def apis(self):
         apis = super(EWSApi, self).apis
-        apis.extend([
-            ApiSyncObject('dailyreports', self.endpoint.get_daily_reports, self.daily_report_sync),
-            ApiSyncObject('weeklyreports', self.endpoint.get_weekly_reports, self.weekly_report_sync),
-            ApiSyncObject('monthlyreports', self.endpoint.get_monthly_reports, self.monthly_report_sync)
-        ])
+        # apis.extend([
+        #     ApiSyncObject('dailyreports', self.endpoint.get_daily_reports, self.daily_report_sync),
+        #     ApiSyncObject('weeklyreports', self.endpoint.get_weekly_reports, self.weekly_report_sync),
+        #     ApiSyncObject('monthlyreports', self.endpoint.get_monthly_reports, self.monthly_report_sync)
+        # ])
+        return apis
 
     def _create_location_from_supply_point(self, supply_point, location):
         try:
