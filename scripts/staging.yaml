@@ -43,6 +43,7 @@
 trunk: master
 name: autostaging
 branches:
+  - usec+master # Daniel 4/22
   - usec  # danny 4/13
   - subscription-no-contact-info # bb 8/4
   - vellum-staging # J$ 11/13
