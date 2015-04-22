@@ -115,7 +115,11 @@ class MyAccountSettingsView(BaseMyAccountView):
             form = UpdateMyAccountInfoForm(
                 username=self.request.couch_user.username
             )
-        form.initialize_form(self.request.domain, existing_user=self.request.couch_user)
+        try:
+            domain = self.request.domain
+        except:
+            domain = ''
+        form.initialize_form(domain, existing_user=self.request.couch_user)
         form.load_language(language_choices)
         return form
 
