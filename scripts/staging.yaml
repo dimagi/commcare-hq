@@ -54,6 +54,7 @@ branches:
   - commcare-supply+master # Nick P 4/17
   - commcare-supply  # Ethan 4/13
   - new-location  # Ethan 4/14
+  - deprecations  # Ethan 4/22
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
@@ -77,12 +78,16 @@ submodules:
   submodules/ctable-src:
     branches:
       - usec  # danny 4/13
+  submodules/django-digest-src:
+    branches:
+      - atomic  # Ethan 4/22
   submodules/fluff-src:
     branches:
       - usec  # danny 4/13
   submodules/pillowtop-src:
     branches:
       - usec  # danny 4/13
+      - atomic  # Ethan 4/22
   submodules/toggle:
     branches:
       - usec  # danny 4/13
