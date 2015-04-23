@@ -7,12 +7,12 @@ from toggle.shortcuts import toggle_enabled, set_toggle
 
 Tag = namedtuple('Tag', 'name css_class')
 TAG_ONE_OFF = Tag(name='One-Off', css_class='important')
-TAG_EXPEREIMENTAL = Tag(name='Experimental', css_class='warning')
+TAG_EXPERIMENTAL = Tag(name='Experimental', css_class='warning')
 TAG_PRODUCT_PATH = Tag(name='Product Path', css_class='info')
 TAG_PRODUCT_CORE = Tag(name='Core Product', css_class='success')
 TAG_PREVIEW = Tag(name='Preview', css_class='default')
 TAG_UNKNOWN = Tag(name='Unknown', css_class='inverse')
-ALL_TAGS = [TAG_ONE_OFF, TAG_EXPEREIMENTAL, TAG_PRODUCT_PATH, TAG_PRODUCT_CORE, TAG_PREVIEW, TAG_UNKNOWN]
+ALL_TAGS = [TAG_ONE_OFF, TAG_EXPERIMENTAL, TAG_PRODUCT_PATH, TAG_PRODUCT_CORE, TAG_PREVIEW, TAG_UNKNOWN]
 
 
 class StaticToggle(object):
@@ -122,13 +122,13 @@ APP_BUILDER_CUSTOM_PARENT_REF = StaticToggle(
 APP_BUILDER_CAREPLAN = StaticToggle(
     'careplan',
     'Careplan module',
-    TAG_EXPEREIMENTAL
+    TAG_EXPERIMENTAL
 )
 
 APP_BUILDER_ADVANCED = StaticToggle(
     'advanced-app-builder',
     'Advanced Module in App-Builder',
-    TAG_EXPEREIMENTAL
+    TAG_EXPERIMENTAL
 )
 
 APP_BUILDER_INCLUDE_MULTIMEDIA_ODK = StaticToggle(
@@ -147,13 +147,13 @@ BOOTSTRAP3_PREVIEW = StaticToggle(
 CASE_LIST_CUSTOM_XML = StaticToggle(
     'case_list_custom_xml',
     'Show text area for entering custom case list xml',
-    TAG_EXPEREIMENTAL,
+    TAG_EXPERIMENTAL,
 )
 
 CASE_LIST_TILE = StaticToggle(
     'case_list_tile',
     'Allow configuration of case list tiles',
-    TAG_EXPEREIMENTAL,
+    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
@@ -167,26 +167,26 @@ DETAIL_LIST_TABS = StaticToggle(
 GRAPH_CREATION = StaticToggle(
     'graph-creation',
     'Case list/detail graph creation',
-    TAG_EXPEREIMENTAL,
+    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
 OFFLINE_CLOUDCARE = StaticToggle(
     'offline-cloudcare',
     'Offline Cloudcare',
-    TAG_EXPEREIMENTAL
+    TAG_EXPERIMENTAL
 )
 
 CASE_REBUILD = StaticToggle(
     'case_rebuild',
     'Show UI-based case and form rebuild options (primarily for support team)',
-    TAG_EXPEREIMENTAL
+    TAG_EXPERIMENTAL
 )
 
 IS_DEVELOPER = StaticToggle(
     'is_developer',
     'Is developer',
-    TAG_EXPEREIMENTAL
+    TAG_EXPERIMENTAL
 )
 
 PATHWAYS_PREVIEW = StaticToggle(
@@ -204,7 +204,7 @@ MM_CASE_PROPERTIES = StaticToggle(
 VISIT_SCHEDULER = StaticToggle(
     'app_builder_visit_scheduler',
     'Visit Scheduler',
-    TAG_EXPEREIMENTAL,
+    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
@@ -245,7 +245,7 @@ NO_VELLUM = StaticToggle(
     'no_vellum',
     'Allow disabling Form Builder per form '
     '(for custom forms that Vellum breaks)',
-    TAG_EXPEREIMENTAL,
+    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
@@ -267,7 +267,7 @@ CAN_EDIT_EULA = StaticToggle(
     'can_edit_eula',
     "Whether this user can set the custom eula and data sharing internal project options. "
     "This should be a small number of DIMAGI ONLY users",
-    TAG_EXPEREIMENTAL,
+    TAG_EXPERIMENTAL,
 )
 
 STOCK_AND_RECEIPT_SMS_HANDLER = StaticToggle(
@@ -287,7 +287,7 @@ PAGINATE_WEB_USERS = StaticToggle(
 LOOSE_SYNC_TOKEN_VALIDATION = StaticToggle(
     'loose_sync_token_validation',
     "Don't fail hard on missing or deleted sync tokens.",
-    TAG_EXPEREIMENTAL,
+    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
 )
 
@@ -356,7 +356,7 @@ PRIME_RESTORE = StaticToggle(
 FORM_LINK_WORKFLOW = StaticToggle(
     'form_link_workflow',
     'Form linking workflow available on forms',
-    TAG_EXPEREIMENTAL,
+    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN],
 )
 
@@ -402,7 +402,7 @@ CACHE_AND_INDEX = StaticToggle(
 CUSTOM_PROPERTIES = StaticToggle(
     'custom_properties',
     'Allow users to add arbitrary custom properties to their appliation',
-    TAG_EXPEREIMENTAL,
+    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
 )
 
@@ -439,7 +439,7 @@ USE_NEW_TIMEZONE_BEHAVIOR = StaticToggle(
      "during submission and in reports. "
      "(Please do not set manually, "
      "because it has to be accompanied by a migration.)"),
-    TAG_EXPEREIMENTAL,
+    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN],
 )
 
@@ -453,14 +453,14 @@ USER_AS_A_CASE = StaticToggle(
 STREAM_RESTORE_CACHE = StaticToggle(
     'stream_cached_restore',
     'Stream cached restore from couchdb',
-    TAG_EXPEREIMENTAL,
+    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
 )
 
 ENABLE_LOADTEST_USERS = StaticToggle(
     'enable_loadtest_users',
     'Enable creating loadtest users on HQ',
-    TAG_EXPEREIMENTAL,
+    TAG_EXPERIMENTAL,
     namespaces=[NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/ccinternal/Loadtest+Users',
 )
