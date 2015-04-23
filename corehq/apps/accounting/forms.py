@@ -1799,7 +1799,7 @@ class InvoiceInfoForm(forms.Form):
 
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-                '{}Invoice #{}'.format('Wire' if invoice.is_wire else '', invoice.invoice_number),
+                '{} Invoice #{}'.format('Wire' if invoice.is_wire else '', invoice.invoice_number),
                 TextField(
                     'subscription',
                     subscription_link
