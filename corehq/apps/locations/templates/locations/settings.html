@@ -59,23 +59,47 @@
                     <i class="icon-plus"></i> {% trans "New Location Type" %}
                 </button>
                 <hr />
-                <div class="text-error" data-bind="text: loc_types_error"></div>
+                <div class="alert alert-error" style="display: none"
+                     data-bind="visible: loc_types_error">
+                    {% trans "Location types cannot be their own ancestors." %}
+                </div>
                 <table class="table table-striped table-bordered">
                     <thead>
                         <tr>
                             <th>{% trans "Location Type" %}</th>
-                            <th>{% trans "Location Type Code" %}</th>
-                            <th>{% trans "Allowed Parent Type" %}</th>
+                            <th>
+                                {% trans "Parent Type" %}
+                                <span class="hq-help-template"
+                                      data-title="{% trans "Parent Type" %}"
+                                      data-content="{% blocktrans %}
+                                          This controls which parent this location type
+                                          must have. You can use this to setup a location
+                                          type that can have different types of children.
+                                      {% endblocktrans %}">
+                                </span>
+                            </th>
                             {% if commtrack_enabled %}
                             <th>{% trans "Tracks Stock" %}</th>
                             {% endif %}
-                            <th>{% trans "Owns Cases" %}</th>
                             <th>
-                                {% trans "View Child Locations" %}
+                                {% trans "Owns Cases" %}
                                 <span class="hq-help-template"
-                                      data-title="View Child Locations"
+                                      data-title="{% trans "Owns Cases" %}"
                                       data-content="{% blocktrans %}
-                                          Gives mobile users access to case data for all child locations
+                                          This allows locations of this type to own and
+                                          manage cases. A case sharing group will be
+                                          created for each location.
+                                      {% endblocktrans %}">
+                                </span>
+                            </th>
+                            <th>
+                                {% trans "View Child Location Data" %}
+                                <span class="hq-help-template"
+                                      data-title="{% trans "View Child Location Data" %}"
+                                      data-content="{% blocktrans %}
+                                          Mobile workers assigned to locations off this
+                                          type will be able to view any cases owned by
+                                          their child locations.
                                       {% endblocktrans %}">
                                 </span>
                             </th>
@@ -86,16 +110,17 @@
                     <tr data-bind="bind_element: Object()">
                         <td class="control-group" data-bind="css: { 'error': name_error }">
                             <input class="loctype_name" data-bind="value: name" type="text" />
-                            <div class="help-inline" data-bind="text: name_error"></div>
+                            <div class="help-inline" data-bind="visible: name_error">
+                                {% trans "Required" %}
+                            </div>
                         </td>
-                        <td class="control-group" data-bind="css: { 'error': code_error }">
-                            <input class="loctype_code" data-bind="value: code" type="text" />
-                            <div class="help-inline" data-bind="text: code_error"></div>
-                        </td>
-                        <td class="control-group" data-bind="css: { 'error': allowed_parents_error }">
-                            <select data-bind="options: $root.loc_types, optionsText: 'name', optionsValue: 'name', selectedOptions: allowed_parents, optionsCaption: '\u2013top level\u2013'">
+                        <td class="control-group">
+                            <select data-bind="options: $root.loc_types,
+                                               optionsText: 'name',
+                                               optionsValue: 'name',
+                                               value: parent_type,
+                                               optionsCaption: '\u2013top level\u2013'">
                             </select>
-                            <div class="help-inline" data-bind="text: allowed_parents_error"></div>
                         </td>
                         {% if commtrack_enabled %}
                         <td>

@@ -48,6 +48,9 @@ def _is_valid_status(facility, date, status_type):
     if (not facility.metadata.get('group', None)) and (groups.count() == 0):
         return False
 
+    if status_type == SupplyPointStatusTypes.SUPERVISION_FACILITY:
+        return True
+
     if groups.count() > 0:
         codes = [group.group for group in groups]
     else:
@@ -342,7 +345,7 @@ def populate_report_data(start_date, end_date, domain, runner):
     update_historical_data(domain)
 
 
-@task(queue='background_queue')
+@task(queue='background_queue', ignore_result=True)
 def process_facility_warehouse_data(facility, start_date, end_date, runner):
     """
     process all the facility-level warehouse tables
@@ -376,8 +379,7 @@ def process_facility_warehouse_data(facility, start_date, end_date, runner):
         case_id=supply_point_id,
         report__date__gte=start_date,
         report__date__lt=end_date,
-        type='stockonhand'
-    ).order_by('report__date')
+    ).exclude(type='consumption').order_by('report__date')
     process_facility_transactions(location_id, new_trans)
 
     # go through all the possible values in the date ranges
@@ -535,7 +537,7 @@ def get_nested_children(location):
     return children
 
 
-@task(queue='background_queue')
+@task(queue='background_queue', ignore_result=True)
 def process_non_facility_warehouse_data(location, start_date, end_date, runner, strict=True):
     runner.location = location.sql_location
     runner.save()

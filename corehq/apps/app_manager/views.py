@@ -1241,19 +1241,23 @@ def new_app(request, domain):
     type = request.POST["type"]
     application_version = request.POST.get('application_version', APP_V1)
     cls = str_to_cls[type]
+    form_args = []
     if cls == Application:
         app = cls.new_app(domain, "Untitled Application", lang=lang, application_version=application_version)
-        app.add_module(Module.new_module("Untitled Module", lang))
-        app.new_form(0, "Untitled Form", lang)
+        module = Module.new_module("Untitled Module", lang)
+        app.add_module(module)
+        form = app.new_form(0, "Untitled Form", lang)
+        form_args = [module.id, form.id]
     else:
         app = cls.new_app(domain, "Untitled Application", lang=lang)
     if request.project.secure_submissions:
         app.secure_submissions = True
     app.save()
     _clear_app_cache(request, domain)
-    app_id = app.id
+    main_args = [request, domain, app.id]
+    main_args.extend(form_args)
 
-    return back_to_main(request, domain, app_id=app_id)
+    return back_to_main(*main_args)
 
 @require_can_edit_apps
 def default_new_app(request, domain):
@@ -1266,13 +1270,14 @@ def default_new_app(request, domain):
         domain, _("Untitled Application"), lang=lang,
         application_version=APP_V2
     )
-    app.add_module(Module.new_module(_("Untitled Module"), lang))
-    app.new_form(0, "Untitled Form", lang)
+    module = Module.new_module(_("Untitled Module"), lang)
+    app.add_module(module)
+    form = app.new_form(0, "Untitled Form", lang)
     if request.project.secure_submissions:
         app.secure_submissions = True
     _clear_app_cache(request, domain)
     app.save()
-    return back_to_main(request, domain, app_id=app.id)
+    return back_to_main(request, domain, app_id=app.id, module_id=module.id, form_id=form.id)
 
 
 @no_conflict_require_POST
@@ -1534,7 +1539,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         parent_module = request.POST.get("parent_module")
         module.parent_select.module_id = parent_module
 
-    if (toggles.MODULE_FILTER.enabled(app.domain) and
+    if (feature_previews.MODULE_FILTER.enabled(app.domain) and
             app.enable_module_filtering and
             should_edit('module_filter')):
         module['module_filter'] = request.POST.get('module_filter')
@@ -2576,6 +2581,17 @@ def odk_qr_code(request, domain, app_id):
 def odk_media_qr_code(request, domain, app_id):
     qr_code = get_app(domain, app_id).get_odk_qr_code(with_media=True)
     return HttpResponse(qr_code, mimetype="image/png")
+
+
+def short_url(request, domain, app_id):
+    short_url = get_app(domain, app_id).get_short_url()
+    return HttpResponse(short_url)
+
+
+def short_odk_url(request, domain, app_id, with_media=False):
+    short_url = get_app(domain, app_id).get_short_odk_url(with_media=with_media)
+    return HttpResponse(short_url)
+
 
 @safe_download
 def download_odk_profile(request, domain, app_id):
