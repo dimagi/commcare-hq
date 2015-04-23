@@ -136,3 +136,12 @@ LOCATIONS = FeaturePreview(
     help_link='http://help.commcarehq.org/',
     save_fn=enable_locations,
 )
+
+MODULE_FILTER = FeaturePreview(
+    slug='module_filter',
+    label=_('Module Filtering'),
+    description=_(
+        'Module filtering allows you to hide modules when a certain XPath condition is met. '
+        'Note, this feature requires CommCare 2.20'
+    ),
+)

@@ -375,12 +375,6 @@ BULK_PAYMENTS = StaticToggle(
     'Enable payment of invoices by bulk credit payments and invoice generation for wire tranfers',
 )
 
-MODULE_FILTER = StaticToggle(
-    'module_filter',
-    'Enable module filtering',
-    [NAMESPACE_DOMAIN],
-)
-
 USE_NEW_TIMEZONE_BEHAVIOR = StaticToggle(
     'use_new_timezone_behavior',
     ("Enable properly dealing with timezones in phone timestamps "
