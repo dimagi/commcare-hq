@@ -435,34 +435,6 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
 
         self.assertXmlPartialEqual(self.get_xml('advanced_module_parent'), app.create_suite(), "./entry[1]")
 
-    def test_usercase_id_added_update(self):
-        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
-
-        child_module = app.add_module(Module.new_module("Untitled Module", None))
-        child_module.case_type = 'child'
-
-        child_form = app.new_form(0, "Untitled Form", None)
-        child_form.xmlns = 'http://id_m1-f0'
-        child_form.requires = 'case'
-        child_form.actions.update_case = UpdateCaseAction(update={'user/name': '/data/question1'})
-        child_form.actions.update_case.condition.type = 'always'
-
-        self.assertXmlPartialEqual(self.get_xml('usercase_entry'), app.create_suite(), "./entry[1]")
-
-    def test_usercase_id_added_preload(self):
-        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
-
-        child_module = app.add_module(Module.new_module("Untitled Module", None))
-        child_module.case_type = 'child'
-
-        child_form = app.new_form(0, "Untitled Form", None)
-        child_form.xmlns = 'http://id_m1-f0'
-        child_form.requires = 'case'
-        child_form.actions.case_preload = PreloadAction(preload={'/data/question1': 'user/name'})
-        child_form.actions.case_preload.condition.type = 'always'
-
-        self.assertXmlPartialEqual(self.get_xml('usercase_entry'), app.create_suite(), "./entry[1]")
-
     def test_open_case_and_subcase(self):
         app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
 
