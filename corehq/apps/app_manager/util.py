@@ -6,6 +6,7 @@ import uuid
 from corehq.apps.app_manager.exceptions import SuiteError
 from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.app_manager.tasks import create_user_cases
+from corehq.toggles import USER_AS_A_CASE
 from corehq.util.soft_assert import soft_assert
 from couchdbkit.exceptions import DocTypeError
 from corehq import Domain
@@ -219,7 +220,7 @@ def get_case_properties(app, case_types, defaults=(),
     )
 
 
-def is_usercase_enabled(domain_name):
+def is_usercase_in_use(domain_name):
     domain = Domain.get_by_name(domain_name) if domain_name else None
     return domain and domain.usercase_enabled
 

@@ -67,7 +67,7 @@ from corehq.apps.app_manager.util import (
     save_xform,
     get_correct_app_class,
     ParentCasePropertyBuilder,
-    is_usercase_enabled)
+    is_usercase_in_use)
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
@@ -2188,7 +2188,7 @@ class AdvancedModule(ModuleBase):
 
                 if from_module.parent_select.active:
                     app = self.get_app()
-                    gen = suite_xml.SuiteGenerator(app, is_usercase_enabled(app.domain))
+                    gen = suite_xml.SuiteGenerator(app, is_usercase_in_use(app.domain))
                     select_chain = gen.get_select_chain(from_module, include_self=False)
                     for n, link in enumerate(reversed(list(enumerate(select_chain)))):
                         i, module = link
@@ -3641,7 +3641,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 'langs': ["default"] + self.build_langs
             })
         else:
-            return suite_xml.SuiteGenerator(self, is_usercase_enabled(self.domain)).generate_suite()
+            return suite_xml.SuiteGenerator(self, is_usercase_in_use(self.domain)).generate_suite()
 
     def create_media_suite(self):
         return suite_xml.MediaSuiteGenerator(self).generate_suite()

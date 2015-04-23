@@ -64,7 +64,6 @@ from corehq.apps.sms.views import get_sms_autocomplete_context
 from django.utils.http import urlencode as django_urlencode
 from couchdbkit.exceptions import ResourceConflict
 from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseForbidden
-from toggle.shortcuts import toggle_enabled as toggle_enabled_shortcut
 from unidecode import unidecode
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse, RegexURLResolver, Resolver404
@@ -96,7 +95,7 @@ from corehq.apps.app_manager.util import (
     get_commcare_versions,
     save_xform,
     get_settings_values,
-    is_usercase_enabled,
+    is_usercase_in_use,
     enable_usercase,
     actions_use_usercase,
 )
@@ -163,6 +162,7 @@ from corehq.apps.app_manager.decorators import safe_download, no_conflict_requir
 from django.contrib import messages
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege, has_privilege
+from corehq.toggles import USER_AS_A_CASE
 # Numbers in paths is prohibited, hence the use of importlib
 import importlib
 FilterMigration = importlib.import_module('corehq.apps.app_manager.migrations.0002_add_filter_to_Detail').Migration
@@ -833,7 +833,7 @@ def get_module_view_context_and_template(app, module):
             'long': module.case_details.long,
             'child_case_types': child_case_types,
         }
-        if is_usercase_enabled(app.domain):
+        if is_usercase_in_use(app.domain):
             item['properties'] = sorted(builder.get_properties(case_type) | builder.get_properties(USERCASE_TYPE))
         else:
             item['properties'] = sorted(builder.get_properties(case_type))
@@ -1067,7 +1067,6 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
     })
 
     context['latest_commcare_version'] = get_commcare_versions(request.user)[-1]
-    context['usercase_enabled'] = is_usercase_enabled(domain)
 
     if app and app.doc_type == 'Application' and has_privilege(request, privileges.COMMCARE_LOGO_UPLOADER):
         uploader_slugs = ANDROID_LOGO_PROPERTY_MAPPING.keys()
@@ -1887,8 +1886,8 @@ def edit_form_actions(request, domain, app_id, module_id, form_id):
     form = app.get_module(module_id).get_form(form_id)
     form.actions = FormActions.wrap(json.loads(request.POST['actions']))
     form.requires = request.POST.get('requires', form.requires)
-    if actions_use_usercase(form.actions) and not is_usercase_enabled(domain):
-        if toggle_enabled_shortcut('user_as_a_case', domain, namespace='domain'):
+    if actions_use_usercase(form.actions) and not is_usercase_in_use(domain):
+        if USER_AS_A_CASE.enabled(domain):
             enable_usercase(domain)
         else:
             return HttpResponseBadRequest(json.dumps({
