@@ -58,8 +58,9 @@ class LoadtestUserTest(TestCase):
         self.user.save()
         child, parent = self.factory.create_or_update_case(
             CaseStructure(
+                attrs={'case_name': 'parent'},
                 relationships=[
-                    CaseRelationship(),
+                    CaseRelationship(CaseStructure(attrs={'case_name': 'child'})),
                 ]
             )
         )
