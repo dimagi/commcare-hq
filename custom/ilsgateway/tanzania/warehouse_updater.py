@@ -48,9 +48,6 @@ def _is_valid_status(facility, date, status_type):
     if (not facility.metadata.get('group', None)) and (groups.count() == 0):
         return False
 
-    if status_type == SupplyPointStatusTypes.SUPERVISION_FACILITY:
-        return True
-
     if groups.count() > 0:
         codes = [group.group for group in groups]
     else:
