@@ -9,10 +9,12 @@
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
+    {% if adjust_balance_form %}
     <script>
         var adjustBalanceFormModel = new AdjustBalanceFormModel();
         ko.applyBindings(adjustBalanceFormModel, $('#adjust-balance-form-{{ invoice_info_form.invoice.id }}').get(0));
     </script>
+    {% endif %}
 {% endblock %}
 
 {% block main_column %}
