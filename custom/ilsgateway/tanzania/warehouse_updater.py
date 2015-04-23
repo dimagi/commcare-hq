@@ -167,7 +167,7 @@ def not_responding_facility(org_summary):
         group_summary.save()
 
 
-@transaction.commit_on_success
+@transaction.atomic
 def update_product_availability_facility_data(org_summary):
     # product availability
 
@@ -414,7 +414,7 @@ def process_facility_warehouse_data(facility, start_date, end_date, runner):
         populate_facility_stockout_alerts(facility, window_date)
 
 
-@transaction.commit_on_success
+@transaction.atomic
 def process_facility_statuses(facility_id, statuses, alerts=True):
     """
     For a given facility and list of statuses, update the appropriate
@@ -500,7 +500,7 @@ def process_facility_product_reports(facility_id, reports):
         months_updated[warehouse_date] = None  # update the cache of stuff we've dealt with
 
 
-@transaction.commit_on_success
+@transaction.atomic
 def process_facility_transactions(facility_id, transactions):
     """
     For a given facility and list of transactions, update the appropriate
