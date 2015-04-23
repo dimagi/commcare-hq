@@ -109,8 +109,8 @@ class LocationTypesView(BaseCommTrackManageView):
         return {
             'pk': loctype.pk,
             'name': loctype.name,
-            'allowed_parents': [loctype.parent_type.name
-                                if loctype.parent_type else None],
+            'parent_type': (loctype.parent_type.name
+                            if loctype.parent_type else None),
             'administrative': loctype.administrative,
             'shares_cases': loctype.shares_cases,
             'view_descendants': loctype.view_descendants
@@ -120,12 +120,9 @@ class LocationTypesView(BaseCommTrackManageView):
         payload = json.loads(request.POST.get('json'))
         sql_loc_types = {}
 
-        def mk_loctype(name, allowed_parents, administrative,
+        def mk_loctype(name, parent_type, administrative,
                        shares_cases, view_descendants, pk):
-            if allowed_parents and allowed_parents[0]:
-                parent = sql_loc_types[allowed_parents[0]]
-            else:
-                parent = None
+            parent = sql_loc_types[parent_type] if parent_type else None
 
             try:
                 loc_type = LocationType.objects.get(domain=self.domain, pk=pk)
@@ -142,11 +139,9 @@ class LocationTypesView(BaseCommTrackManageView):
         loc_types = payload['loc_types']
         pks = []
         for loc_type in loc_types:
-            for prop in ['name', 'allowed_parents', 'administrative',
+            for prop in ['name', 'parent_type', 'administrative',
                          'shares_cases', 'view_descendants', 'pk']:
                 assert prop in loc_type, "Missing a location type property!"
-                assert len(loc_type['allowed_parents']) <= 1, \
-                    "This location type has more than one parent. How?"
             pks.append(loc_type['pk'])
 
         hierarchy = self.get_hierarchy(loc_types)
@@ -191,9 +186,8 @@ class LocationTypesView(BaseCommTrackManageView):
                 assert lt['name'] not in visited, \
                     "There's a loc type cycle, we need to prohibit that"
                 visited.add(lt['name'])
-                parents = lt['allowed_parents']
-                if parents and parents[0]:
-                    step(lt_dict.get(parents[0]))
+                if lt['parent_type']:
+                    step(lt_dict[lt['parent_type']])
             step(loc_type)
 
         hierarchy = {}
@@ -204,8 +198,7 @@ class LocationTypesView(BaseCommTrackManageView):
             and return hierarchy below loc_type
             """
             name = loc_type['name']
-            parents = loc_type['allowed_parents']
-            parent = lt_dict.get(parents[0], None) if parents else None
+            parent = lt_dict.get(loc_type['parent_type'], None)
             if not parent:
                 lt_hierarchy = hierarchy
             else:
