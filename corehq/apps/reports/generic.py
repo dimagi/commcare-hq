@@ -717,6 +717,7 @@ class GenericTabularReport(GenericReportView):
     start_at_row = 0
     show_all_rows = False
     fix_left_col = False
+    disable_pagination = False
     ajax_pagination = False
     use_datatables = True
     charts_per_row = 1
@@ -944,6 +945,8 @@ class GenericTabularReport(GenericReportView):
                 source=self.pagination_source,
                 filter=False
             )
+        if self.disable_pagination:
+            pagination_spec['hide'] = True
 
         left_col = dict(is_fixed=self.fix_left_col)
         if self.fix_left_col:
