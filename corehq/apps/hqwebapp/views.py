@@ -42,6 +42,7 @@ from corehq.apps.reports.util import is_mobile_worker_with_report_access
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.hqwebapp.doc_info import get_doc_info
+from corehq.util.cache_utils import ExponentialBackoff
 from corehq.util.context_processors import get_domain_type
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
@@ -398,14 +399,20 @@ def debug_notify(request):
 
 @require_POST
 def jserror(request):
-    notify_js_exception(
-        request,
-        message=request.POST.get('message', None),
-        stack=request.POST.get('stack', None),
-        line=request.POST.get('line', None),
-        filename=request.POST.get('filename', None),
-    )
-    return HttpResponse("JS error has been logged")
+    stack = request.POST.get('stack', None)
+
+    ExponentialBackoff.increment(stack)
+    if not ExponentialBackoff.should_backoff(stack):
+        notify_js_exception(
+            request,
+            message=request.POST.get('message', None),
+            stack=stack,
+            line=request.POST.get('line', None),
+            filename=request.POST.get('filename', None),
+        )
+        return HttpResponse("JS error has been logged")
+    else:
+        return HttpResponse("JS error has been skipped")
 
 
 @login_required()
