@@ -410,9 +410,8 @@ def jserror(request):
             line=request.POST.get('line', None),
             filename=request.POST.get('filename', None),
         )
-        return HttpResponse("JS error has been logged")
-    else:
-        return HttpResponse("JS error has been skipped")
+
+    return HttpResponse('')
 
 
 @login_required()
