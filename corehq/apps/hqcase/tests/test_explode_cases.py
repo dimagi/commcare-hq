@@ -106,16 +106,21 @@ class ExplodeCasesTest(SimpleTestCase, TestFileMixin):
 
 class ExplodeCasesDbTest(TestCase):
 
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
         delete_all_cases()
-        self.domain = Domain(name='foo')
-        self.domain.save()
-        self.user = CommCareUser.create(self.domain.name, 'somebody', 'password')
-        self.user_id = self.user._id
+        cls.domain = Domain(name='foo')
+        cls.domain.save()
+        cls.user = CommCareUser.create(cls.domain.name, 'somebody', 'password')
+        cls.user_id = cls.user._id
 
-    def tearDown(self):
-        self.user.delete()
-        self.domain.delete()
+    def setUp(cls):
+        delete_all_cases()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.user.delete()
+        cls.domain.delete()
 
     def test_simple(self):
         caseblock = CaseBlock(

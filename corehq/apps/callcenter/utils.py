@@ -1,13 +1,31 @@
 from __future__ import absolute_import
+from collections import namedtuple
+from datetime import datetime, timedelta
+import pytz
 from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2
 import uuid
 from xml.etree import ElementTree
 from corehq.apps.app_manager.const import USERCASE_TYPE
+from corehq.apps.es.domains import DomainES
+from corehq.apps.es import filters
 from corehq.apps.hqcase.utils import submit_case_blocks, get_case_by_domain_hq_user_id
 from couchdbkit.exceptions import MultipleResultsFound
-from corehq.elastic import es_query
+from corehq.util.couch_helpers import paginate_view
+from corehq.util.timezones.conversions import UserTime
 from dimagi.utils.couch import CriticalSection
+
+
+class DomainLite(namedtuple('DomainLite', 'name default_timezone cc_case_type')):
+    @property
+    def midnight(self):
+        tz = pytz.timezone(self.default_timezone)
+        midnight = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        return UserTime(midnight, tz).server_time().done()
+
+
+CallCenterCase = namedtuple('CallCenterCase', 'case_id hq_user_id')
 
 
 def sync_user_case(commcare_user, case_type, owner_id, copy_user_data=True):
@@ -110,12 +128,58 @@ def sync_usercase(user):
         )
 
 
+def is_midnight_for_domain(midnight_form_domain, error_margin=15, current_time=None):
+    current_time = current_time or datetime.utcnow()
+    diff = current_time - midnight_form_domain
+    return diff.days >= 0 and diff < timedelta(minutes=error_margin)
+
+
 def get_call_center_domains():
-    q = {'fields': ['name']}
-    result = es_query(params={
-        'internal.using_call_center': True,
-        'is_active': True,
-        'is_snapshot': False
-    }, q=q)
-    hits = result.get('hits', {}).get('hits', {})
-    return [hit['fields']['name'] for hit in hits]
+    result = (
+        DomainES()
+            .is_active()
+            .is_snapshot(False)
+            .filter(filters.term('call_center_config.enabled', True))
+            .fields(['name', 'default_timezone', 'call_center_config.case_type'])
+            .run()
+    )
+
+    def to_domain_lite(hit):
+        return DomainLite(
+            name=hit['name'],
+            default_timezone=hit['default_timezone'],
+            cc_case_type=hit.get('call_center_config.case_type', '')
+        )
+    return [to_domain_lite(hit) for hit in result.hits]
+
+
+def get_call_center_cases(domain_name, case_type, user=None):
+    base_key = ["open type owner", domain_name, case_type]
+    if user:
+        keys = [
+            base_key + [owner_id]
+            for owner_id in user.get_owner_ids()
+        ]
+    else:
+        keys = [base_key]
+
+    all_cases = []
+    for key in keys:
+        rows = paginate_view(
+            CommCareCase.get_db(),
+            'case/all_cases',
+            chunk_size=10,
+            startkey=key,
+            endkey=key + [{}],
+            reduce=False,
+            include_docs=True
+        )
+        for row in rows:
+            hq_user_id = row['doc'].get('hq_user_id', None)
+            if hq_user_id:
+                all_cases.append(CallCenterCase(
+                    case_id=row['id'],
+                    hq_user_id=hq_user_id
+                ))
+
+    return all_cases

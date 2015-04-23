@@ -184,7 +184,10 @@ class FormListForm(object):
                                 'key': header['key']})
             elif isinstance(self.get_child_form_field(header), forms.Field):
                 field = self.get_child_form_field(header)
+                html_attrs = field.widget.attrs
+                html_attrs['type'] = field.widget.input_type
                 columns.append({'type': field.widget.__class__.__name__,
+                                'html_attrs': html_attrs,
                                 'key': header})
         return columns
 

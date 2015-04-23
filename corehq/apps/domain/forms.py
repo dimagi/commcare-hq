@@ -767,6 +767,12 @@ class HQPasswordResetForm(PasswordResetForm):
 
     This prevents duplicate emails with linked commcare user accounts to the same email.
     """
+    error_messages = {
+        'unknown': _("That email address doesn't have an associated "
+                     "user account. Are you sure you've registered?"),
+        'unusable': _("The user account associated with this email "
+                      "address cannot reset the password."),
+    }
 
     def clean_email(self):
         UserModel = get_user_model()
