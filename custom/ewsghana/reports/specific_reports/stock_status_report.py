@@ -160,11 +160,9 @@ class MonthOfStockProduct(EWSData):
                 url = make_url(
                     cls,
                     self.config['domain'],
-                    '?location_id=%s&filter_by_program=%s&startdate=%s'
-                    '&enddate=%s&report_type=%s&filter_by_product=%s',
-                    (sp.location_id, self.config['program'] or ALL_OPTION, self.config['startdate'],
-                    self.config['enddate'], self.config['report_type'],
-                    '&filter_by_product='.join(self.config['products'])))
+                    '?location_id=%s&filter_by_program=%s&startdate=%s&enddate=%s&report_type=%s',
+                    (sp.location_id, self.config['program'] or ALL_OPTION, self.config['startdate'].date(),
+                    self.config['enddate'].date(), self.config['report_type']))
 
                 row = [link_format(sp.name, url)]
                 for p in self.unique_products(self.get_supply_points, all=True):
