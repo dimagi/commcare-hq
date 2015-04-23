@@ -222,12 +222,6 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-VIEW_SYNC_HISTORY = StaticToggle(
-    'sync_history_report',
-    'Enable sync history report',
-    TAG_PRODUCT_PATH
-)
-
 STOCK_TRANSACTION_EXPORT = StaticToggle(
     'ledger_export',
     'Show "export transactions" link on case details page',

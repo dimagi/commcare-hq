@@ -15,7 +15,6 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, D
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.util import make_form_couch_key, format_datatables_data
 from corehq.apps.users.models import CommCareUser
-from corehq.toggles import VIEW_SYNC_HISTORY
 from corehq.util.couch import get_document_or_404
 from couchforms.models import XFormInstance
 from django.utils.translation import ugettext_noop
@@ -142,24 +141,20 @@ class SyncHistoryReport(DeploymentsReport):
     name = ugettext_noop("User Sync History")
     slug = "sync_history"
     fields = ['corehq.apps.reports.filters.users.SelectMobileWorkerFilter']
-
-    @classmethod
-    def show_in_navigation(cls, domain=None, project=None, user=None):
-        return (
-            user
-            and VIEW_SYNC_HISTORY.enabled(user.username)
-            and super(DeploymentsReport, cls).show_in_navigation(domain, project, user)
-        )
+    report_subtitles = [ugettext_noop('Shows the last (up to) 10 times a user has synced.')]
+    disable_pagination = True
 
     @property
     def headers(self):
         headers = DataTablesHeader(
-            DataTablesColumn(_("Sync Log")),
             DataTablesColumn(_("Sync Date"), sort_type=DTSortType.NUMERIC),
             DataTablesColumn(_("# of Cases"), sort_type=DTSortType.NUMERIC),
-            DataTablesColumn(_("Sync Duration"), sort_type=DTSortType.NUMERIC),
+            DataTablesColumn(_("Sync Duration"), sort_type=DTSortType.NUMERIC)
         )
-        headers.custom_sort = [[1, 'desc']]
+        if self.show_extra_columns:
+            headers.add_column(DataTablesColumn(_("Sync Log")))
+
+        headers.custom_sort = [[0, 'desc']]
         return headers
 
     @property
@@ -208,18 +203,24 @@ class SyncHistoryReport(DeploymentsReport):
                 )
 
             num_cases = len(sync_log.cases_on_phone)
-            return [
-                _fmt_id(sync_log.get_id),
+            columns = [
                 _fmt_date(sync_log.date),
                 format_datatables_data(num_cases, num_cases),
                 _fmt_duration(sync_log.duration),
             ]
+            if self.show_extra_columns:
+                columns.append(_fmt_id(sync_log.get_id))
+
+            return columns
 
         return [
             _sync_log_to_row(SyncLog.wrap(sync_log_json))
             for sync_log_json in iter_docs(SyncLog.get_db(), sync_log_ids)
         ]
 
+    @property
+    def show_extra_columns(self):
+        return self.request.user and self.request.user.is_superuser
 
 def _fmt_date(date):
     def _timedelta_class(delta):
