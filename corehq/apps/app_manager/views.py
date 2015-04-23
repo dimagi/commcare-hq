@@ -98,7 +98,7 @@ from corehq.apps.app_manager.util import (
     is_usercase_in_use,
     enable_usercase,
     actions_use_usercase,
-)
+    get_usercase_properties)
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import LoginAndDomainMixin
 from corehq.util.compression import decompress
@@ -1005,6 +1005,12 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
                 )
             })
 
+        uc_on = toggles.USER_AS_A_CASE.enabled(domain)
+        context.update({
+            'usercase_toggle_on': uc_on,
+            'usercase_properties': get_usercase_properties(app) if uc_on else None,
+        })
+
         context.update(form_context)
     elif module:
         template, module_context = get_module_view_context_and_template(app, module)
@@ -1896,6 +1902,7 @@ def edit_form_actions(request, domain, app_id, module_id, form_id):
     response_json = {}
     app.save(response_json)
     response_json['propertiesMap'] = get_all_case_properties(app)
+    response_json['usercasePropertiesMap'] = get_usercase_properties(app)
     return json_response(response_json)
 
 @no_conflict_require_POST

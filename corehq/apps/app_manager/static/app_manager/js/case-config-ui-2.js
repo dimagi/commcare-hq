@@ -1,6 +1,8 @@
 /*globals $, COMMCAREHQ, ko, _, CC_UTILS */
 
-var action_names = ["open_case", "update_case", "close_case", "case_preload"];
+var action_names = ["open_case", "update_case", "close_case", "case_preload",
+    // Usercase actions are managed in the User Case Management tab.
+    "update_usercase", "usercase_preload"];
 
 var CaseConfig = (function () {
     "use strict";

@@ -167,16 +167,13 @@ class ParentCasePropertyBuilder(object):
                     ).get(case_type, [])
                 )
 
-        # prefix user case properties with "user:".
+        # prefix user case properties.
         prefix_user = lambda p: USERCASE_PREFIX + p if case_type == USERCASE_TYPE else p
 
-        # .. note:: if the user case type has a parent case type, its
-        #           properties will be returned as `user:parent/property`
-        #
         # .. note:: if this case type is not the user case type, but it has a
         #           parent case type which is the user case type, then the
         #           parent case type's properties will be returned as
-        #           `parent/user:property`.
+        #           `parent/user/property`.
         #
         return {prefix_user(p) for p in case_properties}
 
@@ -226,14 +223,19 @@ def is_usercase_in_use(domain_name):
 
 
 def get_all_case_properties(app):
-    case_types = set(itertools.chain.from_iterable(m.get_case_types() for m in app.modules))
-    if is_usercase_enabled(app.domain):
-        case_types.add(USERCASE_TYPE)
     return get_case_properties(
         app,
-        case_types,
+        set(itertools.chain.from_iterable(m.get_case_types() for m in app.modules)),
         defaults=('name',)
     )
+
+
+def get_usercase_properties(app):
+    # No need to check toggles.USER_AS_A_CASE. This function is only called
+    # from app_manager.views, and it checks the toggle.
+    if is_usercase_in_use(app.domain):
+        return get_case_properties(app, [USERCASE_TYPE])
+    return []
 
 
 def get_settings_values(app):
@@ -415,11 +417,9 @@ def any_usercase_items(iter_):
 
 
 def actions_use_usercase(actions):
-    if 'update_case' in actions and hasattr(actions['update_case'], 'update'):
-        return any_usercase_items(actions['update_case'].update.iterkeys())
-    if 'case_preload' in actions:
-        return any_usercase_items(actions['case_preload'].preload.itervalues())
-    return False
+    return ('update_usercase' in actions and
+            hasattr(actions['update_usercase'], 'update') or
+            'usercase_preload' in actions)
 
 
 def enable_usercase(domain_name):

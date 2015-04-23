@@ -314,6 +314,9 @@ class FormActions(DocumentSchema):
     case_preload = SchemaProperty(PreloadAction)
     referral_preload = SchemaProperty(PreloadAction)
 
+    update_usercase = SchemaProperty(UpdateCaseAction)
+    usercase_preload = SchemaProperty(PreloadAction)
+
     subcases = SchemaListProperty(OpenSubCaseAction)
 
     def all_property_names(self):
