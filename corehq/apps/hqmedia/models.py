@@ -6,7 +6,6 @@ from datetime import datetime
 import hashlib
 from couchdbkit.exceptions import ResourceConflict
 from couchdbkit.ext.django.schema import *
-from couchdbkit.schema import LazyDict
 from corehq.apps.app_manager.exceptions import XFormException
 from dimagi.utils.couch.resource_conflict import retry_resource
 from django.contrib import messages
@@ -485,7 +484,7 @@ class ApplicationMediaReference(object):
     def _get_name(self, raw_name, lang=None):
         if not raw_name:
             return ""
-        if not isinstance(raw_name, dict) or not isinstance(raw_name, LazyDict):
+        if not isinstance(raw_name, dict):
             return raw_name
         if lang is None:
             lang = self.app_lang

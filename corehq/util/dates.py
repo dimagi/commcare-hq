@@ -1,6 +1,7 @@
 import datetime
 import time
 from corehq.util.soft_assert import soft_assert
+from dimagi.utils.parsing import ISO_DATE_FORMAT
 
 
 def unix_time(dt):
@@ -81,3 +82,15 @@ def iso_string_to_datetime(iso_string):
     _assert(False, 'input not in expected format: {!r}'.format(iso_string))
     from dimagi.utils.parsing import string_to_utc_datetime
     return string_to_utc_datetime(iso_string)
+
+
+def iso_string_to_date(iso_string):
+    """
+    parse a date string in iso format
+
+    return a datetime.date
+    >>> iso_string_to_date('2015-04-07')
+    datetime.date(2015, 4, 7)
+
+    """
+    return datetime.datetime.strptime(iso_string, ISO_DATE_FORMAT).date()

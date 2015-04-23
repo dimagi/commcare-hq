@@ -2,6 +2,7 @@ import random
 import datetime
 import string
 from decimal import Decimal
+from corehq.apps.sms.mixin import SMSBackend
 
 from dimagi.utils.data import generator as data_gen
 from corehq.apps.accounting.models import Currency
@@ -150,7 +151,12 @@ def arbitrary_fees_by_all(backend_ids):
 def arbitrary_backend_ids():
     backend_ids = {}
     for backend in get_available_backends().values():
-        backend_ids[backend.get_api_id()] = data_gen.arbitrary_unique_name("back")
+        backend_instance = data_gen.arbitrary_unique_name("back")
+        backend_ids[backend.get_api_id()] = backend_instance
+        sms_backend = SMSBackend()
+        sms_backend._id = backend_instance
+        sms_backend.is_global = True
+        sms_backend.save()
     return backend_ids
 
 

@@ -633,6 +633,23 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
 
     def __init__(self, can_edit_eula, *args, **kwargs):
         super(DomainInternalForm, self).__init__(*args, **kwargs)
+        self.can_edit_eula = can_edit_eula
+        additional_fields = []
+        if self.can_edit_eula:
+            additional_fields = ['custom_eula', 'can_use_data']
+            self.fields['custom_eula'] = ChoiceField(
+                label=ugettext_noop("Custom Eula?"),
+                choices=tf_choices(_('Yes'), _('No')),
+                required=False,
+                help_text='Set to "yes" if this project has a customized EULA as per their contract.'
+            )
+            self.fields['can_use_data'] = ChoiceField(
+                label=ugettext_noop("Can use project data?"),
+                choices=tf_choices('Yes', 'No'),
+                required=False,
+                help_text='Set to "no" if this project opts out of data usage. Defaults to "yes".'
+            )
+
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
         self.helper.layout = crispy.Layout(
@@ -650,6 +667,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                 'deployment_date',
                 'countries',
                 'commtrack_domain',
+                crispy.Div(*additional_fields),
             ),
             crispy.Fieldset(
                 _("Salesforce Details"),
@@ -665,20 +683,6 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                 ),
             ),
         )
-        self.can_edit_eula = can_edit_eula
-        if self.can_edit_eula:
-            self.fields['custom_eula'] = ChoiceField(
-                label=ugettext_noop("Custom Eula?"),
-                choices=tf_choices('Yes', 'No'),
-                required=False,
-                help_text='Set to "yes" if this project has a customized EULA as per their contract.'
-            )
-            self.fields['can_use_data'] = ChoiceField(
-                label=ugettext_noop("Can use project data?"),
-                choices=tf_choices('Yes', 'No'),
-                required=False,
-                help_text='Set to "no" if this project opts out of data usage. Defaults to "yes".'
-            )
 
     def save(self, domain):
         kwargs = {"workshop_region": self.cleaned_data["workshop_region"]} if self.cleaned_data["workshop_region"] else {}
@@ -731,6 +735,12 @@ class HQPasswordResetForm(PasswordResetForm):
 
     This prevents duplicate emails with linked commcare user accounts to the same email.
     """
+    error_messages = {
+        'unknown': _("That email address doesn't have an associated "
+                     "user account. Are you sure you've registered?"),
+        'unusable': _("The user account associated with this email "
+                      "address cannot reset the password."),
+    }
 
     def clean_email(self):
         UserModel = get_user_model()

@@ -6,9 +6,11 @@ from toggle.shortcuts import toggle_enabled, set_toggle
 
 
 class StaticToggle(object):
-    def __init__(self, slug, label, namespaces=None):
+    def __init__(self, slug, label, namespaces=None, help_link=None, description=None):
         self.slug = slug
         self.label = label
+        self.help_link = help_link
+        self.description = description
         if namespaces:
             self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
         else:
@@ -275,12 +277,6 @@ ALLOW_CASE_ATTACHMENTS_VIEW = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-CASEDETAILS_IN_CLOUDCARE_FORMS = StaticToggle(
-    'case_details_in_cloudcare_forms',
-    'Display details of the selected case on top in CloudCare if a form uses Case Management',
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
 LOCATION_TYPE_STOCK_RATES = StaticToggle(
     'location_type_stock_rates',
     "Specify stock rates per location type.",
@@ -331,6 +327,18 @@ VELLUM_ITEMSETS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+VELLUM_HELP_MARKDOWN = StaticToggle(
+    'help_markdown',
+    "Use markdown for the help text in the form builder",
+    [NAMESPACE_DOMAIN]
+)
+
+VELLUM_SAVE_TO_CASE = StaticToggle(
+    'save_to_case',
+    "Adds save to case as a question to the form builder",
+    [NAMESPACE_DOMAIN]
+)
+
 CACHE_AND_INDEX = StaticToggle(
     'cache_and_index',
     'Enable the "Cache and Index" format option when choosing sort properties '
@@ -367,12 +375,6 @@ BULK_PAYMENTS = StaticToggle(
     'Enable payment of invoices by bulk credit payments and invoice generation for wire tranfers',
 )
 
-MODULE_FILTER = StaticToggle(
-    'module_filter',
-    'Enable module filtering',
-    [NAMESPACE_DOMAIN],
-)
-
 USE_NEW_TIMEZONE_BEHAVIOR = StaticToggle(
     'use_new_timezone_behavior',
     ("Enable properly dealing with timezones in phone timestamps "
@@ -380,4 +382,23 @@ USE_NEW_TIMEZONE_BEHAVIOR = StaticToggle(
      "(Please do not set manually, "
      "because it has to be accompanied by a migration.)"),
     [NAMESPACE_DOMAIN],
+)
+
+USER_AS_A_CASE = StaticToggle(
+    'user_as_a_case',
+    'Enable "User-As-A-Case" to store user properties in a case and use them in forms',
+    [NAMESPACE_DOMAIN]
+)
+
+STREAM_RESTORE_CACHE = StaticToggle(
+    'stream_cached_restore',
+    'Stream cached restore from couchdb',
+    [NAMESPACE_DOMAIN]
+)
+
+ENABLE_LOADTEST_USERS = StaticToggle(
+    'enable_loadtest_users',
+    'Enable creating loadtest users on HQ',
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Loadtest+Users',
 )

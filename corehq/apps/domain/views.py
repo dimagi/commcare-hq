@@ -4,6 +4,7 @@ from decimal import Decimal
 import logging
 import uuid
 from couchdbkit import ResourceNotFound
+from corehq.const import USER_DATE_FORMAT
 from custom.dhis2.forms import Dhis2SettingsForm
 from custom.dhis2.models import Dhis2Settings
 import dateutil
@@ -628,7 +629,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
         general_credits = None
         if subscription:
             cards = get_customer_cards(self.account, self.request.user.username, self.domain)
-            date_end = (subscription.date_end.strftime("%d %B %Y")
+            date_end = (subscription.date_end.strftime(USER_DATE_FORMAT)
                         if subscription.date_end is not None else "--")
 
             if subscription.date_end is not None:
@@ -649,7 +650,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
 
                     next_subscription.update({
                         'exists': True,
-                        'date_start': subscription.next_subscription.date_start.strftime("%d %B %Y"),
+                        'date_start': subscription.next_subscription.date_start.strftime(USER_DATE_FORMAT),
                         'name': subscription.next_subscription.plan_version.plan.name,
                         'price': next_products[0]['monthly_fee'],
                     })
@@ -675,7 +676,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'css_class': "label-plan %s" % plan_version.plan.edition.lower(),
             'do_not_invoice': subscription.do_not_invoice if subscription is not None else False,
             'is_trial': subscription.is_trial if subscription is not None else False,
-            'date_start': (subscription.date_start.strftime("%d %B %Y")
+            'date_start': (subscription.date_start.strftime(USER_DATE_FORMAT)
                            if subscription is not None else None),
             'date_end': date_end,
             'cards': cards,
@@ -886,7 +887,6 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                 args=[self.domain],
             ),
             'stripe_cards': self.stripe_cards,
-            'total_balance': "%.2f" % sum(invoice.get_total() for invoice in self.invoices)
         })
         return pagination_context
 
@@ -905,19 +905,19 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                 ).latest('date_created')
                 if invoice.is_paid:
                     payment_status = (_("Paid on %s.")
-                                      % invoice.date_paid.strftime("%d %B %Y"))
+                                      % invoice.date_paid.strftime(USER_DATE_FORMAT))
                     payment_class = "label label-inverse"
                 else:
                     payment_status = _("Not Paid")
                     payment_class = "label label-important"
-                date_due = (invoice.date_due.strftime("%d %B %Y")
+                date_due = (invoice.date_due.strftime(USER_DATE_FORMAT)
                             if not invoice.is_paid else _("Already Paid"))
                 yield {
                     'itemData': {
                         'id': invoice.id,
                         'invoice_number': invoice.invoice_number,
-                        'start': invoice.date_start.strftime("%d %B %Y"),
-                        'end': invoice.date_end.strftime("%d %B %Y"),
+                        'start': invoice.date_start.strftime(USER_DATE_FORMAT),
+                        'end': invoice.date_end.strftime(USER_DATE_FORMAT),
                         'plan': invoice.subscription.plan_version.user_facing_description,
                         'payment_status': payment_status,
                         'payment_class': payment_class,

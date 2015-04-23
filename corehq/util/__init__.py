@@ -1,5 +1,8 @@
 import re
 
+from .couch import get_document_or_404
+from .view_utils import reverse
+
 
 def fix_urls(text):
     """

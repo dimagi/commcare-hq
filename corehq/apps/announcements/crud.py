@@ -1,6 +1,8 @@
 import datetime
 from markdown import markdown
 from corehq.apps.crud.models import BaseAdminHQTabularCRUDManager
+from corehq.const import USER_DATE_FORMAT
+
 
 class HQAnnouncementCRUDManager(BaseAdminHQTabularCRUDManager):
     """
@@ -12,7 +14,7 @@ class HQAnnouncementCRUDManager(BaseAdminHQTabularCRUDManager):
 
     def format_property(self, key, property):
         if isinstance(property, datetime.datetime):
-            return property.strftime("%d %b %Y")
+            return property.strftime(USER_DATE_FORMAT)
         if key == "summary":
             return markdown(property)
         return super(HQAnnouncementCRUDManager, self).format_property(key, property)

@@ -64,6 +64,7 @@ from corehq.apps.sms.views import get_sms_autocomplete_context
 from django.utils.http import urlencode as django_urlencode
 from couchdbkit.exceptions import ResourceConflict
 from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseForbidden
+from toggle.shortcuts import toggle_enabled as toggle_enabled_shortcut
 from unidecode import unidecode
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse, RegexURLResolver, Resolver404
@@ -83,11 +84,22 @@ from corehq.apps.app_manager.const import (
     CAREPLAN_GOAL,
     CAREPLAN_TASK,
     MAJOR_RELEASE_TO_VERSION,
+    USERCASE_TYPE,
 )
 from corehq.apps.app_manager.success_message import SuccessMessage
-from corehq.apps.app_manager.util import is_valid_case_type, get_all_case_properties, add_odk_profile_after_build, ParentCasePropertyBuilder, commtrack_ledger_sections, \
-    get_commcare_versions
-from corehq.apps.app_manager.util import save_xform, get_settings_values
+from corehq.apps.app_manager.util import (
+    is_valid_case_type,
+    get_all_case_properties,
+    add_odk_profile_after_build,
+    ParentCasePropertyBuilder,
+    commtrack_ledger_sections,
+    get_commcare_versions,
+    save_xform,
+    get_settings_values,
+    is_usercase_enabled,
+    enable_usercase,
+    actions_use_usercase,
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import LoginAndDomainMixin
 from corehq.util.compression import decompress
@@ -805,13 +817,45 @@ def get_module_view_context_and_template(app, module):
             for form in mod.get_forms() if form.is_registration_form(case_type)
         ]
         if forms or module.case_list_form.form_id:
-            options['disabled'] = _("Don't show")
+            options['disabled'] = _("Don't Show")
             options.update({f.unique_id: trans(f.name, app.langs) for f in forms})
 
-        if not options:
-            options['disabled'] = _("No suitable forms available")
-
         return options
+
+    def get_details():
+        item = {
+            'label': _('Case List'),
+            'detail_label': _('Case Detail'),
+            'type': 'case',
+            'model': 'case',
+            'sort_elements': module.case_details.short.sort_elements,
+            'short': module.case_details.short,
+            'long': module.case_details.long,
+            'child_case_types': child_case_types,
+        }
+        if is_usercase_enabled(app.domain):
+            item['properties'] = sorted(builder.get_properties(case_type) | builder.get_properties(USERCASE_TYPE))
+        else:
+            item['properties'] = sorted(builder.get_properties(case_type))
+
+        if isinstance(module, AdvancedModule):
+            details = [item]
+            if app.commtrack_enabled:
+                details.append({
+                    'label': _('Product List'),
+                    'detail_label': _('Product Detail'),
+                    'type': 'product',
+                    'model': 'product',
+                    'properties': ['name'] + commtrack_ledger_sections(app.commtrack_requisition_mode),
+                    'sort_elements': module.product_details.short.sort_elements,
+                    'short': module.product_details.short,
+                    'child_case_types': child_case_types,
+                })
+        else:
+            item['parent_select'] = module.parent_select
+            details = [item]
+
+        return details
 
     # make sure all modules have unique ids
     app.ensure_module_unique_ids(should_save=True)
@@ -846,38 +890,12 @@ def get_module_view_context_and_template(app, module):
         }
     elif isinstance(module, AdvancedModule):
         case_type = module.case_type
-        def get_details():
-            details = [{
-                'label': _('Case List'),
-                'detail_label': _('Case Detail'),
-                'type': 'case',
-                'model': 'case',
-                'properties': sorted(builder.get_properties(case_type)),
-                'sort_elements': module.case_details.short.sort_elements,
-                'short': module.case_details.short,
-                'long': module.case_details.long,
-                'child_case_types': child_case_types,
-            }]
-
-            if app.commtrack_enabled:
-                details.append({
-                    'label': _('Product List'),
-                    'detail_label': _('Product Detail'),
-                    'type': 'product',
-                    'model': 'product',
-                    'properties': ['name'] + commtrack_ledger_sections(app.commtrack_requisition_mode),
-                    'sort_elements': module.product_details.short.sort_elements,
-                    'short': module.product_details.short,
-                    'child_case_types': child_case_types,
-                })
-
-            return details
-
+        form_options = case_list_form_options(case_type)
         return "app_manager/module_view_advanced.html", {
             'fixtures': fixtures,
             'details': get_details(),
-            'case_list_form_options': case_list_form_options(case_type),
-            'case_list_form_allowed': module.all_forms_require_a_case,
+            'case_list_form_options': form_options,
+            'case_list_form_allowed': bool(module.all_forms_require_a_case and form_options),
             'valid_parent_modules': [
                 parent_module for parent_module in app.modules
                 if not getattr(parent_module, 'root_module_id', None)
@@ -886,25 +904,15 @@ def get_module_view_context_and_template(app, module):
         }
     else:
         case_type = module.case_type
+        form_options = case_list_form_options(case_type)
         return "app_manager/module_view.html", {
             'parent_modules': get_parent_modules(case_type),
             'fixtures': fixtures,
-            'details': [
-                {
-                    'label': _('Case List'),
-                    'detail_label': _('Case Detail'),
-                    'type': 'case',
-                    'model': 'case',
-                    'properties': sorted(builder.get_properties(case_type)),
-                    'sort_elements': module.case_details.short.sort_elements,
-                    'short': module.case_details.short,
-                    'long': module.case_details.long,
-                    'parent_select': module.parent_select,
-                    'child_case_types': child_case_types,
-                },
-            ],
-            'case_list_form_options': case_list_form_options(case_type),
-            'case_list_form_allowed': module.all_forms_require_a_case and not module.parent_select.active,
+            'details': get_details(),
+            'case_list_form_options': form_options,
+            'case_list_form_allowed': bool(
+                module.all_forms_require_a_case and not module.parent_select.active and form_options
+            ),
         }
 
 
@@ -983,7 +991,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
             def qualified_form_name(form):
                 module_name = trans(form.get_module().name, app.langs)
                 form_name = trans(form.name, app.langs)
-                return "{} -> {}".format(module_name, form_name)
+                return u"{} -> {}".format(module_name, form_name)
 
             modules = filter(lambda m: m.case_type == module.case_type, app.get_modules())
             if getattr(module, 'root_module_id', None) and module.root_module not in modules:
@@ -1059,6 +1067,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
     })
 
     context['latest_commcare_version'] = get_commcare_versions(request.user)[-1]
+    context['usercase_enabled'] = is_usercase_enabled(domain)
 
     if app and app.doc_type == 'Application' and has_privilege(request, privileges.COMMCARE_LOGO_UPLOADER):
         uploader_slugs = ANDROID_LOGO_PROPERTY_MAPPING.keys()
@@ -1201,6 +1210,8 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None,
         vellum_plugins.append("itemset")
     if toggles.VELLUM_TRANSACTION_QUESTION_TYPES.enabled(domain):
         vellum_plugins.append("commtrack")
+    if toggles.VELLUM_SAVE_TO_CASE.enabled(domain):
+        vellum_plugins.append("saveToCase")
 
     vellum_features = toggles.toggles_dict(username=request.user.username,
                                            domain=domain)
@@ -1230,19 +1241,23 @@ def new_app(request, domain):
     type = request.POST["type"]
     application_version = request.POST.get('application_version', APP_V1)
     cls = str_to_cls[type]
+    form_args = []
     if cls == Application:
         app = cls.new_app(domain, "Untitled Application", lang=lang, application_version=application_version)
-        app.add_module(Module.new_module("Untitled Module", lang))
-        app.new_form(0, "Untitled Form", lang)
+        module = Module.new_module("Untitled Module", lang)
+        app.add_module(module)
+        form = app.new_form(0, "Untitled Form", lang)
+        form_args = [module.id, form.id]
     else:
         app = cls.new_app(domain, "Untitled Application", lang=lang)
     if request.project.secure_submissions:
         app.secure_submissions = True
     app.save()
     _clear_app_cache(request, domain)
-    app_id = app.id
+    main_args = [request, domain, app.id]
+    main_args.extend(form_args)
 
-    return back_to_main(request, domain, app_id=app_id)
+    return back_to_main(*main_args)
 
 @require_can_edit_apps
 def default_new_app(request, domain):
@@ -1255,13 +1270,14 @@ def default_new_app(request, domain):
         domain, _("Untitled Application"), lang=lang,
         application_version=APP_V2
     )
-    app.add_module(Module.new_module(_("Untitled Module"), lang))
-    app.new_form(0, "Untitled Form", lang)
+    module = Module.new_module(_("Untitled Module"), lang)
+    app.add_module(module)
+    form = app.new_form(0, "Untitled Form", lang)
     if request.project.secure_submissions:
         app.secure_submissions = True
     _clear_app_cache(request, domain)
     app.save()
-    return back_to_main(request, domain, app_id=app.id)
+    return back_to_main(request, domain, app_id=app.id, module_id=module.id, form_id=form.id)
 
 
 @no_conflict_require_POST
@@ -1523,7 +1539,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         parent_module = request.POST.get("parent_module")
         module.parent_select.module_id = parent_module
 
-    if (toggles.MODULE_FILTER.enabled(app.domain) and
+    if (feature_previews.MODULE_FILTER.enabled(app.domain) and
             app.enable_module_filtering and
             should_edit('module_filter')):
         module['module_filter'] = request.POST.get('module_filter')
@@ -1876,6 +1892,13 @@ def edit_form_actions(request, domain, app_id, module_id, form_id):
     form = app.get_module(module_id).get_form(form_id)
     form.actions = FormActions.wrap(json.loads(request.POST['actions']))
     form.requires = request.POST.get('requires', form.requires)
+    if actions_use_usercase(form.actions) and not is_usercase_enabled(domain):
+        if toggle_enabled_shortcut('user_as_a_case', domain, namespace='domain'):
+            enable_usercase(domain)
+        else:
+            return HttpResponseBadRequest(json.dumps({
+                'reason': _('This form uses usercase properties, but User-As-A-Case is not enabled for this '
+                            'project. To use this feature, please enable the "User-As-A-Case" Feature Flag.')}))
     response_json = {}
     app.save(response_json)
     response_json['propertiesMap'] = get_all_case_properties(app)
@@ -2558,6 +2581,17 @@ def odk_qr_code(request, domain, app_id):
 def odk_media_qr_code(request, domain, app_id):
     qr_code = get_app(domain, app_id).get_odk_qr_code(with_media=True)
     return HttpResponse(qr_code, mimetype="image/png")
+
+
+def short_url(request, domain, app_id):
+    short_url = get_app(domain, app_id).get_short_url()
+    return HttpResponse(short_url)
+
+
+def short_odk_url(request, domain, app_id, with_media=False):
+    short_url = get_app(domain, app_id).get_short_odk_url(with_media=with_media)
+    return HttpResponse(short_url)
+
 
 @safe_download
 def download_odk_profile(request, domain, app_id):

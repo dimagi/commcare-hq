@@ -194,6 +194,12 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
     except Exception:
         logging.exception("Could not clean text for sms dated '%s' in domain '%s'" % (msg.date, msg.domain))
     try:
+        if not domain_has_privilege(msg.domain, privileges.OUTBOUND_SMS):
+            raise Exception(
+                ("Domain '%s' does not have permission to send SMS."
+                 "  Please investigate why this function was called.") % msg.domain
+            )
+
         phone_obj = PhoneNumber.get_by_phone_number_or_none(msg.phone_number)
         if phone_obj and not phone_obj.send_sms:
             if msg.ignore_opt_out and phone_obj.can_opt_in:
@@ -352,13 +358,13 @@ def incoming(phone_number, text, backend_api, timestamp=None,
         text = ""
     phone_number = clean_phone_number(phone_number)
     msg = SMSLog(
-        phone_number = phone_number,
-        direction = INCOMING,
-        date = timestamp or datetime.utcnow(),
-        text = text,
-        domain_scope = domain_scope,
-        backend_api = backend_api,
-        backend_message_id = backend_message_id,
+        phone_number=phone_number,
+        direction=INCOMING,
+        date=timestamp or datetime.utcnow(),
+        text=text,
+        domain_scope=domain_scope,
+        backend_api=backend_api,
+        backend_message_id=backend_message_id,
         raw_text=raw_text,
     )
     if backend_attributes:

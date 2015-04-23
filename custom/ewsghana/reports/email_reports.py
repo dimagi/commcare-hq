@@ -76,8 +76,8 @@ class EmailReportData(EWSData):
             months_of_stock = float(v['total_stock']) / float(v['monthly_consumption'] or 1)
             rows.append([k, percent(v['fac_with_stockout'], v['total_fac']),
                         v['total_fac'], v['total_stock'], percent(v['fac_with_consumption'], v['total_fac']),
-                        v['monthly_consumption'], "<b>%.1f</b>" % months_of_stock, stock_status(months_of_stock,
-                                                                                         location)])
+                        round(v['monthly_consumption']), "<b>%.1f</b>" % months_of_stock,
+                        stock_status(months_of_stock, location)])
         return rows
 
 

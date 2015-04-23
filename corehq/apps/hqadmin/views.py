@@ -76,7 +76,7 @@ from corehq.db import Session
 from corehq.elastic import parse_args_for_es, ES_URLS, run_query
 from dimagi.utils.couch.database import get_db, is_bigcouch
 from dimagi.utils.decorators.datespan import datespan_in_request
-from dimagi.utils.parsing import json_format_datetime
+from dimagi.utils.parsing import json_format_datetime, json_format_date
 from dimagi.utils.web import json_response, get_url_base
 from dimagi.utils.django.email import send_HTML_email
 
@@ -704,7 +704,7 @@ def doc_in_es(request):
     es_doc_type = None
     for index, url in ES_URLS.items():
         res = run_query(url, query)
-        if res['hits']['total'] == 1:
+        if 'hits' in res and res['hits']['total'] == 1:
             es_doc = res['hits']['hits'][0]['_source']
             found_indices[index] = to_json(es_doc)
             es_doc_type = es_doc_type or es_doc.get('doc_type')
@@ -777,7 +777,9 @@ def callcenter_test(request):
     if user or user_case:
         custom_cache = None if enable_caching else cache.get_cache('django.core.cache.backends.dummy.DummyCache')
         cci = CallCenterIndicators(
-            domain,
+            domain.name,
+            domain.default_timezone,
+            domain.call_center_config.case_type,
             user,
             custom_cache=custom_cache,
             override_date=query_date,
@@ -790,7 +792,7 @@ def callcenter_test(request):
     context = {
         "error": error,
         "mobile_user": user,
-        "date": query_date.strftime("%Y-%m-%d"),
+        "date": json_format_date(query_date),
         "enable_caching": enable_caching,
         "data": data,
         "doc_id": doc_id

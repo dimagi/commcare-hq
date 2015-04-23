@@ -524,6 +524,13 @@ class CaseReminderHandler(Document):
             property_references_parent(self.until)
         )
 
+    @property
+    def uses_time_case_property(self):
+        for event in self.events:
+            if event.fire_time_type == FIRE_TIME_CASE_PROPERTY:
+                return True
+        return False
+
     @classmethod
     def get_now(cls):
         try:

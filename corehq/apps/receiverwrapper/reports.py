@@ -1,6 +1,7 @@
 from django.core.urlresolvers import reverse, NoReverseMatch
 from corehq.apps.reports.standard.deployments import DeploymentsReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
+from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from couchforms.models import XFormError
 from corehq.apps.receiverwrapper.filters import SubmissionErrorType, \
@@ -120,7 +121,7 @@ class SubmissionErrorReport(DeploymentsReport):
             
             def _fmt_date(somedate):
                 time = ServerTime(somedate).user_time(self.timezone).done()
-                return time.strftime("%Y-%m-%d %H:%M:%S")
+                return time.strftime(SERVER_DATETIME_FORMAT)
             
             return [_fmt_url(error_doc.get_id),
                     error_doc.metadata.username if error_doc.metadata else EMPTY_USER,

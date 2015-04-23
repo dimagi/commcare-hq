@@ -1,11 +1,10 @@
-import uuid
 from couchdbkit import ResourceConflict
 from django.utils.decorators import method_decorator
 from casexml.apps.stock.models import StockTransaction
 from casexml.apps.stock.utils import get_current_ledger_transactions
 from corehq.apps.accounting.decorators import requires_privilege_for_commcare_user, requires_privilege_with_fallback
-from corehq.apps.app_manager.exceptions import FormNotFoundException, \
-    ModuleNotFoundException
+from corehq.apps.app_manager.exceptions import FormNotFoundException, ModuleNotFoundException
+from corehq.apps.app_manager.util import is_usercase_enabled, get_cloudcare_session_data
 from corehq.util.couch import get_document_or_404
 from couchforms.const import ATTACHMENT_NAME
 from couchforms.models import XFormInstance
@@ -196,9 +195,8 @@ def form_context(request, domain, app_id, module_id, form_id):
         )
 
     session_extras = {'session_name': session_name, 'app_id': app._id}
-    suite_gen = SuiteGenerator(app)
-    datums = suite_gen.get_new_case_id_datums_meta(form)
-    session_extras.update({datum['datum'].id: uuid.uuid4().hex for datum in datums})
+    suite_gen = SuiteGenerator(app, is_usercase_enabled(domain))
+    session_extras.update(get_cloudcare_session_data(suite_gen, domain, form, request.couch_user))
 
     delegation = request.GET.get('task-list') == 'true'
     offline = request.GET.get('offline') == 'true'
@@ -279,7 +277,7 @@ def filter_cases(request, domain, app_id, module_id, parent_id=None):
     delegation = request.GET.get('task-list') == 'true'
     auth_cookie = request.COOKIES.get('sessionid')
 
-    suite_gen = SuiteGenerator(app)
+    suite_gen = SuiteGenerator(app, is_usercase_enabled(domain))
     xpath = suite_gen.get_filter_xpath(module, delegation=delegation)
     extra_instances = [{'id': inst.id, 'src': inst.src}
                        for inst in suite_gen.get_instances_for_module(module, additional_xpaths=[xpath])]

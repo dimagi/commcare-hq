@@ -2,17 +2,17 @@ from django.test import TestCase
 import os
 import time
 from django.test.utils import override_settings
+from casexml.apps.phone.caselogic import BatchedCaseSyncOperation
+from casexml.apps.phone.tests.utils import generate_restore_payload
 from couchforms.tests.testutils import post_xform_to_couch
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import check_xml_line_by_line, delete_all_cases, delete_all_sync_logs
+from casexml.apps.phone.restore import RestoreConfig
 from casexml.apps.case.xform import process_cases
 from datetime import datetime, date
 from casexml.apps.phone.models import User, SyncLog
-from casexml.apps.phone import xml, views
+from casexml.apps.phone import xml
 from django.contrib.auth.models import User as DjangoUser
-from casexml.apps.phone.restore import generate_restore_payload
-from casexml.apps.phone.util import get_payload_content
-from django.http import HttpRequest
 from casexml.apps.phone.tests import const
 from casexml.apps.case import const as case_const
 from casexml.apps.phone.tests.dummy import dummy_restore_xml, dummy_user,\
@@ -33,6 +33,8 @@ class OtaRestoreTest(TestCase):
     def tearDown(self):
         delete_all_cases()
         delete_all_sync_logs()
+        restore_config = RestoreConfig(dummy_user())
+        restore_config.cache.delete(restore_config._initial_cache_key())
 
     def testFromDjangoUser(self):
         django_user = DjangoUser(username="foo", password="secret", date_joined=datetime(2011, 6, 9))
@@ -54,7 +56,7 @@ class OtaRestoreTest(TestCase):
             include_docs=True,
             reduce=False,
         ).count())
-        restore_payload = get_payload_content(generate_restore_payload(dummy_user(), items=True))
+        restore_payload = generate_restore_payload(dummy_user(), items=True)
         sync_log = SyncLog.view(
             "phone/sync_logs_by_user",
             include_docs=True,
@@ -65,6 +67,13 @@ class OtaRestoreTest(TestCase):
             dummy_restore_xml(sync_log.get_id, items=3),
             restore_payload,
         )
+
+    def testOverwriteCache(self):
+        restore_payload = generate_restore_payload(dummy_user(), items=True, force_cache=True)
+        restore_payload_cached = generate_restore_payload(dummy_user(), items=True)
+        restore_payload_overwrite = generate_restore_payload(dummy_user(), items=True, overwrite_cache=True)
+        self.assertEqual(restore_payload, restore_payload_cached)
+        self.assertNotEqual(restore_payload, restore_payload_overwrite)
 
     def testUserRestoreWithCase(self):
         file_path = os.path.join(os.path.dirname(__file__),
@@ -77,7 +86,7 @@ class OtaRestoreTest(TestCase):
 
         # implicit length assertion
         [newcase] = CommCareCase.view("case/by_user", reduce=False, include_docs=True).all()
-        self.assertEqual(1, len(user.get_case_updates(None).actual_cases_to_sync))
+        self.assertEqual(1, len(list(BatchedCaseSyncOperation(user, None).get_all_case_updates())))
         expected_case_block = """
         <case>
             <case_id>asdf</case_id>
@@ -114,10 +123,10 @@ class OtaRestoreTest(TestCase):
             ),
         )
 
-        restore_payload = get_payload_content(generate_restore_payload(
+        restore_payload = generate_restore_payload(
             user=dummy_user(),
             items=True,
-        ))
+        )
         sync_log_id = SyncLog.view(
             "phone/sync_logs_by_user",
             include_docs=True,
@@ -147,7 +156,7 @@ class OtaRestoreTest(TestCase):
         process_cases(form)
 
         time.sleep(1)
-        restore_payload = get_payload_content(generate_restore_payload(dummy_user(), items=items))
+        restore_payload = generate_restore_payload(dummy_user(), items=items)
 
         sync_log_id = SyncLog.view(
             "phone/sync_logs_by_user",
@@ -162,11 +171,11 @@ class OtaRestoreTest(TestCase):
         check_xml_line_by_line(self, expected_restore_payload, restore_payload)
 
         time.sleep(1)
-        sync_restore_payload = get_payload_content(generate_restore_payload(
+        sync_restore_payload = generate_restore_payload(
             user=dummy_user(),
             restore_id=sync_log_id,
             items=items,
-        ))
+        )
         all_sync_logs = SyncLog.view(
             "phone/sync_logs_by_user",
             include_docs=True,
@@ -192,11 +201,11 @@ class OtaRestoreTest(TestCase):
         process_cases(form)
 
         time.sleep(1)
-        sync_restore_payload = get_payload_content(generate_restore_payload(
+        sync_restore_payload = generate_restore_payload(
             user=dummy_user(),
             restore_id=latest_log.get_id,
             items=items,
-        ))
+        )
         all_sync_logs = SyncLog.view(
             "phone/sync_logs_by_user",
             include_docs=True,
@@ -233,7 +242,7 @@ class OtaRestoreTest(TestCase):
         self.assertTrue(isinstance(newcase.stringattr, dict))
         self.assertEqual("neither should this", newcase.stringattr["#text"])
         self.assertEqual("i am a string", newcase.stringattr["@somestring"])
-        restore_payload = get_payload_content(generate_restore_payload(dummy_user()))
+        restore_payload = generate_restore_payload(dummy_user())
         # ghetto
         self.assertTrue('<dateattr somedate="2012-01-01">' in restore_payload)
         self.assertTrue('<stringattr somestring="i am a string">' in restore_payload)

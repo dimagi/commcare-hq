@@ -6,6 +6,7 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import save_xform
 from datetime import datetime
 from corehq.apps.users.models import CouchUser
+from corehq.const import SERVER_DATETIME_FORMAT_NO_SEC
 
 
 class Command(BaseCommand):
@@ -58,7 +59,7 @@ class Command(BaseCommand):
         print 'successfully updated {}'.format(app.name)
         if options['deploy']:
             # make build and star it
-            comment = options.get('comment', 'form changes from {0}'.format(datetime.utcnow().strftime("%Y-%m-%d %H:%M")))
+            comment = options.get('comment', 'form changes from {0}'.format(datetime.utcnow().strftime(SERVER_DATETIME_FORMAT_NO_SEC)))
             copy = app.make_build(
                 comment=comment,
                 user_id=user._id,

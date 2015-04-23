@@ -1,13 +1,19 @@
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
+from corehq.apps.domain.models import Domain
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.reports.filters.dates import DatespanFilter
+from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.standard import DatespanMixin, ProjectReport,\
     ProjectReportParametersMixin
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader,\
     DTSortType
 from corehq.apps.sms.filters import MessageTypeFilter
+from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.view_utils import absolute_reverse
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.models import CouchUser
@@ -119,7 +125,7 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
     def _fmt_timestamp(self, timestamp):
         return self.table_cell(
             timestamp,
-            timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+            timestamp.strftime(SERVER_DATETIME_FORMAT),
         )
 
     def _fmt_contact_link(self, recipient_id, doc_info):
@@ -187,10 +193,7 @@ the domain to the list in settings.MESSAGE_LOG_OPTIONS["abbreviated_phone_number
 class MessageLogReport(BaseCommConnectLogReport):
     name = ugettext_noop('Message Log')
     slug = 'message_log'
-    fields = [
-        'corehq.apps.reports.filters.dates.DatespanFilter',
-        'corehq.apps.sms.filters.MessageTypeFilter',
-    ]
+
     exportable = True
 
     def get_message_type_filter(self):
@@ -199,6 +202,20 @@ class MessageLogReport(BaseCommConnectLogReport):
             filtered_types = set([mt.lower() for mt in filtered_types])
             return lambda message_types: len(filtered_types.intersection(message_types)) > 0
         return lambda message_types: True
+
+    def get_location_filter(self):
+        locations = []
+        location_id = AsyncLocationFilter.get_value(self.request, self.domain)
+        if location_id:
+            locations = SQLLocation.objects.get(
+                location_id=location_id
+            ).get_descendants(
+                include_self=True
+            ).filter(
+                location_type__administrative=False
+            ).values_list('location_id', flat=True)
+
+        return locations
 
     @staticmethod
     def _get_message_types(message):
@@ -219,6 +236,13 @@ class MessageLogReport(BaseCommConnectLogReport):
         return types
 
     @property
+    def fields(self):
+        fields = [DatespanFilter, MessageTypeFilter]
+        if self.locations_enabled:
+            fields.insert(0, AsyncLocationFilter)
+        return fields
+
+    @property
     def headers(self):
         header = DataTablesHeader(
             DataTablesColumn(_("Timestamp")),
@@ -232,6 +256,11 @@ class MessageLogReport(BaseCommConnectLogReport):
         return header
 
     @property
+    @memoized
+    def locations_enabled(self):
+        return Domain.get_by_name(self.domain).locations_enabled
+
+    @property
     def rows(self):
         startdate = json_format_datetime(self.datespan.startdate_utc)
         enddate = json_format_datetime(self.datespan.enddate_utc)
@@ -242,7 +271,7 @@ class MessageLogReport(BaseCommConnectLogReport):
             INCOMING: _("Incoming"),
             OUTGOING: _("Outgoing"),
         }
-
+        reporting_locations_id = self.get_location_filter() if self.locations_enabled else []
         # Retrieve message log options
         message_log_options = getattr(settings, "MESSAGE_LOG_OPTIONS", {})
         abbreviated_phone_number_domains = message_log_options.get("abbreviated_phone_number_domains", [])
@@ -257,6 +286,9 @@ class MessageLogReport(BaseCommConnectLogReport):
 
             message_types = self._get_message_types(message)
             if not message_type_filter(message_types):
+                continue
+
+            if reporting_locations_id and message.location_id not in reporting_locations_id:
                 continue
 
             doc_info = self.get_recipient_info(message.couch_recipient_doc_type,

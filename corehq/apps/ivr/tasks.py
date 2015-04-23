@@ -13,7 +13,7 @@ OUTBOUND_RETRIES = getattr(settings, "IVR_OUTBOUND_RETRIES",
 OUTBOUND_RETRY_INTERVAL = getattr(settings, "IVR_OUTBOUND_RETRY_INTERVAL",
     DEFAULT_OUTBOUND_RETRY_INTERVAL)
 
-@task
+@task(ignore_result=True)
 def initiate_outbound_call(*args, **kwargs):
     retry_num = kwargs.pop("retry_num", 0)
     try:

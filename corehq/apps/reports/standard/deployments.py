@@ -1,6 +1,7 @@
 # coding=utf-8
 from datetime import datetime, timedelta
 from django.contrib.humanize.templatetags.humanize import naturaltime
+from django.core.urlresolvers import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from casexml.apps.phone.models import SyncLog
@@ -65,6 +66,8 @@ def _build_html(version, version_source):
 class ApplicationStatusReport(DeploymentsReport):
     name = ugettext_noop("Application Status")
     slug = "app_status"
+    emailable = True
+    exportable = True
     fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
               'corehq.apps.reports.filters.select.GroupFilter',
               'corehq.apps.reports.filters.select.SelectApplicationFilter']
@@ -161,6 +164,8 @@ class SyncHistoryReport(DeploymentsReport):
 
     @property
     def rows(self):
+        base_link_url = '{}?q={{id}}'.format(reverse('global_quick_find'))
+
         user_id = self.request.GET.get('individual')
         if not user_id:
             return []
@@ -196,7 +201,9 @@ class SyncHistoryReport(DeploymentsReport):
                     )
 
             def _fmt_id(sync_log_id):
-                return '<a href="/search/?q={id}" target="_blank">{id:.5}...</a>'.format(
+                href = base_link_url.format(id=sync_log_id)
+                return '<a href="{href}" target="_blank">{id:.5}...</a>'.format(
+                    href=href,
                     id=sync_log_id
                 )
 
@@ -219,10 +226,10 @@ def _fmt_date(date):
         return _bootstrap_class(delta, timedelta(days=7), timedelta(days=3))
 
     if not date:
-        return format_datatables_data('<span class="label">{0}</span>'.format(_("Never")), -1)
+        return format_datatables_data(u'<span class="label">{0}</span>'.format(_("Never")), -1)
     else:
         return format_datatables_data(
-            '<span class="{cls}">{text}</span>'.format(
+            u'<span class="{cls}">{text}</span>'.format(
                 cls=_timedelta_class(datetime.utcnow() - date),
                 text=naturaltime(date),
             ),

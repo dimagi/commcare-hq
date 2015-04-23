@@ -3,6 +3,7 @@ import logging
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.sms.api import incoming
 from corehq.apps.sms.mixin import SMSBackend
+from corehq.util.timezones.conversions import UserTime
 from urllib2 import urlopen
 from urllib import urlencode
 import pytz
@@ -88,6 +89,7 @@ DATE_FORMAT = "%m/%d/%y %I:%M:%S %p"
 DATE_FORMAT2 = "%Y-%m-%d %H:%M:%S"
 DATE_FORMAT3 = "%Y-%m-%d%%20%H:%M:%S"
 
+
 def convert_timestamp(timestamp):
     for format in [DATE_FORMAT, DATE_FORMAT2, DATE_FORMAT3]:
         try:
@@ -95,8 +97,10 @@ def convert_timestamp(timestamp):
         except ValueError:
             pass
         else:
-            return pytz.timezone('Asia/Kolkata').localize(actual_timestamp).astimezone(pytz.utc)
+            return (UserTime(actual_timestamp, pytz.timezone('Asia/Kolkata'))
+                    .server_time().done())
     raise ValueError('could not parse unicel inbound timestamp [%s]' % timestamp)
+
 
 def create_from_request(request, delay=True):
     """

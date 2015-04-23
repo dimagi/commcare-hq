@@ -1,0 +1,44 @@
+{% extends 'hqwebapp/two_column.html' %}
+{% block main_column %}
+    <form method="post">
+        {% csrf_token %}
+        {{ formset.management_form }}
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Commodity</th>
+                    <th>Current Stock On Hand</th>
+                    <th>Receipts</th>
+                    <th>Units</th>
+                    <th>Average Monthly Consumption (Calculated)</th>
+                </tr>
+            </thead>
+            {% for form in formset %}
+                <tr>
+                    <td>
+                        {{ form.product_id }}
+                        {{ form.product }}
+                        {{ form.product.value }}
+                    </td>
+                    <td>
+                        {{ form.stock_on_hand.errors }}
+                        {{ form.stock_on_hand }}
+                    </td>
+                    <td>
+                        {{ form.receipts.errors }}
+                        {{ form.receipts }}
+                    </td>
+                    <td>
+                        {{ form.units.value }}
+                    </td>
+                    <td>
+                        {{ form.monthly_consumption }}
+                        {{ form.monthly_consumption.value }}
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+
+        <input type="submit" value="Submit" />
+    </form>
+{% endblock %}

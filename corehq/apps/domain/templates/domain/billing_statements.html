@@ -13,12 +13,21 @@
 
         var bulkPaymentHandler = new PaymentMethodHandler(
             {{ payment_error_messages|JSON }},
-            "{% trans "Submit Payment" %}"
+            "{% trans "Submit Payment" %}",
+            "bulk-payment-form"
         );
         var paymentHandler = new PaymentMethodHandler(
             {{ payment_error_messages|JSON }},
-            "{% trans "Submit Payment" %}"
+            "{% trans "Submit Payment" %}",
+            "payment-form"
         );
+
+        // A sign that the data model isn't exactly right - credit cards are shared data.
+        // Consider refactoring at some point.
+        var handlers = [bulkPaymentHandler, paymentHandler];
+        for (var i = 0; i < handlers.length; i++) {
+            handlers[i].handlers = handlers;
+        }
 
         {% if stripe_cards %}
             var stripe_cards = {{ stripe_cards|JSON }};
@@ -33,11 +42,25 @@
 
         $('#bulkPaymentBtn').click(function () {
             bulkPaymentHandler.costItem(new TotalCostItem({
-                totalBalance: {{ total_balance }}
+                totalBalance: paginatedListModel.totalDue()
             }));
             bulkPaymentHandler.reset();
         });
 
+        paginatedListModel.totalDue = ko.computed(function() {
+            var totalBalance = 0;
+            var paginatedList = paginatedListModel.paginatedList();
+            for (var i = 0; i < paginatedList.length; i++) {
+                totalBalance += parseFloat(new Invoice({
+                    paginatedItem: paginatedList[i],
+                    paginatedList: paginatedListModel
+                }).balance());
+            }
+            return totalBalance;
+        });
+        paginatedListModel.displayTotalDue = ko.computed(function() {
+            return "$" + paginatedListModel.totalDue().toFixed(2);
+        });
         paginatedListModel.showUnpaidBills = ko.observable(true);
         paginatedListModel.showAllBills = ko.computed(function () {
             return ! paginatedListModel.showUnpaidBills();
@@ -74,15 +97,14 @@
 {% endblock %}
 
 {% block paginated_list_top %}
-    {% if request|toggle_enabled:"BULK_PAYMENTS" %}
     <div id="currentBalanceSection">
         <h2>{% trans 'Current Balance' %}</h2>
         <p>
             {% trans 'Total Due:' %}
-            {{ total_balance }}
+            <span data-bind="text: displayTotalDue, visible: hasInitialLoadFinished"></span>
         </p>
         {% if not is_ops_user_but_not_admin %}
-        <p>
+        <p data-bind="visible: hasInitialLoadFinished() && totalDue()">
             <button type="button"
                     class="btn btn-success"
                     data-toggle="modal"
@@ -98,7 +120,6 @@
         </span>
         {% endif %}
     </div>
-    {% endif %}
     <h2>{% trans 'Billing Statements' %} <span data-bind="visible: showUnpaidBills">({% trans 'Unpaid' %})</span></h2>
     <p>
         <button type="button"

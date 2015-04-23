@@ -19,7 +19,7 @@ def get_files_from_doc(doc):
     return files
 
 
-@task
+@task(ignore_result=True)
 def async_create_case(upload_id):
     """
     Task backend for sonosite upload
@@ -32,7 +32,7 @@ def async_create_case(upload_id):
     upload_doc.delete()
 
 
-@task
+@task(ignore_result=True)
 def async_find_and_attach(upload_id):
     """
     Task backend for Vscan upload

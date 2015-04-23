@@ -293,7 +293,7 @@ class ProjectReportsTab(UITab):
                 _("Create Reports"),
                 [{
                     "title": _('Create new report'),
-                    "url": reverse("create_new_report_builder", args=[self.domain]),
+                    "url": reverse("report_builder_select_type", args=[self.domain]),
                     "icon": "icon-plus"
                 }]
             )]
@@ -1086,7 +1086,7 @@ class ProjectUsersTab(UITab):
                     LocationImportView,
                     LocationImportStatusView,
                     LocationFieldsView,
-                    LocationSettingsView,
+                    LocationTypesView,
                 )
 
                 locations_config = {
@@ -1117,8 +1117,8 @@ class ProjectUsersTab(UITab):
                     ]
                 }
                 advanced_locations_config = {
-                    'title': LocationSettingsView.page_title,
-                    'url': reverse(LocationSettingsView.urlname, args=[self.domain]),
+                    'title': LocationTypesView.page_title,
+                    'url': reverse(LocationTypesView.urlname, args=[self.domain]),
                     'show_in_dropdown': True,
                 }
 

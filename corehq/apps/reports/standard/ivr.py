@@ -4,6 +4,7 @@ from corehq.apps.reports.standard import DatespanMixin, ProjectReport,\
     ProjectReportParametersMixin
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
+from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.parsing import json_format_datetime
@@ -230,6 +231,6 @@ class ExpectedCallbackReport(ProjectReport, ProjectReportParametersMixin, Generi
     def _fmt_timestamp(self, timestamp):
         return self.table_cell(
             timestamp,
-            timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+            timestamp.strftime(SERVER_DATETIME_FORMAT),
         )
 

@@ -3,6 +3,7 @@ import string
 from xml.etree import ElementTree
 
 from casexml.apps.case.xml import V1
+from casexml.apps.phone.tests.utils import generate_restore_payload
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.programs.fixtures import program_fixture_generator
 from corehq.apps.products.fixtures import product_fixture_generator
@@ -11,7 +12,6 @@ from corehq.apps.programs.models import Program
 from corehq.apps.commtrack.tests.util import CommTrackTest
 from corehq.apps.commtrack.tests.util import bootstrap_user
 from casexml.apps.phone.models import SyncLog
-from casexml.apps.phone.restore import generate_restore_payload
 import datetime
 
 

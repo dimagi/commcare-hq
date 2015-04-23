@@ -4,6 +4,7 @@ from django import forms
 #flipping to tuple
 from django.forms import Form
 from corehq.apps.api.es import ReportCaseES
+from dimagi.utils.parsing import json_format_date
 from pact.enums import PACT_HP_CHOICES, PACT_DOT_CHOICES, PACT_REGIMEN_CHOICES, GENDER_CHOICES, PACT_RACE_CHOICES, PACT_HIV_CLINIC_CHOICES, PACT_LANGUAGE_CHOICES, CASE_NONART_REGIMEN_PROP, CASE_ART_REGIMEN_PROP, DOT_ART, DOT_NONART
 from django.forms import widgets
 from pact.regimen import regimen_dict_from_choice
@@ -101,13 +102,12 @@ class PactPatientForm(Form):
 
     def clean_dob(self):
         if self.cleaned_data['dob'] is not None:
-            return self.cleaned_data['dob'].strftime('%Y-%m-%d')
+            return json_format_date(self.cleaned_data['dob'])
         else:
             return None
 
     def clean_mass_health_expiration(self):
         if self.cleaned_data['mass_health_expiration'] is not None:
-            return self.cleaned_data['mass_health_expiration'].strftime('%Y-%m-%d')
+            return json_format_date(self.cleaned_data['mass_health_expiration'])
         else:
             return None
-

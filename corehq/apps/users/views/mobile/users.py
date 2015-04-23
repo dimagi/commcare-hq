@@ -2,7 +2,6 @@ from collections import defaultdict
 import json
 import csv
 import io
-import re
 
 from couchdbkit import ResourceNotFound
 
@@ -36,6 +35,7 @@ from corehq.apps.users.util import (
     smart_query_string,
 )
 from corehq.apps.custom_data_fields import CustomDataEditor
+from corehq.const import USER_DATE_FORMAT
 from corehq.elastic import es_query, ES_URLS, ADD_TO_ES_FILTER
 from corehq.util.couch import get_document_or_404
 
@@ -78,11 +78,12 @@ class EditCommCareUserView(BaseFullEditUserView):
     @property
     @memoized
     def custom_data(self):
+        is_custom_data_post = self.request.method == "POST" and self.request.POST['form_type'] == "update-user"
         return CustomDataEditor(
             field_view=UserFieldsView,
             domain=self.domain,
             existing_custom_data=self.editable_user.user_data,
-            post_dict=self.request.POST if self.request.method == "POST" else None,
+            post_dict=self.request.POST if is_custom_data_post else None,
         )
 
     @property
@@ -139,6 +140,7 @@ class EditCommCareUserView(BaseFullEditUserView):
     def update_commtrack_form(self):
         if self.request.method == "POST" and self.request.POST['form_type'] == "commtrack":
             return CommtrackUserForm(self.request.POST, domain=self.domain)
+
         # currently only support one location on the UI
         linked_loc = self.editable_user.location
         initial_id = linked_loc._id if linked_loc else None
@@ -421,7 +423,7 @@ class AsyncListCommCareUsersView(ListCommCareUsersView):
                 'edit_url': reverse(EditCommCareUserView.urlname, args=[self.domain, user.user_id]),
                 'username': user.raw_username,
                 'full_name': user.full_name,
-                'joined_on': user.date_joined.strftime("%d %b %Y"),
+                'joined_on': user.date_joined.strftime(USER_DATE_FORMAT),
                 'phone_numbers': user.phone_numbers,
                 'form_count': '--',
                 'case_count': '--',

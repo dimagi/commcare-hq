@@ -8,6 +8,7 @@ from django.utils.datastructures import SortedDict
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
 from corehq.pillows.base import restore_property_dict
+from corehq.util.dates import iso_string_to_date
 
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
@@ -18,12 +19,15 @@ from corehq.apps.reports.datatables import (DataTablesColumn, NumericColumn,
         DataTablesHeader)
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports import util
+from dimagi.utils.parsing import json_format_date
 
 from hsph.reports import HSPHSiteDataMixin
 from hsph.fields import AllocatedToFilter, IHForCHFField, DCTLToFIDAFilter
 from corehq.apps.api.es import ReportCaseES
 from django.utils.translation import ugettext as _
 from datetime import date, timedelta
+from hsph.reports.call_center import datestring_minus_days
+
 
 def numeric_cell(val):
     if isinstance(val, numbers.Number):
@@ -34,10 +38,6 @@ def numeric_cell(val):
 def short_date_format(date):
     return date.strftime('%d-%b')
 
-        
-def datestring_minus_days(datestring, days):
-    date = datetime.datetime.strptime(datestring[:10], '%Y-%m-%d')
-    return (date - datetime.timedelta(days=days)).isoformat()
 
 def get_user_site_map(domain):
     user_site_map = defaultdict(list)
@@ -121,9 +121,7 @@ class FIDAPerformanceReport(GenericTabularReport, CustomProjectReport,
         startdate = self.datespan.startdate_param_utc[:10]
         enddate = self.datespan.enddate_param_utc[:10]
         
-        to_date = lambda string: datetime.datetime.strptime(
-                        string, "%Y-%m-%d").date()
-        weeks = (to_date(enddate) - to_date(startdate)).days // 7
+        weeks = (iso_string_to_date(enddate) - iso_string_to_date(startdate)).days // 7
 
         for user in self.users:
             user_id = user.user_id
@@ -454,8 +452,8 @@ class CaseReport(CaseListReport, CustomProjectReport, HSPHSiteDataMixin,
             filters.append({'term': {'region_id.#value': region_id.lower()}})
 
         if allocated_to:
-            max_date_admission = (datetime.date.today() -
-                datetime.timedelta(days=21)).strftime("%Y-%m-%d")
+            max_date_admission = json_format_date(
+                datetime.date.today() - datetime.timedelta(days=21))
 
             call_center_filter = {
                 'or': [
@@ -622,18 +620,18 @@ class FacilityWiseFollowUpReport(GenericTabularReport, DatespanMixin,
             # Not closed and If today < date_admission + 8
             start = today - timedelta(days=7)
             not_yet_open_for_follow_up = get_view_results('needing_follow_up',
-                start.strftime('%Y-%m-%d'), today.strftime('%Y-%m-%d'))
+                json_format_date(start), json_format_date(today))
 
             # Not closed and if (date_admission + 8) <= today <= (date_admission + 21)
             start = today - timedelta(days=21)
             end = today - timedelta(days=8)
             open_for_cati_follow_up = get_view_results('needing_follow_up',
-                start.strftime('%Y-%m-%d'), end.strftime('%Y-%m-%d'))
+                json_format_date(start), json_format_date(end))
 
             # Not closed and today > date_admission+21
             end = today - timedelta(days = 22)
             open_for_fada_follow_up = get_view_results('needing_follow_up',
-                "", end.strftime('%Y-%m-%d'))
+                "", json_format_date(end))
 
             closed_cases = get_view_results('closed_cases', startdate, enddate)
 

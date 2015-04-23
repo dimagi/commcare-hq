@@ -71,10 +71,9 @@ TODO:
             <td></td>
             <td colspan="4">
                 <button class="btn" data-bind="
-                    click: function(){columns.push(new PropertyListItem());}
-                ">
-                    Add Property
-                </button>
+                    click: function(){columns.push(new PropertyListItem());},
+                    text: buttonText
+                "></button>
             </td>
         </tr>
     </tbody>

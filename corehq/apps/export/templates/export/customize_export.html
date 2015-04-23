@@ -226,8 +226,9 @@
                     // assumes unselected
                     var unselected;
                     var columns = table.column_configuration();
+                    var spliceIdx = 0;
 
-                    _(columns).each(function (column) {
+                    _(columns).each(function (column, idx) {
                         var niceField = self.utils.parseField(column.index, table.index, column.tag());
                         var special = ko.utils.unwrapObservable(column.special);
                         if (special) {
@@ -246,19 +247,20 @@
                             }
                             return false;
                         }.bind(column);
+                        if (!self.minimal() && !column.selected() && !spliceIdx) {
+                            spliceIdx = idx;
+                        }
                     });
 
-                    for (var i = 0; i < columns.length; i++) {
-                        if (!columns[i].selected()) {
-                            break;
-                        }
+                    // Splice out unselected and put them at the end and reorder
+                    if (!self.minimal()) {
+                        unselected = table.column_configuration.splice(spliceIdx, columns.length);
+                        unselected = self.utils.putInDefaultOrder(table.index(), unselected);
+                        table.column_configuration.push.apply(
+                            table.column_configuration,
+                            unselected
+                        );
                     }
-                    unselected = table.column_configuration.splice(i, columns.length);
-                    unselected = self.utils.putInDefaultOrder(table.index(), unselected);
-                    table.column_configuration.push.apply(
-                        table.column_configuration,
-                        unselected
-                    );
                 });
 
                 self.showDeidColumn = ko.observable(function () {
@@ -309,7 +311,13 @@
                                         transform: column.transform() || null, // it doesn't save '' well
                                         is_sensitive: Boolean(is_sensitive)
                                 };
-                                if (column.doc_type() === 'SplitColumn'){
+                                if (self.export_type() === 'form') {
+                                    if (self.custom_export.split_multiselects() && column.allOptions()) {
+                                        col.doc_type = 'SplitColumn';
+                                    } else {
+                                        col.doc_type = 'ExportColumn';
+                                    }
+                                } else if (column.doc_type() === 'SplitColumn'){
                                     col.doc_type = column.doc_type();
                                     col.options = column.options();
                                 }
@@ -334,7 +342,7 @@
                     return tables;
                 };
 
-                self.output = ko.computed(function () {
+                self.output = function () {
                     var output = ko.mapping.toJS({
                         custom_export: self.custom_export,
                         presave: self.presave,
@@ -342,7 +350,7 @@
                     });
                     output.custom_export.tables = self.make_tables();
                     return JSON.stringify(output);
-                });
+                };
 
                 self.save = function () {
                     self.save.state('saving');
@@ -420,6 +428,7 @@
 
         $(function () {
             var customExportView = CustomExportView.wrap({
+                export_type: {{ custom_export.type|JSON }},
                 custom_export: {{ custom_export|JSON }},
                 table_configuration: {{ table_configuration|JSON }},
                 presave: {{ presave|JSON }},
@@ -430,7 +439,8 @@
                     save: {{ request.get_full_path|safe|JSON }}
                 },
                 allow_repeats: {{ helper.allow_repeats|JSON }},
-                default_order: {{ default_order|JSON }}
+                default_order: {{ default_order|JSON }},
+                minimal: {{ minimal|JSON }}
             });
 
             ko.applyBindings(customExportView, $('#customize-export').get(0));
@@ -441,30 +451,37 @@
 {% block main_column %}
 <div id="customize-export" style="display: none;" data-bind="visible: true">
     {# content for multi-select help popover #}
+    {% if custom_export.type == 'case' %}
     <div id="popover_content_wrapper" style="display: none">
         {% blocktrans %}
             These options allow you to configure how CommCare exports data from multi-select questions.
             If you do not want to split the options into multiple columns select the 'plain' option.
         {% endblocktrans %}
         <br/>
-        {% if custom_export.type == 'form' %}
         {% blocktrans %}
-            When the export is run a new column will be added to the export file
-            for each item in the multi-select field.
-        {% endblocktrans %}
-        {% else %}
-            {% blocktrans %}
             Each item that is selected in the select list will appear as a column in the exported data.
             Any options not selected will be in an "extra" column.
         {% endblocktrans %}
-        {% endif %}
         <a href='https://help.commcarehq.org/display/commcarepublic/Splitting+multi-select+data+in+exports' target="_blank" class="allow-click">
             {% trans "More info" %}
         </a>
     </div>
+    {% endif %}
+    <header>
+        <div class="row-fluid">
+            <div class="span12">
+                <h3>{% trans "Export Settings" %}</h3>
+                <p>
+                    {% blocktrans %}
+                    Learn more about exports on our <a href="https://help.commcarehq.org/display/commcarepublic/Data+Export+Overview" target="_blank">Help Site</a>.
+                    {% endblocktrans %}
+                </p>
+                <hr/>
+            </div>
+        </div>
+    </header>
     <form class="form-horizontal" method="post">
         <fieldset>
-            <legend>{% trans "Export Settings" %}</legend>
             <div class="control-group">
                 <label for="export-name" class="control-label">{% trans "Export Name" %}</label>
                 <div class="controls">
@@ -503,6 +520,12 @@
                         <input type="checkbox" id="include-errors-checkbox" data-bind="checked: custom_export.include_errors" />
                         {% trans "Include duplicates and other unprocessed forms" %}
                     </label>
+                    {% if request|toggle_enabled:'SPLIT_MULTISELECT_EXPORT' %}
+                    <label class="checkbox">
+                        <input type="checkbox" id="split-multiselects-checkbox" data-bind="checked: custom_export.split_multiselects" />
+                        {% trans "Expand Multiple Answer Questions" %}
+                    </label>
+                    {% endif %}
                 {% endif %}
                 </div>
             </div>
@@ -552,7 +575,7 @@
                                         {% trans "Question" %}
                                     </th>
                                     <th>{% trans "Display" %}</th>
-                                    {% if request|toggle_enabled:'SPLIT_MULTISELECT_EXPORT' %}
+                                    {% if custom_export.type == 'case' and request|toggle_enabled:'SPLIT_MULTISELECT_EXPORT' %}
                                     <th>{% trans "Type" %}</th>
                                     {% endif %}
                                     {% if helper.allow_deid %}
@@ -560,10 +583,14 @@
                                     {% endif %}
                                 </tr>
                                 </thead>
+                                {% if minimal %}
+                                <tbody data-bind="foreach: column_configuration">
+                                {% else %}
                                 <tbody data-bind="sortable: column_configuration">
+                                {% endif %}
                                     <tr data-bind="
-                                        visible:  $parent.show_deleted() || ($data.show() || selected),
-                                        attr: {'data-order': _sortableOrder}
+                                        visible:  $parent.show_deleted() || ($data.show || selected)
+                                        {% if not minimal %}, attr: {'data-order': _sortableOrder}{% endif %}
                                         ">
                                         <td class="sortable-handle">
                                             <i class="icon-resize-vertical"></i>
@@ -577,7 +604,7 @@
 
                                         </td>
                                         <td><input class="input-xlarge" type="text" data-bind="value: display" /></td>
-                                        {% if request|toggle_enabled:'SPLIT_MULTISELECT_EXPORT' %}
+                                        {% if custom_export.type == 'case' and request|toggle_enabled:'SPLIT_MULTISELECT_EXPORT' %}
                                         <td class="input">
                                             <div data-bind="if: !allOptions()">
                                                 <select disabled>
@@ -592,7 +619,6 @@
                                                     <option data-bind="value: value, text: label"></option>
                                                 </select>
                                                 <span data-bind="makeHqHelp: {name: '{% trans "Split multi-select data" %}', placement: 'left', trigger: 'click'}"></span>
-                                                {% if custom_export.type == 'case' %}
                                                 <div data-bind="if: doc_type() === 'SplitColumn'">
                                                     <a href="#" data-bind="visible: !showOptions(), click: function() {showOptions(true);}">{% trans "Show Options" %}</a>
                                                     <div data-bind="visible: showOptions">
@@ -603,7 +629,6 @@
                                                         <button class="btn" data-bind="click: addOption">{% trans "Add" %}</button>
                                                     </div>
                                                 </div>
-                                                {% endif %}
                                             </div>
                                         </td>
                                         {% endif %}

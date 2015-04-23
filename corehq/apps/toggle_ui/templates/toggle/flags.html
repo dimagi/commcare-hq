@@ -35,7 +35,7 @@
         <tbody>
             {% for toggle in toggles %}
             <tr>
-                <td>{{ toggle.label }}</td>
+                <td>{{ toggle.label }}{% if toggle.help_link %} (<a href="{{ toggle.help_link }}" target="_blank">docs</a>){% endif %}</td>
                 <td>
                     <a href="{% url "edit_toggle" toggle.slug %}" role="button" data-toggle="modal" class="btn btn-primary">{% trans "Edit" %}</a>
                 </td>

@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 from itertools import imap
-import hashlib
 import json
 import logging
 import uuid
@@ -13,11 +12,11 @@ from couchdbkit.ext.django.schema import (
     DocumentSchema, SchemaProperty, DictProperty,
     StringListProperty, SchemaListProperty, TimeProperty, DecimalProperty
 )
-from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.appstore.models import SnapshotMixin
+from corehq.util.quickcache import skippable_quickcache
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import (
     iter_docs, get_db, get_safe_write_kwargs, apply_update, iter_bulk_delete
@@ -40,6 +39,7 @@ lang_lookup = defaultdict(str)
 DATA_DICT = settings.INTERNAL_DATA
 AREA_CHOICES = [a["name"] for a in DATA_DICT["area"]]
 SUB_AREA_CHOICES = reduce(list.__add__, [a["sub_areas"] for a in DATA_DICT["area"]], [])
+DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 
 
 for lang in all_langs:
@@ -221,6 +221,7 @@ class Domain(Document, SnapshotMixin):
     has_careplan = BooleanProperty(default=False)
     restrict_superusers = BooleanProperty(default=False)
     location_restriction_for_users = BooleanProperty(default=True)
+    usercase_enabled = BooleanProperty(default=False)
 
     case_display = SchemaProperty(CaseDisplaySettings)
 
@@ -308,6 +309,7 @@ class Domain(Document, SnapshotMixin):
     _dirty_fields = ('admin_password', 'admin_password_charset', 'city', 'countries', 'region', 'customer_type')
 
     default_mobile_worker_redirect = StringProperty(default=None)
+    last_modified = DateTimeProperty(default=datetime(2015, 1, 1))
 
     @property
     def domain_type(self):
@@ -517,6 +519,7 @@ class Domain(Document, SnapshotMixin):
         return self.name
 
     @classmethod
+    @skippable_quickcache(['name'], skip_arg='strict', timeout=30*60)
     def get_by_name(cls, name, strict=False):
         if not name:
             # get_by_name should never be called with name as None (or '', etc)
@@ -534,37 +537,21 @@ class Domain(Document, SnapshotMixin):
                     notify_exception(None, '%r is not a valid domain name' % name)
                     return None
 
-        cache_key = _domain_cache_key(name)
-        if not strict:
-            MISSING = object()
-            res = cache.get(cache_key, MISSING)
-            if res != MISSING:
-                return res
+        def _get_by_name(stale=False):
+            extra_args = {'stale': settings.COUCH_STALE_QUERY} if stale else {}
+            result = cls.view("domain/domains", key=name, reduce=False, include_docs=True, **extra_args).first()
+            if not isinstance(result, Domain):
+                # A stale view may return a result with no doc if the doc has just been deleted.
+                # In this case couchdbkit just returns the raw view result as a dict
+                return None
+            else:
+                return result
 
-        domain = cls._get_by_name(name, strict)
-        # 30 mins, so any unforeseen invalidation bugs aren't too bad.
-        cache.set(cache_key, domain, 30*60)
-        return domain
-
-    @classmethod
-    def _get_by_name(cls, name, strict=False):
-        extra_args = {'stale': settings.COUCH_STALE_QUERY} if not strict else {}
-
-        db = cls.get_db()
-        res = cache_core.cached_view(db, "domain/domains", key=name, reduce=False,
-                                     include_docs=True, wrapper=cls.wrap, force_invalidate=strict,
-                                     **extra_args)
-
-        if len(res) > 0:
-            result = res[0]
-        else:
-            result = None
-
-        if result is None and not strict:
+        domain = _get_by_name(stale=(not strict))
+        if domain is None and not strict:
             # on the off chance this is a brand new domain, try with strict
-            return cls.get_by_name(name, strict=True)
-
-        return result
+            domain = _get_by_name(stale=False)
+        return domain
 
     @classmethod
     def get_by_organization(cls, organization):
@@ -632,8 +619,9 @@ class Domain(Document, SnapshotMixin):
         return self.case_sharing or reduce(lambda x, y: x or y, [getattr(app, 'case_sharing', False) for app in self.applications()], False)
 
     def save(self, **params):
+        self.last_modified = datetime.utcnow()
         super(Domain, self).save(**params)
-        cache.delete(_domain_cache_key(self.name))
+        Domain.get_by_name.clear(Domain, self.name)  # clear the domain cache
 
         from corehq.apps.domain.signals import commcare_domain_post_save
         results = commcare_domain_post_save.send_robust(sender='domain', domain=self)
@@ -927,6 +915,7 @@ class Domain(Document, SnapshotMixin):
         )]
         iter_bulk_delete(db, related_doc_ids, chunksize=500)
         super(Domain, self).delete()
+        Domain.get_by_name.clear(Domain, self.name)  # clear the domain cache
 
     def all_media(self, from_apps=None): #todo add documentation or refactor
         from corehq.apps.hqmedia.models import CommCareMultimedia
@@ -1052,6 +1041,14 @@ class Domain(Document, SnapshotMixin):
     def location_types(self):
         from corehq.apps.locations.models import LocationType
         return LocationType.objects.filter(domain=self.name).all()
+
+    @property
+    @memoized
+    def uses_locations(self):
+        if self.commtrack_enabled:
+            return True
+        from corehq.apps.locations.models import LocationType
+        return LocationType.objects.filter(domain=self.name).exists()
 
     @property
     def supports_multiple_locations_per_user(self):
@@ -1248,7 +1245,3 @@ class TransferDomainRequest(models.Model):
             'deactivate_url': self.deactivate_url(),
             'activate_url': self.activate_url(),
         }
-
-
-def _domain_cache_key(name):
-    return hashlib.md5(u'cchq:domain:{name}'.format(name=name).encode('utf-8')).hexdigest()

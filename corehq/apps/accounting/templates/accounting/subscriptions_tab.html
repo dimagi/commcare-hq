@@ -18,14 +18,14 @@
                 <th>{% trans "End Date" %}</th>
                 <th>{% trans "Currently Active" %}</th>
                 <th>{% trans "Salesforce Contract ID" %}</th>
-                <th>{% trans "Last Invoice" %}</th>
+                <th>{% trans "Last Invoice Due Date" %}</th>
                 <th>{% trans "Delay Invoicing Until" %}</th>
                 <th>{% trans "Do Not Invoice" %}</th>
                 <th>{% trans "Edit" %}</th>
             </tr>
         </thead>
-        <tbody data-bind="foreach: subscription_list">
-            {% for subscription, invoice in subscription_list %}
+        <tbody>
+            {% for subscription, last_due_date in subscription_list %}
                 <tr>
                     <td>{{ subscription.subscriber.domain }}</td>
                     <td>{{ subscription.plan_version.plan.name }}</td>
@@ -33,7 +33,7 @@
                     <td>{{ subscription.date_end }}</td>
                     <td>{{ subscription.is_active }}</td>
                     <td>{{ subscription.salesforce_contract_id }}</td>
-                    <td>{{ invoice }}</td>
+                    <td>{{ last_due_date }}</td>
                     <td>{{ subscription.date_delay_invoicing }}</td>
                     <td>{{ subscription.do_not_invoice }}</td>
                     <td><a href="{% url 'edit_subscription' subscription.id %}" class="btn">Edit</a></td>

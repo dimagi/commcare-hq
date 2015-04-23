@@ -79,7 +79,7 @@ To set up CouchDB from the command line
 
 Create the database:
 
-    curl -X PUT "http://localhost:5984/commcarehq
+    curl -X PUT "http://localhost:5984/commcarehq"
 
 Add the required user:
 
@@ -90,6 +90,8 @@ Add the required user:
     createuser -U postgres commcarehq
     createdb -U postgres commcarehq
     createdb -U postgres commcarehq_reporting
+
+If these commands give you difficulty, particularly for Mac users running Postgres.app, verify that the default postgres role has been created. If not, `createuser -s -r postgres` will create it.
 
 
 ### Setting up a virtualenv
@@ -165,6 +167,7 @@ that you have a 32bit version of Python installed.
     # This will do some basic setup, create a superuser, and create a project.
     # The project-name, email, and password given here are specific to your
     # local development environment.
+    # Ignore warnings related to Raven.
     ./manage.py bootstrap <project-name> <email> <password>
 
     # To set up elasticsearch indexes, first run (and then kill once you see the
@@ -210,6 +213,10 @@ the following contents:
 
 + On Mac OS X, libevent may not be installed already, which the Python `gevent` library requires. The error message
   will be a clang error that file `event.h` is not found. To fix this using Homebrew, run `brew install libevent`.
+
++ On Mac OS X, if lxml fails to install, ensure that your command line tools are up to date by running `xcode-select --install`.
+
++ On Mac OS X, if Pillow complains that it can't find freetype, make sure freetype is installed with `brew install freetype`. Then create a symlink with: `ln -s /usr/local/include/freetype2 /usr/local/include/freetype`.
 
 + If you have an authentication error running `./manage.py syncdb` the first
   time, open `pg_hba.conf` (`/etc/postgresql/9.1/main/pg_hba.conf` on Ubuntu)
@@ -303,6 +310,9 @@ To run a particular test or subset of tests
 
 To run the selenium tests, you first need to install the
 [ChromeDriver](https://code.google.com/p/selenium/wiki/ChromeDriver).
+
+If database tests are failing because of a `permission denied` error, give your postgres user permissions to create a database. 
+In the postgres shell, run the following as a superuser: `ALTER USER commcarehq CREATEDB;`
 
 The tests for CloudCare currently expect the "Basic Tests" app from the
 `corpora` domain on CommCareHQ.org to be installed in the same domain locally.

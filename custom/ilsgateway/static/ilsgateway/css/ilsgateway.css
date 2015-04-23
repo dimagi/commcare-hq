@@ -41,10 +41,11 @@ tr:nth-child(n+2) {
 
 .module li div.meta,
 .module li div.caption {
+    font-size: 1.5em;
 }
 
 .module li div.report {
-    font-size: 2em;
+    font-size: 3em;
     line-height: 1.2;
     border-bottom: 1px dotted #eee;
     margin-bottom: 0.25em;

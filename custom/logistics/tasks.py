@@ -4,6 +4,7 @@ from functools import partial
 import itertools
 from couchdbkit import ResourceNotFound
 from django.db import transaction
+from casexml.apps.stock.const import TRANSACTION_TYPE_LA
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack.models import SupplyPointCase, update_stock_state_for_transaction
 from corehq.apps.locations.models import SQLLocation, Location
@@ -12,12 +13,12 @@ from couchforms.models import XFormInstance
 from custom.logistics.commtrack import save_stock_data_checkpoint, synchronization
 from custom.logistics.models import StockDataCheckpoint
 from celery.task.base import task
-from custom.logistics.utils import get_supply_point_by_external_id, get_reporting_types
+from custom.logistics.utils import get_supply_point_by_external_id
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import force_to_datetime
 
 
-@task(queue='background_queue')
+@task(queue='background_queue', ignore_result=True)
 def stock_data_task(domain, endpoint, apis, config, test_facilities=None):
     # checkpoint logic
     start_date = datetime.today()
@@ -53,7 +54,7 @@ def stock_data_task(domain, endpoint, apis, config, test_facilities=None):
     else:
         supply_points_ids = SQLLocation.objects.filter(
             domain=domain,
-            location_type__in=get_reporting_types(domain)
+            location_type__administrative=False
         ).order_by('created_at').values_list('supply_point_id', flat=True)
         facilities = [doc['external_id'] for doc in iter_docs(SupplyPointCase.get_db(), supply_points_ids)]
 
@@ -86,7 +87,7 @@ def stock_data_task(domain, endpoint, apis, config, test_facilities=None):
     checkpoint.save()
 
 
-@task
+@task(ignore_result=True)
 def sms_users_fix(api):
     endpoint = api.endpoint
     api.set_default_backend()
@@ -94,7 +95,7 @@ def sms_users_fix(api):
                     None, None, 100, 0)
 
 
-@task
+@task(ignore_result=True)
 def fix_groups_in_location_task(domain):
     locations = Location.by_domain(domain=domain)
     for loc in locations:
@@ -105,7 +106,7 @@ def fix_groups_in_location_task(domain):
             loc.save()
 
 
-@task
+@task(ignore_result=True)
 def locations_fix(domain):
     locations = SQLLocation.objects.filter(domain=domain, location_type__in=['country', 'region', 'district'])
     for loc in locations:
@@ -122,7 +123,7 @@ def locations_fix(domain):
             SupplyPointCase.get_or_create_by_location(fake_location)
 
 
-@task
+@task(ignore_result=True)
 def add_products_to_loc(api):
     endpoint = api.endpoint
     synchronization(None, endpoint.get_locations, api.location_sync, None, None, 100, 0,
@@ -185,27 +186,53 @@ def sync_stock_transactions_for_facility(domain, endpoint, facility, xform, chec
                     report = StockReport.objects.filter(**params)[0]
 
                 sql_product = SQLProduct.objects.get(code=stocktransaction.product, domain=domain)
-                if stocktransaction.quantity != 0:
+                if stocktransaction.report_type.lower() == 'stock received':
                     transactions_to_add.append(StockTransaction(
                         case_id=case._id,
                         product_id=sql_product.product_id,
                         sql_product=sql_product,
                         section_id=section_id,
-                        type='receipts' if stocktransaction.quantity > 0 else 'consumption',
+                        type='receipts',
                         stock_on_hand=Decimal(stocktransaction.ending_balance),
                         quantity=Decimal(stocktransaction.quantity),
                         report=report
                     ))
-                transactions_to_add.append(StockTransaction(
-                    case_id=case._id,
-                    product_id=sql_product.product_id,
-                    sql_product=sql_product,
-                    section_id=section_id,
-                    type='stockonhand',
-                    stock_on_hand=Decimal(stocktransaction.ending_balance),
-                    report=report
-                ))
-                products_saved.add(sql_product.product_id)
+                    products_saved.add(sql_product.product_id)
+                elif stocktransaction.report_type.lower() == 'stock on hand':
+                    if stocktransaction.quantity < 0:
+                        transactions_to_add.append(StockTransaction(
+                            case_id=case._id,
+                            product_id=sql_product.product_id,
+                            sql_product=sql_product,
+                            section_id=section_id,
+                            type='consumption',
+                            stock_on_hand=Decimal(stocktransaction.ending_balance),
+                            quantity=Decimal(stocktransaction.quantity),
+                            report=report,
+                            subtype='inferred'
+                        ))
+                    transactions_to_add.append(StockTransaction(
+                        case_id=case._id,
+                        product_id=sql_product.product_id,
+                        sql_product=sql_product,
+                        section_id=section_id,
+                        type='stockonhand',
+                        stock_on_hand=Decimal(stocktransaction.ending_balance),
+                        report=report
+                    ))
+                    products_saved.add(sql_product.product_id)
+                elif stocktransaction.report_type.lower() == 'loss or adjustment':
+                    transactions_to_add.append(StockTransaction(
+                        case_id=case._id,
+                        product_id=sql_product.product_id,
+                        sql_product=sql_product,
+                        section_id=section_id,
+                        type=TRANSACTION_TYPE_LA,
+                        stock_on_hand=Decimal(stocktransaction.ending_balance),
+                        quantity=stocktransaction.quantity,
+                        report=report
+                    ))
+                    products_saved.add(sql_product.product_id)
 
         if transactions_to_add:
             # Doesn't send signal

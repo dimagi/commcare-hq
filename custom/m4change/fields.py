@@ -1,4 +1,5 @@
 import datetime
+from corehq.util.dates import iso_string_to_date
 from dimagi.utils.dates import DateSpan
 import json
 from django.utils.translation import ugettext as _, ugettext_noop
@@ -18,8 +19,10 @@ class DateRangeField(ReportField):
         range = self.request.GET.get('range', None)
         if range is not None:
             dates = str(range).split(_(' to '))
-            self.request.datespan.startdate = datetime.datetime.strptime(dates[0], '%Y-%m-%d')
-            self.request.datespan.enddate = datetime.datetime.strptime(dates[1], '%Y-%m-%d')
+            self.request.datespan.startdate = datetime.datetime.combine(
+                iso_string_to_date(dates[0]), datetime.time())
+            self.request.datespan.enddate = datetime.datetime.combine(
+                iso_string_to_date(dates[1]), datetime.time())
 
         self.datespan = DateSpan.since(self.default_days, timezone=self.timezone, inclusive=self.inclusive)
         if self.request.datespan.is_valid():

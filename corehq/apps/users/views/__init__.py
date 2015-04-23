@@ -169,7 +169,7 @@ class BaseEditUserView(BaseUserSettingsView):
             return self.user_update_form_class(data=self.request.POST)
 
         form = self.user_update_form_class()
-        form.initialize_form(existing_user=self.editable_user)
+        form.initialize_form(domain=self.request.domain, existing_user=self.editable_user)
         return form
 
     @property
@@ -187,10 +187,14 @@ class BaseEditUserView(BaseUserSettingsView):
     def commtrack_form(self):
         if self.request.method == "POST" and self.request.POST['form_type'] == "commtrack":
             return CommtrackUserForm(self.request.POST, domain=self.domain)
+
         user_domain_membership = self.editable_user.get_domain_membership(self.domain)
         linked_loc = user_domain_membership.location_id
         linked_prog = user_domain_membership.program_id
-        return CommtrackUserForm(domain=self.domain, is_admin=self.request.couch_user.is_domain_admin(self.domain), initial={'location': linked_loc, 'program_id': linked_prog})
+        return CommtrackUserForm(
+            domain=self.domain,
+            initial={'location': linked_loc, 'program_id': linked_prog}
+        )
 
     def update_user(self):
         if self.form_user_update.is_valid():

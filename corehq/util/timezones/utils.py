@@ -37,8 +37,5 @@ def get_timezone_for_user(couch_user_or_id, domain):
 
     if not timezone:
         current_domain = Domain.get_by_name(domain)
-        try:
-            timezone = coerce_timezone_value(current_domain.default_timezone)
-        except pytz.UnknownTimeZoneError:
-            timezone = pytz.utc
+        timezone = coerce_timezone_value(current_domain.default_timezone)
     return timezone

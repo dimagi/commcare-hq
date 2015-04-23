@@ -92,7 +92,7 @@ from corehq.apps.reports.models import (
     HQGroupExportConfiguration
 )
 from corehq.apps.reports.standard.cases.basic import CaseListReport
-from corehq.apps.reports.tasks import create_metadata_export, rebuild_export_async
+from corehq.apps.reports.tasks import create_metadata_export, rebuild_export_async, send_delayed_report
 from corehq.apps.reports import util
 from corehq.apps.reports.util import (
     get_all_users_by_domain,
@@ -108,8 +108,6 @@ from corehq.apps.users.models import Permissions
 from corehq.apps.domain.decorators import login_and_domain_required
 
 from casexml.apps.case.xform import extract_case_blocks
-
-DATE_FORMAT = "%Y-%m-%d"
 
 datespan_default = datespan_in_request(
     from_param="startdate",
@@ -583,9 +581,12 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
     config.owner_id = user_id
     config.domain = domain
 
-    config.date_range = 'range'
     config.start_date = request.datespan.computed_startdate.date()
-    config.end_date = request.datespan.computed_enddate.date()
+    if request.datespan.enddate:
+        config.date_range = 'range'
+        config.end_date = request.datespan.computed_enddate.date()
+    else:
+        config.date_range = 'since'
 
     GET = dict(request.GET.iterlists())
     exclude = ['startdate', 'enddate', 'subject', 'send_to_owner', 'notes', 'recipient_emails']
@@ -655,7 +656,7 @@ def recalculate_hour(hour, hour_difference, minute_difference):
 
 
 def get_timezone_difference(domain):
-    return datetime.now(pytz.timezone(Domain._get_by_name(domain)['default_timezone'])).strftime('%z')
+    return datetime.now(pytz.timezone(Domain.get_by_name(domain)['default_timezone'])).strftime('%z')
 
 
 def calculate_day(interval, day, day_change):
@@ -733,7 +734,7 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
     form.fields['recipient_emails'].choices = web_user_emails
 
     form.fields['hour'].help_text = "This scheduled report's timezone is %s (%s GMT)"  % \
-                                    (Domain._get_by_name(domain)['default_timezone'],
+                                    (Domain.get_by_name(domain)['default_timezone'],
                                     get_timezone_difference(domain)[:3] + ':' + get_timezone_difference(domain)[3:])
 
 
@@ -789,7 +790,6 @@ def delete_scheduled_report(request, domain, scheduled_report_id):
 
 @login_and_domain_required
 def send_test_scheduled_report(request, domain, scheduled_report_id):
-    from corehq.apps.reports.tasks import send_report
     from corehq.apps.users.models import CouchUser, CommCareUser, WebUser
 
     user_id = request.couch_user._id
@@ -801,7 +801,7 @@ def send_test_scheduled_report(request, domain, scheduled_report_id):
         user = CommCareUser.get_by_user_id(user_id, domain)
 
     try:
-        send_report.delay(notification._id)
+        send_delayed_report(notification)
     except Exception, e:
         import logging
         logging.exception(e)
@@ -926,6 +926,34 @@ def case_details(request, domain, case_id):
     })
 
 
+@require_case_view_permission
+@login_and_domain_required
+@require_GET
+def case_forms(request, domain, case_id):
+    case = get_document_or_404(CommCareCase, domain, case_id)
+    try:
+        start_range = int(request.GET['start_range'])
+        end_range = int(request.GET['end_range'])
+    except (KeyError, ValueError):
+        raise HttpResponseBadRequest()
+
+    def form_to_json(form):
+        return {
+            'id': form._id,
+            'received_on': json_format_datetime(form.received_on),
+            'user': {
+                "id": form.metadata.userID if form.metadata else '',
+                "username": form.metadata.username if form.metadata else '',
+            },
+            'readable_name': form.form.get('@name') or _('unknown'),
+        }
+
+    slice = list(reversed(case.xform_ids))[start_range:end_range]
+    return json_response([
+        form_to_json(XFormInstance.get(form_id)) for form_id in slice
+    ])
+
+
 @login_and_domain_required
 @require_GET
 def case_attachments(request, domain, case_id):
@@ -953,6 +981,19 @@ def rebuild_case_view(request, domain, case_id):
     case = get_document_or_404(CommCareCase, domain, case_id)
     rebuild_case(case_id)
     messages.success(request, _(u'Case %s was rebuilt from its forms.' % case.name))
+    return HttpResponseRedirect(reverse('case_details', args=[domain, case_id]))
+
+
+@require_case_view_permission
+@require_permission(Permissions.edit_data)
+@require_POST
+def resave_case(request, domain, case_id):
+    case = get_document_or_404(CommCareCase, domain, case_id)
+    CommCareCase.get_db().save_doc(case._doc)  # don't just call save to avoid signals
+    messages.success(
+        request,
+        _(u'Case %s was successfully saved. Hopefully it will show up in all reports momentarily.' % case.name),
+    )
     return HttpResponseRedirect(reverse('case_details', args=[domain, case_id]))
 
 
@@ -1363,7 +1404,7 @@ def form_multimedia_export(request, domain):
         enddate = json_format_date(string_to_datetime(enddate) + timedelta(days=1))
         app_id = request.GET.get("app_id", None)
         export_id = request.GET.get("export_id", None)
-        zip_name = request.GET.get("name", None)
+        zip_name = unidecode(request.GET.get("name", None))
     except (KeyError, ValueError):
         return HttpResponseBadRequest()
 

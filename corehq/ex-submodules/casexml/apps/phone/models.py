@@ -19,7 +19,8 @@ class User(object):
     """
     
     def __init__(self, user_id, username, password, date_joined,
-                 user_data=None, additional_owner_ids=None, domain=None):
+                 user_data=None, additional_owner_ids=None, domain=None,
+                 loadtest_factor=1):
         self.user_id = user_id
         self.username = username
         self.password = password
@@ -27,22 +28,13 @@ class User(object):
         self.user_data = user_data or {}
         self.additional_owner_ids = additional_owner_ids or []
         self.domain = domain
+        self.loadtest_factor = loadtest_factor
 
     def get_owner_ids(self):
         ret = [self.user_id]
         ret.extend(self.additional_owner_ids)
         return list(set(ret))
-        
-    def get_case_updates(self, last_sync):
-        """
-        Get open cases associated with the user. This method
-        can be overridden to change case-syncing behavior
-        
-        returns: A CaseSyncOperation object
-        """
-        from casexml.apps.phone.caselogic import CaseSyncOperation
-        return CaseSyncOperation(self, last_sync)
-    
+
     @classmethod
     def from_django_user(cls, django_user):
         return cls(user_id=str(django_user.pk), username=django_user.username,
@@ -121,9 +113,9 @@ class SyncLog(SafeSaveDocument, UnicodeMixIn):
     def has_cached_payload(self, version):
         return self.get_payload_attachment_name(version) in self._doc.get('_attachments', {})
 
-    def get_cached_payload(self, version):
+    def get_cached_payload(self, version, stream=False):
         try:
-            return self.fetch_attachment(self.get_payload_attachment_name(version))
+            return self.fetch_attachment(self.get_payload_attachment_name(version), stream=stream)
         except ResourceNotFound:
             return None
 
