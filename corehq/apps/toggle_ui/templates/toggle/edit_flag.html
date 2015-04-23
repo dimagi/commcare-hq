@@ -82,8 +82,14 @@
     });
 </script>
 {% endblock %}
-
 {% block page_content %}
+    {% if toggle_meta.description %}
+        <p>{{ toggle_meta.description }}</p>
+    {% endif %}
+    <p>{% trans "This flag is tagged as: " %}<span class="label label-{{ toggle_meta.tag.css_class }}">{{ toggle_meta.tag.name }}</span></p>
+    {% if toggle_meta.help_link %}
+    <p><a href="{{ toggle_meta.help_link }}" target="_blank">{% trans "More information" %}</a></p>
+    {% endif %}
     <div id="toggle_editing_ko">
         <div data-bind="saveButton: saveButton"></div>
         <h4>{% trans "Enabled toggle items" %}</h4>

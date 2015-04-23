@@ -926,6 +926,8 @@ def quick_find(request):
         if redirect and doc_info.link:
             messages.info(request, _("We've redirected you to the %s matching your query") % doc_info.type_display)
             return HttpResponseRedirect(doc_info.link)
+        elif request.couch_user.is_superuser:
+            return HttpResponseRedirect('{}?id={}'.format(reverse('doc_in_es'), doc.get('_id')))
         else:
             return json_response(doc_info)
 

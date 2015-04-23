@@ -777,7 +777,9 @@ def callcenter_test(request):
     if user or user_case:
         custom_cache = None if enable_caching else cache.get_cache('django.core.cache.backends.dummy.DummyCache')
         cci = CallCenterIndicators(
-            domain,
+            domain.name,
+            domain.default_timezone,
+            domain.call_center_config.case_type,
             user,
             custom_cache=custom_cache,
             override_date=query_date,

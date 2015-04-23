@@ -1539,7 +1539,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         parent_module = request.POST.get("parent_module")
         module.parent_select.module_id = parent_module
 
-    if (toggles.MODULE_FILTER.enabled(app.domain) and
+    if (feature_previews.MODULE_FILTER.enabled(app.domain) and
             app.enable_module_filtering and
             should_edit('module_filter')):
         module['module_filter'] = request.POST.get('module_filter')

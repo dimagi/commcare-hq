@@ -114,6 +114,10 @@
             line_chart.yAxis.tickFormat(d3.format({{ chart.y_axis.format|JSON }}));
         {% endif %}
 
+        {% if chart.forceY %}
+            line_chart.forceY({{ chart.forceY|JSON }});
+        {% endif %}
+
         line_chart.margin(chart_config.margin);
         line_chart.tooltips(chart_config.tooltips);
 
