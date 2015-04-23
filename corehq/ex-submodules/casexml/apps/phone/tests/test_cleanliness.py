@@ -2,12 +2,15 @@ import uuid
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseRelationship
 from casexml.apps.phone.models import OwnershipCleanliness
 from casexml.apps.phone.tests.test_sync_mode import SyncBaseTest
+from corehq.toggles import OWNERSHIP_CLEANLINESS
 
 
 class OwnerCleanlinessTest(SyncBaseTest):
 
     def setUp(self):
         super(OwnerCleanlinessTest, self).setUp()
+        # ensure that randomization is on
+        OWNERSHIP_CLEANLINESS.randomness = 1
         self.owner_id = uuid.uuid4().hex
         self.synclog_id = uuid.uuid4().hex
         self.domain = uuid.uuid4().hex
@@ -106,3 +109,10 @@ class OwnerCleanlinessTest(SyncBaseTest):
         self._set_owner(self.parent._id, new_owner)
         self.assert_owner_dirty()
         self.assertEqual(self.child._id, self.owner_cleanliness.hint)
+
+    def test_toggle(self):
+        # make sure the flag gets removed
+        OWNERSHIP_CLEANLINESS.randomness = 0
+        # and any test that normally expects a flag to be set to fail
+        with self.assertRaises(AssertionError):
+            self.test_create_dirty_makes_dirty()
