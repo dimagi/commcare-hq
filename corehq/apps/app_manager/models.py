@@ -831,9 +831,10 @@ class FormBase(DocumentSchema):
 
     def rename_xform_language(self, old_code, new_code):
         source = XForm(self.source)
-        source.rename_language(old_code, new_code)
-        source = source.render()
-        self.source = source
+        if source.exists():
+            source.rename_language(old_code, new_code)
+            source = source.render()
+            self.source = source
 
     def default_name(self):
         app = self.get_app()
