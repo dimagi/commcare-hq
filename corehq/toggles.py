@@ -68,8 +68,9 @@ class PredicatablyRandomToggle(StaticToggle):
     It extends StaticToggle, so individual domains/users can also be explicitly added.
     """
 
-    def __init__(self, slug, label, tag, namespace, randomness):
-        super(PredicatablyRandomToggle, self).__init__(slug, label, tag, list(namespace))
+    def __init__(self, slug, label, tag, namespace, randomness, help_link=None, description=None):
+        super(PredicatablyRandomToggle, self).__init__(slug, label, tag, list(namespace),
+                                                       help_link=help_link, description=description)
         assert namespace, 'namespace must be defined!'
         self.namespace = namespace
         assert 0 <= randomness <= 1, 'randomness must be between 0 and 1!'
