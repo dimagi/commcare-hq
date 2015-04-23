@@ -45,7 +45,7 @@ from corehq.apps.hqwebapp.doc_info import get_doc_info
 from corehq.util.context_processors import get_domain_type
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.logging import notify_exception
+from dimagi.utils.logging import notify_exception, notify_js_exception
 from dimagi.utils.web import get_url_base, json_response, get_site_domain
 from corehq.apps.domain.models import Domain
 from couchforms.models import XFormInstance
@@ -394,6 +394,19 @@ def debug_notify(request):
         notify_exception(request,
             "If you want to achieve a 500-style email-out but don't want the user to see a 500, use notify_exception(request[, message])")
     return HttpResponse("Email should have been sent")
+
+
+@require_POST
+def jserror(request):
+    notify_js_exception(
+        request,
+        message=request.POST.get('message', None),
+        stack=request.POST.get('stack', None),
+        line=request.POST.get('line', None),
+        filename=request.POST.get('filename', None),
+    )
+    return HttpResponse("JS error has been logged")
+
 
 @login_required()
 @require_POST
