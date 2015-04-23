@@ -2,6 +2,8 @@
 from __future__ import unicode_literals, print_function, absolute_import
 
 # External imports
+from django.utils.decorators import method_decorator
+from django.views.decorators.debug import sensitive_post_parameters
 from corehq.apps.accounting.exceptions import AccountingError
 from corehq.apps.accounting.models import Subscription
 from django_prbac.models import Role
@@ -22,6 +24,7 @@ class CCHQPRBACMiddleware(object):
     Neither domains nor users currently have roles in the PRBAC tables.
     """
 
+    @method_decorator(sensitive_post_parameters('password'))
     def process_view(self, request, view_func, view_args, view_kwargs):
         self.apply_prbac(request)
         return None
