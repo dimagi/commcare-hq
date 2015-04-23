@@ -581,9 +581,12 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
     config.owner_id = user_id
     config.domain = domain
 
-    config.date_range = 'range'
     config.start_date = request.datespan.computed_startdate.date()
-    config.end_date = request.datespan.computed_enddate.date()
+    if request.datespan.enddate:
+        config.date_range = 'range'
+        config.end_date = request.datespan.computed_enddate.date()
+    else:
+        config.date_range = 'since'
 
     GET = dict(request.GET.iterlists())
     exclude = ['startdate', 'enddate', 'subject', 'send_to_owner', 'notes', 'recipient_emails']
