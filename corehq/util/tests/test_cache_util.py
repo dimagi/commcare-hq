@@ -25,3 +25,8 @@ class TestExponentialBackoff(SimpleTestCase):
 
         ExponentialBackoff.increment(key)  # incr to 4
         self.assertFalse(ExponentialBackoff.should_backoff(key))
+
+    def test_backoff_none(self):
+        key = None
+        ExponentialBackoff.increment(key)  # first incr is 1
+        self.assertFalse(ExponentialBackoff.should_backoff(key))
