@@ -6,9 +6,11 @@ from toggle.shortcuts import toggle_enabled, set_toggle
 
 
 class StaticToggle(object):
-    def __init__(self, slug, label, namespaces=None):
+    def __init__(self, slug, label, namespaces=None, help_link=None, description=None):
         self.slug = slug
         self.label = label
+        self.help_link = help_link
+        self.description = description
         if namespaces:
             self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
         else:
@@ -373,12 +375,6 @@ BULK_PAYMENTS = StaticToggle(
     'Enable payment of invoices by bulk credit payments and invoice generation for wire tranfers',
 )
 
-MODULE_FILTER = StaticToggle(
-    'module_filter',
-    'Enable module filtering',
-    [NAMESPACE_DOMAIN],
-)
-
 USE_NEW_TIMEZONE_BEHAVIOR = StaticToggle(
     'use_new_timezone_behavior',
     ("Enable properly dealing with timezones in phone timestamps "
@@ -403,5 +399,6 @@ STREAM_RESTORE_CACHE = StaticToggle(
 ENABLE_LOADTEST_USERS = StaticToggle(
     'enable_loadtest_users',
     'Enable creating loadtest users on HQ',
-    [NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Loadtest+Users',
 )

@@ -9,7 +9,8 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.xpath import dot_interpolate, UserCaseXPath, interpolate_xpath
-from corehq.toggles import MODULE_FILTER, NAMESPACE_DOMAIN
+from corehq.toggles import NAMESPACE_DOMAIN
+from corehq.feature_previews import MODULE_FILTER
 from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
 
 from lxml import etree

@@ -227,7 +227,7 @@
                         </select>
                     </div>
                 </div>
-                {% if request|toggle_enabled:"MODULE_FILTER" %}
+                {% if request|feature_preview_enabled:"MODULE_FILTER" %}
                 <div class="control-group">
                     <label class="control-label">
                         {% trans "Module filter" %}

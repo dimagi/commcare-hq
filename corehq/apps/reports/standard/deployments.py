@@ -164,10 +164,7 @@ class SyncHistoryReport(DeploymentsReport):
 
     @property
     def rows(self):
-        if self.request.couch_user.is_superuser:
-            base_link_url = '{}?id={{id}}'.format(reverse('doc_in_es'))
-        else:
-            base_link_url = '{}?q={{id}}'.format(reverse('global_quick_find'))
+        base_link_url = '{}?q={{id}}'.format(reverse('global_quick_find'))
 
         user_id = self.request.GET.get('individual')
         if not user_id:
