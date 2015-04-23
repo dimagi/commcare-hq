@@ -48,7 +48,7 @@
                     {% endifequal %}
                 </label>
                 <div class="controls">
-                    {% if user_type == "mobile" %}
+                    {% if can_use_inbound_sms and user_type == "mobile" %}
                     {% ifequal phone.status "unverified" %}
                         <form method="post"
                               action="{% url "verify_phone_number" domain couch_user.couch_id %}?phone_number={{phone.number|urlencode}}"
