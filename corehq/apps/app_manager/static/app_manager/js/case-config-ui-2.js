@@ -34,6 +34,11 @@ var CaseConfig = (function () {
         };
         self.setPropertiesMap(params.propertiesMap);
 
+        self.setUsercasePropertiesMap = function (propertiesMap) {
+            self.usercasePropertiesMap = ko.mapping.fromJS(propertiesMap);
+        };
+        self.setUsercasePropertiesMap(params.usercasePropertiesMap);
+
         self.saveButton = COMMCAREHQ.SaveButton.init({
             unsavedMessage: "You have unchanged case settings",
             save: function () {
@@ -46,6 +51,7 @@ var CaseConfig = (function () {
                 }
                 var actions = JSON.stringify(_(self.actions).extend(
                     HQFormActions.from_case_transaction(self.caseConfigViewModel.case_transaction),
+                    HQFormActions.from_usercase_transaction(self.caseConfigViewModel.usercase_transaction),
                     {subcases: subcases}
                 ));
 
@@ -160,6 +166,7 @@ var CaseConfig = (function () {
             return label + ' (' + caseType + ')';
         };
         self.case_transaction = HQFormActions.to_case_transaction(caseConfig.actions, caseConfig);
+        self.usercase_transaction = HQFormActions.to_usercase_transaction(caseConfig.actions, caseConfig);
         self.subcases = ko.observableArray(
             _(caseConfig.actions.subcases).map(function (subcase) {
                 return HQOpenSubCaseAction.to_case_transaction(subcase, caseConfig);
@@ -389,6 +396,174 @@ var CaseConfig = (function () {
     };
 
 
+    var UserCaseTransaction = {
+        mapping: function (self) {
+            return {
+                include: [
+                    'case_properties',
+                    'case_preload'
+                ],
+                case_properties: {
+                    create: function (options) {
+                        return CaseProperty.wrap(options.data, self);
+                    }
+                },
+                case_preload: {
+                    create: function (options) {
+                        return CasePreload.wrap(options.data, self);
+                    }
+                }
+            };
+        },
+
+        wrap: function (data, caseConfig) {
+            var self = {};
+            ko.mapping.fromJS(data, UserCaseTransaction.mapping(self), self);
+            self.caseConfig = caseConfig;
+
+            // link self.case_name to corresponding path observable
+            // in case_properties for convenience
+            try {
+                self.case_name = _(self.case_properties()).find(function (p) {
+                    return p.key() === 'name' && p.required();
+                }).path;
+            } catch (e) {
+                self.case_name = null;
+            }
+            self.suggestedPreloadProperties = ko.computed(function () {
+                if (!self.case_preload) {
+                    return [];
+                }
+                return CC_UTILS.filteredSuggestedProperties(self.suggestedProperties(), self.case_preload());
+            }, self);
+            self.suggestedSaveProperties = ko.computed(function () {
+                return CC_UTILS.filteredSuggestedProperties(self.suggestedProperties(), self.case_properties());
+            }, self);
+
+            self.addProperty = function () {
+                var property = CaseProperty.wrap({
+                    path: '',
+                    key: '',
+                    required: false
+                }, self);
+
+                self.case_properties.push(property);
+            };
+
+            self.removeProperty = function (property) {
+                self.case_properties.remove(property);
+            };
+
+            self.propertyCounts = ko.computed(function () {
+                var count = {};
+                _(self.case_properties()).each(function (p) {
+                    var key = p.key();
+                    if (!count.hasOwnProperty(key)) {
+                        count[key] = 0;
+                    }
+                    return count[key] += 1;
+                });
+                return count;
+            });
+
+            if (self.case_preload) {
+                self.addPreload = function () {
+                    var property = CasePreload.wrap({
+                        path: '',
+                        key: '',
+                        required: false
+                    }, self);
+
+                    self.case_preload.push(property);
+                };
+
+                self.removePreload = function (property) {
+                    self.case_preload.remove(property);
+                };
+
+                self.preloadCounts = ko.computed(function () {
+                    var count = {};
+                    _(self.case_preload()).each(function (p) {
+                        var path = p.path();
+                        if (!count.hasOwnProperty(path)) {
+                            count[path] = 0;
+                        }
+                        return count[path] += 1;
+                    });
+                    return count;
+                });
+            }
+
+            self.repeat_context = function () {
+                if (self.case_name) {
+                    return self.caseConfig.get_repeat_context(self.case_name());
+                } else {
+                    return null;
+                }
+            };
+
+            self.setRequired = function (required) {
+                var delete_me = [];
+                _(self.case_properties()).each(function (case_property) {
+                    var key = case_property.key();
+                    if (_(required).contains(key)) {
+                        case_property.required(true);
+                        required.splice(required.indexOf(key), 1);
+                    } else {
+                        if (case_property.required()) {
+                            case_property.required(false);
+                            if (!case_property.path()) {
+                                delete_me.push(case_property);
+                            }
+                        }
+
+                    }
+                });
+                _(delete_me).each(function (case_property) {
+                    self.case_properties.remove(case_property);
+                });
+                _(required).each(function (key) {
+                    self.case_properties.splice(0, 0, CaseProperty.wrap({
+                        path: '',
+                        key: key,
+                        required: true
+                    }, self));
+                });
+            };
+
+            self.unwrap = function () {
+                UserCaseTransaction.unwrap(self);
+            };
+
+            self.ensureBlankProperties = function () {
+                var items = [{
+                    properties: self.case_properties(),
+                    addProperty: self.addProperty
+                }];
+                if (self.case_preload) {
+                    items.push({
+                        properties: self.case_preload(),
+                        addProperty: self.addPreload
+                    });
+                }
+                _(items).each(function (item) {
+                    var properties = item.properties;
+                    var last = properties[properties.length-1];
+                    if (last && !last.isBlank()) {
+                        item.addProperty();
+                    }
+                });
+            };
+
+            return self;
+        },
+
+        unwrap: function (self) {
+            return ko.mapping.toJS(self, UserCaseTransaction.mapping(self));
+        }
+    };
+
+
     var CasePropertyBase = {
         mapping: {
             include: ['key', 'path', 'required']
@@ -587,6 +762,53 @@ var CaseConfig = (function () {
                 },
                 close_case: {
                     condition: cleanCondition(close_condition)
+                }
+            };
+        },
+        to_usercase_transaction: function (o, caseConfig) {
+            var self = HQFormActions.normalize(o);
+            var required_properties = caseConfig.requires() === 'none' && !o.update_case.update.name ? [{
+                key: 'name',
+                path: self.open_case.name_path,
+                required: true
+            }] : [];
+            var case_properties = CC_UTILS.propertyDictToArray(
+                required_properties,
+                self.update_case.update,
+                caseConfig
+            );
+            var case_preload = CC_UTILS.propertyDictToArray(
+                [],
+                self.case_preload.preload,
+                caseConfig,
+                true
+            );
+            return UserCaseTransaction.wrap({
+                case_properties: case_properties,
+                case_preload: case_preload,
+
+                suggestedProperties: function () {
+                    // TODO: Do we need suggestedProperties?
+                    // TODO: Pass user case type from the view.
+                    if (_(caseConfig.usercasePropertiesMap).has('commcare-user')) {
+                        return caseConfig.usercasePropertiesMap['commcare-user']();
+                    } else {
+                        return [];
+                    }
+                }
+            }, caseConfig);
+        },
+        from_usercase_transaction: function (usercase_transaction) {
+            var o = UserCaseTransaction.unwrap(usercase_transaction);
+            var x = CC_UTILS.propertyArrayToDict(['name'], o.case_properties);
+            var case_properties = x[0]  ;
+            var case_preload = CC_UTILS.propertyArrayToDict([], o.case_preload, true)[0];
+            return {
+                update_usercase: {
+                    update: case_properties
+                },
+                case_preload: {
+                    preload: case_preload
                 }
             };
         }

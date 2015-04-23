@@ -1,7 +1,5 @@
 {% load i18n %}
 
-<!-------------------->
-
 <script type="text/html" id="usercase-config:case-properties:question">
     <input class="input-large" type="hidden" data-bind="
         questionsSelect: $root.getQuestions('all', false, case_transaction.allow.repeats(), true),
@@ -128,9 +126,6 @@
     </a>
 </script>
 
-
-<!-------------------->
-
 <script type="text/html" id="usercase-config:case-transaction">
     <div class="row-fluid">
         <div class="well span6">
@@ -144,8 +139,8 @@
 
 <div id="usercase-config-ko">
     <div data-bind="saveButton: saveButton"></div>
-    <div data-bind="with: usercaseConfigViewModel">
-        <div data-bind="template: {name: 'usercase-config:case-transaction', data: case_transaction}"></div>
-        <!-- subcases removed for now -->
+    <div data-bind="with: caseConfigViewModel">
+        <div data-bind="template: {name: 'usercase-config:case-transaction', data: usercase_transaction }"></div>
+        {% comment %} subcases removed for now {% endcomment %}
     </div>
 </div>

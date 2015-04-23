@@ -294,6 +294,13 @@
                     {% trans "Case Management" %}
                 </a>
             </li>
+            {%  if usercase_toggle_on %}
+            <li>
+                <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
+                    {% trans "User Case Management" %}
+                </a>
+            </li>
+            {%  endif %}
             {% if form.form_type == 'advanced_form' and module.has_schedule %}
                  <li>
                      <a href="#visit-scheduler" data-toggle="tab">
@@ -343,6 +350,31 @@
                 {% else %}
                     <p class="alert alert-warning">
                         {% trans "You have not created a form yet. Create a form in order to view and edit Case Management." %}
+                    </p>
+                {% endif %}
+            </div>
+
+            <div class="tab-pane" id="usercase-configuration">
+                {% if form_errors or xform_validation_errored %}
+                    <p class="alert alert-warning">
+                        {% trans "There are errors in your form. Fix your form in order to view and edit Case Management." %}
+                    </p>
+                {% elif form.source %}
+                    <header class="clearfix">
+                        <h4 class="pull-left">{% trans "User Case Management" %}</h4>
+                        <span class="hq-help-template"
+                            data-title="{% trans "User Case Management" %}"
+                            data-content="{% trans "The user case allows you to store data about the user in a case and use that data in forms." %}"
+                        ></span>
+                    </header>
+                    <div class="casexml" id="usercasexml_home">
+                        {% block usercase_management_content %}
+                            {% include 'app_manager/partials/usercase_config.html' %}
+                        {% endblock %}
+                    </div>
+                {% else %}
+                    <p class="alert alert-warning">
+                        {% trans "You have not created a form yet. Create a form in order to view and edit User Case Management." %}
                     </p>
                 {% endif %}
             </div>
