@@ -7,4 +7,11 @@ class GlobalRequestMiddleware(object):
         set_request(request)
 
     def process_response(self, request, response):
+        if hasattr(request, 'domain'):
+            self.remember_domain_visit(request, response)
         return response
+
+    def remember_domain_visit(self, request, response):
+        last_visited_domain = request.COOKIES.get('last_visited_domain')
+        if last_visited_domain != request.domain:
+            response.set_cookie('last_visited_domain', request.domain)

@@ -111,7 +111,7 @@ PAYMENT_ERROR_MESSAGES = {
 
 
 @login_required
-def select(request, domain_select_template='domain/select.html'):
+def select(request, domain_select_template='domain/select.html', do_not_redirect=False):
     domains_for_user = Domain.active_for_user(request.user)
     if not domains_for_user:
         return redirect('registration_domain', domain_type=get_domain_type(None, request))
@@ -123,7 +123,20 @@ def select(request, domain_select_template='domain/select.html'):
         'domains_for_user': domains_for_user,
         'open_invitations': open_invitations,
     }
-    return render(request, domain_select_template, additional_context)
+
+    last_visited_domain = request.COOKIES.get('last_visited_domain')
+    if open_invitations \
+       or do_not_redirect \
+       or not last_visited_domain:
+        return render(request, domain_select_template, additional_context)
+
+    try:
+        from corehq.apps.dashboard.views import dashboard_default
+        return dashboard_default(request, last_visited_domain)
+    except Http404:
+        response = render(request, domain_select_template, additional_context)
+        response.delete_cookie('last_visited_domain')
+        return response
 
 
 @require_superuser
