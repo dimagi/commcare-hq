@@ -377,14 +377,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
             for row in cls.get_db().view("case/get_lite", keys=ids, include_docs=False):
                 yield wrapper(row['value'])
 
-    def get_preloader_dict(self):
-        """
-        Gets the case as a dictionary for use in touchforms preloader framework
-        """
-        ret = copy.copy(self._doc)
-        ret["case-id"] = self.get_id
-        return ret
-
     def get_server_modified_date(self):
         # gets (or adds) the server modified timestamp
         if not self.server_modified_on:
