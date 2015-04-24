@@ -245,13 +245,6 @@ NO_VELLUM = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-DOUBLE_MANAGEMENT = StaticToggle(
-    'double_management',
-    'Case list actions a.k.a. double management',
-    TAG_PRODUCT_CORE,
-    [NAMESPACE_USER, NAMESPACE_DOMAIN]
-)
-
 SPLIT_MULTISELECT_EXPORT = StaticToggle(
     'split_multiselect_export',
     'Split multiselect columns in custom exports',
