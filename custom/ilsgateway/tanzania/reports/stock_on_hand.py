@@ -121,7 +121,7 @@ class SohPercentageTableData(ILSData):
                 fac_ids = facs.exclude(supply_point_id__isnull=True).values_list(*['supply_point_id'], flat=True)
                 enddate = self.config['enddate']
                 month = enddate.month - 1 if enddate.month != 1 else 12
-                year = enddate.year - 1 if enddate.month != 1 else enddate.year
+                year = enddate.year - 1 if enddate.month == 1 else enddate.year
                 stockouts = StockTransaction.objects.filter(
                     case_id__in=fac_ids,
                     stock_on_hand__lte=0,
