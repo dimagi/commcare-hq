@@ -208,14 +208,15 @@ def rebuild_staging(config, print_details=True, push=True):
                     git.add(submodule)
                 git.commit('-m', "update submodule refs", '--no-edit',
                            '--allow-empty')
-            # stupid safety check
-            assert config.name != 'master'
-            if push:
+        if push and not (merge_conflicts or not_found):
+            for path, config in all_configs:
+                # stupid safety check
+                assert config.name != 'master', path
                 print "  [{cwd}] Force pushing to origin {name}".format(
                     cwd=path,
                     name=config.name,
                 )
-                force_push(git, config.name)
+                force_push(get_git(path), config.name)
 
     if not_found:
         print "You must remove the following branches before rebuilding:"

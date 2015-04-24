@@ -356,7 +356,9 @@ class EditMyAccountDomainView(BaseFullEditUserView):
 
     @property
     def page_context(self):
-        context = {}
+        context = {
+            'can_use_inbound_sms': domain_has_privilege(self.domain, privileges.INBOUND_SMS),
+        }
         if self.request.project.commtrack_enabled:
             context.update({
                 'update_form': self.commtrack_form,

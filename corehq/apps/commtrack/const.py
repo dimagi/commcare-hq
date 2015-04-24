@@ -41,6 +41,7 @@ StockActions = enum(
     STOCKOUT='stockout',
     RECEIPTS='receipts',
     CONSUMPTION='consumption',
+    LA='lossoradjustment'
 )
 
 RequisitionActions = enum(
