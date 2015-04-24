@@ -68,8 +68,9 @@ class PredicatablyRandomToggle(StaticToggle):
     It extends StaticToggle, so individual domains/users can also be explicitly added.
     """
 
-    def __init__(self, slug, label, tag, namespace, randomness):
-        super(PredicatablyRandomToggle, self).__init__(slug, label, tag, list(namespace))
+    def __init__(self, slug, label, tag, namespace, randomness, help_link=None, description=None):
+        super(PredicatablyRandomToggle, self).__init__(slug, label, tag, list(namespace),
+                                                       help_link=help_link, description=description)
         assert namespace, 'namespace must be defined!'
         self.namespace = namespace
         assert 0 <= randomness <= 1, 'randomness must be between 0 and 1!'
@@ -457,4 +458,13 @@ ENABLE_LOADTEST_USERS = StaticToggle(
     TAG_EXPERIMENTAL,
     namespaces=[NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/ccinternal/Loadtest+Users',
+)
+
+OWNERSHIP_CLEANLINESS = PredicatablyRandomToggle(
+    'enable_owner_cleanliness_flags',
+    'Enable tracking ownership cleanliness on submission',
+    TAG_EXPERIMENTAL,
+    randomness=.05,
+    namespace=NAMESPACE_DOMAIN,
+    help_link='https://docs.google.com/a/dimagi.com/document/d/12WfZLerFL832LZbMwqRAvXt82scdjDL51WZVNa31f28/edit#heading=h.gu9sjekp0u2p',
 )
