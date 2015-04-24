@@ -315,35 +315,7 @@
             </div>
             <div class="modal-body">
                 <div class="accordion" data-bind="bootstrapCollapse: true">
-                    <div class="accordion-group">
-                        <div class="accordion-heading">
-                            <a class="accordion-toggle" data-bind="
-                                click: function() { track_deploy_type('Download to Java Phone'); },
-                            ">
-                                {% trans "Download to Java Phone" %}
-                            </a>
-                        </div>
-                        <div class="accordion-body collapse">
-                            <div class="accordion-inner">
-                                <ol>
-                                    <li>
-                                        {% trans "Download <strong>both</strong> of the following files:" %}
-                                        <p><a data-bind="attr: {href: $root.url('jad', id)}">{% trans "Download" %} CommCare.jad</a></p>
-                                        <p><a data-bind="attr: {href: $root.url('jar', id)}">{% trans "Download" %} CommCare.jar</a></p>
-                                    </li>
-                                    <li>
-                                        {% trans "For help on how to install, see" %}
-                                        <a target="_blank" href="https://help.commcarehq.org/display/commcarepublic/CommCare+for+Feature+Phones">{% trans "Set Up Feature Phones" %}</a>.
-                                    </li>
-                                    <li>
-                                        {% trans "If you have any issues with the installation, please refer to" %}
-                                        <a target="_blank" href="https://help.commcarehq.org/display/commcarepublic/Troubleshooting">{% trans "Troubleshooting Phone Problems" %}</a>.
-                                    </li>
-                                </ol>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="accordion-group">
+                    <div class="accordion-group" data-bind="visible: true">
                         <div class="accordion-heading">
                             <a class="accordion-toggle" data-bind="
                                 click: function() { track_deploy_type('Download to Android'); },
@@ -432,6 +404,34 @@
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-group">
+                        <div class="accordion-heading">
+                            <a class="accordion-toggle" data-bind="
+                                click: function() { track_deploy_type('Download to Java Phone'); },
+                            ">
+                                {% trans "Download to Java Phone" %}
+                            </a>
+                        </div>
+                        <div class="accordion-body collapse">
+                            <div class="accordion-inner">
+                                <ol>
+                                    <li>
+                                        {% trans "Download <strong>both</strong> of the following files:" %}
+                                        <p><a data-bind="attr: {href: $root.url('jad', id)}">{% trans "Download" %} CommCare.jad</a></p>
+                                        <p><a data-bind="attr: {href: $root.url('jar', id)}">{% trans "Download" %} CommCare.jar</a></p>
+                                    </li>
+                                    <li>
+                                        {% trans "For help on how to install, see" %}
+                                        <a target="_blank" href="https://help.commcarehq.org/display/commcarepublic/CommCare+for+Feature+Phones">{% trans "Set Up Feature Phones" %}</a>.
+                                    </li>
+                                    <li>
+                                        {% trans "If you have any issues with the installation, please refer to" %}
+                                        <a target="_blank" href="https://help.commcarehq.org/display/commcarepublic/Troubleshooting">{% trans "Troubleshooting Phone Problems" %}</a>.
+                                    </li>
+                                </ol>
                             </div>
                         </div>
                     </div>
