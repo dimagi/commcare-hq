@@ -200,7 +200,6 @@ def report_run(domain):
                                        start_run=datetime.utcnow(), domain=domain)
     has_error = True
     try:
-        run.has_error = has_error
         populate_report_data(start_date, end_date, domain, run)
         has_error = False
     except Exception, e:
