@@ -295,12 +295,6 @@ PRODUCTS_PER_LOCATION = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-DOCUMENTATION_FILE = StaticToggle(
-    'documentation_file',
-    "Allows users to optionally add a supporting documentation file to explain exchange applications",
-    TAG_PRODUCT_CORE
-)
-
 ALLOW_CASE_ATTACHMENTS_VIEW = StaticToggle(
     'allow_case_attachments_view',
     "Explicitly allow user to access case attachments, even if they can't view the case list report.",
