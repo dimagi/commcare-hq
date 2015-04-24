@@ -137,13 +137,17 @@ def domains_for_user(context, request, selected_domain=None):
             domain_list = [Domain.wrap(x) for x in cached_domains]
         else:
             try:
-                domain_list = Domain.active_for_user(request.couch_user)
-                cache_core.cache_doc_prop(request.couch_user.get_id, 'domain_list', [x.to_json() for x in domain_list])
+                domain_list = Domain.active_for_user(request.couch_user, for_ui=True)
+                cache_core.cache_doc_prop(
+                    request.couch_user.get_id,
+                    'domain_list',
+                    [x.to_json() for x in domain_list]
+                )
             except Exception:
                 if settings.DEBUG:
                     raise
                 else:
-                    domain_list = Domain.active_for_user(request.user)
+                    domain_list = Domain.active_for_user(request.user, for_ui=True)
                     notify_exception(request)
     domain_list = [dict(
         url=reverse('domain_homepage', args=[d.name]),

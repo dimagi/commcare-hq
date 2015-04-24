@@ -371,7 +371,7 @@ class Domain(Document, SnapshotMixin):
         return pytz.timezone(self.default_timezone)
 
     @staticmethod
-    def active_for_user(user, is_active=True):
+    def active_for_user(user, is_active=True, for_ui=False):
         if isinstance(user, AnonymousUser):
             return []
         from corehq.apps.users.models import CouchUser
@@ -380,7 +380,7 @@ class Domain(Document, SnapshotMixin):
         else:
             couch_user = CouchUser.from_django_user(user)
         if couch_user:
-            domain_names = couch_user.get_domains()
+            domain_names = couch_user.get_domains(for_ui=for_ui)
             return cache_core.cached_view(Domain.get_db(), "domain/by_status",
                                           keys=[[is_active, d] for d in domain_names],
                                           reduce=False,
