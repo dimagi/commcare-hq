@@ -65,6 +65,7 @@ from dimagi.utils.export import WorkBook
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import json_format_datetime, string_to_boolean, string_to_datetime, json_format_date
 from dimagi.utils.web import json_request, json_response
+from django_prbac.utils import has_privilege
 from soil import DownloadBase
 from soil.tasks import prepare_download
 from dimagi.utils.couch.cache.cache_core import get_redis_client
@@ -72,8 +73,10 @@ from couchexport.export import Format, export_from_tables
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.templatetags.case_tags import case_inline_display
 from casexml.apps.case.xml import V2
+from corehq import privileges
 from corehq.apps.export.exceptions import BadExportConfiguration
 from corehq.apps.hqwebapp.models import ReportsTab
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.reports.exportfilters import default_form_filter
 import couchforms.views as couchforms_views
 from couchforms.filters import instances
@@ -1249,9 +1252,12 @@ def download_form(request, domain, instance_id):
 
 
 @require_form_view_permission
-@login_and_domain_required
+@require_permission(Permissions.edit_data)
 @require_GET
 def edit_form_instance(request, domain, instance_id):
+    if not (has_privilege(request, privileges.CLOUDCARE) and toggle_enabled(request, toggles.EDIT_SUBMISSIONS)):
+        raise Http404()
+
     context = _get_form_context(request, domain, instance_id)
     instance = context['instance']
     form_meta = FormType(domain, instance.xmlns, instance.app_id).metadata
