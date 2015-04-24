@@ -73,7 +73,7 @@ class ApplicationStatusReport(DeploymentsReport):
 
     @property
     def headers(self):
-        return DataTablesHeader(
+        headers = DataTablesHeader(
             DataTablesColumn(_("Username")),
             DataTablesColumn(_("Last Submission"),
                              sort_type=DTSortType.NUMERIC),
@@ -83,6 +83,8 @@ class ApplicationStatusReport(DeploymentsReport):
                 help_text=_("""Displays application version of the last submitted form;
                             The currently deployed version may be different."""))
         )
+        headers.custom_sort = [[1, 'desc']]
+        return headers
 
     @property
     def rows(self):
