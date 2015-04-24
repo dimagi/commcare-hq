@@ -9,6 +9,7 @@ import cStringIO
 import itertools
 from datetime import datetime, timedelta, date
 from urllib2 import URLError
+from casexml.apps.case import const
 from corehq.util.timezones.utils import get_timezone_for_user
 from dimagi.utils.decorators.memoized import memoized
 from unidecode import unidecode
@@ -1245,6 +1246,53 @@ def download_form(request, domain, instance_id):
     instance = _get_form_or_404(instance_id)
     assert(domain == instance.domain)
     return couchforms_views.download_form(request, instance_id)
+
+
+@require_form_view_permission
+@login_and_domain_required
+@require_GET
+def edit_form_instance(request, domain, instance_id):
+    context = _get_form_context(request, domain, instance_id)
+    instance = context['instance']
+    form_meta = FormType(domain, instance.xmlns, instance.app_id).metadata
+
+    def _form_meta_to_context_url(form_meta, instance_id=None):
+        try:
+            url = reverse(
+                'cloudcare_form_context',
+                args=[domain, form_meta['app']['id'], form_meta['module']['id'], form_meta['form']['id']])
+        except (KeyError, AttributeError):
+            raise Http404(_('Missing app, module or form information!'))
+
+        if instance:
+            url = '{}?instance_id={}'.format(url, instance_id)
+        return url
+
+    edit_session_data = {'user_id': instance.metadata.userID}
+    case_blocks = extract_case_blocks(instance)
+
+    if len(case_blocks) == 1 and case_blocks[0].get(const.CASE_ATTR_ID):
+        edit_session_data["case_id"] = case_blocks[0].get(const.CASE_ATTR_ID)
+
+    edit_session_data['function_context'] = {
+        'static': [
+            {'name': 'now', 'value': instance.metadata.timeEnd},
+        ]
+    }
+
+    context.update({
+        'domain': domain,
+        'maps_api_key': settings.GMAPS_API_KEY,  # used by cloudcare
+        'form_name': _('Edit Submission'),  # used in breadcrumbs
+        'edit_context': {
+            'formUrl': _form_meta_to_context_url(form_meta, instance_id),
+            'submitUrl': reverse('receiver_post_with_app_id', args=[domain, form_meta['app']['id']]),
+            'sessionData': edit_session_data,
+            'returnUrl': reverse('render_form_data', args=[domain, instance_id]),
+        }
+    })
+    return render(request, 'reports/form/edit_submission.html', context)
+
 
 @login_or_digest
 @require_form_view_permission
