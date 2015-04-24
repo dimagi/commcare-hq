@@ -113,11 +113,7 @@
                                       .filter(function(k, v) { 
                                           return /\s+/.test(v.value.trim());
                                       }).length;
-                if (invalidFields > 0) {
-                    $('.form-actions [type=submit]').prop('disabled', true);
-                } else {
-                    $('.form-actions [type=submit]').prop('disabled', false);
-                }
+                $('.form-actions [type=submit]').prop('disabled', invalidFields > 0);
             }
 
             function populateRowErrors(tr) {
