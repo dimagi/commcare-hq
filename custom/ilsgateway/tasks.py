@@ -14,7 +14,7 @@ from custom.ilsgateway.api import ILSGatewayEndpoint, ILSGatewayAPI
 from custom.logistics.commtrack import bootstrap_domain as ils_bootstrap_domain, save_stock_data_checkpoint
 from custom.ilsgateway.models import ILSGatewayConfig, SupplyPointStatus, DeliveryGroupReport, ReportRun, \
     GroupSummary, OrganizationSummary, ProductAvailabilityData, Alert, SupplyPointWarehouseRecord
-from custom.ilsgateway.tanzania.warehouse_updater import populate_report_data
+from custom.ilsgateway.tanzania.warehouse.updater import populate_report_data
 from custom.logistics.models import StockDataCheckpoint
 from custom.logistics.tasks import stock_data_task, sync_stock_transactions
 
@@ -180,7 +180,7 @@ def clear_report_data(domain):
 
 # @periodic_task(run_every=timedelta(days=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 @task(queue='background_queue', ignore_result=True)
-def report_run(domain):
+def report_run(domain, locations=None, strict=True):
     last_successful_run = ReportRun.last_success(domain)
     last_run = ReportRun.last_run(domain)
     start_date = (datetime.min if not last_successful_run else last_successful_run.end)
@@ -200,7 +200,7 @@ def report_run(domain):
                                        start_run=datetime.utcnow(), domain=domain)
     has_error = True
     try:
-        populate_report_data(start_date, end_date, domain, run)
+        populate_report_data(start_date, end_date, domain, run, locations, strict=strict)
         has_error = False
     except Exception, e:
         # just in case something funky happened in the DB
