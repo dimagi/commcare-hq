@@ -198,10 +198,10 @@ def report_run(domain):
         # start new run
         run = ReportRun.objects.create(start=start_date, end=end_date,
                                        start_run=datetime.utcnow(), domain=domain)
+    has_error = True
     try:
-        run.has_error = True
         populate_report_data(start_date, end_date, domain, run)
-        run.has_error = False
+        has_error = False
     except Exception, e:
         # just in case something funky happened in the DB
         if isinstance(e, DatabaseError):
@@ -209,10 +209,12 @@ def report_run(domain):
                 transaction.rollback()
             except:
                 pass
-        run.has_error = True
+        has_error = True
         raise
     finally:
         # complete run
+        run = ReportRun.objects.get(pk=run.id)
+        run.has_error = has_error
         run.end_run = datetime.utcnow()
         run.complete = True
         run.save()
