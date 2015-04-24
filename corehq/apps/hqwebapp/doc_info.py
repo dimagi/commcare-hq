@@ -1,4 +1,5 @@
 from couchdbkit import ResourceNotFound
+from dimagi.utils.couch.undo import DELETED_SUFFIX
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
 from jsonobject import *
@@ -15,6 +16,7 @@ class DocInfo(JsonObject):
     display = StringProperty()
     link = StringProperty()
     type_display = StringProperty()
+    is_deleted = BooleanProperty()
 
 
 def get_doc_info_by_id(domain, id):
@@ -40,13 +42,14 @@ def get_doc_info(doc, domain_hint=None, cache=None):
     domain = doc.get('domain') or domain_hint
     doc_type = doc.get('doc_type')
     doc_id = doc.get('_id')
+    generic_delete = doc_type.endswith(DELETED_SUFFIX)
 
     assert doc.get('domain') == domain or domain in doc.get('domains', ())
 
     if cache and doc_id in cache:
         return cache[doc_id]
 
-    if doc_type in ('Application', 'RemoteApp'):
+    if doc_type.startswith('Application') or doc_type.startswith('RemoteApp'):
         if doc.get('copy_of'):
             doc_info = DocInfo(
                 display=u'%s (#%s)' % (doc['name'], doc['version']),
@@ -55,6 +58,7 @@ def get_doc_info(doc, domain_hint=None, cache=None):
                     'corehq.apps.app_manager.views.download_index',
                     args=[domain, doc_id],
                 ),
+                is_deleted=generic_delete,
             )
         else:
             doc_info = DocInfo(
@@ -64,8 +68,9 @@ def get_doc_info(doc, domain_hint=None, cache=None):
                     'corehq.apps.app_manager.views.view_app',
                     args=[domain, doc_id],
                 ),
+                is_deleted=generic_delete,
             )
-    elif doc_type in ('CommCareCase',):
+    elif doc_type.startswith('CommCareCase'):
         doc_info = DocInfo(
             display=doc['name'],
             type_display=_('Case'),
@@ -73,14 +78,16 @@ def get_doc_info(doc, domain_hint=None, cache=None):
                 'case_details',
                 args=[domain, doc_id],
             ),
+            is_deleted=generic_delete,
         )
-    elif doc_type in (couchforms_models.doc_types().keys()):
+    elif any([doc_type.startswith(d) for d in couchforms_models.doc_types().keys()]):
         doc_info = DocInfo(
             type_display=_('Form'),
             link=reverse(
                 'render_form_data',
                 args=[domain, doc_id],
             ),
+            is_deleted=generic_delete,
         )
     elif doc_type in ('CommCareUser',):
         doc_info = DocInfo(
@@ -90,6 +97,7 @@ def get_doc_info(doc, domain_hint=None, cache=None):
                 'edit_commcare_user',
                 args=[domain, doc_id],
             ),
+            is_deleted=doc.get('base_doc', '').endswith(DELETED_SUFFIX),
         )
     elif doc_type in ('WebUser',):
         doc_info = DocInfo(
@@ -99,6 +107,7 @@ def get_doc_info(doc, domain_hint=None, cache=None):
                 'user_account',
                 args=[domain, doc_id],
             ),
+            is_deleted=doc.get('base_doc', '').endswith(DELETED_SUFFIX),
         )
     elif doc_type in ('Group',):
         from corehq.apps.users.views.mobile import EditGroupMembersView
@@ -109,6 +118,7 @@ def get_doc_info(doc, domain_hint=None, cache=None):
                 EditGroupMembersView.urlname,
                 args=[domain, doc_id],
             ),
+            is_deleted=generic_delete,
         )
     elif doc_type in ('Domain',):
         if doc['is_snapshot'] and doc['published']:
@@ -122,6 +132,7 @@ def get_doc_info(doc, domain_hint=None, cache=None):
                 urlname,
                 kwargs={'domain' : doc['name']}
             ),
+            is_deleted=generic_delete,
         )
     elif doc_type in ('CommCareCaseGroup',):
         from corehq.apps.data_interfaces.views import CaseGroupCaseManagementView
@@ -132,9 +143,12 @@ def get_doc_info(doc, domain_hint=None, cache=None):
                 CaseGroupCaseManagementView.urlname,
                 args=[domain, doc_id],
             ),
+            is_deleted=is_deleted,
         )
     else:
-        doc_info = DocInfo()
+        doc_info = DocInfo(
+            is_deleted=generic_delete,
+        )
 
     doc_info.id = doc_id
     doc_info.domain = domain

@@ -29,6 +29,7 @@ from casexml.apps.case.util import (
 from casexml.apps.case import const
 from dimagi.utils.modules import to_function
 from dimagi.utils import parsing, web
+from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.indicators import ComputedDocumentMixin
 from couchforms.models import XFormInstance
@@ -969,7 +970,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
 import casexml.apps.case.signals
 
 
-class CommCareCaseGroup(Document):
+class CommCareCaseGroup(UndoableDocument):
     """
         This is a group of CommCareCases. Useful for managing cases in larger projects.
     """
@@ -1034,6 +1035,14 @@ class CommCareCaseGroup(Document):
             reduce=True
         ).first()
         return data['value'] if data else 0
+
+    def create_delete_record(self, *args, **kwargs):
+        return DeleteCaseGroupRecord(*args, **kwargs)
+
+
+class DeleteCaseGroupRecord(DeleteDocRecord):
+    def get_doc(self):
+        return CommCareCaseGroup.get(self.doc_id)
 
 
 def _action_sort_key_function(case):

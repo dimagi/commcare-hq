@@ -140,6 +140,9 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
         if doc_info:
             username, contact_type, url = (doc_info.display,
                 doc_info.type_display, doc_info.link)
+            if doc_info.is_deleted:
+                url = None
+                username = '%s (%s %s)' % (username, _('Deleted'), _(doc_info.type_display))
         else:
             username, contact_type, url = (None, None, None)
         username = username or "-"
