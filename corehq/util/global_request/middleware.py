@@ -12,6 +12,6 @@ class GlobalRequestMiddleware(object):
         return response
 
     def remember_domain_visit(self, request, response):
-        last_visited_domain = request.COOKIES.get('last_visited_domain')
+        last_visited_domain = request.session.get('last_visited_domain')
         if last_visited_domain != request.domain:
-            response.set_cookie('last_visited_domain', request.domain)
+            request.session['last_visited_domain'] = request.domain

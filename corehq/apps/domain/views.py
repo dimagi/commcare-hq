@@ -124,7 +124,7 @@ def select(request, domain_select_template='domain/select.html', do_not_redirect
         'open_invitations': open_invitations,
     }
 
-    last_visited_domain = request.COOKIES.get('last_visited_domain')
+    last_visited_domain = request.session.get('last_visited_domain')
     if open_invitations \
        or do_not_redirect \
        or not last_visited_domain:
@@ -134,9 +134,8 @@ def select(request, domain_select_template='domain/select.html', do_not_redirect
             from corehq.apps.dashboard.views import dashboard_default
             return dashboard_default(request, last_visited_domain)
         except Http404:
-            response = render(request, domain_select_template, additional_context)
-            response.delete_cookie('last_visited_domain')
-            return response
+            del request.session['last_visited_domain']
+            return render(request, domain_select_template, additional_context)
 
 
 @require_superuser
