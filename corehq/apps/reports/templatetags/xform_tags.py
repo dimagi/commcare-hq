@@ -1,5 +1,4 @@
 from functools import partial
-from django.conf import settings
 
 from django.template.loader import render_to_string
 from django.core.urlresolvers import reverse
