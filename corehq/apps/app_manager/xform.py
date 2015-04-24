@@ -4,7 +4,7 @@ import logging
 from django.utils.translation import ugettext_lazy as _
 from casexml.apps.case.xml import V2_NAMESPACE
 from corehq.apps.app_manager.const import APP_V1, SCHEDULE_PHASE, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE, \
-    CASE_ID, USERCASE_ID, USERCASE_PREFIX
+    CASE_ID, USERCASE_ID
 from lxml import etree as ET
 from corehq.util.view_utils import get_request
 from dimagi.utils.decorators.memoized import memoized
@@ -407,10 +407,6 @@ class CaseBlock(object):
         for key, value in updates.items():
             if key == 'name':
                 key = 'case_name'
-            elif key.startswith(USERCASE_PREFIX):
-                # Skip usercase keys. They are handled by the usercase block.
-                # cf. add_usercase
-                continue
             if self.is_attachment(value):
                 attachments[key] = value
             else:
@@ -986,7 +982,7 @@ class XForm(WrappedNode):
 
         return meta_blocks
 
-    def _add_usercase_bind(self, usercase_path):
+    def add_usercase_bind(self, usercase_path):
         self.add_bind(
             nodeset=usercase_path + 'case/@case_id',
             calculate=SESSION_USERCASE_ID,
@@ -1010,24 +1006,20 @@ class XForm(WrappedNode):
             )
 
     def add_usercase(self, form):
-        from corehq.apps.app_manager.util import get_usercase_keys, get_usercase_values
-
         usercase_path = 'commcare_usercase/'
         actions = form.active_actions()
 
-        if 'update_case' in actions:
-            usercase_updates = get_usercase_keys(actions['update_case'].update)
-            if usercase_updates:
-                self._add_usercase_bind(usercase_path)
-                usercase_block = _make_elem('{x}commcare_usercase')
-                case_block = CaseBlock(self, usercase_path)
-                case_block.add_update_block(usercase_updates)
-                usercase_block.append(case_block.elem)
-                self.data_node.append(usercase_block)
+        if 'update_usercase' in actions and actions['update_usercase'].update:
+            self.add_usercase_bind(usercase_path)
+            usercase_block = _make_elem('{x}commcare_usercase')
+            case_block = CaseBlock(self, usercase_path)
+            case_block.add_update_block(actions['update_usercase'].update)
+            usercase_block.append(case_block.elem)
+            self.data_node.append(usercase_block)
 
-        if 'case_preload' in actions:
+        if 'usercase_preload' in actions and actions['usercase_preload'].preload:
             self.add_case_preloads(
-                get_usercase_values(actions['case_preload'].preload),
+                actions['usercase_preload'].preload,
                 case_id_xpath=SESSION_USERCASE_ID
             )
 
@@ -1232,8 +1224,6 @@ class XForm(WrappedNode):
             return 'false()'
 
     def create_casexml_2(self, form):
-        from corehq.apps.app_manager.util import skip_usercase_values
-
         actions = form.active_actions()
 
         if form.requires == 'none' and 'open_case' not in actions and 'update_case' in actions:
@@ -1302,7 +1292,7 @@ class XForm(WrappedNode):
                 case_block.add_close_block(self.action_relevance(actions['close_case'].condition))
 
             if 'case_preload' in actions:
-                self.add_case_preloads(skip_usercase_values(actions['case_preload'].preload))
+                self.add_case_preloads(actions['case_preload'].preload)
 
         if 'subcases' in actions:
             subcases = actions['subcases']

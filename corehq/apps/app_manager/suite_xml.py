@@ -1497,16 +1497,25 @@ class SuiteGenerator(SuiteGeneratorBase):
 
     def get_extra_case_id_datums(self, form):
         datums = []
-        if form.form_type == 'module_form' and actions_use_usercase(form.active_actions()):
+        actions = form.active_actions()
+        if form.form_type == 'module_form' and actions_use_usercase(actions):
             if not self.is_usercase_enabled:
                 raise SuiteError('Form uses usercase, but usercase not enabled')
             case = UserCaseXPath().case()
-            datums.append({
-                'datum': SessionDatum(id=USERCASE_ID, function=('%s/@case_id' % case)),
-                'case_type': USERCASE_TYPE,
-                'requires_selection': False,
-                'action': None  # action and user case are independent.
-            })
+            if 'update_usercase' in actions and actions['update_usercase'].update:
+                datums.append({
+                    'datum': SessionDatum(id=USERCASE_ID, function=('%s/@case_id' % case)),
+                    'case_type': USERCASE_TYPE,
+                    'requires_selection': False,
+                    'action': actions['update_usercase']
+                })
+            if 'usercase_preload' in actions and actions['usercase_preload'].preload:
+                datums.append({
+                    'datum': SessionDatum(id=USERCASE_ID, function=('%s/@case_id' % case)),
+                    'case_type': USERCASE_TYPE,
+                    'requires_selection': False,
+                    'action': actions['usercase_preload']
+                })
         return datums
 
     @staticmethod
