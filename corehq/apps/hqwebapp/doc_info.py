@@ -123,6 +123,16 @@ def get_doc_info(doc, domain_hint=None, cache=None):
                 kwargs={'domain' : doc['name']}
             ),
         )
+    elif doc_type in ('CommCareCaseGroup',):
+        from corehq.apps.data_interfaces.views import CaseGroupCaseManagementView
+        doc_info = DocInfo(
+            type_display=_('Case Group'),
+            display=doc['name'],
+            link=reverse(
+                CaseGroupCaseManagementView.urlname,
+                args=[domain, doc_id],
+            ),
+        )
     else:
         doc_info = DocInfo()
 

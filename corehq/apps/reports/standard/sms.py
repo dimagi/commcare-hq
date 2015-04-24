@@ -17,9 +17,10 @@ from corehq.util.timezones.conversions import ServerTime
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
+from corehq.apps.groups.models import Group
 from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.models import CouchUser
-from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.models import CommCareCase, CommCareCaseGroup
 from django.conf import settings
 # This import is not used, but there's some sort circular dependency
 # that is exposed if you remove this. That's not something I've seen before
@@ -162,6 +163,10 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
                     doc = CommCareCase.get(recipient_id)
                 elif recipient_doc_type in ('CommCareUser', 'WebUser'):
                     doc = CouchUser.get_by_user_id(recipient_id)
+                elif recipient_doc_type.startswith('Group'):
+                    doc = Group.get(recipient_id)
+                elif recipient_doc_type.startswith('CommCareCaseGroup'):
+                    doc = CommCareCaseGroup.get(recipient_id)
             except Exception:
                 pass
 
