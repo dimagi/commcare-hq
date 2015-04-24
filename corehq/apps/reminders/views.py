@@ -1464,8 +1464,6 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
             }
 
     def _fmt_keyword_data(self, keyword):
-        actions = [a.action for a in keyword.actions]
-        is_structured = METHOD_STRUCTURED_SMS in actions
         return {
             'id': keyword._id,
             'keyword': keyword.keyword,
@@ -1473,7 +1471,7 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
             'editUrl': reverse(
                 EditStructuredKeywordView.urlname,
                 args=[self.domain, keyword._id]
-            ) if is_structured else reverse(
+            ) if keyword.is_structured_sms() else reverse(
                 EditNormalKeywordView.urlname,
                 args=[self.domain, keyword._id]
             ),

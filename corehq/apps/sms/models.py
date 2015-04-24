@@ -615,6 +615,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     domain = models.CharField(max_length=255, null=False, db_index=True)
     date = models.DateTimeField(null=False, db_index=True)
     source = models.CharField(max_length=3, choices=SOURCE_CHOICES, null=False)
+    source_id = models.CharField(max_length=255, null=True)
     content_type = models.CharField(max_length=3, choices=CONTENT_CHOICES, null=False)
 
     # Only used when content_type is CONTENT_SMS_SURVEY or CONTENT_IVR_SURVEY
@@ -668,29 +669,44 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         )
 
     @classmethod
-    def create_from_reminder(cls, reminder_definition, reminder, recipient):
+    def get_source(cls, reminder_definition):
         from corehq.apps.reminders.models import (REMINDER_TYPE_ONE_TIME,
-            REMINDER_TYPE_KEYWORD_INITIATED, REMINDER_TYPE_DEFAULT, METHOD_SMS,
+            REMINDER_TYPE_KEYWORD_INITIATED, REMINDER_TYPE_DEFAULT)
+
+        default = (cls.SOURCE_OTHER, None)
+        return {
+            REMINDER_TYPE_ONE_TIME:
+                (cls.SOURCE_BROADCAST, reminder_definition.get_id),
+            REMINDER_TYPE_KEYWORD_INITIATED:
+                (cls.SOURCE_KEYWORD, reminder_definition.keyword_id),
+            REMINDER_TYPE_DEFAULT:
+                (cls.SOURCE_REMINDER, reminder_definition.get_id),
+        }.get(reminder_definition.reminder_type, default)
+
+    @classmethod
+    def get_content_type(cls, reminder_definition):
+        from corehq.apps.reminders.models import (METHOD_SMS, METHOD_SMS_CALLBACK,
             METHOD_SMS_SURVEY, METHOD_IVR_SURVEY)
-
-        source = {
-            REMINDER_TYPE_ONE_TIME: cls.SOURCE_BROADCAST,
-            REMINDER_TYPE_KEYWORD_INITIATED: cls.SOURCE_KEYWORD,
-            REMINDER_TYPE_DEFAULT: cls.SOURCE_REMINDER,
-        }.get(reminder_definition.reminder_type, cls.SOURCE_OTHER)
-
-        content_type = {
+        return {
             METHOD_SMS: cls.CONTENT_SMS,
+            METHOD_SMS_CALLBACK: cls.CONTENT_SMS,
             METHOD_SMS_SURVEY: cls.CONTENT_SMS_SURVEY,
             METHOD_IVR_SURVEY: cls.CONTENT_IVR_SURVEY,
         }.get(reminder_definition.method, '')
 
+    @classmethod
+    def create_from_reminder(cls, reminder_definition, reminder, recipient):
+        from corehq.apps.reminders.models import METHOD_SMS_SURVEY, METHOD_IVR_SURVEY
+
+        source, source_id = cls.get_source(reminder_definition)
+        content_type = cls.get_content_type(reminder_definition)
         recipient_type = cls.get_recipient_type(recipient)
 
         return cls.objects.create(
             domain=reminder_definition.domain,
             date=datetime.utcnow(),
             source=source,
+            source_id=source_id,
             content_type=content_type,
             form_unique_id=(reminder.current_event.form_unique_id
                 if reminder_definition.method in (METHOD_SMS_SURVEY, METHOD_IVR_SURVEY)

@@ -132,7 +132,8 @@ def enqueue_reminder_directly(reminder):
         ReminderEnqueuingOperation)
     ReminderEnqueuingOperation().enqueue_directly(reminder)
 
-def create_immediate_reminder(contact, content_type, reminder_type=None, message=None, form_unique_id=None, case=None):
+def create_immediate_reminder(contact, content_type, reminder_type=None,
+    message=None, form_unique_id=None, case=None, keyword=None):
     """
     contact - the contact to send to
     content_type - METHOD_SMS or METHOD_SMS_SURVEY (see corehq.apps.reminders.models)
@@ -140,6 +141,8 @@ def create_immediate_reminder(contact, content_type, reminder_type=None, message
     message - the message to send if content_type == METHOD_SMS
     form_unique_id - the form_unique_id of the form to send if content_type == METHOD_SMS_SURVEY
     case - the case that is associated with this reminder (so that you can embed case properties into the message)
+    keyword - if reminder_type == REMINDER_TYPE_KEYWORD_INITIATED,
+        pass in the keyword that initiated this reminder
     """
     from corehq.apps.reminders.models import (
         CaseReminderHandler,
@@ -147,6 +150,7 @@ def create_immediate_reminder(contact, content_type, reminder_type=None, message
         ON_DATETIME,
         EVENT_AS_OFFSET,
         REMINDER_TYPE_DEFAULT,
+        REMINDER_TYPE_KEYWORD_INITIATED,
         METHOD_SMS,
         METHOD_SMS_SURVEY,
         RECIPIENT_CASE,
@@ -197,6 +201,7 @@ def create_immediate_reminder(contact, content_type, reminder_type=None, message
         user_id = contact._id if recipient == RECIPIENT_USER else None,
         sample_id = contact._id if recipient == RECIPIENT_SURVEY_SAMPLE else None,
         user_group_id = contact._id if recipient == RECIPIENT_USER_GROUP else None,
+        keyword_id=keyword.get_id if keyword and reminder_type == REMINDER_TYPE_KEYWORD_INITIATED else None,
     )
     handler.save(send_immediately=True)
 

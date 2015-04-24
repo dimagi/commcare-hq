@@ -1,5 +1,7 @@
+from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
+from couchdbkit.resource import ResourceNotFound
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.filters.dates import DatespanFilter
@@ -37,6 +39,11 @@ from corehq.apps.sms.models import (
     SMSLog,
     MessagingEvent,
 )
+from corehq.apps.reminders.models import (SurveyKeyword,
+    CaseReminderHandler)
+from corehq.apps.reminders.views import (EditStructuredKeywordView,
+    EditNormalKeywordView, EditScheduledReminderView)
+
 
 class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
     name = ugettext_noop('SMS Usage')
@@ -137,7 +144,7 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
         username = username or "-"
         contact_type = contact_type or _("Unknown")
         if url:
-            ret = self.table_cell(username, '<a href="%s">%s</a>' % (url, username))
+            ret = self.table_cell(username, '<a target="_blank" href="%s">%s</a>' % (url, username))
         else:
             ret = self.table_cell(username, username)
         ret['raw'] = "|||".join([username, contact_type,
@@ -340,6 +347,53 @@ class MessagingEventsReport(BaseCommConnectLogReport):
         status = dict(MessagingEvent.STATUS_CHOICES).get(event.status)
         return _(status)
 
+    def get_keyword_display(self, keyword_id, content_cache):
+        if keyword_id in content_cache:
+            return content_cache[keyword_id]
+        try:
+            keyword = SurveyKeyword.get(keyword_id)
+            if keyword.deleted():
+                result = '%s %s' % (keyword.description, _('(Deleted Keyword)'))
+            else:
+                urlname = (EditStructuredKeywordView.urlname if keyword.is_structured_sms()
+                    else EditNormalKeywordView.urlname)
+                result = '<a target="_blank" href="%s">%s</a>' % (
+                    reverse(urlname, args=[keyword.domain, keyword_id]),
+                    keyword.description,
+                )
+        except ResourceNotFound:
+            result = '-'
+
+        content_cache[keyword_id] = result
+        return result
+
+    def get_reminder_display(self, handler_id, content_cache):
+        if handler_id in content_cache:
+            return content_cache[handler_id]
+        try:
+            reminder_definition = CaseReminderHandler.get(handler_id)
+            if reminder_definition.deleted():
+                result = '%s %s' % (reminder_definition.nickname, _('(Deleted Reminder)'))
+            else:
+                urlname = EditScheduledReminderView.urlname
+                result = '<a target="_blank" href="%s">%s</a>' % (
+                    reverse(urlname, args=[reminder_definition.domain, handler_id]),
+                    reminder_definition.nickname,
+                )
+        except ResourceNotFound:
+            result = '-'
+
+        content_cache[handler_id] = result
+        return result
+
+    def get_content_display(self, event, content_cache):
+        if event.source == MessagingEvent.SOURCE_KEYWORD and event.source_id:
+            return self.get_keyword_display(event.source_id, content_cache)
+        elif event.source == MessagingEvent.SOURCE_REMINDER and event.source_id:
+            return self.get_reminder_display(event.source_id, content_cache)
+        else:
+            return '-'
+
     @property
     def rows(self):
         data = MessagingEvent.objects.filter(
@@ -350,6 +404,7 @@ class MessagingEventsReport(BaseCommConnectLogReport):
 
         result = []
         contact_cache = {}
+        content_cache = {}
 
         for event in data:
             doc_info = self.get_recipient_info(event.get_recipient_doc_type(),
@@ -358,7 +413,7 @@ class MessagingEventsReport(BaseCommConnectLogReport):
             timestamp = ServerTime(event.date).user_time(self.timezone).done()
             result.append([
                 self._fmt_timestamp(timestamp),
-                '',
+                self.get_content_display(event, content_cache),
                 self.get_source_display(event),
                 self._fmt_contact_link(event.recipient_id, doc_info),
                 self.get_status_display(event),

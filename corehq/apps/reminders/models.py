@@ -509,6 +509,11 @@ class CaseReminderHandler(Document):
     # and if a case other than that case triggered the reminder.
     force_surveys_to_use_triggered_case = BooleanProperty(default=False)
 
+    # Keywords spawn immediate reminders. If this reminder definition was
+    # spawned from a keyword (self.reminder_type == REMINDER_TYPE_KEYWORD_INITIATED),
+    # then this is the id of the keyword that spawned it.
+    keyword_id = StringProperty()
+
     @property
     def uses_parent_case_property(self):
         events_use_parent_case_property = False
@@ -1438,6 +1443,12 @@ class SurveyKeyword(Document):
     named_args = DictProperty()
     named_args_separator = StringProperty()
     oct13_migration_timestamp = DateTimeProperty()
+
+    def is_structured_sms(self):
+        return METHOD_STRUCTURED_SMS in [a.action for a in self.actions]
+
+    def deleted(self):
+        return self.doc_type != 'SurveyKeyword'
 
     def retire(self):
         self.doc_type += "-Deleted"

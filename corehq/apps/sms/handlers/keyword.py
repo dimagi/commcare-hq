@@ -511,12 +511,12 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
             create_immediate_reminder(contact, METHOD_SMS, 
                 reminder_type=REMINDER_TYPE_KEYWORD_INITIATED,
                 message=survey_keyword_action.message_content,
-                case=case)
+                case=case, keyword=survey_keyword)
         elif survey_keyword_action.action == METHOD_SMS_SURVEY:
             create_immediate_reminder(contact, METHOD_SMS_SURVEY,
                 reminder_type=REMINDER_TYPE_KEYWORD_INITIATED,
                 form_unique_id=survey_keyword_action.form_unique_id,
-                case=case)
+                case=case, keyword=survey_keyword)
         elif survey_keyword_action.action == METHOD_STRUCTURED_SMS:
             res = handle_structured_sms(survey_keyword, survey_keyword_action,
                 sender, verified_number, text, send_response=True, msg=msg,
