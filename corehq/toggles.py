@@ -445,11 +445,12 @@ USER_AS_A_CASE = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-STREAM_RESTORE_CACHE = StaticToggle(
+STREAM_RESTORE_CACHE = PredicatablyRandomToggle(
     'stream_cached_restore',
     'Stream cached restore from couchdb',
     TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN]
+    randomness=.05,
+    namespace=[NAMESPACE_DOMAIN]
 )
 
 ENABLE_LOADTEST_USERS = StaticToggle(
