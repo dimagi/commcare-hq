@@ -8,6 +8,7 @@ from django.db.models import Q
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.locations.models import Location, SQLLocation
 from dimagi.utils.chunked import chunked
+from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.dates import get_business_day_of_month, add_months, months_between
 from casexml.apps.stock.models import StockReport, StockTransaction
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, DeliveryGroups, \
@@ -291,7 +292,7 @@ def _get_test_locations(domain):
     test_region = SQLLocation.objects.get(domain=domain, external_id=TEST_REGION_ID)
     sql_locations = SQLLocation.objects.filter(
         Q(domain=domain) & (Q(parent=test_region) | Q(parent__parent=test_region))
-    ).order_by('id').only('location_id')
+    ).exclude(is_archived=True).order_by('id').only('location_id')
     return [sql_location.couch_location for sql_location in sql_locations] + \
            [test_region.couch_location]
 
@@ -310,10 +311,18 @@ def populate_report_data(start_date, end_date, domain, runner):
         for location_type in non_facilities_types:
             non_facilities.extend(filter(lambda location: location.location_type == location_type, locations))
     else:
-        facilities = Location.filter_by_type(domain, 'FACILITY')
-        non_facilities = list(Location.filter_by_type(domain, 'DISTRICT'))
-        non_facilities += list(Location.filter_by_type(domain, 'REGION'))
-        non_facilities += list(Location.filter_by_type(domain, 'MOHSW'))
+        facilities = [l.couch_location for l in SQLLocation.objects.filter(domain=domain,
+                                                                           location_type__name='FACILITY',
+                                                                           is_archived=False)]
+        non_facilities = [l.couch_location for l in SQLLocation.objects.filter(domain=domain,
+                                                                               location_type__name='DISTRICT',
+                                                                               is_archived=False)]
+        non_facilities += [l.couch_location for l in SQLLocation.objects.filter(domain=domain,
+                                                                                location_type__name='REGION',
+                                                                                is_archived=False)]
+        non_facilities += [l.couch_location for l in SQLLocation.objects.filter(domain=domain,
+                                                                                location_type__name='MOSHW',
+                                                                                is_archived=False)]
 
     if runner.location:
         if runner.location.location_type.name.upper() != 'FACILITY':
@@ -529,12 +538,10 @@ def process_facility_transactions(facility_id, transactions):
 
 
 def get_nested_children(location):
-    children = []
-    if not location.children:
-        return [location]
-    for child in location.children:
-        children.extend(get_nested_children(child))
-    return children
+    child_ids = location.sql_location.get_descendants().filter(
+        is_actived=False
+    ).values_list('location_id', flat=True)
+    return [Location.wrap(doc) for doc in get_docs(Location.get_db(), child_ids)]
 
 
 @task(queue='background_queue', ignore_result=True)

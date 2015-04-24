@@ -116,6 +116,10 @@ class RRReportingHistory(ILSData):
         for child in dg:
             total_responses = 0
             total_possible = 0
+            rr_value = randr_value(child.location_id, self.config['startdate'], self.config['enddate'])
+            if child.is_archived and not rr_value:
+                continue
+
             group_summaries = GroupSummary.objects.filter(
                 org_summary__date__lte=self.config['startdate'],
                 org_summary__supply_point=child.location_id, title=SupplyPointStatusTypes.R_AND_R_FACILITY
@@ -132,7 +136,6 @@ class RRReportingHistory(ILSData):
                            (self.config['location_id'], self.config['month'], self.config['year'],
                            self.config['program'], self.config['msd_code']))
 
-            rr_value = randr_value(child.location_id, self.config['startdate'], self.config['enddate'])
             contact = CommCareUser.get_db().view(
                 'locations/users_by_location_id',
                 startkey=[child.location_id],
