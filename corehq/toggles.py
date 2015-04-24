@@ -90,8 +90,9 @@ class PredicatablyRandomToggle(StaticToggle):
         )
 
 # if no namespaces are specified the user namespace is assumed
-NAMESPACE_USER = object()
+NAMESPACE_USER = 'user'
 NAMESPACE_DOMAIN = 'domain'
+ALL_NAMESPACES = [NAMESPACE_USER, NAMESPACE_DOMAIN]
 
 
 def all_toggles():
