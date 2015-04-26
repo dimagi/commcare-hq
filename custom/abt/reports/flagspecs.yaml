@@ -1,0 +1,45 @@
+# Form 3
+http://openrosa.org/formdesigner/54338047-CFB6-4D5B-861B-2256A10BBBC8:
+    - question: [q2_action]
+      answer: []
+      warning: " Problem reported: Spray operator(s) not properly fed or hydrated prior to donning PPE."
+      warning_question: ~
+      # answer and warning_question are optional
+    - question: [q4_action]
+      warning: "Problem reported: Spray operator(s) eating or drinking after donning PPE."
+    - question: [q5_action]
+      warning: "Problem reported: Team Leaders not conducting casual physical inspection of SOs in the morning."
+    - question: [q6_action]
+      warning: "Problem reported: Spray operator(s) not using insecticide left over from previous day."
+    - question:  [q7_action]
+      warning: "Problem reported: Not all pesticide and contaminated rinse water used up to fill SOs tanks."
+    - question: [q9_action]
+      warning: "Problem noted: Vehicle was not inspected prior to contract."
+    - question: [q10_action]
+      warning: "Problem noted: Vehicle does not have required license or certificate."
+    - question: [q11_action]
+      warning: "If No, Problem noted: Provide safety training for driver."
+    - question: [q12_action]
+      warning: "Problem noted: Separate transportation needed for operators and pesticides other than the days supply."
+    - question: [q13_action]
+      warning: "Problem noted: Mixed goods transportation violation, suggest re-training."
+    - question: [q16_action]
+      warning: "Problem noted: Drivers do not have cell telephone and/or appropriate PPE."
+    - question: [q17_action]
+      warning: "Problem noted: Need to provide materials for securing and tying down pesticides in the vehicle"
+    - question: [q18_action]
+      warning: "Problem reported: Pesticide transport vehicle must always carry a fire extinguisher."
+    - question: [q19_action]
+      warning: "Problem noted: Spray operator transport vehicle must be configured with seats and railings"
+    - question: [q19a]
+      warning: "Confirm date for transport vehicle to be modified."
+    - question: [q20_action]
+      warning: "Problem reported: Spray operators must be properly seated with the pump secured between their legs in the transport vehicle."
+    - question: [q21_action]
+      warning: "Problem noted: Need to provide additional vehicle for spray operators."
+    - question: [q22_action]
+      warning: "Problem noted: Evidence of pesticide leakage in vehicle."
+    - question: [q23_action]
+      warning: "Problem noted: Pesticide exposure incident reported. Follow-up to ensure that an incident report form is completed and sent to COP, ECO, Operations Manager, Technical Coordinator and ECM immediately."
+    - question: [q24_action]
+      warning: "Problem noted: Vehicle accident reported. Follow-up to ensure that an incident report form is completed and sent to COP, ECO, Operations Manager, Technical Coordinator and ECM immediately."
