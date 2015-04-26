@@ -1,199 +1,14 @@
 [
   {
-    "display_name": "flag", 
-    "datatype": "string", 
-    "expression": {
-      "datatype": null, 
-      "type": "property_name", 
-      "property_name": "flag"
-    }, 
-    "transform": {}, 
-    "is_nullable": true, 
-    "is_primary_key": false, 
-    "column_id": "flag", 
-    "type": "expression"
-  }, 
-  {
-    "display_name": "warning", 
-    "datatype": "string", 
-    "expression": {
-      "datatype": null, 
-      "type": "property_name", 
-      "property_name": "warning"
-    }, 
-    "transform": {}, 
-    "is_nullable": true, 
-    "is_primary_key": false, 
-    "column_id": "warning", 
-    "type": "expression"
-  }, 
-  {
-    "display_name": "date_and_time_of_inspection", 
-    "datatype": "datetime", 
-    "expression": {
-      "expression": {
-        "datatype": null, 
-        "type": "property_path", 
-        "property_path": [
-          "form", 
-          "date_time"
-        ]
-      }, 
-      "type": "root_doc"
-    }, 
-    "transform": {}, 
-    "is_nullable": true, 
-    "is_primary_key": false, 
-    "column_id": "date_and_time_of_inspection", 
-    "type": "expression"
-  }, 
-  {
-    "display_name": "country", 
-    "datatype": "string", 
-    "expression": {
-      "expression": {
-        "datatype": null, 
-        "type": "property_path", 
-        "property_path": [
-          "form", 
-          "country"
-        ]
-      }, 
-      "type": "root_doc"
-    }, 
-    "transform": {}, 
-    "is_nullable": true, 
-    "is_primary_key": false, 
-    "column_id": "country", 
-    "type": "expression"
-  }, 
-  {
-    "display_name": "district", 
-    "datatype": "string", 
-    "expression": {
-      "expression": {
-        "datatype": null, 
-        "type": "property_path", 
-        "property_path": [
-          "form", 
-          "District"
-        ]
-      }, 
-      "type": "root_doc"
-    }, 
-    "transform": {}, 
-    "is_nullable": true, 
-    "is_primary_key": false, 
-    "column_id": "district", 
-    "type": "expression"
-  }, 
-  {
-    "display_name": "sub_district", 
-    "datatype": "string", 
-    "expression": {
-      "expression": {
-        "datatype": null, 
-        "type": "property_path", 
-        "property_path": [
-          "form", 
-          "sub"
-        ]
-      }, 
-      "type": "root_doc"
-    }, 
-    "transform": {}, 
-    "is_nullable": true, 
-    "is_primary_key": false, 
-    "column_id": "sub_district", 
-    "type": "expression"
-  }, 
-  {
-    "display_name": "username", 
-    "datatype": "string", 
-    "expression": {
-      "expression": {
-        "datatype": null, 
-        "type": "property_path", 
-        "property_path": [
-          "form", 
-          "meta", 
-          "username"
-        ]
-      }, 
-      "type": "root_doc"
-    }, 
-    "transform": {}, 
-    "is_nullable": true, 
-    "is_primary_key": false, 
-    "column_id": "username", 
-    "type": "expression"
-  }, 
-  {
-    "display_name": "userID", 
-    "datatype": "string", 
-    "expression": {
-      "expression": {
-        "datatype": null, 
-        "type": "property_path", 
-        "property_path": [
-          "form", 
-          "meta", 
-          "userID"
-        ]
-      }, 
-      "type": "root_doc"
-    }, 
-    "transform": {}, 
-    "is_nullable": true, 
-    "is_primary_key": false, 
-    "column_id": "userID", 
-    "type": "expression"
-  }, 
-  {
-    "display_name": "form_name", 
-    "datatype": "string", 
-    "expression": {
-      "expression": {
-        "datatype": null, 
-        "type": "property_path", 
-        "property_path": [
-          "form", 
-          "@name"
-        ]
-      }, 
-      "type": "root_doc"
-    }, 
-    "transform": {}, 
-    "is_nullable": true, 
-    "is_primary_key": false, 
-    "column_id": "form_name", 
-    "type": "expression"
-  }, 
-  {
-    "display_name": "timeStart", 
-    "datatype": "datetime", 
-    "expression": {
-      "expression": {
-        "datatype": null, 
-        "type": "property_path", 
-        "property_path": [
-          "form", 
-          "meta", 
-          "timeStart"
-        ]
-      }, 
-      "type": "root_doc"
-    }, 
-    "transform": {}, 
-    "is_nullable": true, 
-    "is_primary_key": false, 
-    "column_id": "timeStart", 
-    "type": "expression"
-  }, 
-  {
     "display_name": "timeEnd", 
+    "transform": {}, 
     "datatype": "datetime", 
+    "type": "expression", 
+    "is_primary_key": false, 
+    "is_nullable": true, 
+    "column_id": "timeEnd", 
     "expression": {
+      "type": "root_doc", 
       "expression": {
         "datatype": null, 
         "type": "property_path", 
@@ -202,13 +17,76 @@
           "meta", 
           "timeEnd"
         ]
-      }, 
-      "type": "root_doc"
-    }, 
+      }
+    }
+  }, 
+  {
+    "display_name": "username", 
+    "datatype": "string", 
+    "type": "expression", 
+    "is_primary_key": false, 
     "transform": {}, 
     "is_nullable": true, 
+    "expression": {
+      "type": "root_doc", 
+      "expression": {
+        "datatype": null, 
+        "type": "property_path", 
+        "property_path": [
+          "form", 
+          "meta", 
+          "username"
+        ]
+      }
+    }, 
+    "column_id": "username"
+  }, 
+  {
+    "display_name": "form_name", 
+    "transform": {}, 
+    "datatype": "string", 
+    "type": "expression", 
     "is_primary_key": false, 
-    "column_id": "timeEnd", 
-    "type": "expression"
+    "is_nullable": true, 
+    "column_id": "form_name", 
+    "expression": {
+      "type": "root_doc", 
+      "expression": {
+        "datatype": null, 
+        "type": "property_path", 
+        "property_path": [
+          "form", 
+          "@name"
+        ]
+      }
+    }
+  }, 
+  {
+    "display_name": "flag", 
+    "transform": {}, 
+    "datatype": "string", 
+    "type": "expression", 
+    "is_primary_key": false, 
+    "is_nullable": true, 
+    "column_id": "flag", 
+    "expression": {
+      "datatype": null, 
+      "type": "property_name", 
+      "property_name": "flag"
+    }
+  }, 
+  {
+    "display_name": "warning", 
+    "transform": {}, 
+    "datatype": "string", 
+    "type": "expression", 
+    "is_primary_key": false, 
+    "is_nullable": true, 
+    "column_id": "warning", 
+    "expression": {
+      "datatype": null, 
+      "type": "property_name", 
+      "property_name": "warning"
+    }
   }
 ]

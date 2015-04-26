@@ -111,7 +111,8 @@ http://openrosa.org/formdesigner/54338047-CFB6-4D5B-861B-2256A10BBBC8:
     - question: [q10_action]
       warning: "Problem noted: Vehicle does not have required license or certificate."
     - question: [q11_action]
-      warning: "If No, Problem noted: Provide safety training for driver."
+      answer: "No"
+      warning: "Problem noted: Provide safety training for driver."
     - question: [q12_action]
       warning: "Problem noted: Separate transportation needed for operators and pesticides other than the days supply."
     - question: [q13_action]
@@ -166,7 +167,8 @@ http://openrosa.org/formdesigner/2BAC5FDC-72F3-4AF4-8381-9160E8AE13CF:
   - question: [q13_action]
     warning: "Problem reported: Some residents not satisfied with the IRS operations."
   - question: [q14_action]
-    warning: "If unchecked boxes,  Problem reported: Spray operator not wearing full PPE."
+    warning: "Problem reported: Spray operator not wearing full PPE."
+    # TODO: Only show q14_action if unchecked boxes
   - question: [q15_action]
     warning: "Problem reported: Homeowner did not observe mixing of pesticide."
   - question: [q16_action]
@@ -250,7 +252,8 @@ http://openrosa.org/formdesigner/7B543EA4-A416-4E46-A121-C4F57412B5AA:
   - question: [q29_action]
     warning: "Problem reported: Pesticide inventory does not balance."
   - question: [q30_action]
-    warning: "If  yes, Problem reported: Surplus pesticide in inventory."
+    answer: "yes" # TODO: Is this really the right answer?
+    warning: "Problem reported: Surplus pesticide in inventory."
   - question: [q31_action]
     warning: "Problem reported: Deficient waste management planning."
   - question: [q32_action]
@@ -306,9 +309,11 @@ http://openrosa.org/formdesigner/89F60CF0-C6A7-4AD8-A48E-AA0F7A7A9B4D:
   - question: [q14_action]
     warning: "Problem reported: Need for strict accounting for sachet/bottless, for labeled containers for all contaminated waste, and for storekeeper training."
   - question: [q15_action]
-    warning: "If no, Problem reported: Spray operators must complete daily report forms."
+    answer: "no" # TODO: Is this really the right capitalization?
+    warning: "Problem reported: Spray operators must complete daily report forms."
   - question: [q16_action]
-    warning: "If no, Problem reported: Supervisors must check spray forms."
+    answer: "no" # TODO same
+    warning: "Problem reported: Supervisors must check spray forms."
   - question: [q17_action]
     warning: "Problem reported: Team Leaders not using Error Eliminator.  "
   - question: [q17_2_action]

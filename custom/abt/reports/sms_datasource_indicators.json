@@ -1,11 +1,11 @@
 [
   {
     "display_name": "country", 
-    "transform": {}, 
     "datatype": "string", 
     "type": "expression", 
-    "is_primary_key": false, 
+    "transform": {}, 
     "is_nullable": true, 
+    "is_primary_key": false, 
     "column_id": "country", 
     "expression": {
       "value_expression": {
@@ -28,11 +28,11 @@
   }, 
   {
     "display_name": "district", 
-    "transform": {}, 
     "datatype": "string", 
     "type": "expression", 
-    "is_primary_key": false, 
+    "transform": {}, 
     "is_nullable": true, 
+    "is_primary_key": false, 
     "column_id": "district", 
     "expression": {
       "value_expression": {
@@ -54,12 +54,39 @@
     }
   }, 
   {
-    "display_name": "worker_code", 
-    "transform": {}, 
+    "display_name": "sub_district", 
     "datatype": "string", 
     "type": "expression", 
-    "is_primary_key": false, 
+    "transform": {}, 
     "is_nullable": true, 
+    "is_primary_key": false, 
+    "column_id": "sub_district", 
+    "expression": {
+      "value_expression": {
+        "datatype": null, 
+        "type": "property_name", 
+        "property_name": "sub_district"
+      }, 
+      "type": "related_doc", 
+      "related_doc_type": "CommCareCase", 
+      "doc_id_expression": {
+        "datatype": "string", 
+        "type": "property_path", 
+        "property_path": [
+          "form", 
+          "case", 
+          "@case_id"
+        ]
+      }
+    }
+  }, 
+  {
+    "display_name": "worker_code", 
+    "datatype": "string", 
+    "type": "expression", 
+    "transform": {}, 
+    "is_nullable": true, 
+    "is_primary_key": false, 
     "column_id": "worker_code", 
     "expression": {
       "value_expression": {
@@ -212,34 +239,6 @@
     "property_name": null
   }, 
   {
-    "display_name": "userID", 
-    "property_path": [
-      "form", 
-      "meta", 
-      "userID"
-    ], 
-    "datatype": "string", 
-    "is_primary_key": false, 
-    "column_id": "userID", 
-    "is_nullable": true, 
-    "type": "raw", 
-    "property_name": null
-  }, 
-  {
-    "display_name": "timeStart", 
-    "property_path": [
-      "form", 
-      "meta", 
-      "timeStart"
-    ], 
-    "datatype": "datetime", 
-    "is_primary_key": false, 
-    "column_id": "timeStart", 
-    "is_nullable": true, 
-    "type": "raw", 
-    "property_name": null
-  }, 
-  {
     "display_name": "timeEnd", 
     "property_path": [
       "form", 
@@ -254,26 +253,12 @@
     "property_name": null
   }, 
   {
-    "display_name": "deviceID", 
-    "property_path": [
-      "form", 
-      "meta", 
-      "deviceID"
-    ], 
-    "datatype": "string", 
-    "is_primary_key": false, 
-    "column_id": "deviceID", 
-    "is_nullable": true, 
-    "type": "raw", 
-    "property_name": null
-  }, 
-  {
     "display_name": "target_number", 
-    "transform": {}, 
     "datatype": "integer", 
     "type": "expression", 
-    "is_primary_key": false, 
+    "transform": {}, 
     "is_nullable": true, 
+    "is_primary_key": false, 
     "column_id": "target_number", 
     "expression": {
       "test": {
