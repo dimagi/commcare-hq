@@ -397,13 +397,6 @@ FILE_RESTORE = PredicatablyRandomToggle(
     namespace=[NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
 
-GLOBAL_SMS_RATES = StaticToggle(
-    'global_sms_rates',
-    'Global SMS Rates page',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_USER]
-)
-
 BULK_SMS_VERIFICATION = StaticToggle(
     'bulk_sms_verification',
     'Allow initiating the SMS phone verification workflow for all users in a group.',
