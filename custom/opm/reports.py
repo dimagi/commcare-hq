@@ -864,7 +864,6 @@ class MetReport(CaseReportMixin, BaseReport):
     model = ConditionsMet
     exportable = False
     default_rows = 5
-    ajax_pagination = True
     cache_key = 'opm-report'
 
     @property
@@ -876,9 +875,12 @@ class MetReport(CaseReportMixin, BaseReport):
         self._debug_data = []
         awc_codes = {user['awc']: user['awc_code']
                      for user in UserSqlData().get_data()}
+        total_payment = 0
         for index, row in enumerate(self.get_rows(self.datespan), 1):
             try:
-                rows.append(self.get_row_data(row, index=1, awc_codes=awc_codes))
+                case_row = self.get_row_data(row, index=1, awc_codes=awc_codes)
+                total_payment += case_row.cash_amt
+                rows.append(case_row)
             except InvalidRow as e:
                 if self.debug:
                     import sys
@@ -889,6 +891,9 @@ class MetReport(CaseReportMixin, BaseReport):
                         'message': repr(e),
                         'traceback': ''.join(traceback.format_tb(tb)),
                     })
+        self.total_row = ["" for __ in self.model.method_map]
+        self.total_row[0] = _("Total Payment")
+        self.total_row[self.column_index('cash')] = "Rs. {}".format(total_payment)
         return rows
 
     def get_row_data(self, row, **kwargs):
@@ -914,10 +919,6 @@ class MetReport(CaseReportMixin, BaseReport):
         return redis_key
 
     @property
-    def total_records(self):
-        return len(super(MetReport, self).rows)
-
-    @property
     def headers(self):
         if not self.is_rendered_as_email:
             return DataTablesHeader(*[
@@ -940,7 +941,6 @@ class MetReport(CaseReportMixin, BaseReport):
         self.use_datatables = False
         self.override_template = "opm/met_print_report.html"
         self.update_report_context()
-        self.pagination.count = 1000000
 
         cache = get_redis_client()
         if cache.exists(self.redis_key):
@@ -963,6 +963,7 @@ class MetReport(CaseReportMixin, BaseReport):
                 row[self.column_index('name')] = link_text.group(1)
 
         rows.sort(key=lambda r: r[self.column_index('serial_number')])
+        rows.append(self.total_row)
 
         self.context['report_table'].update(
             rows=rows
@@ -992,11 +993,7 @@ class MetReport(CaseReportMixin, BaseReport):
         elif sort_dir == 'desc':
             rows.sort(key=lambda x: x[col_id], reverse=True)
         self._store_rows_in_redis(rows)
-
-        if not self.is_rendered_as_email:
-            return rows[self.pagination.start:(self.pagination.start + self.pagination.count)]
-        else:
-            return rows
+        return rows
 
 
 class NewHealthStatusReport(CaseReportMixin, BaseReport):

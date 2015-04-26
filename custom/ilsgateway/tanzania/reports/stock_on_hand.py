@@ -119,11 +119,15 @@ class SohPercentageTableData(ILSData):
                 soh_late = soh_data.late * 100 / facs_count
                 soh_not_responding = soh_data.not_responding * 100 / facs_count
                 fac_ids = facs.exclude(supply_point_id__isnull=True).values_list(*['supply_point_id'], flat=True)
+                enddate = self.config['enddate']
+                month = enddate.month - 1 if enddate.month != 1 else 12
+                year = enddate.year - 1 if enddate.month == 1 else enddate.year
                 stockouts = StockTransaction.objects.filter(
-                    case_id__in=list(fac_ids), stock_on_hand__lte=0,
-                    report__date__month=self.config['enddate'].month,
-                    report__date__year=self.config['enddate'].year,
-                    type='stockonhand').order_by('case_id').distinct('case_id').count()
+                    case_id__in=fac_ids,
+                    stock_on_hand__lte=0,
+                    report__date__month=month,
+                    report__date__year=year,
+                ).order_by('case_id').distinct('case_id').count()
                 percent_stockouts = (stockouts or 0) * 100 / float(facs_count)
 
                 url = make_url(StockOnHandReport, self.config['domain'],

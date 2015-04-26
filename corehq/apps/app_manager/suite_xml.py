@@ -19,7 +19,7 @@ from .exceptions import (
     SuiteError,
     SuiteValidationError,
 )
-from corehq.toggles import MODULE_FILTER
+from corehq.feature_previews import MODULE_FILTER
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE_LAST_VISIT, SCHEDULE_PHASE, \
     CASE_ID, RETURN_TO, USERCASE_ID, USERCASE_TYPE

@@ -26,9 +26,9 @@ from custom.ilsgateway.tanzania.reminders.delivery import send_delivery_reminder
 from custom.ilsgateway.tanzania.reminders.randr import send_ror_reminder
 from custom.ilsgateway.tanzania.reminders.stockonhand import send_soh_reminder
 from custom.ilsgateway.tanzania.reminders.supervision import send_supervision_reminder
-from custom.ilsgateway.tanzania.warehouse_updater import TEST_REGION_ID
+from custom.ilsgateway.tanzania.warehouse.const import TEST_REGION_ID
 
-from custom.ilsgateway.tasks import get_ilsgateway_data_migrations
+from custom.ilsgateway.tasks import get_ilsgateway_data_migrations, clear_report_data
 from casexml.apps.stock.models import StockTransaction
 from custom.logistics.tasks import sms_users_fix, fix_groups_in_location_task
 from custom.ilsgateway.api import ILSGatewayAPI
@@ -252,8 +252,9 @@ def ils_sync_stock_data(request, domain):
 @domain_admin_required
 @require_POST
 def ils_clear_stock_data(request, domain):
-    ils_clear_stock_data_task.delay()
+    ils_clear_stock_data_task.delay(domain)
     return HttpResponse('OK')
+
 
 @domain_admin_required
 @require_POST
@@ -286,8 +287,7 @@ def ils_sms_users_fix(request, domain):
 @domain_admin_required
 @require_POST
 def delete_reports_runs(request, domain):
-    runs = ReportRun.objects.filter(domain=domain)
-    runs.delete()
+    clear_report_data.delay(domain)
     return HttpResponse('OK')
 
 

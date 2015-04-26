@@ -7,7 +7,11 @@ from django.db import transaction
 from django.db.models import Q
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.locations.models import Location, SQLLocation
+from custom.ilsgateway.tanzania.warehouse import const
+from custom.ilsgateway.tanzania.warehouse.alerts import populate_no_primary_alerts, \
+    populate_facility_stockout_alerts, create_alert
 from dimagi.utils.chunked import chunked
+from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.dates import get_business_day_of_month, add_months, months_between
 from casexml.apps.stock.models import StockReport, StockTransaction
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, DeliveryGroups, \
@@ -16,29 +20,13 @@ from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, 
 
 
 """
-    These functions and variables are ported from:
-    https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzania/reporting/run_reports.py
+These functions and variables are ported from:
+https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzania/reporting/run_reports.py
 """
 
 
-NEEDED_STATUS_TYPES = [SupplyPointStatusTypes.DELIVERY_FACILITY,
-                       SupplyPointStatusTypes.R_AND_R_FACILITY,
-                       SupplyPointStatusTypes.SUPERVISION_FACILITY,
-                       SupplyPointStatusTypes.SOH_FACILITY]
-
-NO_PRIMARY_CONTACT = 'no_primary_contact'
-PRODUCT_STOCKOUT = 'product_stockout'
-RR_NOT_SUBMITTED = 'rr_' + SupplyPointStatusValues.NOT_SUBMITTED
-RR_NOT_RESPONDED = 'rr_not_responded'
-DELIVERY_NOT_RECEIVED = 'delivery_' + SupplyPointStatusValues.NOT_RECEIVED
-DELIVERY_NOT_RESPONDING = 'delivery_not_responding'
-SOH_NOT_RESPONDING = 'soh_not_responding'
-
-TEST_REGION_ID = 21
-
-
 def _is_valid_status(facility, date, status_type):
-    if status_type not in NEEDED_STATUS_TYPES:
+    if status_type not in const.NEEDED_STATUS_TYPES:
         return False
     groups = HistoricalLocationGroup.objects.filter(
         date__month=date.month,
@@ -135,7 +123,7 @@ def average_lead_time(facility_id, window_date):
 
 def needed_status_types(org_summary):
     facility = Location.get(docid=org_summary.supply_point)
-    return [status_type for status_type in NEEDED_STATUS_TYPES if _is_valid_status(facility,
+    return [status_type for status_type in const.NEEDED_STATUS_TYPES if _is_valid_status(facility,
                                                                                    org_summary.date, status_type)]
 
 
@@ -201,82 +189,6 @@ def update_product_availability_facility_data(org_summary):
             "bad product data config"
 
 
-def populate_no_primary_alerts(location, date):
-    # First of all we have to delete all existing alert for this date.
-    alert = Alert.objects.filter(supply_point=location._id, date=date, type=NO_PRIMARY_CONTACT)
-    alert.delete()
-    # create no primary contact alerts
-    # TODO Too slow. Figure out better solution.
-    """
-    if not filter(lambda user: user.is_active and user.location and user.location._id == org._id,
-                  CommCareUser.by_domain(org.domain)):
-        create_multilevel_alert(org, date, NO_PRIMARY_CONTACT, {'org': org})
-    """
-
-
-def populate_facility_stockout_alerts(facility_id, date):
-    # delete stockout alerts
-    alert = Alert.objects.filter(supply_point=facility_id, date=date, type=PRODUCT_STOCKOUT)
-    alert.delete()
-    # create stockout alerts
-    product_data = ProductAvailabilityData.objects.filter(supply_point=facility_id, date=date, without_stock=1)
-    for p in product_data:
-        create_multilevel_alert(facility_id, date, PRODUCT_STOCKOUT, {'org': facility_id, 'product': p.product})
-
-
-def create_multilevel_alert(location, date, alert_type, details):
-    create_alert(location._id, date, alert_type, details)
-    if location.parent is not None:
-        create_multilevel_alert(location.parent, date, alert_type, details)
-
-
-def create_alert(location_id, date, alert_type, details):
-    text = ''
-    # url = ''
-    date = datetime(date.year, date.month, 1)
-    expyear, expmonth = add_months(date.year, date.month, 1)
-    expires = datetime(expyear, expmonth, 1)
-
-    number = 0 if 'number' not in details else details['number']
-
-    if alert_type in [PRODUCT_STOCKOUT, NO_PRIMARY_CONTACT]:
-        if alert_type == PRODUCT_STOCKOUT:
-            text = '%s is stocked out of %s.' % (details['org'].name, details['product'].name)
-        elif alert_type == NO_PRIMARY_CONTACT:
-            text = '%s has no primary contact.' % details['org'].name
-
-        alert = Alert.objects.filter(supply_point=location_id, date=date, type=alert_type, text=text)
-        if not alert:
-            Alert(supply_point=location_id, date=date, type=alert_type, expires=expires, text=text).save()
-
-    else:
-        if alert_type == RR_NOT_SUBMITTED:
-            text = '%s have reported not submitting their R&R form as of today.' % \
-                   ((str(number) + ' facility') if number == 1 else (str(number) + ' facilities'))
-        elif alert_type == RR_NOT_RESPONDED:
-            text = '%s did not respond to the SMS asking if they had submitted their R&R form.' % \
-                   ((str(number) + ' facility') if number == 1 else (str(number) + ' facilities'))
-        elif alert_type == DELIVERY_NOT_RECEIVED:
-            text = '%s have reported not receiving their deliveries as of today.' % \
-                   ((str(number) + ' facility') if number == 1 else (str(number) + ' facilities'))
-        elif alert_type == DELIVERY_NOT_RESPONDING:
-            text = '%s did not respond to the SMS asking if they had received their delivery.' % \
-                   ((str(number) + ' facility') if number == 1 else (str(number) + ' facilities'))
-        elif alert_type == SOH_NOT_RESPONDING:
-            text = '%s have not reported their stock levels for last month.' % \
-                   ((str(number) + ' facility') if number == 1 else (str(number) + ' facilities'))
-
-        alert, created = Alert.objects.get_or_create(
-            supply_point=location_id,
-            date=date,
-            type=alert_type,
-            expires=expires
-        )
-        alert.number = number
-        alert.text = text
-        alert.save()
-
-
 def default_start_date():
     return datetime(2012, 1, 1)
 
@@ -285,7 +197,7 @@ def _get_test_locations(domain):
     """
         returns test region and all its children
     """
-    test_region = SQLLocation.objects.get(domain=domain, external_id=TEST_REGION_ID)
+    test_region = SQLLocation.objects.get(domain=domain, external_id=const.TEST_REGION_ID)
     sql_locations = SQLLocation.objects.filter(
         Q(domain=domain) & (Q(parent=test_region) | Q(parent__parent=test_region))
     ).order_by('id').only('location_id')
@@ -293,14 +205,15 @@ def _get_test_locations(domain):
            [test_region.couch_location]
 
 
-def populate_report_data(start_date, end_date, domain, runner):
+def populate_report_data(start_date, end_date, domain, runner, locations=None, strict=True):
     # first populate all the warehouse tables for all facilities
     # hard coded to know this is the first date with data
     start_date = max(start_date, default_start_date())
 
     # For QA purposes generate reporting data for only some small part of data.
     if not ILSGatewayConfig.for_domain(domain).all_stock_data:
-        locations = _get_test_locations(domain)
+        if locations is None:
+            locations = _get_test_locations(domain)
         facilities = filter(lambda location: location.location_type == 'FACILITY', locations)
         non_facilities_types = ['DISTRICT', 'REGION', 'MOHSW']
         non_facilities = []
@@ -331,9 +244,13 @@ def populate_report_data(start_date, end_date, domain, runner):
         res.get()
 
     non_facilities_chunked_list = chunked(non_facilities, 50)
+
     # then populate everything above a facility off a warehouse table
     for chunk in non_facilities_chunked_list:
-        res = chain(process_non_facility_warehouse_data.si(org, start_date, end_date, runner) for org in chunk)()
+        res = chain(
+            process_non_facility_warehouse_data.si(org, start_date, end_date, runner, strict)
+            for org in chunk
+        )()
         res.get()
     runner.location = None
     runner.save()
@@ -342,7 +259,7 @@ def populate_report_data(start_date, end_date, domain, runner):
     update_historical_data(domain)
 
 
-@task(queue='background_queue', ignore_result=True)
+@task(queue='background_queue')
 def process_facility_warehouse_data(facility, start_date, end_date, runner):
     """
     process all the facility-level warehouse tables
@@ -350,7 +267,7 @@ def process_facility_warehouse_data(facility, start_date, end_date, runner):
     logging.info("processing facility %s (%s)" % (facility.name, str(facility._id)))
     runner.location = facility.sql_location
     runner.save()
-    for alert_type in [SOH_NOT_RESPONDING, RR_NOT_RESPONDED, DELIVERY_NOT_RESPONDING]:
+    for alert_type in [const.SOH_NOT_RESPONDING, const.RR_NOT_RESPONDED, const.DELIVERY_NOT_RESPONDING]:
         alert = Alert.objects.filter(supply_point=facility._id, date__gte=start_date, date__lt=end_date,
                                      type=alert_type)
         alert.delete()
@@ -376,8 +293,7 @@ def process_facility_warehouse_data(facility, start_date, end_date, runner):
         case_id=supply_point_id,
         report__date__gte=start_date,
         report__date__lt=end_date,
-        type='stockonhand'
-    ).order_by('report__date')
+    ).exclude(type='consumption').order_by('report__date')
     process_facility_transactions(location_id, new_trans)
 
     # go through all the possible values in the date ranges
@@ -398,7 +314,7 @@ def process_facility_warehouse_data(facility, start_date, end_date, runner):
         org_summary.save()
 
         # create group_summary for every org_summary title combo
-        for title in NEEDED_STATUS_TYPES:
+        for title in const.NEEDED_STATUS_TYPES:
             GroupSummary.objects.get_or_create(org_summary=org_summary,
                                                title=title)
         # update all the non-response data
@@ -454,12 +370,12 @@ def process_facility_statuses(facility_id, statuses, alerts=True):
                 if alerts:
                     if status.status_value == SupplyPointStatusValues.NOT_SUBMITTED \
                             and status.status_type == SupplyPointStatusTypes.R_AND_R_FACILITY:
-                        create_alert(facility_id, status.status_date, RR_NOT_SUBMITTED,
+                        create_alert(facility_id, status.status_date, const.RR_NOT_SUBMITTED,
                                      {'number': 1})
 
                     if status.status_value == SupplyPointStatusValues.NOT_RECEIVED \
                             and status.status_type == SupplyPointStatusTypes.DELIVERY_FACILITY:
-                        create_alert(facility_id, status.status_date, DELIVERY_NOT_RECEIVED,
+                        create_alert(facility_id, status.status_date, const.DELIVERY_NOT_RECEIVED,
                                      {'number': 1})
 
 
@@ -527,15 +443,13 @@ def process_facility_transactions(facility_id, transactions):
 
 
 def get_nested_children(location):
-    children = []
-    if not location.children:
-        return [location]
-    for child in location.children:
-        children.extend(get_nested_children(child))
-    return children
+    child_ids = location.sql_location.get_descendants().filter(
+        children__isnull=True
+    ).values_list('location_id', flat=True)
+    return [Location.wrap(doc) for doc in get_docs(Location.get_db(), child_ids)]
 
 
-@task(queue='background_queue', ignore_result=True)
+@task(queue='background_queue')
 def process_non_facility_warehouse_data(location, start_date, end_date, runner, strict=True):
     runner.location = location.sql_location
     runner.save()
@@ -579,7 +493,7 @@ def process_non_facility_warehouse_data(location, start_date, end_date, runner, 
             product_data.save()
 
         dg = DeliveryGroups(month=month, facs=facs)
-        for status_type in NEEDED_STATUS_TYPES:
+        for status_type in const.NEEDED_STATUS_TYPES:
             gsum = GroupSummary.objects.get_or_create(org_summary=org_summary, title=status_type)[0]
             sub_sums = GroupSummary.objects.filter(title=status_type, org_summary__in=sub_summaries).all()
 
@@ -602,8 +516,8 @@ def process_non_facility_warehouse_data(location, start_date, end_date, runner, 
             if gsum.total != expected:
                 logging.info("expected %s but was %s for %s" % (expected, gsum.total, gsum))
 
-        for alert_type in [RR_NOT_SUBMITTED, DELIVERY_NOT_RECEIVED,
-                           SOH_NOT_RESPONDING, RR_NOT_RESPONDED, DELIVERY_NOT_RESPONDING]:
+        for alert_type in [const.RR_NOT_SUBMITTED, const.DELIVERY_NOT_RECEIVED,
+                           const.SOH_NOT_RESPONDING, const.RR_NOT_RESPONDED, const.DELIVERY_NOT_RESPONDING]:
             sub_alerts = Alert.objects.filter(supply_point__in=fac_ids, date=window_date, type=alert_type)
             aggregate_response_alerts(location._id, window_date, sub_alerts, alert_type)
 
@@ -614,7 +528,7 @@ def aggregate_response_alerts(location_id, date, alerts, alert_type):
         create_alert(location_id, date, alert_type, {'number': total})
 
 
-def update_historical_data(domain):
+def update_historical_data(domain, locations=None):
     """
     If we don't have a record of this supply point being updated, run
     through all historical data and just fill in with zeros.
@@ -625,10 +539,11 @@ def update_historical_data(domain):
 
     start_date = org_summaries[0].date
 
-    if not ILSGatewayConfig.for_domain(domain).all_stock_data:
-        locations = _get_test_locations(domain)
-    else:
-        locations = Location.by_domain(domain)
+    if locations is None:
+        if not ILSGatewayConfig.for_domain(domain).all_stock_data:
+            locations = _get_test_locations(domain)
+        else:
+            locations = Location.by_domain(domain)
 
     for sp in locations:
         try:
@@ -664,6 +579,6 @@ def _init_with_product(location, date):
 
 def _init_group_summary(location, date):
     org_summary = OrganizationSummary.objects.get(supply_point=location._id, date=date)
-    for title in NEEDED_STATUS_TYPES:
+    for title in const.NEEDED_STATUS_TYPES:
         GroupSummary.objects.get_or_create(org_summary=org_summary,
                                            title=title)
