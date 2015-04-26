@@ -34,7 +34,7 @@ from corehq.apps.smsbillables.async_handlers import SMSRatesAsyncHandler, SMSRat
 from corehq.apps.smsbillables.forms import SMSRateCalculatorForm
 from corehq.apps.users.models import DomainInvitation
 from corehq.apps.fixtures.models import FixtureDataType
-from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA, TRANSFER_DOMAIN, GLOBAL_SMS_RATES
+from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA, TRANSFER_DOMAIN
 from corehq.util.context_processors import get_domain_type
 from dimagi.utils.couch.resource_conflict import retry_resource
 from django.conf import settings
@@ -2455,7 +2455,6 @@ class DeactivateTransferDomainView(View):
 
 from corehq.apps.smsbillables.forms import PublicSMSRateCalculatorForm
 from corehq.apps.smsbillables.async_handlers import PublicSMSRatesAsyncHandler
-from corehq.apps.domain.decorators import login_required
 
 
 class PublicSMSRatesView(BasePageView, AsyncHandlerMixin):
@@ -2463,13 +2462,6 @@ class PublicSMSRatesView(BasePageView, AsyncHandlerMixin):
     page_title = ugettext_noop("SMS Rate Calculator")
     template_name = 'domain/admin/global_sms_rates.html'
     async_handlers = [PublicSMSRatesAsyncHandler]
-
-    @method_decorator(login_required)
-    def dispatch(self, request, *args, **kwargs):
-        # this will be public latter
-        if not GLOBAL_SMS_RATES.enabled(request.user.username):
-            raise Http404()
-        return super(PublicSMSRatesView, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_url(self):
