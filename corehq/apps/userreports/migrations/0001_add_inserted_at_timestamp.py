@@ -16,7 +16,7 @@ class Migration(DataMigration):
 
     def forwards(self, orm):
         """
-        Adds an 'inserted_at' column to each existing DataSourceConfiguration table
+        Adds an 'inserted_at' column to each existing data source table
         """
         _sync_couch()
         table_names = _get_all_table_names()
@@ -38,7 +38,7 @@ class Migration(DataMigration):
 
     def backwards(self, orm):
         """
-        Removes 'inserted_at' column from each DataSourceConfiguration table
+        Removes 'inserted_at' column from each data source table
         """
         _sync_couch()
         table_names = _get_all_table_names()
