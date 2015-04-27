@@ -245,13 +245,6 @@ NO_VELLUM = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-SPLIT_MULTISELECT_EXPORT = StaticToggle(
-    'split_multiselect_export',
-    'Split multiselect columns in custom exports',
-    TAG_PRODUCT_CORE,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
 CAN_EDIT_EULA = StaticToggle(
     'can_edit_eula',
     "Whether this user can set the custom eula and data sharing internal project options. "
