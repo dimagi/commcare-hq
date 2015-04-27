@@ -370,8 +370,8 @@ def install_packages():
 @roles(ROLES_TOUCHFORMS)
 def install_npm_packages():
     """Install required NPM packages for server"""
-    sudo("cd {} && npm install".format(
-        os.path.join(env.code_root, 'submodules/touchforms-src/touchforms/package.json')))
+    with cd(os.path.join(env.code_root, 'submodules/touchforms-src/touchforms')):
+        sudo("npm install")
 
 
 @task
@@ -774,8 +774,8 @@ def awesome_deploy(confirm="yes"):
 @roles(ROLES_TOUCHFORMS)
 def update_touchforms():
     # npm bin allows you to specify the locally installed version instead of having to install grunt globally
-    filepath = os.path.join(env.code_root, 'submodules/touchforms-src/touchforms')
-    sudo('cd {} && PATH=$(npm bin):$PATH grunt build'.format(filepath))
+    with cd(os.path.join(env.code_root, 'submodules/touchforms-src/touchforms')):
+        sudo('PATH=$(npm bin):$PATH grunt build')
 
 
 @task
