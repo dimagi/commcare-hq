@@ -367,6 +367,14 @@ def install_packages():
 
 
 @task
+@roles(ROLES_TOUCHFORMS)
+def install_npm_packages():
+    """Install required NPM packages for server"""
+    sudo("cd {} && npm install".format(
+        os.path.join(env.code_root, 'submodules/touchforms-src/touchforms/package.json')))
+
+
+@task
 @roles(ROLES_ALL_SRC)
 @parallel
 def upgrade_packages():
@@ -658,6 +666,7 @@ def _deploy_without_asking():
     try:
         _execute_with_timing(update_code)
         _execute_with_timing(update_virtualenv)
+        _execute_with_timing(update_touchforms)
 
         # handle static files
         _execute_with_timing(version_static)
@@ -759,6 +768,13 @@ def awesome_deploy(confirm="yes"):
              "and wait for an email saying it's done. "
              "Thank you for using AWESOME DEPLOY.")
         )
+
+
+@task
+@roles(ROLES_TOUCHFORMS)
+def update_touchforms():
+    # npm bin allows you to specify the locally installed version instead of having to install grunt globally
+    sudo('PATH=$(npm bin):$PATH grunt build')
 
 
 @task
