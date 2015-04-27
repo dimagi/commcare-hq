@@ -315,7 +315,7 @@
             </div>
             <div class="modal-body">
                 <div class="accordion" data-bind="bootstrapCollapse: true">
-                    <div class="accordion-group" data-bind="visible: true">
+                    <div class="accordion-group">
                         <div class="accordion-heading">
                             <a class="accordion-toggle" data-bind="
                                 click: function() { track_deploy_type('Download to Android'); },
@@ -324,7 +324,7 @@
                                 {% trans "Download to Android" %}
                             </a>
                         </div>
-                        <div class="accordion-body collapse">
+                        <div class="accordion-body in collapse">
                             <div class="accordion-inner">
                                 <div data-bind="bootstrapTabs: true">
                                     <div class="tabbable">
