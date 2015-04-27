@@ -400,15 +400,17 @@ def debug_notify(request):
 @require_POST
 def jserror(request):
     stack = request.POST.get('stack', None)
+    cache_key = ' '.join(map(lambda l: l.strip(), stack.split('\n'))[:3])
 
-    ExponentialBackoff.increment(stack)
-    if not ExponentialBackoff.should_backoff(stack):
+    count = ExponentialBackoff.increment(cache_key)
+    if not ExponentialBackoff.should_backoff(cache_key):
         notify_js_exception(
             request,
             message=request.POST.get('message', None),
             stack=stack,
             line=request.POST.get('line', None),
             filename=request.POST.get('filename', None),
+            count=count,
         )
 
     return HttpResponse('')
