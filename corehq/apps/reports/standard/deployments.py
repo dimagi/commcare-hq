@@ -142,7 +142,7 @@ class ApplicationStatusReport(DeploymentsReport):
 class SyncHistoryReport(DeploymentsReport):
     name = ugettext_noop("User Sync History")
     slug = "sync_history"
-    fields = ['corehq.apps.reports.filters.users.SelectMobileWorkerFilter']
+    fields = ['corehq.apps.reports.filters.users.AltPlaceholderMobileWorkerFilter']
     report_subtitles = [ugettext_noop('Shows the last (up to) 10 times a user has synced.')]
     disable_pagination = True
 

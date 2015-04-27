@@ -176,6 +176,10 @@ class SelectMobileWorkerFilter(BaseSingleOptionTypeaheadFilter):
         return default
 
 
+class AltPlaceholderMobileWorkerFilter(SelectMobileWorkerFilter):
+    default_text = ugettext_noop('Enter a worker')
+
+
 class SelectCaseOwnerFilter(SelectMobileWorkerFilter):
     label = ugettext_noop("Select Case Owner")
     default_text = ugettext_noop("All Case Owners")
