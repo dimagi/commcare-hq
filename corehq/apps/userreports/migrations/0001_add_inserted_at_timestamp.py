@@ -5,10 +5,12 @@ from south.v2 import DataMigration
 from django.db import models
 from django.db.utils import DatabaseError
 
-from corehq.apps.userreports.models import DataSourceConfiguration
+from dimagi.utils.couch import sync_docs
+from corehq.apps.userreports import models as userreports_models
 from corehq.apps.userreports.sql import get_table_name
 
 logger = logging.getLogger(__name__)
+
 
 class Migration(DataMigration):
 
@@ -16,6 +18,7 @@ class Migration(DataMigration):
         """
         Adds an 'inserted_at' column to each existing DataSourceConfiguration table
         """
+        _sync_couch()
         table_names = _get_all_table_names()
 
         num_tables = len(table_names)
@@ -33,11 +36,11 @@ class Migration(DataMigration):
 
         logger.info("Finished adding inserted_at columns to existing UCR datasource tables")
 
-
     def backwards(self, orm):
         """
         Removes 'inserted_at' column from each DataSourceConfiguration table
         """
+        _sync_couch()
         table_names = _get_all_table_names()
 
         for table_name in table_names:
@@ -47,5 +50,14 @@ class Migration(DataMigration):
 
     complete_apps = ['userreports']
 
+
+def _sync_couch():
+    """
+    Sync couch docs before running the sql migration as it requires data from couch
+    """
+    sync_docs.sync(userreports_models, verbosity=2)
+
+
 def _get_all_table_names():
-    return map(lambda dsc: get_table_name(dsc.domain, dsc.table_id), DataSourceConfiguration.all())
+    return map(lambda dsc: get_table_name(dsc.domain, dsc.table_id),
+               userreports_models.DataSourceConfiguration.all())
