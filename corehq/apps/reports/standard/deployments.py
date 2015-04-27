@@ -184,7 +184,7 @@ class SyncHistoryReport(DeploymentsReport):
                 if isinstance(duration, int):
                     return format_datatables_data(
                         '<span class="{cls}">{text}</span>'.format(
-                            cls=_bootstrap_class(duration or 0, 20, 60),
+                            cls=_bootstrap_class(duration or 0, 60, 20),
                             text=_('{} seconds').format(duration),
                         ),
                         duration
