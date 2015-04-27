@@ -49,6 +49,3 @@ ptop*.json
 # Sphinx
 docs/_build
 celerybeat-schedule
-
-# compiled translations
-/locale/**/*.mo
