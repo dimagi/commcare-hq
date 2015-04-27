@@ -6,7 +6,6 @@
 requires imports/proptable.html to be included in the main template
 {% endcomment %}
 {% include "imports/fancy-code.html" %}
-{% include 'cloudcare/includes/touchforms-inline.html' %}
 <style media="print">
     header {
         display: none !important;
@@ -28,7 +27,6 @@ requires imports/proptable.html to be included in the main template
     width: 800px;
 }
 </style>
-<script src="{% static 'cloudcare/js/util.js' %}"></script>
 <script>
     $(function () {
         var help_text = {
@@ -98,20 +96,6 @@ requires imports/proptable.html to be included in the main template
             }
         });
         showSkipped(false);
-
-        {% if form_meta %}
-        GMAPS_API_KEY = '{{ maps_api_key|safe }}'; // maps api is a global variable depended on by touchforms
-
-        // unfortunately since cloudcare doesn't have reversible urls, this has to be done in javascript
-        // todo: this probably needs better error handling
-        var cloudCareUrl = getCloudCareUrl(
-            "{% url "cloudcare_main" domain '' %}",
-            "{{ form_meta.app.id }}",
-            "{{ form_meta.module.id }}",
-            "{{ form_meta.form.id }}"
-        ) + "?preview=true&instance={{ instance.get_id }}";
-        $("#edit-form").attr("href", cloudCareUrl);
-        {% endif %}
 
         $("#archive-form").submit(function() {
             document.getElementById('archive-form-btn').disabled=true;
@@ -230,13 +214,6 @@ requires imports/proptable.html to be included in the main template
             {% trans "Raw XML" %}
         </a>
     </li>
-{% if show_edit_submission %}
-    <li>
-        <a href="#edit-submission" data-toggle="tab">
-            {% trans "Edit Submission" %}
-        </a>
-    </li>
-{% endif %}
 </ul>
 
 <div class="tab-content form-details" style="overflow:visible">
@@ -286,6 +263,11 @@ requires imports/proptable.html to be included in the main template
                         <i class="icon-refresh icon-spin" id="resave-spinner" style="display:none"></i>
                     </button>
                 </form>
+                {% endif %}
+                {% if show_edit_submission %}
+                        <a href="{% url 'edit_form_instance' domain instance.get_id %}" target="_blank" class="btn btn-primary">
+                            <i class="icon-edit"></i> {% trans "Edit submission" %}
+                        </a>
                 {% endif %}
             </p>
             {% endif %}
@@ -398,22 +380,4 @@ requires imports/proptable.html to be included in the main template
         <p>{% trans "Double-click code below to select all:" %}</p>
         {% render_form_xml instance %}
     </div>
-{% if show_edit_submission %}
-    <div class="tab-pane" id="edit-submission">
-        <p>
-            <a href="#" class="btn btn-primary touchforms-link"
-                data-target="#form_editor_container"
-                data-app-id="{{ form_meta.app.id }}"
-                data-module-id="{{ form_meta.module.id }}"
-                data-form-id="{{ form_meta.form.id  }}"
-                data-instance-id='{{ instance.get_id }}'
-                data-session-data='{{ edit_session_data|JSON }}'
-                data-submit-url-root='{% url "receiver_post" domain %}'
-                data-form-url-root='{% url "cloudcare_main" domain "" %}'>
-                <i class="icon-edit"></i> {% trans "Edit submission" %}
-            </a>
-        </p>
-        <div class="touchforms-inline" id="form_editor_container"></div>
-    </div>
-{% endif %}
 </div>
