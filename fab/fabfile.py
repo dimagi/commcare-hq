@@ -774,7 +774,8 @@ def awesome_deploy(confirm="yes"):
 @roles(ROLES_TOUCHFORMS)
 def update_touchforms():
     # npm bin allows you to specify the locally installed version instead of having to install grunt globally
-    sudo('PATH=$(npm bin):$PATH grunt build')
+    filepath = os.path.join(env.code_root, 'submodules/touchforms-src/touchforms')
+    sudo('cd {} && PATH=$(npm bin):$PATH grunt build'.format(filepath))
 
 
 @task
