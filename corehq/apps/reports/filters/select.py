@@ -2,7 +2,7 @@ import datetime
 import calendar
 
 from django.conf import settings
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.utils.translation import ugettext as _
 
 from casexml.apps.case.models import CommCareCase, CommCareCaseGroup
@@ -65,7 +65,7 @@ class SelectOrganizationFilter(BaseSingleOptionFilter):
 
 class GroupFilterMixin(object):
     slug = "group"
-    label = ugettext_noop("Group")
+    label = ugettext_lazy("Group")
     default_text = ugettext_noop("Everybody")
 
     @property
@@ -106,8 +106,8 @@ class MonthFilter(BaseSingleOptionFilter):
 
 class CaseTypeMixin(object):
     slug = "case_type"
-    label = ugettext_noop("Case Type")
-    default_text = ugettext_noop("All Case Types")
+    label = ugettext_lazy("Case Type")
+    default_text = ugettext_lazy("All Case Types")
 
     @property
     def options(self):
@@ -174,8 +174,8 @@ class SelectOpenCloseFilter(BaseSingleOptionFilter):
 
 class SelectApplicationFilter(BaseSingleOptionFilter):
     slug = "app"
-    label = ugettext_noop("Application")
-    default_text = ugettext_noop("Select Application [Latest Build Version]")
+    label = ugettext_lazy("Application")
+    default_text = ugettext_lazy("Select Application [Latest Build Version]")
 
     @property
     def options(self):
