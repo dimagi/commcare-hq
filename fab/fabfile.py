@@ -426,6 +426,7 @@ def setup_server():
     # Install required system packages for deployment, plus some extras
     # Install pip, and use it to install virtualenv
     install_packages()
+    install_npm_packages()
     sudo("easy_install -U pip")
     sudo("pip install -U virtualenv")
     upgrade_packages()
