@@ -151,14 +151,14 @@ def saved_exports():
         export_for_group_async.delay(group_config, 'couch')
 
 
-@task(queue='saved_exports_queue')
+@task(queue='saved_exports_queue', ignore_result=True)
 def export_for_group_async(group_config, output_dir):
     # exclude exports not accessed within the last 7 days
     last_access_cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
     export_for_group(group_config, output_dir, last_access_cutoff=last_access_cutoff)
 
 
-@task(queue='saved_exports_queue')
+@task(queue='saved_exports_queue', ignore_result=True)
 def rebuild_export_async(config, schema, output_dir):
     rebuild_export(config, schema, output_dir)
 
@@ -221,7 +221,7 @@ def apps_update_calculated_properties():
         calced_props = {"cp_is_active": is_app_active(r["_id"], r["_source"]["domain"])}
         es.post("%s/app/%s/_update" % (APP_INDEX, r["_id"]), data={"doc": calced_props})
 
-@task
+@task(ignore_result=True)
 def export_all_rows_task(ReportClass, report_state):
     report = object.__new__(ReportClass)
     report.__setstate__(report_state)

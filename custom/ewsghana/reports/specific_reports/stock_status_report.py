@@ -160,17 +160,15 @@ class MonthOfStockProduct(EWSData):
                 url = make_url(
                     cls,
                     self.config['domain'],
-                    '?location_id=%s&filter_by_program=%s&startdate=%s'
-                    '&enddate=%s&report_type=%s&filter_by_product=%s',
-                    (sp.location_id, self.config['program'] or ALL_OPTION, self.config['startdate'],
-                    self.config['enddate'], self.config['report_type'],
-                    '&filter_by_product='.join(self.config['products'])))
+                    '?location_id=%s&filter_by_program=%s&startdate=%s&enddate=%s&report_type=%s',
+                    (sp.location_id, self.config['program'] or ALL_OPTION, self.config['startdate'].date(),
+                    self.config['enddate'].date(), self.config['report_type']))
 
                 row = [link_format(sp.name, url)]
                 for p in self.unique_products(self.get_supply_points, all=True):
                     transaction = StockTransaction.objects.filter(
                         type='stockonhand', product_id=p.product_id, case_id=sp.supply_point_id,
-                        report__date__lte=self.config['enddate'], report__date__gte=self.config['startdate']
+                        report__date__lte=self.config['enddate']
                     ).order_by('-report__date')
 
                     state = StockState.objects.filter(sql_product=p, case_id=sp.supply_point_id)\
@@ -179,7 +177,7 @@ class MonthOfStockProduct(EWSData):
                     if transaction and state:
                         monthly = state[0].get_monthly_consumption()
                         if monthly:
-                            row.append(int(transaction[0].stock_on_hand / monthly))
+                            row.append(round(transaction[0].stock_on_hand / monthly))
                         else:
                             row.append(0)
                     else:
@@ -315,16 +313,19 @@ class StockStatus(MultiReport):
 
         if self.is_reporting_type():
             self.split = True
-            return [
-                FacilityReportData(config),
-                StockLevelsLegend(config),
-                InputStock(config),
-                FacilitySMSUsers(config),
-                FacilityUsers(config),
-                FacilityInChargeUsers(config),
-                InventoryManagementData(config),
-                ProductSelectionPane(config),
-            ]
+            if self.is_rendered_as_email:
+                return [FacilityReportData(config)]
+            else:
+                return [
+                    FacilityReportData(config),
+                    StockLevelsLegend(config),
+                    InputStock(config),
+                    FacilitySMSUsers(config),
+                    FacilityUsers(config),
+                    FacilityInChargeUsers(config),
+                    InventoryManagementData(config),
+                    ProductSelectionPane(config)
+                ]
         self.split = False
         if report_type == 'stockouts':
             return [

@@ -10,7 +10,7 @@ from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
 
 
-@task(queue='background_queue')
+@task(queue='background_queue', ignore_result=True)
 def rebuild_indicators(indicator_config_id):
     is_static = indicator_config_id.startswith(CustomDataSourceConfiguration._datasource_id_prefix)
     if is_static:

@@ -49,7 +49,6 @@ def REPORTS(project):
         (ugettext_lazy("Manage Deployments"), (
             deployments.ApplicationStatusReport,
             receiverwrapper.SubmissionErrorReport,
-            phonelog.FormErrorReport,
             phonelog.DeviceLogDetailsReport,
             deployments.SyncHistoryReport,
         )),

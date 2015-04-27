@@ -21,7 +21,6 @@ from casexml.apps.case.xml import V2, V1
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from datetime import datetime
-from xml.etree import ElementTree
 from no_exceptions.exceptions import HttpException
 
 USER_ID = "main_user"
@@ -585,7 +584,7 @@ class MultiUserSyncTest(SyncBaseTest):
         # original user syncs again
         # make sure updates take
         _, match = assert_user_has_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
-        self.assertTrue("Hello!" in ElementTree.tostring(match))
+        self.assertTrue("Hello!" in match.to_string())
 
     def testOtherUserAddsIndex(self):
         time = datetime.utcnow()
@@ -645,7 +644,7 @@ class MultiUserSyncTest(SyncBaseTest):
                             restore_id=self.sync_log.get_id, version=V2,
                             purge_restore_cache=True)
         _, orig = assert_user_has_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
-        self.assertTrue("index" in ElementTree.tostring(orig))
+        self.assertTrue("index" in orig.to_string())
 
     def testMultiUserEdits(self):
         time = datetime.utcnow()

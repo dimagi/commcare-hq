@@ -11,6 +11,21 @@ from corehq.apps.userreports.expressions.specs import (
 from corehq.apps.userreports.specs import EvaluationContext
 
 
+class ExpressionPluginTest(SimpleTestCase):
+
+    def test_custom_expression(self):
+        """Confirm that plugin framework is being bootstrapped."""
+        ExpressionFactory.from_spec({
+            "type": "abt_supervisor"
+        })
+
+    def test_double_registration(self):
+
+        ExpressionFactory.register("foo", lambda x: x)
+        with self.assertRaises(ValueError):
+            ExpressionFactory.register("foo", lambda x: x * 2)
+
+
 class ConstantExpressionTest(SimpleTestCase):
 
     def test_constant_expression(self):

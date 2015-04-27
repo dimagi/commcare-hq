@@ -125,8 +125,10 @@ MIDDLEWARE_CLASSES = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'corehq.middleware.OpenRosaMiddleware',
     'corehq.util.global_request.middleware.GlobalRequestMiddleware',
+    'corehq.apps.domain.middleware.ProjectMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
     'corehq.apps.domain.middleware.CCHQPRBACMiddleware',
+    'corehq.apps.domain.middleware.DomainHistoryMiddleware',
     'casexml.apps.phone.middleware.SyncTokenMiddleware',
     'auditcare.middleware.AuditMiddleware',
     'no_exceptions.middleware.NoExceptionsMiddleware',
@@ -433,6 +435,8 @@ BASE_TEMPLATE = "hqwebapp/base.html"
 BASE_ASYNC_TEMPLATE = "reports/async/basic.html"
 LOGIN_TEMPLATE = "login_and_password/login.html"
 LOGGEDOUT_TEMPLATE = LOGIN_TEMPLATE
+
+CSRF_FAILURE_VIEW = 'corehq.apps.hqwebapp.views.csrf_failure'
 
 # These are non-standard setting names that are used in localsettings
 # The standard variables are then set to these variables after localsettings
@@ -804,6 +808,9 @@ LOGGING = {
             'level': 'ERROR',
             'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
         },
+        'null': {
+            'class': 'django.utils.log.NullHandler',
+        },
     },
     'loggers': {
         '': {
@@ -815,6 +822,10 @@ LOGGING = {
             'handlers': ['mail_admins'],
             'level': 'ERROR',
             'propagate': True,
+        },
+        'django.security.DisallowedHost': {
+            'handlers': ['null'],
+            'propagate': False,
         },
         'notify': {
             'handlers': ['mail_admins'],
@@ -1282,6 +1293,10 @@ ES_XFORM_FULL_INDEX_DOMAINS = [
     'pact',
     'uth-rhd-test',
     'succeed'
+]
+
+CUSTOM_UCR_EXPRESSIONS = [
+    ('abt_supervisor', 'custom.abt.reports.expressions.abt_supervisor_expression'),
 ]
 
 CUSTOM_MODULES = [

@@ -115,6 +115,10 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
     url(r'^odk/(?P<app_id>[\w-]+)/install/$', 'odk_install', name="odk_install"),
     url(r'^odk/(?P<app_id>[\w-]+)/media_install/$', 'odk_install', {'with_media': True}, name="odk_media_install"),
 
+    url(r'^odk/(?P<app_id>[\w-]+)/short_url/$', 'short_url'),
+    url(r'^odk/(?P<app_id>[\w-]+)/short_odk_media_url/$', 'short_odk_url', {'with_media': True}),
+    url(r'^odk/(?P<app_id>[\w-]+)/short_odk_url/$', 'short_odk_url'),
+
     url(r'^save/(?P<app_id>[\w-]+)/$', 'save_copy'),
     url(r'^revert/(?P<app_id>[\w-]+)/$', 'revert_to_copy'),
     url(r'^delete_copy/(?P<app_id>[\w-]+)/$', 'delete_copy'),

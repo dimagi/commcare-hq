@@ -14,7 +14,6 @@ from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from dimagi.utils.parsing import ISO_DATE_FORMAT
 
-from no_exceptions.exceptions import Http400
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.domain.decorators import login_and_domain_required

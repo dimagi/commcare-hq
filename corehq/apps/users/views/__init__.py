@@ -169,7 +169,7 @@ class BaseEditUserView(BaseUserSettingsView):
             return self.user_update_form_class(data=self.request.POST)
 
         form = self.user_update_form_class()
-        form.initialize_form(existing_user=self.editable_user)
+        form.initialize_form(domain=self.request.domain, existing_user=self.editable_user)
         return form
 
     @property
@@ -356,7 +356,9 @@ class EditMyAccountDomainView(BaseFullEditUserView):
 
     @property
     def page_context(self):
-        context = {}
+        context = {
+            'can_use_inbound_sms': domain_has_privilege(self.domain, privileges.INBOUND_SMS),
+        }
         if self.request.project.commtrack_enabled:
             context.update({
                 'update_form': self.commtrack_form,
