@@ -4,8 +4,6 @@ from __future__ import unicode_literals, print_function, absolute_import
 # External imports
 from django.utils.decorators import method_decorator
 from django.views.decorators.debug import sensitive_post_parameters
-from corehq.apps.domain.models import Domain
-from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.accounting.exceptions import AccountingError
 from corehq.apps.accounting.models import Subscription
 from django_prbac.models import Role
@@ -59,17 +57,3 @@ class DomainHistoryMiddleware(object):
         last_visited_domain = request.session.get('last_visited_domain')
         if last_visited_domain != request.domain:
             request.session['last_visited_domain'] = request.domain
-
-
-class ProjectMiddleware(object):
-
-    def process_view(self, request, view_func, view_args, view_kwargs):
-        """
-        Add domain, project, and org properties (if applicable) to request object
-        """
-        if 'domain' in view_kwargs:
-            request.domain = view_kwargs['domain']
-            project = Domain.get_by_name(normalize_domain_name(request.domain))
-            request.project = project
-        if 'org' in view_kwargs:
-            request.org = view_kwargs['org']
