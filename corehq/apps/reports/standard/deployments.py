@@ -162,21 +162,22 @@ class SyncHistoryReport(DeploymentsReport):
     @property
     def rows(self):
         base_link_url = '{}?q={{id}}'.format(reverse('global_quick_find'))
-
         user_id = self.request.GET.get('individual')
         if not user_id:
-            return []
-
-        # security check
-        get_document_or_404(CommCareUser, self.domain, user_id)
-
+            key_args = {}
+        else:
+            # security check
+            get_document_or_404(CommCareUser, self.domain, user_id)
+            key_args = {
+                'startkey': [user_id, {}],
+                'endkey': [user_id]
+            }
         sync_log_ids = [row['id'] for row in SyncLog.view(
             "phone/sync_logs_by_user",
-            startkey=[user_id, {}],
-            endkey=[user_id],
             descending=True,
             reduce=False,
-            limit=10
+            limit=10,
+            **key_args
         )]
 
         def _sync_log_to_row(sync_log):
