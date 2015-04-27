@@ -1071,6 +1071,10 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
                 'menu_refs': app.get_case_list_form_media(module, module_id),
                 'default_file_name': '{}_case_list_form'.format(default_file_name),
             }
+            specific_media['case_list_menu_item'] = {
+                'menu_refs': app.get_case_list_menu_item_media(module, module_id),
+                'default_file_name': '{}_case_list_menu_item'.format(default_file_name),
+            }
         context.update({
             'multimedia': {
                 "references": app.get_references(),

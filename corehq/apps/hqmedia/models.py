@@ -589,6 +589,13 @@ class HQMediaMixin(Document):
         media_kwargs = self.get_media_ref_kwargs(module, module_index)
         return self._get_item_media(module.case_list_form, media_kwargs)
 
+    def get_case_list_menu_item_media(self, module, module_index):
+        if not module:
+            # user_registration isn't a real module, for instance
+            return {}
+        media_kwargs = self.get_media_ref_kwargs(module, module_index)
+        return self._get_item_media(module.case_list, media_kwargs)
+
     def _get_item_media(self, item, media_kwargs):
         menu_media = {}
         image_ref = ApplicationMediaReference(
