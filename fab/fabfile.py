@@ -677,7 +677,7 @@ def _deploy_without_asking():
             _execute_with_timing(_migrate)
         else:
             print(blue("No migration required, skipping."))
-        _execute_with_timing(do_update_translations)
+        _execute_with_timing(do_update_django_locales)
         if do_migrate:
             _execute_with_timing(flip_es_aliases)
 
@@ -1146,8 +1146,8 @@ def update_apache_conf():
     sudo('service apache2 reload', user='root')
 
 @task
-def update_translations():
-    do_update_translations()
+def update_django_locales():
+    do_update_django_locales()
 
 
 @roles(ROLES_PILLOWTOP)
@@ -1166,16 +1166,12 @@ def stop_celery_tasks():
 
 @roles(ROLES_ALL_SRC)
 @parallel
-def do_update_translations():
+def do_update_django_locales():
     with cd(env.code_root):
-        update_locale_command = '{virtualenv_root}/bin/python manage.py update_django_locales'.format(
+        command = '{virtualenv_root}/bin/python manage.py update_django_locales'.format(
             virtualenv_root=env.virtualenv_root,
         )
-        update_translations_command = '{virtualenv_root}/bin/python manage.py compilemessages'.format(
-            virtualenv_root=env.virtualenv_root,
-        )
-        sudo(update_locale_command)
-        sudo(update_translations_command)
+        sudo(command)
 
 
 @task
