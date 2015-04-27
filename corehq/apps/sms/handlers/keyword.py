@@ -5,7 +5,7 @@ from corehq.apps.sms.api import (
 )
 from dimagi.utils.logging import notify_exception
 from corehq.apps.smsforms.app import _get_responses, start_session
-from corehq.apps.sms.models import WORKFLOW_KEYWORD
+from corehq.apps.sms.models import WORKFLOW_KEYWORD, MessagingEvent
 from corehq.apps.sms.messages import *
 from corehq.apps.sms.handlers.form_session import validate_answer
 from corehq.apps.smsforms.models import SQLXFormsSession
@@ -447,6 +447,8 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
     case = None
     args = split_args(text, survey_keyword)
 
+    logged_event = MessagingEvent.create_from_keyword(survey_keyword, sender)
+
     # Close any open sessions even if it's just an sms that we're
     # responding with.
     SQLXFormsSession.close_all_open_sms_sessions(verified_number.domain,
@@ -463,12 +465,15 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
                     external_id, sender)
                 if matches == 0:
                     send_keyword_response(verified_number, MSG_CASE_NOT_FOUND)
+                    logged_event.error(MessagingEvent.ERROR_CASE_EXTERNAL_ID_NOT_FOUND)
                     return
                 elif matches > 1:
                     send_keyword_response(verified_number, MSG_MULTIPLE_CASES_FOUND)
+                    logged_event.error(MessagingEvent.MULTIPLE_CASES_WITH_EXTERNAL_ID_FOUND)
                     return
             else:
                 send_keyword_response(verified_number, MSG_MISSING_EXTERNAL_ID)
+                logged_event.error(MessagingEvent.NO_EXTERNAL_ID_GIVEN)
                 return
             args = args[2:]
         else:
@@ -511,12 +516,12 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
             create_immediate_reminder(contact, METHOD_SMS, 
                 reminder_type=REMINDER_TYPE_KEYWORD_INITIATED,
                 message=survey_keyword_action.message_content,
-                case=case, keyword=survey_keyword)
+                case=case, logged_event=logged_event)
         elif survey_keyword_action.action == METHOD_SMS_SURVEY:
             create_immediate_reminder(contact, METHOD_SMS_SURVEY,
                 reminder_type=REMINDER_TYPE_KEYWORD_INITIATED,
                 form_unique_id=survey_keyword_action.form_unique_id,
-                case=case, keyword=survey_keyword)
+                case=case, logged_event=logged_event)
         elif survey_keyword_action.action == METHOD_STRUCTURED_SMS:
             res = handle_structured_sms(survey_keyword, survey_keyword_action,
                 sender, verified_number, text, send_response=True, msg=msg,
@@ -524,4 +529,6 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
             if not res:
                 # If the structured sms processing wasn't successful, don't
                 # process any of the other actions
+                logged_event.error(COULD_NOT_PROCESS_STRUCTURED_SMS)
                 return
+    logged_event.completed()

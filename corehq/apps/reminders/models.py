@@ -509,10 +509,9 @@ class CaseReminderHandler(Document):
     # and if a case other than that case triggered the reminder.
     force_surveys_to_use_triggered_case = BooleanProperty(default=False)
 
-    # Keywords spawn immediate reminders. If this reminder definition was
-    # spawned from a keyword (self.reminder_type == REMINDER_TYPE_KEYWORD_INITIATED),
-    # then this is the id of the keyword that spawned it.
-    keyword_id = StringProperty()
+    # If this reminder definition is being created as a subevent of a
+    # MessagingEvent, this is the id of the MessagingEvent
+    messaging_event_id = IntegerProperty()
 
     @property
     def uses_parent_case_property(self):

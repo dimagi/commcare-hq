@@ -578,11 +578,13 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         (SOURCE_OTHER, ugettext_noop('Other')),
     )
 
+    CONTENT_NONE = 'NOP'
     CONTENT_SMS = 'SMS'
     CONTENT_SMS_SURVEY = 'SVY'
     CONTENT_IVR_SURVEY = 'IVR'
 
     CONTENT_CHOICES = (
+        (CONTENT_NONE, ugettext_noop('None')),
         (CONTENT_SMS, ugettext_noop('SMS')),
         (CONTENT_SMS_SURVEY, ugettext_noop('SMS Survey')),
         (CONTENT_IVR_SURVEY, ugettext_noop('IVR Survey')),
@@ -611,6 +613,10 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     ERROR_INVALID_CUSTOM_CONTENT_HANDLER = 'INVALID_CUSTOM_CONTENT_HANDLER'
     ERROR_CANNOT_LOAD_CUSTOM_CONTENT_HANDLER = 'CANNOT_LOAD_CUSTOM_CONTENT_HANDLER'
     ERROR_CANNOT_FIND_FORM = 'CANNOT_FIND_FORM'
+    ERROR_CASE_EXTERNAL_ID_NOT_FOUND = 'CASE_EXTERNAL_ID_NOT_FOUND'
+    ERROR_MULTIPLE_CASES_WITH_EXTERNAL_ID_FOUND = 'MULTIPLE_CASES_WITH_EXTERNAL_ID_FOUND'
+    ERROR_NO_EXTERNAL_ID_GIVEN = 'NO_EXTERNAL_ID_GIVEN'
+    ERROR_COULD_NOT_PROCESS_STRUCTURED_SMS = 'COULD_NOT_PROCESS_STRUCTURED_SMS'
 
     domain = models.CharField(max_length=255, null=False, db_index=True)
     date = models.DateTimeField(null=False, db_index=True)
@@ -669,7 +675,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         )
 
     @classmethod
-    def get_source(cls, reminder_definition):
+    def get_source_from_reminder(cls, reminder_definition):
         from corehq.apps.reminders.models import (REMINDER_TYPE_ONE_TIME,
             REMINDER_TYPE_KEYWORD_INITIATED, REMINDER_TYPE_DEFAULT)
 
@@ -677,14 +683,12 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         return {
             REMINDER_TYPE_ONE_TIME:
                 (cls.SOURCE_BROADCAST, reminder_definition.get_id),
-            REMINDER_TYPE_KEYWORD_INITIATED:
-                (cls.SOURCE_KEYWORD, reminder_definition.keyword_id),
             REMINDER_TYPE_DEFAULT:
                 (cls.SOURCE_REMINDER, reminder_definition.get_id),
         }.get(reminder_definition.reminder_type, default)
 
     @classmethod
-    def get_content_type(cls, reminder_definition):
+    def get_content_type_from_reminder(cls, reminder_definition):
         from corehq.apps.reminders.models import (METHOD_SMS, METHOD_SMS_CALLBACK,
             METHOD_SMS_SURVEY, METHOD_IVR_SURVEY)
         return {
@@ -692,14 +696,31 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             METHOD_SMS_CALLBACK: cls.CONTENT_SMS,
             METHOD_SMS_SURVEY: cls.CONTENT_SMS_SURVEY,
             METHOD_IVR_SURVEY: cls.CONTENT_IVR_SURVEY,
-        }.get(reminder_definition.method, '')
+        }.get(reminder_definition.method, cls.CONTENT_SMS)
+
+    @classmethod
+    def get_content_type_from_keyword(cls, keyword):
+        from corehq.apps.reminders.models import (METHOD_SMS, METHOD_SMS_SURVEY,
+            METHOD_STRUCTURED_SMS)
+
+        if len(keyword.actions) == 0:
+            return cls.CONTENT_NONE
+
+        for action in keyword.actions:
+            if action.action in (METHOD_SMS_SURVEY, METHOD_STRUCTURED_SMS):
+                return cls.CONTENT_SMS_SURVEY
+
+        return cls.CONTENT_SMS
 
     @classmethod
     def create_from_reminder(cls, reminder_definition, reminder, recipient):
         from corehq.apps.reminders.models import METHOD_SMS_SURVEY, METHOD_IVR_SURVEY
 
-        source, source_id = cls.get_source(reminder_definition)
-        content_type = cls.get_content_type(reminder_definition)
+        if reminder_definition.messaging_event_id:
+            return cls.objects.get(pk=reminder_definition.messaging_event_id)
+
+        source, source_id = cls.get_source_from_reminder(reminder_definition)
+        content_type = cls.get_content_type_from_reminder(reminder_definition)
         recipient_type = cls.get_recipient_type(recipient)
 
         return cls.objects.create(
@@ -714,6 +735,26 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             status=cls.STATUS_IN_PROGRESS,
             recipient_type=recipient_type,
             recipient_id=recipient.get_id if recipient_type else None
+        )
+
+    @classmethod
+    def create_from_keyword(cls, keyword, contact):
+        """
+        keyword - the keyword object
+        contact - the person who initiated the keyword
+        """
+        content_type = cls.get_content_type_from_keyword(keyword)
+        recipient_type = cls.get_recipient_type(contact)
+
+        return cls.objects.create(
+            domain=keyword.domain,
+            date=datetime.utcnow(),
+            source=cls.SOURCE_KEYWORD,
+            source_id=keyword.get_id,
+            content_type=content_type,
+            status=cls.STATUS_IN_PROGRESS,
+            recipient_type=recipient_type,
+            recipient_id=contact.get_id if recipient_type else None
         )
 
 
