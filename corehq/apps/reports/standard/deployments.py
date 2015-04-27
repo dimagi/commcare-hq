@@ -162,6 +162,7 @@ class SyncHistoryReport(DeploymentsReport):
     @property
     def rows(self):
         base_link_url = '{}?q={{id}}'.format(reverse('global_quick_find'))
+
         user_id = self.request.GET.get('individual')
         if not user_id:
             key_args = {}
