@@ -1,14 +1,8 @@
 [
   {
     "display_name": "timeEnd", 
-    "transform": {}, 
     "datatype": "datetime", 
-    "type": "expression", 
-    "is_primary_key": false, 
-    "is_nullable": true, 
-    "column_id": "timeEnd", 
     "expression": {
-      "type": "root_doc", 
       "expression": {
         "datatype": null, 
         "type": "property_path", 
@@ -17,18 +11,20 @@
           "meta", 
           "timeEnd"
         ]
-      }
-    }
+      }, 
+      "type": "root_doc"
+    }, 
+    "transform": {}, 
+    "is_nullable": true, 
+    "is_primary_key": false, 
+    "column_id": "timeEnd", 
+    "type": "expression"
   }, 
   {
     "display_name": "username", 
-    "datatype": "string", 
-    "type": "expression", 
-    "is_primary_key": false, 
     "transform": {}, 
-    "is_nullable": true, 
+    "datatype": "string", 
     "expression": {
-      "type": "root_doc", 
       "expression": {
         "datatype": null, 
         "type": "property_path", 
@@ -37,20 +33,18 @@
           "meta", 
           "username"
         ]
-      }
+      }, 
+      "type": "root_doc"
     }, 
-    "column_id": "username"
+    "is_primary_key": false, 
+    "is_nullable": true, 
+    "column_id": "username", 
+    "type": "expression"
   }, 
   {
     "display_name": "form_name", 
-    "transform": {}, 
     "datatype": "string", 
-    "type": "expression", 
-    "is_primary_key": false, 
-    "is_nullable": true, 
-    "column_id": "form_name", 
     "expression": {
-      "type": "root_doc", 
       "expression": {
         "datatype": null, 
         "type": "property_path", 
@@ -58,35 +52,61 @@
           "form", 
           "@name"
         ]
-      }
-    }
+      }, 
+      "type": "root_doc"
+    }, 
+    "transform": {}, 
+    "is_nullable": true, 
+    "is_primary_key": false, 
+    "column_id": "form_name", 
+    "type": "expression"
+  }, 
+  {
+    "display_name": "inspector_names", 
+    "datatype": "string", 
+    "expression": {
+      "expression": {
+        "datatype": null, 
+        "type": "property_path", 
+        "property_path": [
+          "form", 
+          "names"
+        ]
+      }, 
+      "type": "root_doc"
+    }, 
+    "transform": {}, 
+    "is_nullable": true, 
+    "is_primary_key": false, 
+    "column_id": "inspector_names", 
+    "type": "expression"
   }, 
   {
     "display_name": "flag", 
-    "transform": {}, 
     "datatype": "string", 
-    "type": "expression", 
-    "is_primary_key": false, 
-    "is_nullable": true, 
-    "column_id": "flag", 
     "expression": {
       "datatype": null, 
       "type": "property_name", 
       "property_name": "flag"
-    }
+    }, 
+    "transform": {}, 
+    "is_nullable": true, 
+    "is_primary_key": false, 
+    "column_id": "flag", 
+    "type": "expression"
   }, 
   {
     "display_name": "warning", 
-    "transform": {}, 
     "datatype": "string", 
-    "type": "expression", 
-    "is_primary_key": false, 
-    "is_nullable": true, 
-    "column_id": "warning", 
     "expression": {
       "datatype": null, 
       "type": "property_name", 
       "property_name": "warning"
-    }
+    }, 
+    "transform": {}, 
+    "is_nullable": true, 
+    "is_primary_key": false, 
+    "column_id": "warning", 
+    "type": "expression"
   }
 ]
