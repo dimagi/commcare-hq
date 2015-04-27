@@ -142,7 +142,8 @@ MODULE_FILTER = FeaturePreview(
     slug='module_filter',
     label=_('Module Filtering'),
     description=_(
-        'Module filtering allows you to hide modules when a certain XPath condition is met. '
-        'Note, this feature requires CommCare 2.20'
+        'Similar to form display conditions, hide your module unless the condition is met. Most commonly used'
+        ' in conjunction with '
+        '<a href="https://help.commcarehq.org/display/commcarepublic/Custom+User+Data">custom user data</a>.'
     ),
 )
