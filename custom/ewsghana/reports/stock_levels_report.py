@@ -102,7 +102,7 @@ class FacilityReportData(EWSData):
                     if state.stock_on_hand and monthly_consumption else 0,
                     'stockout_duration': '',
                     'stockout_duration_helper': True,
-                    'current_stock': state.stock_on_hand,
+                    'current_stock': None,
                     'monthly_consumption': monthly_consumption,
                     'reorder_level': round(max_level / 2.0),
                     'maximum_level': max_level,
@@ -119,12 +119,14 @@ class FacilityReportData(EWSData):
 
                 if not state_grouping[state.product_id]['last_report']:
                     state_grouping[state.product_id]['last_report'] = json_format_date(state.report.date)
+                if state_grouping[state.product_id]['current_stock'] is None:
+                    state_grouping[state.product_id]['current_stock'] = state.stock_on_hand
 
 
         for values in state_grouping.values():
             yield {
                 'commodity': values['commodity'],
-                'current_stock': int(values['current_stock']),
+                'current_stock': int(values['current_stock'] or 0),
                 'monthly_consumption': values['monthly_consumption'] if values['monthly_consumption'] != 0.00
                 else 'not enough data',
                 'months_until_stockout': get_months_until_stockout_icon(values['months_until_stockout']

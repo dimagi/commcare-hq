@@ -168,7 +168,7 @@ class MonthOfStockProduct(EWSData):
                 for p in self.unique_products(self.get_supply_points, all=True):
                     transaction = StockTransaction.objects.filter(
                         type='stockonhand', product_id=p.product_id, case_id=sp.supply_point_id,
-                        report__date__lte=self.config['enddate'], report__date__gte=self.config['startdate']
+                        report__date__lte=self.config['enddate']
                     ).order_by('-report__date')
 
                     state = StockState.objects.filter(sql_product=p, case_id=sp.supply_point_id)\
