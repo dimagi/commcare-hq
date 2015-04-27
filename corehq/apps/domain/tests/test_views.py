@@ -55,7 +55,6 @@ class TestDomainViews(TestCase):
         """
         Tests creating a new exchange snapshot and then creating another snapshot
         """
-        toggles.DOCUMENTATION_FILE.set(self.user.username, True)
 
         self.client.login(username=self.username, password=self.password)
         app_publish = "{}-publish".format(self.app._id)

@@ -31,6 +31,7 @@ require.config({
             "vellum/lock", 
             "vellum/commtrack", 
             "vellum/modeliteration", 
+            "vellum/saveToCase", 
             "vellum/uploader", 
             "vellum/window", 
             "vellum/polyfills"
@@ -52,6 +53,7 @@ define([
     'vellum/lock',
     'vellum/commtrack',
     'vellum/modeliteration',
+    'vellum/saveToCase',
     'vellum/uploader',
     'vellum/window',
     'vellum/polyfills'

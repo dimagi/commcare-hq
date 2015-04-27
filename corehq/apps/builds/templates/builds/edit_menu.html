@@ -22,14 +22,14 @@
     <h4>Editing {{ doc.ID }}</h4>
     <form id="menu-form" action="." method="POST">{% csrf_token %}
         <table id="menu-table" class="table table-striped">
-            <caption><h3>Menu Options</h3></caption>
+            <h3>Menu Options</h3>
             <thead>
                 <tr>
                     <th></th>
                     <th>Version</th>
                     <th>Label</th>
                     <th>Superuser Only</th>
-                    <th>Delete</th>
+                    <th/>
                 </tr>
             </thead>
             <tbody data-bind="sortable: versions">
@@ -55,12 +55,14 @@
                     </td>
                 </tr>
             </tbody>
-            <tr><td></td><td></td><td></td><td></td><td>
-                <button data-bind="click: addVersion">Add a Version</button>
-            </td></tr>
+            <tr>
+                <td colspan="5">
+                    <button data-bind="click: addVersion" class="btn">Add a Version</button>
+                </td>
+            </tr>
         </table>
 
-        <h3>Defaults</h3>
+        <h4>Defaults</h4>
         <p>Select default 1.x and default 2.x</p>
         <select data-bind="
             options: available_ones,
@@ -70,11 +72,11 @@
             options: available_twos,
             value: default_two
         "></select>
-        <p><input id="submit-menu-form" class="pull-right btn btn-primary" type="Submit" value="submit"></p>
+        <p><input id="submit-menu-form" class="btn btn-primary" type="Submit" value="Submit"></p>
     </form>
     </div>
-    <div>
-        <h4>Import a new build from the build server</h4>
+    <div class="container">
+        <h3>Import a new build from the build server</h3>
         <ol>
             <li><a href="http://jenkins.dimagi.com/view/CommCare%20Mobile/" target="_blank">Browse builds</a></li>
             <li>Click on a CommCare version (example: "commcare-mobile-2.13", <strong>NOT</strong> "commcare-odk-2.13")</li>
@@ -95,7 +97,7 @@
             <label for="import_build_build_number">Build Number</label>
             <input id="import_build_build_number" type="text" name="build_number"/>
             <br/>
-            <button type="submit">Import Build</button>
+            <button type="submit" class="btn btn-primary">Import Build</button>
         </form>
     </div>
     <div style="height:150px;"></div>

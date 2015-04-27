@@ -68,8 +68,9 @@ class PredicatablyRandomToggle(StaticToggle):
     It extends StaticToggle, so individual domains/users can also be explicitly added.
     """
 
-    def __init__(self, slug, label, tag, namespace, randomness):
-        super(PredicatablyRandomToggle, self).__init__(slug, label, tag, list(namespace))
+    def __init__(self, slug, label, tag, namespace, randomness, help_link=None, description=None):
+        super(PredicatablyRandomToggle, self).__init__(slug, label, tag, list(namespace),
+                                                       help_link=help_link, description=description)
         assert namespace, 'namespace must be defined!'
         self.namespace = namespace
         assert 0 <= randomness <= 1, 'randomness must be between 0 and 1!'
@@ -89,8 +90,9 @@ class PredicatablyRandomToggle(StaticToggle):
         )
 
 # if no namespaces are specified the user namespace is assumed
-NAMESPACE_USER = object()
+NAMESPACE_USER = 'user'
 NAMESPACE_DOMAIN = 'domain'
+ALL_NAMESPACES = [NAMESPACE_USER, NAMESPACE_DOMAIN]
 
 
 def all_toggles():
@@ -222,12 +224,6 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-VIEW_SYNC_HISTORY = StaticToggle(
-    'sync_history_report',
-    'Enable sync history report',
-    TAG_PRODUCT_PATH
-)
-
 STOCK_TRANSACTION_EXPORT = StaticToggle(
     'ledger_export',
     'Show "export transactions" link on case details page',
@@ -246,20 +242,6 @@ NO_VELLUM = StaticToggle(
     'Allow disabling Form Builder per form '
     '(for custom forms that Vellum breaks)',
     TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
-DOUBLE_MANAGEMENT = StaticToggle(
-    'double_management',
-    'Case list actions a.k.a. double management',
-    TAG_PRODUCT_CORE,
-    [NAMESPACE_USER, NAMESPACE_DOMAIN]
-)
-
-SPLIT_MULTISELECT_EXPORT = StaticToggle(
-    'split_multiselect_export',
-    'Split multiselect columns in custom exports',
-    TAG_PRODUCT_CORE,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
@@ -304,12 +286,6 @@ PRODUCTS_PER_LOCATION = StaticToggle(
     "This doesn't actually do anything yet.",
     TAG_PRODUCT_CORE,
     [NAMESPACE_DOMAIN]
-)
-
-DOCUMENTATION_FILE = StaticToggle(
-    'documentation_file',
-    "Allows users to optionally add a supporting documentation file to explain exchange applications",
-    TAG_PRODUCT_CORE
 )
 
 ALLOW_CASE_ATTACHMENTS_VIEW = StaticToggle(
@@ -406,18 +382,12 @@ CUSTOM_PROPERTIES = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-FILE_RESTORE = StaticToggle(
+FILE_RESTORE = PredicatablyRandomToggle(
     'file_restore',
     'Use files to do phone restore',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER],
-)
-
-GLOBAL_SMS_RATES = StaticToggle(
-    'global_sms_rates',
-    'Global SMS Rates page',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_USER]
+    randomness=.05,
+    namespace=[NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
 
 BULK_SMS_VERIFICATION = StaticToggle(
@@ -450,11 +420,12 @@ USER_AS_A_CASE = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-STREAM_RESTORE_CACHE = StaticToggle(
+STREAM_RESTORE_CACHE = PredicatablyRandomToggle(
     'stream_cached_restore',
     'Stream cached restore from couchdb',
     TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN]
+    randomness=.05,
+    namespace=[NAMESPACE_DOMAIN]
 )
 
 ENABLE_LOADTEST_USERS = StaticToggle(
@@ -463,4 +434,13 @@ ENABLE_LOADTEST_USERS = StaticToggle(
     TAG_EXPERIMENTAL,
     namespaces=[NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/ccinternal/Loadtest+Users',
+)
+
+OWNERSHIP_CLEANLINESS = PredicatablyRandomToggle(
+    'enable_owner_cleanliness_flags',
+    'Enable tracking ownership cleanliness on submission',
+    TAG_EXPERIMENTAL,
+    randomness=.05,
+    namespace=NAMESPACE_DOMAIN,
+    help_link='https://docs.google.com/a/dimagi.com/document/d/12WfZLerFL832LZbMwqRAvXt82scdjDL51WZVNa31f28/edit#heading=h.gu9sjekp0u2p',
 )
