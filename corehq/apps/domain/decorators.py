@@ -171,22 +171,20 @@ def cls_to_view(additional_decorator=None):
     def decorator(func):
         def __outer__(cls, request, *args, **kwargs):
             domain = kwargs.get('domain')
-            new_kwargs = kwargs.copy()
             if not domain:
                 try:
                     domain = args[0]
                 except IndexError:
                     pass
-            else:
-                del new_kwargs['domain']
 
-            def __inner__(request, domain, *args, **new_kwargs):
+
+            def __inner__(request, domain, *args, **kwargs):
                 return func(cls, request, *args, **kwargs)
 
             if additional_decorator:
-                return additional_decorator(__inner__)(request, domain, *args, **new_kwargs)
+                return additional_decorator(__inner__)(request, domain, *args, **kwargs)
             else:
-                return __inner__(request, domain, *args, **new_kwargs)
+                return __inner__(request, domain, *args, **kwargs)
         return __outer__
     return decorator
 
