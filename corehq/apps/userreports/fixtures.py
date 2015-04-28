@@ -1,5 +1,9 @@
+from collections import defaultdict
+import json
 from xml.etree import ElementTree
+from corehq import toggles
 from corehq.apps.userreports.reports.factory import ReportFactory
+from corehq.apps.userreports.reports.specs import MultibarChartSpec
 from .models import ReportConfiguration
 
 
@@ -7,6 +11,9 @@ def report_fixture_generator(user, version, last_sync=None):
     """
     Generates a report fixture for mobile that can be used by a report module
     """
+    if not toggles.MOBILE_UCR.enabled(user.domain):
+        return []
+
     reports = ReportConfiguration.by_domain(user.domain)
     if not reports:
         return []
@@ -27,15 +34,29 @@ def _report_to_fixture(report):
     )
     report_elem.append(_element('name', report.title))
     report_elem.append(_element('description', report.description))
-
-    data_source = ReportFactory.from_spec(report)
-    rows_elem = ElementTree.Element('rows')
     # todo: set filter values properly?
+    data_source = ReportFactory.from_spec(report)
+
+    rows_elem = ElementTree.Element('rows')
+
+    # for each "multibar" chart configured, send down an appropriate json representation
+    # of axis labels in the format { "0": "freezing", "100": "boiling" }
+    xlabels = {}
+    for chart in report.charts:
+        if isinstance(chart, MultibarChartSpec):
+            xlabels[chart.x_axis_column] = {}
+
     for i, row in enumerate(data_source.get_data()):
         row_elem = ElementTree.Element('row', attrib={'index': str(i)})
         for k in sorted(row.keys()):
             row_elem.append(_element('column', _serialize(row[k]), attrib={'id': k}))
         rows_elem.append(row_elem)
+        for needed_label in xlabels.keys():
+            if needed_label in row:
+                xlabels[needed_label][str(i)] = _serialize(row[needed_label])
+
+    for column, labels in xlabels.items():
+        report_elem.append(_element('xlabels', json.dumps(labels), attrib={'column': column}))
 
     report_elem.append(rows_elem)
     return report_elem
