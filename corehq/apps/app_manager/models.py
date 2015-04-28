@@ -2707,13 +2707,13 @@ class ReportAppConfig(DocumentSchema):
         return Detail(custom_xml=suite_xml.Detail(
             id='reports.{}.select'.format(self.report_id),
             title=suite_xml.Text(
-                locale=suite_xml.Locale(id='cchq.report_menu'),
+                locale=suite_xml.Locale(id=id_strings.report_menu()),
             ),
             fields=[
                 suite_xml.Field(
                     header=suite_xml.Header(
                         text=suite_xml.Text(
-                            locale=suite_xml.Locale(id='cchq.report_name_header'),
+                            locale=suite_xml.Locale(id=id_strings.report_name_header()),
                         )
                     ),
                     template=suite_xml.Template(
@@ -2762,13 +2762,13 @@ class ReportAppConfig(DocumentSchema):
         return Detail(custom_xml=suite_xml.Detail(
             id='reports.{}.summary'.format(self.report_id),
             title=suite_xml.Text(
-                locale=suite_xml.Locale(id='cchq.report_menu'),
+                locale=suite_xml.Locale(id=id_strings.report_menu()),
             ),
             fields=[
                 suite_xml.Field(
                     header=suite_xml.Header(
                         text=suite_xml.Text(
-                            locale=suite_xml.Locale(id='cchq.report_name_header'),
+                            locale=suite_xml.Locale(id=id_strings.report_name_header()),
                         )
                     ),
                     template=suite_xml.Template(
@@ -2779,7 +2779,7 @@ class ReportAppConfig(DocumentSchema):
                 suite_xml.Field(
                     header=suite_xml.Header(
                         text=suite_xml.Text(
-                            locale=suite_xml.Locale(id='cchq.report_description_header'),
+                            locale=suite_xml.Locale(id=id_strings.report_description_header()),
                         )
                     ),
                     template=suite_xml.Template(

@@ -156,6 +156,20 @@ def report_command(report_id):
     return u'reports.{report_id}'.format(report_id=report_id)
 
 
+@pattern('cchq.report_menu')
+def report_menu():
+    return 'cchq.report_menu'
+
+
+@pattern('cchq.report_name_header')
+def report_name_header():
+    return 'cchq.report_name_header'
+
+@pattern('cchq.report_description_header')
+def report_description_header():
+    return 'cchq.report_description_header'
+
+
 CUSTOM_APP_STRINGS_RE = _regex_union(REGEXES)
 
 
