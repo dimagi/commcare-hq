@@ -16,7 +16,7 @@ from django.core.cache import cache
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _, get_language, ugettext_noop
 from django.views.decorators.cache import cache_control
-from corehq import ApplicationsTab, toggles, privileges, feature_previews
+from corehq import ApplicationsTab, toggles, privileges, feature_previews, ReportConfiguration
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager import commcare_settings
 from corehq.apps.app_manager.exceptions import (
@@ -156,7 +156,7 @@ from corehq.apps.app_manager.models import (
     get_app,
     load_case_reserved_words,
     str_to_cls,
-)
+    ReportAppConfig)
 from corehq.apps.app_manager.models import import_app as import_app_util, SortElement
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST, \
@@ -1345,6 +1345,11 @@ def _new_advanced_module(request, domain, app, name, lang):
 
 def _new_report_module(request, domain, app, name, lang):
     module = app.add_module(ReportModule.new_module(name, lang))
+    # by default add all reports
+    module.report_configs =[
+        ReportAppConfig(report_id=report._id, header={lang: report.title})
+        for report in ReportConfiguration.by_domain(domain)
+    ]
     app.save()
     return back_to_main(request, domain, app_id=app.id, module_id=module.id)
 

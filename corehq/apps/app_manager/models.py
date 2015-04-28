@@ -2704,7 +2704,7 @@ class ReportAppConfig(DocumentSchema):
         yield (self.data_detail_id, self.data_details(), True)
 
     def select_details(self):
-        return suite_xml.Detail(
+        return Detail(custom_xml=suite_xml.Detail(
             id='reports.{}.select'.format(self.report_id),
             title=suite_xml.Text(
                 locale=suite_xml.Locale(id='cchq.report_menu'),
@@ -2722,7 +2722,7 @@ class ReportAppConfig(DocumentSchema):
                     ),
                 )
             ]
-        )
+        ).serialize())
 
     def summary_details(self):
         def _get_graph_fields():
@@ -2757,7 +2757,7 @@ class ReportAppConfig(DocumentSchema):
                     )
 
 
-        return suite_xml.Detail(
+        return Detail(custom_xml=suite_xml.Detail(
             id='reports.{}.summary'.format(self.report_id),
             title=suite_xml.Text(
                 locale=suite_xml.Locale(id='cchq.report_menu'),
@@ -2786,7 +2786,7 @@ class ReportAppConfig(DocumentSchema):
                     ),
                 ),
             ] + list(_get_graph_fields())
-        )
+        ).serialize())
 
     def data_details(self):
         def _column_to_field(column):
@@ -2804,13 +2804,13 @@ class ReportAppConfig(DocumentSchema):
                 ),
             )
 
-        return suite_xml.Detail(
+        return Detail(custom_xml=suite_xml.Detail(
             id='reports.{}.data'.format(self.report_id),
             title=suite_xml.Text(
                 locale=suite_xml.Locale(id='cchq.reports.{}.name'.format(self.report_id)),
             ),
             fields=[_column_to_field(c) for c in self.report.report_columns]
-        )
+        ).serialize())
 
     def get_entry(self):
         return suite_xml.Entry(

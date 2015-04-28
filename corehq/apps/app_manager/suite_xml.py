@@ -1095,9 +1095,7 @@ class SuiteGenerator(SuiteGeneratorBase):
             for module in self.modules:
                 for detail_type, detail, enabled in module.get_details():
                     if enabled:
-                        if isinstance(detail, Detail):
-                            r.append(detail)
-                        elif detail.custom_xml:
+                        if detail.custom_xml:
                             d = load_xmlobject_from_string(
                                 detail.custom_xml,
                                 xmlclass=Detail
