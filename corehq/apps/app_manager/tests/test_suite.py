@@ -710,7 +710,6 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         report_app_config._report = report
         report_module.report_configs = [report_app_config]
         report_module._loaded = True
-
         self.assertXmlPartialEqual(
             self.get_xml('reports_module_menu'),
             app.create_suite(),

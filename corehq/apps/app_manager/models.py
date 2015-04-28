@@ -2725,6 +2725,38 @@ class ReportAppConfig(DocumentSchema):
         )
 
     def summary_details(self):
+        def _get_graph_fields():
+            from corehq.apps.userreports.reports.specs import MultibarChartSpec
+            # todo: make this less hard-coded
+            for chart_config in self.report.charts:
+                if isinstance(chart_config, MultibarChartSpec):
+                    def _column_to_series(column):
+                        return suite_xml.Series(
+                            nodeset="instance('reports')/reports/report[@id='{}']/rows/row".format(self.report_id),
+                            x_function='@index',
+                            y_function="column[@id='{}']".format(column),
+                            radius_function='5',
+                        )
+                    yield suite_xml.Field(
+                        header=suite_xml.Header(text=suite_xml.Text()),
+                        template=suite_xml.GraphTemplate(
+                            form='graph',
+                            graph=suite_xml.Graph(
+                                type='xy',
+                                series=[_column_to_series(c) for c in chart_config.y_axis_columns],
+                                configuration=suite_xml.ConfigurationGroup(
+                                    configs=[suite_xml.ConfigurationItem(
+                                        id='x-labels',
+                                        xpath=suite_xml.Xpath(
+                                            function="instance('reports')/reports/report[@id='{}']/xlabels".format(self.report_id)
+                                        )
+                                    )]
+                                )
+                            )
+                        )
+                    )
+
+
         return suite_xml.Detail(
             id='reports.{}.summary'.format(self.report_id),
             title=suite_xml.Text(
@@ -2753,7 +2785,7 @@ class ReportAppConfig(DocumentSchema):
                             xpath=suite_xml.Xpath(function='description'))
                     ),
                 ),
-            ]
+            ] + list(_get_graph_fields())
         )
 
     def data_details(self):
@@ -2777,7 +2809,7 @@ class ReportAppConfig(DocumentSchema):
             title=suite_xml.Text(
                 locale=suite_xml.Locale(id='cchq.reports.{}.name'.format(self.report_id)),
             ),
-            fields=[_column_to_field(c) for c in self.report.report_columns],
+            fields=[_column_to_field(c) for c in self.report.report_columns]
         )
 
     def get_entry(self):
