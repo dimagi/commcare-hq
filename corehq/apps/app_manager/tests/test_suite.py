@@ -706,7 +706,8 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         report = get_sample_report_config()
         report._id = 'd3ff18cd83adf4550b35db8d391f6008'
 
-        report_app_config = ReportAppConfig(report_id=report._id)
+        report_app_config = ReportAppConfig(report_id=report._id,
+                                            header={'en': 'CommBugz'})
         report_app_config._report = report
         report_module.report_configs = [report_app_config]
         report_module._loaded = True
@@ -737,7 +738,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         )
         self.assertIn(
             'reports.d3ff18cd83adf4550b35db8d391f6008=CommBugz',
-            app.create_app_strings('en'),
+            app.create_app_strings('default'),
         )
 
 
