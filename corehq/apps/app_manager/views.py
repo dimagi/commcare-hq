@@ -14,6 +14,7 @@ from xml.dom.minidom import parseString
 from diff_match_patch import diff_match_patch
 from django.core.cache import cache
 from django.template.loader import render_to_string
+from django.template.defaultfilters import slugify
 from django.utils.translation import ugettext as _, get_language, ugettext_noop
 from django.views.decorators.cache import cache_control
 from corehq import ApplicationsTab, toggles, privileges, feature_previews, ReportConfiguration
@@ -921,6 +922,25 @@ def get_module_view_context_and_template(app, module):
         }
 
 
+def _get_default_media_file_name(app, module, form):
+
+    default_file_name = ""
+
+    if module:
+        if trans(module.name, app.langs) == _("Untitled Module"):
+            default_file_name = "{}{}".format("module", module.id)
+        else:
+            default_file_name = slugify(trans(module.name, app.langs))
+
+    if form:
+        if trans(form.name, app.langs) == _("Untitled Form"):
+            default_file_name = "{}_{}{}".format(default_file_name, "form", form.id)
+        else:
+            default_file_name = '{}_{}'.format(default_file_name, slugify(trans(form.name, app.langs)))
+
+    return default_file_name
+
+
 @retry_resource(3)
 def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_user_registration=False, copy_app_form=None):
     """
@@ -1023,9 +1043,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
     menu_host = form or module
     if menu_host:
 
-        default_file_name = 'module%s' % module_id
-        if form_id:
-            default_file_name = '%s_form%s' % (default_file_name, form_id)
+        default_file_name = _get_default_media_file_name(app, module, form)
 
         specific_media = {
             'menu': {
