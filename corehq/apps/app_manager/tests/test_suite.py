@@ -735,6 +735,10 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
             app.create_suite(),
             "./entry",
         )
+        self.assertIn(
+            'reports.d3ff18cd83adf4550b35db8d391f6008=CommBugz',
+            app.create_app_strings('en'),
+        )
 
 
 class AdvancedModuleAsChildTest(SimpleTestCase, TestFileMixin):

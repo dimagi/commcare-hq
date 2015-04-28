@@ -40,9 +40,12 @@ def _create_custom_app_strings(app, lang):
         for detail_type, detail, _ in module.get_details():
             if detail_type.startswith('case'):
                 label = trans(module.case_label)
-            else:
+            elif detail_type.startswith('referral'):
                 label = trans(module.referral_label)
-            yield id_strings.detail_title_locale(module, detail_type), label
+            else:
+                label = None
+            if label:
+                yield id_strings.detail_title_locale(module, detail_type), label
 
             for column in detail.get_columns():
                 if not is_sort_only_column(column):
