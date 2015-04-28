@@ -90,8 +90,9 @@ class PredicatablyRandomToggle(StaticToggle):
         )
 
 # if no namespaces are specified the user namespace is assumed
-NAMESPACE_USER = object()
+NAMESPACE_USER = 'user'
 NAMESPACE_DOMAIN = 'domain'
+ALL_NAMESPACES = [NAMESPACE_USER, NAMESPACE_DOMAIN]
 
 
 def all_toggles():
@@ -244,20 +245,6 @@ NO_VELLUM = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-DOUBLE_MANAGEMENT = StaticToggle(
-    'double_management',
-    'Case list actions a.k.a. double management',
-    TAG_PRODUCT_CORE,
-    [NAMESPACE_USER, NAMESPACE_DOMAIN]
-)
-
-SPLIT_MULTISELECT_EXPORT = StaticToggle(
-    'split_multiselect_export',
-    'Split multiselect columns in custom exports',
-    TAG_PRODUCT_CORE,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
 CAN_EDIT_EULA = StaticToggle(
     'can_edit_eula',
     "Whether this user can set the custom eula and data sharing internal project options. "
@@ -299,12 +286,6 @@ PRODUCTS_PER_LOCATION = StaticToggle(
     "This doesn't actually do anything yet.",
     TAG_PRODUCT_CORE,
     [NAMESPACE_DOMAIN]
-)
-
-DOCUMENTATION_FILE = StaticToggle(
-    'documentation_file',
-    "Allows users to optionally add a supporting documentation file to explain exchange applications",
-    TAG_PRODUCT_CORE
 )
 
 ALLOW_CASE_ATTACHMENTS_VIEW = StaticToggle(
@@ -401,18 +382,12 @@ CUSTOM_PROPERTIES = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-FILE_RESTORE = StaticToggle(
+FILE_RESTORE = PredicatablyRandomToggle(
     'file_restore',
     'Use files to do phone restore',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER],
-)
-
-GLOBAL_SMS_RATES = StaticToggle(
-    'global_sms_rates',
-    'Global SMS Rates page',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_USER]
+    randomness=.05,
+    namespace=[NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
 
 BULK_SMS_VERIFICATION = StaticToggle(
@@ -445,11 +420,12 @@ USER_AS_A_CASE = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-STREAM_RESTORE_CACHE = StaticToggle(
+STREAM_RESTORE_CACHE = PredicatablyRandomToggle(
     'stream_cached_restore',
     'Stream cached restore from couchdb',
     TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN]
+    randomness=.05,
+    namespace=[NAMESPACE_DOMAIN]
 )
 
 ENABLE_LOADTEST_USERS = StaticToggle(
