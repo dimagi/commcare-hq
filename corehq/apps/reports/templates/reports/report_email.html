@@ -1,3 +1,4 @@
+{% load i18n %}
 <head>
 <style>
 h1 {
@@ -24,14 +25,14 @@ td.null-entry {
     </p>
     <p>
         {% if startdate %}
-            {% trans Date range %}: {{ startdate }} - {{ enddate }}
+            {% trans "Date range" %}: {{ startdate }} - {{ enddate }}
         {% endif %}
     </p>
     {% endif %}
 
     {% if notes %}
         <p>
-            <strong>{% trans Report Notes %}</strong><br/>
+            <strong>{% trans "Report Notes" %}</strong><br/>
             {{ notes }}
         </p>
     {% endif %}

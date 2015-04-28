@@ -160,17 +160,15 @@ class MonthOfStockProduct(EWSData):
                 url = make_url(
                     cls,
                     self.config['domain'],
-                    '?location_id=%s&filter_by_program=%s&startdate=%s'
-                    '&enddate=%s&report_type=%s&filter_by_product=%s',
-                    (sp.location_id, self.config['program'] or ALL_OPTION, self.config['startdate'],
-                    self.config['enddate'], self.config['report_type'],
-                    '&filter_by_product='.join(self.config['products'])))
+                    '?location_id=%s&filter_by_program=%s&startdate=%s&enddate=%s&report_type=%s',
+                    (sp.location_id, self.config['program'] or ALL_OPTION, self.config['startdate'].date(),
+                    self.config['enddate'].date(), self.config['report_type']))
 
                 row = [link_format(sp.name, url)]
                 for p in self.unique_products(self.get_supply_points, all=True):
                     transaction = StockTransaction.objects.filter(
                         type='stockonhand', product_id=p.product_id, case_id=sp.supply_point_id,
-                        report__date__lte=self.config['enddate'], report__date__gte=self.config['startdate']
+                        report__date__lte=self.config['enddate']
                     ).order_by('-report__date')
 
                     state = StockState.objects.filter(sql_product=p, case_id=sp.supply_point_id)\

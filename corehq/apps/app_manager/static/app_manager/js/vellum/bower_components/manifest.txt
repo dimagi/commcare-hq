@@ -2,7 +2,7 @@
 ├── XMLWriter#ab8760d6e0
 ├── almond#0.2.9 (latest is 0.3.1)
 ├── bootstrap-better-typeahead#26036ce250
-├── chai#2.2.0
+├── chai#2.2.0 (2.3.0 available)
 ├── equivalent-xml-js#7de21be295
 ├── jquery#1.11.2 (latest is 2.1.3)
 ├─┬ jquery-ui#1.11.4
@@ -18,6 +18,6 @@
 ├── requirejs-text#2.0.14
 ├── requirejs-tpl#a3ca1e0e7f
 ├── underscore#1.5.2 (latest is 1.8.3)
-├── when#2.8.0 (latest is 3.7.2)
+├── when#2.8.0 (latest is 3.7.3)
 ├── xpath#1926d1ebd2
 └── xrayquire#2a0861abd7

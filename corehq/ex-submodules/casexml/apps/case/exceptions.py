@@ -21,6 +21,10 @@ class IllegalCaseId(CommCareCaseError):
     pass
 
 
+class UsesReferrals(CommCareCaseError):
+    pass
+
+
 class NoDomainProvided(CommCareCaseError):
     pass
 

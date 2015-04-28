@@ -4,6 +4,7 @@ a feature preview, you shouldn't need to migrate the data, as long as the
 slug is kept intact.
 """
 from django.utils.translation import ugettext_lazy as _
+from corehq.toggles import TAG_PREVIEW
 from django_prbac.utils import has_privilege as prbac_has_privilege
 
 from .toggles import StaticToggle, NAMESPACE_DOMAIN
@@ -27,7 +28,7 @@ class FeaturePreview(StaticToggle):
     def __init__(self, slug, label, description, help_link=None, privilege=None, save_fn=None):
         self.privilege = privilege
         self.save_fn = save_fn
-        super(FeaturePreview, self).__init__(slug, label, description=description, help_link=help_link,
+        super(FeaturePreview, self).__init__(slug, label, TAG_PREVIEW, description=description, help_link=help_link,
                                              namespaces=[NAMESPACE_DOMAIN])
 
     def has_privilege(self, request):
@@ -141,7 +142,8 @@ MODULE_FILTER = FeaturePreview(
     slug='module_filter',
     label=_('Module Filtering'),
     description=_(
-        'Module filtering allows you to hide modules when a certain XPath condition is met. '
-        'Note, this feature requires CommCare 2.20'
+        'Similar to form display conditions, hide your module unless the condition is met. Most commonly used'
+        ' in conjunction with '
+        '<a href="https://help.commcarehq.org/display/commcarepublic/Custom+User+Data">custom user data</a>.'
     ),
 )

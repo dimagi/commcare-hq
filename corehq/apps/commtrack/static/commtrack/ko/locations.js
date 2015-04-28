@@ -123,17 +123,11 @@ function LocationTypeModel(data, root) {
 
     this.validate = function() {
         this.name_error(false);
-
-        valid = true;
-
         if (!this.name()) {
-            this.name_error(false);
-            valid = false;
+            this.name_error(true);
+            return false;
         }
-            valid = false;
-        }
-
-        return valid;
+        return true;
     };
 
     this.to_json = function() {

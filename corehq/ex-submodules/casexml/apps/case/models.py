@@ -27,6 +27,7 @@ from casexml.apps.case.util import (
     reverse_indices,
 )
 from casexml.apps.case import const
+from casexml.apps.case.exceptions import UsesReferrals
 from dimagi.utils.modules import to_function
 from dimagi.utils import parsing, web
 from dimagi.utils.decorators.memoized import memoized
@@ -377,14 +378,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
             for row in cls.get_db().view("case/get_lite", keys=ids, include_docs=False):
                 yield wrapper(row['value'])
 
-    def get_preloader_dict(self):
-        """
-        Gets the case as a dictionary for use in touchforms preloader framework
-        """
-        ret = copy.copy(self._doc)
-        ret["case-id"] = self.get_id
-        return ret
-
     def get_server_modified_date(self):
         # gets (or adds) the server modified timestamp
         if not self.server_modified_on:
@@ -565,7 +558,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
             logging.error('Form {} touching case {} in domain {} is still using referrals'.format(
                 xformdoc._id, case_update.id, getattr(xformdoc, 'domain', None))
             )
-            raise Exception(_('Sorry, referrals are no longer supported!'))
+            raise UsesReferrals(_('Sorry, referrals are no longer supported!'))
 
         if is_deprecation(xformdoc):
             # Mark all of the form actions as deprecated. These will get removed on rebuild.
