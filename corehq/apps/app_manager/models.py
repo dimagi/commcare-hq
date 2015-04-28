@@ -2748,7 +2748,9 @@ class ReportAppConfig(DocumentSchema):
                                     configs=[suite_xml.ConfigurationItem(
                                         id='x-labels',
                                         xpath=suite_xml.Xpath(
-                                            function="instance('reports')/reports/report[@id='{}']/xlabels".format(self.report_id)
+                                            function="instance('reports')/reports/report[@id='{}']/xlabels[@column='{}']".format(
+                                                self.report_id, chart_config.x_axis_column
+                                            )
                                         )
                                     )]
                                 )

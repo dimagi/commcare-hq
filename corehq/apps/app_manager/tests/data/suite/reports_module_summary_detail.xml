@@ -42,7 +42,7 @@
           </series>
           <configuration>
             <text id="x-labels">
-              <xpath function="instance('reports')/reports/report[@id='d3ff18cd83adf4550b35db8d391f6008']/xlabels"/>
+              <xpath function="instance('reports')/reports/report[@id='d3ff18cd83adf4550b35db8d391f6008']/xlabels[@column='owner']"/>
             </text>
           </configuration>
         </graph>
