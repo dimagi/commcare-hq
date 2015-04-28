@@ -446,7 +446,7 @@ class DetailVariableList(XmlObject):
     variables = NodeListField('_', DetailVariable)
 
 
-class Detail(IdNode):
+class Detail(OrderedXmlObject, IdNode):
     """
     <detail id="">
         <title><text/></title>
@@ -461,6 +461,7 @@ class Detail(IdNode):
     """
 
     ROOT_NAME = 'detail'
+    ORDER = ('title', 'fields')
 
     title = NodeField('title/text', Text)
     fields = NodeListField('field', Field)
