@@ -137,6 +137,8 @@ var CaseConfig = (function () {
                      .on('click', 'a', self.change);
                 self.ensureBlankProperties();
                 self.forceRefreshTextchangeBinding();
+
+                ko.applyBindings(self, $('#usercase-config-ko').get(0));
             });
 
         };
