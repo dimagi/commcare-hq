@@ -345,10 +345,15 @@ class Location(CachedCouchDocumentMixin, Document):
             sql_location = SQLLocation.objects.get(location_id=self._id)
         except SQLLocation.DoesNotExist:
             # The location type must already exist
-            location_type = LocationType.objects.get(
-                domain=self.domain,
-                name=self.location_type,
-            )
+            try:
+                location_type = LocationType.objects.get(
+                    domain=self.domain,
+                    name=self.location_type,
+                )
+            except LocationType.DoesNotExist:
+                msg = "You can't create a location without a real location type"
+                raise LocationType.DoesNotExist(msg)
+
             sql_location = SQLLocation(
                 domain=self.domain,
                 location_type=location_type,
