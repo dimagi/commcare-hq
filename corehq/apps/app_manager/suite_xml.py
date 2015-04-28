@@ -320,8 +320,9 @@ class Assertion(XmlObject):
     text = NodeListField('text', Text)
 
 
-class Entry(XmlObject):
+class Entry(OrderedXmlObject, XmlObject):
     ROOT_NAME = 'entry'
+    ORDER = ('form', 'command', 'instance', 'datums')
 
     form = StringField('form')
     command = NodeField('command', Command)
@@ -689,6 +690,7 @@ class SuiteGeneratorBase(object):
 
 
 GROUP_INSTANCE = Instance(id='groups', src='jr://fixture/user-groups')
+REPORT_INSTANCE = Instance(id='reports', src='jr://fixture/commcare:reports')
 LEDGER_INSTANCE = Instance(id='ledgerdb', src='jr://instance/ledgerdb')
 CASE_INSTANCE = Instance(id='casedb', src='jr://instance/casedb')
 SESSION_INSTANCE = Instance(id='commcaresession', src='jr://instance/session')
@@ -697,6 +699,7 @@ INSTANCE_BY_ID = {
     instance.id: instance
     for instance in (
         GROUP_INSTANCE,
+        REPORT_INSTANCE,
         LEDGER_INSTANCE,
         CASE_INSTANCE,
         SESSION_INSTANCE,
@@ -1465,6 +1468,9 @@ class SuiteGenerator(SuiteGeneratorBase):
                         ))
                 results.append(e)
 
+            for entry in module.get_custom_entries():
+                results.append(entry)
+
         return results
 
     def get_assertion(self, test, locale_id, locale_arguments=None):
@@ -1997,6 +2003,9 @@ class SuiteGenerator(SuiteGeneratorBase):
                     Command(id=self.id_strings.form_command(module.get_form_by_type(CAREPLAN_TASK, 'update'))),
                 ])
                 menus.append(update_menu)
+            elif hasattr(module, 'get_menus'):
+                for menu in module.get_menus():
+                    menus.append(menu)
             else:
                 menu_kwargs = {
                     'id': self.id_strings.menu_id(module),

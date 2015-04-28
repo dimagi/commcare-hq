@@ -1,0 +1,8 @@
+<partial>
+ <menu id="reports-menu">
+    <text>
+      <locale id="cchq.reports_menu"/>
+    </text>
+    <command id="reports.d3ff18cd83adf4550b35db8d391f6008"/>
+  </menu>
+</partial>

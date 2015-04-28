@@ -712,6 +712,11 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         report_module._loaded = True
 
         self.assertXmlPartialEqual(
+            self.get_xml('reports_module_menu'),
+            app.create_suite(),
+            "./menu",
+        )
+        self.assertXmlPartialEqual(
             self.get_xml('reports_module_select_detail'),
             app.create_suite(),
             "./detail[@id='reports.d3ff18cd83adf4550b35db8d391f6008.select']",
@@ -725,6 +730,11 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
             self.get_xml('reports_module_data_detail'),
             app.create_suite(),
             "./detail[@id='reports.d3ff18cd83adf4550b35db8d391f6008.data']",
+        )
+        self.assertXmlPartialEqual(
+            self.get_xml('reports_module_data_entry'),
+            app.create_suite(),
+            "./entry",
         )
 
 

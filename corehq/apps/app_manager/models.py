@@ -1630,6 +1630,15 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
                 child_case_types.update(form.get_child_case_types())
         return child_case_types
 
+    def get_custom_entries(self):
+        """
+        By default, suite entries are configured by forms, but you can also provide custom
+        entries by overriding this function.
+
+        See ReportModule for an example
+        """
+        return []
+
 
 class Module(ModuleBase):
     """
@@ -2675,10 +2684,22 @@ class ReportAppConfig(DocumentSchema):
             self._report = ReportConfiguration.get(self.report_id)
         return self._report
 
+    @property
+    def select_detail_id(self):
+        return 'reports.{}.select'.format(self.report_id)
+
+    @property
+    def summary_detail_id(self):
+        return 'reports.{}.summary'.format(self.report_id)
+
+    @property
+    def data_detail_id(self):
+        return 'reports.{}.data'.format(self.report_id)
+
     def get_details(self):
-        yield ('reports.{}.select'.format(self.report_id), self.select_details(), True)
-        yield ('reports.{}.summary'.format(self.report_id), self.summary_details(), True)
-        yield ('reports.{}.data'.format(self.report_id), self.data_details(), True)
+        yield (self.select_detail_id, self.select_details(), True)
+        yield (self.summary_detail_id, self.summary_details(), True)
+        yield (self.data_detail_id, self.data_details(), True)
 
     def select_details(self):
         return suite_xml.Detail(
@@ -2757,6 +2778,34 @@ class ReportAppConfig(DocumentSchema):
             fields=[_column_to_field(c) for c in self.report.report_columns],
         )
 
+    def get_entry(self):
+        return suite_xml.Entry(
+            form='fixmeclayton',
+            command=suite_xml.Command(
+                id='reports.{}'.format(self.report_id),
+                text=suite_xml.Text(
+                    locale=suite_xml.Locale(id='cchq.reports.{}.name'.format(self.report_id)),
+                ),
+            ),
+            datums=[
+                suite_xml.SessionDatum(
+                    detail_confirm=self.summary_detail_id,
+                    detail_select=self.select_detail_id,
+                    id='report_id',
+                    nodeset="instance('reports')/reports/report[@id='{}']".format(self.report_id),
+                    value='./@id',
+                ),
+                # you are required to select something - even if you don't use it
+                suite_xml.SessionDatum(
+                    detail_select=self.data_detail_id,
+                    id='throwaway',
+                    nodeset="instance('reports')/reports/report[@id='{}']/rows/row".format(self.report_id),
+                    value="''",
+                )
+
+            ]
+        )
+
 
 class ReportModule(ModuleBase):
     """
@@ -2795,6 +2844,22 @@ class ReportModule(ModuleBase):
         for config in self.report_configs:
             for details in config.get_details():
                 yield details
+
+    def get_custom_entries(self):
+        self._load_reports()
+        for config in self.report_configs:
+            yield config.get_entry()
+
+    def get_menus(self):
+        yield suite_xml.Menu(
+            id='reports-menu',
+            text=suite_xml.Text(
+                locale=suite_xml.Locale(id='cchq.reports_menu')
+            ),
+            commands=[
+                suite_xml.Command(id='reports.{}'.format(config.report_id)) for config in self.report_configs
+            ]
+        )
 
 
 class VersionedDoc(LazyAttachmentDoc):
