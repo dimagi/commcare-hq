@@ -1087,45 +1087,43 @@ class SuiteGenerator(SuiteGeneratorBase):
     @property
     @memoized
     def details(self):
-
         r = []
         if not self.app.use_custom_suite:
             for module in self.modules:
                 for detail_type, detail, enabled in module.get_details():
                     if enabled:
-                        detail_column_infos = get_detail_column_infos(
-                            detail,
-                            include_sort=detail_type.endswith('short'),
-                        )
-
-                        if detail_column_infos:
-                            if detail.custom_xml:
-                                d = load_xmlobject_from_string(
-                                    detail.custom_xml,
-                                    xmlclass=Detail
-                                )
-                                r.append(d)
-
-                            elif detail.use_case_tiles:
-                                r.append(self.build_case_tile_detail(
-                                    module, detail, detail_type
-                                ))
-                            else:
-                                d = self.build_detail(
-                                    module,
-                                    detail_type,
-                                    detail,
-                                    detail_column_infos,
-                                    list(detail.get_tabs()),
-                                    self.id_strings.detail(module, detail_type),
-                                    Text(locale_id=self.id_strings.detail_title_locale(
-                                        module, detail_type
-                                    )),
-                                    0,
-                                    len(detail_column_infos)
-                                )
-                                if d:
-                                    r.append(d)
+                        if detail.custom_xml:
+                            d = load_xmlobject_from_string(
+                                detail.custom_xml,
+                                xmlclass=Detail
+                            )
+                            r.append(d)
+                        else:
+                            detail_column_infos = get_detail_column_infos(
+                                detail,
+                                include_sort=detail_type.endswith('short'),
+                            )
+                            if detail_column_infos:
+                                if detail.use_case_tiles:
+                                    r.append(self.build_case_tile_detail(
+                                        module, detail, detail_type
+                                    ))
+                                else:
+                                    d = self.build_detail(
+                                        module,
+                                        detail_type,
+                                        detail,
+                                        detail_column_infos,
+                                        list(detail.get_tabs()),
+                                        self.id_strings.detail(module, detail_type),
+                                        Text(locale_id=self.id_strings.detail_title_locale(
+                                            module, detail_type
+                                        )),
+                                        0,
+                                        len(detail_column_infos)
+                                    )
+                                    if d:
+                                        r.append(d)
         return r
 
     def detail_variables(self, module, detail, detail_column_infos):
