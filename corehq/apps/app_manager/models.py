@@ -1492,6 +1492,8 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
                 return CareplanModule.wrap(data)
             elif doc_type == 'AdvancedModule':
                 return AdvancedModule.wrap(data)
+            elif doc_type == 'ReportModule':
+                return ReportModule.wrap(data)
             else:
                 raise ValueError('Unexpected doc_type for Module', doc_type)
         else:
@@ -2811,6 +2813,9 @@ class ReportModule(ModuleBase):
     """
     Module for user configurable reports
     """
+
+    module_type = 'report'
+
     report_configs = SchemaListProperty(ReportAppConfig)
     forms = []
     _loaded = False
