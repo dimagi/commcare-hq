@@ -2889,12 +2889,13 @@ class ReportModule(ModuleBase):
 
     def get_menus(self):
         yield suite_xml.Menu(
-            id='reports-menu',
+            id=id_strings.menu_id(self),
             text=suite_xml.Text(
-                locale=suite_xml.Locale(id='cchq.reports_menu')
+                locale=suite_xml.Locale(id=id_strings.module_locale(self))
             ),
             commands=[
-                suite_xml.Command(id='reports.{}'.format(config.report_id)) for config in self.report_configs
+                suite_xml.Command(id=id_strings.report_command(config.report_id))
+                for config in self.report_configs
             ]
         )
 

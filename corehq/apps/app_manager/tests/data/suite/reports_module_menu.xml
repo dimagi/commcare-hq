@@ -1,7 +1,7 @@
 <partial>
- <menu id="reports-menu">
+  <menu id="m0">
     <text>
-      <locale id="cchq.reports_menu"/>
+      <locale id="modules.m0"/>
     </text>
     <command id="reports.d3ff18cd83adf4550b35db8d391f6008"/>
   </menu>

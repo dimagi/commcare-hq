@@ -151,6 +151,11 @@ def referral_list_locale(module):
     return u"referral_lists.m{module.id}".format(module=module)
 
 
+@pattern('reports.%s')
+def report_command(report_id):
+    return u'reports.{report_id}'.format(report_id=report_id)
+
+
 CUSTOM_APP_STRINGS_RE = _regex_union(REGEXES)
 
 

@@ -61,6 +61,9 @@ def _create_custom_app_strings(app, lang):
                 yield id_strings.detail_tab_title_locale(module, detail_type, tab), trans(tab.header)
 
         yield id_strings.module_locale(module), maybe_add_index(trans(module.name))
+        if hasattr(module, 'report_configs'):
+            for config in module.report_configs:
+                yield id_strings.report_command(config.report_id), trans(config.header)
         if hasattr(module, 'case_list'):
             if module.case_list.show:
                 yield id_strings.case_list_locale(module), trans(module.case_list.label) or "Case List"
