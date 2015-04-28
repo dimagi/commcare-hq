@@ -41,7 +41,7 @@ def _report_to_fixture(report):
 
     # for each "multibar" chart configured, send down an appropriate json representation
     # of axis labels in the format { "0": "freezing", "100": "boiling" }
-    xlabels = {}
+    xlabels = {'dummy': {}}
     for chart in report.charts:
         if isinstance(chart, MultibarChartSpec):
             xlabels[chart.x_axis_column] = {}
