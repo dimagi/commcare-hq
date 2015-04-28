@@ -2678,7 +2678,7 @@ class ReportAppConfig(DocumentSchema):
     def get_details(self):
         yield ('reports.{}.select'.format(self.report_id), self.select_details(), True)
         yield ('reports.{}.summary'.format(self.report_id), self.summary_details(), True)
-        # yield ('reports.{}.data'.format(self.report_id), self.data_details(), True)
+        yield ('reports.{}.data'.format(self.report_id), self.data_details(), True)
 
     def select_details(self):
         detail_xml = suite_xml.Detail(
@@ -2736,7 +2736,29 @@ class ReportAppConfig(DocumentSchema):
         return Detail(custom_xml=detail_xml.serialize())
 
     def data_details(self):
-        pass
+        def _column_to_field(column):
+            return suite_xml.Field(
+                header=suite_xml.Header(
+                    text=suite_xml.Text(
+                        locale=suite_xml.Locale(
+                            id='cchq.reports.{}.headers.{}'.format(self.report_id, column.column_id)
+                        ),
+                    )
+                ),
+                template=suite_xml.Template(
+                    text=suite_xml.Text(
+                        xpath=suite_xml.Xpath(function="column[@id='{}']".format(column.column_id)))
+                ),
+            )
+
+        detail_xml = suite_xml.Detail(
+            id='reports.{}.data'.format(self.report_id),
+            title=suite_xml.Text(
+                locale=suite_xml.Locale(id='cchq.reports.{}.name'.format(self.report_id)),
+            ),
+            fields=[_column_to_field(c) for c in self.report.report_columns],
+        )
+        return Detail(custom_xml=detail_xml.serialize())
 
 
 class ReportModule(ModuleBase):

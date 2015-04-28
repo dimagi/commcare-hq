@@ -9,7 +9,6 @@ from corehq.apps.app_manager.models import (
     ReportModule, ReportAppConfig)
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.xpath import dot_interpolate, UserCaseXPath, interpolate_xpath
-from corehq.apps.userreports.tests import get_sample_report_config
 from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.feature_previews import MODULE_FILTER
 from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
@@ -698,6 +697,8 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
                                    './entry[1]/session')
 
     def test_report_module(self):
+        from corehq.apps.userreports.tests import get_sample_report_config
+
         app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
 
         report_module = app.add_module(ReportModule.new_module('Reports', None))
@@ -719,6 +720,11 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
             self.get_xml('reports_module_summary_detail'),
             app.create_suite(),
             "./detail[@id='reports.d3ff18cd83adf4550b35db8d391f6008.summary']",
+        )
+        self.assertXmlPartialEqual(
+            self.get_xml('reports_module_data_detail'),
+            app.create_suite(),
+            "./detail[@id='reports.d3ff18cd83adf4550b35db8d391f6008.data']",
         )
 
 
