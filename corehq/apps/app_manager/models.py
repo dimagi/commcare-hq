@@ -2827,14 +2827,14 @@ class ReportAppConfig(DocumentSchema):
                 suite_xml.SessionDatum(
                     detail_confirm=self.summary_detail_id,
                     detail_select=self.select_detail_id,
-                    id='report_id',
+                    id='report_id_{}'.format(self.report_id),
                     nodeset="instance('reports')/reports/report[@id='{}']".format(self.report_id),
                     value='./@id',
                 ),
                 # you are required to select something - even if you don't use it
                 suite_xml.SessionDatum(
                     detail_select=self.data_detail_id,
-                    id='throwaway',
+                    id='throwaway_{}'.format(self.report_id),
                     nodeset="instance('reports')/reports/report[@id='{}']/rows/row".format(self.report_id),
                     value="''",
                 )
