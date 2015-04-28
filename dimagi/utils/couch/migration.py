@@ -105,7 +105,7 @@ class SyncSQLToCouchMixin(object):
         cls = self._migration_get_couch_model_class()
         if not self.couch_id:
             obj = cls()
-            obj.save()
+            obj.save(sync_to_sql=False)
             self.couch_id = obj._id
             self.save(sync_to_couch=False)
         else:
