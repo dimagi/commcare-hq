@@ -36,6 +36,7 @@ from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import ServerTime
+from dimagi.utils.couch.bulk import get_docs
 from django_prbac.exceptions import PermissionDenied
 from corehq.apps.accounting.utils import domain_has_privilege
 
@@ -2656,6 +2657,125 @@ class CareplanModule(ModuleBase):
                 'module': self.get_module_info(),
             })
         return errors
+
+
+class ReportAppConfig(DocumentSchema):
+    """
+    Class for configuring how a user configurable report shows up in an app
+    """
+    report_id = StringProperty(required=True)
+    header = DictProperty()
+
+    _report = None
+
+    @property
+    def report(self):
+        from corehq.apps.userreports.models import ReportConfiguration
+        if self._report is None:
+            self._report = ReportConfiguration.get(self.report_id)
+        return self._report
+
+    def get_details(self):
+        yield ('reports.{}.select'.format(self.report_id), self.select_details(), True)
+        yield ('reports.{}.summary'.format(self.report_id), self.summary_details(), True)
+        # yield ('reports.{}.data'.format(self.report_id), self.data_details(), True)
+
+    def select_details(self):
+        detail_xml = suite_xml.Detail(
+            id='reports.{}.select'.format(self.report_id),
+            title=suite_xml.Text(
+                locale=suite_xml.Locale(id='cchq.report_menu'),
+            ),
+            fields=[
+                suite_xml.Field(
+                    header=suite_xml.Header(
+                        text=suite_xml.Text(
+                            locale=suite_xml.Locale(id='cchq.report_name_header'),
+                        )
+                    ),
+                    template=suite_xml.Template(
+                        text=suite_xml.Text(
+                            xpath=suite_xml.Xpath(function='name'))
+                    ),
+                )
+            ]
+        )
+        return Detail(custom_xml=detail_xml.serialize())
+
+    def summary_details(self):
+        detail_xml = suite_xml.Detail(
+            id='reports.{}.summary'.format(self.report_id),
+            title=suite_xml.Text(
+                locale=suite_xml.Locale(id='cchq.report_menu'),
+            ),
+            fields=[
+                suite_xml.Field(
+                    header=suite_xml.Header(
+                        text=suite_xml.Text(
+                            locale=suite_xml.Locale(id='cchq.report_name_header'),
+                        )
+                    ),
+                    template=suite_xml.Template(
+                        text=suite_xml.Text(
+                            xpath=suite_xml.Xpath(function='name'))
+                    ),
+                ),
+                suite_xml.Field(
+                    header=suite_xml.Header(
+                        text=suite_xml.Text(
+                            locale=suite_xml.Locale(id='cchq.report_description_header'),
+                        )
+                    ),
+                    template=suite_xml.Template(
+                        text=suite_xml.Text(
+                            xpath=suite_xml.Xpath(function='description'))
+                    ),
+                ),
+            ]
+        )
+        return Detail(custom_xml=detail_xml.serialize())
+
+    def data_details(self):
+        pass
+
+
+class ReportModule(ModuleBase):
+    """
+    Module for user configurable reports
+    """
+    report_configs = SchemaListProperty(ReportAppConfig)
+    forms = []
+    _loaded = False
+
+    @property
+    @memoized
+    def reports(self):
+        from corehq.apps.userreports.models import ReportConfiguration
+        return [ReportConfiguration.wrap(doc) for doc in
+            get_docs(ReportConfiguration.get_db(), [r.report_id for r in self.report_configs])
+        ]
+
+    @classmethod
+    def new_module(cls, name, lang):
+        module = ReportModule(
+            name={(lang or 'en'): name or ugettext("Reports")},
+            case_type='',
+        )
+        module.get_or_create_unique_id()
+        return module
+
+    def _load_reports(self):
+        if not self._loaded:
+            # load reports in bulk to avoid hitting the database for each one
+            for i, report in enumerate(self.reports):
+                self.report_configs[i]._report = report
+        self._loaded = True
+
+    def get_details(self):
+        self._load_reports()
+        for config in self.report_configs:
+            for details in config.get_details():
+                yield details
 
 
 class VersionedDoc(LazyAttachmentDoc):

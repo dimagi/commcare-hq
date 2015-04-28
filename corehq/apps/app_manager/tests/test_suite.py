@@ -5,10 +5,11 @@ from corehq.apps.app_manager.models import (
     Application, AutoSelectCase, AUTO_SELECT_USER, AUTO_SELECT_CASE, LoadUpdateAction, AUTO_SELECT_FIXTURE,
     AUTO_SELECT_RAW, WORKFLOW_MODULE, DetailColumn, ScheduleVisit, FormSchedule, Module, AdvancedModule,
     WORKFLOW_ROOT, AdvancedOpenCaseAction, SortElement, PreloadAction, MappingItem, OpenCaseAction,
-    OpenSubCaseAction, FormActionCondition, UpdateCaseAction, WORKFLOW_FORM, FormLink
-)
+    OpenSubCaseAction, FormActionCondition, UpdateCaseAction, WORKFLOW_FORM, FormLink,
+    ReportModule, ReportAppConfig)
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.xpath import dot_interpolate, UserCaseXPath, interpolate_xpath
+from corehq.apps.userreports.tests import get_sample_report_config
 from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.feature_previews import MODULE_FILTER
 from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
@@ -695,6 +696,30 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         self.assertXmlPartialEqual(expected,
                                    app.create_suite(),
                                    './entry[1]/session')
+
+    def test_report_module(self):
+        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+
+        report_module = app.add_module(ReportModule.new_module('Reports', None))
+        report_module.unique_id = 'report_module'
+        report = get_sample_report_config()
+        report._id = 'd3ff18cd83adf4550b35db8d391f6008'
+
+        report_app_config = ReportAppConfig(report_id=report._id)
+        report_app_config._report = report
+        report_module.report_configs = [report_app_config]
+        report_module._loaded = True
+
+        self.assertXmlPartialEqual(
+            self.get_xml('reports_module_select_detail'),
+            app.create_suite(),
+            "./detail[@id='reports.d3ff18cd83adf4550b35db8d391f6008.select']",
+        )
+        self.assertXmlPartialEqual(
+            self.get_xml('reports_module_summary_detail'),
+            app.create_suite(),
+            "./detail[@id='reports.d3ff18cd83adf4550b35db8d391f6008.summary']",
+        )
 
 
 class AdvancedModuleAsChildTest(SimpleTestCase, TestFileMixin):
