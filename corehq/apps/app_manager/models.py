@@ -2796,7 +2796,7 @@ class ReportAppConfig(DocumentSchema):
                 header=suite_xml.Header(
                     text=suite_xml.Text(
                         locale=suite_xml.Locale(
-                            id='cchq.reports.{}.headers.{}'.format(self.report_id, column.column_id)
+                            id=id_strings.report_column_header(self.report_id, column.column_id)
                         ),
                     )
                 ),
@@ -2809,7 +2809,7 @@ class ReportAppConfig(DocumentSchema):
         return Detail(custom_xml=suite_xml.Detail(
             id='reports.{}.data'.format(self.report_id),
             title=suite_xml.Text(
-                locale=suite_xml.Locale(id='cchq.reports.{}.name'.format(self.report_id)),
+                locale=suite_xml.Locale(id=id_strings.report_name(self.report_id)),
             ),
             fields=[_column_to_field(c) for c in self.report.report_columns]
         ).serialize())
@@ -2820,7 +2820,7 @@ class ReportAppConfig(DocumentSchema):
             command=suite_xml.Command(
                 id='reports.{}'.format(self.report_id),
                 text=suite_xml.Text(
-                    locale=suite_xml.Locale(id='cchq.reports.{}.name'.format(self.report_id)),
+                    locale=suite_xml.Locale(id=id_strings.report_name(self.report_id)),
                 ),
             ),
             datums=[
