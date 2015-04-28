@@ -73,7 +73,7 @@ class FeatureType(object):
 
 class SoftwareProductType(object):
     COMMCARE = "CommCare"
-    COMMTRACK = "CommCare Supply"
+    COMMTRACK = "CommTrack"
     COMMCONNECT = "CommConnect"
     CHOICES = (
         (COMMCARE, COMMCARE),
