@@ -697,7 +697,7 @@ LOCAL_PILLOWTOPS = {}
 # Prelogin site
 ENABLE_PRELOGIN_SITE = False
 PRELOGIN_APPS = (
-    'corehq.apps.public',
+    'corehq.apps.prelogin',
 )
 
 # If there are existing doc_ids and case_ids you want to check directly,

@@ -18,7 +18,7 @@ try:
     from localsettings import PRELOGIN_APP_URLS
 except ImportError:
     PRELOGIN_APP_URLS = (
-        (r'^public/', include('corehq.apps.public.urls')),
+        (r'^public/', include('corehq.apps.prelogin.urls')),
     )
 admin.autodiscover()
 
