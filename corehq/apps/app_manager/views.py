@@ -1346,7 +1346,7 @@ def _new_advanced_module(request, domain, app, name, lang):
 def _new_report_module(request, domain, app, name, lang):
     module = app.add_module(ReportModule.new_module(name, lang))
     # by default add all reports
-    module.report_configs =[
+    module.report_configs = [
         ReportAppConfig(report_id=report._id, header={lang: report.title})
         for report in ReportConfiguration.by_domain(domain)
     ]

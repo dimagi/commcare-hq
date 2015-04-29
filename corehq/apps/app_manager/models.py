@@ -2758,7 +2758,6 @@ class ReportAppConfig(DocumentSchema):
                         )
                     )
 
-
         return Detail(custom_xml=suite_xml.Detail(
             id='reports.{}.summary'.format(self.report_id),
             title=suite_xml.Text(
@@ -2858,7 +2857,8 @@ class ReportModule(ModuleBase):
     @memoized
     def reports(self):
         from corehq.apps.userreports.models import ReportConfiguration
-        return [ReportConfiguration.wrap(doc) for doc in
+        return [
+            ReportConfiguration.wrap(doc) for doc in
             get_docs(ReportConfiguration.get_db(), [r.report_id for r in self.report_configs])
         ]
 
