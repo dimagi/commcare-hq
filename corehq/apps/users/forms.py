@@ -371,6 +371,38 @@ else:
 class MultipleSelectionForm(forms.Form):
     """
     Form for selecting groups (used by the group UI on the user page)
+    Usage::
+
+        # views.py
+        @property
+        @memoized
+        def users_form(self):
+            form = MultipleSelectionForm(
+                initial={'selected_ids': self.users_at_location},
+                submit_label=_("Update Users at this Location"),
+            )
+            form.fields['selected_ids'].choices = self.all_users
+            return form
+
+        # template.html
+        <script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.9.2.multiselect-deps.custom.min.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.js' %}"></script>
+
+        <script type="text/javascript">
+            $(function () {
+                $("#id_selected_ids").width(800).height(400).multiselect();
+            });
+        </script>
+
+        <form class="form disable-on-submit" id="edit_users" action="" method='post'>
+            <legend>{% trans 'Specify Users At This Location' %}</legend>
+            {% crispy users_per_location_form %}
+        </form>
+
+    To display multiple forms on the same page, you'll need to pass a prefix to
+    the MultipleSelectionForm constructor, like ``auto_id='users-%s'`` This will
+    change the css id to ``"#users-selected_ids"``
     """
     selected_ids = forms.MultipleChoiceField(
         label="",
