@@ -394,7 +394,7 @@ class SubAreaMixin():
         return sub_area
 
 class DomainGlobalSettingsForm(forms.Form):
-    hr_name = forms.CharField(required=False, label=_("Project Name"))
+    hr_name = forms.CharField(label=_("Project Name"))
     default_timezone = TimeZoneChoiceField(label=ugettext_noop("Default Timezone"), initial="UTC")
 
     logo = ImageField(
