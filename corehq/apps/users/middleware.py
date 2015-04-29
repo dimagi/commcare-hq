@@ -26,6 +26,10 @@ class UsersMiddleware(object):
     
     #def process_request(self, request):
     def process_view(self, request, view_func, view_args, view_kwargs):
+        if 'domain' in view_kwargs:
+            request.domain = view_kwargs['domain']
+        if 'org' in view_kwargs:
+            request.org = view_kwargs['org']
         if request.user and hasattr(request.user, 'get_profile'):
             sessionid = request.COOKIES.get('sessionid', None)
             if sessionid:
