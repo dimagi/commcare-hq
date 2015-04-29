@@ -437,7 +437,7 @@ class SubmissionPost(object):
                 get_and_check_xform_domain, CaseDbCache, process_cases_with_casedb
             )
             from casexml.apps.case.signals import case_post_save
-            from casexml.apps.case.exceptions import IllegalCaseId
+            from casexml.apps.case.exceptions import IllegalCaseId, UsesReferrals
             from corehq.apps.commtrack.processing import process_stock
 
             cases = []
@@ -454,7 +454,7 @@ class SubmissionPost(object):
                         try:
                             case_result = process_cases_with_casedb(xforms, case_db)
                             process_stock(instance, case_db)
-                        except IllegalCaseId as e:
+                        except (IllegalCaseId, UsesReferrals) as e:
                             # errors we know about related to the content of the form
                             # log the error and respond with a success code so that the phone doesn't
                             # keep trying to send the form

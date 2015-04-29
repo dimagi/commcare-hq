@@ -43,26 +43,26 @@
 trunk: master
 name: autostaging
 branches:
-  - master+usec+master # J$ 4/22
-  - usec+master # Daniel 4/22
   - usec  # danny 4/13
   - subscription-no-contact-info # bb 8/4
   - vellum-staging # J$ 11/13
   - locations-as-groups # tw 1/20
   - fixtures-spike  # cz 1/29
-  - static-updates # Biyeun 2/9
   - usercase # Norman 3/27
   - commcare-supply  # Ethan 4/13
   - new-location  # Ethan 4/14
   - fm-facing-interface+bulk-wire-invoice # Ben 4/23
   - fm-facing-interface # Nick P 4/23
   - bulk-wire-invoice # Ben 4/23
+  - commcarehq-prelogin # Biyeun 4/29
+  - grunt-task-fabric # Ben 4/29
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches: []
+    branches:
     #  - tf-persistence  # wsp 3/10
+      - use-templates # Ben 4/29
 
   submodules/formtranslate-src:
     # let's leave this here even when empty

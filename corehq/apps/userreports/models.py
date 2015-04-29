@@ -142,6 +142,11 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
                 }
             }
         }, self.named_filter_objects)]
+
+        default_indicators.append(IndicatorFactory.from_spec({
+            "type": "inserted_at",
+        }, self.named_filter_objects))
+
         if self.base_item_expression:
             default_indicators.append(IndicatorFactory.from_spec({
                 "type": "repeat_iteration",
