@@ -210,7 +210,11 @@
                             <a class="btn" data-bind="
                                 openModal: 'deploy-build-modal-template',
                                 css: {'btn-primary': !build_broken(), 'btn-danger': build_broken},
-                                click: function() { ga_track_event('App Manager', 'Deploy Button', '{{ app.id }}'); analytics.track('Clicked Deploy-Button');}
+                                click: function() {
+                                    generate_short_url('short_odk_url');
+                                    ga_track_event('App Manager', 'Deploy Button', '{{ app.id }}');
+                                    analytics.track('Clicked Deploy-Button');
+                                }
                             ">
                                 <span class="icon icon-exclamation-sign" data-bind="visible: build_broken"></span>
                                 {% trans "Deploy" %}
@@ -318,8 +322,8 @@
                     <div class="accordion-group">
                         <div class="accordion-heading">
                             <a class="accordion-toggle" data-bind="
+                                {# TODO: This tracking code is probably rarely fired anymore because now this accordion is open by default #}
                                 click: function() { track_deploy_type('Download to Android'); },
-                                click: function() { generate_short_url('short_odk_url'); }
                             ">
                                 {% trans "Download to Android" %}
                             </a>
