@@ -401,8 +401,9 @@ class MultipleSelectionForm(forms.Form):
         </form>
 
     To display multiple forms on the same page, you'll need to pass a prefix to
-    the MultipleSelectionForm constructor, like ``auto_id='users-%s'`` This will
-    change the css id to ``"#users-selected_ids"``
+    the MultipleSelectionForm constructor, like ``prefix="users"`` This will
+    change the css id to ``"#id_users-selected_ids"``, and the returned list of
+    ids to ``request.POST.getlist('users-selected_ids', [])``
     """
     selected_ids = forms.MultipleChoiceField(
         label="",

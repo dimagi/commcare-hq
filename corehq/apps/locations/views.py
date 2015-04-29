@@ -398,6 +398,7 @@ class EditLocationView(NewLocationView):
         return consumptions
 
     @property
+    @memoized
     def products_form(self):
         if (
             self.location.location_type_object.administrative or
@@ -407,10 +408,34 @@ class EditLocationView(NewLocationView):
 
         form = MultipleSelectionForm(
             initial={'selected_ids': self.products_at_location},
-            submit_label=_("Update Product List")
+            submit_label=_("Update Product List"),
+            prefix="products",
         )
         form.fields['selected_ids'].choices = self.all_products
         return form
+
+    @property
+    def users_at_location(self):
+        # TODO
+        return []
+
+    @property
+    @memoized
+    def all_users(self):
+        # TODO
+        return []
+
+    @property
+    @memoized
+    def users_form(self):
+        form = MultipleSelectionForm(
+            initial={'selected_ids': self.users_at_location},
+            submit_label=_("Update Users at this Location"),
+            prefix="users",
+        )
+        form.fields['selected_ids'].choices = self.all_users
+        return form
+
 
     @property
     def all_products(self):
@@ -432,12 +457,18 @@ class EditLocationView(NewLocationView):
         context = super(EditLocationView, self).page_context
         context.update({
             'products_per_location_form': self.products_form,
+            'users_per_location_form': self.users_form,
         })
         return context
 
+    def users_form_post(self, request, *args, **kwargs):
+        # TODO
+        print request.POST.getlist('users-selected_ids', [])
+        return self.form_valid()
+
     def products_form_post(self, request, *args, **kwargs):
         products = SQLProduct.objects.filter(
-            product_id__in=request.POST.getlist('selected_ids', [])
+            product_id__in=request.POST.getlist('products-selected_ids', [])
         )
         self.sql_location.products = products
         self.sql_location.save()
@@ -446,6 +477,8 @@ class EditLocationView(NewLocationView):
     def post(self, request, *args, **kwargs):
         if self.request.POST['form_type'] == "location-settings":
             return self.settings_form_post(request, *args, **kwargs)
+        elif (self.request.POST['form_type'] == "location-users"):
+            return self.users_form_post(request, *args, **kwargs)
         elif (self.request.POST['form_type'] == "location-products"
               and toggles.PRODUCTS_PER_LOCATION.enabled(request.domain)):
             return self.products_form_post(request, *args, **kwargs)
