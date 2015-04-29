@@ -2737,6 +2737,10 @@ class ReportAppConfig(DocumentSchema):
                             y_function="column[@id='{}']".format(column),
                             radius_function='5',
                         )
+                    _xlabels_xpath = (
+                        "instance('reports')/reports/report[@id='{}']/xlabels[@column='{}']"
+                        .format(self.report_id, chart_config.x_axis_column)
+                    )
                     yield suite_xml.Field(
                         header=suite_xml.Header(text=suite_xml.Text()),
                         template=suite_xml.GraphTemplate(
@@ -2748,9 +2752,7 @@ class ReportAppConfig(DocumentSchema):
                                     configs=[suite_xml.ConfigurationItem(
                                         id='x-labels',
                                         xpath=suite_xml.Xpath(
-                                            function="instance('reports')/reports/report[@id='{}']/xlabels[@column='{}']".format(
-                                                self.report_id, chart_config.x_axis_column
-                                            )
+                                            function=_xlabels_xpath
                                         )
                                     )]
                                 )
