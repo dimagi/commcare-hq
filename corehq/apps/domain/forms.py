@@ -394,6 +394,7 @@ class SubAreaMixin():
         return sub_area
 
 class DomainGlobalSettingsForm(forms.Form):
+    hr_name = forms.CharField(required=False, label=_("Project Name"))
     default_timezone = TimeZoneChoiceField(label=ugettext_noop("Default Timezone"), initial="UTC")
 
     logo = ImageField(
@@ -466,6 +467,8 @@ class DomainGlobalSettingsForm(forms.Form):
 
     def save(self, request, domain):
         try:
+            domain.hr_name = self.cleaned_data['hr_name']
+
             if self.can_use_custom_logo:
                 logo = self.cleaned_data['logo']
                 if logo:

@@ -205,7 +205,7 @@ class Domain(Document, SnapshotMixin):
     secure_submissions = BooleanProperty(default=False)
     cloudcare_releases = StringProperty(choices=['stars', 'nostars', 'default'], default='default')
     organization = StringProperty()
-    hr_name = StringProperty() # the human-readable name for this project within an organization
+    hr_name = StringProperty() # the human-readable name for this project
     creating_user = StringProperty() # username of the user who created this domain
 
     # domain metadata
@@ -870,10 +870,7 @@ class Domain(Document, SnapshotMixin):
     def display_name(self):
         if self.is_snapshot:
             return "Snapshot of %s" % self.copied_from.display_name()
-        if self.hr_name and self.organization:
-            return self.hr_name
-        else:
-            return self.name
+        return self.hr_name or self.name
 
     def long_display_name(self):
         if self.is_snapshot:
@@ -889,7 +886,7 @@ class Domain(Document, SnapshotMixin):
                 self.hr_name or self.name
             )
         else:
-            return self.name
+            return self.hr_name or self.name
 
     __str__ = long_display_name
 
