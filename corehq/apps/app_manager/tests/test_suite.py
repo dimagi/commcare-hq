@@ -8,8 +8,9 @@ from corehq.apps.app_manager.models import (
     OpenSubCaseAction, FormActionCondition, UpdateCaseAction, WORKFLOW_FORM, FormLink
 )
 from corehq.apps.app_manager.tests.util import TestFileMixin
-from corehq.apps.app_manager.suite_xml import dot_interpolate
-from corehq.toggles import MODULE_FILTER, NAMESPACE_DOMAIN
+from corehq.apps.app_manager.xpath import dot_interpolate, UserCaseXPath, interpolate_xpath
+from corehq.toggles import NAMESPACE_DOMAIN
+from corehq.feature_previews import MODULE_FILTER
 from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
 
 from lxml import etree
@@ -403,7 +404,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
 
         app = Application.wrap(json)
         module = app.get_module(0)
-        module.module_filter = "./user/mod/filter = '123'"
+        module.module_filter = "#session/user/mod/filter = '123'"
         self.assertXmlPartialEqual(
             self.get_xml('module-filter-user'),
             app.create_suite(),
@@ -832,7 +833,7 @@ class AdvancedModuleAsChildTest(SimpleTestCase, TestFileMixin):
 
 class RegexTest(SimpleTestCase):
 
-    def testRegex(self):
+    def test_regex(self):
         replacement = "@case_id stuff"
         cases = [
             ('./lmp < 570.5', '%s/lmp < 570.5'),
@@ -845,6 +846,29 @@ class RegexTest(SimpleTestCase):
                 case[1] % replacement
             )
 
+    def test_interpolate_xpath(self):
+        replacements = {
+            'case': "<casedb stuff>",
+            'user': UserCaseXPath().case(),
+            'session': "instance('commcaresession')/session",
+        }
+        cases = [
+            ('./lmp < 570.5', '{case}/lmp < 570.5'),
+            ('#case/lmp < 570.5', '{case}/lmp < 570.5'),
+            ('stuff ./lmp < 570.', 'stuff {case}/lmp < 570.'),
+            ('stuff #case/lmp < 570.', 'stuff {case}/lmp < 570.'),
+            ('.53 < hello.', '.53 < hello{case}'),
+            ('.53 < hello#case', '.53 < hello{case}'),
+            ('#session/data/username', '{session}/data/username'),
+            ('"jack" = #session/username', '"jack" = {session}/username'),
+            ('./@case_id = #session/userid', '{case}/@case_id = {session}/userid'),
+            ('#case/@case_id = #user/@case_id', '{case}/@case_id = {user}/@case_id'),
+        ]
+        for case in cases:
+            self.assertEqual(
+                interpolate_xpath(case[0], replacements['case']),
+                case[1].format(**replacements)
+            )
 
 class TestFormLinking(SimpleTestCase, TestFileMixin):
     file_path = ('data', 'suite')

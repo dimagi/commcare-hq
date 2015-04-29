@@ -191,7 +191,7 @@ class InputStockView(BaseDomainView):
                     'product_id': product.product_id,
                     'product': product.name,
                     'stock_on_hand': int(stock_on_hand),
-                    'monthly_consumption': int(monthly_consumption) if monthly_consumption else 0,
+                    'monthly_consumption': round(monthly_consumption) if monthly_consumption else 0,
                     'units': product.units
                 }
             )
@@ -222,7 +222,7 @@ def ews_sync_stock_data(request, domain):
 @domain_admin_required
 @require_POST
 def ews_clear_stock_data(request, domain):
-    ews_clear_stock_data_task.delay()
+    ews_clear_stock_data_task.delay(domain)
     return HttpResponse('OK')
 
 

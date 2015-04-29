@@ -2,7 +2,6 @@ from collections import defaultdict
 import json
 import csv
 import io
-import re
 
 from couchdbkit import ResourceNotFound
 
@@ -28,6 +27,7 @@ from corehq.apps.accounting.models import (
     BillingAccountType,
     EntryPoint,
 )
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.models import Location
@@ -79,11 +79,12 @@ class EditCommCareUserView(BaseFullEditUserView):
     @property
     @memoized
     def custom_data(self):
+        is_custom_data_post = self.request.method == "POST" and self.request.POST['form_type'] == "update-user"
         return CustomDataEditor(
             field_view=UserFieldsView,
             domain=self.domain,
             existing_custom_data=self.editable_user.user_data,
-            post_dict=self.request.POST if self.request.method == "POST" else None,
+            post_dict=self.request.POST if is_custom_data_post else None,
         )
 
     @property
@@ -140,6 +141,7 @@ class EditCommCareUserView(BaseFullEditUserView):
     def update_commtrack_form(self):
         if self.request.method == "POST" and self.request.POST['form_type'] == "commtrack":
             return CommtrackUserForm(self.request.POST, domain=self.domain)
+
         # currently only support one location on the UI
         linked_loc = self.editable_user.location
         initial_id = linked_loc._id if linked_loc else None
@@ -154,6 +156,7 @@ class EditCommCareUserView(BaseFullEditUserView):
             'reset_password_form': self.reset_password_form,
             'is_currently_logged_in_user': self.is_currently_logged_in_user,
             'data_fields_form': self.custom_data.form,
+            'can_use_inbound_sms': domain_has_privilege(self.domain, privileges.INBOUND_SMS),
         }
         if self.request.project.commtrack_enabled or self.request.project.locations_enabled:
             context.update({

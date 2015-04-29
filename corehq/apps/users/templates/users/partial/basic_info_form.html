@@ -48,6 +48,7 @@
                     {% endifequal %}
                 </label>
                 <div class="controls">
+                    {% if can_use_inbound_sms and user_type == "mobile" %}
                     {% ifequal phone.status "unverified" %}
                         <form method="post"
                               action="{% url "verify_phone_number" domain couch_user.couch_id %}?phone_number={{phone.number|urlencode}}"
@@ -74,6 +75,7 @@
                             <i class="icon icon-signal icon-white"></i> {% trans 'Verify (retry)' %}
                         </button>
                     {% endifequal %}
+                    {% endif %}
 
                     <a class="btn btn-danger"
                        data-toggle="modal"

@@ -434,10 +434,10 @@ class SubmissionPost(object):
         else:
             from casexml.apps.case.models import CommCareCase
             from casexml.apps.case.xform import (
-                get_and_check_xform_domain, CaseDbCache, process_cases_with_casedb_bulk
+                get_and_check_xform_domain, CaseDbCache, process_cases_with_casedb
             )
             from casexml.apps.case.signals import case_post_save
-            from casexml.apps.case.exceptions import IllegalCaseId
+            from casexml.apps.case.exceptions import IllegalCaseId, UsesReferrals
             from corehq.apps.commtrack.processing import process_stock
 
             cases = []
@@ -452,9 +452,9 @@ class SubmissionPost(object):
                     domain = get_and_check_xform_domain(instance)
                     with CaseDbCache(domain=domain, lock=True, deleted_ok=True, xforms=xforms) as case_db:
                         try:
-                            process_cases_with_casedb_bulk(xforms, case_db)
+                            case_result = process_cases_with_casedb(xforms, case_db)
                             process_stock(instance, case_db)
-                        except IllegalCaseId as e:
+                        except (IllegalCaseId, UsesReferrals) as e:
                             # errors we know about related to the content of the form
                             # log the error and respond with a success code so that the phone doesn't
                             # keep trying to send the form
@@ -506,6 +506,8 @@ class SubmissionPost(object):
                         unfinished_submission_stub.save()
                         for case in cases:
                             case_post_save.send(CommCareCase, case=case)
+
+                        case_result.commit_dirtiness_flags()
                         responses, errors = self.process_signals(instance)
                         if errors:
                             # .problems was added to instance

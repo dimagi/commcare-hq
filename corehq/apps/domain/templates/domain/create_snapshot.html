@@ -1,6 +1,7 @@
 {% extends "domain/admin/info_base.html" %}
 {% load hqstyle_tags %}
 {% load hq_shared_tags %}
+{% load crispy_forms_tags %}
 {% load i18n %}
 
 {% block js %}{{ block.super }}
@@ -66,53 +67,15 @@
 {% endblock %}
 
 {% block main_column %}
-<form id="snapshot-form" class="form-horizontal" enctype="multipart/form-data" method="post" action="{% url "domain_create_snapshot" domain %}" id="snapshot_form">
-    <fieldset>
         {% bootstrap_form_errors form %}
-        {% bootstrap_fieldset form "Publishing new version of your project to Commcare Exchange" %}
-        {% if request.project.published_snapshot.image_path %}
-            <div class="control-group">
-                <div class="control-label">
-                    <label for="id_old_image">
-                        {% trans "Use current image" %}
-                    </label>
-                </div>
-                <div class="controls">
-                    <input type="checkbox" checked="checked" id="id_old_image" name="old_image" value="true" />
-                    <br />
-                    <img src="{% url "appstore_project_image" request.project.published_snapshot.name %}" style="max-width: 400px; max-height:500px;" />
-                    <p class="help-block">
-                        {% blocktrans %}
-                        If you upload an image, it will automatically erase the current image and use that instead.
-                        {% endblocktrans %}
-                    </p>
-                </div>
-            </div>
-        {% endif %}
-        {% if request|toggle_enabled:"DOCUMENTATION_FILE" %}
-            {% if request.project.published_snapshot.documentation_file_path %}
-                <div class="control-group">
-                    <div class="control-label">
-                        <label for="id_old_documentation_file">
-                            {% trans "Use current documentation" %}
-                        </label>
-                    </div>
-                    <div class="controls">
-                        <input
-                            type="checkbox"
-                            checked="checked"
-                            id="id_old_documentation_file"
-                            name="old_documentation_file"
-                            value="true" />
-                        <p class="help-block">
-                            {% blocktrans %}
-                            If you upload new documentation, it will automatically erase the current documentation and use that instead.
-                            {% endblocktrans %}
-                        </p>
-                    </div>
-                </div>
-            {% endif %}
-        {% endif %}
+    <form
+        id="snapshot-form"
+        class="form-horizontal"
+        enctype="multipart/form-data"
+        method="post"
+        action="{% url "domain_create_snapshot" domain %}">
+
+        {% crispy form %}
         {% if can_publish_as_org %}
             <div class="control-group">
                 <div class="control-label"><label>{% trans "Publishing as" %}</label></div>
@@ -136,23 +99,22 @@
         </div>
         {% for app, app_form in app_forms %}
         <h3>{% trans "Application" %}: {{ app.name }}</h3>
-            {% bootstrap_fieldset app_form %}
+            {% crispy app_form %}
         {% endfor %}
         {% for fixture, fixture_form in fixture_forms %}
             <h3>{% trans "Lookup Table" %}: {{ fixture.tag }}</h3>
-            {% bootstrap_fieldset fixture_form %}
+            {% crispy fixture_form %}
         {% endfor %}
         <input type="hidden" name="publish_on_submit" value="yes" id="id_publish_on_submit">
-    </fieldset>
 
-    <div class="form-actions">
-        <a id="save-button" class="btn disable-on-submit-no-spinner add-spinner-on-click">{% trans "Save and Publish Later" %}</a>
-        <button type="submit"
-                class="btn btn-primary disable-on-submit-no-spinner add-spinner-on-click"
-                id="publish-now-button"
-        >
-            {% trans "Publish Now" %}
-        </button>
-    </div>
-</form>
+        <div class="form-actions">
+            <a id="save-button" class="btn disable-on-submit-no-spinner add-spinner-on-click">{% trans "Save and Publish Later" %}</a>
+            <button type="submit"
+                    class="btn btn-primary disable-on-submit-no-spinner add-spinner-on-click"
+                    id="publish-now-button"
+            >
+                {% trans "Publish Now" %}
+            </button>
+        </div>
+    </form>
 {% endblock %}>

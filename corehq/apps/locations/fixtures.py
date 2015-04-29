@@ -49,11 +49,8 @@ def location_fixture_generator(user, version, last_sync=None):
     There is an admin feature flag that will make this generate
     a fixture with ALL locations for the domain.
     """
-    project = user.project
-    if (not project or not project.commtrack_enabled
-        or not project.commtrack_settings
-        or not project.commtrack_settings.sync_location_fixtures):
-            return []
+    if not user.project.uses_locations:
+        return []
 
     if toggles.SYNC_ALL_LOCATIONS.enabled(user.domain):
         location_db = _location_footprint(Location.by_domain(user.domain))
@@ -63,9 +60,8 @@ def location_fixture_generator(user, version, last_sync=None):
             # add users location (and ancestors) to fixture
             locations.append(user.location)
 
-            # optionally add all descendants as well
-            if user.location.location_type_object.view_descendants:
-                locations += user.location.descendants
+            # add all descendants as well
+            locations += user.location.descendants
 
         if user.project.supports_multiple_locations_per_user:
             # this might add duplicate locations but we filter that out later
@@ -79,7 +75,7 @@ def location_fixture_generator(user, version, last_sync=None):
                    {'id': 'commtrack:locations',
                     'user_id': user.user_id})
 
-    loc_types = project.location_types
+    loc_types = user.project.location_types
     type_to_slug_mapping = dict((ltype.name, ltype.code) for ltype in loc_types)
 
     def location_type_lookup(location_type):

@@ -42,9 +42,10 @@ function(doc) {
             indicator_entries['child under1 not_immunized'] = case_id;
         }
 
-        if (isChildVisitForm(doc) && indicators.child_dob && indicators.child_dob.value) {
+        if ((isChildVisitForm(doc) || isChildWelfareForm(doc)) && indicators.child_dob && indicators.child_dob.value) {
             // birthdate found, is child under 5?
             var age = get_age_from_dob(indicators.child_dob.value, visit_date);
+            var not_immunized = false;
             if (age < 1825*MS_IN_DAY) {
                 indicator_entries['child under5'] = case_id;
                 if (age < 365*MS_IN_DAY) {
@@ -74,83 +75,65 @@ function(doc) {
                         }
                     }
 
-                    if (isChildWelfareForm(doc) || isChildWelfareForm(doc)) {
-                        var not_immunized = false;
-                        if (age > 45 * MS_IN_DAY){
-                            if ((indicators.prev_vaccination_birth && indicators.prev_vaccination_birth.value === 'no') ||
-                                (indicators.vaccination_birth && indicators.vaccination_birth.value === 'no')) {
-                                not_immunized = true;
-                            }
-                            //OPV0
-                            if ((indicators.prev_vaccination_birth_2 && indicators.prev_vaccination_birth_2.value === 'no') ||
-                                (indicators.vaccination_birth_2 || indicators.vaccination_birth_2.value === 'no')) {
-                                not_immunized = true;
-                            }
+                    if (age > 45 * MS_IN_DAY){
+                        if (indicators.vaccination_birth && indicators.vaccination_birth.value === 'no') {
+                            not_immunized = true;
                         }
-                        if (age > 75 * MS_IN_DAY) {
-                            if ((indicators.prev_vaccination_6week && indicators.prev_vaccination_6week.value === 'no') ||
-                                (indicators.vaccination_6week && indicators.vaccination_6week.value === 'no')) {
-                                not_immunized = true;
-                            }
-                            if ((indicators.prev_dpt_hep1 && indicators.prev_dpt_hep1.value === 'no') ||
-                                (indicators.vaccination_penta1 || indicators.vaccination_penta1.value === 'no')) {
-                                not_immunized = true;
-                            }
-                            if ((indicators.prev_pneumococi1 && indicators.prev_pneumococi1.value === 'no') ||
-                                (indicators.vaccination_pneumococi1 || indicators.vaccination_pneumococi1.value === 'no')) {
-                                not_immunized = true;
-                            }
-                            if ((indicators.prev_rotavirus1 && indicators.prev_rotavirus1.value === 'no') ||
-                                (indicators.vaccination_rotavirus1 || indicators.vaccination_rotavirus1.value === 'no')) {
-                                not_immunized = true;
-                            }
+                        //OPV0
+                        if (indicators.vaccination_birth_2 && indicators.vaccination_birth_2.value === 'no') {
+                            not_immunized = true;
                         }
-                        if (age > 105 * MS_IN_DAY) {
-                            if ((indicators.prev_vaccination_10week && indicators.prev_vaccination_10week.value === 'no') ||
-                                (indicators.vaccination_10week && indicators.vaccination_10week.value === 'no')) {
-                                not_immunized = true;
-                            }
-                            if ((indicators.prev_dpt2_hep2 && indicators.prev_dpt2_hep2.value === 'no') ||
-                                (indicators.vaccination_penta2 || indicators.vaccination_penta2.value === 'no')) {
-                                not_immunized = true;
-                            }
-                            if ((indicators.prev_pneumococi2 && indicators.prev_pneumococi2.value === 'no') ||
-                                (indicators.vaccination_pneumococi2 || indicators.vaccination_pneumococi2.value === 'no')) {
-                                not_immunized = true;
-                            }
-                            if ((indicators.prev_rotavirus2 && indicators.prev_rotavirus2.value === 'no') ||
-                                (indicators.vaccination_rotavirus2 || indicators.vaccination_rotavirus2.value === 'no')) {
-                                not_immunized = true;
-                            }
+                    }
+                    if (age > 75 * MS_IN_DAY) {
+                        if (indicators.vaccination_6week && indicators.vaccination_6week.value === 'no') {
+                            not_immunized = true;
                         }
-                        if (age > 135 * MS_IN_DAY) {
-                            if ((indicators.prev_vaccination_14week && indicators.prev_vaccination_14week.value === 'no') ||
-                                (indicators.vaccination_14week && indicators.vaccination_14week.value === 'no')) {
-                                not_immunized = true;
-                            }
-                            if ((indicators.prev_dpt_hep3 && indicators.prev_dpt_hep3.value === 'no') ||
-                                (indicators.vaccination_penta3 || indicators.vaccination_penta3.value === 'no')) {
-                                not_immunized = true;
-                            }
-                            if ((indicators.prev_pneumococi3 && indicators.prev_pneumococi3.value === 'no') ||
-                                (indicators.vaccination_pneumococi3 || indicators.vaccination_pneumococi3.value === 'no')) {
-                                not_immunized = true;
-                            }
+                        if (indicators.vaccination_penta1 && indicators.vaccination_penta1.value === 'no') {
+                            not_immunized = true;
                         }
-                        if (age > 300 * MS_IN_DAY) {
-                            if ((indicators.prev_vaccination_36week && indicators.prev_vaccination_14week.value === 'no') ||
-                                (indicators.vaccination_36week && indicators.vaccination_36week.value === 'no')) {
-                                not_immunized = true;
-                            }
-                            if ((indicators.prev_yellow_fever && indicators.prev_yellow_fever.value === 'no') ||
-                                (indicators.vaccination_yellow_fever || indicators.vaccination_yellow_fever.value === 'no')) {
-                                not_immunized = true;
-                            }
+                        if (indicators.vaccination_pneumococi1 && indicators.vaccination_pneumococi1.value === 'no') {
+                            not_immunized = true;
                         }
+                        if (indicators.vaccination_rotavirus1 && indicators.vaccination_rotavirus1.value === 'no') {
+                            not_immunized = true;
+                        }
+                    }
+                    if (age > 105 * MS_IN_DAY) {
+                        if (indicators.vaccination_10week && indicators.vaccination_10week.value === 'no') {
+                            not_immunized = true;
+                        }
+                        if (indicators.vaccination_penta2 && indicators.vaccination_penta2.value === 'no') {
+                            not_immunized = true;
+                        }
+                        if (indicators.vaccination_pneumococi2 && indicators.vaccination_pneumococi2.value === 'no') {
+                            not_immunized = true;
+                        }
+                        if (indicators.vaccination_rotavirus2 && indicators.vaccination_rotavirus2.value === 'no') {
+                            not_immunized = true;
+                        }
+                    }
+                    if (age > 135 * MS_IN_DAY) {
+                        if (indicators.vaccination_14week && indicators.vaccination_14week.value === 'no') {
+                            not_immunized = true;
+                        }
+                        if (indicators.vaccination_penta3 && indicators.vaccination_penta3.value === 'no') {
+                            not_immunized = true;
+                        }
+                        if (indicators.vaccination_pneumococi3 && indicators.vaccination_pneumococi3.value === 'no') {
+                            not_immunized = true;
+                        }
+                    }
+                    if (age > 300 * MS_IN_DAY) {
+                        if (indicators.vaccination_36week && indicators.vaccination_36week.value === 'no') {
+                            not_immunized = true;
+                        }
+                        if (indicators.vaccination_yellow_fever && indicators.vaccination_yellow_fever.value === 'no') {
+                            not_immunized = true;
+                        }
+                    }
 
-                        if (not_immunized) {
-                            indicator_entries['child under1 not_immunized'] = case_id;
-                        }
+                    if (not_immunized) {
+                        indicator_entries['child under1 not_immunized'] = case_id;
                     }
 
                     if (age < 180*MS_IN_DAY) {

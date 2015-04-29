@@ -7,13 +7,43 @@ function SavedApp(o, r) {
     if (!self.include_media) {
         self.include_media = ko.observable(false);
     }
+    if(!self.generating_url){
+        self.generating_url = ko.observable(false);
+    }
+
+    self.generate_short_url = function(url_type){
+        //accepted_url_types = ['short_odk_url', 'short_odk_media_url', 'short_url']
+        url_type = url_type || 'short_odk_url';
+        var base_url = '/a/' + self.domain() + '/apps/odk/' + self.id() + '/',
+            should_generate_url = ((url_type === 'short_odk_url') && self.short_odk_url && !self.short_odk_url()) ||
+                                  ((url_type === 'short_odk_media_url') && self.short_odk_media_url && !self.short_odk_media_url()) ||
+                                  ((url_type === 'short_url') && self.short_url && !self.short_url());
+        
+        if (should_generate_url && !self.generating_url()){
+            self.generating_url(true);
+            $.ajax({
+                url: base_url + url_type + '/'
+            }).done(function(data){
+                self[url_type](data);
+            }).always(function(){
+                self.generating_url(false);
+            });
+        }
+    };
+
     self.get_short_odk_url = ko.computed(function() {
         if (self.include_media()) {
            if (self.short_odk_media_url) {
+                if (!self.short_odk_media_url()){
+                    self.generate_short_url('short_odk_media_url');
+                }
                return self.short_odk_media_url();
            }
         } else {
             if (self.short_odk_url) {
+                // short_odk_url is generated on first click. 
+                // not having `self.generate_short_url()` here prevents the 
+                // link from being automatically generated when a build is created.
                 return self.short_odk_url();
             }
         }

@@ -1,4 +1,5 @@
 from couchdbkit import ResourceNotFound
+from django.conf import settings
 from corehq.util.quickcache import quickcache
 from dimagi.utils.couch.database import get_db
 
@@ -29,3 +30,10 @@ def get_namespace_name(domain, namespace):
 
 def get_indicator_domains():
     return get_indicator_config().keys()
+
+
+def get_mvp_domains():
+    from mvp.models import MVP
+    if settings.UNIT_TESTING:
+        return MVP.DOMAINS
+    return get_indicator_domains() or MVP.DOMAINS

@@ -52,11 +52,12 @@ class MVPIndicatorPillowBase(BasicPillow):
         if doc_type in self._deleted_doc_types:
             self._delete_doc(doc_dict)
 
-        domain = doc_dict.get('domain')
-        if not domain:
-            return
-        namespaces = get_namespaces(domain)
-        self.process_indicators(namespaces, domain, doc_dict)
+        else:
+            domain = doc_dict.get('domain')
+            if not domain:
+                return
+            namespaces = get_namespaces(domain)
+            self.process_indicators(namespaces, domain, doc_dict)
 
     def process_indicators(self, namespaces, domain, doc_dict):
         raise NotImplementedError("Your pillow must implement this method.")

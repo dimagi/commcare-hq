@@ -25,6 +25,8 @@ var PaymentMethodHandler = function (errorMessages, submitBtnText, form_id) {
 
     self.newCard = ko.observable(new StripeCard());
 
+    self.handlers = [self];
+
     self.showConfirmRemoveCard = ko.observable(false);
     self.isRemovingCard = ko.observable(false);
     self.selectedCard = ko.computed(function () {
@@ -88,10 +90,13 @@ var PaymentMethodHandler = function (errorMessages, submitBtnText, form_id) {
                 if (response.success) {
                     self.costItem().reset(response);
                     if (response.wasSaved) {
-                        var stripe_card = new StripeCard();
-                        stripe_card.loadSavedData(response.card);
-                        self.savedCards.push(stripe_card);
-                        self.selectedCardType('saved');
+                        for (var i = 0; i < handlers.length; i++) {
+                            var handler = self.handlers[i];
+                            var stripe_card = new StripeCard();
+                            stripe_card.loadSavedData(response.card);
+                            handler.savedCards.push(stripe_card);
+                            handler.selectedCardType('saved');
+                        }
                     }
                     self.paymentIsComplete(true);
                 }
@@ -114,11 +119,14 @@ var PaymentMethodHandler = function (errorMessages, submitBtnText, form_id) {
             },
             success: function (response) {
                 self.handleProcessingErrors(response);
-                self.savedCards(_.filter(self.savedCards(), function (card) {
-                    return card.token() !== response.removedCard;
-                }));
-                if (self.savedCards().length == 0) {
-                    self.selectedCardType('new');
+                for (var i = 0; i < handlers.length; i++) {
+                    var handler = self.handlers[i];
+                    handler.savedCards(_.filter(handler.savedCards(), function (card) {
+                        return card.token() !== response.removedCard;
+                    }));
+                    if (!handler.savedCards().length) {
+                        handler.selectedCardType('new');
+                    }
                 }
                 self.isRemovingCard(false);
             },
