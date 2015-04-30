@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 from itertools import imap
 import json
 import logging
-import re
 import uuid
 from couchdbkit.exceptions import ResourceConflict
 from django.conf import settings
@@ -615,16 +614,6 @@ class Domain(Document, SnapshotMixin):
     @classmethod
     def get_all_names(cls):
         return [d['key'] for d in Domain.get_all(include_docs=False)]
-
-    @classmethod
-    def generate_name(cls, base):
-        base = re.sub(r'\W', '-', base)
-        counter = 0
-        name = base
-        while (Domain.get_by_name(name) is not None):
-            counter = counter + 1
-            name = (base + '-' + str(counter))[-25:]
-        return name
 
     def case_sharing_included(self):
         return self.case_sharing or reduce(lambda x, y: x or y, [getattr(app, 'case_sharing', False) for app in self.applications()], False)

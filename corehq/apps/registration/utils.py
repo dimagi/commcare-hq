@@ -167,7 +167,7 @@ def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
     return new_user
 
 
-def request_new_domain(request, name, org, domain_type=None, new_user=True):
+def request_new_domain(request, org, domain_type=None, new_user=True):
     now = datetime.utcnow()
     current_user = CouchUser.from_django_user(request.user)
 
@@ -180,7 +180,7 @@ def request_new_domain(request, name, org, domain_type=None, new_user=True):
         dom_req.activation_guid = uuid.uuid1().hex
 
     new_domain = Domain(
-        name=name,
+        name='',
         hr_name='New Project',
         is_active=False,
         date_created=datetime.utcnow(),
@@ -229,6 +229,7 @@ def request_new_domain(request, name, org, domain_type=None, new_user=True):
     else:
         send_global_domain_registration_email(request.user, new_domain.name)
     send_new_request_update_email(request.user, get_ip(request), new_domain.name, is_new_user=new_user)
+    return new_domain
 
 
 REGISTRATION_EMAIL_BODY_HTML = u"""

@@ -241,22 +241,11 @@ def copy_snapshot(request, domain):
 
         from corehq.apps.registration.forms import DomainRegistrationForm
 
-        args = {'domain_name': Domain.generate_name(dom.hr_name), 'eula_confirmed': True}
-        form = DomainRegistrationForm(args)
-
         if not dom.published:
             messages.error(request, _("This project is not published and can't be downloaded"))
             return project_info(request, domain)
 
-        if form.is_valid():
-            new_domain = dom.save_copy(form.cleaned_data['domain_name'], user=user)
-        else:
-            messages.error(request, form.errors)
-            return project_info(request, domain)
-
-        if new_domain is None:
-            messages.error(request, _("A project by that name already exists"))
-            return project_info(request, domain)
+        new_domain = dom.save_copy(user=user)
 
         # sign new project up for trial
         create_30_day_trial(new_domain)

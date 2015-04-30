@@ -8,7 +8,6 @@ from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
-import re
 import sys
 
 from corehq.apps.domain.decorators import login_required
@@ -145,14 +144,12 @@ def register_domain(request, domain_type=None):
         })
         return render(request, 'error.html', context)
 
-    requested_domain = Domain.generate_name(re.sub(r'@.*', '', request.user.username))
-    request_new_domain(
-        request, requested_domain, org, new_user=is_new, domain_type=domain_type)
+    new_domain = request_new_domain(request, org, new_user=is_new, domain_type=domain_type)
 
     if is_new:
         context.update({
             'alert_message': _("An email has been sent to %s.") % request.user.username,
-            'requested_domain': requested_domain,
+            'requested_domain': new_domain.name,
             'track_domain_registration': True,
         })
         return render(request, 'registration/confirmation_sent.html',
@@ -162,7 +159,7 @@ def register_domain(request, domain_type=None):
             return HttpResponseRedirect(nextpage)
         if referer_url:
             return redirect(referer_url)
-        return HttpResponseRedirect(reverse("domain_homepage", args=[requested_domain]))
+        return HttpResponseRedirect(reverse("domain_homepage", args=[new_domain.name]))
 
 @transaction.commit_on_success
 @login_required
