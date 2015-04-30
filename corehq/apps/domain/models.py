@@ -621,7 +621,7 @@ class Domain(Document, SnapshotMixin):
         base = re.sub(r'\W', '-', base)
         counter = 0
         name = base
-        while (Domain.get_by_name(name) != None):
+        while (Domain.get_by_name(name) is not None):
             counter = counter + 1
             name = (base + '-' + str(counter))[-25:]
         return name
