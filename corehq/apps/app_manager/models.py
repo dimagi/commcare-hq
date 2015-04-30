@@ -989,6 +989,20 @@ class NavMenuItemMediaMixin(DocumentSchema):
     media_image = SchemaDictProperty(JRResourceProperty)
     media_audio = SchemaDictProperty(JRResourceProperty)
 
+    @classmethod
+    def wrap(cls, data):
+        self = super(NavMenuItemMediaMixin, cls).wrap(data)
+
+        # ToDo - Remove after migration
+        for media_attr in ('media_image', 'media_audio'):
+            old_media = getattr(self, media_attr)
+            if isinstance(old_media, (str, unicode)):
+                # ToDo - remove default language hardcode. Migrate media to other app-languages
+                new_media = {'en': old_media or ''}
+                setattr(self, media_attr, new_media)
+
+        return self
+
 
 class Form(IndexedFormBase, NavMenuItemMediaMixin):
     form_type = 'module_form'
