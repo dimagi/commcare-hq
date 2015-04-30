@@ -6,7 +6,8 @@ from corehq.apps.groups.models import Group
 from jsonobject.exceptions import WrappingAttributeError
 from mock import Mock
 
-from ..couch import get_document_or_404, IterDB, iter_update, IterUpdateError
+from ..couch import (get_document_or_404, IterDB, iter_update, IterUpdateError,
+        DocUpdate)
 
 
 class MockDb(object):
@@ -180,9 +181,9 @@ class IterDBTest(TestCase):
             action = desired_action(group)
             if action == 'UPDATE':
                 group['is_cool'] = True
-                return group
+                return DocUpdate(group)
             elif action == 'DELETE':
-                return 'DELETE'
+                return DocUpdate(group, delete=True)
 
         ids = [g._id for g in self.groups] + ['NOT_REAL_ID']
         res = iter_update(self.db, mark_cool, ids)
@@ -197,6 +198,19 @@ class IterDBTest(TestCase):
                 {g._id for g in self.groups if desired_action(g) == action}
             )
 
+    def test_iter_update_no_actual_changes(self):
+        ids = [g._id for g in self.groups]
+        # tell iter_update to save the docs, but don't actually make changes
+        res = iter_update(self.db, lambda doc: DocUpdate(doc), ids)
+        self.assertEqual(res.ignored_ids, set(ids))
+
+    def test_iter_update_bad_return(self):
+        def update_fn(group):
+            return {'not_an_instance': 'of DocUpdate'}
+        ids = [g._id for g in self.groups]
+        with self.assertRaises(IterUpdateError):
+            iter_update(self.db, update_fn, ids)
+
     def test_no_retries(self):
         visited_ids = set()  # Only fail the first time
 
@@ -204,7 +218,7 @@ class IterDBTest(TestCase):
             if group['index'] % 2 == 0 and group['_id'] not in visited_ids:
                 group['_rev'] = group['_rev'] + 'bad'
                 visited_ids.add(group['_id'])
-            return group
+            return DocUpdate(group)
 
         ids = [g._id for g in self.groups]
         error_ids = {g._id for g in self.groups if g.index % 2 == 0}

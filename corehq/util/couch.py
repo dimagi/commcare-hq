@@ -1,3 +1,4 @@
+from copy import deepcopy
 from collections import defaultdict, namedtuple
 from time import sleep
 from couchdbkit import ResourceNotFound, BulkSaveError
@@ -114,27 +115,41 @@ class IterUpdateError(Exception):
         super(IterUpdateError, self).__init__(*args, **kwargs)
 
 
+class DocUpdate(object):
+    def __init__(self, doc, delete=False):
+        self.doc = doc
+        self.delete = delete
+
+
+def _is_unchanged(doc_or_Document, doc):
+    if hasattr(doc_or_Document, 'to_json'):
+        new_doc = doc_or_Document.to_json()
+    else:
+        new_doc = doc_or_Document
+    return new_doc == doc
+
+
 def iter_update(db, fn, ids, max_retries=3):
     """
     Map `fn` over every doc in `db` matching `ids`
 
-    `fn` should accept a json dict from couch and return one of:
-     * a json dict (or wrapped couch document) - bulk save that document
-     * the string "DELETE" - bulk delete that document
-     * None - pass
+    `fn` should accept a json dict from couch and return an instance of
+    DocUpdate or None (which will skip the doc)
 
     iter_update returns an object with the following properties:
     saved_ids, deleted_ids, ignored_ids,
 
     Ex: mark dimagi users as cool, delete the Canadians, and ignore the rest
 
+        from corehq.util.couch import iter_update, DocUpdate
+
         def mark_cool(user_dict):
             user = CommCareUser.wrap(user_dict)
             if user.is_dimagi:
                 user.is_cool = True
-                return user
+                return DocUpdate(doc=user)
             if user.language == "Canadian":
-                return "DELETE"
+                return DocUpdate(doc=user, delete=True)
 
         iter_update(CommCareUser.get_db(), mark_cool, all_user_ids)
 
@@ -157,11 +172,17 @@ def iter_update(db, fn, ids, max_retries=3):
                     if not raw_doc or not doc_id:
                         results.not_found_ids.add(res['key'])
                     else:
-                        doc = fn(raw_doc)
-                        if isinstance(doc, dict):
-                            iter_db.save(doc)
-                        elif doc == "DELETE":
+                        # copy the dictionary so we can tell if it changed
+                        doc_update = fn(deepcopy(raw_doc))
+                        if doc_update is None:
+                            results.ignored_ids.add(doc_id)
+                        elif (not isinstance(doc_update, DocUpdate)
+                              or doc_update.doc.get('_id') != doc_id):
+                            results.error_ids.add(doc_id)
+                        elif doc_update.delete:
                             iter_db.delete(raw_doc)
+                        elif not _is_unchanged(doc_update.doc, raw_doc):
+                            iter_db.save(doc_update.doc)
                         else:
                             results.ignored_ids.add(doc_id)
 
@@ -171,11 +192,17 @@ def iter_update(db, fn, ids, max_retries=3):
         if iter_db.error_ids:
             if try_num >= max_retries:
                 results.error_ids.update(iter_db.error_ids)
-                msg = ("The following documents did not correctly save:\n"
+                msg = ("The following documents did not correctly save:\n" +
                        ", ".join(results.error_ids))
                 raise IterUpdateError(results, msg)
             else:
                 _iter_update(iter_db.error_ids, try_num + 1)
 
     _iter_update(ids, 0)
+    if results.error_ids:
+        msg = ("The following docs didn't correctly save.  Are you sure fn {} "
+               "returned either None or an instance of DocUpdate?  Did you "
+               "change or remove the '_id' field?".format(fn.__name__) +
+               ", ".join(results.error_ids))
+        raise IterUpdateError(results, msg)
     return results
