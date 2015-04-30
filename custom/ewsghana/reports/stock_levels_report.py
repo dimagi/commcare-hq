@@ -20,6 +20,7 @@ from custom.ewsghana.utils import has_input_stock_permissions
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 from corehq.apps.locations.models import Location, SQLLocation
+from dimagi.utils.decorators.profile import line_profile
 from dimagi.utils.parsing import json_format_date
 
 
@@ -82,12 +83,12 @@ class FacilityReportData(EWSData):
         stock_states = StockState.objects.filter(
             case_id=loc.supply_point_id,
             section_id=STOCK_SECTION_TYPE,
-            sql_product__in=self.unique_products([loc])
+            sql_product__in=self.unique_products(SQLLocation.objects.filter(pk=loc.pk))
         ).order_by('-last_modified_date')
 
         st = StockTransaction.objects.filter(
             case_id=loc.supply_point_id,
-            sql_product__in=self.unique_products([loc]),
+            sql_product__in=self.unique_products(SQLLocation.objects.filter(pk=loc.pk)),
             report__date__lte=self.config['enddate'],
             type='stockonhand',
         ).order_by('-report__date')
@@ -165,6 +166,7 @@ class InventoryManagementData(EWSData):
         return []
 
     @property
+    @line_profile()
     def chart_data(self):
         def calculate_weeks_remaining(state, daily_consumption, date):
             if not daily_consumption:
@@ -183,16 +185,16 @@ class InventoryManagementData(EWSData):
         stoke_states = StockState.objects.filter(
             case_id=loc.supply_point_id,
             section_id=STOCK_SECTION_TYPE,
-            sql_product__in=self.unique_products([loc], all=True),
+            sql_product__in=loc.products,
         )
 
         consumptions = {ss.product_id: ss.daily_consumption for ss in stoke_states}
         st = StockTransaction.objects.filter(
             case_id=loc.supply_point_id,
-            sql_product__in=self.unique_products([loc], all=True),
+            sql_product__in=loc.products,
             type='stockonhand',
             report__date__lte=enddate
-        ).order_by('report__date')
+        ).select_related('report', 'sql_product').order_by('report__date')
 
         rows = OrderedDict()
         weeks = ceil((enddate - startdate).days / 7.0)
