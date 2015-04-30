@@ -2,6 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 from functools import partial
 import itertools
+from celery.canvas import chain
 from couchdbkit import ResourceNotFound
 from django.db import transaction
 from casexml.apps.stock.const import TRANSACTION_TYPE_LA
@@ -14,6 +15,7 @@ from custom.logistics.commtrack import save_stock_data_checkpoint, synchronizati
 from custom.logistics.models import StockDataCheckpoint
 from celery.task.base import task
 from custom.logistics.utils import get_supply_point_by_external_id
+from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import force_to_datetime
 
@@ -24,30 +26,18 @@ def stock_data_task(domain, endpoint, apis, config, test_facilities=None):
     start_date = datetime.today()
     default_api = apis[0][0]
 
-    try:
-        checkpoint = StockDataCheckpoint.objects.get(domain=domain)
-        api = checkpoint.api
-        # legacy
-        if api == 'product_stock':
-            api = default_api
-        date = checkpoint.date
-        limit = checkpoint.limit
-        offset = checkpoint.offset
-        location = checkpoint.location
-        if not checkpoint.start_date:
-            checkpoint.start_date = start_date
-            checkpoint.save()
-        else:
-            start_date = checkpoint.start_date
-    except StockDataCheckpoint.DoesNotExist:
-        checkpoint = StockDataCheckpoint()
-        checkpoint.domain = domain
+    checkpoint = StockDataCheckpoint.objects.get_or_create(domain=domain, defaults={
+        'api': default_api,
+        'date': None,
+        'limit': 1000,
+        'offset': 0,
+        'location': None,
+        'start_date': start_date
+    })
+
+    if not checkpoint.start_date:
         checkpoint.start_date = start_date
-        api = default_api
-        date = None
-        limit = 1000
-        offset = 0
-        location = None
+        checkpoint.save()
 
     if not config.all_stock_data:
         facilities = test_facilities
@@ -58,33 +48,42 @@ def stock_data_task(domain, endpoint, apis, config, test_facilities=None):
         ).order_by('created_at').values_list('supply_point_id', flat=True)
         facilities = [doc['external_id'] for doc in iter_docs(SupplyPointCase.get_db(), supply_points_ids)]
 
-    apis_from_checkpoint = itertools.dropwhile(lambda x: x[0] != api, apis)
-    facilities_copy = list(facilities)
-    if location:
-        supply_point = SupplyPointCase.get_by_location_id(domain, location.location_id)
+    if checkpoint.location:
+        supply_point = SupplyPointCase.get_by_location_id(domain, checkpoint.location.location_id)
         external_id = supply_point.external_id if supply_point else None
         if external_id:
             facilities = itertools.dropwhile(lambda x: int(x) != int(external_id), facilities)
 
+    facilities_chunked_list = chunked(facilities, 50)
+    for chunk in facilities_chunked_list:
+        res = chain(process_facility_task.si(domain, endpoint, fac, apis)
+                    for fac in chunk)()
+        res.get()
+
+    checkpoint = StockDataCheckpoint.objects.get(domain=domain)
+    save_stock_data_checkpoint(checkpoint, default_api, 1000, 0, start_date, None, False)
+    checkpoint.start_date = None
+    checkpoint.save()
+
+
+@task(queue='background_queue')
+def process_facility_task(domain, endpoint, facility, apis):
+    checkpoint = StockDataCheckpoint.objects.get(domain=domain)
+    limit = checkpoint.limit
+    offset = checkpoint.offset
+    apis_from_checkpoint = itertools.dropwhile(lambda x: x[0] != checkpoint.api, apis)
     for idx, (api_name, api_function) in enumerate(apis_from_checkpoint):
         api_function(
             domain=domain,
             checkpoint=checkpoint,
-            date=date,
+            date=checkpoint.date,
             limit=limit,
             offset=offset,
             endpoint=endpoint,
-            facilities=facilities
+            facilities=[facility]
         )
         limit = 1000
         offset = 0
-        # todo: see if we can avoid modifying the list of facilities in place
-        if idx == 0:
-            facilities = facilities_copy
-
-    save_stock_data_checkpoint(checkpoint, default_api, 1000, 0, start_date, None, False)
-    checkpoint.start_date = None
-    checkpoint.save()
 
 
 @task(ignore_result=True)
