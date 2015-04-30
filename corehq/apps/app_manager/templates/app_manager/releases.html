@@ -321,10 +321,7 @@
                 <div class="accordion" data-bind="bootstrapCollapse: true">
                     <div class="accordion-group">
                         <div class="accordion-heading">
-                            <a class="accordion-toggle" data-bind="
-                                {# TODO: This tracking code is probably rarely fired anymore because now this accordion is open by default #}
-                                click: function() { track_deploy_type('Download to Android'); },
-                            ">
+                            <a class="accordion-toggle">
                                 {% trans "Download to Android" %}
                             </a>
                         </div>

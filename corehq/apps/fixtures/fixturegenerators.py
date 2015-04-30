@@ -12,7 +12,7 @@ def item_lists_by_domain(domain):
         ret.append({
             'sourceUri': 'jr://fixture/item-list:%s' % data_type.tag,
             'defaultId': data_type.tag,
-            'initialQuery': "instance('{tag}')/item-list:{tag}/{tag}".format(tag=data_type.tag),
+            'initialQuery': "instance('{tag}')/{tag}_list/{tag}".format(tag=data_type.tag),
             'name': data_type.tag,
             'structure': {
                 f.field_name: {

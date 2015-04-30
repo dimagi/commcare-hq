@@ -343,6 +343,7 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
     @memoized
     def basic_info_form(self):
         initial = {
+            'hr_name': self.domain_object.hr_name or self.domain_object.name,
             'default_timezone': self.domain_object.default_timezone,
             'case_sharing': json.dumps(self.domain_object.case_sharing),
             'call_center_enabled': self.domain_object.call_center_config.enabled,
