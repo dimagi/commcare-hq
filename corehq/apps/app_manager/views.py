@@ -1548,20 +1548,26 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         module.case_list_form.form_id = request.POST.get('case_list_form_id')
     if should_edit('case_list_form_label'):
         module.case_list_form.label[lang] = request.POST.get('case_list_form_label')
+    # ToDo
     if should_edit('case_list_form_media_image'):
-        val = _process_media_attribute(
+        new_path = _process_media_attribute(
             'case_list_form_media_image',
             resp,
             request.POST.get('case_list_form_media_image')
         )
-        module.case_list_form.media_image = val
+        image_dict = module.case_list_form.media_image
+        image_dict[lang] = new_path or ''
+        module.case_list_form.media_image = image_dict
+
     if should_edit('case_list_form_media_audio'):
-        val = _process_media_attribute(
+        new_path = _process_media_attribute(
             'case_list_form_media_audio',
             resp,
             request.POST.get('case_list_form_media_audio')
         )
-        module.case_list_form.media_audio = val
+        audio_dict = module.case_list_form.media_audio
+        audio_dict[lang] = new_path or ''
+        module.case_list_form.media_audio = audio_dict
 
     for attribute in ("name", "case_label", "referral_label"):
         if should_edit(attribute):
@@ -1590,7 +1596,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
                 except ModuleNotFoundException:
                     messages.error(_("Unknown Module"))
 
-    _handle_media_edits(request, module, should_edit, resp)
+    _handle_media_edits(request, module, should_edit, resp, lang)
 
     app.save(resp)
     resp['case_list-show'] = module.requires_case_details()
@@ -1706,13 +1712,15 @@ def _process_media_attribute(attribute, resp, val):
     return val
 
 
-def _handle_media_edits(request, item, should_edit, resp):
+def _handle_media_edits(request, item, should_edit, resp, lang):
     if 'corrections' not in resp:
         resp['corrections'] = {}
     for attribute in ('media_image', 'media_audio'):
         if should_edit(attribute):
-            val = _process_media_attribute(attribute, resp, request.POST.get(attribute))
-            setattr(item, attribute, val)
+            media_path = _process_media_attribute(attribute, resp, request.POST.get(attribute))
+            prev_val = getattr(item, attribute)
+            prev_val[lang] = media_path or ''
+            setattr(item, attribute, prev_val)
 
 
 @no_conflict_require_POST
@@ -1834,7 +1842,7 @@ def edit_form_attr(request, domain, app_id, unique_form_id, attr):
         )
         form.form_links = [FormLink({'xpath': link[0], 'form_id': link[1]}) for link in form_links]
 
-    _handle_media_edits(request, form, should_edit, resp)
+    _handle_media_edits(request, form, should_edit, resp, lang)
 
     app.save(resp)
     if ajax:
