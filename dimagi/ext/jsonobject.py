@@ -5,6 +5,7 @@ from jsonobject.base_properties import AbstractDateProperty
 from jsonobject import *
 import re
 from jsonobject.api import re_date, re_time, re_decimal
+from dimagi.utils.dates import safe_strftime
 from dimagi.utils.parsing import ISO_DATETIME_FORMAT
 from django.conf import settings
 
@@ -65,7 +66,7 @@ class DateTimeProperty(AbstractDateProperty):
     def _unwrap(self, value):
         _assert(value.tzinfo is None,
                 "Can't set a USecDateTimeProperty to an offset-aware datetime")
-        return value, value.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+        return value, safe_strftime(value, '%Y-%m-%dT%H:%M:%S.%fZ')
 
 
 re_trans_datetime = re.compile(r'^\d{4}-0[1-9]|1[0-2]-[12]\d|0[1-9]|3[01]T'
