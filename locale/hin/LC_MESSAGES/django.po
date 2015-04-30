@@ -7170,7 +7170,6 @@ msgid "Make Payment"
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/billing_statements.html:181
-#: custom/opm/beneficiary.py:802
 msgid "Payment Amount"
 msgstr "नकद मिला"
 
@@ -23898,9 +23897,8 @@ msgid "IFSC {} incorrect"
 msgstr ""
 
 #: custom/opm/beneficiary.py:786
-#, fuzzy
 msgid "Serial number"
-msgstr "दूरभाष/मोबाइल सं०(अपना/ पडोसी/ रिश्तेदार/ आशा/ एएनएम) लिखें"
+msgstr "क्रम संख्या"
 
 #: custom/opm/beneficiary.py:787 custom/opm/beneficiary.py:865
 msgid "List of Beneficiaries"
@@ -23909,12 +23907,11 @@ msgstr "लाभार्थी का नामै"
 #: custom/opm/beneficiary.py:788 custom/opm/beneficiary.py:867
 #: custom/opm/health_status.py:89
 msgid "AWC Name"
-msgstr "आंगनवाडी का नाम"
+msgstr "आंगनवाडी केंद्र का नाम"
 
 #: custom/opm/beneficiary.py:789 custom/opm/health_status.py:85
-#, fuzzy
 msgid "AWC Code"
-msgstr "आंगनवाडी का नाम"
+msgstr "आंगनवाडी केंद्र का कोड"
 
 #: custom/opm/beneficiary.py:790 custom/opm/beneficiary.py:872
 msgid "Block Name"
@@ -23952,10 +23949,13 @@ msgstr "शर्त 4"
 msgid "Condition 5"
 msgstr "शर्त 5"
 
+#: custom/opm/beneficiary.py:802
+msgid "Payment amount this month (Rs.)"
+msgstr "नकद प्राप्त इस महीने (Rs.)"
+
 #: custom/opm/beneficiary.py:805
-#, fuzzy
-msgid "Payment amount received last month (Rs.)"
-msgstr "भुगतान राशि पिछले महीने प्राप्त (Rs)"
+msgid "Payment amount last month (Rs.)"
+msgstr "नकद प्राप्त पिछले महीने (Rs.)"
 
 #: custom/opm/beneficiary.py:806
 msgid "Cash received last month"
