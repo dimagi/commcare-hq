@@ -166,7 +166,7 @@ def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
 
     return new_user
 
-def request_new_domain(request, form, org, domain_type=None, new_user=True):
+def request_new_domain(request, name, org, domain_type=None, new_user=True):
     now = datetime.utcnow()
     current_user = CouchUser.from_django_user(request.user)
 
@@ -179,7 +179,8 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
         dom_req.activation_guid = uuid.uuid1().hex
 
     new_domain = Domain(
-        name=form.cleaned_data['domain_name'],
+        name=name,
+        hr_name='New Project',
         is_active=False,
         date_created=datetime.utcnow(),
         commtrack_enabled=commtrack_enabled,
@@ -191,12 +192,9 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
     if commtrack_enabled:
         enable_commtrack_previews(new_domain)
 
-    if form.cleaned_data.get('domain_timezone'):
-        new_domain.default_timezone = form.cleaned_data['domain_timezone']
-
     if org:
         new_domain.organization = org
-        new_domain.hr_name = request.POST.get('domain_hrname', None) or new_domain.name
+        new_domain.hr_name = request.POST.get('domain_hrname', None) or new_domain.hr_name
 
     if not new_user:
         new_domain.is_active = True
