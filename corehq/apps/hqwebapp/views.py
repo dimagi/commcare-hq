@@ -414,6 +414,7 @@ def jserror(request):
             details={
                 'filename': request.POST.get('filename', None),
                 'line': request.POST.get('line', None),
+                'page': request.POST.get('page', None),
                 'agent': request.META.get('HTTP_USER_AGENT', None),
                 'stack': stack,
                 'count': count,
