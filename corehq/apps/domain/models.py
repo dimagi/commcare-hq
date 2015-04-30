@@ -919,8 +919,7 @@ class Domain(Document, SnapshotMixin):
         super(Domain, self).delete()
         Domain.get_by_name.clear(Domain, self.name)  # clear the domain cache
 
-    def all_media(self, from_apps=None):
-        #todo add documentation or refactor
+    def all_media(self, from_apps=None):  # todo add documentation or refactor
         from corehq.apps.hqmedia.models import CommCareMultimedia
         dom_with_media = self if not self.is_snapshot else self.copied_from
 
