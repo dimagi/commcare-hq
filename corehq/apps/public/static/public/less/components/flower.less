@@ -1,0 +1,60 @@
+.flower-container {
+  position: relative;
+}
+
+.flower-home {
+  background: no-repeat center center;
+  margin: 0 auto;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+
+  .tooltip {
+    width: 112px;
+  }
+
+  @media (min-width: @screen-sm-min) {
+    .make-flower(@flower-size-sm);
+    background-image: url('@{pub-images}/flower-home/flower-home-sm.png');
+  }
+  @media (min-width: @screen-md-min) {
+    .make-flower(@flower-size-md);
+    background-image: url('@{pub-images}/flower-home/flower-home-md.png');
+  }
+  @media (min-width: @screen-lg-min) {
+    .make-flower(@flower-size-lg);
+    background-image: url('@{pub-images}/flower-home/flower-home-lg.png');
+  }
+  @media (max-width: @screen-xs-max) {
+    .make-flower(@flower-size-xs);
+    top: 330px;
+    background-image: url('@{pub-images}/flower-home/flower-home-xs.png');
+  }
+}
+
+.flower-icon {
+  position: absolute;
+  display: block;
+}
+
+.flower-icon-first {
+  .make-flower-icon-slug('icon-first', -1, -1, 0, 0);
+}
+
+.flower-icon-second {
+  .make-flower-icon-slug('icon-second', -1, 1, 0, 1);
+}
+
+.flower-icon-fourth {
+  .make-flower-icon-slug('icon-fourth', 1, 1, 1, 1);
+}
+
+.flower-icon-third {
+  .make-flower-icon-slug('icon-third', 1, -1, 1, 0);
+}
+
+
+
+
+
+

@@ -1,48 +1,31 @@
 {% extends 'public/base.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
+{% load crispy_forms_tags_b3 %}
+{% load djangular_tags %}
 
 {% block js %}
 <script type="text/javascript" src="{% new_static 'style/lib/ui-select/dist/select.js' %}"></script>
-<script type="text/javascript" src="{% new_static 'public/js/home.ng.js' %}"></script>
+<script type="text/javascript" src="{% new_static 'public/js/hq_public_contact.ng.js' %}"></script>
 {% endblock js %}
 
 {% block js-uncompressed %}
-<!--
-IE8 support, see AngularJS Internet Explorer Compatibility http://docs.angularjs.org/guide/ie
-For Firefox 3.6, you will also need to include jQuery and ECMAScript 5 shim
--->
-<!--[if lt IE 9]>
-<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.js"></script>
-<script src="http://cdnjs.cloudflare.com/ajax/libs/es5-shim/2.2.0/es5-shim.js"></script>
-<script>
-  document.createElement('ui-select');
-  document.createElement('ui-select-match');
-  document.createElement('ui-select-choices');
-</script>
-<![endif]-->
-
 <script type="text/javascript">
-(function (angular, undefined) {
-    'use strict';
-    var homeApp = angular.module('homeApp', [
-        'ccpublic.home',
-        'ngSanitize',
-        'ui.select'
-    ]);
-    homeApp.constant('homeConfig', {
-        caseTypes: [
-            '{% trans "mothers" %}',
-            '{% trans "vaccines" %}',
-            '{% trans "farms" %}',
-            '{% trans "books" %}'
-        ],
-        defaultCaseType: '{% trans "everyone" %}'
-    });
-}(window.angular));
 $(function () {
     $('.flower-home [data-toggle="tooltip"]').tooltip();
 });
+(function (angular, undefined) {
+    'use strict';
+    var contactApp = angular.module('contactApp', [
+        'hq.public.contact'
+    ]);
+    contactApp.config(['$httpProvider', function($httpProvider) {
+        $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+    }]);
+    contactApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
+        djangoRMIProvider.configure({% djng_current_rmi %});
+    }]);
+}(window.angular));
 </script>
 {% endblock %}
 
@@ -55,16 +38,18 @@ $(function () {
 
 {% block content %}
 {% include 'public/_sections/home/lead.html' %}
-<div class="bg-static-fixed bg-home-build"></div>
+<div class="bg-static-fixed bg-home-main"></div>
 <section class="section section-aside">
     <div class="container">
         <div class="row">
             <div class="col-xs-12">
-                <div class="well well-transparent">
+                <div class="well well-lightcool well-blockquote" style="margin-top: 70px;">
                     <p class="lead">
                         {% blocktrans %}
                         Used in over 40 countries, CommCare is the most widely
-                        adopted, technically advanced, and evidence-based mobile
+                        adopted, technically advanced,
+                        <br class="visible-sm visible-md visible-lg" />
+                        and evidence-based mobile
                         platform for low-resource settings.
                         {% endblocktrans %}
                     </p>
@@ -74,12 +59,37 @@ $(function () {
     </div>
 </section>
 {% include 'public/_sections/home/build.html' %}
-<div class="bg-static-fixed bg-home-use"></div>
+<div class="bg-static-fixed bg-home-first"></div>
 {% include 'public/_sections/home/use.html' %}
-<div class="bg-static-fixed bg-home-track"></div>
+<div class="bg-static-fixed bg-home-second"></div>
 {% include 'public/_sections/home/track.html' %}
-<div class="bg-static-fixed bg-home-analyze"></div>
+<div class="bg-static-fixed bg-home-third"></div>
 {% include 'public/_sections/home/analyze.html' %}
-<div class="bg-static-fixed bg-home-last"></div>
+<div class="bg-static-fixed bg-home-fourth"></div>
 {% include 'public/_sections/home/about_dimagi.html' %}
 {% endblock content %}
+
+{% block modals %}
+<div id="contactDimagi"
+     class="modal fade" ng-app="contactApp">
+    <div class="modal-dialog"
+         ng-controller="contactFormValidationController">
+        <form id="contact-dimagi-form"
+              name="contactDimagi"
+              class="form form-horizontal"
+              novalidate>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{% trans 'Close' %}</span></button>
+                    <h3 class="modal-title">
+                        {% trans "Contact Dimagi" %}
+                    </h3>
+                </div>
+                <div class="modal-body">
+                    {% crispy_b3 contact_form %}
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock modals %}

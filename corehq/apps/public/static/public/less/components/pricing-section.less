@@ -1,0 +1,155 @@
+@pricing-first-section-height-xs: 182px;
+@pricing-first-section-height-sm: 182px;
+@pricing-first-section-height-md: 167px;
+@pricing-first-section-height-lg: 191px;
+
+@pricing-second-section-height-xs: 411px;
+@pricing-second-section-height-sm: 401px;
+@pricing-second-section-height-md: 401px;
+@pricing-second-section-height-lg: 457px;
+
+@pricing-third-section-height-xs: 340px;
+@pricing-third-section-height-sm: 340px;
+@pricing-third-section-height-md: 335px;
+@pricing-third-section-height-lg: 383px;
+
+@pricing-fourth-section-height-xs: 507px;
+@pricing-fourth-section-height-sm: 497px;
+@pricing-fourth-section-height-md: 467px;
+@pricing-fourth-section-height-lg: 531px;
+
+@pricing-fifth-section-height-xs: 426px;
+@pricing-fifth-section-height-sm: 416px;
+@pricing-fifth-section-height-md: 416px;
+@pricing-fifth-section-height-lg: 472px;
+
+@pricing-sixth-section-height-xs: 408px;
+@pricing-sixth-section-height-sm: 408px;
+@pricing-sixth-section-height-md: 365px;
+@pricing-sixth-section-height-lg: 413px;
+
+
+.make-pricing-heights (@xsH, @smH, @mdH, @lgH) {
+  height: @xsH;
+
+  @media (min-width: @screen-sm-min) {
+    height: @smH;
+  }
+
+  @media (min-width: @screen-md-min) {
+    height: @mdH;
+  }
+
+  @media (min-width: @screen-lg-min) {
+    height: @lgH;
+  }
+}
+
+.make-pricing-margins (@xsH, @smH, @mdH, @lgH) {
+  margin-top: -@xsH;
+
+  @media (min-width: @screen-sm-min) {
+    margin-top: -@smH;
+  }
+
+  @media (min-width: @screen-md-min) {
+    margin-top: -@mdH;
+  }
+
+  @media (min-width: @screen-lg-min) {
+    margin-top: -@lgH;
+  }
+}
+
+.bg-pricing-first {
+  .make-pricing-heights(@pricing-first-section-height-xs, @pricing-first-section-height-sm, @pricing-first-section-height-md, @pricing-first-section-height-lg);
+}
+
+.section-pricing-first {
+  .make-pricing-margins(@pricing-first-section-height-xs, @pricing-first-section-height-sm, @pricing-first-section-height-md, @pricing-first-section-height-lg);
+  .make-pricing-heights(@pricing-first-section-height-xs, @pricing-first-section-height-sm, @pricing-first-section-height-md, @pricing-first-section-height-lg);
+}
+
+.bg-pricing-second {
+  .make-pricing-heights(@pricing-second-section-height-xs, @pricing-second-section-height-sm, @pricing-second-section-height-md, @pricing-second-section-height-lg);
+}
+
+.section-pricing-second {
+  .make-pricing-margins(@pricing-second-section-height-xs, @pricing-second-section-height-sm, @pricing-second-section-height-md, @pricing-second-section-height-lg);
+  .make-pricing-heights(@pricing-second-section-height-xs, @pricing-second-section-height-sm, @pricing-second-section-height-md, @pricing-second-section-height-lg);
+}
+
+.bg-pricing-third {
+  .make-pricing-heights(@pricing-third-section-height-xs, @pricing-third-section-height-sm, @pricing-third-section-height-md, @pricing-third-section-height-lg);
+}
+
+.section-pricing-third {
+  .make-pricing-margins(@pricing-third-section-height-xs, @pricing-third-section-height-sm, @pricing-third-section-height-md, @pricing-third-section-height-lg);
+  .make-pricing-heights(@pricing-third-section-height-xs, @pricing-third-section-height-sm, @pricing-third-section-height-md, @pricing-third-section-height-lg);
+}
+
+.bg-pricing-fourth {
+  .make-pricing-heights(@pricing-fourth-section-height-xs, @pricing-fourth-section-height-sm, @pricing-fourth-section-height-md, @pricing-fourth-section-height-lg);
+}
+
+.section-pricing-fourth {
+  .make-pricing-margins(@pricing-fourth-section-height-xs, @pricing-fourth-section-height-sm, @pricing-fourth-section-height-md, @pricing-fourth-section-height-lg);
+  .make-pricing-heights(@pricing-fourth-section-height-xs, @pricing-fourth-section-height-sm, @pricing-fourth-section-height-md, @pricing-fourth-section-height-lg);
+}
+
+.bg-pricing-fifth {
+  .make-pricing-heights(@pricing-fifth-section-height-xs, @pricing-fifth-section-height-sm, @pricing-fifth-section-height-md, @pricing-fifth-section-height-lg);
+}
+
+.section-pricing-fifth {
+  .make-pricing-margins(@pricing-fifth-section-height-xs, @pricing-fifth-section-height-sm, @pricing-fifth-section-height-md, @pricing-fifth-section-height-lg);
+  .make-pricing-heights(@pricing-fifth-section-height-xs, @pricing-fifth-section-height-sm, @pricing-fifth-section-height-md, @pricing-fifth-section-height-lg);
+}
+
+.bg-pricing-sixth {
+  .make-pricing-heights(@pricing-sixth-section-height-xs, @pricing-sixth-section-height-sm, @pricing-sixth-section-height-md, @pricing-sixth-section-height-lg);
+}
+
+.section-pricing-sixth {
+  .make-pricing-margins(@pricing-sixth-section-height-xs, @pricing-sixth-section-height-sm, @pricing-sixth-section-height-md, @pricing-sixth-section-height-lg);
+  .make-pricing-heights(@pricing-sixth-section-height-xs, @pricing-sixth-section-height-sm, @pricing-sixth-section-height-md, @pricing-sixth-section-height-lg);
+}
+
+
+@smallest-table-width: 715px;
+
+.pricing-table-container {
+  position: relative;
+
+  @media (max-width: @smallest-table-width) {
+    overflow-x: scroll;
+    overflow-y: none;
+  }
+}
+.pricing-table-container-inner {
+  min-width: @smallest-table-width + 1;
+}
+
+.section-pricing-lead {
+  .pricing-table-container {
+    @media (max-width: @smallest-table-width) {
+      height: 269px;
+    }
+  }
+}
+
+.section-pricing-first {
+  .pricing-table-container {
+    @media (max-width: @smallest-table-width) {
+      height: @pricing-first-section-height-xs;
+    }
+  }
+}
+
+.section-pricing-second {
+  .pricing-table-container {
+    @media (max-width: @smallest-table-width) {
+      height: @pricing-second-section-height-xs;
+    }
+  }
+}

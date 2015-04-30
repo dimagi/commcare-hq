@@ -27,6 +27,7 @@
                   href="{% new_static 'style/less/style.less' %}" />
         {% endcompress %}
 
+        <link rel="shortcut icon" href="{% new_static 'style/img/favicon.png' %}" />
         {% compress css %}
             <link type="text/less"
                   rel="stylesheet"
@@ -44,7 +45,7 @@
 
     </head>
     <body>
-        <nav class="navbar navbar-default" role="navigation">
+        <nav class="navbar navbar-default navbar-static-hq" role="navigation">
             <div class="container">
 
                 <!-- Brand and toggle get grouped for better mobile display -->
@@ -52,7 +53,7 @@
                     <button type="button"
                             class="navbar-toggle collapsed"
                             data-toggle="collapse"
-                            data-target="#">
+                            data-target=".cc-navbar-collapse">
                         <span class="sr-only">{% trans 'Toggle Navigation' %}</span>
                         <span class="icon-bar"></span>
                         <span class="icon-bar"></span>
@@ -66,31 +67,31 @@
                 </div>
 
                 <!-- Collect the nav links, forms, and other content for toggling -->
-                <div class="collapse navbar-collapse"
+                <div class="collapse navbar-collapse cc-navbar-collapse"
                      id="primary-nav">
                     <button type="button"
                             class="btn btn-primary navbar-btn navbar-right">
                         {% trans 'Sign In' %}
                     </button>
                     <ul class="nav navbar-nav">
-                        <li><a href="#">{% trans "About" %}</a></li>
-                        <li><a href="#">{% trans "Support" %}</a></li>
+                        <li{% if is_home %} class="active"{% endif %}><a href="{% url 'public_home' %}">CommCare</a></li>
+                        <li{% if is_solutions %} class="active"{% endif %}><a href="{% url 'public_solutions' %}">{% trans "Solutions" %}</a></li>
+                        <li{% if is_impact %} class="active"{% endif %}><a href="{% url 'public_impact' %}">{% trans "Impact" %}</a></li>
+                        <li{% if is_pricing %} class="active"{% endif %}><a href="{% url 'public_pricing' %}">{% trans "Software Pricing" %}</a></li>
+                        <li{% if is_services %} class="active"{% endif %}><a href="{% url 'public_services' %}">{% trans "Services" %}</a></li>
+                    </ul>
+                    <ul class="nav navbar-nav navbar-right">
                         <li class="dropdown">
                             <a href="#"
                                class="dropdown-toggle"
                                data-toggle="dropdown"
-                               role="button"
                                aria-expanded="false">
-                                {% trans "Pricing" %}
+                                English
                                 <span class="caret"></span>
                             </a>
                             <ul class="dropdown-menu" role="menu">
-                                <li>
-                                    <a href="#">{% trans "Software Plans" %}</a>
-                                </li>
-                                <li>
-                                    <a href="#">{% trans "Service Packages" %}</a>
-                                </li>
+                                <li role="presentation"><a role="menuitem" tabindex="-1" href="#">English</a></li>
+                                <li role="presentation"><a role="menuitem" tabindex="-1" href="#">French (to-do)</a></li>
                             </ul>
                         </li>
                     </ul>
@@ -111,9 +112,13 @@
             </div>
         </footer>
 
+        {% block modals %}{% endblock modals %}
+
         {# Javascript #}
         {% compress js %}
             <script type="text/javascript" src="{% new_static 'style/lib/angular-1.2.27/angular.min.js' %}"></script>
+            <script type="text/javascript" src="{% new_static 'style/lib/angular-1.2.27/angular-route.min.js' %}"></script>
+            <script type="text/javascript" src="{% new_static 'style/lib/angular-1.2.27/angular-resource.min.js' %}"></script>
             <script type="text/javascript" src="{% new_static 'style/lib/angular-1.2.27/angular-sanitize.min.js' %}"></script>
             <script type="text/javascript" src="{% new_static 'style/lib/angular-ui/ui-bootstrap-tpls-0.11.2.min.js' %}"></script>
             <script type="text/javascript" src="{% new_static 'djangular/js/django-angular.min.js' %}"></script>

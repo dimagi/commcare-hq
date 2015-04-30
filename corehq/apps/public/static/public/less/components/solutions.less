@@ -1,0 +1,107 @@
+.services-bg-img (@gName, @gSize) {
+  background-image: url('@{pub-images}/solutions/@{gName}-@{gSize}.png');
+}
+
+.make-solutions-graphic (@type, @wLG, @hLG, @wMD, @hMD, @wSM, @hSM) {
+  .services-bg-img(@type, 'md');
+  width: @wMD;
+  height: @hMD;
+
+  @media (min-width: @screen-sm-min) {
+    .services-bg-img(@type, 'sm');
+    width: @wSM;
+    height: @hSM;
+  }
+  @media (min-width: @screen-md-min) {
+    .services-bg-img(@type, 'md');
+    width: @wMD;
+    height: @hMD;
+  }
+  @media (min-width: @screen-lg-min) {
+    .services-bg-img(@type, 'lg');
+    width: @wLG;
+    height: @hLG;
+  }
+}
+
+@bulb-width-lg: 367px;
+@bulb-height-lg: 489px;
+@bulb-width-md: 300px;
+@bulb-height-md: 400px;
+@bulb-width-sm: 227px;
+@bulb-height-sm: 303px;
+
+.solutions-graphic-container {
+  position: relative;
+}
+
+.solutions-graphic-main {
+  .make-solutions-graphic(
+    'solutions-bulb',
+    @bulb-width-lg, @bulb-height-lg,
+    @bulb-width-md, @bulb-height-md,
+    @bulb-width-sm, @bulb-height-sm
+  );
+  background-position: center center;
+  background-repeat: none;
+  margin: 0 auto;
+  margin-top: 40px;
+
+  @media (max-width: @screen-xs-max) {
+    margin-top: 20px;
+    position: absolute;
+    opacity: .3;
+  }
+
+  @media (min-width: @screen-sm-min) {
+    margin-top: 30px;
+  }
+
+  @media (min-width: @screen-md-min) {
+    margin-top: 50px;
+  }
+
+  @media (min-width: @screen-lg-min) {
+    margin-top: 40px;
+  }
+}
+
+@supply-width-lg: 560px;
+@supply-height-lg: 511px;
+@supply-width-md: 460px;
+@supply-height-md: 420px;
+@supply-width-sm: 350px;
+@supply-height-sm: 320px;
+
+.solutions-graphic-commcare-supply {
+  .make-solutions-graphic(
+    'solutions-supply',
+    @supply-width-lg, @supply-height-lg,
+    @supply-width-md, @supply-height-md,
+    @supply-width-sm, @supply-height-sm
+  );
+  background-position: center center;
+  margin: 0 auto;
+
+  @media (max-width: @screen-xs-max) {
+    .services-bg-img('solutions-supply', 'sm');
+    width: @supply-width-sm;
+    height: @supply-height-sm;
+    margin-bottom: 40px;
+    position: relative;
+    left: 50%;
+    margin-left: -@supply-width-sm/2;
+  }
+
+  @media (min-width: @screen-sm-min) {
+    margin-top: 10px;
+  }
+  @media (min-width: @screen-md-min) {
+    margin-top: 0;
+  }
+
+}
+
+.solutions-detail-row {
+  margin-bottom: 20px;
+}

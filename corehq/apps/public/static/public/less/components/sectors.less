@@ -1,0 +1,183 @@
+@sectors-icon-size-xs: 80px;
+@sectors-icon-size-sm: 103px;
+@sectors-icon-size-md: 140px;
+@sectors-icon-size-lg: 173px;
+
+.sectors-icon {
+  margin: 0 auto;
+  background-color: @cc-neutral-mid;
+  .border-top-radius(@sectors-icon-size-md/2);
+  .border-bottom-radius(@sectors-icon-size-md/2);
+  width: @sectors-icon-size-md;
+  height: @sectors-icon-size-md;
+
+  @media (min-width: @screen-sm-min) {
+    .border-top-radius(@sectors-icon-size-sm/2);
+    .border-bottom-radius(@sectors-icon-size-sm/2);
+    width: @sectors-icon-size-sm;
+    height: @sectors-icon-size-sm;
+  }
+
+  @media (min-width: @screen-md-min) {
+    .border-top-radius(@sectors-icon-size-md/2);
+    .border-bottom-radius(@sectors-icon-size-md/2);
+    width: @sectors-icon-size-md;
+    height: @sectors-icon-size-md;
+  }
+
+  @media (min-width: @screen-lg-min) {
+    .border-top-radius(@sectors-icon-size-lg/2);
+    .border-bottom-radius(@sectors-icon-size-lg/2);
+    width: @sectors-icon-size-lg;
+    height: @sectors-icon-size-lg;
+  }
+}
+
+.sectors-icon-health-light {
+  background-color: @cc-dark-cool-accent-mid;
+}
+.sectors-icon-health-dark {
+  background-color: @cc-dark-cool-accent-low;
+}
+
+.sectors-icon-ag-light {
+  background-color: @cc-att-pos-mid;
+}
+.sectors-icon-ag-dark {
+  background-color: @cc-att-pos-low;
+}
+
+.sectors-icon-dev-light {
+  background-color: @cc-light-cool-accent-mid;
+}
+.sectors-icon-dev-dark {
+  background-color: @cc-light-cool-accent-low;
+}
+
+.sectors-title {
+  font-size: 18px;
+  text-align: center;
+  @media (max-width: @screen-xs-max) {
+    font-size: 24px !important;
+    margin: 10px 0;
+  }
+}
+
+.sectors-title-health {
+  color: @cc-dark-cool-accent-low;
+}
+.sectors-title-ag {
+  color: @cc-att-pos-low;
+}
+.sectors-title-dev {
+  color: @cc-light-cool-accent-low;
+}
+
+.sectors-bg-img (@gName, @gSize) {
+  background-image: url('@{pub-images}/sector-icons/@{gName}-@{gSize}.png');
+}
+
+.make-sectors-icon (@name) {
+  background-position: center center;
+  background-repeat: no-repeat;
+  .sectors-bg-img(@name, 'md');
+
+  @media (min-width: @screen-sm-min) {
+    .sectors-bg-img(@name, 'sm');
+  }
+  @media (min-width: @screen-md-min) {
+    .sectors-bg-img(@name, 'md');
+  }
+  @media (min-width: @screen-lg-min) {
+    .sectors-bg-img(@name, 'lg');
+  }
+}
+
+.background-adjust-left(@posLG, @posMD, @posSM) {
+  background-position: @posSM 0;
+
+  @media (min-width: @screen-sm-min) {
+    background-position: @posSM 0;
+  }
+  @media (min-width: @screen-md-min) {
+    background-position: @posMD 0;
+  }
+  @media (min-width: @screen-lg-min) {
+    background-position: @posLG 0;
+  }
+}
+
+.sectors-icon-health-child {
+  .make-sectors-icon('health-child');
+}
+.sectors-icon-health-hiv {
+  .make-sectors-icon('health-hiv');
+  .background-adjust-left(6px, 5px, 2px);
+}
+.sectors-icon-health-malaria {
+  .make-sectors-icon('health-malaria');
+  .background-adjust-left(1px, 1px, 1px);
+}
+.sectors-icon-health-nutrition {
+  .make-sectors-icon('health-nutrition');
+  .background-adjust-left(2px, 2px, 1px);
+}
+
+.sectors-icon-ag-coop {
+  .make-sectors-icon('ag-coop');
+}
+.sectors-icon-ag-finance {
+  .make-sectors-icon('ag-finance');
+  .background-adjust-left(-7px, -5px, -3px);
+}
+.sectors-icon-ag-logistics {
+  .make-sectors-icon('ag-logistics');
+}
+.sectors-icon-ag-extension {
+  .make-sectors-icon('ag-extension');
+}
+
+.sectors-icon-dev-er {
+  .make-sectors-icon('dev-er');
+}
+.sectors-icon-dev-education {
+  .make-sectors-icon('dev-education');
+}
+.sectors-icon-dev-smallb {
+  .make-sectors-icon('dev-smallb');
+}
+.sectors-icon-dev-logistics {
+  .make-sectors-icon('dev-logistics');
+}
+
+.section .sectors-text-details {
+  font-size: 12px;
+  padding-top: 10px;
+
+  &.sectors-text-details-health {
+    color: @cc-dark-cool-accent-low;
+  }
+  &.sectors-text-details-ag {
+    color: @cc-att-pos-low;
+  }
+  &.sectors-text-details-dev {
+    color: @cc-light-cool-accent-low;
+  }
+  @media (max-width: @screen-sm-max) {
+    font-size: 10px;
+  }
+  @media (max-width: @screen-xs-max) {
+    margin-bottom: 20px !important;
+    font-size: 16px;
+  }
+}
+
+.sectors-row-sector {
+  @media (max-width: @screen-xs-max) {
+    > .col-sm-4 {
+      margin-bottom: 20px;
+    }
+  }
+}
+
+

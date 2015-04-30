@@ -1,0 +1,19 @@
+.footer {
+  height: @navbar-height;
+  background: @cc-brand-low;
+
+  p {
+    line-height: @navbar-height;
+    margin-bottom: 0;
+  }
+
+  @media (max-width: @screen-xs-max) {
+    min-height: @navbar-height;
+    height: auto;
+    p {
+      line-height: 1.3em;
+      margin-top: 20px;
+      margin-bottom: 20px;
+    }
+  }
+}

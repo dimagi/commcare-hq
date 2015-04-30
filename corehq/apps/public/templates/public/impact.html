@@ -1,0 +1,35 @@
+{% extends 'public/base.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% block content %}
+{% include 'public/_sections/impact/lead.html' %}
+<div class="bg-static-fixed bg-impact-first"></div>
+<section class="section section-aside">
+<div class="container">
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="well well-lightcool well-blockquote"
+                 style="margin-top: 90px;">
+                <p class="lead">
+                    <strong>
+                        {% trans 'Who uses CommCare?' %}
+                    </strong>
+                    {% blocktrans %}
+                        The logos of many of our users are featured
+                        throughout this page.
+                    {% endblocktrans %}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+</section>
+{% include 'public/_sections/impact/sectors.html' %}
+<div class="bg-static-fixed bg-impact-second"></div>
+{% include 'public/_sections/impact/case_studies.html' %}
+<div class="bg-static-fixed bg-impact-third"></div>
+{% include 'public/_sections/impact/partners.html' %}
+<div class="bg-static-fixed bg-impact-fourth"></div>
+{% include 'public/_sections/impact/publications.html' %}
+{% endblock content %}

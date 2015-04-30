@@ -1,0 +1,13 @@
+{% extends 'public/base.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% block content %}
+{% include 'public/_sections/services_details/lead.html' %}
+<div class="bg-static-fixed bg-details-first"></div>
+{% include 'public/_sections/services_details/bundles.html' %}
+<div class="bg-static-fixed bg-details-second"></div>
+{% include 'public/_sections/services_details/capacity.html' %}
+<div class="bg-static-fixed bg-details-third"></div>
+{% include 'public/_sections/services_details/faq.html' %}
+{% endblock content %}

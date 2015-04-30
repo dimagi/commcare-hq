@@ -1,0 +1,132 @@
+.bg-static-fixed {
+  background: no-repeat center fixed;
+
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+
+  max-width: 100%;
+  height: @bg-static-window-height;
+  background-color: @cc-text;
+}
+
+.make-bg (@location, @order) {
+  background-image: url('@{pub-images}/bg-@{location}/bg-@{location}-@{order}-lg.jpg');
+
+  // todo scale for screen
+}
+
+.bg-home-main {
+  .make-bg('home', 'main');
+  background-position: bottom;
+}
+
+.bg-home-first {
+  .make-bg('home', 'first');
+  background-position: bottom;
+}
+
+.bg-home-second {
+  .make-bg('home', 'second');
+  background-position: center;
+}
+
+.bg-home-third {
+  .make-bg('home', 'fourth');
+  background-position: center;
+}
+
+.bg-home-fourth {
+  .make-bg('home', 'third');
+  background-position: center;
+}
+
+.bg-impact-first{
+  .make-bg('impact', 'first');
+  background-position: center;
+}
+
+.bg-impact-second {
+  .make-bg('impact', 'second');
+  background-position: center;
+}
+
+.bg-impact-third {
+  .make-bg('impact', 'third');
+  background-position: center;
+}
+
+.bg-impact-fourth {
+  .make-bg('impact', 'fourth');
+  background-position: center;
+}
+
+.bg-pricing {
+  background-color: @cc-brand-low;
+  z-index: 0;
+}
+
+.bg-services-first {
+  .make-bg('services', 'first');
+  background-position: bottom;
+}
+
+.bg-services-second {
+  .make-bg('services', 'second');
+  background-position: center;
+}
+
+.bg-services-third {
+  .make-bg('services', 'third');
+  background-position: center;
+}
+
+.bg-pricing-first {
+  .make-bg('pricing', 'mobile');
+}
+
+.bg-pricing-second {
+  .make-bg('pricing', 'web');
+}
+
+.bg-pricing-third {
+  .make-bg('pricing', 'analytics');
+}
+
+.bg-pricing-fourth {
+  .make-bg('pricing', 'sms');
+}
+
+.bg-pricing-fifth {
+  .make-bg('pricing', 'users');
+}
+
+.bg-pricing-sixth {
+  .make-bg('pricing', 'support');
+}
+
+.bg-pricing-seventh {
+  .make-bg('pricing', 'last');
+  background-position: left bottom;
+}
+
+.bg-details-first {
+  .make-bg('details', 'first');
+}
+
+.bg-details-second {
+  .make-bg('details', 'second');
+}
+
+.bg-details-third {
+  .make-bg('details', 'third');
+}
+
+.bg-solutions-first {
+  .make-bg('solutions', 'first');
+}
+
+.bg-solutions-second {
+  .make-bg('solutions', 'second');
+}
