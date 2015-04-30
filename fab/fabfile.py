@@ -29,7 +29,7 @@ from distutils.util import strtobool
 from fabric import utils
 from fabric.api import run, roles, execute, task, sudo, env, parallel
 from fabric.colors import blue
-from fabric.context_managers import settings, cd
+from fabric.context_managers import settings, cd, shell_env
 from fabric.contrib import files, console
 from fabric.operations import require, local, prompt
 import yaml
@@ -367,11 +367,12 @@ def install_packages():
 
 
 @task
-@roles(ROLES_TOUCHFORMS)
+@roles(ROLES_ALL_SRC)
 def install_npm_packages():
     """Install required NPM packages for server"""
     with cd(os.path.join(env.code_root, 'submodules/touchforms-src/touchforms')):
-        sudo("npm install")
+        with shell_env(HOME=env.home):
+            sudo("npm install")
 
 
 @task
@@ -772,11 +773,11 @@ def awesome_deploy(confirm="yes"):
 
 
 @task
-@roles(ROLES_TOUCHFORMS)
+@roles(ROLES_ALL_SRC)
 def update_touchforms():
     # npm bin allows you to specify the locally installed version instead of having to install grunt globally
     with cd(os.path.join(env.code_root, 'submodules/touchforms-src/touchforms')):
-        sudo('PATH=$(npm bin):$PATH grunt build')
+        sudo('PATH=$(npm bin):$PATH grunt build --force')
 
 
 @task
