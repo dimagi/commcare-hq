@@ -53,7 +53,6 @@ branches:
   - new-location  # Ethan 4/14
   - fm-facing-interface+bulk-wire-invoice # Ben 4/23
   - fm-facing-interface # Nick P 4/23
-  - bulk-wire-invoice # Ben 4/23
 #  - grunt-task-fabric # Ben 4/29
   - commcarehq-prelogin # Biyeun 4/29
   - small-invoices # Nick P 4/30
