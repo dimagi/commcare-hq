@@ -573,7 +573,7 @@
                                         {% trans "Question" %}
                                     </th>
                                     <th>{% trans "Display" %}</th>
-                                    {% if custom_export.type == 'case' %}
+                                    {% if custom_export.type == 'case' and request|feature_preview_enabled:"SPLIT_MULTISELECT_CASE_EXPORT"%}
                                     <th>{% trans "Type" %}</th>
                                     {% endif %}
                                     {% if helper.allow_deid %}
@@ -602,7 +602,7 @@
 
                                         </td>
                                         <td><input class="input-xlarge" type="text" data-bind="value: display" /></td>
-                                        {% if custom_export.type == 'case' %}
+                                        {% if custom_export.type == 'case' and request|feature_preview_enabled:"SPLIT_MULTISELECT_CASE_EXPORT"%}
                                         <td class="input">
                                             <div data-bind="if: !allOptions()">
                                                 <select disabled>
