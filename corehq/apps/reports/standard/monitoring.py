@@ -969,7 +969,7 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
             sizes.extend([1] * 24)
         chart.add_data(sizes)
 
-        chart.set_axis_labels('x', [''] + [(str(h) + 'h') for h in range(24)] + [''])
+        chart.set_axis_labels('x', [''] + [(str(h) + ':00') for h in range(24)] + [''])
         chart.set_axis_labels('x', [' ', _('Time ({timezone})').format(timezone=timezone), ' '])
         chart.set_axis_labels('y', [''] + [day_names[n] for n in days] + [''])
 
