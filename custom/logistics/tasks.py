@@ -26,7 +26,7 @@ def stock_data_task(domain, endpoint, apis, config, test_facilities=None):
     start_date = datetime.today()
     default_api = apis[0][0]
 
-    checkpoint = StockDataCheckpoint.objects.get_or_create(domain=domain, defaults={
+    checkpoint, _ = StockDataCheckpoint.objects.get_or_create(domain=domain, defaults={
         'api': default_api,
         'date': None,
         'limit': 1000,
@@ -52,12 +52,17 @@ def stock_data_task(domain, endpoint, apis, config, test_facilities=None):
         supply_point = SupplyPointCase.get_by_location_id(domain, checkpoint.location.location_id)
         external_id = supply_point.external_id if supply_point else None
         if external_id:
-            facilities = itertools.dropwhile(lambda x: int(x) != int(external_id), facilities)
+            facilities = list(itertools.dropwhile(lambda x: int(x) != int(external_id), facilities))
+            if checkpoint.api:
+                apis_from_checkpoint = itertools.dropwhile(lambda x: x[0] != checkpoint.api, apis)
+            else:
+                apis_from_checkpoint = apis
+            process_facility_task.si(domain, endpoint, facilities[0], apis_from_checkpoint)
+            facilities = facilities[1:]
 
     facilities_chunked_list = chunked(facilities, 50)
     for chunk in facilities_chunked_list:
-        res = chain(process_facility_task.si(domain, endpoint, fac, apis)
-                    for fac in chunk)()
+        res = chain(process_facility_task.si(domain, endpoint, fac, apis) for fac in chunk)()
         res.get()
 
     checkpoint = StockDataCheckpoint.objects.get(domain=domain)
@@ -71,8 +76,7 @@ def process_facility_task(domain, endpoint, facility, apis):
     checkpoint = StockDataCheckpoint.objects.get(domain=domain)
     limit = checkpoint.limit
     offset = checkpoint.offset
-    apis_from_checkpoint = itertools.dropwhile(lambda x: x[0] != checkpoint.api, apis)
-    for idx, (api_name, api_function) in enumerate(apis_from_checkpoint):
+    for idx, (api_name, api_function) in enumerate(apis):
         api_function(
             domain=domain,
             checkpoint=checkpoint,
@@ -84,7 +88,7 @@ def process_facility_task(domain, endpoint, facility, apis):
         )
         limit = 1000
         offset = 0
-
+    save_stock_data_checkpoint(checkpoint, 'finished', 1000, 0, checkpoint.date, facility)
 
 @task(ignore_result=True)
 def sms_users_fix(api):
