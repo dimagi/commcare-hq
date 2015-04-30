@@ -4185,7 +4185,7 @@ class RemoteApp(ApplicationBase):
         }
         tree = _parse_xml(files['profile.xml'])
 
-        def add_file_from_path(path, strict=False):
+        def add_file_from_path(path, strict=False, transform=None):
             added_files = []
             # must find at least one
             try:
@@ -4197,13 +4197,20 @@ class RemoteApp(ApplicationBase):
                     return
             for loc_node in tree.findall(path):
                 loc, file = self.fetch_file(loc_node.text)
+                if transform:
+                    file = transform(file)
                 files[loc] = file
                 added_files.append(file)
             return added_files
 
         add_file_from_path('features/users/logo')
         try:
-            suites = add_file_from_path(self.SUITE_XPATH, strict=True)
+            suites = add_file_from_path(
+                self.SUITE_XPATH,
+                strict=True,
+                transform=(lambda suite:
+                           remote_app.make_remote_suite(self, suite))
+            )
         except AppEditingError:
             raise AppEditingError(ugettext('Problem loading suite file from profile file. Is your profile file correct?'))
 
