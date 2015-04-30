@@ -228,11 +228,16 @@ class Domain(Document, SnapshotMixin):
     # CommConnect settings
     commconnect_enabled = BooleanProperty(default=False)
     survey_management_enabled = BooleanProperty(default=False)
-    sms_case_registration_enabled = BooleanProperty(default=False)  # Whether or not a case can register via sms
-    sms_case_registration_type = StringProperty()  # Case type to apply to cases registered via sms
-    sms_case_registration_owner_id = StringProperty()  # Owner to apply to cases registered via sms
-    sms_case_registration_user_id = StringProperty()  # Submitting user to apply to cases registered via sms
-    sms_mobile_worker_registration_enabled = BooleanProperty(default=False)  # Whether or not a mobile worker can register via sms
+    # Whether or not a case can register via sms
+    sms_case_registration_enabled = BooleanProperty(default=False)
+    # Case type to apply to cases registered via sms
+    sms_case_registration_type = StringProperty()
+    # Owner to apply to cases registered via sms
+    sms_case_registration_owner_id = StringProperty()
+    # Submitting user to apply to cases registered via sms
+    sms_case_registration_user_id = StringProperty()
+    # Whether or not a mobile worker can register via sms
+    sms_mobile_worker_registration_enabled = BooleanProperty(default=False)
     default_sms_backend_id = StringProperty()
     use_default_sms_response = BooleanProperty(default=False)
     default_sms_response = StringProperty()
@@ -914,7 +919,8 @@ class Domain(Document, SnapshotMixin):
         super(Domain, self).delete()
         Domain.get_by_name.clear(Domain, self.name)  # clear the domain cache
 
-    def all_media(self, from_apps=None):  #todo add documentation or refactor
+    def all_media(self, from_apps=None):
+        #todo add documentation or refactor
         from corehq.apps.hqmedia.models import CommCareMultimedia
         dom_with_media = self if not self.is_snapshot else self.copied_from
 
