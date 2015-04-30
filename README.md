@@ -167,7 +167,7 @@ that you have a 32bit version of Python installed.
     # This will do some basic setup, create a superuser, and create a project.
     # The project-name, email, and password given here are specific to your
     # local development environment.
-    # Ignore warnings related to Raven.
+    # Ignore warnings related to Raven for the following three commands.
     ./manage.py bootstrap <project-name> <email> <password>
 
     # To set up elasticsearch indexes, first run (and then kill once you see the
@@ -175,7 +175,7 @@ that you have a 32bit version of Python installed.
     ./manage.py run_ptop --all
     # This will do an initial run of the elasticsearch indexing process, but this will run as a
     # service later. This run at least creates the indices for the first time.
-    
+
     # Next, set the aliases of the elastic indices. These can be set by a management command
     # that sets the stored index names to the aliases.
 
@@ -246,12 +246,15 @@ If your installation didn't set up the helper processes required by CommCare HQ
 to automatically run on system startup, you need to run them manually:
 
     redis-server /path/to/redis.conf
+
     /path/to/unzipped/elasticsearch/bin/elasticsearch &
+
     /path/to/couchdb/bin/couchdb &
 
 Then run the following separately:
 
-    # MacOS Asynchronous task scheduler
+    # Setting up the asynchronous task scheduler
+    # For Mac / Linux
     ./manage.py celeryd --verbosity=2 --beat --statedb=celery.db --events
     # Windows
     > manage.py celeryd --settings=settings
@@ -286,7 +289,7 @@ By default, HQ uses vellum minified build files to render form-designer. To use 
 Building CommCare Mobile Apps
 -----------------------------
 
-In order to build and download a CommCare mobile app from your instance of
+In order to build, download, and sync a CommCare mobile app from your instance of
 CommCare HQ, you need to follow our [instructions][builds] for how to download
 and load CommCare binaries from the Dimagi build server.
 

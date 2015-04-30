@@ -926,6 +926,7 @@ def _do_collectstatic():
     """Collect static after a code update"""
     with cd(env.code_root):
         sudo('%(virtualenv_root)s/bin/python manage.py collectstatic --noinput' % env)
+        sudo('%(virtualenv_root)s/bin/python manage.py fix_less_imports_collectstatic' % env)
 
 
 @roles(ROLES_DJANGO)
