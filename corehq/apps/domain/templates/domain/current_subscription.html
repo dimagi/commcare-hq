@@ -14,7 +14,7 @@
         Stripe.setPublishableKey('{{ stripe_public_key }}');
 
         var paymentHandler = new PaymentMethodHandler(
-            "add-credit-form"
+            "add-credit-form",
             {
                 submitBtnText: "{% trans "Buy Credits" %}",
                 errorMessages: {{ payment_error_messages|JSON }}
