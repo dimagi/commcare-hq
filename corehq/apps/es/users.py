@@ -54,7 +54,4 @@ def user_ids(user_ids):
     return filters.term("_id", list(user_ids))
 
 def location(location_id):
-    return filters.OR(
-        filters.term('domain_membership.location_id', location_id),
-        filters.term('domain_memberships.location_id', location_id)
-    )
+    return filters.term('location_id', location_id)
