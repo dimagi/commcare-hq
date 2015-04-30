@@ -3,19 +3,9 @@
 <p>{{ greeting }}</p>
 
 <p>
-    {% if plan_name %}
-
     {% blocktrans %}
     Your {{ plan_name }} Billing Statement is now available for {{ month_name }}.
     {% endblocktrans %}
-
-    {% else %}
-
-    {% blocktrans %}
-    Your Bulk Billing Statement is now available for {{ month_name }}.
-    {% endblocktrans %}
-
-    {% endif %}
 </p>
 
 <table cellpadding="2">
@@ -37,16 +27,6 @@
             </a>
         </td>
     </tr>
-    {% if plan_name %}
-    <tr>
-        <th align="right">
-            {% trans 'Software Plan' %}:
-        </th>
-        <td>
-            {{ plan_name }}
-        </td>
-    </tr>
-    {% endif %}
     <tr>
         <th align="right">
             {% trans 'Status' %}:
@@ -82,19 +62,9 @@
 </p>
 
 <p>
-    {% if plan_name %}
-
     {% blocktrans %}
     Thank you for using {{ plan_name }}. If you have any questions, please don't hesitate to contact {{ invoicing_contact_email }}.
     {% endblocktrans %}
-
-    {% else %}
-
-    {% blocktrans %}
-    Thank you. If you have any questions, please don't hesitate to contact {{ invoicing_contact_email }}.
-    {% endblocktrans %}
-
-    {% endif %}
 </p>
 
 <p>

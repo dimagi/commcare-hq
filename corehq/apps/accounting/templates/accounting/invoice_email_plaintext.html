@@ -4,31 +4,14 @@
 {% endblocktrans %}
 
 
-{% if plan_name %}
-
 {% blocktrans %}
 Your {{ plan_name }} Billing Statement is now available for {{ month_name }}.
 {% endblocktrans %}
 
-{% else %}
-
-{% blocktrans %}
-Your Bulk Billing Statement is now available for {{ month_name }}.
-{% endblocktrans %}
-
-{% endif %}
-
-
 {% blocktrans %}
 Statement No.: {{ statement_number }}
 Project Space: {{ domain }}
-{% endblocktrans %}
-{% if plan_name %}
-{% blocktrans %}
 Software Plan: {{ plan_name }}
-{% endblocktrans %}
-{% endif %}
-{% blocktrans %}
 Status: {{ payment_status }}
 Amount Due: {{ amount_due }}
 {% endblocktrans %}
@@ -59,17 +42,9 @@ To pay this bill, you can either choose a credit card or wire payment:
       the project space.
 {% endblocktrans %}
 
-{% if plan_name %}
 {% blocktrans %}
 Thank you for using {{ plan_name }}. If you have any questions, please don't hesitate to contact {{ invoicing_contact_email }}.
-{% endblocktrans %}
-{% else %}
-{% blocktrans %}
-Thank you. If you have any questions, please don't hesitate to contact {{ invoicing_contact_email }}.
-{% endblocktrans %}
-{% endif %}
 
-{% blocktrans %}
 Best Regards,
 The CommCare HQ Team
 www.commcarehq.org

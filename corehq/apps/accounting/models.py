@@ -1683,6 +1683,9 @@ class BillingRecordBase(models.Model):
 class WireBillingRecord(BillingRecordBase):
     invoice = models.ForeignKey(WireInvoice, on_delete=models.PROTECT)
 
+    INVOICE_HTML_TEMPLATE = 'accounting/wire_invoice_email.html'
+    INVOICE_TEXT_TEMPLATE = 'accounting/wire_invoice_email_plaintext.html'
+
     def is_email_throttled(self):
         return False
 
