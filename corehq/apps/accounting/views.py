@@ -36,7 +36,7 @@ from corehq.apps.accounting.exceptions import (
 )
 from corehq.apps.accounting.interface import (
     AccountingInterface, SubscriptionInterface, SoftwarePlanInterface,
-    InvoiceInterface
+    InvoiceInterface, WireInvoiceInterface
 )
 from corehq.apps.accounting.async_handlers import (
     FeatureRateAsyncHandler,
@@ -47,11 +47,12 @@ from corehq.apps.accounting.async_handlers import (
     SubscriberFilterAsyncHandler,
     SubscriptionFilterAsyncHandler,
     AccountFilterAsyncHandler,
+    DomainFilterAsyncHandler,
     BillingContactInfoAsyncHandler,
     SoftwarePlanAsyncHandler,
 )
 from corehq.apps.accounting.models import (
-    SoftwareProductType, Invoice, BillingAccount, CreditLine, Subscription,
+    SoftwareProductType, Invoice, WireInvoice, BillingAccount, CreditLine, Subscription,
     SoftwarePlanVersion, SoftwarePlan, CreditAdjustment
 )
 from corehq.apps.accounting.user_text import PricingTable
@@ -659,16 +660,15 @@ def pricing_table_json(request, product, locale):
     return response
 
 
-class InvoiceSummaryView(AccountingSectionView):
+class InvoiceSummaryViewBase(AccountingSectionView):
     template_name = 'accounting/invoice.html'
-    urlname = 'invoice_summary'
 
     @property
     @memoized
     def invoice(self):
         try:
-            return Invoice.objects.get(id=self.args[0])
-        except Invoice.DoesNotExist:
+            return self.invoice_class.objects.get(id=self.args[0])
+        except self.invoice_class.DoesNotExist:
             raise Http404()
 
     @property
@@ -680,36 +680,6 @@ class InvoiceSummaryView(AccountingSectionView):
         return reverse(self.urlname, args=self.args)
 
     @property
-    def parent_pages(self):
-        return [{
-            'title': InvoiceInterface.name,
-            'url': InvoiceInterface.get_url(),
-        }]
-
-    @property
-    @memoized
-    def adjust_balance_form(self):
-        if self.request.method == 'POST':
-            return AdjustBalanceForm(self.invoice, self.request.POST)
-        return AdjustBalanceForm(self.invoice)
-
-    @property
-    @memoized
-    def adjustment_list(self):
-        adjustment_list = CreditAdjustment.objects.filter(invoice=self.invoice)
-        return adjustment_list.order_by('-date_created')
-
-    @property
-    @memoized
-    def billing_records(self):
-        return self.invoice.billingrecord_set.all()
-
-    @property
-    @memoized
-    def invoice_info_form(self):
-        return InvoiceInfoForm(self.invoice)
-
-    @property
     @memoized
     def resend_email_form(self):
         if self.request.method == 'POST':
@@ -717,15 +687,9 @@ class InvoiceSummaryView(AccountingSectionView):
         return ResendEmailForm(self.invoice)
 
     @property
-    def page_context(self):
-        return {
-            'adjust_balance_form': self.adjust_balance_form,
-            'adjustment_list': self.adjustment_list,
-            'billing_records': self.billing_records,
-            'invoice_info_form': self.invoice_info_form,
-            'resend_email_form': self.resend_email_form,
-            'can_send_email': not self.invoice.subscription.do_not_invoice,
-        }
+    @memoized
+    def invoice_info_form(self):
+        return InvoiceInfoForm(self.invoice)
 
     def post(self, request, *args, **kwargs):
         if 'adjust_balance' in self.request.POST:
@@ -745,6 +709,73 @@ class InvoiceSummaryView(AccountingSectionView):
         return self.get(request, *args, **kwargs)
 
 
+class WireInvoiceSummaryView(InvoiceSummaryViewBase):
+    urlname = 'wire_invoice_summary'
+    invoice_class = WireInvoice
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': WireInvoiceInterface.name,
+            'url': WireInvoiceInterface.get_url(),
+        }]
+
+    @property
+    @memoized
+    def billing_records(self):
+        return self.invoice.wirebillingrecord_set.all()
+
+    @property
+    def page_context(self):
+        return {
+            'billing_records': self.billing_records,
+            'invoice_info_form': self.invoice_info_form,
+            'resend_email_form': self.resend_email_form,
+            'can_send_email': True
+        }
+
+
+class InvoiceSummaryView(InvoiceSummaryViewBase):
+    urlname = 'invoice_summary'
+    invoice_class = Invoice
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': InvoiceInterface.name,
+            'url': InvoiceInterface.get_url(),
+        }]
+
+    @property
+    @memoized
+    def adjust_balance_form(self):
+        if self.request.method == 'POST':
+            return AdjustBalanceForm(self.invoice, self.request.POST)
+        return AdjustBalanceForm(self.invoice)
+
+    @property
+    @memoized
+    def billing_records(self):
+        return self.invoice.billingrecord_set.all()
+
+    @property
+    @memoized
+    def adjustment_list(self):
+        adjustment_list = CreditAdjustment.objects.filter(invoice=self.invoice)
+        return adjustment_list.order_by('-date_created')
+
+    @property
+    def page_context(self):
+        return {
+            'adjust_balance_form': self.adjust_balance_form,
+            'adjustment_list': self.adjustment_list,
+            'billing_records': self.billing_records,
+            'invoice_info_form': self.invoice_info_form,
+            'resend_email_form': self.resend_email_form,
+            'can_send_email': not self.invoice.subscription.do_not_invoice,
+        }
+
+
 class ManageAccountingAdminsView(AccountingSectionView, CRUDPaginatedViewMixin):
     template_name = 'accounting/accounting_admins.html'
     urlname = 'accounting_manage_admins'
@@ -756,7 +787,6 @@ class ManageAccountingAdminsView(AccountingSectionView, CRUDPaginatedViewMixin):
     loading_message = ugettext_noop("Loading admin list...")
     deleted_items_header = ugettext_noop("Removed Users:")
     new_items_header = ugettext_noop("Added Users:")
-
 
     @property
     def page_url(self):
@@ -843,6 +873,7 @@ class AccountingSingleOptionResponseView(View, AsyncHandlerMixin):
         SubscriberFilterAsyncHandler,
         SubscriptionFilterAsyncHandler,
         AccountFilterAsyncHandler,
+        DomainFilterAsyncHandler,
         BillingContactInfoAsyncHandler,
         SoftwarePlanAsyncHandler,
     ]
