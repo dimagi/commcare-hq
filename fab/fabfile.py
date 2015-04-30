@@ -427,7 +427,6 @@ def setup_server():
     # Install required system packages for deployment, plus some extras
     # Install pip, and use it to install virtualenv
     install_packages()
-    install_npm_packages()
     sudo("easy_install -U pip")
     sudo("pip install -U virtualenv")
     upgrade_packages()
@@ -668,6 +667,7 @@ def _deploy_without_asking():
     try:
         _execute_with_timing(update_code)
         _execute_with_timing(update_virtualenv)
+        _execute_with_timing(install_npm_packages)
         _execute_with_timing(update_touchforms)
 
         # handle static files
