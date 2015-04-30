@@ -1025,14 +1025,14 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
         specific_media = {
             'menu': {
                 'menu_refs': app.get_menu_media(
-                    module, module_id, form=form, form_index=form_id
+                    module, module_id, form=form, form_index=form_id, to_language=context['lang']
                 ),
                 'default_file_name': default_file_name,
             }
         }
         if module:
             specific_media['case_list_form'] = {
-                'menu_refs': app.get_case_list_form_media(module, module_id),
+                'menu_refs': app.get_case_list_form_media(module, module_id, to_language=context['lang']),
                 'default_file_name': '{}_case_list_form'.format(default_file_name),
             }
         context.update({
