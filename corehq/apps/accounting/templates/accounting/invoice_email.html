@@ -28,6 +28,14 @@
         </td>
     </tr>
     <tr>
+         <th align="right">
+            {% trans 'Software Plan' %}:
+        </th>
+        <td>
+            {{ plan_name }}
+        </td>
+    </tr>
+    <tr>
         <th align="right">
             {% trans 'Status' %}:
         </th>
@@ -63,12 +71,6 @@
 
 <p>
     {% blocktrans %}
-    Thank you for using {{ plan_name }}. If you have any questions, please don't hesitate to contact {{ invoicing_contact_email }}.
-    {% endblocktrans %}
-</p>
-
-<p>
-    {% blocktrans %}
     You can pay this bill by credit card or by wire:
     <ul>
         <li>
@@ -86,6 +88,12 @@
             invoice number, and the project space.
         </li>
     </ul>
+    {% endblocktrans %}
+</p>
+
+<p>
+    {% blocktrans %}
+    Thank you for using {{ plan_name }}. If you have any questions, please don't hesitate to contact {{ invoicing_contact_email }}.
     {% endblocktrans %}
 </p>
 
