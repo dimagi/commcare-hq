@@ -986,8 +986,8 @@ class JRResourceProperty(StringProperty):
 
 class NavMenuItemMediaMixin(DocumentSchema):
 
-    media_image = JRResourceProperty(required=False)
-    media_audio = JRResourceProperty(required=False)
+    media_image = SchemaDictProperty(JRResourceProperty)
+    media_audio = SchemaDictProperty(JRResourceProperty)
 
 
 class Form(IndexedFormBase, NavMenuItemMediaMixin):
