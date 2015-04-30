@@ -201,6 +201,7 @@ class DomainInvoiceFactory(object):
         try:
             if subscription.auto_generate_credits and not invoice.balance:
                 record.skipped_email = True
+                record.save()
             else:
                 record.send_email()
         except InvoiceEmailThrottledError as e:
