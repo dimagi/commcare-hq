@@ -2,7 +2,13 @@
   {
     "display_name": "timeEnd", 
     "datatype": "datetime", 
+    "type": "expression", 
+    "transform": {}, 
+    "is_nullable": true, 
+    "is_primary_key": false, 
+    "column_id": "timeEnd", 
     "expression": {
+      "type": "root_doc", 
       "expression": {
         "datatype": null, 
         "type": "property_path", 
@@ -11,20 +17,19 @@
           "meta", 
           "timeEnd"
         ]
-      }, 
-      "type": "root_doc"
-    }, 
-    "transform": {}, 
-    "is_nullable": true, 
-    "is_primary_key": false, 
-    "column_id": "timeEnd", 
-    "type": "expression"
+      }
+    }
   }, 
   {
     "display_name": "username", 
     "transform": {}, 
     "datatype": "string", 
+    "type": "expression", 
+    "is_primary_key": false, 
+    "is_nullable": true, 
+    "column_id": "username", 
     "expression": {
+      "type": "root_doc", 
       "expression": {
         "datatype": null, 
         "type": "property_path", 
@@ -33,18 +38,19 @@
           "meta", 
           "username"
         ]
-      }, 
-      "type": "root_doc"
-    }, 
-    "is_primary_key": false, 
-    "is_nullable": true, 
-    "column_id": "username", 
-    "type": "expression"
+      }
+    }
   }, 
   {
     "display_name": "form_name", 
     "datatype": "string", 
+    "type": "expression", 
+    "transform": {}, 
+    "is_nullable": true, 
+    "is_primary_key": false, 
+    "column_id": "form_name", 
     "expression": {
+      "type": "root_doc", 
       "expression": {
         "datatype": null, 
         "type": "property_path", 
@@ -52,19 +58,19 @@
           "form", 
           "@name"
         ]
-      }, 
-      "type": "root_doc"
-    }, 
-    "transform": {}, 
-    "is_nullable": true, 
-    "is_primary_key": false, 
-    "column_id": "form_name", 
-    "type": "expression"
+      }
+    }
   }, 
   {
     "display_name": "inspector_names", 
     "datatype": "string", 
+    "type": "expression", 
+    "transform": {}, 
+    "is_nullable": true, 
+    "is_primary_key": false, 
+    "column_id": "inspector_names", 
     "expression": {
+      "type": "root_doc", 
       "expression": {
         "datatype": null, 
         "type": "property_path", 
@@ -72,41 +78,35 @@
           "form", 
           "names"
         ]
-      }, 
-      "type": "root_doc"
-    }, 
-    "transform": {}, 
-    "is_nullable": true, 
-    "is_primary_key": false, 
-    "column_id": "inspector_names", 
-    "type": "expression"
+      }
+    }
   }, 
   {
     "display_name": "flag", 
     "datatype": "string", 
-    "expression": {
-      "datatype": null, 
-      "type": "property_name", 
-      "property_name": "flag"
-    }, 
+    "type": "expression", 
     "transform": {}, 
     "is_nullable": true, 
     "is_primary_key": false, 
     "column_id": "flag", 
-    "type": "expression"
+    "expression": {
+      "datatype": null, 
+      "type": "property_name", 
+      "property_name": "flag"
+    }
   }, 
   {
     "display_name": "warning", 
     "datatype": "string", 
-    "expression": {
-      "datatype": null, 
-      "type": "property_name", 
-      "property_name": "warning"
-    }, 
+    "type": "expression", 
     "transform": {}, 
     "is_nullable": true, 
     "is_primary_key": false, 
     "column_id": "warning", 
-    "type": "expression"
+    "expression": {
+      "datatype": null, 
+      "type": "property_name", 
+      "property_name": "warning"
+    }
   }
 ]
