@@ -752,6 +752,7 @@ class Domain(Document, SnapshotMixin):
         if doc_type in ('Application', 'RemoteApp'):
             new_doc = import_app(id, new_domain_name)
             new_doc.copy_history.append(id)
+            new_doc.case_sharing = False
             # when copying from app-docs that don't have
             # unique_id attribute on Modules
             new_doc.ensure_module_unique_ids(should_save=False)
