@@ -291,7 +291,6 @@ HQ_APPS = (
     'corehq.apps.styleguide',
     'corehq.apps.grapevine',
     'corehq.apps.dashboard',
-    'corehq.apps.public',
     'corehq.util',
 
     # custom reports
@@ -448,7 +447,6 @@ EMAIL_SMTP_PORT = 587
 # These are the normal Django settings
 EMAIL_USE_TLS = True
 SEND_BROKEN_LINK_EMAILS = True
-
 
 # put email addresses here to have them receive bug reports
 BUG_REPORT_RECIPIENTS = ()
@@ -695,6 +693,12 @@ LOCAL_APPS = ()
 LOCAL_COUCHDB_APPS = ()
 LOCAL_MIDDLEWARE_CLASSES = ()
 LOCAL_PILLOWTOPS = {}
+
+# Prelogin site
+ENABLE_PRELOGIN_SITE = False
+PRELOGIN_APPS = (
+    'corehq.apps.prelogin',
+)
 
 # If there are existing doc_ids and case_ids you want to check directly,
 # they are referenced in your localsettings for more accurate direct checks,
@@ -1069,6 +1073,9 @@ COUCHDB_DATABASES = make_couchdb_tuples(COUCHDB_APPS, COUCH_DATABASE)
 EXTRA_COUCHDB_DATABASES = get_extra_couchdbs(COUCHDB_APPS, COUCH_DATABASE)
 
 INSTALLED_APPS += LOCAL_APPS
+
+if ENABLE_PRELOGIN_SITE:
+    INSTALLED_APPS += PRELOGIN_APPS
 
 MIDDLEWARE_CLASSES += LOCAL_MIDDLEWARE_CLASSES
 
