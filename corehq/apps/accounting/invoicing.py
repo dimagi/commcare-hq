@@ -199,7 +199,10 @@ class DomainInvoiceFactory(object):
 
         record = BillingRecord.generate_record(invoice)
         try:
-            record.send_email()
+            if subscription.auto_generate_credits and not invoice.balance:
+                record.skipped_email = True
+            else:
+                record.send_email()
         except InvoiceEmailThrottledError as e:
             if not self.logged_throttle_error:
                 logger.error("[BILLING] %s" % e)
