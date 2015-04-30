@@ -2,7 +2,7 @@ import calendar
 from decimal import Decimal
 import datetime
 import logging
-from django.db.models import F, Q
+from django.db.models import F, Q, Min, Max
 from django.template.loader import render_to_string
 
 from django.utils.translation import ugettext as _
@@ -16,7 +16,7 @@ from corehq.apps.accounting.models import (
     Subscription, BillingAccount, SubscriptionAdjustment,
     SubscriptionAdjustmentMethod, BillingRecord,
     BillingContactInfo, SoftwarePlanEdition, CreditLine,
-    EntryPoint,
+    EntryPoint, WireInvoice, WireBillingRecord
 )
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.users.models import CommCareUser
@@ -218,6 +218,73 @@ class DomainInvoiceFactory(object):
             )
             feature_factory = feature_factory_class(subscription, feature_rate, invoice)
             feature_factory.create()
+
+
+class DomainWireInvoiceFactory(object):
+
+    def __init__(self, domain, date_start=None, date_end=None, contact_emails=None):
+        self.date_start = date_start
+        self.date_end = date_end
+        self.contact_emails = contact_emails
+        self.domain = ensure_domain_instance(domain)
+        self.logged_throttle_error = False
+        if self.domain is None:
+            raise InvoiceError("Domain '{}' is not a valid domain on HQ!".format(self.domain))
+
+    def create_wire_invoice(self, balance):
+
+        # Gather relevant invoices
+        invoices = Invoice.objects.filter(
+            subscription__subscriber__domain=self.domain,
+            is_hidden=False,
+            date_paid__exact=None,
+        ).order_by('-date_start')
+
+        account = BillingAccount.get_or_create_account_by_domain(
+            self.domain.name,
+            created_by=self.__class__.__name__,
+            created_by_invoicing=True,
+            entry_point=EntryPoint.SELF_STARTED,
+        )[0]
+
+        # If no start date supplied, default earliest start date of unpaid invoices
+        if self.date_start:
+            date_start = self.date_start
+        else:
+            date_start = invoices.aggregate(Min('date_start'))['date_start__min']
+
+        # If no end date supplied, default latest end date of unpaid invoices
+        if self.date_end:
+            date_end = self.date_end
+        else:
+            date_end = invoices.aggregate(Max('date_end'))['date_end__max']
+
+        if not date_end:
+            date_end = datetime.datetime.today()
+
+        date_due = date_end + datetime.timedelta(DEFAULT_DAYS_UNTIL_DUE)
+
+        # TODO: figure out how to handle line items
+        wire_invoice = WireInvoice.objects.create(
+            domain=self.domain.name,
+            date_start=date_start,
+            date_end=date_end,
+            date_due=date_due,
+            balance=balance,
+            account=account
+        )
+
+        record = WireBillingRecord.generate_record(wire_invoice)
+
+        try:
+            record.send_email(contact_emails=self.contact_emails)
+        except InvoiceEmailThrottledError as e:
+            # Currently wire invoices are never throttled
+            if not self.logged_throttle_error:
+                logger.error("[BILLING] %s" % e)
+                self.logged_throttle_error = True
+
+        return wire_invoice
 
 
 class LineItemFactory(object):
