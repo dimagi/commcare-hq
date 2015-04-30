@@ -416,7 +416,7 @@ def jserror(request):
                 'line': request.POST.get('line', None),
                 'page': request.POST.get('page', None),
                 'agent': request.META.get('HTTP_USER_AGENT', None),
-                'stack': stack,
+                'js_stack': stack,
                 'count': count,
             }
         )
