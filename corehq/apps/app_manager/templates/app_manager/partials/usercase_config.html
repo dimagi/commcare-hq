@@ -138,7 +138,11 @@
 </script>
 
 <div id="usercase-config-ko">
-    <div data-bind="saveButton: saveButton"></div>
+    <div class="row-fluid">
+        <div class="span12">
+            <div data-bind="saveButton: saveButton"></div>
+        </div>
+    </div>
     <div data-bind="with: caseConfigViewModel">
         <div data-bind="template: {name: 'usercase-config:case-transaction', data: usercase_transaction }"></div>
         {% comment %} subcases removed for now {% endcomment %}
