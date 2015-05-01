@@ -548,7 +548,11 @@ class Domain(Document, SnapshotMixin):
             if not isinstance(result, Domain):
                 # A stale view may return a result with no doc if the doc has just been deleted.
                 # In this case couchdbkit just returns the raw view result as a dict
-                return None
+                result = Domain.get(name)
+                if not isinstance(result, Domain):
+                    return None
+                else:
+                    return result
             else:
                 return result
 

@@ -181,7 +181,7 @@ def request_new_domain(request, org, domain_type=None, new_user=True):
 
     new_domain = Domain(
         name='',
-        hr_name='New Project',
+        hr_name='Untitled Project',
         is_active=False,
         date_created=datetime.utcnow(),
         commtrack_enabled=commtrack_enabled,
