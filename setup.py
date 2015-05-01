@@ -14,7 +14,7 @@ setup(
     install_requires=[
         'jsonobject-couchdbkit',
         'django<1.7',
-        'django-redis',
+        'django-redis<=3.8',
         'mock>=0.8.0',
         'openpyxl',
         'Pillow',
