@@ -9,7 +9,8 @@ from django.utils.translation import ugettext as _
 import json
 from casexml.apps.case.models import CommCareCaseAction
 from corehq.apps.groups.models import Group
-from corehq.apps.locations.models import LOCATION_SHARING_PREFIX, SQLLocation
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.util import loc_group_id_or_none
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.view_utils import absolute_reverse
@@ -92,8 +93,8 @@ class CaseInfo(object):
     @property
     @memoized
     def location(self):
-        if self.owner_id.startswith(LOCATION_SHARING_PREFIX):
-            loc_id = self.owner_id.split(LOCATION_SHARING_PREFIX, 1)[1]
+        loc_id = loc_group_id_or_none(self.owner_id)
+        if loc_id:
             try:
                 return SQLLocation.objects.get(location_id=loc_id)
             except SQLLocation.DoesNotExist:

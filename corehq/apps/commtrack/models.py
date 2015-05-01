@@ -757,12 +757,12 @@ class SupplyPointCase(CommCareCase):
                     [
                         {
                             "expr": "location_parent_name",
-                            "name": _("Location"),
+                            "name": _("Parent Location"),
                         },
                         {
                             "expr": "owner_id",
-                            "name": _("Group"),
-                            "format": '<span data-field="owner_id">{0}</span>',
+                            "name": _("Location"),
+                            "process": "doc_info",
                         },
                     ],
                 ],
