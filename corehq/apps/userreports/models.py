@@ -260,6 +260,11 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
 
     @property
     @memoized
+    def report_columns(self):
+        return [ReportColumnFactory.from_spec(c) for c in self.columns]
+
+    @property
+    @memoized
     def ui_filters(self):
         return [ReportFilterFactory.from_spec(f) for f in self.filters]
 
@@ -297,7 +302,7 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             'Filters cannot contain duplicate slugs: {}',
         )
         _check_for_duplicates(
-            [ReportColumnFactory.from_spec(c).column_id for c in self.columns],
+            [c.column_id for c in self.report_columns],
             'Columns cannot contain duplicate column_ids: {}',
         )
 

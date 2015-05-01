@@ -211,7 +211,6 @@ class EWSApi(APISynchronization):
             permissions = Permissions(
                 edit_web_users=True,
                 edit_commcare_users=True,
-                edit_data=True,
                 view_reports=False,
                 view_report_list=reports_list
             )
@@ -225,7 +224,6 @@ class EWSApi(APISynchronization):
                     view_reports=False,
                     edit_web_users=True,
                     edit_commcare_users=True,
-                    edit_data=True,
                     view_report_list=reports_list
                 ),
                 name='Facility manager'
@@ -253,8 +251,6 @@ class EWSApi(APISynchronization):
             permissions = Permissions(
                 edit_web_users=True,
                 edit_commcare_users=True,
-                edit_data=True,
-                edit_apps=True,
                 view_reports=False,
                 view_report_list=reports_list
             )
@@ -267,8 +263,6 @@ class EWSApi(APISynchronization):
                     view_reports=False,
                     edit_web_users=True,
                     edit_commcare_users=True,
-                    edit_data=True,
-                    edit_apps=True,
                     view_report_list=reports_list
                 ),
                 name='Administrator'

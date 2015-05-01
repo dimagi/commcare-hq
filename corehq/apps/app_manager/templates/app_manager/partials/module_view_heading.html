@@ -1,0 +1,16 @@
+{% load i18n %}
+{% load xforms_extras %}
+<div id="build_errors"></div>
+<div class="delete-me">
+    <form action="{% url "delete_module" domain app.id module.unique_id %}" method="post">
+        <button type="submit" class="disable-on-submit btn btn-danger">
+            <i class="icon-trash"></i>
+            {% trans "Delete Module" %}
+        </button>
+    </form>
+</div>
+
+<h3>
+    <i class="icon-folder-open"></i>
+    <span class="app-manager-title variable-module_name">{{ module.name|html_trans:langs|safe }}</span>
+</h3>
