@@ -57,14 +57,11 @@ def get_forms_of_all_types(domain):
 
 
 def get_number_of_forms_by_type(domain, type_):
-    assert type_ in doc_types() or not type_
-    if type_:
-        startkey = [domain, 'by_type', type_]
-    else:
-        startkey = [domain, 'by_type']
+    assert type_ in doc_types()
+    startkey = [domain, 'by_type', type_]
     endkey = startkey + [{}]
 
-    return XFormError.view(
+    return XFormInstance.view(
         "couchforms/all_submissions_by_domain",
         startkey=startkey,
         endkey=endkey,
@@ -73,7 +70,15 @@ def get_number_of_forms_by_type(domain, type_):
 
 
 def get_number_of_forms_of_all_types(domain):
-    return get_number_of_forms_by_type(domain, None)
+    startkey = [domain, 'by_type']
+    endkey = startkey + [{}]
+
+    return XFormInstance.view(
+        "couchforms/all_submissions_by_domain",
+        startkey=startkey,
+        endkey=endkey,
+        reduce=True,
+    ).one()['value']
 
 
 def get_forms_in_date_range(domain, start, end):
