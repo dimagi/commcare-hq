@@ -1,3 +1,4 @@
+{% if SEGMENT_ANALYTICS_KEY %}
 <script>
 	// Segment analytics tracker.
 	// This snippet automatically takes care of Segment library load failure
@@ -15,3 +16,4 @@
       email: '{{ user.email }}'
     });
 </script>
+{% endif %}
