@@ -40,17 +40,12 @@ def notify_exception(request, message=None, details=None):
     )
 
 
-def notify_js_exception(request, message=None, filename=None, stack=None, line=None, count=None):
-    agent = request.META['HTTP_USER_AGENT'] if request else None
+def notify_js_exception(request, message=None, details=None):
     notify_logger.error(
         'Notify JS Exception: {}'.format(message),
         extra={
-            'js_filename': filename,
-            'js_stack': stack,
-            'user_agent': agent,
             'request': request,
-            'line': line,
-            'count': count,
+            'details': details,
         }
     )
 
