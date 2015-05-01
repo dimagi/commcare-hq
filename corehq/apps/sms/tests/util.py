@@ -23,7 +23,6 @@ from corehq.apps.users.models import CommCareUser, WebUser
 from django.contrib.sites.models import Site
 from casexml.apps.case.models import CommCareCase
 from couchforms.dbaccessors import get_forms_by_type
-from couchforms.models import XFormInstance
 from time import sleep
 from dateutil.parser import parse
 import uuid

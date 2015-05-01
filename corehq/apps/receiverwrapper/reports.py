@@ -5,7 +5,6 @@ from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from couchforms.dbaccessors import get_forms_by_type, \
     get_number_of_forms_by_type, get_number_of_forms_of_all_types
-from couchforms.models import XFormError
 from corehq.apps.receiverwrapper.filters import SubmissionErrorType, \
     SubmissionTypeFilter
 from dimagi.utils.couch.pagination import FilteredPaginator, CouchFilter
