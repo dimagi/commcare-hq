@@ -54,7 +54,6 @@ branches:
   - fm-facing-interface # Nick P 4/23
   - small-invoices # Nick P 4/30
   - grunt-task-fabric # Ben 5/1
-  - fm-facing-interface-fix # Ben P 5/1
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
