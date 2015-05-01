@@ -69,5 +69,5 @@ def _element(name, text, attrib=None):
 
 
 def _serialize(value):
-    # todo: might want to be smarter than this
-    return unicode(value)
+    # todo: be smarter than this
+    return '' if value is None else unicode(value)
