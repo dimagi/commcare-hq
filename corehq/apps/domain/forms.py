@@ -395,6 +395,12 @@ class SubAreaMixin():
 
 class DomainGlobalSettingsForm(forms.Form):
     hr_name = forms.CharField(label=_("Project Name"))
+
+    name = forms.CharField(
+        required=False,
+        label=_("Project URL"),
+        help_text=_("Alias used in project URL. Once set, this cannot be changed.")
+    )
     default_timezone = TimeZoneChoiceField(label=ugettext_noop("Default Timezone"), initial="UTC")
 
     logo = ImageField(
@@ -432,6 +438,7 @@ class DomainGlobalSettingsForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         domain = kwargs.pop('domain', None)
+        self.domain_id = kwargs.pop('domain_id', None)
         self.can_use_custom_logo = kwargs.pop('can_use_custom_logo', False)
         super(DomainGlobalSettingsForm, self).__init__(*args, **kwargs)
         if not self.can_use_custom_logo:
@@ -439,6 +446,9 @@ class DomainGlobalSettingsForm(forms.Form):
             del self.fields['delete_logo']
 
         if domain:
+            if domain != self.domain_id:
+                self.fields['name'].help_text = "Alias used in project URL"
+                self.fields['name'].widget = BootstrapDisabledInput(attrs={'class': 'input-xlarge'})
             if not CALLCENTER.enabled(domain):
                 self.fields['call_center_enabled'].widget = forms.HiddenInput()
                 self.fields['call_center_case_owner'].widget = forms.HiddenInput()
@@ -468,6 +478,7 @@ class DomainGlobalSettingsForm(forms.Form):
     def save(self, request, domain):
         try:
             domain.hr_name = self.cleaned_data['hr_name']
+            domain.name = self.cleaned_data['name'] or self.domain_id
 
             if self.can_use_custom_logo:
                 logo = self.cleaned_data['logo']
