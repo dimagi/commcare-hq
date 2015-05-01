@@ -452,3 +452,9 @@ MOBILE_UCR = StaticToggle(
     TAG_EXPERIMENTAL,
     namespaces=[NAMESPACE_DOMAIN],
 )
+
+FM_FACING_SUBSCRIPTIONS = StaticToggle(
+    'fm_facing_subscriptions',
+    'FM Facing Subscription Management Interface',
+    TAG_PRODUCT_CORE,
+)
