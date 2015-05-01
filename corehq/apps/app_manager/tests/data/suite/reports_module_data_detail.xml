@@ -1,0 +1,45 @@
+<partial>
+  <detail id="reports.d3ff18cd83adf4550b35db8d391f6008.data">
+    <title>
+      <text>
+        <locale id="cchq.reports.d3ff18cd83adf4550b35db8d391f6008.name"/>
+      </text>
+    </title>
+    <field>
+      <header>
+        <text>
+          <locale id="cchq.reports.d3ff18cd83adf4550b35db8d391f6008.headers.owner"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="column[@id='owner']"/>
+        </text>
+      </template>
+    </field>
+    <field>
+      <header>
+        <text>
+          <locale id="cchq.reports.d3ff18cd83adf4550b35db8d391f6008.headers.count"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="column[@id='count']"/>
+        </text>
+      </template>
+    </field>
+    <field>
+      <header>
+        <text>
+          <locale id="cchq.reports.d3ff18cd83adf4550b35db8d391f6008.headers.is_starred"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="column[@id='is_starred']"/>
+        </text>
+      </template>
+    </field>
+  </detail>
+</partial>
