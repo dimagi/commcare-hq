@@ -22,6 +22,7 @@ from corehq.apps.app_manager.models import import_app
 from corehq.apps.users.models import CommCareUser, WebUser
 from django.contrib.sites.models import Site
 from casexml.apps.case.models import CommCareCase
+from couchforms.dbaccessors import get_forms_by_type
 from couchforms.models import XFormInstance
 from time import sleep
 from dateutil.parser import parse
@@ -237,13 +238,8 @@ class TouchformsTestCase(LiveServerTestCase):
         self.assertEquals(case.get_case_property(prop), value)
 
     def get_last_form_submission(self):
-        form = XFormInstance.view("couchforms/all_submissions_by_domain",
-            startkey=[self.domain, "by_type", "XFormInstance", {}],
-            endkey=[self.domain, "by_type", "XFormInstance"],
-            descending=True,
-            include_docs=True,
-            reduce=False,
-        ).first()
+        [form] = get_forms_by_type(self.domain, 'XFormInstance',
+                                   recent_first=True, limit=1)
         return form
 
     def assertNoNewSubmission(self, last_submission):
