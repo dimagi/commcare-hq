@@ -34,7 +34,7 @@ from corehq.util import reverse, get_document_or_404
 from custom.openlmis.tasks import bootstrap_domain_task
 
 from .models import Location, LocationType, SQLLocation
-from .forms import LocationForm
+from .forms import LocationForm, UsersAtLocationForm
 from .util import load_locs_json, location_hierarchy_config, dump_locations
 
 
@@ -227,6 +227,7 @@ class NewLocationView(BaseLocationView):
     urlname = 'create_location'
     page_title = ugettext_noop("New Location")
     template_name = 'locations/manage/location.html'
+    form_tab = 'basic'
 
     @property
     def parent_pages(self):
@@ -286,6 +287,7 @@ class NewLocationView(BaseLocationView):
             'form': self.location_form,
             'location': self.location,
             'consumption': consumption,
+            'form_tab': self.form_tab,
         }
 
     def form_valid(self):
@@ -442,8 +444,11 @@ class EditLocationView(NewLocationView):
     @property
     @memoized
     def users_form(self):
-        form = MultipleSelectionForm(
-            initial={'selected_ids': self.users_at_location},
+        form = UsersAtLocationForm(
+            domain_object=self.domain_object,
+            location=self.location,
+            users_at_location=self.users_at_location,
+            data=self.request.POST if self.request.method == "POST" else None,
             submit_label=_("Update Users at this Location"),
             prefix="users",
         )
@@ -476,9 +481,13 @@ class EditLocationView(NewLocationView):
         return context
 
     def users_form_post(self, request, *args, **kwargs):
-        # TODO
-        print request.POST.getlist('users-selected_ids', [])
-        return self.form_valid()
+        if self.users_form.is_valid():
+            self.users_form.save()
+            return self.form_valid()
+        else:
+            self.request.method = "GET"
+            self.form_tab = 'users'
+            return self.get(request, *args, **kwargs)
 
     def products_form_post(self, request, *args, **kwargs):
         products = SQLProduct.objects.filter(
