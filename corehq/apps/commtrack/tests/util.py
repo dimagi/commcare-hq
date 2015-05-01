@@ -7,7 +7,7 @@ from casexml.apps.stock.models import StockReport, StockTransaction
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq.apps.commtrack import const
 from corehq.apps.groups.models import Group
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import Location, LocationType
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.sms import StockReportParser, process
@@ -106,11 +106,14 @@ def bootstrap_user(setup, username=TEST_USER, domain=TEST_DOMAIN,
     user.save_verified_number(domain, phone_number, verified=True, backend_id=backend)
     return CommCareUser.wrap(user.to_json())
 
+
 def make_loc(code, name=None, domain=TEST_DOMAIN, type=TEST_LOCATION_TYPE, parent=None):
     name = name or code
+    LocationType.objects.get_or_create(domain=domain, name=type)
     loc = Location(site_code=code, name=name, domain=domain, location_type=type, parent=parent)
     loc.save()
     return loc
+
 
 class CommTrackTest(TestCase):
     requisitions_enabled = False  # can be overridden

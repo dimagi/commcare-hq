@@ -31,7 +31,6 @@
         </div>
     {% endif %}
 {% endblock %}
-
 {% block reporttable %}
 {% if report.needs_filters %}
     {% include 'reports/standard/partials/description.html' %}
@@ -298,5 +297,24 @@
         if ( report_slug === 'stock_summary_report' || report_slug === 'cms_rms_summary_report') {
             $('.dataTables_filter').remove();
         }
+    </script>
+    <script>
+        function updateExportButton() {
+            var button = $("#export-report-excel");
+            if ({{ split|yesno:"true,false" }}) {
+                button.text("Export table to Excel");
+                button.css('display', 'inline-block');
+            } else if ({{ exportable|yesno:"true,false" }}){
+                button.text("Export table(s) to Excel");
+                button.css('display', 'inline-block');
+            } else {
+                button.css('display', 'None');
+            }
+        }
+        $("#apply-filters").on('click', function(){
+            updateExportButton();
+        });
+        updateExportButton();
+        $(".dataTables_filter").css('display', 'none');
     </script>
 {% endblock %}

@@ -1,5 +1,5 @@
 from django.test import TestCase
-from casexml.apps.case.mock import CaseFactory
+from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseRelationship
 from casexml.apps.case.tests import delete_all_cases
 from casexml.apps.case.tests.util import extract_caseblocks_from_xml
 from casexml.apps.case.xml import V2
@@ -52,3 +52,23 @@ class LoadtestUserTest(TestCase):
         self.assertEqual(1, len(filter(lambda cb: cb.get_case_id() == case2._id, caseblocks)))
         self.assertEqual(3, len(filter(lambda cb: case1.name in cb.get_case_name(), caseblocks)))
         self.assertEqual(3, len(filter(lambda cb: case2.name in cb.get_case_name(), caseblocks)))
+
+    def test_parent_child(self):
+        self.user.loadtest_factor = 3
+        self.user.save()
+        child, parent = self.factory.create_or_update_case(
+            CaseStructure(
+                attrs={'case_name': 'parent'},
+                relationships=[
+                    CaseRelationship(CaseStructure(attrs={'case_name': 'child'})),
+                ]
+            )
+        )
+        restore_config = RestoreConfig(self.user, version=V2, domain=self.domain)
+        payload_string = restore_config.get_payload().as_string()
+        caseblocks = extract_caseblocks_from_xml(payload_string)
+        self.assertEqual(6, len(caseblocks))
+        self.assertEqual(1, len(filter(lambda cb: cb.get_case_id() == child._id, caseblocks)))
+        self.assertEqual(1, len(filter(lambda cb: cb.get_case_id() == parent._id, caseblocks)))
+        self.assertEqual(3, len(filter(lambda cb: child.name in cb.get_case_name(), caseblocks)))
+        self.assertEqual(3, len(filter(lambda cb: parent.name in cb.get_case_name(), caseblocks)))

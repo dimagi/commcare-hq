@@ -1,14 +1,16 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*- 
+# -*- coding: utf-8 -*-
 
 from corehq.apps.commtrack.tests.util import bootstrap_domain
 from django.test import TestCase
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import Location, LocationType
+
 
 class SiteCodeTest(TestCase):
 
     def setUp(self):
         self.domain = bootstrap_domain()
+        LocationType(domain=self.domain.name, name='type').save()
 
     def testSimpleName(self):
         location = Location(

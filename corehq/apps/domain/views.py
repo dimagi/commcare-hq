@@ -35,7 +35,7 @@ from corehq.apps.smsbillables.async_handlers import SMSRatesAsyncHandler, SMSRat
 from corehq.apps.smsbillables.forms import SMSRateCalculatorForm
 from corehq.apps.users.models import DomainInvitation
 from corehq.apps.fixtures.models import FixtureDataType
-from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA, TRANSFER_DOMAIN, GLOBAL_SMS_RATES
+from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA, TRANSFER_DOMAIN
 from corehq.util.context_processors import get_domain_type
 from dimagi.utils.couch.resource_conflict import retry_resource
 from django.conf import settings
@@ -111,7 +111,7 @@ PAYMENT_ERROR_MESSAGES = {
 
 
 @login_required
-def select(request, domain_select_template='domain/select.html'):
+def select(request, domain_select_template='domain/select.html', do_not_redirect=False):
     domains_for_user = Domain.active_for_user(request.user)
     if not domains_for_user:
         return redirect('registration_domain', domain_type=get_domain_type(None, request))
@@ -123,7 +123,19 @@ def select(request, domain_select_template='domain/select.html'):
         'domains_for_user': domains_for_user,
         'open_invitations': open_invitations,
     }
-    return render(request, domain_select_template, additional_context)
+
+    last_visited_domain = request.session.get('last_visited_domain')
+    if open_invitations \
+       or do_not_redirect \
+       or not last_visited_domain:
+        return render(request, domain_select_template, additional_context)
+    else:
+        try:
+            from corehq.apps.dashboard.views import dashboard_default
+            return dashboard_default(request, last_visited_domain)
+        except Http404:
+            del request.session['last_visited_domain']
+            return render(request, domain_select_template, additional_context)
 
 
 @require_superuser
@@ -331,6 +343,7 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
     @memoized
     def basic_info_form(self):
         initial = {
+            'hr_name': self.domain_object.hr_name or self.domain_object.name,
             'default_timezone': self.domain_object.default_timezone,
             'case_sharing': json.dumps(self.domain_object.case_sharing),
             'call_center_enabled': self.domain_object.call_center_config.enabled,
@@ -1646,10 +1659,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
     @memoized
     def snapshot_settings_form(self):
         if self.request.method == 'POST':
-            # User arg can be removed when toggle in __init__ is gone
-            form = SnapshotSettingsForm(self.request.POST, self.request.FILES,
-                                        domain=self.domain_object,
-                                        user=self.request.user)
+            form = SnapshotSettingsForm(self.request.POST, self.request.FILES, domain=self.domain_object)
             return form
 
         proj = self.published_snapshot if self.published_snapshot else self.domain_object
@@ -1666,8 +1676,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
         for attr in init_attribs:
             initial[attr] = getattr(proj, attr)
 
-        # User arg can be removed when toggle in __init__ is gone
-        return SnapshotSettingsForm(initial=initial, domain=self.domain_object, user=self.request.user)
+        return SnapshotSettingsForm(initial=initial, domain=self.domain_object)
 
     @property
     @memoized
@@ -1745,15 +1754,14 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
                 new_domain.image_type = old.image_type
             new_domain.save()
 
-            if toggles.DOCUMENTATION_FILE.enabled(request.user.username):
-                documentation_file = self.snapshot_settings_form.cleaned_data['documentation_file']
-                if documentation_file:
-                    new_domain.documentation_file_path = documentation_file.name
-                    new_domain.documentation_file_type = documentation_file.content_type
-                elif request.POST.get('old_documentation_file', False):
-                    new_domain.documentation_file_path = old.documentation_file_path
-                    new_domain.documentation_file_type = old.documentation_file_type
-                new_domain.save()
+            documentation_file = self.snapshot_settings_form.cleaned_data['documentation_file']
+            if documentation_file:
+                new_domain.documentation_file_path = documentation_file.name
+                new_domain.documentation_file_type = documentation_file.content_type
+            elif request.POST.get('old_documentation_file', False):
+                new_domain.documentation_file_path = old.documentation_file_path
+                new_domain.documentation_file_type = old.documentation_file_type
+            new_domain.save()
 
             if publish_on_submit:
                 _publish_snapshot(request, self.domain_object, published_snapshot=new_domain)
@@ -1770,12 +1778,11 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
             elif request.POST.get('old_image', False):
                 new_domain.put_attachment(content=old.fetch_attachment(old.image_path), name=new_domain.image_path)
 
-            if toggles.DOCUMENTATION_FILE.enabled(request.user.username):
-                if documentation_file:
-                    new_domain.put_attachment(content=documentation_file, name=documentation_file.name)
-                elif request.POST.get('old_documentation_file', False):
-                    new_domain.put_attachment(content=old.fetch_attachment(old.documentation_file_path),
-                                              name=new_domain.documentation_file_path)
+            if documentation_file:
+                new_domain.put_attachment(content=documentation_file, name=documentation_file.name)
+            elif request.POST.get('old_documentation_file', False):
+                new_domain.put_attachment(content=old.fetch_attachment(old.documentation_file_path),
+                                          name=new_domain.documentation_file_path)
 
             for application in new_domain.full_applications():
                 original_id = application.copied_from._id
@@ -2487,7 +2494,6 @@ class DeactivateTransferDomainView(View):
 
 from corehq.apps.smsbillables.forms import PublicSMSRateCalculatorForm
 from corehq.apps.smsbillables.async_handlers import PublicSMSRatesAsyncHandler
-from corehq.apps.domain.decorators import login_required
 
 
 class PublicSMSRatesView(BasePageView, AsyncHandlerMixin):
@@ -2495,13 +2501,6 @@ class PublicSMSRatesView(BasePageView, AsyncHandlerMixin):
     page_title = ugettext_noop("SMS Rate Calculator")
     template_name = 'domain/admin/global_sms_rates.html'
     async_handlers = [PublicSMSRatesAsyncHandler]
-
-    @method_decorator(login_required)
-    def dispatch(self, request, *args, **kwargs):
-        # this will be public latter
-        if not GLOBAL_SMS_RATES.enabled(request.user.username):
-            raise Http404()
-        return super(PublicSMSRatesView, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_url(self):

@@ -96,18 +96,15 @@ class ProjectSettingsForm(forms.Form):
         return smart_str(data)
 
     def save(self, user, domain):
-        try:
-            timezone = self.cleaned_data['global_timezone']
-            override = self.cleaned_data['override_global_tz']
-            if override:
-                timezone = self.cleaned_data['user_timezone']
-            dm = user.get_domain_membership(domain)
-            dm.timezone = timezone
-            dm.override_global_tz = override
-            user.save()
-            return True
-        except Exception:
-            return False
+        timezone = self.cleaned_data['global_timezone']
+        override = self.cleaned_data['override_global_tz']
+        if override:
+            timezone = self.cleaned_data['user_timezone']
+        dm = user.get_domain_membership(domain)
+        dm.timezone = timezone
+        dm.override_global_tz = override
+        user.save()
+        return True
 
 
 class SnapshotApplicationForm(forms.Form):
@@ -120,19 +117,24 @@ class SnapshotApplicationForm(forms.Form):
     user_type = CharField(label=ugettext_noop("User type"), required=False,
         help_text=ugettext_noop("e.g. CHW, ASHA, RA, etc"))
     attribution_notes = CharField(label=ugettext_noop("Attribution notes"), required=False,
-        help_text=ugettext_noop("Enter any special instructions to users here. This will be shown just before users copy your project."), widget=forms.Textarea)
+        help_text=ugettext_noop(
+            "Enter any special instructions to users here. "
+            "This will be shown just before users copy your project."),
+        widget=forms.Textarea)
 
     def __init__(self, *args, **kwargs):
         super(SnapshotApplicationForm, self).__init__(*args, **kwargs)
-        self.fields.keyOrder = [
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.layout = crispy.Layout(
             'publish',
             'name',
             'description',
             'deployment_date',
             'phone_model',
             'user_type',
-            'attribution_notes'
-        ]
+            'attribution_notes',
+        )
 
 
 class SnapshotFixtureForm(forms.Form):
@@ -142,10 +144,12 @@ class SnapshotFixtureForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super(SnapshotFixtureForm, self).__init__(*args, **kwargs)
-        self.fields.keyOrder = [
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.layout = crispy.Layout(
             'publish',
             'description',
-        ]
+        )
 
 
 class SnapshotSettingsForm(forms.Form):
@@ -170,30 +174,55 @@ class SnapshotSettingsForm(forms.Form):
         help_text=ugettext_noop("This will publish reminders along with this project"))
     image = forms.ImageField(label=ugettext_noop("Exchange image"), required=False,
         help_text=ugettext_noop("An optional image to show other users your logo or what your app looks like"))
+    old_image = forms.BooleanField(required=False)
+
     video = CharField(label=ugettext_noop("Youtube Video"), required=False,
         help_text=ugettext_noop("An optional youtube clip to tell users about your app. Please copy and paste a URL to a youtube video"))
     documentation_file = forms.FileField(label=ugettext_noop("Documentation File"), required=False,
         help_text=ugettext_noop("An optional file to tell users more about your app."))
+    old_documentation_file = forms.BooleanField(required=False)
     cda_confirmed = BooleanField(required=False, label=ugettext_noop("Content Distribution Agreement"))
 
     def __init__(self, *args, **kw):
         self.dom = kw.pop("domain", None)
-        user = kw.pop("user", None)
         super(SnapshotSettingsForm, self).__init__(*args, **kw)
-        self.fields.keyOrder = [
-            'title',
-            'short_description',
-            'description',
-            'project_type',
-            'image',
-            'video',
-            'share_multimedia',
-            'share_reminders',
-            'license',
-            'cda_confirmed',]
 
-        if self.dom and toggles.DOCUMENTATION_FILE.enabled(user.username):
-            self.fields.keyOrder.insert(5, 'documentation_file')
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                'Project Description',
+                'title',
+                'short_description',
+                'description',
+                'project_type',
+                'image',
+                crispy.Field(
+                    'old_image',
+                    template='domain/partials/old_snapshot_image.html'
+                )
+            ),
+            crispy.Fieldset(
+                'Documentation',
+                'video',
+                'documentation_file',
+                crispy.Field(
+                    'old_documentation_file',
+                    template='domain/partials/old_snapshot_documentation_file.html'
+                )
+            ),
+            crispy.Fieldset(
+                'Content',
+                'share_multimedia',
+                'share_reminders',
+            ),
+            crispy.Fieldset(
+                'Licensing',
+                'license',
+                'cda_confirmed',
+            ),
+        )
+
 
         self.fields['license'].help_text = \
             render_to_string('domain/partials/license_explanations.html', {
@@ -362,6 +391,7 @@ class SubAreaMixin():
         return sub_area
 
 class DomainGlobalSettingsForm(forms.Form):
+    hr_name = forms.CharField(label=_("Project Name"))
     default_timezone = TimeZoneChoiceField(label=ugettext_noop("Default Timezone"), initial="UTC")
 
     logo = ImageField(
@@ -433,45 +463,44 @@ class DomainGlobalSettingsForm(forms.Form):
         return smart_str(data)
 
     def save(self, request, domain):
-        try:
-            if self.can_use_custom_logo:
-                logo = self.cleaned_data['logo']
-                if logo:
+        domain.hr_name = self.cleaned_data['hr_name']
 
-                    input_image = Image.open(io.BytesIO(logo.read()))
-                    input_image.load()
-                    input_image.thumbnail(LOGO_SIZE)
-                    # had issues trying to use a BytesIO instead
-                    tmpfilename = "/tmp/%s_%s" % (uuid.uuid4(), logo.name)
-                    input_image.save(tmpfilename, 'PNG')
+        if self.can_use_custom_logo:
+            logo = self.cleaned_data['logo']
+            if logo:
 
-                    with open(tmpfilename) as tmpfile:
-                        domain.put_attachment(tmpfile, name=LOGO_ATTACHMENT)
-                elif self.cleaned_data['delete_logo']:
-                    domain.delete_attachment(LOGO_ATTACHMENT)
+                input_image = Image.open(io.BytesIO(logo.read()))
+                input_image.load()
+                input_image.thumbnail(LOGO_SIZE)
+                # had issues trying to use a BytesIO instead
+                tmpfilename = "/tmp/%s_%s" % (uuid.uuid4(), logo.name)
+                input_image.save(tmpfilename, 'PNG')
 
-            domain.call_center_config.enabled = self.cleaned_data.get('call_center_enabled', False)
-            if domain.call_center_config.enabled:
-                domain.internal.using_call_center = True
-                domain.call_center_config.case_owner_id = self.cleaned_data.get('call_center_case_owner', None)
-                domain.call_center_config.case_type = self.cleaned_data.get('call_center_case_type', None)
+                with open(tmpfilename) as tmpfile:
+                    domain.put_attachment(tmpfile, name=LOGO_ATTACHMENT)
+            elif self.cleaned_data['delete_logo']:
+                domain.delete_attachment(LOGO_ATTACHMENT)
 
-            global_tz = self.cleaned_data['default_timezone']
-            if domain.default_timezone != global_tz:
-                domain.default_timezone = global_tz
-                users = WebUser.by_domain(domain.name)
-                users_to_save = []
-                for user in users:
-                    dm = user.get_domain_membership(domain.name)
-                    if not dm.override_global_tz and dm.timezone != global_tz:
-                        dm.timezone = global_tz
-                        users_to_save.append(user)
-                if users_to_save:
-                    WebUser.bulk_save(users_to_save)
-            domain.save()
-            return True
-        except Exception:
-            return False
+        domain.call_center_config.enabled = self.cleaned_data.get('call_center_enabled', False)
+        if domain.call_center_config.enabled:
+            domain.internal.using_call_center = True
+            domain.call_center_config.case_owner_id = self.cleaned_data.get('call_center_case_owner', None)
+            domain.call_center_config.case_type = self.cleaned_data.get('call_center_case_type', None)
+
+        global_tz = self.cleaned_data['default_timezone']
+        if domain.default_timezone != global_tz:
+            domain.default_timezone = global_tz
+            users = WebUser.by_domain(domain.name)
+            users_to_save = []
+            for user in users:
+                dm = user.get_domain_membership(domain.name)
+                if not dm.override_global_tz and dm.timezone != global_tz:
+                    dm.timezone = global_tz
+                    users_to_save.append(user)
+            if users_to_save:
+                WebUser.bulk_save(users_to_save)
+        domain.save()
+        return True
 
 
 class DomainMetadataForm(DomainGlobalSettingsForm):
@@ -544,29 +573,26 @@ class PrivacySecurityForm(forms.Form):
 
     def save(self, domain):
         domain.restrict_superusers = self.cleaned_data.get('restrict_superusers', False)
-        try:
-            secure_submissions = self.cleaned_data.get(
-                'secure_submissions', False)
-            apps_to_save = []
-            if secure_submissions != domain.secure_submissions:
-                for app in get_apps_in_domain(domain.name):
-                    if app.secure_submissions != secure_submissions:
-                        app.secure_submissions = secure_submissions
-                        apps_to_save.append(app)
-            domain.secure_submissions = secure_submissions
-            domain.save()
+        secure_submissions = self.cleaned_data.get(
+            'secure_submissions', False)
+        apps_to_save = []
+        if secure_submissions != domain.secure_submissions:
+            for app in get_apps_in_domain(domain.name):
+                if app.secure_submissions != secure_submissions:
+                    app.secure_submissions = secure_submissions
+                    apps_to_save.append(app)
+        domain.secure_submissions = secure_submissions
+        domain.save()
 
-            if apps_to_save:
-                apps = [app for app in apps_to_save if isinstance(app, Application)]
-                remote_apps = [app for app in apps_to_save if isinstance(app, RemoteApp)]
-                if apps:
-                    Application.bulk_save(apps)
-                if remote_apps:
-                    RemoteApp.bulk_save(remote_apps)
+        if apps_to_save:
+            apps = [app for app in apps_to_save if isinstance(app, Application)]
+            remote_apps = [app for app in apps_to_save if isinstance(app, RemoteApp)]
+            if apps:
+                Application.bulk_save(apps)
+            if remote_apps:
+                RemoteApp.bulk_save(remote_apps)
 
-            return True
-        except Exception:
-            return False
+        return True
 
 
 class DomainInternalForm(forms.Form, SubAreaMixin):

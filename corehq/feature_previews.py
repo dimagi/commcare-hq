@@ -67,6 +67,15 @@ ENUM_IMAGE = FeaturePreview(
     help_link='https://help.commcarehq.org/display/commcarepublic/Adding+Icons+in+Case+List+and+Case+Detail+screen'
 )
 
+SPLIT_MULTISELECT_CASE_EXPORT = FeaturePreview(
+    slug='split_multiselect_case_export',
+    label=_('Split multi-selects in case export'),
+    description=_(
+        "This setting allows users to split multi-select questions into multiple "
+        "columns in case exports."
+    )
+)
+
 
 def enable_commtrack_previews(domain):
     for toggle_class in [COMMTRACK, LOCATIONS]:
@@ -142,7 +151,8 @@ MODULE_FILTER = FeaturePreview(
     slug='module_filter',
     label=_('Module Filtering'),
     description=_(
-        'Module filtering allows you to hide modules when a certain XPath condition is met. '
-        'Note, this feature requires CommCare 2.20'
+        'Similar to form display conditions, hide your module unless the condition is met. Most commonly used'
+        ' in conjunction with '
+        '<a href="https://help.commcarehq.org/display/commcarepublic/Custom+User+Data">custom user data</a>.'
     ),
 )

@@ -365,7 +365,7 @@ def _transform_loadtest_update(update, factor):
     case = CommCareCase.wrap(deepcopy(update.case._doc))
     case._id = _map_id(case._id, factor)
     for index in case.indices:
-        index.referenced_id = _map_id(index.referenced_id)
+        index.referenced_id = _map_id(index.referenced_id, factor)
     case.name = '{} ({})'.format(case.name, factor)
     return CaseSyncUpdate(case, update.sync_token, required_updates=update.required_updates)
 
