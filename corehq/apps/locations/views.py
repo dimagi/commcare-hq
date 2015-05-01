@@ -419,15 +419,6 @@ class EditLocationView(NewLocationView):
         return form
 
     @property
-    def users_at_location(self):
-        user_query = (UserES()
-                      .domain(self.domain)
-                      .mobile_users()
-                      .location(self.location_id)
-                      .fields([]))
-        return user_query.run().doc_ids
-
-    @property
     @memoized
     def all_users(self):
         user_query = (UserES()
@@ -447,14 +438,12 @@ class EditLocationView(NewLocationView):
         form = UsersAtLocationForm(
             domain_object=self.domain_object,
             location=self.location,
-            users_at_location=self.users_at_location,
             data=self.request.POST if self.request.method == "POST" else None,
             submit_label=_("Update Users at this Location"),
             prefix="users",
         )
         form.fields['selected_ids'].choices = self.all_users
         return form
-
 
     @property
     def all_products(self):

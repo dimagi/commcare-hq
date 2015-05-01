@@ -6,6 +6,7 @@ from django.template.loader import get_template
 from django.utils.translation import ugettext as _
 
 from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.custom_data_fields import CustomDataEditor
 from corehq.apps.es import UserES
@@ -257,14 +258,23 @@ class LocationForm(forms.Form):
 
 
 class UsersAtLocationForm(MultipleSelectionForm):
-    def __init__(self, domain_object, location, users_at_location, *args, **kwargs):
+    def __init__(self, domain_object, location, *args, **kwargs):
         self.domain_object = domain_object
         self.location = location
-        self.users_at_location = users_at_location
         super(UsersAtLocationForm, self).__init__(
             initial={'selected_ids': self.users_at_location},
             *args, **kwargs
         )
+
+    @property
+    @memoized
+    def users_at_location(self):
+        user_query = (UserES()
+                      .domain(self.domain_object.name)
+                      .mobile_users()
+                      .location(self.location._id)
+                      .fields([]))
+        return user_query.run().doc_ids
 
     def already_have_locations(self, users):
         user_query = (UserES()
