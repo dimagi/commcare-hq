@@ -27,6 +27,9 @@ COUCH_DATABASE_NAME = 'commcarehq'
 #Staging domains you want to replicate
 STAGING_DOMAINS = []
 
+### Public / Pre-login Site information
+ENABLE_PRELOGIN_SITE = False
+
 #COUCHDB URI {http|https}://username:password@host:optionalport/dbname
 PRODUCTION_COUCHDB_URI = ""
 

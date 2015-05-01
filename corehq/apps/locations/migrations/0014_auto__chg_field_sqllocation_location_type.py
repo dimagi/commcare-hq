@@ -1,32 +1,22 @@
 # encoding: utf-8
-import datetime
 from south.db import db
 from south.v2 import SchemaMigration
-from django.db import models
+
 
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
+        if orm.SQLLocation.objects.filter(location_type=None).exists():
+            raise TypeError("You cannot run this migration if there are "
+                            "locations without location types")
 
-        # Adding field 'LocationType.emergency_level'
-        db.add_column(u'locations_locationtype', 'emergency_level', self.gf('django.db.models.fields.DecimalField')(default=0.5, max_digits=10, decimal_places=1), keep_default=False)
+        # Changing field 'SQLLocation.location_type'
+        db.alter_column(u'locations_sqllocation', 'location_type_id', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['locations.LocationType']))
 
-        # Adding field 'LocationType.understock_threshold'
-        db.add_column(u'locations_locationtype', 'understock_threshold', self.gf('django.db.models.fields.DecimalField')(default=1.5, max_digits=10, decimal_places=1), keep_default=False)
-
-        # Adding field 'LocationType.overstock_threshold'
-        db.add_column(u'locations_locationtype', 'overstock_threshold', self.gf('django.db.models.fields.DecimalField')(default=3.0, max_digits=10, decimal_places=1), keep_default=False)
 
     def backwards(self, orm):
-
-        # Deleting field 'LocationType.emergency_level'
-        db.delete_column(u'locations_locationtype', 'emergency_level')
-
-        # Deleting field 'LocationType.understock_threshold'
-        db.delete_column(u'locations_locationtype', 'understock_threshold')
-
-        # Deleting field 'LocationType.overstock_threshold'
-        db.delete_column(u'locations_locationtype', 'overstock_threshold')
+        # Changing field 'SQLLocation.location_type'
+        db.alter_column(u'locations_sqllocation', 'location_type_id', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['locations.LocationType'], null=True))
 
 
     models = {
@@ -40,8 +30,8 @@ class Migration(SchemaMigration):
             'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'overstock_threshold': ('django.db.models.fields.DecimalField', [], {'default': '3.0', 'max_digits': '10', 'decimal_places': '1'}),
             'parent_type': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['locations.LocationType']", 'null': 'True'}),
-            'understock_threshold': ('django.db.models.fields.DecimalField', [], {'default': '1.5', 'max_digits': '10', 'decimal_places': '1'}),
             'shares_cases': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'understock_threshold': ('django.db.models.fields.DecimalField', [], {'default': '1.5', 'max_digits': '10', 'decimal_places': '1'}),
             'view_descendants': ('django.db.models.fields.BooleanField', [], {'default': 'False'})
         },
         u'locations.sqllocation': {
@@ -57,7 +47,7 @@ class Migration(SchemaMigration):
             u'level': ('django.db.models.fields.PositiveIntegerField', [], {'db_index': 'True'}),
             u'lft': ('django.db.models.fields.PositiveIntegerField', [], {'db_index': 'True'}),
             'location_id': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '100', 'db_index': 'True'}),
-            'location_type': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['locations.LocationType']", 'null': 'True'}),
+            'location_type': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['locations.LocationType']"}),
             'longitude': ('django.db.models.fields.DecimalField', [], {'null': 'True', 'max_digits': '20', 'decimal_places': '10'}),
             'metadata': ('json_field.fields.JSONField', [], {'default': '{}'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '100', 'null': 'True'}),
