@@ -104,7 +104,7 @@
     <script>
         $(function() {
            window.onbeforeunload = function() {
-               if (window.mainView.router.view.dirty) {
+               if (window.mainView.router.view && window.mainView.router.view.dirty) {
                    return translatedStrings.dirty;
                }
            }
