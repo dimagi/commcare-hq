@@ -132,6 +132,7 @@ urlpatterns = patterns('',
     url(r'^pro_bono/$', ProBonoStaticView.as_view(),
         name=ProBonoStaticView.urlname),
     url(r'^loadtest/', include('corehq.apps.loadtestendpoints.urls')),
+    url(r'^robots.txt$',  TemplateView.as_view(template_name='robots.txt', content_type='text/plain')),
 ) + patterns('', *LOCAL_APP_URLS)
 
 if settings.ENABLE_PRELOGIN_SITE:
