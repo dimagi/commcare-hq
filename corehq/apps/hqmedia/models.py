@@ -597,7 +597,7 @@ class HQMediaMixin(Document):
         menu_media = {}
         to_language = media_kwargs.pop('to_language')
         image_ref = ApplicationMediaReference(
-            item.media_image.get(to_language),
+            item.icon_by_language(to_language),
             media_class=CommCareImage,
             **media_kwargs
         )
@@ -605,7 +605,7 @@ class HQMediaMixin(Document):
         menu_media['image'] = image_ref
 
         audio_ref = ApplicationMediaReference(
-            item.media_audio.get(to_language),
+            item.audio_by_language(to_language),
             media_class=CommCareAudio,
             **media_kwargs
         )

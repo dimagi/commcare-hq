@@ -985,7 +985,14 @@ class JRResourceProperty(StringProperty):
 
 
 class NavMenuItemMediaMixin(DocumentSchema):
+    """
+        Language-specific icon and audio.
+        Properties are map of lang-code to filepath
 
+        Convention (for old docs): Unless a specific language key exists,
+        by default, media for that language is same as that for English
+
+    """
     media_image = SchemaDictProperty(JRResourceProperty)
     media_audio = SchemaDictProperty(JRResourceProperty)
 
@@ -996,12 +1003,45 @@ class NavMenuItemMediaMixin(DocumentSchema):
         # ToDo - Remove after migration
         for media_attr in ('media_image', 'media_audio'):
             old_media = getattr(self, media_attr)
-            if isinstance(old_media, (str, unicode)):
-                # ToDo - remove default language hardcode. Migrate media to other app-languages
+            if old_media is None or isinstance(old_media, (str, unicode)):
+                # ToDo - better way than to hardcode default-language.
                 new_media = {'en': old_media or ''}
                 setattr(self, media_attr, new_media)
 
         return self
+
+    def _get_media_by_language(self, media_attr, lang):
+        if media_attr not in ('media_image', 'media_audio'):
+            raise Exception("Unknown media attribute %s." % media_attr)
+
+        media_dict = getattr(self, media_attr)
+        default_media = media_dict.get('en', '')
+
+        if lang == 'en':
+            return default_media
+        else:
+            return media_dict[lang] if lang in media_dict else default_media
+
+    def icon_by_language(self, lang):
+        return self._get_media_by_language('media_image', lang)
+
+    def audio_by_language(self, lang):
+        return self._get_media_by_language('media_audio', lang)
+
+    def _set_media(self, media_attr, lang, media_path):
+        if media_attr not in ('media_image', 'media_audio'):
+            raise Exception("Unknown media attribute %s." % media_attr)
+
+        media_dict = getattr(self, media_attr)
+        # If set to None, jsonobject validation complains. Ask others
+        media_dict[lang] = media_path or ''
+        setattr(self, media_attr, media_dict)
+
+    def set_icon(self, lang, icon_path):
+        self._set_media('media_image', lang, icon_path)
+
+    def set_audio(self, lang, audio_path):
+        self._set_media('media_audio', lang, audio_path)
 
 
 class Form(IndexedFormBase, NavMenuItemMediaMixin):

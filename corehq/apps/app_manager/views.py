@@ -1548,16 +1548,13 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         module.case_list_form.form_id = request.POST.get('case_list_form_id')
     if should_edit('case_list_form_label'):
         module.case_list_form.label[lang] = request.POST.get('case_list_form_label')
-    # ToDo
     if should_edit('case_list_form_media_image'):
         new_path = _process_media_attribute(
             'case_list_form_media_image',
             resp,
             request.POST.get('case_list_form_media_image')
         )
-        image_dict = module.case_list_form.media_image
-        image_dict[lang] = new_path or ''
-        module.case_list_form.media_image = image_dict
+        module.case_list_form.set_icon(lang, new_path)
 
     if should_edit('case_list_form_media_audio'):
         new_path = _process_media_attribute(
@@ -1565,9 +1562,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
             resp,
             request.POST.get('case_list_form_media_audio')
         )
-        audio_dict = module.case_list_form.media_audio
-        audio_dict[lang] = new_path or ''
-        module.case_list_form.media_audio = audio_dict
+        module.case_list_form.set_audio(lang, new_path)
 
     for attribute in ("name", "case_label", "referral_label"):
         if should_edit(attribute):
@@ -1718,9 +1713,7 @@ def _handle_media_edits(request, item, should_edit, resp, lang):
     for attribute in ('media_image', 'media_audio'):
         if should_edit(attribute):
             media_path = _process_media_attribute(attribute, resp, request.POST.get(attribute))
-            prev_val = getattr(item, attribute)
-            prev_val[lang] = media_path or ''
-            setattr(item, attribute, prev_val)
+            item._set_media(attribute, lang, media_path)
 
 
 @no_conflict_require_POST

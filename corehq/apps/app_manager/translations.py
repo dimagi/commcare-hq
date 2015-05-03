@@ -237,8 +237,8 @@ def expected_bulk_app_sheet_rows(app):
             sheet_name=module_string,
             languages=[module.name.get(lang) for lang in app.langs],
             case_labels=[module.case_label.get(lang) for lang in app.langs],
-            media_image=[module.media_image.get(lang) for lang in app.langs],
-            media_audio=[module.media_audio.get(lang) for lang in app.langs],
+            media_image=[module.icon_by_language(lang) for lang in app.langs],
+            media_audio=[module.audio_by_language(lang) for lang in app.langs],
             unique_id=module.unique_id,
         )
         rows["Modules_and_forms"].append(row_data)
@@ -309,8 +309,8 @@ def expected_bulk_app_sheet_rows(app):
                 languages=[form.name.get(lang) for lang in app.langs],
                 # leave all
                 case_labels=[None] * len(app.langs),
-                media_image=[form.media_image.get(lang) for lang in app.langs],
-                media_audio=[form.media_audio.get(lang) for lang in app.langs],
+                media_image=[form.icon_by_language(lang) for lang in app.langs],
+                media_audio=[form.audio_by_language(lang) for lang in app.langs],
                 unique_id=form.unique_id
             )
 
@@ -421,13 +421,9 @@ def process_modules_and_forms_sheet(rows, app):
                     if lang in document.case_label:
                         del document.case_label[lang]
 
-        media_image_dict = {lang: row.get('icon_filepath_%s' % lang, '')
-                            for lang in app.langs}
-        document.media_image = media_image_dict
-
-        media_audio_dict = {lang: row.get('audio_filepath_%s' % lang, '')
-                            for lang in app.langs}
-        document.media_audio = media_audio_dict
+        for lang in app.langs:
+            document.set_icon(lang, row.get('icon_filepath_%s' % lang, ''))
+            document.set_audio(lang, row.get('audio_filepath_%s' % lang, ''))
 
     return msgs
 
