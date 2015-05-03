@@ -16,4 +16,14 @@
       email: '{{ user.email }}'
     });
 </script>
+{% else %}
+<script>
+    var analytics = {
+        track: function(){},
+        identify: function(){},
+        page: function(){},
+        alias: function(){}
+    };
+</script>
 {% endif %}
+
