@@ -122,7 +122,22 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
                 if current_config_id
                 else ReportConfig.default()
             ),
+            'datespan_filters': [
+                None,
+            ] + [
+                f['slug']
+                for f in self.spec.filters
+                if f['type'] == 'date'
+            ],
         }
+
+    @property
+    def has_datespan(self):
+        filters = self.spec.filters
+        return any(
+            f['type'] == 'date'
+            for f in filters
+        )
 
     @property
     def headers(self):
