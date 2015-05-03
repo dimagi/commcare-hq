@@ -23,7 +23,10 @@ class FilterValue(object):
 class DateFilterValue(FilterValue):
 
     def __init__(self, filter, value):
-        assert filter.type == 'date'
+        assert filter.type in [
+            'date',
+            'sliding_date',
+        ]
         assert isinstance(value, DateSpan) or value is None
         super(DateFilterValue, self).__init__(filter, value)
 

@@ -64,6 +64,7 @@ def _build_dynamic_choice_list_filter(spec):
 class ReportFilterFactory(object):
     constructor_map = {
         'date': _build_date_filter,
+        'sliding_date': _build_date_filter,
         'choice_list': _build_choice_list_filter,
         'dynamic_choice_list': _build_dynamic_choice_list_filter,
         'numeric': _build_numeric_filter

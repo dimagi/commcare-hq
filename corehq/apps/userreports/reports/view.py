@@ -174,6 +174,14 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         """
         return self.report_config_id
 
+    @property
+    def has_datespan(self):
+        filters = self.spec.filters
+        return any(
+            filter['type'] == 'sliding_date'
+            for filter in filters
+        )
+
     @classmethod
     def get_report(cls, domain, slug, report_config_id):
         report = cls()
