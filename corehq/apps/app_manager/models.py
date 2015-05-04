@@ -3601,7 +3601,7 @@ def validate_property(property):
     Validate a case property name
 
     >>> validate_property('parent/maternal-grandmother_fullName')
-    >>> validate_property('user:full_name')
+    >>> validate_property('foo+bar')
     Traceback (most recent call last):
       ...
     ValueError: Invalid Property
