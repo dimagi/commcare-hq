@@ -17,10 +17,12 @@ website_re = '(http(s?)\:\/\/|~/|/)?([a-zA-Z]{1}([\w\-]+\.)+([\w]{2,5}))(:[\d]{1
 
 
 def normalize_domain_name(domain):
-    normalized = domain.replace('_', '-').lower()
-    if settings.DEBUG:
-        assert(re.match('^%s$' % grandfathered_domain_re, normalized))
-    return normalized
+    if domain:
+        normalized = domain.replace('_', '-').lower()
+        if settings.DEBUG:
+            assert(re.match('^%s$' % grandfathered_domain_re, normalized))
+        return normalized
+    return domain
 
 
 def get_domained_url(domain, path):
