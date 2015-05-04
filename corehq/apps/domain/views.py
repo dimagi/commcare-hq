@@ -130,12 +130,16 @@ def select(request, domain_select_template='domain/select.html', do_not_redirect
        or not last_visited_domain:
         return render(request, domain_select_template, additional_context)
     else:
-        try:
-            from corehq.apps.dashboard.views import dashboard_default
-            return dashboard_default(request, last_visited_domain)
-        except Http404:
-            del request.session['last_visited_domain']
-            return render(request, domain_select_template, additional_context)
+        domain = Domain.get_by_name(last_visited_domain)
+        if domain and domain.is_active:
+            try:
+                from corehq.apps.dashboard.views import dashboard_default
+                return dashboard_default(request, last_visited_domain)
+            except Http404:
+                pass
+            
+        del request.session['last_visited_domain']
+        return render(request, domain_select_template, additional_context)
 
 
 @require_superuser
