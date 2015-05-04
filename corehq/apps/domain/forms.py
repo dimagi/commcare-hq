@@ -479,7 +479,8 @@ class DomainGlobalSettingsForm(forms.Form):
     def clean_name(self):
         data = self.cleaned_data['name'].strip().lower()
         if not re.match("^%s$" % new_domain_re, data):
-            raise forms.ValidationError('Only lowercase letters and numbers allowed. Single hyphens may be used to separate words.')
+            raise forms.ValidationError('Only lowercase letters and numbers allowed. ' + 
+                'Single hyphens may be used to separate words.')
 
         conflict = Domain.get_by_name(data) or Domain.get_by_name(data.replace('-', '.'))
         if conflict:
