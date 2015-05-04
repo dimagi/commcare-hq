@@ -17,6 +17,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from casexml.apps.case.models import CommCareCase
 #from .inbound_handlers import *
 from .opt_tests import *
+from .migration import *
 from corehq.apps.users.models import CommCareUser
 from django.contrib.sites.models import Site
 from corehq.apps.users.util import format_username
