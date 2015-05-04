@@ -172,6 +172,29 @@ def media_resource(multimedia_id, name):
     return u'media-{id}-{name}'.format(id=multimedia_id, name=name)
 
 
+def module_icon_locale(module):
+    return u"modules.m{module.id}.icon".format(module=module)
+
+
+def module_audio_locale(module):
+    return u"modules.m{module.id}.audio".format(module=module)
+
+
+def form_icon_locale(form):
+    return u"forms.m{module.id}f{form.id}.icon".format(
+        module=form.get_module(),
+        form=form
+    )
+
+
+# ToDo - figure out case_list_form media
+def form_audio_locale(form):
+    return u"forms.m{module.id}f{form.id}.audio".format(
+        module=form.get_module(),
+        form=form
+    )
+
+
 def detail(module, detail_type):
     return u"m{module.id}_{detail_type}".format(module=module, detail_type=detail_type)
 
