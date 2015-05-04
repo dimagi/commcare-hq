@@ -438,7 +438,7 @@ class DomainGlobalSettingsForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
-        domain = kwargs.pop('domain', None)
+        self.domain = kwargs.pop('domain', None)
         self.domain_id = kwargs.pop('domain_id', None)
         self.can_use_custom_logo = kwargs.pop('can_use_custom_logo', False)
         super(DomainGlobalSettingsForm, self).__init__(*args, **kwargs)
@@ -446,17 +446,14 @@ class DomainGlobalSettingsForm(forms.Form):
             del self.fields['logo']
             del self.fields['delete_logo']
 
-        if domain:
-            if domain != self.domain_id:
-                self.fields['name'].help_text = "Alias used in project URL"
-                self.fields['name'].widget = BootstrapDisabledInput(attrs={'class': 'input-xlarge'})
-            if not CALLCENTER.enabled(domain):
+        if self.domain:
+            if not CALLCENTER.enabled(self.domain):
                 self.fields['call_center_enabled'].widget = forms.HiddenInput()
                 self.fields['call_center_case_owner'].widget = forms.HiddenInput()
                 self.fields['call_center_case_type'].widget = forms.HiddenInput()
             else:
-                groups = Group.get_case_sharing_groups(domain)
-                users = CommCareUser.by_domain(domain)
+                groups = Group.get_case_sharing_groups(self.domain)
+                users = CommCareUser.by_domain(self.domain)
 
                 call_center_user_choices = [
                     (user._id, user.raw_username + ' [user]') for user in users
@@ -478,12 +475,14 @@ class DomainGlobalSettingsForm(forms.Form):
 
     def clean_name(self):
         data = self.cleaned_data['name'].strip().lower()
+        if data != self.domain and self.domain != self.domain_id:
+            raise forms.ValidationError('Once set, project URL may not be changed.')
         if not re.match("^%s$" % new_domain_re, data):
             raise forms.ValidationError('Only lowercase letters and numbers allowed. ' + 
                 'Single hyphens may be used to separate words.')
 
         conflict = Domain.get_by_name(data) or Domain.get_by_name(data.replace('-', '.'))
-        if conflict:
+        if conflict and conflict._id != self.domain_id:
             raise forms.ValidationError('Alias already taken---please try another')
         return data
 
