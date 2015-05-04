@@ -1046,13 +1046,19 @@ class Domain(Document, SnapshotMixin):
         from corehq.apps.locations.models import LocationType
         return LocationType.objects.filter(domain=self.name).all()
 
+    @memoized
+    def has_privilege(self, privilege):
+        from corehq.apps.accounting.utils import domain_has_privilege
+        return domain_has_privilege(privilege)
+
     @property
     @memoized
     def uses_locations(self):
-        if self.commtrack_enabled:
-            return True
+        from corehq import privileges
         from corehq.apps.locations.models import LocationType
-        return LocationType.objects.filter(domain=self.name).exists()
+        return (self.has_privilege(privileges.LOCATIONS)
+                and (self.commtrack_enabled
+                     or LocationType.objects.filter(domain=self.name).exists()))
 
     @property
     def supports_multiple_locations_per_user(self):

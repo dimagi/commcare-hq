@@ -1078,7 +1078,7 @@ class ProjectUsersTab(UITab):
                 }
             ]))
 
-            if self.project.locations_enabled:
+            if has_privilege(self._request, privileges.LOCATIONS):
                 from corehq.apps.locations.views import (
                     LocationsListView,
                     NewLocationView,
@@ -1092,7 +1092,7 @@ class ProjectUsersTab(UITab):
                 locations_config = {
                     'title': LocationsListView.page_title,
                     'url': reverse(LocationsListView.urlname, args=[self.domain]),
-                    'show_in_dropdown': True,
+                    'show_in_dropdown': self.project.uses_locations,
                     'subpages': [
                         {
                             'title': NewLocationView.page_title,
@@ -1119,7 +1119,7 @@ class ProjectUsersTab(UITab):
                 advanced_locations_config = {
                     'title': LocationTypesView.page_title,
                     'url': reverse(LocationTypesView.urlname, args=[self.domain]),
-                    'show_in_dropdown': True,
+                    'show_in_dropdown': self.project.uses_locations,
                 }
 
                 items.append((_('Locations'), [
