@@ -195,7 +195,7 @@
                 "location_id": 900,
                 "name": "Test sp 900",
                 "primary_reporter": 43,
-                "products":["ad", "al"],
+                "products":[],
                 "supervised_by": null,
                 "supplied_by": null,
                 "type": "Hospital"
