@@ -32,7 +32,7 @@ from corehq.util import reverse, get_document_or_404
 from custom.openlmis.tasks import bootstrap_domain_task
 
 from .permissions import (locations_access_required, is_locations_admin,
-                          can_edit_location)
+                          can_edit_location, can_edit_location_types)
 from .models import Location, LocationType, SQLLocation
 from .forms import LocationForm
 from .util import load_locs_json, location_hierarchy_config, dump_locations
@@ -102,7 +102,7 @@ class LocationTypesView(BaseLocationView):
     page_title = ugettext_noop("Location Types")
     template_name = 'locations/settings.html'
 
-    @method_decorator(is_locations_admin)
+    @method_decorator(can_edit_location_types)
     def dispatch(self, request, *args, **kwargs):
         return super(LocationTypesView, self).dispatch(request, *args, **kwargs)
 

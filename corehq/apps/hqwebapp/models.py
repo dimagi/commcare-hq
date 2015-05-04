@@ -1088,8 +1088,11 @@ class ProjectUsersTab(UITab):
                 LocationFieldsView,
                 LocationTypesView,
             )
+            from corehq.apps.locations.permissions import (
+                user_can_edit_location_types
+            )
 
-            locations_config = {
+            locations_config = [{
                 'title': LocationsListView.page_title,
                 'url': reverse(LocationsListView.urlname, args=[self.domain]),
                 'show_in_dropdown': True,
@@ -1115,17 +1118,15 @@ class ProjectUsersTab(UITab):
                         'urlname': LocationFieldsView.urlname,
                     },
                 ]
-            }
-            advanced_locations_config = {
-                'title': LocationTypesView.page_title,
-                'url': reverse(LocationTypesView.urlname, args=[self.domain]),
-                'show_in_dropdown': True,
-            }
+            }]
 
-            items.append((_('Locations'), [
-                locations_config,
-                advanced_locations_config,
-            ]))
+            if user_can_edit_location_types(self.couch_user, self.domain):
+                locations_config.append({
+                    'title': LocationTypesView.page_title,
+                    'url': reverse(LocationTypesView.urlname, args=[self.domain]),
+                    'show_in_dropdown': True,
+                })
+            items.append((_('Locations'), locations_config))
 
         return items
 
