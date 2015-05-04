@@ -1621,7 +1621,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         owner_ids = [self.user_id]
         owner_ids.extend(Group.by_user(self, wrap=False))
 
-        if self.project.locations_enabled and self.location:
+        if self.project.uses_locations and self.location:
             owner_ids.extend(self.location_group_ids())
 
         return owner_ids

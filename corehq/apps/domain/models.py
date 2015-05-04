@@ -216,7 +216,6 @@ class Domain(Document, SnapshotMixin):
     short_description = StringProperty()
     is_shared = BooleanProperty(default=False)
     commtrack_enabled = BooleanProperty(default=False)
-    locations_enabled = BooleanProperty(default=False)
     call_center_config = SchemaProperty(CallCenterProperties)
     has_careplan = BooleanProperty(default=False)
     restrict_superusers = BooleanProperty(default=False)
@@ -1049,7 +1048,7 @@ class Domain(Document, SnapshotMixin):
     @memoized
     def has_privilege(self, privilege):
         from corehq.apps.accounting.utils import domain_has_privilege
-        return domain_has_privilege(privilege)
+        return domain_has_privilege(self, privilege)
 
     @property
     @memoized

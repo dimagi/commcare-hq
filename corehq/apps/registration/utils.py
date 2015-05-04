@@ -183,7 +183,6 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
         is_active=False,
         date_created=datetime.utcnow(),
         commtrack_enabled=commtrack_enabled,
-        locations_enabled=commtrack_enabled,
         creating_user=current_user.username,
         secure_submissions=True,
     )
