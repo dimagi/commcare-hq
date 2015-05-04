@@ -21,7 +21,7 @@
             $(function () {
                 function updateCaseListLabel() {
                     $(this).next()[$(this).val() === 'true' ? 'show' : 'hide']();
-                    $(this).parent().parent().next()[$(this).val() === 'true' ? 'show' : 'hide']();
+                    $('#{{ SLUG }}-media')[$(this).val() === 'true' ? 'show' : 'hide']();
                 }
                 $('#{{ SLUG }}-label input').attr('name', '{{ SLUG }}-label').removeClass('wide');
                 $('[name="{{ SLUG }}-show"]').change(updateCaseListLabel);
