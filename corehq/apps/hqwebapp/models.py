@@ -1641,7 +1641,7 @@ class OrgSettingsTab(OrgTab):
                 url=reverse("orgs_teams", args=(self.org.name,))),
             dropdown_dict(
                 _("Members"),
-                url=reverse("orgs_stats", args=(self.org.name,))),
+                url=reverse("orgs_members", args=(self.org.name,))),
         ]
 
 

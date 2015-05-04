@@ -1,4 +1,6 @@
 import logging
+import datetime
+from couchforms.dbaccessors import get_form_ids_by_type
 from dimagi.utils.couch.database import iter_docs
 from corehq.apps.indicators.utils import get_namespaces, get_indicator_domains
 from django.core.management.base import LabelCommand
@@ -18,15 +20,9 @@ class Command(LabelCommand):
             for namespace in namespaces:
                 indicators.extend(FormIndicatorDefinition.get_all(namespace, domain))
 
-            key = [domain, "by_type", "XFormInstance"]
-            data = xform_db.view(
-                'couchforms/all_submissions_by_domain',
-                startkey=key+["2013-08-01"],
-                endkey=key+["2013-10-15"],
-                reduce=False,
-                include_docs=False
-            ).all()
-            form_ids = [d['id'] for d in data]
+            form_ids = get_form_ids_by_type(domain, 'XFormInstance',
+                                            start=datetime.date(2013, 8, 1),
+                                            end=datetime.date(2013, 10, 15))
 
             for doc in iter_docs(xform_db, form_ids):
                 xfrom_doc = XFormInstance.wrap(doc)

@@ -3,9 +3,9 @@ import dateutil.parser
 from django.test import SimpleTestCase
 import pytz
 from corehq.const import USER_DATETIME_FORMAT
-from corehq.util.dates import safe_strftime
 from corehq.util.timezones.conversions import ServerTime, PhoneTime, \
     UserTime, get_timezone_data_migration_complete
+from dimagi.utils.dates import safe_strftime
 
 
 class UIStringTest(SimpleTestCase):
