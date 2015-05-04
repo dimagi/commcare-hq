@@ -16,7 +16,6 @@ from corehq.apps.app_manager.const import (
     CT_REQUISITION_MODE_4,
     CT_LEDGER_APPROVED,
     CT_LEDGER_PREFIX,
-    USERCASE_PREFIX,
     USERCASE_TYPE,
     USERCASE_ID
 )
@@ -165,16 +164,7 @@ class ParentCasePropertyBuilder(object):
                         app, [case_type], include_shared_properties=False
                     ).get(case_type, [])
                 )
-
-        # prefix user case properties.
-        prefix_user = lambda p: USERCASE_PREFIX + p if case_type == USERCASE_TYPE else p
-
-        # .. note:: if this case type is not the user case type, but it has a
-        #           parent case type which is the user case type, then the
-        #           parent case type's properties will be returned as
-        #           `parent/user/property`.
-        #
-        return {prefix_user(p) for p in case_properties}
+        return case_properties
 
     @memoized
     def get_case_updates(self, form, case_type):
