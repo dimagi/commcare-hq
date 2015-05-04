@@ -829,7 +829,7 @@ var CaseConfig = (function () {
                 update_usercase: {
                     update: case_properties
                 },
-                case_preload: {
+                usercase_preload: {
                     preload: case_preload
                 }
             };
