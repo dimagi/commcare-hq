@@ -5,6 +5,7 @@ from django.test import TestCase
 import json
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.models import Domain
+from corehq.apps.hqadmin.dbaccessors import get_all_forms_in_all_domains
 from corehq.apps.users.models import CommCareUser
 from couchforms.models import XFormInstance
 from pact.dot_data import filter_obs_for_day, query_observations, DOTDay, get_dots_case_json
@@ -31,10 +32,10 @@ CTSIMS_ID = 'ff6c662bfc2a448dadc9084056a4abdf'
 
 class dotsSubmissionTests(TestCase):
     def setUp(self):
-        for doc in XFormInstance.get_db().view('hqadmin/forms_over_time', reduce=False, include_docs=True).all():
-            #purge all xforms prior to start
-            if doc['doc']['xmlns'] in [XMLNS_DOTS_FORM, XMLNS_PATIENT_UPDATE_DOT]:
-                XFormInstance.get_db().delete_doc(doc['doc'])
+        for doc in get_all_forms_in_all_domains():
+            # purge all xforms prior to start
+            if doc.xmlns in [XMLNS_DOTS_FORM, XMLNS_PATIENT_UPDATE_DOT]:
+                doc.delete()
 
         two_weeks = timedelta(days=14)
         self.domain = Domain()
