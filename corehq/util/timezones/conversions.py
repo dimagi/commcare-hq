@@ -2,9 +2,9 @@ from django.utils.encoding import smart_str
 import pytz
 from corehq.const import USER_DATETIME_FORMAT
 from corehq.toggles import USE_NEW_TIMEZONE_BEHAVIOR
-from corehq.util.dates import safe_strftime
 from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import get_request
+from dimagi.utils.dates import safe_strftime
 
 
 def get_timezone_data_migration_complete():

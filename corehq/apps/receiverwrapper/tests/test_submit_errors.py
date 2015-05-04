@@ -4,26 +4,13 @@ from corehq.apps.domain.shortcuts import create_domain
 from django.test.client import Client
 from django.core.urlresolvers import reverse
 import os
+from couchforms.dbaccessors import get_forms_by_type, clear_all_forms
 from dimagi.utils.post import tmpfile
-from couchforms.models import SubmissionErrorLog
 from couchforms.signals import successful_form_received
 
 
-def _clear_all_forms(domain):
-    items = SubmissionErrorLog.view(
-        "couchforms/all_submissions_by_domain",
-        reduce=False,
-        include_docs=True,
-        startkey=[domain, "by_type"],
-        endkey=[domain, "by_type", {}],
-        wrapper=lambda row: SubmissionErrorLog.wrap(row['doc'])
-    ).all()
-    for item in items:
-        item.delete()
-
-
 class SubmissionErrorTest(TestCase):
-    
+
     def setUp(self):
         self.domain = create_domain("submit-errors")
         self.couch_user = WebUser.create(None, "test", "foobar")
@@ -32,13 +19,13 @@ class SubmissionErrorTest(TestCase):
         self.client = Client()
         self.client.login(**{'username': 'test', 'password': 'foobar'})
         self.url = reverse("receiver_post", args=[self.domain])
-        _clear_all_forms(self.domain.name)
-        
+        clear_all_forms(self.domain.name)
+
     def tearDown(self):
         self.couch_user.delete()
         self.domain.delete()
-        _clear_all_forms(self.domain.name)
-    
+        clear_all_forms(self.domain.name)
+
     def _submit(self, formname):
         file_path = os.path.join(os.path.dirname(__file__), "data", formname)
         with open(file_path, "rb") as f:
@@ -68,17 +55,10 @@ class SubmissionErrorTest(TestCase):
             })
             self.assertEqual(201, res.status_code)
             self.assertIn("Form is a duplicate", res.content)
-        
+
         # make sure we logged it
-        log = SubmissionErrorLog.view(
-            "couchforms/all_submissions_by_domain",
-            reduce=False,
-            include_docs=True,
-            startkey=[self.domain.name, "by_type", "XFormDuplicate"],
-            endkey=[self.domain.name, "by_type", "XFormDuplicate", {}],
-            classes={'XFormDuplicate': SubmissionErrorLog},
-        ).one()
-        
+        [log] = get_forms_by_type(self.domain.name, 'XFormDuplicate', limit=1)
+
         self.assertIsNotNone(log)
         self.assertIn("Form is a duplicate", log.problem)
         with open(file) as f:
@@ -103,13 +83,7 @@ class SubmissionErrorTest(TestCase):
                 self.assertIn(evil_laugh, res.content)
 
             # make sure we logged it
-            log = SubmissionErrorLog.view(
-                "couchforms/all_submissions_by_domain",
-                reduce=False,
-                include_docs=True,
-                startkey=[self.domain.name, "by_type", "XFormError"],
-                endkey=[self.domain.name, "by_type", "XFormError", {}],
-            ).one()
+            [log] = get_forms_by_type(self.domain.name, 'XFormError', limit=1)
 
             self.assertIsNotNone(log)
             self.assertIn(evil_laugh, log.problem)
@@ -129,16 +103,11 @@ class SubmissionErrorTest(TestCase):
             })
             self.assertEqual(500, res.status_code)
             self.assertIn('Invalid XML', res.content)
-        
+
         # make sure we logged it
-        log = SubmissionErrorLog.view(
-            "couchforms/all_submissions_by_domain",
-            reduce=False,
-            include_docs=True,
-            startkey=[self.domain.name, "by_type", "SubmissionErrorLog"],
-            endkey=[self.domain.name, "by_type", "SubmissionErrorLog", {}],
-        ).one()
-        
+        [log] = get_forms_by_type(self.domain.name, 'SubmissionErrorLog',
+                                  limit=1)
+
         self.assertIsNotNone(log)
         self.assertIn('Invalid XML', log.problem)
         self.assertEqual("this isn't even close to xml", log.get_xml())
