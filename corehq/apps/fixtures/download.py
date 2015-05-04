@@ -6,8 +6,8 @@ from datetime import datetime, timedelta
 from django.contrib import messages
 from django.template.defaultfilters import yesno
 from django.utils.translation import ugettext as _
-from django.http import Http404
 
+from corehq.apps.fixtures.exceptions import FixtureDownloadError
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem, _id_from_doc
 from corehq.apps.fixtures.upload import DELETE_HEADER
 from couchexport.export import export_raw
@@ -53,7 +53,7 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
             data_types_view = [FixtureDataType.get(id) for id in table_ids]
         except ResourceNotFound:
             if html_response:
-                raise Http404(
+                raise FixtureDownloadError(
                     _("Sorry, we couldn't find that table. If you think this "
                       "is a mistake please report an issue."))
             data_types_view = FixtureDataType.by_domain(domain)

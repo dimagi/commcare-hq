@@ -96,18 +96,15 @@ class ProjectSettingsForm(forms.Form):
         return smart_str(data)
 
     def save(self, user, domain):
-        try:
-            timezone = self.cleaned_data['global_timezone']
-            override = self.cleaned_data['override_global_tz']
-            if override:
-                timezone = self.cleaned_data['user_timezone']
-            dm = user.get_domain_membership(domain)
-            dm.timezone = timezone
-            dm.override_global_tz = override
-            user.save()
-            return True
-        except Exception:
-            return False
+        timezone = self.cleaned_data['global_timezone']
+        override = self.cleaned_data['override_global_tz']
+        if override:
+            timezone = self.cleaned_data['user_timezone']
+        dm = user.get_domain_membership(domain)
+        dm.timezone = timezone
+        dm.override_global_tz = override
+        user.save()
+        return True
 
 
 class SnapshotApplicationForm(forms.Form):
@@ -394,6 +391,7 @@ class SubAreaMixin():
         return sub_area
 
 class DomainGlobalSettingsForm(forms.Form):
+    hr_name = forms.CharField(label=_("Project Name"))
     default_timezone = TimeZoneChoiceField(label=ugettext_noop("Default Timezone"), initial="UTC")
 
     logo = ImageField(
@@ -465,45 +463,44 @@ class DomainGlobalSettingsForm(forms.Form):
         return smart_str(data)
 
     def save(self, request, domain):
-        try:
-            if self.can_use_custom_logo:
-                logo = self.cleaned_data['logo']
-                if logo:
+        domain.hr_name = self.cleaned_data['hr_name']
 
-                    input_image = Image.open(io.BytesIO(logo.read()))
-                    input_image.load()
-                    input_image.thumbnail(LOGO_SIZE)
-                    # had issues trying to use a BytesIO instead
-                    tmpfilename = "/tmp/%s_%s" % (uuid.uuid4(), logo.name)
-                    input_image.save(tmpfilename, 'PNG')
+        if self.can_use_custom_logo:
+            logo = self.cleaned_data['logo']
+            if logo:
 
-                    with open(tmpfilename) as tmpfile:
-                        domain.put_attachment(tmpfile, name=LOGO_ATTACHMENT)
-                elif self.cleaned_data['delete_logo']:
-                    domain.delete_attachment(LOGO_ATTACHMENT)
+                input_image = Image.open(io.BytesIO(logo.read()))
+                input_image.load()
+                input_image.thumbnail(LOGO_SIZE)
+                # had issues trying to use a BytesIO instead
+                tmpfilename = "/tmp/%s_%s" % (uuid.uuid4(), logo.name)
+                input_image.save(tmpfilename, 'PNG')
 
-            domain.call_center_config.enabled = self.cleaned_data.get('call_center_enabled', False)
-            if domain.call_center_config.enabled:
-                domain.internal.using_call_center = True
-                domain.call_center_config.case_owner_id = self.cleaned_data.get('call_center_case_owner', None)
-                domain.call_center_config.case_type = self.cleaned_data.get('call_center_case_type', None)
+                with open(tmpfilename) as tmpfile:
+                    domain.put_attachment(tmpfile, name=LOGO_ATTACHMENT)
+            elif self.cleaned_data['delete_logo']:
+                domain.delete_attachment(LOGO_ATTACHMENT)
 
-            global_tz = self.cleaned_data['default_timezone']
-            if domain.default_timezone != global_tz:
-                domain.default_timezone = global_tz
-                users = WebUser.by_domain(domain.name)
-                users_to_save = []
-                for user in users:
-                    dm = user.get_domain_membership(domain.name)
-                    if not dm.override_global_tz and dm.timezone != global_tz:
-                        dm.timezone = global_tz
-                        users_to_save.append(user)
-                if users_to_save:
-                    WebUser.bulk_save(users_to_save)
-            domain.save()
-            return True
-        except Exception:
-            return False
+        domain.call_center_config.enabled = self.cleaned_data.get('call_center_enabled', False)
+        if domain.call_center_config.enabled:
+            domain.internal.using_call_center = True
+            domain.call_center_config.case_owner_id = self.cleaned_data.get('call_center_case_owner', None)
+            domain.call_center_config.case_type = self.cleaned_data.get('call_center_case_type', None)
+
+        global_tz = self.cleaned_data['default_timezone']
+        if domain.default_timezone != global_tz:
+            domain.default_timezone = global_tz
+            users = WebUser.by_domain(domain.name)
+            users_to_save = []
+            for user in users:
+                dm = user.get_domain_membership(domain.name)
+                if not dm.override_global_tz and dm.timezone != global_tz:
+                    dm.timezone = global_tz
+                    users_to_save.append(user)
+            if users_to_save:
+                WebUser.bulk_save(users_to_save)
+        domain.save()
+        return True
 
 
 class DomainMetadataForm(DomainGlobalSettingsForm):
@@ -576,29 +573,26 @@ class PrivacySecurityForm(forms.Form):
 
     def save(self, domain):
         domain.restrict_superusers = self.cleaned_data.get('restrict_superusers', False)
-        try:
-            secure_submissions = self.cleaned_data.get(
-                'secure_submissions', False)
-            apps_to_save = []
-            if secure_submissions != domain.secure_submissions:
-                for app in get_apps_in_domain(domain.name):
-                    if app.secure_submissions != secure_submissions:
-                        app.secure_submissions = secure_submissions
-                        apps_to_save.append(app)
-            domain.secure_submissions = secure_submissions
-            domain.save()
+        secure_submissions = self.cleaned_data.get(
+            'secure_submissions', False)
+        apps_to_save = []
+        if secure_submissions != domain.secure_submissions:
+            for app in get_apps_in_domain(domain.name):
+                if app.secure_submissions != secure_submissions:
+                    app.secure_submissions = secure_submissions
+                    apps_to_save.append(app)
+        domain.secure_submissions = secure_submissions
+        domain.save()
 
-            if apps_to_save:
-                apps = [app for app in apps_to_save if isinstance(app, Application)]
-                remote_apps = [app for app in apps_to_save if isinstance(app, RemoteApp)]
-                if apps:
-                    Application.bulk_save(apps)
-                if remote_apps:
-                    RemoteApp.bulk_save(remote_apps)
+        if apps_to_save:
+            apps = [app for app in apps_to_save if isinstance(app, Application)]
+            remote_apps = [app for app in apps_to_save if isinstance(app, RemoteApp)]
+            if apps:
+                Application.bulk_save(apps)
+            if remote_apps:
+                RemoteApp.bulk_save(remote_apps)
 
-            return True
-        except Exception:
-            return False
+        return True
 
 
 class DomainInternalForm(forms.Form, SubAreaMixin):

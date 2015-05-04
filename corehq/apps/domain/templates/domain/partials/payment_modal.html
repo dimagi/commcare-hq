@@ -1,6 +1,6 @@
 {% load i18n %}
 
-<div class="modal hide fade" id="{{ payment_modal_id }}">
+<div class="payment-modal modal hide fade" id="{{ payment_modal_id }}">
     <div class="modal-header">
         <a class="close" data-dismiss="modal">&times;</a>
         <div data-bind="template: {
@@ -13,7 +13,7 @@
           method="POST"
           class="form form-horizontal"
           data-bind="attr: {
-              id: form_id
+              id: formId
           }">
         <div class="modal-body">
             <div data-bind="template: {
@@ -28,6 +28,30 @@
                 <span data-bind="text: serverErrorMsg"></span>
             </p>
 
+            <!-- ko if: isWire -->
+            <fieldset data-bind="visible: paymentIsNotComplete">
+                <legend>{% trans 'Wire Payment Information' %}</legend>
+                <p>
+                {% blocktrans %}
+                Dimagi accepts wire payments via ACH and wire transfer. You will receive an invoice via email with instructions for wire payment. Please include the invoice ID in the wire payment details.
+                {% endblocktrans %}
+                </p>
+                <div class="control-group">
+                    <label class="control-label">
+                        {% trans 'Invoice Recipients' %}
+                    </label>
+                    <div class="controls">
+                        <input type="text"
+                                data-bind="value: wireEmails"
+                                size="20"
+                                name="emails"
+                                placeholder="jane@gmail.com john@gmail.com" />
+                    </div>
+                </div>
+            </fieldset>
+            <!-- /ko -->
+            <!-- ko ifnot: isWire -->
+
             <div data-bind="template: {
                 data: newCard,
                 name: 'select-new-stripe-card-template',
@@ -39,6 +63,7 @@
                 name: 'select-stripe-card-template',
                 if: canSelectCard
             }"></div>
+            <!-- /ko -->
 
             <p class="alert alert-success"
                  data-bind="visible: paymentIsComplete">

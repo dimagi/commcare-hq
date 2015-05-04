@@ -36,6 +36,7 @@ from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import ServerTime
+from dimagi.utils.couch.bulk import get_docs
 from django_prbac.exceptions import PermissionDenied
 from corehq.apps.accounting.utils import domain_has_privilege
 
@@ -1503,6 +1504,8 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
                 return CareplanModule.wrap(data)
             elif doc_type == 'AdvancedModule':
                 return AdvancedModule.wrap(data)
+            elif doc_type == 'ReportModule':
+                return ReportModule.wrap(data)
             else:
                 raise ValueError('Unexpected doc_type for Module', doc_type)
         else:
@@ -1640,6 +1643,15 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
             if hasattr(form, 'get_child_case_types'):
                 child_case_types.update(form.get_child_case_types())
         return child_case_types
+
+    def get_custom_entries(self):
+        """
+        By default, suite entries are configured by forms, but you can also provide custom
+        entries by overriding this function.
+
+        See ReportModule for an example
+        """
+        return []
 
 
 class Module(ModuleBase):
@@ -2668,6 +2680,240 @@ class CareplanModule(ModuleBase):
                 'module': self.get_module_info(),
             })
         return errors
+
+
+class ReportAppConfig(DocumentSchema):
+    """
+    Class for configuring how a user configurable report shows up in an app
+    """
+    report_id = StringProperty(required=True)
+    header = DictProperty()
+
+    _report = None
+
+    @property
+    def report(self):
+        from corehq.apps.userreports.models import ReportConfiguration
+        if self._report is None:
+            self._report = ReportConfiguration.get(self.report_id)
+        return self._report
+
+    @property
+    def select_detail_id(self):
+        return 'reports.{}.select'.format(self.report_id)
+
+    @property
+    def summary_detail_id(self):
+        return 'reports.{}.summary'.format(self.report_id)
+
+    @property
+    def data_detail_id(self):
+        return 'reports.{}.data'.format(self.report_id)
+
+    def get_details(self):
+        yield (self.select_detail_id, self.select_details(), True)
+        yield (self.summary_detail_id, self.summary_details(), True)
+        yield (self.data_detail_id, self.data_details(), True)
+
+    def select_details(self):
+        return Detail(custom_xml=suite_xml.Detail(
+            id='reports.{}.select'.format(self.report_id),
+            title=suite_xml.Text(
+                locale=suite_xml.Locale(id=id_strings.report_menu()),
+            ),
+            fields=[
+                suite_xml.Field(
+                    header=suite_xml.Header(
+                        text=suite_xml.Text(
+                            locale=suite_xml.Locale(id=id_strings.report_name_header()),
+                        )
+                    ),
+                    template=suite_xml.Template(
+                        text=suite_xml.Text(
+                            xpath=suite_xml.Xpath(function='name'))
+                    ),
+                )
+            ]
+        ).serialize())
+
+    def summary_details(self):
+        def _get_graph_fields():
+            from corehq.apps.userreports.reports.specs import MultibarChartSpec
+            # todo: make this less hard-coded
+            for chart_config in self.report.charts:
+                if isinstance(chart_config, MultibarChartSpec):
+                    def _column_to_series(column):
+                        return suite_xml.Series(
+                            nodeset="instance('reports')/reports/report[@id='{}']/rows/row".format(self.report_id),
+                            x_function='@index',
+                            y_function="column[@id='{}']".format(column),
+                            radius_function='5',
+                        )
+                    _xlabels_xpath = (
+                        "instance('reports')/reports/report[@id='{}']/xlabels[@column='{}']"
+                        .format(self.report_id, chart_config.x_axis_column)
+                    )
+                    yield suite_xml.Field(
+                        header=suite_xml.Header(text=suite_xml.Text()),
+                        template=suite_xml.GraphTemplate(
+                            form='graph',
+                            graph=suite_xml.Graph(
+                                type='xy',
+                                series=[_column_to_series(c) for c in chart_config.y_axis_columns],
+                                configuration=suite_xml.ConfigurationGroup(
+                                    configs=[suite_xml.ConfigurationItem(
+                                        id='x-labels',
+                                        xpath=suite_xml.Xpath(
+                                            function=_xlabels_xpath
+                                        )
+                                    )]
+                                )
+                            )
+                        )
+                    )
+
+        return Detail(custom_xml=suite_xml.Detail(
+            id='reports.{}.summary'.format(self.report_id),
+            title=suite_xml.Text(
+                locale=suite_xml.Locale(id=id_strings.report_menu()),
+            ),
+            fields=[
+                suite_xml.Field(
+                    header=suite_xml.Header(
+                        text=suite_xml.Text(
+                            locale=suite_xml.Locale(id=id_strings.report_name_header()),
+                        )
+                    ),
+                    template=suite_xml.Template(
+                        text=suite_xml.Text(
+                            xpath=suite_xml.Xpath(function='name'))
+                    ),
+                ),
+                suite_xml.Field(
+                    header=suite_xml.Header(
+                        text=suite_xml.Text(
+                            locale=suite_xml.Locale(id=id_strings.report_description_header()),
+                        )
+                    ),
+                    template=suite_xml.Template(
+                        text=suite_xml.Text(
+                            xpath=suite_xml.Xpath(function='description'))
+                    ),
+                ),
+            ] + list(_get_graph_fields())
+        ).serialize())
+
+    def data_details(self):
+        def _column_to_field(column):
+            return suite_xml.Field(
+                header=suite_xml.Header(
+                    text=suite_xml.Text(
+                        locale=suite_xml.Locale(
+                            id=id_strings.report_column_header(self.report_id, column.column_id)
+                        ),
+                    )
+                ),
+                template=suite_xml.Template(
+                    text=suite_xml.Text(
+                        xpath=suite_xml.Xpath(function="column[@id='{}']".format(column.column_id)))
+                ),
+            )
+
+        return Detail(custom_xml=suite_xml.Detail(
+            id='reports.{}.data'.format(self.report_id),
+            title=suite_xml.Text(
+                locale=suite_xml.Locale(id=id_strings.report_name(self.report_id)),
+            ),
+            fields=[_column_to_field(c) for c in self.report.report_columns]
+        ).serialize())
+
+    def get_entry(self):
+        return suite_xml.Entry(
+            form='fixmeclayton',
+            command=suite_xml.Command(
+                id='reports.{}'.format(self.report_id),
+                text=suite_xml.Text(
+                    locale=suite_xml.Locale(id=id_strings.report_name(self.report_id)),
+                ),
+            ),
+            datums=[
+                suite_xml.SessionDatum(
+                    detail_confirm=self.summary_detail_id,
+                    detail_select=self.select_detail_id,
+                    id='report_id_{}'.format(self.report_id),
+                    nodeset="instance('reports')/reports/report[@id='{}']".format(self.report_id),
+                    value='./@id',
+                ),
+                # you are required to select something - even if you don't use it
+                suite_xml.SessionDatum(
+                    detail_select=self.data_detail_id,
+                    id='throwaway_{}'.format(self.report_id),
+                    nodeset="instance('reports')/reports/report[@id='{}']/rows/row".format(self.report_id),
+                    value="''",
+                )
+
+            ]
+        )
+
+
+class ReportModule(ModuleBase):
+    """
+    Module for user configurable reports
+    """
+
+    module_type = 'report'
+
+    report_configs = SchemaListProperty(ReportAppConfig)
+    forms = []
+    _loaded = False
+
+    @property
+    @memoized
+    def reports(self):
+        from corehq.apps.userreports.models import ReportConfiguration
+        return [
+            ReportConfiguration.wrap(doc) for doc in
+            get_docs(ReportConfiguration.get_db(), [r.report_id for r in self.report_configs])
+        ]
+
+    @classmethod
+    def new_module(cls, name, lang):
+        module = ReportModule(
+            name={(lang or 'en'): name or ugettext("Reports")},
+            case_type='',
+        )
+        module.get_or_create_unique_id()
+        return module
+
+    def _load_reports(self):
+        if not self._loaded:
+            # load reports in bulk to avoid hitting the database for each one
+            for i, report in enumerate(self.reports):
+                self.report_configs[i]._report = report
+        self._loaded = True
+
+    def get_details(self):
+        self._load_reports()
+        for config in self.report_configs:
+            for details in config.get_details():
+                yield details
+
+    def get_custom_entries(self):
+        self._load_reports()
+        for config in self.report_configs:
+            yield config.get_entry()
+
+    def get_menus(self):
+        yield suite_xml.Menu(
+            id=id_strings.menu_id(self),
+            text=suite_xml.Text(
+                locale=suite_xml.Locale(id=id_strings.module_locale(self))
+            ),
+            commands=[
+                suite_xml.Command(id=id_strings.report_command(config.report_id))
+                for config in self.report_configs
+            ]
+        )
 
 
 class VersionedDoc(LazyAttachmentDoc):
