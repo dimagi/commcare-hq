@@ -1459,7 +1459,7 @@ def form_multimedia_export(request, domain):
         enddate = json_format_date(string_to_datetime(enddate) + timedelta(days=1))
         app_id = request.GET.get("app_id", None)
         export_id = request.GET.get("export_id", None)
-        zip_name = unidecode(request.GET.get("name", None))
+        zip_name = request.GET.get("name", None)
     except (KeyError, ValueError):
         return HttpResponseBadRequest()
 
@@ -1529,7 +1529,7 @@ def form_multimedia_export(request, domain):
     forms_info = list()
     for form in iter_docs(XFormInstance.get_db(), form_ids):
         if not zip_name:
-            zip_name = unidecode(form['form'].get('@name', 'unknown form'))
+            zip_name = form['form'].get('@name', 'unknown form')
         forms_info.append(extract_form_info(form, properties))
 
     # get case names
@@ -1554,5 +1554,5 @@ def form_multimedia_export(request, domain):
 
     response = HttpResponse(stream_file.getvalue(), mimetype="application/zip")
     response['Content-Length'] = size
-    response['Content-Disposition'] = 'attachment; filename=%s.zip' % zip_name
+    response['Content-Disposition'] = 'attachment; filename=%s.zip' % unidecode(zip_name)
     return response
