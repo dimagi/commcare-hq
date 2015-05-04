@@ -10,6 +10,7 @@ from django.contrib.auth import get_user_model
 from corehq import privileges, toggles
 from corehq.apps.accounting.exceptions import SubscriptionRenewalError
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.domain.utils import new_domain_re
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.feature_previews import CALLCENTER
 import settings
@@ -474,6 +475,16 @@ class DomainGlobalSettingsForm(forms.Form):
         timezone_field = TimeZoneField()
         timezone_field.run_validators(data)
         return smart_str(data)
+
+    def clean_name(self):
+        data = self.cleaned_data['name'].strip().lower()
+        if not re.match("^%s$" % new_domain_re, data):
+            raise forms.ValidationError('Only lowercase letters and numbers allowed. Single hyphens may be used to separate words.')
+
+        conflict = Domain.get_by_name(data) or Domain.get_by_name(data.replace('-', '.'))
+        if conflict:
+            raise forms.ValidationError('Alias already taken---please try another')
+        return data
 
     def save(self, request, domain):
         try:
