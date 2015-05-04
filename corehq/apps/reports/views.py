@@ -585,10 +585,10 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
     config.owner_id = user_id
     config.domain = domain
 
-    config.start_date = request.datespan.computed_startdate.date()
+    config.start_date = request.datespan.startdate.date()
     if request.datespan.enddate:
         config.date_range = 'range'
-        config.end_date = request.datespan.computed_enddate.date()
+        config.end_date = request.datespan.enddate.date()
     else:
         config.date_range = 'since'
 
