@@ -1,7 +1,7 @@
 from corehq.apps.sms.models import SMSLog, SMS
 from custom.fri.models import FRISMSLog
 from dimagi.utils.couch.database import iter_docs
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from optparse import make_option
 
 

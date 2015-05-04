@@ -2,7 +2,8 @@ from corehq.apps.sms.models import SMSLog, SMS, INCOMING, OUTGOING
 from custom.fri.models import FRISMSLog, PROFILES
 from datetime import datetime, timedelta
 from django.test import TestCase
-import random, string
+import random
+import string
 from time import sleep
 
 

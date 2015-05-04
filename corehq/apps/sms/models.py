@@ -205,6 +205,7 @@ class MessageLog(SafeSaveDocument, UnicodeMixIn):
         else:
             return False
 
+
 class SMSLog(SyncCouchToSQLMixin, MessageLog):
     text = StringProperty()
     # In cases where decoding must occur, this is the raw text received
