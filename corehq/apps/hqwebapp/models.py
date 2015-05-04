@@ -1120,7 +1120,7 @@ class ProjectUsersTab(UITab):
                 ]
             }]
 
-            if user_can_edit_location_types(self.couch_user, self.domain):
+            if user_can_edit_location_types(self.couch_user, self.project):
                 locations_config.append({
                     'title': LocationTypesView.page_title,
                     'url': reverse(LocationTypesView.urlname, args=[self.domain]),
