@@ -259,11 +259,8 @@ class SQLLocation(MPTTModel):
         return Location.get(self.location_id)
 
     def is_direct_ancestor_of(self, location):
-        if not (location and location.parent):
-            return False
-        elif location.parent == self:
-            return True
-        return self.is_direct_ancestor_of(location.parent, visited)
+        return (location.get_ancestors(include_self=True)
+                .filter(pk=self.pk).exists())
 
 
 def _filter_for_archived(locations, include_archive_ancestors):

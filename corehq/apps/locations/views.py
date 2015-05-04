@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.http.response import HttpResponseServerError
 from django.shortcuts import render
+from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.http import require_POST
@@ -20,10 +21,9 @@ from corehq import toggles
 from corehq.apps.commtrack.exceptions import MultipleSupplyPointException
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.commtrack.tasks import import_locations_async
-from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.custom_data_fields import CustomDataModelMixin
-from corehq.apps.domain.decorators import domain_admin_required, login_and_domain_required
+from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.facilities.models import FacilityRegistry
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.products.models import Product, SQLProduct
@@ -31,17 +31,26 @@ from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.util import reverse, get_document_or_404
 from custom.openlmis.tasks import bootstrap_domain_task
 
+from .permissions import (locations_access_required, is_locations_admin,
+                          can_edit_location)
 from .models import Location, LocationType, SQLLocation
 from .forms import LocationForm
 from .util import load_locs_json, location_hierarchy_config, dump_locations
 
 
-@domain_admin_required
+@locations_access_required
 def default(request, domain):
     return HttpResponseRedirect(reverse(LocationsListView.urlname, args=[domain]))
 
 
-class BaseLocationView(BaseCommTrackManageView):
+class BaseLocationView(BaseDomainView):
+    @method_decorator(locations_access_required)
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseLocationView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def section_url(self):
+        return reverse(LocationsListView.urlname, args=[self.domain])
 
     @property
     def main_context(self):
@@ -83,11 +92,19 @@ class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
     field_type = 'LocationFields'
     entity_string = _("Location")
 
+    @method_decorator(is_locations_admin)
+    def dispatch(self, request, *args, **kwargs):
+        return super(LocationFieldsView, self).dispatch(request, *args, **kwargs)
 
-class LocationTypesView(BaseCommTrackManageView):
+
+class LocationTypesView(BaseLocationView):
     urlname = 'location_types'
     page_title = ugettext_noop("Location Types")
     template_name = 'locations/settings.html'
+
+    @method_decorator(is_locations_admin)
+    def dispatch(self, request, *args, **kwargs):
+        return super(LocationTypesView, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_context(self):
@@ -303,7 +320,7 @@ class NewLocationView(BaseLocationView):
         return self.settings_form_post(request, *args, **kwargs)
 
 
-@domain_admin_required
+@can_edit_location
 def archive_location(request, domain, loc_id):
     loc = Location.get(loc_id)
     if loc.domain != domain:
@@ -318,7 +335,7 @@ def archive_location(request, domain, loc_id):
     })
 
 
-@domain_admin_required
+@can_edit_location
 def unarchive_location(request, domain, loc_id):
     # hack for circumventing cache
     # which was found to be out of date, at least in one case
@@ -340,6 +357,10 @@ def unarchive_location(request, domain, loc_id):
 class EditLocationView(NewLocationView):
     urlname = 'edit_location'
     page_title = ugettext_noop("Edit Location")
+
+    @method_decorator(can_edit_location)
+    def dispatch(self, request, *args, **kwargs):
+        return super(EditLocationView, self).dispatch(request, *args, **kwargs)
 
     @property
     def location_id(self):
@@ -577,7 +598,7 @@ class LocationImportView(BaseLocationView):
         )
 
 
-@login_and_domain_required
+@locations_access_required
 def location_importer_job_poll(request, domain, download_id, template="hqwebapp/partials/download_status.html"):
     try:
         context = get_download_context(download_id, check_state=True)
@@ -592,7 +613,7 @@ def location_importer_job_poll(request, domain, download_id, template="hqwebapp/
     return render(request, template, context)
 
 
-@login_and_domain_required
+@locations_access_required
 def location_export(request, domain):
     include_consumption = request.GET.get('include_consumption') == 'true'
     response = HttpResponse(mimetype=Format.from_format('xlsx').mimetype)
@@ -601,7 +622,7 @@ def location_export(request, domain):
     return response
 
 
-@domain_admin_required
+@is_locations_admin
 @require_POST
 def sync_facilities(request, domain):
     # TODO this is believed to be obsolete and should
@@ -668,7 +689,7 @@ def sync_facilities(request, domain):
     return HttpResponse('OK')
 
 
-@domain_admin_required
+@is_locations_admin
 @require_POST
 def sync_openlmis(request, domain):
     # todo: error handling, if we care.
