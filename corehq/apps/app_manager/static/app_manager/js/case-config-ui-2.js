@@ -51,7 +51,6 @@ var CaseConfig = (function () {
                 }
                 var actions = JSON.stringify(_(self.actions).extend(
                     HQFormActions.from_case_transaction(self.caseConfigViewModel.case_transaction),
-                    HQFormActions.from_usercase_transaction(self.caseConfigViewModel.usercase_transaction),
                     {subcases: subcases}
                 ));
 
@@ -67,6 +66,27 @@ var CaseConfig = (function () {
                         COMMCAREHQ.app_manager.updateDOM(data.update);
                         self.requires(requires);
                         self.setPropertiesMap(data.propertiesMap);
+                    }
+                });
+            }
+        });
+
+        self.saveUsercaseButton = COMMCAREHQ.SaveButton.init({
+            unsavedMessage: "You have unchanged user case settings",
+            save: function () {
+                var actions = JSON.stringify(_(self.actions).extend(
+                    HQFormActions.from_usercase_transaction(self.caseConfigViewModel.usercase_transaction)
+                ));
+                self.saveUsercaseButton.ajax({
+                    type: 'post',
+                    url: self.save_url,
+                    data: {
+                        actions: actions
+                    },
+                    dataType: 'json',
+                    success: function (data) {
+                        COMMCAREHQ.app_manager.updateDOM(data.update);
+                        self.setUsercasePropertiesMap(data.setUsercasePropertiesMap);
                     }
                 });
             }
