@@ -667,8 +667,8 @@ def _deploy_without_asking():
     try:
         _execute_with_timing(update_code)
         _execute_with_timing(update_virtualenv)
-        # _execute_with_timing(install_npm_packages)
-        # _execute_with_timing(update_touchforms)
+        _execute_with_timing(install_npm_packages)
+        _execute_with_timing(update_touchforms)
 
         # handle static files
         _execute_with_timing(version_static)
