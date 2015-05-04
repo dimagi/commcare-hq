@@ -7,6 +7,7 @@ from django.test.client import Client
 from django.utils import http
 
 from corehq.apps.domain.models import Domain
+from corehq.apps.hqadmin.dbaccessors import get_all_forms_in_all_domains
 
 from corehq.apps.users.models import WebUser
 from casexml.apps.case.models import CommCareCase
@@ -50,7 +51,7 @@ class CaseObjectCacheTest(BaseCaseMultimediaTest):
         self.user.save()
         for item in CommCareCase.view("case/by_user", include_docs=True, reduce=False).all():
             item.delete()
-        for item in XFormInstance.view("hqadmin/forms_over_time", include_docs=True, reduce=False).all():
+        for item in get_all_forms_in_all_domains():
             item.delete()
         time.sleep(1)
 

@@ -360,7 +360,7 @@ class NewStockReport(object):
 
         return cls(form, timestamp, tag, transactions)
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def create_models(self, domain=None):
         # todo: this function should probably move to somewhere in casexml.apps.stock
         if self.tag not in stockconst.VALID_REPORT_TYPES:

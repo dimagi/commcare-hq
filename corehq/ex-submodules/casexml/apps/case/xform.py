@@ -221,8 +221,9 @@ class CaseDbCache(object):
                 raise IllegalCaseId("Case [%s] is deleted " % doc['_id'])
         elif doc['doc_type'] != 'CommCareCase':
             raise IllegalCaseId(
-                "Bad case doc type! "
-                "This usually means you are using a bad value for case_id."
+                'Bad case doc type! '
+                'This usually means you are using a bad value for case_id.'
+                'The offending ID is {}'.format(doc['_id'])
             )
 
     def get(self, case_id):
