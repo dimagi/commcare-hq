@@ -1,10 +1,11 @@
 from django.db.models.signals import post_save
-from couchdbkit.ext.django.schema import Document
+from dimagi.ext.couchdbkit import Document
+from dimagi.ext.jsonobject import JsonObject
 from django.db import models
 from django.contrib.auth.models import User
 import logging
 from django.forms import model_to_dict
-import jsonobject
+
 
 import settings
 try:
@@ -23,7 +24,7 @@ def model_to_json(instance):
 
     """
 
-    class DummyObject(jsonobject.JsonObject):
+    class DummyObject(JsonObject):
         pass
 
     return DummyObject(**model_to_dict(instance)).to_json()

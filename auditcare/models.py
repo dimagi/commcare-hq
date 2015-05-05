@@ -1,7 +1,6 @@
 import copy
 import settings
-from couchdbkit.ext.django.schema import Document
-from couchdbkit.schema.properties import StringProperty, DateTimeProperty, StringListProperty, DictProperty, IntegerProperty
+from dimagi.ext.couchdbkit import Document, StringProperty, DateTimeProperty, StringListProperty, DictProperty, IntegerProperty
 from django.db import models
 import uuid
 from django.contrib.auth.models import User, AnonymousUser
