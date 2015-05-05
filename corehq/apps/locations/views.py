@@ -69,10 +69,18 @@ class LocationsListView(BaseLocationView):
     page_title = ugettext_noop("Locations")
     template_name = 'locations/manage/locations.html'
 
+    def viewable_locations(self):
+        locations = self.editable_locations()
+        user_loc = self.request.couch_user.get_location(self.domain)
+        if user_loc:
+            locations = self.editable_locations() + user_loc.lineage
+
+        return locations
+
     def editable_locations(self):
         user_loc = self.request.couch_user.get_location(self.domain)
         if not user_loc:
-            locations = [loc._id for loc in all_locations(self.domain)]
+            locations = ['all']
         else:
             locations = [user_loc._id] + [loc._id for loc in user_loc.descendants]
 
@@ -93,7 +101,8 @@ class LocationsListView(BaseLocationView):
             ),
             'show_inactive': self.show_inactive,
             'has_location_types': has_location_types,
-            'editable_locations': self.editable_locations()
+            'editable_locations': self.editable_locations(),
+            'viewable_locations': self.viewable_locations(),
         }
 
 
