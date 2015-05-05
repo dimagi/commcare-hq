@@ -207,6 +207,7 @@ class Domain(Document, SnapshotMixin):
     organization = StringProperty()
     hr_name = StringProperty()  # the human-readable name for this project
     creating_user = StringProperty()  # username of the user who created this domain
+    alias = StringProperty()
 
     # domain metadata
     project_type = StringProperty()  # e.g. MCH, HIV
@@ -588,6 +589,15 @@ class Domain(Document, SnapshotMixin):
                           key=[organization, hr_name],
                           reduce=False,
                           include_docs=True)
+        return result
+
+    @classmethod
+    def get_by_alias(cls, domain_alias):
+        result = cls.view("domain/by_alias",
+                          startkey=[domain_alias],
+                          endkey=[domain_alias, {}],
+                          reduce=False,
+                          include_docs=True).first()
         return result
 
     @classmethod

@@ -58,7 +58,13 @@ def login_and_domain_required(view_func):
     @wraps(view_func)
     def _inner(req, domain, *args, **kwargs):
         user = req.user
-        domain_name, domain = load_domain(req, domain)
+        domain_identifier = domain
+        domain_name, domain = load_domain(req, domain_identifier)
+        if not domain:
+            domain = Domain.get_by_alias(domain_identifier)
+            if domain:
+                domain_name, domain = load_domain(req, domain.name)
+
         if domain:
             if user.is_authenticated() and user.is_active:
                 if not domain.is_active:

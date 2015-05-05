@@ -397,9 +397,9 @@ class SubAreaMixin():
 class DomainGlobalSettingsForm(forms.Form):
     hr_name = forms.CharField(label=_("Project Name"))
 
-    name = forms.CharField(
+    alias = forms.CharField(
         required=False,
-        label=_("Project URL"),
+        label=_("Project Alias"),
         help_text=_("Alias used in project URL. Once set, this cannot be changed.")
     )
     default_timezone = TimeZoneChoiceField(label=ugettext_noop("Default Timezone"), initial="UTC")
@@ -473,12 +473,10 @@ class DomainGlobalSettingsForm(forms.Form):
         timezone_field.run_validators(data)
         return smart_str(data)
 
-    def clean_name(self):
-        data = self.cleaned_data['name'].strip().lower()
-        if data != self.domain and self.domain != self.domain_id:
-            raise forms.ValidationError('Once set, project URL may not be changed.')
+    def clean_alias(self):
+        data = self.cleaned_data['alias'].strip().lower()
         if not re.match("^%s$" % new_domain_re, data):
-            raise forms.ValidationError('Only lowercase letters and numbers allowed. ' + 
+            raise forms.ValidationError('Only lowercase letters and numbers allowed. ' +
                 'Single hyphens may be used to separate words.')
 
         conflict = Domain.get_by_name(data) or Domain.get_by_name(data.replace('-', '.'))
@@ -489,7 +487,7 @@ class DomainGlobalSettingsForm(forms.Form):
     def save(self, request, domain):
         try:
             domain.hr_name = self.cleaned_data['hr_name']
-            domain.name = self.cleaned_data['name'] or self.domain_id
+            domain.alias = self.cleaned_data['alias']
 
             if self.can_use_custom_logo:
                 logo = self.cleaned_data['logo']
