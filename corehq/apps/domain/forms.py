@@ -531,7 +531,6 @@ class DomainGlobalSettingsForm(forms.Form):
                 WebUser.bulk_save(users_to_save)
         domain.save()
         return True
->>>>>>> master
 
 
 class DomainMetadataForm(DomainGlobalSettingsForm):
