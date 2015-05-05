@@ -144,7 +144,7 @@ LOCATIONS = FeaturePreview(
         'Enable locations for this project. This must be enabled for '
         'CommCare Supply to work properly'
     ),
-    help_link='http://help.commcarehq.org/',
+    help_link='https://help.commcarehq.org/display/commtrack/Locations',
     save_fn=enable_locations,
 )
 

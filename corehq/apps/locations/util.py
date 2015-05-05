@@ -1,7 +1,8 @@
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.products.models import Product
-from corehq.apps.locations.models import Location, SQLLocation
+from corehq.apps.locations.models import (Location, SQLLocation,
+                                          LOCATION_SHARING_PREFIX)
 from corehq.apps.domain.models import Domain
 from corehq.util.quickcache import quickcache
 from dimagi.utils.couch.database import iter_bulk_delete
@@ -278,3 +279,8 @@ def purge_locations(domain):
     domain_json.pop('obsolete_location_types', None)
     domain_json.pop('location_types', None)
     db.save_doc(domain_json)
+
+
+def loc_group_id_or_none(group_id):
+    if group_id.startswith(LOCATION_SHARING_PREFIX):
+        return group_id.split(LOCATION_SHARING_PREFIX, 1)[1]
