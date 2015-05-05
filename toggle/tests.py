@@ -1,5 +1,5 @@
 from couchdbkit import ResourceConflict
-from couchdbkit.ext.django.schema import Document
+from dimagi.ext.couchdbkit import Document
 from django.conf import settings
 from django.test import TestCase
 from .models import generate_toggle_id, Toggle
