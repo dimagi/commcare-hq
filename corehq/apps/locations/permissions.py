@@ -42,3 +42,22 @@ def can_edit_location(view_fn):
                 return view_fn(request, domain, loc_id, *args, **kwargs)
         raise Http404()
     return locations_access_required(_inner)
+
+
+def user_can_edit_location_types(user, project):
+    if not project.location_restriction_for_users:
+        return True
+
+    return False if user.get_domain_membership(project.name).location_id else True
+
+
+def can_edit_location_types(view_fn):
+    """
+    Decorator controlling a user's access to a location types.
+    """
+    @wraps(view_fn)
+    def _inner(request, domain, *args, **kwargs):
+        if user_can_edit_location_types(request.couch_user, request.project):
+            return view_fn(request, domain, *args, **kwargs)
+        raise Http404()
+    return locations_access_required(_inner)
