@@ -9,6 +9,8 @@ from django.utils.translation import ugettext as _
 import json
 from casexml.apps.case.models import CommCareCaseAction
 from corehq.apps.groups.models import Group
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.util import loc_group_id_or_none
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.view_utils import absolute_reverse
@@ -89,9 +91,22 @@ class CaseInfo(object):
         return {'id': user_id, 'name': self._get_username(user_id)}
 
     @property
+    @memoized
+    def location(self):
+        loc_id = loc_group_id_or_none(self.owner_id)
+        if loc_id:
+            try:
+                return SQLLocation.objects.get(location_id=loc_id)
+            except SQLLocation.DoesNotExist:
+                return None
+
+    @property
     def owner(self):
         if self.owning_group and self.owning_group.name:
             return ('group', {'id': self.owning_group._id, 'name': self.owning_group.name})
+        elif self.location:
+            return ('location', {'id': self.location.location_id,
+                                 'name': self.location.display_name})
         else:
             return ('user', self._user_meta(self.user_id))
 
