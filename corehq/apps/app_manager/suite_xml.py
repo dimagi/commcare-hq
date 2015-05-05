@@ -2111,7 +2111,7 @@ class MediaSuiteGenerator(SuiteGeneratorBase):
             if path.startswith(PREFIX):
                 path = path[len(PREFIX):]
             else:
-                raise MediaResourceError('%s does not start with jr://file/commcare/' % path)
+                raise MediaResourceError('%s does not start with %s' % (path, PREFIX))
             path, name = split_path(path)
             # CommCare assumes jr://media/,
             # which is an alias to jr://file/commcare/media/

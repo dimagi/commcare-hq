@@ -585,10 +585,10 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
     config.owner_id = user_id
     config.domain = domain
 
-    config.start_date = request.datespan.computed_startdate.date()
+    config.start_date = request.datespan.startdate.date()
     if request.datespan.enddate:
         config.date_range = 'range'
-        config.end_date = request.datespan.computed_enddate.date()
+        config.end_date = request.datespan.enddate.date()
     else:
         config.date_range = 'since'
 
@@ -884,45 +884,24 @@ def view_scheduled_report(request, domain, scheduled_report_id):
 @login_and_domain_required
 @require_GET
 def case_details(request, domain, case_id):
-    timezone = get_timezone_for_user(request.couch_user, domain)
-
     try:
         case = get_document_or_404(CommCareCase, domain, case_id)
     except Http404:
         messages.info(request, "Sorry, we couldn't find that case. If you think this is a mistake please report an issue.")
         return HttpResponseRedirect(CaseListReport.get_url(domain=domain))
 
-    try:
-        owner_name = CommCareUser.get_by_user_id(case.owner_id, domain).raw_username
-    except Exception:
-        try:
-            owning_group = Group.get(case.owner_id)
-            owner_name = owning_group.display_name if owning_group.domain == domain else ''
-        except Exception:
-            owner_name = None
-
-    try:
-        username = CommCareUser.get_by_user_id(case.user_id, domain).raw_username
-    except Exception:
-        username = None
-
     return render(request, "reports/reportdata/case_details.html", {
         "domain": domain,
         "case_id": case_id,
         "case": case,
-        "username": username,
-        "owner_name": owner_name,
-        "slug": CaseListReport.slug,
         "report": dict(
             name=case_inline_display(case),
             slug=CaseListReport.slug,
             is_async=False,
         ),
-        "layout_flush_content": True,
-        "timezone": timezone,
         "case_display_options": {
             "display": request.project.get_case_display(case),
-            "timezone": timezone,
+            "timezone": get_timezone_for_user(request.couch_user, domain),
             "get_case_url": lambda case_id: absolute_reverse(case_details, args=[domain, case_id]),
             "show_transaction_export": toggles.STOCK_TRANSACTION_EXPORT.enabled(request.user.username),
         },
@@ -1459,7 +1438,7 @@ def form_multimedia_export(request, domain):
         enddate = json_format_date(string_to_datetime(enddate) + timedelta(days=1))
         app_id = request.GET.get("app_id", None)
         export_id = request.GET.get("export_id", None)
-        zip_name = unidecode(request.GET.get("name", None))
+        zip_name = request.GET.get("name", None)
     except (KeyError, ValueError):
         return HttpResponseBadRequest()
 
@@ -1529,7 +1508,7 @@ def form_multimedia_export(request, domain):
     forms_info = list()
     for form in iter_docs(XFormInstance.get_db(), form_ids):
         if not zip_name:
-            zip_name = unidecode(form['form'].get('@name', 'unknown form'))
+            zip_name = form['form'].get('@name', 'unknown form')
         forms_info.append(extract_form_info(form, properties))
 
     # get case names
@@ -1554,5 +1533,5 @@ def form_multimedia_export(request, domain):
 
     response = HttpResponse(stream_file.getvalue(), mimetype="application/zip")
     response['Content-Length'] = size
-    response['Content-Disposition'] = 'attachment; filename=%s.zip' % zip_name
+    response['Content-Disposition'] = 'attachment; filename=%s.zip' % unidecode(zip_name)
     return response

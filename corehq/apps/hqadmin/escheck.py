@@ -157,7 +157,7 @@ def _get_latest_doc_from_index(es_index, sort_field):
 def _get_first_id_or_none(docs, skipfunc=None):
 
     # don't check more than 5000 docs, not worth it
-    for doc in itertools.islice(docs, stop=5000):
+    for doc in itertools.islice(docs, 0, 5000):
         if skipfunc(doc):
             return doc['id']
 
