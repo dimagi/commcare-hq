@@ -18,7 +18,8 @@ var LOAD_LOCS_URL = '{{ api_root }}',
 var locs = {{ locations|JSON }};
 var selected_loc = {{ selected_id|JSON }};
 var hierarchy = {{ hierarchy|JSON }};
-var show_inactive = {{ show_inactive|yesno:"true,false" }}
+var show_inactive = {{ show_inactive|yesno:"true,false" }};
+var editable_locations = {{ editable_locations|JSON }};
 
 function loc_edit_url(loc_id) {
     var template = '{% url "edit_location" domain "-locid-" %}';
@@ -135,7 +136,7 @@ $(function() {
         <div class="loc_section">
             <!-- header bar -->
             <div class="loc_header" data-bind="if: name() != '_root'">
-                <div style="float:right;">
+                <div style="float:right;" data-bind="if: _.contains(editable_locations, uuid())">
                     {% if not show_inactive %}
                         <a class="btn btn-primary" data-bind="attr: { href: loc_edit_url(uuid()) }">
                             {% trans "Edit" %}

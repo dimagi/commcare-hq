@@ -33,7 +33,7 @@ from custom.openlmis.tasks import bootstrap_domain_task
 
 from .permissions import (locations_access_required, is_locations_admin,
                           can_edit_location, can_edit_location_types)
-from .models import Location, LocationType, SQLLocation
+from .models import Location, LocationType, SQLLocation, all_locations
 from .forms import LocationForm
 from .util import load_locs_json, location_hierarchy_config, dump_locations
 
@@ -69,6 +69,15 @@ class LocationsListView(BaseLocationView):
     page_title = ugettext_noop("Locations")
     template_name = 'locations/manage/locations.html'
 
+    def editable_locations(self):
+        user_loc = self.request.couch_user.get_location(self.domain)
+        if not user_loc:
+            locations = [loc._id for loc in all_locations(self.domain)]
+        else:
+            locations = [user_loc._id] + [loc._id for loc in user_loc.descendants]
+
+        return locations
+
     @property
     def show_inactive(self):
         return json.loads(self.request.GET.get('show_inactive', 'false'))
@@ -83,7 +92,8 @@ class LocationsListView(BaseLocationView):
                 self.domain, selected_id, self.show_inactive
             ),
             'show_inactive': self.show_inactive,
-            'has_location_types': has_location_types
+            'has_location_types': has_location_types,
+            'editable_locations': self.editable_locations()
         }
 
 
