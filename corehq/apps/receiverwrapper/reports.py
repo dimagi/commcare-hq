@@ -120,6 +120,6 @@ class SubmissionErrorReport(DeploymentsReport):
                     _fmt_date(error_doc.received_on),
                     xmlns_to_name(self.domain, error_doc.xmlns, app_id=getattr(error_doc, 'app_id', None)) if error_doc.metadata else EMPTY_FORM,
                     SubmissionErrorType.display_name_by_doc_type(error_doc.doc_type),
-                    error_doc.problem or EMPTY_ERROR]
-        
+                    getattr(error_doc, 'problem', EMPTY_ERROR)]
+
         return [_to_row(error_doc) for error_doc in items]
