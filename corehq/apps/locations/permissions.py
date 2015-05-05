@@ -21,7 +21,9 @@ def is_locations_admin(view_fn):
 
 
 def user_can_edit_location(user, location):
-    user_loc = user.get_location(location.domain).sql_location
+    user_loc = user.get_location(location.domain)
+    if user_loc:
+        user_loc = user_loc.sql_location
     return user_loc is None or user_loc.is_direct_ancestor_of(location)
 
 
