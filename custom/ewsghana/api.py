@@ -212,7 +212,6 @@ class EWSApi(APISynchronization):
             permissions = Permissions(
                 edit_web_users=True,
                 edit_commcare_users=True,
-                edit_data=True,
                 view_reports=False,
                 view_report_list=reports_list
             )
@@ -226,7 +225,6 @@ class EWSApi(APISynchronization):
                     view_reports=False,
                     edit_web_users=True,
                     edit_commcare_users=True,
-                    edit_data=True,
                     view_report_list=reports_list
                 ),
                 name='Facility manager'
@@ -254,8 +252,6 @@ class EWSApi(APISynchronization):
             permissions = Permissions(
                 edit_web_users=True,
                 edit_commcare_users=True,
-                edit_data=True,
-                edit_apps=True,
                 view_reports=False,
                 view_report_list=reports_list
             )
@@ -268,8 +264,6 @@ class EWSApi(APISynchronization):
                     view_reports=False,
                     edit_web_users=True,
                     edit_commcare_users=True,
-                    edit_data=True,
-                    edit_apps=True,
                     view_report_list=reports_list
                 ),
                 name='Administrator'
@@ -431,8 +425,7 @@ class EWSApi(APISynchronization):
                                       limit=1).first()
             if sp:
                 sql_location = sp.location.sql_location
-                sql_location.stocks_all_products = False
-                if not sql_location.products:
+                if set(sql_location.products.values_list('code', flat=True)) != supply_point.products:
                     sql_location.products = SQLProduct.objects.filter(
                         domain=self.domain,
                         code__in=supply_point.products
@@ -457,12 +450,13 @@ class EWSApi(APISynchronization):
             'date_joined': force_to_datetime(ews_webuser.date_joined),
             'password_hashed': True,
         }
-        sp = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                  key=[self.domain, str(ews_webuser.location)],
-                                  reduce=False,
-                                  include_docs=True,
-                                  limit=1).first()
-        location_id = sp.location_id if sp else None
+        location_id = None
+        if ews_webuser.location:
+            try:
+                location = SQLLocation.objects.get(domain=self.domain, external_id=ews_webuser.location)
+                location_id = location.location_id
+            except SQLLocation.DoesNotExist:
+                pass
 
         if user is None:
             try:

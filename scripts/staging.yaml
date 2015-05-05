@@ -48,13 +48,13 @@ branches:
   - vellum-staging # J$ 11/13
   - locations-as-groups # tw 1/20
   - fixtures-spike  # cz 1/29
-  - static-updates # Biyeun 2/9
   - usercase # Norman 3/27
   - commcare-supply  # Ethan 4/13
   - new-location  # Ethan 4/14
-  - fm-facing-interface+bulk-wire-invoice # Ben 4/23
   - fm-facing-interface # Nick P 4/23
-  - bulk-wire-invoice # Ben 4/23
+  - small-invoices # Nick P 4/30
+  - grunt-task-fabric # Ben 5/1
+  - case-list-menu-icons # TS 5/4
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

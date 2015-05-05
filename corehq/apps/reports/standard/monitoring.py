@@ -928,13 +928,13 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
         for time in self.activity_times:
             chart_data[time] += 1
         return dict(
-            chart_url=self.generate_chart(chart_data),
+            chart_url=self.generate_chart(chart_data, timezone=self.timezone),
             no_data=not self.activity_times,
             timezone=self.timezone,
         )
 
     @classmethod
-    def generate_chart(cls, data, width=950, height=300):
+    def generate_chart(cls, data, width=950, height=300, timezone="UTC"):
         """
             Gets a github style punchcard chart.
             Hat tip: http://github.com/dustin/bindir/blob/master/gitaggregates.py
@@ -955,7 +955,7 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
         chart.add_data(d)
 
         # mapping between numbers 0..6 and its day of the week label
-        day_names = "Mon Tue Wed Thu Fri Sat Sun".split(" ")
+        day_names = [_("Mon"), _("Tue"), _("Wed"), _("Thu"), _("Fri"), _("Sat"), _("Sun")]
         # the order, bottom-to-top, in which the days should appear
         # i.e. Sun, Sat, Fri, Thu, etc
         days = (6, 5, 4, 3, 2, 1, 0)
@@ -969,7 +969,8 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
             sizes.extend([1] * 24)
         chart.add_data(sizes)
 
-        chart.set_axis_labels('x', [''] + [str(h) for h  in range(24)] + [''])
+        chart.set_axis_labels('x', [''] + [(str(h) + ':00') for h in range(24)] + [''])
+        chart.set_axis_labels('x', [' ', _('Time ({timezone})').format(timezone=timezone), ' '])
         chart.set_axis_labels('y', [''] + [day_names[n] for n in days] + [''])
 
         chart.add_marker(1, 1.0, 'o', '333333', 25)

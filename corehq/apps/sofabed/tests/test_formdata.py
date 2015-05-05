@@ -1,4 +1,5 @@
 from django.test import TestCase
+from corehq.apps.hqadmin.dbaccessors import get_all_forms_in_all_domains
 from couchforms.models import XFormInstance
 from couchforms.util import SubmissionPost
 import os
@@ -10,7 +11,7 @@ class FormDataTestCase(TestCase):
 
     def setUp(self):
 
-        for item in XFormInstance.view("hqadmin/forms_over_time", include_docs=True, reduce=False).all():
+        for item in get_all_forms_in_all_domains():
             item.delete()
 
         for item in FormData.objects.all():

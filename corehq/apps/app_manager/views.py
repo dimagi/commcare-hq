@@ -16,7 +16,7 @@ from django.core.cache import cache
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _, get_language, ugettext_noop
 from django.views.decorators.cache import cache_control
-from corehq import ApplicationsTab, toggles, privileges, feature_previews
+from corehq import ApplicationsTab, toggles, privileges, feature_previews, ReportConfiguration
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager import commcare_settings
 from corehq.apps.app_manager.exceptions import (
@@ -128,6 +128,7 @@ from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.app_manager.models import (
+    ANDROID_LOGO_PROPERTY_MAPPING,
     AdvancedForm,
     AdvancedFormActions,
     AdvancedModule,
@@ -140,6 +141,7 @@ from corehq.apps.app_manager.models import (
     DeleteFormRecord,
     DeleteModuleRecord,
     DetailColumn,
+    DetailTab,
     Form,
     FormActions,
     FormLink,
@@ -149,13 +151,12 @@ from corehq.apps.app_manager.models import (
     Module,
     ModuleNotFoundException,
     ParentSelect,
+    ReportModule,
     SavedAppBuild,
     get_app,
     load_case_reserved_words,
     str_to_cls,
-    DetailTab,
-    ANDROID_LOGO_PROPERTY_MAPPING,
-)
+    ReportAppConfig)
 from corehq.apps.app_manager.models import import_app as import_app_util, SortElement
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST, \
@@ -902,6 +903,10 @@ def get_module_view_context_and_template(app, module):
             ]
 
         }
+    elif isinstance(module, ReportModule):
+        return 'app_manager/module_view_report.html', {
+            'reports': [],
+        }
     else:
         case_type = module.case_type
         form_options = case_list_form_options(case_type)
@@ -1336,6 +1341,17 @@ def _new_advanced_module(request, domain, app, name, lang):
     response.set_cookie('suppress_build_errors', 'yes')
     messages.info(request, _('Caution: Advanced modules are a labs feature'))
     return response
+
+
+def _new_report_module(request, domain, app, name, lang):
+    module = app.add_module(ReportModule.new_module(name, lang))
+    # by default add all reports
+    module.report_configs = [
+        ReportAppConfig(report_id=report._id, header={lang: report.title})
+        for report in ReportConfiguration.by_domain(domain)
+    ]
+    app.save()
+    return back_to_main(request, domain, app_id=app.id, module_id=module.id)
 
 
 @no_conflict_require_POST
@@ -3067,6 +3083,10 @@ MODULE_TYPE_MAP = {
     },
     'advanced': {
         FN: _new_advanced_module,
+        VALIDATIONS: common_module_validations
+    },
+    'report': {
+        FN: _new_report_module,
         VALIDATIONS: common_module_validations
     }
 }
