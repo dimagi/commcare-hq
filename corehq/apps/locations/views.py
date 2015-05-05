@@ -77,6 +77,7 @@ class LocationsListView(BaseLocationView):
     def page_context(self):
         selected_id = self.request.GET.get('selected')
         has_location_types = len(self.domain_object.location_types) > 0
+        loc_restricted = self.request.project.location_restriction_for_users
         return {
             'selected_id': selected_id,
             'locations': load_locs_json(
@@ -84,6 +85,8 @@ class LocationsListView(BaseLocationView):
             ),
             'show_inactive': self.show_inactive,
             'has_location_types': has_location_types,
+            'can_edit_root': (not loc_restricted or 
+                (loc_restricted and not self.request.couch_user.get_location(self.domain))),
         }
 
 

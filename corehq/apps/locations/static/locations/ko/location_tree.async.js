@@ -40,7 +40,7 @@ function LocationTreeViewModel(hierarchy) {
 
     // load location hierarchy and set initial expansion
     this.load = function(locs, selected) {
-        this.root(new LocationModel({name: '_root', children: locs}, this));
+        this.root(new LocationModel({name: '_root', children: locs, can_edit: can_edit_root}, this));
         this.root().expanded(true);
 
         if (selected) {

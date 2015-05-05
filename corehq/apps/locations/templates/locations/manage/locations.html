@@ -16,6 +16,7 @@ var LOAD_LOCS_URL = '{{ api_root }}',
     NEW_LOC_URL = '{% url "create_location" domain %}';
 
 var locs = {{ locations|JSON }};
+var can_edit_root = {{ can_edit_root|yesno:"true,false" }};
 var selected_loc = {{ selected_id|JSON }};
 var hierarchy = {{ hierarchy|JSON }};
 var show_inactive = {{ show_inactive|yesno:"true,false" }};
