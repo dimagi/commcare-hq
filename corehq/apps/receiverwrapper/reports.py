@@ -115,12 +115,11 @@ class SubmissionErrorReport(DeploymentsReport):
                 time = ServerTime(somedate).user_time(self.timezone).done()
                 return time.strftime(SERVER_DATETIME_FORMAT)
             
-            problem = error_doc.problem if hasattr(error_doc, 'problem') and error_doc.problem else EMPTY_ERROR
             return [_fmt_url(error_doc.get_id),
                     error_doc.metadata.username if error_doc.metadata else EMPTY_USER,
                     _fmt_date(error_doc.received_on),
                     xmlns_to_name(self.domain, error_doc.xmlns, app_id=getattr(error_doc, 'app_id', None)) if error_doc.metadata else EMPTY_FORM,
                     SubmissionErrorType.display_name_by_doc_type(error_doc.doc_type),
-                    problem]
+                    getattr(error_doc, 'problem', None) or EMPTY_ERROR]
 
         return [_to_row(error_doc) for error_doc in items]
