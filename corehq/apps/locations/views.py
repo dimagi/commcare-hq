@@ -286,7 +286,8 @@ class NewLocationView(BaseLocationView):
     def location_form(self):
         if self.request.method == 'POST':
             return LocationForm(self.location, self.request.POST, is_new=True)
-        return LocationForm(self.location, is_new=True)
+        return LocationForm(self.location, user=self.request.couch_user,
+                            is_new=True)
 
     @property
     def page_context(self):
@@ -403,7 +404,7 @@ class EditLocationView(NewLocationView):
     def location_form(self):
         if self.request.method == 'POST':
             return LocationForm(self.location, self.request.POST)
-        return LocationForm(self.location)
+        return LocationForm(self.location, user=self.request.couch_user)
 
     @property
     def consumption(self):
