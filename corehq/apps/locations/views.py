@@ -419,7 +419,6 @@ class EditLocationView(NewLocationView):
         return form
 
     @property
-    @memoized
     def all_users(self):
         user_query = (UserES()
                       .domain(self.domain)
