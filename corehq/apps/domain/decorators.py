@@ -64,7 +64,9 @@ def login_and_domain_required(view_func):
             domain = Domain.get_by_alias(domain_identifier)
             if domain:
                 domain_name, domain = load_domain(req, domain.name)
-                return HttpResponseRedirect(req.path.replace('/' + domain_identifier + '/', '/' + domain_name + '/'))
+                return HttpResponseRedirect(
+                    req.path.replace('/' + domain_identifier + '/', '/' + domain_name + '/')
+                )
 
         if domain:
             if user.is_authenticated() and user.is_active:
