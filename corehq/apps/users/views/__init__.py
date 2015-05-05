@@ -169,7 +169,7 @@ class BaseEditUserView(BaseUserSettingsView):
             return self.user_update_form_class(data=self.request.POST)
 
         form = self.user_update_form_class()
-        form.initialize_form(existing_user=self.editable_user)
+        form.initialize_form(domain=self.request.domain, existing_user=self.editable_user)
         return form
 
     @property
@@ -187,6 +187,7 @@ class BaseEditUserView(BaseUserSettingsView):
     def commtrack_form(self):
         if self.request.method == "POST" and self.request.POST['form_type'] == "commtrack":
             return CommtrackUserForm(self.request.POST, domain=self.domain)
+
         user_domain_membership = self.editable_user.get_domain_membership(self.domain)
         linked_loc = user_domain_membership.location_id
         linked_prog = user_domain_membership.program_id
@@ -257,7 +258,8 @@ class EditWebUserView(BaseEditUserView):
         ctx = {
             'form_uneditable': BaseUserInfoForm(),
         }
-        if self.request.project.commtrack_enabled:
+        if (self.request.project.commtrack_enabled or
+                self.request.project.locations_enabled):
             ctx.update({'update_form': self.commtrack_form})
         if self.request.couch_user.is_superuser:
             ctx.update({'update_permissions': True})
@@ -355,8 +357,11 @@ class EditMyAccountDomainView(BaseFullEditUserView):
 
     @property
     def page_context(self):
-        context = {}
-        if self.request.project.commtrack_enabled:
+        context = {
+            'can_use_inbound_sms': domain_has_privilege(self.domain, privileges.INBOUND_SMS),
+        }
+        if (self.request.project.commtrack_enabled or
+                self.request.project.locations_enabled):
             context.update({
                 'update_form': self.commtrack_form,
             })

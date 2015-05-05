@@ -107,12 +107,17 @@ class LocationType(models.Model):
     def __unicode__(self):
         return self.name
 
+    @property
+    @memoized
+    def can_have_children(self):
+        return LocationType.objects.filter(parent_type=self).exists()
+
 
 class SQLLocation(MPTTModel):
     domain = models.CharField(max_length=255, db_index=True)
     name = models.CharField(max_length=100, null=True)
     location_id = models.CharField(max_length=100, db_index=True, unique=True)
-    location_type = models.ForeignKey(LocationType, null=True)
+    location_type = models.ForeignKey(LocationType)
     site_code = models.CharField(max_length=255)
     external_id = models.CharField(max_length=255, null=True)
     metadata = json_field.JSONField(default={})
@@ -319,6 +324,10 @@ class Location(CachedCouchDocumentMixin, Document):
     def __hash__(self):
         return hash(self._id)
 
+    # Method return a non save SQLLocation object, because when we want sync location in task, we can have some
+    # problems. For example: we can have location in SQL but without location type.
+    # this behavior causes problems when we want go to locations page - 500 error.
+    # SQLlocation object is saved together with Couch object in save method.
     def _sync_location(self):
         properties_to_sync = [
             ('location_id', '_id'),
@@ -332,18 +341,22 @@ class Location(CachedCouchDocumentMixin, Document):
             'metadata'
         ]
 
-        sql_location, is_new = SQLLocation.objects.get_or_create(
-            location_id=self._id,
-            defaults={
-                'domain': self.domain,
-                'site_code': self.site_code
-            }
-        )
+        try:
+            sql_location = SQLLocation.objects.get(location_id=self._id)
+        except SQLLocation.DoesNotExist:
+            # The location type must already exist
+            try:
+                location_type = LocationType.objects.get(
+                    domain=self.domain,
+                    name=self.location_type,
+                )
+            except LocationType.DoesNotExist:
+                msg = "You can't create a location without a real location type"
+                raise LocationType.DoesNotExist(msg)
 
-        if is_new or (sql_location.location_type.name != self.location_type):
-            sql_location.location_type, _ = LocationType.objects.get_or_create(
+            sql_location = SQLLocation(
                 domain=self.domain,
-                name=self.location_type,
+                location_type=location_type,
             )
 
         for prop in properties_to_sync:
@@ -365,7 +378,7 @@ class Location(CachedCouchDocumentMixin, Document):
         if parent_id:
             sql_location.parent = SQLLocation.objects.get(location_id=parent_id)
 
-        sql_location.save()
+        return sql_location
 
     @property
     def sql_location(self):
@@ -444,9 +457,20 @@ class Location(CachedCouchDocumentMixin, Document):
                 Location.site_codes_for_domain(self.domain)
             )
 
+        sql_location = None
         result = super(Location, self).save(*args, **kwargs)
 
-        self._sync_location()
+        # try sync locations and when SQLLocation doesn't returned, removed Couch object from database.
+        # added because when we sync location by tasks we can have behavior that the task can be
+        # killed in _sync_location method and this causes the problems
+        try:
+            sql_location = self._sync_location()
+        finally:
+            if sql_location:
+                sql_location.save()
+            else:
+                self.delete()
+                result = None
 
         return result
 

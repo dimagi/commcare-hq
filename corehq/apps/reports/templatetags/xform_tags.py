@@ -1,5 +1,4 @@
 from functools import partial
-from django.conf import settings
 
 from django.template.loader import render_to_string
 from django.core.urlresolvers import reverse
@@ -86,7 +85,6 @@ def render_form(form, domain, options):
     case_id = options.get('case_id')
     side_pane = options.get('side_pane', False)
     user = options.get('user', None)
-    case_id_attr = "@%s" % const.CASE_TAG_ID
 
     _get_tables_as_columns = partial(get_tables_as_columns, timezone=timezone)
 
@@ -96,13 +94,13 @@ def render_form(form, domain, options):
     # Case Changes tab
     case_blocks = extract_case_blocks(form)
     for i, block in enumerate(list(case_blocks)):
-        if case_id and block.get(case_id_attr) == case_id:
+        if case_id and block.get(const.CASE_ATTR_ID) == case_id:
             case_blocks.pop(i)
             case_blocks.insert(0, block)
 
     cases = []
     for b in case_blocks:
-        this_case_id = b.get(case_id_attr)
+        this_case_id = b.get(const.CASE_ATTR_ID)
         try:
             this_case = CommCareCase.get(this_case_id) if this_case_id else None
             valid_case = True
@@ -154,10 +152,6 @@ def render_form(form, domain, options):
     else:
         user_info = get_doc_info_by_id(domain, meta_userID)
 
-    edit_session_data = {'user_id': meta_userID}
-    if len(case_blocks) == 1 and case_blocks[0].get(case_id_attr):
-        edit_session_data["case_id"] = case_blocks[0].get(case_id_attr)
-
     request = options.get('request', None)
     user_can_edit = (
         request and user and request.domain
@@ -175,8 +169,6 @@ def render_form(form, domain, options):
     return render_to_string("reports/form/partials/single_form.html", {
         "context_case_id": case_id,
         "instance": form,
-        "form_meta": options.get('form_meta', {}),
-        "maps_api_key": settings.GMAPS_API_KEY,
         "is_archived": form.doc_type == "XFormArchived",
         "domain": domain,
         'question_list_not_found': question_list_not_found,
@@ -192,7 +184,6 @@ def render_form(form, domain, options):
         "user_info": user_info,
         "side_pane": side_pane,
         "user": user,
-        "edit_session_data": edit_session_data,
         "show_edit_submission": show_edit_submission,
         "show_resave": show_resave,
     })

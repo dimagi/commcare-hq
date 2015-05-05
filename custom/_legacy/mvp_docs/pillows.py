@@ -4,6 +4,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.indicators.models import FormIndicatorDefinition, \
     CaseIndicatorDefinition, CaseDataInFormIndicatorDefinition
 from corehq.apps.indicators.utils import get_namespaces, get_indicator_domains
+from corehq.pillows.utils import get_deleted_doc_types
 from couchforms.models import XFormInstance
 from mvp_docs.models import IndicatorXForm, IndicatorCase
 from pillowtop.listener import BasicPillow
@@ -13,14 +14,23 @@ pillow_eval_logging = logging.getLogger("pillowtop_eval")
 
 
 class MVPIndicatorPillowBase(BasicPillow):
-    couch_filter = 'fluff_filter/domain_type'
+    indicator_class = None
+    couch_filter = 'hqadmin/domains_and_doc_types'
 
     @property
     def extra_args(self):
         return {
             'domains': ' '.join(get_indicator_domains()),
-            'doc_type': self.document_class._doc_type,
+            'doc_types': ' '.join([self._main_doc_type] + self._deleted_doc_types),
         }
+
+    @property
+    def _main_doc_type(self):
+        return self.document_class._doc_type
+
+    @property
+    def _deleted_doc_types(self):
+        return get_deleted_doc_types(self._main_doc_type)
 
     def run_burst(self):
         """
@@ -38,18 +48,29 @@ class MVPIndicatorPillowBase(BasicPillow):
                 self.processor(change)
 
     def change_transform(self, doc_dict):
-        domain = doc_dict.get('domain')
-        if not domain:
-            return
-        namespaces = get_namespaces(domain)
-        self.process_indicators(namespaces, domain, doc_dict)
+        doc_type = doc_dict.get('doc_type')
+        if doc_type in self._deleted_doc_types:
+            self._delete_doc(doc_dict)
+
+        else:
+            domain = doc_dict.get('domain')
+            if not domain:
+                return
+            namespaces = get_namespaces(domain)
+            self.process_indicators(namespaces, domain, doc_dict)
 
     def process_indicators(self, namespaces, domain, doc_dict):
         raise NotImplementedError("Your pillow must implement this method.")
 
+    def _delete_doc(self, doc_dict):
+        doc = self.indicator_class.wrap_for_indicator_db(doc_dict)
+        if doc.exists_in_database():
+            doc.delete()
+
 
 class MVPFormIndicatorPillow(MVPIndicatorPillowBase):
     document_class = XFormInstance
+    indicator_class = IndicatorXForm
     use_locking = True
 
     def process_indicators(self, namespaces, domain, doc_dict):
@@ -88,6 +109,7 @@ class MVPFormIndicatorPillow(MVPIndicatorPillowBase):
 
 class MVPCaseIndicatorPillow(MVPIndicatorPillowBase):
     document_class = CommCareCase
+    indicator_class = IndicatorCase
     use_locking = True
 
     def process_indicators(self, namespaces, domain, doc_dict):

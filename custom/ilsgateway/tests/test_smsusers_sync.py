@@ -6,6 +6,7 @@ from corehq.apps.commtrack.tests.util import bootstrap_domain as initial_bootstr
 from corehq.apps.users.models import CommCareUser
 from custom.ilsgateway.api import SMSUser, ILSGatewayAPI
 from custom.ilsgateway.tests.mock_endpoint import MockEndpoint
+from custom.logistics.api import ApiSyncObject
 from custom.logistics.commtrack import synchronization
 from custom.logistics.models import MigrationCheckpoint
 
@@ -49,9 +50,12 @@ class SMSUsersSyncTest(TestCase):
             limit=100,
             offset=0
         )
-        synchronization('smsuser',
-                        self.endpoint.get_smsusers,
-                        self.api_object.sms_user_sync, checkpoint, None, 100, 0)
+        sms_user_api = ApiSyncObject(
+            'smsuser',
+            self.endpoint.get_smsusers,
+            self.api_object.sms_user_sync
+        )
+        synchronization(sms_user_api, checkpoint, None, 100, 0)
         self.assertEqual('smsuser', checkpoint.api)
         self.assertEqual(100, checkpoint.limit)
         self.assertEqual(0, checkpoint.offset)

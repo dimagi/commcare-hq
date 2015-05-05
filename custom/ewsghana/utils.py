@@ -283,3 +283,28 @@ def can_receive_email(user, verified_number):
 
 def get_country_id(domain):
     return SQLLocation.objects.filter(domain=domain, location_type__name='country')[0].location_id
+
+
+def has_input_stock_permissions(couch_user, location, domain):
+    domain_membership = couch_user.get_domain_membership(domain)
+    if not couch_user.is_web_user() or not domain_membership or not domain_membership.location_id:
+        return False
+    try:
+        user_location = SQLLocation.objects.get(location_id=domain_membership.location_id)
+    except SQLLocation.DoesNotExist:
+        return False
+
+    if not user_location.location_type.administrative:
+        if user_location.location_id != location.location_id:
+            return False
+    else:
+        parents = location.get_ancestors().values_list('location_id', flat=True)
+        if user_location.location_id not in parents:
+            return False
+    return True
+
+
+def first_item(items, f):
+    for item in items:
+        if f(item):
+            return item

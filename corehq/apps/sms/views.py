@@ -681,10 +681,10 @@ def get_case_contact_info(domain_obj, case_ids):
     data = {}
     for doc in iter_docs(CommCareCase.get_db(), case_ids):
         if domain_obj.custom_case_username:
-            name = doc.get(domain_obj.custom_case_username, _('unknown'))
+            name = doc.get(domain_obj.custom_case_username)
         else:
-            name = doc.get('name', _('unknown'))
-        data[doc['_id']] = [name]
+            name = doc.get('name')
+        data[doc['_id']] = [name or _('(unknown)')]
     return data
 
 

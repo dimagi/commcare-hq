@@ -31,18 +31,17 @@ class ReportingRates(ReportingRatesData):
     def rows(self):
         rows = {}
         if self.location_id:
-            if self.location.location_type.name == 'country':
-                supply_points = self.all_reporting_locations()
-                reports = len(self.reporting_supply_points(supply_points))
-            else:
-                supply_points = self.get_supply_points().values_list(
-                    'supply_point_id', flat=True
-                )
-                reports = len(self.reporting_supply_points())
+            supply_points = self.location.get_descendants().filter(
+                location_type__administrative=False,
+                is_archived=False
+            )
+            reports = self.reporting_supply_points(supply_points.values_list('supply_point_id', flat=True))
+            supply_points_count = supply_points.count()
+            reports_count = reports.count()
             rows = dict(
-                total=len(supply_points),
-                reported=reports,
-                non_reported=len(supply_points) - reports
+                total=supply_points_count,
+                reported=reports_count,
+                non_reported=supply_points_count - reports_count
             )
         return rows
 
@@ -79,22 +78,22 @@ class ReportingDetails(ReportingRatesData):
     def rows(self):
         rows = {}
         if self.location_id:
-            if self.location.location_type.name == 'country':
-                supply_points = self.reporting_supply_points(self.all_reporting_locations())
-            else:
-                supply_points = self.reporting_supply_points()
+            supply_points = self.location.get_descendants().filter(
+                location_type__administrative=False,
+                is_archived=False
+            ).values_list('supply_point_id', flat=True)
             complete = 0
             incomplete = 0
-            for supply_point in supply_points:
-                products = {
-                    product.product_id
-                    for product in SQLLocation.objects.get(supply_point_id=supply_point).products
-                }
+            for supply_point in self.reporting_supply_points(supply_points):
+                products = SQLLocation.objects.get(
+                    supply_point_id=supply_point
+                ).products.values_list('product_id', flat=True)
+
                 st = StockTransaction.objects.filter(
                     case_id=supply_point,
                     report__date__range=[self.config['startdate'], self.config['enddate']]
                 ).distinct('product_id').values_list('product_id', flat=True)
-                if not (products - set(st)):
+                if not (set(products) - set(st)):
                     complete += 1
                 else:
                     incomplete += 1
@@ -366,6 +365,7 @@ class ReportingRatesReport(MultiReport):
             location_id=self.request.GET.get('location_id') or get_country_id(self.domain),
             products=None,
             program=program if program != ALL_OPTION else None,
+            user=self.request.couch_user
         )
 
     @property
@@ -373,16 +373,19 @@ class ReportingRatesReport(MultiReport):
         config = self.report_config
         if self.is_reporting_type():
             self.split = True
-            return [
-                FacilityReportData(config),
-                StockLevelsLegend(config),
-                InputStock(config),
-                FacilitySMSUsers(config),
-                FacilityUsers(config),
-                FacilityInChargeUsers(config),
-                InventoryManagementData(config),
-                ProductSelectionPane(config),
-            ]
+            if self.is_rendered_as_email:
+                return [FacilityReportData(config)]
+            else:
+                return [
+                    FacilityReportData(config),
+                    StockLevelsLegend(config),
+                    InputStock(config),
+                    FacilitySMSUsers(config),
+                    FacilityUsers(config),
+                    FacilityInChargeUsers(config),
+                    InventoryManagementData(config),
+                    ProductSelectionPane(config)
+                ]
         self.split = False
         data_providers = [
             AlertsData(config=config),
@@ -406,3 +409,12 @@ class ReportingRatesReport(MultiReport):
         datespan = DateSpan(startdate=last_period_st, enddate=last_period_end)
         datespan.is_default = True
         return datespan
+
+    @property
+    def datespan(self):
+        url = self.request.META.get('HTTP_REFERER')
+        if not url or 'startdate' in url:
+            return self.request.datespan
+
+        self.request.datespan = self.default_datespan
+        return self.default_datespan

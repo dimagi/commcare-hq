@@ -2,6 +2,7 @@ import calendar
 import datetime
 from decimal import Decimal
 from django.conf import settings
+from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 
 from corehq import Domain, privileges
@@ -151,7 +152,7 @@ def get_address_from_invoice(invoice):
     from corehq.apps.accounting.models import BillingContactInfo
     try:
         contact_info = BillingContactInfo.objects.get(
-            account=invoice.subscription.account,
+            account=invoice.account,
         )
         return Address(
             name=(
@@ -242,3 +243,12 @@ def get_active_reminders_by_domain_name(domain_name):
             and reminder_doc.get('reminder_type', REMINDER_TYPE_DEFAULT) != REMINDER_TYPE_KEYWORD_INITIATED
         )
     ]
+
+
+def make_anchor_tag(href, name, attrs={}):
+    context = {
+        'href': href,
+        'name': name,
+        'attrs': attrs,
+    }
+    return render_to_string('accounting/partials/anchor_tag.html', context)

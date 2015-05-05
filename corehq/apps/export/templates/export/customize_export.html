@@ -226,8 +226,9 @@
                     // assumes unselected
                     var unselected;
                     var columns = table.column_configuration();
+                    var spliceIdx = 0;
 
-                    _(columns).each(function (column) {
+                    _(columns).each(function (column, idx) {
                         var niceField = self.utils.parseField(column.index, table.index, column.tag());
                         var special = ko.utils.unwrapObservable(column.special);
                         if (special) {
@@ -246,19 +247,20 @@
                             }
                             return false;
                         }.bind(column);
+                        if (!self.minimal() && !column.selected() && !spliceIdx) {
+                            spliceIdx = idx;
+                        }
                     });
 
-                    for (var i = 0; i < columns.length; i++) {
-                        if (!columns[i].selected()) {
-                            break;
-                        }
+                    // Splice out unselected and put them at the end and reorder
+                    if (!self.minimal()) {
+                        unselected = table.column_configuration.splice(spliceIdx, columns.length);
+                        unselected = self.utils.putInDefaultOrder(table.index(), unselected);
+                        table.column_configuration.push.apply(
+                            table.column_configuration,
+                            unselected
+                        );
                     }
-                    unselected = table.column_configuration.splice(i, columns.length);
-                    unselected = self.utils.putInDefaultOrder(table.index(), unselected);
-                    table.column_configuration.push.apply(
-                        table.column_configuration,
-                        unselected
-                    );
                 });
 
                 self.showDeidColumn = ko.observable(function () {
@@ -437,7 +439,8 @@
                     save: {{ request.get_full_path|safe|JSON }}
                 },
                 allow_repeats: {{ helper.allow_repeats|JSON }},
-                default_order: {{ default_order|JSON }}
+                default_order: {{ default_order|JSON }},
+                minimal: {{ minimal|JSON }}
             });
 
             ko.applyBindings(customExportView, $('#customize-export').get(0));
@@ -517,12 +520,10 @@
                         <input type="checkbox" id="include-errors-checkbox" data-bind="checked: custom_export.include_errors" />
                         {% trans "Include duplicates and other unprocessed forms" %}
                     </label>
-                    {% if request|toggle_enabled:'SPLIT_MULTISELECT_EXPORT' %}
                     <label class="checkbox">
                         <input type="checkbox" id="split-multiselects-checkbox" data-bind="checked: custom_export.split_multiselects" />
                         {% trans "Expand Multiple Answer Questions" %}
                     </label>
-                    {% endif %}
                 {% endif %}
                 </div>
             </div>
@@ -572,7 +573,7 @@
                                         {% trans "Question" %}
                                     </th>
                                     <th>{% trans "Display" %}</th>
-                                    {% if custom_export.type == 'case' and request|toggle_enabled:'SPLIT_MULTISELECT_EXPORT' %}
+                                    {% if custom_export.type == 'case' and request|feature_preview_enabled:"SPLIT_MULTISELECT_CASE_EXPORT"%}
                                     <th>{% trans "Type" %}</th>
                                     {% endif %}
                                     {% if helper.allow_deid %}
@@ -580,10 +581,14 @@
                                     {% endif %}
                                 </tr>
                                 </thead>
+                                {% if minimal %}
+                                <tbody data-bind="foreach: column_configuration">
+                                {% else %}
                                 <tbody data-bind="sortable: column_configuration">
+                                {% endif %}
                                     <tr data-bind="
-                                        visible:  $parent.show_deleted() || ($data.show() || selected),
-                                        attr: {'data-order': _sortableOrder}
+                                        visible:  $parent.show_deleted() || ($data.show || selected)
+                                        {% if not minimal %}, attr: {'data-order': _sortableOrder}{% endif %}
                                         ">
                                         <td class="sortable-handle">
                                             <i class="icon-resize-vertical"></i>
@@ -597,7 +602,7 @@
 
                                         </td>
                                         <td><input class="input-xlarge" type="text" data-bind="value: display" /></td>
-                                        {% if custom_export.type == 'case' and request|toggle_enabled:'SPLIT_MULTISELECT_EXPORT' %}
+                                        {% if custom_export.type == 'case' and request|feature_preview_enabled:"SPLIT_MULTISELECT_CASE_EXPORT"%}
                                         <td class="input">
                                             <div data-bind="if: !allOptions()">
                                                 <select disabled>

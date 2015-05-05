@@ -14,22 +14,22 @@
 {% block pretable %}
     {% if not report.needs_filters %}
         {% if rendered_as == 'print' %}
-        <div class="row">
-            <div class="span10">{% now "d M Y" %}</div>
-        </div>
-        <div class="row">
-            <div class="span10">
-                <h3 class="media-heading">{{ title }}<br/></h3>
+            <div class="row">
+                <div class="span10">{% now "d M Y" %}</div>
             </div>
-        </div>
+            <div class="row">
+                <div class="span10">
+                    <h1 class="media-heading">{{ title }}<br/></h1>
+                </div>
+            </div>
         {% else %}
-        <div class="media">
-          <div class="media-body" style="height: 64px">
-            <h3 class="media-heading">{{ title }}<br/></h3>
-          </div>
-        </div>
+            <div class="media">
+              <div class="media-body" style="height: 64px">
+                <h1 class="media-heading">{{ title }}<br/></h1>
+              </div>
+            </div>
         {% endif %}
-    {% endif %}{{ block.super }}
+    {% endif %}
 {% endblock %}
 
 {% block reporttable %}
@@ -76,6 +76,19 @@
 {% endblock %}
 
 {% block js-inline %}
+    <script>
+        $(document).ajaxStop(function () {
+            $('#group_location_async select').first().css('display', 'none');
+            var location_type = '{{ location_type }}';
+            var filter_elem = $('#reportFilters.in');
+            var element = $('#toggle-report-filters');
+            if (location_type === 'FACILITY' && filter_elem.length !== 0) {
+                element.click()
+            } else if (filter_elem.length === 0) {
+                element.click()
+            }
+        });
+    </script>
     {% for thisreport in reports %}
         {% for chart in thisreport.charts %}
             {% with id1=forloop.counter|stringformat:"s" id2=forloop.parentloop.counter|stringformat:"s" slug=report.slug %}

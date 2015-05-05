@@ -167,7 +167,7 @@ that you have a 32bit version of Python installed.
     # This will do some basic setup, create a superuser, and create a project.
     # The project-name, email, and password given here are specific to your
     # local development environment.
-    # Ignore warnings related to Raven.
+    # Ignore warnings related to Raven for the following three commands.
     ./manage.py bootstrap <project-name> <email> <password>
 
     # To set up elasticsearch indexes, first run (and then kill once you see the
@@ -175,7 +175,7 @@ that you have a 32bit version of Python installed.
     ./manage.py run_ptop --all
     # This will do an initial run of the elasticsearch indexing process, but this will run as a
     # service later. This run at least creates the indices for the first time.
-    
+
     # Next, set the aliases of the elastic indices. These can be set by a management command
     # that sets the stored index names to the aliases.
 
@@ -214,6 +214,10 @@ the following contents:
 + On Mac OS X, libevent may not be installed already, which the Python `gevent` library requires. The error message
   will be a clang error that file `event.h` is not found. To fix this using Homebrew, run `brew install libevent`.
 
++ On Mac OS X, if lxml fails to install, ensure that your command line tools are up to date by running `xcode-select --install`.
+
++ On Mac OS X, if Pillow complains that it can't find freetype, make sure freetype is installed with `brew install freetype`. Then create a symlink with: `ln -s /usr/local/include/freetype2 /usr/local/include/freetype`.
+
 + If you have an authentication error running `./manage.py syncdb` the first
   time, open `pg_hba.conf` (`/etc/postgresql/9.1/main/pg_hba.conf` on Ubuntu)
   and change the line "local all all peer" to "local all all md5".
@@ -242,12 +246,15 @@ If your installation didn't set up the helper processes required by CommCare HQ
 to automatically run on system startup, you need to run them manually:
 
     redis-server /path/to/redis.conf
+
     /path/to/unzipped/elasticsearch/bin/elasticsearch &
+
     /path/to/couchdb/bin/couchdb &
 
 Then run the following separately:
 
-    # MacOS Asynchronous task scheduler
+    # Setting up the asynchronous task scheduler
+    # For Mac / Linux
     ./manage.py celeryd --verbosity=2 --beat --statedb=celery.db --events
     # Windows
     > manage.py celeryd --settings=settings
@@ -282,7 +289,7 @@ By default, HQ uses vellum minified build files to render form-designer. To use 
 Building CommCare Mobile Apps
 -----------------------------
 
-In order to build and download a CommCare mobile app from your instance of
+In order to build, download, and sync a CommCare mobile app from your instance of
 CommCare HQ, you need to follow our [instructions][builds] for how to download
 and load CommCare binaries from the Dimagi build server.
 
@@ -306,6 +313,9 @@ To run a particular test or subset of tests
 
 To run the selenium tests, you first need to install the
 [ChromeDriver](https://code.google.com/p/selenium/wiki/ChromeDriver).
+
+If database tests are failing because of a `permission denied` error, give your postgres user permissions to create a database. 
+In the postgres shell, run the following as a superuser: `ALTER USER commcarehq CREATEDB;`
 
 The tests for CloudCare currently expect the "Basic Tests" app from the
 `corpora` domain on CommCareHQ.org to be installed in the same domain locally.

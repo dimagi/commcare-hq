@@ -1,7 +1,9 @@
 from collections import defaultdict
 from copy import copy
+from datetime import datetime
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from couchdbkit.ext.django.schema import *
+from django.db import models
 from dimagi.utils.couch.database import SafeSaveDocument
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
@@ -19,7 +21,8 @@ class User(object):
     """
     
     def __init__(self, user_id, username, password, date_joined,
-                 user_data=None, additional_owner_ids=None, domain=None):
+                 user_data=None, additional_owner_ids=None, domain=None,
+                 loadtest_factor=1):
         self.user_id = user_id
         self.username = username
         self.password = password
@@ -27,6 +30,7 @@ class User(object):
         self.user_data = user_data or {}
         self.additional_owner_ids = additional_owner_ids or []
         self.domain = domain
+        self.loadtest_factor = loadtest_factor
 
     def get_owner_ids(self):
         ret = [self.user_id]
@@ -111,9 +115,9 @@ class SyncLog(SafeSaveDocument, UnicodeMixIn):
     def has_cached_payload(self, version):
         return self.get_payload_attachment_name(version) in self._doc.get('_attachments', {})
 
-    def get_cached_payload(self, version):
+    def get_cached_payload(self, version, stream=False):
         try:
-            return self.fetch_attachment(self.get_payload_attachment_name(version))
+            return self.fetch_attachment(self.get_payload_attachment_name(version), stream=stream)
         except ResourceNotFound:
             return None
 
@@ -352,3 +356,26 @@ class SyncLog(SafeSaveDocument, UnicodeMixIn):
 
     def __unicode__(self):
         return "%s synced on %s (%s)" % (self.user_id, self.date.date(), self.get_id)
+
+
+class OwnershipCleanliness(models.Model):
+    """
+    Stores whether an owner_id is "clean" aka has a case universe only belonging
+    to that ID.
+
+    We use this field to optimize restores.
+    """
+    domain = models.CharField(max_length=100, db_index=True)
+    owner_id = models.CharField(max_length=100, db_index=True, primary_key=True)
+    is_clean = models.BooleanField(default=False)
+    last_checked = models.DateTimeField()
+    hint = models.CharField(max_length=100, null=True, blank=True)
+
+    def save(self, force_insert=False, force_update=False, using=None,
+             update_fields=None):
+        self.last_checked = datetime.utcnow()
+        super(OwnershipCleanliness, self).save(force_insert, force_update, using, update_fields)
+
+    @classmethod
+    def get_for_owner(cls, domain, owner_id):
+        return cls.objects.get_or_create(domain=domain, owner_id=owner_id)[0]

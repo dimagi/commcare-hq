@@ -2,18 +2,20 @@ import copy
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import (
-    Application, AutoSelectCase,
-    AUTO_SELECT_USER, AUTO_SELECT_CASE, LoadUpdateAction, AUTO_SELECT_FIXTURE,
-    AUTO_SELECT_RAW, WORKFLOW_MODULE, DetailColumn, ScheduleVisit, FormSchedule,
-    Module, AdvancedModule, WORKFLOW_ROOT, AdvancedOpenCaseAction, SortElement,
-    MappingItem, OpenCaseAction, OpenSubCaseAction, FormActionCondition, UpdateCaseAction, WORKFLOW_FORM, FormLink)
+    Application, AutoSelectCase, AUTO_SELECT_USER, AUTO_SELECT_CASE, LoadUpdateAction, AUTO_SELECT_FIXTURE,
+    AUTO_SELECT_RAW, WORKFLOW_MODULE, DetailColumn, ScheduleVisit, FormSchedule, Module, AdvancedModule,
+    WORKFLOW_ROOT, AdvancedOpenCaseAction, SortElement, PreloadAction, MappingItem, OpenCaseAction,
+    OpenSubCaseAction, FormActionCondition, UpdateCaseAction, WORKFLOW_FORM, FormLink,
+    ReportModule, ReportAppConfig)
 from corehq.apps.app_manager.tests.util import TestFileMixin
-from corehq.apps.app_manager.suite_xml import dot_interpolate
-from corehq.toggles import MODULE_FILTER, NAMESPACE_DOMAIN
+from corehq.apps.app_manager.xpath import dot_interpolate, UserCaseXPath, interpolate_xpath
+from corehq.toggles import NAMESPACE_DOMAIN
+from corehq.feature_previews import MODULE_FILTER
 from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
 
 from lxml import etree
 import commcare_translations
+from mock import patch
 from corehq.apps.builds.models import BuildSpec
 
 
@@ -24,8 +26,12 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         update_toggle_cache(MODULE_FILTER.slug, 'skelly', True, NAMESPACE_DOMAIN)
         update_toggle_cache(MODULE_FILTER.slug, 'domain', True, NAMESPACE_DOMAIN)
         update_toggle_cache(MODULE_FILTER.slug, 'example', True, NAMESPACE_DOMAIN)
+        self.usercase_enabled_patch = patch('corehq.apps.app_manager.models.is_usercase_enabled')
+        self.usercase_enabled_mock = self.usercase_enabled_patch.start()
+        self.usercase_enabled_mock.return_value = True
 
     def tearDown(self):
+        self.usercase_enabled_patch.stop()
         clear_toggle_cache(MODULE_FILTER.slug, 'skelly', NAMESPACE_DOMAIN)
         clear_toggle_cache(MODULE_FILTER.slug, 'domain', NAMESPACE_DOMAIN)
         clear_toggle_cache(MODULE_FILTER.slug, 'example', NAMESPACE_DOMAIN)
@@ -398,7 +404,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
 
         app = Application.wrap(json)
         module = app.get_module(0)
-        module.module_filter = "./user/mod/filter = '123'"
+        module.module_filter = "#session/user/mod/filter = '123'"
         self.assertXmlPartialEqual(
             self.get_xml('module-filter-user'),
             app.create_suite(),
@@ -429,6 +435,34 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         child_form.requires = 'case'
 
         self.assertXmlPartialEqual(self.get_xml('advanced_module_parent'), app.create_suite(), "./entry[1]")
+
+    def test_usercase_id_added_update(self):
+        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+
+        child_module = app.add_module(Module.new_module("Untitled Module", None))
+        child_module.case_type = 'child'
+
+        child_form = app.new_form(0, "Untitled Form", None)
+        child_form.xmlns = 'http://id_m1-f0'
+        child_form.requires = 'case'
+        child_form.actions.update_case = UpdateCaseAction(update={'user:name': '/data/question1'})
+        child_form.actions.update_case.condition.type = 'always'
+
+        self.assertXmlPartialEqual(self.get_xml('usercase_entry'), app.create_suite(), "./entry[1]")
+
+    def test_usercase_id_added_preload(self):
+        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+
+        child_module = app.add_module(Module.new_module("Untitled Module", None))
+        child_module.case_type = 'child'
+
+        child_form = app.new_form(0, "Untitled Form", None)
+        child_form.xmlns = 'http://id_m1-f0'
+        child_form.requires = 'case'
+        child_form.actions.case_preload = PreloadAction(preload={'/data/question1': 'user:name'})
+        child_form.actions.case_preload.condition.type = 'always'
+
+        self.assertXmlPartialEqual(self.get_xml('usercase_entry'), app.create_suite(), "./entry[1]")
 
     def test_open_case_and_subcase(self):
         app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
@@ -662,6 +696,51 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
                                    app.create_suite(),
                                    './entry[1]/session')
 
+    def test_report_module(self):
+        from corehq.apps.userreports.tests import get_sample_report_config
+
+        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+
+        report_module = app.add_module(ReportModule.new_module('Reports', None))
+        report_module.unique_id = 'report_module'
+        report = get_sample_report_config()
+        report._id = 'd3ff18cd83adf4550b35db8d391f6008'
+
+        report_app_config = ReportAppConfig(report_id=report._id,
+                                            header={'en': 'CommBugz'})
+        report_app_config._report = report
+        report_module.report_configs = [report_app_config]
+        report_module._loaded = True
+        self.assertXmlPartialEqual(
+            self.get_xml('reports_module_menu'),
+            app.create_suite(),
+            "./menu",
+        )
+        self.assertXmlPartialEqual(
+            self.get_xml('reports_module_select_detail'),
+            app.create_suite(),
+            "./detail[@id='reports.d3ff18cd83adf4550b35db8d391f6008.select']",
+        )
+        self.assertXmlPartialEqual(
+            self.get_xml('reports_module_summary_detail'),
+            app.create_suite(),
+            "./detail[@id='reports.d3ff18cd83adf4550b35db8d391f6008.summary']",
+        )
+        self.assertXmlPartialEqual(
+            self.get_xml('reports_module_data_detail'),
+            app.create_suite(),
+            "./detail[@id='reports.d3ff18cd83adf4550b35db8d391f6008.data']",
+        )
+        self.assertXmlPartialEqual(
+            self.get_xml('reports_module_data_entry'),
+            app.create_suite(),
+            "./entry",
+        )
+        self.assertIn(
+            'reports.d3ff18cd83adf4550b35db8d391f6008=CommBugz',
+            app.create_app_strings('default'),
+        )
+
 
 class AdvancedModuleAsChildTest(SimpleTestCase, TestFileMixin):
     file_path = ('data', 'suite')
@@ -677,7 +756,11 @@ class AdvancedModuleAsChildTest(SimpleTestCase, TestFileMixin):
         for m_id in range(2):
             self.app.new_form(m_id, "Form", None)
 
+        self.usercase_enabled_patch = patch('corehq.apps.app_manager.models.is_usercase_enabled')
+        self.usercase_enabled_mock = self.usercase_enabled_patch.start()
+
     def tearDown(self):
+        self.usercase_enabled_patch.stop()
         clear_toggle_cache(MODULE_FILTER.slug, self.app.domain, NAMESPACE_DOMAIN)
 
     def test_basic_workflow(self):
@@ -795,7 +878,7 @@ class AdvancedModuleAsChildTest(SimpleTestCase, TestFileMixin):
 
 class RegexTest(SimpleTestCase):
 
-    def testRegex(self):
+    def test_regex(self):
         replacement = "@case_id stuff"
         cases = [
             ('./lmp < 570.5', '%s/lmp < 570.5'),
@@ -808,6 +891,29 @@ class RegexTest(SimpleTestCase):
                 case[1] % replacement
             )
 
+    def test_interpolate_xpath(self):
+        replacements = {
+            'case': "<casedb stuff>",
+            'user': UserCaseXPath().case(),
+            'session': "instance('commcaresession')/session",
+        }
+        cases = [
+            ('./lmp < 570.5', '{case}/lmp < 570.5'),
+            ('#case/lmp < 570.5', '{case}/lmp < 570.5'),
+            ('stuff ./lmp < 570.', 'stuff {case}/lmp < 570.'),
+            ('stuff #case/lmp < 570.', 'stuff {case}/lmp < 570.'),
+            ('.53 < hello.', '.53 < hello{case}'),
+            ('.53 < hello#case', '.53 < hello{case}'),
+            ('#session/data/username', '{session}/data/username'),
+            ('"jack" = #session/username', '"jack" = {session}/username'),
+            ('./@case_id = #session/userid', '{case}/@case_id = {session}/userid'),
+            ('#case/@case_id = #user/@case_id', '{case}/@case_id = {user}/@case_id'),
+        ]
+        for case in cases:
+            self.assertEqual(
+                interpolate_xpath(case[0], replacements['case']),
+                case[1].format(**replacements)
+            )
 
 class TestFormLinking(SimpleTestCase, TestFileMixin):
     file_path = ('data', 'suite')
@@ -832,8 +938,11 @@ class TestFormLinking(SimpleTestCase, TestFileMixin):
 
     def setUp(self):
         update_toggle_cache(MODULE_FILTER.slug, 'domain', True, NAMESPACE_DOMAIN)
+        self.is_usercase_enabled_patch = patch('corehq.apps.app_manager.models.is_usercase_enabled')
+        self.is_usercase_enabled_patch.start()
 
     def tearDown(self):
+        self.is_usercase_enabled_patch.stop()
         clear_toggle_cache(MODULE_FILTER.slug, 'domain', NAMESPACE_DOMAIN)
 
     def make_app(self, spec):

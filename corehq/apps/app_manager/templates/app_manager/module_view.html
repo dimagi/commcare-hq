@@ -170,21 +170,7 @@
 {% endblock %}
 
 {% block form-view %}
-    <div id="build_errors"></div>
-    <div class="delete-me">
-        <form action="{% url "delete_module" domain app.id module.unique_id %}" method="post">
-            <button type="submit" class="disable-on-submit btn btn-danger">
-                <i class="icon-trash"></i>
-                {% trans "Delete Module" %}
-            </button>
-        </form>
-    </div>
-
-    <h3>
-        <i class="icon-folder-open"></i>
-        <span class="app-manager-title variable-module_name">{{ module.name|html_trans:langs|safe }}</span>
-    </h3>
-
+    {% include 'app_manager/partials/module_view_heading.html' %}
 <div class="tabbable">
 <ul class="nav nav-tabs" id="module-view-tabs">
     <li class="active"><a href="#module-settings" data-toggle="tab">{% trans "Settings" %}</a></li>
@@ -227,19 +213,7 @@
                         </select>
                     </div>
                 </div>
-                {% if request|toggle_enabled:"MODULE_FILTER" %}
-                <div class="control-group">
-                    <label class="control-label">
-                        {% trans "Module filter" %}
-                    </label>
-                    <div class="controls commcare-feature" data-since-version="2.20">
-                        <input type="text"
-                            placeholder="{% trans "XPath expression" %}"
-                            name="module_filter"
-                            value="{% if module.module_filter %}{{ module.module_filter }}{% endif %}"/>
-                    </div>
-                </div>
-                {% endif %}
+                {% include "app_manager/partials/module_filter.html" %}
                 {% include "app_manager/partials/nav_menu_media.html" with ICON_LABEL="Icon" AUDIO_LABEL="Audio" %}
                 {% endblock %}
             </fieldset>

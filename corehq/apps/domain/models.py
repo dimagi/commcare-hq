@@ -39,10 +39,11 @@ lang_lookup = defaultdict(str)
 DATA_DICT = settings.INTERNAL_DATA
 AREA_CHOICES = [a["name"] for a in DATA_DICT["area"]]
 SUB_AREA_CHOICES = reduce(list.__add__, [a["sub_areas"] for a in DATA_DICT["area"]], [])
+DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 
 
 for lang in all_langs:
-    lang_lookup[lang['three']] = lang['names'][0] # arbitrarily using the first name if there are multiple
+    lang_lookup[lang['three']] = lang['names'][0]  # arbitrarily using the first name if there are multiple
     if lang['two'] != '':
         lang_lookup[lang['two']] = lang['names'][0]
 
@@ -103,7 +104,7 @@ class Deployment(DocumentSchema, UpdatableSchema):
     date = DateTimeProperty()
     city = StringProperty()
     countries = StringListProperty()
-    region = StringProperty() # e.g. US, LAC, SA, Sub-saharn Africa, East Africa, West Africa, Southeast Asia)
+    region = StringProperty()  # e.g. US, LAC, SA, Sub-saharn Africa, East Africa, West Africa, Southeast Asia)
     description = StringProperty()
     public = BooleanProperty(default=False)
 
@@ -164,9 +165,9 @@ class CaseDisplaySettings(DocumentSchema):
 
 class DynamicReportConfig(DocumentSchema):
     """configurations of generic/template reports to be set up for this domain"""
-    report = StringProperty() # fully-qualified path to template report class
-    name = StringProperty() # report display name in sidebar
-    kwargs = DictProperty() # arbitrary settings to configure report
+    report = StringProperty()  # fully-qualified path to template report class
+    name = StringProperty()  # report display name in sidebar
+    kwargs = DictProperty()  # arbitrary settings to configure report
     previewers_only = BooleanProperty()
 
 class DynamicReportSet(DocumentSchema):
@@ -204,12 +205,12 @@ class Domain(Document, SnapshotMixin):
     secure_submissions = BooleanProperty(default=False)
     cloudcare_releases = StringProperty(choices=['stars', 'nostars', 'default'], default='default')
     organization = StringProperty()
-    hr_name = StringProperty() # the human-readable name for this project within an organization
-    creating_user = StringProperty() # username of the user who created this domain
+    hr_name = StringProperty()  # the human-readable name for this project
+    creating_user = StringProperty()  # username of the user who created this domain
 
     # domain metadata
-    project_type = StringProperty() # e.g. MCH, HIV
-    customer_type = StringProperty() # plus, full, etc.
+    project_type = StringProperty()  # e.g. MCH, HIV
+    customer_type = StringProperty()  # plus, full, etc.
     is_test = StringProperty(choices=["true", "false", "none"], default="none")
     description = StringProperty()
     short_description = StringProperty()
@@ -220,23 +221,29 @@ class Domain(Document, SnapshotMixin):
     has_careplan = BooleanProperty(default=False)
     restrict_superusers = BooleanProperty(default=False)
     location_restriction_for_users = BooleanProperty(default=True)
+    usercase_enabled = BooleanProperty(default=False)
 
     case_display = SchemaProperty(CaseDisplaySettings)
 
     # CommConnect settings
     commconnect_enabled = BooleanProperty(default=False)
     survey_management_enabled = BooleanProperty(default=False)
-    sms_case_registration_enabled = BooleanProperty(default=False) # Whether or not a case can register via sms
-    sms_case_registration_type = StringProperty() # Case type to apply to cases registered via sms
-    sms_case_registration_owner_id = StringProperty() # Owner to apply to cases registered via sms
-    sms_case_registration_user_id = StringProperty() # Submitting user to apply to cases registered via sms
-    sms_mobile_worker_registration_enabled = BooleanProperty(default=False) # Whether or not a mobile worker can register via sms
+    # Whether or not a case can register via sms
+    sms_case_registration_enabled = BooleanProperty(default=False)
+    # Case type to apply to cases registered via sms
+    sms_case_registration_type = StringProperty()
+    # Owner to apply to cases registered via sms
+    sms_case_registration_owner_id = StringProperty()
+    # Submitting user to apply to cases registered via sms
+    sms_case_registration_user_id = StringProperty()
+    # Whether or not a mobile worker can register via sms
+    sms_mobile_worker_registration_enabled = BooleanProperty(default=False)
     default_sms_backend_id = StringProperty()
     use_default_sms_response = BooleanProperty(default=False)
     default_sms_response = StringProperty()
     chat_message_count_threshold = IntegerProperty()
-    custom_chat_template = StringProperty() # See settings.CUSTOM_CHAT_TEMPLATES
-    custom_case_username = StringProperty() # Case property to use when showing the case's name in a chat window
+    custom_chat_template = StringProperty()  # See settings.CUSTOM_CHAT_TEMPLATES
+    custom_case_username = StringProperty()  # Case property to use when showing the case's name in a chat window
     # If empty, sms can be sent at any time. Otherwise, only send during
     # these windows of time. SMS_QUEUE_ENABLED must be True in localsettings
     # for this be considered.
@@ -276,8 +283,8 @@ class Domain(Document, SnapshotMixin):
     title = StringProperty()
     cda = SchemaProperty(LicenseAgreement)
     multimedia_included = BooleanProperty(default=True)
-    downloads = IntegerProperty(default=0) # number of downloads for this specific snapshot
-    full_downloads = IntegerProperty(default=0) # number of downloads for all snapshots from this domain
+    downloads = IntegerProperty(default=0)  # number of downloads for this specific snapshot
+    full_downloads = IntegerProperty(default=0)  # number of downloads for all snapshots from this domain
     author = StringProperty()
     phone_model = StringProperty()
     attribution_notes = StringProperty()
@@ -307,6 +314,7 @@ class Domain(Document, SnapshotMixin):
     _dirty_fields = ('admin_password', 'admin_password_charset', 'city', 'countries', 'region', 'customer_type')
 
     default_mobile_worker_redirect = StringProperty(default=None)
+    last_modified = DateTimeProperty(default=datetime(2015, 1, 1))
 
     @property
     def domain_type(self):
@@ -497,7 +505,7 @@ class Domain(Document, SnapshotMixin):
             reduce=False,
             include_docs=False,
             limit=1).all()
-        if len(res) > 0: # if there have been any submissions in the past 30 days
+        if len(res) > 0:  # if there have been any submissions in the past 30 days
             return (datetime.utcnow() <=
                     datetime.strptime(res[0]['key'][2], "%Y-%m-%dT%H:%M:%SZ")
                     + timedelta(days=30))
@@ -616,6 +624,7 @@ class Domain(Document, SnapshotMixin):
         return self.case_sharing or reduce(lambda x, y: x or y, [getattr(app, 'case_sharing', False) for app in self.applications()], False)
 
     def save(self, **params):
+        self.last_modified = datetime.utcnow()
         super(Domain, self).save(**params)
         Domain.get_by_name.clear(Domain, self.name)  # clear the domain cache
 
@@ -650,7 +659,7 @@ class Domain(Document, SnapshotMixin):
         new_domain.copy_history = self.get_updated_history()
         new_domain.is_snapshot = False
         new_domain.snapshot_time = None
-        new_domain.organization = None # TODO: use current user's organization (?)
+        new_domain.organization = None  # TODO: use current user's organization (?)
 
         # reset stuff
         new_domain.cda.signed = False
@@ -748,6 +757,7 @@ class Domain(Document, SnapshotMixin):
         if doc_type in ('Application', 'RemoteApp'):
             new_doc = import_app(id, new_domain_name)
             new_doc.copy_history.append(id)
+            new_doc.case_sharing = False
             # when copying from app-docs that don't have
             # unique_id attribute on Modules
             new_doc.ensure_module_unique_ids(should_save=False)
@@ -776,6 +786,7 @@ class Domain(Document, SnapshotMixin):
 
             if doc_type == 'FixtureDataType':
                 new_doc.copy_from = id
+                new_doc.is_global = True
 
         if self.is_snapshot and doc_type == 'Application':
             new_doc.prepare_multimedia_for_exchange()
@@ -866,10 +877,7 @@ class Domain(Document, SnapshotMixin):
     def display_name(self):
         if self.is_snapshot:
             return "Snapshot of %s" % self.copied_from.display_name()
-        if self.hr_name and self.organization:
-            return self.hr_name
-        else:
-            return self.name
+        return self.hr_name or self.name
 
     def long_display_name(self):
         if self.is_snapshot:
@@ -885,7 +893,7 @@ class Domain(Document, SnapshotMixin):
                 self.hr_name or self.name
             )
         else:
-            return self.name
+            return self.hr_name or self.name
 
     __str__ = long_display_name
 
@@ -913,7 +921,7 @@ class Domain(Document, SnapshotMixin):
         super(Domain, self).delete()
         Domain.get_by_name.clear(Domain, self.name)  # clear the domain cache
 
-    def all_media(self, from_apps=None): #todo add documentation or refactor
+    def all_media(self, from_apps=None):  # todo add documentation or refactor
         from corehq.apps.hqmedia.models import CommCareMultimedia
         dom_with_media = self if not self.is_snapshot else self.copied_from
 
@@ -1037,6 +1045,14 @@ class Domain(Document, SnapshotMixin):
     def location_types(self):
         from corehq.apps.locations.models import LocationType
         return LocationType.objects.filter(domain=self.name).all()
+
+    @property
+    @memoized
+    def uses_locations(self):
+        if self.commtrack_enabled:
+            return True
+        from corehq.apps.locations.models import LocationType
+        return LocationType.objects.filter(domain=self.name).exists()
 
     @property
     def supports_multiple_locations_per_user(self):

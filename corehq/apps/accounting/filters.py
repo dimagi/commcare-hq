@@ -4,6 +4,7 @@ from corehq.apps.accounting.async_handlers import (
     SubscriberFilterAsyncHandler,
     SubscriptionFilterAsyncHandler,
     AccountFilterAsyncHandler,
+    DomainFilterAsyncHandler,
     BillingContactInfoAsyncHandler,
     SoftwarePlanAsyncHandler,
 )
@@ -39,6 +40,14 @@ class NameFilter(BaseAccountingSingleOptionFilter):
     default_text = _("All")
     async_handler = AccountFilterAsyncHandler
     async_action = 'account_name'
+
+
+class DomainFilter(BaseAccountingSingleOptionFilter):
+    slug = 'domain_name'
+    label = _("Project Space")
+    default_text = _("All")
+    async_handler = DomainFilterAsyncHandler
+    async_action = 'domain_name'
 
 
 def clean_options(options):

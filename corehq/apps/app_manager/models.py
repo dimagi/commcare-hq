@@ -36,6 +36,7 @@ from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import ServerTime
+from dimagi.utils.couch.bulk import get_docs
 from django_prbac.exceptions import PermissionDenied
 from corehq.apps.accounting.utils import domain_has_privilege
 
@@ -62,7 +63,12 @@ from corehq.apps.users.util import cc_user_domain
 from corehq.apps.domain.models import cached_property
 from corehq.apps.app_manager import current_builds, app_strings, remote_app
 from corehq.apps.app_manager import suite_xml, commcare_settings
-from corehq.apps.app_manager.util import split_path, save_xform, get_correct_app_class, ParentCasePropertyBuilder
+from corehq.apps.app_manager.util import (
+    split_path,
+    save_xform,
+    get_correct_app_class,
+    ParentCasePropertyBuilder,
+    is_usercase_enabled)
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
@@ -826,9 +832,10 @@ class FormBase(DocumentSchema):
 
     def rename_xform_language(self, old_code, new_code):
         source = XForm(self.source)
-        source.rename_language(old_code, new_code)
-        source = source.render()
-        self.source = source
+        if source.exists():
+            source.rename_language(old_code, new_code)
+            source = source.render()
+            self.source = source
 
     def default_name(self):
         app = self.get_app()
@@ -1234,6 +1241,20 @@ class MappingItem(DocumentSchema):
     # lang => localized string
     value = DictProperty()
 
+    @property
+    def key_as_variable(self):
+        """
+        Return an xml variable name to represent this key.
+        If the key has no spaces, return the key with "k" prepended.
+        If the key does contain spaces, return a hash of the key with "h" prepended.
+        The prepended characters prevent the variable name from starting with a
+        numeral, which is illegal.
+        """
+        if " " not in self.key:
+            return 'k{key}'.format(key=self.key)
+        else:
+            return 'h{hash}'.format(hash=hashlib.md5(self.key).hexdigest()[:8])
+
 
 class GraphAnnotations(IndexedSchema):
     display_text = DictProperty()
@@ -1471,6 +1492,8 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
                 return CareplanModule.wrap(data)
             elif doc_type == 'AdvancedModule':
                 return AdvancedModule.wrap(data)
+            elif doc_type == 'ReportModule':
+                return ReportModule.wrap(data)
             else:
                 raise ValueError('Unexpected doc_type for Module', doc_type)
         else:
@@ -1546,8 +1569,8 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
                     key = item.key
                     # key cannot contain certain characters because it is used
                     # to generate an xpath variable name within suite.xml
-                    # todo: I think the space here will break xpath generation
-                    # todo: which relies on 'k{key}' being a valid xpath token
+                    # (names with spaces will be hashed to form the xpath
+                    # variable name)
                     if not re.match('^([\w_ -]*)$', key):
                         yield {
                             'type': 'invalid id key',
@@ -1608,6 +1631,15 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
             if hasattr(form, 'get_child_case_types'):
                 child_case_types.update(form.get_child_case_types())
         return child_case_types
+
+    def get_custom_entries(self):
+        """
+        By default, suite entries are configured by forms, but you can also provide custom
+        entries by overriding this function.
+
+        See ReportModule for an example
+        """
+        return []
 
 
 class Module(ModuleBase):
@@ -2168,7 +2200,8 @@ class AdvancedModule(ModuleBase):
                 )
 
                 if from_module.parent_select.active:
-                    gen = suite_xml.SuiteGenerator(self.get_app())
+                    app = self.get_app()
+                    gen = suite_xml.SuiteGenerator(app, is_usercase_enabled(app.domain))
                     select_chain = gen.get_select_chain(from_module, include_self=False)
                     for n, link in enumerate(reversed(list(enumerate(select_chain)))):
                         i, module = link
@@ -2635,6 +2668,240 @@ class CareplanModule(ModuleBase):
                 'module': self.get_module_info(),
             })
         return errors
+
+
+class ReportAppConfig(DocumentSchema):
+    """
+    Class for configuring how a user configurable report shows up in an app
+    """
+    report_id = StringProperty(required=True)
+    header = DictProperty()
+
+    _report = None
+
+    @property
+    def report(self):
+        from corehq.apps.userreports.models import ReportConfiguration
+        if self._report is None:
+            self._report = ReportConfiguration.get(self.report_id)
+        return self._report
+
+    @property
+    def select_detail_id(self):
+        return 'reports.{}.select'.format(self.report_id)
+
+    @property
+    def summary_detail_id(self):
+        return 'reports.{}.summary'.format(self.report_id)
+
+    @property
+    def data_detail_id(self):
+        return 'reports.{}.data'.format(self.report_id)
+
+    def get_details(self):
+        yield (self.select_detail_id, self.select_details(), True)
+        yield (self.summary_detail_id, self.summary_details(), True)
+        yield (self.data_detail_id, self.data_details(), True)
+
+    def select_details(self):
+        return Detail(custom_xml=suite_xml.Detail(
+            id='reports.{}.select'.format(self.report_id),
+            title=suite_xml.Text(
+                locale=suite_xml.Locale(id=id_strings.report_menu()),
+            ),
+            fields=[
+                suite_xml.Field(
+                    header=suite_xml.Header(
+                        text=suite_xml.Text(
+                            locale=suite_xml.Locale(id=id_strings.report_name_header()),
+                        )
+                    ),
+                    template=suite_xml.Template(
+                        text=suite_xml.Text(
+                            xpath=suite_xml.Xpath(function='name'))
+                    ),
+                )
+            ]
+        ).serialize())
+
+    def summary_details(self):
+        def _get_graph_fields():
+            from corehq.apps.userreports.reports.specs import MultibarChartSpec
+            # todo: make this less hard-coded
+            for chart_config in self.report.charts:
+                if isinstance(chart_config, MultibarChartSpec):
+                    def _column_to_series(column):
+                        return suite_xml.Series(
+                            nodeset="instance('reports')/reports/report[@id='{}']/rows/row".format(self.report_id),
+                            x_function='@index',
+                            y_function="column[@id='{}']".format(column),
+                            radius_function='5',
+                        )
+                    _xlabels_xpath = (
+                        "instance('reports')/reports/report[@id='{}']/xlabels[@column='{}']"
+                        .format(self.report_id, chart_config.x_axis_column)
+                    )
+                    yield suite_xml.Field(
+                        header=suite_xml.Header(text=suite_xml.Text()),
+                        template=suite_xml.GraphTemplate(
+                            form='graph',
+                            graph=suite_xml.Graph(
+                                type='xy',
+                                series=[_column_to_series(c) for c in chart_config.y_axis_columns],
+                                configuration=suite_xml.ConfigurationGroup(
+                                    configs=[suite_xml.ConfigurationItem(
+                                        id='x-labels',
+                                        xpath=suite_xml.Xpath(
+                                            function=_xlabels_xpath
+                                        )
+                                    )]
+                                )
+                            )
+                        )
+                    )
+
+        return Detail(custom_xml=suite_xml.Detail(
+            id='reports.{}.summary'.format(self.report_id),
+            title=suite_xml.Text(
+                locale=suite_xml.Locale(id=id_strings.report_menu()),
+            ),
+            fields=[
+                suite_xml.Field(
+                    header=suite_xml.Header(
+                        text=suite_xml.Text(
+                            locale=suite_xml.Locale(id=id_strings.report_name_header()),
+                        )
+                    ),
+                    template=suite_xml.Template(
+                        text=suite_xml.Text(
+                            xpath=suite_xml.Xpath(function='name'))
+                    ),
+                ),
+                suite_xml.Field(
+                    header=suite_xml.Header(
+                        text=suite_xml.Text(
+                            locale=suite_xml.Locale(id=id_strings.report_description_header()),
+                        )
+                    ),
+                    template=suite_xml.Template(
+                        text=suite_xml.Text(
+                            xpath=suite_xml.Xpath(function='description'))
+                    ),
+                ),
+            ] + list(_get_graph_fields())
+        ).serialize())
+
+    def data_details(self):
+        def _column_to_field(column):
+            return suite_xml.Field(
+                header=suite_xml.Header(
+                    text=suite_xml.Text(
+                        locale=suite_xml.Locale(
+                            id=id_strings.report_column_header(self.report_id, column.column_id)
+                        ),
+                    )
+                ),
+                template=suite_xml.Template(
+                    text=suite_xml.Text(
+                        xpath=suite_xml.Xpath(function="column[@id='{}']".format(column.column_id)))
+                ),
+            )
+
+        return Detail(custom_xml=suite_xml.Detail(
+            id='reports.{}.data'.format(self.report_id),
+            title=suite_xml.Text(
+                locale=suite_xml.Locale(id=id_strings.report_name(self.report_id)),
+            ),
+            fields=[_column_to_field(c) for c in self.report.report_columns]
+        ).serialize())
+
+    def get_entry(self):
+        return suite_xml.Entry(
+            form='fixmeclayton',
+            command=suite_xml.Command(
+                id='reports.{}'.format(self.report_id),
+                text=suite_xml.Text(
+                    locale=suite_xml.Locale(id=id_strings.report_name(self.report_id)),
+                ),
+            ),
+            datums=[
+                suite_xml.SessionDatum(
+                    detail_confirm=self.summary_detail_id,
+                    detail_select=self.select_detail_id,
+                    id='report_id_{}'.format(self.report_id),
+                    nodeset="instance('reports')/reports/report[@id='{}']".format(self.report_id),
+                    value='./@id',
+                ),
+                # you are required to select something - even if you don't use it
+                suite_xml.SessionDatum(
+                    detail_select=self.data_detail_id,
+                    id='throwaway_{}'.format(self.report_id),
+                    nodeset="instance('reports')/reports/report[@id='{}']/rows/row".format(self.report_id),
+                    value="''",
+                )
+
+            ]
+        )
+
+
+class ReportModule(ModuleBase):
+    """
+    Module for user configurable reports
+    """
+
+    module_type = 'report'
+
+    report_configs = SchemaListProperty(ReportAppConfig)
+    forms = []
+    _loaded = False
+
+    @property
+    @memoized
+    def reports(self):
+        from corehq.apps.userreports.models import ReportConfiguration
+        return [
+            ReportConfiguration.wrap(doc) for doc in
+            get_docs(ReportConfiguration.get_db(), [r.report_id for r in self.report_configs])
+        ]
+
+    @classmethod
+    def new_module(cls, name, lang):
+        module = ReportModule(
+            name={(lang or 'en'): name or ugettext("Reports")},
+            case_type='',
+        )
+        module.get_or_create_unique_id()
+        return module
+
+    def _load_reports(self):
+        if not self._loaded:
+            # load reports in bulk to avoid hitting the database for each one
+            for i, report in enumerate(self.reports):
+                self.report_configs[i]._report = report
+        self._loaded = True
+
+    def get_details(self):
+        self._load_reports()
+        for config in self.report_configs:
+            for details in config.get_details():
+                yield details
+
+    def get_custom_entries(self):
+        self._load_reports()
+        for config in self.report_configs:
+            yield config.get_entry()
+
+    def get_menus(self):
+        yield suite_xml.Menu(
+            id=id_strings.menu_id(self),
+            text=suite_xml.Text(
+                locale=suite_xml.Locale(id=id_strings.module_locale(self))
+            ),
+            commands=[
+                suite_xml.Command(id=id_strings.report_command(config.report_id))
+                for config in self.report_configs
+            ]
+        )
 
 
 class VersionedDoc(LazyAttachmentDoc):
@@ -3230,6 +3497,37 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                                          content_type="image/png")
             return png_data
 
+    def generate_shortened_url(self, url_type):
+        try:
+            if settings.BITLY_LOGIN:
+                view_name = 'corehq.apps.app_manager.views.{}'.format(url_type)
+                long_url = "{}{}".format(get_url_base(), reverse(view_name, args=[self.domain, self._id]))
+                shortened_url = bitly.shorten(long_url)
+            else:
+                shortened_url = None
+        except Exception:
+            logging.exception("Problem creating bitly url for app %s. Do you have network?" % self.get_id)
+        else:
+            return shortened_url
+
+    def get_short_url(self):
+        if not self.short_url:
+            self.short_url = self.generate_shortened_url('download_jad')
+            self.save()
+        return self.short_url
+
+    def get_short_odk_url(self, with_media=False):
+        if with_media:
+            if not self.short_odk_media_url:
+                self.short_odk_media_url = self.generate_shortened_url('download_odk_media_profile')
+                self.save()
+            return self.short_odk_media_url
+        else:
+            if not self.short_odk_url:
+                self.short_odk_url = self.generate_shortened_url('download_odk_profile')
+                self.save()
+            return self.short_odk_url
+
     def fetch_jar(self):
         return self.get_jadjar().fetch_jar()
 
@@ -3249,24 +3547,8 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             # I'm putting this assert here if copy._id is ever None
             # which makes tests error
             assert copy._id
-            if settings.BITLY_LOGIN:
-                copy.short_url = bitly.shorten(
-                    get_url_base() + reverse('corehq.apps.app_manager.views.download_jad', args=[copy.domain, copy._id])
-                )
-                copy.short_odk_url = bitly.shorten(
-                    get_url_base() + reverse('corehq.apps.app_manager.views.download_odk_profile', args=[copy.domain, copy._id])
-                )
-                copy.short_odk_media_url = bitly.shorten(
-                    get_url_base() + reverse('corehq.apps.app_manager.views.download_odk_media_profile', args=[copy.domain, copy._id])
-                )
         except AssertionError:
             raise
-        except Exception:  # URLError, BitlyError
-            # for offline only
-            logging.exception("Problem creating bitly url for app %s. Do you have network?" % self.get_id)
-            copy.short_url = None
-            copy.short_odk_url = None
-            copy.short_odk_media_url = None
 
         copy.build_comment = comment
         copy.comment_from = user_id
@@ -3304,7 +3586,7 @@ def validate_lang(lang):
 
 def validate_property(property):
     # this regex is also copied in propertyList.ejs
-    if not re.match(r'^[a-zA-Z][\w_-]*(/[a-zA-Z][\w_-]*)*$', property):
+    if not re.match(r'^[a-zA-Z][\w_-]*([/:][a-zA-Z][\w_-]*)*$', property):
         raise ValueError("Invalid Property")
 
 
@@ -3611,7 +3893,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 'langs': ["default"] + self.build_langs
             })
         else:
-            return suite_xml.SuiteGenerator(self).generate_suite()
+            return suite_xml.SuiteGenerator(self, is_usercase_enabled(self.domain)).generate_suite()
 
     def create_media_suite(self):
         return suite_xml.MediaSuiteGenerator(self).generate_suite()
@@ -4127,7 +4409,7 @@ class RemoteApp(ApplicationBase):
         }
         tree = _parse_xml(files['profile.xml'])
 
-        def add_file_from_path(path, strict=False):
+        def add_file_from_path(path, strict=False, transform=None):
             added_files = []
             # must find at least one
             try:
@@ -4139,13 +4421,20 @@ class RemoteApp(ApplicationBase):
                     return
             for loc_node in tree.findall(path):
                 loc, file = self.fetch_file(loc_node.text)
+                if transform:
+                    file = transform(file)
                 files[loc] = file
                 added_files.append(file)
             return added_files
 
         add_file_from_path('features/users/logo')
         try:
-            suites = add_file_from_path(self.SUITE_XPATH, strict=True)
+            suites = add_file_from_path(
+                self.SUITE_XPATH,
+                strict=True,
+                transform=(lambda suite:
+                           remote_app.make_remote_suite(self, suite))
+            )
         except AppEditingError:
             raise AppEditingError(ugettext('Problem loading suite file from profile file. Is your profile file correct?'))
 

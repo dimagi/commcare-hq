@@ -1,3 +1,4 @@
+from datetime import datetime
 from jsonobject import StringProperty
 
 
@@ -18,3 +19,4 @@ class EvaluationContext(object):
     def __init__(self, root_doc, iteration=0):
         self.root_doc = root_doc
         self.iteration = iteration
+        self.inserted_timestamp = datetime.utcnow()

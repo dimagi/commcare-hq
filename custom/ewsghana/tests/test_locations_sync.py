@@ -13,13 +13,22 @@ TEST_DOMAIN = 'ewsghana-commtrack-locations-test'
 
 class LocationSyncTest(TestCase):
 
-    def setUp(self):
-        self.endpoint = MockEndpoint('http://test-api.com/', 'dummy', 'dummy')
-        self.api_object = EWSApi(TEST_DOMAIN, self.endpoint)
-        self.datapath = os.path.join(os.path.dirname(__file__), 'data')
+    @classmethod
+    def setUpClass(cls):
+        cls.endpoint = MockEndpoint('http://test-api.com/', 'dummy', 'dummy')
+        cls.api_object = EWSApi(TEST_DOMAIN, cls.endpoint)
+        cls.datapath = os.path.join(os.path.dirname(__file__), 'data')
         initial_bootstrap(TEST_DOMAIN)
-        self.api_object.prepare_commtrack_config()
+        cls.api_object.prepare_commtrack_config()
+        with open(os.path.join(cls.datapath, 'sample_products.json')) as f:
+            for p in json.loads(f.read()):
+                cls.api_object.product_sync(Product(p))
+
+    def setUp(self):
         for location in CouchLocation.by_domain(TEST_DOMAIN):
+            supply_point = location.linked_supply_point()
+            if supply_point:
+                supply_point.delete()
             location.delete()
 
         for sql_location in SQLLocation.objects.all():
@@ -66,6 +75,7 @@ class LocationSyncTest(TestCase):
         self.assertIsNotNone(sql_location.supply_point_id)
         supply_point = SupplyPointCase.get_by_location_id(TEST_DOMAIN, sql_location.location_id)
         self.assertIsNotNone(supply_point)
+        self.assertEqual(supply_point.location, ewsghana_location)
         self.assertEqual(location.supply_points[0].id, int(supply_point.external_id))
         self.assertEqual(location.supply_points[0].name, supply_point.name)
         self.assertListEqual(location.supply_points[0].products,
@@ -109,3 +119,74 @@ class LocationSyncTest(TestCase):
         self.assertEqual("tsactive", ewsghana_location.site_code)
         self.assertEqual("Active Test hospital", ewsghana_location.name)
         self.assertFalse(ewsghana_location.is_archived)
+
+    def test_locations_with_duplicated_site_code(self):
+        with open(os.path.join(self.datapath, 'sample_locations.json')) as f:
+            location = Location(json.loads(f.read())[8])
+        ewsghana_location = self.api_object.location_sync(location)
+        self.assertEqual(SQLLocation.objects.filter(site_code='duplicated', domain=TEST_DOMAIN).count(), 1)
+        self.assertEqual(ewsghana_location.site_code, "duplicated")
+        self.assertNotEqual(ewsghana_location.parent.site_code, "duplicated")
+
+    def test_edit_location_with_duplicated_code(self):
+        with open(os.path.join(self.datapath, 'sample_locations.json')) as f:
+            locations = json.loads(f.read())
+            location = Location(locations[8])
+            district = Location(locations[7])
+        self.api_object.location_sync(location)
+        ews_district = self.api_object.location_sync(district)
+        self.assertNotEqual(ews_district.site_code, "duplicated")
+
+    def test_edit_reporting_location(self):
+        with open(os.path.join(self.datapath, 'sample_locations.json')) as f:
+            location = Location(json.loads(f.read())[1])
+
+        self.api_object.location_sync(location)
+        location.name = 'edited'
+        location.code = 'edited'
+        edited = self.api_object.location_sync(location)
+        # shouldn't change because we use name and code from supply point not from location
+        self.assertEqual(edited.name, 'Central Regional Medical Store')
+        self.assertEqual(edited.site_code, 'crms')
+
+        location.supply_points[0].name = 'edited'
+        location.supply_points[0].code = 'edited'
+        location.supply_points[0].products = ['alk', 'abc', 'ad']
+        edited = self.api_object.location_sync(location)
+        self.assertEqual(edited.name, 'edited')
+        self.assertEqual(edited.site_code, 'edited')
+        self.assertEqual(edited.sql_location.products.count(), 3)
+        self.assertListEqual(list(edited.sql_location.products.values_list('code', flat=True).order_by('code')),
+                             ['abc', 'ad', 'alk'])
+
+    def test_location_with_products(self):
+        with open(os.path.join(self.datapath, 'sample_locations.json')) as f:
+            location = Location(json.loads(f.read())[1])
+
+        ews_location = self.api_object.location_sync(location)
+        self.assertListEqual(
+            list(ews_location.sql_location.products.values_list('code', flat=True).order_by('code')),
+            ['ad', 'al']
+        )
+
+    def test_location_without_products(self):
+        with open(os.path.join(self.datapath, 'sample_locations.json')) as f:
+            location = Location(json.loads(f.read())[8])
+
+        ews_location = self.api_object.location_sync(location)
+        self.assertEqual(ews_location.sql_location.products.count(), 0)
+
+    def test_edit_non_facility_location(self):
+        with open(os.path.join(self.datapath, 'sample_locations.json')) as f:
+            location = Location(json.loads(f.read())[0])
+
+        ewsghana_location = self.api_object.location_sync(location)
+        self.assertEqual(ewsghana_location.name, "Test country")
+        self.assertEqual(ewsghana_location.site_code, "testcountry")
+
+        location.name = "edited"
+        location.code = "edited"
+        ewsghana_location = self.api_object.location_sync(location)
+
+        self.assertEqual(ewsghana_location.name, "edited")
+        self.assertEqual(ewsghana_location.site_code, "edited")

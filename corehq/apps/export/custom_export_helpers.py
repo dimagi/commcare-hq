@@ -63,7 +63,8 @@ class CustomExportHelper(object):
     @classmethod
     def make(cls, request, export_type, domain=None, export_id=None):
         export_type = export_type or request.GET.get('request_type', 'form')
-        return cls.subclasses_map[export_type](request, domain, export_id=export_id)
+        minimal = bool(request.GET.get('minimal', False))
+        return cls.subclasses_map[export_type](request, domain, export_id=export_id, minimal=minimal)
 
     def update_custom_params(self):
         if len(self.custom_export.tables) > 0:
@@ -81,12 +82,13 @@ class CustomExportHelper(object):
             for col in self.custom_export.tables[0].columns
         ) if self.custom_export.tables else False
 
-    def __init__(self, request, domain, export_id=None):
+    def __init__(self, request, domain, export_id=None, minimal=False):
         self.request = request
         self.domain = domain
         self.presave = False
         self.transform_dates = False
         self.creating_new_export = not bool(export_id)
+        self.minimal = minimal
 
         if export_id:
             self.custom_export = self.ExportSchemaClass.get(export_id)
@@ -164,6 +166,8 @@ class CustomExportHelper(object):
 
     def get_context(self):
         table_configuration = self.format_config_for_javascript(self.custom_export.table_configuration)
+        if self.minimal:
+            table_configuration = filter(lambda t: t['selected'], table_configuration)
         return {
             'custom_export': self.custom_export,
             'default_order': self.default_order,
@@ -175,6 +179,7 @@ class CustomExportHelper(object):
             'table_configuration': table_configuration,
             'domain': self.domain,
             'commtrack_domain': Domain.get_by_name(self.domain).commtrack_enabled,
+            'minimal': self.minimal,
             'helper': {
                 'back_url': self.ExportReport.get_url(domain=self.domain),
                 'export_title': self.export_title,
@@ -199,8 +204,8 @@ class FormCustomExportHelper(CustomExportHelper):
     def export_title(self):
         return _('Export Submissions to Excel')
 
-    def __init__(self, request, domain, export_id=None):
-        super(FormCustomExportHelper, self).__init__(request, domain, export_id)
+    def __init__(self, request, domain, export_id=None, minimal=False):
+        super(FormCustomExportHelper, self).__init__(request, domain, export_id, minimal)
         if not self.custom_export.app_id:
             self.custom_export.app_id = request.GET.get('app_id')
 
@@ -286,8 +291,7 @@ class FormCustomExportHelper(CustomExportHelper):
             if self.creating_new_export and (question in self.default_questions or question in current_questions):
                 col["selected"] = True
 
-            if toggle_enabled(self.request, 'SPLIT_MULTISELECT_EXPORT'):
-                update_multi_select_column(question, col)
+            update_multi_select_column(question, col)
 
         requires_case = self.custom_export.uses_cases()
 
@@ -343,8 +347,7 @@ class FormCustomExportHelper(CustomExportHelper):
                 show=True,
             ).to_config_format(selected=self.creating_new_export)
 
-            if toggle_enabled(self.request, 'SPLIT_MULTISELECT_EXPORT'):
-                update_multi_select_column(question, col)
+            update_multi_select_column(question, col)
 
             return col
 

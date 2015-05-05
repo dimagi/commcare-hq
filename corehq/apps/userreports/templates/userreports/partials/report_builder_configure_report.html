@@ -54,16 +54,25 @@
                 return that.property() != "";
             });
         };
+        PropertyListItem.wrap = function(o){
+            var i = new PropertyListItem();
+            i.property(o.property);
+            i.displayText(o.display_text);
+            i.format(o.format);
+            return i;
+        };
+
         /**
          * Knockout view model controlling the filter property list.
          */
         var propertyList = function(options) {
             var that = this;
             options = options || {};
-            this.hasFormatCol = ko.observable(options.hasFormatCol != undefined ? options.hasFormatCol : true);
+            this.buttonText = options.buttonText !== undefined ? options.buttonText : "Add property";
+            this.hasFormatCol = ko.observable(options.hasFormatCol !== undefined ? options.hasFormatCol : true);
             this.formatOptions = ko.observableArray(["Choice", "Date", "Numeric"]);
             this.propertyOptions = ko.observableArray({{ property_options|JSON }});
-            this.columns = ko.observableArray([]);
+            this.columns = ko.observableArray(options.initialCols !== undefined ? options.initialCols : []);
             this.serializedProperties = ko.computed(function(){
                 return JSON.stringify(
                     _.map(that.columns(), function(c){return c.toJS()})
@@ -78,8 +87,22 @@
 
         var configForm = function(){
             var that = this;
-            this.filtersList = new propertyList({hasFormatCol: true});
-            this.columnsList = new propertyList({hasFormatCol:false});
+            var initialFilters = _.map({{ initial_filters|JSON }}, function(i){
+                return PropertyListItem.wrap(i);
+            });
+            var initialColumns = _.map({{ initial_columns|JSON }}, function(i){
+                return PropertyListItem.wrap(i);
+            });
+            this.filtersList = new propertyList({
+                hasFormatCol: true,
+                initialCols: initialFilters,
+                buttonText: 'Add Filter'
+            });
+            this.columnsList = new propertyList({
+                hasFormatCol: false,
+                initialCols: initialColumns,
+                buttonText: 'Add Column'
+            });
             this.submitHandler = function(){
                 var isValid = true;
                 isValid = that.filtersList.validate() && isValid;

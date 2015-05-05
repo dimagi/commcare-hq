@@ -43,7 +43,7 @@ class ApisTest(TestCase):
         self.assertEqual(webusers.is_active, True)
         self.assertEqual(webusers.is_staff, False)
         self.assertEqual(webusers.is_superuser, False)
-        self.assertEqual(webusers.location, 319)
+        self.assertIsNone(webusers.location)
         self.assertEqual(webusers.organization, 'TestOrg1')
         self.assertEqual(webusers.password, 'sha1$4b8dd$8acea54703614eea2fbb4bf7fd6ee9465a67ff53')
         self.assertEqual(webusers.sms_notifications, True)
@@ -63,15 +63,6 @@ class ApisTest(TestCase):
         self.assertEqual(smsuser.email, None)
         self.assertEqual(smsuser.is_active, "True")
         self.assertEqual(smsuser.phone_numbers, ["+2222222222"])
-
-    def test_parse_productstock_json(self):
-        with open(os.path.join(self.datapath, 'sample_productstocks.json')) as f:
-            product_stock = ProductStock(json.loads(f.read())[0])
-        self.assertEqual(None, product_stock.auto_monthly_consumption)
-        self.assertEqual("2011-09-01T22:41:35.039236", product_stock.last_modified)
-        self.assertEqual("ip", product_stock.product)
-        self.assertEqual(0.0, product_stock.quantity)
-        self.assertEqual(68, product_stock.supply_point)
 
     def test_parse_stocktransaction_json(self):
         with open(os.path.join(self.datapath, 'sample_stocktransactions.json')) as f:
