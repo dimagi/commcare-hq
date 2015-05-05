@@ -1,5 +1,5 @@
 from datetime import timedelta
-from couchdbkit.ext.django.schema import Document
+from dimagi.ext.couchdbkit import Document
 import fluff
 
 
