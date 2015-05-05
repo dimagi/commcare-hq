@@ -562,17 +562,16 @@ class SubscriptionForm(forms.Form):
                     "Please update 'Client Contact Emails' "
                     '<strong><a href=%s target="_blank">here</a></strong> '
                     "before using Billing Account <strong>%s</strong>."
-                    ) % (
-                        reverse(ManageBillingAccountView.urlname, args=[account.id]),
-                        account.name,
-                    )
-                ))
+                ) % (
+                    reverse(ManageBillingAccountView.urlname, args=[account.id]),
+                    account.name,
+                )))
 
         start_date = self.cleaned_data.get('start_date') or self.subscription.date_start
         if (self.cleaned_data['end_date'] is not None
             and start_date > self.cleaned_data['end_date']):
             raise ValidationError(_("End date must be after start date."))
-        
+
         if self.cleaned_data['end_date'] and self.cleaned_data['end_date'] <= datetime.date.today():
             raise ValidationError(_("End date must be in the future."))
 
@@ -1277,7 +1276,7 @@ class SoftwarePlanVersionForm(forms.Form):
                 "You may have at most ONE rate per product type "
                 "(CommCare, CommCare Supply, etc.)"
             ))
-        
+
         self.new_product_rates = rate_instances
         rate_ids = lambda x: set([r.id for r in x])
         if (not self.is_update
