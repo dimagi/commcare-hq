@@ -24,12 +24,10 @@ from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.custom_data_fields import CustomDataModelMixin
 from corehq.apps.domain.decorators import domain_admin_required, login_and_domain_required
-from corehq.apps.es import UserES
 from corehq.apps.facilities.models import FacilityRegistry
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.users.forms import MultipleSelectionForm
-from corehq.apps.users.util import user_display_string
 from corehq.util import reverse, get_document_or_404
 from custom.openlmis.tasks import bootstrap_domain_task
 
@@ -419,19 +417,6 @@ class EditLocationView(NewLocationView):
         return form
 
     @property
-    def all_users(self):
-        user_query = (UserES()
-                      .domain(self.domain)
-                      .mobile_users()
-                      .fields(['_id', 'username', 'first_name', 'last_name']))
-        return [
-            (u['_id'], user_display_string(u['username'],
-                                           u.get('first_name', ''),
-                                           u.get('last_name', '')))
-            for u in user_query.run().hits
-        ]
-
-    @property
     @memoized
     def users_form(self):
         form = UsersAtLocationForm(
@@ -441,7 +426,6 @@ class EditLocationView(NewLocationView):
             submit_label=_("Update Users at this Location"),
             prefix="users",
         )
-        form.fields['selected_ids'].choices = self.all_users
         return form
 
     @property

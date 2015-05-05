@@ -12,7 +12,7 @@ from corehq.apps.custom_data_fields import CustomDataEditor
 from corehq.apps.es import UserES
 from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.users.util import raw_username
+from corehq.apps.users.util import raw_username, user_display_string
 
 from .models import Location
 from .signals import location_created, location_edited
@@ -265,6 +265,19 @@ class UsersAtLocationForm(MultipleSelectionForm):
             initial={'selected_ids': self.users_at_location},
             *args, **kwargs
         )
+        self.fields['selected_ids'].choices = self.get_all_users()
+
+    def get_all_users(self):
+        user_query = (UserES()
+                      .domain(self.domain_object.name)
+                      .mobile_users()
+                      .fields(['_id', 'username', 'first_name', 'last_name']))
+        return [
+            (u['_id'], user_display_string(u['username'],
+                                           u.get('first_name', ''),
+                                           u.get('last_name', '')))
+            for u in user_query.run().hits
+        ]
 
     @property
     @memoized
