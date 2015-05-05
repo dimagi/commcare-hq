@@ -1,3 +1,5 @@
+import requests
+import json
 from copy import deepcopy
 from collections import defaultdict, namedtuple
 from time import sleep
@@ -5,7 +7,7 @@ from couchdbkit import ResourceNotFound, BulkSaveError
 from django.http import Http404
 from jsonobject.exceptions import WrappingAttributeError
 from dimagi.utils.chunked import chunked
-from dimagi.utils.couch.bulk import get_docs
+from dimagi.utils.requestskit import get_auth
 
 
 def get_document_or_404(cls, domain, doc_id, additional_doc_types=None):
@@ -129,6 +131,19 @@ def _is_unchanged(doc_or_Document, doc):
     return new_doc == doc
 
 
+def send_keys_to_couch(db, keys):
+    """
+    Copied from dimagi-utils get_docs. Returns a response for every key.
+    """
+    url = db.uri + '/_all_docs'
+    r = requests.post(url=url,
+                      data=json.dumps({'keys': filter(None, keys)}),
+                      headers={'content-type': 'application/json'},
+                      auth=get_auth(url),
+                      params={'include_docs': 'true'})
+    return r.json()['rows']
+
+
 def iter_update(db, fn, ids, max_retries=3):
     """
     Map `fn` over every doc in `db` matching `ids`
@@ -166,7 +181,7 @@ def iter_update(db, fn, ids, max_retries=3):
     def _iter_update(doc_ids, try_num):
         with IterDB(db, chunksize=100) as iter_db:
             for chunk in chunked(set(doc_ids), 100):
-                for res in get_docs(db, keys=chunk):
+                for res in send_keys_to_couch(db, keys=chunk):
                     raw_doc = res.get('doc')
                     doc_id = res.get('id', None)
                     if not raw_doc or not doc_id:
