@@ -21,7 +21,6 @@ from corehq.apps.reports.util import make_form_couch_key
 from corehq.apps.users.models import CouchUser
 from corehq.elastic import es_query, ADD_TO_ES_FILTER, ES_URLS
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
-from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from dimagi.utils.parsing import json_format_datetime
 
 

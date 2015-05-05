@@ -1,6 +1,5 @@
 import functools
 from couchdbkit.exceptions import ResourceNotFound
-from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 from corehq.util.dates import iso_string_to_datetime
@@ -24,8 +23,6 @@ from corehq.elastic import es_query, ADD_TO_ES_FILTER
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch import get_cached_property, IncompatibleDocument, safe_index
-from corehq.apps.reports.graph_models import PieChart
-from corehq import elastic
 from dimagi.utils.decorators.memoized import memoized
 
 

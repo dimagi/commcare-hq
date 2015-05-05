@@ -2,7 +2,6 @@
 Logic about chws phones and cases go here.
 """
 from collections import defaultdict
-from datetime import datetime
 import itertools
 import logging
 from casexml.apps.case.models import CommCareCase
@@ -11,7 +10,6 @@ from casexml.apps.case.util import reverse_indices
 from casexml.apps.case.xform import CaseDbCache
 from casexml.apps.phone.models import CaseState
 from corehq.util.dates import iso_string_to_datetime
-from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import string_to_utc_datetime
 
 logger = logging.getLogger(__name__)
