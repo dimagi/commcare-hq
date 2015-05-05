@@ -1022,6 +1022,14 @@ class NavMenuItemMediaMixin(DocumentSchema):
         else:
             return media_dict[lang] if lang in media_dict else default_media
 
+    @property
+    def default_media_image(self):
+        return self.icon_by_language('en')
+
+    @property
+    def default_media_audio(self):
+        return self.audio_by_language('en')
+
     def icon_by_language(self, lang):
         return self._get_media_by_language('media_image', lang)
 
