@@ -1,11 +1,14 @@
 from dateutil.parser import parse
 from django.core.management.base import BaseCommand, CommandError
-from corehq.apps.sms.models import CallLog
-from corehq.util.timezones.conversions import ServerTime, UserTime
+from corehq.apps.sms.models import CallLog, INCOMING, OUTGOING
+from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch.database import iter_docs
 from math import ceil
 from optparse import make_option
 import pytz
+
+
+UNKNOWN = '?'
 
 
 def get_ids(start_date=None, timezone=None):
@@ -51,7 +54,11 @@ def get_domain_data(data, domain):
 
 def get_backend_data(data, backend_api):
     if backend_api not in data:
-        data[backend_api] = {'calls': 0, 'minutes': 0}
+        data[backend_api] = {
+            INCOMING: {'calls': 0, 'minutes': 0},
+            OUTGOING: {'calls': 0, 'minutes': 0},
+            UNKNOWN: {'calls': 0, 'minutes': 0},
+        }
     return data[backend_api]
 
 
@@ -66,17 +73,36 @@ def get_backend_api(call):
     return backend_api or 'catchall'
 
 
+def get_direction(call):
+    return {
+        INCOMING: INCOMING,
+        OUTGOING: OUTGOING,
+    }.get(call.direction, UNKNOWN)
+
+
 def get_data(ids, timezone=None):
     """
     returns the data in the format:
     {
         '2015-03': {
             'domain1': {
-                'KOOKOO': {'calls': 40, 'minutes': 45}
+                'KOOKOO': {
+                    'I': {'calls': 2, 'minutes': 3},
+                    'O': {'calls': 40, 'minutes': 45},
+                    '?': {'calls': 0, 'minutes': 0},
+                 },
             },
             'domain2': {
-                'KOOKOO': {'calls': 20, 'minutes': 25}
-                'TELERIVET': {'calls': 5, 'minutes': 0}
+                'KOOKOO': {
+                    'I': {'calls': 1, 'minutes': 1},
+                    'O': {'calls': 20, 'minutes': 25},
+                    '?': {'calls': 0, 'minutes': 0},
+                 },
+                'TELERIVET': {
+                    'I': {'calls': 10, 'minutes': 0},
+                    'O': {'calls': 0, 'minutes': 0},
+                    '?': {'calls': 0, 'minutes': 0},
+                 },
             }
         }
     }
@@ -89,10 +115,11 @@ def get_data(ids, timezone=None):
         domain_data = get_domain_data(month_data, call.domain)
         backend_api = get_backend_api(call)
         backend_data = get_backend_data(domain_data, backend_api)
-        backend_data['calls'] += 1
+        direction = get_direction(call)
+        backend_data[direction]['calls'] += 1
         duration = (call.duration or 0) / 60.0
         duration = int(ceil(duration))
-        backend_data['minutes'] += duration
+        backend_data[direction]['minutes'] += duration
     return data
 
 
@@ -128,11 +155,12 @@ class Command(BaseCommand):
             except:
                 raise CommandError('Start date must be YYYY-MM-DD')
 
-        print 'Month,Domain,Backend,Num Calls,Minutes Used'
+        print 'Month,Domain,Backend,Direction,Num Calls,Minutes Used'
         ids = get_ids(start_date, timezone=timezone)
         data = get_data(ids, timezone=timezone)
         for (month, month_data) in data.iteritems():
             for (domain, domain_data) in month_data.iteritems():
                 for (backend, backend_data) in domain_data.iteritems():
-                    print '%s,%s,%s,%s,%s' % (month, domain, backend,
-                        backend_data['calls'], backend_data['minutes'])
+                    for (direction, direction_data) in backend_data.iteritems():
+                        print '%s,%s,%s,%s,%s,%s' % (month, domain, backend, direction,
+                            direction_data['calls'], direction_data['minutes'])
