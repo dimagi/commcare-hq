@@ -11,7 +11,7 @@ class JsonHandlerTest(SimpleTestCase):
         self.assertEqual('2014-01-05', json_handler(datetime.date(2014, 1, 5)))
 
     def test_datetime(self):
-        self.assertEqual('2014-01-05T12:15:05Z', json_handler(datetime.datetime(2014, 1, 5, 12, 15, 5)))
+        self.assertEqual('2014-01-05T12:15:05.000000Z', json_handler(datetime.datetime(2014, 1, 5, 12, 15, 5)))
 
     def test_time(self):
         self.assertEqual('11:15:22', json_handler(datetime.time(11, 15, 22)))

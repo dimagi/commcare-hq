@@ -1,6 +1,6 @@
 from couchdbkit import ResourceConflict
 from couchdbkit.client import Database
-from couchdbkit.ext.django.schema import Document
+from dimagi.ext.couchdbkit import Document
 from django.conf import settings
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import get_docs

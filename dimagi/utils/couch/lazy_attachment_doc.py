@@ -1,6 +1,6 @@
 from mimetypes import guess_type
 from couchdbkit import ResourceNotFound
-from couchdbkit.ext.django.schema import Document
+from dimagi.ext.couchdbkit import Document
 from couchdbkit.resource import encode_attachments
 from django.core.cache import cache
 

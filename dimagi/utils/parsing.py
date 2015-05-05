@@ -1,9 +1,11 @@
-from datetime import datetime, date, time
+from datetime import date, time, datetime
 from dateutil.parser import parse
 import dateutil.tz
 
+
 TRUE_STRINGS = ("true", "t", "yes", "y", "1")
 FALSE_STRINGS = ("false", "f", "no", "n", "0")
+
 
 def string_to_boolean(val):
     """
@@ -18,13 +20,12 @@ def string_to_boolean(val):
     elif val.lower().strip() in FALSE_STRINGS:
         return False
     raise ValueError("%s is not a parseable boolean!" % val)
-    
+
+
 def string_to_datetime(val):
     """
-    Try to convert a string to a date.  
+    Try to convert a string to a date.
     """
-    # python dateutil gives this to us out of the box, but it's convenient to be able
-    # to reference it here.  
     if isinstance(val, datetime):
         return val
     elif isinstance(val, date):
@@ -39,17 +40,27 @@ def string_to_utc_datetime(val):
     return val.astimezone(dateutil.tz.tzutc()).replace(tzinfo=None)
 
 
-# some date to json tricks from
-# http://stackoverflow.com/questions/455580/json-datetime-between-python-and-javascript
-ISO_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
-
-
-def json_format_datetime(time):
-    return time.strftime(ISO_FORMAT)
-
+ISO_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ'
 ISO_DATE_FORMAT = '%Y-%m-%d'
-def json_format_date(time):
-    return time.strftime(ISO_DATE_FORMAT)
+
+
+def json_format_datetime(dt):
+    """
+    includes microseconds (always)
+    >>> json_format_datetime(datetime.datetime(2015, 4, 8, 12, 0, 1))
+    '2015-04-08T12:00:01.000000Z'
+    """
+    from dimagi.ext.jsonobject import _assert
+    _assert(isinstance(dt, datetime),
+            'json_format_datetime expects a datetime: {!r}'.format(dt))
+    if isinstance(dt, datetime):
+        _assert(dt.tzinfo is None,
+                'json_format_datetime expects offset-naive: {!r}'.format(dt))
+    return dt.strftime(ISO_DATETIME_FORMAT)
+
+
+def json_format_date(date_):
+    return date_.strftime(ISO_DATE_FORMAT)
 
 
 ISO_MIN = datetime(1900, 1, 1)

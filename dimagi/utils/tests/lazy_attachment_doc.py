@@ -1,5 +1,5 @@
 from couchdbkit import ResourceConflict
-from couchdbkit.ext.django.schema import StringProperty
+from dimagi.ext.couchdbkit import StringProperty
 from django.test import TestCase
 from dimagi.utils.couch.lazy_attachment_doc import LazyAttachmentDoc
 

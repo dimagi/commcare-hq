@@ -4,7 +4,7 @@ from datetime import timedelta
 from dimagi.utils.couch.delete import delete
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.cache.cache_core import get_redis_client
-from couchdbkit.ext.django.schema import DateTimeProperty, DocumentSchema
+from dimagi.ext.couchdbkit import DateTimeProperty, DocumentSchema
 from couchdbkit.exceptions import ResourceConflict
 import redis
 import json
