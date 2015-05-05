@@ -4,7 +4,8 @@ from optparse import make_option
 from collections import defaultdict
 from django.core.management.base import LabelCommand
 from django.conf import settings
-from jsonobject import JsonObject, StringProperty, ListProperty, base
+from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty
+from jsonobject.base import DefaultProperty
 
 # This command relies on a properly formatted json spec in order to run.
 # Here is an example of a spec:
@@ -128,7 +129,7 @@ class CouchConfig(JsonObject):
     user = StringProperty()
     password = StringProperty()
     host = StringProperty(required=True)
-    headers = base.DefaultProperty()
+    headers = DefaultProperty()
 
     def __init__(self, obj=None, **kwargs):
         PREFIX = "CI"

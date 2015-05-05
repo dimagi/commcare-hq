@@ -5,7 +5,7 @@ import logging
 import urllib
 import urlparse
 
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 from couchdbkit.exceptions import ResourceNotFound
 from django.core.cache import cache
 import socket
@@ -370,24 +370,11 @@ class RepeatRecord(Document, LockableMixIn):
     repeater_type = StringProperty()
     domain = StringProperty()
 
-    last_checked = DateTimeProperty(exact=True)
-    next_check = DateTimeProperty(exact=True)
+    last_checked = DateTimeProperty()
+    next_check = DateTimeProperty()
     succeeded = BooleanProperty(default=False)
 
     payload_id = StringProperty()
-
-    @classmethod
-    def wrap(cls, data):
-        for attr in ('last_checked', 'next_check'):
-            value = data.get(attr)
-            if not value:
-                continue
-            try:
-                dt = datetime.strptime(value, '%Y-%m-%dT%H:%M:%SZ')
-                data[attr] = dt.isoformat() + '.000000Z'
-            except ValueError:
-                pass
-        return super(RepeatRecord, cls).wrap(data)
 
     @property
     @memoized

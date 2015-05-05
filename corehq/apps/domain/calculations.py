@@ -4,7 +4,7 @@ from dateutil.relativedelta import relativedelta
 
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
-from jsonobject.properties import DateTimeProperty
+from dimagi.ext.jsonobject import DateTimeProperty
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.apps.es.sms import SMSES
@@ -22,6 +22,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.elastic import es_query, ADD_TO_ES_FILTER, ES_URLS
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
+from dimagi.utils.parsing import json_format_datetime
 
 
 def num_web_users(domain, *args):
@@ -33,7 +34,6 @@ def num_mobile_users(domain, *args):
     row = get_db().view('users/by_domain', startkey=[domain], endkey=[domain, {}]).one()
     return row["value"] if row else 0
 
-DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 DISPLAY_DATE_FORMAT = '%Y/%m/%d %H:%M:%S'
 
 def active_mobile_users(domain, *args):
@@ -76,13 +76,14 @@ def cases(domain, *args):
     row = get_db().view("hqcase/types_by_domain", startkey=[domain], endkey=[domain, {}]).one()
     return row["value"] if row else 0
 
+
 def cases_in_last(domain, days):
     """
     Returns the number of open cases that have been modified in the last <days> days
     """
     now = datetime.utcnow()
-    then = (now - timedelta(days=int(days))).strftime(DATE_FORMAT)
-    now = now.strftime(DATE_FORMAT)
+    then = json_format_datetime(now - timedelta(days=int(days)))
+    now = json_format_datetime(now)
 
     q = {"query": {
         "range": {
@@ -97,8 +98,8 @@ def inactive_cases_in_last(domain, days):
     Returns the number of open cases that have been modified in the last <days> days
     """
     now = datetime.utcnow()
-    then = (now - timedelta(days=int(days))).strftime(DATE_FORMAT)
-    now = now.strftime(DATE_FORMAT)
+    then = json_format_datetime(now - timedelta(days=int(days)))
+    now = json_format_datetime(now)
 
     q = {"query":
              {"bool": {
@@ -138,8 +139,8 @@ def sms_in_last_bool(domain, days=None):
 
 def active(domain, *args):
     now = datetime.utcnow()
-    then = (now - timedelta(days=30)).strftime(DATE_FORMAT)
-    now = now.strftime(DATE_FORMAT)
+    then = json_format_datetime(now - timedelta(days=30))
+    now = json_format_datetime(now)
 
     key = ['submission', domain]
     row = get_db().view(

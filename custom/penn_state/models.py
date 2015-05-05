@@ -1,6 +1,6 @@
 import datetime
 
-from couchdbkit.ext.django.schema import (Document, StringProperty,
+from dimagi.ext.couchdbkit import (Document, StringProperty,
     ListProperty, DictProperty, DateProperty)
 
 from corehq.apps.groups.models import Group
