@@ -20,7 +20,10 @@ def is_locations_admin(view_fn):
     return locations_access_required(domain_admin_required(view_fn))
 
 
-def user_can_edit_location(user, location):
+def user_can_edit_location(user, location, project):
+    if not project.location_restriction_for_users:
+        return True
+
     user_loc = user.get_location(location.domain)
     if user_loc:
         user_loc = user_loc.sql_location
@@ -40,7 +43,7 @@ def can_edit_location(view_fn):
         except SQLLocation.DoesNotExist:
             raise Http404()
         else:
-            if user_can_edit_location(request.couch_user, location):
+            if user_can_edit_location(request.couch_user, location, request.project):
                 return view_fn(request, domain, loc_id, *args, **kwargs)
         raise Http404()
     return locations_access_required(_inner)
@@ -50,7 +53,7 @@ def user_can_edit_location_types(user, project):
     if not project.location_restriction_for_users:
         return True
 
-    return False if user.get_domain_membership(project.name).location_id else True
+    return not user.get_domain_membership(project.name).location_id
 
 
 def can_edit_location_types(view_fn):

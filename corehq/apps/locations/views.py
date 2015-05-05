@@ -70,6 +70,8 @@ class LocationsListView(BaseLocationView):
     template_name = 'locations/manage/locations.html'
 
     def viewable_locations(self):
+        if not self.domain_object.location_restriction_for_users:
+            return ['all']
         locations = self.editable_locations()
         user_loc = self.request.couch_user.get_location(self.domain)
         if user_loc:
@@ -78,6 +80,8 @@ class LocationsListView(BaseLocationView):
         return locations
 
     def editable_locations(self):
+        if not self.domain_object.location_restriction_for_users:
+            return ['all']
         user_loc = self.request.couch_user.get_location(self.domain)
         if not user_loc:
             locations = ['all']
