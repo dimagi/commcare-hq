@@ -4,7 +4,7 @@ from dateutil.relativedelta import relativedelta
 
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
-from dimagi.ext.jsonobject import DateTimeProperty
+from corehq.util.dates import iso_string_to_datetime
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.apps.es.sms import SMSES
@@ -154,7 +154,7 @@ def active(domain, *args):
 def display_time(row, display=True):
     submission_time = row["key"][2]
     if display:
-        return DateTimeProperty().wrap(submission_time).strftime(DISPLAY_DATE_FORMAT)
+        return iso_string_to_datetime(submission_time).strftime(DISPLAY_DATE_FORMAT)
     else:
         return submission_time
 
