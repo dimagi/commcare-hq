@@ -424,7 +424,7 @@ STREAM_RESTORE_CACHE = PredicatablyRandomToggle(
     'stream_cached_restore',
     'Stream cached restore from couchdb',
     TAG_EXPERIMENTAL,
-    randomness=.05,
+    randomness=.5,
     namespace=[NAMESPACE_DOMAIN]
 )
 
@@ -443,4 +443,18 @@ OWNERSHIP_CLEANLINESS = PredicatablyRandomToggle(
     randomness=.05,
     namespace=NAMESPACE_DOMAIN,
     help_link='https://docs.google.com/a/dimagi.com/document/d/12WfZLerFL832LZbMwqRAvXt82scdjDL51WZVNa31f28/edit#heading=h.gu9sjekp0u2p',
+)
+
+MOBILE_UCR = StaticToggle(
+    'mobile_ucr',
+    ('Mobile UCR: Configure viewing user configurable reports on the mobile '
+     'through the app builder'),
+    TAG_EXPERIMENTAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+FM_FACING_SUBSCRIPTIONS = StaticToggle(
+    'fm_facing_subscriptions',
+    'FM Facing Subscription Management Interface',
+    TAG_PRODUCT_CORE,
 )

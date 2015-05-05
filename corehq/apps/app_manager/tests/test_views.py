@@ -12,17 +12,19 @@ from corehq.apps.app_manager.models import Application, APP_V1, APP_V2, Module
 
 
 class TestViews(TestCase):
-    def setUp(self):
-        self.domain = 'app-manager-testviews-domain'
-        self.username = 'cornelius'
-        self.password = 'fudge'
-        self.user = WebUser.create(self.domain, self.username, self.password, is_active=True)
-        self.user.is_superuser = True
-        self.user.save()
-        toggles.CUSTOM_PROPERTIES.set("domain:{domain}".format(domain=self.domain), True)
+    @classmethod
+    def setUpClass(cls):
+        cls.domain = 'app-manager-testviews-domain'
+        cls.username = 'cornelius'
+        cls.password = 'fudge'
+        cls.user = WebUser.create(cls.domain, cls.username, cls.password, is_active=True)
+        cls.user.is_superuser = True
+        cls.user.save()
+        toggles.CUSTOM_PROPERTIES.set("domain:{domain}".format(domain=cls.domain), True)
 
-    def tearDown(self):
-        self.user.delete()
+    @classmethod
+    def tearDownClass(cls):
+        cls.user.delete()
 
     def test_download_file_bad_xform_404(self):
         '''

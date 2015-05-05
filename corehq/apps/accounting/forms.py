@@ -550,7 +550,13 @@ class SubscriptionForm(forms.Form):
         account_id = self.cleaned_data['active_accounts'] or self.cleaned_data['account']
         if account_id:
             account = BillingAccount.objects.get(id=account_id)
-            if not self.cleaned_data['do_not_invoice'] and not account.billingcontactinfo.emails:
+            if (
+                not self.cleaned_data['do_not_invoice']
+                and (
+                    not account.billingcontactinfo
+                    or not account.billingcontactinfo.emails
+                )
+            ):
                 from corehq.apps.accounting.views import ManageBillingAccountView
                 raise forms.ValidationError(mark_safe(
                     "Please update 'Client Contact Emails' "

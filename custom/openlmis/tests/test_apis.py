@@ -4,7 +4,7 @@ import os
 from django.test import TestCase
 from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.commtrack.tests import bootstrap_domain
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import Location, LocationType
 from custom.openlmis.api import get_facilities, Facility, get_facility_programs, FacilityProgramLink, get_programs_and_products, Program, RequisitionDetails, RequisitionStatus, get_requisition_statuses, Requisition
 from custom.openlmis.commtrack import sync_supply_point_to_openlmis, submit_requisition
 from custom.openlmis.tests.mock_api import MockOpenLMISEndpoint
@@ -152,6 +152,7 @@ class PostApiTest(TestCase):
         bootstrap_domain(self.domain)
         self.api = MockOpenLMISEndpoint("uri://mock/lmis/endpoint", username='ned', password='honor')
         self.datapath = os.path.join(os.path.dirname(__file__), 'data')
+        LocationType.objects.get_or_create(domain=self.domain, name='chw')
 
     def testCreateVirtualFacility(self):
         loc = Location(site_code='1234', name='beavis', domain=self.domain,

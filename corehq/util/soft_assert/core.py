@@ -2,6 +2,8 @@ from collections import namedtuple
 import hashlib
 import traceback
 
+from corehq.util.cache_utils import ExponentialBackoff
+
 
 SoftAssertInfo = namedtuple('SoftAssertInfo',
                             ['traceback', 'count', 'msg', 'key', 'line',
@@ -9,15 +11,12 @@ SoftAssertInfo = namedtuple('SoftAssertInfo',
 
 
 class SoftAssert(object):
-    def __init__(self, debug=False, send=None, incrementing_counter=None,
-                 should_send=None, skip_frames=0, key_limit=2):
+    def __init__(self, debug=False, send=None, use_exponential_backoff=True,
+                 skip_frames=0, key_limit=2):
         assert send
-        assert incrementing_counter
-        assert should_send
         self.debug = debug
         self.send = send
-        self.incrementing_counter = incrementing_counter
-        self.should_send = should_send
+        self.use_exponential_backoff = use_exponential_backoff
         self.tb_skip = skip_frames + 3
         self.key_limit = key_limit
 
@@ -34,8 +33,8 @@ class SoftAssert(object):
             full_tb = get_traceback(skip=self.tb_skip)
             line = short_tb.strip().split('\n')[-1].strip()
             tb_id = hashlib.md5(short_tb).hexdigest()
-            count = self.incrementing_counter(tb_id)
-            if self.should_send(count):
+            count = ExponentialBackoff.increment(tb_id)
+            if not self.use_exponential_backoff or not ExponentialBackoff.should_backoff(tb_id):
                 self.send(SoftAssertInfo(traceback=full_tb,
                                          short_traceback=short_tb,
                                          count=count,
