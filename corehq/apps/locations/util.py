@@ -2,7 +2,8 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.products.models import Product
 from corehq.apps.locations.models import Location, SQLLocation
-from corehq.apps.locations.permissions import user_can_edit_location
+from corehq.apps.locations.permissions import (user_can_edit_location,
+                                               user_can_view_location)
 from corehq.apps.domain.models import Domain
 from corehq.util.quickcache import quickcache
 from dimagi.utils.couch.database import iter_bulk_delete
@@ -45,6 +46,7 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False,
         SQLLocation.root_locations(
             domain, include_archive_ancestors=include_archived
         )
+        if user_can_view_location(user, loc, project)
     ]
 
     # if a location is selected, we need to pre-populate its location hierarchy
