@@ -61,6 +61,9 @@ def catch_signal(app, **kwargs):
 def get_tables_to_rebuild(diffs, table_names):
 
     def check_diff(diff):
+        """
+        See: http://alembic.readthedocs.org/en/latest/api.html#autogeneration
+        """
         if diff[0] in ('add_table', 'remove_table'):
             if diff[1].name in table_names:
                 return diff[1].name
@@ -68,7 +71,7 @@ def get_tables_to_rebuild(diffs, table_names):
             return diff[2]
 
     def yield_diffs(diff_list):
-        for diff in diffs:
+        for diff in diff_list:
             if isinstance(diff, list):
                 for d in diff:
                     yield check_diff(d)
