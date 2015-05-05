@@ -316,5 +316,17 @@
         });
         updateExportButton();
         $(".dataTables_filter").css('display', 'none');
+
+        $('.row div').append(
+                '<div class="desc" style="width: 100%; text-align: center; margin-top: -1cm; margin-bottom: 1cm"></div>'
+        );
+        setTimeout(function() {
+            $('.nv-slice').on('mouseenter', function() {
+                var descDiv = $(this).parents('.row').find('.desc');
+                $('.nvtooltip').hide();
+                descDiv.text($('.nvtooltip h3').text());
+                descDiv.css('color', $(this).attr('fill'));
+            });
+        }, 300);
     </script>
 {% endblock %}
