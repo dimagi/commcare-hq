@@ -82,7 +82,7 @@ def get_number_of_forms_of_all_types(domain):
 
 
 def get_forms_in_date_range(domain, start, end):
-    XFormInstance.view(
+    return XFormInstance.view(
         "couchforms/all_submissions_by_domain",
         startkey=[domain, "by_date", start.isoformat()],
         endkey=[domain, "by_date", end.isoformat(), {}],
