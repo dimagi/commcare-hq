@@ -1,24 +1,35 @@
 from dateutil.parser import parse
 from django.core.management.base import BaseCommand, CommandError
 from corehq.apps.sms.models import CallLog
+from corehq.util.timezones.conversions import ServerTime, UserTime
 from dimagi.utils.couch.database import iter_docs
 from math import ceil
+from optparse import make_option
+import pytz
 
 
-def get_ids(start_date=None):
+def get_ids(start_date=None, timezone=None):
     result = CallLog.view(
         'sms/call_by_session',
         include_docs=False,
     ).all()
     def include_row(row):
         if start_date:
-            try:
-                date = parse(row['key'][1]).replace(tzinfo=None)
-            except:
+            date = row['key'][1]
+            if date:
+                date = parse(date).replace(tzinfo=None)
+                date = get_naive_user_datetime(date, timezone=timezone)
+                return date >= start_date
+            else:
                 return False
-            return date >= start_date
         return True
     return [row['id'] for row in result if include_row(row)]
+
+
+def get_naive_user_datetime(date, timezone=None):
+    if date and timezone:
+        date = ServerTime(date).user_time(timezone).done().replace(tzinfo=None)
+    return date
 
 
 def get_month_data(data, date):
@@ -55,7 +66,7 @@ def get_backend_api(call):
     return backend_api or 'catchall'
 
 
-def get_data(ids):
+def get_data(ids, timezone=None):
     """
     returns the data in the format:
     {
@@ -73,7 +84,8 @@ def get_data(ids):
     data = {}
     for doc in iter_docs(CallLog.get_db(), ids):
         call = CallLog.wrap(doc)
-        month_data = get_month_data(data, call.date)
+        date = get_naive_user_datetime(call.date, timezone=timezone)
+        month_data = get_month_data(data, date)
         domain_data = get_domain_data(month_data, call.domain)
         backend_api = get_backend_api(call)
         backend_data = get_backend_data(domain_data, backend_api)
@@ -86,13 +98,28 @@ def get_data(ids):
 
 class Command(BaseCommand):
     """
-    Usage: python manage.py ivr_usage [start_date]
+    Usage: python manage.py ivr_usage [start_date] [--timezone timezone]
     """
     args = 'start_date'
     help = ('A simple script to calculate IVR usage. '
         'Eventually, this will be ported to the billing framework.')
+    option_list = BaseCommand.option_list + (
+        make_option('--timezone',
+                    action='store',
+                    type='string',
+                    dest='timezone',
+                    default=None,
+                    help=('Specify to interpret month start and end '
+                        'times using this timezone.')),
+    )
 
     def handle(self, *args, **options):
+        try:
+            timezone = pytz.timezone(options['timezone'])
+        except:
+            print 'Warning: Timezone not recognized, using UTC instead'
+            timezone = None
+
         if len(args) == 0:
             start_date = None
         else:
@@ -102,7 +129,8 @@ class Command(BaseCommand):
                 raise CommandError('Start date must be YYYY-MM-DD')
 
         print 'Month,Domain,Backend,Num Calls,Minutes Used'
-        data = get_data(get_ids(start_date))
+        ids = get_ids(start_date, timezone=timezone)
+        data = get_data(ids, timezone=timezone)
         for (month, month_data) in data.iteritems():
             for (domain, domain_data) in month_data.iteritems():
                 for (backend, backend_data) in domain_data.iteritems():
