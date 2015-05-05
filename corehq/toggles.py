@@ -377,7 +377,7 @@ CACHE_AND_INDEX = StaticToggle(
 
 CUSTOM_PROPERTIES = StaticToggle(
     'custom_properties',
-    'Allow users to add arbitrary custom properties to their appliation',
+    'Allow users to add arbitrary custom properties to their application',
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
 )
@@ -399,7 +399,7 @@ BULK_SMS_VERIFICATION = StaticToggle(
 
 BULK_PAYMENTS = StaticToggle(
     'bulk_payments',
-    'Enable payment of invoices by bulk credit payments and invoice generation for wire tranfers',
+    'Enable payment of invoices by bulk credit payments and invoice generation for wire transfers',
     TAG_PRODUCT_CORE
 )
 
@@ -443,4 +443,18 @@ OWNERSHIP_CLEANLINESS = PredicatablyRandomToggle(
     randomness=.05,
     namespace=NAMESPACE_DOMAIN,
     help_link='https://docs.google.com/a/dimagi.com/document/d/12WfZLerFL832LZbMwqRAvXt82scdjDL51WZVNa31f28/edit#heading=h.gu9sjekp0u2p',
+)
+
+MOBILE_UCR = StaticToggle(
+    'mobile_ucr',
+    ('Mobile UCR: Configure viewing user configurable reports on the mobile '
+     'through the app builder'),
+    TAG_EXPERIMENTAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+FM_FACING_SUBSCRIPTIONS = StaticToggle(
+    'fm_facing_subscriptions',
+    'FM Facing Subscription Management Interface',
+    TAG_PRODUCT_CORE,
 )

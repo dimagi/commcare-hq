@@ -36,7 +36,7 @@ from corehq.apps.accounting.async_handlers import (
 )
 from corehq.apps.accounting.utils import (
     is_active_subscription, has_subscription_already_ended, get_money_str,
-    get_first_last_days
+    get_first_last_days, make_anchor_tag
 )
 from corehq.apps.hqwebapp.crispy import BootstrapMultiField, TextField
 from corehq.apps.domain.models import Domain
@@ -45,11 +45,15 @@ from corehq.apps.accounting.models import (
     BillingContactInfo,
     BillingRecord,
     CreditAdjustment,
+    CreditAdjustmentReason,
     CreditLine,
     Currency,
+    EntryPoint,
     Feature,
     FeatureRate,
     FeatureType,
+    Invoice,
+    ProBonoStatus,
     SoftwarePlan,
     SoftwarePlanEdition,
     SoftwarePlanVersion,
@@ -58,11 +62,8 @@ from corehq.apps.accounting.models import (
     SoftwareProductRate,
     SoftwareProductType,
     Subscription,
-    Invoice,
-    CreditAdjustmentReason,
     SubscriptionType,
-    ProBonoStatus,
-    EntryPoint,
+    WireBillingRecord,
 )
 
 
@@ -549,7 +550,13 @@ class SubscriptionForm(forms.Form):
         account_id = self.cleaned_data['active_accounts'] or self.cleaned_data['account']
         if account_id:
             account = BillingAccount.objects.get(id=account_id)
-            if not self.cleaned_data['do_not_invoice'] and not account.billingcontactinfo.emails:
+            if (
+                not self.cleaned_data['do_not_invoice']
+                and (
+                    not account.billingcontactinfo
+                    or not account.billingcontactinfo.emails
+                )
+            ):
                 from corehq.apps.accounting.views import ManageBillingAccountView
                 raise forms.ValidationError(mark_safe(_(
                     "Please update 'Client Contact Emails' "
@@ -1776,7 +1783,7 @@ class InvoiceInfoForm(forms.Form):
 
     def __init__(self, invoice, *args, **kwargs):
         self.invoice = invoice
-        subscription = invoice.subscription
+        subscription = invoice.subscription if not invoice.is_wire else None
         super(InvoiceInfoForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
@@ -1784,29 +1791,28 @@ class InvoiceInfoForm(forms.Form):
             EditSubscriptionView,
             ManageBillingAccountView,
         )
+        if not invoice.is_wire:
+            subscription_link = mark_safe(make_anchor_tag(
+                reverse(EditSubscriptionView.urlname, args=(subscription.id,)),
+                u'{plan_name} ({start_date} - {end_date})'.format(
+                    plan_name=subscription.plan_version,
+                    start_date=subscription.date_start,
+                    end_date=subscription.date_end,
+                )
+            ))
+        else:
+            subscription_link = 'N/A'
+
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-                'Invoice #%s' % invoice.invoice_number,
+                '{} Invoice #{}'.format('Wire' if invoice.is_wire else '', invoice.invoice_number),
                 TextField(
                     'subscription',
-                    mark_safe(
-                        '<a href="%(subscription_link)s">'
-                        '%(plan_name)s'
-                        ' (%(start_date)s - %(end_date)s)'
-                        '</a>' % {
-                            'subscription_link': reverse(
-                                EditSubscriptionView.urlname,
-                                args=(subscription.id,)
-                            ),
-                            'plan_name': subscription.plan_version,
-                            'start_date': subscription.date_start,
-                            'end_date': subscription.date_end,
-                        }
-                    ),
+                    subscription_link
                 ),
                 TextField(
                     'project',
-                    subscription.subscriber.domain,
+                    invoice.get_domain(),
                 ),
                 TextField(
                     'account',
@@ -1816,9 +1822,9 @@ class InvoiceInfoForm(forms.Form):
                         '</a>' % {
                             'account_link': reverse(
                                 ManageBillingAccountView.urlname,
-                                args=(subscription.account.id,)
+                                args=(invoice.account.id,)
                             ),
-                            'account_name': subscription.account.name,
+                            'account_name': invoice.account.name,
                         }
                     ),
                 ),
@@ -1832,6 +1838,7 @@ class InvoiceInfoForm(forms.Form):
                         'Adjust Balance',
                         data_toggle='modal',
                         data_target='#adjustBalanceModal-%d' % invoice.id,
+                        css_class='disabled' if invoice.is_wire else '',
                     ),
                 ),
             ),
@@ -1885,7 +1892,10 @@ class ResendEmailForm(forms.Form):
     def resend_email(self):
         contact_emails = self.invoice.email_recipients
         contact_emails += self.cleaned_data['additional_recipients']
-        record = BillingRecord.generate_record(self.invoice)
+        if self.invoice.is_wire:
+            record = WireBillingRecord.generate_record(self.invoice)
+        else:
+            record = BillingRecord.generate_record(self.invoice)
         record.send_email(contact_emails=contact_emails)
 
 

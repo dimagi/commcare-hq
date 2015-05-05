@@ -1,0 +1,84 @@
+{% load i18n %}
+
+<p>{{ greeting }}</p>
+
+<p>
+    {% blocktrans %}
+    The Wire Payment Invoice you requested for project {{ domain }} is now available.
+    {% endblocktrans %}
+</p>
+
+<table cellpadding="2">
+    <tr>
+        <th align="right">
+            {% trans 'Invoice No.' %}:
+        </th>
+        <td>
+            {{ statement_number }}
+        </td>
+    </tr>
+    <tr>
+        <th align="right">
+            {% trans 'Project Space' %}:
+        </th>
+        <td>
+            <a href="{{ domain_url }}">
+                {{ domain }}
+            </a>
+        </td>
+    </tr>
+    <tr>
+        <th align="right">
+            {% trans 'Amount Due' %}:
+        </th>
+        <td>
+            {{ amount_due }}
+        </td>
+    </tr>
+</table>
+
+<p>
+    {% blocktrans %}
+    <b>Instructions for Wire Payment</b>
+    {% endblocktrans %}
+</p>
+
+<p>
+    {% blocktrans %}
+    Dimagi accepts wire payments via ACH and wire transfer. To complete the Wire Payment, please follow these instructions:
+    {% endblocktrans %}
+</p>
+
+<p>
+    {% blocktrans %}
+    Send the wire payment to Dimagi’s bank account and include the invoice ID in the wire payment details. Dimagi’s bank account details and the invoice ID can be found in the attached invoice.
+    {% endblocktrans %}
+</p>
+
+<p>
+    {% blocktrans %}
+    Send an email to {{ accounts_email }} after you have made the payment including the date of the payment, the amount, the invoice number and the project space name.
+    {% endblocktrans %}
+</p>
+
+<p>
+    {% blocktrans %}
+    Thank you for using CommCare. If you have any questions, please don't hesitate to contact commcarehq-support@dimagi.com.
+    {% endblocktrans %}
+</p>
+
+<p>
+    {% blocktrans %}
+    Best Regards,<br />
+    The CommCare HQ Team<br />
+    www.commcarehq.org
+    {% endblocktrans %}
+</p>
+
+<p>
+    {% blocktrans %}
+    Statement From:
+    CommCare HQ and the corporation Dimagi, Inc.
+    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA
+    {% endblocktrans %}
+</p>

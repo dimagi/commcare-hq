@@ -9,6 +9,7 @@ from django.http import HttpResponse, Http404
 from django.template.context import RequestContext
 from django.template.loader import render_to_string
 from django.shortcuts import render
+from corehq.apps.domain.utils import normalize_domain_name
 
 from corehq.apps.reports.tasks import export_all_rows_task
 from corehq.apps.reports.models import ReportConfig
@@ -127,7 +128,7 @@ class GenericReportView(object):
 
         self.request = request
         self.request_params = json_request(self.request.GET if self.request.method == 'GET' else self.request.POST)
-        self.domain = domain
+        self.domain = normalize_domain_name(domain)
         self.context = base_context or {}
         self._update_initial_context()
         self.is_rendered_as_email = False # setting this to true in email_response
