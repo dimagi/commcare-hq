@@ -407,7 +407,7 @@ class DomainGlobalSettingsForm(forms.Form):
     alias = forms.CharField(
         required=False,
         label=_("Project Alias"),
-        help_text=_("Alias used in project URL. Once set, this cannot be changed.")
+        help_text=_("Alias used in project URL.")
     )
     default_timezone = TimeZoneChoiceField(label=ugettext_noop("Default Timezone"), initial="UTC")
 
@@ -482,11 +482,17 @@ class DomainGlobalSettingsForm(forms.Form):
 
     def clean_alias(self):
         data = self.cleaned_data['alias'].strip().lower()
+        if data == "":
+            return data
+
         if not re.match("^%s$" % new_domain_re, data):
             raise forms.ValidationError('Only lowercase letters and numbers allowed. ' +
                 'Single hyphens may be used to separate words.')
 
-        conflict = Domain.get_by_name(data) or Domain.get_by_name(data.replace('-', '.'))
+        data_alternate = data.replace('-', '.')
+        conflict = Domain.get_by_name(data) or Domain.get_by_name(data_alternate)
+        if conflict is None:
+            conflict = Domain.get_by_alias(data) or Domain.get_by_alias(data_alternate)
         if conflict and conflict._id != self.domain_id:
             raise forms.ValidationError('Alias already taken---please try another')
         return data
