@@ -19,8 +19,6 @@ var locs = {{ locations|JSON }};
 var selected_loc = {{ selected_id|JSON }};
 var hierarchy = {{ hierarchy|JSON }};
 var show_inactive = {{ show_inactive|yesno:"true,false" }};
-var editable_locations = {{ editable_locations|JSON }};
-var viewable_locations = {{ viewable_locations|JSON }};
 
 function loc_edit_url(loc_id) {
     var template = '{% url "edit_location" domain "-locid-" %}';
@@ -136,8 +134,8 @@ $(function() {
 
         <div class="loc_section">
             <!-- header bar -->
-            <div class="loc_header" data-bind="if: name() != '_root' && _.intersection(viewable_locations, [uuid(), 'all']).length">
-                <div style="float:right;" data-bind="if: _.intersection(editable_locations, [uuid(), 'all']).length">
+            <div class="loc_header" data-bind="if: name() != '_root'">
+                <div style="float:right;" data-bind="if: can_edit()">
                     {% if not show_inactive %}
                         <a class="btn btn-primary" data-bind="attr: { href: loc_edit_url(uuid()) }">
                             {% trans "Edit" %}
@@ -194,7 +192,7 @@ $(function() {
 
                 {% if not show_inactive %}
                     <!-- create child button -->
-                    <!-- ko if: _.intersection(editable_locations, [uuid(), 'all']).length -->
+                    <!-- ko if: can_edit() -->
                         <a class="btn btn-success loc_child" data-bind="attr: { href: NEW_LOC_URL + '?parent=' + (uuid() || '') }">
                             <i class="icon icon-white icon-plus"></i> <span data-bind="text: new_child_caption"></span>
                         </a>

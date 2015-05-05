@@ -67,6 +67,7 @@ function LocationModel(data, root, depth) {
     this.type = ko.observable();
     this.uuid = ko.observable();
     this.is_archived = ko.observable();
+    this.can_edit = ko.observable();
     this.children = ko.observableArray();
     this.depth = depth || 0;
     this.children_status = ko.observable('not_loaded');
@@ -87,6 +88,7 @@ function LocationModel(data, root, depth) {
         this.type(data.location_type);
         this.uuid(data.uuid);
         this.is_archived(data.is_archived);
+        this.can_edit(data.can_edit);
         if (data.children != null) {
             this.set_children(data.children);
         }

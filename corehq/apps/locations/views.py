@@ -69,27 +69,6 @@ class LocationsListView(BaseLocationView):
     page_title = ugettext_noop("Locations")
     template_name = 'locations/manage/locations.html'
 
-    def viewable_locations(self):
-        if not self.domain_object.location_restriction_for_users:
-            return ['all']
-        locations = self.editable_locations()
-        user_loc = self.request.couch_user.get_location(self.domain)
-        if user_loc:
-            locations = self.editable_locations() + user_loc.lineage
-
-        return locations
-
-    def editable_locations(self):
-        if not self.domain_object.location_restriction_for_users:
-            return ['all']
-        user_loc = self.request.couch_user.get_location(self.domain)
-        if not user_loc:
-            locations = ['all']
-        else:
-            locations = [user_loc._id] + [loc._id for loc in user_loc.descendants]
-
-        return locations
-
     @property
     def show_inactive(self):
         return json.loads(self.request.GET.get('show_inactive', 'false'))
@@ -101,12 +80,10 @@ class LocationsListView(BaseLocationView):
         return {
             'selected_id': selected_id,
             'locations': load_locs_json(
-                self.domain, selected_id, self.show_inactive
+                self.domain, selected_id, self.show_inactive, self.request.couch_user
             ),
             'show_inactive': self.show_inactive,
             'has_location_types': has_location_types,
-            'editable_locations': self.editable_locations(),
-            'viewable_locations': self.viewable_locations(),
         }
 
 
