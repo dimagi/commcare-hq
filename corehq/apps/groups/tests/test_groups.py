@@ -46,28 +46,30 @@ class GroupTest(TestCase):
 
 class WrapGroupTest(SimpleTestCase):
 
+    document_class = Group
+
     def test_yes_Z(self):
         date_string = '2014-08-26T15:20:20.062732Z'
-        group = Group.wrap({'last_modified': date_string})
+        group = self.document_class.wrap({'last_modified': date_string})
         self.assertEqual(group.to_json()['last_modified'], date_string)
         date_string_no_usec = '2014-08-26T15:20:20Z'
         date_string_yes_usec = '2014-08-26T15:20:20.000000Z'
-        group = Group.wrap({'last_modified': date_string_no_usec})
+        group = self.document_class.wrap({'last_modified': date_string_no_usec})
         self.assertEqual(group.to_json()['last_modified'], date_string_yes_usec)
 
     def test_no_Z(self):
         date_string_no_Z = '2014-08-26T15:20:20.062732'
         date_string_yes_Z = '2014-08-26T15:20:20.062732Z'
-        group = Group.wrap({'last_modified': date_string_no_Z})
+        group = self.document_class.wrap({'last_modified': date_string_no_Z})
         self.assertEqual(group.to_json()['last_modified'], date_string_yes_Z)
         # iso_format can, technically, produce this if microseconds
         # happens to be exactly 0
         date_string_no_Z = '2014-08-26T15:20:20'
         date_string_yes_Z = '2014-08-26T15:20:20.000000Z'
-        group = Group.wrap({'last_modified': date_string_no_Z})
+        group = self.document_class.wrap({'last_modified': date_string_no_Z})
         self.assertEqual(group.to_json()['last_modified'], date_string_yes_Z)
 
     def test_fail(self):
         bad_date_string = '2014-08-26T15:20'
         with self.assertRaises(BadValueError):
-            Group.wrap({'last_modified': bad_date_string})
+            self.document_class.wrap({'last_modified': bad_date_string})
