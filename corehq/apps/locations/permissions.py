@@ -94,7 +94,7 @@ def can_edit_location(view_fn):
 
 
 def user_can_edit_location_types(user, project):
-    if (user.is_domain_admin(project.name) or 
+    if (user.is_domain_admin(project.name) or
             not project.location_restriction_for_users):
         return True
 
