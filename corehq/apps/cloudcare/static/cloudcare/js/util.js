@@ -103,6 +103,16 @@ var showSuccess = function (message, location, autoHideTime) {
     _show(message, location, autoHideTime, "alert alert-success");
 };
 
+var showRenderedForm = function (message, location, autoHideTime) {
+    if (message === undefined) {
+        message = "success";
+    }
+    var alert = $("<div />");
+    alert.html(message);
+    location.append(alert);
+};
+
+
 var _show = function (message, location, autoHideTime, classes) {
     var alert = $("<div />");
     alert.addClass(classes).text(message);
