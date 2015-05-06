@@ -29,7 +29,7 @@ def get_next_visit(case):
                     break
                 except IndexError:
                     next_visit = {
-                        'name': 'last',
+                        'visit_name': 'last',
                         'days': -1
                     }
     return next_visit
