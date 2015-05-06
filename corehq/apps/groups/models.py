@@ -192,8 +192,8 @@ class Group(UndoableDocument):
             groups = [group for group in all_groups if group.case_sharing]
             groups.extend([
                 location.case_sharing_group_object() for location in
-                SQLLocation.objects.filter(domain=domain)
-                if location.couch_location.location_type_object.shares_cases
+                SQLLocation.objects.filter(domain=domain,
+                                           location_type__shares_cases=True)
             ])
             return groups
         else:
