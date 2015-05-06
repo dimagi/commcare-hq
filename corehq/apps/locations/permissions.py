@@ -1,6 +1,6 @@
 from functools import wraps
 from django.http import Http404
-from .models import SQLLocation
+from .models import SQLLocation, Location
 from corehq.apps.domain.decorators import (login_and_domain_required,
                                            domain_admin_required)
 
@@ -20,6 +20,19 @@ def is_locations_admin(view_fn):
     return locations_access_required(domain_admin_required(view_fn))
 
 
+def editable_locations(user, project):
+    if (user.is_domain_admin(project.name) or
+            not project.location_restriction_for_users):
+        return [l._id for l in Location.by_domain(project.name)]
+
+    user_loc = user.get_location(project.name)
+    if not user_loc:
+        return []
+
+    return [l.location_id for l in
+            user_loc.sql_location.get_descendants(include_self=True)]
+
+
 def user_can_edit_location(user, location, project):
     """
     Expects SQLLocation
@@ -32,6 +45,19 @@ def user_can_edit_location(user, location, project):
     if user_loc:
         user_loc = user_loc.sql_location
     return user_loc is None or user_loc.is_direct_ancestor_of(location)
+
+
+def viewable_locations(user, project):
+    if (user.is_domain_admin(project.name) or
+            not project.location_restriction_for_users):
+        return [l._id for l in Location.by_domain(project.name)]
+
+    user_loc = user.get_location(project.name)
+    if not user_loc:
+        return []
+
+    return [l.location_id for l in
+            user_loc.sql_location.get_ancestors()] + editable_locations(user, project)
 
 
 def user_can_view_location(user, location, project):
