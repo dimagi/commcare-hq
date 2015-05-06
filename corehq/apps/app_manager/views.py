@@ -915,7 +915,9 @@ def get_module_view_context_and_template(app, module):
         warnings = []
         if invalid_report_references:
             module.report_configs = filter(lambda r: r.report_id in all_report_ids, module.report_configs)
-            warnings.append(_('Your app contains references to reports that are deleted. These will be removed on save.'))
+            warnings.append(
+                _('Your app contains references to reports that are deleted. These will be removed on save.')
+            )
         return 'app_manager/module_view_report.html', {
             'all_reports': [_report_to_config(r) for r in all_reports],
             'current_reports': [r.to_json() for r in module.report_configs],

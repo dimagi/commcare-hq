@@ -14,7 +14,7 @@ var ReportModule = (function () {
                 report_id: self.reportId(),
                 header: self.fullDisplay
             };
-        }
+        };
     }
     function ReportModule(options) {
         var self = this;
@@ -29,7 +29,7 @@ var ReportModule = (function () {
         for (var i = 0; i < availableReports.length; i++) {
             self.reportTitles[availableReports[i].report_id] = availableReports[i].title;
         }
-        self.availableReportIds = _.map(options.availableReports, function (r) { return r.report_id; })
+        self.availableReportIds = _.map(options.availableReports, function (r) { return r.report_id; });
 
         self.defaultReportTitle = function (reportId) {
             return self.reportTitles[reportId];
@@ -70,7 +70,7 @@ var ReportModule = (function () {
             report.display.subscribe(changeSaveButton);
             report.reportId.subscribe(changeSaveButton);
             report.reportId.subscribe(function (reportId) {
-                report.display(self.defaultReportTitle(reportId))
+                report.display(self.defaultReportTitle(reportId));
             });
 
             return report;
@@ -84,11 +84,10 @@ var ReportModule = (function () {
         };
 
         // add exiting reports to UI
-        for (var i = 0; i < currentReports.length; i += 1) {
+        for (i = 0; i < currentReports.length; i += 1) {
             var report = newReport(currentReports[i]);
             self.reports.push(report);
         }
-        //self.saveButton.fire('change');
     }
 
     return ReportModule;
