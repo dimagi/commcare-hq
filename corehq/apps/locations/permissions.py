@@ -3,6 +3,7 @@ from django.http import Http404
 from .models import SQLLocation, Location
 from corehq.apps.domain.decorators import (login_and_domain_required,
                                            domain_admin_required)
+from corehq.util.quickcache import quickcache
 
 
 def locations_access_required(view_fn):
@@ -20,6 +21,7 @@ def is_locations_admin(view_fn):
     return locations_access_required(domain_admin_required(view_fn))
 
 
+@quickcache(['user._id', 'project.name'])
 def editable_locations(user, project):
     if (user.is_domain_admin(project.name) or
             not project.location_restriction_for_users):
