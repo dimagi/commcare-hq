@@ -233,15 +233,14 @@ class LocaleId(XmlObject):
 
 class MediaText(XmlObject):
     ROOT_NAME = 'text'
-    form_name = StringField('@form')  # Nothing XForm-y about this 'form'
+    form_name = StringField('@form', choices=['image', 'audio'])  # Nothing XForm-y about this 'form'
     locale = NodeField('locale', LocaleId)
 
 
-class LocalizedMediaDisplay(XmlObject):
+class LocalizedMediaDisplay(OrderedXmlObject):
     ROOT_NAME = 'display'
-    ORDER = ('text', 'media_text')
+    ORDER = ('text')
 
-    text = NodeField('text', Text)
     media_text = NodeListField('text', MediaText)
 
 
@@ -249,28 +248,29 @@ class TextOrDisplay(XmlObject):
     text = NodeField('text', Text)
     display = NodeField('display', LocalizedMediaDisplay)
 
-    def __init__(self, node=None, context=None, locale_id=None, media_image=None, media_audio=None, **kwargs):
+    def __init__(self, node=None, context=None,
+                 menu_locale_id=None, image_locale_id=None, audio_locale_id=None,
+                 media_image=None, media_audio=None, **kwargs):
         super(TextOrDisplay, self).__init__(node, context, **kwargs)
 
-        text = Text(locale_id=locale_id) if locale_id else None
-        locale = LocaleId(locale_id=locale_id) if locale_id else None
+        text = Text(locale_id=menu_locale_id) if menu_locale_id else None
 
         media_text = []
         if media_image:
             media_text.append(MediaText(
-                locale=locale,
+                locale=LocaleId(locale_id=image_locale_id),
                 form_name='image',
             ))
         if media_audio:
             media_text.append(MediaText(
-                locale=locale,
+                locale=LocaleId(locale_id=audio_locale_id),
                 form_name='audio'
             ))
 
         if media_text:
             self.display = LocalizedMediaDisplay(
                 text=text,
-                media_text=media_text
+                media_text=[text] if text else [] + media_text
             )
         elif text:
             self.text = text
