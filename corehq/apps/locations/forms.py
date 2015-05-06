@@ -28,7 +28,6 @@ class ParentLocWidget(forms.Widget):
         ).render(Context({
             'name': name,
             'value': value,
-            'locations': load_locs_json(self.domain, value),
         }))
 
 
