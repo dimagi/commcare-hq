@@ -1507,20 +1507,12 @@ class SuiteGenerator(SuiteGeneratorBase):
             if not self.is_usercase_enabled:
                 raise SuiteError('Form uses usercase, but usercase not enabled')
             case = UserCaseXPath().case()
-            if 'update_usercase' in actions and actions['update_usercase'].update:
-                datums.append({
-                    'datum': SessionDatum(id=USERCASE_ID, function=('%s/@case_id' % case)),
-                    'case_type': USERCASE_TYPE,
-                    'requires_selection': False,
-                    'action': actions['update_usercase']
-                })
-            if 'usercase_preload' in actions and actions['usercase_preload'].preload:
-                datums.append({
-                    'datum': SessionDatum(id=USERCASE_ID, function=('%s/@case_id' % case)),
-                    'case_type': USERCASE_TYPE,
-                    'requires_selection': False,
-                    'action': actions['usercase_preload']
-                })
+            datums.append({
+                'datum': SessionDatum(id=USERCASE_ID, function=('%s/@case_id' % case)),
+                'case_type': USERCASE_TYPE,
+                'requires_selection': False,
+                'action': None  # Unused (and could be actions['update_usercase'] or actions['usercase_preload'])
+            })
         return datums
 
     @staticmethod
