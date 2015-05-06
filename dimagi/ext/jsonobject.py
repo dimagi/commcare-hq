@@ -77,7 +77,7 @@ re_trans_datetime = re.compile(r'^\d{4}-0[1-9]|1[0-2]-[12]\d|0[1-9]|3[01]T'
 # i.e. I just removed (...)? surrounding the second two lines
 re_loose_datetime = re.compile(
     r'^(\d{4})\D?(0[1-9]|1[0-2])\D?([12]\d|0[1-9]|3[01])'
-    r'\D?([01]\d|2[0-3])\D?([0-5]\d)\D?([0-5]\d)?\D?(\d{3,6})?'
+    r'[ T]([01]\d|2[0-3])\D?([0-5]\d)\D?([0-5]\d)?\D?(\d{3,6})?'
     r'([zZ]|([\+-])([01]\d|2[0-3])\D?([0-5]\d)?)?$'
 )
 
