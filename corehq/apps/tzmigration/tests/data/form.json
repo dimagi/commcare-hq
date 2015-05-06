@@ -1,0 +1,118 @@
+{
+    "_attachments": {
+        "form.xml": {
+            "content_type": "text/xml",
+            "digest": "md5-urn9hndEfdESU2iuKZmovw==",
+            "length": 3410,
+            "revpos": 1,
+            "stub": true
+        }
+    },
+    "_id": "{instance_id}",
+    "_rev": "1-357db8748930bb35224a9c47b2609832",
+    "computed_": {},
+    "computed_modified_on_": null,
+    "doc_type": "XFormInstance",
+    "form": {
+        "#type": "data",
+        "@name": "Visit",
+        "@uiVersion": "1",
+        "@version": "303",
+        "@xmlns": "http://openrosa.org/formdesigner/266AD1A0-9EAE-483E-B4B2-4E85D6CA8D4B",
+        "any_other_sick": "no",
+        "birth_control_pills_distributed": "0",
+        "case": {
+            "@case_id": "{case_id}",
+            "@date_modified": "2013-03-09T06:30:09.007000Z",
+            "@user_id": "test",
+            "@xmlns": "http://commcarehq.org/case/transaction/v2",
+            "create": {
+                "case_type": "case"
+            },
+            "update": {
+                "gps_location": "",
+                "last_visit": "2013-03-09",
+                "last_visit_counsel_topics": "sanitation",
+                "malaria_assessment_date": "2013-03-09",
+                "num_ec": "1",
+                "toilet_assessment_date": "2013-03-09"
+            }
+        },
+        "counseling": {
+            "counsel_sanitation_group": {
+                "counsel_sanitation": ""
+            },
+            "counsel_type_ec": "sanitation"
+        },
+        "cur_counsel_topics": "sanitation",
+        "cur_malaria_assessment_date": "2013-03-09",
+        "cur_num_fp": "1",
+        "cur_toilet_assessment_date": "2013-03-09",
+        "do_malaria_assessment": "yes",
+        "do_toilet_assessment": "yes",
+        "gps_location": "",
+        "health_id": "",
+        "injectables_distributed": "1",
+        "last_visit": "2013-03-09",
+        "malaria_assessment": {
+            "num_bednets_no": "0",
+            "num_bednets_nonfunction": "0",
+            "num_bednets_observerd": "3",
+            "num_preg_slept_hh_last_night": "0",
+            "num_preg_slept_hh_last_night_bednet": "0\n\t\t",
+            "num_sleeping_sites": "3",
+            "num_u5_slept_hh_bednet_last_night": "1\n\t\t",
+            "num_u5_slept_hh_last_night": "1"
+        },
+        "member_available": "yes",
+        "meta": {
+            "@xmlns": "http://openrosa.org/jr/xforms",
+            "appVersion": {
+                "#text": "CommCare ODK, version \"2.2.0\"(6121). App v303. CommCare Version 2.2. Build 6121, built on: November-06-2012",
+                "@xmlns": "http://commcarehq.org/xforms"
+            },
+            "deviceID": "358510043913306",
+            "instanceID": "{instance_id}",
+            "timeEnd": "2013-03-09T06:30:09.007000Z",
+            "timeStart": "2013-03-09T06:26:56.240000Z",
+            "userID": "test",
+            "username": "test"
+        },
+        "modern_fp": {
+            "fp_type": "iud"
+        },
+        "num_ec": "1",
+        "num_using_fp": "1",
+        "prev_counsel_topics": "",
+        "prev_location_code": "",
+        "prev_malaria_assessment_date": "",
+        "prev_toilet_assessment_date": "",
+        "toilet_assessment": {
+            "handwashing": "latrine kitchen not_designated",
+            "handwashing_knowledge": "before_eating after_eating before_cooking after_defecation after_cleaning_stools after_cleaning_latrine",
+            "soap": "water_soap",
+            "stool_disposal": "toilet put_toilet",
+            "toilet_shared": "no",
+            "toilet_type": "pit_latrine_without_slab",
+            "trash_disposal": "dump_yard",
+            "water_source": "rainwater",
+            "water_treatment": "yes",
+            "water_treatment_type": "boil_water"
+        }
+    },
+    "history": [],
+    "initial_processing_complete": false,
+    "partial_submission": false,
+    "received_on": "2013-09-21T03:52:24Z",
+    "xmlns": "http://openrosa.org/formdesigner/266AD1A0-9EAE-483E-B4B2-4E85D6CA8D4B",
+    "#export_tag": null,
+    "app_id": null,
+    "auth_context": {},
+    "build_id": null,
+    "date_header": null,
+    "domain": null,
+    "last_sync_token": null,
+    "openrosa_headers": {},
+    "path": null,
+    "submit_ip": null
+}
