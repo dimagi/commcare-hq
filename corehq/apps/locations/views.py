@@ -251,11 +251,14 @@ class NewLocationView(BaseLocationView):
         return breadcrumbs
 
     @property
+    def parent_id(self):
+        return self.request.GET.get('parent')
+
+    @property
     @memoized
     def location(self):
-        parent_id = self.request.GET.get('parent')
-        parent = (get_document_or_404(Location, self.domain, parent_id)
-                  if parent_id else None)
+        parent = (get_document_or_404(Location, self.domain, self.parent_id)
+                  if self.parent_id else None)
         return Location(domain=self.domain, parent=parent)
 
     @property
