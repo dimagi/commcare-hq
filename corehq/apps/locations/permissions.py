@@ -35,18 +35,15 @@ def editable_locations(user, project):
             user_loc.sql_location.get_descendants(include_self=True)]
 
 
-def user_can_edit_location(user, location, project):
-    """
-    Expects SQLLocation
-    """
+def user_can_edit_location(user, sql_location, project):
     if (user.is_domain_admin(project.name) or
             not project.location_restriction_for_users):
         return True
 
-    user_loc = user.get_location(location.domain)
+    user_loc = user.get_location(sql_location.domain)
     if user_loc:
         user_loc = user_loc.sql_location
-    return user_loc is None or user_loc.is_direct_ancestor_of(location)
+    return user_loc is None or user_loc.is_direct_ancestor_of(sql_location)
 
 
 def viewable_locations(user, project):
@@ -62,22 +59,19 @@ def viewable_locations(user, project):
             user_loc.sql_location.get_ancestors()] + editable_locations(user, project)
 
 
-def user_can_view_location(user, location, project):
-    """
-    Expects SQLLocation
-    """
+def user_can_view_location(user, sql_location, project):
     if (user.is_domain_admin(project.name) or
             not project.location_restriction_for_users):
         return True
 
-    user_loc = user.get_location(location.domain)
+    user_loc = user.get_location(sql_location.domain)
     if not user_loc:
         return True
 
-    if user_can_edit_location(user, location, project):
+    if user_can_edit_location(user, sql_location, project):
         return True
 
-    return location.location_id in user_loc.lineage
+    return sql_location.location_id in user_loc.lineage
 
 
 def can_edit_location(view_fn):
