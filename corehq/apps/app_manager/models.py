@@ -1692,7 +1692,7 @@ class Module(ModuleBase):
             )]
         )
         module = Module(
-            name={(lang or 'en'): name or ugettext("Untitled Module")},
+            name={(lang or 'en'): name or ugettext(DEFAULT_MODULE_NAME)},
             forms=[],
             case_type='',
             case_details=DetailPair(
@@ -1705,7 +1705,7 @@ class Module(ModuleBase):
 
     def new_form(self, name, lang, attachment=''):
         form = Form(
-            name={lang if lang else "en": name if name else _("Untitled Form")},
+            name={lang if lang else "en": name if name else _(DEFAULT_FORM_NAME)},
         )
         self.forms.append(form)
         form = self.get_form(-1)
@@ -2123,7 +2123,7 @@ class AdvancedModule(ModuleBase):
         )
 
         module = AdvancedModule(
-            name={(lang or 'en'): name or ugettext("Untitled Module")},
+            name={(lang or 'en'): name or ugettext(DEFAULT_MODULE_NAME)},
             forms=[],
             case_type='',
             case_details=DetailPair(
@@ -2149,7 +2149,7 @@ class AdvancedModule(ModuleBase):
 
     def new_form(self, name, lang, attachment=''):
         form = AdvancedForm(
-            name={lang if lang else "en": name if name else _("Untitled Form")},
+            name={lang if lang else "en": name if name else _(DEFAULT_FORM_NAME)},
         )
         if self.has_schedule:
             form.schedule = FormSchedule()

@@ -86,6 +86,8 @@ from corehq.apps.app_manager.const import (
     CAREPLAN_TASK,
     MAJOR_RELEASE_TO_VERSION,
     USERCASE_TYPE,
+    DEFAULT_FORM_NAME,
+    DEFAULT_MODULE_NAME,
 )
 from corehq.apps.app_manager.success_message import SuccessMessage
 from corehq.apps.app_manager.util import (
@@ -927,13 +929,13 @@ def _get_default_media_file_name(app, module, form):
     default_file_name = ""
 
     if module:
-        if trans(module.name, app.langs) == _("Untitled Module"):
+        if trans(module.name, app.langs) == _(DEFAULT_MODULE_NAME):
             default_file_name = "{}{}".format("module", module.id)
         else:
             default_file_name = slugify(trans(module.name, app.langs))
 
     if form:
-        if trans(form.name, app.langs) == _("Untitled Form"):
+        if trans(form.name, app.langs) == _(DEFAULT_FORM_NAME):
             default_file_name = "{}_{}{}".format(default_file_name, "form", form.id)
         else:
             default_file_name = '{}_{}'.format(default_file_name, slugify(trans(form.name, app.langs)))
@@ -1267,9 +1269,9 @@ def new_app(request, domain):
     form_args = []
     if cls == Application:
         app = cls.new_app(domain, "Untitled Application", lang=lang, application_version=application_version)
-        module = Module.new_module("Untitled Module", lang)
+        module = Module.new_module(_(DEFAULT_MODULE_NAME), lang)
         app.add_module(module)
-        form = app.new_form(0, "Untitled Form", lang)
+        form = app.new_form(0, _(DEFAULT_FORM_NAME), lang)
         form_args = [module.id, form.id]
     else:
         app = cls.new_app(domain, "Untitled Application", lang=lang)
@@ -1293,9 +1295,9 @@ def default_new_app(request, domain):
         domain, _("Untitled Application"), lang=lang,
         application_version=APP_V2
     )
-    module = Module.new_module(_("Untitled Module"), lang)
+    module = Module.new_module(_(DEFAULT_MODULE_NAME), lang)
     app.add_module(module)
-    form = app.new_form(0, "Untitled Form", lang)
+    form = app.new_form(0, _(DEFAULT_FORM_NAME), lang)
     if request.project.secure_submissions:
         app.secure_submissions = True
     _clear_app_cache(request, domain)
@@ -1314,7 +1316,7 @@ def new_module(request, domain, app_id):
     if module_type == 'case':
         module = app.add_module(Module.new_module(name, lang))
         module_id = module.id
-        app.new_form(module_id, "Untitled Form", lang)
+        app.new_form(module_id, _(DEFAULT_FORM_NAME), lang)
         app.save()
         response = back_to_main(request, domain, app_id=app_id, module_id=module_id)
         response.set_cookie('suppress_build_errors', 'yes')
@@ -1352,7 +1354,7 @@ def _new_careplan_module(request, domain, app, name, lang):
 def _new_advanced_module(request, domain, app, name, lang):
     module = app.add_module(AdvancedModule.new_module(name, lang))
     module_id = module.id
-    app.new_form(module_id, _("Untitled Form"), lang)
+    app.new_form(module_id, _(DEFAULT_FORM_NAME), lang)
 
     app.save()
     response = back_to_main(request, domain, app_id=app.id, module_id=module_id)

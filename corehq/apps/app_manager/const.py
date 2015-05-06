@@ -33,3 +33,6 @@ USERCASE_ID = 'usercase_id'
 USERCASE_PREFIX = 'user:'
 
 RETURN_TO = 'return_to'
+
+DEFAULT_MODULE_NAME = 'Untitled Module'
+DEFAULT_FORM_NAME = 'Unititled Form'
