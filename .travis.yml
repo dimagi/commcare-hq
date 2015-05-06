@@ -9,7 +9,7 @@ install:
  - "pip install coverage coveralls --use-mirrors"
  - "curl http://127.0.0.1:5984/"
 script:
-- "coverage run --parallel-mode `which django-admin.py` test --settings settings --traceback utils"
+- "coverage run --parallel-mode `which django-admin.py` test --settings settings --traceback"
 - "coverage run --parallel-mode setup.py test"
 after_success:
  - coverage combine

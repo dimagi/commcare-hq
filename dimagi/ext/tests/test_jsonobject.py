@@ -2,7 +2,7 @@ import datetime
 from django.test import SimpleTestCase
 import jsonobject
 from jsonobject.exceptions import BadValueError
-from dimagi.ext.jsonobject import DateTimeProperty
+from dimagi.ext.jsonobject import DateTimeProperty, re_loose_datetime
 
 
 class Foo(jsonobject.JsonObject):
@@ -38,3 +38,15 @@ class TransitionalExactDateTimePropertyTest(SimpleTestCase):
     def test_wrap_new_too_long(self):
         with self.assertRaises(BadValueError):
             Foo.wrap({'bar': '2015-01-01T12:00:00.1200543'})
+
+
+class TestDateRegex(SimpleTestCase):
+    def test_date_no_change(self):
+        cases = [
+            ('2015-04-03', False),
+            ('2013-03-09T06:30:09.007', True),
+            ('2013-03-09T06:30:09.007+03', True),
+            ('351602061044374', False),
+        ]
+        for candidate, expected in cases:
+            self.assertEqual(bool(re_loose_datetime.match(candidate)), expected, candidate)
