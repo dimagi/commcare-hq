@@ -43,4 +43,4 @@ class TestDateRegex(SimpleTestCase):
             ('351602061044374', False),
         ]
         for candidate, expected in cases:
-            self.assertEqual(bool(re_loose_datetime.match(candidate)), expected)
+            self.assertEqual(bool(re_loose_datetime.match(candidate)), expected, candidate)
