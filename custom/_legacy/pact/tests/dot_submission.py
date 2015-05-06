@@ -252,9 +252,12 @@ class dotsSubmissionTests(TestCase):
             for k, v in props.items():
                 if k.endswith("_date"):
                     # datetime check
-                    obs_date = (ServerTime(getattr(obs, k))
-                                .user_time(PACT_TIMEZONE).done().date())
-                    val_date = dateutil.parser.parse(v).date()
+                    obs_datetime = getattr(obs, k)
+                    val_datetime = dateutil.parser.parse(v)
+                    if k in ('completed_date', 'created_date'):
+                        obs_datetime = ServerTime(obs_datetime).user_time(PACT_TIMEZONE).done()
+                    obs_date = obs_datetime.date()
+                    val_date = val_datetime.date()
                     self.assertEquals(obs_date, val_date)
                 else:
                     self.assertEquals(getattr(obs, k), v,
