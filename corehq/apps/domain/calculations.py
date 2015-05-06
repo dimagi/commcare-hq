@@ -4,7 +4,7 @@ from dateutil.relativedelta import relativedelta
 
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
-from dimagi.ext.jsonobject import DateTimeProperty
+from corehq.util.dates import iso_string_to_datetime
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.apps.es.sms import SMSES
@@ -21,7 +21,6 @@ from corehq.apps.reports.util import make_form_couch_key
 from corehq.apps.users.models import CouchUser
 from corehq.elastic import es_query, ADD_TO_ES_FILTER, ES_URLS
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
-from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from dimagi.utils.parsing import json_format_datetime
 
 
@@ -154,7 +153,7 @@ def active(domain, *args):
 def display_time(row, display=True):
     submission_time = row["key"][2]
     if display:
-        return DateTimeProperty().wrap(submission_time).strftime(DISPLAY_DATE_FORMAT)
+        return iso_string_to_datetime(submission_time).strftime(DISPLAY_DATE_FORMAT)
     else:
         return submission_time
 
