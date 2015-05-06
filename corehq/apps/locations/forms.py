@@ -19,7 +19,7 @@ class ParentLocWidget(forms.Widget):
         ).render(Context({
             'name': name,
             'value': value,
-            'locations': load_locs_json(self.domain, value),
+            'locations': load_locs_json(self.domain, value, user=self.user)
         }))
 
 
@@ -62,7 +62,7 @@ class LocationForm(forms.Form):
 
     strict = True  # optimization hack: strict or loose validation
 
-    def __init__(self, location, bound_data=None, is_new=False,
+    def __init__(self, location, user=None, bound_data=None, is_new=False,
                  *args, **kwargs):
         self.location = location
 
@@ -78,6 +78,7 @@ class LocationForm(forms.Form):
 
         super(LocationForm, self).__init__(bound_data, *args, **kwargs)
         self.fields['parent_id'].widget.domain = self.location.domain
+        self.fields['parent_id'].widget.user = user
 
         if not self.location.external_id:
             self.fields['external_id'].widget = forms.HiddenInput()

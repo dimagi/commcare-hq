@@ -42,9 +42,4 @@ Extracting data from the db:
         forms += c.get_forms() # python
 
     # alternatively, this will pull ALL forms from a domain:
-    forms = db.view(
-        "couchforms/all_submissions_by_domain",
-        startkey=['opm'],
-        endkey=['opm', {}],
-        include_docs=True, reduce=False
-    ).all()
+    forms = get_forms_of_all_types('opm')

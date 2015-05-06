@@ -1755,6 +1755,7 @@ class InvoicePdf(SafeSaveDocument):
             applied_tax=getattr(invoice, 'applied_tax', Decimal('0.000')),
             applied_credit=getattr(invoice, 'applied_credit', Decimal('0.000')),
             total=invoice.get_total(),
+            is_wire=invoice.is_wire
         )
 
         if not invoice.is_wire:
