@@ -45,15 +45,11 @@ class DateTimeProperty(AbstractDateProperty):
         if '.' in value:
             fmt = ISO_DATETIME_FORMAT
             if len(value.split('.')[-1]) != 7:
-                if value[-1] != 'Z':
-                    fmt = '%Y-%m-%dT%H:%M:%S.%f'
-                else:
-                    raise ValueError(
-                        'USecDateTimeProperty '
-                        'must have 6 decimal places '
-                        'or none at all: {}'.format(value)
-                    )
-
+                raise ValueError(
+                    'USecDateTimeProperty '
+                    'must have 6 decimal places '
+                    'or none at all: {}'.format(value)
+                )
         else:
             fmt = HISTORICAL_DATETIME_FORMAT
 
