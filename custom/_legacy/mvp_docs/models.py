@@ -13,6 +13,9 @@ class IndicatorDocument(object):
         """
         raise NotImplementedError("is_update must be implemented")
 
+    def exists_in_database(self):
+        return '_rev' in self._doc
+
     @classmethod
     def get_db(cls):
         """Makes damn sure that we get the correct DB for this particular app

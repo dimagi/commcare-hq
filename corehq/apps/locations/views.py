@@ -2,7 +2,6 @@ import json
 import logging
 
 from django.contrib import messages
-from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.http.response import HttpResponseServerError
 from django.shortcuts import render
@@ -21,7 +20,6 @@ from corehq import toggles
 from corehq.apps.commtrack.exceptions import MultipleSupplyPointException
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.commtrack.tasks import import_locations_async
-from corehq.apps.commtrack.util import unicode_slug
 from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.custom_data_fields import CustomDataModelMixin
@@ -30,10 +28,11 @@ from corehq.apps.facilities.models import FacilityRegistry
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.users.forms import MultipleSelectionForm
+from corehq.util import reverse, get_document_or_404
 from custom.openlmis.tasks import bootstrap_domain_task
 
 from .models import Location, LocationType, SQLLocation
-from .forms import LocationForm
+from .forms import LocationForm, UsersAtLocationForm
 from .util import load_locs_json, location_hierarchy_config, dump_locations
 
 
@@ -110,43 +109,26 @@ class LocationTypesView(BaseCommTrackManageView):
         return {
             'pk': loctype.pk,
             'name': loctype.name,
-            'code': loctype.code,
-            'allowed_parents': [loctype.parent_type.name
-                                if loctype.parent_type else None],
+            'parent_type': (loctype.parent_type.name
+                            if loctype.parent_type else None),
             'administrative': loctype.administrative,
             'shares_cases': loctype.shares_cases,
             'view_descendants': loctype.view_descendants
         }
 
     def post(self, request, *args, **kwargs):
-        # This is really ugly, it needs a refactor.
-        # There are some changes coming to this UI, so I'm just gonna wait
-        # for that.  I intend to remove "code" from the UI altogether, and
-        # use the actual location_type pk to reference it, not the name.
         payload = json.loads(request.POST.get('json'))
         sql_loc_types = {}
 
-        def mk_loctype(name, code, allowed_parents, administrative,
+        def mk_loctype(name, parent_type, administrative,
                        shares_cases, view_descendants, pk):
-            if allowed_parents and allowed_parents[0]:
-                parent = sql_loc_types[allowed_parents[0]]
-            else:
-                parent = None
-
-            cleaned_code = unicode_slug(code)
-            if cleaned_code != code:
-                err = _('Location type code "{code}" is invalid. No spaces or '
-                        'special characters are allowed. It has been replaced '
-                        'with "{new_code}".')
-                messages.warning(request,
-                                 err.format(code=code, new_code=cleaned_code))
+            parent = sql_loc_types[parent_type] if parent_type else None
 
             try:
                 loc_type = LocationType.objects.get(domain=self.domain, pk=pk)
             except LocationType.DoesNotExist:
                 loc_type = LocationType(domain=self.domain)
             loc_type.name = name
-            loc_type.code = cleaned_code
             loc_type.administrative = administrative
             loc_type.parent_type = parent
             loc_type.shares_cases = shares_cases
@@ -157,11 +139,9 @@ class LocationTypesView(BaseCommTrackManageView):
         loc_types = payload['loc_types']
         pks = []
         for loc_type in loc_types:
-            for prop in ['name', 'code', 'allowed_parents', 'administrative',
+            for prop in ['name', 'parent_type', 'administrative',
                          'shares_cases', 'view_descendants', 'pk']:
                 assert prop in loc_type, "Missing a location type property!"
-                assert len(loc_type['allowed_parents']) <= 1, \
-                    "This location type has more than one parent. How?"
             pks.append(loc_type['pk'])
 
         hierarchy = self.get_hierarchy(loc_types)
@@ -206,9 +186,8 @@ class LocationTypesView(BaseCommTrackManageView):
                 assert lt['name'] not in visited, \
                     "There's a loc type cycle, we need to prohibit that"
                 visited.add(lt['name'])
-                parents = lt['allowed_parents']
-                if parents and parents[0]:
-                    step(lt_dict.get(parents[0]))
+                if lt['parent_type']:
+                    step(lt_dict[lt['parent_type']])
             step(loc_type)
 
         hierarchy = {}
@@ -219,8 +198,7 @@ class LocationTypesView(BaseCommTrackManageView):
             and return hierarchy below loc_type
             """
             name = loc_type['name']
-            parents = loc_type['allowed_parents']
-            parent = lt_dict.get(parents[0], None) if parents else None
+            parent = lt_dict.get(loc_type['parent_type'], None)
             if not parent:
                 lt_hierarchy = hierarchy
             else:
@@ -247,22 +225,38 @@ class NewLocationView(BaseLocationView):
     urlname = 'create_location'
     page_title = ugettext_noop("New Location")
     template_name = 'locations/manage/location.html'
+    form_tab = 'basic'
 
     @property
     def parent_pages(self):
-        return [{
+        selected = self.location._id or self.location.parent_id
+        breadcrumbs = [{
             'title': LocationsListView.page_title,
-            'url': reverse(LocationsListView.urlname, args=[self.domain]),
+            'url': reverse(
+                LocationsListView.urlname,
+                args=[self.domain],
+                params={"selected": selected} if selected else None,
+            )
         }]
-
-    @property
-    def parent_id(self):
-        return self.request.GET.get('parent')
+        if self.location.parent:
+            sql_parent = self.location.parent.sql_location
+            for loc in sql_parent.get_ancestors(include_self=True):
+                breadcrumbs.append({
+                    'title': loc.name,
+                    'url': reverse(
+                        EditLocationView.urlname,
+                        args=[self.domain, loc.location_id],
+                    )
+                })
+        return breadcrumbs
 
     @property
     @memoized
     def location(self):
-        return Location(domain=self.domain, parent=self.parent_id)
+        parent_id = self.request.GET.get('parent')
+        parent = (get_document_or_404(Location, self.domain, parent_id)
+                  if parent_id else None)
+        return Location(domain=self.domain, parent=parent)
 
     @property
     def consumption(self):
@@ -292,6 +286,7 @@ class NewLocationView(BaseLocationView):
             'location': self.location,
             'consumption': consumption,
             'locations': load_locs_json(self.domain, self.parent_id),
+            'form_tab': self.form_tab,
         }
 
     def form_valid(self):
@@ -321,7 +316,7 @@ def archive_location(request, domain, loc_id):
         'success': True,
         'message': _("Location '{location_name}' has successfully been {action}.").format(
             location_name=loc.name,
-            action="archived",
+            action=_("archived"),
         )
     })
 
@@ -340,7 +335,7 @@ def unarchive_location(request, domain, loc_id):
         'success': True,
         'message': _("Location '{location_name}' has successfully been {action}.").format(
             location_name=loc.name,
-            action="unarchived",
+            action=_("unarchived"),
         )
     })
 
@@ -406,6 +401,7 @@ class EditLocationView(NewLocationView):
         return consumptions
 
     @property
+    @memoized
     def products_form(self):
         if (
             self.location.location_type_object.administrative or
@@ -415,9 +411,22 @@ class EditLocationView(NewLocationView):
 
         form = MultipleSelectionForm(
             initial={'selected_ids': self.products_at_location},
-            submit_label=_("Update Product List")
+            submit_label=_("Update Product List"),
+            prefix="products",
         )
         form.fields['selected_ids'].choices = self.all_products
+        return form
+
+    @property
+    @memoized
+    def users_form(self):
+        form = UsersAtLocationForm(
+            domain_object=self.domain_object,
+            location=self.location,
+            data=self.request.POST if self.request.method == "POST" else None,
+            submit_label=_("Update Users at this Location"),
+            prefix="users",
+        )
         return form
 
     @property
@@ -440,12 +449,22 @@ class EditLocationView(NewLocationView):
         context = super(EditLocationView, self).page_context
         context.update({
             'products_per_location_form': self.products_form,
+            'users_per_location_form': self.users_form,
         })
         return context
 
+    def users_form_post(self, request, *args, **kwargs):
+        if self.users_form.is_valid():
+            self.users_form.save()
+            return self.form_valid()
+        else:
+            self.request.method = "GET"
+            self.form_tab = 'users'
+            return self.get(request, *args, **kwargs)
+
     def products_form_post(self, request, *args, **kwargs):
         products = SQLProduct.objects.filter(
-            product_id__in=request.POST.getlist('selected_ids', [])
+            product_id__in=request.POST.getlist('products-selected_ids', [])
         )
         self.sql_location.products = products
         self.sql_location.save()
@@ -454,6 +473,8 @@ class EditLocationView(NewLocationView):
     def post(self, request, *args, **kwargs):
         if self.request.POST['form_type'] == "location-settings":
             return self.settings_form_post(request, *args, **kwargs)
+        elif (self.request.POST['form_type'] == "location-users"):
+            return self.users_form_post(request, *args, **kwargs)
         elif (self.request.POST['form_type'] == "location-products"
               and toggles.PRODUCTS_PER_LOCATION.enabled(request.domain)):
             return self.products_form_post(request, *args, **kwargs)

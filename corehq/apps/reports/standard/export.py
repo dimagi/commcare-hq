@@ -63,7 +63,7 @@ class FormExportReportBase(ExportReport, DatespanMixin):
         exports = filter(lambda x: x.type == "form", exports)
         if not self.can_view_deid:
             exports = filter(lambda x: not x.is_safe, exports)
-        return exports
+        return sorted(exports, key=lambda x: x.name)
 
     @property
     def default_datespan(self):
@@ -318,7 +318,7 @@ class CaseExportReport(ExportReport):
             startkey=startkey, endkey=endkey,
             include_docs=True).all()
         exports = filter(lambda x: x.type == "case", exports)
-        return exports
+        return sorted(exports, key=lambda x: x.name)
 
     @property
     def report_context(self):

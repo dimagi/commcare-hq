@@ -6,6 +6,7 @@ from corehq.apps.commtrack.tests.util import bootstrap_domain as initial_bootstr
 from corehq.apps.users.models import WebUser, UserRole
 from custom.ilsgateway.api import ILSUser, ILSGatewayAPI
 from custom.ilsgateway.tests.mock_endpoint import MockEndpoint
+from custom.logistics.api import ApiSyncObject
 from custom.logistics.commtrack import synchronization
 from custom.logistics.models import MigrationCheckpoint
 
@@ -52,9 +53,12 @@ class WebUsersSyncTest(TestCase):
             limit=100,
             offset=0
         )
-        synchronization('webuser',
-                        self.endpoint.get_webusers,
-                        self.api_object.web_user_sync, checkpoint, None, 100, 0)
+        location_api = ApiSyncObject(
+            'webuser',
+            self.endpoint.get_webusers,
+            self.api_object.web_user_sync
+        )
+        synchronization(location_api, checkpoint, None, 100, 0)
         self.assertEqual('webuser', checkpoint.api)
         self.assertEqual(100, checkpoint.limit)
         self.assertEqual(0, checkpoint.offset)

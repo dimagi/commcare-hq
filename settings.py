@@ -127,6 +127,7 @@ MIDDLEWARE_CLASSES = [
     'corehq.util.global_request.middleware.GlobalRequestMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
     'corehq.apps.domain.middleware.CCHQPRBACMiddleware',
+    'corehq.apps.domain.middleware.DomainHistoryMiddleware',
     'casexml.apps.phone.middleware.SyncTokenMiddleware',
     'auditcare.middleware.AuditMiddleware',
     'no_exceptions.middleware.NoExceptionsMiddleware',
@@ -290,8 +291,8 @@ HQ_APPS = (
     'corehq.apps.styleguide',
     'corehq.apps.grapevine',
     'corehq.apps.dashboard',
-    'corehq.apps.public',
     'corehq.util',
+    'dimagi.ext',
 
     # custom reports
     'a5288',
@@ -433,6 +434,8 @@ BASE_ASYNC_TEMPLATE = "reports/async/basic.html"
 LOGIN_TEMPLATE = "login_and_password/login.html"
 LOGGEDOUT_TEMPLATE = LOGIN_TEMPLATE
 
+CSRF_FAILURE_VIEW = 'corehq.apps.hqwebapp.views.csrf_failure'
+
 # These are non-standard setting names that are used in localsettings
 # The standard variables are then set to these variables after localsettings
 # Todo: Change to use standard settings variables
@@ -445,7 +448,6 @@ EMAIL_SMTP_PORT = 587
 # These are the normal Django settings
 EMAIL_USE_TLS = True
 SEND_BROKEN_LINK_EMAILS = True
-
 
 # put email addresses here to have them receive bug reports
 BUG_REPORT_RECIPIENTS = ()
@@ -484,6 +486,7 @@ FIXTURE_GENERATORS = {
         "corehq.apps.callcenter.fixturegenerators.indicators_fixture_generator",
         "corehq.apps.products.fixtures.product_fixture_generator",
         "corehq.apps.programs.fixtures.program_fixture_generator",
+        "corehq.apps.userreports.fixtures.report_fixture_generator",
         # custom
         "custom.bihar.reports.indicators.fixtures.generator",
         "custom.m4change.fixtures.report_fixtures.generator",
@@ -525,8 +528,6 @@ CELERY_REMINDER_RULE_QUEUE = CELERY_MAIN_QUEUE
 # on its own queue.
 CELERY_REMINDER_CASE_UPDATE_QUEUE = CELERY_MAIN_QUEUE
 
-SKIP_SOUTH_TESTS = True
-#AUTH_PROFILE_MODULE = 'users.HqUserProfile'
 TEST_RUNNER = 'testrunner.TwoStageTestRunner'
 # this is what gets appended to @domain after your accounts
 HQ_ACCOUNT_ROOT = "commcarehq.org"
@@ -678,6 +679,7 @@ ANALYTICS_IDS = {
     'PINGDOM_ID': '',
     'ANALYTICS_ID_PUBLIC_COMMCARE': '',
     'SEGMENT_ANALYTICS_KEY': '',
+    'HUBSPOT_ID': '',
 }
 
 OPEN_EXCHANGE_RATES_ID = ''
@@ -694,6 +696,12 @@ LOCAL_APPS = ()
 LOCAL_COUCHDB_APPS = ()
 LOCAL_MIDDLEWARE_CLASSES = ()
 LOCAL_PILLOWTOPS = {}
+
+# Prelogin site
+ENABLE_PRELOGIN_SITE = False
+PRELOGIN_APPS = (
+    'corehq.apps.prelogin',
+)
 
 # If there are existing doc_ids and case_ids you want to check directly,
 # they are referenced in your localsettings for more accurate direct checks,
@@ -805,6 +813,9 @@ LOGGING = {
             'level': 'ERROR',
             'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
         },
+        'null': {
+            'class': 'django.utils.log.NullHandler',
+        },
     },
     'loggers': {
         '': {
@@ -816,6 +827,10 @@ LOGGING = {
             'handlers': ['mail_admins'],
             'level': 'ERROR',
             'propagate': True,
+        },
+        'django.security.DisallowedHost': {
+            'handlers': ['null'],
+            'propagate': False,
         },
         'notify': {
             'handlers': ['mail_admins'],
@@ -891,6 +906,11 @@ SAVED_EXPORT_ACCESS_CUTOFF = 35
 # override for production
 DEFAULT_PROTOCOL = 'http'
 
+####### South Settings #######
+SKIP_SOUTH_TESTS = True
+SOUTH_TESTS_MIGRATE = False
+
+
 try:
     # try to see if there's an environmental variable set for local_settings
     if os.environ.get('CUSTOMSETTINGS', None) == "demo":
@@ -941,10 +961,6 @@ INDICATOR_CONFIG = {
     "mvp-potou": ['mvp_indicators'],
 }
 
-####### South Settings #######
-#SKIP_SOUTH_TESTS=True
-#SOUTH_TESTS_MIGRATE=False
-
 ####### Couch Forms & Couch DB Kit Settings #######
 from settingshelper import get_dynamic_db_settings, make_couchdb_tuples, get_extra_couchdbs
 
@@ -984,6 +1000,7 @@ COUCHDB_APPS = [
     'custom_data_fields',
     'hqadmin',
     'domain',
+    'ext',
     'facilities',
     'fluff_filter',
     'fixtures',
@@ -1060,6 +1077,9 @@ COUCHDB_DATABASES = make_couchdb_tuples(COUCHDB_APPS, COUCH_DATABASE)
 EXTRA_COUCHDB_DATABASES = get_extra_couchdbs(COUCHDB_APPS, COUCH_DATABASE)
 
 INSTALLED_APPS += LOCAL_APPS
+
+if ENABLE_PRELOGIN_SITE:
+    INSTALLED_APPS += PRELOGIN_APPS
 
 MIDDLEWARE_CLASSES += LOCAL_MIDDLEWARE_CLASSES
 
@@ -1281,6 +1301,10 @@ ES_XFORM_FULL_INDEX_DOMAINS = [
     'pact',
     'uth-rhd-test',
     'succeed'
+]
+
+CUSTOM_UCR_EXPRESSIONS = [
+    ('abt_supervisor', 'custom.abt.reports.expressions.abt_supervisor_expression'),
 ]
 
 CUSTOM_MODULES = [

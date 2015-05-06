@@ -53,7 +53,7 @@ def reprocess_form_cases(form, config=None, case_db=None):
     from casexml.apps.case.xform import process_cases, process_cases_with_casedb
 
     if case_db:
-        process_cases_with_casedb(form, case_db, config=config)
+        process_cases_with_casedb([form], case_db, config=config)
     else:
         process_cases(form, config)
     # mark cleaned up now that we've reprocessed it
@@ -115,6 +115,21 @@ def reverse_indices(db, case, wrap=True):
         reduce=False,
         **kwargs
     ).all()
+
+
+def get_reverse_indexed_cases(cases):
+    """
+    Given a base list of cases, gets all wrapped cases that directly
+    reference them (child cases).
+    """
+    from casexml.apps.case.models import CommCareCase
+    keys = [[c['domain'], c['_id'], 'reverse_index'] for c in cases]
+    return CommCareCase.view(
+        'case/related',
+        keys=keys,
+        reduce=False,
+        include_docs=True,
+    )
 
 
 def primary_actions(case):

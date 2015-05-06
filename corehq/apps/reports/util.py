@@ -434,7 +434,7 @@ def stream_qs(qs, batch_size=1000):
         for item in qs:
             yield item
 
-def numcell(text, value=None, convert='int'):
+def numcell(text, value=None, convert='int', raw=None):
     if value is None:
         try:
             value = int(text) if convert == 'int' else float(text)
@@ -444,7 +444,7 @@ def numcell(text, value=None, convert='int'):
                 text = '%.f%%' % value
         except ValueError:
             value = text
-    return format_datatables_data(text=text, sort_key=value)
+    return format_datatables_data(text=text, sort_key=value, raw=raw)
 
 def datespan_from_beginning(domain, default_days, timezone):
     now = datetime.utcnow()

@@ -49,7 +49,6 @@ def REPORTS(project):
         (ugettext_lazy("Manage Deployments"), (
             deployments.ApplicationStatusReport,
             receiverwrapper.SubmissionErrorReport,
-            phonelog.FormErrorReport,
             phonelog.DeviceLogDetailsReport,
             deployments.SyncHistoryReport,
         )),
@@ -256,6 +255,7 @@ from corehq.apps.accounting.interface import (
     SubscriptionInterface,
     SoftwarePlanInterface,
     InvoiceInterface,
+    WireInvoiceInterface,
     PaymentRecordInterface,
 )
 
@@ -265,6 +265,7 @@ ACCOUNTING_ADMIN_INTERFACES = (
         SubscriptionInterface,
         SoftwarePlanInterface,
         InvoiceInterface,
+        WireInvoiceInterface,
         PaymentRecordInterface,
     )),
 )

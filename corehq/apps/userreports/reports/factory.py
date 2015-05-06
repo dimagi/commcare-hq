@@ -101,7 +101,7 @@ class ReportFactory(object):
             config_or_config_id=spec.config_id,
             filters=[ReportFilter.wrap(f) for f in spec.filters],
             aggregation_columns=spec.aggregation_columns,
-            columns=[ReportColumnFactory.from_spec(colspec) for colspec in spec.columns],
+            columns=spec.report_columns,
         )
 
 

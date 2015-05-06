@@ -21,9 +21,10 @@
     <script type="text/javascript">
         var LOAD_LOCS_URL = '{{ api_root }}';
 
-        // for product per location selection
+        // for product and user per location selection
         $(function () {
-            $("#id_selected_ids").width(800).height(400).multiselect();
+            $("#id_users-selected_ids").width(800).height(400).multiselect();
+            $("#id_products-selected_ids").width(800).height(400).multiselect();
         });
     </script>
 {% endblock %}
@@ -78,13 +79,18 @@
   </script>
 
   <ul class="nav nav-tabs">
-    <li class="active"><a href="#basic-info" data-toggle="tab">{% trans "Basic" %}</a></li>
+    <li class="{% if form_tab == "basic" %}active{% endif %}">
+      <a href="#basic-info" data-toggle="tab">{% trans "Basic" %}</a>
+    </li>
+    <li class="{% if form_tab == "users" %}active{% endif %}">
+      <a href="#users" data-toggle="tab">{% trans "Users" %}</a>
+    </li>
 
     {% if products_per_location_form %}
       <li><a href="#products" data-toggle="tab">{% trans "Products" %}</a></li>
     {% endif %}
 
-    {% if location.get_id %}
+    {% if location.get_id and location.location_type.can_have_children %}
     <li>
       <a href="{% url "create_location" domain %}?parent={{ location.get_id }}">
         {% trans "New Child Location" %}
@@ -94,7 +100,7 @@
   </ul>
 
   <div class="tab-content">
-    <div class="tab-pane active" id="basic-info">
+    <div class="tab-pane {% if form_tab == "basic" %}active{% endif %}" id="basic-info">
       <form id="loc_form" class="form form-horizontal" name="product" method="post">
         {% bootstrap_form_errors form %}
         {% crispy form %}
@@ -128,6 +134,18 @@
         </div>
       </form>
     </div>
+
+    {% if users_per_location_form %}
+      <div class="tab-pane {% if form_tab == "users" %}active{% endif %}" id="users">
+        <div class="row-fluid">
+          <form class="form disable-on-submit" id="edit_users" action="" method='post'>
+            <legend>{% trans 'Specify Users At This Location' %}</legend>
+            {% crispy users_per_location_form %}
+            <input type="hidden" name="form_type" value="location-users" />
+          </form>
+        </div>
+      </div>
+    {% endif %}
 
     {% if products_per_location_form %}
       <div class="tab-pane" id="products">

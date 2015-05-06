@@ -1,9 +1,7 @@
 from collections import defaultdict
 from xml.etree import ElementTree
-from django.conf import settings
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from corehq.apps.users.models import CommCareUser
-from dimagi.utils.modules import to_function
 
 
 def item_lists_by_domain(domain):
@@ -12,7 +10,7 @@ def item_lists_by_domain(domain):
         ret.append({
             'sourceUri': 'jr://fixture/item-list:%s' % data_type.tag,
             'defaultId': data_type.tag,
-            'initialQuery': "instance('{tag}')/item-list:{tag}/{tag}".format(tag=data_type.tag),
+            'initialQuery': "instance('{tag}')/{tag}_list/{tag}".format(tag=data_type.tag),
             'name': data_type.tag,
             'structure': {
                 f.field_name: {

@@ -3,12 +3,12 @@ import os
 from django.test.testcases import SimpleTestCase
 from django.test.utils import override_settings
 from casexml.apps.case.xml import V3
+from casexml.apps.phone.tests.utils import generate_restore_payload
 from couchforms.tests.testutils import post_xform_to_couch
 from casexml.apps.case.tests.util import check_xml_line_by_line, delete_all_cases, delete_all_sync_logs
 from casexml.apps.case.xform import process_cases
 from casexml.apps.phone.models import SyncLog
-from casexml.apps.phone.restore import generate_restore_payload, StringRestoreResponse
-from casexml.apps.phone.util import get_payload_content
+from casexml.apps.phone.restore import StringRestoreResponse
 from casexml.apps.phone.tests.dummy import dummy_restore_xml, dummy_user
 
 
@@ -28,7 +28,7 @@ class OtaV3RestoreTest(TestCase):
         process_cases(form)
 
         expected_case_block = """
-        <case case_id="asdf" date_modified="2010-06-29T13:42:50Z" user_id="foo"
+        <case case_id="asdf" date_modified="2010-06-29T13:42:50.000000Z" user_id="foo"
             xmlns="http://commcarehq.org/case/transaction/v2">
             <create>
                 <case_type>test_case_type</case_type>
@@ -40,11 +40,11 @@ class OtaV3RestoreTest(TestCase):
             </update>
         </case>"""
 
-        restore_payload = get_payload_content(generate_restore_payload(
+        restore_payload = generate_restore_payload(
             user=dummy_user(),
             items=True,
             version=V3
-        ))
+        )
         sync_log_id = SyncLog.view(
             "phone/sync_logs_by_user",
             include_docs=True,
@@ -77,6 +77,7 @@ class TestRestoreResponse(SimpleTestCase):
         expected = self._expected(user, body, items=None)
         with StringRestoreResponse(user, False) as response:
             response.append(body)
+            response.finalize()
             self.assertEqual(expected, str(response))
 
     def test_items(self):
@@ -85,6 +86,7 @@ class TestRestoreResponse(SimpleTestCase):
         expected = self._expected(user, body, items=2)
         response = StringRestoreResponse(user, True)
         response.append(body)
+        response.finalize()
         self.assertEqual(expected, str(response))
 
     def test_add(self):
@@ -99,4 +101,5 @@ class TestRestoreResponse(SimpleTestCase):
         response2.append(body2)
 
         added = response1 + response2
+        added.finalize()
         self.assertEqual(expected, str(added))

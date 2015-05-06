@@ -4,6 +4,7 @@ import uuid
 
 from celery.schedules import crontab
 from celery.task import periodic_task
+from corehq.apps.indicators.utils import get_mvp_domains
 from corehq.apps.reports.scheduled import get_scheduled_reports
 from corehq.util.view_utils import absolute_reverse
 from couchexport.files import Temp
@@ -34,7 +35,7 @@ from corehq.apps.reports.models import (
 from corehq.elastic import get_es, ES_URLS, stream_es_query
 from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
-from corehq.apps.users.models import WebUser
+from dimagi.utils.parsing import json_format_datetime
 import settings
 
 
@@ -82,7 +83,24 @@ def check_es_index():
         notify_exception(None, message='\n'.join(message))
 
 
-@task
+def send_delayed_report(report):
+    """
+    Sends a scheduled report, via  celery background task.
+    """
+    send_report.apply_async(args=[report._id], queue=get_report_queue(report))
+
+
+def get_report_queue(report):
+    # This is a super-duper hacky, hard coded way to deal with the fact that MVP reports
+    # consistently crush the celery queue for everyone else.
+    # Just send them to their own longrunning background queue
+    if report.domain in get_mvp_domains():
+        return 'background_queue'
+    else:
+        return 'celery'
+
+
+@task(ignore_result=True)
 def send_report(notification_id):
     notification = ReportNotification.get(notification_id)
     try:
@@ -111,19 +129,19 @@ def create_metadata_export(download_id, domain, format, filename, datespan=None,
 @periodic_task(run_every=crontab(hour="*", minute="*/30", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def daily_reports():
     for rep in get_scheduled_reports('daily'):
-        send_report.delay(rep._id)
+        send_delayed_report(rep)
 
 
 @periodic_task(run_every=crontab(hour="*", minute="*/30", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def weekly_reports():
     for rep in get_scheduled_reports('weekly'):
-        send_report.delay(rep._id)
+        send_delayed_report(rep)
 
 
 @periodic_task(run_every=crontab(hour="*", minute="*/30", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def monthly_reports():
     for rep in get_scheduled_reports('monthly'):
-        send_report.delay(rep._id)
+        send_delayed_report(rep)
 
 
 @periodic_task(run_every=crontab(hour=[22], minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
@@ -133,14 +151,14 @@ def saved_exports():
         export_for_group_async.delay(group_config, 'couch')
 
 
-@task(queue='saved_exports_queue')
+@task(queue='saved_exports_queue', ignore_result=True)
 def export_for_group_async(group_config, output_dir):
     # exclude exports not accessed within the last 7 days
     last_access_cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
     export_for_group(group_config, output_dir, last_access_cutoff=last_access_cutoff)
 
 
-@task(queue='saved_exports_queue')
+@task(queue='saved_exports_queue', ignore_result=True)
 def rebuild_export_async(config, schema, output_dir):
     rebuild_export(config, schema, output_dir)
 
@@ -171,7 +189,7 @@ def update_calculated_properties():
             "cp_last_form": CALC_FNS["last_form_submission"](dom, False),
             "cp_is_active": CALC_FNS["active"](dom),
             "cp_has_app": CALC_FNS["has_app"](dom),
-            "cp_last_updated": datetime.utcnow().strftime(DATE_FORMAT),
+            "cp_last_updated": json_format_datetime(datetime.utcnow()),
             "cp_n_in_sms": int(CALC_FNS["sms"](dom, "I")),
             "cp_n_out_sms": int(CALC_FNS["sms"](dom, "O")),
             "cp_n_sms_ever": int(CALC_FNS["sms_in_last"](dom)),
@@ -184,11 +202,11 @@ def update_calculated_properties():
             del calced_props['cp_last_form']
         es.post("%s/hqdomain/%s/_update" % (DOMAIN_INDEX, r["_id"]), data={"doc": calced_props})
 
-DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
+
 def is_app_active(app_id, domain):
     now = datetime.utcnow()
-    then = (now - timedelta(days=30)).strftime(DATE_FORMAT)
-    now = now.strftime(DATE_FORMAT)
+    then = json_format_datetime(now - timedelta(days=30))
+    now = json_format_datetime(now)
 
     key = ['submission app', domain, app_id]
     row = get_db().view("reports_forms/all_forms", startkey=key+[then], endkey=key+[now]).all()
@@ -203,7 +221,7 @@ def apps_update_calculated_properties():
         calced_props = {"cp_is_active": is_app_active(r["_id"], r["_source"]["domain"])}
         es.post("%s/app/%s/_update" % (APP_INDEX, r["_id"]), data={"doc": calced_props})
 
-@task
+@task(ignore_result=True)
 def export_all_rows_task(ReportClass, report_state):
     report = object.__new__(ReportClass)
     report.__setstate__(report_state)

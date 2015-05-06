@@ -1,4 +1,4 @@
-from couchdbkit.ext.django.schema import Document, StringProperty, DateProperty
+from dimagi.ext.couchdbkit import Document, StringProperty, DateProperty
 
 
 """

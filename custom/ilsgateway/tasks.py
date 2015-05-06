@@ -8,11 +8,14 @@ from psycopg2._psycopg import DatabaseError
 
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack.models import StockState
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import Product
 from custom.ilsgateway.api import ILSGatewayEndpoint, ILSGatewayAPI
 from custom.logistics.commtrack import bootstrap_domain as ils_bootstrap_domain, save_stock_data_checkpoint
-from custom.ilsgateway.models import ILSGatewayConfig, SupplyPointStatus, DeliveryGroupReport, ReportRun
-from custom.ilsgateway.tanzania.warehouse_updater import populate_report_data
+from custom.ilsgateway.models import ILSGatewayConfig, SupplyPointStatus, DeliveryGroupReport, ReportRun, \
+    GroupSummary, OrganizationSummary, ProductAvailabilityData, Alert, SupplyPointWarehouseRecord
+from custom.ilsgateway.tanzania.warehouse.updater import populate_report_data
+from custom.logistics.models import StockDataCheckpoint
 from custom.logistics.tasks import stock_data_task, sync_stock_transactions
 
 
@@ -88,13 +91,18 @@ def sync_supply_point_status(domain, endpoint, facility, checkpoint, date, limit
             facility=facility
         )
         # set the checkpoint right before the data we are about to process
+        if not supply_point_statuses:
+            return None
         save_stock_data_checkpoint(checkpoint,
                                    'supply_point_status',
                                    meta.get('limit') or limit,
                                    meta.get('offset') or offset, date, facility, True)
         for sps in supply_point_statuses:
             try:
-                SupplyPointStatus.objects.get(external_id=sps.external_id)
+                SupplyPointStatus.objects.get(
+                    external_id=int(sps.external_id),
+                    supply_point=SQLLocation.objects.get(domain=domain, external_id=facility).location_id
+                )
             except SupplyPointStatus.DoesNotExist:
                 sps.save()
 
@@ -128,7 +136,7 @@ def sync_delivery_group_report(domain, endpoint, facility, checkpoint, date, lim
                                    date, facility, True)
         for dgr in delivery_group_reports:
             try:
-                DeliveryGroupReport.objects.get(external_id=dgr.external_id)
+                DeliveryGroupReport.objects.get(external_id=dgr.external_id, supply_point=facility)
             except DeliveryGroupReport.DoesNotExist:
                 dgr.save()
 
@@ -144,18 +152,35 @@ def get_delivery_group_reports(domain, endpoint, facilities, checkpoint, date, l
         offset = 0
 
 
-# Temporary for staging
-@task(queue='background_queue')
-def ils_clear_stock_data_task():
-    StockTransaction.objects.filter(report__domain='ilsgateway-test-1').delete()
-    StockReport.objects.filter(domain='ilsgateway-test-1').delete()
-    products = Product.ids_by_domain('ilsgateway-test-1')
+@task(queue='background_queue', ignore_result=True)
+def ils_clear_stock_data_task(domain):
+    assert ILSGatewayConfig.for_domain(domain)
+    locations = SQLLocation.objects.filter(domain=domain)
+    SupplyPointStatus.objects.filter(supply_point__in=locations.values_list('location_id', flat=True)).delete()
+    DeliveryGroupReport.objects.filter(supply_point__in=locations.values_list('location_id', flat=True)).delete()
+    products = Product.ids_by_domain(domain)
     StockState.objects.filter(product_id__in=products).delete()
+    StockTransaction.objects.filter(
+        case_id__in=locations.exclude(supply_point_id__isnull=True).values_list('supply_point_id', flat=True)
+    ).delete()
+    StockReport.objects.filter(domain=domain).delete()
+    StockDataCheckpoint.objects.filter(domain=domain).delete()
+
+
+@task(queue='background_queue', ignore_result=True)
+def clear_report_data(domain):
+    locations_ids = SQLLocation.objects.filter(domain=domain).values_list('location_id', flat=True)
+    GroupSummary.objects.filter(org_summary__supply_point__in=locations_ids).delete()
+    OrganizationSummary.objects.filter(supply_point__in=locations_ids).delete()
+    ProductAvailabilityData.objects.filter(supply_point__in=locations_ids).delete()
+    Alert.objects.filter(supply_point__in=locations_ids).delete()
+    SupplyPointWarehouseRecord.objects.filter(supply_point__in=locations_ids).delete()
+    ReportRun.objects.filter(domain=domain).delete()
 
 
 # @periodic_task(run_every=timedelta(days=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
-@task(queue='background_queue')
-def report_run(domain):
+@task(queue='background_queue', ignore_result=True)
+def report_run(domain, locations=None, strict=True):
     last_successful_run = ReportRun.last_success(domain)
     last_run = ReportRun.last_run(domain)
     start_date = (datetime.min if not last_successful_run else last_successful_run.end)
@@ -173,10 +198,10 @@ def report_run(domain):
         # start new run
         run = ReportRun.objects.create(start=start_date, end=end_date,
                                        start_run=datetime.utcnow(), domain=domain)
+    has_error = True
     try:
-        run.has_error = True
-        populate_report_data(start_date, end_date, domain, run)
-        run.has_error = False
+        populate_report_data(start_date, end_date, domain, run, locations, strict=strict)
+        has_error = False
     except Exception, e:
         # just in case something funky happened in the DB
         if isinstance(e, DatabaseError):
@@ -184,10 +209,12 @@ def report_run(domain):
                 transaction.rollback()
             except:
                 pass
-        run.has_error = True
+        has_error = True
         raise
     finally:
         # complete run
+        run = ReportRun.objects.get(pk=run.id)
+        run.has_error = has_error
         run.end_run = datetime.utcnow()
         run.complete = True
         run.save()

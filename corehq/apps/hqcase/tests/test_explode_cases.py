@@ -46,7 +46,7 @@ TESTS = (
         ),
         {u'fruity_file': u'./corehq/ex-submodules/casexml/apps/case/tests/data/attachments/fruity.jpg'},
         """
-        <case case_id="new-case-abc123" date_modified="2011-12-20T00:11:02Z"
+        <case case_id="new-case-abc123" date_modified="2011-12-20T00:11:02.000000Z"
                 user_id="user-abc123"
                 xmlns="http://commcarehq.org/case/transaction/v2">
             <create>
@@ -106,16 +106,21 @@ class ExplodeCasesTest(SimpleTestCase, TestFileMixin):
 
 class ExplodeCasesDbTest(TestCase):
 
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
         delete_all_cases()
-        self.domain = Domain(name='foo')
-        self.domain.save()
-        self.user = CommCareUser.create(self.domain.name, 'somebody', 'password')
-        self.user_id = self.user._id
+        cls.domain = Domain(name='foo')
+        cls.domain.save()
+        cls.user = CommCareUser.create(cls.domain.name, 'somebody', 'password')
+        cls.user_id = cls.user._id
 
-    def tearDown(self):
-        self.user.delete()
-        self.domain.delete()
+    def setUp(cls):
+        delete_all_cases()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.user.delete()
+        cls.domain.delete()
 
     def test_simple(self):
         caseblock = CaseBlock(

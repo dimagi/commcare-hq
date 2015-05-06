@@ -55,9 +55,9 @@ def ews_bootstrap_domain_task(domain):
     return bootstrap_domain(EWSApi(domain, GhanaEndpoint.from_config(ews_config)))
 
 
-@task(queue='background_queue')
-def ews_clear_stock_data_task():
-    StockTransaction.objects.filter(report__domain='ewsghana-test-1').delete()
-    StockReport.objects.filter(domain='ewsghana-test-1').delete()
-    products = Product.ids_by_domain('ewsghana-test-1')
+@task(queue='background_queue', ignore_result=True)
+def ews_clear_stock_data_task(domain):
+    StockTransaction.objects.filter(report__domain=domain).delete()
+    StockReport.objects.filter(domain=domain).delete()
+    products = Product.ids_by_domain(domain)
     StockState.objects.filter(product_id__in=products).delete()

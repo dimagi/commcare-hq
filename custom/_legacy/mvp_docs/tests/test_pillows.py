@@ -111,4 +111,15 @@ class IndicatorPillowTests(TestCase):
         )
         self.assertNotEqual(indicator_case.computed_, {})
 
+    def test_delete_doc(self):
+        form = IndicatorXForm()
+        form.save()
+        self.assertTrue(IndicatorXForm.get_db().doc_exist(form._id))
+        self.form_pillow.change_transform({'_id': form._id, 'doc_type': 'XFormArchived'})
+        self.assertFalse(IndicatorXForm.get_db().doc_exist(form._id))
 
+    def test_delete_doc_that_doesnt_exist(self):
+        # this test just makes sure we don't crash in this scenario so there are no assertions
+        self.form_pillow.change_transform(
+            {'_id': 'some-bad-id', '_rev': 'whatrever', 'doc_type': 'XFormArchived'}
+        )

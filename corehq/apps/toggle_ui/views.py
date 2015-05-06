@@ -6,7 +6,7 @@ from django.utils.decorators import method_decorator
 from corehq import Domain
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.hqwebapp.views import BasePageView
-from corehq.toggles import all_toggles
+from corehq.toggles import all_toggles, ALL_TAGS, NAMESPACE_USER
 from toggle.models import Toggle
 from toggle.shortcuts import clear_toggle_cache
 
@@ -33,6 +33,7 @@ class ToggleListView(ToggleBaseView):
     def page_context(self):
         return {
             'toggles': all_toggles(),
+            'tags': ALL_TAGS
         }
 
 
@@ -77,6 +78,7 @@ class ToggleEditView(ToggleBaseView):
             'toggle_meta': toggle_meta,
             'toggle': self.get_toggle(),
             'expanded': self.expanded,
+            'namespaces': [NAMESPACE_USER if n is None else n for n in toggle_meta.namespaces],
         }
         if self.expanded:
             context['domain_toggle_list'] = sorted(

@@ -8,6 +8,7 @@ from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.commtrack.data_sources import StockStatusBySupplyPointDataSource
 from corehq.apps.reports.commtrack.maps import StockStatusMapReport
 from corehq.apps.reports.standard import CustomProjectReport
+from custom.ewsghana.utils import get_country_id
 
 
 class EWSStockStatusBySupplyPointDataSource(StockStatusBySupplyPointDataSource):
@@ -64,14 +65,14 @@ class EWSStockStatusBySupplyPointDataSource(StockStatusBySupplyPointDataSource):
                 months_until_stockout = None
             else:
                 if stock_states[0].get_monthly_consumption():
-                    monthly_consumption = int(stock_states[0].get_monthly_consumption())
+                    monthly_consumption = round(stock_states[0].get_monthly_consumption())
                 else:
                     monthly_consumption = None
                 quantity = stock_states[0].stock_on_hand
                 if not monthly_consumption:
                     months_until_stockout = None
                 else:
-                    months_until_stockout = (stock_states[0].stock_on_hand / monthly_consumption)
+                    months_until_stockout = (float(stock_states[0].stock_on_hand) / monthly_consumption)
 
                 if quantity == 0:
                     category = 'stockout'
@@ -118,6 +119,23 @@ class EWSMapReport(CustomProjectReport, StockStatusMapReport):
         'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
         'custom.ewsghana.filters.ProductFilter',
     ]
+
+    @classmethod
+    def get_url(cls, domain=None, render_as=None, **kwargs):
+        url = super(EWSMapReport, cls).get_url(domain=domain, render_as=None, kwargs=kwargs)
+        request = kwargs.get('request')
+        user = getattr(request, 'couch_user', None)
+
+        if user:
+            product = SQLProduct.objects.filter(domain=domain, is_archived=False).\
+                values_list('product_id', flat=True).order_by('name')
+
+            url = '%s?location_id=%s&product_id=%s' % (
+                url,
+                user.location_id if user.location_id else get_country_id(domain),
+                product[0] if product else ''
+            )
+        return url
 
     @property
     def product(self):

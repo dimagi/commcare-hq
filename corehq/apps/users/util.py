@@ -2,6 +2,7 @@ import re
 
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.utils import html, safestring
 
 from couchdbkit.resource import ResourceNotFound
 from corehq import privileges
@@ -169,3 +170,14 @@ def smart_query_string(query):
     r = re.compile(r'\w+')
     tokens = r.findall(query)
     return True, "*{}*".format("* *".join(tokens))
+
+
+def user_display_string(username, first_name="", last_name=""):
+    full_name = u"{} {}".format(first_name or u'', last_name or u'').strip()
+
+    def parts():
+        yield u'%s' % html.escape(raw_username(username))
+        if full_name:
+            yield u' "%s"' % html.escape(full_name)
+
+    return safestring.mark_safe(''.join(parts()))

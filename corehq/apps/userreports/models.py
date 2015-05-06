@@ -1,15 +1,16 @@
 from copy import copy
 import json
-from couchdbkit import ResourceNotFound, SchemaProperty
-from couchdbkit.ext.django.schema import (
+from couchdbkit import ResourceNotFound
+from dimagi.ext.couchdbkit import (
     BooleanProperty,
+    DateTimeProperty,
     Document,
     DocumentSchema,
+    SchemaProperty,
     StringListProperty,
-    DateTimeProperty
 )
-from couchdbkit.ext.django.schema import StringProperty, DictProperty, ListProperty, IntegerProperty
-from jsonobject import JsonObject
+from dimagi.ext.couchdbkit import StringProperty, DictProperty, ListProperty, IntegerProperty
+from dimagi.ext.jsonobject import JsonObject
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
@@ -22,22 +23,11 @@ from corehq.apps.userreports.reports.specs import FilterSpec
 from django.utils.translation import ugettext as _
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.sql import IndicatorSqlAdapter, get_engine
+from corehq.pillows.utils import get_deleted_doc_types
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
 from django.conf import settings
-
-
-DELETED_DOC_TYPES = {
-    'CommCareCase': [
-        'CommCareCase-Deleted',
-    ],
-    'XFormInstance': [
-        'XFormInstance-Deleted',
-        'XFormArchived',
-        'XFormDeprecated',
-    ],
-}
 
 
 class DataSourceBuildInformation(DocumentSchema):
@@ -91,11 +81,12 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         return self._get_filter([self.referenced_doc_type])
 
     def _get_deleted_filter(self):
-        if self.referenced_doc_type in DELETED_DOC_TYPES:
-            return self._get_filter(DELETED_DOC_TYPES[self.referenced_doc_type])
-        return None
+        return self._get_filter(get_deleted_doc_types(self.referenced_doc_type))
 
     def _get_filter(self, doc_types):
+        if not doc_types:
+            return None
+
         extras = (
             [self.configured_filter]
             if self.configured_filter else []
@@ -152,6 +143,11 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
                 }
             }
         }, self.named_filter_objects)]
+
+        default_indicators.append(IndicatorFactory.from_spec({
+            "type": "inserted_at",
+        }, self.named_filter_objects))
+
         if self.base_item_expression:
             default_indicators.append(IndicatorFactory.from_spec({
                 "type": "repeat_iteration",
@@ -230,6 +226,12 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             yield cls.wrap(result)
 
 
+class ReportMeta(DocumentSchema):
+    # `True` if this report was initially constructed by the report builder.
+    created_by_builder = BooleanProperty(default=False)
+    builder_report_type = StringProperty(choices=['chart', 'list', 'table', 'worker'])
+
+
 class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     """
     A report configuration. These map 1:1 with reports that show up in the UI.
@@ -243,6 +245,7 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     filters = ListProperty()
     columns = ListProperty()
     configured_charts = ListProperty()
+    report_meta = SchemaProperty(ReportMeta)
 
     def __unicode__(self):
         return u'{} - {}'.format(self.domain, self.title)
@@ -254,6 +257,11 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             return DataSourceConfiguration.get(self.config_id)
         except ResourceNotFound:
             raise BadSpecError(_('The data source referenced by this report could not be found.'))
+
+    @property
+    @memoized
+    def report_columns(self):
+        return [ReportColumnFactory.from_spec(c) for c in self.columns]
 
     @property
     @memoized
@@ -294,7 +302,7 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             'Filters cannot contain duplicate slugs: {}',
         )
         _check_for_duplicates(
-            [ReportColumnFactory.from_spec(c).column_id for c in self.columns],
+            [c.column_id for c in self.report_columns],
             'Columns cannot contain duplicate column_ids: {}',
         )
 

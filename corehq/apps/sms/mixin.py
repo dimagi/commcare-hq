@@ -4,7 +4,7 @@ import json
 from dateutil.parser import parse
 from datetime import datetime, timedelta
 from decimal import Decimal
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 from couchdbkit.exceptions import MultipleResultsFound
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.decorators.memoized import memoized

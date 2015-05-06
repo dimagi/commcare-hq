@@ -15,12 +15,14 @@ class MockEndpoint(GhanaEndpoint):
             return self._from_json('sample_webusers.json', **kwargs)
         elif 'product' in url:
             return self._from_json('sample_products.json', **kwargs)
+        elif 'stocktransactions' in url:
+            return self._from_json('sample_stocktransactions.json', **kwargs)
 
     def _from_json(self, filename, **kwargs):
         with open(os.path.join(self.datapath, filename)) as f:
             objects = json.loads(f.read())
             meta = {
-                "limit": 100,
+                "limit": 1000,
                 "next": None,
                 "offset": 0,
                 "previous": None,
@@ -31,11 +33,21 @@ class MockEndpoint(GhanaEndpoint):
     def get_location(self, id, params=None):
         with open(os.path.join(self.datapath, 'sample_locations.json')) as f:
             objects = [location for location in json.loads(f.read())]
-            if id == 1:
-                return objects[0]
-            elif id == 620:
-                return objects[1]
-            elif id == 369:
-                return objects[2]
-            elif id == 319:
-                return objects[3]
+        if id == 1:
+            return objects[0]
+        elif id == 620:
+            return objects[1]
+        elif id == 369:
+            return objects[2]
+        elif id == 319:
+            return objects[3]
+        elif id == 621:
+            return objects[4]
+        elif id == 15:
+            return objects[5]
+        elif id == 1000:
+            return objects[6]
+        elif id == 899:
+            return objects[7]
+        elif id == 900:
+            return objects[8]

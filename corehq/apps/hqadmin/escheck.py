@@ -3,9 +3,12 @@ from datetime import datetime
 import time
 
 from couchdbkit import ResourceNotFound
+import itertools
 
 from casexml.apps.case.models import CommCareCase
 from corehq import Domain
+from corehq.apps.hqadmin.dbaccessors import iter_all_forms_most_recent_first, \
+    iter_all_cases_most_recent_first
 from corehq.elastic import get_es
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
@@ -80,9 +83,10 @@ def check_reportxform_es_index(doc_id=None, interval=10):
         return {}
 
 
-def check_xform_es_index(doc_id=None, interval=10):
+def check_xform_es_index(interval=10):
     db = XFormInstance.get_db()
-    check_doc_id = doc_id if doc_id else _get_latest_doc_id(db, 'XFormInstance', skipfunc=is_real_submission)
+    forms = iter_all_forms_most_recent_first()
+    check_doc_id = _get_first_id_or_none(forms, skipfunc=is_real_submission)
     return check_index_by_doc(XFORM_INDEX, db, check_doc_id, interval=interval)
 
 
@@ -114,9 +118,10 @@ def check_reportcase_es_index(doc_id=None, interval=10):
         return {}
 
 
-def check_case_es_index(doc_id=None, interval=10):
+def check_case_es_index(interval=10):
     db = CommCareCase.get_db()
-    check_doc_id = doc_id if doc_id else _get_latest_doc_id(db, 'CommCareCase', skipfunc=is_case_recent)
+    cases = iter_all_cases_most_recent_first()
+    check_doc_id = _get_first_id_or_none(cases, skipfunc=is_case_recent)
     return check_index_by_doc(CASE_INDEX, db, check_doc_id, interval=interval)
 
 
@@ -149,46 +154,14 @@ def _get_latest_doc_from_index(es_index, sort_field):
         return None
 
 
+def _get_first_id_or_none(docs, skipfunc=None):
 
-def _get_latest_doc_id(db, doc_type, skip=0, limit=100, skipfunc=None):
-    """
-    Get the most recent doc_id from the relevant views emitting over time.
+    # don't check more than 5000 docs, not worth it
+    for doc in itertools.islice(docs, 0, 5000):
+        if skipfunc(doc):
+            return doc['id']
 
-    'CommCareCase' | 'XFormInstance'
-    hqadmin/cases_over_time or hqadmin/forms_over_time
-
-    skipfunc = filter function for getting stuff out that we don't care about.
-
-    for xforms, this is for filtering out devicelogs
-    for cases, filtering out dates in the future
-    """
-    doc_type_views = {
-        'CommCareCase': 'hqadmin/cases_over_time',
-        'XFormInstance': 'hqadmin/forms_over_time'
-    }
-
-    if doc_type in doc_type_views:
-        view_name = doc_type_views[doc_type]
-    else:
-        raise Exception("Don't know what to do with that doc_type to check an index: %s" % doc_type)
-    def _call_view(skip, limit):
-        return db.view(view_name, reduce=False, limit=limit, skip=skip, include_docs=True, descending=True)
-    filtered_docs = []
-
-    while True:
-        raw_docs = _call_view(skip, limit)
-        filtered_docs = filter(skipfunc, raw_docs)
-        if len(filtered_docs) > 0:
-            break
-        skip += limit
-        if skip == 5000:
-            #sanity check if we get a deluge of bad data, just return anything we got
-            break
-
-    if len(filtered_docs) > 0:
-        return filtered_docs[0]['id']
-    else:
-        return None
+    return None
 
 
 def _check_es_rev(index, doc_id, couch_revs):

@@ -15,7 +15,7 @@ MESSAGE_TYPE_CALL = "call"
 CELERY_QUEUE = ("sms_queue" if settings.SMS_QUEUE_ENABLED else
     settings.CELERY_MAIN_QUEUE)
 
-@task(queue=CELERY_QUEUE)
+@task(queue=CELERY_QUEUE, ignore_result=True)
 def process_incoming_message(*args, **kwargs):
     try:
         from corehq.apps.telerivet.views import TELERIVET_INBOUND_FIELD_MAP

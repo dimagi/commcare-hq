@@ -19,16 +19,18 @@ from .exceptions import (
     SuiteError,
     SuiteValidationError,
 )
-from corehq.toggles import MODULE_FILTER
+from corehq.feature_previews import MODULE_FILTER
 from corehq.apps.app_manager import id_strings
+from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE_LAST_VISIT, SCHEDULE_PHASE, \
+    CASE_ID, RETURN_TO, USERCASE_ID, USERCASE_TYPE
 from corehq.apps.app_manager.exceptions import UnknownInstanceError, ScheduleError, FormNotFoundException
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
-from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE_LAST_VISIT, SCHEDULE_PHASE, RETURN_TO
-from corehq.apps.app_manager.util import split_path, create_temp_sort_column, languages_mapping
+from corehq.apps.app_manager.util import split_path, create_temp_sort_column, languages_mapping, \
+    actions_use_usercase
 from corehq.apps.app_manager.xform import SESSION_CASE_ID, autoset_owner_id_for_open_case, \
     autoset_owner_id_for_subcase
-from corehq.apps.app_manager.xpath import dot_interpolate, CaseIDXPath, session_var, \
-    CaseTypeXpath, ItemListFixtureXpath, ScheduleFixtureInstance, XPath, ProductInstanceXpath
+from corehq.apps.app_manager.xpath import interpolate_xpath, CaseIDXPath, session_var, \
+    CaseTypeXpath, ItemListFixtureXpath, ScheduleFixtureInstance, XPath, ProductInstanceXpath, UserCaseXPath
 from corehq.apps.hqmedia.models import HQMediaMapItem
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base
@@ -318,8 +320,9 @@ class Assertion(XmlObject):
     text = NodeListField('text', Text)
 
 
-class Entry(XmlObject):
+class Entry(OrderedXmlObject, XmlObject):
     ROOT_NAME = 'entry'
+    ORDER = ('form', 'command', 'instance', 'datums')
 
     form = StringField('form')
     command = NodeField('command', Command)
@@ -444,7 +447,7 @@ class DetailVariableList(XmlObject):
     variables = NodeListField('_', DetailVariable)
 
 
-class Detail(IdNode):
+class Detail(OrderedXmlObject, IdNode):
     """
     <detail id="">
         <title><text/></title>
@@ -459,6 +462,7 @@ class Detail(IdNode):
     """
 
     ROOT_NAME = 'detail'
+    ORDER = ('title', 'fields')
 
     title = NodeField('title/text', Text)
     fields = NodeListField('field', Field)
@@ -686,6 +690,7 @@ class SuiteGeneratorBase(object):
 
 
 GROUP_INSTANCE = Instance(id='groups', src='jr://fixture/user-groups')
+REPORT_INSTANCE = Instance(id='reports', src='jr://fixture/commcare:reports')
 LEDGER_INSTANCE = Instance(id='ledgerdb', src='jr://instance/ledgerdb')
 CASE_INSTANCE = Instance(id='casedb', src='jr://instance/casedb')
 SESSION_INSTANCE = Instance(id='commcaresession', src='jr://instance/session')
@@ -694,6 +699,7 @@ INSTANCE_BY_ID = {
     instance.id: instance
     for instance in (
         GROUP_INSTANCE,
+        REPORT_INSTANCE,
         LEDGER_INSTANCE,
         CASE_INSTANCE,
         SESSION_INSTANCE,
@@ -737,6 +743,10 @@ class SuiteGenerator(SuiteGeneratorBase):
         'menus',
         'fixtures',
     )
+
+    def __init__(self, app, is_usercase_enabled=None):
+        super(SuiteGenerator, self).__init__(app)
+        self.is_usercase_enabled = is_usercase_enabled
 
     def post_process(self, suite):
         if self.app.enable_post_form_workflow:
@@ -1080,45 +1090,43 @@ class SuiteGenerator(SuiteGeneratorBase):
     @property
     @memoized
     def details(self):
-
         r = []
         if not self.app.use_custom_suite:
             for module in self.modules:
                 for detail_type, detail, enabled in module.get_details():
                     if enabled:
-                        detail_column_infos = get_detail_column_infos(
-                            detail,
-                            include_sort=detail_type.endswith('short'),
-                        )
-
-                        if detail_column_infos:
-                            if detail.custom_xml:
-                                d = load_xmlobject_from_string(
-                                    detail.custom_xml,
-                                    xmlclass=Detail
-                                )
-                                r.append(d)
-
-                            elif detail.use_case_tiles:
-                                r.append(self.build_case_tile_detail(
-                                    module, detail, detail_type
-                                ))
-                            else:
-                                d = self.build_detail(
-                                    module,
-                                    detail_type,
-                                    detail,
-                                    detail_column_infos,
-                                    list(detail.get_tabs()),
-                                    self.id_strings.detail(module, detail_type),
-                                    Text(locale_id=self.id_strings.detail_title_locale(
-                                        module, detail_type
-                                    )),
-                                    0,
-                                    len(detail_column_infos)
-                                )
-                                if d:
-                                    r.append(d)
+                        if detail.custom_xml:
+                            d = load_xmlobject_from_string(
+                                detail.custom_xml,
+                                xmlclass=Detail
+                            )
+                            r.append(d)
+                        else:
+                            detail_column_infos = get_detail_column_infos(
+                                detail,
+                                include_sort=detail_type.endswith('short'),
+                            )
+                            if detail_column_infos:
+                                if detail.use_case_tiles:
+                                    r.append(self.build_case_tile_detail(
+                                        module, detail, detail_type
+                                    ))
+                                else:
+                                    d = self.build_detail(
+                                        module,
+                                        detail_type,
+                                        detail,
+                                        detail_column_infos,
+                                        list(detail.get_tabs()),
+                                        self.id_strings.detail(module, detail_type),
+                                        Text(locale_id=self.id_strings.detail_title_locale(
+                                            module, detail_type
+                                        )),
+                                        0,
+                                        len(detail_column_infos)
+                                    )
+                                    if d:
+                                        r.append(d)
         return r
 
     def detail_variables(self, module, detail, detail_column_infos):
@@ -1244,10 +1252,9 @@ class SuiteGenerator(SuiteGeneratorBase):
             if column.format == "enum":
                 template_args[template_field]["enum_keys"] = {}
                 for mapping in column.enum:
-                    key = mapping.key
-                    template_args[template_field]["enum_keys"][key] = \
+                    template_args[template_field]["enum_keys"][mapping.key] = \
                         self.id_strings.detail_column_enum_variable(
-                            module, detail_type, column, key
+                            module, detail_type, column, mapping.key_as_variable
                         )
         # Populate the template
         detail_as_string = self._case_tile_template_string.format(**template_args)
@@ -1459,6 +1466,9 @@ class SuiteGenerator(SuiteGeneratorBase):
                         ))
                 results.append(e)
 
+            for entry in module.get_custom_entries():
+                results.append(entry)
+
         return results
 
     def get_assertion(self, test, locale_id, locale_arguments=None):
@@ -1489,6 +1499,24 @@ class SuiteGenerator(SuiteGeneratorBase):
                 'case_autoload.{0}.case_missing'.format(mode),
             )
         ]
+
+    def get_extra_case_id_datums(self, form):
+        datums = []
+        if form.form_type == 'module_form' and actions_use_usercase(form.active_actions()):
+            if not self.is_usercase_enabled:
+                raise SuiteError('Form uses usercase, but usercase not enabled')
+            case = UserCaseXPath().case()
+            datums.append({
+                'datum': SessionDatum(id=USERCASE_ID, function=('%s/@case_id' % case)),
+                'case_type': USERCASE_TYPE,
+                'requires_selection': False,
+                'action': None  # action and user case are independent.
+            })
+        return datums
+
+    @staticmethod
+    def any_usercase_datums(datums):
+        return any(d['case_type'] == USERCASE_TYPE for d in datums)
 
     def get_new_case_id_datums_meta(self, form):
         if not form:
@@ -1572,6 +1600,7 @@ class SuiteGenerator(SuiteGeneratorBase):
             datums.extend(self.get_datum_meta_module(module, use_filter=True))
 
         datums.extend(self.get_new_case_id_datums_meta(form))
+        datums.extend(self.get_extra_case_id_datums(form))
         for datum in datums:
             e.datums.append(datum['datum'])
 
@@ -1651,7 +1680,7 @@ class SuiteGenerator(SuiteGeneratorBase):
         from corehq.apps.app_manager.models import AUTO_SELECT_USER, AUTO_SELECT_CASE, \
             AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW
         if auto_select.mode == AUTO_SELECT_USER:
-            xpath = session_var(auto_select.value_key, subref='user')
+            xpath = session_var(auto_select.value_key, path='user/data')
             assertions = self.get_auto_select_assertions(xpath, auto_select.mode, [auto_select.value_key])
             return SessionDatum(
                 id=action.case_session_var,
@@ -1972,6 +2001,9 @@ class SuiteGenerator(SuiteGeneratorBase):
                     Command(id=self.id_strings.form_command(module.get_form_by_type(CAREPLAN_TASK, 'update'))),
                 ])
                 menus.append(update_menu)
+            elif hasattr(module, 'get_menus'):
+                for menu in module.get_menus():
+                    menus.append(menu)
             else:
                 menu_kwargs = {
                     'id': self.id_strings.menu_id(module),
@@ -1985,8 +2017,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 if (self.app.domain and MODULE_FILTER.enabled(self.app.domain) and
                         self.app.enable_module_filtering and
                         getattr(module, 'module_filter', None)):
-                    menu_kwargs['relevant'] = dot_interpolate(module.module_filter,
-                                                              "instance('commcaresession')/session")
+                    menu_kwargs['relevant'] = interpolate_xpath(module.module_filter)
 
                 menu = Menu(**menu_kwargs)
 
@@ -2006,7 +2037,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                                 case = SESSION_CASE_ID.case()
 
                             if case:
-                                command.relevant = dot_interpolate(form.form_filter, case)
+                                command.relevant = interpolate_xpath(form.form_filter, case)
                         yield command
 
                     if hasattr(module, 'case_list') and module.case_list.show:
@@ -2071,7 +2102,7 @@ class MediaSuiteGenerator(SuiteGeneratorBase):
             if path.startswith(PREFIX):
                 path = path[len(PREFIX):]
             else:
-                raise MediaResourceError('%s does not start with jr://file/commcare/' % path)
+                raise MediaResourceError('%s does not start with %s' % (path, PREFIX))
             path, name = split_path(path)
             # CommCare assumes jr://media/,
             # which is an alias to jr://file/commcare/media/

@@ -3,10 +3,10 @@ from datetime import timedelta, datetime
 from django.core.cache import cache
 from django.db.models.aggregates import Count, Avg
 from django.db.models.query_utils import Q
-from jsonobject import JsonObject
-from jsonobject.properties import DictProperty, StringProperty
+from dimagi.ext.jsonobject import JsonObject, DictProperty, StringProperty
 import pytz
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.callcenter.utils import get_call_center_cases
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.filters.select import CaseTypeMixin
 from corehq.apps.sofabed.models import FormData, CaseData
@@ -92,16 +92,19 @@ class CallCenterIndicators(object):
     no_value = 0
     name = 'call-center'
 
-    def __init__(self, domain, user, custom_cache=None, override_date=None, override_cases=None):
-        self.domain = domain
+    def __init__(self, domain_name, domain_timezone, cc_case_type, user,
+                 custom_cache=None, override_date=None, override_cases=None,
+                 override_cache=False):
+        self.domain = domain_name
         self.user = user
         self.data = defaultdict(dict)
-        self.cc_case_type = self.domain.call_center_config.case_type
+        self.cc_case_type = cc_case_type
         self.cache = custom_cache or cache
         self.override_cases = override_cases
+        self.override_cache = override_cache
 
         try:
-            self.timezone = self.domain.get_default_timezone()
+            self.timezone = pytz.timezone(domain_timezone)
         except pytz.UnknownTimeZoneError:
             self.timezone = pytz.utc
 
@@ -135,23 +138,7 @@ class CallCenterIndicators(object):
         if self.override_cases:
             return self.override_cases
 
-        keys = [
-            ["open type owner", self.domain.name, self.cc_case_type, owner_id]
-            for owner_id in self.user.get_owner_ids()
-        ]
-        all_owned_cases = []
-        for key in keys:
-            cases = CommCareCase.view(
-                'case/all_cases',
-                startkey=key,
-                endkey=key + [{}],
-                reduce=False,
-                include_docs=True
-            ).all()
-
-            all_owned_cases.extend(cases)
-
-        return all_owned_cases
+        return get_call_center_cases(self.domain, self.cc_case_type, self.user)
 
     @property
     @memoized
@@ -168,6 +155,9 @@ class CallCenterIndicators(object):
         """
         :return: Dictionary of user_id -> CachedIndicators
         """
+        if self.override_cache:
+            return {}
+
         keys = [cache_key(user_id, self.reference_date) for user_id in self.user_to_case_map.keys()]
         cached = self.cache.get_many(keys)
         data = {data['user_id']: CachedIndicators.wrap(data) for data in cached.values()}
@@ -202,14 +192,14 @@ class CallCenterIndicators(object):
         """
         :return: Set of all case types for the domain excluding the CallCenter case type.
         """
-        case_types = set(CaseTypeMixin.get_case_types(self.domain.name))
+        case_types = set(CaseTypeMixin.get_case_types(self.domain))
         case_types.remove(self.cc_case_type)
         return case_types
 
     @property
     @memoized
     def case_sharing_groups(self):
-        return Group.get_case_sharing_groups(self.domain.name)
+        return Group.get_case_sharing_groups(self.domain)
 
     @property
     @memoized
@@ -316,7 +306,7 @@ class CallCenterIndicators(object):
             .values('case_owner', 'type') \
             .exclude(type=self.cc_case_type) \
             .filter(
-                domain=self.domain.name,
+                domain=self.domain,
                 doc_type='CommCareCase')
 
     def _case_query_opened_closed(self, opened_or_closed, lower, upper):
@@ -325,7 +315,7 @@ class CallCenterIndicators(object):
             .values('case_owner', 'type') \
             .exclude(type=self.cc_case_type) \
             .filter(
-                domain=self.domain.name,
+                domain=self.domain,
                 doc_type='CommCareCase') \
             .filter(**self._date_filters('{}_on'.format(opened_or_closed), lower, upper)) \
             .filter(**{
@@ -340,7 +330,7 @@ class CallCenterIndicators(object):
             .values('user_id') \
             .exclude(type=self.cc_case_type) \
             .filter(
-                domain=self.domain.name,
+                domain=self.domain,
                 doc_type='CommCareCase',
                 closed=False,
                 user_id__in=self.users_needing_data) \
@@ -407,7 +397,7 @@ class CallCenterIndicators(object):
             .values('user_id') \
             .filter(
                 xmlns=xmlns,
-                domain=self.domain.name,
+                domain=self.domain,
                 doc_type='XFormInstance',
                 user_id__in=self.users_needing_data) \
             .filter(**self._date_filters('time_end', lower, upper)) \
@@ -426,7 +416,7 @@ class CallCenterIndicators(object):
             .values('user_id') \
             .filter(**self._date_filters('time_end', lower, upper)) \
             .filter(
-                domain=self.domain.name,
+                domain=self.domain,
                 doc_type='XFormInstance',
                 user_id__in=self.users_needing_data
             )\
@@ -436,8 +426,8 @@ class CallCenterIndicators(object):
         #  maintained for backwards compatibility
         self._add_data(results, 'formsSubmitted{}'.format(range_name.title()))
 
-        if self.domain.name in PER_DOMAIN_FORM_INDICATORS:
-            for custom in PER_DOMAIN_FORM_INDICATORS[self.domain.name]:
+        if self.domain in PER_DOMAIN_FORM_INDICATORS:
+            for custom in PER_DOMAIN_FORM_INDICATORS[self.domain]:
                 self.add_custom_form_data(
                     custom['slug'],
                     range_name,
@@ -468,7 +458,7 @@ class CallCenterIndicators(object):
                         cache_data = CachedIndicators(
                             user_id=user_id,
                             case_id=user_case_id,
-                            domain=self.domain.name,
+                            domain=self.domain,
                             indicators=indicators
                         )
                         self.cache.set(

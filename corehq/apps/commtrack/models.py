@@ -3,7 +3,7 @@ import uuid
 import logging
 from xml.etree import ElementTree
 from couchdbkit.exceptions import ResourceNotFound
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 from django.db import transaction
 from django.utils.translation import ugettext as _
 from casexml.apps.case.mock import CaseBlock
@@ -139,6 +139,7 @@ class ConsumptionConfig(DocumentSchema):
     min_window = IntegerProperty(default=10)
     optimal_window = IntegerProperty()
     use_supply_point_type_default_consumption = BooleanProperty(default=False)
+    exclude_invalid_periods = BooleanProperty(default=False)
 
 
 class StockLevelsConfig(DocumentSchema):
@@ -205,7 +206,6 @@ class CommtrackConfig(CachedCouchDocumentMixin, Document):
     # configured on Advanced Settings page
     use_auto_emergency_levels = BooleanProperty(default=False)
 
-    sync_location_fixtures = BooleanProperty(default=True)
     sync_consumption_fixtures = BooleanProperty(default=True)
     use_auto_consumption = BooleanProperty(default=False)
     consumption_config = SchemaProperty(ConsumptionConfig)
@@ -262,6 +262,7 @@ class CommtrackConfig(CachedCouchDocumentMixin, Document):
             min_window=self.consumption_config.min_window,
             max_window=self.consumption_config.optimal_window,
             default_monthly_consumption_function=_default_monthly_consumption,
+            exclude_invalid_periods=self.consumption_config.exclude_invalid_periods
         )
 
     def get_ota_restore_settings(self):
@@ -359,7 +360,7 @@ class NewStockReport(object):
 
         return cls(form, timestamp, tag, transactions)
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def create_models(self, domain=None):
         # todo: this function should probably move to somewhere in casexml.apps.stock
         if self.tag not in stockconst.VALID_REPORT_TYPES:
@@ -756,12 +757,12 @@ class SupplyPointCase(CommCareCase):
                     [
                         {
                             "expr": "location_parent_name",
-                            "name": _("Location"),
+                            "name": _("Parent Location"),
                         },
                         {
                             "expr": "owner_id",
-                            "name": _("Group"),
-                            "format": '<span data-field="owner_id">{0}</span>',
+                            "name": _("Location"),
+                            "process": "doc_info",
                         },
                     ],
                 ],
@@ -931,7 +932,7 @@ class ActiveManager(models.Manager):
     Filter any object that is associated to an archived product.
     """
 
-    def get_query_set(self):
+    def get_queryset(self):
         return super(ActiveManager, self).get_query_set() \
             .exclude(sql_product__is_archived=True) \
             .exclude(sql_location__is_archived=True)

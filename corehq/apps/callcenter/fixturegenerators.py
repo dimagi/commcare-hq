@@ -3,6 +3,8 @@ from datetime import datetime
 import pytz
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.users.models import CommCareUser
+from corehq.util.soft_assert import soft_assert
+from corehq.util.timezones.conversions import UserTime, ServerTime
 from dimagi.utils.logging import notify_exception
 
 utc = pytz.utc
@@ -13,17 +15,26 @@ def should_sync(domain, last_sync, utcnow=None):
     if not last_sync or not last_sync.date:
         return True
 
+    # utcnow only used in tests to mock other times
+    utcnow = utcnow or datetime.utcnow()
+
     try:
         timezone = domain.get_default_timezone()
     except pytz.UnknownTimeZoneError:
         timezone = utc
 
-    # check if user has already synced today (in local timezone). Indicators only change daily.
-    last_sync_utc = last_sync.date if last_sync.date.tzinfo else utc.localize(last_sync.date)
-    last_sync_local = timezone.normalize(last_sync_utc.astimezone(timezone))
+    _assert = soft_assert(to=['droberts' + '@' + 'dimagi.com'])
 
-    utcnow = utcnow if utcnow else utc.localize(datetime.utcnow())
-    current_date_local = timezone.normalize(utcnow.astimezone(timezone))
+    last_sync_utc = last_sync.date
+
+    if not _assert(last_sync_utc.tzinfo is None,
+                   'last_sync.date should be an offset-naive dt'):
+        last_sync_utc = UserTime(last_sync_utc).server_time().done()
+
+    # check if user has already synced today (in local timezone).
+    # Indicators only change daily.
+    last_sync_local = ServerTime(last_sync_utc).user_time(timezone).done()
+    current_date_local = ServerTime(utcnow).user_time(timezone).done()
 
     if current_date_local.date() != last_sync_local.date():
         return True
@@ -44,7 +55,12 @@ def indicators_fixture_generator(user, version, last_sync=None):
         return fixtures
 
     try:
-        fixtures.append(gen_fixture(user, CallCenterIndicators(domain, user)))
+        fixtures.append(gen_fixture(user, CallCenterIndicators(
+            domain.name,
+            domain.default_timezone,
+            domain.call_center_config.case_type,
+            user
+        )))
     except Exception:  # blanket exception catching intended
         notify_exception(None, 'problem generating callcenter fixture', details={
             'user_id': user._id,

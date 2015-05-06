@@ -1,5 +1,7 @@
 import json
 import os
+from datetime import datetime
+from mock import patch
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.models import Application
 from corehq.apps.userreports.app_manager import get_case_data_sources, get_form_data_sources
@@ -12,7 +14,11 @@ class AppManagerDataSourceConfigTest(SimpleTestCase):
         with open(os.path.join(os.path.dirname(__file__), 'data', 'app_manager', name)) as f:
             return json.loads(f.read())
 
-    def test_simple_case_management(self):
+    @patch('corehq.apps.userreports.specs.datetime')
+    def test_simple_case_management(self, datetime_mock):
+        fake_time_now = datetime(2015, 4, 24, 12, 30, 8, 24886)
+        datetime_mock.utcnow.return_value = fake_time_now
+
         app = Application.wrap(self.get_json('simple_app.json'))
         self.assertEqual('userreports_test', app.domain)
         data_sources = get_case_data_sources(app)
@@ -36,7 +42,7 @@ class AppManagerDataSourceConfigTest(SimpleTestCase):
         # check the indicators
         expected_columns = set(
             ["doc_id", "modified_on", "user_id", "opened_on",
-             "owner_id", "name", "category", "priority", "starred", "estimate"]
+             "owner_id", "name", "category", "priority", "starred", "estimate", "inserted_at"]
         )
         self.assertEqual(expected_columns, set(col_back.id for col_back in data_source.get_columns()))
 
@@ -62,7 +68,10 @@ class AppManagerDataSourceConfigTest(SimpleTestCase):
         default_case_property_datatypes = DEFAULT_CASE_PROPERTY_DATATYPES
         [row] = data_source.get_all_values(sample_doc)
         for result in row:
-            if result.column.id != "repeat_iteration":
+            if result.column.id == "inserted_at":
+                self.assertEqual(result.column.datatype, 'datetime')
+                self.assertEqual(fake_time_now, result.value)
+            if result.column.id not in ["repeat_iteration", "inserted_at"]:
                 self.assertEqual(sample_doc[_get_column_property(result.column)], result.value)
                 if result.column.id in default_case_property_datatypes:
                     self.assertEqual(

@@ -12,15 +12,36 @@
         Stripe.setPublishableKey('{{ stripe_public_key }}');
 
         var bulkPaymentHandler = new PaymentMethodHandler(
-            {{ payment_error_messages|JSON }},
-            "{% trans "Submit Payment" %}",
-            "bulk-payment-form"
+            "bulk-payment-form",
+            {
+                submitBtnText: "{% trans "Submit Payment" %}",
+                errorMessages: {{ payment_error_messages|JSON }}
+            }
         );
+
+        var bulkWirePaymentHandler = new WireInvoiceHandler(
+            "bulk-wire-payment-form",
+            {
+                submitBtnText: "{% trans "Submit Invoice Request" %}",
+                isWire: true,
+                errorMessages: {{ payment_error_messages|JSON }},
+            }
+        );
+
         var paymentHandler = new PaymentMethodHandler(
-            {{ payment_error_messages|JSON }},
-            "{% trans "Submit Payment" %}",
-            "payment-form"
+            "payment-form",
+            {
+                submitBtnText: "{% trans "Submit Payment" %}",
+                errorMessages: {{ payment_error_messages|JSON }},
+            }
         );
+
+        // A sign that the data model isn't exactly right - credit cards are shared data.
+        // Consider refactoring at some point.
+        var handlers = [bulkPaymentHandler, paymentHandler];
+        for (var i = 0; i < handlers.length; i++) {
+            handlers[i].handlers = handlers;
+        }
 
         {% if stripe_cards %}
             var stripe_cards = {{ stripe_cards|JSON }};
@@ -30,6 +51,7 @@
 
         $(function () {
             ko.applyBindings(bulkPaymentHandler, $('#bulkPaymentModal').get(0));
+            ko.applyBindings(bulkWirePaymentHandler, $('#bulkWirePaymentModal').get(0));
             ko.applyBindings(paymentHandler, $('#paymentModal').get(0));
         });
 
@@ -38,6 +60,11 @@
                 totalBalance: paginatedListModel.totalDue()
             }));
             bulkPaymentHandler.reset();
+        });
+        $('#bulkWirePaymentBtn').click(function () {
+            bulkWirePaymentHandler.costItem(new TotalCostItem({
+                totalBalance: paginatedListModel.totalDue()
+            }));
         });
 
         paginatedListModel.totalDue = ko.computed(function() {
@@ -85,21 +112,19 @@
                     e.preventDefault();
                 });
             }
-            $(".hide-while-loading").removeAttr("hidden");
         };
     </script>
 {% endblock %}
 
 {% block paginated_list_top %}
-    {% if request|toggle_enabled:"BULK_PAYMENTS" %}
     <div id="currentBalanceSection">
         <h2>{% trans 'Current Balance' %}</h2>
         <p>
             {% trans 'Total Due:' %}
-            <span class="hide-while-loading" hidden="true" data-bind="text: displayTotalDue"></span>
+            <span data-bind="text: displayTotalDue, visible: hasInitialLoadFinished"></span>
         </p>
         {% if not is_ops_user_but_not_admin %}
-        <p class="hide-while-loading" hidden="true" data-bind="visible: totalDue">
+        <p data-bind="visible: hasInitialLoadFinished() && totalDue()">
             <button type="button"
                     class="btn btn-success"
                     data-toggle="modal"
@@ -108,6 +133,17 @@
                 {% trans 'Pay with Credit Card' %}
             </button>
         </p>
+        {% if request|toggle_enabled:"BULK_PAYMENTS" %}
+        <p data-bind="visible: hasInitialLoadFinished() && totalDue()">
+            <button type="button"
+                    class="btn btn-success"
+                    data-toggle="modal"
+                    data-target="#bulkWirePaymentModal"
+                    id="bulkWirePaymentBtn">
+                {% trans 'Pay by Wire' %}
+            </button>
+        </p>
+        {% endif %}
         {% else %}
         <span class="label">
             <i class="icon-info-sign"></i>
@@ -115,7 +151,6 @@
         </span>
         {% endif %}
     </div>
-    {% endif %}
     <h2>{% trans 'Billing Statements' %} <span data-bind="visible: showUnpaidBills">({% trans 'Unpaid' %})</span></h2>
     <p>
         <button type="button"
@@ -233,6 +268,10 @@
         </h3>
     </script>
 
+    <script type="text/html" id="bulk-wire-payment-method-modal-title">
+        <h3>{% trans 'Bulk Wire Payment' %}</h3>
+    </script>
+
     <script type="text/html" id="bulk-payment-method-modal-title">
         <h3>
             {% trans 'Bulk Payment' %}
@@ -246,6 +285,9 @@
     {% endwith %}
     {% with process_bulk_payment_url as process_payment_url %}
         {% include 'domain/partials/payment_modal.html' with payment_modal_id="bulkPaymentModal" title_template="bulk-payment-method-modal-title" cost_item_template="cost-item-template" %}
+    {% endwith %}
+    {% with process_wire_invoice_url as process_payment_url %}
+        {% include 'domain/partials/payment_modal.html' with payment_modal_id="bulkWirePaymentModal" title_template="bulk-wire-payment-method-modal-title" cost_item_template="cost-item-template" %}
     {% endwith %}
 
 {% endblock %}

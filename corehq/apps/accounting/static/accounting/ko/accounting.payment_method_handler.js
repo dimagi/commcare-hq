@@ -1,15 +1,70 @@
-var PaymentMethodHandler = function (errorMessages, submitBtnText, form_id) {
+var BillingHandler = function (formId, opts) {
     'use strict';
     var self = this;
-
-    self.errorMessages = errorMessages || {};
-    self.submitBtnText = submitBtnText;
-    self.form_id = form_id;
-
+    self.formId = formId;
+    self.errorMessages = opts.errorMessages || {};
+    self.submitBtnText = opts.submitBtnText;
     self.costItem = ko.observable();
     self.hasCostItem = ko.computed(function () {
         return !! self.costItem();
     });
+
+    self.isWire = ko.observable(opts.isWire || false);
+
+    self.paymentIsComplete = ko.observable(false);
+    self.paymentIsNotComplete = ko.computed(function () {
+        return ! self.paymentIsComplete();
+    });
+
+    self.serverErrorMsg = ko.observable();
+    self.showServerErrorMsg = ko.computed(function () {
+        return !! self.serverErrorMsg();
+    });
+
+    self.submitForm = function () {
+        $('#' + self.formId).ajaxSubmit({
+            success: self.handleSuccess,
+            error: self.handleGeneralError
+        });
+    };
+};
+
+var WireInvoiceHandler = function(formId, opts) {
+    'use strict';
+    var self = this;
+    opts = opts ? opts : {};
+
+    BillingHandler.apply(this, arguments);
+
+    self.wireEmails = ko.observable('');
+
+    self.handleGeneralError = function (response, textStatus, errorThrown) {
+        errorThrown = errorThrown || 500;
+        self.serverErrorMsg(self.errorMessages[errorThrown]);
+    };
+
+    self.handleSuccess = function(response) {
+          if (response.success) {
+              self.costItem().reset();
+              self.paymentIsComplete(true);
+          }
+    };
+
+    self.isSubmitDisabled = ko.computed(function () {
+        return !(self.costItem() && self.costItem().isValid());
+    });
+    self.processPayment = function () {
+        self.submitForm();
+    };
+    self.hasAgreedToPrivacy = true; // No privacy policy for wire
+};
+
+var PaymentMethodHandler = function (formId, opts) {
+    'use strict';
+    var self = this;
+    opts = opts ? opts : {};
+
+    BillingHandler.apply(this, arguments);
 
     self.savedCards = ko.observableArray();
 
@@ -25,6 +80,8 @@ var PaymentMethodHandler = function (errorMessages, submitBtnText, form_id) {
 
     self.newCard = ko.observable(new StripeCard());
 
+    self.handlers = [self];
+
     self.showConfirmRemoveCard = ko.observable(false);
     self.isRemovingCard = ko.observable(false);
     self.selectedCard = ko.computed(function () {
@@ -38,10 +95,6 @@ var PaymentMethodHandler = function (errorMessages, submitBtnText, form_id) {
         return self.selectedCard() && self.selectedCard().cardFormIsValid();
     });
 
-    self.paymentIsComplete = ko.observable(false);
-    self.paymentIsNotComplete = ko.computed(function () {
-        return ! self.paymentIsComplete();
-    });
 
     self.mustCreateNewCard = ko.computed(function () {
         return self.paymentIsNotComplete() && self.savedCards().length == 0;
@@ -52,11 +105,6 @@ var PaymentMethodHandler = function (errorMessages, submitBtnText, form_id) {
 
     self.isSubmitDisabled = ko.computed(function () {
         return !(!! self.costItem() && self.costItem().isValid()) || self.selectedCard().isProcessing();
-    });
-
-    self.serverErrorMsg = ko.observable();
-    self.showServerErrorMsg = ko.computed(function () {
-        return !! self.serverErrorMsg();
     });
 
     self.loadCards = function (cards) {
@@ -82,24 +130,6 @@ var PaymentMethodHandler = function (errorMessages, submitBtnText, form_id) {
         }
     };
 
-    self.submitForm = function () {
-        $('#' + self.form_id).ajaxSubmit({
-            success: function (response) {
-                if (response.success) {
-                    self.costItem().reset(response);
-                    if (response.wasSaved) {
-                        var stripe_card = new StripeCard();
-                        stripe_card.loadSavedData(response.card);
-                        self.savedCards.push(stripe_card);
-                        self.selectedCardType('saved');
-                    }
-                    self.paymentIsComplete(true);
-                }
-                self.handleProcessingErrors(response);
-            },
-            error: self.handleGeneralError
-        });
-    };
 
     self.confirmRemoveSavedCard = function () {
         self.showConfirmRemoveCard(true);
@@ -108,17 +138,20 @@ var PaymentMethodHandler = function (errorMessages, submitBtnText, form_id) {
     self.removeSavedCard = function () {
         self.isRemovingCard(true);
         self.showConfirmRemoveCard(false);
-        $('#' + self.form_id).ajaxSubmit({
+        $('#' + self.formId).ajaxSubmit({
             data: {
                 removeCard: true
             },
             success: function (response) {
                 self.handleProcessingErrors(response);
-                self.savedCards(_.filter(self.savedCards(), function (card) {
-                    return card.token() !== response.removedCard;
-                }));
-                if (self.savedCards().length == 0) {
-                    self.selectedCardType('new');
+                for (var i = 0; i < handlers.length; i++) {
+                    var handler = self.handlers[i];
+                    handler.savedCards(_.filter(handler.savedCards(), function (card) {
+                        return card.token() !== response.removedCard;
+                    }));
+                    if (!handler.savedCards().length) {
+                        handler.selectedCardType('new');
+                    }
                 }
                 self.isRemovingCard(false);
             },
@@ -147,7 +180,30 @@ var PaymentMethodHandler = function (errorMessages, submitBtnText, form_id) {
         }
         self.selectedCard().isProcessing(false);
     };
+
+    self.handleSuccess = function(response) {
+          if (response.success) {
+              self.costItem().reset(response);
+              if (response.wasSaved) {
+                  for (var i = 0; i < handlers.length; i++) {
+                      var handler = self.handlers[i];
+                      var stripe_card = new StripeCard();
+                      stripe_card.loadSavedData(response.card);
+                      handler.savedCards.push(stripe_card);
+                      handler.selectedCardType('saved');
+                  }
+              }
+              self.paymentIsComplete(true);
+          }
+          self.handleProcessingErrors(response);
+    };
+
 };
+
+PaymentMethodHandler.prototype = Object.create( BillingHandler.prototype );
+PaymentMethodHandler.prototype.constructor = PaymentMethodHandler;
+WireInvoiceHandler.prototype = Object.create( BillingHandler.prototype );
+WireInvoiceHandler.prototype.constructor = WireInvoiceHandler;
 
 var BaseCostItem = function (initData) {
     'use strict';

@@ -671,7 +671,7 @@ cloudCare.AppView = Backbone.View.extend({
             });
         };
         data.onerror = function (resp) {
-            showError(resp.human_readable_message, $("#cloudcare-notifications"));
+            showError(resp.human_readable_message || resp.message, $("#cloudcare-notifications"));
             cloudCare.dispatch.trigger("form:error", form, caseModel);
         };
         data.onload = function (adapter, resp) {
@@ -1166,6 +1166,7 @@ cloudCare.AppMainView = Backbone.View.extend({
                                         form.get("index"),
                                         caseId);
             self.navigate(path, {replace: true});
+            self.updateTitle(form.get('name')[self.options.language]);
         });
         cloudCare.dispatch.on("case:selected", function (caseModel) {
             var appConfig = caseModel.get("appConfig");

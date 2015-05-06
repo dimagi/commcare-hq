@@ -45,22 +45,49 @@ name: autostaging
 branches:
   - usec  # danny 4/13
   - subscription-no-contact-info # bb 8/4
-  - revert-4205-revert-3841-86347-2 # Daniel 9/11
   - vellum-staging # J$ 11/13
   - locations-as-groups # tw 1/20
   - fixtures-spike  # cz 1/29
-  - static-updates # Biyeun 2/9
   - usercase # Norman 3/27
-  - django1.6 # SK 4/9
   - commcare-supply  # Ethan 4/13
+  - new-location  # Ethan 4/14
+  - small-invoices # Nick P 4/30
+  - grunt-task-fabric # Ben 5/1
+  - case-list-menu-icons # TS 5/4
+  - update-submodules # TS 5/6
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches:
-      - tf-persistence  # wsp 3/10
+    branches: []
+    #  - tf-persistence  # wsp 3/10
 
   submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master
     branches: []
+  submodules/auditcare-src:
+    branches:
+      - usec  # danny 4/13
+  submodules/couchexport-src:
+    branches:
+      - usec  # danny 4/13
+  submodules/couchlog-src:
+    branches:
+      - usec  # danny 4/13
+  submodules/ctable-src:
+    branches:
+      - usec  # danny 4/13
+  submodules/django-digest-src:
+    branches:
+      - atomic  # Ethan 4/22
+  submodules/fluff-src:
+    branches:
+      - usec  # danny 4/13
+  submodules/pillowtop-src:
+    branches:
+      - usec  # danny 4/13
+      - atomic  # Ethan 4/22
+  submodules/toggle:
+    branches:
+      - usec  # danny 4/13

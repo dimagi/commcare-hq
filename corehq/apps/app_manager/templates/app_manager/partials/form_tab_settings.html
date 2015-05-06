@@ -12,12 +12,12 @@
         </div>
 
         <legend>
-        <a class="accordion-toggle" data-toggle="collapse" data-bind="attr: {href: '#' + id}, css: {collapsed: reallyCollapse}" href="#form-settings-multimedia">
+        <a class="accordion-toggle collapsed" data-toggle="collapse" data-bind="attr: {href: '#' + id}, css: {collapsed: reallyCollapse}" href="#form-settings-multimedia">
             <i class="icon-double-angle-down"></i>
             <span data-bind="text: title">Media</span>
         </a>
         </legend>
-        <div class="collapse in" data-bind="attr: {id: id}, css: {'in': !reallyCollapse()}" id="form-settings-multimedia" style="overflow: hidden;">
+        <div class="collapse" data-bind="attr: {id: id}, css: {'in': !reallyCollapse()}" id="form-settings-multimedia" style="overflow: hidden;">
             <div class="control-group" data-bind="
                 visible: visible,
                 css: {error: hasError()}">
@@ -26,12 +26,12 @@
         </div>
 
         <legend>
-        <a class="accordion-toggle" data-toggle="collapse" data-bind="attr: {href: '#' + id}, css: {collapsed: reallyCollapse}" href="#form-settings-logic">
+        <a class="accordion-toggle collapsed" data-toggle="collapse" data-bind="attr: {href: '#' + id}, css: {collapsed: reallyCollapse}" href="#form-settings-logic">
             <i class="icon-double-angle-down"></i>
             <span data-bind="text: title">Logic</span>
         </a>
         </legend>
-        <div class="collapse in" data-bind="attr: {id: id}, css: {'in': !reallyCollapse()}" id="form-settings-logic" style="overflow: hidden;">
+        <div class="collapse" data-bind="attr: {id: id}, css: {'in': !reallyCollapse()}" id="form-settings-logic" style="overflow: hidden;">
             <div class="control-group" data-bind="
                 visible: visible,
                 css: {error: hasError()}">

@@ -1,11 +1,12 @@
 from datetime import datetime
 
-from couchdbkit.ext.django.schema import Document, BooleanProperty, StringProperty
+from dimagi.ext.couchdbkit import Document, BooleanProperty, StringProperty
 from django.db import models
 
 from casexml.apps.stock.models import DocDomainMapping
 from corehq.apps.products.models import Product
 from corehq.apps.locations.models import SQLLocation
+from custom.utils.utils import add_to_module_map
 from dimagi.utils.dates import force_to_datetime
 
 
@@ -58,6 +59,7 @@ class ILSGatewayConfig(Document):
             DocDomainMapping.objects.create(doc_id=self._id,
                                             domain_name=self.domain,
                                             doc_type='ILSGatewayConfig')
+            add_to_module_map(self.domain, 'custom.ilsgateway')
 
 
 # Ported from:

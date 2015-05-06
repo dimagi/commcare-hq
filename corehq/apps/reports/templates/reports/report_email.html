@@ -1,3 +1,4 @@
+{% load i18n %}
 <head>
 <style>
 h1 {
@@ -18,18 +19,20 @@ td.null-entry {
 <body>
     {% if email %}
     <p>
+        {% blocktrans %}
         This is a scheduled report from <a href="{{ DNS_name }}">CommCareHQ</a> for the project '{{ domain }}'.
+        {% endblocktrans %}
     </p>
     <p>
         {% if startdate %}
-            Date range: {{ startdate }} - {{ enddate }}
+            {% trans "Date range" %}: {{ startdate }} - {{ enddate }}
         {% endif %}
     </p>
     {% endif %}
 
     {% if notes %}
         <p>
-            <strong>Report Notes</strong><br/>
+            <strong>{% trans "Report Notes" %}</strong><br/>
             {{ notes }}
         </p>
     {% endif %}
@@ -48,10 +51,13 @@ td.null-entry {
 
     {% if email %}
     <br><hr />
-    <p>You are receiving this automated email from <a href="{{ DNS_name }}">CommCareHQ</a>
+    <p>
+    {% blocktrans %}
+    You are receiving this automated email from <a href="{{ DNS_name }}">CommCareHQ</a>
     because the user {{ owner_name }} added you as a recipient of their report.
     If you would no longer like to receive this report, please ask them to
     remove you.
+    {% endblocktrans %}
     </p> 
     {% endif %}
 </body>

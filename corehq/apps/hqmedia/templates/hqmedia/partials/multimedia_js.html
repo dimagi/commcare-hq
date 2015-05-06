@@ -1,4 +1,12 @@
 {% load hq_shared_tags %}
+<script type="text/javascript">
+    YUI_config = {
+        combine: false,
+        fetchCSS: false,
+        base: "//{{ request.get_host }}/",
+        loaderPath: "static/hqmedia/MediaUploader/yui-loader.js"
+    }
+</script>
 <script type="text/javascript" src="{% static 'hqmedia/MediaUploader/swfobject.js' %}"></script>
 <script type="text/javascript" src="{% static 'hqmedia/MediaUploader/yui-base.js' %}"></script>
 <script type="text/javascript" src="{% static 'hqmedia/MediaUploader/yui-uploader.js' %}"></script>

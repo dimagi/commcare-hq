@@ -11,10 +11,13 @@ from corehq.apps.example_reports.testreport import TestReport
 from corehq.apps.reports.views import AddSavedReportConfigView
 from corehq.apps.userreports.reports.view import ConfigurableReport
 from corehq.apps.userreports.views import (
-    CreateNewReportBuilderView,
-    ConfigureBarChartReportBuilderView,
-    ConfigureTableReportBuilderView,
-    ConfigurePieChartReportBuilderView,
+    ConfigureChartReport,
+    ConfigureListReport,
+    ConfigureTableReport,
+    ConfigureWorkerReport,
+    EditReportInBuilder,
+    ReportBuilderDataSourceSelect,
+    ReportBuilderTypeSelect,
 )
 from .filters import urls as filter_urls
 
@@ -26,15 +29,21 @@ custom_report_urls = patterns('',
 urlpatterns = patterns('corehq.apps.reports.views',
     TestReport.url_pattern(),
     ConfigurableReport.url_pattern(),
-    url(r'^builder/create/$', CreateNewReportBuilderView.as_view(), name="create_new_report_builder"),
-    url(r'^builder/configure/bar/$', ConfigureBarChartReportBuilderView.as_view(), name="configure_bar_chart_report_builder"),
-    url(r'^builder/configure/pie/$', ConfigurePieChartReportBuilderView.as_view(), name="configure_pie_chart_report_builder"),
-    url(r'^builder/configure/table/$', ConfigureTableReportBuilderView.as_view(), name="configure_table_report_builder"),
+
+    url(r'^builder/select_type/$', ReportBuilderTypeSelect.as_view(), name='report_builder_select_type'),
+    url(r'^builder/(?P<report_type>list|chart|table|worker)/select_source/$', ReportBuilderDataSourceSelect.as_view(), name='report_builder_select_source'),
+    url(r'^builder/configure/chart/$', ConfigureChartReport.as_view(), name="configure_chart_report"),
+    url(r'^builder/configure/list/$', ConfigureListReport.as_view(), name="configure_list_report"),
+    url(r'^builder/configure/table/$', ConfigureTableReport.as_view(), name="configure_table_report"),
+    url(r'^builder/configure/worker/$', ConfigureWorkerReport.as_view(), name="configure_worker_report"),
+    url(r'^builder/edit/(?P<report_id>[\w\-]+)/$', EditReportInBuilder.as_view(), name='edit_report_in_builder'),
+
     url(r'^$', "default", name="reports_home"),
     url(r'^saved/', "saved_reports", name="saved_reports"),
     url(r'^saved_reports', 'old_saved_reports'),
 
     url(r'^case_data/(?P<case_id>[\w\-]+)/$', 'case_details', name="case_details"),
+    url(r'^case_data/(?P<case_id>[\w\-]+)/forms/$', 'case_forms', name="single_case_forms"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/attachments/$', 'case_attachments', name="single_case_attachments"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/view/xml/$', 'case_xml', name="single_case_xml"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/rebuild/$', 'rebuild_case_view', name="rebuild_case"),
@@ -48,6 +57,7 @@ urlpatterns = patterns('corehq.apps.reports.views',
     # Download and view form data
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/$', 'form_data', name='render_form_data'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/download/$', 'download_form', name='download_form'),
+    url(r'^form_data/(?P<instance_id>[\w\-:]+)/edit/$', 'edit_form_instance', name='edit_form_instance'),
     url(r'^form_data/download/media/$',
         'form_multimedia_export', name='form_multimedia_export'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/download-attachment/$',

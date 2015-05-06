@@ -14,7 +14,6 @@ from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from dimagi.utils.parsing import ISO_DATE_FORMAT
 
-from no_exceptions.exceptions import Http400
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -248,7 +247,7 @@ class XFormES(ESView):
 
     def run_query(self, es_query, **kwargs):
         es_results = super(XFormES, self).run_query(es_query)
-        #hack, walk the results again, and if we have xmlns, populate human readable names
+        # hack, walk the results again, and if we have xmlns, populate human readable names
         # Note that `get_unknown_form_name` does not require the request, which is also
         # not necessarily available here. So `None` is passed here.
         form_filter = FormsByApplicationFilter(None, domain=self.domain)
@@ -609,6 +608,7 @@ class ESQuerySet(object):
         else:
             raise TypeError('Unsupported type: %s', type(idx))
 
+
 def validate_date(date):
     try:
         datetime.datetime.strptime(date, ISO_DATE_FORMAT)
@@ -616,10 +616,13 @@ def validate_date(date):
         try:
             datetime.datetime.strptime(date, '%Y-%m-%dT%H:%M:%S')
         except ValueError:
-            raise DateTimeError("Date not in the correct format")
+            try:
+                datetime.datetime.strptime(date, '%Y-%m-%dT%H:%M:%S.%f')
+            except ValueError:
+                raise DateTimeError("Date not in the correct format")
     return date
 
-RESERVED_QUERY_PARAMS=set(['limit', 'offset', 'order_by', 'q', '_search'])
+RESERVED_QUERY_PARAMS = set(['limit', 'offset', 'order_by', 'q', '_search'])
 
 # Note that dates are already in a string format when they arrive as query params
 query_param_transforms = {

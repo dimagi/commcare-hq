@@ -98,6 +98,19 @@ def _build_repeat_iteration_indicator(spec, context):
     )
 
 
+def _build_inserted_at(spec, context):
+    return RawIndicator(
+        "inserted at",
+        Column(
+            id="inserted_at",
+            datatype="datetime",
+            is_nullable=False,
+            is_primary_key=False,
+        ),
+        getter=lambda doc, ctx: ctx.inserted_timestamp
+    )
+
+
 class IndicatorFactory(object):
     constructor_map = {
         'boolean': _build_boolean_indicator,
@@ -106,6 +119,7 @@ class IndicatorFactory(object):
         'expression': _build_expression_indicator,
         'raw': _build_raw_indicator,
         'repeat_iteration': _build_repeat_iteration_indicator,
+        'inserted_at': _build_inserted_at,
     }
 
     @classmethod

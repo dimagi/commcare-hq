@@ -109,7 +109,7 @@
 
     {% include 'domain/partials/user_list.html' with users=web_users remove_included=1 %}
 
-    {% if domain_object.commtrack_enabled %}
+    {% if domain_object.locations_enabled %}
         <label class="checkbox">
             <input id="restrict_users" type="checkbox" name="restrict_users" value="True" {% if domain_object.location_restriction_for_users %}checked{% endif %}>
             {% trans "Restrict Web User access based on location" %}
