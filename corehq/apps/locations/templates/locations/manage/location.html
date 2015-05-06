@@ -82,9 +82,12 @@
     <li class="{% if form_tab == "basic" %}active{% endif %}">
       <a href="#basic-info" data-toggle="tab">{% trans "Basic" %}</a>
     </li>
-    <li class="{% if form_tab == "users" %}active{% endif %}">
-      <a href="#users" data-toggle="tab">{% trans "Users" %}</a>
-    </li>
+
+    {% if users_per_location_form %}
+      <li class="{% if form_tab == "users" %}active{% endif %}">
+        <a href="#users" data-toggle="tab">{% trans "Users" %}</a>
+      </li>
+    {% endif %}
 
     {% if products_per_location_form %}
       <li><a href="#products" data-toggle="tab">{% trans "Products" %}</a></li>
