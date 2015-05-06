@@ -30,5 +30,11 @@ class TransitionalExactDateTimePropertyTest(SimpleTestCase):
             Foo.wrap({'bar': '2015-01-01T12:00:00'})
 
     def test_wrap_new_no_Z(self):
+        foo = Foo.wrap({'bar': '2015-01-01T12:00:00.120054'})
+        self.assertEqual(foo.bar, datetime.datetime(2015, 1, 1, 12, 0, 0,
+                                                    120054))
+        self.assertEqual(foo.to_json()['bar'], '2015-01-01T12:00:00.120054Z')
+
+    def test_wrap_new_too_long(self):
         with self.assertRaises(BadValueError):
-            Foo.wrap({'bar': '2015-01-01T12:00:00.120054'})
+            Foo.wrap({'bar': '2015-01-01T12:00:00.1200543'})
