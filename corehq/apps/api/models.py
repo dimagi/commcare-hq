@@ -1,6 +1,6 @@
 from functools import wraps
 from couchdbkit.exceptions import ResourceNotFound
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 
 from django.contrib.auth.models import check_password
 from django.http import HttpResponse

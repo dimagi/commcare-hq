@@ -3,7 +3,7 @@ import uuid
 import logging
 from xml.etree import ElementTree
 from couchdbkit.exceptions import ResourceNotFound
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 from django.db import transaction
 from django.utils.translation import ugettext as _
 from casexml.apps.case.mock import CaseBlock
@@ -757,12 +757,12 @@ class SupplyPointCase(CommCareCase):
                     [
                         {
                             "expr": "location_parent_name",
-                            "name": _("Location"),
+                            "name": _("Parent Location"),
                         },
                         {
                             "expr": "owner_id",
-                            "name": _("Group"),
-                            "format": '<span data-field="owner_id">{0}</span>',
+                            "name": _("Location"),
+                            "process": "doc_info",
                         },
                     ],
                 ],

@@ -60,29 +60,29 @@ def get_number_of_forms_by_type(domain, type_):
     assert type_ in doc_types()
     startkey = [domain, 'by_type', type_]
     endkey = startkey + [{}]
-
-    return XFormInstance.view(
+    submissions = XFormInstance.view(
         "couchforms/all_submissions_by_domain",
         startkey=startkey,
         endkey=endkey,
         reduce=True,
-    ).one()['value']
+    ).one()
+    return submissions['value'] if submissions else 0
 
 
 def get_number_of_forms_of_all_types(domain):
     startkey = [domain, 'by_type']
     endkey = startkey + [{}]
-
-    return XFormInstance.view(
+    submissions = XFormInstance.view(
         "couchforms/all_submissions_by_domain",
         startkey=startkey,
         endkey=endkey,
         reduce=True,
-    ).one()['value']
+    ).one()
+    return submissions['value'] if submissions else 0
 
 
 def get_forms_in_date_range(domain, start, end):
-    XFormInstance.view(
+    return XFormInstance.view(
         "couchforms/all_submissions_by_domain",
         startkey=[domain, "by_date", start.isoformat()],
         endkey=[domain, "by_date", end.isoformat(), {}],

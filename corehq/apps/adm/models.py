@@ -1,7 +1,7 @@
 import logging
 import pytz
 import dateutil
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.adm.admin.crud import *
 from corehq.apps.crud.models import AdminCRUDDocumentMixin

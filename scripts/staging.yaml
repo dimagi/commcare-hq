@@ -51,7 +51,6 @@ branches:
   - usercase # Norman 3/27
   - commcare-supply  # Ethan 4/13
   - new-location  # Ethan 4/14
-  - fm-facing-interface # Nick P 4/23
   - small-invoices # Nick P 4/30
   - grunt-task-fabric # Ben 5/1
   - case-list-menu-icons # TS 5/4
