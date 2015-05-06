@@ -54,6 +54,7 @@ branches:
   - small-invoices # Nick P 4/30
   - grunt-task-fabric # Ben 5/1
   - case-list-menu-icons # TS 5/4
+  - update-submodules # TS 5/6
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
