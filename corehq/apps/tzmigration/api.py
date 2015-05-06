@@ -39,6 +39,10 @@ def get_migration_status(domain, strict=False):
     return progress.migration_status
 
 
+def timezone_migration_in_progress(domain):
+    return get_migration_status(domain) == MigrationStatus.IN_PROGRESS
+
+
 def phone_timezones_have_been_processed():
     """
     The timezone data migration happening some time in Apr-May 2015

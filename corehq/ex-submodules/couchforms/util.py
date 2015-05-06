@@ -16,7 +16,7 @@ from django.http import (
 )
 import iso8601
 from redis import RedisError
-from corehq.apps.tzmigration import phone_timezones_should_be_processed
+from corehq.apps.tzmigration import phone_timezones_should_be_processed, timezone_migration_in_progress
 from dimagi.ext.jsonobject import re_loose_datetime
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.logging import notify_exception
@@ -24,6 +24,7 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import uid, LockManager, ReleaseOnError
 from dimagi.utils.parsing import json_format_datetime
+from no_exceptions.exceptions import HttpException
 import xml2json
 
 import couchforms
@@ -451,6 +452,11 @@ class SubmissionPost(object):
         return doc
 
     def run(self):
+        if timezone_migration_in_progress(self.domain):
+            # keep submissions on the phone
+            # until ready to start accepting again
+            raise HttpException(status=503)
+
         if not self.auth_context.is_valid():
             return self.failed_auth_response, None, []
 
