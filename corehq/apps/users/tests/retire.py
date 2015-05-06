@@ -12,6 +12,7 @@ from couchforms.models import XFormInstance
 
 
 class RetireUserTestCase(TestCase):
+
     def setUp(self):
         self.domain = 'test'
         self.username = "fake-person@test.commcarehq.org"
@@ -39,11 +40,11 @@ class RetireUserTestCase(TestCase):
 
         case_id = uuid.uuid4().hex
         caseblock = CaseBlock(
-                create=True,
-                case_id=case_id,
-                owner_id=self.commcare_user._id,
-                user_id=self.commcare_user._id,
-            )
+            create=True,
+            case_id=case_id,
+            owner_id=self.commcare_user._id,
+            user_id=self.commcare_user._id,
+        )
         casexml = ElementTree.tostring(caseblock.as_xml())
         form_id = submit_case_blocks(casexml, self.domain)
         form = XFormInstance.get(form_id)
@@ -62,11 +63,11 @@ class RetireUserTestCase(TestCase):
 
         case_id = uuid.uuid4().hex
         caseblock = CaseBlock(
-                create=True,
-                case_id=case_id,
-                owner_id=self.commcare_user._id,
-                user_id=self.commcare_user._id,
-            )
+            create=True,
+            case_id=case_id,
+            owner_id=self.commcare_user._id,
+            user_id=self.commcare_user._id,
+        )
         casexml = ElementTree.tostring(caseblock.as_xml())
         form_id = submit_case_blocks(casexml, self.domain)
         form = XFormInstance.get(form_id)
@@ -84,11 +85,11 @@ class RetireUserTestCase(TestCase):
         case_ids = [uuid.uuid4().hex, uuid.uuid4().hex, uuid.uuid4().hex]
 
         caseblocks = [CaseBlock(
-                create=True,
-                case_id=case_id,
-                owner_id=self.commcare_user._id,
-                user_id=self.commcare_user._id,
-            ) for case_id in case_ids]
+            create=True,
+            case_id=case_id,
+            owner_id=self.commcare_user._id,
+            user_id=self.commcare_user._id,
+        ) for case_id in case_ids]
         casexmls = [ElementTree.tostring(caseblock.as_xml()) for caseblock in caseblocks]
         self.form_id = submit_case_blocks(casexmls, self.domain)
 
@@ -109,11 +110,11 @@ class RetireUserTestCase(TestCase):
         case_ids = [uuid.uuid4().hex, uuid.uuid4().hex, uuid.uuid4().hex]
 
         caseblocks = [CaseBlock(
-                create=True,
-                case_id=case_id,
-                owner_id=self.commcare_user._id,
-                user_id=self.commcare_user._id,
-            ) for case_id in case_ids]
+            create=True,
+            case_id=case_id,
+            owner_id=self.commcare_user._id,
+            user_id=self.commcare_user._id,
+        ) for case_id in case_ids]
         casexmls = [ElementTree.tostring(caseblock.as_xml()) for caseblock in caseblocks]
         self.form_id = submit_case_blocks(casexmls, self.domain)
 
