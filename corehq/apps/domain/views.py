@@ -304,6 +304,7 @@ class BaseAdminProjectSettingsView(BaseProjectSettingsView):
         access.
     """
 
+    @method_decorator(login_and_domain_required)
     @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
