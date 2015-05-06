@@ -1,5 +1,5 @@
 from couchdbkit.ext.django.loading import get_db
-from django.test import TestCase
+from django.test import TestCase, SimpleTestCase
 from couchexport.export import SCALAR_NEVER_WAS
 from couchexport.models import ExportSchema, SavedExportSchema, SplitColumn
 from datetime import datetime, timedelta
@@ -159,3 +159,23 @@ class SavedSchemaTest(TestCase):
             col.get_data(1),
             [None, None, 1]
         )
+
+
+class ExportSchemaWrapTest(SimpleTestCase):
+    def test_wrap_datetime_hippy(self):
+        schema1 = ExportSchema(
+            schema={},
+            timestamp=datetime(1970, 1, 2),
+            index='index',
+        )
+        schema2 = ExportSchema.wrap(schema1.to_json())
+        self.assertEqual(schema2.timestamp, datetime(1970, 1, 2))
+
+    def test_wrap_datetime_min(self):
+        schema_bad = ExportSchema(
+            schema={},
+            timestamp=datetime.min,
+            index='index',
+        )
+        schema_good = ExportSchema.wrap(schema_bad.to_json())
+        self.assertEqual(schema_good.timestamp, datetime(1970, 1, 1))

@@ -113,18 +113,10 @@ class ExportSchema(Document, UnicodeMixIn):
 
     @classmethod
     def wrap(cls, data):
-        ret = super(ExportSchema, cls).wrap(data)
-        if not ret.timestamp:
-            # this is a very old export. notify that something weird happened,
-            # but just start from the beginning of time.
-            notify_exception(
-                None,
-                'an export without a timestamp was accessed! %s (%s)' % (ret.index, ret._id)
-            )
-            ret.timestamp = datetime.min
-            ret.save()
+        if data.get('timestamp', '').startswith('1-01-01'):
+            data['timestamp'] = '1970-01-01T00:00:00Z'
 
-        return ret
+        return super(ExportSchema, cls).wrap(data)
 
     @classmethod
     def last(cls, index):
