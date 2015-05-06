@@ -8,3 +8,5 @@ dimagi_utils.egg-info*
 
 .coverage
 /coverage-report
+
+.idea
