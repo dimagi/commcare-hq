@@ -33,7 +33,7 @@ from custom.openlmis.tasks import bootstrap_domain_task
 
 from .permissions import (locations_access_required, is_locations_admin,
                           can_edit_location, can_edit_location_types)
-from .models import Location, LocationType, SQLLocation
+from .models import Location, LocationType, SQLLocation, all_locations
 from .forms import LocationForm
 from .util import load_locs_json, location_hierarchy_config, dump_locations
 
@@ -77,13 +77,16 @@ class LocationsListView(BaseLocationView):
     def page_context(self):
         selected_id = self.request.GET.get('selected')
         has_location_types = len(self.domain_object.location_types) > 0
+        loc_restricted = self.request.project.location_restriction_for_users
         return {
             'selected_id': selected_id,
             'locations': load_locs_json(
-                self.domain, selected_id, self.show_inactive
+                self.domain, selected_id, self.show_inactive, self.request.couch_user
             ),
             'show_inactive': self.show_inactive,
-            'has_location_types': has_location_types
+            'has_location_types': has_location_types,
+            'can_edit_root': (not loc_restricted or 
+                (loc_restricted and not self.request.couch_user.get_location(self.domain))),
         }
 
 
@@ -283,7 +286,8 @@ class NewLocationView(BaseLocationView):
     def location_form(self):
         if self.request.method == 'POST':
             return LocationForm(self.location, self.request.POST, is_new=True)
-        return LocationForm(self.location, is_new=True)
+        return LocationForm(self.location, user=self.request.couch_user,
+                            is_new=True)
 
     @property
     def page_context(self):
@@ -400,7 +404,7 @@ class EditLocationView(NewLocationView):
     def location_form(self):
         if self.request.method == 'POST':
             return LocationForm(self.location, self.request.POST)
-        return LocationForm(self.location)
+        return LocationForm(self.location, user=self.request.couch_user)
 
     @property
     def consumption(self):

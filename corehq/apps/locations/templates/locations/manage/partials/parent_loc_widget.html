@@ -7,7 +7,7 @@
       <div class="control-group">
         <label class="control-label" data-bind="text: allowed_child_types"></label>
         <div class="controls">
-          <select data-bind="options: children, optionsText: 'display_name', value: selected_child"></select>
+          <select data-bind="enable: _.every(children(), function(child) { return child.name() === '_all' || child.can_edit()}), options: children, optionsText: 'display_name', value: selected_child"></select>
         </div>
       </div>
     </div>
