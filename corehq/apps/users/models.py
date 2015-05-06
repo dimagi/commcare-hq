@@ -33,7 +33,7 @@ from corehq.apps.domain.utils import normalize_domain_name, domain_restricts_sup
 from corehq.apps.domain.models import LicenseAgreement
 from corehq.apps.users.util import normalize_username, user_data_from_registration_form
 from corehq.apps.users.xml import group_fixture
-from corehq.apps.users.tasks import tag_docs_as_deleted
+from corehq.apps.users.tasks import tag_docs_as_deleted, tag_forms_as_deleted_rebuild_associated_cases
 from corehq.apps.users.exceptions import InvalidLocationConfig
 from corehq.apps.sms.mixin import (
     CommCareMobileContactMixin,
@@ -1629,14 +1629,19 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def retire(self):
         suffix = DELETED_SUFFIX
         deletion_id = random_hex()
+        deleted_cases = set()
         # doc_type remains the same, since the views use base_doc instead
         if not self.base_doc.endswith(suffix):
             self.base_doc += suffix
             self['-deletion_id'] = deletion_id
-        for formlist in chunked(self.get_forms(wrap=False, include_docs=True), 50):
-            tag_docs_as_deleted.delay(XFormInstance, formlist, deletion_id)
+
         for caselist in chunked(self.get_cases(wrap=False), 50):
             tag_docs_as_deleted.delay(CommCareCase, caselist, deletion_id)
+            for case in caselist:
+                deleted_cases.add(case['_id'])
+
+        for formlist in chunked(self.get_forms(wrap=False, include_docs=True), 50):
+            tag_forms_as_deleted_rebuild_associated_cases.delay(XFormInstance, formlist, deletion_id, deleted_cases=deleted_cases)
 
         for phone_number in self.get_verified_numbers(True).values():
             phone_number.retire(deletion_id)
