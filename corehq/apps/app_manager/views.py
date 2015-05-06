@@ -904,8 +904,23 @@ def get_module_view_context_and_template(app, module):
 
         }
     elif isinstance(module, ReportModule):
+        def _report_to_config(report):
+            return {
+                'report_id': report._id,
+                'title': report.title
+            }
+        all_reports = ReportConfiguration.by_domain(app.domain)
+        all_report_ids = set([r._id for r in all_reports])
+        invalid_report_references = filter(lambda r: r.report_id not in all_report_ids, module.report_configs)
+        warnings = []
+        if invalid_report_references:
+            module.report_configs = filter(lambda r: r.report_id in all_report_ids, module.report_configs)
+            warnings.append(_('Your app contains references to reports that are deleted. These will be removed on save.'))
         return 'app_manager/module_view_report.html', {
-            'reports': [],
+            'all_reports': [_report_to_config(r) for r in all_reports],
+            'current_reports': [r.to_json() for r in module.report_configs],
+            'invalid_report_references': invalid_report_references,
+            'warnings': warnings,
         }
     else:
         case_type = module.case_type
@@ -1680,6 +1695,24 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
     resp = {}
     app.save(resp)
     return json_response(resp)
+
+
+@no_conflict_require_POST
+@require_can_edit_apps
+def edit_report_module(request, domain, app_id, module_id):
+    """
+    Overwrite module case details. Only overwrites components that have been
+    provided in the request. Components are short, long, filter, parent_select,
+    and sort_elements.
+    """
+    params = json_request(request.POST)
+    app = get_app(domain, app_id)
+    module = app.get_module(module_id)
+    assert isinstance(module, ReportModule)
+    module.name = params['name']
+    module.report_configs = [ReportAppConfig.wrap(spec) for spec in params['reports']]
+    app.save()
+    return json_response('success')
 
 
 def validate_module_for_build(request, domain, app_id, module_id, ajax=True):
