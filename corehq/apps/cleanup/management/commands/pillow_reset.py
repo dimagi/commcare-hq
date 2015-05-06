@@ -2,7 +2,7 @@ import json
 from datetime import datetime
 from couchdbkit import ResourceNotFound
 from django.core.management.base import LabelCommand, CommandError
-from jsonobject import JsonObject, StringProperty, ListProperty
+from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.parsing import json_format_datetime
 from pillowtop.utils import import_pillow_string

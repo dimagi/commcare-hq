@@ -3,7 +3,7 @@ import uuid
 import logging
 from xml.etree import ElementTree
 from couchdbkit.exceptions import ResourceNotFound
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 from django.db import transaction
 from django.utils.translation import ugettext as _
 from casexml.apps.case.mock import CaseBlock

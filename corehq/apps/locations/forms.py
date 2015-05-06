@@ -5,7 +5,14 @@ from django.template import Context
 from django.template.loader import get_template
 from django.utils.translation import ugettext as _
 
+from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.decorators.memoized import memoized
+
 from corehq.apps.custom_data_fields import CustomDataEditor
+from corehq.apps.es import UserES
+from corehq.apps.users.forms import MultipleSelectionForm
+from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.util import raw_username, user_display_string
 
 from .models import Location
 from .signals import location_created, location_edited
@@ -248,3 +255,75 @@ class LocationForm(forms.Form):
             pass
 
         return location
+
+
+class UsersAtLocationForm(MultipleSelectionForm):
+    def __init__(self, domain_object, location, *args, **kwargs):
+        self.domain_object = domain_object
+        self.location = location
+        super(UsersAtLocationForm, self).__init__(
+            initial={'selected_ids': self.users_at_location},
+            *args, **kwargs
+        )
+        self.fields['selected_ids'].choices = self.get_all_users()
+
+    def get_all_users(self):
+        user_query = (UserES()
+                      .domain(self.domain_object.name)
+                      .mobile_users()
+                      .fields(['_id', 'username', 'first_name', 'last_name']))
+        return [
+            (u['_id'], user_display_string(u['username'],
+                                           u.get('first_name', ''),
+                                           u.get('last_name', '')))
+            for u in user_query.run().hits
+        ]
+
+    @property
+    @memoized
+    def users_at_location(self):
+        user_query = (UserES()
+                      .domain(self.domain_object.name)
+                      .mobile_users()
+                      .location(self.location._id)
+                      .fields([]))
+        return user_query.run().doc_ids
+
+    def already_have_locations(self, users):
+        user_query = (UserES()
+                      .domain(self.domain_object.name)
+                      .mobile_users()
+                      .doc_id(list(users))
+                      .exists('location_id')
+                      .fields(['username']))
+        return [raw_username(u['username']) for u in user_query.run().hits]
+
+    def unassign_users(self, users):
+        for doc in iter_docs(CommCareUser.get_db(), users):
+            # This could probably be sped up by bulk saving, but there's a lot
+            # of stuff going on - seems tricky.
+            CommCareUser.wrap(doc).unset_location()
+
+    def assign_users(self, users):
+        for doc in iter_docs(CommCareUser.get_db(), users):
+            CommCareUser.wrap(doc).set_location(self.location)
+
+    def clean_selected_ids(self):
+        selected_users = set(self.cleaned_data['selected_ids'])
+        previous_users = set(self.users_at_location)
+        self.to_remove = previous_users - selected_users
+        self.to_add = selected_users - previous_users
+        conflicted = self.already_have_locations(self.to_add)
+        if (
+            conflicted
+            and not self.domain_object.supports_multiple_locations_per_user
+        ):
+            raise forms.ValidationError(_(
+                u"The following users already have locations assigned,  "
+                u"you must unassign them before they can be added here:  "
+            ) + u", ".join(conflicted))
+        return []
+
+    def save(self):
+        self.unassign_users(self.to_remove)
+        self.assign_users(self.to_add)

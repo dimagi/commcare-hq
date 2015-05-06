@@ -752,7 +752,7 @@ var AdvancedCase = (function () {
             self.show_product_stock(self.disable_tag());
             var action = ko.mapping.toJS(self, LoadUpdateAction.mapping(self));
 
-            action.preload = CC_UTILS.propertyArrayToDict([], action.preload, true)[0];
+            action.preload = CC_UTILS.preloadArrayToDict(action.preload);
             action.case_properties = CC_UTILS.propertyArrayToDict([], action.case_properties)[0];
             return action;
         }
