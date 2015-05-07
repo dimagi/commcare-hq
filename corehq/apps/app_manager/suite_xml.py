@@ -237,9 +237,8 @@ class MediaText(XmlObject):
     locale = NodeField('locale', LocaleId)
 
 
-class LocalizedMediaDisplay(OrderedXmlObject):
+class LocalizedMediaDisplay(XmlObject):
     ROOT_NAME = 'display'
-    ORDER = ('text')
 
     media_text = NodeListField('text', MediaText)
 
@@ -270,7 +269,7 @@ class TextOrDisplay(XmlObject):
         if media_text:
             self.display = LocalizedMediaDisplay(
                 text=text,
-                media_text=[text] if text else [] + media_text
+                media_text=[text] + media_text if text else [] + media_text
             )
         elif text:
             self.text = text
