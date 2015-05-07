@@ -3,7 +3,7 @@ from itertools import imap
 import json
 import logging
 import uuid
-from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
+from couchdbkit.exceptions import ResourceConflict
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.template.loader import render_to_string

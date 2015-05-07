@@ -402,12 +402,12 @@ class SubAreaMixin():
         return sub_area
 
 class DomainGlobalSettingsForm(forms.Form):
-    hr_name = forms.CharField(label=_("Project Name"))
+    hr_name = forms.CharField(label=ugettext_noop("Project Name"))
 
     alias = forms.CharField(
         required=False,
-        label=_("Project Alias"),
-        help_text=_("Alias used in project URL.")
+        label=ugettext_noop("Project Alias"),
+        help_text=ugettext_noop("Alias used in project URL.")
     )
     default_timezone = TimeZoneChoiceField(label=ugettext_noop("Default Timezone"), initial="UTC")
 
@@ -486,15 +486,15 @@ class DomainGlobalSettingsForm(forms.Form):
             return data
 
         if not re.match("^%s$" % new_domain_re, data):
-            raise forms.ValidationError('Only lowercase letters and numbers allowed. ' +
-                'Single hyphens may be used to separate words.')
+            raise forms.ValidationError(ugettext_noop('Only lowercase letters and numbers allowed. '
+                'Single hyphens may be used to separate words.'))
 
         data_alternate = data.replace('-', '.')
         conflict = Domain.get_by_name(data) or Domain.get_by_name(data_alternate)
         if conflict is None:
             conflict = Domain.get_by_alias(data) or Domain.get_by_alias(data_alternate)
         if conflict and conflict._id != self.domain_id:
-            raise forms.ValidationError('Alias already taken---please try another')
+            raise forms.ValidationError(ugettext_noop('Alias already taken---please try another'))
         return data
 
     def save(self, request, domain):
