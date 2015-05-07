@@ -1,6 +1,6 @@
 from functools import wraps
 from django.http import Http404
-from .models import SQLLocation, Location
+from .models import SQLLocation
 from corehq.apps.domain.decorators import (login_and_domain_required,
                                            domain_admin_required)
 from corehq.util.quickcache import quickcache
@@ -25,14 +25,15 @@ def is_locations_admin(view_fn):
 def editable_locations(user, project):
     if (user.is_domain_admin(project.name) or
             not project.location_restriction_for_users):
-        return [l._id for l in Location.by_domain(project.name)]
+        return (SQLLocation.by_domain(project.name)
+                           .values_list('location_id', flat=True))
 
     user_loc = user.get_location(project.name)
     if not user_loc:
         return []
 
-    return [l.location_id for l in
-            user_loc.sql_location.get_descendants(include_self=True)]
+    return list(user_loc.sql_location.get_descendants(include_self=True)
+                                 .values_list('location_id', flat=True))
 
 
 def user_can_edit_location(user, sql_location, project):
@@ -49,14 +50,16 @@ def user_can_edit_location(user, sql_location, project):
 def viewable_locations(user, project):
     if (user.is_domain_admin(project.name) or
             not project.location_restriction_for_users):
-        return [l._id for l in Location.by_domain(project.name)]
+        return (SQLLocation.by_domain(project.name)
+                           .values_list('location_id', flat=True))
 
     user_loc = user.get_location(project.name)
     if not user_loc:
         return []
 
-    return [l.location_id for l in
-            user_loc.sql_location.get_ancestors()] + editable_locations(user, project)
+    return (list(user_loc.sql_location.get_ancestors()
+            .values_list('location_id', flat=True)) +
+            editable_locations(user, project))
 
 
 def user_can_view_location(user, sql_location, project):
