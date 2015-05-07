@@ -275,17 +275,23 @@ class TextOrDisplay(XmlObject):
             self.text = text
 
 
-class LocalizedCommand(TextOrDisplay, IdNode):
+class CommandMixin():
+    ROOT_NAME = 'command'
+    relevant = StringField('@relevant')
+
+
+class LocalizedCommand(CommandMixin, TextOrDisplay, IdNode):
     """
         For CC >= 2.21
     """
-    ROOT_NAME = 'command'
-    relevant = StringField('@relevant')
+    pass
 
 
-class Command(DisplayNode, IdNode):
-    ROOT_NAME = 'command'
-    relevant = StringField('@relevant')
+class Command(CommandMixin, DisplayNode, IdNode):
+    """
+        For CC < 2.21
+    """
+    pass
 
 
 class Instance(IdNode, OrderedXmlObject):
