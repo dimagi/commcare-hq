@@ -245,6 +245,7 @@ class NewLocationView(BaseLocationView):
     urlname = 'create_location'
     page_title = ugettext_noop("New Location")
     template_name = 'locations/manage/location.html'
+    creates_new_location = True
 
     @property
     def parent_pages(self):
@@ -284,11 +285,13 @@ class NewLocationView(BaseLocationView):
     @property
     @memoized
     def location_form(self):
-        if self.request.method == 'POST':
-            return LocationForm(self.location, bound_data=self.request.POST,
-                                is_new=True)
-        return LocationForm(self.location, user=self.request.couch_user,
-                            is_new=True)
+        data = self.request.POST if self.request.method == 'POST' else None
+        return LocationForm(
+            self.location,
+            bound_data=data,
+            user=self.request.couch_user,
+            is_new=self.creates_new_location,
+        )
 
     @property
     def page_context(self):
@@ -362,6 +365,7 @@ def unarchive_location(request, domain, loc_id):
 class EditLocationView(NewLocationView):
     urlname = 'edit_location'
     page_title = ugettext_noop("Edit Location")
+    creates_new_location = False
 
     @method_decorator(can_edit_location)
     def dispatch(self, request, *args, **kwargs):
@@ -399,13 +403,6 @@ class EditLocationView(NewLocationView):
     @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain, self.location_id])
-
-    @property
-    @memoized
-    def location_form(self):
-        if self.request.method == 'POST':
-            return LocationForm(self.location, bound_data=self.request.POST)
-        return LocationForm(self.location, user=self.request.couch_user)
 
     @property
     def consumption(self):
