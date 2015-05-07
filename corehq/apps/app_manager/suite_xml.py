@@ -275,7 +275,7 @@ class TextOrDisplay(XmlObject):
             self.text = text
 
 
-class CommandMixin():
+class CommandMixin(XmlObject):
     ROOT_NAME = 'command'
     relevant = StringField('@relevant')
 
@@ -422,12 +422,26 @@ class Entry(OrderedXmlObject, XmlObject):
             self.instances = sorted_instances
 
 
-class Menu(DisplayNode, IdNode):
+class MenuMixin(XmlObject):
     ROOT_NAME = 'menu'
 
     root = StringField('@root')
     relevant = XPathField('@relevant')
     commands = NodeListField('command', Command)
+
+
+class Menu(MenuMixin, DisplayNode, IdNode):
+    """
+        For CC < 2.21
+    """
+    pass
+
+
+class LocalizedMenu(MenuMixin, TextOrDisplay, IdNode):
+    """
+        For CC >= 2.21
+    """
+    pass
 
 
 class AbstractTemplate(XmlObject):
