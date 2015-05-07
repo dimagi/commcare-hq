@@ -46,11 +46,10 @@ def tag_forms_as_deleted_rebuild_associated_cases(formlist, deletion_id, deleted
     for form in formlist:
         form['doc_type'] += DELETED_SUFFIX
         form['-deletion_id'] = deletion_id
-        for case in get_case_ids_from_form(form) - deleted_cases:
-            cases_to_rebuild.add(case)
+        cases_to_rebuild.update(get_case_ids_from_form(form))
     XFormInstance.get_db().bulk_save(formlist)
 
-    for case in cases_to_rebuild:
+    for case in cases_to_rebuild - deleted_cases:
         rebuild_case(case)
 
 @periodic_task(
