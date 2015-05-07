@@ -43,7 +43,6 @@
 trunk: master
 name: autostaging
 branches:
-  - usec  # danny 4/13
   - subscription-no-contact-info # bb 8/4
   - vellum-staging # J$ 11/13
   - locations-as-groups # tw 1/20
@@ -52,7 +51,6 @@ branches:
   - commcare-supply  # Ethan 4/13
   - new-location  # Ethan 4/14
   - small-invoices # Nick P 4/30
-  - grunt-task-fabric # Ben 5/1
   - case-list-menu-icons # TS 5/4
   - update-submodules # TS 5/6
   - drop-new-project-page # Jenny 5/6
@@ -69,28 +67,9 @@ submodules:
     # let's leave this here even when empty
     # just so we always get latest master
     branches: []
-  submodules/auditcare-src:
-    branches:
-      - usec  # danny 4/13
-  submodules/couchexport-src:
-    branches:
-      - usec  # danny 4/13
-  submodules/couchlog-src:
-    branches:
-      - usec  # danny 4/13
-  submodules/ctable-src:
-    branches:
-      - usec  # danny 4/13
   submodules/django-digest-src:
     branches:
       - atomic  # Ethan 4/22
-  submodules/fluff-src:
-    branches:
-      - usec  # danny 4/13
   submodules/pillowtop-src:
     branches:
-      - usec  # danny 4/13
       - atomic  # Ethan 4/22
-  submodules/toggle:
-    branches:
-      - usec  # danny 4/13
