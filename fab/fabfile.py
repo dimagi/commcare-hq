@@ -1086,7 +1086,6 @@ def set_celery_supervisorconf():
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_background_queue.conf')
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_saved_exports_queue.conf')
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_flower.conf')
-    _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_couchdb_lucene.conf') #to be deprecated
 
 
 @roles(ROLES_PILLOWTOP)

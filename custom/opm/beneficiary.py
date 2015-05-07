@@ -831,10 +831,10 @@ class ConditionsMet(OPMCaseRow):
                                              "केवल माँ का दूध नहीं खिलाया गया", self.child_breastfed)
         elif self.status == 'pregnant':
             self.child_name = EMPTY_FIELD
-            self.one = self.condition_image(C_ATTENDANCE_Y, C_ATTENDANCE_N, "गर्भवती का वज़न हुआ",
-                                            "गर्भवती का वज़न नही हुआ", self.preg_attended_vhnd)
-            self.two = self.condition_image(M_WEIGHT_Y, M_WEIGHT_N, "गर्भवती का वज़न लेना",
-                                            "गर्भवती का वज़न नहीं लेना", self.preg_weighed)
+            self.one = self.condition_image(C_ATTENDANCE_Y, C_ATTENDANCE_N, "पोषण दिवस में उपस्थित",
+                                            "पोषण दिवस में उपस्थित नही", self.preg_attended_vhnd)
+            self.two = self.condition_image(M_WEIGHT_Y, M_WEIGHT_N, "गर्भवती का वज़न हुआ",
+                                            "गर्भवती का वज़न नही हुआा", self.preg_weighed)
             self.three = self.condition_image(IFA_Y, IFA_N, "तीस आयरन की गोलियां लेना",
                                               "तीस आयरन की गोलियां नही लिया", self.preg_received_ifa)
             self.four = ''

@@ -24,7 +24,7 @@ from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
 from django.utils.translation import override, ugettext as _, ugettext
 from couchdbkit.exceptions import BadValueError, DocTypeError
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.http import Http404

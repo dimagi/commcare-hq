@@ -4,10 +4,10 @@ from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
 from django.utils import html
 from corehq.apps.reports.util import make_form_couch_key
+from corehq.util.dates import iso_string_to_datetime
 
 from couchforms.models import XFormInstance
 from pact.reports.chw import PactCHWProfileReport
-from datetime import datetime
 
 
 class PactCHWDashboard(GenericTabularReport, ProjectReportParametersMixin, CustomProjectReport):
@@ -66,7 +66,7 @@ class PactCHWDashboard(GenericTabularReport, ProjectReportParametersMixin, Custo
             if res is None:
                 return None
             else:
-                return datetime.strptime(res['key'][3], "%Y-%m-%dT%H:%M:%SZ").strftime("%m/%d/%Y")
+                return iso_string_to_datetime(res['key'][3]).strftime("%m/%d/%Y")
 
 
         for user in self.users:

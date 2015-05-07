@@ -386,7 +386,7 @@ FILE_RESTORE = PredicatablyRandomToggle(
     'file_restore',
     'Use files to do phone restore',
     TAG_PRODUCT_PATH,
-    randomness=.05,
+    randomness=.5,
     namespace=[NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
 
@@ -424,7 +424,7 @@ STREAM_RESTORE_CACHE = PredicatablyRandomToggle(
     'stream_cached_restore',
     'Stream cached restore from couchdb',
     TAG_EXPERIMENTAL,
-    randomness=.05,
+    randomness=.5,
     namespace=[NAMESPACE_DOMAIN]
 )
 

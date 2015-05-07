@@ -1,6 +1,6 @@
 import json
 from couchdbkit.exceptions import ResourceNotFound
-from jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
+from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
 from jsonobject.base_properties import DefaultProperty
 from corehq.apps.userreports.expressions.getters import (
     DictGetter,
