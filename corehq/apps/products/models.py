@@ -98,6 +98,17 @@ class Product(Document):
         self.code_ = val.lower() if val else None
 
     @classmethod
+    def wrap(cls, data):
+        last_modified = data.get('last_modified')
+        # if it's missing a Z because of the Aug. 2014 migration
+        # that added this in iso_format() without Z, then add a Z
+        # (See also Group class)
+        from corehq.apps.groups.models import dt_no_Z_re
+        if last_modified and dt_no_Z_re.match(last_modified):
+            data['last_modified'] += 'Z'
+        return super(Product, cls).wrap(data)
+
+    @classmethod
     def get_by_code(cls, domain, code):
         if not code:
             return None
