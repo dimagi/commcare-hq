@@ -378,7 +378,7 @@ class Recouvrement(fluff.Calculator):
 
     @fluff.date_emitter
     def amount_to_pay(self, form):
-        if 'quantite_reale_a_payer' in form.form:
+        if 'quantite_reale_a_payer' in form.form and 'date_du' in form.form and form.form['date_du']:
             value = form.form['quantite_reale_a_payer']
 
             yield {
@@ -390,7 +390,7 @@ class Recouvrement(fluff.Calculator):
 
     @fluff.date_emitter
     def amount_paid(self, form):
-        if 'montant_payer' in form.form:
+        if 'montant_payer' in form.form and 'date_du' in form.form and form.form['date_du']:
             value = form.form['montant_paye']
 
             yield {
@@ -402,7 +402,7 @@ class Recouvrement(fluff.Calculator):
 
     @fluff.date_emitter
     def in_30_days(self, form):
-        if 'payee_trent_jour' in form.form:
+        if 'payee_trent_jour' in form.form and 'date_du' in form.form and form.form['date_du']:
             value = form.form['payee_trent_jour']
 
             yield {
@@ -414,7 +414,7 @@ class Recouvrement(fluff.Calculator):
 
     @fluff.date_emitter
     def in_3_months(self, form):
-        if 'payee_trois_mois' in form.form:
+        if 'payee_trois_mois' in form.form and 'date_du' in form.form and form.form['date_du']:
             value = form.form['payee_trois_mois']
 
             yield {
@@ -426,7 +426,7 @@ class Recouvrement(fluff.Calculator):
 
     @fluff.date_emitter
     def in_year(self, form):
-        if 'payee_un_an' in form.form:
+        if 'payee_un_an' in form.form and 'date_du' in form.form and form.form['date_du']:
             value = form.form['payee_un_an']
 
             yield {
