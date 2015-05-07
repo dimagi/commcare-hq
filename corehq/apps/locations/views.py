@@ -285,7 +285,8 @@ class NewLocationView(BaseLocationView):
     @memoized
     def location_form(self):
         if self.request.method == 'POST':
-            return LocationForm(self.location, self.request.POST, is_new=True)
+            return LocationForm(self.location, bound_data=self.request.POST,
+                                is_new=True)
         return LocationForm(self.location, user=self.request.couch_user,
                             is_new=True)
 
@@ -403,7 +404,7 @@ class EditLocationView(NewLocationView):
     @memoized
     def location_form(self):
         if self.request.method == 'POST':
-            return LocationForm(self.location, self.request.POST)
+            return LocationForm(self.location, bound_data=self.request.POST)
         return LocationForm(self.location, user=self.request.couch_user)
 
     @property
