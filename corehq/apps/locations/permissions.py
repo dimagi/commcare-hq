@@ -22,7 +22,7 @@ def is_locations_admin(view_fn):
 
 
 @quickcache(['user._id', 'project.name'])
-def editable_locations(user, project):
+def editable_locations_ids(user, project):
     if (user.is_domain_admin(project.name) or
             not project.location_restriction_for_users):
         return (SQLLocation.by_domain(project.name)
@@ -47,7 +47,7 @@ def user_can_edit_location(user, sql_location, project):
     return user_loc is None or user_loc.is_direct_ancestor_of(sql_location)
 
 
-def viewable_locations(user, project):
+def viewable_locations_ids(user, project):
     if (user.is_domain_admin(project.name) or
             not project.location_restriction_for_users):
         return (SQLLocation.by_domain(project.name)
@@ -59,7 +59,7 @@ def viewable_locations(user, project):
 
     return (list(user_loc.sql_location.get_ancestors()
             .values_list('location_id', flat=True)) +
-            editable_locations(user, project))
+            editable_locations_ids(user, project))
 
 
 def user_can_view_location(user, sql_location, project):

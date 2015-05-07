@@ -1,8 +1,8 @@
 from tastypie import fields
 from corehq.apps.locations.models import Location, root_locations
 from corehq.apps.locations.permissions import (user_can_edit_location,
-                                               editable_locations,
-                                               viewable_locations)
+                                               editable_locations_ids,
+                                               viewable_locations_ids)
 from corehq.apps.api.resources.v0_1 import CustomResourceMeta, LoginAndDomainAuthentication
 from corehq.apps.api.util import get_object_or_not_exist
 import json
@@ -28,7 +28,7 @@ class LocationResource(HqBaseResource):
         parent_id = bundle.request.GET.get('parent_id', None)
         include_inactive = json.loads(bundle.request.GET.get('include_inactive', 'false'))
         user = bundle.request.couch_user
-        viewable = viewable_locations(user, project)
+        viewable = viewable_locations_ids(user, project)
 
         if not parent_id:
             locs = root_locations(domain)
@@ -39,7 +39,7 @@ class LocationResource(HqBaseResource):
         return [child for child in locs if child.location_id in viewable]
 
     def dehydrate_can_edit(self, bundle):
-        return bundle.obj.location_id in editable_locations(bundle.request.couch_user, bundle.request.project)
+        return bundle.obj.location_id in editable_locations_ids(bundle.request.couch_user, bundle.request.project)
 
     class Meta(CustomResourceMeta):
         authentication = LoginAndDomainAuthentication()
