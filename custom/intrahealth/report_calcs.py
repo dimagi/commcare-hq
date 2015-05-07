@@ -3,7 +3,8 @@ import fluff
 import re
 import logging
 from corehq.apps.locations.models import Location
-from custom.intrahealth import get_location_by_type, PRODUCT_MAPPING, get_domain, PRODUCT_NAMES
+from custom.intrahealth import get_location_by_type, PRODUCT_MAPPING, get_domain, PRODUCT_NAMES, get_district_name
+
 
 def form_date(form):
     return form.received_on
@@ -383,7 +384,7 @@ class Recouvrement(fluff.Calculator):
             yield {
                 'date': form.form['date_du'],
                 'value': value,
-                'group_by': [form.form['district'],
+                'group_by': [get_district_name(form),
                              get_domain(form)]
             }
 
@@ -395,7 +396,7 @@ class Recouvrement(fluff.Calculator):
             yield {
                 'date': form.form['date_du'],
                 'value': value,
-                'group_by': [form.form['district'],
+                'group_by': [get_district_name(form),
                              get_domain(form)]
             }
 
@@ -407,7 +408,7 @@ class Recouvrement(fluff.Calculator):
             yield {
                 'date': form.form['date_du'],
                 'value': value,
-                'group_by': [form.form['district'],
+                'group_by': [get_district_name(form),
                              get_domain(form)]
             }
 
@@ -419,7 +420,7 @@ class Recouvrement(fluff.Calculator):
             yield {
                 'date': form.form['date_du'],
                 'value': value,
-                'group_by': [form.form['district'],
+                'group_by': [get_district_name(form),
                              get_domain(form)]
             }
 
@@ -431,6 +432,6 @@ class Recouvrement(fluff.Calculator):
             yield {
                 'date': form.form['date_du'],
                 'value': value,
-                'group_by': [form.form['district'],
+                'group_by': [get_district_name(form),
                              get_domain(form)]
             }

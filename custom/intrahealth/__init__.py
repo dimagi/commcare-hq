@@ -64,7 +64,8 @@ PRODUCT_MAPPING = {
     "microgynon": "Microgynon/Lof.",
     "microlut": "Microlut/Ovrette",
     "preservatif_feminin": "Preservatif Feminin",
-    "preservatif_masculin": "Preservatif Masculin"
+    "preservatif_masculin": "Preservatif Masculin",
+    "sayana_press": "Sayana Press"
 }
 
 
@@ -128,8 +129,8 @@ def _get_location(form):
         user_id = form['auth_context']['user_id']
         if not user_id:
             return None
-        user = CommCareUser.get(user_id)
         try:
+            user = CommCareUser.get(user_id)
             loc = user.location
         except ResourceNotFound:
             logging.info('Location %s Not Found.' % loc)
