@@ -37,7 +37,7 @@ app_urls = patterns('corehq.apps.app_manager.views',
 )
 
 urlpatterns = patterns('corehq.apps.app_manager.views',
-    url(r'^$', 'default'),
+    url(r'^$', 'default', name='default_app'),
     url(r'^xform/(?P<form_unique_id>[\w-]+)/$', 'xform_display'),
     url(r'^browse/(?P<app_id>[\w-]+)/modules-(?P<module_id>[\w-]+)/forms-(?P<form_id>[\w-]+)/source/$',
         'get_xform_source', name='get_xform_source'),

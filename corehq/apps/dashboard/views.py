@@ -142,7 +142,7 @@ def _get_default_tile_configurations():
             icon='fcc fcc-applications',
             context_processor_class=AppsPaginatedContext,
             visibility_check=can_edit_apps,
-            urlname='default_new_app',
+            urlname='default_app',
             help_text=_('Build, update, and deploy applications'),
         ),
         TileConfiguration(
