@@ -137,6 +137,7 @@ ANALYTICS_IDS = {
     'PINGDOM_ID': '*****',
     'ANALYTICS_ID_PUBLIC_COMMCARE': '*****',
     'SEGMENT_ANALYTICS_KEY': '*****',
+    'KISSMETRICS_KEY': '*****',
 }
 
 AXES_LOCK_OUT_AT_FAILURE = False
