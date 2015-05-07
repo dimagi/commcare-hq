@@ -51,7 +51,7 @@ class HQUserType(object):
                       ugettext_noop("demo_user"),
                       ugettext_noop("admin"),
                       ugettext_noop("Unknown Users"),
-                      ugettext_noop("CommTrack")]
+                      ugettext_noop("CommCare Supply")]
     toggle_defaults = (True, False, False, False, False)
     count = len(human_readable)
     included_defaults = (True, True, True, True, False)

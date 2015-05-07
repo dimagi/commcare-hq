@@ -12,70 +12,58 @@ base:
   code_repo: 'git://github.com/dimagi/commcare-hq.git'
   timing_log: null  # make a file path to log deploy timing to it. e.g. '../fabric-timing.txt'
 
-  # celery queues all disabled by default
-  sms_queue_enabled: False
-  pillow_retry_queue_enabled: False
-  celery_periodic_enabled: False
-  reminder_queue_enabled: False
-  reminder_rule_queue_enabled: False
-  reminder_case_update_queue_enabled: False
-
   # list of servers where the NewRelic app agent should be running
   new_relic_enabled: []
   
+development:
   # parameters for configuring the celery worker processes
-  celery_params:
-    main:
-      concurrency: 1
-    background_queue:
-      concurrency: 1
-    periodic:
-      concurrency: 1
-    pillow_retry_queue:
-      concurrency: 1
-    reminder_case_update_queue:
-      concurrency: 1
-    reminder_queue:
-      concurrency: 1
-    reminder_rule_queue:
-      concurrency: 1
-    saved_exports_queue:
-      concurrency: 1
-    sms_queue:
-      concurrency: 1
-
-development: {}
+  celery_processes:
+    '*':
+      main:
+        concurrency: 1
+      background_queue:
+        concurrency: 1
+      periodic:
+        concurrency: 1
+      pillow_retry_queue:
+        concurrency: 1
+      reminder_case_update_queue:
+        concurrency: 1
+      reminder_queue:
+        concurrency: 1
+      reminder_rule_queue:
+        concurrency: 1
+      saved_exports_queue:
+        concurrency: 1
+      sms_queue:
+        concurrency: 1
+      flower: {}
 
 india:
   environment: india
   should_migrate: True
 
-  sms_queue_enabled: True
-  pillow_retry_queue_enabled: True
-  celery_periodic_enabled: True
-  reminder_queue_enabled: True
-  reminder_rule_queue_enabled: True
-  reminder_case_update_queue_enabled: True
-
-  celery_params:
-    main:
-      concurrency: 8
-    background_queue:
-      concurrency: 4
-    periodic:
-      concurrency: 4
-    pillow_retry_queue:
-      concurrency: 1
-    reminder_case_update_queue:
-      concurrency: 4
-    reminder_queue:
-      concurrency: 8
-    reminder_rule_queue:
-      concurrency: 4
-    saved_exports_queue:
-      concurrency: 3
-    sms_queue:
-      concurrency: 8
+  celery_processes:
+    '*':
+      main:
+        concurrency: 8
+      background_queue:
+        concurrency: 4
+      periodic:
+        concurrency: 4
+      pillow_retry_queue:
+        concurrency: 1
+      reminder_case_update_queue:
+        concurrency: 4
+      reminder_queue:
+        concurrency: 8
+      reminder_rule_queue:
+        concurrency: 4
+      saved_exports_queue:
+        concurrency: 3
+      sms_queue:
+        concurrency: 8
+      flower: {}
 
 preview:
   environment: preview
@@ -87,90 +75,75 @@ production:
   environment: production
   should_migrate: True
 
-  sms_queue_enabled: True
-  pillow_retry_queue_enabled: True
-  celery_periodic_enabled: True
-  reminder_queue_enabled: True
-  reminder_rule_queue_enabled: True
-  reminder_case_update_queue_enabled: True
-
   new_relic_enabled:
     - hqdjango3.internal.commcarehq.org
 
-  celery_params:
-    main:
-      concurrency: 8
-    background_queue:
-      concurrency: 4
-    periodic:
-      concurrency: 4
-    pillow_retry_queue:
-      concurrency: 1
-    reminder_case_update_queue:
-      concurrency: 4
-    reminder_queue:
-      concurrency: 8
-    reminder_rule_queue:
-      concurrency: 4
-    saved_exports_queue:
-      concurrency: 3
-    sms_queue:
-      concurrency: 8
+  celery_processes:
+    hqcelery0:
+      main:
+        concurrency: 8
+      background_queue:
+        concurrency: 4
+      periodic:
+        concurrency: 4
+      pillow_retry_queue:
+        concurrency: 1
+      reminder_case_update_queue:
+        concurrency: 4
+    hqcelery1:
+      reminder_queue:
+        concurrency: 8
+      reminder_rule_queue:
+        concurrency: 4
+      saved_exports_queue:
+        concurrency: 3
+      sms_queue:
+        concurrency: 8
+      flower: {}
 
 staging:
   environment: staging
   should_migrate: True
-
-  pillow_retry_queue_enabled: True
 
   new_relic_enabled:
     - hqdjango0-staging.internal.commcarehq.org
     - hqdjango1-staging.internal.commcarehq.org
     - hqdb0-staging.internal.commcarehq.org
 
-  celery_params:
-    main:
-      concurrency: 4
-    background_queue:
-      concurrency: 2
-    pillow_retry_queue:
-      concurrency: 1
-    reminder_case_update_queue:
-      concurrency: 1
-    reminder_queue:
-      concurrency: 1
-    reminder_rule_queue:
-      concurrency: 1
-    saved_exports_queue:
-      concurrency: 3
+  celery_processes:
+    '*':
+      main:
+        concurrency: 4
+      background_queue:
+        concurrency: 2
+      pillow_retry_queue:
+        concurrency: 1
+      saved_exports_queue:
+        concurrency: 3
+      flower: {}
 
 zambia:
   environment: production
   should_migrate: True
 
-  sms_queue_enabled: True
-  pillow_retry_queue_enabled: True
-  celery_periodic_enabled: True
-  reminder_queue_enabled: True
-  reminder_rule_queue_enabled: True
-  reminder_case_update_queue_enabled: True
-
-  celery_params:
-    main:
-      concurrency: 4
-    background_queue:
-      concurrency: 4
-    periodic:
-      concurrency: 4
-    pillow_retry_queue:
-      concurrency: 1
-    reminder_case_update_queue:
-      concurrency: 4
-    reminder_queue:
-      concurrency: 4
-    reminder_rule_queue:
-      concurrency: 4
-    saved_exports_queue:
-      concurrency: 3
-    sms_queue:
-      concurrency: 4
+  celery_processes:
+    '*':
+      main:
+        concurrency: 4
+      background_queue:
+        concurrency: 4
+      periodic:
+        concurrency: 4
+      pillow_retry_queue:
+        concurrency: 1
+      reminder_case_update_queue:
+        concurrency: 4
+      reminder_queue:
+        concurrency: 4
+      reminder_rule_queue:
+        concurrency: 4
+      saved_exports_queue:
+        concurrency: 3
+      sms_queue:
+        concurrency: 4
+      flower: {}

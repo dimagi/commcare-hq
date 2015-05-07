@@ -43,7 +43,7 @@
                         {% case "no product detail" %}
                             Module
                             <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
-                            uses CommTrack products but doesn't have
+                            uses CommCare Supply products but doesn't have
                             detail screens configured for products.
                         {% case "invalid id key" %}
                             Module
