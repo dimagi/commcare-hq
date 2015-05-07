@@ -31,7 +31,11 @@
             {% else %}
                 <a class="btn btn-project{% if is_project_settings %} btn-project-active{% endif %}"
                    href="{% url "domain_settings_default" domain %}">
+                    {% if request|toggle_enabled:'PHONE_TIMEZONES_SHOULD_BE_PROCESSED' %}
+                    <i class="icon-globe" title="{% if request|toggle_enabled:'PHONE_TIMEZONES_HAVE_BEEN_PROCESSED' %}New timezone behavior enabled{% else %}Timezone migration started but not complete{% endif %}"></i>
+                    {% else %}
                     <i class="icon-cog"></i>
+                    {% endif %}
                     {% if request.project.is_snapshot %}
                         {% blocktrans with request.project.copied_from.display_name as snap_name %}
                             Snapshot of {{ snap_name }}
