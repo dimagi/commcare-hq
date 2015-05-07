@@ -62,10 +62,11 @@ def login_and_domain_required(view_func):
         domain_name, domain = load_domain(req, domain_identifier)
         if not domain:
             domain = Domain.get_by_alias(domain_identifier)
-            if domain:
+            url_prefix = "/a/{domain}/".format(domain=domain_identifier)
+            if domain and req.path.startswith(url_prefix):
                 domain_name, domain = load_domain(req, domain.name)
                 return HttpResponseRedirect(
-                    req.path.replace('/' + domain_identifier + '/', '/' + domain_name + '/')
+                    req.path.replace(url_prefix, "/a/{domain_name}/".format(domain_name=domain_name))
                 )
 
         if domain:
