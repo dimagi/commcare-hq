@@ -98,7 +98,11 @@ def handle_changed_mailchimp_email(user, old_email, new_email, list_id):
                 and couch_user.email == old_email)
     users_subscribed_with_old_email = [
         other_user
-        for other_user in CouchUser.all()
+        for other_user in CouchUser.view(
+            'users/mailing_list_emails',
+            reduce=False,
+            include_docs=True,
+        ).all()
         if is_user_subscribed_with_email(other_user)
     ]
     if (len(users_subscribed_with_old_email) == 1 and
