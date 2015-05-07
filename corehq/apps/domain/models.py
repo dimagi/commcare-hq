@@ -525,7 +525,7 @@ class Domain(Document, SnapshotMixin):
         return self.name
 
     @classmethod
-    @skippable_quickcache(['name'], skip_arg='strict', timeout=30*60)
+    @skippable_quickcache(['name'], skip_arg='strict', timeout=30 * 60)
     def get_by_name(cls, name, strict=False):
         if not name:
             # get_by_name should never be called with name as None (or '', etc)
@@ -545,7 +545,13 @@ class Domain(Document, SnapshotMixin):
 
         def _get_by_name(stale=False):
             extra_args = {'stale': settings.COUCH_STALE_QUERY} if stale else {}
-            result = cls.view("domain/domains", key=name, reduce=False, include_docs=True, **extra_args).first()
+            result = cls.view(
+                 "domain/domains",
+                 key=name,
+                 reduce=False,
+                 include_docs=True,
+                 **extra_args
+            ).first()
             if not isinstance(result, Domain):
                 # A stale view may return a result with no doc if the doc has just been deleted.
                 # In this case couchdbkit just returns the raw view result as a dict
@@ -560,14 +566,20 @@ class Domain(Document, SnapshotMixin):
         return domain
 
     @classmethod
-    @skippable_quickcache(['alias'], skip_arg='strict', timeout=30*60)
+    @skippable_quickcache(['alias'], skip_arg='strict', timeout=30 * 60)
     def get_by_alias(cls, alias, strict=False):
         if not alias:
             raise ValueError('%r is not a valid domain alias' % alias)
 
         def _get_by_alias(stale=False):
             extra_args = {'stale': settings.COUCH_STALE_QUERY} if stale else {}
-            result = cls.view("domains_apps/by_alias", key=alias, reduce=False, include_docs=True, **extra_args).first()
+            result = cls.view(
+                "domains_apps/by_alias",
+                key=alias,
+                reduce=False,
+                include_docs=True,
+                **extra_args
+            ).first()
             if not isinstance(result, Domain):
                 # A stale view may return a result with no doc if the doc has just been deleted.
                 # In this case couchdbkit just returns the raw view result as a dict
@@ -580,7 +592,6 @@ class Domain(Document, SnapshotMixin):
             # on the off chance this is a brand new domain, try with strict
             domain = _get_by_alias(stale=False)
         return domain
-
 
     @classmethod
     def get_by_organization(cls, organization):
