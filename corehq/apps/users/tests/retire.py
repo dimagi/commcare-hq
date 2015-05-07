@@ -8,7 +8,6 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
-from couchforms.models import XFormInstance
 
 
 class RetireUserTestCase(TestCase):

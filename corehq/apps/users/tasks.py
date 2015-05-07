@@ -10,9 +10,7 @@ from django.core.cache import cache
 import uuid
 from soil import CachedDownload, DownloadBase
 
-from dimagi.utils.couch.database import iter_docs
 from casexml.apps.case.xform import get_case_ids_from_form
-from casexml.apps.case.models import CommCareCase
 from couchforms.models import XFormInstance
 
 @task(ErrorMail=SensitiveErrorMail)
