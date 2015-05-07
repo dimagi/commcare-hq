@@ -161,18 +161,17 @@ def get_location_id_by_type(form, type):
 def get_location_by_type(form, type):
     loc = _get_location(form)
     if not loc:
-        try:
-            district_name = form.form.get('district_name', None)
-            loc = SQLLocation.objects.filter(
-                domain=get_domain(form),
-                name=district_name)
-            if loc.count() > 1:
-                loc = loc.filter(location_type__name='District')
-            loc = loc[0].couch_location
-            if type == 'district':
-                return loc
-        except SQLLocation.DoesNotExist:
+        district_name = form.form.get('district_name', None)
+        loc = SQLLocation.objects.filter(
+            domain=get_domain(form),
+            name=district_name)
+        if not loc:
             return None
+        if loc.count() > 1:
+            loc = loc.filter(location_type__name='District')
+        loc = loc[0].couch_location
+        if type == 'district':
+            return loc
 
     for loc_id in loc.lineage:
         loc = Location.get(loc_id)
