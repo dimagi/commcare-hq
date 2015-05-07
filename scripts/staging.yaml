@@ -43,6 +43,7 @@
 trunk: master
 name: autostaging
 branches:
+  - process-timezone  # danny 5/7
   - subscription-no-contact-info # bb 8/4
   - vellum-staging # J$ 11/13
   - locations-as-groups # tw 1/20
