@@ -17,6 +17,8 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView, View
 
+from sqlalchemy import types
+
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq import ConfigurableReport, privileges, Session, toggles
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
@@ -439,6 +441,28 @@ def preview_data_source(request, domain, config_id):
     return render(request, "userreports/preview_data.html", context)
 
 
+def process_url_params(params, column_descriptions):
+    columns = {column['name']: column for column in column_descriptions}
+    keyword_filters = {}
+    sql_filters = []
+    for key, value in params.items():
+        if key == 'format':
+            continue
+        column = columns.get(key, None)
+        if not column:
+            raise BadSpecError('Invalid filter parameter: {}'.format(key))
+
+        if (
+            value == 'last30'
+            and isinstance(column['type'], (types.Date, types.DateTime))
+        ):
+            expr = column['expr']
+            sql_filters.append(expr.between('2014-02-02', '2014-10-02'))
+        else:
+            keyword_filters[key] = value
+    return keyword_filters, sql_filters
+
+
 @login_or_basic
 @require_permission(Permissions.view_reports)
 def export_data_source(request, domain, config_id):
@@ -446,21 +470,24 @@ def export_data_source(request, domain, config_id):
     config = get_document_or_404(DataSourceConfiguration, domain, config_id)
     table = get_indicator_table(config)
     q = Session.query(table)
-    column_headers = [col['name'] for col in q.column_descriptions]
+    columns = q.column_descriptions
 
-    # apply filtering if any
-    filter_values = {key: value for key, value in request.GET.items() if key != 'format'}
-    for key in filter_values:
-        if key not in column_headers:
-            return HttpResponse('Invalid filter parameter: {}'.format(key), status=400)
-    q = q.filter_by(**filter_values)
+    try:
+        keyword_filters, sql_filters = process_url_params(request.GET, columns)
+    except BadSpecError as e:
+        return HttpResponse(e.message, status=400)
+
+    q = q.filter_by(**keyword_filters)
+    for sql_filter in sql_filters:
+        q = q.filter(sql_filter)
 
     # build export
     def get_table(q):
-        yield column_headers
+        yield [col['name'] for col in columns]
         for row in q:
             yield row
 
+    return HttpResponse('Woo! {} rows'.format(q.count()))
     fd, path = tempfile.mkstemp()
     with os.fdopen(fd, 'wb') as temp:
         export_from_tables([[config.table_id, get_table(q)]], temp, format)
