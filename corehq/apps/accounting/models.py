@@ -2099,4 +2099,4 @@ class CreditAdjustment(models.Model):
         Only one of either a line item or invoice may be specified as the adjuster.
         """
         if self.line_item and self.invoice is not None:
-            raise ValidationError("You can't specify both an invoice and a line item.")
+            raise ValidationError(_("You can't specify both an invoice and a line item."))
