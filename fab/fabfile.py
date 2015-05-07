@@ -1089,7 +1089,7 @@ def set_celery_supervisorconf():
         'sms_queue':                    ['supervisor_celery_sms_queue.conf'],
         'reminder_queue':               ['supervisor_celery_reminder_queue.conf'],
         'reminder_rule_queue':          ['supervisor_celery_reminder_rule_queue.conf'],
-        'reminder_case_update_queue':   ['supervisor_celery_reminder_rule_queue.conf'],
+        'reminder_case_update_queue':   ['supervisor_celery_reminder_case_update_queue.conf'],
         'pillow_retry_queue':           ['supervisor_celery_pillow_retry_queue.conf'],
         'background_queue':             ['supervisor_celery_background_queue.conf'],
         'saved_exports_queue':          ['supervisor_celery_saved_exports_queue.conf'],
