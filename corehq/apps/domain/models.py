@@ -546,11 +546,11 @@ class Domain(Document, SnapshotMixin):
         def _get_by_name(stale=False):
             extra_args = {'stale': settings.COUCH_STALE_QUERY} if stale else {}
             result = cls.view(
-                 "domain/domains",
-                 key=name,
-                 reduce=False,
-                 include_docs=True,
-                 **extra_args
+                "domain/domains",
+                key=name,
+                reduce=False,
+                include_docs=True,
+                **extra_args
             ).first()
             if not isinstance(result, Domain):
                 # A stale view may return a result with no doc if the doc has just been deleted.
