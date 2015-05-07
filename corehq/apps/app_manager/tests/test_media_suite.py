@@ -3,6 +3,8 @@ from django.test.utils import override_settings
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.app_manager.tests.util import TestFileMixin
+from corehq.apps.app_manager.tests.test_suite import SuiteTest
+from corehq.apps.builds.models import BuildSpec
 from corehq.apps.hqmedia.models import CommCareImage
 
 
@@ -16,24 +18,31 @@ class MediaSuiteTest(SimpleTestCase, TestFileMixin):
 
         image_path = 'jr://file/commcare/case_list_image.jpg'
         audo_path = 'jr://file/commcare/case_list_audo.mp3'
-        app.get_module(0).case_list_form.media_image = image_path
-        app.get_module(0).case_list_form.media_audio = audo_path
+        app.get_module(0).case_list_form.set_icon('en', image_path)
+        app.get_module(0).case_list_form.set_audio('en', audo_path)
 
         app.create_mapping(CommCareImage(_id='123'), image_path, save=False)
         app.create_mapping(CommCareImage(_id='456'), audo_path, save=False)
 
         self.assertXmlEqual(self.get_xml('media_suite'), app.create_media_suite())
 
-    def test_localized_media(self):
-        image_path = 'jr://file/commcare/case_list_image.jpg'
-        audio_path = 'jr://file/commcare/case_list_audo.mp3'
 
-        app = Application.new_app('domain', "my app", application_version=APP_V2)
-        module = app.add_module(Module.new_module("Module 1", None))
-        app.new_form(0, "Form 1", None)
+class LocalizedMediaSuiteTest(SuiteTest):
 
-        module.set_icon('en', image_path)
-        module.set_audio('en', audio_path)
+    def setUp(self):
+        super(LocalizedMediaSuiteTest, self).setUp()
+        self.image_path = 'jr://file/commcare/case_list_image.jpg'
+        self.audio_path = 'jr://file/commcare/case_list_audo.mp3'
+        self.app = Application.new_app('domain', "my app", application_version=APP_V2)
+        self.app.build_spec = BuildSpec.from_string('2.21/latest')
+
+    def test_form_suite(self):
+
+        self.app.add_module(Module.new_module("Module 1", None))
+        form = self.app.new_form(0, "Form 1", None)
+
+        form.set_icon('en', self.image_path)
+        form.set_audio('en', self.audio_path)
 
         XML = """
         <partial>
@@ -54,4 +63,30 @@ class MediaSuiteTest(SimpleTestCase, TestFileMixin):
             </entry>
         </partial>
         """
-        self.assertXmlPartialEqual(XML, app.create_suite(), "./entry")
+        self.assertXmlPartialEqual(XML, self.app.create_suite(), "./entry")
+
+    def test_module_suite(self):
+
+        module = self.app.add_module(Module.new_module("Module 1", None))
+        self.app.new_form(0, "Form 1", None)
+
+        module.set_icon('en', self.image_path)
+        module.set_audio('en', self.audio_path)
+
+        XML = """
+        <partial>
+            <display>
+                <text>
+                    <locale id="modules.m0"/>
+                </text>
+                <text form="image">
+                    <locale id="modules.m0.icon"/>
+                </text>
+                <text form="audio">
+                    <locale id="modules.m0.audio"/>
+                </text>
+            </display>
+        </partial>
+        """
+
+        self.assertXmlPartialEqual(XML, self.app.create_suite(), "./menu[@id='m0']/display")
