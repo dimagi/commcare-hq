@@ -1,6 +1,6 @@
 from functools import partial
 from couchdbkit import ResourceNotFound
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 import itertools
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from dimagi.utils.couch.database import iter_docs
@@ -117,7 +117,7 @@ class SQLLocation(MPTTModel):
     domain = models.CharField(max_length=255, db_index=True)
     name = models.CharField(max_length=100, null=True)
     location_id = models.CharField(max_length=100, db_index=True, unique=True)
-    location_type = models.ForeignKey(LocationType, null=True)
+    location_type = models.ForeignKey(LocationType)
     site_code = models.CharField(max_length=255)
     external_id = models.CharField(max_length=255, null=True)
     metadata = json_field.JSONField(default={})
@@ -297,6 +297,17 @@ class Location(CachedCouchDocumentMixin, Document):
     lineage = StringListProperty()
     previous_parents = StringListProperty()
 
+    @classmethod
+    def wrap(cls, data):
+        last_modified = data.get('last_modified')
+        # if it's missing a Z because of the Aug. 2014 migration
+        # that added this in iso_format() without Z, then add a Z
+        # (See also Group class)
+        from corehq.apps.groups.models import dt_no_Z_re
+        if last_modified and dt_no_Z_re.match(last_modified):
+            data['last_modified'] += 'Z'
+        return super(Location, cls).wrap(data)
+
     def __init__(self, *args, **kwargs):
         if 'parent' in kwargs:
             parent = kwargs['parent']
@@ -342,16 +353,21 @@ class Location(CachedCouchDocumentMixin, Document):
         ]
 
         try:
-            is_new = False
             sql_location = SQLLocation.objects.get(location_id=self._id)
         except SQLLocation.DoesNotExist:
-            is_new = True
-            sql_location = SQLLocation(domain=self.domain, site_code=self.site_code)
+            # The location type must already exist
+            try:
+                location_type = LocationType.objects.get(
+                    domain=self.domain,
+                    name=self.location_type,
+                )
+            except LocationType.DoesNotExist:
+                msg = "You can't create a location without a real location type"
+                raise LocationType.DoesNotExist(msg)
 
-        if is_new or (sql_location.location_type.name != self.location_type):
-            sql_location.location_type, _ = LocationType.objects.get_or_create(
+            sql_location = SQLLocation(
                 domain=self.domain,
-                name=self.location_type,
+                location_type=location_type,
             )
 
         for prop in properties_to_sync:

@@ -269,7 +269,7 @@ SELENIUM_APP_SETTINGS = {
 
 INTERNAL_DATA = {
     "business_unit": [],
-    "product": ["CommCare", "CommConnect", "CommTrack", "RapidSMS", "Custom"],
+    "product": ["CommCare", "CommConnect", "CommCare Supply", "RapidSMS", "Custom"],
     "services": [],
     "account_types": [],
     "initiatives": [],

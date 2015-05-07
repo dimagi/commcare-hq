@@ -2,15 +2,16 @@
 ├── XMLWriter#ab8760d6e0
 ├── almond#0.2.9 (latest is 0.3.1)
 ├── bootstrap-better-typeahead#26036ce250
-├── chai#2.2.0
+├── chai#2.3.0
 ├── equivalent-xml-js#7de21be295
-├── jquery#1.11.2 (latest is 2.1.3)
+├── jquery#1.11.3 (latest is 2.1.4)
 ├─┬ jquery-ui#1.11.4
-│ └── jquery#1.11.2 (2.1.3 available)
-├── jsdiff#1.3.2
+│ └── jquery#1.11.3 (2.1.4 available)
+├── jsdiff#1.4.0
 ├─┬ jstree#110b6681ff
-│ └── jquery#1.11.2 (2.1.3 available)
+│ └── jquery#1.11.3 (2.1.4 available)
 ├── langcodes#1168def14e
+├── markdown-it#4.2.1 extraneous
 ├── require-css#0.1.8
 ├── require-less#0.1.5
 ├── requirejs#2.1.17
@@ -18,6 +19,6 @@
 ├── requirejs-text#2.0.14
 ├── requirejs-tpl#a3ca1e0e7f
 ├── underscore#1.5.2 (latest is 1.8.3)
-├── when#2.8.0 (latest is 3.7.2)
+├── when#2.8.0 (latest is 3.7.3)
 ├── xpath#1926d1ebd2
 └── xrayquire#2a0861abd7

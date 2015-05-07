@@ -14,7 +14,7 @@ from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.domain.middleware import CCHQPRBACMiddleware
 from corehq.apps.export.models import FormQuestionSchema
 from corehq.apps.reports.display import xmlns_to_name
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 from corehq.apps.reports.exportfilters import form_matches_users, is_commconnect_form, default_form_filter, \
     default_case_filter
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
@@ -51,7 +51,7 @@ class HQUserType(object):
                       ugettext_noop("demo_user"),
                       ugettext_noop("admin"),
                       ugettext_noop("Unknown Users"),
-                      ugettext_noop("CommTrack")]
+                      ugettext_noop("CommCare Supply")]
     toggle_defaults = (True, False, False, False, False)
     count = len(human_readable)
     included_defaults = (True, True, True, True, False)

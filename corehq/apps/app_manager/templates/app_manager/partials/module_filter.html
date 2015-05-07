@@ -1,0 +1,15 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+{% if request|feature_preview_enabled:"MODULE_FILTER" %}
+<div class="control-group">
+    <label class="control-label">
+        {% trans "Module filter" %}
+    </label>
+    <div class="controls commcare-feature" data-since-version="2.20">
+        <input type="text"
+            placeholder="{% trans "XPath expression" %}"
+            name="module_filter"
+            value="{% if module.module_filter %}{{ module.module_filter }}{% endif %}"/>
+    </div>
+</div>
+{% endif %}

@@ -25,6 +25,7 @@ urlpatterns = patterns(
     url(r'^create_alert/$', 'create_alert', name='create_alert'),
     url(r'^activate_alert/$', 'activate_alert', name='activate_alert'),
     url(r'^deactivate_alert/$', 'deactivate_alert', name='deactivate_alert'),
+    url(r'^jserror/$', 'jserror', name='jserror'),
 )
 
 urlpatterns += patterns('corehq.apps.orgs.views', url(r'^search_orgs/', 'search_orgs', name='search_orgs'))

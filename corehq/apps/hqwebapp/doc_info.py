@@ -2,7 +2,8 @@ from couchdbkit import ResourceNotFound
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
-from jsonobject import *
+from dimagi.ext.jsonobject import *
+from corehq.apps.locations.util import loc_group_id_or_none
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import raw_username
 from couchforms import models as couchforms_models
@@ -23,6 +24,7 @@ def get_doc_info_by_id(domain, id):
     not_found_value = DocInfo(display=id, link=None, owner_type=None)
     if not id:
         return not_found_value
+    id = loc_group_id_or_none(id) or id  # strip prefix if it's a location group
     try:
         doc = CouchUser.get_db().get(id)
     except ResourceNotFound:
@@ -144,6 +146,16 @@ def get_doc_info(doc, domain_hint=None, cache=None):
                 args=[domain, doc_id],
             ),
             is_deleted=is_deleted,
+        )
+    elif doc_type == 'Location':
+        from corehq.apps.locations.views import EditLocationView
+        doc_info = DocInfo(
+            type_display=doc['location_type'],
+            display=doc['name'],
+            link=reverse(
+                EditLocationView.urlname,
+                args=[domain, doc_id],
+            ),
         )
     else:
         doc_info = DocInfo(

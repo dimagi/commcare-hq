@@ -8,12 +8,6 @@
     {{ form.media }}
 {% endblock %}
 
-{% block js-inline %}{{ block.super }}
-    <script type="text/javascript">
-        $("#id_domain_timezone").select2();
-    </script>
-{% endblock %}
-
 {% block step-title %}
     {% if is_new %}
         {% blocktrans %}Welcome to {{ SITE_NAME }}! <small>It's time to create your first project.</small>{% endblocktrans %}
@@ -41,7 +35,7 @@
 {% endblock %}
 
 {% block registration-content %}
-<div class="span8">
+<div>
     {% if is_new %}
     <p>
     {% blocktrans with request.couch_user.first_name as first_name %}
@@ -61,7 +55,6 @@
     {% endif %}
     <form class="form-horizontal" method="post" action="{{ request.get_full_path }}">
         <fieldset>
-            <legend>{% trans "Create a Project Space" %}</legend>
             {% for global_error in form.non_field_errors %}
                 <div class="alert alert-error">
                     {{ global_error }}
@@ -95,15 +88,5 @@
             </button>
         </div>
     </form>
-</div>
-<div class="span4">
-    <aside class="well">
-        <h3><a href="{% url "appstore" %}">{% trans 'Explore Example Projects' %}</a></h3>
-        <p>{% blocktrans %}In need of ideas or just want to explore?{% endblocktrans %}</p>
-        <p>{% trans "Check out" %} <strong><a href="{% url "appstore" %}">{% trans "CommCare Exchange" %}</a></strong> {% trans "for examples of apps being used today." %}</p>
-    </aside>
-    <aside class="well">
-        {% blocktrans %}For detailed documentation, please visit the <a href="http://wiki.commcarehq.org/display/commcarepublic/Home">CommCare Help Site</a>.{% endblocktrans %}
-    </aside>
 </div>
 {% endblock %}

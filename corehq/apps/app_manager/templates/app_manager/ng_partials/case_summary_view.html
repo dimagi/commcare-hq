@@ -145,7 +145,7 @@
 <!-- template for rendering case type hierarchy in navigation -->
 <script type="text/ng-template" id="/hierarchy.html">
 <div class="well">
-    <ul class="nav nav-pills nav-stacked">
+    <ul class="nav nav-hq-sidebar">
         <member ng-repeat='(casetype, subhierarchy) in hierarchy' casetype='casetype' hierarchy="subhierarchy"
                 type-search="typeSearch" filter-case-types="filterCaseTypes({casetype: casetype})"
                 has-errors="hasErrors({casetype: casetype})"></member>

@@ -14,6 +14,7 @@ from casexml.apps.case.xml import V2
 from casexml.apps.phone.models import SyncLog
 import couchforms
 from couchforms.models import XFormInstance, XFormDeprecated
+from dimagi.utils.parsing import json_format_datetime
 
 
 TEST_CASE_ID = "EOL9FIAKIQWOFXFOH0QAMWU64"
@@ -44,15 +45,13 @@ class BaseCaseMultimediaTest(TestCase):
 
     def _formatXForm(self, doc_id, raw_xml, attachment_block):
         final_xml = raw_xml % ({
-                                   "attachments": attachment_block,
-                                   "time_start": (
-                                       datetime.utcnow() - timedelta(minutes=4)).strftime(
-                                       '%Y-%m-%dT%H:%M:%SZ'),
-                                   "time_end": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
-                                   "date_modified": datetime.utcnow().strftime(
-                                       '%Y-%m-%dT%H:%M:%SZ'),
-                                   "doc_id": doc_id
-                               })
+            "attachments": attachment_block,
+            "time_start": json_format_datetime(datetime.utcnow()
+                                               - timedelta(minutes=4)),
+            "time_end": json_format_datetime(datetime.utcnow()),
+            "date_modified": json_format_datetime(datetime.utcnow()),
+            "doc_id": doc_id
+        })
         return final_xml
 
     def _prepAttachments(self, new_attachments, removes=[]):

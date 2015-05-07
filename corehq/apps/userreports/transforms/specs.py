@@ -1,4 +1,4 @@
-from jsonobject import JsonObject, StringProperty
+from dimagi.ext.jsonobject import JsonObject, StringProperty
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.userreports.transforms.custom.date import get_month_display
 from corehq.apps.userreports.transforms.custom.users import (

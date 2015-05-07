@@ -534,8 +534,8 @@ class OPMCaseRow(object):
     def child_image_four(self):
         if self.block == 'atri':
             if self.child_age == 3:
-                return (CHILD_WEIGHT_Y, CHILD_WEIGHT_N, "जन्म के समय वजन तौला गया",
-                        "जन्म के समय वजन नहीं तौला गया")
+                return (CHILD_WEIGHT_Y, CHILD_WEIGHT_N, "जन्म के समय वजन लिया गया",
+                        "जन्म के समय वजन नहीं लिया गया")
             if self.child_age == 6:
                 return (C_REGISTER_Y, C_REGISTER_N, "जन्म पंजीकृत", "जन्म पंजीकृत नहीं")
             if self.child_age == 12:
@@ -799,17 +799,17 @@ class ConditionsMet(OPMCaseRow):
         ('three', _("Condition 3"), True),
         ('four', _("Condition 4"), True),
         ('five', _("Condition 5"), True),
-        ('cash', _("Payment Amount"), True),
-        ('case_id', _('Case ID'), True),
-        ('closed_date', _("Closed On"), True),
-        ('payment_last_month', _("Payment amount received last month (Rs.)"), True),
+        ('cash', _("Payment amount this month (Rs.)"), True),
+        ('payment_last_month', _("Payment amount last month (Rs.)"), True),
         ('cash_received_last_month', _("Cash received last month"), True),
+        ('case_id', _('Case ID'), True),
+        ('closed_date', _("Closed On"), True)
     ]
 
     def __init__(self, case, report, child_index=1, awc_codes={}, **kwargs):
         super(ConditionsMet, self).__init__(case, report, child_index=child_index, **kwargs)
         self.serial_number = child_index
-        self.payment_last_month = "Rs.%d" % self.last_month_row.cash_amt if self.last_month_row else 0
+        self.payment_last_month = "Rs.%d" % (self.last_month_row.cash_amt if self.last_month_row else 0)
         self.cash_received_last_month = self.last_month_row.vhnd_available_display if self.last_month_row else 'no'
         self.awc_code = awc_codes.get(self.awc_name, EMPTY_FIELD)
 
@@ -817,10 +817,10 @@ class ConditionsMet(OPMCaseRow):
             self.child_name = self.case_property(self.child_xpath("child{num}_name"), EMPTY_FIELD)
             self.one = self.condition_image(C_ATTENDANCE_Y, C_ATTENDANCE_N, "पोषण दिवस में उपस्थित",
                                             "पोषण दिवस में उपस्थित नही", self.child_attended_vhnd)
-            self.two = self.condition_image(C_WEIGHT_Y, C_WEIGHT_N, "विकास की निगरानी रखी",
-                                            "विकास की निगरानी नहीं रखी", self.child_growth_calculated)
-            self.three = self.condition_image(ORSZNTREAT_Y, ORSZNTREAT_N, "दस्त होने पर ओ.आर.एस लेना",
-                                              "दस्त होने पर ओ.आर.एस नही लिया", self.child_received_ors)
+            self.two = self.condition_image(C_WEIGHT_Y, C_WEIGHT_N, "बच्चे का वज़न लिया गया",
+                                            "बच्चे का वज़न लिया गया", self.child_growth_calculated)
+            self.three = self.condition_image(ORSZNTREAT_Y, ORSZNTREAT_N, "दस्त होने पर ओ.आर.एस एवं जिंक लिया",
+                                              "दस्त होने पर ओ.आर.एस एवं जिंक नहीं लिया", self.child_received_ors)
             if self.child_condition_four is not None:
                 self.four = self.condition_image(self.child_image_four[0], self.child_image_four[1],
                                                  self.child_image_four[2], self.child_image_four[3],
@@ -831,10 +831,10 @@ class ConditionsMet(OPMCaseRow):
                                              "केवल माँ का दूध नहीं खिलाया गया", self.child_breastfed)
         elif self.status == 'pregnant':
             self.child_name = EMPTY_FIELD
-            self.one = self.condition_image(M_ATTENDANCE_Y, M_ATTENDANCE_N, "पोषण दिवस में उपस्थित",
+            self.one = self.condition_image(C_ATTENDANCE_Y, C_ATTENDANCE_N, "पोषण दिवस में उपस्थित",
                                             "पोषण दिवस में उपस्थित नही", self.preg_attended_vhnd)
-            self.two = self.condition_image(M_WEIGHT_Y, M_WEIGHT_N, "गर्भवती का वज़न लेना",
-                                            "गर्भवती का वज़न नहीं लेना", self.preg_weighed)
+            self.two = self.condition_image(M_WEIGHT_Y, M_WEIGHT_N, "गर्भवती का वज़न हुआ",
+                                            "गर्भवती का वज़न नही हुआा", self.preg_weighed)
             self.three = self.condition_image(IFA_Y, IFA_N, "तीस आयरन की गोलियां लेना",
                                               "तीस आयरन की गोलियां नही लिया", self.preg_received_ifa)
             self.four = ''

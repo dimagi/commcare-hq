@@ -213,16 +213,14 @@
         {% endif %}
     </dd>
 
-    {% if request|toggle_enabled:"DOCUMENTATION_FILE" %}
-        {% if project.documentation_file_path %}
-            <dt>{% trans 'Project Documentation' %}</dt>
-            <dd>
-                <a href="{% url "appstore_project_documentation_file" project.get_id %}" 
-                    download="{{ project.documentation_file_path }}">
-                    {{ project.documentation_file_path }}
-                </a>
-            </dd>
-        {% endif %}
+    {% if project.documentation_file_path %}
+        <dt>{% trans 'Project Documentation' %}</dt>
+        <dd>
+            <a href="{% url "appstore_project_documentation_file" project.get_id %}"
+                download="{{ project.documentation_file_path }}">
+                {{ project.documentation_file_path }}
+            </a>
+        </dd>
     {% endif %}
     {% if project.multimedia_included and project.has_media %}
         <dd>

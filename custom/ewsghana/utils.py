@@ -302,3 +302,9 @@ def has_input_stock_permissions(couch_user, location, domain):
         if user_location.location_id not in parents:
             return False
     return True
+
+
+def first_item(items, f):
+    for item in items:
+        if f(item):
+            return item

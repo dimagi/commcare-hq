@@ -7,7 +7,7 @@ from corehq.apps.sms.forms import BackendForm
 from corehq.apps.reminders.forms import RecordListField
 from django.forms.fields import *
 from django.core.exceptions import ValidationError
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 from dimagi.utils.django.fields import TrimmedCharField
 from corehq.apps.sms.util import clean_phone_number, strip_plus
 from django.utils.translation import ugettext as _, ugettext_noop

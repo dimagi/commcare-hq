@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from couchdbkit.ext.django.schema import Document, BooleanProperty, StringProperty
+from dimagi.ext.couchdbkit import Document, BooleanProperty, StringProperty
 from django.db import models
 
 from casexml.apps.stock.models import DocDomainMapping

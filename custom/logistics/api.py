@@ -11,8 +11,8 @@ from dimagi.utils.dates import force_to_datetime
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
+from django.conf import settings
 import requests
-from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.sms.mixin import PhoneNumberInUseException, VerifiedNumber, apply_leniency, InvalidFormatException, \
     MobileBackend
 from corehq.apps.users.models import CouchUser, CommCareUser, WebUser
@@ -248,8 +248,14 @@ class APISynchronization(object):
             'first_name': ilsgateway_webuser.first_name,
             'last_name': ilsgateway_webuser.last_name,
             'is_active': ilsgateway_webuser.is_active,
-            'last_login': force_to_datetime(ilsgateway_webuser.last_login),
-            'date_joined': force_to_datetime(ilsgateway_webuser.date_joined),
+            # I don't know why sample_webusers.json has these in a number o
+            # different formats, w/ and w/o 'T', with timezone offset, etc
+            # I do not know how timezones are meant to be handled, so I am
+            # conservatively keeping the behavior the same by explicitly
+            # stripping the timezone with no conversion
+            # todo: this is almost certainly not what was intended
+            'last_login': force_to_datetime(ilsgateway_webuser.last_login).replace(tzinfo=None),
+            'date_joined': force_to_datetime(ilsgateway_webuser.date_joined).replace(tzinfo=None),
             'password_hashed': True,
         }
         try:
@@ -266,6 +272,8 @@ class APISynchronization(object):
                 user.add_domain_membership(self.domain, location_id=location_id)
                 user.save()
             except Exception as e:
+                if settings.UNIT_TESTING:
+                    raise
                 logging.error(e)
         else:
             if self.domain not in user.get_domains():
