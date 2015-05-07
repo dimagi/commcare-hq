@@ -8,7 +8,6 @@ from dimagi.ext.couchdbkit import (
 )
 from datetime import datetime
 from decimal import Decimal
-from corehq.apps.groups.models import dt_no_Z_re
 from django.db import models
 from django.utils.translation import ugettext as _
 import json_field
@@ -35,6 +34,7 @@ class Product(Document):
 
     @classmethod
     def wrap(cls, data):
+        from corehq.apps.groups.models import dt_no_Z_re
         # If "Z" is missing because of the Aug 2014 migration, then add it.
         # cf. Group class
         last_modified = data.get('last_modified')
