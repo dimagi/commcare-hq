@@ -217,12 +217,20 @@ def form_icon_locale(form):
     )
 
 
-# ToDo - figure out case_list_form media
+# ToDo - figure out whether media-strings are custom or not
 def form_audio_locale(form):
     return u"forms.m{module.id}f{form.id}.audio".format(
         module=form.get_module(),
         form=form
     )
+
+
+def case_list_form_icon_locale(module):
+    return u"case_list_form.m{module.id}.icon".format(module=module)
+
+
+def case_list_form_audio_locale(module):
+    return u"case_list_form.m{module.id}.audio".format(module=module)
 
 
 def detail(module, detail_type):
