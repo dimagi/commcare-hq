@@ -314,6 +314,7 @@ class NewLocationView(BaseLocationView):
             'form': self.location_form,
             'location': self.location,
             'consumption': consumption,
+            'locations': load_locs_json(self.domain, self.location.parent_id),
             'form_tab': self.form_tab,
         }
 
