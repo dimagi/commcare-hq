@@ -1141,14 +1141,27 @@ class SuiteGenerator(SuiteGeneratorBase):
                     reg_action = form.get_registration_actions(module.case_type)[0]
                     case_session_var = reg_action.case_session_var
 
-                d.action = Action(
-                    display=Display(
-                        text=Text(locale_id=self.id_strings.case_list_form_locale(module)),
-                        media_image=module.case_list_form.media_image,
-                        media_audio=module.case_list_form.media_audio,
-                    ),
-                    stack=Stack()
-                )
+                if self.app.build_version >= '2.21':
+                    form = module.case_list_form
+                    d.action = Action(
+                        display=TextOrDisplay(
+                            menu_locale_id=self.id_strings.form_locale(form),
+                            media_image=bool(filter(bool, form.media_image.value())),
+                            media_audio=bool(filter(bool, form.media_audio.value())),
+                            image_locale_id=self.id_strings.case_list_form_icon_locale(form),
+                            audio_locale_id=self.id_strings.case_list_form_audio_locale(form),
+                        ),
+                        stack=Stack()
+                    )
+                else:
+                    d.action = Action(
+                        display=Display(
+                            text=Text(locale_id=self.id_strings.case_list_form_locale(module)),
+                            media_image=module.case_list_form.default_media_image,
+                            media_audio=module.case_list_form.default_media_audio,
+                        ),
+                        stack=Stack()
+                    )
                 frame = PushFrame()
                 frame.add_command(XPath.string(self.id_strings.form_command(form)))
                 frame.add_datum(StackDatum(id=case_session_var, value='uuid()'))
@@ -1502,12 +1515,22 @@ class SuiteGenerator(SuiteGeneratorBase):
             for form in module.get_forms():
                 e = Entry()
                 e.form = form.xmlns
-                e.command = Command(
-                    id=self.id_strings.form_command(form),
-                    locale_id=self.id_strings.form_locale(form),
-                    media_image=form.media_image,
-                    media_audio=form.media_audio,
-                )
+                if self.app.build_version < '2.21':
+                    e.command = Command(
+                        id=self.id_strings.form_command(form),
+                        locale_id=self.id_strings.form_locale(form),
+                        media_image=form.default_media_image,
+                        media_audio=form.default_media_audio,
+                    )
+                else:
+                    e.command = LocalizedCommand(
+                        id=self.id_strings.form_command(form),
+                        menu_locale_id=self.id_strings.form_locale(form),
+                        media_image=bool(filter(bool, form.media_image.value())),
+                        media_audio=bool(filter(bool, form.media_audio.value())),
+                        image_locale_id=self.id_strings.form_icon_locale(form),
+                        audio_locale_id=self.id_strings.form_audio_locale(form),
+                    )
                 config_entry = {
                     'module_form': self.configure_entry_module_form,
                     'advanced_form': self.configure_entry_advanced_form,
@@ -2084,9 +2107,6 @@ class SuiteGenerator(SuiteGeneratorBase):
             else:
                 menu_kwargs = {
                     'id': self.id_strings.menu_id(module),
-                    'locale_id': self.id_strings.module_locale(module),
-                    'media_image': module.media_image,
-                    'media_audio': module.media_audio,
                 }
                 if self.id_strings.menu_root(module):
                     menu_kwargs['root'] = self.id_strings.menu_root(module)
@@ -2096,7 +2116,22 @@ class SuiteGenerator(SuiteGeneratorBase):
                         getattr(module, 'module_filter', None)):
                     menu_kwargs['relevant'] = interpolate_xpath(module.module_filter)
 
-                menu = Menu(**menu_kwargs)
+                if self.app.build_version >= '2.21':
+                    menu_kwargs.update({
+                        'menu_locale_id': self.id_strings.form_locale(module),
+                        'media_image': bool(filter(bool, module.media_image.value())),
+                        'media_audio': bool(filter(bool, module.media_audio.value())),
+                        'image_locale_id': self.id_strings.module_icon_locale(module),
+                        'audio_locale_id': self.id_strings.module_audio_locale(module),
+                    })
+                    menu = LocalizedMenu(**menu_kwargs)
+                else:
+                    menu_kwargs.update({
+                        'locale_id': self.id_strings.module_locale(module),
+                        'media_image': module.default_media_image,
+                        'media_audio': module.default_media_audio,
+                    })
+                    menu = Menu(**menu_kwargs)
 
                 def get_commands():
                     for form in module.get_forms():
