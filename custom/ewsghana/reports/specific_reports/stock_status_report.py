@@ -179,7 +179,7 @@ class MonthOfStockProduct(EWSData):
 
                     if transaction and state:
                         if state.daily_consumption:
-                            row.append(round(transaction.stock_on_hand / state.get_monthly_consumption()))
+                            row.append("%.1f" % (transaction.stock_on_hand / state.get_monthly_consumption()))
                         else:
                             row.append(0)
                     else:

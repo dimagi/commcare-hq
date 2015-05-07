@@ -2,9 +2,15 @@ from datetime import datetime, timedelta
 from django.test import TestCase
 from casexml.apps.case.tests import check_xml_line_by_line
 from corehq.apps.mobile_auth.utils import new_key_record, get_mobile_auth_payload
-from dimagi.utils.parsing import json_format_datetime
+from dimagi.ext.jsonobject import HISTORICAL_DATETIME_FORMAT
+
 
 class MobileAuthTest(TestCase):
+
+    @staticmethod
+    def format_datetime_no_usec(dt):
+        # phone handler can't deal with microseconds
+        return dt.strftime(HISTORICAL_DATETIME_FORMAT)
 
     def test_xml(self):
         now = datetime.utcnow()
@@ -24,8 +30,8 @@ class MobileAuthTest(TestCase):
                 </auth_keys>
             </OpenRosaResponse>
         """.format(
-            now=json_format_datetime(now),
-            now_plus_30=json_format_datetime(now_plus_30),
+            now=self.format_datetime_no_usec(now),
+            now_plus_30=self.format_datetime_no_usec(now_plus_30),
             record=record,
             domain=domain,
         ))
@@ -43,9 +49,9 @@ class MobileAuthTest(TestCase):
                 </auth_keys>
             </OpenRosaResponse>
         """.format(
-            now=json_format_datetime(now),
-            now_plus_30=json_format_datetime(now_plus_30),
-            now_minus_30=json_format_datetime(now_minus_30),
+            now=self.format_datetime_no_usec(now),
+            now_plus_30=self.format_datetime_no_usec(now_plus_30),
+            now_minus_30=self.format_datetime_no_usec(now_minus_30),
             record=record,
             domain=domain,
         ))

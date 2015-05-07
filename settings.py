@@ -292,6 +292,7 @@ HQ_APPS = (
     'corehq.apps.grapevine',
     'corehq.apps.dashboard',
     'corehq.util',
+    'dimagi.ext',
 
     # custom reports
     'a5288',
@@ -999,6 +1000,7 @@ COUCHDB_APPS = [
     'custom_data_fields',
     'hqadmin',
     'domain',
+    'ext',
     'facilities',
     'fluff_filter',
     'fixtures',

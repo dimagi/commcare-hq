@@ -84,7 +84,7 @@ $ make
 
 Test in a browser:
 ```
-$ `npm bin`/http-server
+$ `npm bin`/http-server -c-1
 $ chromium-browser http://localhost:8080
 ```
 

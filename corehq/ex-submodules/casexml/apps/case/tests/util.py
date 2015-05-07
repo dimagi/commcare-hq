@@ -17,6 +17,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xform import process_cases
 from casexml.apps.phone.restore import RestoreConfig
 from casexml.apps.case.util import post_case_blocks
+from django.conf import settings
 
 
 class RestoreCaseBlock(object):
@@ -223,15 +224,15 @@ def _delete_all(db, viewname):
 
 
 def delete_all_cases():
-    # handle with care
+    assert settings.UNIT_TESTING
     _delete_all(CommCareCase.get_db(), 'case/get_lite')
 
 
 def delete_all_xforms():
-    # handle with care
+    assert settings.UNIT_TESTING
     _delete_all(XFormInstance.get_db(), 'couchforms/all_submissions_by_domain')
 
 
 def delete_all_sync_logs():
-    # handle with care
+    assert settings.UNIT_TESTING
     _delete_all(SyncLog.get_db(), 'phone/sync_logs_by_user')

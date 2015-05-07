@@ -5,7 +5,7 @@ from PIL import Image
 from datetime import datetime
 import hashlib
 from couchdbkit.exceptions import ResourceConflict
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 from corehq.apps.app_manager.exceptions import XFormException
 from dimagi.utils.couch.resource_conflict import retry_resource
 from django.contrib import messages
@@ -14,7 +14,7 @@ import magic
 from corehq.apps.app_manager.xform import XFormValidationError
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.domain.models import LICENSES, LICENSE_LINKS
-from dimagi.utils.couch.database import get_db, SafeSaveDocument, get_safe_read_kwargs, iter_docs
+from dimagi.utils.couch.database import get_db, get_safe_read_kwargs, iter_docs
 from django.utils.translation import ugettext as _
 
 MULTIMEDIA_PREFIX = "jr://file/"

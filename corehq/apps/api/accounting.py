@@ -149,7 +149,7 @@ class BillingAccountResource(ModelResource):
 
 
 class SubscriptionResource(ModelResource):
-    account = fields.IntegerField('acount_id', null=True)
+    account = fields.IntegerField('account_id', null=True)
     plan_version = fields.IntegerField('plan_version_id', null=True)
     subscriber = fields.IntegerField('subscriber_id', null=True)
 
