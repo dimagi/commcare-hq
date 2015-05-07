@@ -560,6 +560,29 @@ class Domain(Document, SnapshotMixin):
         return domain
 
     @classmethod
+    @skippable_quickcache(['alias'], skip_arg='strict', timeout=30*60)
+    def get_by_alias(cls, alias, strict=False):
+        if not alias:
+            raise ValueError('%r is not a valid domain alias' % alias)
+
+        def _get_by_alias(stale=False):
+            extra_args = {'stale': settings.COUCH_STALE_QUERY} if stale else {}
+            result = cls.view("domains_apps/by_alias", key=alias, reduce=False, include_docs=True, **extra_args).first()
+            if not isinstance(result, Domain):
+                # A stale view may return a result with no doc if the doc has just been deleted.
+                # In this case couchdbkit just returns the raw view result as a dict
+                return None
+            else:
+                return result
+
+        domain = _get_by_alias(stale=(not strict))
+        if domain is None and not strict:
+            # on the off chance this is a brand new domain, try with strict
+            domain = _get_by_alias(stale=False)
+        return domain
+
+
+    @classmethod
     def get_by_organization(cls, organization):
         result = cache_core.cached_view(
             cls.get_db(), "domain/by_organization",
@@ -583,15 +606,6 @@ class Domain(Document, SnapshotMixin):
                           key=[organization, hr_name],
                           reduce=False,
                           include_docs=True)
-        return result
-
-    @classmethod
-    def get_by_alias(cls, domain_alias):
-        result = cls.view("domain/by_alias",
-                          startkey=[domain_alias],
-                          endkey=[domain_alias, {}],
-                          reduce=False,
-                          include_docs=True).first()
         return result
 
     @classmethod
