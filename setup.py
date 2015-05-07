@@ -21,6 +21,6 @@ setup(
     packages=find_packages(exclude=['*.pyc']),
     include_package_data=True,
     dependency_links=[
-        'git+git://github.com/dimagi/dimagi-utils.git@2533a1aa96fd91a855b153e7bb9c15275ef844e7#egg=dimagi-utils-1.3usec',
+        'git+git://github.com/dimagi/dimagi-utils.git@24e1eaad37ac735ab9309253011f09835c9ee67e#egg=dimagi-utils-1.3usec',
     ]
 )
