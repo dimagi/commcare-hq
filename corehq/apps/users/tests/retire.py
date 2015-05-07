@@ -46,12 +46,7 @@ class RetireUserTestCase(TestCase):
             user_id=self.commcare_user._id,
         )
         casexml = ElementTree.tostring(caseblock.as_xml())
-        form_id = submit_case_blocks(casexml, self.domain)
-        form = XFormInstance.get(form_id)
-
-        form.form['meta']['userID'] = self.other_user._id
-        # Case is now assigned to commcare_user, form was submitted by other_user
-        form.save()
+        submit_case_blocks(casexml, self.domain, user_id=self.other_user._id)
 
         self.other_user.retire()
 
@@ -69,10 +64,7 @@ class RetireUserTestCase(TestCase):
             user_id=self.commcare_user._id,
         )
         casexml = ElementTree.tostring(caseblock.as_xml())
-        form_id = submit_case_blocks(casexml, self.domain)
-        form = XFormInstance.get(form_id)
-        form.form['meta']['userID'] = self.commcare_user._id
-        form.save()
+        submit_case_blocks(casexml, self.domain, user_id=self.commcare_user._id)
 
         self.other_user.retire()
 
@@ -91,11 +83,8 @@ class RetireUserTestCase(TestCase):
             user_id=self.commcare_user._id,
         ) for case_id in case_ids]
         casexmls = [ElementTree.tostring(caseblock.as_xml()) for caseblock in caseblocks]
-        self.form_id = submit_case_blocks(casexmls, self.domain)
+        submit_case_blocks(casexmls, self.domain, user_id=self.other_user._id)
 
-        form = XFormInstance.get(self.form_id)
-        form.form['meta']['userID'] = self.other_user._id
-        form.save()
         self.other_user.retire()
 
         expected_call_args = [mock.call(case_id) for case_id in case_ids]
@@ -116,11 +105,7 @@ class RetireUserTestCase(TestCase):
             user_id=self.commcare_user._id,
         ) for case_id in case_ids]
         casexmls = [ElementTree.tostring(caseblock.as_xml()) for caseblock in caseblocks]
-        self.form_id = submit_case_blocks(casexmls, self.domain)
-
-        form = XFormInstance.get(self.form_id)
-        form.form['meta']['userID'] = self.other_user._id
-        form.save()
+        submit_case_blocks(casexmls, self.domain, user_id=self.other_user._id)
 
         # This case will get deleted when the user is retired
         case = CommCareCase.get(case_ids[0])

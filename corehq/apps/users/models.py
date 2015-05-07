@@ -1641,8 +1641,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 deleted_cases.add(case['_id'])
 
         for formlist in chunked(self.get_forms(wrap=False, include_docs=True), 50):
-            tag_forms_as_deleted_rebuild_associated_cases.delay(XFormInstance, formlist, deletion_id,
-                                                                deleted_cases=deleted_cases)
+            tag_forms_as_deleted_rebuild_associated_cases.delay(formlist, deletion_id, deleted_cases=deleted_cases)
 
         for phone_number in self.get_verified_numbers(True).values():
             phone_number.retire(deletion_id)

@@ -13,6 +13,7 @@ from soil import CachedDownload, DownloadBase
 from dimagi.utils.couch.database import iter_docs
 from casexml.apps.case.xform import get_case_ids_from_form
 from casexml.apps.case.models import CommCareCase
+from couchforms.models import XFormInstance
 
 @task(ErrorMail=SensitiveErrorMail)
 def bulk_upload_async(domain, user_specs, group_specs, location_specs):
@@ -40,23 +41,19 @@ def tag_docs_as_deleted(cls, docs, deletion_id):
 
 
 @task(rate_limit=2, queue='background_queue', ignore_result=True)  # 2 saves/sec for cloudant slowness
-def tag_forms_as_deleted_rebuild_associated_cases(cls, formlist, deletion_id, deleted_cases=set()):
+def tag_forms_as_deleted_rebuild_associated_cases(formlist, deletion_id, deleted_cases=set()):
     from casexml.apps.case.cleanup import rebuild_case
-
-    for doc in formlist:
-        doc['doc_type'] += DELETED_SUFFIX
-        doc['-deletion_id'] = deletion_id
-    cls.get_db().bulk_save(formlist)
 
     cases_to_rebuild = set()
     for form in formlist:
-        cases = get_case_ids_from_form(form) - deleted_cases
-        for case in iter_docs(CommCareCase.get_db(), cases):
-            if case['owner_id'] != form['form']['meta']['userID']:
-                cases_to_rebuild.add(case['_id'])
+        form['doc_type'] += DELETED_SUFFIX
+        form['-deletion_id'] = deletion_id
+        for case in get_case_ids_from_form(form) - deleted_cases:
+            cases_to_rebuild.add(case)
+    XFormInstance.get_db().bulk_save(formlist)
 
-    for case_id in cases_to_rebuild:
-        rebuild_case(case_id)
+    for case in cases_to_rebuild:
+        rebuild_case(case)
 
 @periodic_task(
     run_every=crontab(hour=23, minute=55),
