@@ -1006,7 +1006,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
             old_media = getattr(self, media_attr)
             if old_media is None or isinstance(old_media, (str, unicode)):
                 # ToDo - better way than to hardcode default-language.
-                new_media = {'en': old_media or ''}
+                new_media = {'en': old_media} if old_media else {}
                 setattr(self, media_attr, new_media)
 
         return self
