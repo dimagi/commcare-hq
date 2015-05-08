@@ -33,7 +33,7 @@ def editable_locations_ids(user, project):
         return []
 
     return list(user_loc.sql_location.get_descendants(include_self=True)
-                                 .values_list('location_id', flat=True))
+                                     .values_list('location_id', flat=True))
 
 
 def user_can_edit_location(user, sql_location, project):

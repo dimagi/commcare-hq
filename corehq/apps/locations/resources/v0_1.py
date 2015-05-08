@@ -1,12 +1,12 @@
+import json
 from tastypie import fields
-from corehq.apps.locations.models import Location, root_locations
-from corehq.apps.locations.permissions import (user_can_edit_location,
-                                               editable_locations_ids,
-                                               viewable_locations_ids)
+
 from corehq.apps.api.resources.v0_1 import CustomResourceMeta, LoginAndDomainAuthentication
 from corehq.apps.api.util import get_object_or_not_exist
-import json
 from corehq.apps.api.resources import HqBaseResource
+
+from ..models import Location, root_locations
+from ..permissions import editable_locations_ids, viewable_locations_ids
 
 
 class LocationResource(HqBaseResource):
