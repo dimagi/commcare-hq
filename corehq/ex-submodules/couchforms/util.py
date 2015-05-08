@@ -13,10 +13,13 @@ from django.http import (
     HttpResponseBadRequest,
     HttpResponseForbidden,
 )
+import iso8601
 from redis import ConnectionError
+from dimagi.ext.jsonobject import re_loose_datetime
 
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import uid, LockManager, ReleaseOnError
+from dimagi.utils.parsing import json_format_datetime
 import xml2json
 
 import couchforms
@@ -108,6 +111,30 @@ class MultiLockManager(list):
             lock_manager.__exit__(exc_type, exc_val, exc_tb)
 
 
+def adjust_datetimes(data, parent=None, key=None):
+    """
+    find all datetime-like strings within data (deserialized json)
+    and format them uniformly, in place.
+
+    """
+    # this strips the timezone like we've always done
+    # todo: in the future this will convert to UTC
+    if isinstance(data, basestring):
+        if re_loose_datetime.match(data):
+            parent[key] = json_format_datetime(
+                iso8601.parse_date(data).replace(tzinfo=None))
+    elif isinstance(data, dict):
+        for key, value in data.items():
+            adjust_datetimes(value, parent=data, key=key)
+    elif isinstance(data, list):
+        for i, value in enumerate(data):
+            adjust_datetimes(value, parent=data, key=i)
+
+    # return data, just for convenience in testing
+    # this is the original input, modified, not a new data structure
+    return data
+
+
 def create_xform(xml_string, attachments=None, _id=None, process=None):
     """
     create but do not save an XFormInstance from an xform payload (xml_string)
@@ -125,6 +152,7 @@ def create_xform(xml_string, attachments=None, _id=None, process=None):
 
     assert attachments is not None
     json_form = convert_xform_to_json(xml_string)
+    adjust_datetimes(json_form)
 
     _id = (_id or _extract_meta_instance_id(json_form)
            or XFormInstance.get_db().server.next_uuid())
@@ -437,7 +465,7 @@ class SubmissionPost(object):
                 get_and_check_xform_domain, CaseDbCache, process_cases_with_casedb
             )
             from casexml.apps.case.signals import case_post_save
-            from casexml.apps.case.exceptions import IllegalCaseId
+            from casexml.apps.case.exceptions import IllegalCaseId, UsesReferrals
             from corehq.apps.commtrack.processing import process_stock
 
             cases = []
@@ -454,7 +482,7 @@ class SubmissionPost(object):
                         try:
                             case_result = process_cases_with_casedb(xforms, case_db)
                             process_stock(instance, case_db)
-                        except IllegalCaseId as e:
+                        except (IllegalCaseId, UsesReferrals) as e:
                             # errors we know about related to the content of the form
                             # log the error and respond with a success code so that the phone doesn't
                             # keep trying to send the form

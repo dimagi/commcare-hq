@@ -1,15 +1,16 @@
 from copy import copy
 import json
-from couchdbkit import ResourceNotFound, SchemaProperty
-from couchdbkit.ext.django.schema import (
+from couchdbkit import ResourceNotFound
+from dimagi.ext.couchdbkit import (
     BooleanProperty,
+    DateTimeProperty,
     Document,
     DocumentSchema,
+    SchemaProperty,
     StringListProperty,
-    DateTimeProperty
 )
-from couchdbkit.ext.django.schema import StringProperty, DictProperty, ListProperty, IntegerProperty
-from jsonobject import JsonObject
+from dimagi.ext.couchdbkit import StringProperty, DictProperty, ListProperty, IntegerProperty
+from dimagi.ext.jsonobject import JsonObject
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
@@ -142,6 +143,11 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
                 }
             }
         }, self.named_filter_objects)]
+
+        default_indicators.append(IndicatorFactory.from_spec({
+            "type": "inserted_at",
+        }, self.named_filter_objects))
+
         if self.base_item_expression:
             default_indicators.append(IndicatorFactory.from_spec({
                 "type": "repeat_iteration",
@@ -254,6 +260,11 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
 
     @property
     @memoized
+    def report_columns(self):
+        return [ReportColumnFactory.from_spec(c) for c in self.columns]
+
+    @property
+    @memoized
     def ui_filters(self):
         return [ReportFilterFactory.from_spec(f) for f in self.filters]
 
@@ -291,7 +302,7 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             'Filters cannot contain duplicate slugs: {}',
         )
         _check_for_duplicates(
-            [ReportColumnFactory.from_spec(c).column_id for c in self.columns],
+            [c.column_id for c in self.report_columns],
             'Columns cannot contain duplicate column_ids: {}',
         )
 

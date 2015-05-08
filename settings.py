@@ -291,8 +291,8 @@ HQ_APPS = (
     'corehq.apps.styleguide',
     'corehq.apps.grapevine',
     'corehq.apps.dashboard',
-    'corehq.apps.public',
     'corehq.util',
+    'dimagi.ext',
 
     # custom reports
     'a5288',
@@ -449,7 +449,6 @@ EMAIL_SMTP_PORT = 587
 EMAIL_USE_TLS = True
 SEND_BROKEN_LINK_EMAILS = True
 
-
 # put email addresses here to have them receive bug reports
 BUG_REPORT_RECIPIENTS = ()
 EXCHANGE_NOTIFICATION_RECIPIENTS = []
@@ -487,6 +486,7 @@ FIXTURE_GENERATORS = {
         "corehq.apps.callcenter.fixturegenerators.indicators_fixture_generator",
         "corehq.apps.products.fixtures.product_fixture_generator",
         "corehq.apps.programs.fixtures.program_fixture_generator",
+        "corehq.apps.userreports.fixtures.report_fixture_generator",
         # custom
         "custom.bihar.reports.indicators.fixtures.generator",
         "custom.m4change.fixtures.report_fixtures.generator",
@@ -679,6 +679,7 @@ ANALYTICS_IDS = {
     'PINGDOM_ID': '',
     'ANALYTICS_ID_PUBLIC_COMMCARE': '',
     'SEGMENT_ANALYTICS_KEY': '',
+    'HUBSPOT_ID': '',
 }
 
 OPEN_EXCHANGE_RATES_ID = ''
@@ -695,6 +696,12 @@ LOCAL_APPS = ()
 LOCAL_COUCHDB_APPS = ()
 LOCAL_MIDDLEWARE_CLASSES = ()
 LOCAL_PILLOWTOPS = {}
+
+# Prelogin site
+ENABLE_PRELOGIN_SITE = False
+PRELOGIN_APPS = (
+    'corehq.apps.prelogin',
+)
 
 # If there are existing doc_ids and case_ids you want to check directly,
 # they are referenced in your localsettings for more accurate direct checks,
@@ -993,6 +1000,7 @@ COUCHDB_APPS = [
     'custom_data_fields',
     'hqadmin',
     'domain',
+    'ext',
     'facilities',
     'fluff_filter',
     'fixtures',
@@ -1069,6 +1077,9 @@ COUCHDB_DATABASES = make_couchdb_tuples(COUCHDB_APPS, COUCH_DATABASE)
 EXTRA_COUCHDB_DATABASES = get_extra_couchdbs(COUCHDB_APPS, COUCH_DATABASE)
 
 INSTALLED_APPS += LOCAL_APPS
+
+if ENABLE_PRELOGIN_SITE:
+    INSTALLED_APPS += PRELOGIN_APPS
 
 MIDDLEWARE_CLASSES += LOCAL_MIDDLEWARE_CLASSES
 

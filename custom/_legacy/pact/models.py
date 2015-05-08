@@ -25,12 +25,12 @@ def make_uuid():
     return uuid.uuid4().hex
 
 from datetime import datetime, timedelta
-from couchdbkit.ext.django.schema import (
+from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateProperty,
-    DateTimeProperty,
-    Document,
     IntegerProperty,
+    OldDateTimeProperty,
+    OldDocument,
     SchemaListProperty,
     StringProperty,
 )
@@ -390,7 +390,7 @@ class PactPatientCase(CommCareCase):
         }
 
 
-class CDotWeeklySchedule(Document):
+class CDotWeeklySchedule(OldDocument):
     """Weekly schedule where each day has a username"""
     schedule_id = StringProperty(default=make_uuid)
 
@@ -406,8 +406,8 @@ class CDotWeeklySchedule(Document):
 
     deprecated = BooleanProperty(default=False)
 
-    started = DateTimeProperty(default=datetime.utcnow, required=True)
-    ended = DateTimeProperty()
+    started = OldDateTimeProperty(default=datetime.utcnow, required=True)
+    ended = OldDateTimeProperty()
 
     created_by = StringProperty()  # user id
     edited_by = StringProperty()  # user id
@@ -438,19 +438,19 @@ class CDotWeeklySchedule(Document):
 ADDENDUM_NOTE_STRING = "[AddendumEntry]"
 
 
-class CObservation(Document):
+class CObservation(OldDocument):
     doc_id = StringProperty()
     patient = StringProperty()  # case id
 
     pact_id = StringProperty()  # patient pact id
     provider = StringProperty()
 
-    encounter_date = DateTimeProperty()
-    anchor_date = DateTimeProperty()
-    observed_date = DateTimeProperty()
+    encounter_date = OldDateTimeProperty()
+    anchor_date = OldDateTimeProperty()
+    observed_date = OldDateTimeProperty()
 
-    submitted_date = DateTimeProperty()
-    created_date = DateTimeProperty()
+    submitted_date = OldDateTimeProperty()
+    created_date = OldDateTimeProperty()
 
     is_art = BooleanProperty()
     dose_number = IntegerProperty()
@@ -521,12 +521,13 @@ class CObservation(Document):
     def __repr__(self):
         return json.dumps(self.to_json(), indent=4)
 
-class CObservationAddendum(Document):
+
+class CObservationAddendum(OldDocument):
     observed_date = DateProperty()
     art_observations = SchemaListProperty(CObservation)
     nonart_observations = SchemaListProperty(CObservation)
     created_by = StringProperty()
-    created_date = DateTimeProperty()
+    created_date = OldDateTimeProperty()
     notes = StringProperty()  # placeholder if need be
 
     class Meta:

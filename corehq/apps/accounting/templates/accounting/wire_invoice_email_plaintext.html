@@ -1,0 +1,29 @@
+{% load i18n %}
+
+{% blocktrans %}
+{{ greeting }}
+
+The Wire Payment Invoice you requested for project {{ domain }} is now available.
+
+Invoice No.: {{ statement_number }}
+Project Space: {{ domain }}
+Amount Due: {{ amount_due }}
+
+Instructions for Wire Payment
+
+Dimagi accepts wire payments via ACH and wire transfer. To complete the Wire Payment, please follow these instructions:
+
+- Send the wire payment to Dimagi’s bank account and include the invoice ID in the wire payment details. Dimagi’s bank account details and the invoice ID can be found in the attached invoice.
+
+- Send an email to {{ accounts_email }} after you have made the payment including the date of the payment, the amount, the invoice number and the project space name.
+
+Thank you for using CommCare. If you have any questions, please don't hesitate to contact commcarehq-support@dimagi.com.
+
+Best Regards,
+The CommCare HQ Team
+www.commcarehq.org
+
+Statement From:
+CommCare HQ and the corporation Dimagi, Inc.
+585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA
+{% endblocktrans %}

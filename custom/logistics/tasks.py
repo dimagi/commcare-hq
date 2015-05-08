@@ -149,8 +149,7 @@ def sync_stock_transactions_for_facility(domain, endpoint, facility, checkpoint,
                                                                  limit=limit,
                                                                  offset=offset,
                                                                  filters=(dict(supply_point=supply_point,
-                                                                               date__gte=date,
-                                                                               order_by='date')))
+                                                                               date__gte=date)))
 
         # set the checkpoint right before the data we are about to process
         meta_limit = meta.get('limit') or limit

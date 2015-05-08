@@ -46,7 +46,7 @@ TESTS = (
         ),
         {u'fruity_file': u'./corehq/ex-submodules/casexml/apps/case/tests/data/attachments/fruity.jpg'},
         """
-        <case case_id="new-case-abc123" date_modified="2011-12-20T00:11:02Z"
+        <case case_id="new-case-abc123" date_modified="2011-12-20T00:11:02.000000Z"
                 user_id="user-abc123"
                 xmlns="http://commcarehq.org/case/transaction/v2">
             <create>

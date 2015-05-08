@@ -5,6 +5,7 @@ from django.test import TestCase
 import json
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.models import Domain
+from corehq.apps.hqadmin.dbaccessors import get_all_forms_in_all_domains
 from corehq.apps.users.models import CommCareUser
 from couchforms.models import XFormInstance
 from pact.dot_data import filter_obs_for_day, query_observations, DOTDay, get_dots_case_json
@@ -31,10 +32,10 @@ CTSIMS_ID = 'ff6c662bfc2a448dadc9084056a4abdf'
 
 class dotsSubmissionTests(TestCase):
     def setUp(self):
-        for doc in XFormInstance.get_db().view('hqadmin/forms_over_time', reduce=False, include_docs=True).all():
-            #purge all xforms prior to start
-            if doc['doc']['xmlns'] in [XMLNS_DOTS_FORM, XMLNS_PATIENT_UPDATE_DOT]:
-                XFormInstance.get_db().delete_doc(doc['doc'])
+        for doc in get_all_forms_in_all_domains():
+            # purge all xforms prior to start
+            if doc.xmlns in [XMLNS_DOTS_FORM, XMLNS_PATIENT_UPDATE_DOT]:
+                doc.delete()
 
         two_weeks = timedelta(days=14)
         self.domain = Domain()
@@ -275,13 +276,13 @@ class dotsSubmissionTests(TestCase):
                     "method": "pillbox",
                     "observed_date": "2012-11-17T05:00:00Z",
                     #"day_slot": 1,
-                    "completed_date": "2012-12-16T22:00:28Z",
+                    "completed_date": "2012-12-16T22:00:28.847000Z",
                     "adherence": "partial",
                     "dose_number": 1, #zero indexed
                     #                    "doc_type": "CObservation",
                     "is_reconciliation": False,
                     "anchor_date": "2012-12-07T05:00:00Z",
-                    "created_date": "2012-12-16T21:37:52Z",
+                    "created_date": "2012-12-16T21:37:52.771000Z",
                     "is_art": True,
                     "_id": "a1811d7e-c968-4b63-aea5-6195ce0d8759",
                     "doc_id": "a1811d7e-c968-4b63-aea5-6195ce0d8759"
@@ -300,13 +301,13 @@ class dotsSubmissionTests(TestCase):
                     "method": "pillbox",
                     "observed_date": "2012-11-17T05:00:00Z",
                     #                    "day_slot": 2,
-                    "completed_date": "2012-12-16T22:00:28Z",
+                    "completed_date": "2012-12-16T22:00:28.847000Z",
                     "adherence": "partial",
                     "dose_number": 1,
                     #                    "doc_type": "CObservation",
                     "is_reconciliation": False,
                     "anchor_date": "2012-12-07T05:00:00Z",
-                    "created_date": "2012-12-16T21:37:52Z",
+                    "created_date": "2012-12-16T21:37:52.771000Z",
                     "is_art": False,
                     "_id": "a1811d7e-c968-4b63-aea5-6195ce0d8759",
                     "doc_id": "a1811d7e-c968-4b63-aea5-6195ce0d8759"
@@ -325,13 +326,13 @@ class dotsSubmissionTests(TestCase):
                     "method": "pillbox",
                     "observed_date": "2012-11-17T05:00:00Z",
                     #                    "day_slot": 3,
-                    "completed_date": "2012-12-16T22:00:28Z",
+                    "completed_date": "2012-12-16T22:00:28.847000Z",
                     "adherence": "partial",
                     "dose_number": 2,
                     #                    "doc_type": "CObservation",
                     "is_reconciliation": False,
                     "anchor_date": "2012-12-07T05:00:00Z",
-                    "created_date": "2012-12-16T21:37:52Z",
+                    "created_date": "2012-12-16T21:37:52.771000Z",
                     "is_art": False,
                     "_id": "a1811d7e-c968-4b63-aea5-6195ce0d8759",
                     "doc_id": "a1811d7e-c968-4b63-aea5-6195ce0d8759"
@@ -353,13 +354,13 @@ class dotsSubmissionTests(TestCase):
                     "method": "pillbox",
                     "observed_date": "2012-12-06T05:00:00Z",
                     "day_slot": -1,
-                    "completed_date": "2012-12-16T22:00:28Z",
+                    "completed_date": "2012-12-16T22:00:28.847000Z",
                     "adherence": "partial",
                     "dose_number": 0,
                     #                    "doc_type": "CObservation",
                     "is_reconciliation": False,
                     "anchor_date": "2012-12-07T05:00:00Z",
-                    "created_date": "2012-12-16T21:37:52Z",
+                    "created_date": "2012-12-16T21:37:52.771000Z",
                     "is_art": True,
                     "_id": "a1811d7e-c968-4b63-aea5-6195ce0d8759",
                     "doc_id": "a1811d7e-c968-4b63-aea5-6195ce0d8759"
@@ -378,13 +379,13 @@ class dotsSubmissionTests(TestCase):
                     "method": "direct",
                     "observed_date": "2012-12-06T05:00:00Z",
                     #                "day_slot": -1,
-                    "completed_date": "2012-12-16T22:00:28Z",
+                    "completed_date": "2012-12-16T22:00:28.847000Z",
                     "adherence": "empty",
                     "dose_number": 0,
                     #                "doc_type": "CObservation",
                     "is_reconciliation": False,
                     "anchor_date": "2012-12-07T05:00:00Z",
-                    "created_date": "2012-12-16T21:37:52Z",
+                    "created_date": "2012-12-16T21:37:52.771000Z",
                     "is_art": False,
                     "_id": "a1811d7e-c968-4b63-aea5-6195ce0d8759",
                     "doc_id": "a1811d7e-c968-4b63-aea5-6195ce0d8759"
@@ -403,13 +404,13 @@ class dotsSubmissionTests(TestCase):
                     "method": "pillbox",
                     "observed_date": "2012-12-06T05:00:00Z",
                     #                "day_slot": -1,
-                    "completed_date": "2012-12-16T22:00:28Z",
+                    "completed_date": "2012-12-16T22:00:28.847000Z",
                     "adherence": "partial",
                     "dose_number": 1,
                     #                "doc_type": "CObservation",
                     "is_reconciliation": False,
                     "anchor_date": "2012-12-07T05:00:00Z",
-                    "created_date": "2012-12-16T21:37:52Z",
+                    "created_date": "2012-12-16T21:37:52.771000Z",
                     "is_art": False,
                     "_id": "a1811d7e-c968-4b63-aea5-6195ce0d8759",
                     "doc_id": "a1811d7e-c968-4b63-aea5-6195ce0d8759"
@@ -428,13 +429,13 @@ class dotsSubmissionTests(TestCase):
                     "method": "pillbox",
                     "observed_date": "2012-12-06T05:00:00Z",
                     #                "day_slot": -1,
-                    "completed_date": "2012-12-16T22:00:28Z",
+                    "completed_date": "2012-12-16T22:00:28.847000Z",
                     "adherence": "partial",
                     "dose_number": 2,
                     #                "doc_type": "CObservation",
                     "is_reconciliation": False,
                     "anchor_date": "2012-12-07T05:00:00Z",
-                    "created_date": "2012-12-16T21:37:52Z",
+                    "created_date": "2012-12-16T21:37:52.771000Z",
                     "is_art": False,
                     "_id": "a1811d7e-c968-4b63-aea5-6195ce0d8759",
                     "doc_id": "a1811d7e-c968-4b63-aea5-6195ce0d8759"
@@ -455,13 +456,13 @@ class dotsSubmissionTests(TestCase):
                     "method": "direct",
                     "observed_date": "2012-12-07T05:00:00Z",
                     #"day_slot": -1,
-                    "completed_date": "2012-12-16T22:00:28Z",
+                    "completed_date": "2012-12-16T22:00:28.847000Z",
                     "adherence": "partial",
                     "dose_number": 0,
                     #                        "doc_type": "CObservation",
                     "is_reconciliation": False,
                     "anchor_date": "2012-12-07T05:00:00Z",
-                    "created_date": "2012-12-16T21:37:52Z",
+                    "created_date": "2012-12-16T21:37:52.771000Z",
                     "is_art": False,
                     "_id": "a1811d7e-c968-4b63-aea5-6195ce0d8759",
                     "doc_id": "a1811d7e-c968-4b63-aea5-6195ce0d8759"
@@ -480,13 +481,13 @@ class dotsSubmissionTests(TestCase):
                     "method": "pillbox",
                     "observed_date": "2012-12-07T05:00:00Z",
                     #                        "day_slot": -1,
-                    "completed_date": "2012-12-16T22:00:28Z",
+                    "completed_date": "2012-12-16T22:00:28.847000Z",
                     "adherence": "partial",
                     "dose_number": 1,
                     #                        "doc_type": "CObservation",
                     "is_reconciliation": False,
                     "anchor_date": "2012-12-07T05:00:00Z",
-                    "created_date": "2012-12-16T21:37:52Z",
+                    "created_date": "2012-12-16T21:37:52.771000Z",
                     "is_art": False,
                     "_id": "a1811d7e-c968-4b63-aea5-6195ce0d8759",
                     "doc_id": "a1811d7e-c968-4b63-aea5-6195ce0d8759"

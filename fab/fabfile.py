@@ -29,7 +29,7 @@ from distutils.util import strtobool
 from fabric import utils
 from fabric.api import run, roles, execute, task, sudo, env, parallel
 from fabric.colors import blue
-from fabric.context_managers import settings, cd
+from fabric.context_managers import settings, cd, shell_env
 from fabric.contrib import files, console
 from fabric.operations import require, local, prompt
 import yaml
@@ -368,6 +368,15 @@ def install_packages():
 
 @task
 @roles(ROLES_ALL_SRC)
+def install_npm_packages():
+    """Install required NPM packages for server"""
+    with cd(os.path.join(env.code_root, 'submodules/touchforms-src/touchforms')):
+        with shell_env(HOME=env.home):
+            sudo("npm install")
+
+
+@task
+@roles(ROLES_ALL_SRC)
 @parallel
 def upgrade_packages():
     """
@@ -658,6 +667,8 @@ def _deploy_without_asking():
     try:
         _execute_with_timing(update_code)
         _execute_with_timing(update_virtualenv)
+        _execute_with_timing(install_npm_packages)
+        _execute_with_timing(update_touchforms)
 
         # handle static files
         _execute_with_timing(version_static)
@@ -677,7 +688,7 @@ def _deploy_without_asking():
             _execute_with_timing(_migrate)
         else:
             print(blue("No migration required, skipping."))
-        _execute_with_timing(do_update_django_locales)
+        _execute_with_timing(do_update_translations)
         if do_migrate:
             _execute_with_timing(flip_es_aliases)
 
@@ -759,6 +770,14 @@ def awesome_deploy(confirm="yes"):
              "and wait for an email saying it's done. "
              "Thank you for using AWESOME DEPLOY.")
         )
+
+
+@task
+@roles(ROLES_ALL_SRC)
+def update_touchforms():
+    # npm bin allows you to specify the locally installed version instead of having to install grunt globally
+    with cd(os.path.join(env.code_root, 'submodules/touchforms-src/touchforms')):
+        sudo('PATH=$(npm bin):$PATH grunt build --force')
 
 
 @task
@@ -926,6 +945,7 @@ def _do_collectstatic():
     """Collect static after a code update"""
     with cd(env.code_root):
         sudo('%(virtualenv_root)s/bin/python manage.py collectstatic --noinput' % env)
+        sudo('%(virtualenv_root)s/bin/python manage.py fix_less_imports_collectstatic' % env)
 
 
 @roles(ROLES_DJANGO)
@@ -1146,8 +1166,8 @@ def update_apache_conf():
     sudo('service apache2 reload', user='root')
 
 @task
-def update_django_locales():
-    do_update_django_locales()
+def update_translations():
+    do_update_translations()
 
 
 @roles(ROLES_PILLOWTOP)
@@ -1166,12 +1186,16 @@ def stop_celery_tasks():
 
 @roles(ROLES_ALL_SRC)
 @parallel
-def do_update_django_locales():
+def do_update_translations():
     with cd(env.code_root):
-        command = '{virtualenv_root}/bin/python manage.py update_django_locales'.format(
+        update_locale_command = '{virtualenv_root}/bin/python manage.py update_django_locales'.format(
             virtualenv_root=env.virtualenv_root,
         )
-        sudo(command)
+        update_translations_command = '{virtualenv_root}/bin/python manage.py compilemessages'.format(
+            virtualenv_root=env.virtualenv_root,
+        )
+        sudo(update_locale_command)
+        sudo(update_translations_command)
 
 
 @task

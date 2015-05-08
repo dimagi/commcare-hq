@@ -1,5 +1,5 @@
 from django.utils.translation import ugettext as _
-from jsonobject import JsonObject, StringProperty, BooleanProperty, ListProperty, DictProperty, ObjectProperty
+from dimagi.ext.jsonobject import JsonObject, StringProperty, BooleanProperty, ListProperty, DictProperty, ObjectProperty
 from jsonobject.base import DefaultProperty
 from sqlagg import CountUniqueColumn, SumColumn
 from sqlagg.columns import (

@@ -2,6 +2,7 @@ from datetime import datetime
 from django.core.urlresolvers import reverse
 from django.db.models import Q
 from corehq import Domain
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.commtrack.standard import CommtrackReportMixin
 from corehq.apps.reports.filters.dates import DatespanFilter
@@ -89,17 +90,19 @@ class EWSData(object):
             return [location]
 
     def unique_products(self, locations, all=False):
-        products = list()
-        for loc in locations:
-            if self.config['products'] and not all:
-                products.extend([p for p in loc.products if p.product_id in self.config['products'] and
-                                 not p.is_archived])
-            elif self.config['program'] and not all:
-                products.extend([p for p in loc.products if p.program_id == self.config['program'] and
-                                 not p.is_archived])
-            else:
-                products.extend(p for p in loc.products if not p.is_archived)
-        return sorted(set(products), key=lambda p: p.code)
+        if self.config['products'] and not all:
+            return SQLProduct.objects.filter(
+                pk__in=locations.values_list('_products', flat=True),
+            ).filter(pk__in=self.config['products']).exclude(is_archived=True)
+        elif self.config['program'] and not all:
+            return SQLProduct.objects.filter(
+                pk__in=locations.values_list('_products', flat=True),
+                program_id=self.config['program']
+            ).exclude(is_archived=True)
+        else:
+            return SQLProduct.objects.filter(
+                pk__in=locations.values_list('_products', flat=True)
+            ).exclude(is_archived=True)
 
 
 class ReportingRatesData(EWSData):
@@ -139,10 +142,9 @@ class ReportingRatesData(EWSData):
             "%s to %s" % (self.config['startdate'].strftime("%Y-%m-%d"),
                           self.config['enddate'].strftime("%Y-%m-%d"))
 
-    @memoized
     def all_reporting_locations(self):
         return SQLLocation.objects.filter(
-            domain=self.domain, location_type__name__in=self.reporting_types(), is_archived=False
+            domain=self.domain, location_type__administrative=False, is_archived=False
         ).values_list('supply_point_id', flat=True)
 
 
@@ -264,17 +266,18 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
             return [col.get("sort_key", col) if isinstance(col, dict) else col for col in row]
 
         table = headers.as_export_table
+        table.insert(0, [SQLLocation.objects.get(location_id=self.report_config['location_id']).name])
         rows = [_unformat_row(row) for row in formatted_rows]
         # Removing html icon tag from MOS column
         for row in rows:
             row[1] = GenericTabularReport._strip_tags(row[1])
         replace = ''
 
-        for k, v in enumerate(table[0]):
+        for k, v in enumerate(table[1]):
             if v != ' ':
                 replace = v
             else:
-                table[0][k] = replace
+                table[1][k] = replace
         table.extend(rows)
         if total_row:
             table.append(_unformat_row(total_row))

@@ -142,7 +142,7 @@ class ApplicationStatusReport(DeploymentsReport):
 class SyncHistoryReport(DeploymentsReport):
     name = ugettext_noop("User Sync History")
     slug = "sync_history"
-    fields = ['corehq.apps.reports.filters.users.SelectMobileWorkerFilter']
+    fields = ['corehq.apps.reports.filters.users.AltPlaceholderMobileWorkerFilter']
     report_subtitles = [ugettext_noop('Shows the last (up to) 10 times a user has synced.')]
     disable_pagination = True
 
@@ -184,7 +184,7 @@ class SyncHistoryReport(DeploymentsReport):
                 if isinstance(duration, int):
                     return format_datatables_data(
                         '<span class="{cls}">{text}</span>'.format(
-                            cls=_bootstrap_class(duration or 0, 20, 60),
+                            cls=_bootstrap_class(duration or 0, 60, 20),
                             text=_('{} seconds').format(duration),
                         ),
                         duration
