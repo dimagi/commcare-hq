@@ -8,7 +8,7 @@ import datetime
 from django.db.models import Q
 import redis
 from casexml.apps.case.signals import cases_received, case_post_save
-from casexml.apps.phone.models import OwnershipCleanliness
+from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, OWNERSHIP_CLEANLINESS
 from casexml.apps.case.util import iter_cases, get_reverse_indexed_cases
 from couchforms.models import XFormInstance
@@ -49,7 +49,7 @@ class CaseProcessingResult(object):
         """
         if self.track_cleanliness:
             flags_to_save = {f.owner_id: f.case_id for f in self.dirtiness_flags}
-            flags_to_update = OwnershipCleanliness.objects.filter(
+            flags_to_update = OwnershipCleanlinessFlag.objects.filter(
                 Q(owner_id__in=flags_to_save.keys()),
                 Q(is_clean=True) | Q(hint__isnull=True)
             )

@@ -2,7 +2,7 @@ from collections import namedtuple
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import get_indexed_case_ids, get_reverse_indexed_case_ids, get_open_case_ids, \
     get_closed_case_ids, get_indexed_cases
-from casexml.apps.phone.models import OwnershipCleanliness
+from casexml.apps.phone.models import OwnershipCleanlinessFlag
 
 
 FootprintInfo = namedtuple('FootprintInfo', ['base_ids', 'all_ids'])
@@ -34,7 +34,7 @@ def set_cleanliness_flags(domain, owner_id):
     """
     For a given owner ID, manually sets the cleanliness flag on that ID.
     """
-    cleanliness_object = OwnershipCleanliness.objects.get_or_create(
+    cleanliness_object = OwnershipCleanlinessFlag.objects.get_or_create(
         owner_id=owner_id,
         domain=domain,
         defaults={'is_clean': False}

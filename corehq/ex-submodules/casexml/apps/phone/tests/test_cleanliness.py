@@ -1,7 +1,7 @@
 import uuid
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseRelationship
 from casexml.apps.phone.cleanliness import set_cleanliness_flags, hint_still_valid
-from casexml.apps.phone.models import OwnershipCleanliness
+from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from casexml.apps.phone.tests.test_sync_mode import SyncBaseTest
 from corehq.toggles import OWNERSHIP_CLEANLINESS
 
@@ -44,7 +44,7 @@ class OwnerCleanlinessTest(SyncBaseTest):
         hint = self.owner_cleanliness.hint
         self.owner_cleanliness.delete()
         set_cleanliness_flags(self.domain, self.owner_id)
-        new_cleanliness = OwnershipCleanliness.objects.get(owner_id=self.owner_id)
+        new_cleanliness = OwnershipCleanlinessFlag.objects.get(owner_id=self.owner_id)
         self.assertEqual(is_clean, new_cleanliness.is_clean)
         self.assertEqual(hint, new_cleanliness.hint)
         if hint:
@@ -52,7 +52,7 @@ class OwnerCleanlinessTest(SyncBaseTest):
 
     @property
     def owner_cleanliness(self):
-        return OwnershipCleanliness.objects.get_or_create(
+        return OwnershipCleanlinessFlag.objects.get_or_create(
             owner_id=self.owner_id,
             domain=self.domain,
             defaults={'is_clean': True}
@@ -144,7 +144,7 @@ class OwnerCleanlinessTest(SyncBaseTest):
     def test_set_flag_clean_no_data(self):
         unused_owner_id = uuid.uuid4().hex
         set_cleanliness_flags(self.domain, unused_owner_id)
-        self.assertTrue(OwnershipCleanliness.objects.get(owner_id=unused_owner_id).is_clean)
+        self.assertTrue(OwnershipCleanlinessFlag.objects.get(owner_id=unused_owner_id).is_clean)
 
     def test_hint_invalidation(self):
         self.test_change_parent_owner_makes_dirty()
