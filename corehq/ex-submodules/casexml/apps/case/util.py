@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from xml.etree import ElementTree
 from django.conf import settings
 from casexml.apps.case import const
+from casexml.apps.case.dbaccessors import get_indexed_case_ids
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.phone.models import SyncLogAssertionError, SyncLog
 from casexml.apps.stock.models import StockReport
@@ -140,47 +141,6 @@ def get_reverse_indexed_cases(domain, case_ids):
         reduce=False,
         include_docs=True,
     )
-
-
-def get_indexed_case_ids(domain, case_ids):
-    """
-    Given a base list of case ids, gets all ids of cases they reference (parent cases)
-    """
-    return _get_related_case_ids(domain, case_ids, 'index')
-
-
-def get_reverse_indexed_case_ids(domain, case_ids):
-    """
-    Given a base list of case ids, gets all ids of cases that reference them (child cases)
-    """
-    return _get_related_case_ids(domain, case_ids, 'reverse_index')
-
-
-def _get_related_case_ids(domain, case_ids, reference_type):
-    from casexml.apps.case.models import CommCareCase
-    keys = [[domain, id, reference_type] for id in case_ids]
-    return [row['value']['referenced_id'] for row in CommCareCase.get_db().view(
-        'case/related',
-        keys=keys,
-        reduce=False,
-    )]
-
-
-def get_open_case_ids(owner_id):
-    return _get_case_ids(owner_id, False)
-
-
-def get_closed_case_ids(owner_id):
-    return _get_case_ids(owner_id, False)
-
-
-def _get_case_ids(owner_id, is_closed):
-    from casexml.apps.case.models import CommCareCase
-    return [row['id'] for row in CommCareCase.get_db().view(
-        'case/by_owner',
-        reduce=False,
-        key=[owner_id, is_closed],
-    )]
 
 
 def primary_actions(case):
