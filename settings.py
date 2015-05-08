@@ -758,6 +758,77 @@ MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
 
 DIGEST_LOGIN_FACTORY = 'django_digest.NoEmailLoginFactory'
 
+# Django Compressor
+COMPRESS_PRECOMPILERS = (
+   ('text/less', 'corehq.apps.style.precompilers.LessFilter'),
+)
+COMPRESS_ENABLED = True
+
+LESS_FOR_BOOTSTRAP_3_BINARY = '/opt/lessc/bin/lessc'
+
+# Invoicing
+INVOICE_STARTING_NUMBER = 0
+INVOICE_PREFIX = ''
+INVOICE_TERMS = ''
+INVOICE_FROM_ADDRESS = {}
+BANK_ADDRESS = {}
+BANK_NAME = ''
+BANK_ACCOUNT_NUMBER = ''
+BANK_ROUTING_NUMBER_ACH = ''
+BANK_ROUTING_NUMBER_WIRE = ''
+BANK_SWIFT_CODE = ''
+
+STRIPE_PUBLIC_KEY = ''
+STRIPE_PRIVATE_KEY = ''
+
+# Mailchimp
+MAILCHIMP_APIKEY = ''
+MAILCHIMP_COMMCARE_USERS_ID = ''
+MAILCHIMP_MASS_EMAIL_ID = ''
+
+SQL_REPORTING_DATABASE_URL = None
+
+# number of days since last access after which a saved export is considered unused
+SAVED_EXPORT_ACCESS_CUTOFF = 35
+
+# override for production
+DEFAULT_PROTOCOL = 'http'
+
+####### South Settings #######
+SKIP_SOUTH_TESTS = True
+SOUTH_TESTS_MIGRATE = False
+
+
+try:
+    # try to see if there's an environmental variable set for local_settings
+    if os.environ.get('CUSTOMSETTINGS', None) == "demo":
+        # this sucks, but is a workaround for supporting different settings
+        # in the same environment
+        from settings_demo import *
+    else:
+        from localsettings import *
+except ImportError:
+    pass
+
+if DEBUG:
+    try:
+        import luna
+        del luna
+    except ImportError:
+        pass
+    else:
+        INSTALLED_APPS = INSTALLED_APPS + (
+            'luna',
+        )
+
+    import warnings
+    warnings.simplefilter('default')
+else:
+    TEMPLATE_LOADERS = [
+        ('django.template.loaders.cached.Loader', TEMPLATE_LOADERS),
+    ]
+
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': True,
@@ -870,75 +941,6 @@ LOGGING = {
     }
 }
 
-# Django Compressor
-COMPRESS_PRECOMPILERS = (
-   ('text/less', 'corehq.apps.style.precompilers.LessFilter'),
-)
-COMPRESS_ENABLED = True
-
-LESS_FOR_BOOTSTRAP_3_BINARY = '/opt/lessc/bin/lessc'
-
-# Invoicing
-INVOICE_STARTING_NUMBER = 0
-INVOICE_PREFIX = ''
-INVOICE_TERMS = ''
-INVOICE_FROM_ADDRESS = {}
-BANK_ADDRESS = {}
-BANK_NAME = ''
-BANK_ACCOUNT_NUMBER = ''
-BANK_ROUTING_NUMBER_ACH = ''
-BANK_ROUTING_NUMBER_WIRE = ''
-BANK_SWIFT_CODE = ''
-
-STRIPE_PUBLIC_KEY = ''
-STRIPE_PRIVATE_KEY = ''
-
-# Mailchimp
-MAILCHIMP_APIKEY = ''
-MAILCHIMP_COMMCARE_USERS_ID = ''
-MAILCHIMP_MASS_EMAIL_ID = ''
-
-SQL_REPORTING_DATABASE_URL = None
-
-# number of days since last access after which a saved export is considered unused
-SAVED_EXPORT_ACCESS_CUTOFF = 35
-
-# override for production
-DEFAULT_PROTOCOL = 'http'
-
-####### South Settings #######
-SKIP_SOUTH_TESTS = True
-SOUTH_TESTS_MIGRATE = False
-
-
-try:
-    # try to see if there's an environmental variable set for local_settings
-    if os.environ.get('CUSTOMSETTINGS', None) == "demo":
-        # this sucks, but is a workaround for supporting different settings
-        # in the same environment
-        from settings_demo import *
-    else:
-        from localsettings import *
-except ImportError:
-    pass
-
-if DEBUG:
-    try:
-        import luna
-        del luna
-    except ImportError:
-        pass
-    else:
-        INSTALLED_APPS = INSTALLED_APPS + (
-            'luna',
-        )
-
-    import warnings
-    warnings.simplefilter('default')
-else:
-    TEMPLATE_LOADERS = [
-        ('django.template.loaders.cached.Loader', TEMPLATE_LOADERS),
-    ]
 
 ### Reporting database - use same DB as main database
 db_settings = DATABASES["default"].copy()
