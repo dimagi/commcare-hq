@@ -1,5 +1,3 @@
-
-
 def get_open_case_ids(owner_id):
     """
     Get all open case ids for a given owner

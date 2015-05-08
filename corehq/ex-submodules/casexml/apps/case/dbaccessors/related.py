@@ -1,5 +1,3 @@
-
-
 def get_indexed_case_ids(domain, case_ids):
     """
     Given a base list of case ids, gets all ids of cases they reference (parent cases)
