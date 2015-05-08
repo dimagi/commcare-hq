@@ -1,18 +1,19 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4
 import logging
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 
 from datetime import datetime
 from django.db import models
 from corehq.apps.users.models import CouchUser, CommCareUser
 from casexml.apps.case.models import CommCareCase
+from dimagi.utils.couch.migration import (SyncCouchToSQLMixin,
+    SyncSQLToCouchMixin)
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.signals import case_post_save
 from .mixin import CommCareMobileContactMixin, MobileBackend, PhoneNumberInUseException, InvalidFormatException
 from corehq.apps.sms import util as smsutil
-from dimagi.utils.couch.database import SafeSaveDocument
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.couch import CouchDocLockableMixIn
 
@@ -203,7 +204,8 @@ class MessageLog(SafeSaveDocument, UnicodeMixIn):
         else:
             return False
 
-class SMSLog(MessageLog):
+
+class SMSLog(SyncCouchToSQLMixin, MessageLog):
     text = StringProperty()
     # In cases where decoding must occur, this is the raw text received
     # from the gateway
@@ -234,6 +236,125 @@ class SMSLog(MessageLog):
 
         to_from = (self.direction == INCOMING) and "from" or "to"
         return "%s (%s %s)" % (str, to_from, self.phone_number)
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return [field for field in SMS._migration_get_fields() if not field.startswith('fri_')]
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SMS
+
+
+class SMS(SyncSQLToCouchMixin, models.Model):
+    couch_id = models.CharField(max_length=126, null=True, db_index=True)
+    domain = models.CharField(max_length=126, null=True, db_index=True)
+    date = models.DateTimeField(null=True, db_index=True)
+    couch_recipient_doc_type = models.CharField(max_length=126, null=True, db_index=True)
+    couch_recipient = models.CharField(max_length=126, null=True, db_index=True)
+    phone_number = models.CharField(max_length=126, null=True, db_index=True)
+    direction = models.CharField(max_length=1, null=True)
+    text = models.TextField(null=True)
+
+    # In cases where decoding must occur, this is the raw text received
+    # from the gateway
+    raw_text = models.TextField(null=True)
+
+    """Properties related to processing and billing"""
+    datetime_to_process = models.DateTimeField(null=True, db_index=True)
+    processed = models.NullBooleanField(default=True, db_index=True)
+    num_processing_attempts = models.IntegerField(default=0, null=True)
+    queued_timestamp = models.DateTimeField(null=True)
+    processed_timestamp = models.DateTimeField(null=True)
+    error = models.NullBooleanField(default=False)
+    system_error_message = models.TextField(null=True)
+    billed = models.NullBooleanField(default=False)
+
+    # If the message was simulated from a domain, this is the domain
+    domain_scope = models.CharField(max_length=126, null=True)
+
+    # Set to True to send the message regardless of whether the destination
+    # phone number has opted-out. Should only be used to send opt-out
+    # replies or other info-related queries while opted-out.
+    ignore_opt_out = models.NullBooleanField(default=False)
+
+    """Metadata properties"""
+    backend_api = models.CharField(max_length=126, null=True)
+    backend_id = models.CharField(max_length=126, null=True)
+    system_phone_number = models.CharField(max_length=126, null=True)
+
+    # This is the unique message id that the gateway uses to track this
+    # message, if applicable.
+    backend_message_id = models.CharField(max_length=126, null=True)
+
+    # Describes what kind of workflow this sms was a part of
+    workflow = models.CharField(max_length=126, null=True)
+
+    # For outgoing sms only: if this sms was sent from a chat window,
+    # the _id of the CouchUser who sent this sms; otherwise None
+    chat_user_id = models.CharField(max_length=126, null=True)
+
+    # If this sms is related to a survey, this points to the couch_id
+    # of an instance of SQLXFormsSession that this sms is tied to
+    xforms_session_couch_id = models.CharField(max_length=126, null=True, db_index=True)
+
+    # True if this was an inbound message that was an
+    # invalid response to a survey question
+    invalid_survey_response = models.NullBooleanField(default=False)
+
+    # If this sms is related to a reminder, this points to the _id of a
+    # CaseReminder instance that it is tied to
+    reminder_id = models.CharField(max_length=126, null=True)
+    location_id = models.CharField(max_length=126, null=True)
+
+    """ Custom properties. For the initial migration, it makes it easier
+    to put these here. Eventually they should be moved to a separate table. """
+    fri_message_bank_lookup_completed = models.NullBooleanField(default=False)
+    fri_message_bank_message_id = models.CharField(max_length=126, null=True)
+    fri_id = models.CharField(max_length=126, null=True)
+    fri_risk_profile = models.CharField(max_length=1, null=True)
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            'backend_api',
+            'backend_id',
+            'backend_message_id',
+            'billed',
+            'chat_user_id',
+            'couch_recipient',
+            'couch_recipient_doc_type',
+            'date',
+            'datetime_to_process',
+            'direction',
+            'domain',
+            'domain_scope',
+            'error',
+            'fri_id',
+            'fri_message_bank_lookup_completed',
+            'fri_message_bank_message_id',
+            'fri_risk_profile',
+            'ignore_opt_out',
+            'invalid_survey_response',
+            'location_id',
+            'num_processing_attempts',
+            'phone_number',
+            'processed',
+            'processed_timestamp',
+            'queued_timestamp',
+            'raw_text',
+            'reminder_id',
+            'system_error_message',
+            'system_phone_number',
+            'text',
+            'workflow',
+            'xforms_session_couch_id',
+        ]
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return SMSLog
+
 
 class LastReadMessage(Document, CouchDocLockableMixIn):
     domain = StringProperty()

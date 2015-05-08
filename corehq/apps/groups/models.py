@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from itertools import imap
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
+import re
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.users.models import CouchUser, CommCareUser
@@ -8,6 +9,8 @@ from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord, DELETED_S
 from datetime import datetime
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.groups.exceptions import CantSaveException
+
+dt_no_Z_re = re.compile('^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d\d\d\d\d\d)?$')
 
 
 class Group(UndoableDocument):
@@ -28,6 +31,15 @@ class Group(UndoableDocument):
 
     # custom data can live here
     metadata = DictProperty()
+
+    @classmethod
+    def wrap(cls, data):
+        last_modified = data.get('last_modified')
+        # if it's missing a Z because of the Aug. 2014 migration
+        # that added this in iso_format() without Z, then add a Z
+        if last_modified and dt_no_Z_re.match(last_modified):
+            data['last_modified'] += 'Z'
+        return super(Group, cls).wrap(data)
 
     def save(self, *args, **kwargs):
         self.last_modified = datetime.utcnow()
@@ -180,8 +192,8 @@ class Group(UndoableDocument):
             groups = [group for group in all_groups if group.case_sharing]
             groups.extend([
                 location.case_sharing_group_object() for location in
-                SQLLocation.objects.filter(domain=domain)
-                if location.couch_location.location_type_object.shares_cases
+                SQLLocation.objects.filter(domain=domain,
+                                           location_type__shares_cases=True)
             ])
             return groups
         else:

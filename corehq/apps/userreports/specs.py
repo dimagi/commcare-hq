@@ -1,5 +1,5 @@
+from dimagi.ext.jsonobject import StringProperty
 from datetime import datetime
-from jsonobject import StringProperty
 
 
 def TypeProperty(value):

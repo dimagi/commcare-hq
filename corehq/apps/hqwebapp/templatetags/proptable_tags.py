@@ -15,8 +15,9 @@ import collections
 import datetime
 import itertools
 import types
+from corehq.util.dates import iso_string_to_datetime
 
-from jsonobject import DateTimeProperty, DateProperty
+from dimagi.ext.jsonobject import DateProperty
 from jsonobject.exceptions import BadValueError
 from dimagi.utils.chunked import chunked
 import pytz
@@ -50,7 +51,7 @@ def _parse_date_or_datetime(val):
             return val
 
         try:
-            dt = DateTimeProperty().wrap(val)
+            dt = iso_string_to_datetime(val)
         except BadValueError:
             try:
                 return DateProperty().wrap(val)

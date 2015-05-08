@@ -1,5 +1,5 @@
 from decimal import Decimal
-from jsonobject import JsonProperty
+from jsonobject.base_properties import JsonProperty
 from jsonobject.exceptions import BadValueError
 import re
 from .datatypes import GeoPoint

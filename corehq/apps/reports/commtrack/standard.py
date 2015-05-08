@@ -7,8 +7,8 @@ from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.reports.graph_models import PieChart, MultiBarChart, Axis
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.reports.filters.commtrack import SelectReportingType
+from corehq.util.dates import iso_string_to_datetime
 from dimagi.utils.couch.loosechange import map_reduce
-from datetime import datetime
 from corehq.apps.locations.models import Location
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop
@@ -550,8 +550,8 @@ class RequisitionReport(CaseListReport):
     @classmethod
     def lead_time(self, closed_date, opened_date):
         try:
-            closed_date = datetime.strptime(closed_date, "%Y-%m-%dT%H:%M:%SZ")
-            opened_date = datetime.strptime(opened_date, "%Y-%m-%dT%H:%M:%SZ")
+            closed_date = iso_string_to_datetime(closed_date)
+            opened_date = iso_string_to_datetime(opened_date)
             days_rest_delta = (((closed_date - opened_date).seconds / 3600)*10)/24
             return "%s.%s" % ((closed_date - opened_date).days, days_rest_delta)
         except TypeError:

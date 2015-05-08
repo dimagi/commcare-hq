@@ -103,71 +103,81 @@
         </fieldset>
 
         <fieldset>
-            <legend>{% trans "Key/Value Fields" %}</legend>
-            <div class="alert">
-                <p>
-                    {% blocktrans %}
-                        This is an advanced feature that allows you to
-                        map data from multiple rows to a single case during
-                        upload. It should remain unchecked unless
-                        you intend to do this.
-                    {% endblocktrans %}
-                </p>
-
-                <p>
-                    {% blocktrans %}
-                        Instructions can be found on our
-                        <a href="https://confluence.dimagi.com/display/commcarepublic/Mapping+data+from+multiple+rows+to+a+single+case" target="_blank">
-                            help pages
-                        </a>
-                        for this part of the feature.
-                    {% endblocktrans %}
-                </p>
-            </div>
-            <div class="control-group">
-                <div class="controls">
-                    <label class="checkbox" for="key_value_columns">
-                        <input type="checkbox"
-                               name="key_value_columns"
-                               id="key_value_columns" />
-                        {% trans "This file contains matching key/value columns" %}
-                    </label>
-                </div>
-            </div>
-        </fieldset>
-
-        <fieldset id="key_val_selection_fields">
             <legend>
-                {% trans "Corresponding Key/Value fields from Excel" %}
+                <a class="accordion-toggle collapsed" data-toggle="collapse" data-parent="#" href="#advanced-options">
+                    <i class="icon-double-angle-down"></i>{% trans "Advanced" %}
+                </a>
             </legend>
-            <div class="control-group">
-                <label class="control-label" for="key_column">
-                    {% trans "Key column" %}
-                </label>
-                <div class="controls">
-                    <select name="key_column" id="key_column">
-                        {% for column in columns %}
-                        <option value="{{column|escape}}">
-                            {{column|escape}}
-                        </option>
-                        {% endfor %}
-                    </select>
+            <div id="advanced-options" class="accordion-body collapse">
+                <div class="control-group">
+                    <div class="controls">
+                        <label for="key_value_columns" class="checkbox">
+                            <input type="checkbox"
+                                   name="key_value_columns"
+                                   id="key_value_columns" />
+                            {% trans "Update Cases Using Multiple Key/Value Pairs" %}
+                        </label>
+                    </div>
                 </div>
-            </div>
 
-            <div class="control-group">
-                <label class="control-label" for="value_column">
-                    {% trans "Value column" %}
-                </label>
-                <div class="controls">
-                    <select name="value_column" id="value_column">
-                        {% for column in columns %}
-                        <option value="{{column|escape}}">
-                            {{column|escape}}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
+                <fieldset id="key_val_selection_fields">
+                    <div class="alert">
+                        <p>
+                            {% blocktrans %}
+                                Instructions can be found on our
+                                <a href="https://confluence.dimagi.com/display/commcarepublic/Mapping+data+from+multiple+rows+to+a+single+case" target="_blank">
+                                    help pages
+                                </a>
+                                for this part of the feature.
+                            {% endblocktrans %}
+                        </p>
+                    </div>                
+                    <legend>                    
+                        {% trans "Corresponding Key/Value fields from Excel" %}
+                        <div style="display:inline; position:relative; top:-5px;">
+                            <a href="#" class="hq-help no-click" id="help_key_value_pairs">
+                                <i class="icon-question-sign" 
+                                    data-title='{% trans "Key/Value Pairs" %}'
+                                    data-content='{% trans "The Excel file must be formatted with three columns. The first, identified in the Identifying Cases section above, contains the case to update. The second contains names of case properties to update. The last column contains the values to change. " %}'
+                                    data-trigger="hover" data-original-title=""></i>
+                            </a>
+                        </div>
+                        <script>
+                            $(function () {
+                                $('#help_key_value_pairs').hqHelp();
+                            });
+                        </script>                         
+                    </legend>
+                    <div class="control-group">                
+                        <label class="control-label" for="key_column">
+                            {% trans "Case Properties column" %}
+                        </label>
+                        <div class="controls">
+                            <select name="key_column" id="key_column">
+                                {% for column in columns %}
+                                <option value="{{column|escape}}">
+                                    {{column|escape}}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label" for="value_column">
+                            {% trans "Value column" %}
+                        </label>
+                        <div class="controls">
+                            <select name="value_column" id="value_column">
+                                {% for column in columns %}
+                                <option value="{{column|escape}}">
+                                    {{column|escape}}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </fieldset>
             </div>
         </fieldset>
 

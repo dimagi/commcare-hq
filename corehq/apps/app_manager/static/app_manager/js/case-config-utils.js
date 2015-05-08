@@ -61,12 +61,12 @@ var CC_UTILS = {
         });
         return required.concat(property_array);
     },
-    propertyArrayToDict: function (required, property_array, keyIsPath) {
+    propertyArrayToDict: function (required, property_array) {
         var property_dict = {},
             extra_dict = {};
         _(property_array).each(function (case_property) {
-            var key = case_property[!keyIsPath ? 'key' : 'path'];
-            var path = case_property[!keyIsPath ? 'path' : 'key'];
+            var key = case_property.key;
+            var path = case_property.path;
             if (key || path) {
                 if (_(required).contains(key) && case_property.required) {
                     extra_dict[key] = path;
@@ -76,5 +76,14 @@ var CC_UTILS = {
             }
         });
         return [property_dict, extra_dict];
+    },
+    preloadArrayToDict: function (preloadArray) {
+        // i.e. {i.path: i.key for i in preloadArray if i.key or i.path}
+        return _.object(
+            _.map(
+                _.filter(preloadArray, function (i) { return (i.key || i.path); }),
+                function (i) { return [i.path, i.key]; }
+            )
+        );
     }
 };

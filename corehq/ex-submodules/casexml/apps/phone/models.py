@@ -2,9 +2,8 @@ from collections import defaultdict
 from copy import copy
 from datetime import datetime
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 from django.db import models
-from dimagi.utils.couch.database import SafeSaveDocument
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import LooselyEqualDocumentSchema

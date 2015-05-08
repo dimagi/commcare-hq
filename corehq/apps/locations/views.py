@@ -33,8 +33,8 @@ from custom.openlmis.tasks import bootstrap_domain_task
 
 from .permissions import (locations_access_required, is_locations_admin,
                           can_edit_location, can_edit_location_types)
-from .models import Location, LocationType, SQLLocation, all_locations
-from .forms import LocationForm
+from .models import Location, LocationType, SQLLocation
+from .forms import LocationForm, UsersAtLocationForm
 from .util import load_locs_json, location_hierarchy_config, dump_locations
 
 
@@ -85,7 +85,7 @@ class LocationsListView(BaseLocationView):
             ),
             'show_inactive': self.show_inactive,
             'has_location_types': has_location_types,
-            'can_edit_root': (not loc_restricted or 
+            'can_edit_root': (not loc_restricted or
                 (loc_restricted and not self.request.couch_user.get_location(self.domain))),
         }
 
@@ -246,6 +246,7 @@ class NewLocationView(BaseLocationView):
     page_title = ugettext_noop("New Location")
     template_name = 'locations/manage/location.html'
     creates_new_location = True
+    form_tab = 'basic'
 
     @property
     def parent_pages(self):
@@ -309,6 +310,7 @@ class NewLocationView(BaseLocationView):
             'form': self.location_form,
             'location': self.location,
             'consumption': consumption,
+            'form_tab': self.form_tab,
         }
 
     def form_valid(self):
@@ -421,6 +423,7 @@ class EditLocationView(NewLocationView):
         return consumptions
 
     @property
+    @memoized
     def products_form(self):
         if (
             self.location.location_type_object.administrative or
@@ -430,9 +433,22 @@ class EditLocationView(NewLocationView):
 
         form = MultipleSelectionForm(
             initial={'selected_ids': self.products_at_location},
-            submit_label=_("Update Product List")
+            submit_label=_("Update Product List"),
+            prefix="products",
         )
         form.fields['selected_ids'].choices = self.all_products
+        return form
+
+    @property
+    @memoized
+    def users_form(self):
+        form = UsersAtLocationForm(
+            domain_object=self.domain_object,
+            location=self.location,
+            data=self.request.POST if self.request.method == "POST" else None,
+            submit_label=_("Update Users at this Location"),
+            prefix="users",
+        )
         return form
 
     @property
@@ -455,12 +471,22 @@ class EditLocationView(NewLocationView):
         context = super(EditLocationView, self).page_context
         context.update({
             'products_per_location_form': self.products_form,
+            'users_per_location_form': self.users_form,
         })
         return context
 
+    def users_form_post(self, request, *args, **kwargs):
+        if self.users_form.is_valid():
+            self.users_form.save()
+            return self.form_valid()
+        else:
+            self.request.method = "GET"
+            self.form_tab = 'users'
+            return self.get(request, *args, **kwargs)
+
     def products_form_post(self, request, *args, **kwargs):
         products = SQLProduct.objects.filter(
-            product_id__in=request.POST.getlist('selected_ids', [])
+            product_id__in=request.POST.getlist('products-selected_ids', [])
         )
         self.sql_location.products = products
         self.sql_location.save()
@@ -469,6 +495,8 @@ class EditLocationView(NewLocationView):
     def post(self, request, *args, **kwargs):
         if self.request.POST['form_type'] == "location-settings":
             return self.settings_form_post(request, *args, **kwargs)
+        elif (self.request.POST['form_type'] == "location-users"):
+            return self.users_form_post(request, *args, **kwargs)
         elif (self.request.POST['form_type'] == "location-products"
               and toggles.PRODUCTS_PER_LOCATION.enabled(request.domain)):
             return self.products_form_post(request, *args, **kwargs)
