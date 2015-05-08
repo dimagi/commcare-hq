@@ -8,6 +8,7 @@ def _send_message(info, backend):
     backend(
         subject='Soft Assert: [{}] {}'.format(info.key[:8], info.msg),
         message=('Message: {info.msg}\n'
+                 'Value: {info.obj!r}\n'
                  'Traceback:\n{info.traceback}\n'
                  'Request:\n{request}\n'
                  'Occurrences to date: {info.count}\n').format(
