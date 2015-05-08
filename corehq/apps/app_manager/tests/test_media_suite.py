@@ -1,25 +1,24 @@
-from django.test import SimpleTestCase
+from django.test import TestCase
 from django.test.utils import override_settings
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.app_manager.tests.util import TestFileMixin
-from corehq.apps.app_manager.tests.test_suite import SuiteTest
 from corehq.apps.builds.models import BuildSpec
 from corehq.apps.hqmedia.models import CommCareImage
 
 
-class MediaSuiteTest(SimpleTestCase, TestFileMixin):
+class MediaSuiteTest(TestCase, TestFileMixin):
     file_path = ('data', 'suite')
 
     @override_settings(BASE_ADDRESS='192.cc.hq.1')
-    def test_csae_list_media(self):
+    def test_case_list_media(self):
         app = Application.wrap(self.get_json('app'))
         app.get_module(0).case_list_form.form_id = app.get_module(0).get_form(0).unique_id
 
         image_path = 'jr://file/commcare/case_list_image.jpg'
         audo_path = 'jr://file/commcare/case_list_audo.mp3'
-        app.get_module(0).case_list_form.set_icon('en', image_path)
-        app.get_module(0).case_list_form.set_audio('en', audo_path)
+        app.get_module(0).case_list_form.set_icon('en', image_path, default_lang=app.default_language)
+        app.get_module(0).case_list_form.set_audio('en', audo_path, default_lang=app.default_language)
 
         app.create_mapping(CommCareImage(_id='123'), image_path, save=False)
         app.create_mapping(CommCareImage(_id='456'), audo_path, save=False)
@@ -27,10 +26,9 @@ class MediaSuiteTest(SimpleTestCase, TestFileMixin):
         self.assertXmlEqual(self.get_xml('media_suite'), app.create_media_suite())
 
 
-class LocalizedMediaSuiteTest(SuiteTest):
+class LocalizedMediaSuiteTest(TestCase, TestFileMixin):
 
     def setUp(self):
-        super(LocalizedMediaSuiteTest, self).setUp()
         self.image_path = 'jr://file/commcare/case_list_image.jpg'
         self.audio_path = 'jr://file/commcare/case_list_audo.mp3'
         self.app = Application.new_app('domain', "my app", application_version=APP_V2)

@@ -540,16 +540,17 @@ class HQMediaMixin(Document):
             }
             _add_menu_media(module, **media_kwargs)
             if module.case_list_form.form_id:
-                media.append(ApplicationMediaReference(
-                    module.case_list_form.media_audio,
-                    media_class=CommCareAudio,
-                    **media_kwargs)
-                )
-                media.append(ApplicationMediaReference(
-                    module.case_list_form.media_image,
-                    media_class=CommCareImage,
-                    **media_kwargs)
-                )
+                media.extend([ApplicationMediaReference(audio_path,
+                                                        media_class=CommCareAudio,
+                                                        **media_kwargs)
+                              for audio_path in module.case_list_form.media_audio.values()
+                              if audio_path])
+
+                media.extend([ApplicationMediaReference(image_path,
+                                                        media_class=CommCareImage,
+                                                        **media_kwargs)
+                              for image_path in module.case_list_form.media_image.values()
+                              if image_path])
 
             for f_order, f in enumerate(module.get_forms()):
                 media_kwargs['form_name'] = f.name
