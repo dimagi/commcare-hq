@@ -48,7 +48,7 @@ def get_per_domain_context(project, request=None):
     domain_type = get_domain_type(project, request)
     if domain_type == COMMTRACK:
         logo_url = static('hqstyle/img/commtrack-logo.png')
-        site_name = "CommTrack"
+        site_name = "CommCare Supply"
         public_site = "http://www.commtrack.org"
         can_be_your = _("mobile logistics solution")
     else:

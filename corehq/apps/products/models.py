@@ -32,6 +32,16 @@ class Product(Document):
     is_archived = BooleanProperty(default=False)
     last_modified = DateTimeProperty()
 
+    @classmethod
+    def wrap(cls, data):
+        from corehq.apps.groups.models import dt_no_Z_re
+        # If "Z" is missing because of the Aug 2014 migration, then add it.
+        # cf. Group class
+        last_modified = data.get('last_modified')
+        if last_modified and dt_no_Z_re.match(last_modified):
+            data['last_modified'] += 'Z'
+        return super(Product, cls).wrap(data)
+
     def sync_to_sql(self):
         properties_to_sync = [
             ('product_id', '_id'),
