@@ -990,8 +990,9 @@ class NavMenuItemMediaMixin(DocumentSchema):
         Language-specific icon and audio.
         Properties are map of lang-code to filepath
 
-        Convention (for old docs): Unless a specific language key exists,
-        by default, media for that language is same as that for English
+        Convention (for old docs): Unless a language key exists in the map,
+        by default, media for it will be same as that pointed by 'default' key.
+        This is enforced by set/get methods contained in this class.
 
     """
     media_image = SchemaDictProperty(JRResourceProperty)
@@ -1006,7 +1007,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
             old_media = getattr(self, media_attr)
             if old_media is None or isinstance(old_media, (str, unicode)):
                 # ToDo - better way than to hardcode default-language.
-                new_media = {'en': old_media} if old_media else {}
+                new_media = {'default': old_media} if old_media else {}
                 setattr(self, media_attr, new_media)
 
         return self
@@ -1016,20 +1017,17 @@ class NavMenuItemMediaMixin(DocumentSchema):
             raise Exception("Unknown media attribute %s." % media_attr)
 
         media_dict = getattr(self, media_attr)
-        default_media = media_dict.get('en', '')
+        default_media = media_dict.get('default', '')
 
-        if lang == 'en':
-            return default_media
-        else:
-            return media_dict[lang] if lang in media_dict else default_media
+        return media_dict[lang] if lang in media_dict else default_media
 
     @property
     def default_media_image(self):
-        return self.icon_by_language('en')
+        return self.icon_by_language('default')
 
     @property
     def default_media_audio(self):
-        return self.audio_by_language('en')
+        return self.audio_by_language('default')
 
     def icon_by_language(self, lang):
         return self._get_media_by_language('media_image', lang)
@@ -1037,20 +1035,30 @@ class NavMenuItemMediaMixin(DocumentSchema):
     def audio_by_language(self, lang):
         return self._get_media_by_language('media_audio', lang)
 
-    def _set_media(self, media_attr, lang, media_path):
+    def _set_media(self, media_attr, lang, media_path, default_lang=None):
+        """
+            Caller's responsibility to save doc.
+            Currently only called from the view which saves after all Edits
+        """
+
         if media_attr not in ('media_image', 'media_audio'):
             raise Exception("Unknown media attribute %s." % media_attr)
 
         media_dict = getattr(self, media_attr)
-        # If set to None, jsonobject validation complains. Ask others
+        # Todo, If set to None, jsonobject validation complains. Ask others
         media_dict[lang] = media_path or ''
         setattr(self, media_attr, media_dict)
 
-    def set_icon(self, lang, icon_path):
-        self._set_media('media_image', lang, icon_path)
+        default_language = default_lang or self.get_app().default_language
+        if lang == default_language:
+            media_dict['default'] = media_path or ''
+            setattr(self, media_attr, media_dict)
 
-    def set_audio(self, lang, audio_path):
-        self._set_media('media_audio', lang, audio_path)
+    def set_icon(self, lang, icon_path, default_lang=None):
+        self._set_media('media_image', lang, icon_path, default_lang=default_lang)
+
+    def set_audio(self, lang, audio_path, default_lang=None):
+        self._set_media('media_audio', lang, audio_path, default_lang=default_lang)
 
 
 class Form(IndexedFormBase, NavMenuItemMediaMixin):
