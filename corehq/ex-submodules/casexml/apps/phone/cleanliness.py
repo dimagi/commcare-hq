@@ -1,6 +1,6 @@
 from collections import namedtuple
 from datetime import datetime
-from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.dbaccessors import get_all_case_owner_ids
 from casexml.apps.case.util import get_indexed_case_ids, get_reverse_indexed_case_ids, get_open_case_ids, \
     get_closed_case_ids, get_indexed_cases
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
@@ -16,19 +16,6 @@ def set_cleanliness_flags_for_domain(domain):
     """
     for owner_id in get_all_case_owner_ids(domain):
         set_cleanliness_flags(domain, owner_id)
-
-
-def get_all_case_owner_ids(domain):
-    """
-    Get all owner ids that are assigned to cases in a domain.
-    """
-    key = ["all owner", domain]
-    submitted = CommCareCase.get_db().view('case/all_cases',
-        group_level=3,
-        startkey=key,
-        endkey=key + [{}],
-    ).all()
-    return set([row['key'][2] for row in submitted])
 
 
 def set_cleanliness_flags(domain, owner_id):
