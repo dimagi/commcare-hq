@@ -1,21 +1,14 @@
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
-from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.standard import DatespanMixin, CustomProjectReport
-from custom.up_nrhm.filters import DrillDownOptionFilter
+from corehq.apps.reports.standard import CustomProjectReport
+from custom.up_nrhm.filters import NRHMDatespanMixin
 from custom.up_nrhm.sql_data import ASHAFunctionalityChecklistData, ASHAAFChecklistData
 from dimagi.utils.dates import force_to_datetime
 
 
-class ASHAFunctionalityChecklistReport(GenericTabularReport, DatespanMixin, CustomProjectReport):
-    fields = [DatespanFilter, DrillDownOptionFilter]
+class ASHAFunctionalityChecklistReport(GenericTabularReport, NRHMDatespanMixin, CustomProjectReport):
     name = "ASHA Functionality Checklist Report"
     slug = "asha_functionality_checklist_report"
-    report_template_path = "up_nrhm/asha_functionality.html"
-    show_all_rows = True
-    default_rows = 20
-    no_value = '--'
-    doc_ids = []
 
     @property
     def report_config(self):
@@ -27,19 +20,21 @@ class ASHAFunctionalityChecklistReport(GenericTabularReport, DatespanMixin, Cust
         }
 
     @property
-    def model(self):
+    def model_data(self):
         return ASHAFunctionalityChecklistData(config=self.report_config)
 
     @property
+    def ashas(self):
+        return sorted(self.model_data.data.values(), key=lambda x: x['hv_asha_name'])
+
+    @property
     def headers(self):
-        self.doc_ids = []
         headers = DataTablesHeader(*[
             DataTablesColumn('', sortable=False, sort_type="title-numeric"),
             DataTablesColumnGroup('ASHAs', DataTablesColumn('Name of ASHAs', sortable=False)),
         ])
 
-        for index, v in enumerate(self.model.data.values()):
-            self.doc_ids.append(v['doc_id'])
+        for index, v in enumerate(self.ashas):
             headers.add_column(DataTablesColumnGroup(index + 1,
                                                      DataTablesColumn(v['hv_asha_name'], sortable=False)))
         headers.add_column(DataTablesColumn('', sortable=False))
@@ -72,9 +67,9 @@ class ASHAFunctionalityChecklistReport(GenericTabularReport, DatespanMixin, Cust
 
         ttotal = [0] * len(default_row_data)
         total_of_functional = 0
-        for doc_id in self.doc_ids:
+        for asha in self.ashas:
             data = ASHAAFChecklistData(config=dict(
-                doc_id=doc_id,
+                doc_id=asha['doc_id'],
                 date=force_to_datetime(self.request.GET.get('date')),
                 domain=self.domain
             )).data
