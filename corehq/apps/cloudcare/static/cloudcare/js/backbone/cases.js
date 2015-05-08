@@ -6,8 +6,8 @@ cloudCare.EMPTY = '---';
 
 var _caseListLoadError = function (model, response) {
     hideLoadingCallback();
-    var message = response.responseText || translatedStrings.caseListError;
-    showError(message, $("#cloudcare-notifications"));
+    console.error(response.responseText);
+    showError(translatedStrings.caseListError, $("#cloudcare-notifications"));
 };
 
 cloudCare.CASE_PROPERTY_MAP = {
