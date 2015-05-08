@@ -27,11 +27,11 @@ from custom.ewsghana.reminders.reminders import first_soh_process_user, second_s
     third_soh_process_users_and_facilities, stockout_process_user, rrirv_process_user, visit_website_process_user
 from custom.ewsghana.reports.specific_reports.stock_status_report import StockoutsProduct
 from custom.ewsghana.reports.stock_levels_report import InventoryManagementData, StockLevelsReport
-from custom.ewsghana.tasks import ews_bootstrap_domain_task, ews_clear_stock_data_task, \
-    EWS_FACILITIES
+from custom.ewsghana.stock_data import EWSStockDataSynchronization
+from custom.ewsghana.tasks import ews_bootstrap_domain_task, ews_clear_stock_data_task
 from custom.ewsghana.utils import make_url, has_input_stock_permissions
 from custom.ilsgateway.views import GlobalStats
-from custom.logistics.tasks import sms_users_fix, add_products_to_loc, locations_fix, sync_stock_transactions
+from custom.logistics.tasks import sms_users_fix, add_products_to_loc, locations_fix
 from custom.logistics.tasks import stock_data_task
 from custom.logistics.views import BaseConfigView, BaseRemindersTester
 from dimagi.utils.dates import force_to_datetime
@@ -209,13 +209,10 @@ def sync_ewsghana(request, domain):
 @domain_admin_required
 @require_POST
 def ews_sync_stock_data(request, domain):
-    apis = (
-        ('stock_transaction', sync_stock_transactions),
-    )
     config = EWSGhanaConfig.for_domain(domain)
     domain = config.domain
     endpoint = GhanaEndpoint.from_config(config)
-    stock_data_task.delay(domain, endpoint, apis, config, EWS_FACILITIES)
+    stock_data_task.delay(EWSStockDataSynchronization(domain, endpoint))
     return HttpResponse('OK')
 
 

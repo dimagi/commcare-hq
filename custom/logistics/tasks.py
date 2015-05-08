@@ -2,31 +2,28 @@ from datetime import datetime
 from decimal import Decimal
 from functools import partial
 import itertools
+import celery
 from celery.canvas import chain
-from couchdbkit import ResourceNotFound
 from django.db import transaction
 from casexml.apps.stock.const import TRANSACTION_TYPE_LA
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack.models import SupplyPointCase, update_stock_state_for_transaction
 from corehq.apps.locations.models import SQLLocation, Location
 from corehq.apps.products.models import SQLProduct
-from couchforms.models import XFormInstance
 from custom.logistics.commtrack import save_stock_data_checkpoint, synchronization
 from custom.logistics.models import StockDataCheckpoint
-from celery.task.base import task
 from custom.logistics.utils import get_supply_point_by_external_id
 from dimagi.utils.chunked import chunked
-from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import force_to_datetime
 
 
-@task(queue='background_queue', ignore_result=True)
-def stock_data_task(domain, endpoint, apis, config, test_facilities=None):
+@celery.task(queue='background_queue', ignore_result=True)
+def stock_data_task(api_object):
     # checkpoint logic
     start_date = datetime.today()
-    default_api = apis[0][0]
+    default_api = api_object.apis[0][0]
 
-    checkpoint, _ = StockDataCheckpoint.objects.get_or_create(domain=domain, defaults={
+    checkpoint, _ = StockDataCheckpoint.objects.get_or_create(domain=api_object.domain, defaults={
         'api': default_api,
         'date': None,
         'limit': 1000,
@@ -39,58 +36,55 @@ def stock_data_task(domain, endpoint, apis, config, test_facilities=None):
         checkpoint.start_date = start_date
         checkpoint.save()
 
-    if not config.all_stock_data:
-        facilities = test_facilities
+    if not api_object.all_stock_data:
+        facilities = api_object.test_facilities
     else:
-        supply_points_ids = SQLLocation.objects.filter(
-            domain=domain,
-            location_type__administrative=False
-        ).order_by('created_at').values_list('supply_point_id', flat=True)
-        facilities = [doc['external_id'] for doc in iter_docs(SupplyPointCase.get_db(), supply_points_ids)]
+        facilities = api_object.get_ids()
 
     if checkpoint.location:
-        supply_point = SupplyPointCase.get_by_location_id(domain, checkpoint.location.location_id)
-        external_id = supply_point.external_id if supply_point else None
+        external_id = api_object.get_last_processed_location(checkpoint)
         if external_id:
             facilities = list(itertools.dropwhile(lambda x: int(x) != int(external_id), facilities))
-            if checkpoint.api:
-                apis_from_checkpoint = itertools.dropwhile(lambda x: x[0] != checkpoint.api, apis)
-            else:
-                apis_from_checkpoint = apis
-            process_facility_task.si(domain, endpoint, facilities[0], apis_from_checkpoint)
+            process_facility_task(api_object, facilities[0], start_from=checkpoint.api)
             facilities = facilities[1:]
 
-    facilities_chunked_list = chunked(facilities, 50)
+    facilities_chunked_list = chunked(facilities, 5)
     for chunk in facilities_chunked_list:
-        res = chain(process_facility_task.si(domain, endpoint, fac, apis) for fac in chunk)()
+        res = chain(process_facility_task.si(api_object, fac) for fac in chunk)()
         res.get()
 
-    checkpoint = StockDataCheckpoint.objects.get(domain=domain)
+    checkpoint = StockDataCheckpoint.objects.get(domain=api_object.domain)
     save_stock_data_checkpoint(checkpoint, default_api, 1000, 0, start_date, None, False)
     checkpoint.start_date = None
     checkpoint.save()
 
 
-@task(queue='background_queue')
-def process_facility_task(domain, endpoint, facility, apis):
-    checkpoint = StockDataCheckpoint.objects.get(domain=domain)
+@celery.task(queue='background_queue')
+def process_facility_task(api_object, facility, start_from=None):
+    checkpoint = StockDataCheckpoint.objects.get(domain=api_object.domain)
     limit = checkpoint.limit
     offset = checkpoint.offset
+    apis = api_object.apis
+
+    if start_from is not None:
+        apis = itertools.dropwhile(lambda x: x[0] != checkpoint.api, api_object.apis)
+
     for idx, (api_name, api_function) in enumerate(apis):
         api_function(
-            domain=domain,
+            domain=api_object.domain,
             checkpoint=checkpoint,
             date=checkpoint.date,
             limit=limit,
             offset=offset,
-            endpoint=endpoint,
-            facilities=[facility]
+            endpoint=api_object.endpoint,
+            facility=facility
         )
         limit = 1000
         offset = 0
-    save_stock_data_checkpoint(checkpoint, 'finished', 1000, 0, checkpoint.date, facility)
+    save_stock_data_checkpoint(checkpoint, '', 1000, 0, checkpoint.date, api_object.get_location_id(facility))
 
-@task(ignore_result=True)
+
+@celery.task(ignore_result=True)
 def sms_users_fix(api):
     endpoint = api.endpoint
     api.set_default_backend()
@@ -98,7 +92,7 @@ def sms_users_fix(api):
                     None, None, 100, 0)
 
 
-@task(ignore_result=True)
+@celery.task(ignore_result=True)
 def fix_groups_in_location_task(domain):
     locations = Location.by_domain(domain=domain)
     for loc in locations:
@@ -109,7 +103,7 @@ def fix_groups_in_location_task(domain):
             loc.save()
 
 
-@task(ignore_result=True)
+@celery.task(ignore_result=True)
 def locations_fix(domain):
     locations = SQLLocation.objects.filter(domain=domain, location_type__in=['country', 'region', 'district'])
     for loc in locations:
@@ -126,26 +120,14 @@ def locations_fix(domain):
             SupplyPointCase.get_or_create_by_location(fake_location)
 
 
-@task(ignore_result=True)
+@celery.task(ignore_result=True)
 def add_products_to_loc(api):
     endpoint = api.endpoint
     synchronization(None, endpoint.get_locations, api.location_sync, None, None, 100, 0,
                     filters={"is_active": True})
 
 
-def sync_stock_transactions(domain, endpoint, facilities, checkpoint, date, limit=100, offset=0):
-    # todo: should figure out whether there's a better thing to be doing than faking this global form
-    try:
-        xform = XFormInstance.get(docid='ilsgateway-xform')
-    except ResourceNotFound:
-        xform = XFormInstance(_id='ilsgateway-xform')
-        xform.save()
-    for facility in facilities:
-        sync_stock_transactions_for_facility(domain, endpoint, facility, xform, checkpoint, date, limit, offset)
-        offset = 0  # reset offset for each facility, is only set in the context of a checkpoint resume
-
-
-def sync_stock_transactions_for_facility(domain, endpoint, facility, xform, checkpoint,
+def sync_stock_transactions_for_facility(domain, endpoint, facility, checkpoint,
                                          date, limit=1000, offset=0):
     """
     Syncs stock data from StockTransaction objects in ILSGateway to StockTransaction objects in HQ
@@ -158,7 +140,8 @@ def sync_stock_transactions_for_facility(domain, endpoint, facility, xform, chec
     if not case:
         return
 
-    save_stock_data_checkpoint(checkpoint, 'stock_transaction', limit, offset, date, facility, True)
+    location_id = case.location_id
+    save_stock_data_checkpoint(checkpoint, 'stock_transaction', limit, offset, date, location_id, True)
 
     products_saved = set()
     while has_next:
@@ -172,12 +155,14 @@ def sync_stock_transactions_for_facility(domain, endpoint, facility, xform, chec
         # set the checkpoint right before the data we are about to process
         meta_limit = meta.get('limit') or limit
         meta_offset = meta.get('offset') or offset
-        save_stock_data_checkpoint(checkpoint, 'stock_transaction', meta_limit, meta_offset, date, facility, True)
+        save_stock_data_checkpoint(
+            checkpoint, 'stock_transaction', meta_limit, meta_offset, date, location_id, True
+        )
         transactions_to_add = []
         with transaction.commit_on_success():
             for stocktransaction in stocktransactions:
                 params = dict(
-                    form_id=xform._id,
+                    form_id='logistics-xform',
                     date=force_to_datetime(stocktransaction.date),
                     type='balance',
                     domain=domain,
