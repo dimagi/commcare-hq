@@ -2,9 +2,9 @@ from django.contrib import admin
 from .models import *
 
 
-class OwnershipCleanlinessAdmin(admin.ModelAdmin):
+class OwnershipCleanlinessFlagAdmin(admin.ModelAdmin):
 
-    model = OwnershipCleanliness
+    model = OwnershipCleanlinessFlag
     list_display = [
         'domain',
         'owner_id',
@@ -23,4 +23,4 @@ class OwnershipCleanlinessAdmin(admin.ModelAdmin):
     ]
 
 
-admin.site.register(OwnershipCleanliness, OwnershipCleanlinessAdmin)
+admin.site.register(OwnershipCleanlinessFlag, OwnershipCleanlinessFlagAdmin)
