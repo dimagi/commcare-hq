@@ -128,10 +128,16 @@ var CaseConfig = (function () {
         self.change = function () {
             self.saveButton.fire('change');
             self.ensureBlankProperties();
-            self.forceRefreshTextchangeBinding();
+            self.forceRefreshTextchangeBinding($('#case-config-ko'));
         };
 
-        self.forceRefreshTextchangeBinding = function () {
+        self.usercaseChange = function () {
+            self.saveUsercaseButton.fire('change');
+            self.caseConfigViewModel.usercase_transaction.ensureBlankProperties();
+            self.forceRefreshTextchangeBinding($('#usercase-config-ko'));
+        };
+
+        self.forceRefreshTextchangeBinding = function (domNode) {
             // This is a hack that I do not understand,
             // and really shouldn't be necessary.
             // For some reason, $home.on('textchange', 'input', blah)
@@ -142,13 +148,14 @@ var CaseConfig = (function () {
             // (this is potentially expensive just because it's O(N)
             // but I'd be surprised if other things weren't too)
             var x = function () {};
-            $('#case-config-ko').find('input')
+            domNode.find('input')
                 .off('textchange', x)
                 .on('textchange', x);
         };
 
         self.init = function () {
             var $home = $('#case-config-ko');
+            var $usercaseMgmt = $('#usercase-config-ko');
             _.delay(function () {
                 ko.applyBindings(self, $home.get(0));
                 $home.on('textchange', 'input', self.change)
@@ -156,9 +163,14 @@ var CaseConfig = (function () {
                      .on('change', 'select, input[type="hidden"]', self.change)
                      .on('click', 'a', self.change);
                 self.ensureBlankProperties();
-                self.forceRefreshTextchangeBinding();
+                self.forceRefreshTextchangeBinding($home);
 
-                ko.applyBindings(self, $('#usercase-config-ko').get(0));
+                ko.applyBindings(self, $usercaseMgmt.get(0));
+                $usercaseMgmt.on('textchange', 'input', self.usercaseChange)
+                             .on('change', 'select, input[type="hidden"]', self.usercaseChange)
+                             .on('click', 'a', self.usercaseChange);
+                self.caseConfigViewModel.usercase_transaction.ensureBlankProperties();
+                self.forceRefreshTextchangeBinding($usercaseMgmt);
             });
 
         };
@@ -694,6 +706,12 @@ var CaseConfig = (function () {
             self.close_case = {
                 condition: (o.close_case || {}).condition || DEFAULT_CONDITION_ALWAYS
             };
+            self.update_usercase = {
+                update: (o.update_usercase || {}).update || {}
+            };
+            self.usercase_preload = {
+                preload: (o.usercase_preload || {}).preload || {}
+            };
             return self;
         },
         to_case_transaction: function (o, caseConfig) {
@@ -789,28 +807,25 @@ var CaseConfig = (function () {
         },
         to_usercase_transaction: function (o, caseConfig) {
             var self = HQFormActions.normalize(o);
-            var required_properties = caseConfig.requires() === 'none' && !o.update_case.update.name ? [{
-                key: 'name',
-                path: self.open_case.name_path,
-                required: true
-            }] : [];
+            // TODO: usercase required properties?
+            var required_properties = [];
             var case_properties = CC_UTILS.propertyDictToArray(
                 required_properties,
-                self.update_case.update,
+                self.update_usercase.update,
                 caseConfig
             );
             var case_preload = CC_UTILS.propertyDictToArray(
                 [],
-                self.case_preload.preload,
+                self.usercase_preload.preload,
                 caseConfig,
                 true
             );
             return UserCaseTransaction.wrap({
-                case_properties: case_properties,
-                case_preload: case_preload,
+                case_properties: case_properties,  // TODO: Name this usercase_properties?
+                case_preload: case_preload,  // TODO: Or "case_preload: usercase_preload"?
+                                             // TODO: Or "usercase_preload: usercase_preload"?
 
                 suggestedProperties: function () {
-                    // TODO: Do we need suggestedProperties?
                     // TODO: Pass user case type from the view.
                     if (_(caseConfig.usercasePropertiesMap).has('commcare-user')) {
                         return caseConfig.usercasePropertiesMap['commcare-user']();
@@ -822,8 +837,8 @@ var CaseConfig = (function () {
         },
         from_usercase_transaction: function (usercase_transaction) {
             var o = UserCaseTransaction.unwrap(usercase_transaction);
-            var x = CC_UTILS.propertyArrayToDict(['name'], o.case_properties);
-            var case_properties = x[0]  ;
+            var x = CC_UTILS.propertyArrayToDict([], o.case_properties);  // "name" required?
+            var case_properties = x[0];
             var case_preload = CC_UTILS.propertyArrayToDict([], o.case_preload, true)[0];
             return {
                 update_usercase: {

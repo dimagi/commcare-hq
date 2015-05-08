@@ -2,10 +2,11 @@
 
 <script type="text/html" id="usercase-config:case-properties:question">
     <input class="input-large" type="hidden" data-bind="
-        questionsSelect: $root.getQuestions('all', false, case_transaction.allow.repeats(), true),
+        questionsSelect: $root.getQuestions('all', false, true, true),
         value: path,
         optionsCaption: ' '
     "/>
+    <!-- TODO: usercase_transaction not in scope: $root.getQuestions('all', false, usercase_transaction.allow.repeats(), true) -->
     <p class="help-inline" data-bind="visible: required() && !path()">{% trans "Required" %}</p>
     <p class="help-inline" data-bind="visible: !required() && !path() && key()">{% trans "Not assigned" %}</p>
 </script>
