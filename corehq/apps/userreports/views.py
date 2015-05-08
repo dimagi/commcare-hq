@@ -23,7 +23,7 @@ from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq import ConfigurableReport, privileges, Session, toggles
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
 from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
-from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.apps.userreports.exceptions import BadSpecError, UserQueryError
 from corehq.apps.userreports.reports.builder.forms import (
     ConfigurePieChartReportForm,
     ConfigureTableReportForm,
@@ -450,7 +450,7 @@ def process_url_params(params, column_descriptions):
             continue
         column = columns.get(key, None)
         if not column:
-            raise BadSpecError('Invalid filter parameter: {}'.format(key))
+            raise UserQueryError('Invalid filter parameter: {}'.format(key))
 
         if (
             value == 'last30'
@@ -474,7 +474,7 @@ def export_data_source(request, domain, config_id):
 
     try:
         keyword_filters, sql_filters = process_url_params(request.GET, columns)
-    except BadSpecError as e:
+    except UserQueryError as e:
         return HttpResponse(e.message, status=400)
 
     q = q.filter_by(**keyword_filters)
