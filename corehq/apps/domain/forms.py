@@ -1474,7 +1474,10 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
             self.domain, edition=self.cleaned_data['software_plan_edition'],
         )
         revert_current_subscription_end_date = None
-        if self.current_subscription and self.cleaned_data['start_date'] < self.current_subscription.date_end:
+        if self.current_subscription and (
+            not self.current_subscription.date_end
+            or self.cleaned_data['start_date'] < self.current_subscription.date_end
+        ):
             revert_current_subscription_end_date = self.current_subscription.date_end
             self.current_subscription.date_end = self.cleaned_data['start_date']
             self.current_subscription.save()
