@@ -1,4 +1,5 @@
 from collections import namedtuple
+from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import get_indexed_case_ids, get_reverse_indexed_case_ids, get_open_case_ids, \
     get_closed_case_ids, get_indexed_cases
 from casexml.apps.phone.models import OwnershipCleanliness
@@ -6,6 +7,27 @@ from casexml.apps.phone.models import OwnershipCleanliness
 
 FootprintInfo = namedtuple('FootprintInfo', ['base_ids', 'all_ids'])
 CleanlinessFlag = namedtuple('CleanlinessFlag', ['is_clean', 'hint'])
+
+
+def set_cleanliness_flags_for_domain(domain):
+    """
+    Sets all cleanliness flags for an entire domain.
+    """
+    for owner_id in get_all_case_owner_ids(domain):
+        set_cleanliness_flags(domain, owner_id)
+
+
+def get_all_case_owner_ids(domain):
+    """
+    Get all owner ids that are assigned to cases in a domain.
+    """
+    key = ["all owner", domain]
+    submitted = CommCareCase.get_db().view('case/all_cases',
+        group_level=3,
+        startkey=key,
+        endkey=key + [{}],
+    ).all()
+    return set([row['key'][2] for row in submitted])
 
 
 def set_cleanliness_flags(domain, owner_id):
