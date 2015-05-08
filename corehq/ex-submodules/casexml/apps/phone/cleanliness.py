@@ -1,4 +1,5 @@
 from collections import namedtuple
+from datetime import datetime
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import get_indexed_case_ids, get_reverse_indexed_case_ids, get_open_case_ids, \
     get_closed_case_ids, get_indexed_cases
@@ -41,15 +42,14 @@ def set_cleanliness_flags(domain, owner_id):
     )[0]
     # if it already is clean we don't need to do anything since that gets invalidated on submission
     if not cleanliness_object.is_clean:
-        if cleanliness_object.hint:
-            if hint_still_valid(domain, owner_id, cleanliness_object.hint):
-                return
+        if not cleanliness_object.hint or not hint_still_valid(domain, owner_id, cleanliness_object.hint):
+            # either the hint wasn't set or wasn't valid - rebuild from scratch
+            cleanliness_flag = get_cleanliness_flag_from_scratch(domain, owner_id)
+            cleanliness_object.is_clean = cleanliness_flag.is_clean
+            cleanliness_object.hint = cleanliness_flag.hint
 
-        # either the hint wasn't set or wasn't valid - rebuild from scratch
-        cleanliness_flag = get_cleanliness_flag_from_scratch(domain, owner_id)
-        cleanliness_object.is_clean = cleanliness_flag.is_clean
-        cleanliness_object.hint = cleanliness_flag.hint
-        cleanliness_object.save()
+    cleanliness_object.last_checked = datetime.utcnow()
+    cleanliness_object.save()
 
 
 def hint_still_valid(domain, owner_id, hint):
