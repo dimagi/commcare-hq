@@ -6,7 +6,7 @@ cloudCare.EMPTY = '---';
 
 var _caseListLoadError = function (model, response) {
     hideLoadingCallback();
-    var message = response.responseText || translatedStrings.caseListError
+    var message = response.responseText || translatedStrings.caseListError;
     showError(message, $("#cloudcare-notifications"));
 };
 
