@@ -1,6 +1,6 @@
 import uuid
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseRelationship
-from casexml.apps.phone.cleanliness import set_cleanliness_flags
+from casexml.apps.phone.cleanliness import set_cleanliness_flags, hint_still_valid
 from casexml.apps.phone.models import OwnershipCleanliness
 from casexml.apps.phone.tests.test_sync_mode import SyncBaseTest
 from corehq.toggles import OWNERSHIP_CLEANLINESS
@@ -47,6 +47,8 @@ class OwnerCleanlinessTest(SyncBaseTest):
         new_cleanliness = OwnershipCleanliness.objects.get(owner_id=self.owner_id)
         self.assertEqual(is_clean, new_cleanliness.is_clean)
         self.assertEqual(hint, new_cleanliness.hint)
+        if hint:
+            self.assertTrue(hint_still_valid(self.domain, self.owner_id, hint))
 
     @property
     def owner_cleanliness(self):
@@ -143,3 +145,16 @@ class OwnerCleanlinessTest(SyncBaseTest):
         unused_owner_id = uuid.uuid4().hex
         set_cleanliness_flags(self.domain, unused_owner_id)
         self.assertTrue(OwnershipCleanliness.objects.get(owner_id=unused_owner_id).is_clean)
+
+    def test_hint_invalidation(self):
+        self.test_change_parent_owner_makes_dirty()
+        self._set_owner(self.parent._id, self.owner_id)
+        # after the submission the dirtiness flag should still be set
+        # since it isn't invalidated right away
+        self.assert_owner_dirty()
+        # explicitly make sure the hint is no longer valid
+        self.assertFalse(hint_still_valid(self.domain, self.owner_id, self.owner_cleanliness.hint))
+        # reset the cleanliness flag and ensure it worked
+        set_cleanliness_flags(self.domain, self.owner_id)
+        self.assert_owner_clean()
+        self.assertEqual(None, self.owner_cleanliness.hint)

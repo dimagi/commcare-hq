@@ -1,6 +1,6 @@
 from collections import namedtuple
 from casexml.apps.case.util import get_indexed_case_ids, get_reverse_indexed_case_ids, get_open_case_ids, \
-    get_closed_case_ids
+    get_closed_case_ids, get_indexed_cases
 from casexml.apps.phone.models import OwnershipCleanliness
 
 
@@ -34,8 +34,8 @@ def hint_still_valid(domain, owner_id, hint):
     """
     For a given domain/owner/cleanliness hint check if it's still valid
     """
-    # todo - add hint logic
-    return False
+    related_cases = get_indexed_cases(domain, [hint])
+    return any([c.owner_id != owner_id for c in related_cases])
 
 
 def get_cleanliness_flag_from_scratch(domain, owner_id):
