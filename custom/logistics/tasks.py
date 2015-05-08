@@ -48,10 +48,17 @@ def stock_data_task(api_object):
             process_facility_task(api_object, facilities[0], start_from=checkpoint.api)
             facilities = facilities[1:]
 
-    facilities_chunked_list = chunked(facilities, 5)
-    for chunk in facilities_chunked_list:
-        res = chain(process_facility_task.si(api_object, fac) for fac in chunk)()
-        res.get()
+    if not checkpoint.date:
+        # use subtasks only during initial migration
+        facilities_chunked_list = chunked(facilities, 5)
+
+        for chunk in facilities_chunked_list:
+            res = chain(process_facility_task.si(api_object, fac) for fac in chunk)()
+            res.get()
+
+    else:
+        for facility in facilities:
+            process_facility_task(api_object, facility)
 
     checkpoint = StockDataCheckpoint.objects.get(domain=api_object.domain)
     save_stock_data_checkpoint(checkpoint, default_api, 1000, 0, start_date, None, False)
