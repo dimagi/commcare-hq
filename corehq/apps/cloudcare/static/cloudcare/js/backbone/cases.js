@@ -4,9 +4,10 @@ if (typeof cloudCare === 'undefined') {
 
 cloudCare.EMPTY = '---';
 
-var _caseListLoadError = function (response) {
+var _caseListLoadError = function (model, response) {
     hideLoadingCallback();
-    showError(translatedStrings.caseListError, $("#cloudcare-notifications"));
+    var message = response.responseText || translatedStrings.caseListError
+    showError(message, $("#cloudcare-notifications"));
 };
 
 cloudCare.CASE_PROPERTY_MAP = {
