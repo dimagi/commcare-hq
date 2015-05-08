@@ -1,3 +1,4 @@
+from collections import namedtuple
 import json
 import os
 import tempfile
@@ -441,7 +442,12 @@ def preview_data_source(request, domain, config_id):
     return render(request, "userreports/preview_data.html", context)
 
 
+ExportParameters = namedtuple('ExportParameters',
+                              ['format', 'keyword_filters', 'sql_filters'])
+
+
 def process_url_params(params, column_descriptions):
+    format_ = params.get('format', Format.UNZIPPED_CSV)
     columns = {column['name']: column for column in column_descriptions}
     keyword_filters = {}
     sql_filters = []
@@ -460,25 +466,24 @@ def process_url_params(params, column_descriptions):
             sql_filters.append(expr.between('2014-02-02', '2014-10-02'))
         else:
             keyword_filters[key] = value
-    return keyword_filters, sql_filters
+    return ExportParameters(format_, keyword_filters, sql_filters)
 
 
 @login_or_basic
 @require_permission(Permissions.view_reports)
 def export_data_source(request, domain, config_id):
-    format = request.GET.get('format', Format.UNZIPPED_CSV)
     config = get_document_or_404(DataSourceConfiguration, domain, config_id)
     table = get_indicator_table(config)
     q = Session.query(table)
     columns = q.column_descriptions
 
     try:
-        keyword_filters, sql_filters = process_url_params(request.GET, columns)
+        params = process_url_params(request.GET, columns)
     except UserQueryError as e:
         return HttpResponse(e.message, status=400)
 
-    q = q.filter_by(**keyword_filters)
-    for sql_filter in sql_filters:
+    q = q.filter_by(**params.keyword_filters)
+    for sql_filter in params.sql_filters:
         q = q.filter(sql_filter)
 
     # build export
@@ -490,8 +495,8 @@ def export_data_source(request, domain, config_id):
     return HttpResponse('Woo! {} rows'.format(q.count()))
     fd, path = tempfile.mkstemp()
     with os.fdopen(fd, 'wb') as temp:
-        export_from_tables([[config.table_id, get_table(q)]], temp, format)
-        return export_response(Temp(path), format, config.display_name)
+        export_from_tables([[config.table_id, get_table(q)]], temp, params.format)
+        return export_response(Temp(path), params.format, config.display_name)
 
 
 @login_and_domain_required
