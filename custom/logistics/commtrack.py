@@ -1,7 +1,6 @@
 import itertools
 import logging
 import traceback
-from corehq.apps.commtrack.models import SupplyPointCase
 
 from corehq.apps.locations.models import Location, SQLLocation
 from custom.logistics.models import MigrationCheckpoint

@@ -18,6 +18,7 @@ from custom.ilsgateway.tanzania.warehouse.updater import populate_report_data
 from custom.logistics.models import StockDataCheckpoint
 from custom.logistics.tasks import stock_data_task
 
+
 @periodic_task(run_every=crontab(hour="23", minute="55", day_of_week="*"),
                queue='background_queue')
 def migration_task():

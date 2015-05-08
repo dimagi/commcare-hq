@@ -37,4 +37,3 @@ class ILSStockDataSynchronization(StockDataSynchronization):
 
     def get_last_processed_location(self, checkpoint):
         return checkpoint.location.external_id
-
