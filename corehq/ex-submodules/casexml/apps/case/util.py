@@ -117,13 +117,25 @@ def reverse_indices(db, case, wrap=True):
     ).all()
 
 
+def get_indexed_cases(cases):
+    """
+    Given a base list of cases, gets all wrapped cases that they reference
+    (parent cases).
+    """
+    return _get_related_cases(cases, 'index')
+
+
 def get_reverse_indexed_cases(cases):
     """
     Given a base list of cases, gets all wrapped cases that directly
     reference them (child cases).
     """
+    return _get_related_cases(cases, 'reverse_index')
+
+
+def _get_related_cases(cases, reference_type):
     from casexml.apps.case.models import CommCareCase
-    keys = [[c['domain'], c['_id'], 'reverse_index'] for c in cases]
+    keys = [[c['domain'], c['_id'], reference_type] for c in cases]
     return CommCareCase.view(
         'case/related',
         keys=keys,
