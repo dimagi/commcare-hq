@@ -222,10 +222,17 @@ class LocationsTest(LocationTestBase):
             Location.get_in_domain(self.domain.name, 'not-a-real-id'),
         )
 
-        # Location.all_locations
+        def _all_locations(domain):
+            return Location.view(
+                'locations/hierarchy',
+                startkey=[domain],
+                endkey=[domain, {}],
+                reduce=False,
+                include_docs=True
+            ).all()
         compare(
             [self.user.location, test_state1, test_state2, test_village1],
-            Location.all_locations(self.domain.name)
+            _all_locations(self.domain.name)
         )
 
         # Location.by_site_code
