@@ -1,11 +1,12 @@
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.standard import DatespanMixin, CustomProjectReport
+from corehq.apps.reports.standard import CustomProjectReport
+from custom.up_nrhm.filters import NRHMDatespanMixin
 from custom.up_nrhm.sql_data import ASHAFunctionalityChecklistData, ASHAAFChecklistData
 from dimagi.utils.dates import force_to_datetime
 
 
-class ASHAFunctionalityChecklistReport(GenericTabularReport, DatespanMixin, CustomProjectReport):
+class ASHAFunctionalityChecklistReport(GenericTabularReport, NRHMDatespanMixin, CustomProjectReport):
     name = "ASHA Functionality Checklist Report"
     slug = "asha_functionality_checklist_report"
 

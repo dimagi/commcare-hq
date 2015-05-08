@@ -1,8 +1,8 @@
 from corehq.apps.reports.filters.select import YearFilter
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin, ProjectReportParametersMixin
-from corehq.apps.reports.filters.dates import DatespanFilter
-from custom.up_nrhm.filters import DrillDownOptionFilter, SampleFormatFilter, ASHAMonthFilter
+from corehq.apps.reports.standard import CustomProjectReport
+from custom.up_nrhm.filters import DrillDownOptionFilter, SampleFormatFilter, ASHAMonthFilter,\
+    NRHMDatespanFilter, NRHMDatespanMixin
 from custom.up_nrhm.reports.asha_facilitators_report import ASHAFacilitatorsReport
 from custom.up_nrhm.reports.asha_functionality_checklist_report import ASHAFunctionalityChecklistReport
 from custom.up_nrhm.reports.block_level_af_report import BlockLevelAFReport
@@ -19,8 +19,8 @@ def total_rows(report):
     return {}
 
 
-class ASHAReports(GenericTabularReport, DatespanMixin, CustomProjectReport):
-    fields = [SampleFormatFilter, DatespanFilter, DrillDownOptionFilter, ASHAMonthFilter, YearFilter]
+class ASHAReports(GenericTabularReport, NRHMDatespanMixin, CustomProjectReport):
+    fields = [SampleFormatFilter, NRHMDatespanFilter, DrillDownOptionFilter, ASHAMonthFilter, YearFilter]
     name = "ASHA Reports"
     slug = "asha_reports"
     show_all_rows = True

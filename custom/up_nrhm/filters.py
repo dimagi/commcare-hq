@@ -5,6 +5,8 @@ from dimagi.utils.decorators.memoized import memoized
 from sqlagg.columns import SimpleColumn
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
+from corehq.apps.reports.filters.dates import DatespanFilter
+from corehq.apps.reports.standard import DatespanMixin
 
 
 class HierarchySqlData(SqlData):
@@ -33,7 +35,6 @@ class HierarchySqlData(SqlData):
 
 class DrillDownOptionFilter(BaseDrilldownOptionFilter):
     label = ugettext_noop("Hierarchy")
-    template = "common/single_all_drilldown_options.html"
     slug = "hierarchy"
 
     @property
@@ -119,3 +120,10 @@ class SampleFormatFilter(BaseSingleOptionFilter):
 
 class ASHAMonthFilter(MonthFilter):
     label = "Last month of the quarter"
+
+class NRHMDatespanFilter(DatespanFilter):
+    template = "up_nrhm/datespan.html"
+
+
+class NRHMDatespanMixin(DatespanMixin):
+    datespan_field = NRHMDatespanFilter
