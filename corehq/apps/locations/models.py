@@ -262,6 +262,10 @@ class SQLLocation(MPTTModel):
         return (location.get_ancestors(include_self=True)
                 .filter(pk=self.pk).exists())
 
+    @classmethod
+    def by_domain(cls, domain):
+        return cls.objects.filter(domain=domain)
+
 
 def _filter_for_archived(locations, include_archive_ancestors):
     """
