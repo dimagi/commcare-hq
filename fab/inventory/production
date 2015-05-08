@@ -20,6 +20,7 @@ hqdb0.internal.commcarehq.org
 hqdb0.internal.commcarehq.org
 
 [celery]
+hqcelery0.internal.commcarehq.org
 hqcelery1.internal.commcarehq.org
 
 [celery:vars]
