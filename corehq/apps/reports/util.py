@@ -143,6 +143,7 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
         return [_report_user_dict(user) for user in users]
     return users
 
+
 def get_all_userids_submitted(domain):
     submitted = get_db().view('reports_forms/all_submitted_users',
         startkey=[domain],
@@ -151,14 +152,6 @@ def get_all_userids_submitted(domain):
     ).all()
     return [user['key'][1] for user in submitted]
 
-def get_all_owner_ids_submitted(domain):
-    key = ["all owner", domain]
-    submitted = get_db().view('case/all_cases',
-        group_level=3,
-        startkey=key,
-        endkey=key + [{}],
-    ).all()
-    return set([row['key'][2] for row in submitted])
 
 def get_username_from_forms(domain, user_id):
     key = make_form_couch_key(domain, user_id=user_id)
