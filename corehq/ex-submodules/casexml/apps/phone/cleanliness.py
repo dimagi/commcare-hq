@@ -70,8 +70,13 @@ def get_cleanliness_flag_from_scratch(domain, owner_id):
             # it wasn't in any of the open or closed IDs - it must be dirty
             case_id_outside_footprint = cases_to_check.pop()
             reverse_index_ids = set(get_reverse_indexed_case_ids(domain, [case_id_outside_footprint]))
-            hint = (reverse_index_ids & (footprint_info.base_ids | closed_owned_case_ids)).pop()
-            return CleanlinessFlag(False, hint)
+            indexed_with_right_owner = (reverse_index_ids & (footprint_info.base_ids | closed_owned_case_ids))
+            if indexed_with_right_owner:
+                return CleanlinessFlag(False, indexed_with_right_owner.pop())
+
+            # the only way we can get here is if an owner id spans multiple domains
+            # (and therefore has unclean indices, but not in this domain)
+            # in this case it should be clean for our domain so default to clean below
 
     return CleanlinessFlag(True, None)
 
