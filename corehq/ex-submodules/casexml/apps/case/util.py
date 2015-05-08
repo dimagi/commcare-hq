@@ -166,23 +166,6 @@ def _get_related_case_ids(domain, case_ids, reference_type):
     )]
 
 
-def get_open_case_ids(owner_id):
-    return _get_case_ids(owner_id, False)
-
-
-def get_closed_case_ids(owner_id):
-    return _get_case_ids(owner_id, False)
-
-
-def _get_case_ids(owner_id, is_closed):
-    from casexml.apps.case.models import CommCareCase
-    return [row['id'] for row in CommCareCase.get_db().view(
-        'case/by_owner',
-        reduce=False,
-        key=[owner_id, is_closed],
-    )]
-
-
 def primary_actions(case):
     return filter(lambda a: a.action_type != const.CASE_ACTION_REBUILD,
                   case.actions)
