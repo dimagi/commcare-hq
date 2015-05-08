@@ -121,6 +121,7 @@ class SampleFormatFilter(BaseSingleOptionFilter):
 class ASHAMonthFilter(MonthFilter):
     label = "Last month of the quarter"
 
+
 class NRHMDatespanFilter(DatespanFilter):
     template = "up_nrhm/datespan.html"
 
