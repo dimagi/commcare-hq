@@ -53,3 +53,23 @@ class UtilTestCase(TestCase):
         handle_changed_mailchimp_email(self.couch_user, self.email, new_email)
 
         self.assertEqual(unsubscribe.call_count, 0)
+
+    @mock.patch("corehq.apps.registration.utils.safe_unsubscribe_user_from_mailchimp_list")
+    def test_handle_changed_mailchimp_email_other_user_not_subscribed(self, unsubscribe):
+        """ Two users with the same email, other user is not subscribed, so unsubscribe """
+
+        other_username = "shmoe@my-domain.commcarehq.org"
+        other_couch_user = CommCareUser.create(self.domain, other_username, "passw3rd", email=self.email)
+        other_couch_user.subscribed_to_commcare_users = False
+        other_couch_user.email_opt_out = True
+        other_couch_user.save()
+
+        new_email = "newemail@example.com"
+
+        handle_changed_mailchimp_email(self.couch_user, self.email, new_email)
+
+        expected_call_args = [mock.call(self.couch_user, settings.MAILCHIMP_COMMCARE_USERS_ID, email=self.email),
+                              mock.call(self.couch_user, settings.MAILCHIMP_MASS_EMAIL_ID, email=self.email)]
+
+        self.assertEqual(unsubscribe.call_count, 2)
+        self.assertItemsEqual(unsubscribe.call_args_list, expected_call_args)
