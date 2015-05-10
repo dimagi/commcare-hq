@@ -189,23 +189,14 @@ class SyncTokenUpdateTest(SyncBaseTest):
         self._createCaseStubs([case_id])
         assert_user_doesnt_have_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
         
-        update_block = CaseBlock(
-            create=False,
-            case_id=case_id,
-            user_id=USER_ID,
-            version=V2,
-            update={"greeting": "hello"}
-        ).as_xml()
-        self._postFakeWithSyncToken(update_block, self.sync_log.get_id)
+        self.factory.create_or_update_case(
+            CaseStructure(case_id=case_id, attrs={'update': {"greeting": "hello"}}),
+        )
         assert_user_doesnt_have_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
 
-        reassign_block = CaseBlock(
-            create=False,
-            case_id=case_id,
-            owner_id=OTHER_USER_ID,
-            version=V2
-        ).as_xml()
-        self._postFakeWithSyncToken(reassign_block, self.sync_log.get_id)
+        self.factory.create_or_update_case(
+            CaseStructure(case_id=case_id, attrs={'owner_id': OTHER_USER_ID}),
+        )
         assert_user_doesnt_have_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
 
     def testIndexReferences(self):
