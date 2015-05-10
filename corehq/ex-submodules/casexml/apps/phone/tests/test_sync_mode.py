@@ -47,11 +47,16 @@ class SyncBaseTest(TestCase):
         # this creates the initial blank sync token in the database
         restore_config = RestoreConfig(self.user)
         self.sync_log = synclog_from_restore_payload(restore_config.get_payload().as_string())
-        self.factory = CaseFactory(case_defaults={
-            'user_id': USER_ID,
-            'owner_id': USER_ID,
-            'case_type': PARENT_TYPE,
-        })
+        self.factory = CaseFactory(
+            case_defaults={
+                'user_id': USER_ID,
+                'owner_id': USER_ID,
+                'case_type': PARENT_TYPE,
+            },
+            form_extras={
+                'last_sync_token': self.sync_log._id
+            }
+        )
 
     def tearDown(self):
         restore_config = RestoreConfig(self.user)
@@ -59,11 +64,9 @@ class SyncBaseTest(TestCase):
 
     def _createCaseStubs(self, id_list, **kwargs):
         case_attrs = {'create': True}
-        form_extras = {'last_sync_token': self.sync_log._id}
         case_attrs.update(kwargs)
         return self.factory.create_or_update_cases(
             [CaseStructure(case_id=case_id, attrs=case_attrs) for case_id in id_list],
-            form_extras=form_extras
         )
 
     def _postWithSyncToken(self, filename, token_id):
@@ -558,8 +561,9 @@ class MultiUserSyncTest(SyncBaseTest):
         )
         self.assertTrue(SHARED_ID in self.sync_log.owner_ids_on_phone)
         self.assertTrue(USER_ID in self.sync_log.owner_ids_on_phone)
-        
-        
+        # since we got a new sync log, have to update the factory as well
+        self.factory.form_extras = {'last_sync_token': self.sync_log._id}
+
     def testSharedCase(self):
         # create a case by one user
         case_id = "shared_case"
