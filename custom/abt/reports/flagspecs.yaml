@@ -15,11 +15,14 @@ http://openrosa.org/formdesigner/BB2BF979-BD8F-4B8D-BCF8-A46451228BA9:
       warning: "Send picture to contractor for installing bars and screens on windows. Get completion date."
     - question: [q6_2]
       warning: "Send picture to contractor for installing bars and screens on windows. Get completion date."
-      # TODO: Confirm that no answer means any answer.
     - question: [q7_2]
       answer: "no"
       warning: "Improve lighting in storage facility. Get completion date."
-    # TODO: q10_5 requires advanced logic
+    - question: [q10]
+      # TODO: Test this one.
+      warning_type: unchecked
+      ignore: ["none"]
+      warning: "Contact logistics/central storekeeper to have {msg} delivered immediately. Get delivery date.<br>Advise all personnel not to enter pesticide storage without PPE."
     - question: [q11_3]
       answer: "no"
       warning: "Obtain pesticide labels and re-label boxes."
@@ -32,7 +35,11 @@ http://openrosa.org/formdesigner/BB2BF979-BD8F-4B8D-BCF8-A46451228BA9:
     - question: [q14_2]
       answer: "yes"
       warning: "Notify storekeeper to rearrange items that are stacked too high."
-    # TODO: There is a row in the sheet that doesn't reference a question id. It probably references q15. Also, it needs advanced logic.
+    # TODO: Test this. Confirm that q15 is the ID they want.
+    - question: [q15]
+      warning_type: unchecked
+      ignore: ["none"]
+      warning: "Contact logistics/central storekeeper and get {msg} shipping/delivery date."
     - question: [q16_2]
       answer: "no"
       warning: "Check with central storekeeper/logistics to get delivery date for soap, wash tubs, and water."
@@ -54,7 +61,11 @@ http://openrosa.org/formdesigner/BB2BF979-BD8F-4B8D-BCF8-A46451228BA9:
     - question: [q22_2]
       answer: "no"
       warning: "Check with central storekeeper/logistics to get delivery date for fire extinguishers."
-    # TODO: q23_11 requires advanced logic
+    # TODO: Test this one
+    - quesiton: [q23]
+      warning_type: unchecked
+      ignore: ["none"]
+      warning: "Prepare detailed list of items needed for Spill and First Aid kits and send to logistics/central storekeeper. Get delivery dates."
     - question: [q24_2]
       answer: "no"
       warning: "Contact logistics/central storekeeper and get delivery date for contaminated waste containers. Make labels and attach to containers."
@@ -179,9 +190,10 @@ http://openrosa.org/formdesigner/2BAC5FDC-72F3-4AF4-8381-9160E8AE13CF:
     warning: "Problem reported: Some residents refusing IRS."
   - question: [q13_action]
     warning: "Problem reported: Some residents not satisfied with the IRS operations."
-  - question: [q14_action]
-    warning: "Problem reported: Spray operator not wearing full PPE."
-    # TODO: Only show q14_action if unchecked boxes
+  - question: [q14]
+    warning_type: unchecked
+    ignore: ["none"]
+    warning: "Problem reported: Spray operator not wearing full PPE. Missing: {msg}."
   - question: [q15_action]
     warning: "Problem reported: Homeowner did not observe mixing of pesticide."
   - question: [q16_action]
@@ -232,8 +244,14 @@ http://openrosa.org/formdesigner/7B543EA4-A416-4E46-A121-C4F57412B5AA:
     warning: "Problem reported: Material Safety Data sheet for the current pesticide(s) not posted"
   - question: [q6_action]
     warning: "Problem reported: Thermometer needed in storeroom."
-  # TODO: q7, q8
-  # These require listing unchecked and other logic
+  - question: [q7]
+    warning_type: "unchecked"
+    ignore: ["none_above"]
+    warning: "Problem reported: First aid items are needed for this facility. Missing: {msg}"
+  - question: [q8]
+    warning_type: "unchecked"
+    ignore: ["none"]
+    warning: "Problem reported: Storeroom missing {msg}."
   - question: [q9_action]
     warning: "Problem reported: Storekeeper not familiar with symptoms of poisoning for the current pesticide(s)."
   - question: [q10_action]
