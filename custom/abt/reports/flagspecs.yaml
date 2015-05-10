@@ -1,95 +1,108 @@
 # Form 1
 http://openrosa.org/formdesigner/BB2BF979-BD8F-4B8D-BCF8-A46451228BA9:
     - question: [q2_2]
-      answer: "No"
+      answer: "no"
       warning: "Research possibilities for relocating storage facility."
     - question: [q4_2]
-      answer: "No"
+      answer: "no"
       warning: "Check storage inventory, pending purchase orders, and delivery date for padlocks and needed hardware."
     - question: [q5_2]
-      answer: "No"
+      answer: "no"
       warning: "Send picture of defect to contractor for roof and/or floor repair. Get completion date."
+    # TODO: There are two q5_2 question_ids. Is that intended?
     - question: [q5_2]
-      answer: "No"
+      answer: "no"
       warning: "Send picture to contractor for installing bars and screens on windows. Get completion date."
+    - question [q6_2]
+      warning: "Send picture to contractor for installing bars and screens on windows. Get completion date."
+      # TODO: Confirm that no answer means any answer.
     - question: [q7_2]
-      answer: "No"
+      answer: "no"
       warning: "Improve lighting in storage facility. Get completion date."
+    # TODO: q10_5 requires advanced logic
     - question: [q11_3]
-      answer: "No"
+      answer: "no"
       warning: "Obtain pesticide labels and re-label boxes."
     - question: [q12_2]
-      answer: "Yes"
+      answer: "yes"
       warning: "Contact logistics to dispose of obsolete pesticide."
     - question: [q13_2]
-      answer: "No"
+      answer: "no"
       warning: "Discuss stacking and/or packaging with storekeeper, obtain pallets and/or cartons for repackaging damaged cartons of pesticide."
     - question: [q14_2]
-      answer: "Yes"
+      answer: "yes"
       warning: "Notify storekeeper to rearrange items that are stacked too high."
+    # TODO: There is a row in the sheet that doesn't reference a question id. It probably references q15. Also, it needs advanced logic.
     - question: [q16_2]
-      answer: "No"
+      answer: "no"
       warning: "Check with central storekeeper/logistics to get delivery date for soap, wash tubs, and water."
     - question: [q17_2]
-      answer: "No"
+      answer: "no"
       warning: "Check with central storekeeper/logistics to get delivery date for Danger signs."
     - question: [q18_2]
-      answer: "No"
+      answer: "no"
       warning: "Print out enough current pesticide(s) Health and Safety sheets for storehouse and pesticide transport vehicles. Deliver to storehouse and post."
     - question: [q19_2]
-      answer: "No"
+      answer: "no"
       warning: "Print out Emergency Response Procedure for storehouse and pesticide transport vehicles, deliver to storehouse and post."
     - question: [q20_2]
-      answer: "No"
+      answer: "no"
       warning: "Print out Spill Response Procedure for storehouse and pesticide transport vehicles, deliver to storehouse and post."
     - question: [q21_2]
-      answer: "No"
+      answer: "no"
       warning: "Check with central storekeeper/logistics to get delivery date for thermometers."
     - question: [q22_2]
-      answer: "No"
+      answer: "no"
       warning: "Check with central storekeeper/logistics to get delivery date for fire extinguishers."
+    # TODO: q23_11 requires advanced logic
     - question: [q24_2]
-      answer: "No"
+      answer: "no"
       warning: "Contact logistics/central storekeeper and get delivery date for contaminated waste containers. Make labels and attach to containers."
     - question: [q25_3]
-      answer: "No"
+      answer: "no"
       warning: "Get date of storekeeper training."
     - question: [q26_3]
-      answer: "No"
+      answer: "no"
       warning: "Check with logistics/storekeeper on status of antidotes."
     - question: [q27_3]
-      answer: "No"
+      answer: "no"
       warning: "Get date of pregnancy testing."
     - question: [q29_2]
-      answer: "No"
+      answer: "no"
       warning: "Research possibilities for relocating soak pit."
     - question: [q30_2]
-      answer: "No"
+      answer: "no"
       warning: "Arrange for clearing/cleaning of soak pit area."
     - question: [q31_2]
-      answer: "No"
+      answer: "no"
       warning: "Arrange for repair/replacement of fencing, gate, locks, and/or pump hangers as needed."
     - question: [q32_2]
-      answer: "No"
+      answer: "no"
       warning: "Check with Operations Manager to secure water supply."
     - question: [q33_2]
-      answer: "No"
+      answer: "no"
       warning: "Arrange for re-sloping and/or repairing cracks in wash area."
     - question: [q34_2]
-      answer: "No"
+      answer: "no"
       warning: "Itemize soak pit needs and arrange for needed soak pit materials and labor to repair."
     - question: [q35_2]
-      answer: "No"
+      answer: "no"
       warning: "Check with central stores and obtain delivery date for rinse barrels and wash tubs."
     - question: [q36_2]
-      answer: "No"
+      answer: "no"
       warning: "Arrange for construction of drying lines for overalls."
     - question: [q37_2]
-      answer: "No"
+      answer: "no"
       warning: "Arrange for delivery and installation of Danger signs on soak pit fence."
     - question: [q38_2]
-      answer: "No"
+      answer: "no"
       warning: "Arrange for construction of operator wash areas and/or toilets."
+    - question: [q38a]
+      answer: "no"
+      warning: "Arrange to have the walls of the shower and/or toilet for women built high enough and from the ground."
+    - question: [q38b]
+      answer: "no"
+      warning: "Arrange to provide adequate drainge for the showers and/or toilets."
 # TODO: Form 2
 # Form 3
 http://openrosa.org/formdesigner/54338047-CFB6-4D5B-861B-2256A10BBBC8:
@@ -111,7 +124,7 @@ http://openrosa.org/formdesigner/54338047-CFB6-4D5B-861B-2256A10BBBC8:
     - question: [q10_action]
       warning: "Problem noted: Vehicle does not have required license or certificate."
     - question: [q11_action]
-      answer: "No"
+      answer: "no"
       warning: "Problem noted: Provide safety training for driver."
     - question: [q12_action]
       warning: "Problem noted: Separate transportation needed for operators and pesticides other than the days supply."
@@ -140,7 +153,7 @@ http://openrosa.org/formdesigner/54338047-CFB6-4D5B-861B-2256A10BBBC8:
 # Form 4
 http://openrosa.org/formdesigner/2BAC5FDC-72F3-4AF4-8381-9160E8AE13CF:
   - question: [q1]
-    answer: "No"
+    answer: "no"
     warning: "Problem reported: Resident not informed of spray activities."
   - question: [q2_action]
     warning: "Problem reported: Belongings not removed from structure."
@@ -178,7 +191,7 @@ http://openrosa.org/formdesigner/2BAC5FDC-72F3-4AF4-8381-9160E8AE13CF:
   - question: [q18_action]
     warning: "Problem reported: Spray operator not correctly pressurizing tank before spraying."
   - question: [q19]
-    answer: "Yes"
+    answer: "yes"
     warning: "Problem reported: Pump leaking."
   - question: [q19_action]
     warning: "Problem reported: Spray operator did not immediately service leaking pump."
@@ -194,6 +207,7 @@ http://openrosa.org/formdesigner/2BAC5FDC-72F3-4AF4-8381-9160E8AE13CF:
     warning: "Problem reported: Spray operator spraying wrong surfaces."
   - question: [q25_action]
     warning: "Problem reported: Spray operator not re-pressurizing tank as required."
+  # TODO: 26, 27, and 28 require special logic.
 # Form 5
 http://openrosa.org/formdesigner/7B543EA4-A416-4E46-A121-C4F57412B5AA:
   - question: [q1_action]
@@ -208,6 +222,7 @@ http://openrosa.org/formdesigner/7B543EA4-A416-4E46-A121-C4F57412B5AA:
     warning: "Problem reported: Material Safety Data sheet for the current pesticide(s) not posted"
   - question: [q6_action]
     warning: "Problem reported: Thermometer needed in storeroom. "
+  # TODO: 17, 18
   - question: [q9_action]
     warning: "Problem reported: Storekeeper not familiar with symptoms of poisoning for the current pesticide(s)."
   - question: [q10_action]
@@ -243,7 +258,6 @@ http://openrosa.org/formdesigner/7B543EA4-A416-4E46-A121-C4F57412B5AA:
   - question: [q25_action]
     warning: "Problem reported: Not using FEFO inventory system."
   - question: [q26_action]
-    answer: "yes" # TODO: Is this realy the right answer?
     warning: "Problem reported: Expired pesticides in storeroom."
   - question: [q27_action]
     warning: "Problem reported: Deficient storage and/or labeling of hazardous waste."
@@ -252,7 +266,6 @@ http://openrosa.org/formdesigner/7B543EA4-A416-4E46-A121-C4F57412B5AA:
   - question: [q29_action]
     warning: "Problem reported: Pesticide inventory does not balance."
   - question: [q30_action]
-    answer: "yes" # TODO: Is this really the right answer?
     warning: "Problem reported: Surplus pesticide in inventory."
   - question: [q31_action]
     warning: "Problem reported: Deficient waste management planning."
@@ -309,15 +322,16 @@ http://openrosa.org/formdesigner/89F60CF0-C6A7-4AD8-A48E-AA0F7A7A9B4D:
   - question: [q14_action]
     warning: "Problem reported: Need for strict accounting for sachet/bottless, for labeled containers for all contaminated waste, and for storekeeper training."
   - question: [q15_action]
-    answer: "no" # TODO: Is this really the right capitalization?
     warning: "Problem reported: Spray operators must complete daily report forms."
   - question: [q16_action]
-    answer: "no" # TODO same
     warning: "Problem reported: Supervisors must check spray forms."
   - question: [q17_action]
     warning: "Problem reported: Team Leaders not using Error Eliminator.  "
   - question: [q17_2_action]
     warning: "Problem reported: Team Leaders have difficulty using the Error Eliminator correctly."
+  - question: [q18]
+    answer: "yes"
+    warning: " Problem reported: An incident has been reported and an Incident Report Form is needed immediately. Follow up with Sector Manager to be sure accident report form is filed and sent to TC and ECM."
   - question: [q19_action]
     warning: "Possible exposure reported: Follow-up on status of SO complaining of irritation and ensure incident report has been sent to home office Technical Coordinator and ECM."
   - question: [q20_action]
@@ -387,15 +401,16 @@ http://openrosa.org/formdesigner/89F60CF0-C6A7-4AD8-A48E-AA0F7A7A9B4D:
   - question: [q51_action]
     warning: "Problem reported: Porters not transporting clean overalls to field teams"
   - question: [q52_action]
-    answer: "no" # TODO: Is this really the right answer?
     warning: "Problem reported: Spray operators must complete daily report forms."
   - question: [q53_action]
-    answer: "no" # TODO: Is this really the right answer?
     warning: "Problem reported: Supervisors must check spray forms."
   - question: [q54_action]
     warning: "Problem reported: Team Leaders not using Error Eliminator."
   - question: [q54_2_action]
     warning: "Problem reported: Team Leaders have difficulty using the Error Eliminator correctly."
+  - question: [q55]
+    answer: "yes"
+    warning: "Problem reported: An incident has been reported and an Incident Report Form is needed immediately. Follow up with Sector Manager to be sure accident report form is filed and sent to TC and ECM."
   - question: [q56_action]
     warning: "Possible exposure reported: Follow-up on status of SO complaining of irritation and ensure incident report has been sent to home office Technical Coordinator and ECM."
 # Form 7
