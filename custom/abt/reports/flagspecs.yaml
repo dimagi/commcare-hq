@@ -13,7 +13,7 @@ http://openrosa.org/formdesigner/BB2BF979-BD8F-4B8D-BCF8-A46451228BA9:
     - question: [q5_2]
       answer: "no"
       warning: "Send picture to contractor for installing bars and screens on windows. Get completion date."
-    - question [q6_2]
+    - question: [q6_2]
       warning: "Send picture to contractor for installing bars and screens on windows. Get completion date."
       # TODO: Confirm that no answer means any answer.
     - question: [q7_2]
@@ -207,7 +207,17 @@ http://openrosa.org/formdesigner/2BAC5FDC-72F3-4AF4-8381-9160E8AE13CF:
     warning: "Problem reported: Spray operator spraying wrong surfaces."
   - question: [q25_action]
     warning: "Problem reported: Spray operator not re-pressurizing tank as required."
-  # TODO: 26, 27, and 28 require special logic.
+  - question: [q26_action]
+    warning: "Problem reported; Spray Operator {msg} drinking, or eating during the day"
+    warning_question: [q26a]
+  - question: [q27_3]
+    warning: "Problem reported; Accident or expowsure to: {msg} reported, follow up on IRF"
+    warning_question: [q27_3]
+    # NOTE: q27 might change. Text doesn't make sense given the questions.
+  - question: [q28_action]
+    warning: "Problem reported: {msg}"
+    warning_question: [q28_2]
+  # why no 29?
 # Form 5
 http://openrosa.org/formdesigner/7B543EA4-A416-4E46-A121-C4F57412B5AA:
   - question: [q1_action]
@@ -221,8 +231,9 @@ http://openrosa.org/formdesigner/7B543EA4-A416-4E46-A121-C4F57412B5AA:
   - question: [q5_action]
     warning: "Problem reported: Material Safety Data sheet for the current pesticide(s) not posted"
   - question: [q6_action]
-    warning: "Problem reported: Thermometer needed in storeroom. "
-  # TODO: 17, 18
+    warning: "Problem reported: Thermometer needed in storeroom."
+  # TODO: q7, q8
+  # These require listing unchecked and other logic
   - question: [q9_action]
     warning: "Problem reported: Storekeeper not familiar with symptoms of poisoning for the current pesticide(s)."
   - question: [q10_action]
