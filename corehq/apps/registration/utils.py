@@ -98,15 +98,20 @@ def handle_changed_mailchimp_email(user, old_email, new_email):
         Checks whether there are other users with old_email who are also subscribed to any mailchimp lists.
         If not, it safely unsubscribes that email from mailchimp. Then, adds new_email to mailchimp.
     """
-    users_with_old_email = User.objects.filter(email=old_email)
+    users_with_old_email = User.objects.filter(email=old_email).values_list('username', flat=True)
 
     users_subscribed_with_old_email = []
-    for couch_user in map(lambda u: CouchUser.from_django_user(u), users_with_old_email):
-        if user.subscribed_to_commcare_users or not user.email_opt_out:
-            users_subscribed_with_old_email.append(couch_user)
+    couch_users = CouchUser.get_db().view('users/by_username',
+                                          keys=list(users_with_old_email),
+                                          include_docs=True,
+                                          reduce=False,
+                                          ).all()
+    for couch_user in couch_users:
+        if couch_user['doc']['subscribed_to_commcare_users'] or not couch_user['doc']['email_opt_out']:
+            users_subscribed_with_old_email.append(couch_user['id'])
 
     if (len(users_subscribed_with_old_email) == 1 and
-            users_subscribed_with_old_email[0].get_id == user.get_id):
+            users_subscribed_with_old_email[0] == user.get_id):
         if user.subscribed_to_commcare_users:
             safe_unsubscribe_user_from_mailchimp_list(user, settings.MAILCHIMP_COMMCARE_USERS_ID, email=old_email)
         if not user.email_opt_out:
