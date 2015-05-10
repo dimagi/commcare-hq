@@ -5,6 +5,7 @@ from casexml.apps.case.dbaccessors import get_all_case_owner_ids, get_open_case_
 from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.util import get_indexed_cases
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
+from corehq.apps.users.util import WEIRD_USER_IDS
 
 
 FootprintInfo = namedtuple('FootprintInfo', ['base_ids', 'all_ids'])
@@ -16,7 +17,8 @@ def set_cleanliness_flags_for_domain(domain):
     Sets all cleanliness flags for an entire domain.
     """
     for owner_id in get_all_case_owner_ids(domain):
-        set_cleanliness_flags(domain, owner_id)
+        if owner_id not in WEIRD_USER_IDS:
+            set_cleanliness_flags(domain, owner_id)
 
 
 def set_cleanliness_flags(domain, owner_id):
