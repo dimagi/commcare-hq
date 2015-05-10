@@ -4,7 +4,7 @@ from django.test import TestCase
 import os
 from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
 from casexml.apps.phone.tests.utils import generate_restore_payload
-from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure
+from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseRelationship
 from casexml.apps.phone.tests.utils import synclog_from_restore_payload
 from corehq.apps.domain.models import Domain
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, FILE_RESTORE
@@ -213,14 +213,15 @@ class SyncTokenUpdateTest(SyncBaseTest):
         # create the child        
         child_id = "baby"
         index_id = 'my_mom_is'
-        child = CaseBlock(
-            create=True,
+        self.factory.create_or_update_case(CaseStructure(
             case_id=child_id,
-            user_id=USER_ID,
-            version=V2,
-            index={index_id: (PARENT_TYPE, parent_id)},
-        ).as_xml()
-        self._postFakeWithSyncToken(child, self.sync_log.get_id)
+            attrs={'create': True},
+            relationships=[CaseRelationship(
+                CaseStructure(case_id=parent_id),
+                relationship=index_id,
+                related_type=PARENT_TYPE,
+            )],
+        ))
         index_ref = CommCareCaseIndex(identifier=index_id,
                                       referenced_type=PARENT_TYPE,
                                       referenced_id=parent_id)
