@@ -221,6 +221,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
                 relationship=index_id,
                 related_type=PARENT_TYPE,
             )],
+            walk_related=False,
         ))
         index_ref = CommCareCaseIndex(identifier=index_id,
                                       referenced_type=PARENT_TYPE,
@@ -281,22 +282,20 @@ class SyncTokenUpdateTest(SyncBaseTest):
         Tests that things work properly when you have a reference to the parent
         case in a child, even if it's closed.
         """
-        # first create the parent case
         parent_id = "mommy"
-        self._createCaseStubs([parent_id])
-        self._testUpdate(self.sync_log.get_id, {parent_id: []})
-        
-        # create the child        
         child_id = "baby"
         index_id = 'my_mom_is'
-        child = CaseBlock(
-            create=True,
-            case_id=child_id,
-            user_id=USER_ID,
-            version=V2,
-            index={index_id: (PARENT_TYPE, parent_id)},
-        ).as_xml()
-        self._postFakeWithSyncToken(child, self.sync_log.get_id)
+        self.factory.create_or_update_cases([
+            CaseStructure(
+                case_id=child_id,
+                attrs={'create': True},
+                relationships=[CaseRelationship(
+                    CaseStructure(case_id=parent_id, attrs={'create': True}),
+                    relationship=index_id,
+                    related_type=PARENT_TYPE,
+                )],
+            )
+        ])
         index_ref = CommCareCaseIndex(identifier=index_id,
                                       referenced_type=PARENT_TYPE,
                                       referenced_id=parent_id)
@@ -319,17 +318,19 @@ class SyncTokenUpdateTest(SyncBaseTest):
     def testAssignToNewOwner(self):
         # first create the parent case
         parent_id = "mommy"
-        self._createCaseStubs([parent_id])
-        self._testUpdate(self.sync_log.get_id, {parent_id: []})
-        
-        # create the child        
         child_id = "baby"
         index_id = 'my_mom_is'
-        self._postFakeWithSyncToken(
-            CaseBlock(create=True, case_id=child_id, user_id=USER_ID, version=V2,
-                      index={index_id: (PARENT_TYPE, parent_id)},
-        ).as_xml(), self.sync_log.get_id)
-        
+        self.factory.create_or_update_cases([
+            CaseStructure(
+                case_id=child_id,
+                attrs={'create': True},
+                relationships=[CaseRelationship(
+                    CaseStructure(case_id=parent_id, attrs={'create': True}),
+                    relationship=index_id,
+                    related_type=PARENT_TYPE,
+                )],
+            )
+        ])
         index_ref = CommCareCaseIndex(identifier=index_id,
                                       referenced_type=PARENT_TYPE,
                                       referenced_id=parent_id)
