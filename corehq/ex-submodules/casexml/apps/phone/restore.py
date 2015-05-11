@@ -11,6 +11,7 @@ import tempfile
 from couchdbkit import ResourceConflict, ResourceNotFound
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.caselogic import BatchedCaseSyncOperation, CaseSyncUpdate
+from casexml.apps.phone.data_providers import get_restore_providers
 from casexml.apps.phone.exceptions import (
     MissingSyncLog, InvalidSyncLogException, SyncLogUserMismatch,
     BadStateException, RestoreException,
@@ -32,7 +33,6 @@ from couchforms.xml import (
     get_simple_response_xml,
 )
 from casexml.apps.case.xml import check_version, V1
-from casexml.apps.phone.fixtures import generator
 from django.http import HttpResponse, StreamingHttpResponse
 from django.conf import settings
 from casexml.apps.phone.checksum import CaseStateHash
@@ -578,14 +578,10 @@ class RestoreConfig(object):
 
         # start with standard response
         with get_restore_class(user)(user.username, items=self.params.include_item_count) as response:
-            # add sync token info
-            response.append(xml.get_sync_element(new_synclog.get_id))
-            # registration block
-            response.append(xml.get_registration_element(user))
-
-            # fixture block
-            for fixture in generator.get_fixtures(user, self.version, last_synclog):
-                response.append(fixture)
+            providers = get_restore_providers()
+            for provider in providers:
+                for element in provider.get_elements(self.restore_state):
+                    response.append(element)
 
             case_response, self.num_batches = get_case_payload_batched(
                 self.domain, self.stock_settings, self.version, user, last_synclog,
