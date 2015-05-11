@@ -572,7 +572,6 @@ class RestoreConfig(object):
 
         user = self.user
         # create a sync log for this
-        last_synclog = self.restore_state.last_sync_log
         self.restore_state.start_sync()
 
         # start with standard response
