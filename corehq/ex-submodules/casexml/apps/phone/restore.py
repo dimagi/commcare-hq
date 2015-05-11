@@ -508,6 +508,10 @@ class RestoreState(object):
         new_synclog.save(**get_safe_write_kwargs())
         return new_synclog
 
+    @property
+    def restore_class(self):
+        return get_restore_class(self.user)
+
 
 class RestoreConfig(object):
     """
@@ -577,9 +581,9 @@ class RestoreConfig(object):
         self.restore_state.start_sync()
 
         # start with standard response
-        with get_restore_class(user)(user.username, items=self.params.include_item_count) as response:
-            providers = get_restore_providers()
-            for provider in providers:
+        with self.restore_state.restore_class(user.username, items=self.params.include_item_count) as response:
+            normal_providers = get_restore_providers()
+            for provider in normal_providers:
                 for element in provider.get_elements(self.restore_state):
                     response.append(element)
 
