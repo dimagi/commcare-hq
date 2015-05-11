@@ -112,13 +112,21 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
 
     @property
     def saved_report_context_data(self):
+        def _update_daterange_filters(report_config):
+            report_config_data = ReportConfig.get_db().open_doc(report_config._id)
+            report_config_data['filters'].update(report_config.get_date_range())
+            return report_config_data
+
         current_config_id = self.request.GET.get('config_id')
         return {
-            'report_configs': ReportConfig.by_domain_and_owner(
-                self.domain, self.request.couch_user._id, report_slug=self.slug
-            ),
+            'report_configs': [
+                _update_daterange_filters(config)
+                for config in ReportConfig.by_domain_and_owner(
+                    self.domain, self.request.couch_user._id, report_slug=self.slug
+                )
+            ],
             'default_config': (
-                ReportConfig.get(current_config_id)
+                _update_daterange_filters(ReportConfig.get(current_config_id))
                 if current_config_id
                 else ReportConfig.default()
             ),
