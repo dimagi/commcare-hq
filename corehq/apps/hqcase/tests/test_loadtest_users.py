@@ -3,7 +3,7 @@ from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseRelationship
 from casexml.apps.case.tests import delete_all_cases
 from casexml.apps.case.tests.util import extract_caseblocks_from_xml
 from casexml.apps.case.xml import V2
-from casexml.apps.phone.restore import RestoreConfig
+from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 from corehq import Domain
 from corehq.apps.users.models import CommCareUser
 from corehq.toggles import ENABLE_LOADTEST_USERS
@@ -33,7 +33,7 @@ class LoadtestUserTest(TestCase):
         self.user.loadtest_factor = None
         self.user.save()
         case = self.factory.create_case()
-        restore_config = RestoreConfig(self.user, version=V2)
+        restore_config = RestoreConfig(user=self.user, params=RestoreParams(version=V2))
         payload_string = restore_config.get_payload().as_string()
         caseblocks = extract_caseblocks_from_xml(payload_string)
         self.assertEqual(1, len(caseblocks))
@@ -44,7 +44,11 @@ class LoadtestUserTest(TestCase):
         self.user.save()
         case1 = self.factory.create_case(case_name='case1')
         case2 = self.factory.create_case(case_name='case2')
-        restore_config = RestoreConfig(self.user, version=V2, domain=self.domain)
+        restore_config = RestoreConfig(
+            domain=self.domain,
+            user=self.user,
+            params=RestoreParams(version=V2),
+        )
         payload_string = restore_config.get_payload().as_string()
         caseblocks = extract_caseblocks_from_xml(payload_string)
         self.assertEqual(6, len(caseblocks))
@@ -64,7 +68,11 @@ class LoadtestUserTest(TestCase):
                 ]
             )
         )
-        restore_config = RestoreConfig(self.user, version=V2, domain=self.domain)
+        restore_config = RestoreConfig(
+            domain=self.domain,
+            user=self.user,
+            params=RestoreParams(version=V2)
+        )
         payload_string = restore_config.get_payload().as_string()
         caseblocks = extract_caseblocks_from_xml(payload_string)
         self.assertEqual(6, len(caseblocks))
