@@ -59,26 +59,6 @@ class ProductByProgramFilter(BaseDrilldownOptionFilter):
         }
 
 
-class MSDZoneFilter(BaseSingleOptionFilter):
-
-    slug = 'msd'
-    label = 'MSD zone'
-
-    @property
-    def options(self):
-        return [
-            ('MT', 'Mtwara'),
-            ('MS', 'Moshi'),
-            ('MB', 'Mbeya'),
-            ('TB', 'Tabora'),
-            ('MW', 'Mwanza'),
-            ('IR', 'Iringa'),
-            ('DR', 'Dar'),
-            ('DM', 'Dodoma'),
-            ('TG', 'Tanga'),
-        ]
-
-
 class ProgramFilter(BaseSingleOptionFilter):
     slug = 'filter_by_program'
     label = 'Program'
