@@ -2,6 +2,7 @@ from couchdbkit import ResourceNotFound
 from django.test.utils import override_settings
 from django.test import TestCase
 import os
+from casexml.apps.phone.exceptions import MissingSyncLog, RestoreException
 from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
 from casexml.apps.phone.tests.utils import generate_restore_payload
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseRelationship
@@ -15,7 +16,7 @@ from casexml.apps.case.tests.util import (check_user_has_case, delete_all_sync_l
     assert_user_has_case)
 from casexml.apps.case.xform import process_cases
 from casexml.apps.phone.models import SyncLog, User
-from casexml.apps.phone.restore import RestoreConfig, CachedResponse
+from casexml.apps.phone.restore import CachedResponse, RestoreConfig, RestoreParams, RestoreCacheSettings
 from dimagi.utils.parsing import json_format_datetime
 from couchforms.models import XFormInstance
 from casexml.apps.case.xml import V2, V1
@@ -45,7 +46,7 @@ class SyncBaseTest(TestCase):
         self.user = User(user_id=USER_ID, username=USERNAME,
                          password="changeme", date_joined=datetime(2011, 6, 9))
         # this creates the initial blank sync token in the database
-        restore_config = RestoreConfig(self.user)
+        restore_config = RestoreConfig(user=self.user)
         self.sync_log = synclog_from_restore_payload(restore_config.get_payload().as_string())
         self.factory = CaseFactory(
             case_defaults={
@@ -59,7 +60,7 @@ class SyncBaseTest(TestCase):
         )
 
     def tearDown(self):
-        restore_config = RestoreConfig(self.user)
+        restore_config = RestoreConfig(user=self.user)
         restore_config.cache.delete(restore_config._initial_cache_key())
 
     def _createCaseStubs(self, id_list, **kwargs):
@@ -413,8 +414,11 @@ class SyncTokenCachingTest(SyncBaseTest):
         self.assertFalse(self.sync_log.has_cached_payload(V2))
         # first request should populate the cache
         original_payload = RestoreConfig(
-            self.user, version=V2,
-            restore_id=self.sync_log._id,
+            user=self.user,
+            params=RestoreParams(
+                version=V2,
+                sync_log_id=self.sync_log._id,
+            )
         ).get_payload().as_string()
         next_sync_log = synclog_from_restore_payload(original_payload)
 
@@ -423,26 +427,35 @@ class SyncTokenCachingTest(SyncBaseTest):
 
         # a second request with the same config should be exactly the same
         cached_payload = RestoreConfig(
-            self.user, version=V2,
-            restore_id=self.sync_log._id,
+            user=self.user,
+            params=RestoreParams(
+                version=V2,
+                sync_log_id=self.sync_log._id,
+            )
         ).get_payload().as_string()
         self.assertEqual(original_payload, cached_payload)
 
         # caching a different version should also produce something new
         versioned_payload = RestoreConfig(
-            self.user, version=V1,
-            restore_id=self.sync_log._id,
+            user=self.user,
+            params=RestoreParams(
+                version=V1,
+                sync_log_id=self.sync_log._id,
+            ),
         ).get_payload().as_string()
         self.assertNotEqual(original_payload, versioned_payload)
         versioned_sync_log = synclog_from_restore_payload(versioned_payload)
         self.assertNotEqual(next_sync_log._id, versioned_sync_log._id)
 
     def test_initial_cache(self):
-        restore_config = RestoreConfig(self.user, force_cache=True)
+        restore_config = RestoreConfig(
+            user=self.user,
+            cache_settings=RestoreCacheSettings(force_cache=True),
+        )
         original_payload = restore_config.get_payload()
         self.assertNotIsInstance(original_payload, CachedResponse)
 
-        restore_config = RestoreConfig(self.user)
+        restore_config = RestoreConfig(user=self.user)
         cached_payload = restore_config.get_payload()
         self.assertIsInstance(cached_payload, CachedResponse)
 
@@ -450,8 +463,11 @@ class SyncTokenCachingTest(SyncBaseTest):
 
     def testCacheInvalidation(self):
         original_payload = RestoreConfig(
-            self.user, version=V2,
-            restore_id=self.sync_log._id,
+            user=self.user,
+            params=RestoreParams(
+                version=V2,
+                sync_log_id=self.sync_log._id,
+            ),
         ).get_payload().as_string()
         self.sync_log = SyncLog.get(self.sync_log._id)
         self.assertTrue(self.sync_log.has_cached_payload(V2))
@@ -464,8 +480,11 @@ class SyncTokenCachingTest(SyncBaseTest):
 
         # resyncing should recreate the cache
         next_payload = RestoreConfig(
-            self.user, version=V2,
-            restore_id=self.sync_log._id,
+            user=self.user,
+            params=RestoreParams(
+                version=V2,
+                sync_log_id=self.sync_log._id,
+            ),
         ).get_payload().as_string()
         self.sync_log = SyncLog.get(self.sync_log._id)
         self.assertTrue(self.sync_log.has_cached_payload(V2))
@@ -478,8 +497,11 @@ class SyncTokenCachingTest(SyncBaseTest):
 
     def testCacheNonInvalidation(self):
         original_payload = RestoreConfig(
-            self.user, version=V2,
-            restore_id=self.sync_log._id,
+            user=self.user,
+            params=RestoreParams(
+                version=V2,
+                sync_log_id=self.sync_log._id,
+            ),
         ).get_payload().as_string()
         self.sync_log = SyncLog.get(self.sync_log._id)
         self.assertTrue(self.sync_log.has_cached_payload(V2))
@@ -496,8 +518,11 @@ class SyncTokenCachingTest(SyncBaseTest):
             version=V2,
         ).as_xml()])
         next_payload = RestoreConfig(
-            self.user, version=V2,
-            restore_id=self.sync_log._id,
+            user=self.user,
+            params=RestoreParams(
+                version=V2,
+                sync_log_id=self.sync_log._id,
+            ),
         ).get_payload().as_string()
         self.assertEqual(original_payload, next_payload)
         self.assertFalse(case_id in next_payload)
@@ -515,14 +540,17 @@ class FileRestoreSyncTokenCachingTest(SyncTokenCachingTest):
 
     def testCacheInvalidationAfterFileDelete(self):
         # first request should populate the cache
-        original_payload = RestoreConfig(self.user, force_cache=True).get_payload()
+        original_payload = RestoreConfig(
+            user=self.user,
+            cache_settings=RestoreCacheSettings(force_cache=True)
+        ).get_payload()
         self.assertNotIsInstance(original_payload, CachedResponse)
 
         # Delete cached file
         os.remove(original_payload.get_filename())
 
         # resyncing should recreate the cache
-        next_file = RestoreConfig(self.user).get_payload()
+        next_file = RestoreConfig(user=self.user).get_payload()
         self.assertNotIsInstance(next_file, CachedResponse)
         self.assertNotEqual(original_payload.get_filename(), next_file.get_filename())
 
@@ -1113,11 +1141,14 @@ class LooseSyncTokenValidationTest(SyncBaseTest):
         _test()
 
     def test_restore_with_bad_log_default(self):
-        with self.assertRaises(ResourceNotFound):
+        with self.assertRaises(MissingSyncLog):
             RestoreConfig(
-                self.user, version=V2,
-                restore_id='not-a-valid-synclog-id',
                 domain=Domain(name="test_restore_with_bad_log_default"),
+                user=self.user,
+                params=RestoreParams(
+                    version=V2,
+                    sync_log_id='not-a-valid-synclog-id',
+                ),
             ).get_payload()
 
     def test_restore_with_bad_log_toggle_enabled(self):
@@ -1125,16 +1156,19 @@ class LooseSyncTokenValidationTest(SyncBaseTest):
 
         def _test():
             RestoreConfig(
-                self.user, version=V2,
-                restore_id='not-a-valid-synclog-id',
                 domain=Domain(name=domain),
+                user=self.user,
+                params=RestoreParams(
+                    version=V2,
+                    sync_log_id='not-a-valid-synclog-id',
+                )
             ).get_payload()
 
         LOOSE_SYNC_TOKEN_VALIDATION.set(domain, False, namespace='domain')
-        with self.assertRaises(ResourceNotFound):
+        with self.assertRaises(MissingSyncLog):
             _test()
 
         LOOSE_SYNC_TOKEN_VALIDATION.set(domain, True, namespace='domain')
-        # when the toggle is set the exception should be an HttpException instead
-        with self.assertRaises(HttpException):
+        # when the toggle is set the exception should be a RestoreException instead
+        with self.assertRaises(RestoreException):
             _test()

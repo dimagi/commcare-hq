@@ -13,7 +13,12 @@ from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
 
 
-WEIRD_USER_IDS = ['commtrack-system', 'demo_user']
+WEIRD_USER_IDS = [
+    'commtrack-system',    # internal HQ/commtrack system forms
+    'demo_user',           # demo mode
+    'demo_user_group_id',  # demo mode with case sharing enabled
+]
+
 
 def cc_user_domain(domain):
     sitewide_domain = settings.HQ_ACCOUNT_ROOT 
