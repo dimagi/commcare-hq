@@ -1205,7 +1205,7 @@ class InternalSubscriptionManagementForm(forms.Form):
             )
             account.save()
         contact_info, _ = BillingContactInfo.objects.get_or_create(account=account)
-        emails = (contact_info.emails or '').split(',')
+        emails = contact_info.emails.split(',') if contact_info.emails else []
         for email in self.account_emails:
             if email not in emails:
                 emails.append(email)
@@ -1364,7 +1364,7 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
 
     @property
     def account_emails(self):
-        return self.cleaned_data['emails']
+        return self.cleaned_data['emails'].split(',')
 
 
 class ContractedPartnerForm(InternalSubscriptionManagementForm):
@@ -1530,7 +1530,7 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
 
     @property
     def account_emails(self):
-        return self.cleaned_data['emails']
+        return self.cleaned_data['emails'].split(',')
 
     def clean_end_date(self):
         end_date = self.cleaned_data['end_date']
