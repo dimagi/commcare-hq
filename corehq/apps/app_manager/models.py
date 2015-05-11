@@ -1000,16 +1000,14 @@ class NavMenuItemMediaMixin(DocumentSchema):
 
     @classmethod
     def wrap(cls, data):
-        self = super(NavMenuItemMediaMixin, cls).wrap(data)
-
         # ToDo - Remove after migration
         for media_attr in ('media_image', 'media_audio'):
-            old_media = getattr(self, media_attr)
-            if isinstance(old_media, basestring):
+            old_media = data.get(media_attr, None)
+            if old_media and isinstance(old_media, basestring):
                 new_media = {'default': old_media}
-                setattr(self, media_attr, new_media)
+                data[media_attr] = new_media
 
-        return self
+        return super(NavMenuItemMediaMixin, cls).wrap(data)
 
     @staticmethod
     def _check_media_attribute(media_attr):
