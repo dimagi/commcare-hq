@@ -10,6 +10,7 @@ class RestoreDataProvider(object):
     def get_elements(self, restore_state):
         raise NotImplementedError('Need to implement this method')
 
+
 class SyncElementProvider(RestoreDataProvider):
     """
     Gets the initial sync element.

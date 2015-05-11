@@ -569,9 +569,7 @@ class RestoreConfig(object):
         if cached_response.exists():
             return cached_response
 
-
         user = self.user
-
         # create a sync log for this
         last_synclog = self.restore_state.last_sync_log
         self.restore_state.start_sync()
