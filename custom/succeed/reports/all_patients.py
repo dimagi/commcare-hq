@@ -8,7 +8,6 @@ from corehq.apps.groups.models import Group
 from corehq.apps.reports.datatables import DTSortType
 from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn, SqlTabularReport, DataFormatter, \
     TableDataFormat
-from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.dates import iso_string_to_datetime
 from custom.succeed.reports.patient_interactions import PatientInteractionsReport
 from custom.succeed.reports.patient_task_list import PatientTaskListReport
