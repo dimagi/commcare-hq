@@ -36,6 +36,8 @@ class LocalizedMediaSuiteTest(TestCase, TestFileMixin):
         self.image_path = 'jr://file/commcare/case_list_image.jpg'
         self.audio_path = 'jr://file/commcare/case_list_audo.mp3'
         self.app = Application.new_app('domain', "my app", application_version=APP_V2)
+        self.module = self.app.add_module(Module.new_module("Module 1", None))
+        self.form = self.app.new_form(0, "Form 1", None)
         self.min_spec = BuildSpec.from_string('2.21/latest')
         self.app.build_spec = self.min_spec
 
@@ -61,22 +63,26 @@ class LocalizedMediaSuiteTest(TestCase, TestFileMixin):
             audio_locale_id=audio_locale_id,
         )
 
-    def test_form_suite(self):
+    def test_no_media(self):
+        XML = """
+        <partial>
+            <text>
+                <locale id="forms.m0f0"/>
+            </text>
+        </partial>
+        """
+        self.assertXmlPartialEqual(XML, self.app.create_suite(), "./entry/command[@id='m0-f0']/")
 
-        self.app.add_module(Module.new_module("Module 1", None))
-        form = self.app.new_form(0, "Form 1", None)
-        form.set_icon('en', self.image_path)
-        form.set_audio('en', self.audio_path)
+    def test_form_suite(self):
+        self.form.set_icon('en', self.image_path)
+        self.form.set_audio('en', self.audio_path)
 
         XML = self.makeXML("forms.m0f0", "forms.m0f0.icon", "forms.m0f0.audio")
         self.assertXmlPartialEqual(XML, self.app.create_suite(), "./entry/command[@id='m0-f0']/display")
 
     def test_module_suite(self):
-
-        module = self.app.add_module(Module.new_module("Module 1", None))
-        self.app.new_form(0, "Form 1", None)
-        module.set_icon('en', self.image_path)
-        module.set_audio('en', self.audio_path)
+        self.module.set_icon('en', self.image_path)
+        self.module.set_audio('en', self.audio_path)
 
         XML = self.makeXML("modules.m0", "modules.m0.icon", "modules.m0.audio")
         self.assertXmlPartialEqual(XML, self.app.create_suite(), "./menu[@id='m0']/display")
