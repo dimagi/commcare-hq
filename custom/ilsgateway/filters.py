@@ -1,11 +1,14 @@
+import calendar
 from datetime import datetime
 from django.utils.translation import ugettext_noop
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
-from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter
+from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter, BaseReportFilter
 from corehq.apps.reports.filters.select import MonthFilter
+from corehq.apps.reports_core.filters import DatespanFilter
 from custom.common import ALL_OPTION
 from dimagi.utils.decorators.memoized import memoized
+import settings
 
 
 class ProductByProgramFilter(BaseDrilldownOptionFilter):
@@ -88,21 +91,51 @@ class ProgramFilter(BaseSingleOptionFilter):
         return [(p._id, p.name) for p in Program.by_domain(self.domain)]
 
 
-class MonthAndQuarterFilter(MonthFilter):
+class ILSDateFilter(BaseReportFilter):
+
+    template = "ilsgateway/datespan.html"
+    slug = "datespan"
+    label = "Filter By:"
+
+    def selected(self, type):
+        slug = '{0}_{1}'.format(self.slug, type)
+        return self.request.GET.get(slug)
 
     @property
-    def options(self):
-        options = super(MonthAndQuarterFilter, self).options
-        options.extend([
-            ('-1', 'Quarter 1'),
-            ('-2', 'Quarter 2'),
-            ('-3', 'Quarter 3'),
-            ('-4', 'Quarter 4'),
-            ('-5', 'All')
-        ])
-        return options
+    def select_options(self):
+        start_year = getattr(settings, 'START_YEAR', 2008)
+        years = [dict(val=unicode(y), text=y) for y in range(start_year, datetime.utcnow().year + 1)]
+        years.reverse()
+        months = [dict(val="%02d" % m, text=calendar.month_name[m]) for m in range(1, 13)]
+        quarters = [dict(val=1, text='Quarter 1'),
+                    dict(val=2, text='Quarter 2'),
+                    dict(val=3, text='Quarter 3'),
+                    dict(val=4, text='Quarter 4')]
+        return [
+            {
+                'text': 'Month',
+                'val': 1,
+                'firstOptions': months,
+                'secondOptions': years
+            },
+            {
+                'text': 'Quarter',
+                'val': 2,
+                'firstOptions': quarters,
+                'secondOptions': years
+            },
+            {
+                'text': 'Year',
+                'val': 3,
+                'firstOptions':  [],
+                'secondOptions': years
+            }]
 
     @property
-    @memoized
-    def selected(self):
-        return self.get_value(self.request, self.domain) or "%02d" % datetime.utcnow().month
+    def filter_context(self):
+        return dict(
+            select_options=self.select_options,
+            selected_type=self.selected('type'),
+            selected_first=self.selected('first'),
+            selected_second=self.selected('second')
+        )

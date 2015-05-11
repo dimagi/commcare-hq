@@ -3,7 +3,7 @@ from dateutil import rrule
 from corehq.apps.locations.models import SQLLocation, Location
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.users.models import CommCareUser
-from custom.ilsgateway.filters import MSDZoneFilter, MonthAndQuarterFilter, ProgramFilter
+from custom.ilsgateway.filters import MSDZoneFilter, ProgramFilter, ILSDateFilter
 from custom.ilsgateway.models import OrganizationSummary, GroupSummary, SupplyPointStatusTypes, DeliveryGroups
 from custom.ilsgateway.tanzania import ILSData, DetailsReport
 from custom.ilsgateway.tanzania.reports.mixins import RandRSubmissionData
@@ -11,7 +11,6 @@ from custom.ilsgateway.tanzania.reports.utils import randr_value, get_span, \
     rr_format_percent, link_format, make_url
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
-from corehq.apps.reports.filters.select import YearFilter
 from custom.ilsgateway.tanzania.reports.facility_details import FacilityDetailsReport, InventoryHistoryData, \
     RegistrationData, RandRHistory, Notes, RecentMessages
 from django.utils.translation import ugettext as _
@@ -190,7 +189,7 @@ class RRreport(DetailsReport):
 
     @property
     def fields(self):
-        fields = [AsyncLocationFilter, MonthAndQuarterFilter, YearFilter, ProgramFilter, MSDZoneFilter]
+        fields = [AsyncLocationFilter, ILSDateFilter, ProgramFilter, MSDZoneFilter]
         if self.location and self.location.location_type.name.upper() == 'FACILITY':
             fields = []
         return fields
