@@ -36,7 +36,6 @@ from casexml.apps.phone.fixtures import generator
 from django.http import HttpResponse, StreamingHttpResponse
 from django.conf import settings
 from casexml.apps.phone.checksum import CaseStateHash
-from no_exceptions.exceptions import HttpException
 from wsgiref.util import FileWrapper
 
 logger = logging.getLogger(__name__)
