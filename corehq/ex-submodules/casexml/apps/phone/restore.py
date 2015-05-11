@@ -11,13 +11,15 @@ import tempfile
 from couchdbkit import ResourceConflict, ResourceNotFound
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.caselogic import BatchedCaseSyncOperation, CaseSyncUpdate
-from casexml.apps.phone.exceptions import MissingSyncLog, InvalidSyncLogException, SyncLogUserMismatch
+from casexml.apps.phone.exceptions import (
+    MissingSyncLog, InvalidSyncLogException, SyncLogUserMismatch,
+    BadStateException, RestoreException,
+)
 from casexml.apps.stock.consumption import compute_consumption_or_default
 from casexml.apps.stock.utils import get_current_ledger_transactions_multi
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, FILE_RESTORE, STREAM_RESTORE_CACHE, ENABLE_LOADTEST_USERS
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
-from casexml.apps.case.exceptions import BadStateException, RestoreException
 from casexml.apps.phone.models import SyncLog
 import logging
 from dimagi.utils.couch.database import get_db, get_safe_write_kwargs
