@@ -251,7 +251,6 @@ class TextOrDisplay(XmlObject):
                  menu_locale_id=None, image_locale_id=None, audio_locale_id=None,
                  media_image=None, media_audio=None, **kwargs):
         super(TextOrDisplay, self).__init__(node, context, **kwargs)
-
         text = Text(locale_id=menu_locale_id) if menu_locale_id else None
 
         media_text = []
@@ -497,12 +496,22 @@ class Field(OrderedXmlObject):
     background = NodeField('background/text', Text)
 
 
-class Action(OrderedXmlObject):
+class ActionMixin(OrderedXmlObject):
     ROOT_NAME = 'action'
     ORDER = ('display', 'stack')
 
     stack = NodeField('stack', Stack)
+
+
+class Action(ActionMixin):
+    """ For CC < 2.21 """
+
     display = NodeField('display', Display)
+
+
+class LocalizedAction(ActionMixin, TextOrDisplay):
+    """ For CC >= 2.21 """
+    pass
 
 
 class DetailVariable(XmlObject):
@@ -1142,15 +1151,13 @@ class SuiteGenerator(SuiteGeneratorBase):
                     case_session_var = reg_action.case_session_var
 
                 if self.app.build_version >= '2.21':
-                    form = module.case_list_form
-                    d.action = Action(
-                        display=TextOrDisplay(
-                            menu_locale_id=self.id_strings.form_locale(form),
-                            media_image=bool(filter(bool, form.media_image.values())),
-                            media_audio=bool(filter(bool, form.media_audio.values())),
-                            image_locale_id=self.id_strings.case_list_form_icon_locale(form),
-                            audio_locale_id=self.id_strings.case_list_form_audio_locale(form),
-                        ),
+                    case_list_form = module.case_list_form
+                    d.action = LocalizedAction(
+                        menu_locale_id=self.id_strings.case_list_form_locale(module),
+                        media_image=bool(filter(bool, case_list_form.media_image.values())),
+                        media_audio=bool(filter(bool, case_list_form.media_audio.values())),
+                        image_locale_id=self.id_strings.case_list_form_icon_locale(module),
+                        audio_locale_id=self.id_strings.case_list_form_audio_locale(module),
                         stack=Stack()
                     )
                 else:

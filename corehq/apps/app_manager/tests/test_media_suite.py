@@ -27,64 +27,67 @@ class MediaSuiteTest(TestCase, TestFileMixin):
 
 
 class LocalizedMediaSuiteTest(TestCase, TestFileMixin):
+    """
+        For CC >= 2.21
+    """
+    file_path = ('data', 'suite')
 
     def setUp(self):
         self.image_path = 'jr://file/commcare/case_list_image.jpg'
         self.audio_path = 'jr://file/commcare/case_list_audo.mp3'
         self.app = Application.new_app('domain', "my app", application_version=APP_V2)
-        self.app.build_spec = BuildSpec.from_string('2.21/latest')
+        self.min_spec = BuildSpec.from_string('2.21/latest')
+        self.app.build_spec = self.min_spec
+
+    def makeXML(self, menu_locale_id, image_locale_id, audio_locale_id):
+        XML_template = """
+        <partial>
+            <display>
+                <text>
+                    <locale id="{menu_locale_id}"/>
+                </text>
+                <text form="image">
+                    <locale id="{image_locale_id}"/>
+                </text>
+                <text form="audio">
+                    <locale id="{audio_locale_id}"/>
+                </text>
+            </display>
+        </partial>
+        """
+        return XML_template.format(
+            menu_locale_id=menu_locale_id,
+            image_locale_id=image_locale_id,
+            audio_locale_id=audio_locale_id,
+        )
 
     def test_form_suite(self):
 
         self.app.add_module(Module.new_module("Module 1", None))
         form = self.app.new_form(0, "Form 1", None)
-
         form.set_icon('en', self.image_path)
         form.set_audio('en', self.audio_path)
 
-        XML = """
-        <partial>
-            <entry>
-              <command id="m0-f0">
-                <display>
-                  <text>
-                    <locale id="forms.m0f0"/>
-                  </text>
-                  <text form="image">
-                    <locale id="forms.m0f0.icon"/>
-                  </text>
-                  <text form="audio">
-                    <locale id="forms.m0f0.audio"/>
-                  </text>
-                </display>
-              </command>
-            </entry>
-        </partial>
-        """
-        self.assertXmlPartialEqual(XML, self.app.create_suite(), "./entry")
+        XML = self.makeXML("forms.m0f0", "forms.m0f0.icon", "forms.m0f0.audio")
+        self.assertXmlPartialEqual(XML, self.app.create_suite(), "./entry/command[@id='m0-f0']/display")
 
     def test_module_suite(self):
 
         module = self.app.add_module(Module.new_module("Module 1", None))
         self.app.new_form(0, "Form 1", None)
-
         module.set_icon('en', self.image_path)
         module.set_audio('en', self.audio_path)
 
-        XML = """
-        <partial>
-            <display>
-                <text>
-                    <locale id="modules.m0"/>
-                </text>
-                <text form="image">
-                    <locale id="modules.m0.icon"/>
-                </text>
-                <text form="audio">
-                    <locale id="modules.m0.audio"/>
-                </text>
-            </display>
-        </partial>
-        """
-
+        XML = self.makeXML("modules.m0", "modules.m0.icon", "modules.m0.audio")
         self.assertXmlPartialEqual(XML, self.app.create_suite(), "./menu[@id='m0']/display")
+
+    def test_case_list_form_media(self):
+        app = Application.wrap(self.get_json('app'))
+        app.get_module(0).case_list_form.form_id = app.get_module(0).get_form(0).unique_id
+
+        app.get_module(0).case_list_form.set_icon('en', self.image_path, default_lang=app.default_language)
+        app.get_module(0).case_list_form.set_audio('en', self.audio_path, default_lang=app.default_language)
+        app.build_spec = self.min_spec
+
+        XML = self.makeXML("case_list_form.m0", "case_list_form.m0.icon", "case_list_form.m0.audio")
+        self.assertXmlPartialEqual(XML, app.create_suite(), "./detail[@id='m0_case_short']/action/display")
