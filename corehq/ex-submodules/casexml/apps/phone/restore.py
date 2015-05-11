@@ -441,9 +441,11 @@ class RestoreState(object):
     This allows the providers to set values on the state, for either logging or performance
     reasons.
     """
-    def __init__(self, user, params):
+    def __init__(self, domain, user, params):
+        self.domain = domain
         self.user = user
         self.params = params
+        self.provider_log = {}  # individual data providers can log stuff here
         # get set in the start_sync() function
         self.start_time = None
         self.duration = None
@@ -524,7 +526,7 @@ class RestoreConfig(object):
         self.cache_settings = cache_settings or RestoreCacheSettings()
 
         self.version = self.params.version
-        self.restore_state = RestoreState(self.user, self.params)
+        self.restore_state = RestoreState(self.domain, self.user, self.params)
 
         if domain and domain.commtrack_settings:
             self.stock_settings = domain.commtrack_settings.get_ota_restore_settings()
