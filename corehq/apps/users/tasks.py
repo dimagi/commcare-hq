@@ -39,8 +39,10 @@ def tag_docs_as_deleted(cls, docs, deletion_id):
 
 
 @task(rate_limit=2, queue='background_queue', ignore_result=True)  # 2 saves/sec for cloudant slowness
-def tag_forms_as_deleted_rebuild_associated_cases(formlist, deletion_id, deleted_cases=set()):
+def tag_forms_as_deleted_rebuild_associated_cases(formlist, deletion_id, deleted_cases=None):
     from casexml.apps.case.cleanup import rebuild_case
+    if deleted_cases is None:
+        deleted_cases = set()
 
     cases_to_rebuild = set()
     for form in formlist:
