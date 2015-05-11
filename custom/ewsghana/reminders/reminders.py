@@ -198,11 +198,15 @@ def stockout_notification_to_web_supers():
 
 def stockout_process_user(user, test=False):
     if user_has_reporting_location(user):
-        supply_point = SupplyPointCase.get_by_location(user.location)
+        location = user.location
+        supply_point = SupplyPointCase.get_by_location(location)
         if supply_point and user.get_verified_number():
             products = [
-                SQLProduct.objects.get(product_id=transaction.product_id).name
-                for transaction in StockState.objects.filter(case_id=supply_point._id, stock_on_hand=0)
+                SQLProduct.objects.get(product_id=state.product_id).name
+                for state in StockState.objects.filter(
+                    case_id=supply_point._id, stock_on_hand=0,
+                    product_id__in=[product.product_id for product in location.sql_location.products]
+                )
             ]
             if products:
                 if not test:

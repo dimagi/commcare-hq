@@ -8,7 +8,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import YearFilter
 from django.utils import html
-from custom.ilsgateway.filters import ProductByProgramFilter, MSDZoneFilter, MonthAndQuarterFilter, ProgramFilter
+from custom.ilsgateway.filters import MonthAndQuarterFilter, ProgramFilter
 from custom.ilsgateway.models import SupplyPointStatusTypes, ProductAvailabilityData, \
     OrganizationSummary, SupplyPointStatus, SupplyPointStatusValues
 from custom.ilsgateway.tanzania import ILSData, DetailsReport
@@ -28,6 +28,8 @@ def get_facilities(location, domain):
         locations = SQLLocation.objects.filter(parent=location, is_archived=False)
     elif location.location_type.name.upper() == 'REGION':
         locations = SQLLocation.objects.filter(parent__parent=location, is_archived=False)
+    elif location.location_type.name.upper() == 'MSDZONE':
+        locations = SQLLocation.objects.filter(parent__parent__parent=location, is_archived=False)
     elif location.location_type.name.upper() == 'FACILITY':
         locations = SQLLocation.objects.filter(id=location.id, is_archived=False)
     else:
@@ -104,8 +106,7 @@ class SohPercentageTableData(ILSData):
 
         if self.config['location_id']:
 
-            locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'],
-                                                   site_code__icontains=self.config['msd_code'])
+            locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'])
             for loc in locations:
                 org_summary = OrganizationSummary.objects.filter(date__range=(self.config['startdate'],
                                                                  self.config['enddate']),
@@ -131,9 +132,9 @@ class SohPercentageTableData(ILSData):
                 percent_stockouts = (stockouts or 0) * 100 / float(facs_count)
 
                 url = make_url(StockOnHandReport, self.config['domain'],
-                               '?location_id=%s&month=%s&year=%s&filter_by_program=%s&msd=%s&soh_month=',
+                               '?location_id=%s&month=%s&year=%s&filter_by_program=%s&soh_month=',
                                (loc.location_id, self.config['month'], self.config['year'],
-                               self.config['program'], self.config['msd_code']))
+                               self.config['program']))
 
                 row_data = [
                     link_format(loc.name, url),
@@ -208,9 +209,9 @@ class DistrictSohPercentageTableData(ILSData):
         if self.config['soh_month']:
             soh_month = False
         return html.escape(make_url(StockOnHandReport, self.config['domain'],
-                           '?location_id=%s&month=%s&year=%s&filter_by_program=%s&msd=%s&soh_month=%s',
+                           '?location_id=%s&month=%s&year=%s&filter_by_program=%s&soh_month=%s',
                            (self.config['location_id'], self.config['month'], self.config['year'],
-                           self.config['program'], self.config['msd_code'], soh_month)))
+                           self.config['program'], soh_month)))
 
     @property
     def title_url_name(self):
@@ -290,8 +291,7 @@ class DistrictSohPercentageTableData(ILSData):
                                                  domain=self.config['domain']).order_by('code')
 
         if self.config['location_id']:
-            locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'],
-                                                   site_code__icontains=self.config['msd_code'])
+            locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'])
             for loc in locations:
                 supply_point = loc.supply_point_id
 
@@ -299,9 +299,9 @@ class DistrictSohPercentageTableData(ILSData):
                 hisp = get_hisp_resp_rate(loc)
 
                 url = make_url(FacilityDetailsReport, self.config['domain'],
-                               '?location_id=%s&month=%s&year=%s&filter_by_program=%s&msd=%s',
+                               '?location_id=%s&month=%s&year=%s&filter_by_program=%s',
                                (loc.location_id, self.config['month'], self.config['year'],
-                               self.config['program'], self.config['msd_code']))
+                               self.config['program']))
 
                 row_data = [
                     loc.site_code,
@@ -384,7 +384,7 @@ class StockOnHandReport(DetailsReport):
 
     @property
     def fields(self):
-        fields = [AsyncLocationFilter, MonthAndQuarterFilter, YearFilter, ProgramFilter, MSDZoneFilter]
+        fields = [AsyncLocationFilter, MonthAndQuarterFilter, YearFilter, ProgramFilter]
         if self.location and self.location.location_type.name.upper() == 'FACILITY':
             fields = []
         return fields

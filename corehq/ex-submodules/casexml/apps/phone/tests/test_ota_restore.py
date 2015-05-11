@@ -33,7 +33,7 @@ class OtaRestoreTest(TestCase):
     def tearDown(self):
         delete_all_cases()
         delete_all_sync_logs()
-        restore_config = RestoreConfig(dummy_user())
+        restore_config = RestoreConfig(user=dummy_user())
         restore_config.cache.delete(restore_config._initial_cache_key())
 
     def testFromDjangoUser(self):
