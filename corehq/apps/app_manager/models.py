@@ -1005,17 +1005,23 @@ class NavMenuItemMediaMixin(DocumentSchema):
         # ToDo - Remove after migration
         for media_attr in ('media_image', 'media_audio'):
             old_media = getattr(self, media_attr)
-            if old_media is None or isinstance(old_media, (str, unicode)):
-                new_media = {'default': old_media} if old_media else {}
+            if isinstance(old_media, basestring):
+                new_media = {'default': old_media}
                 setattr(self, media_attr, new_media)
 
         return self
 
-    def _get_media_by_language(self, media_attr, lang):
+    @staticmethod
+    def _check_media_attribute(media_attr):
         if media_attr not in ('media_image', 'media_audio'):
             raise Exception("Unknown media attribute %s." % media_attr)
 
+    def _get_media_by_language(self, media_attr, lang):
+        self._check_media_attribute(media_attr)
+
         media_dict = getattr(self, media_attr)
+        if not media_dict:
+            return None
         default_media = media_dict.get('default', '')
 
         return media_dict[lang] if lang in media_dict else default_media
@@ -1039,11 +1045,9 @@ class NavMenuItemMediaMixin(DocumentSchema):
             Caller's responsibility to save doc.
             Currently only called from the view which saves after all Edits
         """
+        self._check_media_attribute(media_attr)
 
-        if media_attr not in ('media_image', 'media_audio'):
-            raise Exception("Unknown media attribute %s." % media_attr)
-
-        media_dict = getattr(self, media_attr)
+        media_dict = getattr(self, media_attr) or {}
         media_dict[lang] = media_path or ''
         setattr(self, media_attr, media_dict)
 
@@ -1057,6 +1061,17 @@ class NavMenuItemMediaMixin(DocumentSchema):
 
     def set_audio(self, lang, audio_path, default_lang=None):
         self._set_media('media_audio', lang, audio_path, default_lang=default_lang)
+
+    def _all_media_paths(self, media_attr):
+        self._check_media_attribute(media_attr)
+        media_dict = getattr(self, media_attr) or {}
+        return media_dict.values()
+
+    def all_image_paths(self):
+        return self._all_media_paths('media_image')
+
+    def all_audio_paths(self):
+        return self._all_media_paths('media_audio')
 
 
 class Form(IndexedFormBase, NavMenuItemMediaMixin):

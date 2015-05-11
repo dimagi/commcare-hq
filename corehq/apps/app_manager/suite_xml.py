@@ -1154,8 +1154,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                     case_list_form = module.case_list_form
                     d.action = LocalizedAction(
                         menu_locale_id=self.id_strings.case_list_form_locale(module),
-                        media_image=bool(filter(bool, case_list_form.media_image.values())),
-                        media_audio=bool(filter(bool, case_list_form.media_audio.values())),
+                        media_image=bool(len(case_list_form.all_image_paths())),
+                        media_audio=bool(len(case_list_form.all_audio_paths())),
                         image_locale_id=self.id_strings.case_list_form_icon_locale(module),
                         audio_locale_id=self.id_strings.case_list_form_audio_locale(module),
                         stack=Stack()
@@ -1535,8 +1535,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                     e.command = LocalizedCommand(
                         id=self.id_strings.form_command(form),
                         menu_locale_id=self.id_strings.form_locale(form),
-                        media_image=bool(filter(bool, form.media_image.values())),
-                        media_audio=bool(filter(bool, form.media_audio.values())),
+                        media_image=bool(len(form.all_image_paths())),
+                        media_audio=bool(len(form.all_audio_paths())),
                         image_locale_id=self.id_strings.form_icon_locale(form),
                         audio_locale_id=self.id_strings.form_audio_locale(form),
                     )
@@ -2128,8 +2128,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                 if self.app.build_version >= '2.21':
                     menu_kwargs.update({
                         'menu_locale_id': self.id_strings.module_locale(module),
-                        'media_image': bool(filter(bool, module.media_image.values())),
-                        'media_audio': bool(filter(bool, module.media_audio.values())),
+                        'media_image': bool(len(module.all_image_paths())),
+                        'media_audio': bool(len(module.all_audio_paths())),
                         'image_locale_id': self.id_strings.module_icon_locale(module),
                         'audio_locale_id': self.id_strings.module_audio_locale(module),
                     })

@@ -523,13 +523,13 @@ class HQMediaMixin(Document):
             media.extend([ApplicationMediaReference(image,
                                                     media_class=CommCareImage,
                                                     is_menu_media=True, **kwargs)
-                          for image in item.media_image.values()
+                          for image in item.all_image_paths()
                           if image])
 
             media.extend([ApplicationMediaReference(audio,
                                                     media_class=CommCareAudio,
                                                     is_menu_media=True, **kwargs)
-                          for audio in item.media_audio.values()
+                          for audio in item.all_audio_paths()
                           if audio])
 
         for m, module in enumerate(self.get_modules()):
@@ -543,13 +543,13 @@ class HQMediaMixin(Document):
                 media.extend([ApplicationMediaReference(audio_path,
                                                         media_class=CommCareAudio,
                                                         **media_kwargs)
-                              for audio_path in module.case_list_form.media_audio.values()
+                              for audio_path in module.case_list_form.all_audio_paths()
                               if audio_path])
 
                 media.extend([ApplicationMediaReference(image_path,
                                                         media_class=CommCareImage,
                                                         **media_kwargs)
-                              for image_path in module.case_list_form.media_image.values()
+                              for image_path in module.case_list_form.all_image_paths()
                               if image_path])
 
             for f_order, f in enumerate(module.get_forms()):
