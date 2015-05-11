@@ -498,7 +498,18 @@ FIXTURE_GENERATORS = {
     ]
 }
 
-RESTORE_PAYLOAD_DIR = None  # Defaults to tempfile.gettempdir()
+### Shared drive settings ###
+# Also see section after localsettings import
+SHARED_DRIVE_ROOT = None
+
+# name of the directory within SHARED_DRIVE_ROOT
+RESTORE_PAYLOAD_DIR_NAME = None
+
+## django-transfer settings
+# These settings must match the apache / nginx config
+TRANSFER_SERVER = None  # 'apache' or 'nginx'
+# name of the directory within SHARED_DRIVE_ROOT
+TRANSFER_FILE_DIR_NAME = None
 
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
 
@@ -954,6 +965,17 @@ if not SQL_REPORTING_DATABASE_URL or UNIT_TESTING:
         **db_settings
     )
 
+### Shared drive settings ###
+if SHARED_DRIVE_ROOT and RESTORE_PAYLOAD_DIR_NAME:
+    # Defaults to tempfile.gettempdir()
+    RESTORE_PAYLOAD_DIR = os.path.join(SHARED_DRIVE_ROOT, RESTORE_PAYLOAD_DIR_NAME)
+
+if SHARED_DRIVE_ROOT and TRANSFER_FILE_DIR_NAME:
+    TRANSFER_FILE_DIR = os.path.join(SHARED_DRIVE_ROOT, TRANSFER_FILE_DIR_NAME)
+    TRANSFER_MAPPINGS = {
+        TRANSFER_FILE_DIR: '/{}'.format(TRANSFER_FILE_DIR_NAME),  # e.g. '/mnt/shared/downloads': '/downloads',
+    }
+
 MVP_INDICATOR_DB = 'mvp-indicators'
 
 INDICATOR_CONFIG = {
@@ -1384,6 +1406,7 @@ TRAVIS_TEST_GROUPS = (
         'facilities', 'fixtures', 'fluff_filter', 'formplayer',
         'formtranslate', 'fri', 'grapevine', 'groups', 'gsid', 'hope',
         'hqadmin', 'hqcase', 'hqcouchlog', 'hqmedia',
+        'smsbillables',
     ),
 )
 

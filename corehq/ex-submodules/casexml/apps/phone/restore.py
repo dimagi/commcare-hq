@@ -11,12 +11,16 @@ import tempfile
 from couchdbkit import ResourceConflict, ResourceNotFound
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.caselogic import BatchedCaseSyncOperation, CaseSyncUpdate
+from casexml.apps.phone.data_providers import get_restore_providers, get_long_running_providers
+from casexml.apps.phone.exceptions import (
+    MissingSyncLog, InvalidSyncLogException, SyncLogUserMismatch,
+    BadStateException, RestoreException,
+)
 from casexml.apps.stock.consumption import compute_consumption_or_default
 from casexml.apps.stock.utils import get_current_ledger_transactions_multi
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, FILE_RESTORE, STREAM_RESTORE_CACHE, ENABLE_LOADTEST_USERS
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
-from casexml.apps.case.exceptions import BadStateException, RestoreException
 from casexml.apps.phone.models import SyncLog
 import logging
 from dimagi.utils.couch.database import get_db, get_safe_write_kwargs
@@ -29,11 +33,9 @@ from couchforms.xml import (
     get_simple_response_xml,
 )
 from casexml.apps.case.xml import check_version, V1
-from casexml.apps.phone.fixtures import generator
 from django.http import HttpResponse, StreamingHttpResponse
 from django.conf import settings
 from casexml.apps.phone.checksum import CaseStateHash
-from no_exceptions.exceptions import HttpException
 from wsgiref.util import FileWrapper
 
 logger = logging.getLogger(__name__)
@@ -128,7 +130,8 @@ class FileRestoreResponse(RestoreResponse):
 
     def __init__(self, username=None, items=False):
         super(FileRestoreResponse, self).__init__(username, items)
-        self.filename = path.join(settings.RESTORE_PAYLOAD_DIR or tempfile.gettempdir(), uuid4().hex)
+        payload_dir = getattr(settings, 'RESTORE_PAYLOAD_DIR', None)
+        self.filename = path.join(payload_dir or tempfile.gettempdir(), uuid4().hex)
 
         self.response_body = FileIO(self.get_filename(self.BODY_TAG_SUFFIX), 'w+')
 
@@ -397,45 +400,143 @@ def get_case_payload_batched(domain, stock_settings, version, user, last_synclog
     return response, sync_operation.batch_count
 
 
+class RestoreParams(object):
+    """
+    Lightweight class that just handles grouping the possible attributes of a restore together.
+
+    This is just for user-defined settings that can be configured via the URL.
+
+    :param sync_log_id:         ID of the previous restore
+    :param version:             The version of the restore format
+    :param state_hash:          The case state hash string to use to verify the state of the phone
+    :param include_item_count:  Set to `True` to include the item count in the response
+    """
+
+    def __init__(self, sync_log_id='', version=V1, state_hash='', include_item_count=False):
+        self.sync_log_id = sync_log_id
+        self.version = version
+        self.state_hash = state_hash
+        self.include_item_count = include_item_count
+
+
+class RestoreCacheSettings(object):
+    """
+    Settings related to restore caching. These only apply if doing an initial restore and
+    are not used if `RestoreParams.sync_log_id` is set.
+
+    :param force_cache:     Set to `True` to force the response to be cached.
+    :param cache_timeout:   Override the default cache timeout of 1 hour.
+    :param overwrite_cache: Ignore any previously cached value and re-generate the restore response.
+    """
+
+    def __init__(self, force_cache=False, cache_timeout=None, overwrite_cache=False):
+        self.force_cache = force_cache
+        self.cache_timeout = cache_timeout if cache_timeout is not None else INITIAL_SYNC_CACHE_TIMEOUT
+        self.overwrite_cache = overwrite_cache
+
+
+class RestoreState(object):
+    """
+    The RestoreState object can be passed around to multiple restore data providers.
+
+    This allows the providers to set values on the state, for either logging or performance
+    reasons.
+    """
+    def __init__(self, domain, user, params):
+        self.domain = domain
+        self.user = user
+        self.params = params
+        self.provider_log = {}  # individual data providers can log stuff here
+        # get set in the start_sync() function
+        self.start_time = None
+        self.duration = None
+        self.current_sync_log = None
+
+    def validate_state(self):
+        check_version(self.params.version)
+        if self.last_sync_log and self.params.state_hash:
+            parsed_hash = CaseStateHash.parse(self.params.state_hash)
+            computed_hash = self.last_sync_log.get_state_hash()
+            if computed_hash != parsed_hash:
+                raise BadStateException(expected=computed_hash,
+                                        actual=parsed_hash,
+                                        case_ids=self.last_sync_log.get_footprint_of_cases_on_phone())
+
+    @property
+    @memoized
+    def last_sync_log(self):
+        if self.params.sync_log_id:
+            try:
+                sync_log = SyncLog.get(self.params.sync_log_id)
+            except ResourceNotFound:
+                # if we are in loose mode, return an HTTP 412 so that the phone will
+                # just force a fresh sync
+                raise MissingSyncLog('No sync log with ID {} found'.format(self.params.sync_log_id))
+            if sync_log.doc_type != 'SyncLog':
+                raise InvalidSyncLogException('Bad sync log doc type for {}'.format(self.params.sync_log_id))
+            elif sync_log.user_id != self.user.user_id:
+                raise SyncLogUserMismatch('Sync log {} does not match user id {} (was {})'.format(
+                    self.params.sync_log_id, self.user.user_id, sync_log.user_id
+                ))
+
+            return sync_log
+        else:
+            return None
+
+    @property
+    def is_initial(self):
+        return self.last_sync_log is None
+
+    def start_sync(self):
+        self.start_time = datetime.utcnow()
+        self.current_sync_log = self.create_sync_log()
+
+    def finish_sync(self):
+        self.duration = datetime.utcnow() - self.start_time
+        self.current_sync_log.duration = self.duration.seconds
+        self.current_sync_log.save()
+
+    def create_sync_log(self):
+        previous_log_id = None if self.is_initial else self.last_sync_log._id
+        last_seq = str(get_db().info()["update_seq"])
+        new_synclog = SyncLog(
+            user_id=self.user.user_id,
+            last_seq=last_seq,
+            owner_ids_on_phone=self.user.get_owner_ids(),
+            date=datetime.utcnow(),
+            previous_log_id=previous_log_id
+        )
+        new_synclog.save(**get_safe_write_kwargs())
+        return new_synclog
+
+    @property
+    def restore_class(self):
+        return get_restore_class(self.user)
+
+
 class RestoreConfig(object):
     """
     A collection of attributes associated with an OTA restore
 
-    :param user:            The mobile user requesting the restore
-    :param restore_id:      ID of the previous restore
-    :param version:         The version of the restore format
-    :param state_hash:      The case state hash string to use to verify the state of the phone
-    :param items:           Set to `True` to include the item count in the response
-    :param stock_settings:  CommTrack stock settings for the domain.
-                            If None, default settings will be used.
     :param domain:          The domain object. An instance of `Domain`.
-    :param force_cache:     Set to `True` to force the response to be cached.
-                            Only applies if `restore_id` is empty.
-    :param cache_timeout:   Override the default cache timeout of 1 hour.
-                            Only applies if `restore_id` is empty.
-    :param overwrite_cache: Ignore any previously cached value and re-generate the restore response.
-                            Only applies if `restore_id` is empty.
+    :param user:            The mobile user requesting the restore
+    :param params:          The RestoreParams associated with this (see above).
+    :param cache_settings:  The RestoreCacheSettings associated with this (see above).
     """
-    def __init__(self, user, restore_id="", version=V1, state_hash="",
-                 items=False, stock_settings=None, domain=None, force_cache=False,
-                 cache_timeout=None, overwrite_cache=False):
-        self.user = user
-        self.restore_id = restore_id
-        self.version = version
-        self.state_hash = state_hash
-        self.items = items
 
-        if stock_settings:
-            self.stock_settings = stock_settings
-        elif domain and domain.commtrack_settings:
-            self.stock_settings = domain.commtrack_settings.get_ota_restore_settings()
-        else:
-            self.stock_settings = StockSettings()
+    def __init__(self, domain=None, user=None, params=None, cache_settings=None):
+        self.domain = domain
+        self.user = user
+        self.params = params or RestoreParams()
+        self.cache_settings = cache_settings or RestoreCacheSettings()
+
+        self.version = self.params.version
+        self.restore_state = RestoreState(self.domain, self.user, self.params)
 
         self.domain = domain
-        self.force_cache = force_cache
-        self.cache_timeout = cache_timeout or INITIAL_SYNC_CACHE_TIMEOUT
-        self.overwrite_cache = overwrite_cache
+        self.force_cache = self.cache_settings.force_cache
+        self.cache_timeout = self.cache_settings.cache_timeout
+        self.overwrite_cache = self.cache_settings.overwrite_cache
 
         self.cache = get_redis_default_cache()
 
@@ -445,34 +546,18 @@ class RestoreConfig(object):
     @property
     @memoized
     def sync_log(self):
-        if self.restore_id:
-            try:
-                sync_log = SyncLog.get(self.restore_id)
-            except ResourceNotFound:
-                # if we are in loose mode, return an HTTP 412 so that the phone will
-                # just force a fresh sync
-                if LOOSE_SYNC_TOKEN_VALIDATION.enabled(self.domain.name):
-                    raise HttpException(412)
-                else:
-                    raise
-
-            if sync_log.user_id == self.user.user_id \
-                    and sync_log.doc_type == 'SyncLog':
-                return sync_log
-            else:
-                raise HttpException(412)
-        else:
-            return None
+        return self.restore_state.last_sync_log
 
     def validate(self):
-        # runs validation checks, raises exceptions if anything is amiss
-        check_version(self.version)
-        if self.sync_log and self.state_hash:
-            parsed_hash = CaseStateHash.parse(self.state_hash)
-            if self.sync_log.get_state_hash() != parsed_hash:
-                raise BadStateException(expected=self.sync_log.get_state_hash(),
-                                        actual=parsed_hash,
-                                        case_ids=self.sync_log.get_footprint_of_cases_on_phone())
+        try:
+            self.restore_state.validate_state()
+        except InvalidSyncLogException, e:
+            if LOOSE_SYNC_TOKEN_VALIDATION.enabled(self.domain.name):
+                # This exception will get caught by the view and a 412 will be returned to the phone for resync
+                raise RestoreException(e)
+            else:
+                # This exception will fail hard and we'll get a 500 error message
+                raise
 
     def get_payload(self):
         """
@@ -480,52 +565,35 @@ class RestoreConfig(object):
         that contains the contents of the payload. If FILE_RESTORE toggle is enabled, then this will return
         the filename, otherwise it will return the full string payload
         """
-        user = self.user
-        last_synclog = self.sync_log
-
         self.validate()
 
         cached_response = self.get_cached_payload()
         if cached_response.exists():
             return cached_response
 
-        start_time = datetime.utcnow()
-        last_seq = str(get_db().info()["update_seq"])
-
+        user = self.user
         # create a sync log for this
-        previous_log_id = last_synclog.get_id if last_synclog else None
-        new_synclog = SyncLog(
-            user_id=user.user_id,
-            last_seq=last_seq,
-            owner_ids_on_phone=user.get_owner_ids(),
-            date=datetime.utcnow(),
-            previous_log_id=previous_log_id
-        )
-        new_synclog.save(**get_safe_write_kwargs())
+        self.restore_state.start_sync()
 
         # start with standard response
-        with get_restore_class(user)(user.username, items=self.items) as response:
-            # add sync token info
-            response.append(xml.get_sync_element(new_synclog.get_id))
-            # registration block
-            response.append(xml.get_registration_element(user))
+        with self.restore_state.restore_class(user.username, items=self.params.include_item_count) as response:
+            normal_providers = get_restore_providers()
+            for provider in normal_providers:
+                for element in provider.get_elements(self.restore_state):
+                    response.append(element)
 
-            # fixture block
-            for fixture in generator.get_fixtures(user, self.version, last_synclog):
-                response.append(fixture)
+            # in the future these will be done asynchronously so keep them separate
+            long_running_providers = get_long_running_providers()
+            for provider in long_running_providers:
+                partial_response = provider.get_response(self.restore_state)
+                response = response + partial_response
+                partial_response.close()
 
-            case_response, self.num_batches = get_case_payload_batched(
-                self.domain, self.stock_settings, self.version, user, last_synclog, new_synclog
-            )
-            combined_response = response + case_response
-            case_response.close()
-            combined_response.finalize()
+            response.finalize()
 
-        duration = datetime.utcnow() - start_time
-        new_synclog.duration = duration.seconds
-        new_synclog.save()
-        self.set_cached_payload_if_necessary(combined_response, duration)
-        return combined_response
+        self.restore_state.finish_sync()
+        self.set_cached_payload_if_necessary(response, self.restore_state.duration)
+        return response
 
     def get_response(self):
         try:

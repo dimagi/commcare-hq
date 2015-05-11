@@ -22,13 +22,12 @@ from django.views.decorators.http import require_POST
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.const import SERVER_DATETIME_FORMAT_NO_SEC
 from custom.ilsgateway.forms import SupervisionDocumentForm
+from custom.ilsgateway.stock_data import ILSStockDataSynchronization
 from custom.ilsgateway.tanzania.reminders.delivery import send_delivery_reminder
 from custom.ilsgateway.tanzania.reminders.randr import send_ror_reminder
 from custom.ilsgateway.tanzania.reminders.stockonhand import send_soh_reminder
 from custom.ilsgateway.tanzania.reminders.supervision import send_supervision_reminder
-from custom.ilsgateway.tanzania.warehouse.const import TEST_REGION_ID
-
-from custom.ilsgateway.tasks import get_ilsgateway_data_migrations, clear_report_data
+from custom.ilsgateway.tasks import clear_report_data
 from casexml.apps.stock.models import StockTransaction
 from custom.logistics.tasks import sms_users_fix, fix_groups_in_location_task
 from custom.ilsgateway.api import ILSGatewayAPI
@@ -240,12 +239,7 @@ def ils_sync_stock_data(request, domain):
     config = ILSGatewayConfig.for_domain(domain)
     domain = config.domain
     endpoint = ILSGatewayEndpoint.from_config(config)
-    apis = get_ilsgateway_data_migrations()
-    test_region = SQLLocation.objects.get(domain=domain, external_id=TEST_REGION_ID)
-    facilities = SQLLocation.objects.filter(
-        Q(domain=domain) & (Q(parent=test_region) | Q(parent__parent=test_region))
-    ).order_by('id').values_list('external_id', flat=True)
-    stock_data_task.delay(domain, endpoint, apis, config, facilities)
+    stock_data_task.delay(ILSStockDataSynchronization(domain, endpoint))
     return HttpResponse('OK')
 
 
