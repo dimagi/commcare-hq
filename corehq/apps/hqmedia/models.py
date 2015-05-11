@@ -549,6 +549,18 @@ class HQMediaMixin(Document):
                     **media_kwargs)
                 )
 
+            if module.case_list.show:
+                media.append(ApplicationMediaReference(
+                    module.case_list.media_audio,
+                    media_class=CommCareAudio,
+                    **media_kwargs)
+                )
+                media.append(ApplicationMediaReference(
+                    module.case_list.media_image,
+                    media_class=CommCareImage,
+                    **media_kwargs)
+                )
+
             for f_order, f in enumerate(module.get_forms()):
                 media_kwargs['form_name'] = f.name
                 media_kwargs['form_id'] = f.unique_id
