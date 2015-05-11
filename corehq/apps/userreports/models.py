@@ -306,6 +306,11 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             'Columns cannot contain duplicate column_ids: {}',
         )
 
+        if [f['type'] for f in self.filters].count('sliding_date') > 1:
+            raise BadSpecError(_(
+                'Cannot have more than one filter with type "sliding_date".'
+            ))
+
         # these calls all implicitly do validation
         ReportFactory.from_spec(self)
         self.ui_filters
