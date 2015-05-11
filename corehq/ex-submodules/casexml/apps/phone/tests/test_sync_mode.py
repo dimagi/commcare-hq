@@ -2,7 +2,7 @@ from couchdbkit import ResourceNotFound
 from django.test.utils import override_settings
 from django.test import TestCase
 import os
-from casexml.apps.phone.exceptions import MissingSyncLog
+from casexml.apps.phone.exceptions import MissingSyncLog, RestoreException
 from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
 from casexml.apps.phone.tests.utils import generate_restore_payload
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseRelationship
@@ -1169,6 +1169,6 @@ class LooseSyncTokenValidationTest(SyncBaseTest):
             _test()
 
         LOOSE_SYNC_TOKEN_VALIDATION.set(domain, True, namespace='domain')
-        # when the toggle is set the exception should be an HttpException instead
-        with self.assertRaises(HttpException):
+        # when the toggle is set the exception should be a RestoreException instead
+        with self.assertRaises(RestoreException):
             _test()

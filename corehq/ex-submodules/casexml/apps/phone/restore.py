@@ -441,6 +441,15 @@ class RestoreState(object):
         self.user = user
         self.params = params
 
+    def validate_state(self):
+        check_version(self.params.version)
+        if self.sync_log and self.params.state_hash:
+            parsed_hash = CaseStateHash.parse(self.params.state_hash)
+            if self.sync_log.get_state_hash() != parsed_hash:
+                raise BadStateException(expected=self.sync_log.get_state_hash(),
+                                        actual=parsed_hash,
+                                        case_ids=self.sync_log.get_footprint_of_cases_on_phone())
+
     @property
     @memoized
     def sync_log(self):
@@ -480,7 +489,6 @@ class RestoreConfig(object):
         self.cache_settings = cache_settings or RestoreCacheSettings()
 
         self.version = self.params.version
-        self.state_hash = self.params.state_hash
         self.items = self.params.include_item_count
         self.restore_state = RestoreState(self.user, self.params)
 
@@ -502,23 +510,18 @@ class RestoreConfig(object):
     @property
     @memoized
     def sync_log(self):
-        try:
-            return self.restore_state.sync_log
-        except InvalidSyncLogException:
-            if LOOSE_SYNC_TOKEN_VALIDATION.enabled(self.domain.name):
-                raise HttpException(412)
-            else:
-                raise
+        return self.restore_state.sync_log
 
     def validate(self):
-        # runs validation checks, raises exceptions if anything is amiss
-        check_version(self.version)
-        if self.sync_log and self.state_hash:
-            parsed_hash = CaseStateHash.parse(self.state_hash)
-            if self.sync_log.get_state_hash() != parsed_hash:
-                raise BadStateException(expected=self.sync_log.get_state_hash(),
-                                        actual=parsed_hash,
-                                        case_ids=self.sync_log.get_footprint_of_cases_on_phone())
+        try:
+            self.restore_state.validate_state()
+        except InvalidSyncLogException, e:
+            if LOOSE_SYNC_TOKEN_VALIDATION.enabled(self.domain.name):
+                # This exception will get caught by the view and a 412 will be returned to the phone for resync
+                raise RestoreException(e)
+            else:
+                # This exception will fail hard and we'll get a 500 error message
+                raise
 
     def get_payload(self):
         """
@@ -526,9 +529,6 @@ class RestoreConfig(object):
         that contains the contents of the payload. If FILE_RESTORE toggle is enabled, then this will return
         the filename, otherwise it will return the full string payload
         """
-        user = self.user
-        last_synclog = self.sync_log
-
         self.validate()
 
         cached_response = self.get_cached_payload()
@@ -538,7 +538,10 @@ class RestoreConfig(object):
         start_time = datetime.utcnow()
         last_seq = str(get_db().info()["update_seq"])
 
+        user = self.user
+
         # create a sync log for this
+        last_synclog = self.sync_log
         previous_log_id = last_synclog.get_id if last_synclog else None
         new_synclog = SyncLog(
             user_id=user.user_id,
