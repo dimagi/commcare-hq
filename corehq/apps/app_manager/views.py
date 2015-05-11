@@ -2484,6 +2484,7 @@ class DownloadCCZ(DownloadMultimediaZip):
     name = 'download_ccz'
     compress_zip = True
     zip_name = 'commcare.ccz'
+    download_async = True
 
     def check_before_zipping(self):
         pass
