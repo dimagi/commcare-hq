@@ -24,7 +24,7 @@
                     $('#{{ SLUG }}-media')[$(this).val() === 'true' ? 'show' : 'hide']();
                 }
                 $('#{{ SLUG }}-label input').attr('name', '{{ SLUG }}-label').removeClass('wide');
-                $('[name="{{ SLUG }}-show"]').change(updateCaseListLabel);
+                $('[name="{{ SLUG }}-show"]').change(updateCaseListLabel).each(updateCaseListLabel);
             });
         </script>
     </div>
