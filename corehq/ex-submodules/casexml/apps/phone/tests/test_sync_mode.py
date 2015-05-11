@@ -2,6 +2,7 @@ from couchdbkit import ResourceNotFound
 from django.test.utils import override_settings
 from django.test import TestCase
 import os
+from casexml.apps.phone.exceptions import MissingSyncLog
 from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
 from casexml.apps.phone.tests.utils import generate_restore_payload
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseRelationship
@@ -1113,7 +1114,7 @@ class LooseSyncTokenValidationTest(SyncBaseTest):
         _test()
 
     def test_restore_with_bad_log_default(self):
-        with self.assertRaises(ResourceNotFound):
+        with self.assertRaises(MissingSyncLog):
             RestoreConfig(
                 self.user, version=V2,
                 restore_id='not-a-valid-synclog-id',
@@ -1131,7 +1132,7 @@ class LooseSyncTokenValidationTest(SyncBaseTest):
             ).get_payload()
 
         LOOSE_SYNC_TOKEN_VALIDATION.set(domain, False, namespace='domain')
-        with self.assertRaises(ResourceNotFound):
+        with self.assertRaises(MissingSyncLog):
             _test()
 
         LOOSE_SYNC_TOKEN_VALIDATION.set(domain, True, namespace='domain')

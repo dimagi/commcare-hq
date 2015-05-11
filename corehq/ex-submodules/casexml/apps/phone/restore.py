@@ -11,6 +11,7 @@ import tempfile
 from couchdbkit import ResourceConflict, ResourceNotFound
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.caselogic import BatchedCaseSyncOperation, CaseSyncUpdate
+from casexml.apps.phone.exceptions import MissingSyncLog, InvalidSyncLogException, SyncLogUserMismatch
 from casexml.apps.stock.consumption import compute_consumption_or_default
 from casexml.apps.stock.utils import get_current_ledger_transactions_multi
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, FILE_RESTORE, STREAM_RESTORE_CACHE, ENABLE_LOADTEST_USERS
@@ -397,6 +398,48 @@ def get_case_payload_batched(domain, stock_settings, version, user, last_synclog
     return response, sync_operation.batch_count
 
 
+class RestoreParams(object):
+    """
+    Lightweight class that just handles grouping the possible attributes of a restore together.
+
+    This is just for user-defined settings that can be configured via the URL.
+    """
+
+    def __init__(self, sync_log_id, version, state_hash='', include_item_count=False):
+        self.sync_log_id = sync_log_id
+        self.version = version
+        self.state_hash = state_hash
+        self.include_item_count = include_item_count
+
+
+class RestoreState(object):
+
+    def __init__(self, user, params):
+        self.user = user
+        self.params = params
+
+    @property
+    @memoized
+    def sync_log(self):
+        if self.params.sync_log_id:
+            try:
+                sync_log = SyncLog.get(self.params.sync_log_id)
+            except ResourceNotFound:
+                # if we are in loose mode, return an HTTP 412 so that the phone will
+                # just force a fresh sync
+                raise MissingSyncLog('No sync log with ID {} found'.format(self.params.sync_log_id))
+            if sync_log.doc_type != 'SyncLog':
+                raise InvalidSyncLogException('Bad sync log doc type for {}'.format(self.params.sync_log_id))
+            elif sync_log.user_id != self.user.user_id:
+                raise SyncLogUserMismatch('Sync log {} does not match user id {} (was {})'.format(
+                    self.params.sync_log_id, self.user.user_id, sync_log.user_id
+                ))
+
+            return sync_log
+        else:
+            return None
+
+
 class RestoreConfig(object):
     """
     A collection of attributes associated with an OTA restore
@@ -424,6 +467,13 @@ class RestoreConfig(object):
         self.version = version
         self.state_hash = state_hash
         self.items = items
+        self.params = RestoreParams(
+            sync_log_id=restore_id,
+            version=version,
+            state_hash=state_hash,
+            include_item_count=items,
+        )
+        self.restore_state = RestoreState(self.user, self.params)
 
         if stock_settings:
             self.stock_settings = stock_settings
@@ -445,24 +495,13 @@ class RestoreConfig(object):
     @property
     @memoized
     def sync_log(self):
-        if self.restore_id:
-            try:
-                sync_log = SyncLog.get(self.restore_id)
-            except ResourceNotFound:
-                # if we are in loose mode, return an HTTP 412 so that the phone will
-                # just force a fresh sync
-                if LOOSE_SYNC_TOKEN_VALIDATION.enabled(self.domain.name):
-                    raise HttpException(412)
-                else:
-                    raise
-
-            if sync_log.user_id == self.user.user_id \
-                    and sync_log.doc_type == 'SyncLog':
-                return sync_log
-            else:
+        try:
+            return self.restore_state.sync_log
+        except InvalidSyncLogException:
+            if LOOSE_SYNC_TOKEN_VALIDATION.enabled(self.domain.name):
                 raise HttpException(412)
-        else:
-            return None
+            else:
+                raise
 
     def validate(self):
         # runs validation checks, raises exceptions if anything is amiss
