@@ -459,11 +459,11 @@ class RestoreConfig(object):
     :param overwrite_cache: Ignore any previously cached value and re-generate the restore response.
                             Only applies if `restore_id` is empty.
     """
+
     def __init__(self, user, restore_id="", version=V1, state_hash="",
                  items=False, stock_settings=None, domain=None, force_cache=False,
                  cache_timeout=None, overwrite_cache=False):
         self.user = user
-        self.restore_id = restore_id
         self.version = version
         self.state_hash = state_hash
         self.items = items
