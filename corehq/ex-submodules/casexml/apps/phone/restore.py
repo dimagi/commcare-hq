@@ -435,23 +435,33 @@ class RestoreCacheSettings(object):
 
 
 class RestoreState(object):
+    """
+    The RestoreState object can be passed around to multiple restore data providers.
 
+    This allows the providers to set values on the state, for either logging or performance
+    reasons.
+    """
     def __init__(self, user, params):
         self.user = user
         self.params = params
+        # get set in the start_sync() function
+        self.start_time = None
+        self.duration = None
+        self.current_sync_log = None
 
     def validate_state(self):
         check_version(self.params.version)
-        if self.sync_log and self.params.state_hash:
+        if self.last_sync_log and self.params.state_hash:
             parsed_hash = CaseStateHash.parse(self.params.state_hash)
-            if self.sync_log.get_state_hash() != parsed_hash:
-                raise BadStateException(expected=self.sync_log.get_state_hash(),
+            computed_hash = self.last_sync_log.get_state_hash()
+            if computed_hash != parsed_hash:
+                raise BadStateException(expected=computed_hash,
                                         actual=parsed_hash,
-                                        case_ids=self.sync_log.get_footprint_of_cases_on_phone())
+                                        case_ids=self.last_sync_log.get_footprint_of_cases_on_phone())
 
     @property
     @memoized
-    def sync_log(self):
+    def last_sync_log(self):
         if self.params.sync_log_id:
             try:
                 sync_log = SyncLog.get(self.params.sync_log_id)
@@ -469,6 +479,32 @@ class RestoreState(object):
             return sync_log
         else:
             return None
+
+    @property
+    def is_initial(self):
+        return self.last_sync_log is None
+
+    def start_sync(self):
+        self.start_time = datetime.utcnow()
+        self.current_sync_log = self.create_sync_log()
+
+    def finish_sync(self):
+        self.duration = datetime.utcnow() - self.start_time
+        self.current_sync_log.duration = self.duration.seconds
+        self.current_sync_log.save()
+
+    def create_sync_log(self):
+        previous_log_id = None if self.is_initial else self.last_sync_log._id
+        last_seq = str(get_db().info()["update_seq"])
+        new_synclog = SyncLog(
+            user_id=self.user.user_id,
+            last_seq=last_seq,
+            owner_ids_on_phone=self.user.get_owner_ids(),
+            date=datetime.utcnow(),
+            previous_log_id=previous_log_id
+        )
+        new_synclog.save(**get_safe_write_kwargs())
+        return new_synclog
 
 
 class RestoreConfig(object):
@@ -508,7 +544,7 @@ class RestoreConfig(object):
     @property
     @memoized
     def sync_log(self):
-        return self.restore_state.sync_log
+        return self.restore_state.last_sync_log
 
     def validate(self):
         try:
@@ -533,22 +569,12 @@ class RestoreConfig(object):
         if cached_response.exists():
             return cached_response
 
-        start_time = datetime.utcnow()
-        last_seq = str(get_db().info()["update_seq"])
 
         user = self.user
 
         # create a sync log for this
-        last_synclog = self.sync_log
-        previous_log_id = last_synclog.get_id if last_synclog else None
-        new_synclog = SyncLog(
-            user_id=user.user_id,
-            last_seq=last_seq,
-            owner_ids_on_phone=user.get_owner_ids(),
-            date=datetime.utcnow(),
-            previous_log_id=previous_log_id
-        )
-        new_synclog.save(**get_safe_write_kwargs())
+        last_synclog = self.restore_state.last_sync_log
+        self.restore_state.start_sync()
 
         # start with standard response
         with get_restore_class(user)(user.username, items=self.params.include_item_count) as response:
@@ -562,16 +588,15 @@ class RestoreConfig(object):
                 response.append(fixture)
 
             case_response, self.num_batches = get_case_payload_batched(
-                self.domain, self.stock_settings, self.version, user, last_synclog, new_synclog
+                self.domain, self.stock_settings, self.version, user, last_synclog,
+                self.restore_state.current_sync_log
             )
             combined_response = response + case_response
             case_response.close()
             combined_response.finalize()
 
-        duration = datetime.utcnow() - start_time
-        new_synclog.duration = duration.seconds
-        new_synclog.save()
-        self.set_cached_payload_if_necessary(combined_response, duration)
+        self.restore_state.finish_sync()
+        self.set_cached_payload_if_necessary(combined_response, self.restore_state.duration)
         return combined_response
 
     def get_response(self):
