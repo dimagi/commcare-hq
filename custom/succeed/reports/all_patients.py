@@ -44,8 +44,11 @@ def target_date(visit_name, visit_days, randomization_date):
 
 def date_format(date_str):
     if date_str:
-        date = datetime.strptime(date_str, SERVER_DATETIME_FORMAT)
-        return date.strftime(OUTPUT_DATE_FORMAT)
+        try:
+            date = datetime.strptime(date_str, SERVER_DATETIME_FORMAT)
+            return date.strftime(OUTPUT_DATE_FORMAT)
+        except ValueError:
+            return EMPTY_FIELD
     else:
         return EMPTY_FIELD
 
