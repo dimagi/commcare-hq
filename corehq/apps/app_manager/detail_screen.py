@@ -325,11 +325,16 @@ class EnumImage(Enum):
 
 
 @register_format_type('late-flag')
-class LateFlag(HideShortHeaderColumn):
+class LateFlag(FormattedDetailColumn):
 
     template_width = "10%"
 
     XPATH_FUNCTION = u"if({xpath} = '', '*', if(today() - date({xpath}) > {column.late_flag}, '*', ''))"
+
+    @property
+    def header_width(self):
+        if self.detail.display == 'short':
+            return 30  # TODO: Test and adjust
 
 
 @register_format_type('invisible')
