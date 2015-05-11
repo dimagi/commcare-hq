@@ -1006,7 +1006,6 @@ class NavMenuItemMediaMixin(DocumentSchema):
         for media_attr in ('media_image', 'media_audio'):
             old_media = getattr(self, media_attr)
             if old_media is None or isinstance(old_media, (str, unicode)):
-                # ToDo - better way than to hardcode default-language.
                 new_media = {'default': old_media} if old_media else {}
                 setattr(self, media_attr, new_media)
 
@@ -1045,7 +1044,6 @@ class NavMenuItemMediaMixin(DocumentSchema):
             raise Exception("Unknown media attribute %s." % media_attr)
 
         media_dict = getattr(self, media_attr)
-        # Todo, If set to None, jsonobject validation complains. Ask others
         media_dict[lang] = media_path or ''
         setattr(self, media_attr, media_dict)
 
