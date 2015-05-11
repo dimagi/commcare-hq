@@ -470,7 +470,7 @@ class RestoreConfig(object):
     """
 
     def __init__(self, user, restore_id="", version=V1, state_hash="",
-                 items=False, stock_settings=None, domain=None, force_cache=False,
+                 items=False, domain=None, force_cache=False,
                  cache_timeout=None, overwrite_cache=False):
         self.user = user
         self.version = version
@@ -484,9 +484,7 @@ class RestoreConfig(object):
         )
         self.restore_state = RestoreState(self.user, self.params)
 
-        if stock_settings:
-            self.stock_settings = stock_settings
-        elif domain and domain.commtrack_settings:
+        if domain and domain.commtrack_settings:
             self.stock_settings = domain.commtrack_settings.get_ota_restore_settings()
         else:
             self.stock_settings = StockSettings()
