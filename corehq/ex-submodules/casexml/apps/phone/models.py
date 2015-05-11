@@ -194,7 +194,6 @@ class SyncLog(SafeSaveDocument, UnicodeMixIn):
         Get the dependent case state object associated with an id, or None if no such
         object is found
         """
-        # see comment in get_case_state for reasoning
         filtered_list = self._dependent_case_state_map()[case_id]
         if filtered_list:
             self._assert(len(filtered_list) == 1,
