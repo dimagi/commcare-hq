@@ -180,7 +180,7 @@ def request_new_domain(request, org, domain_type=None, new_user=True):
         dom_req.activation_guid = uuid.uuid1().hex
 
     new_domain = Domain(
-        name=form.cleaned_data['domain_name'],
+        name='',
         hr_name='Untitled Project',
         is_active=False,
         date_created=datetime.utcnow(),
