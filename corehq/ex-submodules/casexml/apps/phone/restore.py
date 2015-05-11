@@ -489,7 +489,6 @@ class RestoreConfig(object):
         self.cache_settings = cache_settings or RestoreCacheSettings()
 
         self.version = self.params.version
-        self.items = self.params.include_item_count
         self.restore_state = RestoreState(self.user, self.params)
 
         if domain and domain.commtrack_settings:
@@ -553,7 +552,7 @@ class RestoreConfig(object):
         new_synclog.save(**get_safe_write_kwargs())
 
         # start with standard response
-        with get_restore_class(user)(user.username, items=self.items) as response:
+        with get_restore_class(user)(user.username, items=self.params.include_item_count) as response:
             # add sync token info
             response.append(xml.get_sync_element(new_synclog.get_id))
             # registration block
