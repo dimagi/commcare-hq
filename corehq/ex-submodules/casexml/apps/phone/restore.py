@@ -405,7 +405,7 @@ class RestoreParams(object):
     This is just for user-defined settings that can be configured via the URL.
     """
 
-    def __init__(self, sync_log_id, version, state_hash='', include_item_count=False):
+    def __init__(self, sync_log_id='', version=V1, state_hash='', include_item_count=False):
         self.sync_log_id = sync_log_id
         self.version = version
         self.state_hash = state_hash
@@ -618,3 +618,20 @@ class RestoreConfig(object):
             # on initial sync, only cache if the duration was longer than the threshold
             if self.force_cache or duration > timedelta(seconds=INITIAL_SYNC_CACHE_THRESHOLD):
                 self.cache.set(self._initial_cache_key(), cache_payload, self.cache_timeout)
+
+
+class TemporaryRestoreConfig(RestoreConfig):
+    """
+    Temporary class to change the API of the constructor to ease the refactoring.
+    """
+
+    def __init__(self, domain=None, user=None, params=None):
+        params = params or RestoreParams()
+        super(TemporaryRestoreConfig, self).__init__(
+            user=user,
+            domain=domain,
+            restore_id=params.sync_log_id,
+            version=params.version,
+            state_hash=params.state_hash,
+            items=params.include_item_count,
+        )
