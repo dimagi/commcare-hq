@@ -7,15 +7,19 @@ from django.views.generic import View
 from corehq.util.view_utils import set_file_download
 
 CHUNK_SIZE = 8192
+MULTIMEDIA_EXTENSIONS = ('.mp3', '.wav', '.jpg', '.png', '.gif', '.3gp', '.mp4', '.zip', )
 
 
 def make_zip_tempfile(files, compress=True):
     compression = zipfile.ZIP_DEFLATED if compress else zipfile.ZIP_STORED
     fd, fpath = tempfile.mkstemp()
     with os.fdopen(fd, 'w') as tmp:
-        with zipfile.ZipFile(tmp, "w", compression) as z:
+        with zipfile.ZipFile(tmp, "w") as z:
             for path, data in files:
-                z.writestr(path, data)
+                # don't compress multimedia files
+                extension = os.path.splitext(path)[1]
+                file_compression = zipfile.ZIP_STORED if extension in MULTIMEDIA_EXTENSIONS else compression
+                z.writestr(path, data, file_compression)
     return fpath
 
 
