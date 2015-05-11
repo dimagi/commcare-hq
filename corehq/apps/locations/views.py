@@ -186,7 +186,7 @@ class LocationTypesView(BaseCommTrackManageView):
                 assert lt['name'] not in visited, \
                     "There's a loc type cycle, we need to prohibit that"
                 visited.add(lt['name'])
-                if lt['parent_type']:
+                if lt['parent_type'] and lt['parent_type'] in lt_dict:
                     step(lt_dict[lt['parent_type']])
             step(loc_type)
 
