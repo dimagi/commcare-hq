@@ -98,17 +98,18 @@ def handle_changed_mailchimp_email(user, old_email, new_email):
         Checks whether there are other users with old_email who are also subscribed to any mailchimp lists.
         If not, it safely unsubscribes that email from mailchimp. Then, adds new_email to mailchimp.
     """
+    def subscribed(couch_user):
+        return couch_user.subscribed_to_commcare_users or not couch_user.email_opt_out
+
     users_with_old_email = User.objects.filter(email=old_email).values_list('username', flat=True)
 
-    users_subscribed_with_old_email = []
-    couch_users = CouchUser.get_db().view('users/by_username',
-                                          keys=list(users_with_old_email),
-                                          include_docs=True,
-                                          reduce=False,
-                                          ).all()
-    for couch_user in couch_users:
-        if couch_user['doc']['subscribed_to_commcare_users'] or not couch_user['doc']['email_opt_out']:
-            users_subscribed_with_old_email.append(couch_user['id'])
+    couch_users = CouchUser.view('users/by_username',
+                                 keys=list(users_with_old_email),
+                                 include_docs=True,
+                                 reduce=False,
+                                 ).all()
+
+    users_subscribed_with_old_email = [couch_user.get_id for couch_user in couch_users if subscribed(couch_user)]
 
     if (len(users_subscribed_with_old_email) == 1 and
             users_subscribed_with_old_email[0] == user.get_id):
