@@ -4,7 +4,7 @@ from corehq.apps.locations.models import Location, LocationType, SQLLocation, \
 from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.locations.fixtures import location_fixture_generator
 from corehq.apps.commtrack.helpers import make_supply_point, make_product
-from corehq.apps.commtrack.util import bootstrap_location_types
+from corehq.apps.commtrack.tests.util import bootstrap_location_types
 from corehq.apps.users.models import CommCareUser
 from django.test import TestCase
 from couchdbkit import ResourceNotFound

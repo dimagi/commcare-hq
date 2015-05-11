@@ -11,8 +11,7 @@ from corehq.apps.locations.models import Location, LocationType
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.sms import StockReportParser, process
-from corehq.apps.commtrack.util import get_default_requisition_config, \
-    bootstrap_location_types
+from corehq.apps.commtrack.util import get_default_requisition_config
 from corehq.apps.commtrack.models import SupplyPointCase, CommtrackConfig, ConsumptionConfig
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.sms.backend import test
@@ -105,6 +104,26 @@ def bootstrap_user(setup, username=TEST_USER, domain=TEST_DOMAIN,
 
     user.save_verified_number(domain, phone_number, verified=True, backend_id=backend)
     return CommCareUser.wrap(user.to_json())
+
+
+def bootstrap_location_types(domain):
+    previous = None
+    for name, administrative in [
+        ('state', True),
+        ('district', True),
+        ('block', True),
+        ('village', True),
+        ('outlet', False),
+    ]:
+        location_type, _ = LocationType.objects.get_or_create(
+            domain=domain,
+            name=name,
+            defaults={
+                'parent_type': previous,
+                'administrative': administrative,
+            },
+        )
+        previous = location_type
 
 
 def make_loc(code, name=None, domain=TEST_DOMAIN, type=TEST_LOCATION_TYPE, parent=None):
