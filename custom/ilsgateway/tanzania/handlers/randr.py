@@ -1,7 +1,6 @@
 from datetime import datetime
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.sms.api import send_sms_to_verified_number
-from custom.ilsgateway.tanzania.handlers import get_location
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues, \
     DeliveryGroupReport
 from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
@@ -24,46 +23,49 @@ class RandrHandler(KeywordHandler):
                 send_sms_to_verified_number(user.get_verified_number(), SUBMITTED_NOTIFICATION_MSD % params)
 
     def _handle(self, help=False):
-        location = get_location(self.domain, self.user, None)
+        location = self.user.location
         status_type = None
-        if location['location'].location_type == 'FACILITY':
+        if location.location_type == 'FACILITY':
             status_type = SupplyPointStatusTypes.R_AND_R_FACILITY
-            self.respond(SUBMITTED_CONFIRM % {"sp_name": location['location'].name,
+            self.respond(SUBMITTED_CONFIRM % {"sp_name": location.name,
                                               "contact_name": self.user.name})
-        elif location['location'].location_type == 'DISTRICT':
+        elif location.location_type == 'DISTRICT':
             if help:
                 quantities = [0, 0, 0]
                 self.respond(SUBMITTED_REMINDER_DISTRICT)
             else:
                 quantities = [self.args[1], self.args[3], self.args[5]]
                 DeliveryGroupReport.objects.create(
-                    supply_point=location['case']._id,
+                    supply_point=location.get_id,
                     quantity=quantities[0],
                     message=self.msg._id,
-                    delivery_group="A")
+                    delivery_group="A"
+                )
                 DeliveryGroupReport.objects.create(
-                    supply_point=location['case']._id,
+                    supply_point=location.get_id,
                     quantity=quantities[1],
                     message=self.msg._id,
-                    delivery_group="B")
+                    delivery_group="B"
+                )
                 DeliveryGroupReport.objects.create(
-                    supply_point=location['case']._id,
+                    supply_point=location.get_id,
                     quantity=quantities[2],
                     message=self.msg._id,
-                    delivery_group="C")
+                    delivery_group="C"
+                )
                 self.respond(SUBMITTED_CONFIRM % {
-                    "sp_name": location['case'].name,
+                    "sp_name": location.name,
                     "contact_name": self.user.first_name + " " + self.user.last_name}
                 )
             status_type = SupplyPointStatusTypes.R_AND_R_DISTRICT
             params = {
-                'district_name': location['case'].name,
+                'district_name': location.name,
                 'group_a': quantities[0],
                 'group_b': quantities[1],
                 'group_c': quantities[2]
             }
             self._send_submission_alert_to_msd(params)
-        SupplyPointStatus.objects.create(supply_point=location['case']._id,
+        SupplyPointStatus.objects.create(supply_point=location.get_id,
                                          status_type=status_type,
                                          status_value=SupplyPointStatusValues.SUBMITTED,
                                          status_date=datetime.utcnow())

@@ -14,7 +14,7 @@ class SupervisionHandler(KeywordHandler):
 
     def handle(self):
         subcommand = self.args[0].strip().lower()
-        location = get_location(self.domain, self.user, None)
+        location = self.user.location
         if not location:
             return
         if re.match("hap", subcommand) or re.match("no", subcommand):
@@ -28,6 +28,6 @@ class SupervisionHandler(KeywordHandler):
             return
 
         SupplyPointStatus.objects.create(status_type=SupplyPointStatusTypes.SUPERVISION_FACILITY,
-                                             status_value=status_value,
-                                             supply_point=location['case']._id,
-                                             status_date=datetime.utcnow())
+                                         status_value=status_value,
+                                         supply_point=location.get_id,
+                                         status_date=datetime.utcnow())
