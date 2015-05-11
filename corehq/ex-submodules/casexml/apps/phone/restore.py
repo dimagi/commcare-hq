@@ -412,6 +412,21 @@ class RestoreParams(object):
         self.include_item_count = include_item_count
 
 
+class RestoreCacheSettings(object):
+    """
+    Settings related to restore caching. These only apply if doing an initial restore and
+    are not used if `RestoreParams.sync_log_id` is set.
+
+    :param force_cache:     Set to `True` to force the response to be cached.
+    :param cache_timeout:   Override the default cache timeout of 1 hour.
+    :param overwrite_cache: Ignore any previously cached value and re-generate the restore response.
+    """
+
+    def __init__(self, force_cache=False, cache_timeout=None, overwrite_cache=False):
+        self.force_cache = force_cache
+        self.cache_timeout = cache_timeout
+        self.overwrite_cache = overwrite_cache
+
 class RestoreState(object):
 
     def __init__(self, user, params):
@@ -452,12 +467,6 @@ class RestoreConfig(object):
     :param stock_settings:  CommTrack stock settings for the domain.
                             If None, default settings will be used.
     :param domain:          The domain object. An instance of `Domain`.
-    :param force_cache:     Set to `True` to force the response to be cached.
-                            Only applies if `restore_id` is empty.
-    :param cache_timeout:   Override the default cache timeout of 1 hour.
-                            Only applies if `restore_id` is empty.
-    :param overwrite_cache: Ignore any previously cached value and re-generate the restore response.
-                            Only applies if `restore_id` is empty.
     """
 
     def __init__(self, user, restore_id="", version=V1, state_hash="",
@@ -625,8 +634,9 @@ class TemporaryRestoreConfig(RestoreConfig):
     Temporary class to change the API of the constructor to ease the refactoring.
     """
 
-    def __init__(self, domain=None, user=None, params=None):
+    def __init__(self, domain=None, user=None, params=None, cache_settings=None):
         params = params or RestoreParams()
+        cache_settings = cache_settings or RestoreCacheSettings()
         super(TemporaryRestoreConfig, self).__init__(
             user=user,
             domain=domain,
@@ -634,4 +644,7 @@ class TemporaryRestoreConfig(RestoreConfig):
             version=params.version,
             state_hash=params.state_hash,
             items=params.include_item_count,
+            force_cache=cache_settings.force_cache,
+            cache_timeout=cache_settings.cache_timeout,
+            overwrite_cache=cache_settings.overwrite_cache,
         )

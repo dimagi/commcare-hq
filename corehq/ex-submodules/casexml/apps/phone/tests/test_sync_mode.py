@@ -16,7 +16,7 @@ from casexml.apps.case.tests.util import (check_user_has_case, delete_all_sync_l
     assert_user_has_case)
 from casexml.apps.case.xform import process_cases
 from casexml.apps.phone.models import SyncLog, User
-from casexml.apps.phone.restore import RestoreConfig, CachedResponse, TemporaryRestoreConfig, RestoreParams
+from casexml.apps.phone.restore import CachedResponse, TemporaryRestoreConfig, RestoreParams, RestoreCacheSettings
 from dimagi.utils.parsing import json_format_datetime
 from couchforms.models import XFormInstance
 from casexml.apps.case.xml import V2, V1
@@ -448,7 +448,10 @@ class SyncTokenCachingTest(SyncBaseTest):
         self.assertNotEqual(next_sync_log._id, versioned_sync_log._id)
 
     def test_initial_cache(self):
-        restore_config = RestoreConfig(self.user, force_cache=True)
+        restore_config = TemporaryRestoreConfig(
+            user=self.user,
+            cache_settings=RestoreCacheSettings(force_cache=True),
+        )
         original_payload = restore_config.get_payload()
         self.assertNotIsInstance(original_payload, CachedResponse)
 
@@ -537,7 +540,10 @@ class FileRestoreSyncTokenCachingTest(SyncTokenCachingTest):
 
     def testCacheInvalidationAfterFileDelete(self):
         # first request should populate the cache
-        original_payload = RestoreConfig(self.user, force_cache=True).get_payload()
+        original_payload = TemporaryRestoreConfig(
+            user=self.user,
+            cache_settings=RestoreCacheSettings(force_cache=True)
+        ).get_payload()
         self.assertNotIsInstance(original_payload, CachedResponse)
 
         # Delete cached file
