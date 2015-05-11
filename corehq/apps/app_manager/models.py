@@ -1769,6 +1769,7 @@ class Module(ModuleBase):
                 short=Detail(detail.to_json()),
                 long=Detail(detail.to_json()),
             ),
+            case_label={(lang or 'en'): 'Cases'},
         )
         module.get_or_create_unique_id()
         return module
