@@ -4,8 +4,9 @@ if (typeof cloudCare === 'undefined') {
 
 cloudCare.EMPTY = '---';
 
-var _caseListLoadError = function (response) {
+var _caseListLoadError = function (model, response) {
     hideLoadingCallback();
+    console.error(response.responseText);
     showError(translatedStrings.caseListError, $("#cloudcare-notifications"));
 };
 

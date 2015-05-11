@@ -76,8 +76,8 @@
   permission: "cloudcare"
 
 - id: commtrack_enabled
-  name: "CommTrack"
-  description: 'Enable CommTrack'
+  name: "CommCare Supply"
+  description: 'Enable CommCare Supply'
   description_format: html
   widget: bool
   default: false
@@ -88,8 +88,8 @@
   preview: true
 
 - id: commtrack_requisition_mode
-  name: "CommTrack Requisition Mode"
-  description: "CommTrack Requisition Mode"
+  name: "CommCare Supply Requisition Mode"
+  description: "CommCare Supply Requisition Mode"
   description_format: html
   requires: "{hq.commtrack_enabled}=true"
   values: ['disabled', '3-step', '4-step']
@@ -159,7 +159,7 @@
 
 - id: amplifies_workers
   name: 'Amplifies Workers'
-  description: 'Amplifies the impact of services offered by a Frontline Worker. Examples: an FLW who uses CommCare to improve counseling and screening of pregnant women. An FLW that uses CommTrack to increase their supply of medicines. A nurse who uses CommCare to implement protocols.'
+  description: 'Amplifies the impact of services offered by a Frontline Worker. Examples: an FLW who uses CommCare to improve counseling and screening of pregnant women. An FLW that uses CommCare Supply to increase their supply of medicines. A nurse who uses CommCare to implement protocols.'
   values: ['yes', 'no', 'not_set']
   value_names:
    - 'Yes'

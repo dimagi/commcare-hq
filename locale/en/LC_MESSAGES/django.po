@@ -35,7 +35,7 @@ msgstr ""
 
 #: corehq/__init__.py:61 corehq/apps/reports/__init__.py:12
 msgid "Commtrack"
-msgstr ""
+msgstr "CommCare Supply"
 
 #: corehq/__init__.py:76
 msgid "Care Plans"
@@ -162,7 +162,7 @@ msgstr ""
 #: corehq/apps/reports/models.py:54
 #: corehq/apps/users/templates/users/edit_commcare_user.html:125
 msgid "CommTrack"
-msgstr ""
+msgstr "CommCare Supply"
 
 #: corehq/feature_previews.py:91
 msgid ""

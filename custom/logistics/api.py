@@ -258,11 +258,13 @@ class APISynchronization(object):
             'date_joined': force_to_datetime(ilsgateway_webuser.date_joined).replace(tzinfo=None),
             'password_hashed': True,
         }
-        try:
-            sql_location = SQLLocation.objects.get(domain=self.domain, external_id=ilsgateway_webuser.location)
-            location_id = sql_location.location_id
-        except SQLLocation.DoesNotExist:
-            location_id = None
+        location_id = None
+        if ilsgateway_webuser.location:
+            try:
+                sql_location = SQLLocation.objects.get(domain=self.domain, external_id=ilsgateway_webuser.location)
+                location_id = sql_location.location_id
+            except SQLLocation.DoesNotExist:
+                location_id = None
 
         if user is None:
             try:

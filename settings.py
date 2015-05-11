@@ -401,7 +401,7 @@ DOMAIN_SELECT_URL = "/domain/select/"
 # This is not used by anything in CommCare HQ, leaving it here in case anything
 # in Django unexpectedly breaks without it.  When you need the login url, you
 # should use reverse('login', kwargs={'domain_type': domain_type}) in order to
-# maintain CommCare HQ/CommTrack distinction.
+# maintain CommCare HQ/CommCare Supply distinction.
 LOGIN_URL = "/accounts/login/"
 # If a user tries to access domain admin pages but isn't a domain
 # administrator, here's where he/she is redirected
@@ -1384,6 +1384,7 @@ TRAVIS_TEST_GROUPS = (
         'facilities', 'fixtures', 'fluff_filter', 'formplayer',
         'formtranslate', 'fri', 'grapevine', 'groups', 'gsid', 'hope',
         'hqadmin', 'hqcase', 'hqcouchlog', 'hqmedia',
+        'smsbillables',
     ),
 )
 

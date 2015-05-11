@@ -46,7 +46,8 @@ def iso_string_to_datetime(iso_string):
             return datetime.datetime.strptime(iso_string, fmt)
         except ValueError:
             pass
-    _assert(False, 'input not in expected format: {!r}'.format(iso_string))
+    _assert(False, 'iso_string_to_datetime input not in expected format',
+            iso_string)
     from dimagi.utils.parsing import string_to_utc_datetime
     return string_to_utc_datetime(iso_string)
 
