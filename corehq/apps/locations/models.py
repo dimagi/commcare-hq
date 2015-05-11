@@ -262,6 +262,10 @@ class SQLLocation(MPTTModel):
         return (location.get_ancestors(include_self=True)
                 .filter(pk=self.pk).exists())
 
+    @classmethod
+    def by_domain(cls, domain):
+        return cls.objects.filter(domain=domain)
+
 
 def _filter_for_archived(locations, include_archive_ancestors):
     """
@@ -563,10 +567,6 @@ class Location(CachedCouchDocumentMixin, Document):
         return root_locations(domain)
 
     @classmethod
-    def all_locations(cls, domain):
-        return all_locations(domain)
-
-    @classmethod
     def get_in_domain(cls, domain, id):
         if id:
             try:
@@ -656,8 +656,3 @@ def root_locations(domain):
     ids = [res['key'][-1] for res in results]
     locs = [Location.get(id) for id in ids]
     return [loc for loc in locs if not loc.is_archived]
-
-
-def all_locations(domain):
-    return Location.view('locations/hierarchy', startkey=[domain], endkey=[domain, {}],
-                         reduce=False, include_docs=True).all()

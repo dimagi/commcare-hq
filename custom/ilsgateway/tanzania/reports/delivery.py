@@ -2,7 +2,7 @@ from dateutil import rrule
 from django.db.models.aggregates import Avg
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from custom.ilsgateway.filters import MSDZoneFilter, MonthAndQuarterFilter, ProgramFilter
+from custom.ilsgateway.filters import MonthAndQuarterFilter, ProgramFilter
 from custom.ilsgateway.tanzania import ILSData, DetailsReport
 from custom.ilsgateway.tanzania.reports.facility_details import FacilityDetailsReport, InventoryHistoryData, \
     RegistrationData, RandRHistory, Notes, RecentMessages
@@ -31,8 +31,7 @@ class LeadTimeHistory(ILSData):
 
     @property
     def rows(self):
-        locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'],
-                                               site_code__icontains=self.config['msd_code'])
+        locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'])
         rows = []
         for loc in locations:
             try:
@@ -51,9 +50,9 @@ class LeadTimeHistory(ILSData):
                 avg_lead_time = "None"
 
             url = make_url(DeliveryReport, self.config['domain'],
-                           '?location_id=%s&month=%s&year=%s&filter_by_program=%s&msd=%s',
+                           '?location_id=%s&month=%s&year=%s&filter_by_program=%s',
                            (loc.location_id, self.config['month'], self.config['year'],
-                           self.config['program'], self.config['msd_code']))
+                           self.config['program']))
 
             rows.append([link_format(loc.name, url), avg_lead_time])
         return rows
@@ -88,8 +87,7 @@ class DeliveryStatus(ILSData):
     @property
     def rows(self):
         rows = []
-        locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'],
-                                               site_code__icontains=self.config['msd_code'])
+        locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'])
         dg = []
         for date in list(rrule.rrule(rrule.MONTHLY, dtstart=self.config['startdate'],
                                      until=self.config['enddate'])):
@@ -106,9 +104,9 @@ class DeliveryStatus(ILSData):
             status_date = latest.status_date.strftime("%d-%m-%Y") if latest else "None"
 
             url = make_url(FacilityDetailsReport, self.config['domain'],
-                           '?location_id=%s&month=%s&year=%s&filter_by_program=%s&msd=%s',
+                           '?location_id=%s&month=%s&year=%s&filter_by_program=%s',
                            (self.config['location_id'], self.config['month'], self.config['year'],
-                           self.config['program'], self.config['msd_code']))
+                           self.config['program']))
 
             cycle_lead_time = get_this_lead_time(
                 child.location_id,
@@ -176,7 +174,7 @@ class DeliveryReport(DetailsReport):
 
     @property
     def fields(self):
-        fields = [AsyncLocationFilter, MonthAndQuarterFilter, YearFilter, ProgramFilter, MSDZoneFilter]
+        fields = [AsyncLocationFilter, MonthAndQuarterFilter, YearFilter, ProgramFilter]
         if self.location and self.location.location_type.name.upper() == 'FACILITY':
             fields = []
         return fields
@@ -190,7 +188,7 @@ class DeliveryReport(DetailsReport):
         config = self.report_config
         if config['location_id']:
             location = SQLLocation.objects.get(location_id=config['location_id'])
-            if location.location_type.name.upper() in ['REGION', 'MOHSW']:
+            if location.location_type.name.upper() in ['REGION', 'MSDZONE', 'MOHSW']:
                 data_providers.append(DeliveryData(config=config, css_class='row_chart_all'))
                 data_providers.append(LeadTimeHistory(config=config, css_class='row_chart_all'))
             elif location.location_type.name.upper() == 'FACILITY':

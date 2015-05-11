@@ -3,8 +3,9 @@ from corehq.apps.domain.views import PublicSMSRatesView
 
 urlpatterns = patterns(
     'corehq.apps.hqwebapp.views',
+    (r'^$', 'redirect_to_default'),
     url(r'^homepage/$', 'redirect_to_default', name='homepage'),
-    url(r'^home/$', 'landing_page', name='landing_page'),
+    url(r'^default_landing/$', 'landing_page', name='landing_page'),
     url(r'^crossdomain.xml$', 'yui_crossdomain', name='yui_crossdomain'),
     (r'^serverup.txt$', 'server_up'),
     url(r'^change_password/$', 'password_change', name='password_change'),
@@ -13,7 +14,6 @@ urlpatterns = patterns(
 
     url(r'^accounts/login/(?P<domain_type>\w+)?$', 'login', name="login"),
     url(r'^accounts/logout/$', 'logout', name="logout"),
-    (r'^$', 'redirect_to_default'),
     (r'^reports/$', 'redirect_to_default'),
     url(r'^bug_report/$', 'bug_report', name='bug_report'),
     url(r'^debug/notify/$', 'debug_notify', name='debug_notify'),

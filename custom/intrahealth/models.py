@@ -4,9 +4,9 @@ from fluff.filters import ORFilter, ANDFilter
 from casexml.apps.case.models import CommCareCase
 from corehq.fluff.calculators.xform import FormPropertyFilter
 from custom.intrahealth import INTRAHEALTH_DOMAINS, report_calcs, OPERATEUR_XMLNSES, get_real_date, \
-    get_location_id, get_location_id_by_type, COMMANDE_XMLNSES, get_products, IsExistFormPropertyFilter, RAPTURE_XMLNSES, \
-    get_rupture_products, LIVRAISON_XMLNSES, get_pps_name, get_district_name, get_month, get_products_code, \
-    get_rupture_products_code, RECOUVREMENT_XMLNSES
+    get_location_id, get_location_id_by_type, COMMANDE_XMLNSES, get_products, IsExistFormPropertyFilter,\
+    RAPTURE_XMLNSES, get_rupture_products, LIVRAISON_XMLNSES, get_pps_name, get_district_name, get_month,\
+    get_products_code, get_rupture_products_code, RECOUVREMENT_XMLNSES
 
 from custom.utils.utils import flat_field
 
@@ -156,11 +156,11 @@ class RecouvrementFluff(fluff.IndicatorDocument):
     domains = INTRAHEALTH_DOMAINS
     deleted_types = IH_DELETED_TYPES
     save_direct_to_sql = True
-    group_by = ('domain', )
+    group_by = ('domain', fluff.AttributeGetter('district_name', lambda f: get_district_name(f)))
 
     region_id = flat_field(lambda f: get_location_id_by_type(form=f, type=u'r\xe9gion'))
     district_id = flat_field(lambda f: get_location_id_by_type(form=f, type='district'))
-    district_name = flat_field(lambda f: f.form['district'])
+    district_name = flat_field(lambda f: get_district_name(f))
 
     payments = report_calcs.Recouvrement()
 

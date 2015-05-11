@@ -7,7 +7,7 @@ from corehq.util.cache_utils import ExponentialBackoff
 
 SoftAssertInfo = namedtuple('SoftAssertInfo',
                             ['traceback', 'count', 'msg', 'key', 'line',
-                             'short_traceback'])
+                             'short_traceback', 'obj'])
 
 
 class SoftAssert(object):
@@ -20,12 +20,19 @@ class SoftAssert(object):
         self.tb_skip = skip_frames + 3
         self.key_limit = key_limit
 
-    def __call__(self, assertion, msg=None):
-        return self._call(assertion, msg)
+    def __call__(self, assertion, msg=None, obj=None):
+        return self._call(assertion, msg, obj)
 
     call = __call__
 
-    def _call(self, assertion, msg=None):
+    def _call(self, assertion, msg=None, obj=None):
+        """
+        assertion: what we're asserting
+        msg: a static message describing the error
+        obj: the specific piece of data, if any, that tripped the assertion
+
+        returns the assertion itself
+        """
         if not assertion:
             if self.debug:
                 raise AssertionError(msg)
@@ -39,7 +46,7 @@ class SoftAssert(object):
                                          short_traceback=short_tb,
                                          count=count,
                                          msg=msg,
-                                         key=tb_id, line=line))
+                                         key=tb_id, line=line, obj=obj))
         return assertion
 
 
