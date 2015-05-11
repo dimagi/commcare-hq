@@ -1,11 +1,11 @@
 [
   {
     "display_name": "country", 
+    "transform": {}, 
     "datatype": "string", 
     "type": "expression", 
-    "transform": {}, 
-    "is_nullable": true, 
     "is_primary_key": false, 
+    "is_nullable": true, 
     "column_id": "country", 
     "expression": {
       "value_expression": {
@@ -28,11 +28,11 @@
   }, 
   {
     "display_name": "district", 
+    "transform": {}, 
     "datatype": "string", 
     "type": "expression", 
-    "transform": {}, 
-    "is_nullable": true, 
     "is_primary_key": false, 
+    "is_nullable": true, 
     "column_id": "district", 
     "expression": {
       "value_expression": {
@@ -55,11 +55,11 @@
   }, 
   {
     "display_name": "sub_district", 
+    "transform": {}, 
     "datatype": "string", 
     "type": "expression", 
-    "transform": {}, 
-    "is_nullable": true, 
     "is_primary_key": false, 
+    "is_nullable": true, 
     "column_id": "sub_district", 
     "expression": {
       "value_expression": {
@@ -82,11 +82,11 @@
   }, 
   {
     "display_name": "worker_code", 
+    "transform": {}, 
     "datatype": "string", 
     "type": "expression", 
-    "transform": {}, 
-    "is_nullable": true, 
     "is_primary_key": false, 
+    "is_nullable": true, 
     "column_id": "worker_code", 
     "expression": {
       "value_expression": {
@@ -254,11 +254,11 @@
   }, 
   {
     "display_name": "target_number", 
+    "transform": {}, 
     "datatype": "integer", 
     "type": "expression", 
-    "transform": {}, 
-    "is_nullable": true, 
     "is_primary_key": false, 
+    "is_nullable": true, 
     "column_id": "target_number", 
     "expression": {
       "test": {

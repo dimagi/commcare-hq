@@ -3,10 +3,9 @@
     "display_name": "timeEnd", 
     "datatype": "datetime", 
     "type": "expression", 
+    "is_primary_key": false, 
     "transform": {}, 
     "is_nullable": true, 
-    "is_primary_key": false, 
-    "column_id": "timeEnd", 
     "expression": {
       "type": "root_doc", 
       "expression": {
@@ -18,15 +17,121 @@
           "timeEnd"
         ]
       }
-    }
+    }, 
+    "column_id": "timeEnd"
   }, 
   {
-    "display_name": "username", 
-    "transform": {}, 
+    "display_name": "country", 
     "datatype": "string", 
     "type": "expression", 
     "is_primary_key": false, 
+    "transform": {}, 
     "is_nullable": true, 
+    "expression": {
+      "type": "root_doc", 
+      "expression": {
+        "datatype": null, 
+        "type": "property_path", 
+        "property_path": [
+          "form", 
+          "location_data", 
+          "country"
+        ]
+      }
+    }, 
+    "column_id": "country"
+  }, 
+  {
+    "display_name": "level_1", 
+    "datatype": "string", 
+    "type": "expression", 
+    "is_primary_key": false, 
+    "transform": {}, 
+    "is_nullable": true, 
+    "expression": {
+      "type": "root_doc", 
+      "expression": {
+        "datatype": null, 
+        "type": "property_path", 
+        "property_path": [
+          "form", 
+          "location_data", 
+          "level_1_data"
+        ]
+      }
+    }, 
+    "column_id": "level_1"
+  }, 
+  {
+    "display_name": "level_2", 
+    "datatype": "string", 
+    "type": "expression", 
+    "is_primary_key": false, 
+    "transform": {}, 
+    "is_nullable": true, 
+    "expression": {
+      "type": "root_doc", 
+      "expression": {
+        "datatype": null, 
+        "type": "property_path", 
+        "property_path": [
+          "form", 
+          "location_data", 
+          "level_2_data"
+        ]
+      }
+    }, 
+    "column_id": "level_2"
+  }, 
+  {
+    "display_name": "level_3", 
+    "datatype": "string", 
+    "type": "expression", 
+    "is_primary_key": false, 
+    "transform": {}, 
+    "is_nullable": true, 
+    "expression": {
+      "type": "root_doc", 
+      "expression": {
+        "datatype": null, 
+        "type": "property_path", 
+        "property_path": [
+          "form", 
+          "location_data", 
+          "level_3_data"
+        ]
+      }
+    }, 
+    "column_id": "level_3"
+  }, 
+  {
+    "display_name": "level_4", 
+    "datatype": "string", 
+    "type": "expression", 
+    "is_primary_key": false, 
+    "transform": {}, 
+    "is_nullable": true, 
+    "expression": {
+      "type": "root_doc", 
+      "expression": {
+        "datatype": null, 
+        "type": "property_path", 
+        "property_path": [
+          "form", 
+          "location_data", 
+          "level_4_data"
+        ]
+      }
+    }, 
+    "column_id": "level_4"
+  }, 
+  {
+    "display_name": "username", 
+    "datatype": "string", 
+    "type": "expression", 
+    "transform": {}, 
+    "is_nullable": true, 
+    "is_primary_key": false, 
     "column_id": "username", 
     "expression": {
       "type": "root_doc", 
@@ -45,10 +150,9 @@
     "display_name": "form_name", 
     "datatype": "string", 
     "type": "expression", 
+    "is_primary_key": false, 
     "transform": {}, 
     "is_nullable": true, 
-    "is_primary_key": false, 
-    "column_id": "form_name", 
     "expression": {
       "type": "root_doc", 
       "expression": {
@@ -59,16 +163,16 @@
           "@name"
         ]
       }
-    }
+    }, 
+    "column_id": "form_name"
   }, 
   {
     "display_name": "inspector_names", 
     "datatype": "string", 
     "type": "expression", 
+    "is_primary_key": false, 
     "transform": {}, 
     "is_nullable": true, 
-    "is_primary_key": false, 
-    "column_id": "inspector_names", 
     "expression": {
       "type": "root_doc", 
       "expression": {
@@ -79,34 +183,35 @@
           "names"
         ]
       }
-    }
+    }, 
+    "column_id": "inspector_names"
   }, 
   {
     "display_name": "flag", 
     "datatype": "string", 
     "type": "expression", 
+    "is_primary_key": false, 
     "transform": {}, 
     "is_nullable": true, 
-    "is_primary_key": false, 
-    "column_id": "flag", 
     "expression": {
       "datatype": null, 
       "type": "property_name", 
       "property_name": "flag"
-    }
+    }, 
+    "column_id": "flag"
   }, 
   {
     "display_name": "warning", 
     "datatype": "string", 
     "type": "expression", 
+    "is_primary_key": false, 
     "transform": {}, 
     "is_nullable": true, 
-    "is_primary_key": false, 
-    "column_id": "warning", 
     "expression": {
       "datatype": null, 
       "type": "property_name", 
       "property_name": "warning"
-    }
+    }, 
+    "column_id": "warning"
   }
 ]
