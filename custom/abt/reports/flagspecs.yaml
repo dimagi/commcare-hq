@@ -134,22 +134,26 @@ http://openrosa.org/formdesigner/BBBA67FC-4E25-46B4-AB64-56F820D48A9E:
     base_path: [intro_vehicle2]
   # Two flags for q7 is intentional
   - question: [q7]
+    comment: [q7_comments_action]
     warning_type: "unchecked"
     ignore: ["None"]
     warning: "Problem noted: Need {msg} for the vehicle before it can be used."
     base_path: [intro_vehicle2]
   - question: [q7]
+    comment: [q7_comments_action]
     warning_type: "unchecked"
     ignore: ["None"]
     warning: "Confirm delivery date for {msg}."
     base_path: [intro_vehicle2]
   # Two flags for q8 is intentional
   - question: [q8]
+    comment: [q8_comments_action]
     warning_type: "unchecked"
     ignore: ["none"]
     warning: "Problem noted: Need {msg} for the vehicle before it can be used."
     base_path: [intro_vehicle2]
   - question: [q8]
+    comment: [q8_comments_action]
     warning_type: "unchecked"
     ignore: ["none"]
     warning: "Confirm delivery date for {msg}."
@@ -250,6 +254,7 @@ http://openrosa.org/formdesigner/2BAC5FDC-72F3-4AF4-8381-9160E8AE13CF:
   - question: [q13_action]
     warning: "Problem reported: Some residents not satisfied with the IRS operations."
   - question: [q14]
+    comment: [q14_comments_action]
     warning_type: unchecked
     ignore: ["none"]
     warning: "Problem reported: Spray operator not wearing full PPE. Missing: {msg}."
@@ -305,9 +310,11 @@ http://openrosa.org/formdesigner/7B543EA4-A416-4E46-A121-C4F57412B5AA:
     warning: "Problem reported: Thermometer needed in storeroom."
   - question: [q7]
     warning_type: "unchecked"
+    comment: [q7_comments_action]
     ignore: ["none_above"]
     warning: "Problem reported: First aid items are needed for this facility. Missing: {msg}"
   - question: [q8]
+    comment: [q8_comments_action]
     warning_type: "unchecked"
     ignore: ["none"]
     warning: "Problem reported: Storeroom missing {msg}."

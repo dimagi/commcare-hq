@@ -83,6 +83,24 @@ class AbtSupervisorExpressionSpec(JsonObject):
         ret = unchecked - set(ignore)
         return list(ret)
 
+    @classmethod
+    def _get_comments(cls, item, spec):
+        """
+        Return the comments for the question specified in the spec.
+        If the spec does not contain a `comment` field, then the `question`
+        field is used to build the path to the comment question.
+        """
+        comments_question = spec.get('comment', False)
+        question_path = spec["question"]
+
+        if not comments_question:
+            parts = question_path[-1].split("_")
+            parts.insert(1, "comments")
+            comments_question = question_path[:-1] + ["_".join(parts)]
+
+        comments = cls._get_val(item, comments_question)
+        return comments if comments != () else ""
+
     def __call__(self, item, context=None):
         """
         Given a document (item), return a list of documents representing each
@@ -119,7 +137,8 @@ class AbtSupervisorExpressionSpec(JsonObject):
                         # Raise a flag because there are unchecked answers.
                         docs.append({
                             'flag': spec['question'][-1],
-                            'warning': spec['warning'].format(msg=", ".join(unchecked))
+                            'warning': spec['warning'].format(msg=", ".join(unchecked)),
+                            'comments': self._get_comments(partial, spec)
                         })
 
                 else:
@@ -132,7 +151,8 @@ class AbtSupervisorExpressionSpec(JsonObject):
                             'flag': spec['question'][-1],
                             'warning': spec['warning'].format(
                                 msg=self._get_val(partial, spec.get('warning_question', None)) or ""
-                            )
+                            ),
+                            'comments': self._get_comments(partial, spec)
                         })
 
         return docs
