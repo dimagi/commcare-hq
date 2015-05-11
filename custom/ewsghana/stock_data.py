@@ -33,6 +33,7 @@ class EWSStockDataSynchronization(StockDataSynchronization):
         ).order_by('created_at').values_list('supply_point_id', flat=True)
         return [doc['external_id'] for doc in iter_docs(SupplyPointCase.get_db(), supply_points_ids)]
 
+    @property
     def test_facilities(self):
         return [
             304, 324, 330, 643, 327, 256, 637, 332, 326, 338, 340, 331, 347, 27, 975, 346, 477, 344, 339,
