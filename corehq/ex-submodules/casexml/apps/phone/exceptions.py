@@ -21,8 +21,8 @@ class BadStateException(RestoreException):
         self.case_ids = case_ids
 
     def __str__(self):
-        return "Phone state has mismatch. Expected %s but was %s. Cases: [%s]" % \
-                (self.expected, self.actual, ", ".join(self.case_ids))
+        return "Phone state hash mismatch. Expected %s but was %s. Cases: [%s]" % \
+            (self.expected, self.actual, ", ".join(self.case_ids))
 
 
 class BadVersionException(RestoreException):
