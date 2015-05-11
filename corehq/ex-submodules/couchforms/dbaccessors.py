@@ -1,3 +1,4 @@
+from couchforms.exceptions import ViewTooLarge
 from couchforms.models import XFormInstance, doc_types
 from django.conf import settings
 
@@ -60,35 +61,42 @@ def get_number_of_forms_by_type(domain, type_):
     assert type_ in doc_types()
     startkey = [domain, 'by_type', type_]
     endkey = startkey + [{}]
-
-    return XFormInstance.view(
+    submissions = XFormInstance.view(
         "couchforms/all_submissions_by_domain",
         startkey=startkey,
         endkey=endkey,
         reduce=True,
-    ).one()['value']
+    ).one()
+    return submissions['value'] if submissions else 0
 
 
 def get_number_of_forms_of_all_types(domain):
     startkey = [domain, 'by_type']
     endkey = startkey + [{}]
-
-    return XFormInstance.view(
+    submissions = XFormInstance.view(
         "couchforms/all_submissions_by_domain",
         startkey=startkey,
         endkey=endkey,
         reduce=True,
-    ).one()['value']
+    ).one()
+    return submissions['value'] if submissions else 0
 
 
 def get_forms_in_date_range(domain, start, end):
-    XFormInstance.view(
+    # arbitrary hard limit of 10,000; can expand if this disturbs anything
+    limit = 10000
+    forms = XFormInstance.view(
         "couchforms/all_submissions_by_domain",
         startkey=[domain, "by_date", start.isoformat()],
         endkey=[domain, "by_date", end.isoformat(), {}],
         include_docs=True,
-        reduce=False
+        reduce=False,
+        limit=limit + 1
     ).all()
+    if len(forms) > limit:
+        forms.pop(limit)
+        raise ViewTooLarge(forms)
+    return forms
 
 
 def clear_all_forms(domain):

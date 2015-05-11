@@ -24,7 +24,7 @@ from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
 from django.utils.translation import override, ugettext as _, ugettext
 from couchdbkit.exceptions import BadValueError, DocTypeError
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.http import Http404
@@ -376,7 +376,7 @@ class LoadUpdateAction(AdvancedAction):
     preload:            Value from the case to load into the form. Keys are question paths, values are case properties.
     auto_select:        Configuration for auto-selecting the case
     show_product_stock: If True list the product stock using the module's Product List configuration.
-    product_program:    Only show products for this CommTrack program.
+    product_program:    Only show products for this CommCare Supply program.
     """
     details_module = StringProperty()
     preload = DictProperty()

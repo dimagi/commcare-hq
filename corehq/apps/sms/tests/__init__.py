@@ -12,11 +12,12 @@ from corehq.apps.sms.api import send_sms_to_verified_number, send_sms_with_backe
 from corehq.apps.sms.mixin import SMSBackend, BadSMSConfigException
 from corehq.apps.sms.models import CommConnectCase
 from django.conf import settings
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 from couchdbkit.exceptions import ResourceNotFound
 from casexml.apps.case.models import CommCareCase
 #from .inbound_handlers import *
 from .opt_tests import *
+from .migration import *
 from corehq.apps.users.models import CommCareUser
 from django.contrib.sites.models import Site
 from corehq.apps.users.util import format_username

@@ -3,7 +3,7 @@ from __future__ import absolute_import
 from datetime import datetime
 from django.contrib.auth.models import User
 from dimagi.utils.couch.database import get_db
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.util import django_user_from_couch_id
 from dimagi.utils.mixins import UnicodeMixIn

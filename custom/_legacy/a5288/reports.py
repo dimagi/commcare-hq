@@ -8,7 +8,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.sms.models import ExpectedCallbackEventLog, CALLBACK_PENDING, CALLBACK_RECEIVED, CALLBACK_MISSED
 from datetime import datetime, timedelta
 from corehq.util.timezones.conversions import ServerTime
-from dimagi.utils.parsing import json_format_datetime, json_format_date
+from dimagi.utils.parsing import json_format_date
 
 
 class MissedCallbackReport(CustomProjectReport, GenericTabularReport):
@@ -67,8 +67,8 @@ class MissedCallbackReport(CustomProjectReport, GenericTabularReport):
         start_date = dates[0] - timedelta(days=1)
         end_date = dates[-1] + timedelta(days=2)
 
-        start_utc_timestamp = json_format_datetime(start_date)
-        end_utc_timestamp = json_format_datetime(end_date)
+        start_utc_timestamp = json_format_date(start_date)
+        end_utc_timestamp = json_format_date(end_date)
 
         expected_callback_events = ExpectedCallbackEventLog.view("sms/expected_callback_event",
                                                                  startkey=[self.domain, start_utc_timestamp],

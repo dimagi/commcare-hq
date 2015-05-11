@@ -89,7 +89,7 @@ INDICATOR_DATA = {
     "commtrack_domain_count": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "domains",
-        "chart_title": "Total CommTrack Project Spaces",
+        "chart_title": "Total CommCare Supply Project Spaces",
         "histogram_type": "domains",
         "xaxis_label": "# domains",
     },
@@ -171,7 +171,7 @@ INDICATOR_DATA = {
     "commtrack_users_web": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "commtrack_users_web",
-        "chart_title": "CommTrack Web Users",
+        "chart_title": "CommCare Supply Web Users",
         "get_request_params": {
             "require_submissions": False,
             "user_type_mobile": False,
@@ -364,7 +364,7 @@ INDICATOR_DATA = {
     "commtrack_total_outgoing_sms": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "commtrack_total_outgoing_sms",
-        "chart_title": "Total Outgoing CommTrack SMS",
+        "chart_title": "Total Outgoing CommCare Supply SMS",
         "get_request_params": {
             "additional_params_es": {
                 "direction": ["o"],
@@ -377,7 +377,7 @@ INDICATOR_DATA = {
     "commtrack_total_incoming_sms": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "commtrack_total_incoming_sms",
-        "chart_title": "Total Incoming CommTrack SMS",
+        "chart_title": "Total Incoming CommCare Supply SMS",
         "get_request_params": {
             "additional_params_es": {
                 "direction": ["i"],
@@ -390,7 +390,7 @@ INDICATOR_DATA = {
     "commtrack_forms": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "commtrack_forms",
-        "chart_title": "Total CommTrack Form Submissions",
+        "chart_title": "Total CommCare Supply Form Submissions",
         "histogram_type": "commtrack_forms",
         "xaxis_label": "# forms",
     },
@@ -519,7 +519,7 @@ FACET_MAPPING = [
         {"facet": "case_sharing", "name": "Case Sharing", "expanded": False},
         {"facet": "internal.using_adm", "name": "ADM", "expanded": False},
         {"facet": "internal.using_call_center", "name": "Call Center", "expanded": False},
-        {"facet": "internal.commtrack_domain", "name": "CommTrack", "expanded": False},
+        {"facet": "internal.commtrack_domain", "name": "CommCare Supply", "expanded": False},
         {"facet": "survey_management_enabled", "name": "Survey Management", "expanded": False},
         {"facet": "cp_sms_ever", "name": "Used Messaging Ever", "expanded": False},
         {"facet": "cp_sms_30_d", "name": "Used Messaging Last 30 days", "expanded": False},
@@ -703,7 +703,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             DataTablesColumn(_("Self-Starter?"), prop_name="internal.self_started"),
             DataTablesColumn(_("Test Project?"), prop_name="is_test"),
             DataTablesColumn(_("Active?"), prop_name="cp_is_active"),
-            DataTablesColumn(_("CommTrack?"), prop_name="internal.commtrack_domain"),
+            DataTablesColumn(_("CommCare Supply?"), prop_name="internal.commtrack_domain"),
             DataTablesColumn(_("# Outgoing SMS"), sort_type=DTSortType.NUMERIC,
                 prop_name="cp_n_out_sms"),
             DataTablesColumn(_("# Incoming SMS"), sort_type=DTSortType.NUMERIC,
@@ -1003,7 +1003,7 @@ class CommConnectProjectSpacesReport(GlobalAdminReports):
 
 class CommTrackProjectSpacesReport(GlobalAdminReports):
     slug = 'commtrack_project_spaces'
-    name = ugettext_noop('CommTrack Project Spaces')
+    name = ugettext_noop('CommCare Supply Project Spaces')
     default_params = {
         'es_is_test': 'false',
         'es_internal.commtrack_domain': 'T',

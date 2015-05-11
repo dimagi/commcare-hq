@@ -1,18 +1,24 @@
 import os
 import tempfile
+import uuid
 from wsgiref.util import FileWrapper
 import zipfile
+from django.conf import settings
 from django.http import StreamingHttpResponse
 from django.views.generic import View
+from django_transfer import TransferHttpResponse, is_enabled as transfer_enabled
 from corehq.util.view_utils import set_file_download
 
 CHUNK_SIZE = 8192
 
 
-def make_zip_tempfile(files, compress=True):
+def make_zip_file(files, compress=True, path=None):
     compression = zipfile.ZIP_DEFLATED if compress else zipfile.ZIP_STORED
-    fd, fpath = tempfile.mkstemp()
-    with os.fdopen(fd, 'w') as tmp:
+    fpath = path
+    if not fpath:
+        _, fpath = tempfile.mkstemp()
+
+    with open(fpath, 'wb') as tmp:
         with zipfile.ZipFile(tmp, "w", compression) as z:
             for path, data in files:
                 z.writestr(path, data)
@@ -44,12 +50,19 @@ class DownloadZip(View):
         if error_response:
             return error_response
 
+        path = None
+        if transfer_enabled() and os.path.isdir(settings.TRANSFER_FILE_DIR):
+            path = os.path.join(settings.TRANSFER_FILE_DIR, uuid.uuid4().hex)
+
         files, errors = self.iter_files()
-        fpath = make_zip_tempfile(files, compress=self.compress_zip)
+        fpath = make_zip_file(files, compress=self.compress_zip, path=path)
         if errors:
             self.log_errors(errors)
 
-        response = StreamingHttpResponse(FileWrapper(open(fpath), CHUNK_SIZE), mimetype=self.zip_mimetype)
-        response['Content-Length'] = os.path.getsize(fpath)
-        set_file_download(response, self.zip_name)
-        return response
+        if transfer_enabled():
+            return TransferHttpResponse(fpath, mimetype=self.zip_mimetype)
+        else:
+            response = StreamingHttpResponse(FileWrapper(open(fpath), CHUNK_SIZE), mimetype=self.zip_mimetype)
+            response['Content-Length'] = os.path.getsize(fpath)
+            set_file_download(response, self.zip_name)
+            return response

@@ -1,4 +1,3 @@
-from collections import defaultdict
 import math
 from django.test import SimpleTestCase
 from corehq.util.soft_assert.core import SoftAssert

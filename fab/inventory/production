@@ -20,6 +20,7 @@ hqdb0.internal.commcarehq.org
 hqdb0.internal.commcarehq.org
 
 [celery]
+hqcelery0.internal.commcarehq.org
 hqcelery1.internal.commcarehq.org
 
 [celery:vars]
@@ -43,3 +44,6 @@ hqes0.internal.commcarehq.org elasticsearch_node_name=hqes0
 
 [shared_dir_host]
 hqdb0.internal.commcarehq.org
+
+[sentry]
+logs.internal.dimagi.com
