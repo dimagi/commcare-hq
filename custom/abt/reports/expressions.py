@@ -91,30 +91,49 @@ class AbtSupervisorExpressionSpec(JsonObject):
 
         docs = []
         for spec in self._flag_specs.get(item['xmlns'], []):
-            form_value = self._get_val(item, spec['question'])
 
-            if spec.get("warning_type", None) == "unchecked":
-                ignore = spec.get("ignore", [])
-                unchecked = self._get_unchecked(item, spec['question'], form_value, ignore)
-                if unchecked:
-                    # Raise a flag because there are unchecked answers.
-                    docs.append({
-                        'flag': spec['question'][-1],
-                        'warning': spec['warning'].format(msg=", ".join(unchecked))
-                    })
-
+            if spec.get("base_path", False):
+                repeat_items = self._get_val(item, spec['base_path'])
+                if type(repeat_items) != list:
+                    # bases will be a dict if the repeat only happened once.
+                    repeat_items = [repeat_items]
+                # We have to add the 'form' key here so that _get_val works correctly.
+                repeat_items = [{'form': x} for x in repeat_items]
             else:
-                danger_value = spec.get('answer', [])
-                if form_value == danger_value or (
-                    self._question_answered(form_value) and
-                    self._raise_for_any_answer(danger_value)
-                ):
-                    docs.append({
-                        'flag': spec['question'][-1],
-                        'warning': spec['warning'].format(
-                            msg=self._get_val(item, spec.get('warning_question', None)) or ""
-                        )
-                    })
+                repeat_items = [item]
+
+            # Iterate over the repeat items, or the single submission
+            for partial in repeat_items:
+
+                form_value = self._get_val(partial, spec['question'])
+
+                if spec.get("warning_type", None) == "unchecked":
+                    ignore = spec.get("ignore", [])
+                    unchecked = self._get_unchecked(
+                        item,
+                        spec.get('base_path', []) + spec['question'],
+                        form_value,
+                        ignore
+                    )
+                    if unchecked:
+                        # Raise a flag because there are unchecked answers.
+                        docs.append({
+                            'flag': spec['question'][-1],
+                            'warning': spec['warning'].format(msg=", ".join(unchecked))
+                        })
+
+                else:
+                    danger_value = spec.get('answer', [])
+                    if form_value == danger_value or (
+                        self._question_answered(form_value) and
+                        self._raise_for_any_answer(danger_value)
+                    ):
+                        docs.append({
+                            'flag': spec['question'][-1],
+                            'warning': spec['warning'].format(
+                                msg=self._get_val(partial, spec.get('warning_question', None)) or ""
+                            )
+                        })
 
         return docs
 
