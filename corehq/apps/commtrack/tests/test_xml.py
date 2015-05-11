@@ -7,9 +7,10 @@ import uuid
 from datetime import datetime, timedelta
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
-from casexml.apps.phone.restore import RestoreConfig
+from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 from casexml.apps.phone.tests.utils import synclog_id_from_restore_payload
 from corehq.apps.commtrack.models import ConsumptionConfig, StockRestoreConfig, RequisitionCase, StockState
+from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import Product
 from corehq.apps.consumption.shortcuts import set_default_monthly_consumption_for_domain
 from couchforms.models import XFormInstance
@@ -102,10 +103,11 @@ class CommTrackOTATest(CommTrackTest):
             section_to_consumption_types={'stock': 'consumption'}
         )
         set_default_monthly_consumption_for_domain(self.domain.name, 5 * DAYS_IN_MONTH)
+        self._save_settings_and_clear_cache()
 
         amounts = [(p._id, i*10) for i, p in enumerate(self.products)]
         report = _report_soh(amounts, self.sp._id, 'stock')
-        balance_blocks = _get_ota_balance_blocks(self.ct_settings, self.user)
+        balance_blocks = _get_ota_balance_blocks(self.domain, self.user)
         self.assertEqual(2, len(balance_blocks))
         stock_block, consumption_block = balance_blocks
         check_xml_line_by_line(
@@ -139,22 +141,32 @@ class CommTrackOTATest(CommTrackTest):
             section_to_consumption_types={'stock': 'consumption'},
         )
         set_default_monthly_consumption_for_domain(self.domain.name, 5)
+        self._save_settings_and_clear_cache()
 
-        balance_blocks = _get_ota_balance_blocks(self.ct_settings, self.user)
+        balance_blocks = _get_ota_balance_blocks(self.domain, self.user)
         self.assertEqual(0, len(balance_blocks))
 
-        # self.ct_settings.ota_restore_config.use_dynamic_product_list = True
         self.ct_settings.ota_restore_config.force_consumption_case_types = [const.SUPPLY_POINT_CASE_TYPE]
-        balance_blocks = _get_ota_balance_blocks(self.ct_settings, self.user)
+        self._save_settings_and_clear_cache()
+
+        balance_blocks = _get_ota_balance_blocks(self.domain, self.user)
         # with no data, there should be no consumption block
         self.assertEqual(0, len(balance_blocks))
 
         self.ct_settings.ota_restore_config.use_dynamic_product_list = True
-        balance_blocks = _get_ota_balance_blocks(self.ct_settings, self.user)
+        self._save_settings_and_clear_cache()
+
+        balance_blocks = _get_ota_balance_blocks(self.domain, self.user)
         self.assertEqual(1, len(balance_blocks))
         [balance_block] = balance_blocks
         element = etree.fromstring(balance_block)
         self.assertEqual(3, len([child for child in element]))
+
+    def _save_settings_and_clear_cache(self):
+        # since the commtrack settings object is stored as a memoized property on the domain
+        # we need to refresh that as well
+        self.ct_settings.save()
+        self.domain = Domain.get(self.domain._id)
 
 
 class CommTrackSubmissionTest(CommTrackTest):
@@ -489,9 +501,9 @@ class CommTrackSyncTest(CommTrackSubmissionTest):
 
         # get initial restore token
         restore_config = RestoreConfig(
-            self.casexml_user,
-            version=V2,
-            stock_settings=self.ota_settings,
+            domain=self.domain,
+            user=self.casexml_user,
+            params=RestoreParams(version=V2),
         )
         self.sync_log_id = synclog_id_from_restore_payload(restore_config.get_payload().as_string())
 
@@ -598,11 +610,11 @@ def _report_soh(amounts, case_id, section_id='stock', report=None):
         )
     return report
 
-def _get_ota_balance_blocks(ct_settings, user):
-    ota_settings = ct_settings.get_ota_restore_settings()
+
+def _get_ota_balance_blocks(domain, user):
     restore_config = RestoreConfig(
-        user.to_casexml_user(),
-        version=V2,
-        stock_settings=ota_settings,
+        domain=domain,
+        user=user.to_casexml_user(),
+        params=RestoreParams(version=V2),
     )
     return extract_balance_xml(restore_config.get_payload().as_string())

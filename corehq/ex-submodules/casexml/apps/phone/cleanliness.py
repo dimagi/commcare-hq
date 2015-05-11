@@ -2,8 +2,10 @@ from collections import namedtuple
 from datetime import datetime
 from casexml.apps.case.dbaccessors import get_all_case_owner_ids, get_open_case_ids, get_closed_case_ids, \
     get_reverse_indexed_case_ids, get_indexed_case_ids
+from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.util import get_indexed_cases
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
+from corehq.apps.users.util import WEIRD_USER_IDS
 
 
 FootprintInfo = namedtuple('FootprintInfo', ['base_ids', 'all_ids'])
@@ -15,7 +17,8 @@ def set_cleanliness_flags_for_domain(domain):
     Sets all cleanliness flags for an entire domain.
     """
     for owner_id in get_all_case_owner_ids(domain):
-        set_cleanliness_flags(domain, owner_id)
+        if owner_id not in WEIRD_USER_IDS:
+            set_cleanliness_flags(domain, owner_id)
 
 
 def set_cleanliness_flags(domain, owner_id):
@@ -55,15 +58,16 @@ def get_cleanliness_flag_from_scratch(domain, owner_id):
         cases_to_check = cases_to_check - closed_owned_case_ids
         if cases_to_check:
             # it wasn't in any of the open or closed IDs - it must be dirty
-            case_id_outside_footprint = cases_to_check.pop()
-            reverse_index_ids = set(get_reverse_indexed_case_ids(domain, [case_id_outside_footprint]))
+            reverse_index_ids = set(get_reverse_indexed_case_ids(domain, list(cases_to_check)))
             indexed_with_right_owner = (reverse_index_ids & (footprint_info.base_ids | closed_owned_case_ids))
             if indexed_with_right_owner:
                 return CleanlinessFlag(False, indexed_with_right_owner.pop())
 
-            # the only way we can get here is if an owner id spans multiple domains
-            # (and therefore has unclean indices, but not in this domain)
-            # in this case it should be clean for our domain so default to clean below
+            # I'm not sure if this code can ever be hit, but if it is we should fail hard
+            # until we can better understand it.
+            raise IllegalCaseId('Owner {} in domain {} has an invalid index reference chain!!'.format(
+                owner_id, domain
+            ))
 
     return CleanlinessFlag(True, None)
 

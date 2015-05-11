@@ -1,9 +1,8 @@
 import itertools
 import logging
 import traceback
-from corehq.apps.commtrack.models import SupplyPointCase
 
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import Location, SQLLocation
 from custom.logistics.models import MigrationCheckpoint
 from requests.exceptions import ConnectionError
 from datetime import datetime
@@ -63,16 +62,10 @@ def save_checkpoint(checkpoint, api, limit, offset, date, commit=True):
         checkpoint.save()
 
 
-def save_stock_data_checkpoint(checkpoint, api, limit, offset, date, external_id, commit=True):
+def save_stock_data_checkpoint(checkpoint, api, limit, offset, date, location_id, commit=True):
     save_checkpoint(checkpoint, api, limit, offset, date, False)
-    if external_id:
-        supply_point = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                            key=[checkpoint.domain, str(external_id)],
-                                            reduce=False,
-                                            include_docs=True).first()
-        if not supply_point:
-            return
-        checkpoint.location = supply_point.location.sql_location
+    if location_id:
+        checkpoint.location = SQLLocation.objects.get(location_id=location_id)
     else:
         checkpoint.location = None
     if commit:
