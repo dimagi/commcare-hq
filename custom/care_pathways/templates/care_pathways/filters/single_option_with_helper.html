@@ -8,8 +8,8 @@
         $("fieldset .helptext").each( function (index, data) {
             console.log(data.textContent);
         $(this).parent().prev("label").append(
-                '<a href="#" class="hq-help no-click"><i class="icon-question-sign" data-toggle="popover" data-content="'
-                        + data.textContent + '"data-trigger="hover"></i></a>');
+                '<a href="#" class="hq-help"><i class="icon-question-sign" data-toggle="popover" data-content="'
+                        + data.textContent + '"></i></a>');
         $(this).remove();
     });
 

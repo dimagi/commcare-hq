@@ -289,11 +289,11 @@ requires imports/proptable.html to be included in the main template
         <label class="checkbox">
             <input type="checkbox" class="showSkippedToggle"/>
             {% trans "Show questions in form that were not shown to the user" %}
-            <a href="#" class="hq-help no-click">
+            <a href="#" class="hq-help">
                 <i class="icon-question-sign"
                    data-title="{% trans "Questions not shown to the user" %}"
-                   data-content="{% trans "These questions were not shown to the user because their display conditions were not met." %}"
-                   data-trigger="hover"></i>
+                   data-content="{% trans "These questions were not shown to the user because their display conditions were not met." %}">
+                </i>
             </a>
         </label>
         {% endif %}

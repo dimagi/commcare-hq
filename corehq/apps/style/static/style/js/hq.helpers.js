@@ -72,6 +72,7 @@ $.fn.hqHelp = function () {
         var $helpElem = $($(self).get(i));
         $helpElem.find('i').popover({
             html: true,
+            trigger: 'focus',
             content: function() {
                 return $('#popover_content_wrapper').html();
             }

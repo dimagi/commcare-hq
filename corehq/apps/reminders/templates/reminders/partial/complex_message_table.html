@@ -4,7 +4,7 @@
         <th class="span2">
             <span data-bind="visible: !$parent.isOffsetTimingUsed()">{% trans 'Day' %}</span>
             <span data-bind="visible: $parent.isOffsetTimingUsed()">{% trans 'Days to Delay' %}</span>
-            <a href="#" class="hq-help no-click event-help-text" style="font-weight: normal;">
+            <a href="#" class="hq-help event-help-text" style="font-weight: normal;">
                 <i class="icon-question-sign"
                    data-title="{% trans 'Day' %}"
                    data-content="{% blocktrans %}
@@ -12,33 +12,33 @@
                        Day 0 indicates the day that the reminder was triggered.
                        If Delay After Start is chosen, this is the number of days
                        to wait after the previous event.
-                       {% endblocktrans %}"
-                   data-trigger="hover"></i>
+                       {% endblocktrans %}">
+                   </i>
             </a>
         </th>
         <th class="span2">
             <span data-bind="visible: !$parent.isOffsetTimingUsed()">{% trans 'Time' %}</span>
             <span data-bind="visible: $parent.isOffsetTimingUsed()">{% trans 'Time to Delay' %}</span>
-            <a href="#" class="hq-help no-click event-help-text" style="font-weight: normal;">
+            <a href="#" class="hq-help event-help-text" style="font-weight: normal;">
                 <i class="icon-question-sign"
                    data-title="{% trans 'Time' %}"
                    data-content="{% blocktrans %}
                        Specify the time at which the reminder will be sent out.
                        If Delay After Start is chosen, this is the number of
                        hours and minutes to wait after the previous event.
-                       {% endblocktrans %}"
-                   data-trigger="hover"></i>
+                       {% endblocktrans %}">
+                </i>
             </a>
         </th>
         <th class="span2" data-bind="visible: isWindowLengthVisible">
             {% trans 'Window' %}
-            <a href="#" class="hq-help no-click event-help-text" style="font-weight: normal;">
+            <a href="#" class="hq-help event-help-text" style="font-weight: normal;">
                 <i class="icon-question-sign"
                    data-title="{% trans 'Window' %}"
                    data-content="{% blocktrans %}
                        The number of minutes after the start within which to randomly send the message.
-                       {% endblocktrans %}"
-                   data-trigger="hover"></i>
+                       {% endblocktrans %}">
+                </i>
         </th>
         <th class="span5" data-bind="visible: isSurveyVisible">{% trans 'Survey' %}</th>
         <th class="span5" data-bind="visible: isMessageVisible">{% trans 'Message' %}</th>

@@ -1,10 +1,10 @@
 {% if help_bubble_text %}
     <div class="pull-left" style="margin-top: -5px;">
-        <a href="#" class="hq-help no-click" id="help_{{ field.auto_id }}">
+        <a href="#" class="hq-help" id="help_{{ field.auto_id }}">
             <i class="icon-question-sign"
                data-title="{{ field.label }}"
-               data-content="{{ help_bubble_text }}"
-               data-trigger="hover"></i>
+               data-content="{{ help_bubble_text }}">
+            </i>
         </a>
     </div>
     <script>

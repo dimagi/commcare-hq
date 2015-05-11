@@ -34,8 +34,8 @@ COMMCAREHQ.makeHqHelp = function (opts, wrap) {
     'use strict';
     wrap = wrap === undefined ? true : wrap;
     var el = $(
-        '<a href="#" class="hq-help no-click">' +
-            '<i class="icon-question-sign" data-trigger="hover"></i></a>'
+        '<a href="#" class="hq-help">' +
+            '<i class="icon-question-sign"></i></a>'
     );
     for (var attr in {content: 0, title: 0, html: 0}) {
         $('i', el).data(attr, opts[attr]);

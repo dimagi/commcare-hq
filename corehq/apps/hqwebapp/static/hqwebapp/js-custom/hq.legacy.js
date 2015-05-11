@@ -13,10 +13,10 @@ var COMMCAREHQ = (function () {
         makeHqHelp: function (opts, wrap) {
             wrap = wrap === undefined ? true : wrap;
             var el = $(
-                '<a href="#" class="hq-help no-click">' +
-                    '<i class="icon-question-sign"></i></a>'
+                '<a href="#" class="hq-help">' +
+                    '<i class="icon-question-sign" data-trigger="focus"></i></a>'
                 ),
-                attrs = ['content', 'title', 'placement', 'trigger'];
+                attrs = ['content', 'title', 'placement'];
 
             attrs.map(function (attr) {
                 $('i', el).data(attr, opts[attr]);

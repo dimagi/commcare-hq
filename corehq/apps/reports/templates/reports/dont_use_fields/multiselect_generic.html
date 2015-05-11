@@ -6,11 +6,11 @@
 {% if not hide_label %}
     <label for="{{ select.cssId }}" class="control-label">{% trans select.label %}
         {% if help_text %}
-            <a href="#" class="hq-help no-click">
+            <a href="#" class="hq-help">
                 <i class="icon-question-sign"
                    data-title="{% trans "Help" %}"
-                   data-content="{{ help_text }}"
-                   data-trigger="hover"></i>
+                   data-content="{{ help_text }}">
+                </i>
             </a>
         {% endif %}
     </label>
