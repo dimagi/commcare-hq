@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from xml.etree import ElementTree
 from django.conf import settings
 from casexml.apps.case import const
+from casexml.apps.case.dbaccessors import get_indexed_case_ids
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.phone.models import SyncLogAssertionError, SyncLog
 from casexml.apps.stock.models import StockReport
@@ -117,13 +118,23 @@ def reverse_indices(db, case, wrap=True):
     ).all()
 
 
-def get_reverse_indexed_cases(cases):
+def get_indexed_cases(domain, case_ids):
+    """
+    Given a base list of cases, gets all wrapped cases that they reference
+    (parent cases).
+    """
+    from casexml.apps.case.models import CommCareCase
+    return [CommCareCase.wrap(doc) for doc in iter_docs(CommCareCase.get_db(),
+                                                        get_indexed_case_ids(domain, case_ids))]
+
+
+def get_reverse_indexed_cases(domain, case_ids):
     """
     Given a base list of cases, gets all wrapped cases that directly
     reference them (child cases).
     """
     from casexml.apps.case.models import CommCareCase
-    keys = [[c['domain'], c['_id'], 'reverse_index'] for c in cases]
+    keys = [[domain, id, 'reverse_index'] for id in case_ids]
     return CommCareCase.view(
         'case/related',
         keys=keys,

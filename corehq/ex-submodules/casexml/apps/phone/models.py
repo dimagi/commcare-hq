@@ -357,7 +357,7 @@ class SyncLog(SafeSaveDocument, UnicodeMixIn):
         return "%s synced on %s (%s)" % (self.user_id, self.date.date(), self.get_id)
 
 
-class OwnershipCleanliness(models.Model):
+class OwnershipCleanlinessFlag(models.Model):
     """
     Stores whether an owner_id is "clean" aka has a case universe only belonging
     to that ID.
@@ -365,7 +365,7 @@ class OwnershipCleanliness(models.Model):
     We use this field to optimize restores.
     """
     domain = models.CharField(max_length=100, db_index=True)
-    owner_id = models.CharField(max_length=100, db_index=True, primary_key=True)
+    owner_id = models.CharField(max_length=100, db_index=True)
     is_clean = models.BooleanField(default=False)
     last_checked = models.DateTimeField()
     hint = models.CharField(max_length=100, null=True, blank=True)
@@ -373,8 +373,11 @@ class OwnershipCleanliness(models.Model):
     def save(self, force_insert=False, force_update=False, using=None,
              update_fields=None):
         self.last_checked = datetime.utcnow()
-        super(OwnershipCleanliness, self).save(force_insert, force_update, using, update_fields)
+        super(OwnershipCleanlinessFlag, self).save(force_insert, force_update, using, update_fields)
 
     @classmethod
     def get_for_owner(cls, domain, owner_id):
         return cls.objects.get_or_create(domain=domain, owner_id=owner_id)[0]
+
+    class Meta:
+        unique_together = [('domain', 'owner_id')]
