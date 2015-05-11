@@ -11,7 +11,7 @@ import tempfile
 from couchdbkit import ResourceConflict, ResourceNotFound
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.caselogic import BatchedCaseSyncOperation, CaseSyncUpdate
-from casexml.apps.phone.data_providers import get_restore_providers
+from casexml.apps.phone.data_providers import get_restore_providers, get_long_running_providers
 from casexml.apps.phone.exceptions import (
     MissingSyncLog, InvalidSyncLogException, SyncLogUserMismatch,
     BadStateException, RestoreException,
@@ -532,11 +532,6 @@ class RestoreConfig(object):
         self.version = self.params.version
         self.restore_state = RestoreState(self.domain, self.user, self.params)
 
-        if domain and domain.commtrack_settings:
-            self.stock_settings = domain.commtrack_settings.get_ota_restore_settings()
-        else:
-            self.stock_settings = StockSettings()
-
         self.domain = domain
         self.force_cache = self.cache_settings.force_cache
         self.cache_timeout = self.cache_settings.cache_timeout
@@ -587,17 +582,18 @@ class RestoreConfig(object):
                 for element in provider.get_elements(self.restore_state):
                     response.append(element)
 
-            case_response, self.num_batches = get_case_payload_batched(
-                self.domain, self.stock_settings, self.version, user, last_synclog,
-                self.restore_state.current_sync_log
-            )
-            combined_response = response + case_response
-            case_response.close()
-            combined_response.finalize()
+            # in the future these will be done asynchronously so keep them separate
+            long_running_providers = get_long_running_providers()
+            for provider in long_running_providers:
+                partial_response = provider.get_response(self.restore_state)
+                response = response + partial_response
+                partial_response.close()
+
+            response.finalize()
 
         self.restore_state.finish_sync()
-        self.set_cached_payload_if_necessary(combined_response, self.restore_state.duration)
-        return combined_response
+        self.set_cached_payload_if_necessary(response, self.restore_state.duration)
+        return response
 
     def get_response(self):
         try:
