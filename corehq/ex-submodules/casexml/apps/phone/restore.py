@@ -403,6 +403,11 @@ class RestoreParams(object):
     Lightweight class that just handles grouping the possible attributes of a restore together.
 
     This is just for user-defined settings that can be configured via the URL.
+
+    :param sync_log_id:         ID of the previous restore
+    :param version:             The version of the restore format
+    :param state_hash:          The case state hash string to use to verify the state of the phone
+    :param include_item_count:  Set to `True` to include the item count in the response
     """
 
     def __init__(self, sync_log_id='', version=V1, state_hash='', include_item_count=False):
@@ -424,7 +429,7 @@ class RestoreCacheSettings(object):
 
     def __init__(self, force_cache=False, cache_timeout=None, overwrite_cache=False):
         self.force_cache = force_cache
-        self.cache_timeout = cache_timeout
+        self.cache_timeout = cache_timeout if cache_timeout is not None else INITIAL_SYNC_CACHE_TIMEOUT
         self.overwrite_cache = overwrite_cache
 
 class RestoreState(object):
@@ -459,29 +464,21 @@ class RestoreConfig(object):
     """
     A collection of attributes associated with an OTA restore
 
-    :param user:            The mobile user requesting the restore
-    :param restore_id:      ID of the previous restore
-    :param version:         The version of the restore format
-    :param state_hash:      The case state hash string to use to verify the state of the phone
-    :param items:           Set to `True` to include the item count in the response
-    :param stock_settings:  CommTrack stock settings for the domain.
-                            If None, default settings will be used.
     :param domain:          The domain object. An instance of `Domain`.
+    :param user:            The mobile user requesting the restore
+    :param params:          The RestoreParams associated with this (see above).
+    :param cache_settings:  The RestoreCacheSettings associated with this (see above).
     """
 
-    def __init__(self, user, restore_id="", version=V1, state_hash="",
-                 items=False, domain=None, force_cache=False,
-                 cache_timeout=None, overwrite_cache=False):
+    def __init__(self, domain=None, user=None, params=None, cache_settings=None):
+        self.domain = domain
         self.user = user
-        self.version = version
-        self.state_hash = state_hash
-        self.items = items
-        self.params = RestoreParams(
-            sync_log_id=restore_id,
-            version=version,
-            state_hash=state_hash,
-            include_item_count=items,
-        )
+        self.params = params or RestoreParams()
+        self.cache_settings = cache_settings or RestoreCacheSettings()
+
+        self.version = self.params.version
+        self.state_hash = self.params.state_hash
+        self.items = self.params.include_item_count
         self.restore_state = RestoreState(self.user, self.params)
 
         if domain and domain.commtrack_settings:
@@ -490,9 +487,9 @@ class RestoreConfig(object):
             self.stock_settings = StockSettings()
 
         self.domain = domain
-        self.force_cache = force_cache
-        self.cache_timeout = cache_timeout or INITIAL_SYNC_CACHE_TIMEOUT
-        self.overwrite_cache = overwrite_cache
+        self.force_cache = self.cache_settings.force_cache
+        self.cache_timeout = self.cache_settings.cache_timeout
+        self.overwrite_cache = self.cache_settings.overwrite_cache
 
         self.cache = get_redis_default_cache()
 
@@ -625,24 +622,3 @@ class RestoreConfig(object):
             # on initial sync, only cache if the duration was longer than the threshold
             if self.force_cache or duration > timedelta(seconds=INITIAL_SYNC_CACHE_THRESHOLD):
                 self.cache.set(self._initial_cache_key(), cache_payload, self.cache_timeout)
-
-
-class TemporaryRestoreConfig(RestoreConfig):
-    """
-    Temporary class to change the API of the constructor to ease the refactoring.
-    """
-
-    def __init__(self, domain=None, user=None, params=None, cache_settings=None):
-        params = params or RestoreParams()
-        cache_settings = cache_settings or RestoreCacheSettings()
-        super(TemporaryRestoreConfig, self).__init__(
-            user=user,
-            domain=domain,
-            restore_id=params.sync_log_id,
-            version=params.version,
-            state_hash=params.state_hash,
-            items=params.include_item_count,
-            force_cache=cache_settings.force_cache,
-            cache_timeout=cache_settings.cache_timeout,
-            overwrite_cache=cache_settings.overwrite_cache,
-        )

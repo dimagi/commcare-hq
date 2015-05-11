@@ -6,7 +6,7 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
-from casexml.apps.phone.restore import TemporaryRestoreConfig, RestoreParams
+from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import format_username
@@ -52,7 +52,7 @@ class OtaRestoreBugTest(TestCase):
             self.assertEqual(user._id, case.user_id)
             self.assertEqual(user._id, case.owner_id)
 
-        restore_config = TemporaryRestoreConfig(
+        restore_config = RestoreConfig(
             user=user.to_casexml_user(),
             params=RestoreParams(version=V2),
         )

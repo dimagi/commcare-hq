@@ -1,7 +1,7 @@
 from celery.task import task
 from couchdbkit.exceptions import ResourceNotFound
 from casexml.apps.case.xml import V1
-from casexml.apps.phone.restore import RestoreParams, RestoreCacheSettings, TemporaryRestoreConfig
+from casexml.apps.phone.restore import RestoreParams, RestoreCacheSettings, RestoreConfig
 from corehq.apps.users.models import CommCareUser
 from soil import DownloadBase
 
@@ -37,7 +37,7 @@ def prime_restore(domain, usernames_or_ids, version=V1, cache_timeout_hours=None
 
         try:
             project = couch_user.project
-            restore_config = TemporaryRestoreConfig(
+            restore_config = RestoreConfig(
                 domain=project,
                 user=couch_user.to_casexml_user(),
                 params=RestoreParams(

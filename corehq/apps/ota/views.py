@@ -16,7 +16,7 @@ from corehq.util.view_utils import json_error
 from couchforms.models import XFormInstance
 from dimagi.utils.decorators.memoized import memoized
 from django_digest.decorators import *
-from casexml.apps.phone.restore import TemporaryRestoreConfig, RestoreParams, RestoreCacheSettings
+from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
 from django.http import HttpResponse
 from lxml import etree
 from soil import DownloadBase
@@ -59,7 +59,7 @@ def get_restore_response(domain, couch_user, since=None, version='1.0',
                             status=401)
 
     project = Domain.get_by_name(domain)
-    restore_config = TemporaryRestoreConfig(
+    restore_config = RestoreConfig(
         domain=project,
         user=couch_user.to_casexml_user(),
         params=RestoreParams(

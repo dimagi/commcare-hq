@@ -16,7 +16,7 @@ from casexml.apps.case.tests.util import (check_user_has_case, delete_all_sync_l
     assert_user_has_case)
 from casexml.apps.case.xform import process_cases
 from casexml.apps.phone.models import SyncLog, User
-from casexml.apps.phone.restore import CachedResponse, TemporaryRestoreConfig, RestoreParams, RestoreCacheSettings
+from casexml.apps.phone.restore import CachedResponse, RestoreConfig, RestoreParams, RestoreCacheSettings
 from dimagi.utils.parsing import json_format_datetime
 from couchforms.models import XFormInstance
 from casexml.apps.case.xml import V2, V1
@@ -46,7 +46,7 @@ class SyncBaseTest(TestCase):
         self.user = User(user_id=USER_ID, username=USERNAME,
                          password="changeme", date_joined=datetime(2011, 6, 9))
         # this creates the initial blank sync token in the database
-        restore_config = TemporaryRestoreConfig(user=self.user)
+        restore_config = RestoreConfig(user=self.user)
         self.sync_log = synclog_from_restore_payload(restore_config.get_payload().as_string())
         self.factory = CaseFactory(
             case_defaults={
@@ -60,7 +60,7 @@ class SyncBaseTest(TestCase):
         )
 
     def tearDown(self):
-        restore_config = TemporaryRestoreConfig(user=self.user)
+        restore_config = RestoreConfig(user=self.user)
         restore_config.cache.delete(restore_config._initial_cache_key())
 
     def _createCaseStubs(self, id_list, **kwargs):
@@ -413,7 +413,7 @@ class SyncTokenCachingTest(SyncBaseTest):
     def testCaching(self):
         self.assertFalse(self.sync_log.has_cached_payload(V2))
         # first request should populate the cache
-        original_payload = TemporaryRestoreConfig(
+        original_payload = RestoreConfig(
             user=self.user,
             params=RestoreParams(
                 version=V2,
@@ -426,7 +426,7 @@ class SyncTokenCachingTest(SyncBaseTest):
         self.assertTrue(self.sync_log.has_cached_payload(V2))
 
         # a second request with the same config should be exactly the same
-        cached_payload = TemporaryRestoreConfig(
+        cached_payload = RestoreConfig(
             user=self.user,
             params=RestoreParams(
                 version=V2,
@@ -436,7 +436,7 @@ class SyncTokenCachingTest(SyncBaseTest):
         self.assertEqual(original_payload, cached_payload)
 
         # caching a different version should also produce something new
-        versioned_payload = TemporaryRestoreConfig(
+        versioned_payload = RestoreConfig(
             user=self.user,
             params=RestoreParams(
                 version=V1,
@@ -448,21 +448,21 @@ class SyncTokenCachingTest(SyncBaseTest):
         self.assertNotEqual(next_sync_log._id, versioned_sync_log._id)
 
     def test_initial_cache(self):
-        restore_config = TemporaryRestoreConfig(
+        restore_config = RestoreConfig(
             user=self.user,
             cache_settings=RestoreCacheSettings(force_cache=True),
         )
         original_payload = restore_config.get_payload()
         self.assertNotIsInstance(original_payload, CachedResponse)
 
-        restore_config = TemporaryRestoreConfig(user=self.user)
+        restore_config = RestoreConfig(user=self.user)
         cached_payload = restore_config.get_payload()
         self.assertIsInstance(cached_payload, CachedResponse)
 
         self.assertEqual(original_payload.as_string(), cached_payload.as_string())
 
     def testCacheInvalidation(self):
-        original_payload = TemporaryRestoreConfig(
+        original_payload = RestoreConfig(
             user=self.user,
             params=RestoreParams(
                 version=V2,
@@ -479,7 +479,7 @@ class SyncTokenCachingTest(SyncBaseTest):
         self.assertFalse(self.sync_log.has_cached_payload(V2))
 
         # resyncing should recreate the cache
-        next_payload = TemporaryRestoreConfig(
+        next_payload = RestoreConfig(
             user=self.user,
             params=RestoreParams(
                 version=V2,
@@ -496,7 +496,7 @@ class SyncTokenCachingTest(SyncBaseTest):
         self.assertTrue(self.sync_log.phone_has_case(case_id))
 
     def testCacheNonInvalidation(self):
-        original_payload = TemporaryRestoreConfig(
+        original_payload = RestoreConfig(
             user=self.user,
             params=RestoreParams(
                 version=V2,
@@ -517,7 +517,7 @@ class SyncTokenCachingTest(SyncBaseTest):
             case_type=PARENT_TYPE,
             version=V2,
         ).as_xml()])
-        next_payload = TemporaryRestoreConfig(
+        next_payload = RestoreConfig(
             user=self.user,
             params=RestoreParams(
                 version=V2,
@@ -540,7 +540,7 @@ class FileRestoreSyncTokenCachingTest(SyncTokenCachingTest):
 
     def testCacheInvalidationAfterFileDelete(self):
         # first request should populate the cache
-        original_payload = TemporaryRestoreConfig(
+        original_payload = RestoreConfig(
             user=self.user,
             cache_settings=RestoreCacheSettings(force_cache=True)
         ).get_payload()
@@ -550,7 +550,7 @@ class FileRestoreSyncTokenCachingTest(SyncTokenCachingTest):
         os.remove(original_payload.get_filename())
 
         # resyncing should recreate the cache
-        next_file = TemporaryRestoreConfig(user=self.user).get_payload()
+        next_file = RestoreConfig(user=self.user).get_payload()
         self.assertNotIsInstance(next_file, CachedResponse)
         self.assertNotEqual(original_payload.get_filename(), next_file.get_filename())
 
@@ -1142,7 +1142,7 @@ class LooseSyncTokenValidationTest(SyncBaseTest):
 
     def test_restore_with_bad_log_default(self):
         with self.assertRaises(MissingSyncLog):
-            TemporaryRestoreConfig(
+            RestoreConfig(
                 domain=Domain(name="test_restore_with_bad_log_default"),
                 user=self.user,
                 params=RestoreParams(
@@ -1155,7 +1155,7 @@ class LooseSyncTokenValidationTest(SyncBaseTest):
         domain = 'restore-domain-with-toggle'
 
         def _test():
-            TemporaryRestoreConfig(
+            RestoreConfig(
                 domain=Domain(name=domain),
                 user=self.user,
                 params=RestoreParams(

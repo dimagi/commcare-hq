@@ -7,7 +7,7 @@ import uuid
 from datetime import datetime, timedelta
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
-from casexml.apps.phone.restore import TemporaryRestoreConfig, RestoreParams
+from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 from casexml.apps.phone.tests.utils import synclog_id_from_restore_payload
 from corehq.apps.commtrack.models import ConsumptionConfig, StockRestoreConfig, RequisitionCase, StockState
 from corehq.apps.domain.models import Domain
@@ -500,7 +500,7 @@ class CommTrackSyncTest(CommTrackSubmissionTest):
         self.ota_settings = self.ct_settings.get_ota_restore_settings()
 
         # get initial restore token
-        restore_config = TemporaryRestoreConfig(
+        restore_config = RestoreConfig(
             domain=self.domain,
             user=self.casexml_user,
             params=RestoreParams(version=V2),
@@ -612,7 +612,7 @@ def _report_soh(amounts, case_id, section_id='stock', report=None):
 
 
 def _get_ota_balance_blocks(domain, user):
-    restore_config = TemporaryRestoreConfig(
+    restore_config = RestoreConfig(
         domain=domain,
         user=user.to_casexml_user(),
         params=RestoreParams(version=V2),

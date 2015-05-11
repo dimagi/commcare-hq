@@ -1,7 +1,7 @@
 from xml.etree import ElementTree
 from casexml.apps.case.xml import V1
 from casexml.apps.phone.models import SyncLog
-from casexml.apps.phone.restore import TemporaryRestoreConfig, RestoreParams, RestoreCacheSettings
+from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
 from casexml.apps.phone.xml import SYNC_XMLNS
 
 
@@ -25,7 +25,7 @@ def generate_restore_payload(user, restore_id="", version=V1, state_hash="",
 
         returns: the xml payload of the sync operation
     """
-    config = TemporaryRestoreConfig(
+    config = RestoreConfig(
         user=user,
         params=RestoreParams(
             sync_log_id=restore_id,
@@ -43,7 +43,7 @@ def generate_restore_payload(user, restore_id="", version=V1, state_hash="",
 
 def generate_restore_response(user, restore_id="", version=V1, state_hash="",
                               items=False):
-    config = TemporaryRestoreConfig(
+    config = RestoreConfig(
         user=user,
         params=RestoreParams(
             sync_log_id=restore_id,
