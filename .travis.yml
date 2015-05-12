@@ -39,5 +39,4 @@ services:
   - couchdb
   - rabbitmq
   - elasticsearch
-  - memcache
   - redis-server
