@@ -446,24 +446,22 @@ ExportParameters = namedtuple('ExportParameters',
                               ['format', 'keyword_filters', 'sql_filters'])
 
 
-def process_url_params(params, column_descriptions):
+def process_url_params(params, columns):
     format_ = params.get('format', Format.UNZIPPED_CSV)
-    columns = {column['name']: column for column in column_descriptions}
     keyword_filters = {}
     sql_filters = []
     for key, value in params.items():
         if key == 'format':
             continue
-        column = columns.get(key, None)
-        if not column:
+        if not key in columns:
             raise UserQueryError('Invalid filter parameter: {}'.format(key))
+        column = columns[key]
 
         if (
             value == 'last30'
-            and isinstance(column['type'], (types.Date, types.DateTime))
+            and isinstance(column.type, (types.Date, types.DateTime))
         ):
-            expr = column['expr']
-            sql_filters.append(expr.between('2014-02-02', '2014-10-02'))
+            sql_filters.append(column.between('2014-02-02', '2014-10-02'))
         else:
             keyword_filters[key] = value
     return ExportParameters(format_, keyword_filters, sql_filters)
@@ -475,10 +473,9 @@ def export_data_source(request, domain, config_id):
     config = get_document_or_404(DataSourceConfiguration, domain, config_id)
     table = get_indicator_table(config)
     q = Session.query(table)
-    columns = q.column_descriptions
 
     try:
-        params = process_url_params(request.GET, columns)
+        params = process_url_params(request.GET, table.columns)
     except UserQueryError as e:
         return HttpResponse(e.message, status=400)
 
@@ -488,7 +485,7 @@ def export_data_source(request, domain, config_id):
 
     # build export
     def get_table(q):
-        yield [col['name'] for col in columns]
+        yield table.columns.keys()
         for row in q:
             yield row
 
