@@ -1223,6 +1223,13 @@ class InternalSubscriptionManagementForm(forms.Form):
     def current_subscription(self):
         return Subscription.get_subscribed_plan_by_domain(self.domain)[1]
 
+    @property
+    @memoized
+    def current_contact_emails(self):
+        return BillingContactInfo.objects.get_or_create(
+            account=self.current_subscription.account
+        )[0].emails
+
     def __init__(self, domain, web_user, *args, **kwargs):
         super(InternalSubscriptionManagementForm, self).__init__(*args, **kwargs)
         self.domain = domain
@@ -1310,6 +1317,8 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
         }
 
         super(AdvancedExtendedTrialForm, self).__init__(domain, web_user, *args, **kwargs)
+
+        self.fields['emails'].initial = self.current_contact_emails
 
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
@@ -1421,6 +1430,7 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
 
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
+        self.fields['emails'].initial = self.current_contact_emails
 
         plan_edition = self.current_subscription.plan_version.plan.edition if self.current_subscription else None
         if plan_edition not in [
@@ -1446,7 +1456,6 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
             )
         else:
             self.fields['fogbugz_client_name'].initial = self.current_subscription.account.name
-            self.fields['emails'].initial = self.current_subscription.account.billingcontactinfo.emails
             self.fields['end_date'].initial = self.current_subscription.date_end
             self.helper.layout = crispy.Layout(
                 TextField('software_plan_edition', plan_edition),
