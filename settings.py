@@ -292,6 +292,7 @@ HQ_APPS = (
     'corehq.apps.grapevine',
     'corehq.apps.dashboard',
     'corehq.util',
+    'dimagi.ext',
 
     # custom reports
     'a5288',
@@ -400,7 +401,7 @@ DOMAIN_SELECT_URL = "/domain/select/"
 # This is not used by anything in CommCare HQ, leaving it here in case anything
 # in Django unexpectedly breaks without it.  When you need the login url, you
 # should use reverse('login', kwargs={'domain_type': domain_type}) in order to
-# maintain CommCare HQ/CommTrack distinction.
+# maintain CommCare HQ/CommCare Supply distinction.
 LOGIN_URL = "/accounts/login/"
 # If a user tries to access domain admin pages but isn't a domain
 # administrator, here's where he/she is redirected
@@ -497,7 +498,18 @@ FIXTURE_GENERATORS = {
     ]
 }
 
-RESTORE_PAYLOAD_DIR = None  # Defaults to tempfile.gettempdir()
+### Shared drive settings ###
+# Also see section after localsettings import
+SHARED_DRIVE_ROOT = None
+
+# name of the directory within SHARED_DRIVE_ROOT
+RESTORE_PAYLOAD_DIR_NAME = None
+
+## django-transfer settings
+# These settings must match the apache / nginx config
+TRANSFER_SERVER = None  # 'apache' or 'nginx'
+# name of the directory within SHARED_DRIVE_ROOT
+TRANSFER_FILE_DIR_NAME = None
 
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
 
@@ -677,8 +689,12 @@ ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_ID': '',
     'PINGDOM_ID': '',
     'ANALYTICS_ID_PUBLIC_COMMCARE': '',
-    'SEGMENT_ANALYTICS_KEY': '',
+    'KISSMETRICS_KEY': '',
     'HUBSPOT_ID': '',
+}
+
+ANALYTICS_CONFIG = {
+    "HQ_INSTANCE": '',  # e.g. "www" or "staging"
 }
 
 OPEN_EXCHANGE_RATES_ID = ''
@@ -953,6 +969,17 @@ if not SQL_REPORTING_DATABASE_URL or UNIT_TESTING:
         **db_settings
     )
 
+### Shared drive settings ###
+if SHARED_DRIVE_ROOT and RESTORE_PAYLOAD_DIR_NAME:
+    # Defaults to tempfile.gettempdir()
+    RESTORE_PAYLOAD_DIR = os.path.join(SHARED_DRIVE_ROOT, RESTORE_PAYLOAD_DIR_NAME)
+
+if SHARED_DRIVE_ROOT and TRANSFER_FILE_DIR_NAME:
+    TRANSFER_FILE_DIR = os.path.join(SHARED_DRIVE_ROOT, TRANSFER_FILE_DIR_NAME)
+    TRANSFER_MAPPINGS = {
+        TRANSFER_FILE_DIR: '/{}'.format(TRANSFER_FILE_DIR_NAME),  # e.g. '/mnt/shared/downloads': '/downloads',
+    }
+
 MVP_INDICATOR_DB = 'mvp-indicators'
 
 INDICATOR_CONFIG = {
@@ -999,6 +1026,7 @@ COUCHDB_APPS = [
     'custom_data_fields',
     'hqadmin',
     'domain',
+    'ext',
     'facilities',
     'fluff_filter',
     'fixtures',
@@ -1382,6 +1410,7 @@ TRAVIS_TEST_GROUPS = (
         'facilities', 'fixtures', 'fluff_filter', 'formplayer',
         'formtranslate', 'fri', 'grapevine', 'groups', 'gsid', 'hope',
         'hqadmin', 'hqcase', 'hqcouchlog', 'hqmedia',
+        'smsbillables',
     ),
 )
 

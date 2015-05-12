@@ -170,8 +170,12 @@ def redirect_to_default(req, domain=None):
         if domain != None:
             url = reverse('domain_login', args=[domain])
         else:
-            # this actually gets hijacked by the static site, but is necessary
-            url = reverse('corehq.apps.hqwebapp.views.landing_page')
+            try:
+                from corehq.apps.prelogin.views import HomePublicView
+                url = reverse(HomePublicView.urlname)
+            except ImportError:
+                # this happens when the prelogin app is not included.
+                url = reverse('landing_page')
     else:
         if domain:
             domain = normalize_domain_name(domain)

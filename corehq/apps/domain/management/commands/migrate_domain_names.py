@@ -1,4 +1,4 @@
-from couchdbkit.ext.django.schema import Document
+from dimagi.ext.couchdbkit import Document
 from django.core.management.base import LabelCommand, CommandError
 from corehq.apps.domain.models import OldDomain
 from corehq.apps.domain.shortcuts import create_domain, create_user

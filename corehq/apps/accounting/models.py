@@ -4,7 +4,7 @@ import logging
 from tempfile import NamedTemporaryFile
 from decimal import Decimal
 from couchdbkit import ResourceNotFound
-from couchdbkit.ext.django.schema import DateTimeProperty, StringProperty
+from dimagi.ext.couchdbkit import DateTimeProperty, StringProperty, SafeSaveDocument
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
@@ -21,7 +21,6 @@ from django_prbac.models import Role
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.cached_object import CachedObject
 from dimagi.utils.django.email import send_HTML_email
-from dimagi.utils.couch.database import SafeSaveDocument
 
 from corehq.apps.users.models import WebUser
 
@@ -1775,7 +1774,12 @@ class InvoicePdf(SafeSaveDocument):
 
         template.get_pdf()
         filename = self.get_filename(invoice)
-        self.put_attachment(pdf_data, filename, 'application/pdf')
+        # this is slow and not unit tested
+        # best to just skip during unit tests for speed
+        if not settings.UNIT_TESTING:
+            self.put_attachment(pdf_data, filename, 'application/pdf')
+        else:
+            self.put_attachment('', filename, 'application/pdf')
         pdf_data.close()
 
         self.invoice_id = str(invoice.id)
@@ -2100,4 +2104,4 @@ class CreditAdjustment(models.Model):
         Only one of either a line item or invoice may be specified as the adjuster.
         """
         if self.line_item and self.invoice is not None:
-            raise ValidationError("You can't specify both an invoice and a line item.")
+            raise ValidationError(_("You can't specify both an invoice and a line item."))

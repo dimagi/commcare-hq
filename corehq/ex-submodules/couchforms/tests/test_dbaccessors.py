@@ -1,7 +1,8 @@
+import datetime
 from django.test import TestCase
 from couchforms.dbaccessors import get_forms_by_type, clear_all_forms, \
     get_number_of_forms_by_type, get_number_of_forms_of_all_types, \
-    get_form_ids_by_type
+    get_form_ids_by_type, get_forms_in_date_range
 from couchforms.models import XFormInstance, XFormError
 
 
@@ -10,8 +11,12 @@ class TestDBAccessors(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.domain = 'evelyn'
-
-        cls.xforms = [XFormInstance(_id='xform_1'), XFormInstance(_id='xform_2')]
+        cls.now = datetime.datetime.utcnow()
+        cls.xforms = [
+            XFormInstance(_id='xform_1',
+                          received_on=cls.now - datetime.timedelta(days=10)),
+            XFormInstance(_id='xform_2', received_on=cls.now)
+        ]
         cls.xform_errors = [XFormError(_id='xform_error_1')]
 
         for form in cls.xforms + cls.xform_errors:
@@ -59,3 +64,10 @@ class TestDBAccessors(TestCase):
     def test_get_form_ids_by_type(self):
         form_ids = get_form_ids_by_type(self.domain, 'XFormError')
         self.assertEqual(form_ids, [form._id for form in self.xform_errors])
+
+    def test_get_forms_in_date_range(self):
+        forms = get_forms_in_date_range(self.domain,
+                                        self.now - datetime.timedelta(days=1),
+                                        self.now + datetime.timedelta(days=1))
+        self.assertEqual(len(forms), 1)
+        self.assertEqual(forms[0]._id, 'xform_2')

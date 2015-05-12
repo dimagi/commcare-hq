@@ -1,7 +1,7 @@
 import json
 from django.core.management.base import LabelCommand, CommandError
 from optparse import make_option
-from jsonobject import JsonObject, StringProperty, ListProperty
+from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty
 from corehq import Domain
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import get_docs

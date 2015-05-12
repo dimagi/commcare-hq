@@ -1,6 +1,6 @@
 from functools import partial
 from couchdbkit import ResourceNotFound
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 import itertools
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from dimagi.utils.couch.database import iter_docs
@@ -258,6 +258,14 @@ class SQLLocation(MPTTModel):
     def couch_location(self):
         return Location.get(self.location_id)
 
+    def is_direct_ancestor_of(self, location):
+        return (location.get_ancestors(include_self=True)
+                .filter(pk=self.pk).exists())
+
+    @classmethod
+    def by_domain(cls, domain):
+        return cls.objects.filter(domain=domain)
+
 
 def _filter_for_archived(locations, include_archive_ancestors):
     """
@@ -296,6 +304,17 @@ class Location(CachedCouchDocumentMixin, Document):
     # independent hierarchies
     lineage = StringListProperty()
     previous_parents = StringListProperty()
+
+    @classmethod
+    def wrap(cls, data):
+        last_modified = data.get('last_modified')
+        # if it's missing a Z because of the Aug. 2014 migration
+        # that added this in iso_format() without Z, then add a Z
+        # (See also Group class)
+        from corehq.apps.groups.models import dt_no_Z_re
+        if last_modified and dt_no_Z_re.match(last_modified):
+            data['last_modified'] += 'Z'
+        return super(Location, cls).wrap(data)
 
     def __init__(self, *args, **kwargs):
         if 'parent' in kwargs:
@@ -548,10 +567,6 @@ class Location(CachedCouchDocumentMixin, Document):
         return root_locations(domain)
 
     @classmethod
-    def all_locations(cls, domain):
-        return all_locations(domain)
-
-    @classmethod
     def get_in_domain(cls, domain, id):
         if id:
             try:
@@ -641,8 +656,3 @@ def root_locations(domain):
     ids = [res['key'][-1] for res in results]
     locs = [Location.get(id) for id in ids]
     return [loc for loc in locs if not loc.is_archived]
-
-
-def all_locations(domain):
-    return Location.view('locations/hierarchy', startkey=[domain], endkey=[domain, {}],
-                         reduce=False, include_docs=True).all()

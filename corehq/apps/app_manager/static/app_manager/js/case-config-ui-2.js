@@ -549,7 +549,7 @@ var CaseConfig = (function () {
             var o = CaseTransaction.unwrap(case_transaction);
             var x = CC_UTILS.propertyArrayToDict(['name'], o.case_properties);
             var case_properties = x[0], case_name = x[1].name;
-            var case_preload = CC_UTILS.propertyArrayToDict([], o.case_preload, true)[0];
+            var case_preload = CC_UTILS.preloadArrayToDict(o.case_preload);
             var open_condition = o.condition;
             var close_condition = o.close_condition;
             var update_condition = DEFAULT_CONDITION_ALWAYS;

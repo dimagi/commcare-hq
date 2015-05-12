@@ -12,7 +12,7 @@ from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
-from dimagi.utils.parsing import ISO_DATE_FORMAT, json_format_datetime, string_to_datetime
+from dimagi.utils.parsing import ISO_DATE_FORMAT
 
 from dimagi.utils.logging import notify_exception
 
@@ -608,6 +608,7 @@ class ESQuerySet(object):
         else:
             raise TypeError('Unsupported type: %s', type(idx))
 
+
 def validate_date(date):
     try:
         datetime.datetime.strptime(date, ISO_DATE_FORMAT)
@@ -616,12 +617,12 @@ def validate_date(date):
             datetime.datetime.strptime(date, '%Y-%m-%dT%H:%M:%S')
         except ValueError:
             try:
-                date = json_format_datetime(string_to_datetime(date))
+                datetime.datetime.strptime(date, '%Y-%m-%dT%H:%M:%S.%f')
             except ValueError:
                 raise DateTimeError("Date not in the correct format")
     return date
 
-RESERVED_QUERY_PARAMS=set(['limit', 'offset', 'order_by', 'q', '_search'])
+RESERVED_QUERY_PARAMS = set(['limit', 'offset', 'order_by', 'q', '_search'])
 
 # Note that dates are already in a string format when they arrive as query params
 query_param_transforms = {

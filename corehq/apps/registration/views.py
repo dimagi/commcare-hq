@@ -46,6 +46,8 @@ def register_user(request, domain_type=None):
     if domain_type not in DOMAIN_TYPES:
         raise Http404()
 
+    prefilled_email = request.GET.get('e', '')
+
     context = get_domain_context(domain_type)
 
     if request.user.is_authenticated():
@@ -67,7 +69,7 @@ def register_user(request, domain_type=None):
                     'registration_domain', domain_type=domain_type)
         else:
             form = NewWebUserRegistrationForm(
-                    initial={'domain_type': domain_type})
+                initial={'domain_type': domain_type, 'email': prefilled_email})
 
         context.update({
             'form': form,
