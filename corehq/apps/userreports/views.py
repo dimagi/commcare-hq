@@ -19,7 +19,7 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView, View
 
-from sqlalchemy import types
+from sqlalchemy import types, exc
 
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq import ConfigurableReport, privileges, Session, toggles
@@ -449,7 +449,7 @@ ExportParameters = namedtuple('ExportParameters',
 
 def _last_n_days(column, value):
     if not isinstance(column.type, (types.Date, types.DateTime)):
-        raise UserQueryError("You can only use 'lastndays' on date columns")
+        raise UserQueryError(_("You can only use 'lastndays' on date columns"))
     end = datetime.date.today()
     start = end - datetime.timedelta(days=int(value))
     return column.between(start, end)
@@ -459,7 +459,7 @@ def _range_filter(column, value):
     try:
         start, end = value.split('..')
     except ValueError:
-        raise UserQueryError('Range values must have the format "start..end"')
+        raise UserQueryError(_('Ranges must have the format "start..end"'))
     return column.between(start, end)
 
 
@@ -489,14 +489,15 @@ def process_url_params(params, columns):
             if key.endswith(suffix):
                 field = key.rstrip(suffix)
                 if field not in columns:
-                    raise UserQueryError('No field named {}'.format(field))
+                    raise UserQueryError(_('No field named {}').format(field))
                 sql_filters.append(fn(columns[field], value))
                 break
         else:
             if key in columns:
                 keyword_filters[key] = value
             else:
-                raise UserQueryError('Invalid filter parameter: {}'.format(key))
+                raise UserQueryError(_('Invalid filter parameter: {}')
+                                     .format(key))
     return ExportParameters(format_, keyword_filters, sql_filters)
 
 
@@ -522,10 +523,16 @@ def export_data_source(request, domain, config_id):
         for row in q:
             yield row
 
-    return HttpResponse('Woo! {} rows'.format(q.count()))
+    try:
+        full_table = list(get_table(q))
+    except exc.DataError:
+        msg = _("There was a problem executing your query, please make sure "
+                "your parameters are valid.")
+        return HttpResponse(msg, status=400)
+
     fd, path = tempfile.mkstemp()
     with os.fdopen(fd, 'wb') as temp:
-        export_from_tables([[config.table_id, get_table(q)]], temp, params.format)
+        export_from_tables([[config.table_id, full_table]], temp, params.format)
         return export_response(Temp(path), params.format, config.display_name)
 
 
