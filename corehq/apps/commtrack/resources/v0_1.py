@@ -6,7 +6,7 @@ from corehq.apps.api.resources import HqBaseResource
 
 
 """
-Implementation of the CommTrack APIs. For more information see:
+Implementation of the CommCare Supply APIs. For more information see:
 
 https://confluence.dimagi.com/display/lmis/API
 """

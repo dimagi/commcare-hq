@@ -15,8 +15,9 @@ import collections
 import datetime
 import itertools
 import types
+from corehq.util.dates import iso_string_to_datetime
 
-from jsonobject import DateTimeProperty, DateProperty
+from dimagi.ext.jsonobject import DateProperty
 from jsonobject.exceptions import BadValueError
 from dimagi.utils.chunked import chunked
 import pytz
@@ -29,8 +30,8 @@ from django.utils.html import escape, conditional_escape
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import pretty_doc_info
 from corehq.const import USER_DATETIME_FORMAT, USER_DATE_FORMAT
-from corehq.util.dates import safe_strftime
 from corehq.util.timezones.conversions import ServerTime, PhoneTime
+from dimagi.utils.dates import safe_strftime
 
 register = template.Library()
 
@@ -50,7 +51,7 @@ def _parse_date_or_datetime(val):
             return val
 
         try:
-            dt = DateTimeProperty().wrap(val)
+            dt = iso_string_to_datetime(val)
         except BadValueError:
             try:
                 return DateProperty().wrap(val)

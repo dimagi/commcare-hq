@@ -28,8 +28,10 @@ NUM_PROCESSES = 8
 
 
 class Command(BaseCommand):
-    help = "Copies the contents of a domain to another database."
-    args = '<sourcedb> <domain>'
+    help = "Copies the contents of a domain to another database. " \
+           "If tagetdb is not specified, the target is the database " \
+           "specified by COUCH_DATABASE in your settings."
+    args = '<sourcedb> <domain> [<targetdb>]'
     option_list = BaseCommand.option_list + (
         make_option('--include',
                     action='store',
@@ -72,7 +74,7 @@ class Command(BaseCommand):
                     default='',
                     help="Name of postgres database to pull additional data from. This should map to a "
                          "key in settings.DATABASES. If not specified no additional postgres data will be "
-                         "copied. This is currently used to pull CommTrack models."),
+                         "copied. This is currently used to pull CommCare Supply models."),
         make_option('--postgres-password',
                     action='store',
                     dest='postgres_password',
@@ -82,7 +84,7 @@ class Command(BaseCommand):
     )
 
     def handle(self, *args, **options):
-        if len(args) != 2:
+        if len(args) not in [2, 3]:
             raise CommandError('Usage is copy_domain %s' % self.args)
 
         sourcedb = Database(args[0])
@@ -102,7 +104,7 @@ class Command(BaseCommand):
         if options['postgres_db'] and options['postgres_password']:
             settings.DATABASES[options['postgres_db']]['PASSWORD'] = options['postgres_password']
 
-        self.targetdb = get_db()
+        self.targetdb = Database(args[2]) if len(args) == 3 else get_db()
 
         try:
             domain_doc = Domain.get_by_name(domain)

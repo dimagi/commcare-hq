@@ -1,4 +1,4 @@
-from casexml.apps.case.exceptions import BadVersionException
+from casexml.apps.phone.exceptions import BadVersionException
 
 V1 = "1.0"
 V2 = "2.0"

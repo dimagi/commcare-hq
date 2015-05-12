@@ -1,0 +1,24 @@
+<partial>
+  <entry>
+    <form>fixmeclayton</form>
+    <command id="reports.d3ff18cd83adf4550b35db8d391f6008">
+      <text>
+        <locale id="cchq.reports.d3ff18cd83adf4550b35db8d391f6008.name"/>
+      </text>
+    </command>
+    <instance id="reports" src="jr://fixture/commcare:reports"/>
+    <session>
+      <datum
+        id="report_id_d3ff18cd83adf4550b35db8d391f6008"
+        nodeset="instance('reports')/reports/report[@id='d3ff18cd83adf4550b35db8d391f6008']"
+        value="./@id"
+        detail-select="reports.d3ff18cd83adf4550b35db8d391f6008.select"
+        detail-confirm="reports.d3ff18cd83adf4550b35db8d391f6008.summary"/>
+      <datum
+        id="throwaway_d3ff18cd83adf4550b35db8d391f6008"
+        nodeset="instance('reports')/reports/report[@id='d3ff18cd83adf4550b35db8d391f6008']/rows/row"
+        value="''"
+        detail-select="reports.d3ff18cd83adf4550b35db8d391f6008.data"/>
+    </session>
+  </entry>
+</partial>

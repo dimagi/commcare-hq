@@ -1,5 +1,5 @@
 from datetime import timedelta
-from corehq import Domain
+from django.db.models.aggregates import Count
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.generic import GenericTabularReport
@@ -16,7 +16,7 @@ from custom.ewsghana.reports.stock_levels_report import StockLevelsReport, Inven
 from custom.ewsghana.reports import MultiReport, EWSData, EWSMultiBarChart, ProductSelectionPane, EWSLineChart
 from casexml.apps.stock.models import StockTransaction
 from django.db.models import Q
-from custom.ewsghana.utils import get_supply_points, make_url, get_second_week, get_country_id
+from custom.ewsghana.utils import get_supply_points, make_url, get_second_week, get_country_id, first_item
 
 
 class ProductAvailabilityData(EWSData):
@@ -34,23 +34,24 @@ class ProductAvailabilityData(EWSData):
         rows = []
         if self.config['location_id']:
             locations = get_supply_points(self.config['location_id'], self.config['domain'])
+            supply_points = locations.values_list('supply_point_id', flat=True)
+            if not supply_points:
+                return rows
+            total = supply_points.count()
             for p in self.unique_products(locations, all=True):
-                supply_points = locations.values_list('supply_point_id', flat=True)
-                if supply_points:
-                    stocks = StockTransaction.objects.filter(
-                        type='stockonhand', product_id=p.product_id, case_id__in=supply_points,
-                        report__date__lte=self.config['enddate'], report__date__gte=self.config['startdate']
-                    ).order_by('case_id', '-report__date').distinct('case_id')
-                    total = supply_points.count()
-                    with_stock = stocks.filter(stock_on_hand__gt=0).count()
-                    without_stock = stocks.filter(stock_on_hand=0).count()
-                    without_data = total - with_stock - without_stock
-                    rows.append({"product_code": p.code,
-                                 "product_name": p.name,
-                                 "total": total,
-                                 "with_stock": with_stock,
-                                 "without_stock": without_stock,
-                                 "without_data": without_data})
+                stocks = StockTransaction.objects.filter(
+                    type='stockonhand', product_id=p.product_id, case_id__in=supply_points,
+                    report__date__lte=self.config['enddate'], report__date__gte=self.config['startdate']
+                ).order_by('case_id', '-report__date').distinct('case_id')
+                with_stock = stocks.filter(stock_on_hand__gt=0).count()
+                without_stock = stocks.filter(stock_on_hand=0).count()
+                without_data = total - with_stock - without_stock
+                rows.append({"product_code": p.code,
+                             "product_name": p.name,
+                             "total": total,
+                             "with_stock": with_stock,
+                             "without_stock": without_stock,
+                             "without_data": without_data})
         return rows
 
     @property
@@ -149,37 +150,36 @@ class MonthOfStockProduct(EWSData):
         rows = []
         if self.config['location_id']:
             for sp in self.get_supply_points:
-                location_types = [loc_type.name for loc_type in filter(
-                    lambda loc_type: not loc_type.administrative,
-                    Domain.get_by_name(self.config['domain']).location_types
-                )]
-                if sp.location_type in location_types:
+                if sp.location_type.administrative:
                     cls = StockLevelsReport
                 else:
                     cls = StockStatus
                 url = make_url(
                     cls,
                     self.config['domain'],
-                    '?location_id=%s&filter_by_program=%s&startdate=%s'
-                    '&enddate=%s&report_type=%s&filter_by_product=%s',
-                    (sp.location_id, self.config['program'] or ALL_OPTION, self.config['startdate'],
-                    self.config['enddate'], self.config['report_type'],
-                    '&filter_by_product='.join(self.config['products'])))
+                    '?location_id=%s&filter_by_program=%s&startdate=%s&enddate=%s&report_type=%s',
+                    (sp.location_id, self.config['program'] or ALL_OPTION, self.config['startdate'].date(),
+                    self.config['enddate'].date(), self.config['report_type']))
 
                 row = [link_format(sp.name, url)]
-                for p in self.unique_products(self.get_supply_points, all=True):
-                    transaction = StockTransaction.objects.filter(
-                        type='stockonhand', product_id=p.product_id, case_id=sp.supply_point_id,
-                        report__date__lte=self.config['enddate'], report__date__gte=self.config['startdate']
-                    ).order_by('-report__date')
+                transactions = list(StockTransaction.objects.filter(
+                    type='stockonhand',
+                    case_id=sp.supply_point_id,
+                    report__date__lte=self.config['enddate']
+                ).order_by('-report__date'))
 
-                    state = StockState.objects.filter(sql_product=p, case_id=sp.supply_point_id)\
-                        .order_by('-last_modified_date')
+                states = list(StockState.objects.filter(
+                    case_id=sp.supply_point_id,
+                    section_id='stock'
+                ))
+
+                for p in self.unique_products(self.get_supply_points, all=True):
+                    transaction = first_item(transactions, lambda x: x.product_id == p.product_id)
+                    state = first_item(states, lambda x: x.product_id == p.product_id)
 
                     if transaction and state:
-                        monthly = state[0].get_monthly_consumption()
-                        if monthly:
-                            row.append(round(transaction[0].stock_on_hand / monthly))
+                        if state.daily_consumption:
+                            row.append("%.1f" % (transaction.stock_on_hand / state.get_monthly_consumption()))
                         else:
                             row.append(0)
                     else:
@@ -213,15 +213,15 @@ class StockoutsProduct(EWSData):
             enddate = self.config['enddate']
             startdate = self.config['startdate'] if 'custom_date' in self.config else enddate - timedelta(days=90)
             for d in get_second_week(startdate, enddate):
-                for product in products:
-                    st = StockTransaction.objects.filter(
-                        case_id__in=supply_points.values_list('supply_point_id', flat=True),
-                        sql_product=product,
-                        report__date__range=[d['start_date'], d['end_date']],
-                        type='stockonhand',
-                        stock_on_hand=0).count()
-
-                    rows[product.code].append({'x': d['start_date'], 'y': st})
+                txs = list(StockTransaction.objects.filter(
+                    case_id__in=supply_points.values_list('supply_point_id', flat=True),
+                    sql_product__in=products,
+                    report__date__range=[d['start_date'], d['end_date']],
+                    type='stockonhand',
+                    stock_on_hand=0
+                ).values('sql_product__code').annotate(count=Count('case_id')))
+                for tx in txs:
+                    rows[tx['sql_product__code']].append({'x': d['start_date'], 'y': tx['count']})
         return rows
 
     @property
@@ -273,8 +273,11 @@ class StockoutTable(EWSData):
             for supply_point in supply_points:
                 product_map = {p.product_id: p.name for p in products.intersection(set(supply_point.products))}
                 stockout = StockTransaction.objects.filter(
-                    type='stockonhand', product_id__in=product_map.keys(), case_id=supply_point.supply_point_id,
-                    report__date__lte=self.config['enddate'], report__date__gte=self.config['startdate'],
+                    type='stockonhand',
+                    product_id__in=product_map.keys(),
+                    case_id=supply_point.supply_point_id,
+                    report__date__lte=self.config['enddate'],
+                    report__date__gte=self.config['startdate'],
                     stock_on_hand=0
                 ).order_by('product_id', '-report__date').distinct('product_id').values_list('product_id',
                                                                                              flat=True)

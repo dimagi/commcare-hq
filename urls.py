@@ -13,6 +13,13 @@ try:
     from localsettings import LOCAL_APP_URLS
 except ImportError:
     LOCAL_APP_URLS = ()
+
+try:
+    from localsettings import PRELOGIN_APP_URLS
+except ImportError:
+    PRELOGIN_APP_URLS = (
+        (r'', include('corehq.apps.prelogin.urls')),
+    )
 admin.autodiscover()
 
 handler500 = 'corehq.apps.hqwebapp.views.server_error'
@@ -125,8 +132,11 @@ urlpatterns = patterns('',
     url(r'^pro_bono/$', ProBonoStaticView.as_view(),
         name=ProBonoStaticView.urlname),
     url(r'^loadtest/', include('corehq.apps.loadtestendpoints.urls')),
-    (r'^public/', include('corehq.apps.public.urls')),
+    url(r'^robots.txt$', TemplateView.as_view(template_name='robots.txt', content_type='text/plain')),
 ) + patterns('', *LOCAL_APP_URLS)
+
+if settings.ENABLE_PRELOGIN_SITE:
+    urlpatterns += patterns('', *PRELOGIN_APP_URLS)
 
 # django rosetta support if configured
 if 'rosetta' in settings.INSTALLED_APPS:

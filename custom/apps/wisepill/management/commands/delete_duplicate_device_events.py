@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand, CommandError
 from optparse import make_option
 from django.conf import settings
+from couchforms.dbaccessors import get_forms_in_date_range
 from couchforms.models import XFormInstance
 from dimagi.utils.parsing import string_to_datetime, json_format_datetime
 
@@ -9,11 +10,7 @@ class Command(BaseCommand):
     help = "Delete duplicate form submissions."
 
     def delete_dup_forms(self, domain, xmlns, from_date, to_date):
-        forms = XFormInstance.view("couchforms/all_submissions_by_domain",
-                                   startkey=[domain, "by_date", from_date],
-                                   endkey=[domain, "by_date", to_date, {}],
-                                   include_docs=True,
-                                   reduce=False).all()
+        forms = get_forms_in_date_range(domain, from_date, to_date)
         keys = {}
         for form in forms:
             form_inst = form.form

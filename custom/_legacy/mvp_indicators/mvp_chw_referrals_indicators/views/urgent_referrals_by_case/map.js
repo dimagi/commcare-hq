@@ -7,6 +7,7 @@ function(doc) {
             self.normal = normal_dates;
 
             function _compareVisitAndFlagged(flagged_date) {
+                var  results = false;
                 for (var n = 0; n < self.normal.length; n++) {
                     var normal_date = self.normal[n];
 
@@ -21,10 +22,10 @@ function(doc) {
                         } else {
                             emit_standard(doc, flagged_date, ["urgent_referral_followup_none"], [doc._id]);
                         }
-                        return true;
+                        results =  true;
                     }
                 }
-                return false;
+                return results;
             }
 
             for (var f = 0; f < self.flagged.length; f++) {
@@ -44,12 +45,13 @@ function(doc) {
 
             var referrals = indicators.referral_type.value,
                 visit_dates = [],
+                condition_improved,
                 urgent_dates = [];
-                if (indicators.condition_improved && indicators.condition_improved.value) {
-                    var condition_improved = indicators.condition_improved.value;
-                } else {
-                    var condition_improved = false;
-                }
+            if (indicators.condition_improved && indicators.condition_improved.value) {
+                condition_improved = indicators.condition_improved.value;
+            } else {
+                condition_improved = false;
+            }
 
             for (var r in referrals) {
                 if (referrals.hasOwnProperty(r)) {

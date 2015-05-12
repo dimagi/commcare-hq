@@ -127,6 +127,7 @@ MIDDLEWARE_CLASSES = [
     'corehq.util.global_request.middleware.GlobalRequestMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
     'corehq.apps.domain.middleware.CCHQPRBACMiddleware',
+    'corehq.apps.domain.middleware.DomainHistoryMiddleware',
     'casexml.apps.phone.middleware.SyncTokenMiddleware',
     'auditcare.middleware.AuditMiddleware',
     'no_exceptions.middleware.NoExceptionsMiddleware',
@@ -290,8 +291,8 @@ HQ_APPS = (
     'corehq.apps.styleguide',
     'corehq.apps.grapevine',
     'corehq.apps.dashboard',
-    'corehq.apps.public',
     'corehq.util',
+    'dimagi.ext',
 
     # custom reports
     'a5288',
@@ -400,7 +401,7 @@ DOMAIN_SELECT_URL = "/domain/select/"
 # This is not used by anything in CommCare HQ, leaving it here in case anything
 # in Django unexpectedly breaks without it.  When you need the login url, you
 # should use reverse('login', kwargs={'domain_type': domain_type}) in order to
-# maintain CommCare HQ/CommTrack distinction.
+# maintain CommCare HQ/CommCare Supply distinction.
 LOGIN_URL = "/accounts/login/"
 # If a user tries to access domain admin pages but isn't a domain
 # administrator, here's where he/she is redirected
@@ -448,7 +449,6 @@ EMAIL_SMTP_PORT = 587
 EMAIL_USE_TLS = True
 SEND_BROKEN_LINK_EMAILS = True
 
-
 # put email addresses here to have them receive bug reports
 BUG_REPORT_RECIPIENTS = ()
 EXCHANGE_NOTIFICATION_RECIPIENTS = []
@@ -486,6 +486,7 @@ FIXTURE_GENERATORS = {
         "corehq.apps.callcenter.fixturegenerators.indicators_fixture_generator",
         "corehq.apps.products.fixtures.product_fixture_generator",
         "corehq.apps.programs.fixtures.program_fixture_generator",
+        "corehq.apps.userreports.fixtures.report_fixture_generator",
         # custom
         "custom.bihar.reports.indicators.fixtures.generator",
         "custom.m4change.fixtures.report_fixtures.generator",
@@ -497,7 +498,18 @@ FIXTURE_GENERATORS = {
     ]
 }
 
-RESTORE_PAYLOAD_DIR = None  # Defaults to tempfile.gettempdir()
+### Shared drive settings ###
+# Also see section after localsettings import
+SHARED_DRIVE_ROOT = None
+
+# name of the directory within SHARED_DRIVE_ROOT
+RESTORE_PAYLOAD_DIR_NAME = None
+
+## django-transfer settings
+# These settings must match the apache / nginx config
+TRANSFER_SERVER = None  # 'apache' or 'nginx'
+# name of the directory within SHARED_DRIVE_ROOT
+TRANSFER_FILE_DIR_NAME = None
 
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
 
@@ -678,6 +690,7 @@ ANALYTICS_IDS = {
     'PINGDOM_ID': '',
     'ANALYTICS_ID_PUBLIC_COMMCARE': '',
     'SEGMENT_ANALYTICS_KEY': '',
+    'HUBSPOT_ID': '',
 }
 
 OPEN_EXCHANGE_RATES_ID = ''
@@ -694,6 +707,12 @@ LOCAL_APPS = ()
 LOCAL_COUCHDB_APPS = ()
 LOCAL_MIDDLEWARE_CLASSES = ()
 LOCAL_PILLOWTOPS = {}
+
+# Prelogin site
+ENABLE_PRELOGIN_SITE = False
+PRELOGIN_APPS = (
+    'corehq.apps.prelogin',
+)
 
 # If there are existing doc_ids and case_ids you want to check directly,
 # they are referenced in your localsettings for more accurate direct checks,
@@ -946,6 +965,17 @@ if not SQL_REPORTING_DATABASE_URL or UNIT_TESTING:
         **db_settings
     )
 
+### Shared drive settings ###
+if SHARED_DRIVE_ROOT and RESTORE_PAYLOAD_DIR_NAME:
+    # Defaults to tempfile.gettempdir()
+    RESTORE_PAYLOAD_DIR = os.path.join(SHARED_DRIVE_ROOT, RESTORE_PAYLOAD_DIR_NAME)
+
+if SHARED_DRIVE_ROOT and TRANSFER_FILE_DIR_NAME:
+    TRANSFER_FILE_DIR = os.path.join(SHARED_DRIVE_ROOT, TRANSFER_FILE_DIR_NAME)
+    TRANSFER_MAPPINGS = {
+        TRANSFER_FILE_DIR: '/{}'.format(TRANSFER_FILE_DIR_NAME),  # e.g. '/mnt/shared/downloads': '/downloads',
+    }
+
 MVP_INDICATOR_DB = 'mvp-indicators'
 
 INDICATOR_CONFIG = {
@@ -992,6 +1022,7 @@ COUCHDB_APPS = [
     'custom_data_fields',
     'hqadmin',
     'domain',
+    'ext',
     'facilities',
     'fluff_filter',
     'fixtures',
@@ -1068,6 +1099,9 @@ COUCHDB_DATABASES = make_couchdb_tuples(COUCHDB_APPS, COUCH_DATABASE)
 EXTRA_COUCHDB_DATABASES = get_extra_couchdbs(COUCHDB_APPS, COUCH_DATABASE)
 
 INSTALLED_APPS += LOCAL_APPS
+
+if ENABLE_PRELOGIN_SITE:
+    INSTALLED_APPS += PRELOGIN_APPS
 
 MIDDLEWARE_CLASSES += LOCAL_MIDDLEWARE_CLASSES
 
@@ -1372,6 +1406,7 @@ TRAVIS_TEST_GROUPS = (
         'facilities', 'fixtures', 'fluff_filter', 'formplayer',
         'formtranslate', 'fri', 'grapevine', 'groups', 'gsid', 'hope',
         'hqadmin', 'hqcase', 'hqcouchlog', 'hqmedia',
+        'smsbillables',
     ),
 )
 

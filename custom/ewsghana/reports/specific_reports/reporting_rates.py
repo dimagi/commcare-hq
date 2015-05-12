@@ -31,18 +31,17 @@ class ReportingRates(ReportingRatesData):
     def rows(self):
         rows = {}
         if self.location_id:
-            if self.location.location_type.name == 'country':
-                supply_points = self.all_reporting_locations()
-                reports = len(self.reporting_supply_points(supply_points))
-            else:
-                supply_points = self.get_supply_points().values_list(
-                    'supply_point_id', flat=True
-                )
-                reports = len(self.reporting_supply_points())
+            supply_points = self.location.get_descendants().filter(
+                location_type__administrative=False,
+                is_archived=False
+            )
+            reports = self.reporting_supply_points(supply_points.values_list('supply_point_id', flat=True))
+            supply_points_count = supply_points.count()
+            reports_count = reports.count()
             rows = dict(
-                total=len(supply_points),
-                reported=reports,
-                non_reported=len(supply_points) - reports
+                total=supply_points_count,
+                reported=reports_count,
+                non_reported=supply_points_count - reports_count
             )
         return rows
 
@@ -56,12 +55,12 @@ class ReportingRates(ReportingRatesData):
             chart_data = [
                 dict(value=reported_percent,
                      label=_('Reporting'),
-                     description=_("%.2f%% (%d) Reported (%s)" % (reported_percent, data['reported'],
+                     description=_("%.1f%% (%d) Reported (%s)" % (reported_percent, data['reported'],
                                                                   self.datetext())),
                      color='green'),
                 dict(value=non_reported_percent,
                      label=_('Non-Reporting'),
-                     description=_("%.2f%% (%d) Non-Reported (%s)" %
+                     description=_("%.1f%% (%d) Non-Reported (%s)" %
                                    (non_reported_percent, data['non_reported'], self.datetext())),
                      color='red'),
             ]
@@ -79,22 +78,22 @@ class ReportingDetails(ReportingRatesData):
     def rows(self):
         rows = {}
         if self.location_id:
-            if self.location.location_type.name == 'country':
-                supply_points = self.reporting_supply_points(self.all_reporting_locations())
-            else:
-                supply_points = self.reporting_supply_points()
+            supply_points = self.location.get_descendants().filter(
+                location_type__administrative=False,
+                is_archived=False
+            ).values_list('supply_point_id', flat=True)
             complete = 0
             incomplete = 0
-            for supply_point in supply_points:
-                products = {
-                    product.product_id
-                    for product in SQLLocation.objects.get(supply_point_id=supply_point).products
-                }
+            for supply_point in self.reporting_supply_points(supply_points):
+                products = SQLLocation.objects.get(
+                    supply_point_id=supply_point
+                ).products.values_list('product_id', flat=True)
+
                 st = StockTransaction.objects.filter(
                     case_id=supply_point,
                     report__date__range=[self.config['startdate'], self.config['enddate']]
                 ).distinct('product_id').values_list('product_id', flat=True)
-                if not (products - set(st)):
+                if not (set(products) - set(st)):
                     complete += 1
                 else:
                     incomplete += 1
@@ -115,12 +114,12 @@ class ReportingDetails(ReportingRatesData):
             chart_data = [
                 dict(value=complete_percent,
                      label=_('Complete'),
-                     description=_("%.2f%% (%d) Complete Reports in %s" %
+                     description=_("%.1f%% (%d) Complete Reports in %s" %
                                    (complete_percent, data['complete'], self.datetext())),
                      color='green'),
                 dict(value=incomplete_percent,
                      label=_('Incomplete'),
-                     description=_("%.2f%% (%d) Incomplete Reports in %s" %
+                     description=_("%.1f%% (%d) Incomplete Reports in %s" %
                                    (incomplete_percent, data['incomplete'], self.datetext())),
                      color='purple'),
             ]

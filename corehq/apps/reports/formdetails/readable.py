@@ -1,7 +1,7 @@
 from pydoc import html
 from django.http import Http404
 from django.utils.safestring import mark_safe
-from jsonobject import *
+from dimagi.ext.jsonobject import *
 from jsonobject.base import DefaultProperty
 from corehq.apps.app_manager.models import get_app, Application, FormActionCondition
 from corehq.apps.app_manager.xform import VELLUM_TYPES

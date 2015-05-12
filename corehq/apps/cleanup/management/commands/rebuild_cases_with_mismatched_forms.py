@@ -64,6 +64,10 @@ class Command(BaseCommand):
             if not quiet:
                 print 'Fetching new batch'
             total, records = get_records_to_process('CASE XFORM MISMATCH', batch)
+            if not quiet:
+                print 'Records in batch:', total
+            if not total:
+                return
             for record in records:
                 if 'case_id' not in record:
                     record['exception'].archive('system')

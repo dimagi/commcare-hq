@@ -198,7 +198,7 @@ def data_table(request, domain):
         sheets = prepare_fixture_html(table_ids, domain)
     except FixtureDownloadError as e:
         messages.info(request, unicode(e))
-        raise
+        raise Http404()
     sheets.pop("types")
     if not sheets:
         return {

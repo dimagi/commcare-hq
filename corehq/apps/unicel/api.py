@@ -7,7 +7,7 @@ from corehq.util.timezones.conversions import UserTime
 from urllib2 import urlopen
 from urllib import urlencode
 import pytz
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 from corehq.apps.unicel.forms import UnicelBackendForm
 from django.conf import settings
 

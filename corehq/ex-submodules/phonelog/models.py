@@ -1,4 +1,4 @@
-from couchdbkit.ext.django.schema import Document
+from dimagi.ext.couchdbkit import Document
 from django.db import models
 
 COUCH_UUID_MAX_LEN = 50

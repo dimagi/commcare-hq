@@ -31,7 +31,6 @@
         </div>
     {% endif %}
 {% endblock %}
-
 {% block reporttable %}
 {% if report.needs_filters %}
     {% include 'reports/standard/partials/description.html' %}
@@ -298,5 +297,36 @@
         if ( report_slug === 'stock_summary_report' || report_slug === 'cms_rms_summary_report') {
             $('.dataTables_filter').remove();
         }
+    </script>
+    <script>
+        function updateExportButton() {
+            var button = $("#export-report-excel");
+            if ({{ split|yesno:"true,false" }}) {
+                button.text("Export Table to Excel");
+                button.css('display', 'inline-block');
+            } else if ({{ exportable|yesno:"true,false" }}){
+                button.text("Export Table(s) to Excel");
+                button.css('display', 'inline-block');
+            } else {
+                button.css('display', 'None');
+            }
+        }
+        $("#apply-filters").on('click', function(){
+            updateExportButton();
+        });
+        updateExportButton();
+        $(".dataTables_filter").css('display', 'none');
+
+        $('.row div').append(
+                '<div class="desc" style="width: 100%; text-align: center; margin-top: -1cm; margin-bottom: 1cm"></div>'
+        );
+        setTimeout(function() {
+            $('.nv-slice').on('mouseenter', function() {
+                var descDiv = $(this).parents('.row').find('.desc');
+                $('.nvtooltip').hide();
+                descDiv.text($('.nvtooltip h3').text());
+                descDiv.css('color', $(this).attr('fill'));
+            });
+        }, 500);
     </script>
 {% endblock %}
