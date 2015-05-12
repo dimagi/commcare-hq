@@ -10,3 +10,13 @@ You can view the project space here: {{ domain_url }}
 
 Cheers,
 --The CommCareHQ Team
+
+{% if billing_account %}
+Account name: {{ billing_account.name }}
+Contracted vs. Self-service: {{ billing_account.account_type }}
+Dimagi Contact: {{ billing_account.dimagi_contact }}
+{% endif %}
+{% if request %}
+Initiated by: {{ request.couch_user.username }}
+From the following web page: {{ referer }}
+{% endif %}

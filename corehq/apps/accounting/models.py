@@ -4,6 +4,7 @@ import logging
 from tempfile import NamedTemporaryFile
 from decimal import Decimal
 from couchdbkit import ResourceNotFound
+from corehq.util.global_request import get_request
 from dimagi.ext.couchdbkit import DateTimeProperty, StringProperty, SafeSaveDocument
 
 from django.conf import settings
@@ -778,6 +779,13 @@ class Subscriber(models.Model):
             )
         ):
             from corehq.apps.domain.views import DefaultProjectSettingsView
+            billing_account = (
+                new_subscription.account if new_subscription else
+                old_subscription.account if old_subscription else None
+            )
+            # this can be None, though usually this will be initiated
+            # by an http request
+            request = get_request()
             email_context = {
                 'domain': self.domain,
                 'domain_url': absolute_reverse(
@@ -788,6 +796,9 @@ class Subscriber(models.Model):
                 'new_plan': new_subscription.plan_version if new_subscription else None,
                 'old_subscription_start_date': old_subscription.date_start if old_subscription else None,
                 'new_subscription_end_date': new_subscription.date_end if new_subscription else None,
+                'billing_account': billing_account,
+                'request': request,
+                'referer': request.META.get('HTTP_REFERER') if request else None
             }
             send_HTML_email(
                 "Subscription Change Alert: %(domain)s from %(old_plan)s to %(new_plan)s" % email_context,
