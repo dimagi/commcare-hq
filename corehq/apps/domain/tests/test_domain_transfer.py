@@ -181,8 +181,6 @@ class TestTransferDomainViews(BaseDomainTest):
         self.assertEqual(resp.status_code, 200)
 
     def test_permissions_for_transfer_domain_view(self):
-        import re
-
         # No one logged in
         resp = self.client.get(reverse('transfer_domain_view',
                                        args=[self.domain.name]), follow=True)
