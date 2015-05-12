@@ -186,8 +186,8 @@ class TestTransferDomainViews(BaseDomainTest):
         # No one logged in
         resp = self.client.get(reverse('transfer_domain_view',
                                        args=[self.domain.name]), follow=True)
-        self.assertEqual(resp.status_code, 200, 'Should redirect to login')
-        self.assertTrue(re.compile('login'), resp.template_name)
+        self.assertEqual(resp.template_name, 'login_and_password/login.html',
+                         'Should redirect to login page')
 
         # Random user who belongs to the domain but not an admin
         self.client.login(username=self.rando.username, password=self.password)
