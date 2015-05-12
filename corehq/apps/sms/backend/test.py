@@ -1,3 +1,4 @@
+from couchdbkit import ResourceNotFound
 from corehq.apps.sms.forms import BackendForm
 from corehq.apps.sms.mixin import SMSBackend
 from dimagi.utils.couch.database import get_safe_write_kwargs
@@ -31,6 +32,12 @@ def bootstrap(id=None, to_console=True):
     """
     Create an instance of the test backend in the database
     """
+    if id:
+        try:
+            return TestBackend.get(id)
+        except ResourceNotFound:
+            pass
+
     backend = TestBackend(
         description='test backend',
         is_global=True,

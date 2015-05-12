@@ -458,3 +458,10 @@ FM_FACING_SUBSCRIPTIONS = StaticToggle(
     'FM Facing Subscription Management Interface',
     TAG_PRODUCT_CORE,
 )
+
+API_THROTTLE_WHITELIST = StaticToggle(
+    'api_throttle_whitelist',
+    ('API throttle whitelist'),
+    TAG_EXPERIMENTAL,
+    namespaces=[NAMESPACE_USER],
+)
