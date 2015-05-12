@@ -64,8 +64,10 @@ def _create_custom_app_strings(app, lang):
                 yield id_strings.detail_tab_title_locale(module, detail_type, tab), trans(tab.header)
 
         yield id_strings.module_locale(module), maybe_add_index(trans(module.name))
-        yield id_strings.module_icon_locale(module), module.icon_by_language(lang)
-        yield id_strings.module_audio_locale(module), module.audio_by_language(lang)
+        if module.icon_by_language(lang):
+            yield id_strings.module_icon_locale(module), module.icon_by_language(lang)
+        if module.audio_by_language(lang):
+            yield id_strings.module_audio_locale(module), module.audio_by_language(lang)
         if hasattr(module, 'report_configs'):
             for config in module.report_configs:
                 yield id_strings.report_command(config.report_id), trans(config.header)
@@ -85,8 +87,10 @@ def _create_custom_app_strings(app, lang):
         for form in module.get_forms():
             form_name = trans(form.name) + ('${0}' if form.show_count else '')
             yield id_strings.form_locale(form), maybe_add_index(form_name)
-            yield id_strings.form_icon_locale(form), form.icon_by_language(lang)
-            yield id_strings.form_audio_locale(form), form.audio_by_language(lang)
+            if form.icon_by_language(lang):
+                yield id_strings.form_icon_locale(form), form.icon_by_language(lang)
+            if form.audio_by_language(lang):
+                yield id_strings.form_audio_locale(form), form.audio_by_language(lang)
 
         if hasattr(module, 'case_list_form') and module.case_list_form.form_id:
             yield (

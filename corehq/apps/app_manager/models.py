@@ -1020,7 +1020,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
         media_dict = getattr(self, media_attr)
         if not media_dict:
             return None
-        default_media = media_dict.get('default', '')
+        default_media = media_dict.get('default', None)
 
         return media_dict[lang] if lang in media_dict else default_media
 
