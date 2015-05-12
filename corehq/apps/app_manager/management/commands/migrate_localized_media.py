@@ -31,22 +31,3 @@ class Command(AppMigrationCommandBase):
                 doc[media_attr] = {'default': old_media}
                 self.should_save = True
         return doc
-
-    def alternative_migrate_app(self, app_doc):
-        def _check(item):
-            return bool(len(item.all_image_paths()) or len(item.all_audio_paths()))
-
-        app = Application.wrap(app_doc)
-        for module in app.modules:
-            if _check(module):
-                self.should_save = True
-                break
-            if _check(module.case_list_form):
-                self.should_save = True
-                break
-            for form in module.forms:
-                if _check(form):
-                    self.should_save = True
-                    break
-        if self.should_save:
-            return app
