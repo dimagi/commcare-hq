@@ -528,44 +528,32 @@ class Domain(Document, SnapshotMixin):
         return self.name
 
     @classmethod
-    @skippable_quickcache(['name'], skip_arg='strict', timeout=30 * 60)
     def get_by_name(cls, name, strict=False):
-        if not name:
-            # get_by_name should never be called with name as None (or '', etc)
+        return cls._get_by_key('domain/domains', name, stale=(not strict))
+
+    @classmethod
+    def get_by_alias(cls, alias, strict=False):
+        return cls._get_by_key('domains_apps/by_alias', alias, stale=(not strict))
+
+    @classmethod
+    @skippable_quickcache(['view', 'key'], skip_arg='stale', timeout=30 * 60)
+    def _get_by_key(cls, view, key, stale=False):
+        if not key:
+            # _get_by_key should never be called with key as None (or '', etc)
             # I fixed the code in such a way that if I raise a ValueError
             # all tests pass and basic pages load,
             # but in order not to break anything in the wild,
             # I'm opting to notify by email if/when this happens
             # but fall back to the previous behavior of returning None
             try:
-                raise ValueError('%r is not a valid domain name' % name)
+                raise ValueError('%r is not a valid domain identifier' % key)
             except ValueError:
                 if settings.DEBUG:
                     raise
                 else:
-                    notify_exception(None, '%r is not a valid domain name' % name)
+                    notify_exception(None, '%r is not a valid domain identifier' % key)
                     return None
 
-        domain = cls._get_by_key('domain/domains', name, stale=(not strict))
-        if domain is None and not strict:
-            # on the off chance this is a brand new domain, try with strict
-            domain = cls._get_by_key('domain/domains', name, stale=False)
-        return domain
-
-    @classmethod
-    @skippable_quickcache(['alias'], skip_arg='strict', timeout=30 * 60)
-    def get_by_alias(cls, alias, strict=False):
-        if not alias:
-            raise ValueError('%r is not a valid domain alias' % alias)
-
-        domain = cls._get_by_key('domains_apps/by_alias', alias, stale=(not strict))
-        if domain is None and not strict:
-            # on the off chance this is a brand new domain, try with strict
-            domain = cls._get_by_key('domains_apps/by_alias', alias, stale=False)
-        return domain
-
-    @classmethod
-    def _get_by_key(cls, view, key, stale=False):
         extra_args = {'stale': settings.COUCH_STALE_QUERY} if stale else {}
         result = cls.view(
             view,
@@ -574,12 +562,17 @@ class Domain(Document, SnapshotMixin):
             include_docs=True,
             **extra_args
         ).first()
+
         if not isinstance(result, Domain):
             # A stale view may return a result with no doc if the doc has just been deleted.
             # In this case couchdbkit just returns the raw view result as a dict
-            return None
-        else:
-            return result
+            result = None
+
+        if result is None and not stale:
+            # on the off chance this is a brand new domain, try with strict
+            result = cls._get_by_key(view, key, stale=False)
+
+        return result
 
     @classmethod
     def get_by_organization(cls, organization):
@@ -649,7 +642,7 @@ class Domain(Document, SnapshotMixin):
     def save(self, **params):
         self.last_modified = datetime.utcnow()
         super(Domain, self).save(**params)
-        Domain.get_by_name.clear(Domain, self.name)  # clear the domain cache
+        Domain._get_by_key.clear(Domain, 'domain/domains', self.name)  # clear the domain cache
 
         from corehq.apps.domain.signals import commcare_domain_post_save
         results = commcare_domain_post_save.send_robust(sender='domain', domain=self)
@@ -942,7 +935,7 @@ class Domain(Document, SnapshotMixin):
         )]
         iter_bulk_delete(db, related_doc_ids, chunksize=500)
         super(Domain, self).delete()
-        Domain.get_by_name.clear(Domain, self.name)  # clear the domain cache
+        Domain._get_by_key.clear(Domain, 'domain/domains', self.name)  # clear the domain cache
 
     def all_media(self, from_apps=None):  # todo add documentation or refactor
         from corehq.apps.hqmedia.models import CommCareMultimedia

@@ -179,8 +179,10 @@ def request_new_domain(request, org, domain_type=None, new_user=True):
         dom_req.request_ip = get_ip(request)
         dom_req.activation_guid = uuid.uuid1().hex
 
+    new_id = Domain.get_db().server.next_uuid(count=1)
     new_domain = Domain(
-        name='',
+        _id=new_id,
+        name=new_id,
         hr_name='Untitled Project',
         is_active=False,
         date_created=datetime.utcnow(),
@@ -202,10 +204,6 @@ def request_new_domain(request, org, domain_type=None, new_user=True):
 
     # ensure no duplicate domain documents get created on cloudant
     new_domain.save(**get_safe_write_kwargs())
-
-    if not new_domain.name:
-        new_domain.name = new_domain._id
-        new_domain.save() # we need to get the name from the _id
 
     create_30_day_trial(new_domain)
 
