@@ -38,15 +38,6 @@ SNAPSHOT_MAPPING = [
             }
         },
         {"facet": "author.exact", "name": ugettext_lazy("Author"), "expanded": True},
-        # {
-        #     "facet": "is_starter_app",
-        #     "name": ugettext_lazy("Starter Application"),
-        #     "expanded": True,
-        #     "mapping": {
-        #         'T': 'Starter Application',
-        #         'F': 'Regular Application',
-        #     }
-        # },
     ]),
 ]
 DEPLOYMENT_MAPPING = [
