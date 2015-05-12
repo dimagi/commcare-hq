@@ -370,7 +370,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'south',
     'custom.apps.crs_reports',
     'custom.m4change',
-    'custom.succeed'
 
     # submodules with tests that run on travis
     'couchexport',
