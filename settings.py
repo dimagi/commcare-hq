@@ -681,6 +681,10 @@ ANALYTICS_IDS = {
     'HUBSPOT_ID': '',
 }
 
+ANALYTICS_CONFIG = {
+    "HQ_INSTANCE": '',  # e.g. "www" or "staging"
+}
+
 OPEN_EXCHANGE_RATES_ID = ''
 
 # for touchforms maps

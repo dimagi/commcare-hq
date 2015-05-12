@@ -112,5 +112,8 @@
             {is_dimagi: {{ request.couch_user.is_dimagi|BOOL }} }
         );
     {% endif %}
+    {% if ANALYTICS_CONFIG.HQ_INSTANCE %}
+        analytics.identify({'hq_instance': '{{ANALYTICS_CONFIG.HQ_INSTANCE}}'});
+    {% endif %}
 
 </script>

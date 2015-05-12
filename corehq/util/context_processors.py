@@ -96,7 +96,10 @@ def current_url_name(request):
 
 
 def analytics_js(request):
-    return settings.ANALYTICS_IDS
+    d = {}
+    d.update(settings.ANALYTICS_IDS)
+    d.update({"ANALYTICS_CONFIG": settings.ANALYTICS_CONFIG})
+    return d
 
 def raven(request):
     """lets you know whether raven is being used"""

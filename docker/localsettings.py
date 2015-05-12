@@ -135,6 +135,10 @@ ANALYTICS_IDS = {
     'KISSMETRICS_KEY': '*****',
 }
 
+ANALYTICS_CONFIG = {
+    "HQ_INSTANCE": '',  # e.g. "www" or "staging"
+}
+
 AXES_LOCK_OUT_AT_FAILURE = False
 LUCENE_ENABLED = True
 
