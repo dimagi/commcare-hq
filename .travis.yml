@@ -37,6 +37,4 @@ after_success:
 services:
   - postgresql
   - couchdb
-  - rabbitmq
-  - elasticsearch
   - redis-server
