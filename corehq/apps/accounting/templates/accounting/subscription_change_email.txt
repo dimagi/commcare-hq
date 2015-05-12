@@ -1,6 +1,8 @@
 Dear Accounting Team,
 
-The project space {{ domain }} has changed its subscription from {{ old_plan }} to {{ new_plan }}, with an end date of {% if new_subscription_end_date %}{{ new_subscription_end_date }}{% else %}never{% endif %}.
+The project space {{ domain }} has changed its subscription
+from {{ old_plan }} to {{ new_plan }},
+with {% if new_subscription_end_date %}an end date of {{ new_subscription_end_date }}{% else %} no end date{% endif %}
 
 Previously, they had been on {{ old_plan }} since {{ old_subscription_start_date }}.
 
