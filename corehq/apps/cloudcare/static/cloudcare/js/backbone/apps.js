@@ -640,6 +640,11 @@ cloudCare.AppView = Backbone.View.extend({
             self.caseSelectionView.model.set("childCase", caseModel);
         }
 
+        data.formContext = {
+            // Ensures that caseModel and collection are defined before trying to access allCaseIds
+            all_case_ids: caseModel ? (caseModel.collection ? caseModel.collection.allCaseIds : null) : null,
+            case_model: caseModel ? caseModel.toJSON() : null
+        };
         data.onsubmit = function (xml) {
             window.mainView.router.view.dirty = false;
             // post to receiver

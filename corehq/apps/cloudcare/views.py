@@ -339,7 +339,10 @@ def filter_cases(request, domain, app_id, module_id, parent_id=None):
             'parents': parents
         })
     else:
-        return json_response(cases)
+        return json_response({
+            'cases': cases,
+            'all_case_ids': case_ids  # Used to send to touchforms so we do not have to fetch later
+        })
 
 @cloudcare_api
 def get_apps_api(request, domain):
