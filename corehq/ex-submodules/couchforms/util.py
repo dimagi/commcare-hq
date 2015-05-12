@@ -536,11 +536,12 @@ class SubmissionPost(object):
                             case_post_save.send(CommCareCase, case=case)
 
                         case_result.commit_dirtiness_flags()
-                        responses, errors = self.process_signals(instance)
-                        if errors:
-                            # .problems was added to instance
-                            instance.save()
-                        unfinished_submission_stub.delete()
+
+                    responses, errors = self.process_signals(instance)
+                    if errors:
+                        # .problems was added to instance
+                        instance.save()
+                    unfinished_submission_stub.delete()
                 elif instance.doc_type == 'XFormDuplicate':
                     assert len(xforms) == 1
                     instance.save()
