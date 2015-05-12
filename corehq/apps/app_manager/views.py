@@ -1637,9 +1637,14 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
             if should_edit("name"):
                 resp['update'].update({'.variable-module_name': module.name[lang]})
     for SLUG in ('case_list', 'task_list'):
+        show = '{SLUG}-show'.format(SLUG=SLUG)
+        label = '{SLUG}-label'.format(SLUG=SLUG)
+        if request.POST.get(show) and request.POST.get(label) == '':
+            # Show item, but empty label, was just getting ignored
+            return HttpResponseBadRequest("A label is required for {SLUG}".format(SLUG=SLUG))
         if should_edit(SLUG):
-            module[SLUG].show = json.loads(request.POST['{SLUG}-show'.format(SLUG=SLUG)])
-            module[SLUG].label[lang] = request.POST['{SLUG}-label'.format(SLUG=SLUG)]
+            module[SLUG].show = json.loads(request.POST[show])
+            module[SLUG].label[lang] = request.POST[label]
 
     if isinstance(module, AdvancedModule):
         module.has_schedule = should_edit('has_schedule')

@@ -17,6 +17,9 @@
         <span id="{{ SLUG }}-label">
             with label: {% input_trans case_list.label langs %}
         </span>
+        <span class="help-inline" id="case_list_label_error" style="display: none;">
+            {% trans "Case list requires a label" %}
+        </span>
         <script>
             $(function () {
                 function updateCaseListLabel() {
@@ -25,6 +28,18 @@
                 }
                 $('#{{ SLUG }}-label input').attr('name', '{{ SLUG }}-label').removeClass('wide');
                 $('[name="{{ SLUG }}-show"]').change(updateCaseListLabel).each(updateCaseListLabel);
+
+                $('#{{ SLUG }}-label input').on('textchange', function () {
+                var value = $(this).val();
+                if (!value.length) {
+                    $(this).closest('.control-group').addClass('error');
+                    $('#case_list_label_error').css('display', 'inline');
+                } else {
+                    $(this).closest('.control-group').removeClass('error');
+                    $('#case_list_label_error').css('display', 'none');
+                }
+            });
+
             });
         </script>
     </div>
