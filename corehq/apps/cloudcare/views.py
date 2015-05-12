@@ -442,30 +442,6 @@ def get_ledgers(request, domain):
         default=custom_json_handler,
     )
 
-@cloudcare_api
-def render_form(request, domain, session_id):
-    # get session
-
-    try:
-        session = EntrySession.objects.get(session_id=session_id)
-    except EntrySession.DoesNotExist:
-        session = None
-
-    render_url = 'http://127.0.0.1:8000/a/willslearningproject/cloudcare/render_form/' + session_id
-
-
-
-    #$.ajax({
-    #    url: renderUrl,
-    #    success: function (data) {
-    #        showRenderedForm(data.rendered_form, $("#cloudcare-notifications"));
-    #    }
-    #});
-
-    return json_response({
-        'rendered_form': '<h1>from django: {}</h1>'.format(session_id)
-    })
-
 class HttpResponseConflict(HttpResponse):
     status_code = 409
 
