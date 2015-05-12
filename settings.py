@@ -689,8 +689,12 @@ ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_ID': '',
     'PINGDOM_ID': '',
     'ANALYTICS_ID_PUBLIC_COMMCARE': '',
-    'SEGMENT_ANALYTICS_KEY': '',
+    'KISSMETRICS_KEY': '',
     'HUBSPOT_ID': '',
+}
+
+ANALYTICS_CONFIG = {
+    "HQ_INSTANCE": '',  # e.g. "www" or "staging"
 }
 
 OPEN_EXCHANGE_RATES_ID = ''

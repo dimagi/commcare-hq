@@ -4,15 +4,18 @@
 {% block js-inline %}{{ block.super }}
 <script>
     $(function () {
-        gaTrackLink($('#appstore-link'), 'Dashboard', 'Welcome Tile', 'exchange');
-        gaTrackLink($('#help-link'), 'Dashboard', 'Welcome Tile', 'help');
-        gaTrackLink($('#new-app-link'), 'Dashboard', 'Welcome Tile', 'app');
+        $appstoreLink = $('#appstore-link');
+        $helpLink = $('#help-link');
+        $newAppLink = $('#new-app-link');
 
-        // analytics.trackLink adds timeout, respects cmd-click
-        analytics.track("Visited Welcome Dashboard");
-        analytics.trackLink($('#appstore-link'), "Clicked on Exchange in Dashboard");
-        analytics.trackLink($('#help-link'), "Clicked on Help-site in Dashboard");
-        analytics.trackLink($('#new-app-link'), "Clicked on Applications in Dashboard");
+        gaTrackLink($appstoreLink, 'Dashboard', 'Welcome Tile', 'exchange');
+        gaTrackLink($helpLink, 'Dashboard', 'Welcome Tile', 'help');
+        gaTrackLink($newAppLink, 'Dashboard', 'Welcome Tile', 'app');
+
+        analytics.track('Visited new user dashboard');
+        analytics.trackLink($appstoreLink, 'Clicked Exchange in new user dashboard');
+        analytics.trackLink($helpLink, "Clicked Help Site in new user dashboard");
+        analytics.trackLink($newAppLink, "Clicked Applications in new user dashboard");
 
     });
 </script>
