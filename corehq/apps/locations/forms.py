@@ -73,6 +73,7 @@ class LocationForm(forms.Form):
     def __init__(self, location, bound_data=None, is_new=False, user=None,
                  *args, **kwargs):
         self.location = location
+        self.is_new_location = is_new
 
         # seed form data from couch doc
         kwargs['initial'] = dict(self.location._doc)
