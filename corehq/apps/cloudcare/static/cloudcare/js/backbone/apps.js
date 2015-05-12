@@ -599,8 +599,6 @@ cloudCare.AppView = Backbone.View.extend({
         var self = this;
         var session_id = session.get('id');
 
-        sess.buildInstance($('#xml-instance'), session_id);
-
         var resp = $.ajax({
             url: getSessionContextUrl(self.options.sessionUrlRoot, session_id),
             async: false,

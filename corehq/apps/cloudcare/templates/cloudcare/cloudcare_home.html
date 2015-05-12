@@ -32,8 +32,8 @@
     <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/entrycontrols_full.js' %}?version={{app_version}}"></script>
     <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/build/fullform-ui.templates.js' %}?version={{app_version}}"></script>
     <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/fullform-ui.js' %}?version={{app_version}}"></script>
-    <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/vkbeautify.0.99.00.beta.js' %}"></script>
-    <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/jquery.elastic.source.js' %}"></script>
+    <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/vendor/vkbeautify.0.99.00.beta.js' %}"></script>
+    <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/vendor/jquery.elastic.source.js' %}"></script>
 
     <link rel="stylesheet" href="{% static 'formplayer/style/webforms.css' %}">
     <link rel="stylesheet" href="{% static 'cloudcare/css/cloudcare.css' %}">
@@ -189,9 +189,9 @@
         <section id="webforms" style="min-width: 800px;"></section>
         {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
             <hr/>
-            <div id="instance-xml-home" style="min-width: 800px;" name="instance-xml-home">
-                <textarea id="instance-xml" style="min-width: 800px;" name="instance-xml"></textarea>
-                <textarea id="evaluate-result" style="min-width: 800px;"></textarea>
+            <div id="instance-xml-home" name="instance-xml-home">
+                <textarea id="instance-xml" name="instance-xml"></textarea>
+                <textarea id="evaluate-result" name=""evaluate-result""></textarea>
                 <section>
                     <input id="xpath" name="xpath" value="/data/[your path here]" style="min-width: 300px;"/>
                     <input id="evaluate-button" type="submit" value="Evaluate" />
