@@ -1,5 +1,5 @@
 from couchdbkit import MultipleResultsFound
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 from django.conf import settings
 from django.template.loader import render_to_string
 from corehq.apps.users.models import WebUser, MultiMembershipMixin, Invitation

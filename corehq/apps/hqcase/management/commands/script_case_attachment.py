@@ -8,6 +8,7 @@ from django.core.management.base import NoArgsCommand, BaseCommand
 import sys
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.users.models import CommCareUser
+from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.post import post_data
 
 
@@ -141,9 +142,9 @@ class Command(BaseCommand):
             return '<n0:%s src="%s" from="local"/>' % (key, os.path.split(filename)[-1])
         attachments = [attach_block(k, v) for k, v in options['files'].items()]
         format_dict = {
-            "time_start": (datetime.utcnow() - timedelta(seconds=5)).strftime('%Y-%m-%dT%H:%M:%SZ'),
-            "time_end": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
-            "date_modified": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
+            "time_start": json_format_datetime(datetime.utcnow() - timedelta(seconds=5)),
+            "time_end": json_format_datetime(datetime.utcnow()),
+            "date_modified": json_format_datetime(datetime.utcnow()),
             "user_id": self.user_doc.get_id,
             "username": self.username,
             "doc_id": submit_id,

@@ -3,7 +3,8 @@ from corehq.apps.reports.standard.deployments import DeploymentsReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
-from couchforms.models import XFormError
+from couchforms.dbaccessors import get_forms_by_type, \
+    get_number_of_forms_by_type, get_number_of_forms_of_all_types
 from corehq.apps.receiverwrapper.filters import SubmissionErrorType, \
     SubmissionTypeFilter
 from dimagi.utils.couch.pagination import FilteredPaginator, CouchFilter
@@ -11,36 +12,30 @@ from corehq.apps.reports.display import xmlns_to_name
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 
+
 def compare_submissions(x, y):
     # these are backwards because we want most recent to come first
     return cmp(y.received_on, x.received_on)
 
+
 class SubmitFilter(CouchFilter):
-    
+
     def __init__(self, domain, doc_type):
         self.domain = domain
         self.doc_type = doc_type
-        self._kwargs = { "endkey":       [self.domain, "by_type", self.doc_type],
-                         "startkey":     [self.domain, "by_type", self.doc_type, {}],
-                         "reduce":       False,
-                         "descending":   True }
-        
-    
+
     def get_total(self):
-        return XFormError.view("couchforms/all_submissions_by_domain",
-                               **self._kwargs).count()
+        return get_number_of_forms_by_type(self.domain, self.doc_type)
 
     def get(self, count):
         # this is a hack, but override the doc type because there is an
         # equivalent doc type in the view
         def _update_doc_type(form):
             form.doc_type = self.doc_type
-            return form 
-        return [_update_doc_type(form) for form in \
-                 XFormError.view("couchforms/all_submissions_by_domain",
-                                 include_docs=True,
-                                 limit=count,
-                                 **self._kwargs)]
+            return form
+        forms = get_forms_by_type(self.domain, self.doc_type,
+                                  recent_first=True, limit=count)
+        return [_update_doc_type(form) for form in forms]
 
 
 class SubmissionErrorReport(DeploymentsReport):
@@ -89,10 +84,7 @@ class SubmissionErrorReport(DeploymentsReport):
 
     @property
     def total_records(self):
-        return XFormError.view("couchforms/all_submissions_by_domain",
-            startkey=[self.domain, "by_type"],
-            endkey=[self.domain, "by_type", {}],
-            reduce=False).count()
+        return get_number_of_forms_of_all_types(self.domain)
 
     @property
     def total_filtered_records(self):
@@ -128,6 +120,6 @@ class SubmissionErrorReport(DeploymentsReport):
                     _fmt_date(error_doc.received_on),
                     xmlns_to_name(self.domain, error_doc.xmlns, app_id=getattr(error_doc, 'app_id', None)) if error_doc.metadata else EMPTY_FORM,
                     SubmissionErrorType.display_name_by_doc_type(error_doc.doc_type),
-                    error_doc.problem or EMPTY_ERROR]
-        
+                    getattr(error_doc, 'problem', None) or EMPTY_ERROR]
+
         return [_to_row(error_doc) for error_doc in items]

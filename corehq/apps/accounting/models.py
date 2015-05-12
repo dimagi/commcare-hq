@@ -4,7 +4,7 @@ import logging
 from tempfile import NamedTemporaryFile
 from decimal import Decimal
 from couchdbkit import ResourceNotFound
-from couchdbkit.ext.django.schema import DateTimeProperty, StringProperty
+from dimagi.ext.couchdbkit import DateTimeProperty, StringProperty, SafeSaveDocument
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
@@ -21,7 +21,6 @@ from django_prbac.models import Role
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.cached_object import CachedObject
 from dimagi.utils.django.email import send_HTML_email
-from dimagi.utils.couch.database import SafeSaveDocument
 
 from corehq.apps.users.models import WebUser
 
@@ -1359,26 +1358,91 @@ class Subscription(models.Model):
                ), last_subscription
 
 
-class Invoice(models.Model):
+class InvoiceBase(models.Model):
+    date_created = models.DateTimeField(auto_now_add=True)
+    date_received = models.DateField(blank=True, db_index=True, null=True)
+    is_hidden = models.BooleanField(default=False)
+    tax_rate = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
+    balance = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
+    date_due = models.DateField(db_index=True)
+    date_paid = models.DateField(blank=True, null=True)
+    date_start = models.DateField()
+    date_end = models.DateField()
+    # If set to True invoice will not appear in invoice report. There is no UI to
+    # control this filter
+    is_hidden_to_ops = models.BooleanField(default=False)
+    last_modified = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        abstract = True
+
+    @property
+    def invoice_number(self):
+        ops_num = settings.INVOICE_STARTING_NUMBER + self.id
+        return "%s%d" % (settings.INVOICE_PREFIX, ops_num)
+
+    @property
+    def is_wire(self):
+        return False
+
+    def get_domain(self):
+        raise NotImplementedError()
+
+    @property
+    def is_paid(self):
+        return bool(self.date_paid)
+
+    @property
+    def email_recipients(self):
+        contact_emails = self.account.billingcontactinfo.emails
+        contact_emails = (contact_emails.split(',')
+                          if contact_emails is not None else [])
+        if not contact_emails:
+            admins = WebUser.get_admins_by_domain(
+                self.get_domain()
+            )
+            contact_emails = [a.email if a.email else a.username for a in admins]
+            logger.error(
+                "[BILLING] "
+                "Could not find an email to send the invoice "
+                "email to for the domain %s. Sending to domain admins instead: "
+                "%s." %
+                (self.get_domain(), ', '.join(contact_emails))
+            )
+        return contact_emails
+
+
+class WireInvoice(InvoiceBase):
+    # WireInvoice is tied to a domain, rather than a subscription
+    domain = models.CharField(max_length=80)
+
+    @property
+    @memoized
+    def account(self):
+        return BillingAccount.get_account_by_domain(self.domain)
+
+    @property
+    def subtotal(self):
+        return self.balance
+
+    @property
+    def is_wire(self):
+        return True
+
+    def get_domain(self):
+        return self.domain
+
+    def get_total(self):
+        return self.balance
+
+
+class Invoice(InvoiceBase):
     """
     This is what we'll use to calculate the balance on the accounts based on the current balance
     held by the Invoice. Balance updates will be tied to CreditAdjustmentTriggers which are tied
     to CreditAdjustments.
     """
     subscription = models.ForeignKey(Subscription, on_delete=models.PROTECT)
-    tax_rate = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
-    balance = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
-    date_due = models.DateField(db_index=True)
-    date_paid = models.DateField(blank=True, null=True)
-    date_created = models.DateTimeField(auto_now_add=True)
-    date_received = models.DateField(blank=True, db_index=True, null=True)
-    date_start = models.DateField()
-    date_end = models.DateField()
-    is_hidden = models.BooleanField(default=False)
-    # If set to True invoice will not appear in invoice report. There is no UI to
-    # control this filter
-    is_hidden_to_ops = models.BooleanField(default=False)
-    last_modified = models.DateTimeField(auto_now=True)
 
     @property
     def subtotal(self):
@@ -1390,13 +1454,13 @@ class Invoice(models.Model):
         return sum([line_item.total for line_item in self.lineitem_set.all()])
 
     @property
-    def invoice_number(self):
-        ops_num = settings.INVOICE_STARTING_NUMBER + self.id
-        return "%s%d" % (settings.INVOICE_PREFIX, ops_num)
-
-    @property
     def applied_tax(self):
         return self.tax_rate * self.subtotal
+
+    @property
+    @memoized
+    def account(self):
+        return self.subscription.account
 
     @property
     def applied_credit(self):
@@ -1438,29 +1502,8 @@ class Invoice(models.Model):
             subscription__subscriber__domain=domain, is_hidden=False
         ).count() > 0
 
-    @property
-    def email_recipients(self):
-        contact_emails = \
-            self.subscription.account.billingcontactinfo.emails
-        contact_emails = (contact_emails.split(',')
-                          if contact_emails is not None else [])
-        if not contact_emails:
-            admins = WebUser.get_admins_by_domain(
-                self.subscription.subscriber.domain
-            )
-            contact_emails = [a.email if a.email else a.username for a in admins]
-            logger.error(
-                "[BILLING] "
-                "Could not find an email to send the invoice "
-                "email to for the domain %s. Sending to domain admins instead: "
-                "%s." %
-                (self.subscription.subscriber.domain, ', '.join(contact_emails))
-            )
-        return contact_emails
-
-    @property
-    def is_paid(self):
-        return bool(self.date_paid)
+    def get_domain(self):
+        return self.subscription.subscriber.domain
 
 
 class SubscriptionAdjustment(models.Model):
@@ -1507,18 +1550,24 @@ class SubscriptionAdjustment(models.Model):
         return adjustment
 
 
-class BillingRecord(models.Model):
+class BillingRecordBase(models.Model):
     """
     This stores any interaction we have with the client in sending a physical / pdf invoice to their contact email.
     """
-    invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT)
     date_created = models.DateTimeField(auto_now_add=True, db_index=True)
     emailed_to = models.CharField(max_length=254, db_index=True)
     skipped_email = models.BooleanField(default=False)
     pdf_data_id = models.CharField(max_length=48)
     last_modified = models.DateTimeField(auto_now=True)
 
+    INVOICE_HTML_TEMPLATE = 'accounting/invoice_email.html'
+    INVOICE_TEXT_TEMPLATE = 'accounting/invoice_email_plaintext.html'
+
+    class Meta:
+        abstract = True
+
     _pdf = None
+
     @property
     def pdf(self):
         if self._pdf is None:
@@ -1536,39 +1585,35 @@ class BillingRecord(models.Model):
         record.save()
         return record
 
-    def is_email_throttled(self):
-        month = self.invoice.date_start.month
-        year = self.invoice.date_start.year
-        date_start, date_end = get_first_last_days(year, month)
-        return self.__class__.objects.filter(
-            invoice__date_start__lte=date_end, invoice__date_end__gte=date_start,
-            invoice__subscription__subscriber=self.invoice.subscription.subscriber
-        ).count() > MAX_INVOICE_COMMUNICATIONS
-
-    def send_email(self, contact_emails=None):
-        if self.skipped_email:
-            return
-        pdf_attachment = {
-            'title': self.pdf.get_filename(self.invoice),
-            'file_obj': StringIO(self.pdf.get_data(self.invoice)),
-            'mimetype': 'application/pdf',
-        }
+    def handle_throttled_email(self, contact_emails):
+        self.skipped_email = True
         month_name = self.invoice.date_start.strftime("%B")
-        domain = self.invoice.subscription.subscriber.domain
-        title = "Your %(month)s %(product)s Billing Statement for Project Space %(domain)s" % {
-            'product': self.invoice.subscription.plan_version.core_product,
-            'month': month_name,
-            'domain': self.invoice.subscription.subscriber.domain,
-        }
+        self.save()
+        logger.info(
+            "[BILLING] Throttled billing statements for domain %(domain)s "
+            "to %(emails)s." % {
+                'domain': self.invoice.get_domain(),
+                'emails': ', '.join(contact_emails),
+            }
+        )
+        raise InvoiceEmailThrottledError(
+            "Invoice communications exceeded the maximum limit of "
+            "%(max_limit)d for domain %(domain)s for the month of "
+            "%(month_name)s." % {
+                'max_limit': MAX_INVOICE_COMMUNICATIONS,
+                'domain': self.invoice.get_domain(),
+                'month_name': month_name,
+            })
+
+    def email_context(self):
         from corehq.apps.domain.views import (
             DomainBillingStatementsView, DefaultProjectSettingsView,
         )
+
+        month_name = self.invoice.date_start.strftime("%B")
+        domain = self.invoice.get_domain()
         context = {
             'month_name': month_name,
-            'plan_name': "%(product)s %(name)s" % {
-                'product': self.invoice.subscription.plan_version.core_product,
-                'name': self.invoice.subscription.plan_version.plan.edition,
-            },
             'domain': domain,
             'domain_url': absolute_reverse(DefaultProjectSettingsView.urlname,
                                            args=[domain]),
@@ -1581,26 +1626,28 @@ class BillingRecord(models.Model):
             'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
             'accounts_email': settings.ACCOUNTS_EMAIL,
         }
+        return context
+
+    def email_subject(self):
+        raise NotImplementedError()
+
+    def send_email(self, contact_emails=None):
+        if self.skipped_email:
+            return
+        pdf_attachment = {
+            'title': self.pdf.get_filename(self.invoice),
+            'file_obj': StringIO(self.pdf.get_data(self.invoice)),
+            'mimetype': 'application/pdf',
+        }
+        domain = self.invoice.get_domain()
+        subject = self.email_subject()
+        context = self.email_context()
+        email_from = self.email_from()
 
         contact_emails = contact_emails or self.invoice.email_recipients
         if self.is_email_throttled():
-            self.skipped_email = True
-            self.save()
-            logger.info(
-                "[BILLING] Throttled billing statements for domain %(domain)s "
-                "to %(emails)s." % {
-                    'domain': domain,
-                    'emails': ', '.join(contact_emails),
-                }
-            )
-            raise InvoiceEmailThrottledError(
-                "Invoice communications exceeded the maximum limit of "
-                "%(max_limit)d for domain %(domain)s for the month of "
-                "%(month_name)s." % {
-                    'max_limit': MAX_INVOICE_COMMUNICATIONS,
-                    'domain': domain,
-                    'month_name': month_name,
-                })
+            self.handle_throttled_email(contact_emails)
+
         for email in contact_emails:
             greeting = _("Hello,")
             can_view_statement = False
@@ -1613,13 +1660,12 @@ class BillingRecord(models.Model):
                 pass
             context['greeting'] = greeting
             context['can_view_statement'] = can_view_statement
-            email_html = render_to_string('accounting/invoice_email.html', context)
-            email_plaintext = render_to_string('accounting/invoice_email_plaintext.html', context)
+            email_html = render_to_string(self.INVOICE_HTML_TEMPLATE, context)
+            email_plaintext = render_to_string(self.INVOICE_TEXT_TEMPLATE, context)
             send_HTML_email(
-                title, email, email_html,
+                subject, email, email_html,
                 text_content=email_plaintext,
-                email_from=get_dimagi_from_email_by_product(
-                    self.invoice.subscription.plan_version.core_product),
+                email_from=email_from,
                 file_attachments=[pdf_attachment]
             )
         self.emailed_to = ",".join(contact_emails)
@@ -1633,6 +1679,60 @@ class BillingRecord(models.Model):
         )
 
 
+class WireBillingRecord(BillingRecordBase):
+    invoice = models.ForeignKey(WireInvoice, on_delete=models.PROTECT)
+
+    INVOICE_HTML_TEMPLATE = 'accounting/wire_invoice_email.html'
+    INVOICE_TEXT_TEMPLATE = 'accounting/wire_invoice_email_plaintext.html'
+
+    def is_email_throttled(self):
+        return False
+
+    def email_subject(self):
+        month_name = self.invoice.date_start.strftime("%B")
+        return "Your %(month)s Bulk Billing Statement for Project Space %(domain)s" % {
+            'month': month_name,
+            'domain': self.invoice.get_domain(),
+        }
+
+    def email_from(self):
+        return "Dimagi Accounting <{email}>".format(email=settings.INVOICING_CONTACT_EMAIL)
+
+
+class BillingRecord(BillingRecordBase):
+    invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT)
+
+    def is_email_throttled(self):
+        month = self.invoice.date_start.month
+        year = self.invoice.date_start.year
+        date_start, date_end = get_first_last_days(year, month)
+        return self.__class__.objects.filter(
+            invoice__date_start__lte=date_end, invoice__date_end__gte=date_start,
+            invoice__subscription__subscriber=self.invoice.subscription.subscriber
+        ).count() > MAX_INVOICE_COMMUNICATIONS
+
+    def email_context(self):
+        context = super(BillingRecord, self).email_context()
+        context.update({
+            'plan_name': "%(product)s %(name)s" % {
+                'product': self.invoice.subscription.plan_version.core_product,
+                'name': self.invoice.subscription.plan_version.plan.edition,
+            },
+        })
+        return context
+
+    def email_subject(self):
+        month_name = self.invoice.date_start.strftime("%B")
+        return "Your %(month)s %(product)s Billing Statement for Project Space %(domain)s" % {
+            'product': self.invoice.subscription.plan_version.core_product,
+            'month': month_name,
+            'domain': self.invoice.subscription.subscriber.domain,
+        }
+
+    def email_from(self):
+        return get_dimagi_from_email_by_product(self.invoice.subscription.plan_version.core_product)
+
+
 class InvoicePdf(SafeSaveDocument):
     invoice_id = StringProperty()
     date_created = DateTimeProperty()
@@ -1644,31 +1744,33 @@ class InvoicePdf(SafeSaveDocument):
             pdf_data.name,
             invoice_number=invoice.invoice_number,
             to_address=get_address_from_invoice(invoice),
-            project_name=invoice.subscription.subscriber.domain,
+            project_name=invoice.get_domain(),
             invoice_date=invoice.date_created.date(),
             due_date=invoice.date_due,
             date_start=invoice.date_start,
             date_end=invoice.date_end,
             subtotal=invoice.subtotal,
             tax_rate=invoice.tax_rate,
-            applied_tax=invoice.applied_tax,
-            applied_credit=invoice.applied_credit,
+            applied_tax=getattr(invoice, 'applied_tax', Decimal('0.000')),
+            applied_credit=getattr(invoice, 'applied_credit', Decimal('0.000')),
             total=invoice.get_total(),
+            is_wire=invoice.is_wire
         )
 
-        for line_item in LineItem.objects.filter(invoice=invoice):
-            is_unit = line_item.unit_description is not None
-            description = (line_item.base_description
-                           or line_item.unit_description)
-            if line_item.quantity > 0:
-                template.add_item(
-                    description,
-                    line_item.quantity if is_unit else 1,
-                    line_item.unit_cost if is_unit else line_item.subtotal,
-                    line_item.subtotal,
-                    line_item.applied_credit,
-                    line_item.total
-                )
+        if not invoice.is_wire:
+            for line_item in LineItem.objects.filter(invoice=invoice):
+                is_unit = line_item.unit_description is not None
+                description = (line_item.base_description
+                               or line_item.unit_description)
+                if line_item.quantity > 0:
+                    template.add_item(
+                        description,
+                        line_item.quantity if is_unit else 1,
+                        line_item.unit_cost if is_unit else line_item.subtotal,
+                        line_item.subtotal,
+                        line_item.applied_credit,
+                        line_item.total
+                    )
 
         template.get_pdf()
         filename = self.get_filename(invoice)
@@ -1997,4 +2099,4 @@ class CreditAdjustment(models.Model):
         Only one of either a line item or invoice may be specified as the adjuster.
         """
         if self.line_item and self.invoice is not None:
-            raise ValidationError("You can't specify both an invoice and a line item.")
+            raise ValidationError(_("You can't specify both an invoice and a line item."))

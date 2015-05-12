@@ -16,7 +16,7 @@ from django.core.cache import cache
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _, get_language, ugettext_noop
 from django.views.decorators.cache import cache_control
-from corehq import ApplicationsTab, toggles, privileges, feature_previews
+from corehq import ApplicationsTab, toggles, privileges, feature_previews, ReportConfiguration
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager import commcare_settings
 from corehq.apps.app_manager.exceptions import (
@@ -128,6 +128,7 @@ from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.app_manager.models import (
+    ANDROID_LOGO_PROPERTY_MAPPING,
     AdvancedForm,
     AdvancedFormActions,
     AdvancedModule,
@@ -140,6 +141,7 @@ from corehq.apps.app_manager.models import (
     DeleteFormRecord,
     DeleteModuleRecord,
     DetailColumn,
+    DetailTab,
     Form,
     FormActions,
     FormLink,
@@ -149,13 +151,12 @@ from corehq.apps.app_manager.models import (
     Module,
     ModuleNotFoundException,
     ParentSelect,
+    ReportModule,
     SavedAppBuild,
     get_app,
     load_case_reserved_words,
     str_to_cls,
-    DetailTab,
-    ANDROID_LOGO_PROPERTY_MAPPING,
-)
+    ReportAppConfig)
 from corehq.apps.app_manager.models import import_app as import_app_util, SortElement
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST, \
@@ -902,6 +903,27 @@ def get_module_view_context_and_template(app, module):
             ]
 
         }
+    elif isinstance(module, ReportModule):
+        def _report_to_config(report):
+            return {
+                'report_id': report._id,
+                'title': report.title
+            }
+        all_reports = ReportConfiguration.by_domain(app.domain)
+        all_report_ids = set([r._id for r in all_reports])
+        invalid_report_references = filter(lambda r: r.report_id not in all_report_ids, module.report_configs)
+        warnings = []
+        if invalid_report_references:
+            module.report_configs = filter(lambda r: r.report_id in all_report_ids, module.report_configs)
+            warnings.append(
+                _('Your app contains references to reports that are deleted. These will be removed on save.')
+            )
+        return 'app_manager/module_view_report.html', {
+            'all_reports': [_report_to_config(r) for r in all_reports],
+            'current_reports': [r.to_json() for r in module.report_configs],
+            'invalid_report_references': invalid_report_references,
+            'warnings': warnings,
+        }
     else:
         case_type = module.case_type
         form_options = case_list_form_options(case_type)
@@ -1241,19 +1263,23 @@ def new_app(request, domain):
     type = request.POST["type"]
     application_version = request.POST.get('application_version', APP_V1)
     cls = str_to_cls[type]
+    form_args = []
     if cls == Application:
         app = cls.new_app(domain, "Untitled Application", lang=lang, application_version=application_version)
-        app.add_module(Module.new_module("Untitled Module", lang))
-        app.new_form(0, "Untitled Form", lang)
+        module = Module.new_module("Untitled Module", lang)
+        app.add_module(module)
+        form = app.new_form(0, "Untitled Form", lang)
+        form_args = [module.id, form.id]
     else:
         app = cls.new_app(domain, "Untitled Application", lang=lang)
     if request.project.secure_submissions:
         app.secure_submissions = True
     app.save()
     _clear_app_cache(request, domain)
-    app_id = app.id
+    main_args = [request, domain, app.id]
+    main_args.extend(form_args)
 
-    return back_to_main(request, domain, app_id=app_id)
+    return back_to_main(*main_args)
 
 @require_can_edit_apps
 def default_new_app(request, domain):
@@ -1266,13 +1292,14 @@ def default_new_app(request, domain):
         domain, _("Untitled Application"), lang=lang,
         application_version=APP_V2
     )
-    app.add_module(Module.new_module(_("Untitled Module"), lang))
-    app.new_form(0, "Untitled Form", lang)
+    module = Module.new_module(_("Untitled Module"), lang)
+    app.add_module(module)
+    form = app.new_form(0, "Untitled Form", lang)
     if request.project.secure_submissions:
         app.secure_submissions = True
     _clear_app_cache(request, domain)
     app.save()
-    return back_to_main(request, domain, app_id=app.id)
+    return back_to_main(request, domain, app_id=app.id, module_id=module.id, form_id=form.id)
 
 
 @no_conflict_require_POST
@@ -1331,6 +1358,17 @@ def _new_advanced_module(request, domain, app, name, lang):
     response.set_cookie('suppress_build_errors', 'yes')
     messages.info(request, _('Caution: Advanced modules are a labs feature'))
     return response
+
+
+def _new_report_module(request, domain, app, name, lang):
+    module = app.add_module(ReportModule.new_module(name, lang))
+    # by default add all reports
+    module.report_configs = [
+        ReportAppConfig(report_id=report._id, header={lang: report.title})
+        for report in ReportConfiguration.by_domain(domain)
+    ]
+    app.save()
+    return back_to_main(request, domain, app_id=app.id, module_id=module.id)
 
 
 @no_conflict_require_POST
@@ -1534,7 +1572,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         parent_module = request.POST.get("parent_module")
         module.parent_select.module_id = parent_module
 
-    if (toggles.MODULE_FILTER.enabled(app.domain) and
+    if (feature_previews.MODULE_FILTER.enabled(app.domain) and
             app.enable_module_filtering and
             should_edit('module_filter')):
         module['module_filter'] = request.POST.get('module_filter')
@@ -1659,6 +1697,24 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
     resp = {}
     app.save(resp)
     return json_response(resp)
+
+
+@no_conflict_require_POST
+@require_can_edit_apps
+def edit_report_module(request, domain, app_id, module_id):
+    """
+    Overwrite module case details. Only overwrites components that have been
+    provided in the request. Components are short, long, filter, parent_select,
+    and sort_elements.
+    """
+    params = json_request(request.POST)
+    app = get_app(domain, app_id)
+    module = app.get_module(module_id)
+    assert isinstance(module, ReportModule)
+    module.name = params['name']
+    module.report_configs = [ReportAppConfig.wrap(spec) for spec in params['reports']]
+    app.save()
+    return json_response('success')
 
 
 def validate_module_for_build(request, domain, app_id, module_id, ajax=True):
@@ -2577,6 +2633,17 @@ def odk_media_qr_code(request, domain, app_id):
     qr_code = get_app(domain, app_id).get_odk_qr_code(with_media=True)
     return HttpResponse(qr_code, mimetype="image/png")
 
+
+def short_url(request, domain, app_id):
+    short_url = get_app(domain, app_id).get_short_url()
+    return HttpResponse(short_url)
+
+
+def short_odk_url(request, domain, app_id, with_media=False):
+    short_url = get_app(domain, app_id).get_short_odk_url(with_media=with_media)
+    return HttpResponse(short_url)
+
+
 @safe_download
 def download_odk_profile(request, domain, app_id):
     """
@@ -3050,6 +3117,10 @@ MODULE_TYPE_MAP = {
     },
     'advanced': {
         FN: _new_advanced_module,
+        VALIDATIONS: common_module_validations
+    },
+    'report': {
+        FN: _new_report_module,
         VALIDATIONS: common_module_validations
     }
 }

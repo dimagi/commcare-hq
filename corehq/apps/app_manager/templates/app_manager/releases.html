@@ -210,7 +210,11 @@
                             <a class="btn" data-bind="
                                 openModal: 'deploy-build-modal-template',
                                 css: {'btn-primary': !build_broken(), 'btn-danger': build_broken},
-                                click: function() { ga_track_event('App Manager', 'Deploy Button', '{{ app.id }}'); analytics.track('Clicked Deploy-Button');}
+                                click: function() {
+                                    generate_short_url('short_odk_url');
+                                    ga_track_event('App Manager', 'Deploy Button', '{{ app.id }}');
+                                    analytics.track('Clicked Deploy-Button');
+                                }
                             ">
                                 <span class="icon icon-exclamation-sign" data-bind="visible: build_broken"></span>
                                 {% trans "Deploy" %}
@@ -317,41 +321,11 @@
                 <div class="accordion" data-bind="bootstrapCollapse: true">
                     <div class="accordion-group">
                         <div class="accordion-heading">
-                            <a class="accordion-toggle" data-bind="
-                                click: function() { track_deploy_type('Download to Java Phone'); },
-                            ">
-                                {% trans "Download to Java Phone" %}
-                            </a>
-                        </div>
-                        <div class="accordion-body collapse">
-                            <div class="accordion-inner">
-                                <ol>
-                                    <li>
-                                        {% trans "Download <strong>both</strong> of the following files:" %}
-                                        <p><a data-bind="attr: {href: $root.url('jad', id)}">{% trans "Download" %} CommCare.jad</a></p>
-                                        <p><a data-bind="attr: {href: $root.url('jar', id)}">{% trans "Download" %} CommCare.jar</a></p>
-                                    </li>
-                                    <li>
-                                        {% trans "For help on how to install, see" %}
-                                        <a target="_blank" href="https://help.commcarehq.org/display/commcarepublic/CommCare+for+Feature+Phones">{% trans "Set Up Feature Phones" %}</a>.
-                                    </li>
-                                    <li>
-                                        {% trans "If you have any issues with the installation, please refer to" %}
-                                        <a target="_blank" href="https://help.commcarehq.org/display/commcarepublic/Troubleshooting">{% trans "Troubleshooting Phone Problems" %}</a>.
-                                    </li>
-                                </ol>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="accordion-group">
-                        <div class="accordion-heading">
-                            <a class="accordion-toggle" data-bind="
-                                click: function() { track_deploy_type('Download to Android'); },
-                            ">
+                            <a class="accordion-toggle">
                                 {% trans "Download to Android" %}
                             </a>
                         </div>
-                        <div class="accordion-body collapse">
+                        <div class="accordion-body in collapse">
                             <div class="accordion-inner">
                                 <div data-bind="bootstrapTabs: true">
                                     <div class="tabbable">
@@ -386,7 +360,9 @@
                                                             text: get_short_odk_url()
                                                         "></a></code>
                                                     </span>
-                                                    <span class="text-warning" data-bind="visible: !get_short_odk_url()">
+                                                    <img data-bind="visible: generating_url()"
+                                                        src="{% static 'hqwebapp/img/ajax-loader.gif' %}"/>
+                                                    <span class="text-warning" data-bind="visible: !get_short_odk_url() && !generating_url()">
                                                         {% trans "No short code available; try making another version." %}
                                                     </span>
                                                 </p>
@@ -432,11 +408,40 @@
                             </div>
                         </div>
                     </div>
+                    <div class="accordion-group">
+                        <div class="accordion-heading">
+                            <a class="accordion-toggle" data-bind="
+                                click: function() { track_deploy_type('Download to Java Phone'); },
+                            ">
+                                {% trans "Download to Java Phone" %}
+                            </a>
+                        </div>
+                        <div class="accordion-body collapse">
+                            <div class="accordion-inner">
+                                <ol>
+                                    <li>
+                                        {% trans "Download <strong>both</strong> of the following files:" %}
+                                        <p><a data-bind="attr: {href: $root.url('jad', id)}">{% trans "Download" %} CommCare.jad</a></p>
+                                        <p><a data-bind="attr: {href: $root.url('jar', id)}">{% trans "Download" %} CommCare.jar</a></p>
+                                    </li>
+                                    <li>
+                                        {% trans "For help on how to install, see" %}
+                                        <a target="_blank" href="https://help.commcarehq.org/display/commcarepublic/CommCare+for+Feature+Phones">{% trans "Set Up Feature Phones" %}</a>.
+                                    </li>
+                                    <li>
+                                        {% trans "If you have any issues with the installation, please refer to" %}
+                                        <a target="_blank" href="https://help.commcarehq.org/display/commcarepublic/Troubleshooting">{% trans "Troubleshooting Phone Problems" %}</a>.
+                                    </li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
                     {% if can_send_sms %}
                     <div class="accordion-group">
                         <div class="accordion-heading">
                             <a class="accordion-toggle" data-bind="
                                 click: function() { track_deploy_type('Send to phone via SMS'); },
+                                click: function() { generate_short_url('short_url'); }
                             ">
                                 {% trans "Send to phone via SMS" %}
                             </a>
@@ -451,13 +456,13 @@
                                                 <a>{% trans "Send Java Phone app" %}</a>
                                             </li>
                                             <li>
-                                                <a>{% trans "Send Android app" %}</a>
+                                                <a data-bind="click: function(){ generate_short_url('short_odk_url'); }">{% trans "Send Android app" %}</a>
                                             </li>
                                         </ul>
-                                        <div class="tab-content" data-bind="foreach: [short_url(), short_odk_url()]">
+                                        <div class="tab-content" data-bind="foreach: ['java_phone', 'android'] ">
                                             <div class="tab-pane">
-                                                <div data-bind="visible: $data">
-                                                    <label class="checkbox" data-bind="visible: $parent.allow_media_install && $parent.get_short_odk_media_url && $index() === 1">
+                                                <div data-bind="visible: $parent.sms_url($index()) && !$parent.generating_url()">
+                                                    <label class="checkbox" data-bind="visible: $parent.allow_media_install && $index() === 1">
                                                         <input type="checkbox" data-bind="checked: $parent.include_media, enable: $parent.mm_supported()">
                                                         {% trans "Include Multimedia" %}
                                                         <span data-bind="visible: !$parent.mm_supported()" class="label">
@@ -474,7 +479,10 @@
                                                         <input type="submit" class="btn" value="Send"/>
                                                     </form>
                                                 </div>
-                                                <div data-bind="visible: !$data">
+                                                <div data-bind="visible: $parent.generating_url()">
+                                                    <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}"/>
+                                                </div>
+                                                <div data-bind="visible: !$parent.sms_url($index()) && !$parent.generating_url()">
                                                     <span class="label label-important">
                                                       {% trans "No URL was found for this app, try rebuilding." %}
                                                     </span>

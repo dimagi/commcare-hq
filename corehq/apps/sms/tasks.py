@@ -169,7 +169,7 @@ def handle_incoming(msg):
         log_sms_exception(msg)
         handle_unsuccessful_processing_attempt(msg)
 
-@task(queue="sms_queue")
+@task(queue="sms_queue", ignore_result=True)
 def process_sms(message_id):
     """
     message_id - _id of an SMSLog entry
@@ -233,7 +233,7 @@ def process_sms(message_id):
             process_sms.delay(message_id)
 
 
-@task
+@task(ignore_result=True)
 def store_billable(msg):
     if msg._id and not SmsBillable.objects.filter(log_id=msg._id).exists():
         try:

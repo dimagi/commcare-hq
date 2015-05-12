@@ -1,12 +1,16 @@
+from collections import namedtuple
 import copy
 import logging
+import warnings
 
 from couchdbkit import ResourceNotFound
 import datetime
+from django.db.models import Q
 import redis
 from casexml.apps.case.signals import cases_received, case_post_save
-from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
-from casexml.apps.case.util import iter_cases
+from casexml.apps.phone.models import OwnershipCleanlinessFlag
+from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, OWNERSHIP_CLEANLINESS
+from casexml.apps.case.util import iter_cases, get_reverse_indexed_cases
 from couchforms.models import XFormInstance
 from casexml.apps.case.exceptions import (
     IllegalCaseId,
@@ -23,6 +27,38 @@ from casexml.apps.case.xml.parser import case_update_from_block
 from dimagi.utils.logging import notify_exception
 
 
+# Lightweight class used to store the dirtyness of a case/owner pair.
+DirtinessFlag = namedtuple('DirtinessFlag', ['case_id', 'owner_id'])
+
+
+class CaseProcessingResult(object):
+    """
+    Lightweight class used to collect results of case processing
+    """
+    def __init__(self, cases, dirtiness_flags, track_cleanliness):
+        self.cases = cases
+        self.dirtiness_flags = dirtiness_flags
+        self.track_cleanliness = track_cleanliness
+
+    def set_cases(self, cases):
+        self.cases = cases
+
+    def commit_dirtiness_flags(self):
+        """
+        Updates any dirtiness flags in the database.
+        """
+        if self.track_cleanliness:
+            flags_to_save = {f.owner_id: f.case_id for f in self.dirtiness_flags}
+            flags_to_update = OwnershipCleanlinessFlag.objects.filter(
+                Q(owner_id__in=flags_to_save.keys()),
+                Q(is_clean=True) | Q(hint__isnull=True)
+            )
+            for flag in flags_to_update:
+                flag.is_clean = False
+                flag.hint = flags_to_save[flag.owner_id]
+                flag.save()
+
+
 def process_cases(xform, config=None):
     """
     Creates or updates case objects which live outside of the form.
@@ -30,31 +66,35 @@ def process_cases(xform, config=None):
     If reconcile is true it will perform an additional step of
     reconciling the case update history after the case is processed.
     """
+    warnings.warn(
+        'This function is deprecated. You should be using SubmissionPost.',
+        DeprecationWarning,
+    )
 
     assert getattr(settings, 'UNIT_TESTING', False)
     domain = get_and_check_xform_domain(xform)
 
     with CaseDbCache(domain=domain, lock=True, deleted_ok=True) as case_db:
-        cases = process_cases_with_casedb(xform, case_db, config=config)
+        case_result = process_cases_with_casedb([xform], case_db, config=config)
 
+    cases = case_result.cases
     docs = [xform] + cases
     now = datetime.datetime.utcnow()
     for case in cases:
         case.server_modified_on = now
     XFormInstance.get_db().bulk_save(docs)
+
     for case in cases:
         case_post_save.send(CommCareCase, case=case)
+
+    case_result.commit_dirtiness_flags()
     return cases
 
 
-def process_cases_with_casedb(xform, case_db, config=None):
-    # this is a convenience/legacy API. all the work happens in bulk now
-    return process_cases_with_casedb_bulk([xform], case_db, config)
-
-
-def process_cases_with_casedb_bulk(xforms, case_db, config=None):
+def process_cases_with_casedb(xforms, case_db, config=None):
     config = config or CaseProcessingConfig()
-    cases = _get_or_update_cases(xforms, case_db).values()
+    case_processing_result = _get_or_update_cases(xforms, case_db)
+    cases = case_processing_result.cases
     xform = xforms[0]
 
     if config.reconcile:
@@ -120,7 +160,8 @@ def process_cases_with_casedb_bulk(xforms, case_db, config=None):
                 )
             )
 
-    return cases
+    case_processing_result.set_cases(cases)
+    return case_processing_result
 
 
 class CaseProcessingConfig(object):
@@ -180,8 +221,9 @@ class CaseDbCache(object):
                 raise IllegalCaseId("Case [%s] is deleted " % doc['_id'])
         elif doc['doc_type'] != 'CommCareCase':
             raise IllegalCaseId(
-                "Bad case doc type! "
-                "This usually means you are using a bad value for case_id."
+                'Bad case doc type! '
+                'This usually means you are using a bad value for case_id.'
+                'The offending ID is {}'.format(doc['_id'])
             )
 
     def get(self, case_id):
@@ -288,13 +330,15 @@ def _get_or_update_cases(xforms, case_db):
     touched_cases = copy.copy(case_db.cache)
 
     # once we've gotten through everything, validate all indices
+    # and check for new dirtiness flags
     def _validate_indices(case):
+        dirtiness_flags = []
+        is_dirty = False
         if case.indices:
             for index in case.indices:
                 # call get and not doc_exists to force domain checking
                 # see CaseDbCache.validate_doc
                 referenced_case = case_db.get(index.referenced_id)
-
                 if not referenced_case:
                     # just log, don't raise an error or modify the index
                     logging.error(
@@ -302,10 +346,30 @@ def _get_or_update_cases(xforms, case_db):
                         case.get_id,
                         index.referenced_id,
                     )
+                else:
+                    if referenced_case.owner_id != case.owner_id:
+                        is_dirty = True
+        if is_dirty:
+            dirtiness_flags.append(DirtinessFlag(case._id, case.owner_id))
+        return dirtiness_flags
 
-    [_validate_indices(case) for case in case_db.cache.values()]
+    def _get_dirtiness_flags_for_child_cases(domain, cases):
+        child_cases = get_reverse_indexed_cases(domain, [c['_id'] for c in cases])
+        case_owner_map = dict((case._id, case.owner_id) for case in cases)
+        for child_case in child_cases:
+            for index in child_case.indices:
+                if (index.referenced_id in case_owner_map
+                        and child_case.owner_id != case_owner_map[index.referenced_id]):
+                    yield DirtinessFlag(child_case._id, child_case.owner_id)
 
-    return touched_cases
+    dirtiness_flags = [flag for case in case_db.cache.values() for flag in _validate_indices(case)]
+    domain = getattr(case_db, 'domain', None)
+    track_cleanliness = domain and OWNERSHIP_CLEANLINESS.enabled(domain)
+    if track_cleanliness:
+        # only do this extra step if the toggle is enabled since we know we aren't going to
+        # care about the dirtiness flags otherwise.
+        dirtiness_flags += list(_get_dirtiness_flags_for_child_cases(domain, touched_cases.values()))
+    return CaseProcessingResult(touched_cases.values(), dirtiness_flags, track_cleanliness)
 
 
 def _get_or_update_model(case_update, xform, case_db):

@@ -15,13 +15,13 @@ from corehq.apps.app_manager.models import (
     UpdateCaseAction,
     OpenSubCaseAction,
 )
-from django.test import SimpleTestCase as TestCase
+from django.test import SimpleTestCase
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.util import new_careplan_module
 from corehq.apps.app_manager.xform import XForm
 
 
-class FormPreparationV2Test(TestCase, TestFileMixin):
+class FormPreparationV2Test(SimpleTestCase, TestFileMixin):
     file_path = 'data', 'form_preparation_v2'
 
     def setUp(self):
@@ -102,7 +102,7 @@ class FormPreparationV2Test(TestCase, TestFileMixin):
         self.assertXmlEqual(self.get_xml('case_list_form'), self.form.render_xform())
 
 
-class SubcaseRepeatTest(TestCase, TestFileMixin):
+class SubcaseRepeatTest(SimpleTestCase, TestFileMixin):
     file_path = ('data', 'form_preparation_v2')
 
     def test_subcase_repeat(self):
@@ -158,25 +158,25 @@ class SubcaseRepeatTest(TestCase, TestFileMixin):
                             app.get_module(0).get_form(0).render_xform())
 
 
-class SubcaseParentRefTeset(TestCase, TestFileMixin):
+class SubcaseParentRefTeset(SimpleTestCase, TestFileMixin):
     file_path = ('data', 'form_preparation_v2')
 
     def test_parent_ref(self):
         self.app = Application.wrap(self.get_json('subcase-parent-ref'))
         self.assertXmlEqual(self.app.get_module(1).get_form(0).render_xform(),
-                              self.get_xml('subcase-parent-ref'))
+                            self.get_xml('subcase-parent-ref'))
 
 
-class CaseSharingFormPrepTest(TestCase, TestFileMixin):
+class CaseSharingFormPrepTest(SimpleTestCase, TestFileMixin):
     file_path = ('data', 'form_preparation_v2')
 
     def test_subcase_repeat(self):
         self.app = Application.wrap(self.get_json('complex-case-sharing'))
         self.assertXmlEqual(self.app.get_module(0).get_form(0).render_xform(),
-                              self.get_xml('complex-case-sharing'))
+                            self.get_xml('complex-case-sharing'))
 
 
-class GPSFormPrepTest(TestCase, TestFileMixin):
+class GPSFormPrepTest(SimpleTestCase, TestFileMixin):
     file_path = ('data', 'form_preparation_v2')
 
     def setUp(self):
@@ -201,8 +201,9 @@ class GPSFormPrepTest(TestCase, TestFileMixin):
                             self.get_xml('gps_no_question_auto'))
 
 
-class FormPreparationCareplanTest(TestCase, TestFileMixin):
+class FormPreparationCareplanTest(SimpleTestCase, TestFileMixin):
     file_path = 'data', 'form_preparation_careplan'
+
     def setUp(self):
         self.app = Application.new_app('domain', 'New App', APP_V2)
         self.app.version = 3
@@ -232,8 +233,9 @@ class FormPreparationCareplanTest(TestCase, TestFileMixin):
         self.assertXmlEqual(form.render_xform(), self.get_xml('update_task'))
 
 
-class FormPreparationV2TestAdvanced(TestCase, TestFileMixin):
+class FormPreparationV2TestAdvanced(SimpleTestCase, TestFileMixin):
     file_path = 'data', 'form_preparation_v2_advanced'
+
     def setUp(self):
         self.app = Application.new_app('domain', 'New App', APP_V2)
         self.app.version = 3
@@ -401,7 +403,7 @@ class FormPreparationV2TestAdvanced(TestCase, TestFileMixin):
         self.assertXmlEqual(self.get_xml('child_module_adjusted_case_id'), self.form.render_xform())
 
 
-class SubcaseRepeatTestAdvanced(TestCase, TestFileMixin):
+class SubcaseRepeatTestAdvanced(SimpleTestCase, TestFileMixin):
     file_path = ('data', 'form_preparation_v2_advanced')
 
     def setUp(self):
@@ -519,7 +521,7 @@ class SubcaseRepeatTestAdvanced(TestCase, TestFileMixin):
         self.assertXmlEqual(self.get_xml('subcase-repeat-multiple'), self.form.render_xform())
 
 
-class TestXForm(TestCase, TestFileMixin):
+class TestXForm(SimpleTestCase, TestFileMixin):
     file_path = "data", "xform_test"
 
     def test_action_relevance(self):

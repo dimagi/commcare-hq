@@ -2,7 +2,6 @@
 Logic about chws phones and cases go here.
 """
 from collections import defaultdict
-from datetime import datetime
 import itertools
 import logging
 from casexml.apps.case.models import CommCareCase
@@ -10,7 +9,7 @@ from casexml.apps.case import const
 from casexml.apps.case.util import reverse_indices
 from casexml.apps.case.xform import CaseDbCache
 from casexml.apps.phone.models import CaseState
-from dimagi.utils.decorators.memoized import memoized
+from corehq.util.dates import iso_string_to_datetime
 from dimagi.utils.parsing import string_to_utc_datetime
 
 logger = logging.getLogger(__name__)
@@ -81,11 +80,11 @@ class CaseSyncUpdate(object):
     """
     The record of how a case should sync
     """
-    def __init__(self, case, sync_token):
+    def __init__(self, case, sync_token, required_updates=None):
         self.case = case
         self.sync_token = sync_token
         # cache this property since computing it can be expensive
-        self.required_updates = self._get_required_updates()
+        self.required_updates = required_updates if required_updates is not None else self._get_required_updates()
         
     
     def _get_required_updates(self):
@@ -532,7 +531,7 @@ def filter_cases_modified_elsewhere_since_sync(cases, last_sync_token):
             #   'key': ['case-id', 'sync-token-id']
             # }
             if row['value']:
-                modification_date = datetime.strptime(row['value'], '%Y-%m-%dT%H:%M:%SZ')
+                modification_date = iso_string_to_datetime(row['value'])
                 if modification_date >= last_sync_token.date:
                     case_id, sync_token_id = row['key']
                     all_case_updates_by_sync_token[case_id].append(

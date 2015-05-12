@@ -1,7 +1,10 @@
 import json
 from django.core.management.base import LabelCommand, CommandError
 from optparse import make_option
-from jsonobject import JsonObject, StringProperty, ListProperty
+from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty
+from corehq import Domain
+from dimagi.utils.chunked import chunked
+from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.couch.database import get_db
 
 
@@ -16,6 +19,11 @@ class Command(LabelCommand):
                     dest='replicate',
                     default=False,
                     help="Replicate documents."),
+        make_option('--copy',
+                    action='store_true',
+                    dest='copy',
+                    default=False,
+                    help="Copy documents manually, by view."),
         make_option('--check',
                     action='store_true',
                     dest='check',
@@ -32,8 +40,42 @@ class Command(LabelCommand):
             migration_config = MigrationConfig.wrap(json.loads(f.read()))
             if options['replicate']:
                 _replicate(migration_config)
+            if options['copy']:
+                _copy(migration_config)
             if options['check']:
                 _check(migration_config)
+
+
+def _copy(config):
+    # unfortunately the only couch view we have for this needs to go by domain
+    # will be a bit slow
+    database = Domain.get_db()
+    assert database.uri == config.source_db.uri, 'can only use "copy" with the main HQ DB as the source'
+    domain_names = Domain.get_all_names()
+    for domain in domain_names:
+        for doc_type in config.doc_types:
+            ids_of_this_type = [row['id'] for row in database.view(
+                'domain/docs',
+                startkey=[domain, doc_type],
+                endkey=[domain, doc_type, {}],
+                reduce=False,
+                include_docs=False,
+            )]
+            if ids_of_this_type:
+                new_revs = dict([
+                    (row['id'], row['value']['rev'])
+                    for row in config.dest_db.view('_all_docs', keys=ids_of_this_type, include_docs=False)
+                    if 'error' not in row
+                ])
+                for id_group in chunked(ids_of_this_type, 500):
+                    docs = get_docs(database, id_group)
+                    for doc in docs:
+                        if doc['_id'] in new_revs:
+                            doc['_rev'] = new_revs[doc['_id']]
+                    config.dest_db.bulk_save(docs)
+
+            print 'copied {} {}s from {}'.format(len(ids_of_this_type), doc_type, domain)
+    print 'copy docs complete'
 
 
 def _replicate(config):

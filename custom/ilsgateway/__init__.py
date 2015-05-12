@@ -25,7 +25,7 @@ CUSTOM_REPORTS = (
     )),
 )
 
-LOCATION_TYPES = ["MOHSW", "REGION", "DISTRICT", "FACILITY"]
+LOCATION_TYPES = ["MOHSW", "MSDZONE", "REGION", "DISTRICT", "FACILITY"]
 
 PRODUCTS_CODES_PROGRAMS_MAPPING = {
     "Reproductive Health": ['dp', 'ip', 'cc', 'id', 'pp', 'cond'],

@@ -28,6 +28,7 @@ from corehq.apps.indicators.utils import get_indicator_domains
 from corehq.apps.reminders.util import can_use_survey_reminders
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from django_prbac.utils import has_privilege
+from corehq.toggles import FM_FACING_SUBSCRIPTIONS
 from corehq.util.markup import mark_up_urls
 
 from dimagi.utils.couch.database import get_db
@@ -491,7 +492,7 @@ class SetupTab(UITab):
         from corehq.apps.locations.views import FacilitySyncView
 
         if self.project.commtrack_enabled:
-            return [[_('CommTrack Setup'), [
+            return [[_('CommCare Supply Setup'), [
                 # products
                 {
                     'title': ProductListView.page_title,
@@ -866,7 +867,7 @@ class MessagingTab(UITab):
         if self.project.commtrack_enabled:
             from corehq.apps.sms.views import SubscribeSMSView
             items.append(
-                (_("CommTrack"), [
+                (_("CommCare Supply"), [
                     {'title': ugettext_lazy("Subscribe to SMS Reports"),
                      'url': reverse(SubscribeSMSView.urlname, args=[self.domain])},
                 ])
@@ -1078,54 +1079,55 @@ class ProjectUsersTab(UITab):
                 }
             ]))
 
-            if self.project.locations_enabled:
-                from corehq.apps.locations.views import (
-                    LocationsListView,
-                    NewLocationView,
-                    EditLocationView,
-                    LocationImportView,
-                    LocationImportStatusView,
-                    LocationFieldsView,
-                    LocationTypesView,
-                )
+        if self.project.locations_enabled:
+            from corehq.apps.locations.views import (
+                LocationsListView,
+                NewLocationView,
+                EditLocationView,
+                LocationImportView,
+                LocationImportStatusView,
+                LocationFieldsView,
+                LocationTypesView,
+            )
+            from corehq.apps.locations.permissions import (
+                user_can_edit_location_types
+            )
 
-                locations_config = {
-                    'title': LocationsListView.page_title,
-                    'url': reverse(LocationsListView.urlname, args=[self.domain]),
-                    'show_in_dropdown': True,
-                    'subpages': [
-                        {
-                            'title': NewLocationView.page_title,
-                            'urlname': NewLocationView.urlname,
-                        },
-                        {
-                            'title': EditLocationView.page_title,
-                            'urlname': EditLocationView.urlname,
-                        },
-                        {
-                            'title': LocationImportView.page_title,
-                            'urlname': LocationImportView.urlname,
-                        },
-                        {
-                            'title': LocationImportStatusView.page_title,
-                            'urlname': LocationImportStatusView.urlname,
-                        },
-                        {
-                            'title': LocationFieldsView.page_name(),
-                            'urlname': LocationFieldsView.urlname,
-                        },
-                    ]
-                }
-                advanced_locations_config = {
+            locations_config = [{
+                'title': LocationsListView.page_title,
+                'url': reverse(LocationsListView.urlname, args=[self.domain]),
+                'show_in_dropdown': True,
+                'subpages': [
+                    {
+                        'title': NewLocationView.page_title,
+                        'urlname': NewLocationView.urlname,
+                    },
+                    {
+                        'title': EditLocationView.page_title,
+                        'urlname': EditLocationView.urlname,
+                    },
+                    {
+                        'title': LocationImportView.page_title,
+                        'urlname': LocationImportView.urlname,
+                    },
+                    {
+                        'title': LocationImportStatusView.page_title,
+                        'urlname': LocationImportStatusView.urlname,
+                    },
+                    {
+                        'title': LocationFieldsView.page_name(),
+                        'urlname': LocationFieldsView.urlname,
+                    },
+                ]
+            }]
+
+            if user_can_edit_location_types(self.couch_user, self.project):
+                locations_config.append({
                     'title': LocationTypesView.page_title,
                     'url': reverse(LocationTypesView.urlname, args=[self.domain]),
                     'show_in_dropdown': True,
-                }
-
-                items.append((_('Locations'), [
-                    locations_config,
-                    advanced_locations_config,
-                ]))
+                })
+            items.append((_('Locations'), locations_config))
 
         return items
 
@@ -1246,6 +1248,7 @@ class ProjectSettingsTab(UITab):
                 from corehq.apps.domain.views import (
                     DomainSubscriptionView, EditExistingBillingAccountView,
                     DomainBillingStatementsView, ConfirmSubscriptionRenewalView,
+                    InternalSubscriptionManagementView,
                 )
                 subscription = [
                     {
@@ -1280,6 +1283,14 @@ class ProjectSettingsTab(UITab):
                                            args=[self.domain]),
                         }
                     )
+                if self.couch_user.is_superuser and FM_FACING_SUBSCRIPTIONS.enabled(self.couch_user.username):
+                    subscription.append({
+                        'title': _('Internal Subscription Management (Dimagi Only)'),
+                        'url': reverse(
+                            InternalSubscriptionManagementView.urlname,
+                            args=[self.domain],
+                        )
+                    })
                 items.append((_('Subscription'), subscription))
 
         if any(toggles.PRIME_RESTORE.enabled(item) for item in [self.couch_user.username, self.domain]):
@@ -1641,7 +1652,7 @@ class OrgSettingsTab(OrgTab):
                 url=reverse("orgs_teams", args=(self.org.name,))),
             dropdown_dict(
                 _("Members"),
-                url=reverse("orgs_stats", args=(self.org.name,))),
+                url=reverse("orgs_members", args=(self.org.name,))),
         ]
 
 

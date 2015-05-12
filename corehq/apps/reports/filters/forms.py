@@ -9,7 +9,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 # For translations
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_noop, ugettext_lazy
 import settings
 
 REMOTE_APP_WILDCARD = "http://(.+).commcarehq.org"
@@ -28,9 +28,9 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         or Application-Deleted).
     """
     slug = "form"
-    label = ugettext_noop("Filter Forms")
+    label = ugettext_lazy("Filter Forms")
     css_class = "span5"
-    drilldown_empty_text = ugettext_noop("You don't have any applications set up, so there are no forms "
+    drilldown_empty_text = ugettext_lazy("You don't have any applications set up, so there are no forms "
                                          "to choose from. Please create an application!")
     template = "reports/filters/form_app_module_drilldown.html"
     unknown_slug = "unknown"

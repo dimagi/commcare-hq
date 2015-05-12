@@ -1,14 +1,27 @@
+from collections import namedtuple
 from functools import wraps
 import hashlib
 from django.http import Http404
 import math
 from toggle.shortcuts import toggle_enabled, set_toggle
 
+Tag = namedtuple('Tag', 'name css_class')
+TAG_ONE_OFF = Tag(name='One-Off', css_class='important')
+TAG_EXPERIMENTAL = Tag(name='Experimental', css_class='warning')
+TAG_PRODUCT_PATH = Tag(name='Product Path', css_class='info')
+TAG_PRODUCT_CORE = Tag(name='Core Product', css_class='success')
+TAG_PREVIEW = Tag(name='Preview', css_class='default')
+TAG_UNKNOWN = Tag(name='Unknown', css_class='inverse')
+ALL_TAGS = [TAG_ONE_OFF, TAG_EXPERIMENTAL, TAG_PRODUCT_PATH, TAG_PRODUCT_CORE, TAG_PREVIEW, TAG_UNKNOWN]
+
 
 class StaticToggle(object):
-    def __init__(self, slug, label, namespaces=None):
+    def __init__(self, slug, label, tag, namespaces=None, help_link=None, description=None):
         self.slug = slug
         self.label = label
+        self.tag = tag
+        self.help_link = help_link
+        self.description = description
         if namespaces:
             self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
         else:
@@ -55,8 +68,9 @@ class PredicatablyRandomToggle(StaticToggle):
     It extends StaticToggle, so individual domains/users can also be explicitly added.
     """
 
-    def __init__(self, slug, label, namespace, randomness):
-        super(PredicatablyRandomToggle, self).__init__(slug, label, list(namespace))
+    def __init__(self, slug, label, tag, namespace, randomness, help_link=None, description=None):
+        super(PredicatablyRandomToggle, self).__init__(slug, label, tag, list(namespace),
+                                                       help_link=help_link, description=description)
         assert namespace, 'namespace must be defined!'
         self.namespace = namespace
         assert 0 <= randomness <= 1, 'randomness must be between 0 and 1!'
@@ -76,8 +90,9 @@ class PredicatablyRandomToggle(StaticToggle):
         )
 
 # if no namespaces are specified the user namespace is assumed
-NAMESPACE_USER = object()
+NAMESPACE_USER = 'user'
 NAMESPACE_DOMAIN = 'domain'
+ALL_NAMESPACES = [NAMESPACE_USER, NAMESPACE_DOMAIN]
 
 
 def all_toggles():
@@ -102,109 +117,123 @@ def toggles_dict(username=None, domain=None):
 
 APP_BUILDER_CUSTOM_PARENT_REF = StaticToggle(
     'custom-parent-ref',
-    'Custom case parent reference'
+    'Custom case parent reference',
+    TAG_ONE_OFF
 )
 
 APP_BUILDER_CAREPLAN = StaticToggle(
     'careplan',
-    'Careplan module'
+    'Careplan module',
+    TAG_EXPERIMENTAL
 )
 
 APP_BUILDER_ADVANCED = StaticToggle(
     'advanced-app-builder',
-    'Advanced Module in App-Builder'
+    'Advanced Module in App-Builder',
+    TAG_EXPERIMENTAL
 )
 
 APP_BUILDER_INCLUDE_MULTIMEDIA_ODK = StaticToggle(
     'include-multimedia-odk',
-    'Include multimedia in ODK deploy'
+    'Include multimedia in ODK deploy',
+    TAG_ONE_OFF
 )
 
 BOOTSTRAP3_PREVIEW = StaticToggle(
     'bootstrap3_preview',
     'Bootstrap 3 Preview',
+    TAG_PRODUCT_PATH,
     [NAMESPACE_USER]
 )
 
 CASE_LIST_CUSTOM_XML = StaticToggle(
     'case_list_custom_xml',
     'Show text area for entering custom case list xml',
+    TAG_EXPERIMENTAL,
 )
 
 CASE_LIST_TILE = StaticToggle(
     'case_list_tile',
     'Allow configuration of case list tiles',
+    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
 DETAIL_LIST_TABS = StaticToggle(
     'detail-list-tabs',
     'Tabs in the case detail list',
+    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
 GRAPH_CREATION = StaticToggle(
     'graph-creation',
     'Case list/detail graph creation',
+    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
 OFFLINE_CLOUDCARE = StaticToggle(
     'offline-cloudcare',
-    'Offline Cloudcare'
+    'Offline Cloudcare',
+    TAG_EXPERIMENTAL
 )
 
 CASE_REBUILD = StaticToggle(
     'case_rebuild',
     'Show UI-based case and form rebuild options (primarily for support team)',
+    TAG_EXPERIMENTAL
 )
 
 IS_DEVELOPER = StaticToggle(
     'is_developer',
-    'Is developer'
+    'Is developer',
+    TAG_EXPERIMENTAL
 )
 
 PATHWAYS_PREVIEW = StaticToggle(
     'pathways_preview',
-    'Is Pathways preview'
+    'Is Pathways preview',
+    TAG_ONE_OFF
 )
 
 MM_CASE_PROPERTIES = StaticToggle(
     'mm_case_properties',
     'Multimedia Case Properties',
+    TAG_PRODUCT_PATH
 )
 
 VISIT_SCHEDULER = StaticToggle(
     'app_builder_visit_scheduler',
     'Visit Scheduler',
+    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
 EDIT_SUBMISSIONS = StaticToggle(
     'edit_submissions',
     'Submission Editing on HQ',
+    TAG_PRODUCT_CORE,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
 
 USER_CONFIGURABLE_REPORTS = StaticToggle(
     'user_reports',
     'User configurable reports UI',
+    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
-VIEW_SYNC_HISTORY = StaticToggle(
-    'sync_history_report',
-    'Enable sync history report'
 )
 
 STOCK_TRANSACTION_EXPORT = StaticToggle(
     'ledger_export',
     'Show "export transactions" link on case details page',
+    TAG_PRODUCT_PATH
 )
 
 SYNC_ALL_LOCATIONS = StaticToggle(
     'sync_all_locations',
     'Sync the full location hierarchy when syncing location fixtures',
+    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
 
@@ -212,18 +241,7 @@ NO_VELLUM = StaticToggle(
     'no_vellum',
     'Allow disabling Form Builder per form '
     '(for custom forms that Vellum breaks)',
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
-DOUBLE_MANAGEMENT = StaticToggle(
-    'double_management',
-    'Case list actions a.k.a. double management',
-    [NAMESPACE_USER, NAMESPACE_DOMAIN]
-)
-
-SPLIT_MULTISELECT_EXPORT = StaticToggle(
-    'split_multiselect_export',
-    'Split multiselect columns in custom exports',
+    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
@@ -231,29 +249,34 @@ CAN_EDIT_EULA = StaticToggle(
     'can_edit_eula',
     "Whether this user can set the custom eula and data sharing internal project options. "
     "This should be a small number of DIMAGI ONLY users",
+    TAG_EXPERIMENTAL,
 )
 
 STOCK_AND_RECEIPT_SMS_HANDLER = StaticToggle(
     'stock_and_sms_handler',
     "Enable the stock report handler to accept both stock and receipt values "
     "in the format 'soh abc 100.20'",
+    TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
 
 PAGINATE_WEB_USERS = StaticToggle(
     'paginate_web_users',
     'Paginate Web Users',
+    TAG_PRODUCT_PATH
 )
 
 LOOSE_SYNC_TOKEN_VALIDATION = StaticToggle(
     'loose_sync_token_validation',
     "Don't fail hard on missing or deleted sync tokens.",
+    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
 )
 
 MULTIPLE_LOCATIONS_PER_USER = StaticToggle(
     'multiple_locations',
     "Enable multiple locations per user on domain.",
+    TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
 
@@ -261,52 +284,55 @@ PRODUCTS_PER_LOCATION = StaticToggle(
     'products_per_location',
     "Products Per Location: Specify products stocked at individual locations.  "
     "This doesn't actually do anything yet.",
+    TAG_PRODUCT_CORE,
     [NAMESPACE_DOMAIN]
-)
-
-DOCUMENTATION_FILE = StaticToggle(
-    'documentation_file',
-    "Allows users to optionally add a supporting documentation file to explain exchange applications",
 )
 
 ALLOW_CASE_ATTACHMENTS_VIEW = StaticToggle(
     'allow_case_attachments_view',
     "Explicitly allow user to access case attachments, even if they can't view the case list report.",
+    TAG_ONE_OFF,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
 LOCATION_TYPE_STOCK_RATES = StaticToggle(
     'location_type_stock_rates',
     "Specify stock rates per location type.",
+    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
 
 BULK_ARCHIVE_FORMS = StaticToggle(
     'bulk_archive_forms',
     'Bulk archive forms with excel',
+    TAG_PRODUCT_PATH
 )
 
 TRANSFER_DOMAIN = StaticToggle(
     'transfer_domain',
     'Transfer domains to different users',
+    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
 
 DHIS2_DOMAIN = StaticToggle(
     'dhis2_domain',
     'Enable DHIS2 integration for this domain',
+    TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
 
 PRIME_RESTORE = StaticToggle(
     'prime_restore',
     'Prime restore cache',
+    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
 FORM_LINK_WORKFLOW = StaticToggle(
     'form_link_workflow',
     'Form linking workflow available on forms',
+    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN],
 )
 
@@ -315,6 +341,7 @@ FORM_LINK_WORKFLOW = StaticToggle(
 VELLUM_TRANSACTION_QUESTION_TYPES = StaticToggle(
     'transaction_question_types',
     "Adds transaction-related question types in the form builder",
+    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
 
@@ -322,18 +349,21 @@ VELLUM_ITEMSETS = StaticToggle(
     'itemsets',
     "Adds dynamic (itemset) select and multi-select question types to the "
     "form builder",
+    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
 
 VELLUM_HELP_MARKDOWN = StaticToggle(
     'help_markdown',
     "Use markdown for the help text in the form builder",
+    TAG_UNKNOWN,
     [NAMESPACE_DOMAIN]
 )
 
 VELLUM_SAVE_TO_CASE = StaticToggle(
     'save_to_case',
     "Adds save to case as a question to the form builder",
+    TAG_UNKNOWN,
     [NAMESPACE_DOMAIN]
 )
 
@@ -341,42 +371,36 @@ CACHE_AND_INDEX = StaticToggle(
     'cache_and_index',
     'Enable the "Cache and Index" format option when choosing sort properties '
     'in the app builder',
+    TAG_UNKNOWN,
     [NAMESPACE_DOMAIN],
 )
 
 CUSTOM_PROPERTIES = StaticToggle(
     'custom_properties',
-    'Allow users to add arbitrary custom properties to their appliation',
+    'Allow users to add arbitrary custom properties to their application',
+    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
 )
 
-FILE_RESTORE = StaticToggle(
+FILE_RESTORE = PredicatablyRandomToggle(
     'file_restore',
     'Use files to do phone restore',
-    [NAMESPACE_DOMAIN, NAMESPACE_USER],
-)
-
-GLOBAL_SMS_RATES = StaticToggle(
-    'global_sms_rates',
-    'Global SMS Rates page',
-    [NAMESPACE_USER]
+    TAG_PRODUCT_PATH,
+    randomness=.5,
+    namespace=[NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
 
 BULK_SMS_VERIFICATION = StaticToggle(
     'bulk_sms_verification',
     'Allow initiating the SMS phone verification workflow for all users in a group.',
+    TAG_ONE_OFF,
     [NAMESPACE_USER, NAMESPACE_DOMAIN],
 )
 
 BULK_PAYMENTS = StaticToggle(
     'bulk_payments',
-    'Enable payment of invoices by bulk credit payments and invoice generation for wire tranfers',
-)
-
-MODULE_FILTER = StaticToggle(
-    'module_filter',
-    'Enable module filtering',
-    [NAMESPACE_DOMAIN],
+    'Enable payment of invoices by bulk credit payments and invoice generation for wire transfers',
+    TAG_PRODUCT_CORE
 )
 
 USE_NEW_TIMEZONE_BEHAVIOR = StaticToggle(
@@ -385,17 +409,52 @@ USE_NEW_TIMEZONE_BEHAVIOR = StaticToggle(
      "during submission and in reports. "
      "(Please do not set manually, "
      "because it has to be accompanied by a migration.)"),
+    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN],
 )
 
 USER_AS_A_CASE = StaticToggle(
     'user_as_a_case',
     'Enable "User-As-A-Case" to store user properties in a case and use them in forms',
+    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
 
-STREAM_RESTORE_CACHE = StaticToggle(
+STREAM_RESTORE_CACHE = PredicatablyRandomToggle(
     'stream_cached_restore',
     'Stream cached restore from couchdb',
-    [NAMESPACE_DOMAIN]
+    TAG_EXPERIMENTAL,
+    randomness=.5,
+    namespace=[NAMESPACE_DOMAIN]
+)
+
+ENABLE_LOADTEST_USERS = StaticToggle(
+    'enable_loadtest_users',
+    'Enable creating loadtest users on HQ',
+    TAG_EXPERIMENTAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Loadtest+Users',
+)
+
+OWNERSHIP_CLEANLINESS = PredicatablyRandomToggle(
+    'enable_owner_cleanliness_flags',
+    'Enable tracking ownership cleanliness on submission',
+    TAG_EXPERIMENTAL,
+    randomness=.05,
+    namespace=NAMESPACE_DOMAIN,
+    help_link='https://docs.google.com/a/dimagi.com/document/d/12WfZLerFL832LZbMwqRAvXt82scdjDL51WZVNa31f28/edit#heading=h.gu9sjekp0u2p',
+)
+
+MOBILE_UCR = StaticToggle(
+    'mobile_ucr',
+    ('Mobile UCR: Configure viewing user configurable reports on the mobile '
+     'through the app builder'),
+    TAG_EXPERIMENTAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+FM_FACING_SUBSCRIPTIONS = StaticToggle(
+    'fm_facing_subscriptions',
+    'FM Facing Subscription Management Interface',
+    TAG_PRODUCT_CORE,
 )

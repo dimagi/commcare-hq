@@ -31,7 +31,6 @@
         </div>
     {% endif %}
 {% endblock %}
-
 {% block reporttable %}
 {% if report.needs_filters %}
     {% include 'reports/standard/partials/description.html' %}
@@ -298,5 +297,52 @@
         if ( report_slug === 'stock_summary_report' || report_slug === 'cms_rms_summary_report') {
             $('.dataTables_filter').remove();
         }
+    </script>
+    <script>
+        function updateExportButton() {
+            var button = $("#export-report-excel");
+            if ({{ split|yesno:"true,false" }}) {
+                button.text("Export Table to Excel");
+                button.css('display', 'inline-block');
+            } else if ({{ exportable|yesno:"true,false" }}){
+                button.text("Export Table(s) to Excel");
+                button.css('display', 'inline-block');
+            } else {
+                button.css('display', 'None');
+            }
+        }
+        $("#apply-filters").on('click', function(){
+            updateExportButton();
+        });
+        updateExportButton();
+        $(".dataTables_filter").css('display', 'none');
+
+        $('.row div').append(
+                '<div class="desc" style="width: 100%; text-align: center; margin-top: -1cm; margin-bottom: 1cm"></div>'
+        );
+        setTimeout(function() {
+            $('.nv-slice').on('mouseenter', function() {
+                var descDiv = $(this).parents('.row').find('.desc');
+                $('.nvtooltip').hide();
+                descDiv.text($('.nvtooltip h3').text());
+                descDiv.css('color', $(this).attr('fill'));
+            });
+        }, 500);
+    </script>
+    <script>
+        var slugs = {{ slugs | JSON }};
+        var url = window.location.href;
+        var lastSlash = url.lastIndexOf('/');
+        var previousSlash = url.lastIndexOf('/', lastSlash - 1);
+        var content = '<div style="margin: 0 0 30px 120px;">';
+
+        $.each(slugs, function() {
+            content += '<a class="btn" style="margin-left: 10px" href="' +
+                    url.substring(0, previousSlash + 1) + this[0] + url.substring(lastSlash) +
+                    '">' + this[1] + '</a>';
+        });
+
+        content += '</div>';
+        $('legend').after(content);
     </script>
 {% endblock %}

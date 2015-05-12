@@ -43,7 +43,7 @@ class ApisTest(TestCase):
         self.assertEqual(webusers.is_active, True)
         self.assertEqual(webusers.is_staff, False)
         self.assertEqual(webusers.is_superuser, False)
-        self.assertEqual(webusers.location, 319)
+        self.assertIsNone(webusers.location)
         self.assertEqual(webusers.organization, 'TestOrg1')
         self.assertEqual(webusers.password, 'sha1$4b8dd$8acea54703614eea2fbb4bf7fd6ee9465a67ff53')
         self.assertEqual(webusers.sms_notifications, True)

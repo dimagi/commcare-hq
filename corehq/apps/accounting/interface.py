@@ -6,7 +6,7 @@ from corehq.apps.accounting.forms import AdjustBalanceForm
 from corehq.apps.accounting.models import (
     BillingAccount, Subscription, SoftwarePlan
 )
-from corehq.apps.accounting.utils import get_money_str, quantize_accounting_decimal
+from corehq.apps.accounting.utils import get_money_str, quantize_accounting_decimal, make_anchor_tag
 from corehq.apps.reports.cache import request_cache
 from corehq.apps.reports.datatables import (
     DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
@@ -406,15 +406,176 @@ def get_subtotal_and_deduction(line_items):
     return subtotal, deduction
 
 
-class InvoiceInterface(GenericTabularReport):
+class InvoiceInterfaceBase(GenericTabularReport):
     base_template = "accounting/invoice_list.html"
     section_name = "Accounting"
     dispatcher = AccountingAdminInterfaceDispatcher
+    exportable = True
+    export_format_override = Format.CSV
+
+
+class WireInvoiceInterface(InvoiceInterfaceBase):
+    name = "Wire Invoices"
+    description = "List of all wire invoices"
+    slug = "wire_invoices"
+    fields = [
+        'corehq.apps.accounting.interface.DomainFilter',
+        'corehq.apps.accounting.interface.PaymentStatusFilter',
+        'corehq.apps.accounting.interface.StatementPeriodFilter',
+        'corehq.apps.accounting.interface.DueDatePeriodFilter',
+        'corehq.apps.accounting.interface.IsHiddenFilter',
+    ]
+
+    @property
+    def headers(self):
+        header = DataTablesHeader(
+            DataTablesColumn("Invoice #"),
+            DataTablesColumn("Account Name (Fogbugz Client Name)"),
+            DataTablesColumn("Project Space"),
+            DataTablesColumn("New This Month?"),
+            DataTablesColumn("Company Name"),
+            DataTablesColumn("Emails"),
+            DataTablesColumn("First Name"),
+            DataTablesColumn("Last Name"),
+            DataTablesColumn("Phone Number"),
+            DataTablesColumn("Address Line 1"),
+            DataTablesColumn("Address Line 2"),
+            DataTablesColumn("City"),
+            DataTablesColumn("State/Province/Region"),
+            DataTablesColumn("Postal Code"),
+            DataTablesColumn("Country"),
+            DataTablesColumnGroup("Statement Period",
+                                  DataTablesColumn("Start"),
+                                  DataTablesColumn("End")),
+            DataTablesColumn("Date Due"),
+            DataTablesColumn("Total"),
+            DataTablesColumn("Amount Due"),
+            DataTablesColumn("Payment Status"),
+            DataTablesColumn("Do Not Invoice"),
+        )
+
+        if not self.is_rendered_as_email:
+            header.add_column(DataTablesColumn("View Invoice"))
+        return header
+
+    @property
+    def rows(self):
+        from corehq.apps.accounting.views import (
+            WireInvoiceSummaryView, ManageBillingAccountView,
+        )
+        rows = []
+        for invoice in self.invoices:
+            new_this_month = (invoice.date_created.month == invoice.account.date_created.month
+                              and invoice.date_created.year == invoice.account.date_created.year)
+            try:
+                contact_info = BillingContactInfo.objects.get(account=invoice.account)
+            except BillingContactInfo.DoesNotExist:
+                contact_info = BillingContactInfo()
+
+            account_url = reverse(ManageBillingAccountView.urlname, args=[invoice.account.id])
+            columns = [
+                invoice.invoice_number,
+                format_datatables_data(
+                    mark_safe(make_anchor_tag(account_url, invoice.account.name)),
+                    invoice.account.name
+                ),
+                invoice.get_domain(),
+                "YES" if new_this_month else "no",
+                contact_info.company_name,
+                contact_info.emails,
+                contact_info.first_name,
+                contact_info.last_name,
+                contact_info.phone_number,
+                contact_info.first_line,
+                contact_info.second_line,
+                contact_info.city,
+                contact_info.state_province_region,
+                contact_info.postal_code,
+                contact_info.country,
+                invoice.date_start.strftime(USER_DATE_FORMAT),
+                invoice.date_end.strftime(USER_DATE_FORMAT),
+                invoice.date_due.strftime(USER_DATE_FORMAT),
+                get_exportable_column(invoice.subtotal),
+                get_exportable_column(invoice.balance),
+                "Paid" if invoice.is_paid else "Not paid",
+                "YES" if invoice.is_hidden else "no",
+            ]
+
+            invoice_url = reverse(WireInvoiceSummaryView.urlname, args=(invoice.id,))
+            if not self.is_rendered_as_email:
+                columns.extend([
+                    mark_safe(make_anchor_tag(invoice_url, 'Go to Invoice'))
+                ])
+            rows.append(columns)
+        return rows
+
+    @property
+    @memoized
+    def filters(self):
+        filters = {}
+
+        domain_name = DomainFilter.get_value(self.request, self.domain)
+        if domain_name is not None:
+            filters.update(domain=domain_name)
+
+        payment_status = \
+            PaymentStatusFilter.get_value(self.request, self.domain)
+        if payment_status is not None:
+            filters.update(
+                date_paid__isnull=(
+                    payment_status == PaymentStatusFilter.NOT_PAID
+                ),
+            )
+
+        statement_period = \
+            StatementPeriodFilter.get_value(self.request, self.domain)
+        if statement_period is not None:
+            filters.update(
+                date_start__gte=statement_period[0],
+                date_start__lte=statement_period[1],
+            )
+
+        due_date_period = \
+            DueDatePeriodFilter.get_value(self.request, self.domain)
+        if due_date_period is not None:
+            filters.update(
+                date_due__gte=due_date_period[0],
+                date_due__lte=due_date_period[1],
+            )
+
+        is_hidden = IsHiddenFilter.get_value(self.request, self.domain)
+        if is_hidden is not None:
+            filters.update(
+                is_hidden=(is_hidden == IsHiddenFilter.IS_HIDDEN),
+            )
+
+        filters.update(is_hidden_to_ops=False)
+
+        return filters
+
+    @property
+    @memoized
+    def invoices(self):
+        return WireInvoice.objects.filter(**self.filters)
+
+    @property
+    def email_response(self):
+        self.is_rendered_as_email = True
+        statement_start = StatementPeriodFilter.get_value(
+            self.request, self.domain) or datetime.date.today()
+        return render_to_string('accounting/bookkeeper_email.html',
+            {
+                'headers': self.headers,
+                'month': statement_start.strftime("%B"),
+                'rows': self.rows,
+            }
+        )
+
+
+class InvoiceInterface(InvoiceInterfaceBase):
     name = "Invoices"
     description = "List of all invoices"
     slug = "invoices"
-    exportable = True
-    export_format_override = Format.CSV
     fields = [
         'corehq.apps.accounting.interface.NameFilter',
         'corehq.apps.accounting.interface.SubscriberFilter',
@@ -487,29 +648,22 @@ class InvoiceInterface(GenericTabularReport):
             except BillingContactInfo.DoesNotExist:
                 contact_info = BillingContactInfo()
 
+            plan_name = u"{name} v{version}".format(
+                name=invoice.subscription.plan_version.plan.name,
+                version=invoice.subscription.plan_version.version,
+            )
+            plan_href = reverse(EditSubscriptionView.urlname, args=[invoice.subscription.id])
+            account_name = invoice.subscription.account.name
+            account_href = reverse(ManageBillingAccountView.urlname, args=[invoice.subscription.account.id])
+
             columns = [
                 invoice.invoice_number,
                 format_datatables_data(
-                    mark_safe(
-                        '<a href="%(account_url)s">%(name)s</a>' % {
-                            'account_url': reverse(
-                                ManageBillingAccountView.urlname,
-                                args=[invoice.subscription.account.id]),
-                            'name': invoice.subscription.account.name,
-                        }
-                    ),
+                    mark_safe(make_anchor_tag(account_href, account_name)),
                     invoice.subscription.account.name
                 ),
                 format_datatables_data(
-                    mark_safe(
-                        '<a href="%(sub_url)s">%(name)s v%(version)d</a>' % {
-                            'name': invoice.subscription.plan_version.plan.name,
-                            'version': invoice.subscription.plan_version.version,
-                            'sub_url': reverse(
-                                EditSubscriptionView.urlname,
-                                args=[invoice.subscription.id]),
-                            }
-                    ),
+                    mark_safe(make_anchor_tag(plan_href, plan_name)),
                     invoice.subscription.plan_version.plan.name
                 ),
                 invoice.subscription.subscriber.domain,
@@ -559,19 +713,20 @@ class InvoiceInterface(GenericTabularReport):
             ])
 
             if not self.is_rendered_as_email:
-                # TODO - Create helper function for action button HTML
+                adjust_name = "Adjust Balance"
+                adjust_href = "#adjustBalanceModal-{invoice_id}".format(invoice_id=invoice.id)
+                adjust_attrs = {
+                    "data-toggle": "modal",
+                    "data-target": adjust_href,
+                    "class": "btn",
+                }
                 columns.extend([
-                    mark_safe(
-                        '<a data-toggle="modal"'
-                        '   data-target="#adjustBalanceModal-%(invoice_id)d"'
-                        '   href="#adjustBalanceModal-%(invoice_id)d"'
-                        '   class="btn">Adjust Balance</a>' % {
-                            'invoice_id': invoice.id
-                        }),
-                    mark_safe(
-                        '<a href="%s" class="btn">Go to Invoice</a>'
-                        % reverse(InvoiceSummaryView.urlname, args=(invoice.id,))
-                    )
+                    mark_safe(make_anchor_tag(adjust_href, adjust_name, adjust_attrs)),
+                    mark_safe(make_anchor_tag(
+                        reverse(InvoiceSummaryView.urlname, args=(invoice.id,)),
+                        "Go to Invoice",
+                        {"class": "btn"},
+                    ))
                 ])
             rows.append(columns)
         return rows

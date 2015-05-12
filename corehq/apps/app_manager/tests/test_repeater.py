@@ -6,11 +6,13 @@ from django.test.client import Client
 from corehq.apps.receiverwrapper.models import RepeatRecord, AppStructureRepeater
 from corehq.apps.app_manager.models import Application
 
+
 class TestAppStructureRepeater(TestCase):
-    def setUp(self):
-        self.client = Client()
-        self.domain = 'bedazzled'
-        self.forwarding_url = 'http://not-a-real-url-at-all'
+    @classmethod
+    def setUpClass(cls):
+        cls.client = Client()
+        cls.domain = 'bedazzled'
+        cls.forwarding_url = 'http://not-a-real-url-at-all'
 
     def test_repeat_record_created(self):
         '''

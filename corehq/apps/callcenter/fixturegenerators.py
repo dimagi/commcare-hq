@@ -55,7 +55,12 @@ def indicators_fixture_generator(user, version, last_sync=None):
         return fixtures
 
     try:
-        fixtures.append(gen_fixture(user, CallCenterIndicators(domain, user)))
+        fixtures.append(gen_fixture(user, CallCenterIndicators(
+            domain.name,
+            domain.default_timezone,
+            domain.call_center_config.case_type,
+            user
+        )))
     except Exception:  # blanket exception catching intended
         notify_exception(None, 'problem generating callcenter fixture', details={
             'user_id': user._id,

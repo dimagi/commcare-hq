@@ -58,7 +58,7 @@ def REPORTS(project):
     ])
 
     if project.commtrack_enabled:
-        reports.insert(0, (ugettext_lazy("Commtrack"), (
+        reports.insert(0, (ugettext_lazy("CommCare Supply"), (
             commtrack_reports.SimplifiedInventoryReport,
             commtrack_reports.InventoryReport,
             commtrack_reports.CurrentStockStatusReport,
@@ -255,6 +255,7 @@ from corehq.apps.accounting.interface import (
     SubscriptionInterface,
     SoftwarePlanInterface,
     InvoiceInterface,
+    WireInvoiceInterface,
     PaymentRecordInterface,
 )
 
@@ -264,6 +265,7 @@ ACCOUNTING_ADMIN_INTERFACES = (
         SubscriptionInterface,
         SoftwarePlanInterface,
         InvoiceInterface,
+        WireInvoiceInterface,
         PaymentRecordInterface,
     )),
 )

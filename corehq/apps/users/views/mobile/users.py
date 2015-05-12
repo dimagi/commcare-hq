@@ -27,6 +27,7 @@ from corehq.apps.accounting.models import (
     BillingAccountType,
     EntryPoint,
 )
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.models import Location
@@ -155,6 +156,7 @@ class EditCommCareUserView(BaseFullEditUserView):
             'reset_password_form': self.reset_password_form,
             'is_currently_logged_in_user': self.is_currently_logged_in_user,
             'data_fields_form': self.custom_data.form,
+            'can_use_inbound_sms': domain_has_privilege(self.domain, privileges.INBOUND_SMS),
         }
         if self.request.project.commtrack_enabled or self.request.project.locations_enabled:
             context.update({
@@ -205,7 +207,7 @@ class EditCommCareUserView(BaseFullEditUserView):
         if request.POST['form_type'] == "commtrack":
             if self.update_commtrack_form.is_valid():
                 self.update_commtrack_form.save(self.editable_user)
-                messages.success(request, _("CommTrack information updated!"))
+                messages.success(request, _("CommCare Supply information updated!"))
         return super(EditCommCareUserView, self).post(request, *args, **kwargs)
 
     def custom_user_is_valid(self):

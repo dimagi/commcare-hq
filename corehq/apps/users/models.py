@@ -5,13 +5,12 @@ from __future__ import absolute_import
 from datetime import datetime
 import re
 
-from django.utils import html, safestring
 from restkit.errors import NoMoreData
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 from couchdbkit.resource import ResourceNotFound
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.chunked import chunked
@@ -31,9 +30,13 @@ from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.domain.utils import normalize_domain_name, domain_restricts_superusers
 from corehq.apps.domain.models import LicenseAgreement
-from corehq.apps.users.util import normalize_username, user_data_from_registration_form
+from corehq.apps.users.util import (
+    normalize_username,
+    user_data_from_registration_form,
+    user_display_string,
+)
 from corehq.apps.users.xml import group_fixture
-from corehq.apps.users.tasks import tag_docs_as_deleted
+from corehq.apps.users.tasks import tag_docs_as_deleted, tag_forms_as_deleted_rebuild_associated_cases
 from corehq.apps.users.exceptions import InvalidLocationConfig
 from corehq.apps.sms.mixin import (
     CommCareMobileContactMixin,
@@ -1324,6 +1327,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     domain = StringProperty()
     registering_device_id = StringProperty()
+    # used by loadtesting framework - should typically be empty
+    loadtest_factor = IntegerProperty()
 
     @classmethod
     def wrap(cls, data):
@@ -1410,12 +1415,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     @property
     def username_in_report(self):
-        def parts():
-            yield u'%s' % html.escape(self.raw_username)
-            if self.full_name:
-                yield u' "%s"' % html.escape(self.full_name)
-
-        return safestring.mark_safe(''.join(parts()))
+        return user_display_string(self.username, self.first_name, self.last_name)
 
     @classmethod
     def create_or_update_from_xform(cls, xform):
@@ -1520,6 +1520,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             date_joined=self.date_joined,
             user_data=self.user_data,
             domain=self.domain,
+            loadtest_factor=self.loadtest_factor,
         )
 
         def get_owner_ids():
@@ -1626,14 +1627,19 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def retire(self):
         suffix = DELETED_SUFFIX
         deletion_id = random_hex()
+        deleted_cases = set()
         # doc_type remains the same, since the views use base_doc instead
         if not self.base_doc.endswith(suffix):
             self.base_doc += suffix
             self['-deletion_id'] = deletion_id
-        for formlist in chunked(self.get_forms(wrap=False, include_docs=True), 50):
-            tag_docs_as_deleted.delay(XFormInstance, formlist, deletion_id)
+
         for caselist in chunked(self.get_cases(wrap=False), 50):
             tag_docs_as_deleted.delay(CommCareCase, caselist, deletion_id)
+            for case in caselist:
+                deleted_cases.add(case['_id'])
+
+        for formlist in chunked(self.get_forms(wrap=False, include_docs=True), 50):
+            tag_forms_as_deleted_rebuild_associated_cases.delay(formlist, deletion_id, deleted_cases=deleted_cases)
 
         for phone_number in self.get_verified_numbers(True).values():
             phone_number.retire(deletion_id)
@@ -2254,6 +2260,14 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
         for user_doc in iter_docs(cls.get_db(), user_ids):
             if user_doc['email'].endswith('@dimagi.com'):
                 yield user_doc['email']
+
+    def get_location_id(self, domain):
+        return getattr(self.get_domain_membership(domain), 'location_id', None)
+
+    def get_location(self, domain):
+        from corehq.apps.locations.models import Location
+        loc_id = self.get_location_id(domain)
+        return Location.get(loc_id) if loc_id else None
 
 
 class FakeUser(WebUser):

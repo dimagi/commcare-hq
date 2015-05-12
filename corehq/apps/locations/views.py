@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.http.response import HttpResponseServerError
 from django.shortcuts import render
+from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.http import require_POST
@@ -20,11 +21,9 @@ from corehq import toggles
 from corehq.apps.commtrack.exceptions import MultipleSupplyPointException
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.commtrack.tasks import import_locations_async
-from corehq.apps.commtrack.util import unicode_slug
-from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.custom_data_fields import CustomDataModelMixin
-from corehq.apps.domain.decorators import domain_admin_required, login_and_domain_required
+from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.facilities.models import FacilityRegistry
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.products.models import Product, SQLProduct
@@ -32,17 +31,26 @@ from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.util import reverse, get_document_or_404
 from custom.openlmis.tasks import bootstrap_domain_task
 
+from .permissions import (locations_access_required, is_locations_admin,
+                          can_edit_location, can_edit_location_types)
 from .models import Location, LocationType, SQLLocation
-from .forms import LocationForm
+from .forms import LocationForm, UsersAtLocationForm
 from .util import load_locs_json, location_hierarchy_config, dump_locations
 
 
-@domain_admin_required
+@locations_access_required
 def default(request, domain):
     return HttpResponseRedirect(reverse(LocationsListView.urlname, args=[domain]))
 
 
-class BaseLocationView(BaseCommTrackManageView):
+class BaseLocationView(BaseDomainView):
+    @method_decorator(locations_access_required)
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseLocationView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def section_url(self):
+        return reverse(LocationsListView.urlname, args=[self.domain])
 
     @property
     def main_context(self):
@@ -69,13 +77,16 @@ class LocationsListView(BaseLocationView):
     def page_context(self):
         selected_id = self.request.GET.get('selected')
         has_location_types = len(self.domain_object.location_types) > 0
+        loc_restricted = self.request.project.location_restriction_for_users
         return {
             'selected_id': selected_id,
             'locations': load_locs_json(
-                self.domain, selected_id, self.show_inactive
+                self.domain, selected_id, self.show_inactive, self.request.couch_user
             ),
             'show_inactive': self.show_inactive,
-            'has_location_types': has_location_types
+            'has_location_types': has_location_types,
+            'can_edit_root': (not loc_restricted or
+                (loc_restricted and not self.request.couch_user.get_location(self.domain))),
         }
 
 
@@ -84,11 +95,19 @@ class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
     field_type = 'LocationFields'
     entity_string = _("Location")
 
+    @method_decorator(is_locations_admin)
+    def dispatch(self, request, *args, **kwargs):
+        return super(LocationFieldsView, self).dispatch(request, *args, **kwargs)
 
-class LocationTypesView(BaseCommTrackManageView):
+
+class LocationTypesView(BaseLocationView):
     urlname = 'location_types'
     page_title = ugettext_noop("Location Types")
     template_name = 'locations/settings.html'
+
+    @method_decorator(can_edit_location_types)
+    def dispatch(self, request, *args, **kwargs):
+        return super(LocationTypesView, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_context(self):
@@ -110,43 +129,26 @@ class LocationTypesView(BaseCommTrackManageView):
         return {
             'pk': loctype.pk,
             'name': loctype.name,
-            'code': loctype.code,
-            'allowed_parents': [loctype.parent_type.name
-                                if loctype.parent_type else None],
+            'parent_type': (loctype.parent_type.name
+                            if loctype.parent_type else None),
             'administrative': loctype.administrative,
             'shares_cases': loctype.shares_cases,
             'view_descendants': loctype.view_descendants
         }
 
     def post(self, request, *args, **kwargs):
-        # This is really ugly, it needs a refactor.
-        # There are some changes coming to this UI, so I'm just gonna wait
-        # for that.  I intend to remove "code" from the UI altogether, and
-        # use the actual location_type pk to reference it, not the name.
         payload = json.loads(request.POST.get('json'))
         sql_loc_types = {}
 
-        def mk_loctype(name, code, allowed_parents, administrative,
+        def mk_loctype(name, parent_type, administrative,
                        shares_cases, view_descendants, pk):
-            if allowed_parents and allowed_parents[0]:
-                parent = sql_loc_types[allowed_parents[0]]
-            else:
-                parent = None
-
-            cleaned_code = unicode_slug(code)
-            if cleaned_code != code:
-                err = _('Location type code "{code}" is invalid. No spaces or '
-                        'special characters are allowed. It has been replaced '
-                        'with "{new_code}".')
-                messages.warning(request,
-                                 err.format(code=code, new_code=cleaned_code))
+            parent = sql_loc_types[parent_type] if parent_type else None
 
             try:
                 loc_type = LocationType.objects.get(domain=self.domain, pk=pk)
             except LocationType.DoesNotExist:
                 loc_type = LocationType(domain=self.domain)
             loc_type.name = name
-            loc_type.code = cleaned_code
             loc_type.administrative = administrative
             loc_type.parent_type = parent
             loc_type.shares_cases = shares_cases
@@ -157,11 +159,9 @@ class LocationTypesView(BaseCommTrackManageView):
         loc_types = payload['loc_types']
         pks = []
         for loc_type in loc_types:
-            for prop in ['name', 'code', 'allowed_parents', 'administrative',
+            for prop in ['name', 'parent_type', 'administrative',
                          'shares_cases', 'view_descendants', 'pk']:
                 assert prop in loc_type, "Missing a location type property!"
-                assert len(loc_type['allowed_parents']) <= 1, \
-                    "This location type has more than one parent. How?"
             pks.append(loc_type['pk'])
 
         hierarchy = self.get_hierarchy(loc_types)
@@ -206,9 +206,8 @@ class LocationTypesView(BaseCommTrackManageView):
                 assert lt['name'] not in visited, \
                     "There's a loc type cycle, we need to prohibit that"
                 visited.add(lt['name'])
-                parents = lt['allowed_parents']
-                if parents and parents[0]:
-                    step(lt_dict.get(parents[0]))
+                if lt['parent_type']:
+                    step(lt_dict[lt['parent_type']])
             step(loc_type)
 
         hierarchy = {}
@@ -219,8 +218,7 @@ class LocationTypesView(BaseCommTrackManageView):
             and return hierarchy below loc_type
             """
             name = loc_type['name']
-            parents = loc_type['allowed_parents']
-            parent = lt_dict.get(parents[0], None) if parents else None
+            parent = lt_dict.get(loc_type['parent_type'], None)
             if not parent:
                 lt_hierarchy = hierarchy
             else:
@@ -247,6 +245,8 @@ class NewLocationView(BaseLocationView):
     urlname = 'create_location'
     page_title = ugettext_noop("New Location")
     template_name = 'locations/manage/location.html'
+    creates_new_location = True
+    form_tab = 'basic'
 
     @property
     def parent_pages(self):
@@ -286,9 +286,13 @@ class NewLocationView(BaseLocationView):
     @property
     @memoized
     def location_form(self):
-        if self.request.method == 'POST':
-            return LocationForm(self.location, self.request.POST, is_new=True)
-        return LocationForm(self.location, is_new=True)
+        data = self.request.POST if self.request.method == 'POST' else None
+        return LocationForm(
+            self.location,
+            bound_data=data,
+            user=self.request.couch_user,
+            is_new=self.creates_new_location,
+        )
 
     @property
     def page_context(self):
@@ -306,6 +310,7 @@ class NewLocationView(BaseLocationView):
             'form': self.location_form,
             'location': self.location,
             'consumption': consumption,
+            'form_tab': self.form_tab,
         }
 
     def form_valid(self):
@@ -325,7 +330,7 @@ class NewLocationView(BaseLocationView):
         return self.settings_form_post(request, *args, **kwargs)
 
 
-@domain_admin_required
+@can_edit_location
 def archive_location(request, domain, loc_id):
     loc = Location.get(loc_id)
     if loc.domain != domain:
@@ -340,7 +345,7 @@ def archive_location(request, domain, loc_id):
     })
 
 
-@domain_admin_required
+@can_edit_location
 def unarchive_location(request, domain, loc_id):
     # hack for circumventing cache
     # which was found to be out of date, at least in one case
@@ -362,6 +367,11 @@ def unarchive_location(request, domain, loc_id):
 class EditLocationView(NewLocationView):
     urlname = 'edit_location'
     page_title = ugettext_noop("Edit Location")
+    creates_new_location = False
+
+    @method_decorator(can_edit_location)
+    def dispatch(self, request, *args, **kwargs):
+        return super(EditLocationView, self).dispatch(request, *args, **kwargs)
 
     @property
     def location_id(self):
@@ -397,13 +407,6 @@ class EditLocationView(NewLocationView):
         return reverse(self.urlname, args=[self.domain, self.location_id])
 
     @property
-    @memoized
-    def location_form(self):
-        if self.request.method == 'POST':
-            return LocationForm(self.location, self.request.POST)
-        return LocationForm(self.location)
-
-    @property
     def consumption(self):
         consumptions = []
         for product in Product.by_domain(self.domain):
@@ -420,6 +423,7 @@ class EditLocationView(NewLocationView):
         return consumptions
 
     @property
+    @memoized
     def products_form(self):
         if (
             self.location.location_type_object.administrative or
@@ -429,9 +433,22 @@ class EditLocationView(NewLocationView):
 
         form = MultipleSelectionForm(
             initial={'selected_ids': self.products_at_location},
-            submit_label=_("Update Product List")
+            submit_label=_("Update Product List"),
+            prefix="products",
         )
         form.fields['selected_ids'].choices = self.all_products
+        return form
+
+    @property
+    @memoized
+    def users_form(self):
+        form = UsersAtLocationForm(
+            domain_object=self.domain_object,
+            location=self.location,
+            data=self.request.POST if self.request.method == "POST" else None,
+            submit_label=_("Update Users at this Location"),
+            prefix="users",
+        )
         return form
 
     @property
@@ -454,12 +471,22 @@ class EditLocationView(NewLocationView):
         context = super(EditLocationView, self).page_context
         context.update({
             'products_per_location_form': self.products_form,
+            'users_per_location_form': self.users_form,
         })
         return context
 
+    def users_form_post(self, request, *args, **kwargs):
+        if self.users_form.is_valid():
+            self.users_form.save()
+            return self.form_valid()
+        else:
+            self.request.method = "GET"
+            self.form_tab = 'users'
+            return self.get(request, *args, **kwargs)
+
     def products_form_post(self, request, *args, **kwargs):
         products = SQLProduct.objects.filter(
-            product_id__in=request.POST.getlist('selected_ids', [])
+            product_id__in=request.POST.getlist('products-selected_ids', [])
         )
         self.sql_location.products = products
         self.sql_location.save()
@@ -468,6 +495,8 @@ class EditLocationView(NewLocationView):
     def post(self, request, *args, **kwargs):
         if self.request.POST['form_type'] == "location-settings":
             return self.settings_form_post(request, *args, **kwargs)
+        elif (self.request.POST['form_type'] == "location-users"):
+            return self.users_form_post(request, *args, **kwargs)
         elif (self.request.POST['form_type'] == "location-products"
               and toggles.PRODUCTS_PER_LOCATION.enabled(request.domain)):
             return self.products_form_post(request, *args, **kwargs)
@@ -599,7 +628,7 @@ class LocationImportView(BaseLocationView):
         )
 
 
-@login_and_domain_required
+@locations_access_required
 def location_importer_job_poll(request, domain, download_id, template="hqwebapp/partials/download_status.html"):
     try:
         context = get_download_context(download_id, check_state=True)
@@ -614,7 +643,7 @@ def location_importer_job_poll(request, domain, download_id, template="hqwebapp/
     return render(request, template, context)
 
 
-@login_and_domain_required
+@locations_access_required
 def location_export(request, domain):
     include_consumption = request.GET.get('include_consumption') == 'true'
     response = HttpResponse(mimetype=Format.from_format('xlsx').mimetype)
@@ -623,7 +652,7 @@ def location_export(request, domain):
     return response
 
 
-@domain_admin_required
+@is_locations_admin
 @require_POST
 def sync_facilities(request, domain):
     # TODO this is believed to be obsolete and should
@@ -690,7 +719,7 @@ def sync_facilities(request, domain):
     return HttpResponse('OK')
 
 
-@domain_admin_required
+@is_locations_admin
 @require_POST
 def sync_openlmis(request, domain):
     # todo: error handling, if we care.

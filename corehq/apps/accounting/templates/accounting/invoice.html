@@ -9,14 +9,18 @@
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
+    {% if adjust_balance_form %}
     <script>
         var adjustBalanceFormModel = new AdjustBalanceFormModel();
         ko.applyBindings(adjustBalanceFormModel, $('#adjust-balance-form-{{ invoice_info_form.invoice.id }}').get(0));
     </script>
+    {% endif %}
 {% endblock %}
 
 {% block main_column %}
+    {% if adjust_balance_form %}
     {% include 'accounting/adjust_balance.html' %}
+    {% endif %}
 
     <div class="modal hide fade" id="resendEmailModal">
         <div class="modal-header">
@@ -32,7 +36,9 @@
 
     <ul class="nav nav-tabs" id="user-settings-tabs">
         <li><a href="#invoice" data-toggle="tab">{% trans "Invoice" %}</a></li>
+        {% if adjustment_list %}
         <li><a href="#adjustments" data-toggle="tab">{% trans "Adjustments" %}</a></li>
+        {% endif %}
     </ul>
 
     <div class="tab-content">
@@ -54,7 +60,7 @@
                             <td>{{ billing_record.date_created }}</td>
                             <td>{{ billing_record.emailed_to }}</td>
                             <td>
-                                <a href="{% url 'domain_billing_statement_download' billing_record.invoice.subscription.subscriber.domain billing_record.pdf_data_id %}">
+                                <a href="{% url 'domain_billing_statement_download' billing_record.invoice.get_domain billing_record.pdf_data_id %}">
                                     View PDF
                                 </a>
                             </td>
@@ -76,6 +82,7 @@
             {% endif %}
         </div>
 
+        {% if adjustment_list %}
         <div class="tab-pane" id="adjustments">
         <h2>Invoice Adjustments</h2>
             <table class="table table-striped table-bordered">
@@ -101,5 +108,6 @@
                 </tbody>
             </table>
         </div>
+        {% endif %}
     </div>
 {% endblock %}

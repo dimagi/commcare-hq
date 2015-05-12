@@ -9,6 +9,7 @@ import cStringIO
 import itertools
 from datetime import datetime, timedelta, date
 from urllib2 import URLError
+from casexml.apps.case import const
 from corehq.util.timezones.utils import get_timezone_for_user
 from dimagi.utils.decorators.memoized import memoized
 from unidecode import unidecode
@@ -64,6 +65,7 @@ from dimagi.utils.export import WorkBook
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import json_format_datetime, string_to_boolean, string_to_datetime, json_format_date
 from dimagi.utils.web import json_request, json_response
+from django_prbac.utils import has_privilege
 from soil import DownloadBase
 from soil.tasks import prepare_download
 from dimagi.utils.couch.cache.cache_core import get_redis_client
@@ -71,8 +73,10 @@ from couchexport.export import Format, export_from_tables
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.templatetags.case_tags import case_inline_display
 from casexml.apps.case.xml import V2
+from corehq import privileges
 from corehq.apps.export.exceptions import BadExportConfiguration
 from corehq.apps.hqwebapp.models import ReportsTab
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.reports.exportfilters import default_form_filter
 import couchforms.views as couchforms_views
 from couchforms.filters import instances
@@ -581,9 +585,12 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
     config.owner_id = user_id
     config.domain = domain
 
-    config.date_range = 'range'
-    config.start_date = request.datespan.computed_startdate.date()
-    config.end_date = request.datespan.computed_enddate.date()
+    config.start_date = request.datespan.startdate.date()
+    if request.datespan.enddate:
+        config.date_range = 'range'
+        config.end_date = request.datespan.enddate.date()
+    else:
+        config.date_range = 'since'
 
     GET = dict(request.GET.iterlists())
     exclude = ['startdate', 'enddate', 'subject', 'send_to_owner', 'notes', 'recipient_emails']
@@ -877,45 +884,24 @@ def view_scheduled_report(request, domain, scheduled_report_id):
 @login_and_domain_required
 @require_GET
 def case_details(request, domain, case_id):
-    timezone = get_timezone_for_user(request.couch_user, domain)
-
     try:
         case = get_document_or_404(CommCareCase, domain, case_id)
     except Http404:
         messages.info(request, "Sorry, we couldn't find that case. If you think this is a mistake please report an issue.")
         return HttpResponseRedirect(CaseListReport.get_url(domain=domain))
 
-    try:
-        owner_name = CommCareUser.get_by_user_id(case.owner_id, domain).raw_username
-    except Exception:
-        try:
-            owning_group = Group.get(case.owner_id)
-            owner_name = owning_group.display_name if owning_group.domain == domain else ''
-        except Exception:
-            owner_name = None
-
-    try:
-        username = CommCareUser.get_by_user_id(case.user_id, domain).raw_username
-    except Exception:
-        username = None
-
     return render(request, "reports/reportdata/case_details.html", {
         "domain": domain,
         "case_id": case_id,
         "case": case,
-        "username": username,
-        "owner_name": owner_name,
-        "slug": CaseListReport.slug,
         "report": dict(
             name=case_inline_display(case),
             slug=CaseListReport.slug,
             is_async=False,
         ),
-        "layout_flush_content": True,
-        "timezone": timezone,
         "case_display_options": {
             "display": request.project.get_case_display(case),
-            "timezone": timezone,
+            "timezone": get_timezone_for_user(request.couch_user, domain),
             "get_case_url": lambda case_id: absolute_reverse(case_details, args=[domain, case_id]),
             "show_transaction_export": toggles.STOCK_TRANSACTION_EXPORT.enabled(request.user.username),
         },
@@ -939,8 +925,8 @@ def case_forms(request, domain, case_id):
             'id': form._id,
             'received_on': json_format_datetime(form.received_on),
             'user': {
-                "id": form.metadata.userID,
-                "username": form.metadata.username,
+                "id": form.metadata.userID if form.metadata else '',
+                "username": form.metadata.username if form.metadata else '',
             },
             'readable_name': form.form.get('@name') or _('unknown'),
         }
@@ -1243,6 +1229,57 @@ def download_form(request, domain, instance_id):
     assert(domain == instance.domain)
     return couchforms_views.download_form(request, instance_id)
 
+
+@require_form_view_permission
+@require_permission(Permissions.edit_data)
+@require_GET
+def edit_form_instance(request, domain, instance_id):
+    if not (has_privilege(request, privileges.CLOUDCARE) and toggle_enabled(request, toggles.EDIT_SUBMISSIONS)):
+        raise Http404()
+
+    context = _get_form_context(request, domain, instance_id)
+    instance = context['instance']
+    form_meta = FormType(domain, instance.xmlns, instance.app_id).metadata
+
+    def _form_meta_to_context_url(form_meta, instance_id=None):
+        try:
+            url = reverse(
+                'cloudcare_form_context',
+                args=[domain, form_meta['app']['id'], form_meta['module']['id'], form_meta['form']['id']])
+        except (KeyError, AttributeError):
+            raise Http404(_('Missing app, module or form information!'))
+
+        if instance:
+            url = '{}?instance_id={}'.format(url, instance_id)
+        return url
+
+    edit_session_data = {'user_id': instance.metadata.userID}
+    case_blocks = extract_case_blocks(instance)
+
+    if len(case_blocks) == 1 and case_blocks[0].get(const.CASE_ATTR_ID):
+        edit_session_data["case_id"] = case_blocks[0].get(const.CASE_ATTR_ID)
+
+    edit_session_data['function_context'] = {
+        'static': [
+            {'name': 'now', 'value': instance.metadata.timeEnd},
+            {'name': 'today', 'value': instance.metadata.timeEnd.date()},
+        ]
+    }
+
+    context.update({
+        'domain': domain,
+        'maps_api_key': settings.GMAPS_API_KEY,  # used by cloudcare
+        'form_name': _('Edit Submission'),  # used in breadcrumbs
+        'edit_context': {
+            'formUrl': _form_meta_to_context_url(form_meta, instance_id),
+            'submitUrl': reverse('receiver_post_with_app_id', args=[domain, form_meta['app']['id']]),
+            'sessionData': edit_session_data,
+            'returnUrl': reverse('render_form_data', args=[domain, instance_id]),
+        }
+    })
+    return render(request, 'reports/form/edit_submission.html', context)
+
+
 @login_or_digest
 @require_form_view_permission
 @require_GET
@@ -1471,7 +1508,7 @@ def form_multimedia_export(request, domain):
     forms_info = list()
     for form in iter_docs(XFormInstance.get_db(), form_ids):
         if not zip_name:
-            zip_name = unidecode(form['form'].get('@name', 'unknown form'))
+            zip_name = form['form'].get('@name', 'unknown form')
         forms_info.append(extract_form_info(form, properties))
 
     # get case names
@@ -1496,5 +1533,5 @@ def form_multimedia_export(request, domain):
 
     response = HttpResponse(stream_file.getvalue(), mimetype="application/zip")
     response['Content-Length'] = size
-    response['Content-Disposition'] = 'attachment; filename=%s.zip' % zip_name
+    response['Content-Disposition'] = 'attachment; filename=%s.zip' % unidecode(zip_name)
     return response

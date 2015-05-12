@@ -259,7 +259,7 @@
                                 <form action="{% url "corehq.apps.app_manager.views.new_form" domain app.id module.id %}"
                                       method="post" style="display: none">
                                 </form>
-                                {% if module.doc_type != 'CareplanModule' %}
+                                {% if module.doc_type != 'CareplanModule' and module.doc_type != 'ReportModule'%}
                                 <a class="submit_on_click" href="#">
                                     <i class="icon-plus icon-blue"></i>
                                     <span class="muted">{% trans "Form" %}</span>
@@ -289,13 +289,12 @@
                             {% if show_advanced %}
                             <li>
                                 <a href="#" class="new-module" data-type="advanced">
-                                    {% if app.commtrack_enabled %}
-                                        {% trans "New CommTrack Module" %}
-                                    {% else %}
-                                        {% trans "New Advanced Module" %}
-                                    {% endif %}
+                                    {% trans "New Advanced Module" %}
                                 </a>
                             </li>
+                            {% endif %}
+                            {% if request|toggle_enabled:'MOBILE_UCR' %}
+                                <li><a href="#" class="new-module" data-type="report">{% trans "New Report Module" %}</a></li>
                             {% endif %}
                         </ul>
                     </li>

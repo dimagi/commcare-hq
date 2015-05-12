@@ -1,10 +1,9 @@
 import functools
 from couchdbkit.exceptions import ResourceNotFound
-from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
+from corehq.util.dates import iso_string_to_datetime
 
-from jsonobject import DateTimeProperty
 from corehq.apps.reports import util
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 
@@ -24,8 +23,6 @@ from corehq.elastic import es_query, ADD_TO_ES_FILTER
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch import get_cached_property, IncompatibleDocument, safe_index
-from corehq.apps.reports.graph_models import PieChart
-from corehq import elastic
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -209,9 +206,10 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport,
             init_cells = [
                 form_data_link(form["_id"]),
                 (username or _('No data for username')) + (" %s" % name if name else ""),
-                DateTimeProperty().wrap(safe_index(form, self.time_field.split('.'))).strftime(SERVER_DATETIME_FORMAT),
+                iso_string_to_datetime(safe_index(form, self.time_field.split('.'))).strftime(SERVER_DATETIME_FORMAT),
                 xmlns_to_name(self.domain, form.get("xmlns"), app_id=form.get("app_id")),
             ]
+
             def cell(field):
                 return form["form"].get(field)
             init_cells.extend([cell(field) for field in self.other_fields])

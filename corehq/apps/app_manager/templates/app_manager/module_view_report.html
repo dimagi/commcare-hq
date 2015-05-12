@@ -1,0 +1,81 @@
+{% extends "app_manager/managed_app.html" %}
+{% load xforms_extras %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% block js %}{{ block.super }}
+    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/underscore-1.4.4.js' %}"></script>
+    <script src="{% static 'app_manager/js/report-module.js' %}"></script>
+{% endblock %}
+{% block js-inline %}{{ block.super }}
+    <script>
+        $(function () {
+            var saveURL = "{% url "corehq.apps.app_manager.views.edit_report_module" domain app.id module.id %}";
+            ko.applyBindings(new ReportModule({
+                moduleName: {{ module.name|JSON }},
+                availableReports: {{ all_reports|JSON }},
+                currentReports: {{ current_reports|JSON }},
+                saveURL: saveURL,
+                lang: {{ lang|JSON }}
+            }), $("#report-module-edit")[0]);
+        });
+    </script>
+{% endblock %}
+{% block form-view %}
+    {% if warnings %}
+        <div class="alert alert-warning" data-bind="visible: !contextVariables.requires_case_details()">
+        {% for warning in warnings %}
+            {{ warning }}
+        {% endfor %}
+        </div>
+    {% endif %}
+    {% include 'app_manager/partials/module_view_heading.html' %}
+    <div id='report-module-edit' class="form-horizontal">
+        <div data-bind="saveButton: saveButton"></div>
+        <fieldset>
+            <div class="control-group">
+                <label class="control-label">{% trans "Module Name" %}</label>
+                <div class="controls">
+                    <input type="text" data-bind="value: currentModuleName">
+                </div>
+            </div>
+            <table class="table" id="report-list">
+                <thead>
+
+                    <tr class="row control-group" >
+                        <th></th>
+                        <th>{% trans "Report" %}</th>
+                        <th>{% trans "Display" %}</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody data-bind="sortable: reports">
+                    <tr class="row control-group"
+                        data-bind="attr: {'data-order': _sortableOrder}">
+                        <td>
+                            <i class="grip sortable-handle" data-bind="css: COMMCAREHQ.icons.GRIP, style: {cursor: 'move'}"></i>
+                        </td>
+                        <td>
+                            <select data-bind="options: availableReportIds, optionsText: $root.defaultReportTitle, value: reportId"></select>
+                        </td>
+                        <td>
+                            <input type="text" data-bind="value: display">
+                        </td>
+                        <td>
+                            <i title="{% trans 'Delete' %}" style="cursor: pointer;"
+                               data-bind="
+                                click: $root.removeReport,
+                                css: COMMCAREHQ.icons.DELETE
+                            "></i>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <button class="btn" data-bind="click: addReport">
+                <i class="icon-plus"></i>
+                {% trans "Add Report" %}
+            </button>
+        </fieldset>
+        {% include "app_manager/partials/module_filter.html" %}
+    </div>
+{% endblock %}

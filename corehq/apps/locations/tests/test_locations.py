@@ -1,3 +1,4 @@
+from corehq.apps.groups.tests import WrapGroupTest
 from corehq.apps.locations.models import Location, LocationType, SQLLocation, \
     LOCATION_SHARING_PREFIX, LOCATION_REPORTING_PREFIX
 from corehq.apps.locations.tests.util import make_loc
@@ -221,10 +222,17 @@ class LocationsTest(LocationTestBase):
             Location.get_in_domain(self.domain.name, 'not-a-real-id'),
         )
 
-        # Location.all_locations
+        def _all_locations(domain):
+            return Location.view(
+                'locations/hierarchy',
+                startkey=[domain],
+                endkey=[domain, {}],
+                reduce=False,
+                include_docs=True
+            ).all()
         compare(
             [self.user.location, test_state1, test_state2, test_village1],
-            Location.all_locations(self.domain.name)
+            _all_locations(self.domain.name)
         )
 
         # Location.by_site_code
@@ -414,3 +422,7 @@ class LocationGroupTest(LocationTestBase):
         fixture = location_fixture_generator(self.user, '2.0')
         self.assertEquals(len(fixture[0].findall('.//state')), 1)
         self.assertEquals(len(fixture[0].findall('.//outlet')), 3)
+
+
+class WrapLocationTest(WrapGroupTest):
+    document_class = Location
