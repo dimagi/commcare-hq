@@ -175,6 +175,8 @@ class LineItemResource(ModelResource):
     invoice = fields.IntegerField('invoice_id', null=True)
     feature_rates = AccToManyField(FutureRateResource, 'feature_rates', full=False, null=True)
     product_rate = fields.IntegerField('product_rate_id', null=True)
+    subtotal = fields.IntegerField('subtotal')
+    applied_credit = fields.IntegerField('applied_credit')
 
     class Meta(AccountingResourceMeta):
         queryset = LineItem.objects.all()
