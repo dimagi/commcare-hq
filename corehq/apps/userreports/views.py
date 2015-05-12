@@ -1,4 +1,5 @@
 from collections import namedtuple
+import datetime
 import json
 import os
 import tempfile
@@ -446,24 +447,56 @@ ExportParameters = namedtuple('ExportParameters',
                               ['format', 'keyword_filters', 'sql_filters'])
 
 
+def _last_n_days(column, value):
+    if not isinstance(column.type, (types.Date, types.DateTime)):
+        raise UserQueryError("You can only use 'lastndays' on date columns")
+    end = datetime.date.today()
+    start = end - datetime.timedelta(days=int(value))
+    return column.between(start, end)
+
+
+def _range_filter(column, value):
+    try:
+        start, end = value.split('..')
+    except ValueError:
+        raise UserQueryError('Range values must have the format "start..end"')
+    return column.between(start, end)
+
+
+sql_directives = [
+    # (suffix matching url parameter, callable returning a filter),
+    ('-lastndays', _last_n_days),
+    ('-range', _range_filter),
+]
+
+
 def process_url_params(params, columns):
-    format_ = params.get('format', Format.UNZIPPED_CSV)
+    """
+    Converts a dictionary of parameters from the user to sql filters.
+
+    If a parameter is of the form <field name>-<suffix>, where suffix is
+    defined in `sql_directives`, the corresponding function is used to
+    produce a filter.
+    """
+    format_ = params.get('$format', Format.UNZIPPED_CSV)
     keyword_filters = {}
     sql_filters = []
     for key, value in params.items():
-        if key == 'format':
+        if key == '$format':
             continue
-        if not key in columns:
-            raise UserQueryError('Invalid filter parameter: {}'.format(key))
-        column = columns[key]
 
-        if (
-            value == 'last30'
-            and isinstance(column.type, (types.Date, types.DateTime))
-        ):
-            sql_filters.append(column.between('2014-02-02', '2014-10-02'))
+        for suffix, fn in sql_directives:
+            if key.endswith(suffix):
+                field = key.rstrip(suffix)
+                if field not in columns:
+                    raise UserQueryError('No field named {}'.format(field))
+                sql_filters.append(fn(columns[field], value))
+                break
         else:
-            keyword_filters[key] = value
+            if key in columns:
+                keyword_filters[key] = value
+            else:
+                raise UserQueryError('Invalid filter parameter: {}'.format(key))
     return ExportParameters(format_, keyword_filters, sql_filters)
 
 
