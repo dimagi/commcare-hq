@@ -42,11 +42,30 @@
 
         /**
          * Set the identity of the person using the site.
-         * @param {string} userId
+         * userId is optional, if you just want to set traits for the current
+         * user, call this function with a single object argument. ex:
+         *
+         *    analytics.identify({'is_super_user': False});
+         *
+         * @param {string} [userId]
          * @param {object} [traits] - Dictionary of properties about the user.
          */
         identify: function(userId, traits) {
-            _kmq.push(['identify', userId]);
+            // Figure out if a user id was provided
+            if (typeof userId === 'object'){
+                if (traits === undefined){
+                    // the first and only argument passed was traits
+                    traits = userId;
+                    userId = null;
+                } else {
+                    // uh-oh... can't tell what the first argument was intended to be.
+                    throw "Unexpected argument types"
+                }
+            }
+            // Record identity
+            if (userId !== null) {
+                _kmq.push(['identify', userId]);
+            }
             if (traits !== undefined){
                 _kmq.push(['set', traits]);
             }
