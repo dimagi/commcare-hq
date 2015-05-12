@@ -49,9 +49,11 @@ class LeadTimeHistory(ILSData):
                 avg_lead_time = "None"
 
             url = make_url(DeliveryReport, self.config['domain'],
-                           '?location_id=%s&month=%s&year=%s&filter_by_program=%s',
-                           (loc.location_id, self.config['month'], self.config['year'],
-                           self.config['program']))
+                           '?location_id=%s&filter_by_program=%s&'
+                           'datespan_type=%s&datespan_first=%s&datespan_second=%s',
+                           (loc.location_id,
+                            self.config['program'], self.config['datespan_type'],
+                            self.config['datespan_first'], self.config['datespan_second']))
 
             rows.append([link_format(loc.name, url), avg_lead_time])
         return rows
@@ -66,9 +68,10 @@ class DeliveryStatus(ILSData):
         super(DeliveryStatus, self).__init__(config, css_class)
         self.config = config or {}
         self.css_class = css_class
-        month = self.config.get('month')
-        if month:
-            self.title = "Delivery Status: Group " + DeliveryGroups(int(month)).current_delivering_group()
+        datespan_type = self.config.get('datespan_type')
+        if datespan_type == 1:
+            self.title = "Delivery Status: Group %s" %\
+                         DeliveryGroups(int(self.config['datespan_first'])).current_delivering_group()
         else:
             self.title = "Delivery Status"
 
@@ -103,9 +106,11 @@ class DeliveryStatus(ILSData):
             status_date = latest.status_date.strftime("%d-%m-%Y") if latest else "None"
 
             url = make_url(FacilityDetailsReport, self.config['domain'],
-                           '?location_id=%s&month=%s&year=%s&filter_by_program=%s',
-                           (self.config['location_id'], self.config['month'], self.config['year'],
-                           self.config['program']))
+                           '?location_id=%s&filter_by_program=%s&'
+                           'datespan_type=%s&datespan_first=%s&datespan_second=%s',
+                           (self.config['location_id'],
+                            self.config['program'], self.config['datespan_type'],
+                            self.config['datespan_first'], self.config['datespan_second']))
 
             cycle_lead_time = get_this_lead_time(
                 child.location_id,

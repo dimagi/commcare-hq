@@ -246,8 +246,9 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport,
             org_summary=org_summary if len(org_summary) > 0 else None,
             startdate=self.datespan.startdate,
             enddate=self.datespan.enddate,
-            month=self.request_params['month'] if 'month' in self.request_params else '',
-            year=self.request_params['year'] if 'year' in self.request_params else '',
+            datespan_type=self.type,
+            datespan_first=self.first,
+            datespan_second=self.second,
             location_id=self.request.GET.get('location_id'),
             soh_month=True if self.request.GET.get('soh_month', '') == 'True' else False,
             products=[],
@@ -392,12 +393,13 @@ class DetailsReport(MultiReport):
         return context
 
     def ils_make_url(self, cls):
-        params = '?location_id=%s&month=%s&year=%s&filter_by_program=%s'
+        params = '?location_id=%s&filter_by_program=%s&datespan_type=%s&datespan_first=%s&datespan_second=%s'
         return make_url(cls, self.domain, params, (
             self.request.GET.get('location_id'),
-            self.request.GET.get('month'),
-            self.request.GET.get('year'),
             self.request.GET.get('filter_by_program'),
+            self.request.GET.get('datespan_type'),
+            self.request.GET.get('datespan_first'),
+            self.request.GET.get('datespan_second'),
         ))
 
 

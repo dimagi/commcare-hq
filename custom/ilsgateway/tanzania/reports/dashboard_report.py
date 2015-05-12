@@ -65,6 +65,6 @@ class DashboardReport(MultiReport):
         return make_url(
             StockOnHandReport,
             self.domain,
-            '?location_id=%s&month=%s&year=%s&filter_by_program=%s',
-            (config['location_id'], config['month'], config['year'], config['program'])
+            '?location_id=%s&filter_by_program=%s&datespan_type=%s&datespan_first=%s&datespan_second=%s',
+            (config['location_id'], config['program'], self.type, self.first, self.second)
         )

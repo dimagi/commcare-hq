@@ -57,9 +57,11 @@ class RRStatus(ILSData):
                 hist_resp_rate = rr_format_percent(total_responses, total_possible)
 
                 url = make_url(RRreport, self.config['domain'],
-                               '?location_id=%s&month=%s&year=%s&filter_by_program=%s',
-                               (child.location_id, self.config['month'], self.config['year'],
-                               self.config['program']))
+                               '?location_id=%s&filter_by_program=%s&'
+                               'datespan_type=%s&datespan_first=%s&datespan_second=%s',
+                               (child.location_id,
+                                self.config['program'], self.config['datespan_type'],
+                                self.config['datespan_first'], self.config['datespan_second']))
 
                 rows.append(
                     [
@@ -95,9 +97,10 @@ class RRReportingHistory(ILSData):
         super(RRReportingHistory, self).__init__(config, css_class)
         self.config = config or {}
         self.css_class = css_class
-        month = self.config.get('month')
-        if month:
-            self.title = "R&R Reporting History (Group %s)" % DeliveryGroups(int(month)).current_submitting_group()
+        datespan_type = self.config.get('datespan_type')
+        if datespan_type == 1:
+            self.title = "R&R Reporting History (Group %s)" %\
+                         DeliveryGroups(int(self.config['datespan_first'])).current_submitting_group()
         else:
             self.title = "R&R Reporting History"
 
@@ -129,9 +132,11 @@ class RRReportingHistory(ILSData):
             hist_resp_rate = rr_format_percent(total_responses, total_possible)
 
             url = make_url(FacilityDetailsReport, self.config['domain'],
-                           '?location_id=%s&month=%s&year=%s&filter_by_program=%s',
-                           (self.config['location_id'], self.config['month'], self.config['year'],
-                           self.config['program']))
+                           '?location_id=%s&filter_by_program=%s&'
+                           'datespan_type=%s&datespan_first=%s&datespan_second=%s',
+                           (self.config['location_id'],
+                            self.config['program'], self.config['datespan_type'],
+                            self.config['datespan_first'], self.config['datespan_second']))
 
             contact = CommCareUser.get_db().view(
                 'locations/users_by_location_id',
