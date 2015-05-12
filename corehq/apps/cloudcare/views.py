@@ -442,6 +442,7 @@ def get_ledgers(request, domain):
         default=custom_json_handler,
     )
 
+
 class HttpResponseConflict(HttpResponse):
     status_code = 409
 
