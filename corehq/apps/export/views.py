@@ -262,7 +262,7 @@ BASIC_FORM_SCHEMA = {
 def create_basic_form_checkpoint(index):
     checkpoint = ExportSchema(
         schema=BASIC_FORM_SCHEMA,
-        timestamp=datetime.min,
+        timestamp=datetime(1970, 1, 1),
         index=index,
     )
     checkpoint.save()

@@ -291,8 +291,7 @@ class FormCustomExportHelper(CustomExportHelper):
             if self.creating_new_export and (question in self.default_questions or question in current_questions):
                 col["selected"] = True
 
-            if toggle_enabled(self.request, 'SPLIT_MULTISELECT_EXPORT'):
-                update_multi_select_column(question, col)
+            update_multi_select_column(question, col)
 
         requires_case = self.custom_export.uses_cases()
 
@@ -348,8 +347,7 @@ class FormCustomExportHelper(CustomExportHelper):
                 show=True,
             ).to_config_format(selected=self.creating_new_export)
 
-            if toggle_enabled(self.request, 'SPLIT_MULTISELECT_EXPORT'):
-                update_multi_select_column(question, col)
+            update_multi_select_column(question, col)
 
             return col
 

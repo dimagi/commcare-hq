@@ -151,6 +151,36 @@ def referral_list_locale(module):
     return u"referral_lists.m{module.id}".format(module=module)
 
 
+@pattern('reports.%s')
+def report_command(report_id):
+    return u'reports.{report_id}'.format(report_id=report_id)
+
+
+@pattern('cchq.report_menu')
+def report_menu():
+    return u'cchq.report_menu'
+
+
+@pattern('cchq.report_name_header')
+def report_name_header():
+    return u'cchq.report_name_header'
+
+
+@pattern('cchq.report_description_header')
+def report_description_header():
+    return u'cchq.report_description_header'
+
+
+@pattern('cchq.reports.%s.headers.%s')
+def report_column_header(report_id, column):
+    return u'cchq.reports.{report_id}.headers.{column}'.format(report_id=report_id, column=column)
+
+
+@pattern('cchq.reports.%s.name')
+def report_name(report_id):
+    return u'cchq.reports.{report_id}.name'.format(report_id=report_id)
+
+
 CUSTOM_APP_STRINGS_RE = _regex_union(REGEXES)
 
 

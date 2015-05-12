@@ -5,7 +5,7 @@ import logging
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType, FieldList, FixtureItemField
 from couchdbkit import ResourceNotFound
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 from dimagi.utils.couch.cache import cache_core
 import requests
 from toggle.models import Toggle

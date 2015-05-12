@@ -229,7 +229,6 @@ sudo update-alternatives --auto java
 ## Ensure services start on startup ##
 if [ "$PM" = "apt-ubuntu" ]; then
     sudo update-rc.d couchdb defaults
-    sudo update-rc.d couchdb-lucene defaults
 
     # these should already be on by default
     sudo update-rc.d elasticsearch defaults
@@ -238,12 +237,10 @@ elif [ "$PM" = "yum-rhel" ]; then
     sudo chkconfig --add couchdb
     sudo chkconfig --add elasticsearch
     sudo chkconfig --add postgresql
-    sudo chkconfig --add couchdb-lucene
 
     sudo chkconfig couchdb on
     sudo chkconfig elasticsearch on
     sudo chkconfig postgresql on
-    sudo chkconfig couchdb-lucene on
 fi
 
 ## Ensure services are running ##

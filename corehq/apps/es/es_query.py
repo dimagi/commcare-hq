@@ -118,6 +118,7 @@ class ESQuery(object):
             filters.date_range,
             filters.exists,
             filters.empty,
+            filters.doc_id,
         ]
 
     def __getattr__(self, attr):

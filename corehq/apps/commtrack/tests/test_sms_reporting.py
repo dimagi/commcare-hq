@@ -3,8 +3,7 @@ from decimal import Decimal
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.models import RequisitionCase, StockState
-from casexml.apps.case.models import CommCareCase
-from corehq.apps.commtrack.tests.util import CommTrackTest, bootstrap_user, FIXED_USER, ROAMING_USER
+from corehq.apps.commtrack.tests.util import CommTrackTest, FIXED_USER, ROAMING_USER
 from corehq.apps.commtrack.sms import handle, SMSError
 from corehq.toggles import STOCK_AND_RECEIPT_SMS_HANDLER, NAMESPACE_DOMAIN
 

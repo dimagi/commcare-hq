@@ -1,4 +1,4 @@
-from couchdbkit.ext.django.schema import Document
+from dimagi.ext.couchdbkit import Document
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.dont_use.fields import ReportField
 from datetime import date

@@ -36,7 +36,7 @@ from corehq.apps.accounting.async_handlers import (
 )
 from corehq.apps.accounting.utils import (
     is_active_subscription, has_subscription_already_ended, get_money_str,
-    get_first_last_days
+    get_first_last_days, make_anchor_tag
 )
 from corehq.apps.hqwebapp.crispy import BootstrapMultiField, TextField
 from corehq.apps.domain.models import Domain
@@ -45,11 +45,15 @@ from corehq.apps.accounting.models import (
     BillingContactInfo,
     BillingRecord,
     CreditAdjustment,
+    CreditAdjustmentReason,
     CreditLine,
     Currency,
+    EntryPoint,
     Feature,
     FeatureRate,
     FeatureType,
+    Invoice,
+    ProBonoStatus,
     SoftwarePlan,
     SoftwarePlanEdition,
     SoftwarePlanVersion,
@@ -58,11 +62,8 @@ from corehq.apps.accounting.models import (
     SoftwareProductRate,
     SoftwareProductType,
     Subscription,
-    Invoice,
-    CreditAdjustmentReason,
     SubscriptionType,
-    ProBonoStatus,
-    EntryPoint,
+    WireBillingRecord,
 )
 
 
@@ -167,7 +168,7 @@ class BillingAccountBasicForm(forms.Form):
             conflicting_named_accounts = conflicting_named_accounts.exclude(name=self.account.name)
 
         if conflicting_named_accounts.exists():
-            raise ValidationError("Name '%s' is already taken." % name)
+            raise ValidationError(_("Name '%s' is already taken.") % name)
         return name
 
     def clean_emails(self):
@@ -179,7 +180,7 @@ class BillingAccountBasicForm(forms.Form):
                 # TODO - validate emails
             if len(invalid_emails) != 0:
                 raise ValidationError(
-                    "Invalid emails: %s" % ', '.join(invalid_emails)
+                    _("Invalid emails: %s") % ', '.join(invalid_emails)
                 )
         return account_contact_emails
 
@@ -542,32 +543,37 @@ class SubscriptionForm(forms.Form):
         if self.fields['domain'].required:
             domain = Domain.get_by_name(domain_name)
             if domain is None:
-                raise forms.ValidationError("A valid project space is required.")
+                raise forms.ValidationError(_("A valid project space is required."))
         return domain_name
 
     def clean(self):
         account_id = self.cleaned_data['active_accounts'] or self.cleaned_data['account']
         if account_id:
             account = BillingAccount.objects.get(id=account_id)
-            if not self.cleaned_data['do_not_invoice'] and not account.billingcontactinfo.emails:
+            if (
+                not self.cleaned_data['do_not_invoice']
+                and (
+                    not account.billingcontactinfo
+                    or not account.billingcontactinfo.emails
+                )
+            ):
                 from corehq.apps.accounting.views import ManageBillingAccountView
-                raise forms.ValidationError(mark_safe(
+                raise forms.ValidationError(mark_safe(_(
                     "Please update 'Client Contact Emails' "
                     '<strong><a href=%s target="_blank">here</a></strong> '
                     "before using Billing Account <strong>%s</strong>."
-                    % (
-                        reverse(ManageBillingAccountView.urlname, args=[account.id]),
-                        account.name,
-                    )
-                ))
+                ) % (
+                    reverse(ManageBillingAccountView.urlname, args=[account.id]),
+                    account.name,
+                )))
 
         start_date = self.cleaned_data.get('start_date') or self.subscription.date_start
         if (self.cleaned_data['end_date'] is not None
             and start_date > self.cleaned_data['end_date']):
-            raise ValidationError("End date must be after start date.")
+            raise ValidationError(_("End date must be after start date."))
 
         if self.cleaned_data['end_date'] and self.cleaned_data['end_date'] <= datetime.date.today():
-            raise ValidationError("End date must be in the future.")
+            raise ValidationError(_("End date must be in the future."))
 
         return self.cleaned_data
 
@@ -602,8 +608,8 @@ class SubscriptionForm(forms.Form):
     def clean_active_accounts(self):
         transfer_account = self.cleaned_data.get('active_accounts')
         if transfer_account and transfer_account == self.subscription.account.id:
-            raise ValidationError("Please select an account other than the "
-                                  "current account to transfer to.")
+            raise ValidationError(_("Please select an account other than the "
+                                    "current account to transfer to."))
         return transfer_account
 
     def update_subscription(self):
@@ -747,12 +753,12 @@ class CreditForm(forms.Form):
         amount = self.cleaned_data['amount']
         field_metadata = CreditAdjustment._meta.get_field('amount')
         if amount >= 10 ** (field_metadata.max_digits - field_metadata.decimal_places):
-            raise ValidationError(mark_safe(
+            raise ValidationError(mark_safe(_(
                 'Amount over maximum size.  If you need support for '
                 'quantities this large, please <a data-toggle="modal" '
                 'data-target="#reportIssueModal" href="#reportIssueModal">'
                 'Report an Issue</a>.'
-            ))
+            )))
         return amount
 
     def adjust_credit(self, web_user=None):
@@ -840,7 +846,7 @@ class PlanInformationForm(forms.Form):
         name = self.cleaned_data['name']
         if (len(SoftwarePlan.objects.filter(name=name)) != 0
             and (self.plan is None or self.plan.name != name)):
-            raise ValidationError('Name already taken.  Please enter a new name.')
+            raise ValidationError(_('Name already taken.  Please enter a new name.'))
         return name
 
     def create_plan(self):
@@ -1234,10 +1240,10 @@ class SoftwarePlanVersionForm(forms.Form):
         required_types = dict(FeatureType.CHOICES).keys()
         feature_types = [r.feature.feature_type for r in rate_instances]
         if any([feature_types.count(t) != 1 for t in required_types]):
-            raise ValidationError(
+            raise ValidationError(_(
                 "You must specify exactly one rate per feature type "
                 "(SMS, USER, etc.)"
-            )
+            ))
 
         self.new_feature_rates = rate_instances
         rate_ids = lambda x: set([r.id for r in x])
@@ -1253,7 +1259,7 @@ class SoftwarePlanVersionForm(forms.Form):
         rate_instances = []
         errors = ErrorList()
         if not rates:
-            raise ValidationError("You must specify at least one product rate.")
+            raise ValidationError(_("You must specify at least one product rate."))
         for rate_data in rates:
             rate_form = ProductRateForm(rate_data)
             if not rate_form.is_valid():
@@ -1266,11 +1272,11 @@ class SoftwarePlanVersionForm(forms.Form):
         available_types = dict(SoftwareProductType.CHOICES).keys()
         product_types = [r.product.product_type for r in rate_instances]
         if any([product_types.count(p) > 1 for p in available_types]):
-            raise ValidationError(
+            raise ValidationError(_(
                 "You may have at most ONE rate per product type "
-                "(CommCare, CommTrack, etc.)"
-            )
-        
+                "(CommCare, CommCare Supply, etc.)"
+            ))
+
         self.new_product_rates = rate_instances
         rate_ids = lambda x: set([r.id for r in x])
         if (not self.is_update
@@ -1294,17 +1300,17 @@ class SoftwarePlanVersionForm(forms.Form):
     def clean_new_role_slug(self):
         val = self.cleaned_data['new_role_slug']
         if self.cleaned_data['create_new_role'] and not val:
-            raise ValidationError("A slug is required for this new role.")
+            raise ValidationError(_("A slug is required for this new role."))
         if val:
             validate_slug(val)
         if Role.objects.filter(slug=val).count() != 0:
-            raise ValidationError("Enter a unique role slug.")
+            raise ValidationError(_("Enter a unique role slug."))
         return val
 
     def clean_new_role_name(self):
         val = self.cleaned_data['new_role_name']
         if self.cleaned_data['create_new_role'] and not val:
-            raise ValidationError("A name is required for this new role.")
+            raise ValidationError(_("A name is required for this new role."))
         return val
 
     def save(self, request):
@@ -1750,7 +1756,7 @@ class AdjustBalanceForm(forms.Form):
         elif adjustment_type == 'debit':
             return -Decimal(self.cleaned_data['custom_amount'])
         else:
-            raise ValidationError("Received invalid adjustment type: %s"
+            raise ValidationError(_("Received invalid adjustment type: %s")
                                   % adjustment_type)
 
     def adjust_balance(self, web_user=None):
@@ -1776,7 +1782,7 @@ class InvoiceInfoForm(forms.Form):
 
     def __init__(self, invoice, *args, **kwargs):
         self.invoice = invoice
-        subscription = invoice.subscription
+        subscription = invoice.subscription if not invoice.is_wire else None
         super(InvoiceInfoForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
@@ -1784,29 +1790,28 @@ class InvoiceInfoForm(forms.Form):
             EditSubscriptionView,
             ManageBillingAccountView,
         )
+        if not invoice.is_wire:
+            subscription_link = mark_safe(make_anchor_tag(
+                reverse(EditSubscriptionView.urlname, args=(subscription.id,)),
+                u'{plan_name} ({start_date} - {end_date})'.format(
+                    plan_name=subscription.plan_version,
+                    start_date=subscription.date_start,
+                    end_date=subscription.date_end,
+                )
+            ))
+        else:
+            subscription_link = 'N/A'
+
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-                'Invoice #%s' % invoice.invoice_number,
+                '{} Invoice #{}'.format('Wire' if invoice.is_wire else '', invoice.invoice_number),
                 TextField(
                     'subscription',
-                    mark_safe(
-                        '<a href="%(subscription_link)s">'
-                        '%(plan_name)s'
-                        ' (%(start_date)s - %(end_date)s)'
-                        '</a>' % {
-                            'subscription_link': reverse(
-                                EditSubscriptionView.urlname,
-                                args=(subscription.id,)
-                            ),
-                            'plan_name': subscription.plan_version,
-                            'start_date': subscription.date_start,
-                            'end_date': subscription.date_end,
-                        }
-                    ),
+                    subscription_link
                 ),
                 TextField(
                     'project',
-                    subscription.subscriber.domain,
+                    invoice.get_domain(),
                 ),
                 TextField(
                     'account',
@@ -1816,9 +1821,9 @@ class InvoiceInfoForm(forms.Form):
                         '</a>' % {
                             'account_link': reverse(
                                 ManageBillingAccountView.urlname,
-                                args=(subscription.account.id,)
+                                args=(invoice.account.id,)
                             ),
-                            'account_name': subscription.account.name,
+                            'account_name': invoice.account.name,
                         }
                     ),
                 ),
@@ -1832,6 +1837,7 @@ class InvoiceInfoForm(forms.Form):
                         'Adjust Balance',
                         data_toggle='modal',
                         data_target='#adjustBalanceModal-%d' % invoice.id,
+                        css_class='disabled' if invoice.is_wire else '',
                     ),
                 ),
             ),
@@ -1885,7 +1891,10 @@ class ResendEmailForm(forms.Form):
     def resend_email(self):
         contact_emails = self.invoice.email_recipients
         contact_emails += self.cleaned_data['additional_recipients']
-        record = BillingRecord.generate_record(self.invoice)
+        if self.invoice.is_wire:
+            record = WireBillingRecord.generate_record(self.invoice)
+        else:
+            record = BillingRecord.generate_record(self.invoice)
         record.send_email(contact_emails=contact_emails)
 
 

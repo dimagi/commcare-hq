@@ -17,7 +17,7 @@ class Command(LabelCommand):
                     default='',
                     help="Name of postgres database to pull additional data from. This should map to a "
                          "key in settings.DATABASES. If not specified no additional postgres data will be "
-                         "copied. This is currently used to pull CommTrack models."),
+                         "copied. This is currently used to pull CommCare Supply models."),
     )
 
     def handle(self, *args, **options):

@@ -54,6 +54,7 @@ from corehq.apps.domain.decorators import (
     require_superuser,
 )
 from corehq.apps.translations.models import StandaloneTranslationDoc
+from corehq.util.dates import iso_string_to_datetime
 from corehq.util.timezones.conversions import ServerTime, UserTime
 from dimagi.utils.couch.database import get_db
 from django.contrib import messages
@@ -62,7 +63,6 @@ from django.views.decorators.csrf import csrf_exempt
 from corehq.apps.domain.models import Domain
 from django.utils.translation import ugettext as _, ugettext_noop
 from dimagi.utils.parsing import json_format_datetime, string_to_boolean
-from dateutil.parser import parse
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.decorators.view import get_file
 from dimagi.utils.logging import notify_exception
@@ -681,10 +681,10 @@ def get_case_contact_info(domain_obj, case_ids):
     data = {}
     for doc in iter_docs(CommCareCase.get_db(), case_ids):
         if domain_obj.custom_case_username:
-            name = doc.get(domain_obj.custom_case_username, _('unknown'))
+            name = doc.get(domain_obj.custom_case_username)
         else:
-            name = doc.get('name', _('unknown'))
-        data[doc['_id']] = [name]
+            name = doc.get('name')
+        data[doc['_id']] = [name or _('(unknown)')]
     return data
 
 
@@ -846,7 +846,7 @@ def api_history(request, domain):
     query_start_date_str = None
     if start_date is not None:
         try:
-            query_start_date = parse(start_date)
+            query_start_date = iso_string_to_datetime(start_date)
             query_start_date += timedelta(seconds=1)
             query_start_date_str = json_format_datetime(query_start_date)
         except Exception:
@@ -1304,7 +1304,7 @@ class SubscribeSMSView(BaseMessagingSectionView):
     def post(self, request, *args, **kwargs):
         if self.form.is_valid():
             self.form.save(self.commtrack_settings)
-            messages.success(request, _("Updated CommTrack settings."))
+            messages.success(request, _("Updated CommCare Supply settings."))
             return HttpResponseRedirect(reverse(SubscribeSMSView.urlname, args=[self.domain]))
         return self.get(request, *args, **kwargs)
 

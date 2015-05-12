@@ -99,19 +99,28 @@
 
         //Modify x-values to date-objects and set tickFormat
         {% if chart.x_axis.dateFormat %}
+            var tickValues = [];
             for (i=0 ; i<line_chart_data.length; i++){
                 single_line_chart_data = line_chart_data[i].values;
                 for (j=0; j<single_line_chart_data.length; j++){
                     date = single_line_chart_data[j].x;
                     single_line_chart_data[j].x = new Date(date).getTime();
+                    if (i ===0) {
+                        tickValues.push(new Date(date).getTime());
+                    }
                 }
             }
             line_chart.xAxis.tickFormat(function(d) {return d3.time.format({{ chart.x_axis.dateFormat|JSON }})(new Date(d)); })
+            line_chart.xAxis.tickValues(tickValues);
         {% endif %}
 
         line_chart.yAxis.axisLabel({{ chart.y_axis.label|JSON }});
         {% if chart.y_axis.format %}
             line_chart.yAxis.tickFormat(d3.format({{ chart.y_axis.format|JSON }}));
+        {% endif %}
+
+        {% if chart.forceY %}
+            line_chart.forceY({{ chart.forceY|JSON }});
         {% endif %}
 
         line_chart.margin(chart_config.margin);

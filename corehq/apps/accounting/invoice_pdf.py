@@ -106,7 +106,8 @@ class InvoiceTemplate(object):
                  routing_number_wire=settings.BANK_ROUTING_NUMBER_WIRE,
                  swift_code=settings.BANK_SWIFT_CODE,
                  applied_credit=None,
-                 subtotal=None, tax_rate=None, applied_tax=None, total=None):
+                 subtotal=None, tax_rate=None, applied_tax=None, total=None,
+                 is_wire=False):
         self.canvas = Canvas(filename)
         self.canvas.setFontSize(DEFAULT_FONT_SIZE)
         self.logo_filename = os.path.join(os.getcwd(), logo_filename)
@@ -130,6 +131,7 @@ class InvoiceTemplate(object):
         self.tax_rate = tax_rate
         self.applied_tax = applied_tax
         self.total = total
+        self.is_wire = is_wire
 
         self.items = []
 
@@ -145,7 +147,8 @@ class InvoiceTemplate(object):
         self.draw_statement_period()
         self.draw_invoice_label()
         self.draw_details()
-        self.draw_table()
+        if not self.is_wire:
+            self.draw_table()
         self.draw_footer()
 
         self.canvas.showPage()

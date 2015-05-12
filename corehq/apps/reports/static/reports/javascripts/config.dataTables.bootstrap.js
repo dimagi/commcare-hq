@@ -20,6 +20,7 @@ function HQReportDataTables(options) {
     self.fixColumns = !!(options.fixColumns);
     self.fixColsNumLeft = options.fixColsNumLeft || 1;
     self.fixColsWidth = options.fixColsWidth || 100;
+    self.show_pagination = (options.show_pagination === undefined) ? true : options.bPaginate;
     // a list of functions to call back to after ajax.
     // see user configurable charts for an example usage
     self.extraCallbacks = options.extraCallbacks;
@@ -70,6 +71,7 @@ function HQReportDataTables(options) {
         $(self.dataTableElem).each(function(){
             var params = {
                 sDom: dataTablesDom,
+                bPaginate: self.show_pagination,
                 sPaginationType: self.paginationType,
                 iDisplayLength: self.defaultRows,
                 bAutoWidth: self.autoWidth,

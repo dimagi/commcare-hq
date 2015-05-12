@@ -1,5 +1,5 @@
 from django.core.urlresolvers import reverse
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.utils.translation import ugettext as _
 
 from corehq.apps.es import users as user_es, filters
@@ -130,7 +130,7 @@ class UserTypeFilter(BaseReportFilter):
     # note, this is a butchered refactor of the original FilterUsersField.
     # don't use this as a guideline for anything.
     slug = "ufilter"
-    label = ugettext_noop("User Type")
+    label = ugettext_lazy("User Type")
     template = "reports/filters/filter_users.html"
 
     @property
@@ -174,6 +174,10 @@ class SelectMobileWorkerFilter(BaseSingleOptionTypeaheadFilter):
            user_filter[HQUserType.DEMO_USER].show or user_filter[HQUserType.UNKNOWN].show:
             default = _('%s & Others') % _(default)
         return default
+
+
+class AltPlaceholderMobileWorkerFilter(SelectMobileWorkerFilter):
+    default_text = ugettext_noop('Enter a worker')
 
 
 class SelectCaseOwnerFilter(SelectMobileWorkerFilter):
@@ -278,9 +282,9 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
         group_ids = emwf.selected_group_ids(request)
     """
     slug = "emw"
-    label = ugettext_noop("Groups or Users")
+    label = ugettext_lazy("Groups or Users")
     default_options = None
-    placeholder = ugettext_noop(
+    placeholder = ugettext_lazy(
         "Start typing to specify the groups and users to include in the report."
         " You can select multiple users and groups.")
     is_cacheable = False

@@ -12,6 +12,7 @@ from corehq.apps.sms.phonenumbers_helper import get_country_code_and_national_nu
 from corehq.apps.sms.test_backend import TestSMSBackend
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.smsbillables.exceptions import AmbiguousPrefixException
+from corehq.util.quickcache import quickcache
 
 
 smsbillables_logging = logging.getLogger("smsbillables")
@@ -225,6 +226,11 @@ class SmsUsageFee(models.Model):
         return cls.objects.filter(criteria=criteria.id).latest('date_created')
 
 
+@quickcache(['sms_backend_id'])
+def _sms_backend_is_global(sms_backend_id):
+    return SMSBackend.get(sms_backend_id).is_global
+
+
 class SmsBillable(models.Model):
     """
     A record of matching a fee to a particular MessageLog (or SMSLog).
@@ -288,7 +294,7 @@ class SmsBillable(models.Model):
 
         country_code, national_number = get_country_code_and_national_number(phone_number)
 
-        if backend_instance is None or SMSBackend.get(backend_instance).is_global:
+        if backend_instance is None or _sms_backend_is_global(backend_instance):
             billable.gateway_fee = SmsGatewayFee.get_by_criteria(
                 backend_api_id,
                 direction,

@@ -1,4 +1,4 @@
-from couchdbkit import ResourceConflict
+from couchdbkit import ResourceConflict, ResourceNotFound
 from django.utils.decorators import method_decorator
 from casexml.apps.stock.models import StockTransaction
 from casexml.apps.stock.utils import get_current_ledger_transactions
@@ -190,9 +190,13 @@ def form_context(request, domain, app_id, module_id, form_id):
         'form_url': form_url,
     }
     if instance_id:
-        root_context['instance_xml'] = XFormInstance.get_db().fetch_attachment(
-            instance_id, ATTACHMENT_NAME
-        )
+        try:
+            root_context['instance_xml'] = XFormInstance.get_db().fetch_attachment(
+                instance_id, ATTACHMENT_NAME
+            )
+        except ResourceNotFound:
+            raise Http404()
+
 
     session_extras = {'session_name': session_name, 'app_id': app._id}
     suite_gen = SuiteGenerator(app, is_usercase_enabled(domain))

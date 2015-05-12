@@ -327,7 +327,7 @@ class EnumImage(Enum):
 @register_format_type('late-flag')
 class LateFlag(HideShortHeaderColumn):
 
-    template_width = "10%"
+    template_width = "11%"
 
     XPATH_FUNCTION = u"if({xpath} = '', '*', if(today() - date({xpath}) > {column.late_flag}, '*', ''))"
 

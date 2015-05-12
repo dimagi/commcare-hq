@@ -42,10 +42,11 @@ from corehq.apps.reports.util import is_mobile_worker_with_report_access
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.hqwebapp.doc_info import get_doc_info
+from corehq.util.cache_utils import ExponentialBackoff
 from corehq.util.context_processors import get_domain_type
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.logging import notify_exception
+from dimagi.utils.logging import notify_exception, notify_js_exception
 from dimagi.utils.web import get_url_base, json_response, get_site_domain
 from corehq.apps.domain.models import Domain
 from couchforms.models import XFormInstance
@@ -169,8 +170,12 @@ def redirect_to_default(req, domain=None):
         if domain != None:
             url = reverse('domain_login', args=[domain])
         else:
-            # this actually gets hijacked by the static site, but is necessary
-            url = reverse('corehq.apps.hqwebapp.views.landing_page')
+            try:
+                from corehq.apps.prelogin.views import HomePublicView
+                url = reverse(HomePublicView.urlname)
+            except ImportError:
+                # this happens when the prelogin app is not included.
+                url = reverse('landing_page')
     else:
         if domain:
             domain = normalize_domain_name(domain)
@@ -394,6 +399,34 @@ def debug_notify(request):
         notify_exception(request,
             "If you want to achieve a 500-style email-out but don't want the user to see a 500, use notify_exception(request[, message])")
     return HttpResponse("Email should have been sent")
+
+
+@require_POST
+def jserror(request):
+    stack = request.POST.get('stack', None)
+    message = request.POST.get('message', None)
+    if stack:
+        cache_key = ' '.join(map(lambda l: l.strip(), stack.split('\n'))[:3])
+    else:
+        cache_key = message
+
+    count = ExponentialBackoff.increment(cache_key)
+    if not ExponentialBackoff.should_backoff(cache_key):
+        notify_js_exception(
+            request,
+            message=message,
+            details={
+                'filename': request.POST.get('filename', None),
+                'line': request.POST.get('line', None),
+                'page': request.POST.get('page', None),
+                'agent': request.META.get('HTTP_USER_AGENT', None),
+                'js_stack': stack,
+                'count': count,
+            }
+        )
+
+    return HttpResponse('')
+
 
 @login_required()
 @require_POST
@@ -907,6 +940,8 @@ def quick_find(request):
         if redirect and doc_info.link:
             messages.info(request, _("We've redirected you to the %s matching your query") % doc_info.type_display)
             return HttpResponseRedirect(doc_info.link)
+        elif request.couch_user.is_superuser:
+            return HttpResponseRedirect('{}?id={}'.format(reverse('doc_in_es'), doc.get('_id')))
         else:
             return json_response(doc_info)
 

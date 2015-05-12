@@ -40,9 +40,12 @@ def _create_custom_app_strings(app, lang):
         for detail_type, detail, _ in module.get_details():
             if detail_type.startswith('case'):
                 label = trans(module.case_label)
-            else:
+            elif detail_type.startswith('referral'):
                 label = trans(module.referral_label)
-            yield id_strings.detail_title_locale(module, detail_type), label
+            else:
+                label = None
+            if label:
+                yield id_strings.detail_title_locale(module, detail_type), label
 
             for column in detail.get_columns():
                 if not is_sort_only_column(column):
@@ -61,6 +64,16 @@ def _create_custom_app_strings(app, lang):
                 yield id_strings.detail_tab_title_locale(module, detail_type, tab), trans(tab.header)
 
         yield id_strings.module_locale(module), maybe_add_index(trans(module.name))
+        if hasattr(module, 'report_configs'):
+            for config in module.report_configs:
+                yield id_strings.report_command(config.report_id), trans(config.header)
+                yield id_strings.report_name(config.report_id), config.report.title
+                yield id_strings.report_menu(), 'Reports'
+                yield id_strings.report_name_header(), 'Report Name'
+                yield id_strings.report_description_header(), 'Report Description'
+                for column in config.report.report_columns:
+                    yield id_strings.report_column_header(config.report_id, column.column_id), column.display
+
         if hasattr(module, 'case_list'):
             if module.case_list.show:
                 yield id_strings.case_list_locale(module), trans(module.case_list.label) or "Case List"

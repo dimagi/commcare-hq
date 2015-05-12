@@ -29,7 +29,7 @@ from distutils.util import strtobool
 from fabric import utils
 from fabric.api import run, roles, execute, task, sudo, env, parallel
 from fabric.colors import blue
-from fabric.context_managers import settings, cd
+from fabric.context_managers import settings, cd, shell_env
 from fabric.contrib import files, console
 from fabric.operations import require, local, prompt
 import yaml
@@ -97,7 +97,7 @@ def _require_target():
             provided_by=('staging', 'preview', 'production', 'india', 'zambia'))
 
 
-def format_env(current_env):
+def format_env(current_env, extra=None):
     """
     formats the current env to be a foo=bar,sna=fu type paring
     this is used for the make_supervisor_conf management command
@@ -121,7 +121,6 @@ def format_env(current_env):
         'django_port',
         'django_bind',
         'flower_port',
-        'celery_params',
     ]
 
     host = current_env.get('host_string')
@@ -134,6 +133,10 @@ def format_env(current_env):
 
     for prop in important_props:
         ret[prop] = current_env.get(prop, '')
+
+    if extra:
+        ret.update(extra)
+
     return json.dumps(ret)
 
 
@@ -364,6 +367,15 @@ def install_packages():
 
     sudo("%s %s" % (installer_command,
                     " ".join(map(lambda x: x.strip('\n\r'), packages))), user='root')
+
+
+@task
+@roles(ROLES_ALL_SRC)
+def install_npm_packages():
+    """Install required NPM packages for server"""
+    with cd(os.path.join(env.code_root, 'submodules/touchforms-src/touchforms')):
+        with shell_env(HOME=env.home):
+            sudo("npm install")
 
 
 @task
@@ -658,6 +670,8 @@ def _deploy_without_asking():
     try:
         _execute_with_timing(update_code)
         _execute_with_timing(update_virtualenv)
+        _execute_with_timing(install_npm_packages)
+        _execute_with_timing(update_touchforms)
 
         # handle static files
         _execute_with_timing(version_static)
@@ -677,7 +691,7 @@ def _deploy_without_asking():
             _execute_with_timing(_migrate)
         else:
             print(blue("No migration required, skipping."))
-        _execute_with_timing(do_update_django_locales)
+        _execute_with_timing(do_update_translations)
         if do_migrate:
             _execute_with_timing(flip_es_aliases)
 
@@ -759,6 +773,14 @@ def awesome_deploy(confirm="yes"):
              "and wait for an email saying it's done. "
              "Thank you for using AWESOME DEPLOY.")
         )
+
+
+@task
+@roles(ROLES_ALL_SRC)
+def update_touchforms():
+    # npm bin allows you to specify the locally installed version instead of having to install grunt globally
+    with cd(os.path.join(env.code_root, 'submodules/touchforms-src/touchforms')):
+        sudo('PATH=$(npm bin):$PATH grunt build --force')
 
 
 @task
@@ -926,6 +948,7 @@ def _do_collectstatic():
     """Collect static after a code update"""
     with cd(env.code_root):
         sudo('%(virtualenv_root)s/bin/python manage.py collectstatic --noinput' % env)
+        sudo('%(virtualenv_root)s/bin/python manage.py fix_less_imports_collectstatic' % env)
 
 
 @roles(ROLES_DJANGO)
@@ -1030,7 +1053,7 @@ def commit_locale_changes():
     local('git pull ssh://%s%s' % (env.host, env.code_root))
 
 
-def _rebuild_supervisor_conf_file(conf_command, filename):
+def _rebuild_supervisor_conf_file(conf_command, filename, params=None):
     with cd(env.code_root):
         sudo((
             '%(virtualenv_root)s/bin/python manage.py '
@@ -1042,31 +1065,41 @@ def _rebuild_supervisor_conf_file(conf_command, filename):
             'virtualenv_root': env.virtualenv_root,
             'filename': filename,
             'destination': posixpath.join(env.services, 'supervisor'),
-            'params': format_env(env)
+            'params': format_env(env, params)
         })
 
 
+def get_celery_queues():
+    host = env.get('host_string')
+    if host and '.' in host:
+        host = host.split('.')[0]
+
+    queues = env.celery_processes.get('*', {})
+    host_queues = env.celery_processes.get(host, {})
+    queues.update(host_queues)
+
+    return queues
+
 @roles(ROLES_CELERY)
 def set_celery_supervisorconf():
-    _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_main.conf')
 
-    if env.celery_periodic_enabled:
-        _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_beat.conf')
-        _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_periodic.conf')
-    if env.sms_queue_enabled:
-        _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_sms_queue.conf')
-    if env.reminder_queue_enabled:
-        _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_reminder_queue.conf')
-    if env.reminder_rule_queue_enabled:
-        _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_reminder_rule_queue.conf')
-    if env.reminder_case_update_queue_enabled:
-        _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_reminder_case_update_queue.conf')
-    if env.pillow_retry_queue_enabled:
-        _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_pillow_retry_queue.conf')
-    _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_background_queue.conf')
-    _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_saved_exports_queue.conf')
-    _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_flower.conf')
-    _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_couchdb_lucene.conf') #to be deprecated
+    conf_files = {
+        'main':                         ['supervisor_celery_main.conf'],
+        'periodic':                     ['supervisor_celery_beat.conf', 'supervisor_celery_periodic.conf'],
+        'sms_queue':                    ['supervisor_celery_sms_queue.conf'],
+        'reminder_queue':               ['supervisor_celery_reminder_queue.conf'],
+        'reminder_rule_queue':          ['supervisor_celery_reminder_rule_queue.conf'],
+        'reminder_case_update_queue':   ['supervisor_celery_reminder_case_update_queue.conf'],
+        'pillow_retry_queue':           ['supervisor_celery_pillow_retry_queue.conf'],
+        'background_queue':             ['supervisor_celery_background_queue.conf'],
+        'saved_exports_queue':          ['supervisor_celery_saved_exports_queue.conf'],
+        'flower':                       ['supervisor_celery_flower.conf'],
+        }
+
+    queues = get_celery_queues()
+    for queue, params in queues.items():
+        for config_file in conf_files[queue]:
+            _rebuild_supervisor_conf_file('make_supervisor_conf', config_file, {'celery_params': params})
 
 
 @roles(ROLES_PILLOWTOP)
@@ -1093,17 +1126,17 @@ def set_formsplayer_supervisorconf():
 
 @roles(ROLES_SMS_QUEUE)
 def set_sms_queue_supervisorconf():
-    if env.sms_queue_enabled:
+    if 'sms_queue' in get_celery_queues():
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_sms_queue.conf')
 
 @roles(ROLES_REMINDER_QUEUE)
 def set_reminder_queue_supervisorconf():
-    if env.reminder_queue_enabled:
+    if 'reminder_queue' in get_celery_queues():
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_reminder_queue.conf')
 
 @roles(ROLES_PILLOW_RETRY_QUEUE)
 def set_pillow_retry_queue_supervisorconf():
-    if env.pillow_retry_queue_enabled:
+    if 'pillow_retry_queue' in get_celery_queues():
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_pillow_retry_queue.conf')
 
 @task
@@ -1146,8 +1179,8 @@ def update_apache_conf():
     sudo('service apache2 reload', user='root')
 
 @task
-def update_django_locales():
-    do_update_django_locales()
+def update_translations():
+    do_update_translations()
 
 
 @roles(ROLES_PILLOWTOP)
@@ -1166,12 +1199,16 @@ def stop_celery_tasks():
 
 @roles(ROLES_ALL_SRC)
 @parallel
-def do_update_django_locales():
+def do_update_translations():
     with cd(env.code_root):
-        command = '{virtualenv_root}/bin/python manage.py update_django_locales'.format(
+        update_locale_command = '{virtualenv_root}/bin/python manage.py update_django_locales'.format(
             virtualenv_root=env.virtualenv_root,
         )
-        sudo(command)
+        update_translations_command = '{virtualenv_root}/bin/python manage.py compilemessages'.format(
+            virtualenv_root=env.virtualenv_root,
+        )
+        sudo(update_locale_command)
+        sudo(update_translations_command)
 
 
 @task

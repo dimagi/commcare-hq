@@ -1,16 +1,15 @@
-import json
-import os
 from django.test import SimpleTestCase, TestCase
 from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import ReportConfiguration, DataSourceConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
+from corehq.apps.userreports.tests.utils import get_sample_report_config
 
 
 class ReportConfigurationTest(SimpleTestCase):
 
     def setUp(self):
-        self.config = _get_sample_config()
+        self.config = get_sample_report_config()
 
     def test_metadata(self):
         # metadata
@@ -89,13 +88,5 @@ class ReportConfigurationDbTest(TestCase):
             ReportConfiguration(domain='foo').save()
 
     def test_sample_config_is_valid(self):
-        config = _get_sample_config()
+        config = get_sample_report_config()
         config.validate()
-
-
-def _get_sample_config():
-    folder = os.path.join(os.path.dirname(__file__), 'data', 'configs')
-    sample_file = os.path.join(folder, 'sample_report_config.json')
-    with open(sample_file) as f:
-        structure = json.loads(f.read())
-        return ReportConfiguration.wrap(structure)

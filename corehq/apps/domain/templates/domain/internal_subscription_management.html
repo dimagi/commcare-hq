@@ -1,0 +1,66 @@
+{% extends 'hqwebapp/base_section.html' %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/jquery-ui-1.8.17.custom.datepicker.min.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/select2/select2.js' %}"></script>
+    <script src="{% static 'accounting/js/accounting.billing_info_handler.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+    <script type="text/javascript">
+        var viewModel = {
+            subscriptionType: ko.observable($('#id_subscription_type').val() || null)
+        };
+        ko.applyBindings(viewModel, document.getElementById('subscription_management'));
+    </script>
+
+    <script>
+        var billingInfoHandler = new BillingContactInfoHandler(
+            "{% trans "Please enter a valid email." %}"
+        );
+        billingInfoHandler.init();
+    </script>
+
+    <script>
+        $('.date-picker').datepicker({ dateFormat: "yy-mm-dd" });
+    </script>
+{% endblock %}
+
+{% block head %}{{ block.super }}
+    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
+    <link href="{% static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet"/>
+{% endblock %}
+
+{% block main_column %}
+    {% blocktrans %}
+        <p>
+            This page is visible to Dimagi employees only (you have an @dimagi.com email address)  You can use this page
+            to set up a subscription for this project space.
+
+            Use this tool only for projects that are:
+            <ul>
+                <li>an internal test project</li>
+                <li>part of a contracted project</li>
+                <li>a short term extended trial for biz dev</li>
+            </ul>
+        </p>
+
+        <h3>
+            Your project is currently subscribed to {{ plan_name }}.
+        </h3>
+    {% endblocktrans %}
+
+    <div id="subscription_management">
+        {% crispy select_subscription_type_form %}
+
+        {% for form in subscription_management_forms %}
+            <div data-bind="visible: subscriptionType() == '{{ form.slug }}'">
+                {% crispy form %}
+            </div>
+        {% endfor %}
+    </div>
+
+{% endblock %}

@@ -1,4 +1,4 @@
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 import freddy
 import datetime
 import pytz

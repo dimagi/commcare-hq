@@ -8,7 +8,7 @@ import datetime
 from casexml.apps.case import const
 from casexml.apps.case.models import CommCareCaseAction
 from casexml.apps.case.xml import DEFAULT_VERSION, V1, V2, NS_REVERSE_LOOKUP_MAP
-from dimagi.utils.parsing import string_to_datetime
+from dimagi.utils.parsing import string_to_utc_datetime
 
 
 XMLNS_ATTR = "@xmlns"
@@ -273,7 +273,7 @@ class CaseUpdate(object):
         """
         Guess the modified date, defaulting to the current time in UTC.
         """
-        return string_to_datetime(self.modified_on_str) if self.modified_on_str else datetime.utcnow()
+        return string_to_utc_datetime(self.modified_on_str) if self.modified_on_str else datetime.utcnow()
 
     def creates_case(self):
         # creates have to have actual data in them so this is fine
@@ -346,7 +346,7 @@ class CaseUpdate(object):
             )
         
         modified_on = case_block.get(const.CASE_TAG_MODIFIED, "")
-        return cls(id=case_block[const.CASE_TAG_ID], 
+        return cls(id=case_block[const.CASE_TAG_ID],
                    version=V1,
                    block=case_block,
                    modified_on_str=modified_on)

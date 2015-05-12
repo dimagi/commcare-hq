@@ -245,7 +245,6 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport,
             products=[],
             program='',
             prd_part_url='',
-            msd_code=self.request.GET.get('msd', ''),
             timezone=self.timezone
         )
 
@@ -385,13 +384,12 @@ class DetailsReport(MultiReport):
         return context
 
     def ils_make_url(self, cls):
-        params = '?location_id=%s&month=%s&year=%s&filter_by_program=%s&msd=%s'
+        params = '?location_id=%s&month=%s&year=%s&filter_by_program=%s'
         return make_url(cls, self.domain, params, (
             self.request.GET.get('location_id'),
             self.request.GET.get('month'),
             self.request.GET.get('year'),
             self.request.GET.get('filter_by_program'),
-            self.request.GET.get('msd')
         ))
 
 

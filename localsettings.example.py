@@ -27,6 +27,9 @@ COUCH_DATABASE_NAME = 'commcarehq'
 #Staging domains you want to replicate
 STAGING_DOMAINS = []
 
+### Public / Pre-login Site information
+ENABLE_PRELOGIN_SITE = False
+
 #COUCHDB URI {http|https}://username:password@host:optionalport/dbname
 PRODUCTION_COUCHDB_URI = ""
 
@@ -133,6 +136,11 @@ ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_ID': '*******',
     'PINGDOM_ID': '*****',
     'ANALYTICS_ID_PUBLIC_COMMCARE': '*****',
+    'KISSMETRICS_KEY': '*****',
+}
+
+ANALYTICS_CONFIG = {
+    "HQ_INSTANCE": ''  # e.g. "www", or "india", or "staging"
 }
 
 AXES_LOCK_OUT_AT_FAILURE = False

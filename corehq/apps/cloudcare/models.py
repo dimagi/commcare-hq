@@ -1,5 +1,13 @@
-from couchdbkit import ResourceNotFound, BooleanProperty
-from couchdbkit.ext.django.schema import Document, SchemaListProperty, DictProperty, StringProperty, DocumentSchema, Property
+from couchdbkit import ResourceNotFound
+from dimagi.ext.couchdbkit import (
+    BooleanProperty,
+    DictProperty,
+    Document,
+    DocumentSchema,
+    Property,
+    SchemaListProperty,
+    StringProperty,
+)
 from django.core.cache import cache
 from corehq.apps.app_manager.models import Application
 from corehq.apps.groups.models import Group

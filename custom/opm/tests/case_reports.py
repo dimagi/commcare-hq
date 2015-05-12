@@ -2,7 +2,7 @@ from collections import defaultdict
 from datetime import datetime, date
 from unittest import TestCase
 
-from jsonobject import (JsonObject, DateTimeProperty,
+from dimagi.ext.jsonobject import (JsonObject, DateTimeProperty,
     StringProperty, IntegerProperty, BooleanProperty)
 
 from casexml.apps.case.models import CommCareCase
