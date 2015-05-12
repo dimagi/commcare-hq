@@ -192,9 +192,11 @@ class SnapshotSettingsForm(forms.Form):
         help_text=ugettext_noop("An optional file to tell users more about your app."))
     old_documentation_file = forms.BooleanField(required=False)
     cda_confirmed = BooleanField(required=False, label=ugettext_noop("Content Distribution Agreement"))
+    starter_app = BooleanField(required=False, label=ugettext_noop("This is a starter application"))
 
     def __init__(self, *args, **kw):
         self.dom = kw.pop("domain", None)
+        self.is_superuser = kw.pop("is_superuser", None)
         super(SnapshotSettingsForm, self).__init__(*args, **kw)
 
         self.helper = FormHelper()
@@ -232,6 +234,9 @@ class SnapshotSettingsForm(forms.Form):
                 'cda_confirmed',
             ),
         )
+
+        if self.is_superuser:
+            self.helper.layout.append(crispy.Fieldset('Starter App', 'starter_app',),)
 
 
         self.fields['license'].help_text = \

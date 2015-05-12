@@ -1744,7 +1744,9 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
         for attr in init_attribs:
             initial[attr] = getattr(proj, attr)
 
-        return SnapshotSettingsForm(initial=initial, domain=self.domain_object)
+        return SnapshotSettingsForm(initial=initial,
+                                    domain=self.domain_object,
+                                    is_superuser=self.request.user.is_superuser)
 
     @property
     @memoized
