@@ -242,8 +242,9 @@
     {% block view-tabs %}
     <div class="tabbable" style="padding-top: 15px;">
         <ul class="nav nav-pills">
-            <li{% if not sort_by %} class="active"{% endif %}><a href="{% urlencode request.path request.GET without "sort_by" %}">{% trans "Most Downloaded" %}</a></li>
-            <li{% if sort_by == 'newest' %} class="active"{% endif %}><a href="{% urlencode request.path request.GET with "sort_by" as "newest" %}">{% trans "Newest" %}</a></li>
+            <li{% if not sort_by and not show_starter_apps %} class="active"{% endif %}><a href="{% urlencode request.path request.GET without "sort_by" without 'is_starter_app' %}">{% trans "Most Downloaded" %}</a></li>
+            <li{% if sort_by == 'newest' %} class="active"{% endif %}><a href="{% urlencode request.path request.GET with "sort_by" as "newest" without 'is_starter_app' %}">{% trans "Newest" %}</a></li>
+            <li {% if show_starter_apps %} class="active"{% endif %}><a href="{% urlencode request.path request.GET with 'is_starter_app' as 'T' without 'sort_by' %}">{% trans "Starter Apps" %}</a></li>
         </ul>
     </div>
     {% endblock %}
