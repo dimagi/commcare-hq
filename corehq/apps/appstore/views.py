@@ -19,7 +19,7 @@ from dimagi.utils.couch.database import apply_update
 from corehq.apps.fixtures.models import FixtureDataType
 
 
-SNAPSHOT_FACETS = ['project_type', 'license', 'author.exact']
+SNAPSHOT_FACETS = ['project_type', 'license', 'author.exact', 'is_starter_app']
 DEPLOYMENT_FACETS = ['deployment.region']
 SNAPSHOT_MAPPING = [
     ("", True, [
@@ -38,6 +38,15 @@ SNAPSHOT_MAPPING = [
             }
         },
         {"facet": "author.exact", "name": ugettext_lazy("Author"), "expanded": True},
+        # {
+        #     "facet": "is_starter_app",
+        #     "name": ugettext_lazy("Starter Application"),
+        #     "expanded": True,
+        #     "mapping": {
+        #         'T': 'Starter Application',
+        #         'F': 'Regular Application',
+        #     }
+        # },
     ]),
 ]
 DEPLOYMENT_MAPPING = [
