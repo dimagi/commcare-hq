@@ -95,6 +95,7 @@ function LocationModel(data, root, depth, func, withAllOption) {
   this.type = ko.observable();
   this.uuid = ko.observable();
   this.location_restriction = ko.observable();
+  this.can_edit = ko.observable();
   this.children = ko.observableArray();
   this.depth = depth || 0;
   this.children_loaded = false;
@@ -147,6 +148,7 @@ function LocationModel(data, root, depth, func, withAllOption) {
     this.name(data.name);
     this.type(data.location_type);
     this.uuid(data.uuid);
+    this.can_edit(data.can_edit);
     this.location_restriction(data.restriction);
     if (data.children != null) {
         $.map(data.children, function(e) {

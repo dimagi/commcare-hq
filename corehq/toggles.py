@@ -59,7 +59,7 @@ def deterministic_random(input_string):
     return float.fromhex(hashlib.md5(input_string).hexdigest()) / math.pow(2, 128)
 
 
-class PredicatablyRandomToggle(StaticToggle):
+class PredictablyRandomToggle(StaticToggle):
     """
     A toggle that is predictably random based off some axis. Useful for for doing
     a randomized rollout of a feature. E.g. "turn this on for 5% of domains", or
@@ -69,7 +69,7 @@ class PredicatablyRandomToggle(StaticToggle):
     """
 
     def __init__(self, slug, label, tag, namespace, randomness, help_link=None, description=None):
-        super(PredicatablyRandomToggle, self).__init__(slug, label, tag, list(namespace),
+        super(PredictablyRandomToggle, self).__init__(slug, label, tag, list(namespace),
                                                        help_link=help_link, description=description)
         assert namespace, 'namespace must be defined!'
         self.namespace = namespace
@@ -86,7 +86,7 @@ class PredicatablyRandomToggle(StaticToggle):
     def enabled(self, item, **kwargs):
         return (
             (item and deterministic_random(self._get_identifier(item)) < self.randomness)
-            or super(PredicatablyRandomToggle, self).enabled(item, **kwargs)
+            or super(PredictablyRandomToggle, self).enabled(item, **kwargs)
         )
 
 # if no namespaces are specified the user namespace is assumed
@@ -382,7 +382,7 @@ CUSTOM_PROPERTIES = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-FILE_RESTORE = PredicatablyRandomToggle(
+FILE_RESTORE = PredictablyRandomToggle(
     'file_restore',
     'Use files to do phone restore',
     TAG_PRODUCT_PATH,
@@ -420,7 +420,7 @@ USER_AS_A_CASE = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-STREAM_RESTORE_CACHE = PredicatablyRandomToggle(
+STREAM_RESTORE_CACHE = PredictablyRandomToggle(
     'stream_cached_restore',
     'Stream cached restore from couchdb',
     TAG_EXPERIMENTAL,
@@ -436,7 +436,7 @@ ENABLE_LOADTEST_USERS = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Loadtest+Users',
 )
 
-OWNERSHIP_CLEANLINESS = PredicatablyRandomToggle(
+OWNERSHIP_CLEANLINESS = PredictablyRandomToggle(
     'enable_owner_cleanliness_flags',
     'Enable tracking ownership cleanliness on submission',
     TAG_EXPERIMENTAL,
@@ -457,4 +457,11 @@ FM_FACING_SUBSCRIPTIONS = StaticToggle(
     'fm_facing_subscriptions',
     'FM Facing Subscription Management Interface',
     TAG_PRODUCT_CORE,
+)
+
+API_THROTTLE_WHITELIST = StaticToggle(
+    'api_throttle_whitelist',
+    ('API throttle whitelist'),
+    TAG_EXPERIMENTAL,
+    namespaces=[NAMESPACE_USER],
 )

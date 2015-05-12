@@ -132,6 +132,11 @@ ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_ID': '*******',
     'PINGDOM_ID': '*****',
     'ANALYTICS_ID_PUBLIC_COMMCARE': '*****',
+    'KISSMETRICS_KEY': '*****',
+}
+
+ANALYTICS_CONFIG = {
+    "HQ_INSTANCE": '',  # e.g. "www" or "staging"
 }
 
 AXES_LOCK_OUT_AT_FAILURE = False
@@ -269,7 +274,7 @@ SELENIUM_APP_SETTINGS = {
 
 INTERNAL_DATA = {
     "business_unit": [],
-    "product": ["CommCare", "CommConnect", "CommTrack", "RapidSMS", "Custom"],
+    "product": ["CommCare", "CommConnect", "CommCare Supply", "RapidSMS", "Custom"],
     "services": [],
     "account_types": [],
     "initiatives": [],

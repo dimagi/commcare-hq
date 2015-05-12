@@ -3,7 +3,7 @@ from dateutil import rrule
 from corehq.apps.locations.models import SQLLocation, Location
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.users.models import CommCareUser
-from custom.ilsgateway.filters import MSDZoneFilter, MonthAndQuarterFilter, ProgramFilter
+from custom.ilsgateway.filters import MonthAndQuarterFilter, ProgramFilter
 from custom.ilsgateway.models import OrganizationSummary, GroupSummary, SupplyPointStatusTypes, DeliveryGroups
 from custom.ilsgateway.tanzania import ILSData, DetailsReport
 from custom.ilsgateway.tanzania.reports.mixins import RandRSubmissionData
@@ -27,8 +27,7 @@ class RRStatus(ILSData):
     def rows(self):
         rows = []
         if self.config['org_summary']:
-            locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'],
-                                                   site_code__icontains=self.config['msd_code'])
+            locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'])
             for child in locations:
                 try:
                     org_summary = OrganizationSummary.objects.filter(
@@ -59,9 +58,9 @@ class RRStatus(ILSData):
                 hist_resp_rate = rr_format_percent(total_responses, total_possible)
 
                 url = make_url(RRreport, self.config['domain'],
-                               '?location_id=%s&month=%s&year=%s&filter_by_program=%s&msd=%s',
+                               '?location_id=%s&month=%s&year=%s&filter_by_program=%s',
                                (child.location_id, self.config['month'], self.config['year'],
-                               self.config['program'], self.config['msd_code']))
+                               self.config['program']))
 
                 rows.append(
                     [
@@ -106,8 +105,7 @@ class RRReportingHistory(ILSData):
     @property
     def rows(self):
         rows = []
-        locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'],
-                                               site_code__icontains=self.config['msd_code'])
+        locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'])
         dg = []
         for date in list(rrule.rrule(rrule.MONTHLY, dtstart=self.config['startdate'],
                                      until=self.config['enddate'])):
@@ -128,9 +126,9 @@ class RRReportingHistory(ILSData):
             hist_resp_rate = rr_format_percent(total_responses, total_possible)
 
             url = make_url(FacilityDetailsReport, self.config['domain'],
-                           '?location_id=%s&month=%s&year=%s&filter_by_program=%s&msd=%s',
+                           '?location_id=%s&month=%s&year=%s&filter_by_program=%s',
                            (self.config['location_id'], self.config['month'], self.config['year'],
-                           self.config['program'], self.config['msd_code']))
+                           self.config['program']))
 
             rr_value = randr_value(child.location_id, self.config['startdate'], self.config['enddate'])
             contact = CommCareUser.get_db().view(
@@ -187,7 +185,7 @@ class RRreport(DetailsReport):
 
     @property
     def fields(self):
-        fields = [AsyncLocationFilter, MonthAndQuarterFilter, YearFilter, ProgramFilter, MSDZoneFilter]
+        fields = [AsyncLocationFilter, MonthAndQuarterFilter, YearFilter, ProgramFilter]
         if self.location and self.location.location_type.name.upper() == 'FACILITY':
             fields = []
         return fields
@@ -200,7 +198,7 @@ class RRreport(DetailsReport):
         if config['location_id']:
             data_providers = [RandRSubmissionData(config=config, css_class='row_chart_all')]
             location = Location.get(config['location_id'])
-            if location.location_type in ['REGION', 'MOHSW']:
+            if location.location_type in ['REGION', 'MSDZONE', 'MOHSW']:
                 data_providers.append(RRStatus(config=config, css_class='row_chart_all'))
             elif location.location_type == 'FACILITY':
                 return [

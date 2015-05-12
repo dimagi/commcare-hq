@@ -36,7 +36,7 @@ from corehq.apps.users.util import (
     user_display_string,
 )
 from corehq.apps.users.xml import group_fixture
-from corehq.apps.users.tasks import tag_docs_as_deleted
+from corehq.apps.users.tasks import tag_docs_as_deleted, tag_forms_as_deleted_rebuild_associated_cases
 from corehq.apps.users.exceptions import InvalidLocationConfig
 from corehq.apps.sms.mixin import (
     CommCareMobileContactMixin,
@@ -1627,14 +1627,19 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def retire(self):
         suffix = DELETED_SUFFIX
         deletion_id = random_hex()
+        deleted_cases = set()
         # doc_type remains the same, since the views use base_doc instead
         if not self.base_doc.endswith(suffix):
             self.base_doc += suffix
             self['-deletion_id'] = deletion_id
-        for formlist in chunked(self.get_forms(wrap=False, include_docs=True), 50):
-            tag_docs_as_deleted.delay(XFormInstance, formlist, deletion_id)
+
         for caselist in chunked(self.get_cases(wrap=False), 50):
             tag_docs_as_deleted.delay(CommCareCase, caselist, deletion_id)
+            for case in caselist:
+                deleted_cases.add(case['_id'])
+
+        for formlist in chunked(self.get_forms(wrap=False, include_docs=True), 50):
+            tag_forms_as_deleted_rebuild_associated_cases.delay(formlist, deletion_id, deleted_cases=deleted_cases)
 
         for phone_number in self.get_verified_numbers(True).values():
             phone_number.retire(deletion_id)
@@ -2255,6 +2260,14 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
         for user_doc in iter_docs(cls.get_db(), user_ids):
             if user_doc['email'].endswith('@dimagi.com'):
                 yield user_doc['email']
+
+    def get_location_id(self, domain):
+        return getattr(self.get_domain_membership(domain), 'location_id', None)
+
+    def get_location(self, domain):
+        from corehq.apps.locations.models import Location
+        loc_id = self.get_location_id(domain)
+        return Location.get(loc_id) if loc_id else None
 
 
 class FakeUser(WebUser):

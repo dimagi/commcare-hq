@@ -8,7 +8,7 @@ import datetime
 from django.db.models import Q
 import redis
 from casexml.apps.case.signals import cases_received, case_post_save
-from casexml.apps.phone.models import OwnershipCleanliness
+from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, OWNERSHIP_CLEANLINESS
 from casexml.apps.case.util import iter_cases, get_reverse_indexed_cases
 from couchforms.models import XFormInstance
@@ -49,7 +49,7 @@ class CaseProcessingResult(object):
         """
         if self.track_cleanliness:
             flags_to_save = {f.owner_id: f.case_id for f in self.dirtiness_flags}
-            flags_to_update = OwnershipCleanliness.objects.filter(
+            flags_to_update = OwnershipCleanlinessFlag.objects.filter(
                 Q(owner_id__in=flags_to_save.keys()),
                 Q(is_clean=True) | Q(hint__isnull=True)
             )
@@ -353,8 +353,8 @@ def _get_or_update_cases(xforms, case_db):
             dirtiness_flags.append(DirtinessFlag(case._id, case.owner_id))
         return dirtiness_flags
 
-    def _get_dirtiness_flags_for_child_cases(cases):
-        child_cases = get_reverse_indexed_cases(cases)
+    def _get_dirtiness_flags_for_child_cases(domain, cases):
+        child_cases = get_reverse_indexed_cases(domain, [c['_id'] for c in cases])
         case_owner_map = dict((case._id, case.owner_id) for case in cases)
         for child_case in child_cases:
             for index in child_case.indices:
@@ -368,7 +368,7 @@ def _get_or_update_cases(xforms, case_db):
     if track_cleanliness:
         # only do this extra step if the toggle is enabled since we know we aren't going to
         # care about the dirtiness flags otherwise.
-        dirtiness_flags += list(_get_dirtiness_flags_for_child_cases(touched_cases.values()))
+        dirtiness_flags += list(_get_dirtiness_flags_for_child_cases(domain, touched_cases.values()))
     return CaseProcessingResult(touched_cases.values(), dirtiness_flags, track_cleanliness)
 
 

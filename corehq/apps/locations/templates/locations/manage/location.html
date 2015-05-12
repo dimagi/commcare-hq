@@ -78,15 +78,18 @@
     <li class="{% if form_tab == "basic" %}active{% endif %}">
       <a href="#basic-info" data-toggle="tab">{% trans "Basic" %}</a>
     </li>
-    <li class="{% if form_tab == "users" %}active{% endif %}">
-      <a href="#users" data-toggle="tab">{% trans "Users" %}</a>
-    </li>
+
+    {% if users_per_location_form %}
+      <li class="{% if form_tab == "users" %}active{% endif %}">
+        <a href="#users" data-toggle="tab">{% trans "Users" %}</a>
+      </li>
+    {% endif %}
 
     {% if products_per_location_form %}
       <li><a href="#products" data-toggle="tab">{% trans "Products" %}</a></li>
     {% endif %}
 
-    {% if location.get_id and location.location_type.can_have_children %}
+    {% if location.get_id and location.location_type_object.can_have_children %}
     <li>
       <a href="{% url "create_location" domain %}?parent={{ location.get_id }}">
         {% trans "New Child Location" %}
