@@ -1816,6 +1816,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
             new_domain.author = request.POST.get('author', None)
 
             new_domain.is_approved = False
+            new_domain.starter_app = request.POST.get('starter_app', '') == 'on'
             publish_on_submit = request.POST.get('publish_on_submit', "no") == "yes"
 
             image = self.snapshot_settings_form.cleaned_data['image']
