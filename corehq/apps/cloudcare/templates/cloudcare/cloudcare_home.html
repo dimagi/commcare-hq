@@ -187,6 +187,14 @@
         <section id="case-crumbs" style="width: 800px"></section>
         <section id="cases"></section>
         <section id="webforms" style="min-width: 800px;"></section>
+        {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
+            <section id="instance-xml-home" style="min-width: 800px;" name="instance-xml-home">
+                <textarea id="instance-xml" style="min-width: 800px;" name="instance-xml"></textarea>
+                <input id="evaluate-button" type="submit" value="Evaluate" />
+                <input id="xpath" name="xpath" value="XPath"/>
+                <textarea id="evaluate-result" style="min-width: 800px;"></textarea>
+            </section>
+        {% endif %}
     </div>
 
     {% include 'cloudcare/includes/case_details.html' %}
