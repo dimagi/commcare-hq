@@ -1727,7 +1727,10 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
     @memoized
     def snapshot_settings_form(self):
         if self.request.method == 'POST':
-            form = SnapshotSettingsForm(self.request.POST, self.request.FILES, domain=self.domain_object)
+            form = SnapshotSettingsForm(self.request.POST,
+                                        self.request.FILES,
+                                        domain=self.domain_object,
+                                        is_superuser=self.request.user.is_superuser)
             return form
 
         proj = self.published_snapshot if self.published_snapshot else self.domain_object
