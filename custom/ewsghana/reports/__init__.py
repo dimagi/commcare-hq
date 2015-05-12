@@ -129,8 +129,8 @@ class ReportingRatesData(EWSData):
         return self.get_supply_points(location_id).values_list('supply_point_id')
 
     def reporting_supply_points(self, supply_points=None):
-        all_supply_points = self.get_supply_points().values_list('supply_point_id', flat=True)
-        supply_points = supply_points if supply_points else all_supply_points
+        if not supply_points:
+            supply_points = self.get_supply_points().values_list('supply_point_id', flat=True)
         return StockTransaction.objects.filter(
             case_id__in=supply_points,
             report__date__range=[self.config['startdate'], self.config['enddate']]
