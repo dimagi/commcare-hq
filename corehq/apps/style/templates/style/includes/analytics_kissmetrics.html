@@ -1,6 +1,7 @@
 {% load hq_shared_tags %}
 <script>
     var _kmq = _kmq || [];
+    {% if KISSMETRICS_KEY %}
     var _kmk = _kmk || '{{KISSMETRICS_KEY}}';
     function _kms(u){
       setTimeout(function(){
@@ -12,4 +13,5 @@
     }
     _kms('//i.kissmetrics.com/i.js');
     _kms('//doug1izaerwt3.cloudfront.net/' + _kmk + '.1.js');
+    {% endif %}
 </script>
