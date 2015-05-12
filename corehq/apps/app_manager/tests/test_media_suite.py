@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 from django.test.utils import override_settings
 from lxml import etree
 
@@ -12,7 +12,7 @@ from corehq.apps.hqmedia.models import CommCareImage
 import commcare_translations
 
 
-class MediaSuiteTest(TestCase, TestFileMixin):
+class MediaSuiteTest(SimpleTestCase, TestFileMixin):
     file_path = ('data', 'suite')
 
     @override_settings(BASE_ADDRESS='192.cc.hq.1')

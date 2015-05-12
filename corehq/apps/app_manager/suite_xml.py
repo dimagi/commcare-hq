@@ -267,8 +267,7 @@ class TextOrDisplay(XmlObject):
 
         if media_text:
             self.display = LocalizedMediaDisplay(
-                text=text,
-                media_text=[text] + media_text if text else [] + media_text
+                media_text=[text] + media_text if text else media_text
             )
         elif text:
             self.text = text
@@ -1150,7 +1149,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                     reg_action = form.get_registration_actions(module.case_type)[0]
                     case_session_var = reg_action.case_session_var
 
-                if self.app.build_version >= '2.21':
+                if self.app.enable_localized_menu_media:
                     case_list_form = module.case_list_form
                     d.action = LocalizedAction(
                         menu_locale_id=self.id_strings.case_list_form_locale(module),
@@ -1524,14 +1523,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 e.form = form.xmlns
                 # ToDo: remove version-hardcode
                 # Ideally all of this version check should happen in Command/Display class
-                if self.app.build_version < '2.21':
-                    e.command = Command(
-                        id=self.id_strings.form_command(form),
-                        locale_id=self.id_strings.form_locale(form),
-                        media_image=form.default_media_image,
-                        media_audio=form.default_media_audio,
-                    )
-                else:
+                if self.app.enable_localized_menu_media:
                     e.command = LocalizedCommand(
                         id=self.id_strings.form_command(form),
                         menu_locale_id=self.id_strings.form_locale(form),
@@ -1539,6 +1531,13 @@ class SuiteGenerator(SuiteGeneratorBase):
                         media_audio=bool(len(form.all_audio_paths())),
                         image_locale_id=self.id_strings.form_icon_locale(form),
                         audio_locale_id=self.id_strings.form_audio_locale(form),
+                    )
+                else:
+                    e.command = Command(
+                        id=self.id_strings.form_command(form),
+                        locale_id=self.id_strings.form_locale(form),
+                        media_image=form.default_media_image,
+                        media_audio=form.default_media_audio,
                     )
                 config_entry = {
                     'module_form': self.configure_entry_module_form,
@@ -2125,7 +2124,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                         getattr(module, 'module_filter', None)):
                     menu_kwargs['relevant'] = interpolate_xpath(module.module_filter)
 
-                if self.app.build_version >= '2.21':
+                if self.app.enable_localized_menu_media:
                     menu_kwargs.update({
                         'menu_locale_id': self.id_strings.module_locale(module),
                         'media_image': bool(len(module.all_image_paths())),

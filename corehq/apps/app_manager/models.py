@@ -1011,8 +1011,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
 
     @staticmethod
     def _check_media_attribute(media_attr):
-        if media_attr not in ('media_image', 'media_audio'):
-            raise Exception("Unknown media attribute %s." % media_attr)
+        assert media_attr in ('media_image', 'media_audio')
 
     def _get_media_by_language(self, media_attr, lang):
         self._check_media_attribute(media_attr)
@@ -1063,8 +1062,8 @@ class NavMenuItemMediaMixin(DocumentSchema):
     def _all_media_paths(self, media_attr):
         self._check_media_attribute(media_attr)
         media_dict = getattr(self, media_attr) or {}
-        valid_media_paths = [media for media in media_dict.values() if media]
-        return valid_media_paths
+        valid_media_paths = set([media for media in media_dict.values() if media])
+        return list(valid_media_paths)
 
     def all_image_paths(self):
         return self._all_media_paths('media_image')

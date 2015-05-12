@@ -82,3 +82,11 @@ class CommCareFeatureSupportMixin(object):
         Filtering modules is supported by apps version 2.20 or higher
         """
         return self._require_minimum_version('2.20')
+
+    @property
+    def enable_localized_menu_media(self):
+        """
+        Forms/Modules can have language-specific icon/audio for apps
+        version 2.21 or higher
+        """
+        return self._require_minimum_version('2.21')

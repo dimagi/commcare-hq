@@ -202,14 +202,17 @@ def media_resource(multimedia_id, name):
     return u'media-{id}-{name}'.format(id=multimedia_id, name=name)
 
 
+@pattern('modules.m%d.icon')
 def module_icon_locale(module):
     return u"modules.m{module.id}.icon".format(module=module)
 
 
+@pattern('modules.m%d.audio')
 def module_audio_locale(module):
     return u"modules.m{module.id}.audio".format(module=module)
 
 
+@pattern('forms.m%df%d.icon')
 def form_icon_locale(form):
     return u"forms.m{module.id}f{form.id}.icon".format(
         module=form.get_module(),
@@ -217,7 +220,7 @@ def form_icon_locale(form):
     )
 
 
-# ToDo - figure out whether media-strings are custom or not
+@pattern('forms.m%df%d.audio')
 def form_audio_locale(form):
     return u"forms.m{module.id}f{form.id}.audio".format(
         module=form.get_module(),
@@ -225,10 +228,12 @@ def form_audio_locale(form):
     )
 
 
+@pattern('case_list_form.m%d.icon')
 def case_list_form_icon_locale(module):
     return u"case_list_form.m{module.id}.icon".format(module=module)
 
 
+@pattern('case_list_form.m%d.audio')
 def case_list_form_audio_locale(module):
     return u"case_list_form.m{module.id}.audio".format(module=module)
 
