@@ -305,6 +305,7 @@
                     {% if app.short_description %}
                         <p>{{ app.short_description }}</p>
                     {% endif %}
+                    {% if app.is_starter_app %}<span class="label label-success">{% trans "Starter App" %}</span>{% endif %}
                 </div>
             </div>
         </div>
