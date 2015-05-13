@@ -7,7 +7,7 @@ from casexml.apps.phone.tests.utils import generate_restore_payload
 from couchforms.tests.testutils import post_xform_to_couch
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import check_xml_line_by_line, delete_all_cases, delete_all_sync_logs
-from casexml.apps.phone.restore import RestoreConfig
+from casexml.apps.phone.restore import RestoreConfig, RestoreState, RestoreParams
 from casexml.apps.case.xform import process_cases
 from datetime import datetime, date
 from casexml.apps.phone.models import User, SyncLog
@@ -86,7 +86,9 @@ class OtaRestoreTest(TestCase):
 
         # implicit length assertion
         [newcase] = CommCareCase.view("case/by_user", reduce=False, include_docs=True).all()
-        self.assertEqual(1, len(list(BatchedCaseSyncOperation(user, None).get_all_case_updates())))
+        self.assertEqual(1, len(list(
+            BatchedCaseSyncOperation(RestoreState(None, user, RestoreParams())).get_all_case_updates()
+        )))
         expected_case_block = """
         <case>
             <case_id>asdf</case_id>

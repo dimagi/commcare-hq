@@ -205,9 +205,10 @@ class BatchedCaseSyncOperation(object):
     # use class variable to allow patching in tests
     chunk_size = 1000
 
-    def __init__(self, user, last_synclog, chunk_size=None):
-        self.user = user
-        self.last_synclog = last_synclog
+    def __init__(self, restore_state, chunk_size=None):
+
+        self.user = restore_state.user
+        self.last_synclog = restore_state.last_sync_log
         if chunk_size:
             self.chunk_size = chunk_size
         self.domain = self.user.domain

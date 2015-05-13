@@ -38,7 +38,7 @@ class CasePayloadProvider(LongRunningRestoreDataProvider):
 def get_case_payload_batched(restore_state, stock_settings):
     response = restore_state.restore_class()
 
-    sync_operation = BatchedCaseSyncOperation(restore_state.user, restore_state.last_sync_log)
+    sync_operation = BatchedCaseSyncOperation(restore_state)
     factor = _get_loadtest_factor(restore_state.domain, restore_state.user)
     for update in sync_operation.get_all_case_updates():
         current_count = 0
