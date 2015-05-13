@@ -41,6 +41,24 @@ def bootstrap_grapevine_gateway_update(orm):
         criteria_class=sms_gateway_fee_criteria_class,
     )
 
+    # Explicitly include Lesotho fees for pricing table UI.
+    # Incoming message to Lesotho
+    SmsGatewayFee.create_new(
+        GrapevineBackend.get_api_id(), INCOMING, Decimal('0.90'),
+        country_code='266',
+        currency=currency,
+        fee_class=sms_gateway_fee_class,
+        criteria_class=sms_gateway_fee_criteria_class,
+    )
+    # Outgoing message from Lesotho
+    SmsGatewayFee.create_new(
+        GrapevineBackend.get_api_id(), OUTGOING, Decimal('0.90'),
+        country_code='266',
+        currency=currency,
+        fee_class=sms_gateway_fee_class,
+        criteria_class=sms_gateway_fee_criteria_class,
+    )
+
     # Incoming message to arbitrary country
     SmsGatewayFee.create_new(
         GrapevineBackend.get_api_id(), INCOMING, Decimal('0.90'),
