@@ -2,7 +2,7 @@ from django.test import TestCase
 import os
 import time
 from django.test.utils import override_settings
-from casexml.apps.phone.caselogic import BatchedCaseSyncOperation
+from casexml.apps.phone.data_providers.case.batched import BatchedCaseSyncOperation
 from casexml.apps.phone.tests.utils import generate_restore_payload
 from couchforms.tests.testutils import post_xform_to_couch
 from casexml.apps.case.models import CommCareCase
