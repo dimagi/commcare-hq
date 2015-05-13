@@ -12,7 +12,7 @@ from django.http import StreamingHttpResponse
 from django.views.generic import View
 from django_transfer import TransferHttpResponse, is_enabled as transfer_enabled
 from corehq.util.view_utils import set_file_download
-from soil.util import expose_download
+from soil.util import expose_cached_download
 
 CHUNK_SIZE = 8192
 MULTIMEDIA_EXTENSIONS = ('.mp3', '.wav', '.jpg', '.png', '.gif', '.3gp', '.mp4', '.zip', )

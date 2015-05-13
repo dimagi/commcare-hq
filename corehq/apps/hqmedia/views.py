@@ -29,7 +29,7 @@ from corehq.apps.users.models import Permissions
 from corehq.util.zip_utils import DownloadZipAsync
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.cached_object import CachedObject
-from soil.util import expose_download
+from soil.util import expose_cached_download
 from django.utils.translation import ugettext as _
 from django_prbac.decorators import requires_privilege_raise404
 
@@ -269,7 +269,7 @@ class ProcessBulkUploadView(BaseProcessUploadedView):
     def process_upload(self):
         # save the file w/ soil
         self.uploaded_file.file.seek(0)
-        saved_file = expose_download(self.uploaded_file.file.read(), expiry=BulkMultimediaStatusCache.cache_expiry)
+        saved_file = expose_cached_download(self.uploaded_file.file.read(), expiry=BulkMultimediaStatusCache.cache_expiry)
         processing_id = saved_file.download_id
 
         status = BulkMultimediaStatusCache(processing_id)
