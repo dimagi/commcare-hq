@@ -41,7 +41,7 @@ def supply_points_with_latest_status_by_datespan(sps, status_type, status_value,
     This very similar method is used by the reminders.
     """
     ids = [sp._id for sp in sps]
-    inner = SupplyPointStatus.objects.filter(supply_point__in=ids,
+    inner = SupplyPointStatus.objects.filter(location_id__in=ids,
                                              status_type=status_type,
                                              status_date__gte=datespan.startdate,
                                              status_date__lte=datespan.enddate).annotate(pk=Max('id'))

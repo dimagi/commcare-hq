@@ -229,9 +229,10 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport,
 
     @property
     def report_config(self):
-        org_summary = OrganizationSummary.objects.filter(date__range=(self.datespan.startdate,
-                                                                      self.datespan.enddate),
-                                                         supply_point=self.request.GET.get('location_id'))
+        org_summary = OrganizationSummary.objects.filter(
+            date__range=(self.datespan.startdate, self.datespan.enddate),
+            location_id=self.request.GET.get('location_id')
+        )
 
         config = dict(
             domain=self.domain,
