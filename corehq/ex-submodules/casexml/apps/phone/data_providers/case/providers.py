@@ -22,5 +22,3 @@ class CasePayloadProvider(LongRunningRestoreDataProvider):
         # keep track of the number of batches (if any) for comparison in unit tests
         restore_state.provider_log['num_case_batches'] = num_batches
         return case_response
-
-

@@ -448,7 +448,8 @@ class RestoreConfig(object):
 
         self.restore_state.start_sync()
 
-        with self.restore_state.restore_class(self.user.username, items=self.params.include_item_count) as response:
+        with self.restore_state.restore_class(
+                self.user.username, items=self.params.include_item_count) as response:
             normal_providers = get_restore_providers()
             for provider in normal_providers:
                 for element in provider.get_elements(self.restore_state):
