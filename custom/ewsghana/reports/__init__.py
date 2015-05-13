@@ -129,8 +129,8 @@ class ReportingRatesData(EWSData):
         return self.get_supply_points(location_id).values_list('supply_point_id')
 
     def reporting_supply_points(self, supply_points=None):
-        all_supply_points = self.get_supply_points().values_list('supply_point_id', flat=True)
-        supply_points = supply_points if supply_points else all_supply_points
+        if not supply_points:
+            supply_points = self.get_supply_points().values_list('supply_point_id', flat=True)
         return StockTransaction.objects.filter(
             case_id__in=supply_points,
             report__date__range=[self.config['startdate'], self.config['enddate']]
@@ -214,6 +214,10 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
             'fpr_filters': self.fpr_report_filters(),
             'exportable': self.is_exportable,
             'location_id': self.request.GET.get('location_id'),
+            'slugs': [['dashboard_report', 'Dashboard'], ['stock_status', 'Stock Status Report'],
+                      ['reporting_page', 'Reporting Rates'], ['ews_mapreport', 'Maps'],
+                      ['stock_summary_report', 'Stock Summary Report'],
+                      ['cms_rms_summary_report', 'CMS and RMS Summary Report']]
         }
         return context
 

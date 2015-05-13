@@ -1774,7 +1774,12 @@ class InvoicePdf(SafeSaveDocument):
 
         template.get_pdf()
         filename = self.get_filename(invoice)
-        self.put_attachment(pdf_data, filename, 'application/pdf')
+        # this is slow and not unit tested
+        # best to just skip during unit tests for speed
+        if not settings.UNIT_TESTING:
+            self.put_attachment(pdf_data, filename, 'application/pdf')
+        else:
+            self.put_attachment('', filename, 'application/pdf')
         pdf_data.close()
 
         self.invoice_id = str(invoice.id)

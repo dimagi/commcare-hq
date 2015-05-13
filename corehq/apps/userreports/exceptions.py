@@ -6,3 +6,7 @@ class UserReportsError(Exception):
 
 class BadSpecError(UserReportsError):
     pass
+
+
+class UserQueryError(UserReportsError):
+    pass

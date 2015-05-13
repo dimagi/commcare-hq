@@ -9,6 +9,7 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 from casexml.apps.phone.tests.utils import synclog_id_from_restore_payload
+from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.commtrack.models import ConsumptionConfig, StockRestoreConfig, RequisitionCase, StockState
 from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import Product
@@ -351,9 +352,16 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         for product in self.products:
             self.check_product_stock(self.sp, product._id, 100, 0)
 
+    def test_blank_product_id(self):
+        initial = float(100)
+        balances = [('', initial)]
+        with self.assertRaises(MissingProductId):
+            # todo: if we ever want to fail more gracefully we can catch this exception and change this test
+            self.submit_xml_form(balance_submission(balances))
 
 
 class BugSubmissionsTest(CommTrackSubmissionTest):
+
     def test_device_report_submissions_ignored(self):
         """
         submit a device report with a stock block and make sure it doesn't
