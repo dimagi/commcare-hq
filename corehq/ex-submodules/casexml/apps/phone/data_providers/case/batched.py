@@ -5,7 +5,7 @@ import logging
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.caselogic import get_footprint
 from casexml.apps.phone.data_providers.case.stock import get_stock_payload
-from casexml.apps.phone.data_providers.case.utils import CaseSyncUpdate
+from casexml.apps.phone.data_providers.case.utils import CaseSyncUpdate, get_case_sync_updates
 from corehq.toggles import ENABLE_LOADTEST_USERS
 from dimagi.utils.couch.database import get_safe_write_kwargs
 from casexml.apps.phone import xml
@@ -248,19 +248,7 @@ class CaseSyncBatch(object):
         return filter_cases_modified_elsewhere_since_sync(list(cases), self.last_sync)
 
     def _case_sync_updates(self, all_potential_to_sync):
-        case_updates_to_sync = []
-
-        def _approximate_domain_match(case):
-            # if both objects have a domain then make sure they're the same, but if
-            # either is empty then just assume it's a match (this is just for legacy tests)
-            return self.domain == case.domain if self.domain and case.domain else True
-
-        for case in all_potential_to_sync:
-            sync_update = CaseSyncUpdate(case, self.last_sync)
-            if sync_update.required_updates and _approximate_domain_match(case):
-                case_updates_to_sync.append(sync_update)
-
-        return case_updates_to_sync
+        return get_case_sync_updates(self.domain, all_potential_to_sync, self.last_sync)
 
     def _fetch_missing_cases_and_wrap(self, casedoc_list):
         cases = []
