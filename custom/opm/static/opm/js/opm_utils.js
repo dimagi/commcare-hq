@@ -58,7 +58,7 @@ function splitTableByNumberAndAWCName(table, firstPage, otherPages) {
     var rows = table.children("tbody").children();
 
     rows.each(function(i, row) {
-        if(lastAWC !== "" && lastAWC !== row.children[2].textContent) {
+        if(lastAWC !== "" && lastAWC !== row.children[2].textContent && row.children[2].textContent.trim() !== "") {
             splitIndices.push(i);
             lastSplit = i;
             if (isFirstSplit) {
