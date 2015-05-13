@@ -1,15 +1,23 @@
-from soil import DownloadBase
+from soil import DownloadBase, CachedDownload, FileDownload
 from soil.exceptions import TaskFailedError
 from soil.heartbeat import heartbeat_enabled, is_alive
-from soil import CachedDownload
 
 
-def expose_cached_download(payload, expiry, backend=None, **kwargs):
+def expose_cached_download(payload, expiry, **kwargs):
     """
     Expose a cache download object.
     """
     ref = CachedDownload.create(payload, expiry, **kwargs)
     ref.save(expiry)
+    return ref
+
+
+def expose_file_download(path, **kwargs):
+    """
+    Expose a file download object that potentially uses the external drive
+    """
+    ref = FileDownload.create(path, **kwargs)
+    ref.save()
     return ref
 
 

@@ -7,10 +7,9 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponse, StreamingHttpResponse
 import uuid
 from django.conf import settings
-import tempfile
 import os
 import stat
-from tempfile import mkstemp
+from django_transfer import TransferHttpResponse
 
 GLOBAL_RW = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH
 
@@ -187,20 +186,22 @@ class CachedDownload(DownloadBase):
 class FileDownload(DownloadBase):
     """
     Download that lives on the filesystem
+    Uses django-transfer to get files stored on the external drive if use_transfer=True
     """
-    
-    def __init__(self, filename, mimetype="text/plain", 
+
+    def __init__(self, filename, mimetype="text/plain",
                  content_disposition='attachment; filename="download.txt"',
-                 transfer_encoding=None, extras=None, download_id=None, cache_backend='default', use_transfer=False):
-        super(FileDownload, self).__init__(mimetype, content_disposition, 
+                 transfer_encoding=None, extras=None, download_id=None, cache_backend='default',
+                 use_transfer=False):
+        super(FileDownload, self).__init__(mimetype, content_disposition,
                                              transfer_encoding, extras, download_id, cache_backend)
         self.filename = filename
         self.use_transfer = use_transfer
-    
+
     def get_content(self):
         with open(self.filename, 'rb') as f:
             return f.read()
-        
+
     def get_filename(self):
         return self.filename
 
@@ -219,9 +220,9 @@ class FileDownload(DownloadBase):
             return response
 
     @classmethod
-    def create(cls, path, expiry, **kwargs):
+    def create(cls, path, **kwargs):
         """
-        Create a FileDownload object from a payload, plus any 
+        Create a FileDownload object from a payload, plus any
         additional arguments to pass through to the constructor.
         """
         return cls(filename=path, **kwargs)
