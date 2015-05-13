@@ -57,6 +57,7 @@ branches:
   - locations-for-robber-barons  # Ethan 5/7
   - ucr-sliding-datespan # Nick P 5/11
   - partner-emails-initial-values # Nick P 5/12
+  - form-context-simple # Ben 5/13
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
@@ -65,6 +66,7 @@ submodules:
     #  - tf-persistence  # wsp 3/10
       - tf-persistence  # wsp 5/7
       - use-classes # ben 5/7
+      - form-context-simple # ben 5/13
 
   submodules/formtranslate-src:
     # let's leave this here even when empty
