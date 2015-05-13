@@ -1,5 +1,7 @@
+from collections import namedtuple
 import logging
 import csv
+from couchdbkit.exceptions import ResourceNotFound
 from django.core.management import BaseCommand
 from casexml.apps.case.models import CommCareCase
 from dimagi.utils.couch.database import iter_docs
@@ -9,6 +11,8 @@ logger.setLevel('DEBUG')
 
 
 MOTECH_ID = "fb6e0b19cbe3ef683a10c4c4766a1ef3"
+
+MissingParent = namedtuple("MissingParent", 'get_id owner_id')
 
 class CaseRow(object):
     headers = ['case_id', 'old_case_type', 'new_case_type',
@@ -38,7 +42,7 @@ class CaseRow(object):
             self.case.type,
             self.old_owner,
             self.case.owner_id,
-            self.parent._id if self.parent else 'no_parent',
+            self.parent.get_id if self.parent else 'no_parent',
             self.parent.owner_id if self.parent else 'no_parent',
             self.case.user_id,
             self.save
@@ -50,59 +54,66 @@ class Command(BaseCommand):
     """
 
     def handle(self, *args, **options):
-        csv_file = csv.writer(open('bihar_case_cleanup.csv', 'wb'))
-        csv_file.writerow(CaseRow.headers)
+        with open('bihar_case_cleanup.csv', 'wb') as f:
+            csv_file = csv.writer(f)
+            csv_file.writerow(CaseRow.headers)
 
-        blank_case_type_keys = [
-            ["all type", "care-bihar", ""],
-            ["all type", "care-bihar", None]
-        ]
-        blank_case_ids = []
-        for key in blank_case_type_keys:
-            blank_case_ids += [
-                c['id'] for c in
-                CommCareCase.view(
-                    'case/all_cases',
-                    startkey=key,
-                    endkey=key + [{}],
-                    reduce=False,
-                    include_docs=False,
-                ).all()
+            blank_case_type_keys = [
+                ["all type", "care-bihar", ""],
+                ["all type", "care-bihar", None]
             ]
+            blank_case_ids = []
+            for key in blank_case_type_keys:
+                blank_case_ids += [
+                    c['id'] for c in
+                    CommCareCase.view(
+                        'case/all_cases',
+                        startkey=key,
+                        endkey=key + [{}],
+                        reduce=False,
+                        include_docs=False,
+                    ).all()
+                ]
 
-        # task_case_ids = [c['id'] for c in
-        #         CommCareCase.get_all_cases("care-bihar", case_type="task")]
+            task_case_ids = [c['id'] for c in CommCareCase.get_all_cases("care-bihar", case_type="task")]
 
-        case_ids = set(blank_case_ids)  # | set(task_case_ids)
-        to_save = []
+            case_ids = set(blank_case_ids) | set(task_case_ids)
+            to_save = []
 
-        for i, doc in enumerate(iter_docs(CommCareCase.get_db(), case_ids)):
-            case = CommCareCase.wrap(doc)
+            logger.info("Total cases to process: {}".format(len(case_ids)))
+            for i, doc in enumerate(iter_docs(CommCareCase.get_db(), case_ids)):
+                case = CommCareCase.wrap(doc)
 
-            # if case.type and case.type != "task":
-            #     continue
+                if case.type and case.type != "task":
+                    continue
+    
+                parent = None
+                if case.indices:
+                    parent_id = case.indices[0].referenced_id
+                    try:
+                        parent = CommCareCase.get(parent_id)
+                    except ResourceNotFound:
+                        parent = MissingParent(get_id=parent_id, owner_id='Parent Missing')
 
-            parent = case.parent
-            case_row = CaseRow(case, parent)
+                case_row = CaseRow(case, parent)
 
-            if case.type != 'task':
-                if case.user_id == MOTECH_ID:
-                    case_row.update_type('task')
+                if case.type != 'task':
+                    if case.user_id == MOTECH_ID:
+                        case_row.update_type('task')
 
-            if parent and parent.owner_id != case.owner_id:
-                case_row.update_owner(parent.owner_id)
+                if parent and not isinstance(parent, MissingParent) and parent.owner_id != case.owner_id:
+                    case_row.update_owner(parent.owner_id)
 
-            csv_file.writerow(case_row.to_row())
-            #print case_row.to_row()
-            if case_row.save:
-                to_save.append(case_row.case)
+                if case_row.save:
+                    csv_file.writerow(case_row.to_row())
+                    to_save.append(case_row.case)
 
-            if len(to_save) > 25:
+                if len(to_save) > 100:
+                    CommCareCase.get_db().bulk_save(to_save)
+                    to_save = []
+
+                if i % 100 == 0:
+                    logger.info("{current}/{count} cases completed".format(current=i, count=len(case_ids)))
+
+            if to_save:
                 CommCareCase.get_db().bulk_save(to_save)
-                to_save = []
-
-            if i % 100 == 0:
-                logger.info("{current}/{count} cases completed".format(current=i, count=len(case_ids)))
-
-        if to_save:
-            CommCareCase.get_db().bulk_save(to_save)
