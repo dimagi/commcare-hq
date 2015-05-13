@@ -17,7 +17,7 @@ from django.utils.translation import ugettext as _
 import settings
 
 
-#copy paste from: https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/reports/standard/sms.py
+# copy paste from: https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/reports/standard/sms.py
 # we can't extend report by MessageLogReport.
 def _fmt(val):
     if val is None:
@@ -158,7 +158,7 @@ class UnrecognizedSMSReport(CustomProjectReport, ProjectReportParametersMixin,
                 self._fmt_timestamp(timestamp),
                 self._fmt_contact_link(message, doc_info),
                 _fmt(phone_number),
-                _fmt(direction_map.get(message.direction,"-")),
+                _fmt(direction_map.get(message.direction, "-")),
                 _fmt(message.text)
             ])
 

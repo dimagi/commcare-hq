@@ -4,10 +4,7 @@ from django.utils.translation import ugettext_noop
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter, BaseReportFilter
-from corehq.apps.reports.filters.select import MonthFilter
-from corehq.apps.reports_core.filters import DatespanFilter
 from custom.common import ALL_OPTION
-from dimagi.utils.decorators.memoized import memoized
 import settings
 
 
@@ -107,7 +104,7 @@ class ILSDateFilter(BaseReportFilter):
             {
                 'text': 'Year',
                 'val': 3,
-                'firstOptions':  [],
+                'firstOptions': [],
                 'secondOptions': years
             }]
 
