@@ -2,10 +2,10 @@ from collections import defaultdict
 from copy import deepcopy
 import itertools
 import logging
-from casexml.apps.case import const
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.caselogic import get_footprint
 from casexml.apps.phone.data_providers.case.stock import get_stock_payload
+from casexml.apps.phone.data_providers.case.utils import CaseSyncUpdate
 from corehq.toggles import ENABLE_LOADTEST_USERS
 from dimagi.utils.couch.database import get_safe_write_kwargs
 from casexml.apps.phone import xml
@@ -70,31 +70,6 @@ def _transform_loadtest_update(update, factor):
         index.referenced_id = _map_id(index.referenced_id, factor)
     case.name = '{} ({})'.format(case.name, factor)
     return CaseSyncUpdate(case, update.sync_token, required_updates=update.required_updates)
-
-
-class CaseSyncUpdate(object):
-    """
-    The record of how a case should sync
-    """
-    def __init__(self, case, sync_token, required_updates=None):
-        self.case = case
-        self.sync_token = sync_token
-        # cache this property since computing it can be expensive
-        self.required_updates = required_updates if required_updates is not None else self._get_required_updates()
-
-    def _get_required_updates(self):
-        """
-        Returns a list of the required updates for this case/token
-        pairing. Should be a list of actions like [create, update, close]
-        """
-        ret = []
-        if not self.sync_token or not self.sync_token.phone_has_case(self.case.get_id):
-            ret.append(const.CASE_ACTION_CREATE)
-        # always include an update
-        ret.append(const.CASE_ACTION_UPDATE)
-        if self.case.closed:
-            ret.append(const.CASE_ACTION_CLOSE)
-        return ret
 
 
 class GlobalSyncState(object):
