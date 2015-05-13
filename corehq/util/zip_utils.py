@@ -92,12 +92,14 @@ def iter_files_async(include_multimedia_files, include_index_files, app):
     return file_iterator, errors
 
 
-def make_zip_tempfile_async(include_multimedia_files, include_index_files, app, compress, download_id):
-    compression = zipfile.ZIP_DEFLATED if compress else zipfile.ZIP_STORED
-    fd, fpath = tempfile.mkstemp()
+def make_zip_tempfile_async(include_multimedia_files, include_index_files, app , download_id, compress_zip=False, path=None):
+    compression = zipfile.ZIP_DEFLATED if compress_zip else zipfile.ZIP_STORED
+    fpath = path
+    if not fpath:
+        _, fpath = tempfile.mkstemp()
 
     files, errors = iter_files_async(include_multimedia_files, include_index_files, app)
-    with os.fdopen(fd, 'w') as tmp:
+    with open(fpath, 'wb') as tmp:
         with zipfile.ZipFile(tmp, "w") as z:
             for path, data in files:
                 # don't compress multimedia files
@@ -127,12 +129,17 @@ class DownloadZipAsync(DownloadZip):
         if error_response:
             return error_response
 
+        path = None
+        if transfer_enabled() and os.path.isdir(settings.TRANSFER_FILE_DIR):
+            path = os.path.join(settings.TRANSFER_FILE_DIR, uuid.uuid4().hex)
+
         download = DownloadBase()
         download.set_task(make_zip_tempfile_task.delay(
             include_multimedia_files=self.include_multimedia_files,
             include_index_files=self.include_index_files,
             app=self.app,
             compress_zip=self.compress_zip,
-            download_id=download.download_id)
+            download_id=download.download_id,
+            path=path)
         )
         return download.get_start_response()
