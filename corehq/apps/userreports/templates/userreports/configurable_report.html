@@ -62,7 +62,13 @@
 
         // Bind the ReportConfigsViewModel to the save button.
         var defaultConfig = {{ default_config|JSON }};
-        defaultConfig.date_range = null;
+        {% if report.has_datespan %}
+            if(!defaultConfig.date_range) {
+                defaultConfig.date_range = 'last7';
+            }
+        {% else %}
+            defaultConfig.date_range = null;
+        {% endif %}
         $("#savedReports").reportUserConfigurableConfigEditor({
             filterForm: $("#report-filters"),
             items: {{ report_configs|JSON }},
