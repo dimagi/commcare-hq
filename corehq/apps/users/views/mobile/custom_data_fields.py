@@ -5,10 +5,12 @@ from corehq.apps.custom_data_fields import CustomDataModelMixin
 from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.views import BaseUserSettingsView
 
+CUSTOM_USER_DATA_FIELD_TYPE = 'UserFields'
+
 
 class UserFieldsView(CustomDataModelMixin, BaseUserSettingsView):
     urlname = 'user_fields_view'
-    field_type = 'UserFields'
+    field_type = CUSTOM_USER_DATA_FIELD_TYPE
     entity_string = _("User")
 
     @method_decorator(require_can_edit_commcare_users)
