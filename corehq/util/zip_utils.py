@@ -5,14 +5,14 @@ import uuid
 from wsgiref.util import FileWrapper
 import zipfile
 
-from soil import DownloadBase, FileDownload
+from soil import DownloadBase
 from django.conf import settings
 
 from django.http import StreamingHttpResponse
 from django.views.generic import View
 from django_transfer import TransferHttpResponse, is_enabled as transfer_enabled
 from corehq.util.view_utils import set_file_download
-from soil.util import expose_cached_download
+from soil.util import expose_cached_download, expose_file_download
 
 CHUNK_SIZE = 8192
 MULTIMEDIA_EXTENSIONS = ('.mp3', '.wav', '.jpg', '.png', '.gif', '.3gp', '.mp4', '.zip', )
@@ -112,13 +112,11 @@ def make_zip_tempfile_async(include_multimedia_files, include_index_files, app, 
                 file_compression = zipfile.ZIP_STORED if extension in MULTIMEDIA_EXTENSIONS else compression
                 z.writestr(path, data, file_compression)
 
-    file_download = FileDownload(filename=fpath,
-                                 mimetype='application/zip' if compress_zip else 'application/x-zip-compressed',
-                                 download_id=download_id,
-                                 content_disposition='attachment; filename="commcare.zip"',
-                                 use_transfer=use_transfer)
-    file_download.save()
-    return file_download
+    return expose_file_download(fpath,
+                                mimetype='application/zip' if compress_zip else 'application/x-zip-compressed',
+                                download_id=download_id,
+                                content_disposition='attachment; filename="commcare.zip"',
+                                use_transfer=use_transfer)
 
 
 class DownloadZipAsync(DownloadZip):
