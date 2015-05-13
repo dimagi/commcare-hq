@@ -1,25 +1,28 @@
 from django.test import TestCase
+from lxml import etree
+
 from casexml.apps.case.tests import delete_all_cases, delete_all_xforms
 from casexml.apps.case.tests.util import delete_all_sync_logs
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.tests.utils import generate_restore_payload
-from casexml.apps.stock.models import StockReport, StockTransaction
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
-from corehq.apps.commtrack import const
-from corehq.apps.groups.models import Group
-from corehq.apps.locations.models import Location, LocationType
-from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.domain.models import Domain
-from corehq.apps.commtrack.sms import StockReportParser, process
-from corehq.apps.commtrack.util import get_default_requisition_config, get_or_create_default_program
-from corehq.apps.commtrack.models import SupplyPointCase, CommtrackConfig, ConsumptionConfig
-from corehq.apps.users.models import CommCareUser
-from corehq.apps.sms.backend import test
-from corehq.apps.commtrack.helpers import make_supply_point
-from corehq.apps.products.models import Product
+from casexml.apps.stock.models import StockReport, StockTransaction
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_safe_write_kwargs
-from lxml import etree
+
+from corehq.apps.domain.models import Domain
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.groups.models import Group
+from corehq.apps.locations.models import Location, LocationType
+from corehq.apps.products.models import Product
+from corehq.apps.sms.backend import test
+from corehq.apps.users.models import CommCareUser
+
+from .. import const
+from ..helpers import make_supply_point
+from ..models import SupplyPointCase, CommtrackConfig, ConsumptionConfig
+from ..sms import StockReportParser, process
+from ..util import get_default_requisition_config, get_or_create_default_program
 
 
 TEST_DOMAIN = 'commtrack-test'
