@@ -49,11 +49,9 @@ branches:
   - locations-as-groups # tw 1/20
   - fixtures-spike  # cz 1/29
   - usercase # Norman 3/27
-  - new-location  # Ethan 4/14
   - small-invoices # Nick P 4/30
   - case-list-menu-icons # TS 5/4
   - update-submodules # TS 5/6
-  - locations-for-robber-barons+new-location  # Ethan 5/7
   - locations-for-robber-barons  # Ethan 5/7
   - form-context-simple # Ben 5/13
 submodules:
