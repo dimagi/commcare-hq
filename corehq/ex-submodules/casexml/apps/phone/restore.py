@@ -540,9 +540,6 @@ class RestoreConfig(object):
 
         self.cache = get_redis_default_cache()
 
-        # keep track of the number of batches (if any) for comparison in unit tests
-        self.num_batches = None
-
     @property
     @memoized
     def sync_log(self):

@@ -84,6 +84,7 @@ class CasePayloadProvider(LongRunningRestoreDataProvider):
             last_synclog=restore_state.last_sync_log,
             new_synclog=restore_state.current_sync_log,
         )
+        # keep track of the number of batches (if any) for comparison in unit tests
         restore_state.provider_log['num_case_batches'] = num_batches
         return case_response
 
