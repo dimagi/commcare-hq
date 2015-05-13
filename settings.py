@@ -372,7 +372,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'custom.m4change',
 
     # submodules with tests that run on travis
-    'couchexport',
+    # 'couchexport',
     'ctable',
     'ctable_view',
     'dimagi.utils',
