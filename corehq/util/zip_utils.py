@@ -107,16 +107,14 @@ def make_zip_tempfile_async(include_multimedia_files, include_index_files, app ,
                 print "zipping: ", path
                 file_compression = zipfile.ZIP_STORED if extension in MULTIMEDIA_EXTENSIONS else compression
                 z.writestr(path, data, file_compression)
-
-    f = open(fpath, 'r')
-    # Problem here if files are large
-    return expose_download(f.read(),
-                           60 * 60 * 2,
-                           backend=FileDownload,
-                           mimetype='application/zip',
-                           download_id=download_id,
-                           content_disposition='attachment; filename="commcare.zip"'
-                           )
+    expiry = 60 * 60 * 2
+    file_download = FileDownload.create(fpath,
+                                        expiry=expiry,
+                                        mimetype='application/zip',
+                                        download_id=download_id,
+                                        content_disposition='attachment; filename="commcare.zip"')
+    file_download.save()
+    return file_download
 
 
 class DownloadZipAsync(DownloadZip):
