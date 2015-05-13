@@ -20,7 +20,7 @@ from tastypie.throttle import CacheThrottle
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.es import FormES
 from corehq.apps.users.decorators import require_permission, require_permission_raw
-from corehq.toggles import IS_DEVELOPER
+from corehq.toggles import IS_DEVELOPER, API_THROTTLE_WHITELIST
 from couchforms.models import XFormInstance
 
 # CCHQ imports
@@ -149,12 +149,20 @@ class AdminAuthentication(LoginAndDomainAuthentication):
         return self._auth_test(request, wrappers=wrappers, domain='dimagi', **kwargs)
 
 
+class HQThrottle(CacheThrottle):
+    def should_be_throttled(self, identifier, **kwargs):
+        if API_THROTTLE_WHITELIST.enabled(identifier):
+            return False
+
+        return super(HQThrottle, self).should_be_throttled(identifier, **kwargs)
+
+
 class CustomResourceMeta(object):
     authorization = ReadOnlyAuthorization()
     authentication = LoginAndDomainAuthentication()
     serializer = CustomXMLSerializer()
     default_format='application/json'
-    throttle = CacheThrottle(throttle_at=getattr(settings, 'CCHQ_API_THROTTLE_REQUESTS', 25),
+    throttle = HQThrottle(throttle_at=getattr(settings, 'CCHQ_API_THROTTLE_REQUESTS', 25),
                              timeframe=getattr(settings, 'CCHQ_API_THROTTLE_TIMEFRAME', 15))
 
 

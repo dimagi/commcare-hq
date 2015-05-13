@@ -103,9 +103,6 @@ from toggle.models import Toggle
 
 accounting_logger = logging.getLogger('accounting')
 
-# Domain not required here - we could be selecting it for the first time. See notes domain.decorators
-# about why we need this custom login_required decorator
-
 PAYMENT_ERROR_MESSAGES = {
     400: _('Your request was not formatted properly.'),
     403: _('Forbidden.'),
@@ -115,6 +112,8 @@ PAYMENT_ERROR_MESSAGES = {
 }
 
 
+# Domain not required here - we could be selecting it for the first time. See notes domain.decorators
+# about why we need this custom login_required decorator
 @login_required
 def select(request, domain_select_template='domain/select.html', do_not_redirect=False):
     domains_for_user = Domain.active_for_user(request.user)
@@ -2470,7 +2469,6 @@ class TransferDomainView(BaseAdminProjectSettingsView):
             return {'form': self.transfer_domain_form}
 
     @method_decorator(domain_admin_required)
-    @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         if not TRANSFER_DOMAIN.enabled(request.domain):
             raise Http404()

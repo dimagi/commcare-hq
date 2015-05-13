@@ -544,8 +544,20 @@
                             <button type="button" class="btn" data-bind="
                                 click: function() {show_deleted(!show_deleted());},
                                 css: {active: show_deleted}">
-                                <span data-bind="visible: !show_deleted()">{% trans "Show Deleted Questions and Advanced Properties" %}</span>
-                                <span data-bind="visible: show_deleted">{% trans "Hide Deleted Questions and Advanced Properties" %}</span>
+                                <span data-bind="visible: !show_deleted()">
+                                {% if custom_export.type == 'form' %}
+                                    {% trans "Show Deleted Questions and Advanced Properties" %}
+                                {% else %}
+                                    {% trans "Show Deleted Properties and Advanced Properties" %}
+                                {% endif %}
+                                </span>
+                                <span data-bind="visible: show_deleted">
+                                {% if custom_export.type == 'form' %}
+                                    {% trans "Hide Deleted Questions and Advanced Properties" %}
+                                {% else %}
+                                    {% trans "Hide Deleted Properties and Advanced Properties" %}
+                                {% endif %}
+                                </span>
                             </button>
                         </div>
                     </div>
@@ -570,7 +582,11 @@
                                         <a href="#" class="btn btn-mini" data-bind="click: $root.selectAll">{% trans "Select All" %}</a>
                                         <a href="#" class="btn btn-mini btn-inverse" data-bind="click: $root.selectNone">{% trans "Select None" %}</a></th>
                                     <th>
+                                    {% if custom_export.type == 'form' %}
                                         {% trans "Question" %}
+                                    {% else %}
+                                        {% trans "Property" %}
+                                    {% endif %}
                                     </th>
                                     <th>{% trans "Display" %}</th>
                                     {% if custom_export.type == 'case' and request|feature_preview_enabled:"SPLIT_MULTISELECT_CASE_EXPORT"%}

@@ -12,3 +12,4 @@ Jinja2==2.7.1
 docutils==0.11
 -e git+git://github.com/dimagi/luna.git@1.0.0#egg=luna
 fixture
+sniffer

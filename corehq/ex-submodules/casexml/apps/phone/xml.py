@@ -30,6 +30,7 @@ def get_sync_element(restore_id):
     elem.append(safe_element("restore_id", restore_id))
     return elem
 
+
 def get_case_element(case, updates, version=V1):
     
     check_version(version)

@@ -1079,54 +1079,55 @@ class ProjectUsersTab(UITab):
                 }
             ]))
 
-            if self.project.locations_enabled:
-                from corehq.apps.locations.views import (
-                    LocationsListView,
-                    NewLocationView,
-                    EditLocationView,
-                    LocationImportView,
-                    LocationImportStatusView,
-                    LocationFieldsView,
-                    LocationTypesView,
-                )
+        if self.project.locations_enabled:
+            from corehq.apps.locations.views import (
+                LocationsListView,
+                NewLocationView,
+                EditLocationView,
+                LocationImportView,
+                LocationImportStatusView,
+                LocationFieldsView,
+                LocationTypesView,
+            )
+            from corehq.apps.locations.permissions import (
+                user_can_edit_location_types
+            )
 
-                locations_config = {
-                    'title': LocationsListView.page_title,
-                    'url': reverse(LocationsListView.urlname, args=[self.domain]),
-                    'show_in_dropdown': True,
-                    'subpages': [
-                        {
-                            'title': NewLocationView.page_title,
-                            'urlname': NewLocationView.urlname,
-                        },
-                        {
-                            'title': EditLocationView.page_title,
-                            'urlname': EditLocationView.urlname,
-                        },
-                        {
-                            'title': LocationImportView.page_title,
-                            'urlname': LocationImportView.urlname,
-                        },
-                        {
-                            'title': LocationImportStatusView.page_title,
-                            'urlname': LocationImportStatusView.urlname,
-                        },
-                        {
-                            'title': LocationFieldsView.page_name(),
-                            'urlname': LocationFieldsView.urlname,
-                        },
-                    ]
-                }
-                advanced_locations_config = {
+            locations_config = [{
+                'title': LocationsListView.page_title,
+                'url': reverse(LocationsListView.urlname, args=[self.domain]),
+                'show_in_dropdown': True,
+                'subpages': [
+                    {
+                        'title': NewLocationView.page_title,
+                        'urlname': NewLocationView.urlname,
+                    },
+                    {
+                        'title': EditLocationView.page_title,
+                        'urlname': EditLocationView.urlname,
+                    },
+                    {
+                        'title': LocationImportView.page_title,
+                        'urlname': LocationImportView.urlname,
+                    },
+                    {
+                        'title': LocationImportStatusView.page_title,
+                        'urlname': LocationImportStatusView.urlname,
+                    },
+                    {
+                        'title': LocationFieldsView.page_name(),
+                        'urlname': LocationFieldsView.urlname,
+                    },
+                ]
+            }]
+
+            if user_can_edit_location_types(self.couch_user, self.project):
+                locations_config.append({
                     'title': LocationTypesView.page_title,
                     'url': reverse(LocationTypesView.urlname, args=[self.domain]),
                     'show_in_dropdown': True,
-                }
-
-                items.append((_('Locations'), [
-                    locations_config,
-                    advanced_locations_config,
-                ]))
+                })
+            items.append((_('Locations'), locations_config))
 
         return items
 
