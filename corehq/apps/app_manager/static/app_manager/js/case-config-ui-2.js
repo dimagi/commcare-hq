@@ -2,7 +2,7 @@
 
 var action_names = ["open_case", "update_case", "close_case", "case_preload",
     // Usercase actions are managed in the User Case Management tab.
-    "update_usercase", "usercase_preload"];
+    "usercase_update", "usercase_preload"];
 
 var CaseConfig = (function () {
     "use strict";
@@ -706,8 +706,8 @@ var CaseConfig = (function () {
             self.close_case = {
                 condition: (o.close_case || {}).condition || DEFAULT_CONDITION_ALWAYS
             };
-            self.update_usercase = {
-                update: (o.update_usercase || {}).update || {}
+            self.usercase_update = {
+                update: (o.usercase_update || {}).update || {}
             };
             self.usercase_preload = {
                 preload: (o.usercase_preload || {}).preload || {}
@@ -811,7 +811,7 @@ var CaseConfig = (function () {
             var required_properties = [];
             var case_properties = CC_UTILS.propertyDictToArray(
                 required_properties,
-                self.update_usercase.update,
+                self.usercase_update.update,
                 caseConfig
             );
             var case_preload = CC_UTILS.propertyDictToArray(
@@ -841,7 +841,7 @@ var CaseConfig = (function () {
             var case_properties = x[0];
             var case_preload = CC_UTILS.preloadArrayToDict(o.case_preload);
             return {
-                update_usercase: {
+                usercase_update: {
                     update: case_properties
                 },
                 usercase_preload: {

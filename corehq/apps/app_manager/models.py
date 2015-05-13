@@ -315,7 +315,7 @@ class FormActions(DocumentSchema):
     case_preload = SchemaProperty(PreloadAction)
     referral_preload = SchemaProperty(PreloadAction)
 
-    update_usercase = SchemaProperty(UpdateCaseAction)
+    usercase_update = SchemaProperty(UpdateCaseAction)
     usercase_preload = SchemaProperty(PreloadAction)
 
     subcases = SchemaListProperty(OpenSubCaseAction)
@@ -1042,19 +1042,19 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
             if self.requires == 'none':
                 action_types = (
                     'open_case', 'update_case', 'close_case', 'subcases',
-                    'update_usercase', 'usercase_preload',
+                    'usercase_update', 'usercase_preload',
                 )
             elif self.requires == 'case':
                 action_types = (
                     'update_case', 'close_case', 'case_preload', 'subcases',
-                    'update_usercase', 'usercase_preload',
+                    'usercase_update', 'usercase_preload',
                 )
             else:
                 # this is left around for legacy migrated apps
                 action_types = (
                     'open_case', 'update_case', 'close_case',
                     'case_preload', 'subcases',
-                    'update_usercase', 'usercase_preload',
+                    'usercase_update', 'usercase_preload',
                 )
         return self._get_active_actions(action_types)
 
@@ -1142,11 +1142,11 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
     def get_case_updates(self, case_type):
         # This method is used by both get_all_case_properties and
         # get_usercase_properties. In the case of usercase properties, use
-        # the update_usercase action, and for normal cases, use the
+        # the usercase_update action, and for normal cases, use the
         # update_case action
         if case_type == self.get_module().case_type or case_type == USERCASE_TYPE:
             format_key = self.get_case_property_name_formatter()
-            action = self.actions.update_usercase if case_type == USERCASE_TYPE else self.actions.update_case
+            action = self.actions.usercase_update if case_type == USERCASE_TYPE else self.actions.update_case
             return [format_key(*item) for item in action.update.items()]
         return []
 

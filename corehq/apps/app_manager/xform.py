@@ -1009,11 +1009,11 @@ class XForm(WrappedNode):
         usercase_path = 'commcare_usercase/'
         actions = form.active_actions()
 
-        if 'update_usercase' in actions and actions['update_usercase'].update:
+        if 'usercase_update' in actions and actions['usercase_update'].update:
             self.add_usercase_bind(usercase_path)
             usercase_block = _make_elem('{x}commcare_usercase')
             case_block = CaseBlock(self, usercase_path)
-            case_block.add_update_block(actions['update_usercase'].update)
+            case_block.add_update_block(actions['usercase_update'].update)
             usercase_block.append(case_block.elem)
             self.data_node.append(usercase_block)
 
