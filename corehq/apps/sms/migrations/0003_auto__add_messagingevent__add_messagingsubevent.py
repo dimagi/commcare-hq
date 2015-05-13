@@ -3,9 +3,14 @@ import datetime
 from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
+from corehq.apps import smsforms
 
 
 class Migration(SchemaMigration):
+
+    depends_on = (
+        ('smsforms', '0003_auto__chg_field_sqlxformssession_couch_id'),
+    )
 
     def forwards(self, orm):
 
@@ -17,7 +22,6 @@ class Migration(SchemaMigration):
             ('source', self.gf('django.db.models.fields.CharField')(max_length=3, null=False)),
             ('source_id', self.gf('django.db.models.fields.CharField')(max_length=255, null=True)),
             ('content_type', self.gf('django.db.models.fields.CharField')(max_length=3, null=False)),
-            ('form_unique_id', self.gf('django.db.models.fields.CharField')(max_length=255, null=True)),
             ('status', self.gf('django.db.models.fields.CharField')(max_length=3, null=False)),
             ('error_code', self.gf('django.db.models.fields.CharField')(max_length=255, null=True)),
             ('recipient_type', self.gf('django.db.models.fields.CharField')(max_length=3, null=True, db_index=True)),
@@ -31,6 +35,9 @@ class Migration(SchemaMigration):
             ('parent', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['sms.MessagingEvent'])),
             ('recipient_type', self.gf('django.db.models.fields.CharField')(max_length=3, null=False)),
             ('recipient_id', self.gf('django.db.models.fields.CharField')(max_length=255, null=True)),
+            ('content_type', self.gf('django.db.models.fields.CharField')(max_length=3, null=False)),
+            ('form_unique_id', self.gf('django.db.models.fields.CharField')(max_length=255, null=True)),
+            ('xforms_session', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['smsforms.SQLXFormsSession'], null=True)),
             ('case_id', self.gf('django.db.models.fields.CharField')(max_length=255, null=True)),
             ('status', self.gf('django.db.models.fields.CharField')(max_length=3, null=False)),
             ('error_code', self.gf('django.db.models.fields.CharField')(max_length=255, null=True)),
@@ -62,7 +69,6 @@ class Migration(SchemaMigration):
             'source': ('django.db.models.fields.CharField', [], {'max_length': '3', 'null': 'False'}),
             'source_id': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True'}),
             'content_type': ('django.db.models.fields.CharField', [], {'max_length': '3', 'null': 'False'}),
-            'form_unique_id': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True'}),
             'status': ('django.db.models.fields.CharField', [], {'max_length': '3', 'null': 'False'}),
             'error_code': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True'}),
             'recipient_type': ('django.db.models.fields.CharField', [], {'max_length': '3', 'null': 'True', 'db_index': 'True'}),
@@ -74,6 +80,9 @@ class Migration(SchemaMigration):
             'parent': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['sms.MessagingEvent']"}),
             'recipient_type': ('django.db.models.fields.CharField', [], {'max_length': '3', 'null': 'False'}),
             'recipient_id': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True'}),
+            'content_type': ('django.db.models.fields.CharField', [], {'max_length': '3', 'null': 'False'}),
+            'form_unique_id': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True'}),
+            'xforms_session': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['smsforms.SQLXFormsSession']", 'null': 'True'}),
             'case_id': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True'}),
             'status': ('django.db.models.fields.CharField', [], {'max_length': '3', 'null': 'False'}),
             'error_code': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True'}),

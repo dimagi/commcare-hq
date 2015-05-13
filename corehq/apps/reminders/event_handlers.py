@@ -318,6 +318,7 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers, logge
                 session.save()
 
             reminder.xforms_session_ids.append(session.session_id)
+            logged_subevent.xforms_session = session
 
             # Send out first message
             if len(responses) > 0:
