@@ -360,8 +360,8 @@ class RestoreState(object):
     def version(self):
         return self.params.version
 
-    @memoized
     @property
+    @memoized
     def owner_ids(self):
         return self.user.get_owner_ids()
 
