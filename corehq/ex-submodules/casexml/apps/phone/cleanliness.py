@@ -6,6 +6,7 @@ from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.util import get_indexed_cases
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from corehq.apps.users.util import WEIRD_USER_IDS
+from corehq.toggles import OWNERSHIP_CLEANLINESS
 
 
 FootprintInfo = namedtuple('FootprintInfo', ['base_ids', 'all_ids'])
@@ -30,9 +31,21 @@ def set_cleanliness_flags(domain, owner_id):
         domain=domain,
         defaults={'is_clean': False}
     )[0]
-    # if it already is clean we don't need to do anything since that gets invalidated on submission
+
+    def needs_full_check(domain, cleanliness_obj):
+        # if it already is clean we don't need to do anything since that gets invalidated on submission
+        return (
+            # if clean, only check if the toggle is not enabled since then it won't be properly invalidated
+            # on submission
+            cleanliness_obj.is_clean and not OWNERSHIP_CLEANLINESS.enabled(domain)
+        ) or (
+            # if dirty, first check the hint and only do a full check if it's not valid
+            not cleanliness_object.is_clean and (
+                not cleanliness_object.hint or not hint_still_valid(domain, owner_id, cleanliness_object.hint)
+            )
+        )
     if not cleanliness_object.is_clean:
-        if not cleanliness_object.hint or not hint_still_valid(domain, owner_id, cleanliness_object.hint):
+        if needs_full_check(domain, cleanliness_object):
             # either the hint wasn't set or wasn't valid - rebuild from scratch
             cleanliness_flag = get_cleanliness_flag_from_scratch(domain, owner_id)
             cleanliness_object.is_clean = cleanliness_flag.is_clean
