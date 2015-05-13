@@ -11,7 +11,7 @@ from corehq.apps.locations.models import Location, LocationType
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.sms import StockReportParser, process
-from corehq.apps.commtrack.util import get_default_requisition_config
+from corehq.apps.commtrack.util import get_default_requisition_config, get_or_create_default_program
 from corehq.apps.commtrack.models import SupplyPointCase, CommtrackConfig, ConsumptionConfig
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.sms.backend import test
@@ -72,6 +72,7 @@ PACKER_USER = {
     },
 }
 
+
 def bootstrap_domain(domain_name=TEST_DOMAIN):
     # little test utility that makes a commtrack-enabled domain with
     # a default config and a location
@@ -126,6 +127,23 @@ def bootstrap_location_types(domain):
         previous = location_type
 
 
+def make_product(domain, name, code, program_id):
+    p = Product()
+    p.domain = domain
+    p.name = name
+    p.code = code.lower()
+    p.program_id = program_id
+    p.save()
+    return p
+
+
+def bootstrap_products(domain):
+    program = get_or_create_default_program(domain)
+    make_product(domain, 'Sample Product 1', 'pp', program.get_id)
+    make_product(domain, 'Sample Product 2', 'pq', program.get_id)
+    make_product(domain, 'Sample Product 3', 'pr', program.get_id)
+
+
 def make_loc(code, name=None, domain=TEST_DOMAIN, type=TEST_LOCATION_TYPE, parent=None):
     name = name or code
     LocationType.objects.get_or_create(domain=domain, name=type)
@@ -150,6 +168,7 @@ class CommTrackTest(TestCase):
         self.backend = test.bootstrap(TEST_BACKEND, to_console=True)
         self.domain = bootstrap_domain()
         bootstrap_location_types(self.domain.name)
+        bootstrap_products(self.domain.name)
         self.ct_settings = CommtrackConfig.for_domain(self.domain.name)
         self.ct_settings.consumption_config = ConsumptionConfig(
             min_transactions=0,
