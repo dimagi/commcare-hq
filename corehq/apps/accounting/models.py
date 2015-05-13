@@ -1364,7 +1364,7 @@ class InvoiceBase(models.Model):
     is_hidden = models.BooleanField(default=False)
     tax_rate = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
     balance = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
-    date_due = models.DateField(db_index=True)
+    date_due = models.DateField(db_index=True, null=True)
     date_paid = models.DateField(blank=True, null=True)
     date_start = models.DateField()
     date_end = models.DateField()
