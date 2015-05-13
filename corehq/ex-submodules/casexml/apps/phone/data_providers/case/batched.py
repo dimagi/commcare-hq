@@ -17,7 +17,7 @@ from dimagi.utils.parsing import string_to_utc_datetime
 logger = logging.getLogger(__name__)
 
 
-def get_case_payload_batched(restore_state, stock_settings):
+def get_case_payload_batched(restore_state):
     response = restore_state.restore_class()
 
     sync_operation = BatchedCaseSyncOperation(restore_state)
@@ -37,8 +37,10 @@ def get_case_payload_batched(restore_state, stock_settings):
     restore_state.current_sync_log.dependent_cases_on_phone = sync_state.actual_extended_cases
     restore_state.current_sync_log.save(**get_safe_write_kwargs())
 
-    # commtrack balance sections
-    commtrack_elements = get_stock_payload(restore_state.domain, stock_settings, sync_state.all_synced_cases)
+    # commtrack ledger sections
+    commtrack_elements = get_stock_payload(
+        restore_state.domain, restore_state.stock_settings, sync_state.all_synced_cases
+    )
     response.extend(commtrack_elements)
 
     return response, sync_operation.batch_count
