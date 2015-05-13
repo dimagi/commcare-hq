@@ -44,7 +44,7 @@ class FixtureElementProvider(RestoreDataProvider):
         # fixture block
         for fixture in generator.get_fixtures(
             restore_state.user,
-            restore_state.params.version,
+            restore_state.version,
             restore_state.last_sync_log
         ):
             yield fixture

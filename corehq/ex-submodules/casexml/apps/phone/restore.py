@@ -356,6 +356,10 @@ class RestoreState(object):
     def is_initial(self):
         return self.last_sync_log is None
 
+    @property
+    def version(self):
+        return self.params.version
+
     def start_sync(self):
         self.start_time = datetime.utcnow()
         self.current_sync_log = self.create_sync_log()

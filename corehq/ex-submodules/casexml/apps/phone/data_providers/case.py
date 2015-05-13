@@ -44,7 +44,7 @@ def get_case_payload_batched(restore_state, stock_settings):
         current_count = 0
         original_update = update
         while current_count < factor:
-            element = xml.get_case_element(update.case, update.required_updates, restore_state.params.version)
+            element = xml.get_case_element(update.case, update.required_updates, restore_state.version)
             response.append(element)
             current_count += 1
             if current_count < factor:
