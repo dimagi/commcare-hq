@@ -794,11 +794,11 @@ class Subscriber(models.Model):
                 ),
                 'old_plan': old_subscription.plan_version if old_subscription else None,
                 'new_plan': new_subscription.plan_version if new_subscription else None,
-                'old_subscription_start_date': old_subscription.date_start if old_subscription else None,
-                'new_subscription_end_date': new_subscription.date_end if new_subscription else None,
+                'old_subscription': old_subscription,
+                'new_subscription': new_subscription,
                 'billing_account': billing_account,
                 'request': request,
-                'referer': request.META.get('HTTP_REFERER') if request else None
+                'referer': request.META.get('HTTP_REFERER') if request else None,
             }
             send_HTML_email(
                 "Subscription Change Alert: %(domain)s from %(old_plan)s to %(new_plan)s" % email_context,
