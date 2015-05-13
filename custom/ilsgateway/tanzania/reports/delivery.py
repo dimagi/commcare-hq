@@ -35,10 +35,10 @@ class LeadTimeHistory(ILSData):
         rows = []
         for loc in locations:
             try:
-                org_summary = OrganizationSummary.objects.filter(supply_point=loc.location_id,
-                                                                 date__range=(self.config['startdate'],
-                                                                              self.config['enddate']))\
-                    .aggregate(average_lead_time_in_days=Avg('average_lead_time_in_days'))
+                org_summary = OrganizationSummary.objects.filter(
+                    location_id=loc.location_id,
+                    date__range=(self.config['startdate'], self.config['enddate'])
+                ).aggregate(average_lead_time_in_days=Avg('average_lead_time_in_days'))
             except OrganizationSummary.DoesNotExist:
                 continue
 

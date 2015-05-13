@@ -27,7 +27,7 @@ class AlertReport(GenericTabularReport, CustomProjectReport, ProjectReportParame
         begin_date = datetime(year=year, month=month, day=1)
         end_date = (begin_date + timedelta(days=32)).replace(day=1) - timedelta(seconds=1)
         alerts = Alert.objects.filter(
-            supply_point=self.request.GET.get('location_id', ''),
+            location_id=self.request.GET.get('location_id', ''),
             date__lte=end_date,
             expires__lte=end_date
         ).order_by('-id')
