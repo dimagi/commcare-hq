@@ -1,0 +1,27 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+<div class="modal hide fade" id="async-file-download" data-download-url="{{url}}">
+    <div class="modal-header">
+        <a class="close" data-dismiss="modal">&times;</a>
+        <h3>{% trans "Downloading Your File" %}</h3>
+        <div data-bind='text: download_url' ></div>
+    </div>
+    <div class="modal-body">
+        <div class="span12" id="downloading">
+          <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+          {% trans 'Processing data. Please wait...' %}
+        </div>
+        <div class="span12 hide" id="download-progress"></div>
+        <div class="span12 hide" id="download-complete">
+            <p class="alert alert-success">{% trans "Your file is ready." %}</p>
+            <a href="#" id="file-download-url">
+            <button type="submit" class="btn btn-primary">
+                <i class="icon icon-cloud-download"></i> {% trans 'Download File Now' %}
+            </button>
+            </a>
+        </div>
+    </div>
+</div>
+
+
+<script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
