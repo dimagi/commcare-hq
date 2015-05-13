@@ -44,12 +44,11 @@ def set_cleanliness_flags(domain, owner_id):
                 not cleanliness_object.hint or not hint_still_valid(domain, owner_id, cleanliness_object.hint)
             )
         )
-    if not cleanliness_object.is_clean:
-        if needs_full_check(domain, cleanliness_object):
-            # either the hint wasn't set or wasn't valid - rebuild from scratch
-            cleanliness_flag = get_cleanliness_flag_from_scratch(domain, owner_id)
-            cleanliness_object.is_clean = cleanliness_flag.is_clean
-            cleanliness_object.hint = cleanliness_flag.hint
+    if needs_full_check(domain, cleanliness_object):
+        # either the hint wasn't set or wasn't valid - rebuild from scratch
+        cleanliness_flag = get_cleanliness_flag_from_scratch(domain, owner_id)
+        cleanliness_object.is_clean = cleanliness_flag.is_clean
+        cleanliness_object.hint = cleanliness_flag.hint
 
     cleanliness_object.last_checked = datetime.utcnow()
     cleanliness_object.save()
