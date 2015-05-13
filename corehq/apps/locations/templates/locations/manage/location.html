@@ -78,6 +78,7 @@
     });
   </script>
 
+  {% if not form.is_new_location %}
   <ul class="nav nav-tabs">
     <li class="{% if form_tab == "basic" %}active{% endif %}">
       <a href="#basic-info" data-toggle="tab">{% trans "Basic" %}</a>
@@ -101,6 +102,7 @@
     </li>
     {% endif %}
   </ul>
+  {% endif %}
 
   <div class="tab-content">
     <div class="tab-pane {% if form_tab == "basic" %}active{% endif %}" id="basic-info">

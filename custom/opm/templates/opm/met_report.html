@@ -32,3 +32,27 @@
         </div>
 {% endif %}
 {% endblock %}
+
+{% block js-inline %}
+    {{ block.super }}
+    <script>
+        var updateTotal = function (bodyRows, totalCells) {
+            var total = 0;
+            var childNumber = 16;
+            var totalCell = $(totalCells)[childNumber];
+            $(bodyRows).each(function(id) {
+                var cell = $(this).children()[childNumber];
+                total += parseFloat($(cell).text().trim().split('.')[1]);
+            });
+            $(totalCell).text('Rs. ' + total);
+        };
+
+        var updateTotalRow = function () {
+            updateTotal($('.dataTables_scrollBody tbody tr'), $('.dataTables_scrollFoot td'));
+        };
+        $('#report_table_met_report').on('draw.dt', function() {
+           updateTotalRow();
+        });
+        updateTotalRow();
+    </script>
+{% endblock %}

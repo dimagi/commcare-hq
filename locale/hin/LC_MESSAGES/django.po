@@ -24485,9 +24485,8 @@ msgid "Conditions Met Report"
 msgstr "संकेतक"
 
 #: custom/opm/reports.py:895
-#, fuzzy
 msgid "Total Payment"
-msgstr "कुल लाभार्थी"
+msgstr "कुल भुगतान"
 
 #: custom/opm/templates/opm/beneficiary_report.html:36
 #: custom/opm/templates/opm/new_hsr_print.html:17
