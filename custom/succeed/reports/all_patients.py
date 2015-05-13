@@ -8,7 +8,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.reports.datatables import DTSortType
 from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn, SqlTabularReport, DataFormatter, \
     TableDataFormat
-from corehq.const import SERVER_DATETIME_FORMAT
+from corehq.util.dates import iso_string_to_datetime
 from custom.succeed.reports.patient_interactions import PatientInteractionsReport
 from custom.succeed.reports.patient_task_list import PatientTaskListReport
 from dimagi.utils.decorators.memoized import memoized
@@ -44,7 +44,12 @@ def target_date(visit_name, visit_days, randomization_date):
 
 def date_format(date_str):
     if date_str:
-        date = datetime.strptime(date_str, SERVER_DATETIME_FORMAT)
+        # this comes in with a ' ' instead of 'T' for some reason
+        # would be nice to go back and figure out where that happens
+        # probably `date_str = unicode(dt)` happens somewhere
+        if ' ' in date_str:
+            date_str = date_str.replace(' ', 'T')
+        date = iso_string_to_datetime(date_str)
         return date.strftime(OUTPUT_DATE_FORMAT)
     else:
         return EMPTY_FIELD

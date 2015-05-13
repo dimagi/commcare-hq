@@ -56,6 +56,8 @@ branches:
   - drop-new-project-page # Jenny 5/6
   - locations-for-robber-barons+new-location  # Ethan 5/7
   - locations-for-robber-barons  # Ethan 5/7
+  - ucr-sliding-datespan # Nick P 5/11
+  - partner-emails-initial-values # Nick P 5/12
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

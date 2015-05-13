@@ -316,7 +316,7 @@ class CaseFactory(object):
     def __init__(self, domain=None, case_defaults=None, form_extras=None):
         self.domain = domain
         self.case_defaults = case_defaults if case_defaults is not None else {}
-        self.form_extras = form_extras
+        self.form_extras = form_extras if form_extras is not None else {}
         # almost everything is V2 so override the default for this unless explicitly set
         if 'version' not in self.case_defaults:
             self.case_defaults['version'] = V2
@@ -330,10 +330,13 @@ class CaseFactory(object):
             **kwargs
         ).as_xml()
 
-    def post_case_blocks(self, caseblocks):
+    def post_case_blocks(self, caseblocks, form_extras=None):
+        submit_form_extras = copy.copy(self.form_extras)
+        if form_extras is not None:
+            submit_form_extras.update(form_extras)
         return post_case_blocks(
             caseblocks,
-            form_extras=self.form_extras,
+            form_extras=submit_form_extras,
             domain=self.domain,
         )
 
@@ -344,10 +347,10 @@ class CaseFactory(object):
         kwargs['create'] = True
         return self.create_or_update_case(CaseStructure(case_id=uuid.uuid4().hex, attrs=kwargs))[0]
 
-    def create_or_update_case(self, case_structure):
-        return self.create_or_update_cases([case_structure])
+    def create_or_update_case(self, case_structure, form_extras=None):
+        return self.create_or_update_cases([case_structure], form_extras)
 
-    def create_or_update_cases(self, case_structures):
+    def create_or_update_cases(self, case_structures, form_extras=None):
         def _get_case_block(substructure):
             return self.get_case_block(substructure.case_id, index=substructure.index, **substructure.attrs)
 
@@ -361,7 +364,8 @@ class CaseFactory(object):
             return blocks
 
         self.post_case_blocks(
-            [block for structure in case_structures for block in _get_case_blocks(structure)]
+            [block for structure in case_structures for block in _get_case_blocks(structure)],
+            form_extras,
         )
 
         return [

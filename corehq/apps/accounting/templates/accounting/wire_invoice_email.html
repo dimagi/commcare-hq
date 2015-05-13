@@ -49,17 +49,19 @@
     {% endblocktrans %}
 </p>
 
-<p>
+<ol>
+    <li>
     {% blocktrans %}
     Send the wire payment to Dimagi’s bank account and include the invoice ID in the wire payment details. Dimagi’s bank account details and the invoice ID can be found in the attached invoice.
     {% endblocktrans %}
-</p>
+    </li>
 
-<p>
+    <li>
     {% blocktrans %}
     Send an email to {{ accounts_email }} after you have made the payment including the date of the payment, the amount, the invoice number and the project space name.
     {% endblocktrans %}
-</p>
+    </li>
+</ol>
 
 <p>
     {% blocktrans %}

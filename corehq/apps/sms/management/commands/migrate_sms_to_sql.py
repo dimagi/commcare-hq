@@ -29,8 +29,8 @@ class Command(BaseCommand):
         ids = self.get_sms_couch_ids()
         total_count = len(ids)
         for doc in iter_docs(FRISMSLog.get_db(), ids):
-            couch_sms = FRISMSLog.wrap(doc)
             try:
+                couch_sms = FRISMSLog.wrap(doc)
                 couch_sms._migration_do_sync()
             except Exception as e:
                 print 'Could not sync SMSLog %s: %s' % (couch_sms._id, e)
