@@ -478,11 +478,13 @@ def process_url_params(params, columns):
     defined in `sql_directives`, the corresponding function is used to
     produce a filter.
     """
-    format_ = params.get('$format', Format.UNZIPPED_CSV)
+    # support passing `format` instead of `$format` so we don't break people's
+    # existing URLs.  Let's remove this once we can.
+    format_ = params.get('$format', params.get('format', Format.UNZIPPED_CSV))
     keyword_filters = {}
     sql_filters = []
     for key, value in params.items():
-        if key == '$format':
+        if key in ('$format', 'format'):
             continue
 
         for suffix, fn in sql_directives:
