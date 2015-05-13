@@ -478,11 +478,13 @@ def process_url_params(params, columns):
     defined in `sql_directives`, the corresponding function is used to
     produce a filter.
     """
-    format_ = params.get('$format', Format.UNZIPPED_CSV)
+    # support passing `format` instead of `$format` so we don't break people's
+    # existing URLs.  Let's remove this once we can.
+    format_ = params.get('$format', params.get('format', Format.UNZIPPED_CSV))
     keyword_filters = {}
     sql_filters = []
     for key, value in params.items():
-        if key == '$format':
+        if key in ('$format', 'format'):
             continue
 
         for suffix, fn in sql_directives:
@@ -524,10 +526,10 @@ def export_data_source(request, domain, config_id):
             yield row
 
     fd, path = tempfile.mkstemp()
-    with os.fdopen(fd, 'wb') as tempfile:
+    with os.fdopen(fd, 'wb') as tmpfile:
         try:
             tables = [[config.table_id, get_table(q)]]
-            export_from_tables(tables, tempfile, params.format)
+            export_from_tables(tables, tmpfile, params.format)
         except exc.DataError:
             msg = _("There was a problem executing your query, please make "
                     "sure your parameters are valid.")
