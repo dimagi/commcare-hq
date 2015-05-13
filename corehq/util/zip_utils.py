@@ -92,10 +92,14 @@ def iter_files_async(include_multimedia_files, include_index_files, app):
     return file_iterator, errors
 
 
-def make_zip_tempfile_async(include_multimedia_files, include_index_files, app , download_id, compress_zip=False, path=None):
+def make_zip_tempfile_async(include_multimedia_files, include_index_files, app, download_id, compress_zip=False):
     compression = zipfile.ZIP_DEFLATED if compress_zip else zipfile.ZIP_STORED
-    fpath = path
-    if not fpath:
+
+    use_transfer = False
+    if transfer_enabled() and os.path.isdir(settings.TRANSFER_FILE_DIR):
+        fpath = os.path.join(settings.TRANSFER_FILE_DIR, uuid.uuid4().hex)
+        use_transfer = True
+    else:
         _, fpath = tempfile.mkstemp()
 
     files, errors = iter_files_async(include_multimedia_files, include_index_files, app)
@@ -107,12 +111,12 @@ def make_zip_tempfile_async(include_multimedia_files, include_index_files, app ,
                 print "zipping: ", path
                 file_compression = zipfile.ZIP_STORED if extension in MULTIMEDIA_EXTENSIONS else compression
                 z.writestr(path, data, file_compression)
-    expiry = 60 * 60 * 2
-    file_download = FileDownload.create(fpath,
-                                        expiry=expiry,
-                                        mimetype='application/zip',
-                                        download_id=download_id,
-                                        content_disposition='attachment; filename="commcare.zip"')
+
+    file_download = FileDownload(filename=fpath,
+                                 mimetype='application/zip' if compress_zip else 'application/x-zip-compressed',
+                                 download_id=download_id,
+                                 content_disposition='attachment; filename="commcare.zip"',
+                                 use_transfer=use_transfer)
     file_download.save()
     return file_download
 
@@ -127,17 +131,12 @@ class DownloadZipAsync(DownloadZip):
         if error_response:
             return error_response
 
-        path = None
-        if transfer_enabled() and os.path.isdir(settings.TRANSFER_FILE_DIR):
-            path = os.path.join(settings.TRANSFER_FILE_DIR, uuid.uuid4().hex)
-
         download = DownloadBase()
         download.set_task(make_zip_tempfile_task.delay(
             include_multimedia_files=self.include_multimedia_files,
             include_index_files=self.include_index_files,
             app=self.app,
             compress_zip=self.compress_zip,
-            download_id=download.download_id,
-            path=path)
+            download_id=download.download_id)
         )
         return download.get_start_response()
