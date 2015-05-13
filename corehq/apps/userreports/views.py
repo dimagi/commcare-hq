@@ -523,16 +523,15 @@ def export_data_source(request, domain, config_id):
         for row in q:
             yield row
 
-    try:
-        full_table = list(get_table(q))
-    except exc.DataError:
-        msg = _("There was a problem executing your query, please make sure "
-                "your parameters are valid.")
-        return HttpResponse(msg, status=400)
-
     fd, path = tempfile.mkstemp()
-    with os.fdopen(fd, 'wb') as temp:
-        export_from_tables([[config.table_id, full_table]], temp, params.format)
+    with os.fdopen(fd, 'wb') as tempfile:
+        try:
+            tables = [[config.table_id, get_table(q)]]
+            export_from_tables(tables, tempfile, params.format)
+        except exc.DataError:
+            msg = _("There was a problem executing your query, please make "
+                    "sure your parameters are valid.")
+            return HttpResponse(msg, status=400)
         return export_response(Temp(path), params.format, config.display_name)
 
 
