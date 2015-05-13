@@ -26,7 +26,7 @@ from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareMul
 from corehq.apps.hqmedia.tasks import process_bulk_upload_zip
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-from corehq.util.zip_utils import DownloadZip
+from corehq.util.zip_utils import DownloadZipAsync
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.cached_object import CachedObject
 from soil.util import expose_download
@@ -458,7 +458,7 @@ def _iter_media_files(media_objects):
     return _media_files(), errors
 
 
-class DownloadMultimediaZip(DownloadZip, ApplicationViewMixin):
+class DownloadMultimediaZip(DownloadZipAsync, ApplicationViewMixin):
     """
     This is where the Multimedia for an application gets generated.
     Expects domain and app_id to be in its args
@@ -468,10 +468,8 @@ class DownloadMultimediaZip(DownloadZip, ApplicationViewMixin):
     name = "download_multimedia_zip"
     compress_zip = False
     zip_name = 'commcare.zip'
+    include_multimedia_files = True
 
-    def iter_files(self):
-        self.app.remove_unused_mappings()
-        return _iter_media_files(self.app.get_media_objects())
 
     def check_before_zipping(self):
         if not self.app.multimedia_map:

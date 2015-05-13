@@ -1,9 +1,10 @@
 import os
 import tempfile
+import itertools
 from wsgiref.util import FileWrapper
 import zipfile
 
-from soil import DownloadBase
+from soil import DownloadBase, FileDownload
 from django.http import StreamingHttpResponse
 from django.views.generic import View
 from corehq.util.view_utils import set_file_download
@@ -52,18 +53,8 @@ class DownloadZip(View):
     def iter_files(self):
         raise NotImplementedError()
 
-    # def iter_files_async(self):
-    #     raise NotImplementedError()
-
     def check_before_zipping(self):
         raise NotImplementedError()
-
-    def _get_async(self, files, compress=True):
-        from corehq.util.tasks import make_zip_tempfile_async
-        download = DownloadBase()
-        download.set_task(make_zip_tempfile_async.delay(
-            list(files), compress=compress, download_id=download.download_id))
-        return download.get_start_response()
 
     def get(self, request, *args, **kwargs):
         error_response = self.check_before_zipping()
@@ -71,8 +62,6 @@ class DownloadZip(View):
             return error_response
 
         files, errors = self.iter_files()
-        if self.download_async:
-            return self._get_async(files, compress=self.compress_zip)
 
         fpath = make_zip_tempfile(files, compress=self.compress_zip)
         if errors:
@@ -82,3 +71,66 @@ class DownloadZip(View):
         response['Content-Length'] = os.path.getsize(fpath)
         set_file_download(response, self.zip_name)
         return response
+
+
+def iter_files_async(include_multimedia_files, include_index_files, app):
+    file_iterator = lambda: iter([])
+    errors = []
+    if include_multimedia_files:
+        from corehq.apps.hqmedia.views import _iter_media_files
+        app.remove_unused_mappings()
+        file_iterator, errors = _iter_media_files(app.get_media_objects())
+    if include_index_files:
+        from corehq.apps.app_manager.views import _iter_index_files
+        if app.is_remote_app():
+            file_iterator = _iter_index_files(app)
+        else:
+            file_iterator = itertools.chain(file_iterator, _iter_index_files(app))
+
+    return file_iterator, errors
+
+
+def make_zip_tempfile_async(include_multimedia_files, include_index_files, app, compress, download_id):
+    compression = zipfile.ZIP_DEFLATED if compress else zipfile.ZIP_STORED
+    fd, fpath = tempfile.mkstemp()
+
+    files, errors = iter_files_async(include_multimedia_files, include_index_files, app)
+    with os.fdopen(fd, 'w') as tmp:
+        with zipfile.ZipFile(tmp, "w") as z:
+            for path, data in files:
+                # don't compress multimedia files
+                extension = os.path.splitext(path)[1]
+                print "zipping: ", path
+                file_compression = zipfile.ZIP_STORED if extension in MULTIMEDIA_EXTENSIONS else compression
+                z.writestr(path, data, file_compression)
+
+    f = open(fpath, 'r')
+    # Problem here if files are large
+    return expose_download(f.read(),
+                           60 * 60 * 2,
+                           backend=FileDownload,
+                           mimetype='application/zip',
+                           download_id=download_id,
+                           content_disposition='attachment; filename="commcare.zip"'
+                           )
+
+
+class DownloadZipAsync(DownloadZip):
+    include_multimedia_files = False
+    include_index_files = False
+
+    def get(self, request, *args, **kwargs):
+        from corehq.util.tasks import make_zip_tempfile_task
+        error_response = self.check_before_zipping()
+        if error_response:
+            return error_response
+
+        download = DownloadBase()
+        download.set_task(make_zip_tempfile_task.delay(
+            include_multimedia_files=self.include_multimedia_files,
+            include_index_files=self.include_index_files,
+            app=self.app,
+            compress_zip=self.compress_zip,
+            download_id=download.download_id)
+        )
+        return download.get_start_response()

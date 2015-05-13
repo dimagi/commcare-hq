@@ -2447,23 +2447,34 @@ def delete_copy(request, domain, app_id):
 BAD_BUILD_MESSAGE = "Sorry: this build is invalid. Try deleting it and rebuilding. If error persists, please contact us at commcarehq-support@dimagi.com"
 
 
-def _download_index_files(request):
+def _download_index_files(app):
     files = []
-    if request.app.copy_of:
-        files = [(path[len('files/'):], request.app.fetch_attachment(path))
-                 for path in request.app._attachments
+    errors = []
+    if app.copy_of:
+        files = [(path[len('files/'):], app.fetch_attachment(path))
+                 for path in app._attachments
                  if path.startswith('files/')]
     else:
         try:
-            files = request.app.create_all_files().items()
+            files = app.create_all_files().items()
         except Exception:
-            messages.error(request, _(
-                "We were unable to get your files "
-                "because your Application has errors. "
-                "Please click <strong>Make New Version</strong> "
-                "under <strong>Deploy</strong> "
-                "for feedback on how to fix these errors."
-            ), extra_tags='html')
+            pass
+
+            #raise index files exception
+
+            # errors.append(_(
+            #     "We were unable to get your files "
+            #     "because your Application has errors. "
+            #     "Please click <strong>Make New Version</strong> "
+            #     "under <strong>Deploy</strong> "
+            #     "for feedback on how to fix these errors."))
+            # messages.error(request, _(
+            #     "We were unable to get your files "
+            #     "because your Application has errors. "
+            #     "Please click <strong>Make New Version</strong> "
+            #     "under <strong>Deploy</strong> "
+            #     "for feedback on how to fix these errors."
+            # ), extra_tags='html')
     return sorted(files)
 
 
@@ -2480,33 +2491,37 @@ def download_index(request, domain, app_id, template="app_manager/download_index
     })
 
 
+def _iter_index_files(app):
+    skip_files = ('profile.xml', 'profile.ccpr', 'media_profile.xml')
+    text_extensions = ('.xml', '.ccpr', '.txt')
+    get_name = lambda f: {'media_profile.ccpr': 'profile.ccpr'}.get(f, f)
+
+    def _files():
+        for name, f in _download_index_files(app):
+            if name not in skip_files:
+                # TODO: make RemoteApp.create_all_files not return media files
+                extension = os.path.splitext(name)[1]
+                data = _encode_if_unicode(f) if extension in text_extensions else f
+                yield (get_name(name), data)
+    return _files()
+
+
 class DownloadCCZ(DownloadMultimediaZip):
     name = 'download_ccz'
     compress_zip = True
     zip_name = 'commcare.ccz'
     download_async = True
+    include_index_files = True
 
     def check_before_zipping(self):
         pass
 
     def iter_files(self):
-        skip_files = ('profile.xml', 'profile.ccpr', 'media_profile.xml')
-        text_extensions = ('.xml', '.ccpr', '.txt')
-        get_name = lambda f: {'media_profile.ccpr': 'profile.ccpr'}.get(f, f)
-
-        def _files():
-            for name, f in _download_index_files(self.request):
-                if name not in skip_files:
-                    # TODO: make RemoteApp.create_all_files not return media files
-                    extension = os.path.splitext(name)[1]
-                    data = _encode_if_unicode(f) if extension in text_extensions else f
-                    yield (get_name(name), data)
-
         if self.app.is_remote_app():
-            return _files(), []
+            return _iter_index_files(self.app), []
         else:
             media_files, errors = super(DownloadCCZ, self).iter_files()
-            return itertools.chain(_files(), media_files), errors
+            return itertools.chain(_iter_index_files(), media_files), errors
 
 
 
