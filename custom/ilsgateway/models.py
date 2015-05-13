@@ -128,7 +128,7 @@ class SupplyPointStatus(models.Model):
     status_value = models.CharField(max_length=50,
                                     choices=((c, c) for c in SupplyPointStatusValues.CHOICES))
     status_date = models.DateTimeField(default=datetime.utcnow)
-    supply_point = models.CharField(max_length=100, db_index=True)
+    location_id = models.CharField(max_length=100, db_index=True)
     external_id = models.PositiveIntegerField(null=True, db_index=True)
 
     def save(self, *args, **kwargs):
@@ -146,7 +146,7 @@ class SupplyPointStatus(models.Model):
 
     @classmethod
     def wrap_from_json(cls, obj, location_id):
-        obj['supply_point'] = location_id
+        obj['location_id'] = location_id
         obj['external_id'] = obj['id']
         del obj['id']
         return cls(**obj)
@@ -160,7 +160,7 @@ class SupplyPointStatus(models.Model):
 
 # Ported from: https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzania/models.py#L170
 class DeliveryGroupReport(models.Model):
-    supply_point = models.CharField(max_length=100, db_index=True)
+    location_id = models.CharField(max_length=100, db_index=True)
     quantity = models.IntegerField()
     report_date = models.DateTimeField(default=datetime.utcnow())
     message = models.CharField(max_length=100, db_index=True)
@@ -172,7 +172,7 @@ class DeliveryGroupReport(models.Model):
 
     @classmethod
     def wrap_from_json(cls, obj, location_id):
-        obj['supply_point'] = location_id
+        obj['location_id'] = location_id
         obj['external_id'] = obj['id']
         del obj['id']
         return cls(**obj)
@@ -185,7 +185,7 @@ class ReportingModel(models.Model):
     A model to encapsulate aggregate (data warehouse) data used by a report.
     """
     date = models.DateTimeField()                   # viewing time period
-    supply_point = models.CharField(max_length=100, db_index=True)
+    location_id = models.CharField(max_length=100, db_index=True)
     create_date = models.DateTimeField(editable=False)
     update_date = models.DateTimeField(editable=False)
     external_id = models.PositiveIntegerField(db_index=True, null=True)
@@ -217,7 +217,7 @@ class OrganizationSummary(ReportingModel):
     average_lead_time_in_days = models.FloatField(default=0)
 
     def __unicode__(self):
-        return "%s: %s/%s" % (self.supply_point, self.date.month, self.date.year)
+        return "%s: %s/%s" % (self.location_id, self.date.month, self.date.year)
 
 
 # Ported from:
@@ -240,7 +240,7 @@ class GroupSummary(models.Model):
         org_summary_id = obj['org_summary']['id']
         del obj['org_summary']['id']
         obj['org_summary']['external_id'] = org_summary_id
-        obj['org_summary']['supply_point'] = location_id
+        obj['org_summary']['location_id'] = location_id
         obj['org_summary']['create_date'] = force_to_datetime(obj['org_summary']['create_date'])
         obj['org_summary']['update_date'] = force_to_datetime(obj['org_summary']['update_date'])
         obj['org_summary']['date'] = force_to_datetime(obj['org_summary']['date'])
@@ -317,7 +317,7 @@ class ProductAvailabilityData(ReportingModel):
     def wrap_from_json(cls, obj, domain, location_id):
         product = Product.get_by_code(domain, obj['product'])
         obj['product'] = product._id
-        obj['supply_point'] = location_id
+        obj['location_id'] = location_id
         obj['external_id'] = obj['id']
         del obj['id']
         return cls(**obj)
