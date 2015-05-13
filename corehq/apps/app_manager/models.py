@@ -1144,13 +1144,10 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         # get_usercase_properties. In the case of usercase properties, use
         # the update_usercase action, and for normal cases, use the
         # update_case action
-        if case_type == self.get_module().case_type:
+        if case_type == self.get_module().case_type or case_type == USERCASE_TYPE:
             format_key = self.get_case_property_name_formatter()
-            if case_type == USERCASE_TYPE:
-                return [format_key(*item) for item in self.actions.update_usercase.update.items()]
-        elif case_type == USERCASE_TYPE:
-            format_key = self.get_case_property_name_formatter()
-            return [format_key(*item) for item in self.actions.update_case.update.items()]
+            action = self.actions.update_usercase if case_type == USERCASE_TYPE else self.actions.update_case
+            return [format_key(*item) for item in action.update.items()]
         return []
 
     @memoized

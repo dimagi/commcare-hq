@@ -17,8 +17,8 @@ from corehq.apps.app_manager.const import (
     CT_LEDGER_APPROVED,
     CT_LEDGER_PREFIX,
     USERCASE_TYPE,
-    USERCASE_ID
-)
+    USERCASE_ID,
+    USERCASE_PREFIX)
 from corehq.apps.app_manager.xform import XForm, XFormException, parse_xml
 from dimagi.utils.couch import CriticalSection
 import re
@@ -399,6 +399,10 @@ def enable_usercase(domain_name):
             domain.usercase_enabled = True
             domain.save()
             create_user_cases.delay(domain_name)
+
+
+def prefix_usercase_properties(properties):
+    return {'{}{}'.format(USERCASE_PREFIX, prop) for prop in properties}
 
 
 def get_cloudcare_session_data(suite_gen, domain_name, form, couch_user):

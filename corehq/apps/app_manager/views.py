@@ -98,7 +98,7 @@ from corehq.apps.app_manager.util import (
     is_usercase_in_use,
     enable_usercase,
     actions_use_usercase,
-    get_usercase_properties)
+    get_usercase_properties, prefix_usercase_properties)
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import LoginAndDomainMixin
 from corehq.util.compression import decompress
@@ -834,10 +834,12 @@ def get_module_view_context_and_template(app, module):
             'long': module.case_details.long,
             'child_case_types': child_case_types,
         }
-        if is_usercase_in_use(app.domain):
-            item['properties'] = sorted(builder.get_properties(case_type) | builder.get_properties(USERCASE_TYPE))
-        else:
-            item['properties'] = sorted(builder.get_properties(case_type))
+        case_properties = builder.get_properties(case_type)
+        if is_usercase_in_use(app.domain) and case_type != USERCASE_TYPE:
+            usercase_properties = prefix_usercase_properties(builder.get_properties(USERCASE_TYPE))
+            case_properties |= usercase_properties
+
+        item['properties'] = sorted(case_properties)
 
         if isinstance(module, AdvancedModule):
             details = [item]
