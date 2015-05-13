@@ -1019,7 +1019,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
             if getattr(module, 'root_module_id', None) and module.root_module not in modules:
                 modules.append(module.root_module)
             modules.extend([mod for mod in module.get_child_modules() if mod not in modules])
-            linkable_forms = list(itertools.chain.from_iterable(list(m.get_forms()) for m in modules))
+            linkable_forms = list(itertools.chain.fromdable(list(m.get_forms()) for m in modules))
             context.update({
                 'linkable_forms': map(
                     lambda f: {'unique_id': f.unique_id, 'name': qualified_form_name(f)},
@@ -2491,7 +2491,7 @@ def download_index(request, domain, app_id, template="app_manager/download_index
     })
 
 
-def _iter_index_files(app):
+def iter_index_files(app):
     skip_files = ('profile.xml', 'profile.ccpr', 'media_profile.xml')
     text_extensions = ('.xml', '.ccpr', '.txt')
     get_name = lambda f: {'media_profile.ccpr': 'profile.ccpr'}.get(f, f)
@@ -2518,10 +2518,10 @@ class DownloadCCZ(DownloadMultimediaZip):
 
     def iter_files(self):
         if self.app.is_remote_app():
-            return _iter_index_files(self.app), []
+            return iter_index_files(self.app), []
         else:
             media_files, errors = super(DownloadCCZ, self).iter_files()
-            return itertools.chain(_iter_index_files(), media_files), errors
+            return itertools.chain(iter_index_files(), media_files), errors
 
 
 @safe_download

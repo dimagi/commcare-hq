@@ -79,15 +79,15 @@ def iter_files_async(include_multimedia_files, include_index_files, app):
     file_iterator = lambda: iter([])
     errors = []
     if include_multimedia_files:
-        from corehq.apps.hqmedia.views import _iter_media_files
+        from corehq.apps.hqmedia.views import iter_media_files
         app.remove_unused_mappings()
-        file_iterator, errors = _iter_media_files(app.get_media_objects())
+        file_iterator, errors = iter_media_files(app.get_media_objects())
     if include_index_files:
-        from corehq.apps.app_manager.views import _iter_index_files
+        from corehq.apps.app_manager.views import iter_index_files
         if app.is_remote_app():
-            file_iterator = _iter_index_files(app)
+            file_iterator = iter_index_files(app)
         else:
-            file_iterator = itertools.chain(file_iterator, _iter_index_files(app))
+            file_iterator = itertools.chain(file_iterator, iter_index_files(app))
 
     return file_iterator, errors
 
@@ -109,7 +109,6 @@ def make_zip_tempfile_async(include_multimedia_files,
             for path, data in files:
                 # don't compress multimedia files
                 extension = os.path.splitext(path)[1]
-                print "zipping: ", path
                 file_compression = zipfile.ZIP_STORED if extension in MULTIMEDIA_EXTENSIONS else compression
                 z.writestr(path, data, file_compression)
 

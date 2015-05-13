@@ -430,7 +430,7 @@ class CheckOnProcessingFile(BaseMultimediaView):
         return HttpResponse("workin on it")
 
 
-def _iter_media_files(media_objects):
+def iter_media_files(media_objects):
     """
     take as input the output of get_media_objects
     and return an iterator of (path, data) tuples for the media files
