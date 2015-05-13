@@ -571,12 +571,9 @@ class RestoreConfig(object):
         if cached_response.exists():
             return cached_response
 
-        user = self.user
-        # create a sync log for this
         self.restore_state.start_sync()
 
-        # start with standard response
-        with self.restore_state.restore_class(user.username, items=self.params.include_item_count) as response:
+        with self.restore_state.restore_class(self.user.username, items=self.params.include_item_count) as response:
             normal_providers = get_restore_providers()
             for provider in normal_providers:
                 for element in provider.get_elements(self.restore_state):
