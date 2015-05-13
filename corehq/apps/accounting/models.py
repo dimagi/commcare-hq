@@ -832,7 +832,7 @@ class Subscription(models.Model):
     pro_bono_status = models.CharField(
         max_length=25,
         choices=ProBonoStatus.CHOICES,
-        default=SubscriptionType.NOT_SET,
+        default=ProBonoStatus.NOT_SET,
     )
     last_modified = models.DateTimeField(auto_now=True)
 
