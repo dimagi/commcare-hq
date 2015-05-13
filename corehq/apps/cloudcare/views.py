@@ -330,19 +330,13 @@ def filter_cases(request, domain, app_id, module_id, parent_id=None):
     cases = filter(lambda c: c.type == case_type, cases)
     cases = [c.get_json(lite=True) for c in cases if c]
     parents = []
+
+    response = {'cases': cases}
     if delegation:
-        for case in cases:
-            parent_id = case['indices']['parent']['case_id']
-            parents.append(CommCareCase.get(parent_id))
-        return json_response({
-            'cases': cases,
-            'parents': parents
-        })
-    else:
-        return json_response({
-            'cases': cases,
-            'all_case_ids': case_ids  # Used to send to touchforms so we do not have to fetch later
-        })
+        parent_ids = map(lambda c: c['indices']['parent']['case_id'], cases)
+        parents = [CommCareCase.wrap(doc) for doc in iter_docs(CommCareCase.get_db(), parent_ids)]
+        response.update({'parents': parents})
+    return json_response(response)
 
 @cloudcare_api
 def get_apps_api(request, domain):

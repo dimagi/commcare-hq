@@ -173,7 +173,6 @@ cloudCare.CaseList = Backbone.Collection.extend({
         var self = this;
         _.bindAll(self, 'url', 'setUrl');
         self.casedb = {};
-        self.allCaseIds = null;  // Used to send to touchforms
     },
     model: cloudCare.Case,
     url: function () {
@@ -184,16 +183,15 @@ cloudCare.CaseList = Backbone.Collection.extend({
     },
     parse: function (resp) {
         var self = this;
-        self.allCaseIds = resp.all_case_ids || null;
-        if (resp.cases) {
+        if (resp.parents) {
             // object: {cases: [...], parents: [...]}
             _.each(['cases', 'parents'], function(key) {
                 var cases = resp[key];
                 // maps ids to their corresponding case
                 _.extend(self.casedb, _.object(_.pluck(cases, '_id'), cases));
             });
-            return resp.cases;
         }
+        return resp.cases;
     }
 });
 
@@ -357,7 +355,6 @@ cloudCare.CaseMainView = Backbone.View.extend({
             language: self.options.language,
             appConfig: self.options.appConfig,
             casedb: self.listView.caseList.casedb,
-            allCaseIds: self.listView.caseList.allCaseIds,
             delegation: self.delegation
         });
         $(self.detailsView.render().el).appendTo($(self.section));
