@@ -533,7 +533,7 @@ class Domain(Document, SnapshotMixin):
 
     @classmethod
     def get_by_alias(cls, alias, strict=False):
-        return cls._get_by_key('domains_apps/by_alias', alias, stale=(not strict))
+        return cls._get_by_key('domain_apps/by_alias', alias, stale=(not strict))
 
     @classmethod
     @skippable_quickcache(['view', 'key'], skip_arg='stale', timeout=30 * 60)
