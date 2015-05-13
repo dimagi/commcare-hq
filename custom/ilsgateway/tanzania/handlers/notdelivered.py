@@ -20,7 +20,7 @@ class NotDeliveredHandler(KeywordHandler):
 
         self.respond(NOT_DELIVERED_CONFIRM)
 
-        SupplyPointStatus.objects.create(supply_point=location.get_id,
+        SupplyPointStatus.objects.create(location_id=location.get_id,
                                          status_type=status_type,
                                          status_value=SupplyPointStatusValues.NOT_RECEIVED,
                                          status_date=datetime.utcnow())

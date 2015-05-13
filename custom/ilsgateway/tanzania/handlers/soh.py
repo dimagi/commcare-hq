@@ -18,7 +18,7 @@ class SOHHandler(KeywordHandler):
         else:
             location_id = location.get_id
         if location.location_type == 'FACILITY':
-            SupplyPointStatus.objects.create(supply_point=location_id,
+            SupplyPointStatus.objects.create(location_id=location_id,
                                              status_type=SupplyPointStatusTypes.SOH_FACILITY,
                                              status_value=SupplyPointStatusValues.SUBMITTED,
                                              status_date=datetime.utcnow())

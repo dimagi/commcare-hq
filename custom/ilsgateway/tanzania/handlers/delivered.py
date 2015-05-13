@@ -2,7 +2,6 @@ from datetime import datetime
 from corehq.apps.sms.api import send_sms_to_verified_number
 from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues
-from corehq.apps.users.models import CommCareUser
 from custom.ilsgateway.tanzania.reminders import DELIVERY_CONFIRM_DISTRICT, DELIVERY_PARTIAL_CONFIRM, \
     DELIVERY_CONFIRM_CHILDREN
 from custom.ilsgateway.utils import get_users_by_location_id
@@ -23,7 +22,7 @@ class DeliveredHandler(KeywordHandler):
 
     def handle(self):
         location = self.user.location
-        SupplyPointStatus.objects.create(supply_point=location.get_id,
+        SupplyPointStatus.objects.create(location_id=location.get_id,
                                          status_type=SupplyPointStatusTypes.DELIVERY_FACILITY,
                                          status_value=SupplyPointStatusValues.RECEIVED,
                                          status_date=datetime.utcnow())
@@ -42,7 +41,7 @@ class DeliveredHandler(KeywordHandler):
             self._send_delivery_alert_to_facilities(location)
             self.respond(DELIVERY_CONFIRM_DISTRICT, contact_name=self.user.first_name + " " + self.user.last_name,
                          facility_name=location.name)
-        SupplyPointStatus.objects.create(supply_point=location.get_id,
+        SupplyPointStatus.objects.create(location_id=location.get_id,
                                          status_type=status_type,
                                          status_value=SupplyPointStatusValues.RECEIVED,
                                          status_date=datetime.utcnow())

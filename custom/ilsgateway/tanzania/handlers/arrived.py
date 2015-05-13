@@ -1,4 +1,3 @@
-from corehq.apps.commtrack.util import get_supply_point
 from corehq.apps.locations.models import SQLLocation
 from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
 from custom.ilsgateway.tanzania.reminders import ARRIVED_HELP, ARRIVED_KNOWN, ARRIVED_DEFAULT

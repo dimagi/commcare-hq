@@ -36,19 +36,19 @@ class RandrHandler(KeywordHandler):
             else:
                 quantities = [self.args[1], self.args[3], self.args[5]]
                 DeliveryGroupReport.objects.create(
-                    supply_point=location.get_id,
+                    location_id=location.get_id,
                     quantity=quantities[0],
                     message=self.msg._id,
                     delivery_group="A"
                 )
                 DeliveryGroupReport.objects.create(
-                    supply_point=location.get_id,
+                    location_id=location.get_id,
                     quantity=quantities[1],
                     message=self.msg._id,
                     delivery_group="B"
                 )
                 DeliveryGroupReport.objects.create(
-                    supply_point=location.get_id,
+                    location_id=location.get_id,
                     quantity=quantities[2],
                     message=self.msg._id,
                     delivery_group="C"
@@ -65,7 +65,7 @@ class RandrHandler(KeywordHandler):
                 'group_c': quantities[2]
             }
             self._send_submission_alert_to_msd(params)
-        SupplyPointStatus.objects.create(supply_point=location.get_id,
+        SupplyPointStatus.objects.create(location_id=location.get_id,
                                          status_type=status_type,
                                          status_value=SupplyPointStatusValues.SUBMITTED,
                                          status_date=datetime.utcnow())

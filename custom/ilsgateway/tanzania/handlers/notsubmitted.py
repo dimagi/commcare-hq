@@ -12,7 +12,7 @@ class NotSubmittedHandler(KeywordHandler):
 
     def handle(self):
         location = self.user.location
-        SupplyPointStatus.objects.create(supply_point=location.get_id,
+        SupplyPointStatus.objects.create(location_id=location.get_id,
                                          status_type=SupplyPointStatusTypes.R_AND_R_FACILITY,
                                          status_value=SupplyPointStatusValues.NOT_SUBMITTED,
                                          status_date=datetime.utcnow())

@@ -29,5 +29,5 @@ class SupervisionHandler(KeywordHandler):
 
         SupplyPointStatus.objects.create(status_type=SupplyPointStatusTypes.SUPERVISION_FACILITY,
                                          status_value=status_value,
-                                         supply_point=location.get_id,
+                                         location_id=location.get_id,
                                          status_date=datetime.utcnow())

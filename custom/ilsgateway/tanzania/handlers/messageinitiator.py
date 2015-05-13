@@ -49,14 +49,14 @@ class MessageInitiatior(KeywordHandler):
         if command in ['soh', 'hmk']:
             self.send_message(sql_location, SOH_HELP_MESSAGE)
             now = datetime.utcnow()
-            SupplyPointStatus.objects.create(supply_point=sql_location.location_id,
+            SupplyPointStatus.objects.create(location_id=sql_location.location_id,
                                              status_type=SupplyPointStatusTypes.SOH_FACILITY,
                                              status_value=SupplyPointStatusValues.REMINDER_SENT,
                                              status_date=now)
         elif command in ['supervision']:
             self.send_message(sql_location, SUPERVISION_REMINDER)
             now = datetime.utcnow()
-            SupplyPointStatus.objects.create(supply_point=sql_location.location_id,
+            SupplyPointStatus.objects.create(location_id=sql_location.location_id,
                                              status_type=SupplyPointStatusTypes.SUPERVISION_FACILITY,
                                              status_value=SupplyPointStatusValues.REMINDER_SENT,
                                              status_date=now)
@@ -68,7 +68,7 @@ class MessageInitiatior(KeywordHandler):
                 self.send_message(sql_location, SUBMITTED_REMINDER_FACILITY)
                 status_type = SupplyPointStatusTypes.R_AND_R_FACILITY
             now = datetime.utcnow()
-            SupplyPointStatus.objects.create(supply_point=sql_location.location_id,
+            SupplyPointStatus.objects.create(location_id=sql_location.location_id,
                                              status_type=status_type,
                                              status_value=SupplyPointStatusValues.REMINDER_SENT,
                                              status_date=now)
@@ -80,7 +80,7 @@ class MessageInitiatior(KeywordHandler):
                 self.send_message(sql_location, DELIVERY_REMINDER_FACILITY)
                 status_type = SupplyPointStatusTypes.DELIVERY_FACILITY
             now = datetime.utcnow()
-            SupplyPointStatus.objects.create(supply_point=sql_location.location_id,
+            SupplyPointStatus.objects.create(location_id=sql_location.location_id,
                                              status_type=status_type,
                                              status_value=SupplyPointStatusValues.REMINDER_SENT,
                                              status_date=now)
@@ -93,11 +93,12 @@ class MessageInitiatior(KeywordHandler):
             self.respond(TEST_HANDLER_CONFIRM)
         elif command in ["randr_report"]:
             now = datetime.utcnow()
-            self.respond(REMINDER_MONTHLY_RANDR_SUMMARY,
-                         **reports.construct_summary(sql_location.couch_location,
-                                                     SupplyPointStatusTypes.R_AND_R_FACILITY,
-                                                     [SupplyPointStatusValues.SUBMITTED, SupplyPointStatusValues.NOT_SUBMITTED],
-                                                     get_business_day_of_month_before(now.year, now.month, 5)))
+            self.respond(REMINDER_MONTHLY_RANDR_SUMMARY, **reports.construct_summary(
+                sql_location.couch_location,
+                SupplyPointStatusTypes.R_AND_R_FACILITY,
+                [SupplyPointStatusValues.SUBMITTED, SupplyPointStatusValues.NOT_SUBMITTED],
+                get_business_day_of_month_before(now.year, now.month, 5)
+            ))
         elif command in ["soh_report"]:
             now = datetime.utcnow()
             last_month = datetime(now.year, now.month, 1) - timedelta(days=1)
