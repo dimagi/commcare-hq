@@ -470,7 +470,6 @@ class DownloadMultimediaZip(DownloadZipAsync, ApplicationViewMixin):
     zip_name = 'commcare.zip'
     include_multimedia_files = True
 
-
     def check_before_zipping(self):
         if not self.app.multimedia_map:
             return HttpResponse("You have no multimedia to download.")

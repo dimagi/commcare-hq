@@ -92,7 +92,8 @@ def iter_files_async(include_multimedia_files, include_index_files, app):
     return file_iterator, errors
 
 
-def make_zip_tempfile_async(include_multimedia_files, include_index_files, app, download_id, compress_zip=False):
+def make_zip_tempfile_async(include_multimedia_files,
+                            include_index_files, app, download_id, compress_zip=False, filename="commcare.zip"):
     compression = zipfile.ZIP_DEFLATED if compress_zip else zipfile.ZIP_STORED
 
     use_transfer = False
@@ -115,7 +116,7 @@ def make_zip_tempfile_async(include_multimedia_files, include_index_files, app, 
     return expose_file_download(fpath,
                                 mimetype='application/zip' if compress_zip else 'application/x-zip-compressed',
                                 download_id=download_id,
-                                content_disposition='attachment; filename="commcare.zip"',
+                                content_disposition='attachment; filename="{fname}"'.format(fname=filename),
                                 use_transfer=use_transfer)
 
 
@@ -135,6 +136,7 @@ class DownloadZipAsync(DownloadZip):
             include_index_files=self.include_index_files,
             app=self.app,
             compress_zip=self.compress_zip,
-            download_id=download.download_id)
+            download_id=download.download_id,
+            filename=self.zip_name)
         )
         return download.get_start_response()

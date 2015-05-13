@@ -2524,7 +2524,6 @@ class DownloadCCZ(DownloadMultimediaZip):
             return itertools.chain(_iter_index_files(), media_files), errors
 
 
-
 @safe_download
 def download_file(request, domain, app_id, path):
     mimetype_map = {
