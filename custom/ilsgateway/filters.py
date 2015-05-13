@@ -115,7 +115,7 @@ class ILSDateFilter(BaseReportFilter):
     def filter_context(self):
         return dict(
             select_options=self.select_options,
-            selected_type=self.selected('type'),
-            selected_first=self.selected('first'),
-            selected_second=self.selected('second')
+            selected_type=self.selected('type') if self.selected('type') else 1,
+            selected_first=self.selected('first') if self.selected('first') else datetime.utcnow().month,
+            selected_second=self.selected('second') if self.selected('second') else datetime.utcnow().year
         )

@@ -146,8 +146,8 @@ class ILSDateSpan(DateSpan):
                                         dtstart=datetime(year, 1, 1),
                                         count=5))
 
-            start = quarters[month_or_quarter * (-1) - 1]
-            end = quarters[month_or_quarter * (-1)] - relativedelta(days=1)
+            start = quarters[month_or_quarter - 1]
+            end = quarters[month_or_quarter] - relativedelta(days=1)
         else:
             start = datetime(year, month_or_quarter, 1)
             end = start + relativedelta(months=1) - relativedelta(days=1)
@@ -240,7 +240,6 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport,
         org_summary = OrganizationSummary.objects.filter(date__range=(self.datespan.startdate,
                                                                       self.datespan.enddate),
                                                          supply_point=self.request.GET.get('location_id'))
-
         config = dict(
             domain=self.domain,
             org_summary=org_summary if len(org_summary) > 0 else None,
