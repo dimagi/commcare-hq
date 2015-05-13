@@ -224,7 +224,7 @@ def get_usercase_properties(app):
     # from app_manager.views, and it checks the toggle.
     if is_usercase_in_use(app.domain):
         return get_case_properties(app, [USERCASE_TYPE])
-    return []
+    return {USERCASE_TYPE: []}
 
 
 def get_settings_values(app):
