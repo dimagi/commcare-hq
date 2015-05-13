@@ -207,6 +207,7 @@ class BatchedCaseSyncOperation(object):
 
     def __init__(self, restore_state, chunk_size=None):
 
+        self.restore_state = restore_state
         self.user = restore_state.user
         self.last_synclog = restore_state.last_sync_log
         if chunk_size:
@@ -214,7 +215,7 @@ class BatchedCaseSyncOperation(object):
         self.domain = self.user.domain
 
         try:
-            self.owner_keys = [[owner_id, False] for owner_id in self.user.get_owner_ids()]
+            self.owner_keys = [[owner_id, False] for owner_id in self.restore_state.get_owner_ids()]
         except AttributeError:
             self.owner_keys = [[self.user.user_id, False]]
 
