@@ -58,7 +58,17 @@ def login_and_domain_required(view_func):
     @wraps(view_func)
     def _inner(req, domain, *args, **kwargs):
         user = req.user
-        domain_name, domain = load_domain(req, domain)
+        domain_identifier = domain
+        domain_name, domain = load_domain(req, domain_identifier)
+        if not domain:
+            domain = Domain.get_by_alias(domain_identifier)
+            url_prefix = "/a/{domain}/".format(domain=domain_identifier)
+            if domain and req.path.startswith(url_prefix):
+                domain_name, domain = load_domain(req, domain.name)
+                return HttpResponseRedirect(
+                    req.path.replace(url_prefix, "/a/{domain_name}/".format(domain_name=domain_name))
+                )
+
         if domain:
             if user.is_authenticated() and user.is_active:
                 if not domain.is_active:

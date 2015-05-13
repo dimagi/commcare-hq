@@ -179,7 +179,8 @@ def redirect_to_default(req, domain=None):
     else:
         if domain:
             domain = normalize_domain_name(domain)
-            domains = [Domain.get_by_name(domain)]
+            domain = Domain.get_by_name(domain) or Domain.get_by_alias(domain)
+            domains = [domain]
         else:
             domains = Domain.active_for_user(req.user)
         if 0 == len(domains) and not req.user.is_superuser:

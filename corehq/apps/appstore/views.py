@@ -243,39 +243,24 @@ def copy_snapshot(request, domain):
 
         from corehq.apps.registration.forms import DomainRegistrationForm
 
-        args = {'domain_name': request.POST['new_project_name'], 'eula_confirmed': True}
-        form = DomainRegistrationForm(args)
-
-        if request.POST.get('new_project_name', ""):
-            if not dom.published:
-                messages.error(request, _("This project is not published and can't be downloaded"))
-                return project_info(request, domain)
-
-            if form.is_valid():
-                new_domain = dom.save_copy(form.cleaned_data['domain_name'], user=user)
-            else:
-                messages.error(request, form.errors)
-                return project_info(request, domain)
-
-            if new_domain is None:
-                messages.error(request, _("A project by that name already exists"))
-                return project_info(request, domain)
-
-            # sign new project up for trial
-            create_30_day_trial(new_domain)
-
-            def inc_downloads(d):
-                d.downloads += 1
-
-            apply_update(dom, inc_downloads)
-            messages.success(request, render_to_string("appstore/partials/view_wiki.html",
-                                                       {"pre": _("Project copied successfully!")}),
-                             extra_tags="html")
-            return HttpResponseRedirect(reverse('view_app',
-                                                args=[new_domain.name, new_domain.full_applications()[0].get_id]))
-        else:
-            messages.error(request, _("You must specify a name for the new project"))
+        if not dom.published:
+            messages.error(request, _("This project is not published and can't be downloaded"))
             return project_info(request, domain)
+
+        new_domain = dom.save_copy(user=user)
+
+        # sign new project up for trial
+        create_30_day_trial(new_domain)
+
+        def inc_downloads(d):
+            d.downloads += 1
+
+        apply_update(dom, inc_downloads)
+        messages.success(request, render_to_string("appstore/partials/view_wiki.html",
+                                                   {"pre": _("Project copied successfully!")}),
+                         extra_tags="html")
+        return HttpResponseRedirect(reverse('view_app',
+                                            args=[new_domain.name, new_domain.full_applications()[0].get_id]))
     else:
         return HttpResponseRedirect(reverse('project_info', args=[domain]))
 

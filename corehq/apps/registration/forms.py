@@ -130,6 +130,7 @@ class OrganizationRegistrationForm(forms.Form):
 class DomainRegistrationForm(forms.Form):
     """
     Form for creating a domain for the first time
+    Only used within orgs
     """
     org = forms.CharField(widget=forms.HiddenInput(), required=False)
     domain_name = forms.CharField(label=_('Project Name:'), max_length=25,

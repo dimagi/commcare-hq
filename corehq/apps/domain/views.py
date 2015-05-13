@@ -352,6 +352,7 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
     def basic_info_form(self):
         initial = {
             'hr_name': self.domain_object.hr_name or self.domain_object.name,
+            'alias': self.domain_object.alias,
             'default_timezone': self.domain_object.default_timezone,
             'case_sharing': json.dumps(self.domain_object.case_sharing),
             'call_center_enabled': self.domain_object.call_center_config.enabled,
@@ -366,12 +367,14 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
                     self.request.FILES,
                     user=self.request.couch_user,
                     domain=self.domain_object.name,
+                    domain_id=self.domain_object._id,
                     can_use_custom_logo=self.can_use_custom_logo,
                 )
             return DomainGlobalSettingsForm(
                 self.request.POST,
                 self.request.FILES,
                 domain=self.domain_object.name,
+                domain_id=self.domain_object._id,
                 can_use_custom_logo=self.can_use_custom_logo
             )
 
@@ -385,11 +388,13 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
                 can_use_custom_logo=self.can_use_custom_logo,
                 user=self.request.couch_user,
                 domain=self.domain_object.name,
+                domain_id=self.domain_object._id,
                 initial=initial
             )
         return DomainGlobalSettingsForm(
             initial=initial,
             domain=self.domain_object.name,
+            domain_id=self.domain_object._id,
             can_use_custom_logo=self.can_use_custom_logo
         )
 

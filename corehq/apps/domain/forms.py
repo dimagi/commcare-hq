@@ -13,6 +13,7 @@ from django.contrib.auth import get_user_model
 from corehq import privileges, toggles
 from corehq.apps.accounting.exceptions import SubscriptionRenewalError
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.domain.utils import new_domain_re
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.feature_previews import CALLCENTER
 import settings
@@ -406,7 +407,13 @@ class SubAreaMixin():
         return sub_area
 
 class DomainGlobalSettingsForm(forms.Form):
-    hr_name = forms.CharField(label=_("Project Name"))
+    hr_name = forms.CharField(label=ugettext_noop("Project Name"))
+
+    alias = forms.CharField(
+        required=False,
+        label=ugettext_noop("Project Alias"),
+        help_text=ugettext_noop("Alias used in project URL.")
+    )
     default_timezone = TimeZoneChoiceField(label=ugettext_noop("Default Timezone"), initial="UTC")
 
     logo = ImageField(
@@ -443,21 +450,22 @@ class DomainGlobalSettingsForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
-        domain = kwargs.pop('domain', None)
+        self.domain = kwargs.pop('domain', None)
+        self.domain_id = kwargs.pop('domain_id', None)
         self.can_use_custom_logo = kwargs.pop('can_use_custom_logo', False)
         super(DomainGlobalSettingsForm, self).__init__(*args, **kwargs)
         if not self.can_use_custom_logo:
             del self.fields['logo']
             del self.fields['delete_logo']
 
-        if domain:
-            if not CALLCENTER.enabled(domain):
+        if self.domain:
+            if not CALLCENTER.enabled(self.domain):
                 self.fields['call_center_enabled'].widget = forms.HiddenInput()
                 self.fields['call_center_case_owner'].widget = forms.HiddenInput()
                 self.fields['call_center_case_type'].widget = forms.HiddenInput()
             else:
-                groups = Group.get_case_sharing_groups(domain)
-                users = CommCareUser.by_domain(domain)
+                groups = Group.get_case_sharing_groups(self.domain)
+                users = CommCareUser.by_domain(self.domain)
 
                 call_center_user_choices = [
                     (user._id, user.raw_username + ' [user]') for user in users
@@ -477,8 +485,26 @@ class DomainGlobalSettingsForm(forms.Form):
         timezone_field.run_validators(data)
         return smart_str(data)
 
+    def clean_alias(self):
+        data = self.cleaned_data['alias'].strip().lower()
+        if data == "":
+            return data
+
+        if not re.match("^%s$" % new_domain_re, data):
+            raise forms.ValidationError(ugettext_noop('Only lowercase letters and numbers allowed. '
+                'Single hyphens may be used to separate words.'))
+
+        data_alternate = data.replace('-', '.')
+        conflict = Domain.get_by_name(data) or Domain.get_by_name(data_alternate)
+        if conflict is None:
+            conflict = Domain.get_by_alias(data) or Domain.get_by_alias(data_alternate)
+        if conflict and conflict._id != self.domain_id:
+            raise forms.ValidationError(ugettext_noop('Alias already taken---please try another'))
+        return data
+
     def save(self, request, domain):
         domain.hr_name = self.cleaned_data['hr_name']
+        domain.alias = self.cleaned_data['alias']
 
         if self.can_use_custom_logo:
             logo = self.cleaned_data['logo']

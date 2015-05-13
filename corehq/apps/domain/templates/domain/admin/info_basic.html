@@ -4,6 +4,7 @@
 {% load i18n %}
 
 {% block js-inline %} {{ block.super }}
+<script src="{% static 'style/lib/jquery/plugins/jquery.caret-1.5.2.min.js' %}"></script>
 <script type="text/javascript">
     $(function() {
         // Update project dropdown in page header with potentially new project name
@@ -18,6 +19,16 @@
                 }
             });
         }
+
+        $('#id_alias').keyup(function() {
+            var $input = $(this);
+            var regex = new RegExp(/\s+/g);
+            if (regex.test($input.val())) {
+                var position = $input.caret();
+                $input.val($input.val().replace(regex, '-'));
+                $input.caret(position);
+            }
+        });
 
         $('#id_default_timezone').combobox({
             placeholder: 'Select a Timezone...'

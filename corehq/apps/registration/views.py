@@ -14,7 +14,7 @@ from corehq.apps.domain.decorators import login_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.orgs.views import orgs_landing
 from corehq.apps.registration.models import RegistrationRequest
-from corehq.apps.registration.forms import NewWebUserRegistrationForm, DomainRegistrationForm, OrganizationRegistrationForm
+from corehq.apps.registration.forms import NewWebUserRegistrationForm, OrganizationRegistrationForm
 from corehq.apps.registration.utils import activate_new_user, send_new_request_update_email, request_new_domain, \
     send_domain_registration_email
 from corehq.apps.users.models import WebUser, CouchUser
@@ -133,51 +133,35 @@ def register_domain(request, domain_type=None):
             return render(request, 'registration/confirmation_waiting.html',
                     context)
 
-    if request.method == 'POST':
-        nextpage = request.POST.get('next')
-        org = request.POST.get('org')
-        form = DomainRegistrationForm(request.POST)
-        if form.is_valid():
-            reqs_today = RegistrationRequest.get_requests_today()
-            max_req = settings.DOMAIN_MAX_REGISTRATION_REQUESTS_PER_DAY
-            if reqs_today >= max_req:
-                context.update({
-                    'error_msg': _(
-                        'Number of domains requested today exceeds limit (%d) - contact Dimagi'
-                    ) % max_req,
-                    'show_homepage_link': 1
-                })
-                return render(request, 'error.html', context)
+    nextpage = request.POST.get('next')
+    org = request.POST.get('org')
+    reqs_today = RegistrationRequest.get_requests_today()
+    max_req = settings.DOMAIN_MAX_REGISTRATION_REQUESTS_PER_DAY
+    if reqs_today >= max_req:
+        context.update({
+            'error_msg': _(
+                'Number of domains requested today exceeds limit (%d) - contact Dimagi'
+            ) % max_req,
+            'show_homepage_link': 1
+        })
+        return render(request, 'error.html', context)
 
-            request_new_domain(
-                request, form, org, new_user=is_new, domain_type=domain_type)
+    new_domain = request_new_domain(request, org, new_user=is_new, domain_type=domain_type)
 
-            requested_domain = form.cleaned_data['domain_name']
-            if is_new:
-                context.update({
-                    'alert_message': _("An email has been sent to %s.") % request.user.username,
-                    'requested_domain': requested_domain,
-                    'track_domain_registration': True,
-                })
-                return render(request, 'registration/confirmation_sent.html',
-                        context)
-            else:
-                if nextpage:
-                    return HttpResponseRedirect(nextpage)
-                if referer_url:
-                    return redirect(referer_url)
-                return HttpResponseRedirect(reverse("domain_homepage", args=[requested_domain]))
-        else:
-            if nextpage:
-                return orgs_landing(request, org, form=form)
+    if is_new:
+        context.update({
+            'alert_message': _("An email has been sent to %s.") % request.user.username,
+            'requested_domain': new_domain.name,
+            'track_domain_registration': True,
+        })
+        return render(request, 'registration/confirmation_sent.html',
+                context)
     else:
-        form = DomainRegistrationForm(initial={'domain_type': domain_type})
-
-    context.update({
-        'form': form,
-        'is_new': is_new,
-    })
-    return render(request, 'registration/domain_request.html', context)
+        if nextpage:
+            return HttpResponseRedirect(nextpage)
+        if referer_url:
+            return redirect(referer_url)
+        return HttpResponseRedirect(reverse("domain_homepage", args=[new_domain.name]))
 
 @transaction.commit_on_success
 @login_required

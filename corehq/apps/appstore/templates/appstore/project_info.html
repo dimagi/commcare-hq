@@ -306,8 +306,6 @@
                         {% trans "You are currently logged in as a CloudCare user. Please sign out and login as a normal user to download apps" %}
                     {% else %}
                     <div{% if error_message %} class="error"{% endif %}>
-                        <input type="text" class="span3" id="new_project_name"
-                               name="new_project_name" value="{{ new_project_name }}" placeholder="{% trans 'New project name' %}">
                         {% if error_message %}
                             <span class="help-inline">{{ error_message }}</span>
                         {% endif %}

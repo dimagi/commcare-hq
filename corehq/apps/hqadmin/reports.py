@@ -442,6 +442,7 @@ INDICATOR_DATA = {
 ES_PREFIX = "es_"
 
 DOMAIN_FACETS = [
+    "alias",
     "cp_is_active",
     "cp_has_app",
     "cp_sms_ever",
