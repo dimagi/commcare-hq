@@ -524,10 +524,10 @@ def export_data_source(request, domain, config_id):
             yield row
 
     fd, path = tempfile.mkstemp()
-    with os.fdopen(fd, 'wb') as tempfile:
+    with os.fdopen(fd, 'wb') as tmpfile:
         try:
             tables = [[config.table_id, get_table(q)]]
-            export_from_tables(tables, tempfile, params.format)
+            export_from_tables(tables, tmpfile, params.format)
         except exc.DataError:
             msg = _("There was a problem executing your query, please make "
                     "sure your parameters are valid.")
