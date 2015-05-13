@@ -80,7 +80,6 @@ class CaseSyncUpdate(object):
         # cache this property since computing it can be expensive
         self.required_updates = required_updates if required_updates is not None else self._get_required_updates()
 
-
     def _get_required_updates(self):
         """
         Returns a list of the required updates for this case/token
