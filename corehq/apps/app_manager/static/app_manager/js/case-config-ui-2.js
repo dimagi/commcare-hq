@@ -839,7 +839,7 @@ var CaseConfig = (function () {
             var o = UserCaseTransaction.unwrap(usercase_transaction);
             var x = CC_UTILS.propertyArrayToDict([], o.case_properties);  // "name" required?
             var case_properties = x[0];
-            var case_preload = CC_UTILS.propertyArrayToDict([], o.case_preload, true)[0];
+            var case_preload = CC_UTILS.preloadArrayToDict(o.case_preload);
             return {
                 update_usercase: {
                     update: case_properties
