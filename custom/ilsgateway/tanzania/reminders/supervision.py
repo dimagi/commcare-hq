@@ -17,12 +17,12 @@ def send_supervision_reminder(domain, date, test_list=None):
     for user in users:
         location = user.location
         if user.is_active and location and location.location_type == 'FACILITY':
-            if not SupplyPointStatus.objects.filter(supply_point=location._id,
+            if not SupplyPointStatus.objects.filter(location_id=location._id,
                                                     status_type=SupplyPointStatusTypes.SUPERVISION_FACILITY,
                                                     status_date__gte=date).exists():
                 result = send_translated_message(user, REMINDER_SUPERVISION)
                 if not test_list and result:
-                    sp_ids.add(location._id)
+                    sp_ids.add(location.get_id)
 
     update_statuses(sp_ids, SupplyPointStatusTypes.SUPERVISION_FACILITY, SupplyPointStatusValues.REMINDER_SENT)
 
