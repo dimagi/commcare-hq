@@ -40,6 +40,12 @@ import HTMLParser
 from django.contrib import messages
 from django.utils.translation import ugettext as _, ugettext_noop
 from touchforms.formplayer.models import EntrySession
+from touchforms.formplayer.api import post_data
+from corehq.apps.app_manager.xform import XForm
+from xml2json.lib import xml2json
+import requests;
+from corehq.apps.reports.formdetails import readable
+from corehq.apps.reports.formdetails.readable import get_readable_form_data
 
 
 @require_cloudcare_access
@@ -441,6 +447,30 @@ def get_ledgers(request, domain):
         },
         default=custom_json_handler,
     )
+@cloudcare_api
+def render_form(request, domain, session_id):
+    # get session
+    try:
+        session = EntrySession.objects.get(session_id=session_id)
+    except EntrySession.DoesNotExist:
+        session = None
+    # query touchforms to get XML
+    # TODO make this not terrible
+
+    response = requests.post('http://127.0.0.1:8000/webforms/get-xml/' + session_id)
+    json_response = json.loads(response.text)
+    xmlns = json_response["xmlns"]
+    form_data_xml = json_response["output"]
+
+    _, form_data_json = xml2json(form_data_xml)
+    pretty_questions = readable.get_questions(domain, session.app_id, xmlns)
+
+    readable_form = get_readable_form_data(form_data_json, pretty_questions)
+
+    rendered_readable_form = render(request, 'reports/form/partials/single_form_tree.html', {'questions': readable_form})
+
+    return rendered_readable_form
+
 
 
 class HttpResponseConflict(HttpResponse):

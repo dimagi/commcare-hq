@@ -678,6 +678,16 @@ cloudCare.AppView = Backbone.View.extend({
         data.onload = function (adapter, resp) {
             cloudCare.dispatch.trigger("form:ready", form, caseModel);
         };
+        data.answerCallback = function(sessionId) {
+            // TODO obvious
+            var render_url = 'http://127.0.0.1:8000/a/willslearningproject/cloudcare/render_form/' + sessionId
+            $.ajax({
+                url: render_url,
+                success: function (data) {
+                    showRenderedForm(data, $("#instance-viewer-pretty"));
+                }
+            });
+        };
         data.resourceMap = function(resource_path) {
             if (resource_path.substring(0, 7) === 'http://') {
                 return resource_path;

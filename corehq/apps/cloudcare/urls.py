@@ -41,4 +41,5 @@ urlpatterns = patterns('corehq.apps.cloudcare.views',
     url(r'^cases/', include(cases_urls)),
     url(r'^test/$', TemplateView.as_view(template_name='cloudcare/test.html')),
     url(r'^api/', include(api_urls)),
+    url(r'^render_form/(?P<session_id>[\w-]+)/$', 'render_form', name='cloudcare_render_form'),
 )
