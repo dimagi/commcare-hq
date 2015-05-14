@@ -35,7 +35,6 @@ def get_case_payload_batched(restore_state):
     sync_state = sync_operation.global_state
     restore_state.current_sync_log.cases_on_phone = sync_state.actual_owned_cases
     restore_state.current_sync_log.dependent_cases_on_phone = sync_state.actual_extended_cases
-    restore_state.current_sync_log.save(**get_safe_write_kwargs())
 
     # commtrack ledger sections
     commtrack_elements = get_stock_payload(
