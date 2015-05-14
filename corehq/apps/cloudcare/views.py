@@ -471,6 +471,20 @@ def render_form(request, domain, session_id):
 
     return rendered_readable_form
 
+def render_xml(request, domain, session_id):
+
+    # query touchforms to get XML
+    # TODO make this not terrible
+
+    m_response = requests.post('http://127.0.0.1:8000/webforms/get-xml/' + session_id)
+
+    json_response = json.loads(m_response.text)
+    form_data_xml = json_response["output"]
+
+    from corehq.apps.reports.templatetags.xform_tags import render_pretty_xml
+
+    return HttpResponse(render_pretty_xml(form_data_xml))
+
 
 
 class HttpResponseConflict(HttpResponse):

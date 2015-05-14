@@ -680,9 +680,9 @@ cloudCare.AppView = Backbone.View.extend({
         };
         data.answerCallback = function(sessionId) {
             // TODO obvious
-            var render_url = 'http://127.0.0.1:8000/a/willslearningproject/cloudcare/render_form/' + sessionId
+            var render_xml_url = 'http://127.0.0.1:8000/a/willslearningproject/cloudcare/render_xml/' + sessionId
             $.ajax({
-                url: render_url,
+                url: render_xml_url,
                 success: function (data) {
                     showRenderedForm(data, $("#instance-viewer-pretty"));
                 }

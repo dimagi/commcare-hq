@@ -33,6 +33,9 @@ def render_form_xml(form):
     xml = form.get_xml() or ''
     return '<pre class="fancy-code prettyprint linenums"><code class="language-xml">%s</code></pre>' % escape(xml.replace("><", ">\n<"))
 
+@register.simple_tag
+def render_pretty_xml(xml):
+    return '<pre class="fancy-code prettyprint linenums"><code class="language-xml">%s</code></pre>' % escape(xml.replace("><", ">\n<"))
 
 @register.simple_tag
 def form_inline_display(form_id, timezone=pytz.utc):
