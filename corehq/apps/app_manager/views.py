@@ -829,7 +829,7 @@ def get_module_view_context_and_template(app, module):
 
         return options
 
-    def get_details():
+    def get_details(case_type_):
         item = {
             'label': _('Case List'),
             'detail_label': _('Case Detail'),
@@ -840,8 +840,8 @@ def get_module_view_context_and_template(app, module):
             'long': module.case_details.long,
             'child_case_types': child_case_types,
         }
-        case_properties = builder.get_properties(case_type)
-        if is_usercase_in_use(app.domain) and case_type != USERCASE_TYPE:
+        case_properties = builder.get_properties(case_type_)
+        if is_usercase_in_use(app.domain) and case_type_ != USERCASE_TYPE:
             usercase_properties = prefix_usercase_properties(builder.get_properties(USERCASE_TYPE))
             case_properties |= usercase_properties
 
@@ -902,7 +902,7 @@ def get_module_view_context_and_template(app, module):
         form_options = case_list_form_options(case_type)
         return "app_manager/module_view_advanced.html", {
             'fixtures': fixtures,
-            'details': get_details(),
+            'details': get_details(case_type),
             'case_list_form_options': form_options,
             'case_list_form_allowed': bool(module.all_forms_require_a_case and form_options),
             'valid_parent_modules': [
@@ -938,7 +938,7 @@ def get_module_view_context_and_template(app, module):
         return "app_manager/module_view.html", {
             'parent_modules': get_parent_modules(case_type),
             'fixtures': fixtures,
-            'details': get_details(),
+            'details': get_details(case_type),
             'case_list_form_options': form_options,
             'case_list_form_allowed': bool(
                 module.all_forms_require_a_case and not module.parent_select.active and form_options
