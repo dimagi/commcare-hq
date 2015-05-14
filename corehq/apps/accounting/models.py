@@ -46,6 +46,7 @@ logger = logging.getLogger('accounting')
 integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
 
 MAX_INVOICE_COMMUNICATIONS = 5
+SMALL_INVOICE_THRESHOLD = 100
 
 
 class BillingAccountType(object):
@@ -1375,7 +1376,7 @@ class InvoiceBase(models.Model):
     is_hidden = models.BooleanField(default=False)
     tax_rate = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
     balance = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
-    date_due = models.DateField(db_index=True)
+    date_due = models.DateField(db_index=True, null=True)
     date_paid = models.DateField(blank=True, null=True)
     date_start = models.DateField()
     date_end = models.DateField()
@@ -1724,11 +1725,20 @@ class BillingRecord(BillingRecordBase):
 
     def email_context(self):
         context = super(BillingRecord, self).email_context()
+        total_balance = sum(invoice.balance for invoice in Invoice.objects.filter(
+            is_hidden=False,
+            subscription__subscriber__domain=self.invoice.get_domain(),
+        ))
+        is_small_invoice = self.invoice.balance <= SMALL_INVOICE_THRESHOLD
         context.update({
             'plan_name': "%(product)s %(name)s" % {
                 'product': self.invoice.subscription.plan_version.core_product,
                 'name': self.invoice.subscription.plan_version.plan.edition,
             },
+            'date_due': self.invoice.date_due,
+            'is_small_invoice': is_small_invoice,
+            'total_balance': total_balance,
+            'is_total_balance_due': total_balance > SMALL_INVOICE_THRESHOLD,
         })
         return context
 
