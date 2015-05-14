@@ -365,6 +365,14 @@ class RestoreState(object):
     def owner_ids(self):
         return self.user.get_owner_ids()
 
+    @property
+    @memoized
+    def stock_settings(self):
+        if self.domain and self.domain.commtrack_settings:
+            return self.domain.commtrack_settings.get_ota_restore_settings()
+        else:
+            return StockSettings()
+
     def start_sync(self):
         self.start_time = datetime.utcnow()
         self.current_sync_log = self.create_sync_log()

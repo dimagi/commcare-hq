@@ -1,4 +1,4 @@
-from corehq.apps.app_manager.util import ParentCasePropertyBuilder
+from corehq.apps.app_manager.util import get_case_properties
 from corehq.apps.app_manager.xform import XForm
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.reports.builder import (
@@ -24,7 +24,7 @@ def get_case_data_sources(app):
 
 def get_case_data_source(app, case_type):
 
-    property_builder = ParentCasePropertyBuilder(app, DEFAULT_CASE_PROPERTY_DATATYPES.keys())
+    prop_map = get_case_properties(app, [case_type], defaults=DEFAULT_CASE_PROPERTY_DATATYPES.keys())
     return DataSourceConfiguration(
         domain=app.domain,
         referenced_doc_type='CommCareCase',
@@ -32,7 +32,7 @@ def get_case_data_source(app, case_type):
         display_name=case_type,
         configured_filter=make_case_data_source_filter(case_type),
         configured_indicators=[
-            make_case_property_indicator(property) for property in property_builder.get_properties(case_type)
+            make_case_property_indicator(property) for property in prop_map[case_type]
         ]
     )
 

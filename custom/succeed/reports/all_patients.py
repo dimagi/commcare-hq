@@ -43,12 +43,20 @@ def target_date(visit_name, visit_days, randomization_date):
 
 
 def date_format(date_str):
+    """
+    >>> date_format('2015-02-10 11:54:24')
+    '02/10/2015'
+    >>> date_format('2015-02-10 11:54:24.004000')
+    '02/10/2015'
+
+    """
     if date_str:
         # this comes in with a ' ' instead of 'T' for some reason
         # would be nice to go back and figure out where that happens
         # probably `date_str = unicode(dt)` happens somewhere
-        if ' ' in date_str:
-            date_str = date_str.replace(' ', 'T')
+        if ' ' in date_str and not date_str.endswith('Z'):
+            date_str = date_str.replace(' ', 'T') + 'Z'
+
         date = iso_string_to_datetime(date_str)
         return date.strftime(OUTPUT_DATE_FORMAT)
     else:

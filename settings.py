@@ -28,6 +28,8 @@ LESS_WATCH = False
 # "dev-min" - use built/minified vellum (submodules/formdesigner/_build/src)
 VELLUM_DEBUG = None
 
+# gets set to False for unit tests that run without the database
+DB_ENABLED = True
 try:
     UNIT_TESTING = 'test' == sys.argv[1]
 except IndexError:
@@ -370,10 +372,9 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'south',
     'custom.apps.crs_reports',
     'custom.m4change',
-    'custom.succeed'
 
     # submodules with tests that run on travis
-    'couchexport',
+    # 'couchexport',
     'ctable',
     'ctable_view',
     'dimagi.utils',

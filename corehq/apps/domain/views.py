@@ -935,8 +935,11 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                 else:
                     payment_status = _("Not Paid")
                     payment_class = "label label-important"
-                date_due = (invoice.date_due.strftime(USER_DATE_FORMAT)
-                            if not invoice.is_paid else _("Already Paid"))
+                date_due = (
+                    (invoice.date_due.strftime(USER_DATE_FORMAT)
+                     if not invoice.is_paid else _("Already Paid"))
+                    if invoice.date_due else _("None")
+                )
                 yield {
                     'itemData': {
                         'id': invoice.id,
