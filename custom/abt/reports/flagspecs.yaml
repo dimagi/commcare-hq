@@ -181,11 +181,13 @@ http://openrosa.org/formdesigner/BBBA67FC-4E25-46B4-AB64-56F820D48A9E:
 
 # Form 3
 http://openrosa.org/formdesigner/54338047-CFB6-4D5B-861B-2256A10BBBC8:
+  # TODO: French
     - question: [q2_action]
       answer: []
       warning: " Problem reported: Spray operator(s) not properly fed or hydrated prior to donning PPE."
       warning_question: ~
       # answer and warning_question are optional
+    # TODO: q3
     - question: [q4_action]
       warning: "Problem reported: Spray operator(s) eating or drinking after donning PPE."
     - question: [q5_action]
@@ -204,6 +206,11 @@ http://openrosa.org/formdesigner/54338047-CFB6-4D5B-861B-2256A10BBBC8:
     - question: [q12_action]
       warning: "Problem noted: Separate transportation needed for operators and pesticides other than the days supply."
     - question: [q13_action]
+    # TODO:
+    # q14_action
+    # q14_2_action
+    # q15_action
+    # q15_action
       warning: "Problem noted: Mixed goods transportation violation, suggest re-training."
     - question: [q16_action]
       warning: "Problem noted: Drivers do not have cell telephone and/or appropriate PPE."
@@ -230,70 +237,97 @@ http://openrosa.org/formdesigner/2BAC5FDC-72F3-4AF4-8381-9160E8AE13CF:
   - question: [q1]
     answer: "no"
     warning: "Problem reported: Resident not informed of spray activities."
+    french: "Problème signalé : L’habitant n’a pas été informé des activités de pulvérisation."
   - question: [q2_action]
     warning: "Problem reported: Belongings not removed from structure."
+    french: "Problème signalé : Les effets n’ont pas été retirés de la structure."
   - question: [q3_action]
     warning: "Problem reported: Immovable items not covered with plastic sheet."
+    french: "Problème signalé : Les articles qui ne peuvent pas être retirés ne sont pas couverts d’une bâche de protection en plastique."
   - question: [q4_action]
     warning: "Problem reported: Rooms containing food were sprayed by operator."
+    french: "Problème signalé : Les pièces qui renfermaient des produits alimentaires ont été pulvérisées par l’opérateur."
   - question: [q5_action]
     warning: "Problem reported: Household items not removed from area before spraying eaves."
+    french: "Problème signalé : Les articles ménagers n’ont pas été retirés de la zone concernée avant de pulvériser les corniches des toits."
   - question: [q6_action]
     warning: "Problem reported: Resident not informed of post-spray requirements."
+    french: "Problème signalé : L’habitant n’a pas été informé des exigences de post-pulvérisation."
   - question: [q7_action]
     warning: "Problem reported: Resident not informed of potential exposure protocol."
+    french: "Problème signalé : L’habitant n’a pas été informé du protocole lié à une éventuelle exposition."
   - question: [q8_action]
     warning: "Problem reported: Resident did not confine animals during and after spray."
+    french: "Problème signalé : L’habitant n’a pas confiné les animaux pendant et après la pulvérisation."
   - question: [q9_action]
     warning: "Problem reported: House sprayed with sick, elderly, or babies in home."
+    french: "Problème signalé : Une habitation renfermant des personnes malades ou âgées ou des bébés a été pulvérisée."
   - question: [q10_action]
     warning: "Problem reported: Resident not informed of post-spray protocol."
+    french: "Problème signalé : L’habitant n’a pas été informé du protocole de post-pulvérisation."
   - question: [q11_action]
     warning: "Problem reported: Resident not informed of post-spray protocol."
+    french: "Problème signalé : L’habitant n’a pas été informé du protocole de post-pulvérisation."
   - question: [q12_action]
     warning: "Problem reported: Some residents refusing IRS."
+    french: "Problème signalé : Certains habitants refusent la PID."
   - question: [q13_action]
     warning: "Problem reported: Some residents not satisfied with the IRS operations."
+    french: "Problème signalé : Certains habitants ne sont pas satisfaits des activités PID."
   - question: [q14]
     comment: [q14_comments_action]
     warning_type: unchecked
     ignore: ["none"]
     warning: "Problem reported: Spray operator not wearing full PPE. Missing: {msg}."
+    french: "Problème signalé : L’opérateur de pulvérisation ne porte pas tout son EPI."
   - question: [q15_action]
     warning: "Problem reported: Homeowner did not observe mixing of pesticide."
+    french: "Problème signalé : L’habitant n’a pas observé l’activité qui consiste à mélanger le pesticide."
   - question: [q16_action]
     warning: "Problem reported: Spray operator not observing bottle triple rinse procedure."
+    french: "Problème signalé : L’opérateur de pulvérisation ne respecte pas la procédure de triple rinçage de la bouteille."
   - question: [q17_action]
     warning: "Problem reported: Spray operator not properly mixing pesticide before pressurizing tank."
+    french: "Problème signalé : L’opérateur de pulvérisation ne mélange pas le pesticide de manière appropriée avant de pressuriser le réservoir."
   - question: [q18_action]
     warning: "Problem reported: Spray operator not correctly pressurizing tank before spraying."
+    french: "Problème signalé : L’opérateur de pulvérisation ne pressurise pas correctement le réservoir avant de pulvériser."
   - question: [q19]
     answer: "yes"
     warning: "Problem reported: Pump leaking."
+    french: "Problème signalé : La pompe fuit."
   - question: [q19_action]
     warning: "Problem reported: Spray operator did not immediately service leaking pump."
+    french: "Problème signalé : L’opérateur de pulvérisation n’a pas immédiatement réparé la pompe qui fuit."
   - question: [q20_action]
     warning: "Problem reported: Spray operator not spraying at the correct distance from the surface."
+    french: "Problème signalé : L’opérateur de pulvérisation ne pulvérise pas à la distance correcte à partir de la surface."
   - question: [q21_action]
     warning: "Problem reported: Spray operator not spraying at the correct speed."
+    french: "Problème signalé : L’opérateur de pulvérisation ne pulvérise pas à la vitesse correcte."
   - question: [q22_action]
     warning: "Problem reported: Successive pray swath  do not have 2 cm overlap."
+    french: "Problème signalé : Il n’y a pas de chevauchement de 2 cm d’une passe à l’autre."
   - question: [q23_action]
     warning: "Problem reported: Spray operator not spraying all the recommended surfaces."
+    french: "Problème signalé : L’opérateur de pulvérisation ne pulvérise pas toutes les surfaces recommandées."
   - question: [q24_action]
     warning: "Problem reported: Spray operator spraying wrong surfaces."
+    french: "Problème signalé : L’opérateur de pulvérisation pulvérise les surfaces incorrectes."
   - question: [q25_action]
     warning: "Problem reported: Spray operator not re-pressurizing tank as required."
+    french: "Problème signalé : L’opérateur de pulvérisation ne repressurise pas le réservoir comme requis."
   - question: [q26_action]
     warning: "Problem reported; Spray Operator {msg} drinking, or eating during the day"
     warning_question: [q26a]
-  - question: [q27_3]
-    warning: "Problem reported; Accident or expowsure to: {msg} reported, follow up on IRF"
-    warning_question: [q27_3]
-    # NOTE: q27 might change. Text doesn't make sense given the questions.
+    french: "Problème signalé ; l’opérateur de pulvérisation {msg} boit ou mange pendant la journée"
+  - question: [q27_action]
+    warning: "Problem reported; Accident or expowsure reported, follow up on IRF"
+    french: "Problème signalé ; accident ou exposition signalée, suivi du FRI"
   - question: [q28_action]
     warning: "Problem reported: {msg}"
     warning_question: [q28_2]
+    french: "Problème signalé : {msg}"
 # Form 5
 http://openrosa.org/formdesigner/7B543EA4-A416-4E46-A121-C4F57412B5AA:
   - question: [q1_action]
