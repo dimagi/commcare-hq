@@ -3,6 +3,7 @@ http://openrosa.org/formdesigner/BB2BF979-BD8F-4B8D-BCF8-A46451228BA9:
     - question: [q2_2]
       answer: "no"
       warning: "Research possibilities for relocating storage facility."
+      french: "Rechercher des possibilités pour un nouvel emplacement de l’installation de stockage."
     - question: [q4_2]
       answer: "no"
       warning: "Check storage inventory, pending purchase orders, and delivery date for padlocks and needed hardware."
@@ -389,135 +390,200 @@ http://openrosa.org/formdesigner/7B543EA4-A416-4E46-A121-C4F57412B5AA:
 http://openrosa.org/formdesigner/89F60CF0-C6A7-4AD8-A48E-AA0F7A7A9B4D:
   - question: [q1_action]
     warning: "Problem reported: All SOs must continue to wear PPE on the way back to the operations site."
+    french: "Problème signalé : Tous les opérateurs de pulvérisation doivent continuer à porter leur EPI lorsqu’ils retournent vers le site d’exploitation."
   - question: [q2_action]
     warning: "Problem reported: Eating and/or drinking violation."
+    french: "Problème signalé : Violation de l’interdiction de manger et/ou de boire."
   - question: [q3_action]
     warning: "Problem reported: Team Leaders not supervising cleaning and wash-up."
+    french: "Problème signalé : Les chefs d’équipe ne supervisent pas le nettoyage et le lavage."
   - question: [q4_action]
     warning: "Problem reported: Wash facilities with soap and water must be available to operators."
+    french: "Problème signalé : Des installations de lavage qui ont du savon et de l’eau doivent être disponibles pour les opérateurs de pulvérisation."
   - question: [q5_action]
     warning: "Problem reported: Triple rinse and wash area must be covered with leak-proof surface and sloped to soak pit."
+    french: "Problème signalé : La zone de triple rinçage et de lavage doit être recouverte d’une surface imperméable et inclinée en direction du puisard."
   - question: [q6_action]
     warning: "Problem reported: All personnel in the wash area must wear full PPE."
+    french: "Problème signalé : Tous les membres du personnel qui sont dans la zone de lavage doivent porter tout leur EPI."
   - question: [q7_action]
     warning: "Notify operations coordinator of triple-rinse violations."
+    french: "Notifier le coordonnateur des opérations des violations de la procédure de triple rinçage."
   - question: [q8_action]
     warning: "Problem reported: Insufficient water for triple rinse."
+    french: "Problème signalé : Il n’y a pas suffisamment d’eau pour le triple rinçage."
   - question: [q9_action]
     warning: "Problem reported: Triple-rinse violations."
+    french: "Problème signalé : Violations de la procédure de triple rinçage."
   - question: [q10_action]
     warning: "Problem reported: Pumps not properly washed"
+    french: "Problème signalé : Les pompes ne sont pas lavées de manière appropriée"
   - question: [q11_action]
     warning: "Problem reported: PPE not properly washed"
+    french: "Problème signalé : L’EPI n’est pas lavé de manière appropriée"
   - question: [q12_action]
     warning: "Problem reported: Operators must wash hands and face with soap and water after removing PPE."
+    french: "Problème signalé : Les opérateurs de pulvérisation doivent se laver le visage et les mains avec de l’eau et du savon, après avoir retiré leur équipement de protection individuelle (EPI)."
   - question: [q13_action]
     warning: "Problem reported: Storekeeper must keep records of pesticides handed out and returned."
+    french: "Problème signalé : Le magasinier doit conserver des documents sur les pesticides qui sont distribués et retournés."
   - question: [q14_action]
     warning: "Problem reported: Need for strict accounting for sachet/bottless, for labeled containers for all contaminated waste, and for storekeeper training."
+    french: "Problème signalé : Il est nécessaire d’instaurer une comptabilité rigoureuse en ce qui concerne les sachets/bouteilles, les contenants étiquetés destinés aux déchets contaminés et la formation du magasinier."
   - question: [q15_action]
     warning: "Problem reported: Spray operators must complete daily report forms."
+    french: "problème signalé : Les opérateurs de pulvérisation doivent remplir chaque jour leurs formulaires de rapport."
   - question: [q16_action]
     warning: "Problem reported: Supervisors must check spray forms."
+    french: "problème signalé : Les superviseurs de pulvérisation doivent vérifier les formulaires de pulvérisation."
   - question: [q17_action]
     warning: "Problem reported: Team Leaders not using Error Eliminator.  "
+    french: "Problème signalé : Les chefs d’équipe n’utilisent pas l’Éliminateur d’erreurs."
   - question: [q17_2_action]
     warning: "Problem reported: Team Leaders have difficulty using the Error Eliminator correctly."
+    french: "Problème signalé : Les chefs d’équipe ont des difficultés à utiliser correctement l’Éliminateur d’erreurs."
   - question: [q18]
     answer: "yes"
     warning: " Problem reported: An incident has been reported and an Incident Report Form is needed immediately. Follow up with Sector Manager to be sure accident report form is filed and sent to TC and ECM."
+    french: "Problème signalé : Un incident a été signalé et un formulaire de rapport d’incident est immédiatement requis. Il est nécessaire d’effectuer un travail de suivi auprès du responsable de secteur pour s’assurer qu’un formulaire de rapport d’incident a été déposé et envoyé à TC et à ECM."
   - question: [q19_action]
     warning: "Possible exposure reported: Follow-up on status of SO complaining of irritation and ensure incident report has been sent to home office Technical Coordinator and ECM."
+    french: "Exposition potentielle signalée : Effectuer un travail de suivi sur l’état de l’opérateur de pulvérisation qui se plaint d’irritations et s’assurer qu’un rapport d’incident a été envoyé au coordonnateur technique et à l’ECM du bureau du siège."
   - question: [q20_action]
     warning: "Problem reported: Overalls not properly washed and dried"
+    french: "Problème signalé : Les salopettes ne sont pas lavées et séchées de manière appropriée"
   - question: [q21_action]
     warning: "Problem reported:  Improper disposal of wastewater."
+    french: "Problème signalé :  Élimination inappropriée des eaux usées."
   - question: [q22_action]
     warning: "Problem reported: Water not draining properly into soak-pit."
+    french: "Problème signalé : L’eau ne s’écoule pas de manière appropriée dans le puisard."
   - question: [q23_action]
     warning: "Problem reported: Soak-pit not draining properly."
+    french: "Problème signalé : Le puisard n’effectue pas un écoulement approprié."
   - question: [q24_action]
     warning: "Problem reported: Inadequate gravel in soak pit."
+    french: "Problème signalé : Quantité de gravier insuffisante dans le puisard."
   - question: [q25_action]
     warning: "Problem reported: Pumps not hung up to dry"
+    french: "Problème signalé : Les pompes ne sont pas pendues pour sécher"
   - question: [q26_action]
     warning: "Problem reported: Pumps not stored properly."
+    french: "Problème signalé : Les pompes ne sont pas entreposées de manière appropriée."
   - question: [q27_action]
     warning: "Problem reported: Rinse and/or waste drums not covered overnight."
+    french: "Problème signalé : Les fûts de rinçage et/ou de déchets ne sont pas couverts pendant la nuit."
   - question: [q28_action]
     warning: "Problem reported: Mobile soak pit must be ocated away from water bodies, steep slopes or flood prone areas."
+    french: "Problème signalé : Le puisard mobile doit être situé loin des étendues d’eau, des pentes abruptes ou des zones inondables."
   - question: [q29_action]
     warning: "Problem reported: Storekeeper must keep records of pesticides handed out and returned."
+    french: "Problème signalé : Le magasinier doit conserver des documents sur les pesticides qui sont distribués et retournés."
   - question: [q30_action]
     warning: "Problem reported: Storekeeper must keep records of pesticides handed out and returned."
+    french: "Problème signalé : Le magasinier doit conserver des documents sur les pesticides qui sont distribués et retournés."
   - question: [q31_action]
     warning: "Problem reported: Waste water from collection barrel left at the wash area overnight."
+    french: "Problème signalé : Les eaux usées provenant du fût de collecte ont été laissées dans la zone de lavage pendant la nuit."
   - question: [q32_action]
     warning: "Problem reported: Eating and/or drinking violation."
+    french: "Problème signalé : Violation de l’interdiction de manger et/ou de boire."
   - question: [q33_action]
     warning: "Problem reported: Team Leaders not supervising cleaning and wash-up."
+    french: "Problème signalé : Les chefs d’équipe ne supervisent pas le nettoyage et le lavage."
   - question: [q34_action]
     warning: "Problem reported: Triple rinse and wash area must be covered with leak-proof surface and sloped to mobile soak pit."
+    french: "Problème signalé : La zone de triple rinçage et de lavage doit être recouverte d’une surface imperméable et inclinée en direction du puisard mobile."
   - question: [q35_action]
     warning: "Problem reported: All personnel in the wash area must wear full PPE."
+    french: "Problème signalé : Tous les membres du personnel qui sont dans la zone de lavage doivent porter tout leur EPI."
   - question: [q36_action]
     warning: "Notify operations coordinator of triple-rinse violations."
+    french: "Notifier le coordonnateur des opérations des violations de la procédure de triple rinçage."
   - question: [q37_action]
     warning: "Problem reported: Insufficient water for triple rinse."
+    french: "Problème signalé : Il n’y a pas suffisamment d’eau pour le triple rinçage."
   - question: [q38_action]
     warning: "Problem reported: Triple-rinse violations."
+    french: "Problème signalé : Violations de la procédure de triple rinçage."
   - question: [q39_action]
     warning: "Problem reported: Pumps not properly rinsed"
+    french: "Problème signalé : Les pompes ne sont pas rincées de manière appropriée"
   - question: [q40_action]
     warning: "Problem reported: Pumps not properly washed"
+    french: "Problème signalé : Les pompes ne sont pas lavées de manière appropriée"
   - question: [q41_action]
     warning: "Problem reported: Waste water from collection drum not distributed into spray pumps."
+    french: "Problème signalé : Les eaux usées provenant du fût de collecte ne sont pas distribuées dans les pompes de pulvérisation."
   - question: [q42_action]
     warning: "Problem reported: PPE not properly washed"
+    french: "Problème signalé : L’EPI n’est pas lavé de manière appropriée"
   - question: [q43_action]
     warning: "Problem reported: Operators must wash hands and face with soap and water after removing PPE."
+    french: "Problème signalé : Les opérateurs de pulvérisation doivent se laver le visage et les mains avec de l’eau et du savon, après avoir retiré leur équipement de protection individuelle (EPI)."
   - question: [q44_action]
     warning: "Problem reported:  Improper disposal of wastewater."
+    french: "Problème signalé :  Élimination inappropriée des eaux usées."
   - question: [q45_action]
     warning: "Problem reported: Water not draining properly into mobile soak pit."
+    french: "Problème signalé : L’eau ne s’écoule pas de manière appropriée dans le puisard mobile."
   - question: [q46_action]
     warning: "Problem reported: Mobile soak pit not draining properly."
+    french: "Problème signalé : Le puisard mobile n’effectue pas un écoulement approprié."
   - question: [q47_action]
     warning: "Problem reported: Rinse and/or waste drums not covered overnight."
+    french: "Problème signalé : Les fûts de rinçage et/ou de déchets ne sont pas couverts pendant la nuit."
   - question: [q48_action]
     warning: "Problem reported: MSP not properly restored."
+    french: "Problème signalé : Le puisard mobile n’est pas correctement restauré."
   - question: [q48_2_action]
     warning: "Problem reported: MSP installation site not secured at the end of the day."
+    french: "Problème signalé : Le site d’installation du puisard mobile n’est pas sécurisé à la fin de la journée."
   - question: [q49_action]
     warning: "Problem reported: MSP has to be secured at the end of day."
+    french: "Problème signalé : Le puisard mobile doit être sécurisé à la fin de la journée."
   - question: [q50_action]
     warning: "Problem reported: Porters not transporting overalls to be washed and dried"
+    french: "Problème signalé : Les porteurs ne transportent pas les salopettes à laver et à sécher"
   - question: [q51_action]
     warning: "Problem reported: Porters not transporting clean overalls to field teams"
+    french: "Problème signalé : Les porteurs ne transportent pas les salopettes propres aux équipes sur le terrain"
   - question: [q52_action]
     warning: "Problem reported: Spray operators must complete daily report forms."
+    french: "Problème signalé : Les opérateurs de pulvérisation doivent remplir chaque jour leurs formulaires de rapport."
   - question: [q53_action]
     warning: "Problem reported: Supervisors must check spray forms."
+    french: "Problème signalé : Les superviseurs de pulvérisation doivent vérifier les formulaires de pulvérisation."
   - question: [q54_action]
     warning: "Problem reported: Team Leaders not using Error Eliminator."
+    french: "Problème signalé : Les chefs d’équipe n’utilisent pas l’Éliminateur d’erreurs."
   - question: [q54_2_action]
     warning: "Problem reported: Team Leaders have difficulty using the Error Eliminator correctly."
+    french: "Problème signalé : Les chefs d’équipe ont des difficultés à utiliser correctement l’Éliminateur d’erreurs."
   - question: [q55]
     answer: "yes"
     warning: "Problem reported: An incident has been reported and an Incident Report Form is needed immediately. Follow up with Sector Manager to be sure accident report form is filed and sent to TC and ECM."
+    french: "Problème signalé : Un incident a été signalé et un formulaire de rapport d’incident est immédiatement requis. Il est nécessaire d’effectuer un travail de suivi auprès du responsable de secteur pour s’assurer qu’un formulaire de rapport d’incident a été déposé et envoyé à TC et à ECM."
   - question: [q56_action]
     warning: "Possible exposure reported: Follow-up on status of SO complaining of irritation and ensure incident report has been sent to home office Technical Coordinator and ECM."
+    french: "Exposition potentielle signalée : Effectuer un travail de suivi sur l’état de l’opérateur de pulvérisation qui se plaint d’irritations et s’assurer qu’un rapport d’incident a été envoyé au coordonnateur technique et à l’ECM du bureau du siège."
 # Form 7
 http://openrosa.org/formdesigner/1BE9CFE7-8EE6-4DFA-B9ED-D37993729843:
   - question: [q2_action]
     warning: "Problem reported: IRS commodities (signs, insecticides and wastes from the store and soak pit) still in storage."
+    french: "Problème signalé : Les produits PID (panneaux, insecticides et déchets du magasin et du puisard) sont toujours entreposés."
   - question: [q3_action]
     warning: "Problem reported: Pesticide storage area has not been properly cleaned with soap, water, mop, bucket."
+    french: "Problème signalé : L’aire de stockage des pesticides n’a pas été nettoyée de manière appropriée avec de l’eau, du savon, un balai de lavage et un seau."
   - question: [q4_action]
     warning: "Problem reported: Soak pit not covered and/or fence not locked."
+    french: "Problème signalé : Le puisard n’est pas couvert et/ou la clôture n’est pas verrouillée."
   - question: [q5_action]
     warning: "Problem reported: Soak pit surrounding area not clean."
+    french: "Problème signalé : Les alentours du puisard ne sont pas propres."
   - question: [q6_action]
     warning: "Problem reported: Unsatisfactory relationship with owner of building housing storeroom."
+    french: "Problème signalé : Relations insatisfaisantes avec le propriétaire du bâtiment qui abrite la salle de stockage."
   - question: [q7_action]
     warning: "Problem reported: Advise finding new storage site for next year."
+    french: "Problème signalé : Il est recommandé de trouver un nouveau site de stockage pour l’année prochaine."
