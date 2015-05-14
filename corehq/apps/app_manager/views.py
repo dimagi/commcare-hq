@@ -805,8 +805,8 @@ def get_module_view_context_and_template(app, module):
     child_case_types = list(child_case_types)
     fixtures = [f.tag for f in FixtureDataType.by_domain(app.domain)]
 
-    def get_parent_modules(case_type):
-        parent_types = builder.get_parent_types(case_type)
+    def get_parent_modules(case_type_):
+        parent_types = builder.get_parent_types(case_type_)
         modules = app.modules
         parent_module_ids = [mod.unique_id for mod in modules
                              if mod.case_type in parent_types]
@@ -814,14 +814,14 @@ def get_module_view_context_and_template(app, module):
             'unique_id': mod.unique_id,
             'name': mod.name,
             'is_parent': mod.unique_id in parent_module_ids,
-        } for mod in app.modules if mod.case_type != case_type and mod.unique_id != module.unique_id]
+        } for mod in app.modules if mod.case_type != case_type_ and mod.unique_id != module.unique_id]
 
-    def case_list_form_options(case_type):
+    def case_list_form_options(case_type_):
         options = OrderedDict()
         forms = [
             form
             for mod in app.get_modules() if module.unique_id != mod.unique_id
-            for form in mod.get_forms() if form.is_registration_form(case_type)
+            for form in mod.get_forms() if form.is_registration_form(case_type_)
         ]
         if forms or module.case_list_form.form_id:
             options['disabled'] = _("Don't Show")
