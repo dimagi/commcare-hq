@@ -47,11 +47,30 @@ class SyncCouchToSQLMixin(object):
         """
         raise NotImplementedError()
 
+    def _migration_automatically_handle_dups(self):
+        """
+        Ideally, you should use a CriticalSection to lock out your get and save
+        functionality so that each sync will automatically be atomic. However,
+        even after doing so, during periods of high latency the locks may time
+        out and you still might end up with a race condition in the sync that
+        creates more than one SQL model from this couch model.
+
+        Make this method return True if you want subsequent syncs to delete
+        the duplicate records and resync. Otherwise, the default behavior is
+        that a notify exception email will go out each time duplicates are found.
+        """
+        return False
+
     def _migration_get_or_create_sql_object(self):
         cls = self._migration_get_sql_model_class()
         try:
             obj = cls.objects.get(couch_id=self._id)
         except cls.DoesNotExist:
+            obj = cls(couch_id=self._id)
+        except cls.MultipleObjectsReturned:
+            if not self._migration_automatically_handle_dups():
+                raise
+            cls.objects.filter(couch_id=self._id).delete()
             obj = cls(couch_id=self._id)
         return obj
 
