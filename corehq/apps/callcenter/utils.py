@@ -8,11 +8,14 @@ from casexml.apps.case.xml import V2
 import uuid
 from xml.etree import ElementTree
 from corehq.apps.app_manager.const import USERCASE_TYPE
+from corehq.apps.domain.models import Domain
 from corehq.apps.es.domains import DomainES
 from corehq.apps.es import filters
 from corehq.apps.hqcase.utils import submit_case_blocks, get_case_by_domain_hq_user_id
 from couchdbkit.exceptions import MultipleResultsFound
+from corehq.feature_previews import CALLCENTER
 from corehq.util.couch_helpers import paginate_view
+from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import UserTime
 from dimagi.utils.couch import CriticalSection
 
@@ -183,3 +186,9 @@ def get_call_center_cases(domain_name, case_type, user=None):
                 ))
 
     return all_cases
+
+
+@quickcache(['domain'])
+def get_call_center_case_type_if_enabled(domain):
+    if CALLCENTER.enabled(domain):
+        return Domain.get_by_name(domain).call_center_config.case_type

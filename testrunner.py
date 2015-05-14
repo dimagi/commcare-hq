@@ -1,3 +1,4 @@
+from functools import wraps
 from couchdbkit.ext.django import loading
 from couchdbkit.ext.django.testrunner import CouchDbKitTestSuiteRunner
 import datetime
@@ -7,6 +8,22 @@ import settingshelper
 
 from django.test import TransactionTestCase
 from mock import patch, Mock
+
+
+def set_db_enabled(is_enabled):
+    def decorator(fn):
+        @wraps(fn)
+        def _inner(*args, **kwargs):
+            original_value = settings.DB_ENABLED
+            settings.DB_ENABLED = is_enabled
+            try:
+                return fn(*args, **kwargs)
+            finally:
+                settings.DB_ENABLED = original_value
+
+        return _inner
+
+    return decorator
 
 
 class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
@@ -147,6 +164,7 @@ class TwoStageTestRunner(HqTestSuiteRunner):
         """
         self._db_patch.stop()
 
+    @set_db_enabled(False)
     def run_non_db_tests(self, suite):
         print("Running {0} tests without database".format(suite.countTestCases()))
         self.setup_mock_database()
@@ -154,6 +172,7 @@ class TwoStageTestRunner(HqTestSuiteRunner):
         self.teardown_mock_database()
         return self.suite_result(suite, result)
 
+    @set_db_enabled(True)
     def run_db_tests(self, suite):
         print("Running {0} tests with database".format(suite.countTestCases()))
         old_config = self.setup_databases()
