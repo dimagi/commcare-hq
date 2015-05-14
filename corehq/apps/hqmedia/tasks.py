@@ -29,24 +29,8 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
     status.in_celery = True
     status.save()
 
-    try:
-        saved_file = StringIO.StringIO()
-        saved_ref = DownloadBase.get(processing_id)
-        data = saved_ref.get_content()
-        saved_file.write(data)
-    except Exception as e:
-        status.mark_with_error(_("Could not fetch cached bulk upload file. Error: %s." % e))
-        return
-
-    try:
-        saved_file.seek(0)
-        uploaded_zip = zipfile.ZipFile(saved_file)
-    except Exception as e:
-        status.mark_with_error(_("Error opening file as zip file: %s" % e))
-        return
-
-    if uploaded_zip.testzip():
-        status.mark_with_error(_("Error encountered processing Zip File. File doesn't look valid."))
+    uploaded_zip = status.get_upload_zip()
+    if not uploaded_zip:
         return
 
     zipped_files = uploaded_zip.namelist()

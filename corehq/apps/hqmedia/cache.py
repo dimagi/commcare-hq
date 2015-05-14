@@ -1,7 +1,10 @@
+import StringIO
 import logging
+import zipfile
 from django.core.cache import cache
 from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareVideo
 from django.utils.translation import ugettext as _
+from soil import DownloadBase
 
 
 class BaseMultimediaStatusCache(object):
@@ -106,6 +109,29 @@ class BulkMultimediaStatusCache(BaseMultimediaStatusCache):
         else:
             self.add_unmatched_path(media_info['path'],
                                     _("Not a bulk-upload supported CommCareMedia type: %s" % media_class.__name__))
+
+    def get_upload_zip(self):
+        try:
+            saved_file = StringIO.StringIO()
+            saved_ref = DownloadBase.get(self.processing_id)
+            data = saved_ref.get_content()
+            saved_file.write(data)
+        except Exception as e:
+            self.mark_with_error(_("Could not fetch cached bulk upload file. Error: %s." % e))
+            return
+
+        try:
+            saved_file.seek(0)
+            uploaded_zip = zipfile.ZipFile(saved_file)
+        except Exception as e:
+            self.mark_with_error(_("Error opening file as zip file: %s" % e))
+            return
+
+        if uploaded_zip.testzip():
+            self.mark_with_error(_("Error encountered processing Zip File. File doesn't look valid."))
+            return
+
+        return uploaded_zip
 
     @classmethod
     def get_cache_key(cls, processing_id):
