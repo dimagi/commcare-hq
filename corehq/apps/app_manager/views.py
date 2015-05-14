@@ -166,7 +166,6 @@ from corehq.apps.app_manager.decorators import safe_download, no_conflict_requir
 from django.contrib import messages
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege, has_privilege
-from corehq.toggles import USER_AS_A_CASE
 # Numbers in paths is prohibited, hence the use of importlib
 import importlib
 FilterMigration = importlib.import_module('corehq.apps.app_manager.migrations.0002_add_filter_to_Detail').Migration
@@ -1958,7 +1957,7 @@ def edit_form_actions(request, domain, app_id, module_id, form_id):
     form.actions = FormActions.wrap(json.loads(request.POST['actions']))
     form.requires = request.POST.get('requires', form.requires)
     if actions_use_usercase(form.actions) and not is_usercase_in_use(domain):
-        if USER_AS_A_CASE.enabled(domain):
+        if toggles.USER_AS_A_CASE.enabled(domain):
             enable_usercase(domain)
         else:
             return HttpResponseBadRequest(json.dumps({
