@@ -32,7 +32,7 @@
          <small>{% trans 'What would you like to do?' %}</small></h1>
 </div>
 <div class="row">
-    <div class="col-md-4">
+    <div class="col-md-3">
         <div class="panel panel-dashboard">
             <div class="panel-heading">
                 {% trans 'Exchange' %}
@@ -41,13 +41,13 @@
                 <p class="text-center"><a href="{% url 'appstore' %}" class="dashboard-link" id="appstore-link">
                     <i class="fcc fcc-exchange dashboard-icon dashboard-icon-large"></i>
                     <span class="lead">{% blocktrans %}
-                        Start with an existing application
+                        Start with an<br>existing application
                     {% endblocktrans %}</span>
                 </a></p>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-6">
         <div class="panel panel-dashboard">
             <div class="panel-heading">
                 {% if project.commtrack_enabled %}
@@ -63,14 +63,14 @@
                        id="new-app-link">
                         <i class="fcc dashboard-icon dashboard-icon-large fcc-applications"></i>
                         <span class="lead">
-                            Build a new application
+                            Build a new application<br><br>
                         </span>
                    </a>
                 </p>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-3">
         <div class="panel panel-dashboard">
             <div class="panel-heading">{% trans 'Help Site' %}</div>
             <div class="panel-body">
@@ -80,7 +80,7 @@
                       target="_blank">
                     <i class="fcc fcc-help dashboard-icon dashboard-icon-large"></i>
                     <span class="lead">{% blocktrans %}
-                        Learn how to build an application
+                        Learn how to build<br>an application
                     {% endblocktrans %}</span>
                 </a></p>
             </div>

@@ -68,11 +68,10 @@ class PredictablyRandomToggle(StaticToggle):
     It extends StaticToggle, so individual domains/users can also be explicitly added.
     """
 
-    def __init__(self, slug, label, tag, namespace, randomness, help_link=None, description=None):
-        super(PredictablyRandomToggle, self).__init__(slug, label, tag, list(namespace),
-                                                       help_link=help_link, description=description)
-        assert namespace, 'namespace must be defined!'
-        self.namespace = namespace
+    def __init__(self, slug, label, tag, namespaces, randomness, help_link=None, description=None):
+        super(PredictablyRandomToggle, self).__init__(slug, label, tag, list(namespaces),
+                                                      help_link=help_link, description=description)
+        assert namespaces, 'namespaces must be defined!'
         assert 0 <= randomness <= 1, 'randomness must be between 0 and 1!'
         self.randomness = randomness
 
@@ -81,7 +80,7 @@ class PredictablyRandomToggle(StaticToggle):
         return "{:.0f}".format(self.randomness * 100)
 
     def _get_identifier(self, item):
-        return '{}:{}:{}'.format(self.namespace, self.slug, item)
+        return '{}:{}:{}'.format(self.namespaces, self.slug, item)
 
     def enabled(self, item, **kwargs):
         return (
@@ -387,7 +386,7 @@ FILE_RESTORE = PredictablyRandomToggle(
     'Use files to do phone restore',
     TAG_PRODUCT_PATH,
     randomness=.5,
-    namespace=[NAMESPACE_DOMAIN, NAMESPACE_USER],
+    namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
 
 BULK_SMS_VERIFICATION = StaticToggle(
@@ -425,7 +424,7 @@ STREAM_RESTORE_CACHE = PredictablyRandomToggle(
     'Stream cached restore from couchdb',
     TAG_EXPERIMENTAL,
     randomness=.5,
-    namespace=[NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_DOMAIN]
 )
 
 ENABLE_LOADTEST_USERS = StaticToggle(
@@ -441,7 +440,7 @@ OWNERSHIP_CLEANLINESS = PredictablyRandomToggle(
     'Enable tracking ownership cleanliness on submission',
     TAG_EXPERIMENTAL,
     randomness=.05,
-    namespace=NAMESPACE_DOMAIN,
+    namespaces=[NAMESPACE_DOMAIN],
     help_link='https://docs.google.com/a/dimagi.com/document/d/12WfZLerFL832LZbMwqRAvXt82scdjDL51WZVNa31f28/edit#heading=h.gu9sjekp0u2p',
 )
 

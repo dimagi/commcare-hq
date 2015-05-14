@@ -192,9 +192,11 @@ class SnapshotSettingsForm(forms.Form):
         help_text=ugettext_noop("An optional file to tell users more about your app."))
     old_documentation_file = forms.BooleanField(required=False)
     cda_confirmed = BooleanField(required=False, label=ugettext_noop("Content Distribution Agreement"))
+    is_starter_app = BooleanField(required=False, label=ugettext_noop("This is a starter application"))
 
     def __init__(self, *args, **kw):
         self.dom = kw.pop("domain", None)
+        self.is_superuser = kw.pop("is_superuser", None)
         super(SnapshotSettingsForm, self).__init__(*args, **kw)
 
         self.helper = FormHelper()
@@ -232,6 +234,9 @@ class SnapshotSettingsForm(forms.Form):
                 'cda_confirmed',
             ),
         )
+
+        if self.is_superuser:
+            self.helper.layout.append(crispy.Fieldset('Starter App', 'is_starter_app',),)
 
 
         self.fields['license'].help_text = \
@@ -1157,7 +1162,7 @@ class ProBonoForm(forms.Form):
             }
             html_content = render_to_string("domain/email/pro_bono_application.html", params)
             text_content = render_to_string("domain/email/pro_bono_application.txt", params)
-            recipient = settings.BILLING_EMAIL
+            recipient = settings.SUPPORT_EMAIL
             subject = "[Pro-Bono Application]"
             if domain is not None:
                 subject = "%s %s" % (subject, domain)
@@ -1222,6 +1227,13 @@ class InternalSubscriptionManagementForm(forms.Form):
     @memoized
     def current_subscription(self):
         return Subscription.get_subscribed_plan_by_domain(self.domain)[1]
+
+    @property
+    @memoized
+    def current_contact_emails(self):
+        return BillingContactInfo.objects.get_or_create(
+            account=self.current_subscription.account
+        )[0].emails
 
     def __init__(self, domain, web_user, *args, **kwargs):
         super(InternalSubscriptionManagementForm, self).__init__(*args, **kwargs)
@@ -1310,6 +1322,8 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
         }
 
         super(AdvancedExtendedTrialForm, self).__init__(domain, web_user, *args, **kwargs)
+
+        self.fields['emails'].initial = self.current_contact_emails
 
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
@@ -1421,6 +1435,7 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
 
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
+        self.fields['emails'].initial = self.current_contact_emails
 
         plan_edition = self.current_subscription.plan_version.plan.edition if self.current_subscription else None
         if plan_edition not in [
@@ -1446,7 +1461,6 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
             )
         else:
             self.fields['fogbugz_client_name'].initial = self.current_subscription.account.name
-            self.fields['emails'].initial = self.current_subscription.account.billingcontactinfo.emails
             self.fields['end_date'].initial = self.current_subscription.date_end
             self.helper.layout = crispy.Layout(
                 TextField('software_plan_edition', plan_edition),
