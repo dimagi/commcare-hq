@@ -1,14 +1,14 @@
 {% load multimedia_tags %}
 {% load i18n %}
-
+{% with "download_multimedia_modal" as download_multimedia_modal_id %}
 {% if multimedia.references.form_media.images.maps or multimedia.references.form_media.audio.maps or multimedia.references.menu_media.icons.maps or multimedia.references.menu_media.audio.maps %}
     <p>{% blocktrans %}This .zip file is structured to match the multimedia paths referenced in your CommCare Application.{% endblocktrans %}</p>
 
     <p>
         {% if multimedia.form_errors or multimedia.missing_refs %}
-            <a class="btn btn-warning" style="color: #ffffff;" href="{% url "download_multimedia_zip" domain app.get_id  %}"><i class="icon icon-white icon-bolt"></i> {% trans 'Download Incomplete ZIP' %}</a>
+            <a class="btn btn-warning" style="color: #ffffff;" href="#{{download_multimedia_modal_id}}" data-toggle="modal"><i class="icon icon-white icon-bolt"></i> {% trans 'Download Incomplete ZIP' %}</a>
         {% else %}
-            <a id="download_zip" class="btn btn-primary" style="color: #ffffff;" href="{% url "download_multimedia_zip" domain app.get_id  %}"><i class="icon icon-white icon-download-alt"></i> {% trans 'Download ZIP' %}</a>
+            <a id="download_zip" class="btn btn-primary" style="color: #ffffff;" href="#{{download_multimedia_modal_id}}" data-toggle="modal"><i class="icon icon-white icon-download-alt"></i> {% trans 'Download ZIP' %}</a>
         {% endif %}
     </p>
 {% else %}
@@ -31,3 +31,10 @@
         </p>
     {% endblocktrans %}</div>
 {% endif %}
+
+{% include 'app_manager/partials/download_async_modal.html' with element_id=download_multimedia_modal_id %}
+{{% url "download_multimedia_zip" domain app.get_id as multimedia_url%}
+<script type="text/javascript">
+    var downloader = new COMMCAREHQ.AsyncDownloader($("#{{download_multimedia_modal_id}}"), "{{multimedia_url}}");
+</script>
+{% endwith %}<!-- endwith download_multimedia_modal_id -->
