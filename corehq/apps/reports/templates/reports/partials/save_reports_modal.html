@@ -30,7 +30,12 @@
                     <div class="control-group">
                         <label class="control-label">{% trans "Date Filter" %}</label>
                         <div class="controls">
-                            <select data-bind="options: datespan_filters, value: datespan_slug"></select>
+                            <select data-bind="
+                                options: datespan_filters,
+                                optionsText: 'display',
+                                optionsValue: 'slug',
+                                value: datespan_slug
+                            "></select>
                         </div>
                     </div>
                 </div>

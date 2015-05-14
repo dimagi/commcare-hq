@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
+from django.utils.translation import ugettext_noop as _
 from django.views.generic.base import TemplateView
 from braces.views import JSONResponseMixin
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
@@ -130,13 +131,10 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
                 if current_config_id
                 else ReportConfig.default()
             ),
-            'datespan_filters': [
-                None,
-            ] + [
-                f['slug']
-                for f in self.spec.filters
-                if f['type'] == 'date'
-            ],
+            'datespan_filters': [{
+                'display': _('Choose a date filter...'),
+                'slug': None,
+            }] + self.spec.filters,
         }
 
     @property
