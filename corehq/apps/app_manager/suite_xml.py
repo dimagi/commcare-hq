@@ -1521,7 +1521,6 @@ class SuiteGenerator(SuiteGeneratorBase):
             for form in module.get_forms():
                 e = Entry()
                 e.form = form.xmlns
-                # ToDo: remove version-hardcode
                 # Ideally all of this version check should happen in Command/Display class
                 if self.app.enable_localized_menu_media:
                     e.command = LocalizedCommand(

@@ -1062,7 +1062,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
     def _all_media_paths(self, media_attr):
         self._check_media_attribute(media_attr)
         media_dict = getattr(self, media_attr) or {}
-        valid_media_paths = set([media for media in media_dict.values() if media])
+        valid_media_paths = {media for media in media_dict.values() if media}
         return list(valid_media_paths)
 
     def all_image_paths(self):
