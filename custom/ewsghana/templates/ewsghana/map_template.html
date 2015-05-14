@@ -1,0 +1,25 @@
+{% extends "reports/async/basic.html" %}
+{% load report_tags %}
+
+{% block js-inline %}
+    {{ block.super }}
+    <script>
+        var slugs = [['dashboard_report', 'Dashboard'], ['stock_status', 'Stock Status Report'],
+            ['reporting_page', 'Reporting Rates'], ['ews_mapreport', 'Maps'],
+            ['stock_summary_report', 'Stock Summary Report'],
+            ['cms_rms_summary_report', 'CMS and RMS Summary Report']];
+        var url = window.location.href;
+        var lastSlash = url.lastIndexOf('/');
+        var previousSlash = url.lastIndexOf('/', lastSlash - 1);
+        var content = '<div style="margin: 0 0 30px 120px;">';
+
+        $.each(slugs, function() {
+            content += '<a class="btn" style="margin-left: 10px" href="' +
+                    url.substring(0, previousSlash + 1) + this[0] + url.substring(lastSlash) +
+                    '">' + this[1] + '</a>';
+        });
+
+        content += '</div>';
+        $('legend').after(content);
+    </script>
+{% endblock %}
