@@ -684,7 +684,15 @@ cloudCare.AppView = Backbone.View.extend({
             $.ajax({
                 url: render_xml_url,
                 success: function (data) {
-                    showRenderedForm(data, $("#instance-viewer-pretty"));
+                    showRenderedForm(data, $("#xml-viewer-pretty"));
+                }
+            });
+
+            var render_xml_url = 'http://127.0.0.1:8000/a/willslearningproject/cloudcare/render_form/' + sessionId
+            $.ajax({
+                url: render_xml_url,
+                success: function (data) {
+                    showRenderedForm(data, $("#question-viewer-pretty"));
                 }
             });
         };
