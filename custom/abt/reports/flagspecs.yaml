@@ -120,19 +120,24 @@ http://openrosa.org/formdesigner/BBBA67FC-4E25-46B4-AB64-56F820D48A9E:
   - question: [q1_action]
     warning: "Problem noted: Vehicle(s) or driver(s) do(es) not possess the required certificate or license. Vehicle or driver cannot be used until certificate is obtained."
     base_path: [intro_vehicle2]
+    french: "Problème constaté : Le ou les véhicules ou le ou les conducteurs ne possèdent pas le certificat ou la licence requis. Le véhicule ou le conducteur ne peut pas être utilisé avant d’obtenir le certificat."
   - question: [q2_action]
     warning: "Problem noted: Vehicle does not comply with insurance and inspection requirements. Cannot be used for IRS until rectified."
     base_path: [intro_vehicle2]
+    french: "Problème constaté : Le véhicule n’est pas conforme aux exigences relatives à l’assurance et à l’inspection. Il ne peut pas être utilisé pour PID tant que ces exigences ne sont pas respectées."
 # TODO: q3 (requires unique logic)
   - question: [q4_action]
     warning: "Problem noted: Must provide safety training for driver before spray campaign."
     base_path: [intro_vehicle2]
+    french: "Problème constaté : Les conducteurs doivent suivre une formation à la sécurité avant d’entamer la campagne de pulvérisation."
   - question: [q5_action]
     warning: "Problem noted: Multi-use vehicle. Ensure that vehicle will only be used by AIRS for the duration of the contract, and that it will only be used for either pesticide transport, or for operator transport."
     base_path: [intro_vehicle2]
+    french: "Problème constaté : Véhicule à utilisations multiples. Il faut s’assurer que le véhicule soit uniquement utilisé par AIRS pendant la durée du contrat, et qu’il soit uniquement utilisé pour le transport de pesticides ou pour le transport des opérateurs de pulvérisation."
   - question: [q6_action]
     warning: "Confirm date of repair of vehicle floor before using for IRS."
     base_path: [intro_vehicle2]
+    french: "Confirmer la date de réparation du plancher du véhicule avant d’utiliser le véhicule pour PID."
   # Two flags for q7 is intentional
   - question: [q7]
     comment: [q7_comments_action]
@@ -140,12 +145,14 @@ http://openrosa.org/formdesigner/BBBA67FC-4E25-46B4-AB64-56F820D48A9E:
     ignore: ["None"]
     warning: "Problem noted: Need {msg} for the vehicle before it can be used."
     base_path: [intro_vehicle2]
+    french: "Problème constaté : Il faut obtenir {msg} pour le véhicule avant de pouvoir l’utiliser."
   - question: [q7]
     comment: [q7_comments_action]
     warning_type: "unchecked"
     ignore: ["None"]
     warning: "Confirm delivery date for {msg}."
     base_path: [intro_vehicle2]
+    french: "Confirmer la date de livraison de {msg}."
   # Two flags for q8 is intentional
   - question: [q8]
     comment: [q8_comments_action]
@@ -153,31 +160,39 @@ http://openrosa.org/formdesigner/BBBA67FC-4E25-46B4-AB64-56F820D48A9E:
     ignore: ["none"]
     warning: "Problem noted: Need {msg} for the vehicle before it can be used."
     base_path: [intro_vehicle2]
+    french: "Problème constaté : Il faut obtenir {msg} pour le véhicule avant de pouvoir l’utiliser."
   - question: [q8]
     comment: [q8_comments_action]
     warning_type: "unchecked"
     ignore: ["none"]
     warning: "Confirm delivery date for {msg}."
     base_path: [intro_vehicle2]
+    french: "Confirmer la date de livraison de {msg}."
   - question: [q9_action]
     warning: "Problem noted: Need to provide materials for securing and tying down pesticides in the vehicle, before vehicle can be used for spray campaign."
     base_path: [intro_vehicle2]
+    french: "Problème constaté : Il faut fournir des matériaux pour sécuriser et attacher les pesticides dans le véhicule, avant de pouvoir utiliser le véhicule pour la campagne de pulvérisation."
   - question: [q10_action]
     warning: "Problem noted: Need seats and railings before vehicle can be used for spray campaign."
     base_path: [intro_vehicle2]
+    french: "Problème constaté : Le véhicule doit être équipé de sièges et de barrières métalliques avant de pouvoir l’utiliser pour la campagne de pulvérisation."
   - question: [q11_action]
     warning: "Problem noted: Need fire extinguisher before vehicle can be used for spray campaign."
     base_path: [intro_vehicle2]
+    french: "Problème constaté : Un extincteur est requis avant de pouvoir utiliser le véhicule pour la campagne de pulvérisation."
   - question: [q12_action]
     warning: "Problem noted: Check to ensure pesticide leakage has been cleaned up in the spray operator transport vehicle before contract is signed."
     base_path: [intro_vehicle2]
+    french: "Problème constaté : Il faut vérifier pour s’assurer que la fuite de pesticides a été nettoyée dans le véhicule qui transporte les opérateurs de pulvérisation avant de signer le contrat."
   - question: [q13a_action]
     warning: "Problem noted: Vehicle will not be used for IRS."
     base_path: [intro_vehicle2]
+    french: "Problème constaté : Le véhicule ne sera pas utilisé pour PID."
   - question: [q13a]
     answer: "yes"
     warning: "Problem noted: Vehicle modifications must be confirmed before contract is signed."
     base_path: [intro_vehicle2]
+    french: "Problème constaté : Il faut confirmer les modifications du véhicule avant de signer le contrat."
 
 # Form 3
 http://openrosa.org/formdesigner/54338047-CFB6-4D5B-861B-2256A10BBBC8:
