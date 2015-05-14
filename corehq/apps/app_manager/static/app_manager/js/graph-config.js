@@ -279,7 +279,7 @@ var GraphViewModel = function(moduleOptions){
     self.langs = moduleOptions.langs;
 
     self.graphDisplayName = ko.observable(moduleOptions.name || "Graph");
-    self.availableGraphTypes = ko.observableArray(["xy", "bubble", "time"]);
+    self.availableGraphTypes = ko.observableArray(["xy", "bar", "bubble", "time"]);
     self.selectedGraphType = ko.observable("xy");
     self.series = ko.observableArray([]);
     self.annotations = ko.observableArray([]);
@@ -336,6 +336,7 @@ var GraphViewModel = function(moduleOptions){
     self.fixtures = moduleOptions.fixtures || [];
 
     self.selectedGraphType.subscribe(function(newValue) {
+console.log("doing something");
         // Recreate the series objects to be of the correct type.
         self.series(_.map(self.series(), function(series){
             return new (self.getSeriesConstructor())(ko.toJS(series), self.childCaseTypes, self.fixtures);
@@ -383,12 +384,15 @@ var GraphViewModel = function(moduleOptions){
      * of the view model.
      */
     self.getSeriesConstructor = function(){
-        if (self.selectedGraphType() == "xy" || self.selectedGraphType() == "time"){
-            return XYGraphSeries;
-        } else if (self.selectedGraphType() == "bubble"){
-            return BubbleGraphSeries;
-        } else {
+        if (!_.contains(self.availableGraphTypes(), self.selectedGraphType())){
             throw "Invalid selectedGraphType";
+        }
+        if (self.selectedGraphType() === "bubble"){
+            return BubbleGraphSeries;
+        } else if (self.selectedGraphType() === "bar") {
+            return BarGraphSeries;
+        } else {
+            return XYGraphSeries;
         }
     };
 
@@ -477,6 +481,8 @@ var GraphSeries = function (original, childCaseTypes, fixtures){
     self.showDataPath = ko.observable(origOrDefault('showDataPath', false));
     self.xFunction = ko.observable(origOrDefault('xFunction',""));
     self.yFunction = ko.observable(origOrDefault('yFunction',""));
+    self.xLabel = "X";
+    self.yLabel = "Y";
     self.configPropertyOptions = [
         'fill-above',
         'fill-below',
@@ -511,6 +517,16 @@ var XYGraphSeries = function(original, childCaseTypes, fixtures){
 };
 XYGraphSeries.prototype = new GraphSeries();
 XYGraphSeries.constructor = XYGraphSeries;
+
+var BarGraphSeries = function(original, childCaseTypes, fixtures){
+    GraphSeries.apply(this, [original, childCaseTypes, fixtures]);
+    var self = this;
+
+    self.xLabel = "Label";
+    self.yLabel = "Value";
+};
+BarGraphSeries.prototype = new GraphSeries();
+BarGraphSeries.constructor = BarGraphSeries;
 
 var BubbleGraphSeries = function(original, childCaseTypes, fixtures){
     GraphSeries.apply(this, [original, childCaseTypes, fixtures]);
