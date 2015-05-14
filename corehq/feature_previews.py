@@ -77,21 +77,17 @@ SPLIT_MULTISELECT_CASE_EXPORT = FeaturePreview(
 )
 
 
-def enable_commtrack_previews(domain):
-    for toggle_class in [COMMTRACK, LOCATIONS]:
-        toggle_class.set(domain.name, True, NAMESPACE_DOMAIN)
-
-
-def commtrackify(domain_name, checked):
+def _commtrackify(domain_name, checked):
     from corehq.apps.domain.models import Domain
+    from corehq.apps.commtrack.util import make_domain_commtrack
     domain = Domain.get_by_name(domain_name)
-    domain.commtrack_enabled = checked
-    if checked:
-        # turning on commtrack should turn on locations, but not the other way around
-        domain.locations_enabled = True
-        enable_commtrack_previews(domain)
+    if domain.commtrack_enabled != checked:
+        if checked:
+            make_domain_commtrack(domain)
+        else:
+            domain.commtrack_enabled = False
+            domain.save()
 
-    domain.save()
 
 COMMTRACK = FeaturePreview(
     slug='commtrack',
@@ -104,7 +100,7 @@ COMMTRACK = FeaturePreview(
         "Note: You must also enable CommCare Supply on any CommCare Supply "
         "application's settings page."),
     help_link='https://help.commcarehq.org/display/commtrack/CommTrack+Home',
-    save_fn=commtrackify,
+    save_fn=_commtrackify,
 )
 
 
