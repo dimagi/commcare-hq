@@ -127,9 +127,6 @@ def generate_invoices(based_on_date=None, check_existing=False, is_test=False):
                     "[BILLING] Error occurred while creating invoice for "
                     "domain %s: %s" % (domain.name, e)
                 )
-    # And finally...
-    if not is_test:
-        send_bookkeeper_email()
 
 
 def send_bookkeeper_email(month=None, year=None, emails=None):
