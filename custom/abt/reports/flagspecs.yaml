@@ -298,94 +298,136 @@ http://openrosa.org/formdesigner/2BAC5FDC-72F3-4AF4-8381-9160E8AE13CF:
 http://openrosa.org/formdesigner/7B543EA4-A416-4E46-A121-C4F57412B5AA:
   - question: [q1_action]
     warning: "Problem reported: Personnel entered the pesticide storage area without proper PPE."
+    french: "Problème signalé : Le personnel est entré dans l’aire de stockage des pesticides sans porter d’EPI approprié."
   - question: [q2_action]
     warning: "Problem reported: Personnel handling pesticides without wearing masks, gloves, boots, and overalls."
+    french: "Problème signalé : Le personnel manipule les pesticides sans porter de masques, gants, bottes et salopettes."
   - question: [q3_action]
     warning: "Problem reported: Workers eating inside warehouse while IRS pesticides are in stock."
+    french: "Problème signalé : Les travailleurs mangent dans l’entrepôt lorsque les pesticides PID sont en stock."
   - question: [q4_action]
     warning: "Problem reported:  Water basins not provided in storeroom for washing hands."
+    french: "Problème signalé :  Pas de bassines d’eau fournies dans la salle de stockage pour se laver les mains."
   - question: [q5_action]
     warning: "Problem reported: Material Safety Data sheet for the current pesticide(s) not posted"
+    french: "Problème signalé : La ou les fiches de données de sécurité (FDS) du ou des pesticides actuels ne sont pas affichées"
   - question: [q6_action]
     warning: "Problem reported: Thermometer needed in storeroom."
+    french: "Problème signalé : Un thermomètre est requis pour la salle de stockage."
   - question: [q7]
     warning_type: "unchecked"
     comment: [q7_comments_action]
     ignore: ["none_above"]
     warning: "Problem reported: First aid items are needed for this facility. Missing: {msg}"
+    french: "Problème signalé : Un ou des articles de soins de premiers secours sont requis pour cet établissement. Article(s) manquant(s) : {msg}"
   - question: [q8]
     comment: [q8_comments_action]
     warning_type: "unchecked"
     ignore: ["none"]
     warning: "Problem reported: Storeroom missing {msg}."
+    french: "Problème signalé : Article(s) manquant(s) dans la salle de stockage {msg}."
   - question: [q9_action]
     warning: "Problem reported: Storekeeper not familiar with symptoms of poisoning for the current pesticide(s)."
+    french: "Problème signalé : Les magasiniers ne sont pas au courant des symptômes de l’empoisonnement pour le ou les pesticides actuels."
   - question: [q10_action]
     warning: "Problem reported: Storekeeper does not know location of  nearest health facility."
+    french: "Problème signalé : Les magasiniers ne savent pas où se trouve l’établissement médical le plus proche."
   - question: [q11_action]
     warning: "Problem reported: Antidotes may not be available in the nearest health facility."
+    french: "Problème signalé : Des antidotes sont susceptibles de ne pas être disponibles dans l’établissement médical le plus proche."
   - question: [q12_action]
     warning: "Problem reported: Records for pregnancy not available."
+    french: "Problème signalé : Les dossiers de grossesse ne sont pas disponibles."
   - question: [q13_action]
     warning: "Problem reported: Pesticide leak discovered in storeroom. "
+    french: "Problème signalé : Fuite de pesticides découverte dans la salle de stockage."
   - question: [q14_action]
     warning: "Problem reported: Improper pesticide storage: Skids and/or stacking height."
+    french: "Problème signalé : Stockage de pesticides inapproprié : en ce qui concerne les palettes et/ou la hauteur d’empilage."
   - question: [q15_action]
     warning: "Problem reported: Deficient pesticide and contaminated waste storage procedures."
+    french: "Problème signalé : Procédures insatisfaisantes relatives au stockage du ou des pesticides et des déchets contaminés."
   - question: [q16_action]
     warning: "Problem reported: Deficient pesticide record-keeping."
+    french: "Problème signalé : Tenue des documents liés aux pesticides insatisfaisante."
   - question: [q17_action]
     warning: "Problem reported: Deficient stock record-keeping."
+    french: "Problème signalé : Tenue des documents liés au stock insatisfaisante."
   - question: [q18_action]
     warning: "Problem reported: Deficient stock record-keeping."
+    french: "Problème signalé : Tenue des documents liés au stock insatisfaisante."
   - question: [q19_action]
     warning: "Problem reported: Deficient stock record-keeping: waste stock."
+    french: "Problème signalé : Tenue des documents liés au stock insatisfaisante : stock de déchets."
   - question: [q20_action]
     warning: "Problem reported: Deficient record-keeping: filing."
+    french: "Problème signalé : Tenue des documents insatisfaisante : classement."
   - question: [q21_action]
     warning: "Problem reported: Deficient record-keeping; inventory."
+    french: "Problème signalé : Tenue des documents insatisfaisante : inventaire."
   - question: [q22_action]
     warning: "Problem reported: Deficient record-keeping: usage."
+    french: "Problème signalé : Tenue des documents insatisfaisante : utilisation."
   - question: [q23_action]
     warning: "Problem reported: Deficient storage (no shelving) and/or labeling."
+    french: "Problème signalé : Stockage (absence d’étagères) et/ou étiquetage insatisfaisant(s)."
   - question: [q24_action]
     warning: "Problem reported: Deficient pesticide labeling."
+    french: "Problème signalé : Étiquetage de pesticides insatisfaisant."
   - question: [q25_action]
     warning: "Problem reported: Not using FEFO inventory system."
+    french: "Problème signalé : Non-utilisation du système d’inventaire PPPS."
   - question: [q26_action]
     warning: "Problem reported: Expired pesticides in storeroom."
+    french: "Problème signalé : Présence de pesticides expirés dans la salle de stockage."
   - question: [q27_action]
     warning: "Problem reported: Deficient storage and/or labeling of hazardous waste."
+    french: "Problème signalé : Stockage et/ou étiquetage des déchets dangereux insatisfaisant(s)."
   - question: [q28_action]
     warning: "Problem reported: Deficient storage and/or labeling of empty sachets."
+    french: "Problème signalé : Stockage et/ou étiquetage des sachets vides insatisfaisant(s)."
   - question: [q29_action]
     warning: "Problem reported: Pesticide inventory does not balance."
+    french: "Problème signalé : L’inventaire du ou des pesticides ne s’équilibre pas."
   - question: [q30_action]
     warning: "Problem reported: Surplus pesticide in inventory."
+    french: "Problème signalé : Pesticides excédentaires dans l’inventaire."
   - question: [q31_action]
     warning: "Problem reported: Deficient waste management planning."
+    french: "Problème signalé : Planification de la gestion des déchets insatisfaisante."
   - question: [q32_action]
     warning: "Problem reported: problems with waste management planning."
+    french: "Problème signalé : problèmes liés à la planification de la gestion des déchets."
   - question: [q36_action]
     warning: "Problem reported: Spray Performance Tracking Sheet not displayed and correctly filled out."
+    french: "Problème signalé : La feuille de suivi de la performance des pulvérisations n’est pas affichée et n’est pas remplie correctement."
   - question: [q37_action]
     warning: "Problem reported: The store ledger book is not fully updated."
+    french: "Problème signalé : Le grand livre du magasin n’est pas entièrement mis à jour."
   - question: [q38_action]
     warning: "Problem reported: The stock cards for all the stock items are not fully updated."
+    french: "Problème signalé : Les fiches de stock de tous les articles du stock ne sont pas entièrement mises à jour."
   - question: [q39_action]
     warning: "Problem reported: The balance in the store ledger book does not match the balance on the stock card for all stock items."
+    french: "Problème signalé : Le solde du grand livre du magasin ne correspond pas au solde de la fiche de stock pour tous les articles qui sont en stock."
   - question: [q40_action]
     warning: "Problem reported: The balance on the stock card does not equal the result of a physical stock count for all items."
+    french: "Problème signalé : Le solde de la fiche de stock ne correspond pas au résultat d’un comptage de stock physique pour tous les articles."
   - question: [q41_action]
     warning: "Problem reported: The stock balance on the Spray Performance Tracking Sheet does not equal the physical stock count."
+    french: "Problème signalé : Le solde du stock de la feuille de suivi de la performance des pulvérisations ne correspond pas au comptage de stock physique."
   - question: [q42_action]
     warning: "Problem reported: The Insecticide Tracking Sheet is not completed daily."
+    french: "Problème signalé : La feuille de suivi du ou des insecticides n’est pas remplie chaque jour."
   - question: [q43_action]
     warning: "Problem reported: The stock balance on the Insecticide Tracking Sheet does not match the balances in the store ledger and on the stock car."
+    french: "Problème signalé : Le solde du stock de la feuille de suivi du ou des insecticides ne correspond pas aux soldes du grand livre et de la fiche de stock du magasin."
   - question: [q44_action]
     warning: "Problem reported: The stock balance records of pesticides does not reconcile."
+    french: "Problème signalé : Les documents concernant le solde du stock de pesticides ne peuvent pas être rapprochés."
   - question: [q45_action]
     warning: "Problem reported: The stock balance records of dust masks does not reconcile."
+    french: "Problème signalé : Les documents concernant le solde du stock de masques anti-poussière ne peuvent pas être rapprochés."
  # Form 6
 http://openrosa.org/formdesigner/89F60CF0-C6A7-4AD8-A48E-AA0F7A7A9B4D:
   - question: [q1_action]
