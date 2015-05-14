@@ -28,11 +28,19 @@ class Command(BaseCommand):
         """
         Some old docs apparently have +00:00Z at the end of the date string,
         which is not a valid timezone specification.
+
+        Also, because of http://manage.dimagi.com/default.asp?111189, there's
+        9 docs with very long phone numbers that should just be replaced
+        with null because there was no recipient to those sms.
         """
         date = doc.get('date')
         if isinstance(date, basestring) and date.endswith('+00:00Z'):
             date = date[:-7] + 'Z'
             doc['date'] = date
+
+        phone_number = doc.get('phone_number')
+        if isinstance(phone_number, basestring) and len(phone_number) > 126:
+            doc['phone_number'] = None
 
     def run_migration(self):
         count = 0
