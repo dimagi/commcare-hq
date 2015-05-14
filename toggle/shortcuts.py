@@ -1,4 +1,5 @@
 from couchdbkit import ResourceNotFound
+from django.conf import settings
 from django.core.cache import cache
 from .models import Toggle
 
@@ -13,13 +14,15 @@ def toggle_enabled(slug, item, check_cache=True, namespace=None):
         from_cache = cache.get(cache_key)
         if from_cache is not None:
             return from_cache
-    try:
-        toggle = Toggle.get(slug)
-        ret = item in toggle.enabled_users
-    except ResourceNotFound:
-        ret = False
-    cache.set(cache_key, ret)
-    return ret
+
+    if not settings.UNIT_TESTING or getattr(settings, 'DB_ENABLED', True):
+        try:
+            toggle = Toggle.get(slug)
+            ret = item in toggle.enabled_users
+        except ResourceNotFound:
+            ret = False
+        cache.set(cache_key, ret)
+        return ret
 
 
 def set_toggle(slug, item, enabled, namespace=None):
