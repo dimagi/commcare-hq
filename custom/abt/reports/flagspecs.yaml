@@ -1,5 +1,6 @@
 # Form 1
 http://openrosa.org/formdesigner/BB2BF979-BD8F-4B8D-BCF8-A46451228BA9:
+    # Some of these are missing french on purpose
     - question: [q2_2]
       answer: "no"
       warning: "Research possibilities for relocating storage facility."
@@ -7,15 +8,19 @@ http://openrosa.org/formdesigner/BB2BF979-BD8F-4B8D-BCF8-A46451228BA9:
     - question: [q4_2]
       answer: "no"
       warning: "Check storage inventory, pending purchase orders, and delivery date for padlocks and needed hardware."
+      french: "Vérifier l’inventaire de stockage, les bons de commande en attente et la date de livraison pour les cadenas et le matériel requis."
     - question: [q5_2]
       answer: "no"
       warning: "Send picture of defect to contractor for roof and/or floor repair. Get completion date."
+    - french: "Envoyer une photo du défaut à l’entrepreneur pour les réparations du toit et/ou du plancher. Obtenir la date d’achèvement."
     # TODO: There are two q5_2 question_ids. Is that intended?
     - question: [q5_2]
       answer: "no"
       warning: "Send picture to contractor for installing bars and screens on windows. Get completion date."
+      french: Envoyer une image à l’entrepreneur pour l’installation des barreaux et des blindages aux fenêtres. Obtenir la date d’achèvement.
     - question: [q6_2]
       warning: "Send picture to contractor for installing bars and screens on windows. Get completion date."
+      french: "Améliorer l’éclairage dans l’installation de stockage. Obtenir la date d’achèvement."
     - question: [q7_2]
       answer: "no"
       warning: "Improve lighting in storage facility. Get completion date."
@@ -24,88 +29,115 @@ http://openrosa.org/formdesigner/BB2BF979-BD8F-4B8D-BCF8-A46451228BA9:
       warning_type: unchecked
       ignore: ["none"]
       warning: "Contact logistics/central storekeeper to have {msg} delivered immediately. Get delivery date.\n\nAdvise all personnel not to enter pesticide storage without PPE."
+      french: "Si Non, contacter le service logistique/magasinier central afin que {msg} soient livrés immédiatement. Obtenir la date de livraison.\nConseiller à l’ensemble du personnel de ne pas entrer dans la zone de stockage des pesticides sans équipement de protection individuelle (EPI)."
     - question: [q11_3]
       answer: "no"
       warning: "Obtain pesticide labels and re-label boxes."
+      french: "Si Non, obtenir des étiquettes pour les pesticides et ré-étiqueter les boîtes."
     - question: [q12_2]
       answer: "yes"
       warning: "Contact logistics to dispose of obsolete pesticide."
+      french: "Si Oui, contacter le service logistique pour éliminer les pesticides obsolètes."
     - question: [q13_2]
       answer: "no"
       warning: "Discuss stacking and/or packaging with storekeeper, obtain pallets and/or cartons for repackaging damaged cartons of pesticide."
+      french: "Si Non, discuter de l’empilage et/ou de l’emballage avec le magasinier, obtenir les palettes et/ou les cartons pour le reconditionnement des cartons de pesticide endommagés."
     - question: [q14_2]
       answer: "yes"
       warning: "Notify storekeeper to rearrange items that are stacked too high."
+      french: "Si Oui, informer le magasinier afin qu’il réarrange les articles qui sont empilés trop haut."
     # TODO: Test this.
     - question: [q15]
       warning_type: unchecked
       ignore: ["none"]
       warning: "Contact logistics/central storekeeper and get {msg} shipping/delivery date."
+      french: "Si Non, contacter le service logistique/magasinier central et obtenir la date d’expédition/de livraison de {msg}."
     - question: [q16_2]
       answer: "no"
       warning: "Check with central storekeeper/logistics to get delivery date for soap, wash tubs, and water."
+      french: "Si Non, vérifier auprès du service logistique/magasinier central pour obtenir la date de livraison du savon, des cuvettes de lavage et de l’eau."
     - question: [q17_2]
       answer: "no"
       warning: "Check with central storekeeper/logistics to get delivery date for Danger signs."
+      french: "Si Non, vérifier auprès du service logistique/magasinier central pour obtenir la date de livraison des pancartes de danger."
     - question: [q18_2]
       answer: "no"
       warning: "Print out enough current pesticide(s) Health and Safety sheets for storehouse and pesticide transport vehicles. Deliver to storehouse and post."
+      french: "Si Non, imprimer les fiches Hygiène et Sécurité pour le ou les pesticides actuels pour l’entrepôt et pour les véhicules de transport de pesticides. Livrer à l’entrepôt et afficher."
     - question: [q19_2]
       answer: "no"
       warning: "Print out Emergency Response Procedure for storehouse and pesticide transport vehicles, deliver to storehouse and post."
+      french: "Si Non, imprimer la procédure relative aux interventions en cas d’urgence pour l’entrepôt et pour les véhicules de transport de pesticide, livrer à l’entrepôt et afficher."
     - question: [q20_2]
       answer: "no"
       warning: "Print out Spill Response Procedure for storehouse and pesticide transport vehicles, deliver to storehouse and post."
+      french: "Si Non, imprimer la procédure relative aux interventions en cas de déversement pour l’entrepôt et pour les véhicules de transport de pesticide, livrer à l’entrepôt et afficher."
     - question: [q21_2]
       answer: "no"
       warning: "Check with central storekeeper/logistics to get delivery date for thermometers."
+      french: "Si Non, vérifier auprès du service logistique/magasinier central pour obtenir la date de livraison des thermomètres."
     - question: [q22_2]
       answer: "no"
       warning: "Check with central storekeeper/logistics to get delivery date for fire extinguishers."
+      french: "Si Non, vérifier auprès du service logistique/magasinier central pour obtenir la date de livraison des extincteurs."
     # TODO: Test this one
     - question: [q23]
       warning_type: unchecked
       ignore: ["none"]
       warning: "Prepare detailed list of items needed for Spill and First Aid kits and send to logistics/central storekeeper. Get delivery dates."
+      french: "Si Non, préparer une liste détaillée des articles requis pour les trousses de déversement et de premiers secours et envoyer au service logistique/magasinier central. Obtenir les dates de livraison."
     - question: [q24_2]
       answer: "no"
       warning: "Contact logistics/central storekeeper and get delivery date for contaminated waste containers. Make labels and attach to containers."
+      french: "Si Non, contacter le service logistique/magasinier central et obtenir la date de livraison des conteneurs à déchets contaminés. Fabriquer des étiquettes et les fixer aux conteneurs."
     - question: [q25_3]
       answer: "no"
       warning: "Get date of storekeeper training."
+      french: "Si Non, obtenir la date de formation des magasiniers."
     - question: [q26_3]
       answer: "no"
       warning: "Check with logistics/storekeeper on status of antidotes."
+      french: "Si Non, vérifier auprès du service logistique/magasinier central l’état des antidotes."
     - question: [q27_3]
       answer: "no"
       warning: "Get date of pregnancy testing."
+      french: "Si Non, obtenir la date du test de grossesse."
     - question: [q29_2]
       answer: "no"
       warning: "Research possibilities for relocating soak pit."
+      french: "Si Non, rechercher des possibilités pour un nouvel emplacement du puisard."
     - question: [q30_2]
       answer: "no"
       warning: "Arrange for clearing/cleaning of soak pit area."
+      french: "Si Non, organiser le déblayage/nettoyage de la zone du puisard."
     - question: [q31_2]
       answer: "no"
       warning: "Arrange for repair/replacement of fencing, gate, locks, and/or pump hangers as needed."
+      french: "Si Non, organiser la réparation/le remplacement de la clôture, du portail, des serrures et/ou des dispositifs de suspension de la pompe si nécessaire."
     - question: [q32_2]
       answer: "no"
       warning: "Check with Operations Manager to secure water supply."
+      french: "Si Non, vérifier auprès du responsable des opérations afin de sécuriser l’approvisionnement en eau."
     - question: [q33_2]
       answer: "no"
       warning: "Arrange for re-sloping and/or repairing cracks in wash area."
+      french: "Si Non, organiser le nivellement et/ou la réparation des fissures dans la zone de lavage."
     - question: [q34_2]
       answer: "no"
       warning: "Itemize soak pit needs and arrange for needed soak pit materials and labor to repair."
+      french: "Si Non, énumérer les besoins concernant le puisard et organiser l’obtention des matériaux requis pour le puisard et la main-d’œuvre pour la réparation."
     - question: [q35_2]
       answer: "no"
       warning: "Check with central stores and obtain delivery date for rinse barrels and wash tubs."
+      french: "Si Non, vérifier auprès des magasins principaux et obtenir la date de livraison pour les tonneaux de rinçage et les cuvettes de lavage."
     - question: [q36_2]
       answer: "no"
       warning: "Arrange for construction of drying lines for overalls."
+      french: "Si Non, organiser la construction de lignes de séchage pour les salopettes."
     - question: [q37_2]
       answer: "no"
       warning: "Arrange for delivery and installation of Danger signs on soak pit fence."
+      french: "Si Non, organiser la livraison et l’installation des pancartes de danger sur la clôture du puisard."
     - question: [q38_2]
       answer: "no"
       warning: "Arrange for construction of operator wash areas and/or toilets."
