@@ -6,8 +6,6 @@ from casexml.apps.case.xform import get_case_updates
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.const import is_supply_point_form, RequisitionStatus
 from corehq.apps.commtrack.models import RequisitionCase, CommtrackConfig, SupplyPointCase
-from corehq.apps.commtrack.util import bootstrap_commtrack_settings_if_necessary
-from corehq.apps.domain.signals import commcare_domain_post_save
 from corehq.apps.sms.api import send_sms_to_verified_number
 from dimagi.utils import create_unique_filter
 from custom.openlmis.commtrack import requisition_receipt, requisition_approved
@@ -101,9 +99,3 @@ def supply_point_processing(sender, xform, cases, **kwargs):
         raise_supply_point_events(xform, cases)
 
 cases_received.connect(supply_point_processing)
-
-
-def bootstrap_commtrack_settings_if_necessary_signal(sender, **kwargs):
-    bootstrap_commtrack_settings_if_necessary(kwargs['domain'])
-
-commcare_domain_post_save.connect(bootstrap_commtrack_settings_if_necessary_signal)

@@ -142,16 +142,6 @@ def make_domain_commtrack(domain_obj, requisitions_enabled=False):
     enable_commtrack_previews(domain_obj.name)
 
 
-# TODO do we want this?  It gets called on the domain.save() signal
-def bootstrap_commtrack_settings_if_necessary(domain, requisitions_enabled=False):
-    if (
-        domain and
-        domain.commtrack_enabled and
-        not CommtrackConfig.for_domain(domain.name)
-    ):
-        make_domain_commtrack(domain)
-
-
 def get_default_requisition_config():
     return CommtrackRequisitionConfig(
         enabled=True,
