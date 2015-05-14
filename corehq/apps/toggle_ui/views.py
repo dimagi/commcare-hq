@@ -6,7 +6,7 @@ from django.utils.decorators import method_decorator
 from corehq import Domain
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.hqwebapp.views import BasePageView
-from corehq.toggles import all_toggles, ALL_TAGS, NAMESPACE_USER
+from corehq.toggles import all_toggles, ALL_TAGS, NAMESPACE_USER, NAMESPACE_DOMAIN
 from toggle.models import Toggle
 from toggle.shortcuts import clear_toggle_cache
 
@@ -87,6 +87,16 @@ class ToggleEditView(ToggleBaseView):
             )
         return context
 
+    def call_save_fn(self, toggle, current):
+        if toggle.save_fn is None:
+            return
+        existing = toggle.enabled_users
+        for entry in existing ^ current:
+            if entry.startswith(NAMESPACE_DOMAIN):
+                domain = entry[len(NAMESPACE_DOMAIN):]
+                is_enabled = entry in curent  # otherwise it's been disabled
+                toggle.save_fn(domain, is_enabled)
+
     def post(self, request, *args, **kwargs):
         toggle = self.get_toggle()
         item_list = request.POST.get('item_list', [])
@@ -95,6 +105,7 @@ class ToggleEditView(ToggleBaseView):
             item_list = [u.strip() for u in item_list if u and u.strip()]
 
         affected_users = set(toggle.enabled_users) | set(item_list)
+        self.call_save_fn(toggle, item_list)
         toggle.enabled_users = item_list
         toggle.save()
         for item in affected_users:

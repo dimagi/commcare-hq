@@ -16,12 +16,14 @@ ALL_TAGS = [TAG_ONE_OFF, TAG_EXPERIMENTAL, TAG_PRODUCT_PATH, TAG_PRODUCT_CORE, T
 
 
 class StaticToggle(object):
-    def __init__(self, slug, label, tag, namespaces=None, help_link=None, description=None):
+    def __init__(self, slug, label, tag, namespaces=None, help_link=None,
+                 description=None, save_fn=None):
         self.slug = slug
         self.label = label
         self.tag = tag
         self.help_link = help_link
         self.description = description
+        self.save_fn = save_fn  # Only accepts domain namespaces
         if namespaces:
             self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
         else:
@@ -449,4 +451,31 @@ API_THROTTLE_WHITELIST = StaticToggle(
     ('API throttle whitelist'),
     TAG_EXPERIMENTAL,
     namespaces=[NAMESPACE_USER],
+)
+
+# TODO move to commtrack module
+def commtrackify(domain_name, toggle_enabled):
+    from corehq.apps.domain.models import Domain
+    domain = Domain.get_by_name(domain_name)
+    domain.commtrack_enabled = toggle_enabled
+    if toggle_enabled:
+        # turning on commtrack should turn on locations, but not the other way around
+        domain.locations_enabled = True
+        enable_commtrack_previews(domain)
+
+    domain.save()
+
+COMMTRACK2 = StaticToggle(
+    slug='commtrack',
+    label="CommCare Supply",
+    description=(
+        '<a href="http://www.commtrack.org/home/">CommCare Supply</a> '
+        "is a logistics and supply chain management module. It is designed "
+        "to improve the management, transport, and resupply of a variety of "
+        "goods and materials, from medication to food to bednets. <br/>"
+        "Note: You must also enable CommCare Supply on any CommCare Supply "
+        "application's settings page."),
+    help_link='https://help.commcarehq.org/display/commtrack/CommTrack+Home',
+    namespaces=[NAMESPACE_DOMAIN],
+    save_fn=commtrackify,
 )
