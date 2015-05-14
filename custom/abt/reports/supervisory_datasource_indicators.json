@@ -1,11 +1,12 @@
 [
   {
     "display_name": "timeEnd", 
+    "transform": {}, 
     "datatype": "datetime", 
     "type": "expression", 
     "is_primary_key": false, 
-    "transform": {}, 
     "is_nullable": true, 
+    "column_id": "timeEnd", 
     "expression": {
       "type": "root_doc", 
       "expression": {
@@ -17,16 +18,16 @@
           "timeEnd"
         ]
       }
-    }, 
-    "column_id": "timeEnd"
+    }
   }, 
   {
     "display_name": "country", 
+    "transform": {}, 
     "datatype": "string", 
     "type": "expression", 
     "is_primary_key": false, 
-    "transform": {}, 
     "is_nullable": true, 
+    "column_id": "country", 
     "expression": {
       "type": "root_doc", 
       "expression": {
@@ -38,16 +39,16 @@
           "country"
         ]
       }
-    }, 
-    "column_id": "country"
+    }
   }, 
   {
     "display_name": "level_1", 
+    "transform": {}, 
     "datatype": "string", 
     "type": "expression", 
     "is_primary_key": false, 
-    "transform": {}, 
     "is_nullable": true, 
+    "column_id": "level_1", 
     "expression": {
       "type": "root_doc", 
       "expression": {
@@ -59,16 +60,16 @@
           "level_1_data"
         ]
       }
-    }, 
-    "column_id": "level_1"
+    }
   }, 
   {
     "display_name": "level_2", 
+    "transform": {}, 
     "datatype": "string", 
     "type": "expression", 
     "is_primary_key": false, 
-    "transform": {}, 
     "is_nullable": true, 
+    "column_id": "level_2", 
     "expression": {
       "type": "root_doc", 
       "expression": {
@@ -80,16 +81,16 @@
           "level_2_data"
         ]
       }
-    }, 
-    "column_id": "level_2"
+    }
   }, 
   {
     "display_name": "level_3", 
+    "transform": {}, 
     "datatype": "string", 
     "type": "expression", 
     "is_primary_key": false, 
-    "transform": {}, 
     "is_nullable": true, 
+    "column_id": "level_3", 
     "expression": {
       "type": "root_doc", 
       "expression": {
@@ -101,16 +102,16 @@
           "level_3_data"
         ]
       }
-    }, 
-    "column_id": "level_3"
+    }
   }, 
   {
     "display_name": "level_4", 
+    "transform": {}, 
     "datatype": "string", 
     "type": "expression", 
     "is_primary_key": false, 
-    "transform": {}, 
     "is_nullable": true, 
+    "column_id": "level_4", 
     "expression": {
       "type": "root_doc", 
       "expression": {
@@ -122,17 +123,15 @@
           "level_4_data"
         ]
       }
-    }, 
-    "column_id": "level_4"
+    }
   }, 
   {
     "display_name": "username", 
     "datatype": "string", 
     "type": "expression", 
+    "is_primary_key": false, 
     "transform": {}, 
     "is_nullable": true, 
-    "is_primary_key": false, 
-    "column_id": "username", 
     "expression": {
       "type": "root_doc", 
       "expression": {
@@ -144,15 +143,17 @@
           "username"
         ]
       }
-    }
+    }, 
+    "column_id": "username"
   }, 
   {
     "display_name": "form_name", 
+    "transform": {}, 
     "datatype": "string", 
     "type": "expression", 
     "is_primary_key": false, 
-    "transform": {}, 
     "is_nullable": true, 
+    "column_id": "form_name", 
     "expression": {
       "type": "root_doc", 
       "expression": {
@@ -163,16 +164,16 @@
           "@name"
         ]
       }
-    }, 
-    "column_id": "form_name"
+    }
   }, 
   {
     "display_name": "inspector_names", 
+    "transform": {}, 
     "datatype": "string", 
     "type": "expression", 
     "is_primary_key": false, 
-    "transform": {}, 
     "is_nullable": true, 
+    "column_id": "inspector_names", 
     "expression": {
       "type": "root_doc", 
       "expression": {
@@ -183,35 +184,48 @@
           "names"
         ]
       }
-    }, 
-    "column_id": "inspector_names"
+    }
   }, 
   {
     "display_name": "flag", 
+    "transform": {}, 
     "datatype": "string", 
     "type": "expression", 
     "is_primary_key": false, 
-    "transform": {}, 
     "is_nullable": true, 
+    "column_id": "flag", 
     "expression": {
       "datatype": null, 
       "type": "property_name", 
       "property_name": "flag"
-    }, 
-    "column_id": "flag"
+    }
   }, 
   {
     "display_name": "warning", 
+    "transform": {}, 
     "datatype": "string", 
     "type": "expression", 
     "is_primary_key": false, 
-    "transform": {}, 
     "is_nullable": true, 
+    "column_id": "warning", 
     "expression": {
       "datatype": null, 
       "type": "property_name", 
       "property_name": "warning"
-    }, 
-    "column_id": "warning"
+    }
+  }, 
+  {
+    "display_name": "comments", 
+    "transform": {}, 
+    "datatype": "string", 
+    "type": "expression", 
+    "is_primary_key": false, 
+    "is_nullable": true, 
+    "column_id": "comments", 
+    "expression": {
+      "datatype": null, 
+      "type": "property_name", 
+      "property_name": "comments"
+    }
   }
 ]

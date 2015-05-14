@@ -22,7 +22,7 @@ http://openrosa.org/formdesigner/BB2BF979-BD8F-4B8D-BCF8-A46451228BA9:
       # TODO: Test this one.
       warning_type: unchecked
       ignore: ["none"]
-      warning: "Contact logistics/central storekeeper to have {msg} delivered immediately. Get delivery date.<br>Advise all personnel not to enter pesticide storage without PPE."
+      warning: "Contact logistics/central storekeeper to have {msg} delivered immediately. Get delivery date.\n\nAdvise all personnel not to enter pesticide storage without PPE."
     - question: [q11_3]
       answer: "no"
       warning: "Obtain pesticide labels and re-label boxes."
@@ -35,7 +35,7 @@ http://openrosa.org/formdesigner/BB2BF979-BD8F-4B8D-BCF8-A46451228BA9:
     - question: [q14_2]
       answer: "yes"
       warning: "Notify storekeeper to rearrange items that are stacked too high."
-    # TODO: Test this. Confirm that q15 is the ID they want.
+    # TODO: Test this.
     - question: [q15]
       warning_type: unchecked
       ignore: ["none"]
@@ -293,7 +293,6 @@ http://openrosa.org/formdesigner/2BAC5FDC-72F3-4AF4-8381-9160E8AE13CF:
   - question: [q28_action]
     warning: "Problem reported: {msg}"
     warning_question: [q28_2]
-  # why no 29?
 # Form 5
 http://openrosa.org/formdesigner/7B543EA4-A416-4E46-A121-C4F57412B5AA:
   - question: [q1_action]

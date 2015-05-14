@@ -1,12 +1,7 @@
 [
   {
     "display_name": "country", 
-    "transform": {}, 
     "datatype": "string", 
-    "type": "expression", 
-    "is_primary_key": false, 
-    "is_nullable": true, 
-    "column_id": "country", 
     "expression": {
       "value_expression": {
         "datatype": null, 
@@ -24,21 +19,21 @@
           "@case_id"
         ]
       }
-    }
+    }, 
+    "transform": {}, 
+    "is_nullable": true, 
+    "is_primary_key": false, 
+    "column_id": "country", 
+    "type": "expression"
   }, 
   {
-    "display_name": "district", 
-    "transform": {}, 
+    "display_name": "level_1", 
     "datatype": "string", 
-    "type": "expression", 
-    "is_primary_key": false, 
-    "is_nullable": true, 
-    "column_id": "district", 
     "expression": {
       "value_expression": {
         "datatype": null, 
         "type": "property_name", 
-        "property_name": "district"
+        "property_name": "level_1_data"
       }, 
       "type": "related_doc", 
       "related_doc_type": "CommCareCase", 
@@ -51,21 +46,21 @@
           "@case_id"
         ]
       }
-    }
+    }, 
+    "transform": {}, 
+    "is_nullable": true, 
+    "is_primary_key": false, 
+    "column_id": "level_1", 
+    "type": "expression"
   }, 
   {
-    "display_name": "sub_district", 
-    "transform": {}, 
+    "display_name": "level_2", 
     "datatype": "string", 
-    "type": "expression", 
-    "is_primary_key": false, 
-    "is_nullable": true, 
-    "column_id": "sub_district", 
     "expression": {
       "value_expression": {
         "datatype": null, 
         "type": "property_name", 
-        "property_name": "sub_district"
+        "property_name": "level_2_data"
       }, 
       "type": "related_doc", 
       "related_doc_type": "CommCareCase", 
@@ -78,16 +73,70 @@
           "@case_id"
         ]
       }
-    }
+    }, 
+    "transform": {}, 
+    "is_nullable": true, 
+    "is_primary_key": false, 
+    "column_id": "level_2", 
+    "type": "expression"
+  }, 
+  {
+    "display_name": "level_3", 
+    "datatype": "string", 
+    "expression": {
+      "value_expression": {
+        "datatype": null, 
+        "type": "property_name", 
+        "property_name": "level_3_data"
+      }, 
+      "type": "related_doc", 
+      "related_doc_type": "CommCareCase", 
+      "doc_id_expression": {
+        "datatype": "string", 
+        "type": "property_path", 
+        "property_path": [
+          "form", 
+          "case", 
+          "@case_id"
+        ]
+      }
+    }, 
+    "transform": {}, 
+    "is_nullable": true, 
+    "is_primary_key": false, 
+    "column_id": "level_3", 
+    "type": "expression"
+  }, 
+  {
+    "display_name": "level_4", 
+    "datatype": "string", 
+    "expression": {
+      "value_expression": {
+        "datatype": null, 
+        "type": "property_name", 
+        "property_name": "level_4_data"
+      }, 
+      "type": "related_doc", 
+      "related_doc_type": "CommCareCase", 
+      "doc_id_expression": {
+        "datatype": "string", 
+        "type": "property_path", 
+        "property_path": [
+          "form", 
+          "case", 
+          "@case_id"
+        ]
+      }
+    }, 
+    "transform": {}, 
+    "is_nullable": true, 
+    "is_primary_key": false, 
+    "column_id": "level_4", 
+    "type": "expression"
   }, 
   {
     "display_name": "worker_code", 
-    "transform": {}, 
     "datatype": "string", 
-    "type": "expression", 
-    "is_primary_key": false, 
-    "is_nullable": true, 
-    "column_id": "worker_code", 
     "expression": {
       "value_expression": {
         "datatype": null, 
@@ -105,20 +154,12 @@
           "@case_id"
         ]
       }
-    }
-  }, 
-  {
-    "display_name": "commune_code", 
-    "property_path": [
-      "form", 
-      "commune_code"
-    ], 
-    "datatype": "string", 
-    "is_primary_key": false, 
-    "column_id": "commune_code", 
+    }, 
+    "transform": {}, 
     "is_nullable": true, 
-    "type": "raw", 
-    "property_name": null
+    "is_primary_key": false, 
+    "column_id": "worker_code", 
+    "type": "expression"
   }, 
   {
     "display_name": "structures_found", 
@@ -128,8 +169,8 @@
     ], 
     "datatype": "integer", 
     "is_primary_key": false, 
-    "column_id": "structures_found", 
     "is_nullable": true, 
+    "column_id": "structures_found", 
     "type": "raw", 
     "property_name": null
   }, 
@@ -141,21 +182,21 @@
     ], 
     "datatype": "integer", 
     "is_primary_key": false, 
-    "column_id": "structures_sprayed", 
     "is_nullable": true, 
+    "column_id": "structures_sprayed", 
     "type": "raw", 
     "property_name": null
   }, 
   {
-    "display_name": "total_sops", 
+    "display_name": "total_sprayers", 
     "property_path": [
       "form", 
-      "total_sops"
+      "total_sprayers"
     ], 
     "datatype": "integer", 
     "is_primary_key": false, 
-    "column_id": "total_sops", 
     "is_nullable": true, 
+    "column_id": "total_sprayers", 
     "type": "raw", 
     "property_name": null
   }, 
@@ -167,8 +208,8 @@
     ], 
     "datatype": "integer", 
     "is_primary_key": false, 
-    "column_id": "insecticide_used", 
     "is_nullable": true, 
+    "column_id": "insecticide_used", 
     "type": "raw", 
     "property_name": null
   }, 
@@ -180,47 +221,47 @@
     ], 
     "datatype": "date", 
     "is_primary_key": false, 
+    "is_nullable": true, 
     "column_id": "date_of_data_collection", 
-    "is_nullable": true, 
     "type": "raw", 
     "property_name": null
   }, 
   {
-    "display_name": "Sprayed_structures_per_SOP", 
+    "display_name": "structures_per_sprayer", 
     "property_path": [
       "form", 
-      "Sprayed_structures_per_SOP"
+      "structures_per_sprayer"
     ], 
     "datatype": "decimal", 
     "is_primary_key": false, 
-    "column_id": "sprayed_structures_per_SOP", 
     "is_nullable": true, 
+    "column_id": "structures_per_sprayer", 
     "type": "raw", 
     "property_name": null
   }, 
   {
-    "display_name": "sprayed_structures_per_IU", 
+    "display_name": "structures_per_IU", 
     "property_path": [
       "form", 
-      "Sprayed_structures_per_IU"
+      "structures_per_IU"
     ], 
     "datatype": "decimal", 
     "is_primary_key": false, 
-    "column_id": "sprayed_structures_per_IU", 
     "is_nullable": true, 
+    "column_id": "structures_per_IU", 
     "type": "raw", 
     "property_name": null
   }, 
   {
-    "display_name": "Spray_Coverage", 
+    "display_name": "spray_coverage", 
     "property_path": [
       "form", 
-      "Spray_Coverage"
+      "spray_coverage"
     ], 
     "datatype": "decimal", 
     "is_primary_key": false, 
+    "is_nullable": true, 
     "column_id": "spray_coverage", 
-    "is_nullable": true, 
     "type": "raw", 
     "property_name": null
   }, 
@@ -233,8 +274,8 @@
     ], 
     "datatype": "string", 
     "is_primary_key": false, 
-    "column_id": "username", 
     "is_nullable": true, 
+    "column_id": "username", 
     "type": "raw", 
     "property_name": null
   }, 
@@ -247,22 +288,18 @@
     ], 
     "datatype": "datetime", 
     "is_primary_key": false, 
-    "column_id": "timeEnd", 
     "is_nullable": true, 
+    "column_id": "timeEnd", 
     "type": "raw", 
     "property_name": null
   }, 
   {
     "display_name": "target_number", 
-    "transform": {}, 
     "datatype": "integer", 
-    "type": "expression", 
-    "is_primary_key": false, 
-    "is_nullable": true, 
-    "column_id": "target_number", 
     "expression": {
       "test": {
         "operator": "eq", 
+        "type": "boolean_expression", 
         "expression": {
           "value_expression": {
             "datatype": null, 
@@ -281,17 +318,17 @@
             ]
           }
         }, 
-        "type": "boolean_expression", 
         "property_value": "senegal"
       }, 
       "expression_if_true": {
-        "type": "constant", 
-        "constant": 120553
+        "constant": 120553, 
+        "type": "constant"
       }, 
       "type": "conditional", 
       "expression_if_false": {
         "test": {
           "operator": "eq", 
+          "type": "boolean_expression", 
           "expression": {
             "value_expression": {
               "datatype": null, 
@@ -310,17 +347,17 @@
               ]
             }
           }, 
-          "type": "boolean_expression", 
           "property_value": "benin"
         }, 
         "expression_if_true": {
-          "type": "constant", 
-          "constant": 265907
+          "constant": 265907, 
+          "type": "constant"
         }, 
         "type": "conditional", 
         "expression_if_false": {
           "test": {
             "operator": "eq", 
+            "type": "boolean_expression", 
             "expression": {
               "value_expression": {
                 "datatype": null, 
@@ -339,20 +376,24 @@
                 ]
               }
             }, 
-            "type": "boolean_expression", 
             "property_value": "ethiopia"
           }, 
           "expression_if_true": {
-            "type": "constant", 
-            "constant": 120553
+            "constant": 120553, 
+            "type": "constant"
           }, 
           "type": "conditional", 
           "expression_if_false": {
-            "type": "constant", 
-            "constant": 0
+            "constant": 0, 
+            "type": "constant"
           }
         }
       }
-    }
+    }, 
+    "transform": {}, 
+    "is_nullable": true, 
+    "is_primary_key": false, 
+    "column_id": "target_number", 
+    "type": "expression"
   }
 ]
