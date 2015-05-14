@@ -895,7 +895,7 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
 
     # Only used when content_type is CONTENT_SMS_SURVEY or CONTENT_IVR_SURVEY
     form_unique_id = models.CharField(max_length=255, null=True)
-    xforms_session = models.ForeignKey('smsforms.SQLXFormsSession', null=True, on_delete=models.SET_NULL)
+    xforms_session = models.ForeignKey('smsforms.SQLXFormsSession', null=True, on_delete=models.PROTECT)
 
     # If this was a reminder that spawned off of a case, this is the case's id
     case_id = models.CharField(max_length=255, null=True)
