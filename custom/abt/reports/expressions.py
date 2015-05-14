@@ -101,6 +101,14 @@ class AbtSupervisorExpressionSpec(JsonObject):
         comments = cls._get_val(item, comments_question)
         return comments if comments != () else ""
 
+    @classmethod
+    def _get_warning(cls, spec, item):
+        country = cls._get_val(item, ["location_data", "country"])
+        default = spec.get("warning", "")
+        if country in ["Senegal", "Benin", "Mali", "Madagascar"]:
+            return spec.get("french", default)
+        return default
+
     def __call__(self, item, context=None):
         """
         Given a document (item), return a list of documents representing each
@@ -137,7 +145,7 @@ class AbtSupervisorExpressionSpec(JsonObject):
                         # Raise a flag because there are unchecked answers.
                         docs.append({
                             'flag': spec['question'][-1],
-                            'warning': spec['warning'].format(msg=", ".join(unchecked)),
+                            'warning': self._get_warning(spec, item).format(msg=", ".join(unchecked)),
                             'comments': self._get_comments(partial, spec)
                         })
 
@@ -149,7 +157,7 @@ class AbtSupervisorExpressionSpec(JsonObject):
                     ):
                         docs.append({
                             'flag': spec['question'][-1],
-                            'warning': spec['warning'].format(
+                            'warning': self._get_warning(spec, item).format(
                                 msg=self._get_val(partial, spec.get('warning_question', None)) or ""
                             ),
                             'comments': self._get_comments(partial, spec)
