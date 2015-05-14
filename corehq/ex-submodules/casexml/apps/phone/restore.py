@@ -312,7 +312,8 @@ class RestoreState(object):
     reasons.
     """
     def __init__(self, domain, user, params):
-        self.domain = domain
+        self.project = domain
+        self.domain = domain.name if domain else ''
         self.user = user
         self.params = params
         self.provider_log = {}  # individual data providers can log stuff here
@@ -368,8 +369,8 @@ class RestoreState(object):
     @property
     @memoized
     def stock_settings(self):
-        if self.domain and self.domain.commtrack_settings:
-            return self.domain.commtrack_settings.get_ota_restore_settings()
+        if self.project and self.project.commtrack_settings:
+            return self.project.commtrack_settings.get_ota_restore_settings()
         else:
             return StockSettings()
 
@@ -411,13 +412,14 @@ class RestoreConfig(object):
     """
 
     def __init__(self, domain=None, user=None, params=None, cache_settings=None):
-        self.domain = domain
+        self.project = domain
+        self.domain = domain.name if domain else ''
         self.user = user
         self.params = params or RestoreParams()
         self.cache_settings = cache_settings or RestoreCacheSettings()
 
         self.version = self.params.version
-        self.restore_state = RestoreState(self.domain, self.user, self.params)
+        self.restore_state = RestoreState(self.project, self.user, self.params)
 
         self.force_cache = self.cache_settings.force_cache
         self.cache_timeout = self.cache_settings.cache_timeout
@@ -434,7 +436,7 @@ class RestoreConfig(object):
         try:
             self.restore_state.validate_state()
         except InvalidSyncLogException, e:
-            if LOOSE_SYNC_TOKEN_VALIDATION.enabled(self.domain.name):
+            if LOOSE_SYNC_TOKEN_VALIDATION.enabled(self.domain):
                 # This exception will get caught by the view and a 412 will be returned to the phone for resync
                 raise RestoreException(e)
             else:
@@ -500,7 +502,7 @@ class RestoreConfig(object):
             return CachedResponse(None)
 
         if self.sync_log:
-            stream = STREAM_RESTORE_CACHE.enabled(self.user.domain)
+            stream = STREAM_RESTORE_CACHE.enabled(self.domain)
             payload = self.sync_log.get_cached_payload(self.version, stream=stream)
         else:
             payload = self.cache.get(self._initial_cache_key())

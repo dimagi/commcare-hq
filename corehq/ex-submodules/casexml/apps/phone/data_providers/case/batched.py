@@ -52,7 +52,7 @@ def _get_loadtest_factor(domain, user):
     both the toggle is enabled for the domain, and the user has a non-zero,
     non-null factor set.
     """
-    if domain and ENABLE_LOADTEST_USERS.enabled(domain.name):
+    if domain and ENABLE_LOADTEST_USERS.enabled(domain):
         return getattr(user, 'loadtest_factor', 1) or 1
     return 1
 
@@ -178,7 +178,7 @@ class BatchedCaseSyncOperation(object):
         self.last_synclog = restore_state.last_sync_log
         if chunk_size:
             self.chunk_size = chunk_size
-        self.domain = self.user.domain
+        self.domain = self.restore_state.domain
 
         try:
             self.owner_keys = [[owner_id, False] for owner_id in self.restore_state.owner_ids]
