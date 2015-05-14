@@ -796,7 +796,7 @@ def get_module_view_context_and_template(app, module):
         defaults += ('#owner_name',)
 
     per_type_defaults = None
-    if is_usercase_enabled(app.domain):
+    if is_usercase_in_use(app.domain):
         per_type_defaults = get_per_type_defaults(app.domain, [USERCASE_TYPE])
     builder = ParentCasePropertyBuilder(app, defaults=defaults, per_type_defaults=per_type_defaults)
     child_case_types = set()
