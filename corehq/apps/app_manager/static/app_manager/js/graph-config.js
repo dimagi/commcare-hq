@@ -524,6 +524,8 @@ var BarGraphSeries = function(original, childCaseTypes, fixtures){
 
     self.xLabel = "Label";
     self.yLabel = "Value";
+    self.configPropertyOptions = self.configPropertyOptions.concat(['bar-sort']);
+    self.configPropertyHints['bar-sort'] = "'ascending' or 'descending'";
 };
 BarGraphSeries.prototype = new GraphSeries();
 BarGraphSeries.constructor = BarGraphSeries;
