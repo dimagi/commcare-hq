@@ -419,7 +419,6 @@ class RestoreConfig(object):
         self.version = self.params.version
         self.restore_state = RestoreState(self.domain, self.user, self.params)
 
-        self.domain = domain
         self.force_cache = self.cache_settings.force_cache
         self.cache_timeout = self.cache_settings.cache_timeout
         self.overwrite_cache = self.cache_settings.overwrite_cache
