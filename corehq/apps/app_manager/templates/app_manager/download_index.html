@@ -56,10 +56,7 @@
         });
     </script>
 </div>
-{% include 'app_manager/partials/download_async_modal.html' with element_id=download_ccz_id %}
 {% url "download_ccz" app.domain app.id as ccz_url %}
-<script type="text/javascript">
-    var downloader = new COMMCAREHQ.AsyncDownloader($("#{{download_ccz_id}}"), "{{ccz_url}}");
-</script>
+{% include 'app_manager/partials/download_async_modal.html' with element_id=download_ccz_id download_url=ccz_url%}
 {% endwith %}<!-- endwith download_ccz_id -->
 {% endblock %}
