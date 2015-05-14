@@ -2,10 +2,10 @@ from collections import defaultdict
 from copy import deepcopy
 import itertools
 import logging
-from casexml.apps.case import const
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.caselogic import get_footprint
 from casexml.apps.phone.data_providers.case.stock import get_stock_payload
+from casexml.apps.phone.data_providers.case.utils import CaseSyncUpdate, get_case_sync_updates
 from corehq.toggles import ENABLE_LOADTEST_USERS
 from dimagi.utils.couch.database import get_safe_write_kwargs
 from casexml.apps.phone import xml
@@ -17,7 +17,7 @@ from dimagi.utils.parsing import string_to_utc_datetime
 logger = logging.getLogger(__name__)
 
 
-def get_case_payload_batched(restore_state, stock_settings):
+def get_case_payload_batched(restore_state):
     response = restore_state.restore_class()
 
     sync_operation = BatchedCaseSyncOperation(restore_state)
@@ -37,8 +37,10 @@ def get_case_payload_batched(restore_state, stock_settings):
     restore_state.current_sync_log.dependent_cases_on_phone = sync_state.actual_extended_cases
     restore_state.current_sync_log.save(**get_safe_write_kwargs())
 
-    # commtrack balance sections
-    commtrack_elements = get_stock_payload(restore_state.domain, stock_settings, sync_state.all_synced_cases)
+    # commtrack ledger sections
+    commtrack_elements = get_stock_payload(
+        restore_state.domain, restore_state.stock_settings, sync_state.all_synced_cases
+    )
     response.extend(commtrack_elements)
 
     return response, sync_operation.batch_count
@@ -68,31 +70,6 @@ def _transform_loadtest_update(update, factor):
         index.referenced_id = _map_id(index.referenced_id, factor)
     case.name = '{} ({})'.format(case.name, factor)
     return CaseSyncUpdate(case, update.sync_token, required_updates=update.required_updates)
-
-
-class CaseSyncUpdate(object):
-    """
-    The record of how a case should sync
-    """
-    def __init__(self, case, sync_token, required_updates=None):
-        self.case = case
-        self.sync_token = sync_token
-        # cache this property since computing it can be expensive
-        self.required_updates = required_updates if required_updates is not None else self._get_required_updates()
-
-    def _get_required_updates(self):
-        """
-        Returns a list of the required updates for this case/token
-        pairing. Should be a list of actions like [create, update, close]
-        """
-        ret = []
-        if not self.sync_token or not self.sync_token.phone_has_case(self.case.get_id):
-            ret.append(const.CASE_ACTION_CREATE)
-        # always include an update
-        ret.append(const.CASE_ACTION_UPDATE)
-        if self.case.closed:
-            ret.append(const.CASE_ACTION_CLOSE)
-        return ret
 
 
 class GlobalSyncState(object):
@@ -271,19 +248,7 @@ class CaseSyncBatch(object):
         return filter_cases_modified_elsewhere_since_sync(list(cases), self.last_sync)
 
     def _case_sync_updates(self, all_potential_to_sync):
-        case_updates_to_sync = []
-
-        def _approximate_domain_match(case):
-            # if both objects have a domain then make sure they're the same, but if
-            # either is empty then just assume it's a match (this is just for legacy tests)
-            return self.domain == case.domain if self.domain and case.domain else True
-
-        for case in all_potential_to_sync:
-            sync_update = CaseSyncUpdate(case, self.last_sync)
-            if sync_update.required_updates and _approximate_domain_match(case):
-                case_updates_to_sync.append(sync_update)
-
-        return case_updates_to_sync
+        return get_case_sync_updates(self.domain, all_potential_to_sync, self.last_sync)
 
     def _fetch_missing_cases_and_wrap(self, casedoc_list):
         cases = []
