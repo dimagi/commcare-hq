@@ -14,7 +14,7 @@ from corehq.apps.app_manager.models import (
     Application,
     Form,
 )
-from corehq.apps.app_manager.util import ParentCasePropertyBuilder
+from corehq.apps.app_manager.util import get_case_properties
 from corehq.apps.app_manager.xform import XForm
 from corehq.apps.userreports import tasks
 from corehq.apps.userreports.app_manager import _clean_table_name
@@ -72,12 +72,10 @@ class DataSourceBuilder(object):
             self.source_form = Form.get_form(self.source_id)
             self.source_xform = XForm(self.source_form.source)
         if self.source_type == 'case':
-            property_builder = ParentCasePropertyBuilder(
-                self.app, DEFAULT_CASE_PROPERTY_DATATYPES.keys()
+            prop_map = get_case_properties(
+                self.app, [self.source_id], defaults=DEFAULT_CASE_PROPERTY_DATATYPES.keys()
             )
-            self.case_properties = list(
-                property_builder.get_properties(self.source_id) | {'closed'}
-            )
+            self.case_properties = list(prop_map[self.source_id] | {'closed'})
 
     @property
     @memoized

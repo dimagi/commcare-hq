@@ -77,7 +77,7 @@ class TileConfiguration(object):
         :param visibility_check: (optional) a lambda that accepts a request
         and urlname and returns a boolean value if the tile is visible to the
         user.
-        :param url_generator: a labmda that accepts a request and returns
+        :param url_generator: a lambda that accepts a request and returns
         a string that is the url the tile will take the user to if it's clicked
         :param help_text: (optional) text that will appear on hover of tile
         """

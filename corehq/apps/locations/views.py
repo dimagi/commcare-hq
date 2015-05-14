@@ -129,7 +129,7 @@ class LocationTypesView(BaseLocationView):
         return {
             'pk': loctype.pk,
             'name': loctype.name,
-            'parent_type': (loctype.parent_type.name
+            'parent_type': (loctype.parent_type.pk
                             if loctype.parent_type else None),
             'administrative': loctype.administrative,
             'shares_cases': loctype.shares_cases,
@@ -140,13 +140,20 @@ class LocationTypesView(BaseLocationView):
         payload = json.loads(request.POST.get('json'))
         sql_loc_types = {}
 
+        def _is_fake_pk(pk):
+            return isinstance(pk, basestring) and pk.startswith("fake-pk-")
+
         def mk_loctype(name, parent_type, administrative,
                        shares_cases, view_descendants, pk):
             parent = sql_loc_types[parent_type] if parent_type else None
 
-            try:
-                loc_type = LocationType.objects.get(domain=self.domain, pk=pk)
-            except LocationType.DoesNotExist:
+            loc_type = None
+            if not _is_fake_pk(pk):
+                try:
+                    loc_type = LocationType.objects.get(domain=self.domain, pk=pk)
+                except LocationType.DoesNotExist:
+                    pass
+            if loc_type is None:
                 loc_type = LocationType(domain=self.domain)
             loc_type.name = name
             loc_type.administrative = administrative
@@ -154,7 +161,7 @@ class LocationTypesView(BaseLocationView):
             loc_type.shares_cases = shares_cases
             loc_type.view_descendants = view_descendants
             loc_type.save()
-            sql_loc_types[name] = loc_type
+            sql_loc_types[pk] = loc_type
 
         loc_types = payload['loc_types']
         pks = []
@@ -162,7 +169,9 @@ class LocationTypesView(BaseLocationView):
             for prop in ['name', 'parent_type', 'administrative',
                          'shares_cases', 'view_descendants', 'pk']:
                 assert prop in loc_type, "Missing a location type property!"
-            pks.append(loc_type['pk'])
+            pk = loc_type['pk']
+            if not _is_fake_pk(pk):
+                pks.append(loc_type['pk'])
 
         hierarchy = self.get_hierarchy(loc_types)
 
@@ -196,7 +205,7 @@ class LocationTypesView(BaseLocationView):
         """
         Return loc types in order from parents to children
         """
-        lt_dict = {lt['name']: lt for lt in loc_types}
+        lt_dict = {lt['pk']: lt for lt in loc_types}
 
         # Make sure there are no cycles
         for loc_type in loc_types:
@@ -310,6 +319,8 @@ class NewLocationView(BaseLocationView):
             'form': self.location_form,
             'location': self.location,
             'consumption': consumption,
+            'locations': load_locs_json(self.domain, self.location.parent_id,
+                                        user=self.request.couch_user),
             'form_tab': self.form_tab,
         }
 
