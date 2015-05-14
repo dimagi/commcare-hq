@@ -467,7 +467,7 @@ def render_form(request, domain, session_id):
 
     readable_form = get_readable_form_data(form_data_json, pretty_questions)
 
-    rendered_readable_form = render(request, 'reports/form/partials/single_form_tree.html', {'questions': readable_form})
+    rendered_readable_form = render(request, 'reports/form/partials/readable_form.html', {'questions': readable_form})
 
     return rendered_readable_form
 
