@@ -963,7 +963,12 @@ class MetReport(CaseReportMixin, BaseReport):
                 row[self.column_index('name')] = link_text.group(1)
 
         rows.sort(key=lambda r: r[self.column_index('serial_number')])
-        rows.append(self.total_row)
+        total_row = self.total_row
+
+        with localize('hin'):
+            total_row[0] = _(total_row[0])
+
+        rows.append(total_row)
 
         self.context['report_table'].update(
             rows=rows
