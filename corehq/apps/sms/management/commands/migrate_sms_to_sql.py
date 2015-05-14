@@ -24,16 +24,27 @@ class Command(BaseCommand):
         ).all()
         return [row['id'] for row in result if row['key'][1] == 'SMSLog']
 
+    def clean_doc(self, doc):
+        """
+        Some old docs apparently have +00:00Z at the end of the date string,
+        which is not a valid timezone specification.
+        """
+        date = doc.get('date')
+        if isinstance(date, basestring) and date.endswith('+00:00Z'):
+            date = date[:-7] + 'Z'
+            doc['date'] = date
+
     def run_migration(self):
         count = 0
         ids = self.get_sms_couch_ids()
         total_count = len(ids)
         for doc in iter_docs(FRISMSLog.get_db(), ids):
             try:
+                self.clean_doc(doc)
                 couch_sms = FRISMSLog.wrap(doc)
                 couch_sms._migration_do_sync()
             except Exception as e:
-                print 'Could not sync SMSLog %s: %s' % (couch_sms._id, e)
+                print 'Could not sync SMSLog %s: %s' % (doc['_id'], e)
 
             count += 1
             if (count % 10000) == 0:
