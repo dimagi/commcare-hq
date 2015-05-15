@@ -304,6 +304,9 @@ class DataSourceForm(forms.Form):
 
         return cleaned_data
 
+FilterViewModel = namedtuple("FilterViewModel",
+                             ['property', 'display_text', 'format'])
+
 
 class ConfigureNewReportBase(forms.Form):
     filters = FilterField(required=False)
@@ -471,7 +474,6 @@ class ConfigureNewReportBase(forms.Form):
     @property
     @memoized
     def initial_filters(self):
-        FilterViewModel = namedtuple("FilterViewModel", ['property', 'display_text', 'format'])
         if self.existing_report:
             return [self._get_view_model(f) for f in self.existing_report.filters]
         if self.source_type == 'case':
@@ -489,20 +491,22 @@ class ConfigureNewReportBase(forms.Form):
 
     def _get_view_model(self, filter):
         """
-        Given a ReportFilter, return a dictionary representing the knockout view
-        model representing this filter in the report builder.
+        Given a ReportFilter, return a FilterViewModel representing
+        the knockout view model representing this filter in the report builder.
+
         """
         filter_type_map = {
             'dynamic_choice_list': 'Choice',
-            'choice_list': 'Choice',  # This exists to handle the `closed` filter that might exist
+            # This exists to handle the `closed` filter that might exist
+            'choice_list': 'Choice',
             'date': 'Date',
             'numeric': 'Numeric'
         }
-        return {
-            'property': self._get_property_from_column(filter['field']),
-            'display_text': filter['display'],
-            'format': filter_type_map[filter['type']]
-        }
+        return FilterViewModel(
+            property=self._get_property_from_column(filter['field']),
+            display_text=filter['display'],
+            format=filter_type_map[filter['type']],
+        )
 
     def _get_property_from_column(self, col):
         return self._properties_by_column[col]['id']
