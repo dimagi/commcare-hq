@@ -311,9 +311,9 @@ class RestoreState(object):
     This allows the providers to set values on the state, for either logging or performance
     reasons.
     """
-    def __init__(self, domain, user, params):
-        self.project = domain
-        self.domain = domain.name if domain else ''
+    def __init__(self, project, user, params):
+        self.project = project
+        self.domain = project.name if project else ''
         self.user = user
         self.params = params
         self.provider_log = {}  # individual data providers can log stuff here
