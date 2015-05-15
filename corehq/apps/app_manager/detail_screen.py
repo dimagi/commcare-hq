@@ -263,6 +263,7 @@ class Date(FormattedDetailColumn):
 @register_format_type('time-ago')
 class TimeAgo(FormattedDetailColumn):
     XPATH_FUNCTION = u"if({xpath} = '', '', string(int((today() - date({xpath})) div {column.time_ago_interval})))"
+    SORT_XPATH_FUNCTION = u"{xpath}"
 
 
 @register_format_type('phone')
