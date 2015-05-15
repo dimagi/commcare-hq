@@ -111,16 +111,16 @@ class BulkMultimediaStatusCache(BaseMultimediaStatusCache):
                                     _("Not a bulk-upload supported CommCareMedia type: %s" % media_class.__name__))
 
     def _get_upload_file(self):
+        saved_file = StringIO.StringIO()
         try:
-            saved_file = StringIO.StringIO()
             saved_ref = DownloadBase.get(self.processing_id)
             data = saved_ref.get_content()
-            saved_file.write(data)
-            saved_file.seek(0)
         except Exception as e:
             self.mark_with_error(_("Could not fetch cached bulk upload file. Error: %s." % e))
             return
 
+        saved_file.write(data)
+        saved_file.seek(0)
         return saved_file
 
     def get_upload_zip(self):
