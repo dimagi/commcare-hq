@@ -31,12 +31,8 @@ class SharedDriveConfiguration(object):
 
     @property
     def transfer_enabled(self):
-        from django.conf import settings
-        return (
-            not settings.DEBUG and
-            getattr(settings, 'TRANSFER_SERVER', False) and
-            self.transfer_dir
-        )
+        from django_transfer import is_enabled
+        return is_enabled() and self.transfer_dir
 
 
 def get_server_url(http_method, server_root, username, password):
