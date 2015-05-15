@@ -95,6 +95,23 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
     # as well as all groups that that user is a member of.
     owner_ids_on_phone = StringListProperty()
 
+    strict = True  # for asserts
+
+    def _assert(self, conditional, msg="", case_id=None):
+        if not conditional:
+            if self.strict:
+                raise SyncLogAssertionError(case_id, msg)
+            else:
+                logging.warn("assertion failed: %s" % msg)
+                self.has_assert_errors = True
+
+    @classmethod
+    def wrap(cls, data):
+        ret = super(AbstractSyncLog, cls).wrap(data)
+        if hasattr(ret, 'has_assert_errors'):
+            ret.strict = False
+        return ret
+
     def phone_is_holding_case(self, case_id):
         raise NotImplementedError()
 
@@ -148,25 +165,12 @@ class SyncLog(AbstractSyncLog):
     # of what's on the phone, but is guaranteed to be after pruning
     dependent_cases_on_phone = SchemaListProperty(CaseState)
 
-    strict = True  # for asserts
-
-    def _assert(self, conditional, msg="", case_id=None):
-        if not conditional:
-            if self.strict:
-                raise SyncLogAssertionError(case_id, msg)
-            else:
-                logging.warn("assertion failed: %s" % msg)
-                self.has_assert_errors = True
-
     @classmethod
     def wrap(cls, data):
         # last_seq used to be int, but is now string for cloudant compatibility
         if isinstance(data.get('last_seq'), (int, long)):
             data['last_seq'] = unicode(data['last_seq'])
-        ret = super(SyncLog, cls).wrap(data)
-        if hasattr(ret, 'has_assert_errors'):
-            ret.strict = False
-        return ret
+        return super(SyncLog, cls).wrap(data)
 
     @classmethod
     def last_for_user(cls, user_id):
