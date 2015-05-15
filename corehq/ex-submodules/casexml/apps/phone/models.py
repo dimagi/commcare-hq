@@ -413,7 +413,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
         return case_id in self.case_ids_on_phone
 
     def get_footprint_of_cases_on_phone(self):
-        return self.case_ids_on_phone
+        return list(self.case_ids_on_phone)
 
     def update_phone_lists(self, xform, case_list):
         made_changes = False
