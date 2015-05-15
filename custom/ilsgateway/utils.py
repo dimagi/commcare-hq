@@ -1,7 +1,6 @@
 from datetime import datetime
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.sms.api import send_sms_to_verified_number
-from corehq.apps.users.models import CommCareUser
 from corehq.util.translation import localize
 from custom.ilsgateway.models import SupplyPointStatus, ILSGatewayConfig
 from dimagi.utils.dates import get_business_day_of_month_before
@@ -65,13 +64,3 @@ def send_translated_message(user, message, **kwargs):
     with localize(user.get_language_code()):
         send_sms_to_verified_number(verified_number, message % kwargs)
         return True
-
-
-def get_users_by_location_id(location_id):
-    users = CommCareUser.view(
-        'locations/users_by_location_id',
-        startkey=[location_id],
-        endkey=[location_id, {}],
-        include_docs=True
-    ).all()
-    return users

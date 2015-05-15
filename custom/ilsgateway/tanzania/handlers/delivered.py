@@ -1,10 +1,10 @@
 from datetime import datetime
+from corehq.apps.locations.dbaccessors.users_by_location_id import get_users_by_location_id
 from corehq.apps.sms.api import send_sms_to_verified_number
 from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues
 from custom.ilsgateway.tanzania.reminders import DELIVERY_CONFIRM_DISTRICT, DELIVERY_PARTIAL_CONFIRM, \
     DELIVERY_CONFIRM_CHILDREN
-from custom.ilsgateway.utils import get_users_by_location_id
 
 
 class DeliveredHandler(KeywordHandler):

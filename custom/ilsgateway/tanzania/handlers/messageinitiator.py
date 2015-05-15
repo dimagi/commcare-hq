@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
+from corehq.apps.locations.dbaccessors.users_by_location_id import get_users_by_location_id
 
 from corehq.apps.sms.api import send_sms_to_verified_number
-from custom.ilsgateway.utils import get_users_by_location_id
 from dimagi.utils.dates import get_business_day_of_month_before
 from corehq.apps.locations.models import SQLLocation
 from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
