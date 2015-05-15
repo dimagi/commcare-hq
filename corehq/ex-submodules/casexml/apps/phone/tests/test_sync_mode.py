@@ -1167,7 +1167,7 @@ class LooseSyncTokenValidationTest(SyncBaseTest):
 
         def _test():
             RestoreConfig(
-                domain=Domain(name=domain),
+                project=Domain(name=domain),
                 user=self.user,
                 params=RestoreParams(
                     version=V2,
