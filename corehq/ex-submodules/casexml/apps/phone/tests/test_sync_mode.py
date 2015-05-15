@@ -495,14 +495,14 @@ class SyncTokenCachingTest(SyncBaseTest):
                 sync_log_id=self.sync_log._id,
             ),
         ).get_payload().as_string()
-        self.sync_log = SyncLog.get(self.sync_log._id)
+        self.sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
         self.assertTrue(self.sync_log.has_cached_payload(V2))
         self.assertNotEqual(original_payload, next_payload)
         self.assertFalse(case_id in original_payload)
         # since it was our own update, it shouldn't be in the new payload either
         self.assertFalse(case_id in next_payload)
         # we can be explicit about why this is the case
-        self.assertTrue(self.sync_log.phone_has_case(case_id))
+        self.assertTrue(self.sync_log.phone_is_holding_case(case_id))
 
     def testCacheNonInvalidation(self):
         original_payload = RestoreConfig(

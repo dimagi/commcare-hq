@@ -1,6 +1,6 @@
 from xml.etree import ElementTree
 from casexml.apps.case.xml import V1
-from casexml.apps.phone.models import SyncLog
+from casexml.apps.phone.models import get_properly_wrapped_sync_log
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
 from casexml.apps.phone.xml import SYNC_XMLNS
 
@@ -11,7 +11,7 @@ def synclog_id_from_restore_payload(restore_payload):
 
 
 def synclog_from_restore_payload(restore_payload):
-    return SyncLog.get(synclog_id_from_restore_payload(restore_payload))
+    return get_properly_wrapped_sync_log(synclog_id_from_restore_payload(restore_payload))
 
 
 def generate_restore_payload(user, restore_id="", version=V1, state_hash="",
