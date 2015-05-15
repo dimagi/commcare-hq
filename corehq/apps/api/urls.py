@@ -74,6 +74,8 @@ API_LIST = (
         ReportResource,
         v0_5.DeviceReportResource,
         DomainMetadataResource,
+        locations.v0_5.LocationResource,
+        locations.v0_5.LocationTypeResource,
     )),
 )
 
