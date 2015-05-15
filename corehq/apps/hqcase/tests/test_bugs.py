@@ -53,7 +53,7 @@ class OtaRestoreBugTest(TestCase):
             self.assertEqual(user._id, case.owner_id)
 
         restore_config = RestoreConfig(
-            domain=domain,
+            project=domain,
             user=user.to_casexml_user(),
             params=RestoreParams(version=V2),
         )

@@ -1154,7 +1154,7 @@ class LooseSyncTokenValidationTest(SyncBaseTest):
     def test_restore_with_bad_log_default(self):
         with self.assertRaises(MissingSyncLog):
             RestoreConfig(
-                domain=Domain(name="test_restore_with_bad_log_default"),
+                project=Domain(name="test_restore_with_bad_log_default"),
                 user=self.user,
                 params=RestoreParams(
                     version=V2,

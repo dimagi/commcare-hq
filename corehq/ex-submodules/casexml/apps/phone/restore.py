@@ -411,9 +411,9 @@ class RestoreConfig(object):
     :param cache_settings:  The RestoreCacheSettings associated with this (see above).
     """
 
-    def __init__(self, domain=None, user=None, params=None, cache_settings=None):
-        self.project = domain
-        self.domain = domain.name if domain else ''
+    def __init__(self, project=None, user=None, params=None, cache_settings=None):
+        self.project = project
+        self.domain = project.name if project else ''
         self.user = user
         self.params = params or RestoreParams()
         self.cache_settings = cache_settings or RestoreCacheSettings()
