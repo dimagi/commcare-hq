@@ -97,23 +97,25 @@ def iter_files_async(include_multimedia_files, include_index_files, app):
 
 def make_zip_tempfile_async(include_multimedia_files,
                             include_index_files, app, download_id, compress_zip=False, filename="commcare.zip"):
+    errors = []
     compression = zipfile.ZIP_DEFLATED if compress_zip else zipfile.ZIP_STORED
 
     use_transfer = False
     if transfer_enabled() and os.path.isdir(settings.TRANSFER_FILE_DIR):
-        fpath = os.path.join(settings.TRANSFER_FILE_DIR, uuid.uuid4().hex)
+        fpath = os.path.join(settings.TRANSFER_FILE_DIR, "{}{}".format(app._id, app.version))
         use_transfer = True
     else:
         _, fpath = tempfile.mkstemp()
 
-    files, errors = iter_files_async(include_multimedia_files, include_index_files, app)
-    with open(fpath, 'wb') as tmp:
-        with zipfile.ZipFile(tmp, "w") as z:
-            for path, data in files:
-                # don't compress multimedia files
-                extension = os.path.splitext(path)[1]
-                file_compression = zipfile.ZIP_STORED if extension in MULTIMEDIA_EXTENSIONS else compression
-                z.writestr(path, data, file_compression)
+    if not os.path.isfile(fpath):  # Don't rebuild the file if it is already there
+        files, errors = iter_files_async(include_multimedia_files, include_index_files, app)
+        with open(fpath, 'wb') as tmp:
+            with zipfile.ZipFile(tmp, "w") as z:
+                for path, data in files:
+                    # don't compress multimedia files
+                    extension = os.path.splitext(path)[1]
+                    file_compression = zipfile.ZIP_STORED if extension in MULTIMEDIA_EXTENSIONS else compression
+                    z.writestr(path, data, file_compression)
 
     return expose_file_download(fpath,
                                 mimetype='application/zip' if compress_zip else 'application/x-zip-compressed',
