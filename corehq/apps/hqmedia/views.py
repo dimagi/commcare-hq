@@ -26,10 +26,10 @@ from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareMul
 from corehq.apps.hqmedia.tasks import process_bulk_upload_zip
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-from corehq.util.zip_utils import DownloadZip
+from corehq.util.zip_utils import DownloadZipAsync
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.cached_object import CachedObject
-from soil.util import expose_download
+from soil.util import expose_cached_download
 from django.utils.translation import ugettext as _
 from django_prbac.decorators import requires_privilege_raise404
 
@@ -269,7 +269,7 @@ class ProcessBulkUploadView(BaseProcessUploadedView):
     def process_upload(self):
         # save the file w/ soil
         self.uploaded_file.file.seek(0)
-        saved_file = expose_download(self.uploaded_file.file.read(), expiry=BulkMultimediaStatusCache.cache_expiry)
+        saved_file = expose_cached_download(self.uploaded_file.file.read(), expiry=BulkMultimediaStatusCache.cache_expiry)
         processing_id = saved_file.download_id
 
         status = BulkMultimediaStatusCache(processing_id)
@@ -430,7 +430,7 @@ class CheckOnProcessingFile(BaseMultimediaView):
         return HttpResponse("workin on it")
 
 
-def _iter_media_files(media_objects):
+def iter_media_files(media_objects):
     """
     take as input the output of get_media_objects
     and return an iterator of (path, data) tuples for the media files
@@ -458,7 +458,7 @@ def _iter_media_files(media_objects):
     return _media_files(), errors
 
 
-class DownloadMultimediaZip(DownloadZip, ApplicationViewMixin):
+class DownloadMultimediaZip(DownloadZipAsync, ApplicationViewMixin):
     """
     This is where the Multimedia for an application gets generated.
     Expects domain and app_id to be in its args
@@ -468,10 +468,7 @@ class DownloadMultimediaZip(DownloadZip, ApplicationViewMixin):
     name = "download_multimedia_zip"
     compress_zip = False
     zip_name = 'commcare.zip'
-
-    def iter_files(self):
-        self.app.remove_unused_mappings()
-        return _iter_media_files(self.app.get_media_objects())
+    include_multimedia_files = True
 
     def check_before_zipping(self):
         if not self.app.multimedia_map:
