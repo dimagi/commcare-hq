@@ -264,9 +264,9 @@ class SyncLog(AbstractSyncLog):
         self.cases_on_phone.remove(state)
         self._case_state_map.reset_cache(self)
 
-        # I'm not quite clear on when this can happen, but we've seen it
-        # in wild, so safeguard against it.
-        if not self.phone_has_dependent_case(case_id):
+        all_indices = [i for case_state in self.cases_on_phone + self.dependent_cases_on_phone
+                       for i in case_state.indices]
+        if any([i.referenced_id == case_id for i in all_indices]):
             self.dependent_cases_on_phone.append(state)
             self._dependent_case_state_map.reset_cache(self)
 

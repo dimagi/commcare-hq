@@ -349,7 +349,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
         self._testUpdate(self.sync_log.get_id, {parent_id: [],
                                                 child_id: [index_ref]})
         
-        # assign to new owner
+        # assign the child to a new owner
         new_owner = "not_mine"
         self._postFakeWithSyncToken(
             CaseBlock(create=False, case_id=child_id, user_id=USER_ID, version=V2,
@@ -358,7 +358,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
         
         # should be moved
         self._testUpdate(self.sync_log.get_id, {parent_id: []},
-                         {child_id: [index_ref]})
+                         {})
 
     def testArchiveUpdates(self):
         """
