@@ -148,13 +148,8 @@ class SyncLog(SafeSaveDocument, UnicodeMixIn):
 
     @classmethod
     def last_for_user(cls, user_id):
-        return SyncLog.view("phone/sync_logs_by_user",
-                            startkey=[user_id, {}],
-                            endkey=[user_id],
-                            descending=True,
-                            limit=1,
-                            reduce=False,
-                            include_docs=True).one()
+        from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_last_synclog_for_user
+        return get_last_synclog_for_user(user_id)
 
     def get_previous_log(self):
         """
