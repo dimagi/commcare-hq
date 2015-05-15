@@ -192,9 +192,11 @@ class SnapshotSettingsForm(forms.Form):
         help_text=ugettext_noop("An optional file to tell users more about your app."))
     old_documentation_file = forms.BooleanField(required=False)
     cda_confirmed = BooleanField(required=False, label=ugettext_noop("Content Distribution Agreement"))
+    is_starter_app = BooleanField(required=False, label=ugettext_noop("This is a starter application"))
 
     def __init__(self, *args, **kw):
         self.dom = kw.pop("domain", None)
+        self.is_superuser = kw.pop("is_superuser", None)
         super(SnapshotSettingsForm, self).__init__(*args, **kw)
 
         self.helper = FormHelper()
@@ -232,6 +234,9 @@ class SnapshotSettingsForm(forms.Form):
                 'cda_confirmed',
             ),
         )
+
+        if self.is_superuser:
+            self.helper.layout.append(crispy.Fieldset('Starter App', 'is_starter_app',),)
 
 
         self.fields['license'].help_text = \
@@ -1157,7 +1162,7 @@ class ProBonoForm(forms.Form):
             }
             html_content = render_to_string("domain/email/pro_bono_application.html", params)
             text_content = render_to_string("domain/email/pro_bono_application.txt", params)
-            recipient = settings.BILLING_EMAIL
+            recipient = settings.SUPPORT_EMAIL
             subject = "[Pro-Bono Application]"
             if domain is not None:
                 subject = "%s %s" % (subject, domain)
@@ -1205,7 +1210,7 @@ class InternalSubscriptionManagementForm(forms.Form):
             )
             account.save()
         contact_info, _ = BillingContactInfo.objects.get_or_create(account=account)
-        emails = (contact_info.emails or '').split(',')
+        emails = contact_info.emails.split(',') if contact_info.emails else []
         for email in self.account_emails:
             if email not in emails:
                 emails.append(email)
@@ -1222,6 +1227,16 @@ class InternalSubscriptionManagementForm(forms.Form):
     @memoized
     def current_subscription(self):
         return Subscription.get_subscribed_plan_by_domain(self.domain)[1]
+
+    @property
+    @memoized
+    def current_contact_emails(self):
+        try:
+            return BillingContactInfo.objects.get(
+                account=self.current_subscription.account
+            ).emails
+        except BillingContactInfo.DoesNotExist:
+            return None
 
     def __init__(self, domain, web_user, *args, **kwargs):
         super(InternalSubscriptionManagementForm, self).__init__(*args, **kwargs)
@@ -1311,6 +1326,8 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
 
         super(AdvancedExtendedTrialForm, self).__init__(domain, web_user, *args, **kwargs)
 
+        self.fields['emails'].initial = self.current_contact_emails
+
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
         self.helper.layout = crispy.Layout(
@@ -1364,7 +1381,7 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
 
     @property
     def account_emails(self):
-        return self.cleaned_data['emails']
+        return self.cleaned_data['emails'].split(',')
 
 
 class ContractedPartnerForm(InternalSubscriptionManagementForm):
@@ -1421,6 +1438,7 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
 
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
+        self.fields['emails'].initial = self.current_contact_emails
 
         plan_edition = self.current_subscription.plan_version.plan.edition if self.current_subscription else None
         if plan_edition not in [
@@ -1440,13 +1458,14 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
                     '<p><i class="icon-info-sign"></i> Clicking "Update" will set '
                     'up the subscription in CommCareHQ to one of our standard '
                     'contracted plans.  If you need to set up a non-standard plan, '
-                    'please email accounts@dimagi.com.</p>'
+                    'please email %(accounts_email)s.</p>' % {
+                        'accounts_email': settings.ACCOUNTS_EMAIL,
+                    }
                 )),
                 self.form_actions
             )
         else:
             self.fields['fogbugz_client_name'].initial = self.current_subscription.account.name
-            self.fields['emails'].initial = self.current_subscription.account.billingcontactinfo.emails
             self.fields['end_date'].initial = self.current_subscription.date_end
             self.helper.layout = crispy.Layout(
                 TextField('software_plan_edition', plan_edition),
@@ -1474,7 +1493,10 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
             self.domain, edition=self.cleaned_data['software_plan_edition'],
         )
         revert_current_subscription_end_date = None
-        if self.current_subscription and self.cleaned_data['start_date'] < self.current_subscription.date_end:
+        if self.current_subscription and (
+            not self.current_subscription.date_end
+            or self.cleaned_data['start_date'] < self.current_subscription.date_end
+        ):
             revert_current_subscription_end_date = self.current_subscription.date_end
             self.current_subscription.date_end = self.cleaned_data['start_date']
             self.current_subscription.save()
@@ -1527,7 +1549,7 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
 
     @property
     def account_emails(self):
-        return self.cleaned_data['emails']
+        return self.cleaned_data['emails'].split(',')
 
     def clean_end_date(self):
         end_date = self.cleaned_data['end_date']

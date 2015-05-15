@@ -323,3 +323,24 @@ The tests for CloudCare currently expect the "Basic Tests" app from the
 Make sure to edit the selenium user credentials in `localsettings.py`.  Then run
 
     ./manage.py seltest
+
+## Sniffer
+
+You can also use sniffer to auto run the python tests.
+
+When running, sniffer auto-runs the specified tests whenever you save a file
+For example, you are working on the `retire` method of `CommCareUser`. You are writing a `RetireUserTestCase`, which you want to run every time you make a small change to the `retire` method, or to the `testCase`. Sniffer to the rescue!
+
+### Sniffer Usage
+
+```sh
+sniffer -x <app_name>[.<TestClass>[.<test_name>]]
+```
+In our example, we would run `sniffer -x users.RetireUserTestCase`
+You should see beautiful green `In good standing` if all is well, otherwise a `Failed - Back to work!` message is displayed. 
+If you want to run the whole test suite whenever a file is changed (not recommended), you would run sniffer without the `-x` argument
+
+### Sniffer Installation instructions
+https://github.com/jeffh/sniffer/
+(recommended to install pyinotify or macfsevents for this to actually be worthwhile otherwise it takes a long time to see the change)
+

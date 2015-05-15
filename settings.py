@@ -28,6 +28,8 @@ LESS_WATCH = False
 # "dev-min" - use built/minified vellum (submodules/formdesigner/_build/src)
 VELLUM_DEBUG = None
 
+# gets set to False for unit tests that run without the database
+DB_ENABLED = True
 try:
     UNIT_TESTING = 'test' == sys.argv[1]
 except IndexError:
@@ -370,10 +372,9 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'south',
     'custom.apps.crs_reports',
     'custom.m4change',
-    'custom.succeed'
 
     # submodules with tests that run on travis
-    'couchexport',
+    # 'couchexport',
     'ctable',
     'ctable_view',
     'dimagi.utils',
@@ -498,7 +499,18 @@ FIXTURE_GENERATORS = {
     ]
 }
 
-RESTORE_PAYLOAD_DIR = None  # Defaults to tempfile.gettempdir()
+### Shared drive settings ###
+# Also see section after localsettings import
+SHARED_DRIVE_ROOT = None
+
+# name of the directory within SHARED_DRIVE_ROOT
+RESTORE_PAYLOAD_DIR_NAME = None
+
+## django-transfer settings
+# These settings must match the apache / nginx config
+TRANSFER_SERVER = None  # 'apache' or 'nginx'
+# name of the directory within SHARED_DRIVE_ROOT
+TRANSFER_FILE_DIR_NAME = None
 
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
 
@@ -678,8 +690,12 @@ ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_ID': '',
     'PINGDOM_ID': '',
     'ANALYTICS_ID_PUBLIC_COMMCARE': '',
-    'SEGMENT_ANALYTICS_KEY': '',
+    'KISSMETRICS_KEY': '',
     'HUBSPOT_ID': '',
+}
+
+ANALYTICS_CONFIG = {
+    "HQ_INSTANCE": '',  # e.g. "www" or "staging"
 }
 
 OPEN_EXCHANGE_RATES_ID = ''
@@ -953,6 +969,17 @@ if not SQL_REPORTING_DATABASE_URL or UNIT_TESTING:
     SQL_REPORTING_DATABASE_URL = "postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}{OPTIONS}".format(
         **db_settings
     )
+
+### Shared drive settings ###
+if SHARED_DRIVE_ROOT and RESTORE_PAYLOAD_DIR_NAME:
+    # Defaults to tempfile.gettempdir()
+    RESTORE_PAYLOAD_DIR = os.path.join(SHARED_DRIVE_ROOT, RESTORE_PAYLOAD_DIR_NAME)
+
+if SHARED_DRIVE_ROOT and TRANSFER_FILE_DIR_NAME:
+    TRANSFER_FILE_DIR = os.path.join(SHARED_DRIVE_ROOT, TRANSFER_FILE_DIR_NAME)
+    TRANSFER_MAPPINGS = {
+        TRANSFER_FILE_DIR: '/{}'.format(TRANSFER_FILE_DIR_NAME),  # e.g. '/mnt/shared/downloads': '/downloads',
+    }
 
 MVP_INDICATOR_DB = 'mvp-indicators'
 
@@ -1384,6 +1411,7 @@ TRAVIS_TEST_GROUPS = (
         'facilities', 'fixtures', 'fluff_filter', 'formplayer',
         'formtranslate', 'fri', 'grapevine', 'groups', 'gsid', 'hope',
         'hqadmin', 'hqcase', 'hqcouchlog', 'hqmedia',
+        'smsbillables',
     ),
 )
 

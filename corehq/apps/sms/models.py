@@ -245,6 +245,9 @@ class SMSLog(SyncCouchToSQLMixin, MessageLog):
     def _migration_get_sql_model_class(cls):
         return SMS
 
+    def _migration_automatically_handle_dups(self):
+        return True
+
 
 class SMS(SyncSQLToCouchMixin, models.Model):
     couch_id = models.CharField(max_length=126, null=True, db_index=True)

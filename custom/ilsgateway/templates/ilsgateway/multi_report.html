@@ -79,13 +79,9 @@
     <script>
         $(document).ajaxStop(function () {
             $('#group_location_async select').first().css('display', 'none');
-            var location_type = '{{ location_type }}';
-            var filter_elem = $('#reportFilters.in');
-            var element = $('#toggle-report-filters');
-            if (location_type === 'FACILITY' && filter_elem.length !== 0) {
-                element.click()
-            } else if (filter_elem.length === 0) {
-                element.click()
+            if ($('#paramSelectorForm fieldset').children().length === 1) {
+                $('#reportFilters').css('display', 'none');
+                $('#toggle-report-filters').css('display', 'none');
             }
         });
     </script>

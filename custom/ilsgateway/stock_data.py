@@ -27,8 +27,9 @@ class ILSStockDataSynchronization(StockDataSynchronization):
     def get_ids(self):
         return SQLLocation.objects.filter(
             domain=self.domain
-        ).order_by('created_at').values_list('external_id', flat=True)
+        ).exclude(external_id__isnull=True).order_by('created_at').values_list('external_id', flat=True)
 
+    @property
     def test_facilities(self):
         test_region = SQLLocation.objects.get(domain=self.domain, external_id=TEST_REGION_ID)
         return SQLLocation.objects.filter(

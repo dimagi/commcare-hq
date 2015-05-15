@@ -16,6 +16,8 @@ base:
   new_relic_enabled: []
   
 development:
+  should_migrate: True
+
   # parameters for configuring the celery worker processes
   celery_processes:
     '*':

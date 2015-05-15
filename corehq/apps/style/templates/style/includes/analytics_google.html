@@ -25,15 +25,27 @@
         ga('set', 'dimension2', '{% if request.couch_user %}{{ request.couch_user.userID }}{% else %}none{% endif %}');
         ga('set', 'dimension3', '{% if request.couch_user.is_commcare_user %}yes{% else %}no{% endif %}');
         ga('set', 'dimension4', '{% if domain %}{{ domain|escapejs }}{% else %}none{% endif %}');
-        ga('set', 'dimension5', '{% if request.couch_user.has_built_app %}yes{% else %}no{% endif %}')
+        ga('set', 'dimension5', '{% if request.couch_user.has_built_app %}yes{% else %}no{% endif %}');
         ga('send', 'pageview');
 
-        function gaTrackLink($link_or_selector, eventCategory, eventAction, eventLabel, eventValue) {
-            /* send ga info while still respecting ctrl/cmd-click (open in new window) */
+
+        /**
+         * A helper function for gaTrackLink and analytics.trackLink.
+         *
+         * @param {(object|string)} element - A DOM element, jQuery object, or selector.
+         * @param {function} trackFunction -
+         *      A function that takes a single optional callback.
+         *      If called without the callback, this function should
+         *      record an event. If called with a callback, this
+         *      function should record an event and call the
+         *      callback when finished.
+         */
+        function trackLinkHelper(element, trackFunction){
             var eventHandler = function (event) {
                 var $this = $(this);
                 if (event.metaKey) {
-                    ga_track_event(eventCategory, eventAction, eventLabel, eventValue);
+                    // This page isn't being redirected
+                    trackFunction();
                 } else {
                     event.preventDefault();
                     var callbackCalled = false;
@@ -43,19 +55,32 @@
                             callbackCalled = true;
                         }
                     };
-                    // hitCallback doesn't get called if you can't reach analytics.js
+                    // callback might not get executed if, say, analytics.js can't be reached.
                     setTimeout(callback, 2000);
-                    ga_track_event(eventCategory, eventAction, eventLabel, eventValue, {
-                        'hitCallback': callback
-                    });
+                    trackFunction(callback);
                 }
             };
-            if (typeof $link_or_selector == 'string') {
-                $(document).on('click', $link_or_selector, eventHandler);
+            if (typeof element == 'string') {
+                $(document).on('click', element, eventHandler);
             } else {
-                $link_or_selector.click(eventHandler);
+                if (element.nodeType){
+                    element = $(element);
+                }
+                element.click(eventHandler);
             }
+        }
 
+        function gaTrackLink(link_or_selector, eventCategory, eventAction, eventLabel, eventValue) {
+            trackLinkHelper(
+                link_or_selector,
+                function (cb) {
+                    if (cb !== undefined){
+                        ga_track_event(eventCategory, eventAction, eventLabel, eventValue, {'hitCallback': cb});
+                    } else {
+                        ga_track_event(eventCategory, eventAction, eventLabel, eventValue);
+                    }
+                }
+            );
         }
     </script>
 

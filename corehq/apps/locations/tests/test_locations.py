@@ -4,7 +4,7 @@ from corehq.apps.locations.models import Location, LocationType, SQLLocation, \
 from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.locations.fixtures import location_fixture_generator
 from corehq.apps.commtrack.helpers import make_supply_point, make_product
-from corehq.apps.commtrack.util import bootstrap_location_types
+from corehq.apps.commtrack.tests.util import bootstrap_location_types
 from corehq.apps.users.models import CommCareUser
 from django.test import TestCase
 from couchdbkit import ResourceNotFound
@@ -222,10 +222,17 @@ class LocationsTest(LocationTestBase):
             Location.get_in_domain(self.domain.name, 'not-a-real-id'),
         )
 
-        # Location.all_locations
+        def _all_locations(domain):
+            return Location.view(
+                'locations/hierarchy',
+                startkey=[domain],
+                endkey=[domain, {}],
+                reduce=False,
+                include_docs=True
+            ).all()
         compare(
             [self.user.location, test_state1, test_state2, test_village1],
-            Location.all_locations(self.domain.name)
+            _all_locations(self.domain.name)
         )
 
         # Location.by_site_code

@@ -15,7 +15,7 @@ from couchforms.tests.testutils import post_xform_to_couch
 from couchforms.models import XFormInstance
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xform import process_cases
-from casexml.apps.phone.restore import RestoreConfig
+from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 from casexml.apps.case.util import post_case_blocks
 from django.conf import settings
 
@@ -148,7 +148,7 @@ def check_user_has_case(testcase, user, case_blocks, should_have=True,
 
     if restore_id and purge_restore_cache:
         SyncLog.get(restore_id).invalidate_cached_payloads()
-    restore_config = RestoreConfig(user, restore_id, version=version)
+    restore_config = RestoreConfig(user=user, params=RestoreParams(restore_id, version=version))
     payload_string = restore_config.get_payload().as_string()
     blocks = extract_caseblocks_from_xml(payload_string, version)
 

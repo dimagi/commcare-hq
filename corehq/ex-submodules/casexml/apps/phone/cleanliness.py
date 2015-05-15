@@ -2,8 +2,11 @@ from collections import namedtuple
 from datetime import datetime
 from casexml.apps.case.dbaccessors import get_all_case_owner_ids, get_open_case_ids, get_closed_case_ids, \
     get_reverse_indexed_case_ids, get_indexed_case_ids
+from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.util import get_indexed_cases
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
+from corehq.apps.users.util import WEIRD_USER_IDS
+from corehq.toggles import OWNERSHIP_CLEANLINESS
 
 
 FootprintInfo = namedtuple('FootprintInfo', ['base_ids', 'all_ids'])
@@ -15,7 +18,8 @@ def set_cleanliness_flags_for_domain(domain):
     Sets all cleanliness flags for an entire domain.
     """
     for owner_id in get_all_case_owner_ids(domain):
-        set_cleanliness_flags(domain, owner_id)
+        if owner_id not in WEIRD_USER_IDS:
+            set_cleanliness_flags(domain, owner_id)
 
 
 def set_cleanliness_flags(domain, owner_id):
@@ -27,13 +31,24 @@ def set_cleanliness_flags(domain, owner_id):
         domain=domain,
         defaults={'is_clean': False}
     )[0]
-    # if it already is clean we don't need to do anything since that gets invalidated on submission
-    if not cleanliness_object.is_clean:
-        if not cleanliness_object.hint or not hint_still_valid(domain, owner_id, cleanliness_object.hint):
-            # either the hint wasn't set or wasn't valid - rebuild from scratch
-            cleanliness_flag = get_cleanliness_flag_from_scratch(domain, owner_id)
-            cleanliness_object.is_clean = cleanliness_flag.is_clean
-            cleanliness_object.hint = cleanliness_flag.hint
+
+    def needs_full_check(domain, cleanliness_obj):
+        # if it already is clean we don't need to do anything since that gets invalidated on submission
+        return (
+            # if clean, only check if the toggle is not enabled since then it won't be properly invalidated
+            # on submission
+            cleanliness_obj.is_clean and not OWNERSHIP_CLEANLINESS.enabled(domain)
+        ) or (
+            # if dirty, first check the hint and only do a full check if it's not valid
+            not cleanliness_object.is_clean and (
+                not cleanliness_object.hint or not hint_still_valid(domain, owner_id, cleanliness_object.hint)
+            )
+        )
+    if needs_full_check(domain, cleanliness_object):
+        # either the hint wasn't set or wasn't valid - rebuild from scratch
+        cleanliness_flag = get_cleanliness_flag_from_scratch(domain, owner_id)
+        cleanliness_object.is_clean = cleanliness_flag.is_clean
+        cleanliness_object.hint = cleanliness_flag.hint
 
     cleanliness_object.last_checked = datetime.utcnow()
     cleanliness_object.save()
@@ -55,15 +70,16 @@ def get_cleanliness_flag_from_scratch(domain, owner_id):
         cases_to_check = cases_to_check - closed_owned_case_ids
         if cases_to_check:
             # it wasn't in any of the open or closed IDs - it must be dirty
-            case_id_outside_footprint = cases_to_check.pop()
-            reverse_index_ids = set(get_reverse_indexed_case_ids(domain, [case_id_outside_footprint]))
+            reverse_index_ids = set(get_reverse_indexed_case_ids(domain, list(cases_to_check)))
             indexed_with_right_owner = (reverse_index_ids & (footprint_info.base_ids | closed_owned_case_ids))
             if indexed_with_right_owner:
                 return CleanlinessFlag(False, indexed_with_right_owner.pop())
 
-            # the only way we can get here is if an owner id spans multiple domains
-            # (and therefore has unclean indices, but not in this domain)
-            # in this case it should be clean for our domain so default to clean below
+            # I'm not sure if this code can ever be hit, but if it is we should fail hard
+            # until we can better understand it.
+            raise IllegalCaseId('Owner {} in domain {} has an invalid index reference chain!!'.format(
+                owner_id, domain
+            ))
 
     return CleanlinessFlag(True, None)
 

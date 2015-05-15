@@ -1,6 +1,7 @@
 import uuid
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseRelationship
-from casexml.apps.phone.cleanliness import set_cleanliness_flags, hint_still_valid
+from casexml.apps.phone.cleanliness import set_cleanliness_flags, hint_still_valid, \
+    get_cleanliness_flag_from_scratch
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from casexml.apps.phone.tests.test_sync_mode import SyncBaseTest
 from corehq.toggles import OWNERSHIP_CLEANLINESS
@@ -158,3 +159,32 @@ class OwnerCleanlinessTest(SyncBaseTest):
         set_cleanliness_flags(self.domain, self.owner_id)
         self.assert_owner_clean()
         self.assertEqual(None, self.owner_cleanliness.hint)
+
+    def test_cross_domain_both_clean(self):
+        new_domain = uuid.uuid4().hex
+        self.factory.domain = new_domain
+        self.factory.create_or_update_case(
+            CaseStructure(
+                relationships=[
+                    CaseRelationship(),
+                ]
+            )
+        )
+        # two clean ownership models in different domains should report clean
+        self.assertTrue(get_cleanliness_flag_from_scratch(self.domain, self.owner_id).is_clean)
+        self.assertTrue(get_cleanliness_flag_from_scratch(new_domain, self.owner_id).is_clean)
+
+    def test_cross_domain_dirty(self):
+        new_domain = uuid.uuid4().hex
+        new_owner = uuid.uuid4().hex
+        self.factory.domain = new_domain
+        self.factory.create_or_update_case(
+            CaseStructure(
+                relationships=[
+                    CaseRelationship(CaseStructure(attrs={'owner_id': new_owner})),
+                ]
+            )
+        )
+        # original domain should stay clean but the new one should be dirty
+        self.assertTrue(get_cleanliness_flag_from_scratch(self.domain, self.owner_id).is_clean)
+        self.assertFalse(get_cleanliness_flag_from_scratch(new_domain, self.owner_id).is_clean)

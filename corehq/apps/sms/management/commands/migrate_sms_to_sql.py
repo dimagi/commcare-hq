@@ -24,16 +24,35 @@ class Command(BaseCommand):
         ).all()
         return [row['id'] for row in result if row['key'][1] == 'SMSLog']
 
+    def clean_doc(self, doc):
+        """
+        Some old docs apparently have +00:00Z at the end of the date string,
+        which is not a valid timezone specification.
+
+        Also, because of http://manage.dimagi.com/default.asp?111189, there's
+        9 docs with very long phone numbers that should just be replaced
+        with null because there was no recipient to those sms.
+        """
+        date = doc.get('date')
+        if isinstance(date, basestring) and date.endswith('+00:00Z'):
+            date = date[:-7] + 'Z'
+            doc['date'] = date
+
+        phone_number = doc.get('phone_number')
+        if isinstance(phone_number, basestring) and len(phone_number) > 126:
+            doc['phone_number'] = None
+
     def run_migration(self):
         count = 0
         ids = self.get_sms_couch_ids()
         total_count = len(ids)
         for doc in iter_docs(FRISMSLog.get_db(), ids):
-            couch_sms = FRISMSLog.wrap(doc)
             try:
+                self.clean_doc(doc)
+                couch_sms = FRISMSLog.wrap(doc)
                 couch_sms._migration_do_sync()
             except Exception as e:
-                print 'Could not sync SMSLog %s: %s' % (couch_sms._id, e)
+                print 'Could not sync SMSLog %s: %s' % (doc['_id'], e)
 
             count += 1
             if (count % 10000) == 0:

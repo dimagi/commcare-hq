@@ -2,8 +2,8 @@ from django.db.models.aggregates import Avg, Max
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
+from custom.ilsgateway.filters import ProgramFilter, ILSDateFilter
 from corehq.apps.reports.filters.select import YearFilter
-from custom.ilsgateway.filters import MonthAndQuarterFilter, ProgramFilter
 from custom.ilsgateway.models import GroupSummary, SupplyPointStatusTypes, OrganizationSummary
 from custom.ilsgateway.tanzania import ILSData, DetailsReport
 from custom.ilsgateway.tanzania.reports.utils import make_url, format_percent, link_format, latest_status_or_none
@@ -83,9 +83,11 @@ class SupervisionData(ILSData):
                     response_rate = "<span class='no_data'>None</span>"
 
                 url = make_url(SupervisionReport, self.config['domain'],
-                               '?location_id=%s&month=%s&year=%s&filter_by_program=%s',
-                               (loc.location_id, self.config['month'], self.config['year'],
-                               self.config['program']))
+                               '?location_id=%s&filter_by_program=%s&'
+                               'datespan_type=%s&datespan_first=%s&datespan_second=%s',
+                               (loc.location_id,
+                                self.config['program'], self.config['datespan_type'],
+                                self.config['datespan_first'], self.config['datespan_second']))
 
                 rows.append([
                     link_format(loc.name, url),
@@ -136,9 +138,11 @@ class DistrictSupervisionData(ILSData):
                     response_rate = "<span class='no_data'>None</span>"
 
                 url = make_url(FacilityDetailsReport, self.config['domain'],
-                               '?location_id=%s&month=%s&year=%s&filter_by_program=%s',
-                               (self.config['location_id'], self.config['month'], self.config['year'],
-                                self.config['program']))
+                               '?location_id=%s&filter_by_program=%s&'
+                               'datespan_type=%s&datespan_first=%s&datespan_second=%s',
+                               (loc.location_id,
+                                self.config['program'], self.config['datespan_type'],
+                                self.config['datespan_first'], self.config['datespan_second']))
 
                 latest = latest_status_or_none(loc.location_id, SupplyPointStatusTypes.SUPERVISION_FACILITY,
                                                self.config['startdate'], self.config['enddate'])
@@ -169,7 +173,7 @@ class SupervisionReport(DetailsReport):
 
     @property
     def fields(self):
-        fields = [AsyncLocationFilter, MonthAndQuarterFilter, YearFilter, ProgramFilter]
+        fields = [AsyncLocationFilter, ILSDateFilter, ProgramFilter]
         if self.location and self.location.location_type.name.upper() == 'FACILITY':
             fields = []
         return fields
