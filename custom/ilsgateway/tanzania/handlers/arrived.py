@@ -15,8 +15,8 @@ class ArrivedHandler(KeywordHandler):
 
         msdcode = self.args[0]
         try:
-            location = SQLLocation.objects.get(domain=self.domain, site_code=msdcode)
-            self.respond(ARRIVED_KNOWN, facility=location.name)
+            sql_location = SQLLocation.objects.get(domain=self.domain, site_code=msdcode)
+            self.respond(ARRIVED_KNOWN, facility=sql_location.name)
         except SQLLocation.DoesNotExist:
             self.respond(ARRIVED_DEFAULT)
         return True
