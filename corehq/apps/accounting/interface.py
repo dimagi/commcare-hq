@@ -683,7 +683,7 @@ class InvoiceInterface(InvoiceInterfaceBase):
                 invoice.subscription.salesforce_contract_id or "--",
                 invoice.date_start.strftime(USER_DATE_FORMAT),
                 invoice.date_end.strftime(USER_DATE_FORMAT),
-                invoice.date_due.strftime(USER_DATE_FORMAT),
+                invoice.date_due.strftime(USER_DATE_FORMAT) if invoice.date_due else "None",
             ]
 
             plan_subtotal, plan_deduction = get_subtotal_and_deduction(

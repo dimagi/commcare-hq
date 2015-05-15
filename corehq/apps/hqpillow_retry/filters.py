@@ -42,22 +42,3 @@ class PillowErrorFilter(BaseDrilldownOptionFilter):
             (_('Pillow Class'), 'Select pillow...', 'pillow'),
             (_("Error Type"), 'Select error...', 'error'),
         ]
-
-
-class DatePropFilter(BaseSingleOptionFilter):
-    slug = 'date_prop'
-    label = _("Filter by")
-    default_text = _("Filter date by ...")
-
-    @property
-    def options(self):
-        return [
-            ('date_created', 'Date Created'),
-            ('date_last_attempt', 'Date of Last Attempt'),
-            ('date_next_attempt', 'Date of Next Attempt'),
-        ]
-
-
-class AttemptsFilter(CheckboxFilter):
-    slug = 'filter_attempts'
-    label = _("Show only records with max attempts")
