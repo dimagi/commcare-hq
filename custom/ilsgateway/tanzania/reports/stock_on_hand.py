@@ -6,9 +6,8 @@ from corehq.apps.commtrack.models import SQLProduct, StockState
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
-from corehq.apps.reports.filters.select import YearFilter
 from django.utils import html
-from custom.ilsgateway.filters import MonthAndQuarterFilter, ProgramFilter
+from custom.ilsgateway.filters import ProgramFilter, ILSDateFilter
 from custom.ilsgateway.models import SupplyPointStatusTypes, ProductAvailabilityData, \
     OrganizationSummary, SupplyPointStatus, SupplyPointStatusValues
 from custom.ilsgateway.tanzania import ILSData, DetailsReport
@@ -86,9 +85,13 @@ class SohPercentageTableData(ILSData):
             DataTablesColumn(_('% Facilities With 1 Or More Stockouts This Month')),
         ])
 
-        month = 'month'
-        if self.config['month'] < 0:
+        datespan_type = self.config['datespan_type']
+        if datespan_type == 2:
             month = 'quarter'
+        elif datespan_type == 3:
+            month = 'year'
+        else:
+            month = 'month'
 
         for p in products:
             headers.add_column(DataTablesColumn(_('%s stock outs this %s') % (p.code, month)))
@@ -132,9 +135,11 @@ class SohPercentageTableData(ILSData):
                 percent_stockouts = (stockouts or 0) * 100 / float(facs_count)
 
                 url = make_url(StockOnHandReport, self.config['domain'],
-                               '?location_id=%s&month=%s&year=%s&filter_by_program=%s&soh_month=',
-                               (loc.location_id, self.config['month'], self.config['year'],
-                               self.config['program']))
+                               '?location_id=%s&filter_by_program=%s&'
+                               'datespan_type=%s&datespan_first=%s&datespan_second=%s',
+                               (loc.location_id,
+                                self.config['program'], self.config['datespan_type'],
+                                self.config['datespan_first'], self.config['datespan_second']))
 
                 row_data = [
                     link_format(loc.name, url),
@@ -209,9 +214,11 @@ class DistrictSohPercentageTableData(ILSData):
         if self.config['soh_month']:
             soh_month = False
         return html.escape(make_url(StockOnHandReport, self.config['domain'],
-                           '?location_id=%s&month=%s&year=%s&filter_by_program=%s&soh_month=%s',
-                           (self.config['location_id'], self.config['month'], self.config['year'],
-                           self.config['program'], soh_month)))
+                           '?location_id=%s&filter_by_program=%s&'
+                           'datespan_type=%s&datespan_first=%s&datespan_second=%s&soh_month=%s',
+                           (self.config['location_id'],
+                            self.config['program'], self.config['datespan_type'],
+                            self.config['datespan_first'], self.config['datespan_second'], soh_month)))
 
     @property
     def title_url_name(self):
@@ -299,9 +306,11 @@ class DistrictSohPercentageTableData(ILSData):
                 hisp = get_hisp_resp_rate(loc)
 
                 url = make_url(FacilityDetailsReport, self.config['domain'],
-                               '?location_id=%s&month=%s&year=%s&filter_by_program=%s',
-                               (loc.location_id, self.config['month'], self.config['year'],
-                               self.config['program']))
+                               '?location_id=%s&filter_by_program=%s&'
+                               'datespan_type=%s&datespan_first=%s&datespan_second=%s',
+                               (loc.location_id,
+                                self.config['program'], self.config['datespan_type'],
+                                self.config['datespan_first'], self.config['datespan_second']))
 
                 row_data = [
                     loc.site_code,
@@ -384,7 +393,7 @@ class StockOnHandReport(DetailsReport):
 
     @property
     def fields(self):
-        fields = [AsyncLocationFilter, MonthAndQuarterFilter, YearFilter, ProgramFilter]
+        fields = [AsyncLocationFilter, ILSDateFilter, ProgramFilter]
         if self.location and self.location.location_type.name.upper() == 'FACILITY':
             fields = []
         return fields
