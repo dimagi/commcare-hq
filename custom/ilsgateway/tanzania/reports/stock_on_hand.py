@@ -131,7 +131,7 @@ class SohPercentageTableData(ILSData):
                     stock_on_hand__lte=0,
                     report__date__range=[
                         datetime(year, month, 1),
-                        datetime(year, enddate.month, 1) - timedelta(days=1)
+                        datetime(enddate.year, enddate.month, 1) - timedelta(days=1)
                     ]
                 ).order_by('case_id').distinct('case_id').count()
                 percent_stockouts = (stockouts or 0) * 100 / float(facs_count)
