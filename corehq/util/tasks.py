@@ -1,6 +1,6 @@
 from celery import task
 from soil import DownloadBase
-from corehq.util.zip_utils import make_zip_tempfile_async
+from corehq.apps.hqmedia.views import make_zip_tempfile_async
 
 
 @task

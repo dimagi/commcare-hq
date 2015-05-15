@@ -5,6 +5,9 @@ import logging
 import os
 from django.contrib.auth.decorators import login_required
 import json
+import itertools
+import tempfile
+from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.utils.decorators import method_decorator
 from django.views.generic import View, TemplateView
@@ -15,6 +18,10 @@ from django.http import HttpResponse, Http404, HttpResponseServerError, HttpResp
 
 from django.shortcuts import render
 from corehq import privileges
+
+from soil import DownloadBase
+from soil.util import expose_file_download
+from django_transfer import is_enabled as transfer_enabled
 
 from corehq.apps.app_manager.decorators import safe_download, require_can_edit_apps
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
@@ -458,6 +465,52 @@ def iter_media_files(media_objects):
     return _media_files(), errors
 
 
+def iter_files_async(include_multimedia_files, include_index_files, app):
+    file_iterator = lambda: iter([])
+    errors = []
+    if include_multimedia_files:
+        app.remove_unused_mappings()
+        file_iterator, errors = iter_media_files(app.get_media_objects())
+    if include_index_files:
+        from corehq.apps.app_manager.views import iter_index_files
+        index_files, index_file_errors = iter_index_files(app)
+        if index_file_errors:
+            errors.append(index_file_errors)
+        file_iterator = itertools.chain(file_iterator, index_files)
+
+    return file_iterator, errors
+
+
+def make_zip_tempfile_async(include_multimedia_files, include_index_files,
+                            app, download_id, compress_zip=False, filename="commcare.zip"):
+    MULTIMEDIA_EXTENSIONS = ('.mp3', '.wav', '.jpg', '.png', '.gif', '.3gp', '.mp4', '.zip', )
+    errors = []
+    compression = zipfile.ZIP_DEFLATED if compress_zip else zipfile.ZIP_STORED
+
+    use_transfer = False
+    if transfer_enabled() and os.path.isdir(settings.TRANSFER_FILE_DIR):
+        fpath = os.path.join(settings.TRANSFER_FILE_DIR, "{}{}".format(app._id, app.version))
+        use_transfer = True
+    else:
+        _, fpath = tempfile.mkstemp()
+
+    if not (os.path.isfile(fpath) and use_transfer):  # Don't rebuild the file if it is already there
+        files, errors = iter_files_async(include_multimedia_files, include_index_files, app)
+        with open(fpath, 'wb') as tmp:
+            with zipfile.ZipFile(tmp, "w") as z:
+                for path, data in files:
+                    # don't compress multimedia files
+                    extension = os.path.splitext(path)[1]
+                    file_compression = zipfile.ZIP_STORED if extension in MULTIMEDIA_EXTENSIONS else compression
+                    z.writestr(path, data, file_compression)
+
+    return expose_file_download(fpath,
+                                mimetype='application/zip' if compress_zip else 'application/x-zip-compressed',
+                                download_id=download_id,
+                                content_disposition='attachment; filename="{fname}"'.format(fname=filename),
+                                use_transfer=use_transfer), errors
+
+
 class DownloadMultimediaZip(DownloadZipAsync, ApplicationViewMixin):
     """
     This is where the Multimedia for an application gets generated.
@@ -469,6 +522,7 @@ class DownloadMultimediaZip(DownloadZipAsync, ApplicationViewMixin):
     compress_zip = False
     zip_name = 'commcare.zip'
     include_multimedia_files = True
+    include_index_files = False
 
     def check_before_zipping(self):
         if not self.app.multimedia_map:
@@ -485,6 +539,24 @@ class DownloadMultimediaZip(DownloadZipAsync, ApplicationViewMixin):
             "retrieving media for this application.<br /> %s" % (
                 "<br />".join(errors))
         )
+
+    def get(self, request, *args, **kwargs):
+        assert self.include_multimedia_files or self.include_index_files
+        error_response = self.check_before_zipping()
+        if error_response:
+            return error_response
+
+        from corehq.util.tasks import make_zip_tempfile_task
+        download = DownloadBase()
+        download.set_task(make_zip_tempfile_task.delay(
+            include_multimedia_files=self.include_multimedia_files,
+            include_index_files=self.include_index_files,
+            app=self.app,
+            compress_zip=self.compress_zip,
+            download_id=download.download_id,
+            filename=self.zip_name)
+        )
+        return download.get_start_response()
 
     @method_decorator(safe_download)
     def dispatch(self, request, *args, **kwargs):

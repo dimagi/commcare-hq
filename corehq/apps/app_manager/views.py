@@ -2513,18 +2513,11 @@ class DownloadCCZ(DownloadMultimediaZip):
     name = 'download_ccz'
     compress_zip = True
     zip_name = 'commcare.ccz'
-    download_async = True
     include_index_files = True
 
     def check_before_zipping(self):
-        pass
-
-    def iter_files(self):
         if self.app.is_remote_app():
-            return iter_index_files(self.app), []
-        else:
-            media_files, errors = super(DownloadCCZ, self).iter_files()
-            return itertools.chain(iter_index_files(), media_files), errors
+            self.include_multimedia_files = False
 
 
 @safe_download
