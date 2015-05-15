@@ -386,6 +386,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
     """
     log_format = StringProperty(default=LOG_FORMAT_SIMPLIFIED)
     case_ids_on_phone = SetProperty()
+    owner_ids_on_phone = SetProperty()
 
     def phone_is_holding_case(self, case_id):
         """
