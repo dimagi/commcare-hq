@@ -184,7 +184,8 @@ class CaseAPIHelper(object):
                 for bool in status_to_closed_flags(self.status):
                     yield [self.domain, owner_id, bool]
 
-        view_results = CommCareCase.view('hqcase/by_owner',
+        view_results = CommCareCase.view(
+            'hqcase/by_owner',
             keys=keys,
             include_docs=False,
             reduce=False,
