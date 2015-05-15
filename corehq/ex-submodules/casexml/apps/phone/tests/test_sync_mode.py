@@ -157,7 +157,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
         # (and currently puts it into the dependent list though this 
         # might change.
         self._postWithSyncToken("close_short.xml", sync_log.get_id)
-        self._testUpdate(sync_log.get_id, {}, {"asdf": []})
+        self._testUpdate(sync_log.get_id, {}, {})
 
     def testMultipleUpdates(self):
         """
