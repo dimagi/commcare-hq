@@ -8,7 +8,8 @@ from casexml.apps.case.xml import V2
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.tests.util import delete_all_sync_logs, delete_all_xforms, delete_all_cases
 from casexml.apps.phone.exceptions import BadStateException
-from casexml.apps.phone.tests.utils import generate_restore_payload, generate_restore_response
+from casexml.apps.phone.tests.utils import generate_restore_payload, generate_restore_response, \
+    get_exactly_one_wrapped_sync_log
 from corehq import toggles
 from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
 
@@ -26,12 +27,7 @@ class StateHashTest(TestCase):
 
         # this creates the initial blank sync token in the database
         generate_restore_payload(self.user)
-        sync_log_doc = SyncLog.get_db().view(
-            "phone/sync_logs_by_user",
-            include_docs=True,
-            reduce=False
-        ).all()[0]['doc']
-        self.sync_log = get_sync_log_class_by_format(sync_log_doc['log_format']).wrap(sync_log_doc)
+        self.sync_log = get_exactly_one_wrapped_sync_log()
 
     def testEmpty(self):
         empty_hash = CaseStateHash(EMPTY_HASH)

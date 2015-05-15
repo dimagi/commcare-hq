@@ -1,6 +1,7 @@
 from xml.etree import ElementTree
 from casexml.apps.case.xml import V1
-from casexml.apps.phone.models import get_properly_wrapped_sync_log
+from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_all_sync_logs_docs
+from casexml.apps.phone.models import get_properly_wrapped_sync_log, get_sync_log_class_by_format
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
 from casexml.apps.phone.xml import SYNC_XMLNS
 
@@ -12,6 +13,14 @@ def synclog_id_from_restore_payload(restore_payload):
 
 def synclog_from_restore_payload(restore_payload):
     return get_properly_wrapped_sync_log(synclog_id_from_restore_payload(restore_payload))
+
+
+def get_exactly_one_wrapped_sync_log():
+    """
+    Gets exactly one properly wrapped sync log, or fails hard.
+    """
+    [doc] = list(get_all_sync_logs_docs())
+    return get_sync_log_class_by_format(doc['log_format']).wrap(doc)
 
 
 def generate_restore_payload(user, restore_id="", version=V1, state_hash="",

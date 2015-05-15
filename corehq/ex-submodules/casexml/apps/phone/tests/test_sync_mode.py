@@ -4,7 +4,7 @@ from django.test import TestCase
 import os
 from casexml.apps.phone.exceptions import MissingSyncLog, RestoreException
 from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
-from casexml.apps.phone.tests.utils import generate_restore_payload
+from casexml.apps.phone.tests.utils import generate_restore_payload, get_exactly_one_wrapped_sync_log
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseRelationship
 from casexml.apps.phone.tests.utils import synclog_from_restore_payload
 from corehq.apps.domain.models import Domain
@@ -133,7 +133,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
         """
         Tests that a newly created sync token has no cases attached to it.
         """
-        [sync_log] = SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all()
+        sync_log = get_exactly_one_wrapped_sync_log()
         self._testUpdate(sync_log.get_id, {}, {})
                          
         
@@ -142,7 +142,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
         Test that individual create, update, and close submissions update
         the appropriate case lists in the sync token
         """
-        [sync_log] = SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all()
+        sync_log = get_exactly_one_wrapped_sync_log()
         
         self._postWithSyncToken("create_short.xml", sync_log.get_id)
         
@@ -163,7 +163,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
         Test that multiple update submissions don't update the case lists
         and don't create duplicates in them
         """
-        [sync_log] = SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all()
+        sync_log = get_exactly_one_wrapped_sync_log()
 
         self._postWithSyncToken("create_short.xml", sync_log.get_id)
         self._postWithSyncToken("update_short.xml", sync_log.get_id)
@@ -176,8 +176,8 @@ class SyncTokenUpdateTest(SyncBaseTest):
         """
         Tests a create and update in the same form
         """
-        [sync_log] = SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all()
-        
+        sync_log = get_exactly_one_wrapped_sync_log()
+
         self._postWithSyncToken("case_create.xml", sync_log.get_id)
         self._testUpdate(sync_log.get_id, {"IKA9G79J4HDSPJLG3ER2OHQUY": []})
         
@@ -185,7 +185,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
         """
         Test creating multiple cases from multilple forms
         """
-        [sync_log] = SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all()
+        sync_log = get_exactly_one_wrapped_sync_log()
         
         self._postWithSyncToken("create_short.xml", sync_log.get_id)
         self._testUpdate(sync_log.get_id, {"asdf": []})
@@ -431,7 +431,7 @@ class SyncTokenCachingTest(SyncBaseTest):
         ).get_payload().as_string()
         next_sync_log = synclog_from_restore_payload(original_payload)
 
-        self.sync_log = SyncLog.get(self.sync_log._id)
+        self.sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
         self.assertTrue(self.sync_log.has_cached_payload(V2))
 
         # a second request with the same config should be exactly the same
@@ -478,13 +478,13 @@ class SyncTokenCachingTest(SyncBaseTest):
                 sync_log_id=self.sync_log._id,
             ),
         ).get_payload().as_string()
-        self.sync_log = SyncLog.get(self.sync_log._id)
+        self.sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
         self.assertTrue(self.sync_log.has_cached_payload(V2))
 
         # posting a case associated with this sync token should invalidate the cache
         case_id = "cache_invalidation"
         self._createCaseStubs([case_id])
-        self.sync_log = SyncLog.get(self.sync_log._id)
+        self.sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
         self.assertFalse(self.sync_log.has_cached_payload(V2))
 
         # resyncing should recreate the cache
@@ -512,7 +512,7 @@ class SyncTokenCachingTest(SyncBaseTest):
                 sync_log_id=self.sync_log._id,
             ),
         ).get_payload().as_string()
-        self.sync_log = SyncLog.get(self.sync_log._id)
+        self.sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
         self.assertTrue(self.sync_log.has_cached_payload(V2))
 
         # posting a case associated with this sync token should invalidate the cache
@@ -859,7 +859,7 @@ class MultiUserSyncTest(SyncBaseTest):
             version=V2).as_xml()
         self._postFakeWithSyncToken(parent_update, self.sync_log.get_id)
         
-        main_sync_log = SyncLog.get(self.sync_log.get_id)
+        main_sync_log = get_properly_wrapped_sync_log(self.sync_log.get_id)
         
         # these tests added to debug another issue revealed by this test
         self.assertTrue(main_sync_log.phone_has_case(case_id))
@@ -1046,11 +1046,10 @@ class SyncTokenReprocessingTest(SyncBaseTest):
             # this should fail because it's a true error
             pass
 
-
     def testShouldHaveCase(self):
         case_id = "should_have"
         self._createCaseStubs([case_id])
-        sync_log = SyncLog.get(self.sync_log._id)
+        sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
         cases_on_phone = sync_log.tests_only_get_cases_on_phone()
         self.assertEqual(1, len(cases_on_phone))
         self.assertEqual(case_id, cases_on_phone[0].case_id)
@@ -1071,7 +1070,7 @@ class SyncTokenReprocessingTest(SyncBaseTest):
 
         # this should work because it should magically fix itself
         self._postFakeWithSyncToken(update, self.sync_log.get_id)
-        sync_log = SyncLog.get(self.sync_log._id)
+        sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
         self.assertFalse(getattr(sync_log, 'has_assert_errors', False))
 
     def testCodependencies(self):
