@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.test.utils import override_settings
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.phone.models import SyncLog, User
+from casexml.apps.phone.models import SyncLog, User, get_sync_log_class_by_format, get_properly_wrapped_sync_log
 from datetime import datetime
 from casexml.apps.phone.checksum import EMPTY_HASH, CaseStateHash
 from casexml.apps.case.xml import V2
@@ -26,8 +26,12 @@ class StateHashTest(TestCase):
 
         # this creates the initial blank sync token in the database
         generate_restore_payload(self.user)
-        [sync_log] = SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all()
-        self.sync_log = sync_log
+        sync_log_doc = SyncLog.get_db().view(
+            "phone/sync_logs_by_user",
+            include_docs=True,
+            reduce=False
+        ).all()[0]['doc']
+        self.sync_log = get_sync_log_class_by_format(sync_log_doc['log_format']).wrap(sync_log_doc)
 
     def testEmpty(self):
         empty_hash = CaseStateHash(EMPTY_HASH)
@@ -59,7 +63,7 @@ class StateHashTest(TestCase):
         post_case_blocks([c1, c2], 
                          form_extras={"last_sync_token": self.sync_log.get_id})
         
-        self.sync_log = SyncLog.get(self.sync_log.get_id)
+        self.sync_log = get_properly_wrapped_sync_log(self.sync_log.get_id)
         real_hash = CaseStateHash("409c5c597fa2c2a693b769f0d2ad432b")
         bad_hash = CaseStateHash("thisisntright")
         self.assertEqual(real_hash, self.sync_log.get_state_hash())
