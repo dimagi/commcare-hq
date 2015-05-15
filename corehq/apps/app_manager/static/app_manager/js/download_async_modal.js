@@ -31,8 +31,8 @@ $(function(){
                             }
                         }
                     },
-                    error: function() {
-                        self.downloadError();
+                    error: function(resp) {
+                        self.downloadError(resp.responseText);
                         clearInterval(interval);
                     }
                 });
@@ -55,14 +55,14 @@ $(function(){
                     self.startPollDownloadStatus(data);
                 },
                 error: function(){
-                    self.downloadError();
+                    self.downloadError(self.ERROR_MESSAGE);
                 }
             });
         };
 
-        self.downloadError = function(){
+        self.downloadError = function(text){
             self.$downloading.hide();
-            self.$download_progress.show().html(self.ERROR_MESSAGE);
+            self.$download_progress.show().html(text);
         };
 
         self.$el.on("show", self.generateDownload);

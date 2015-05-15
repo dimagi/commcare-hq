@@ -1019,7 +1019,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
             if getattr(module, 'root_module_id', None) and module.root_module not in modules:
                 modules.append(module.root_module)
             modules.extend([mod for mod in module.get_child_modules() if mod not in modules])
-            linkable_forms = list(itertools.chain.fromdable(list(m.get_forms()) for m in modules))
+            linkable_forms = list(itertools.chain.from_iterable(list(m.get_forms()) for m in modules))
             context.update({
                 'linkable_forms': map(
                     lambda f: {'unique_id': f.unique_id, 'name': qualified_form_name(f)},
@@ -2449,32 +2449,13 @@ BAD_BUILD_MESSAGE = "Sorry: this build is invalid. Try deleting it and rebuildin
 
 def _download_index_files(app):
     files = []
-    errors = []
     if app.copy_of:
         files = [(path[len('files/'):], app.fetch_attachment(path))
                  for path in app._attachments
                  if path.startswith('files/')]
     else:
-        try:
-            files = app.create_all_files().items()
-        except Exception:
-            pass
+        files = app.create_all_files().items()
 
-            #raise index files exception
-
-            # errors.append(_(
-            #     "We were unable to get your files "
-            #     "because your Application has errors. "
-            #     "Please click <strong>Make New Version</strong> "
-            #     "under <strong>Deploy</strong> "
-            #     "for feedback on how to fix these errors."))
-            # messages.error(request, _(
-            #     "We were unable to get your files "
-            #     "because your Application has errors. "
-            #     "Please click <strong>Make New Version</strong> "
-            #     "under <strong>Deploy</strong> "
-            #     "for feedback on how to fix these errors."
-            # ), extra_tags='html')
     return sorted(files)
 
 
@@ -2485,9 +2466,19 @@ def download_index(request, domain, app_id, template="app_manager/download_index
     all the resource files that will end up zipped into the jar.
 
     """
+    try:
+        files = _download_index_files(request.app)
+    except Exception:
+        messages.error(request, _(
+                "We were unable to get your files "
+                "because your Application has errors. "
+                "Please click <strong>Make New Version</strong> "
+                "under <strong>Deploy</strong> "
+                "for feedback on how to fix these errors."
+        ), extra_tags='html')
     return render(request, template, {
         'app': request.app,
-        'files': _download_index_files(request.app),
+        'files': files,
     })
 
 
@@ -2495,15 +2486,27 @@ def iter_index_files(app):
     skip_files = ('profile.xml', 'profile.ccpr', 'media_profile.xml')
     text_extensions = ('.xml', '.ccpr', '.txt')
     get_name = lambda f: {'media_profile.ccpr': 'profile.ccpr'}.get(f, f)
+    files = []
+    errors = []
 
-    def _files():
-        for name, f in _download_index_files(app):
+    def _files(files):
+        for name, f in files:
             if name not in skip_files:
                 # TODO: make RemoteApp.create_all_files not return media files
                 extension = os.path.splitext(name)[1]
                 data = _encode_if_unicode(f) if extension in text_extensions else f
                 yield (get_name(name), data)
-    return _files()
+    try:
+        files = _download_index_files(app)
+    except Exception:
+        errors = _(
+                "We were unable to get your files "
+                "because your Application has errors. "
+                "Please click Make New Version under Deploy "
+                "for feedback on how to fix these errors."
+        )
+
+    return _files(files), errors
 
 
 class DownloadCCZ(DownloadMultimediaZip):

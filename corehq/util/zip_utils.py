@@ -85,9 +85,12 @@ def iter_files_async(include_multimedia_files, include_index_files, app):
     if include_index_files:
         from corehq.apps.app_manager.views import iter_index_files
         if app.is_remote_app():
-            file_iterator = iter_index_files(app)
+            file_iterator, errors = iter_index_files(app)
         else:
-            file_iterator = itertools.chain(file_iterator, iter_index_files(app))
+            index_files, index_file_errors = iter_index_files(app)
+            if index_file_errors:
+                errors.append(index_file_errors)
+            file_iterator = itertools.chain(file_iterator, index_files)
 
     return file_iterator, errors
 
@@ -116,7 +119,7 @@ def make_zip_tempfile_async(include_multimedia_files,
                                 mimetype='application/zip' if compress_zip else 'application/x-zip-compressed',
                                 download_id=download_id,
                                 content_disposition='attachment; filename="{fname}"'.format(fname=filename),
-                                use_transfer=use_transfer)
+                                use_transfer=use_transfer), errors
 
 
 class DownloadZipAsync(DownloadZip):
