@@ -42,6 +42,8 @@ def get_download_context(download_id, check_state=False):
             is_ready = True
             result = download_data.task.result
             context['result'] = result and result.get('messages')
+            if result and result.get('errors'):
+                raise TaskFailedError(result.get('errors'))
 
     alive = True
     if heartbeat_enabled():
