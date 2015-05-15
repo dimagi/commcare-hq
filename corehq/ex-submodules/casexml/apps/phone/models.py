@@ -125,6 +125,13 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
     def get_state_hash(self):
         return CaseStateHash(Checksum(self.get_footprint_of_cases_on_phone()).hexdigest())
 
+    def update_phone_lists(self, xform, case_list):
+        """
+        Given a form an list of touched cases, update this sync log to reflect the updated
+        state on the phone.
+        """
+        raise NotImplementedError()
+
     def get_payload_attachment_name(self, version):
         return 'restore_payload_{version}.xml'.format(version=version)
 
@@ -388,6 +395,51 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
     def get_footprint_of_cases_on_phone(self):
         return self.case_ids_on_phone
+
+    def update_phone_lists(self, xform, case_list):
+        made_changes = False
+        for case in case_list:
+            actions = case.get_actions_for_form(xform.get_id)
+            for action in actions:
+                owner_id = action.updated_known_properties.get("owner_id")
+                phone_owns_case = not owner_id or owner_id in self.owner_ids_on_phone
+
+                if action.action_type == const.CASE_ACTION_CREATE:
+                    self._assert(not self.phone_is_holding_case(case._id),
+                                 'phone has case being created: %s' % case._id)
+                    if phone_owns_case:
+                        self.case_ids_on_phone.add(case._id)
+                        made_changes = True
+                elif action.action_type == const.CASE_ACTION_UPDATE:
+                    self._assert(
+                        self.phone_is_holding_case(case._id),
+                        "phone doesn't have case being updated: %s" % case._id,
+                        case._id,
+                    )
+                    if not phone_owns_case:
+                        # we must have just changed the owner_id to something we didn't own
+                        self.case_ids_on_phone.remove(case._id)
+                        made_changes = True
+                elif action.action_type == const.CASE_ACTION_INDEX:
+                    # we should never have to do anything here - since the
+                    # indexed case should already be on the phone
+                    pass
+                elif action.action_type == const.CASE_ACTION_CLOSE:
+                    # todo: we need to check if the phone still has any live indices
+                    # to this case. Might be a little hairy.
+                    pass
+
+        if made_changes or case_list:
+            try:
+                if made_changes:
+                    self.save()
+                if case_list:
+                    self.invalidate_cached_payloads()
+            except ResourceConflict:
+                logging.exception('doc update conflict saving sync log {id}'.format(
+                    id=self._id,
+                ))
+                raise
 
 
 def get_properly_wrapped_sync_log(doc_id):
