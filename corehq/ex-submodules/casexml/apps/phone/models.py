@@ -78,18 +78,26 @@ class SyncLogAssertionError(AssertionError):
         super(SyncLogAssertionError, self).__init__(*args, **kwargs)
 
 
-class SyncLog(SafeSaveDocument, UnicodeMixIn):
-    """
-    A log of a single sync operation.
-    """
+class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
     date = DateTimeProperty()
     user_id = StringProperty()
     previous_log_id = StringProperty()  # previous sync log, forming a chain
+    duration = IntegerProperty()        # in seconds
+
+    # owner_ids_on_phone stores the ids the phone thinks it's the owner of.
+    # This typically includes the user id,
+    # as well as all groups that that user is a member of.
+    owner_ids_on_phone = StringListProperty()
+
+
+
+class SyncLog(AbstractSyncLog):
+    """
+    A log of a single sync operation.
+    """
     last_seq = StringProperty()         # the last_seq of couch during this sync
-    duration = IntegerProperty()  # in seconds
 
     # we need to store a mapping of cases to indices for generating the footprint
-
     # cases_on_phone represents the state of all cases the server
     # thinks the phone has on it and cares about.
     cases_on_phone = SchemaListProperty(CaseState)
@@ -100,11 +108,6 @@ class SyncLog(SafeSaveDocument, UnicodeMixIn):
     # This list is not necessarily a perfect reflection
     # of what's on the phone, but is guaranteed to be after pruning
     dependent_cases_on_phone = SchemaListProperty(CaseState)
-
-    # owner_ids_on_phone stores the ids the phone thinks it's the owner of.
-    # This typically includes the user id,
-    # as well as all groups that that user is a member of.
-    owner_ids_on_phone = StringListProperty()
 
     strict = True  # for asserts
 
