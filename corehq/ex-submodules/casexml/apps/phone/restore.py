@@ -14,7 +14,7 @@ from casexml.apps.phone.exceptions import (
 )
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, FILE_RESTORE, STREAM_RESTORE_CACHE
 from dimagi.utils.decorators.memoized import memoized
-from casexml.apps.phone.models import SyncLog
+from casexml.apps.phone.models import SyncLog, get_properly_wrapped_sync_log
 import logging
 from dimagi.utils.couch.database import get_db, get_safe_write_kwargs
 from casexml.apps.phone import xml
@@ -337,7 +337,7 @@ class RestoreState(object):
     def last_sync_log(self):
         if self.params.sync_log_id:
             try:
-                sync_log = SyncLog.get(self.params.sync_log_id)
+                sync_log = get_properly_wrapped_sync_log(self.params.sync_log_id)
             except ResourceNotFound:
                 # if we are in loose mode, return an HTTP 412 so that the phone will
                 # just force a fresh sync

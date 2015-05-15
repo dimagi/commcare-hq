@@ -78,38 +78,32 @@ class SyncLogAssertionError(AssertionError):
         super(SyncLogAssertionError, self).__init__(*args, **kwargs)
 
 
+LOG_FORMAT_LEGACY = 'legacy'
+LOG_FORMAT_SIMPLIFIED = 'simplified'
+
+
 class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
     date = DateTimeProperty()
+    # domain = StringProperty()
     user_id = StringProperty()
     previous_log_id = StringProperty()  # previous sync log, forming a chain
     duration = IntegerProperty()        # in seconds
+    log_format = StringProperty()
 
     # owner_ids_on_phone stores the ids the phone thinks it's the owner of.
     # This typically includes the user id,
     # as well as all groups that that user is a member of.
     owner_ids_on_phone = StringListProperty()
 
+    def phone_is_holding_case(self, case_id):
+        raise NotImplementedError()
 
-
-class SyncLog(AbstractSyncLog):
-    """
-    A log of a single sync operation.
-    """
-    last_seq = StringProperty()         # the last_seq of couch during this sync
-
-    # we need to store a mapping of cases to indices for generating the footprint
-    # cases_on_phone represents the state of all cases the server
-    # thinks the phone has on it and cares about.
-    cases_on_phone = SchemaListProperty(CaseState)
-
-    # dependant_cases_on_phone represents the possible list of cases
-    # also on the phone because they are referenced by a real case's index
-    # (or a dependent case's index).
-    # This list is not necessarily a perfect reflection
-    # of what's on the phone, but is guaranteed to be after pruning
-    dependent_cases_on_phone = SchemaListProperty(CaseState)
-
-    strict = True  # for asserts
+    def get_footprint_of_cases_on_phone(self):
+        """
+        Gets the phone's flat list of all case ids on the phone,
+        owned or not owned but relevant.
+        """
+        raise NotImplementedError()
 
     def get_payload_attachment_name(self, version):
         return 'restore_payload_{version}.xml'.format(version=version)
@@ -130,6 +124,28 @@ class SyncLog(AbstractSyncLog):
     def invalidate_cached_payloads(self):
         for name in copy(self._doc.get('_attachments', {})):
             self.delete_attachment(name)
+
+
+class SyncLog(AbstractSyncLog):
+    """
+    A log of a single sync operation.
+    """
+    log_format = StringProperty(default=LOG_FORMAT_LEGACY)
+    last_seq = StringProperty()         # the last_seq of couch during this sync
+
+    # we need to store a mapping of cases to indices for generating the footprint
+    # cases_on_phone represents the state of all cases the server
+    # thinks the phone has on it and cares about.
+    cases_on_phone = SchemaListProperty(CaseState)
+
+    # dependant_cases_on_phone represents the possible list of cases
+    # also on the phone because they are referenced by a real case's index
+    # (or a dependent case's index).
+    # This list is not necessarily a perfect reflection
+    # of what's on the phone, but is guaranteed to be after pruning
+    dependent_cases_on_phone = SchemaListProperty(CaseState)
+
+    strict = True  # for asserts
 
     def _assert(self, conditional, msg="", case_id=None):
         if not conditional:
@@ -294,10 +310,6 @@ class SyncLog(AbstractSyncLog):
                 raise
 
     def get_footprint_of_cases_on_phone(self):
-        """
-        Gets the phone's flat list of all case ids on the phone,
-        owned or not owned but relevant.
-        """
         def children(case_state):
             return [self._get_case_state_from_anywhere(index.referenced_id)
                     for index in case_state.indices]
@@ -352,6 +364,43 @@ class SyncLog(AbstractSyncLog):
 
     def __unicode__(self):
         return "%s synced on %s (%s)" % (self.user_id, self.date.date(), self.get_id)
+
+
+class SimplifiedSyncLog(AbstractSyncLog):
+    """
+    New, simplified sync log class that is used by ownership cleanliness restore.
+
+    Just maintains a flat list of case IDs on the phone rather than the case/dependent state
+    lists from the SyncLog class.
+    """
+    log_format = StringProperty(default=LOG_FORMAT_SIMPLIFIED)
+    case_ids_on_phone = StringListProperty()
+
+    def phone_is_holding_case(self, case_id):
+        """
+        Whether the phone currently has a case, according to this sync log
+        """
+        # todo: if we do this a lot we may want to convert case_ids_on_phone to a memoized set
+        return case_id in self.case_ids_on_phone
+
+    def get_footprint_of_cases_on_phone(self):
+        return self.case_ids_on_phone
+
+
+def get_properly_wrapped_sync_log(doc_id):
+    """
+    Looks up and wraps a sync log, using the class based on the 'log_format' attribute.
+    Defaults to the existing legacy SyncLog class.
+    """
+    doc = SyncLog.get_db().get(doc_id)
+    return get_sync_log_class_by_format(doc.get('log_format')).wrap(doc)
+
+
+def get_sync_log_class_by_format(format):
+    return {
+        LOG_FORMAT_LEGACY: SyncLog,
+        LOG_FORMAT_CLEAN_OWNERS: CleanOwnerSyncLog,
+    }.get(format, SyncLog)
 
 
 class OwnershipCleanlinessFlag(models.Model):
