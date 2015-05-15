@@ -862,8 +862,6 @@ class MultiUserSyncTest(SyncBaseTest):
         main_sync_log = get_properly_wrapped_sync_log(self.sync_log.get_id)
         
         # these tests added to debug another issue revealed by this test
-        self.assertTrue(main_sync_log.phone_has_case(case_id))
-        self.assertTrue(main_sync_log.phone_has_dependent_case(parent_id))
         self.assertTrue(main_sync_log.phone_is_holding_case(case_id))
         self.assertTrue(main_sync_log.phone_is_holding_case(parent_id))
         
