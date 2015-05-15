@@ -23,7 +23,6 @@ from casexml.apps.case.xml import V2, V1
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from datetime import datetime
-from no_exceptions.exceptions import HttpException
 
 USER_ID = "main_user"
 USERNAME = "syncguy"
