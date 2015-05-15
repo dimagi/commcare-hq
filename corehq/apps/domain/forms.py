@@ -1455,7 +1455,9 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
                     '<p><i class="icon-info-sign"></i> Clicking "Update" will set '
                     'up the subscription in CommCareHQ to one of our standard '
                     'contracted plans.  If you need to set up a non-standard plan, '
-                    'please email accounts@dimagi.com.</p>'
+                    'please email %(accounts_email)s.</p>' % {
+                        'accounts_email': settings.ACCOUNTS_EMAIL,
+                    }
                 )),
                 self.form_actions
             )
