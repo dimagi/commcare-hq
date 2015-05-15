@@ -2518,6 +2518,7 @@ class DownloadCCZ(DownloadMultimediaZip):
     def check_before_zipping(self):
         if self.app.is_remote_app():
             self.include_multimedia_files = False
+        super(DownloadCCZ, self).check_before_zipping()
 
 
 @safe_download

@@ -525,7 +525,7 @@ class DownloadMultimediaZip(DownloadZipAsync, ApplicationViewMixin):
     include_index_files = False
 
     def check_before_zipping(self):
-        if not self.app.multimedia_map:
+        if not self.app.multimedia_map and self.include_multimedia_files:
             return HttpResponse("You have no multimedia to download.")
 
     def log_errors(self, errors):
