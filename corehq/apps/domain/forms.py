@@ -1231,9 +1231,12 @@ class InternalSubscriptionManagementForm(forms.Form):
     @property
     @memoized
     def current_contact_emails(self):
-        return BillingContactInfo.objects.get_or_create(
-            account=self.current_subscription.account
-        )[0].emails
+        try:
+            return BillingContactInfo.objects.get(
+                account=self.current_subscription.account
+            ).emails
+        except BillingContactInfo.DoesNotExist:
+            return None
 
     def __init__(self, domain, web_user, *args, **kwargs):
         super(InternalSubscriptionManagementForm, self).__init__(*args, **kwargs)
