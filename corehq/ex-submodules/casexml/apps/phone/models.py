@@ -401,6 +401,11 @@ class SimplifiedSyncLog(AbstractSyncLog):
     case_ids_on_phone = SetProperty(unicode)
     owner_ids_on_phone = SetProperty(unicode)
 
+    def save(self, *args, **kwargs):
+        # force doc type to SyncLog to avoid changing the couch view.
+        self.doc_type = "SyncLog"
+        super(SimplifiedSyncLog, self).save(*args, **kwargs)
+
     def phone_is_holding_case(self, case_id):
         """
         Whether the phone currently has a case, according to this sync log
