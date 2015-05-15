@@ -38,7 +38,7 @@ def get_case_payload_batched(restore_state):
 
     # commtrack ledger sections
     commtrack_elements = get_stock_payload(
-        restore_state.domain, restore_state.stock_settings, sync_state.all_synced_cases
+        restore_state.project, restore_state.stock_settings, sync_state.all_synced_cases
     )
     response.extend(commtrack_elements)
 

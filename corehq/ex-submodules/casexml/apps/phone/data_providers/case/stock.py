@@ -6,8 +6,8 @@ from datetime import datetime
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 
 
-def get_stock_payload(domain, stock_settings, case_state_list):
-    if domain and not domain.commtrack_enabled:
+def get_stock_payload(project, stock_settings, case_state_list):
+    if project and not project.commtrack_enabled:
         return
 
     from lxml.builder import ElementMaker
