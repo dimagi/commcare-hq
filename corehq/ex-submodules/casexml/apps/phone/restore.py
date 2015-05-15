@@ -261,9 +261,9 @@ class CachedResponse(object):
             return HttpResponse(self.payload, mimetype="text/xml")
 
 
-def get_restore_class(user):
+def get_restore_class(domain, user):
     restore_class = StringRestoreResponse
-    if FILE_RESTORE.enabled(user.domain) or FILE_RESTORE.enabled(user.username):
+    if FILE_RESTORE.enabled(domain) or FILE_RESTORE.enabled(user.username):
         restore_class = FileRestoreResponse
 
     return restore_class
@@ -398,7 +398,7 @@ class RestoreState(object):
 
     @property
     def restore_class(self):
-        return get_restore_class(self.user)
+        return get_restore_class(self.domain, self.user)
 
 
 class RestoreConfig(object):
