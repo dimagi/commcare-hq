@@ -105,6 +105,9 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
         """
         raise NotImplementedError()
 
+    def get_state_hash(self):
+        return CaseStateHash(Checksum(self.get_footprint_of_cases_on_phone()).hexdigest())
+
     def get_payload_attachment_name(self, version):
         return 'restore_payload_{version}.xml'.format(version=version)
 
@@ -337,9 +340,6 @@ class SyncLog(AbstractSyncLog):
             if cs and case_id in self.get_footprint_of_cases_on_phone():
                 return True
             return False
-
-    def get_state_hash(self):
-        return CaseStateHash(Checksum(self.get_footprint_of_cases_on_phone()).hexdigest())
 
     def reconcile_cases(self):
         """
