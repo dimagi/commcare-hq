@@ -1267,7 +1267,6 @@ class GraphSeries(DocumentSchema):
     data_path = StringProperty()
     x_function = StringProperty()
     y_function = StringProperty()
-    radius_function = StringProperty()
 
 
 class GraphConfiguration(DocumentSchema):
@@ -2733,29 +2732,16 @@ class ReportAppConfig(DocumentSchema):
                     def _column_to_series(column):
                         return suite_xml.Series(
                             nodeset="instance('reports')/reports/report[@id='{}']/rows/row".format(self.report_id),
-                            x_function='@index',
+                            x_function="column[@id='{}']".format(chart_config.x_axis_column),
                             y_function="column[@id='{}']".format(column),
-                            radius_function='5',
                         )
-                    _xlabels_xpath = (
-                        "instance('reports')/reports/report[@id='{}']/xlabels[@column='{}']"
-                        .format(self.report_id, chart_config.x_axis_column)
-                    )
                     yield suite_xml.Field(
                         header=suite_xml.Header(text=suite_xml.Text()),
                         template=suite_xml.GraphTemplate(
                             form='graph',
                             graph=suite_xml.Graph(
-                                type='xy',
+                                type='bar',
                                 series=[_column_to_series(c) for c in chart_config.y_axis_columns],
-                                configuration=suite_xml.ConfigurationGroup(
-                                    configs=[suite_xml.ConfigurationItem(
-                                        id='x-labels',
-                                        xpath=suite_xml.Xpath(
-                                            function=_xlabels_xpath
-                                        )
-                                    )]
-                                )
                             )
                         )
                     )

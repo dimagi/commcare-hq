@@ -36,28 +36,7 @@ def _report_to_fixture(report):
     # todo: set filter values properly?
     data_source = ReportFactory.from_spec(report)
 
-    rows_elem = ElementTree.Element('rows')
-
-    # for each "multibar" chart configured, send down an appropriate json representation
-    # of axis labels in the format { "0": "freezing", "100": "boiling" }
-    xlabels = {'dummy': {}}
-    for chart in report.charts:
-        if isinstance(chart, MultibarChartSpec):
-            xlabels[chart.x_axis_column] = {}
-
-    for i, row in enumerate(data_source.get_data()):
-        row_elem = ElementTree.Element('row', attrib={'index': str(i)})
-        for k in sorted(row.keys()):
-            row_elem.append(_element('column', _serialize(row[k]), attrib={'id': k}))
-        rows_elem.append(row_elem)
-        for needed_label in xlabels.keys():
-            if needed_label in row:
-                xlabels[needed_label][str(i)] = _serialize(row[needed_label])
-
-    for column, labels in xlabels.items():
-        report_elem.append(_element('xlabels', json.dumps(labels), attrib={'column': column}))
-
-    report_elem.append(rows_elem)
+    report_elem.append(ElementTree.Element('rows'))
     return report_elem
 
 
