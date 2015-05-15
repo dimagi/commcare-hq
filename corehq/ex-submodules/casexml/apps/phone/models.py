@@ -152,6 +152,12 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
         for name in copy(self._doc.get('_attachments', {})):
             self.delete_attachment(name)
 
+    # anything prefixed with 'tests_only' is only used in tests
+    def tests_only_get_cases_on_phone(self):
+        raise NotImplementedError()
+
+    def test_only_clear_cases_on_phone(self):
+        raise NotImplementedError()
 
 class SyncLog(AbstractSyncLog):
     """
@@ -376,6 +382,12 @@ class SyncLog(AbstractSyncLog):
     def __unicode__(self):
         return "%s synced on %s (%s)" % (self.user_id, self.date.date(), self.get_id)
 
+    def tests_only_get_cases_on_phone(self):
+        return self.cases_on_phone
+
+    def test_only_clear_cases_on_phone(self):
+        self.cases_on_phone = []
+
 
 class SimplifiedSyncLog(AbstractSyncLog):
     """
@@ -441,6 +453,13 @@ class SimplifiedSyncLog(AbstractSyncLog):
                     id=self._id,
                 ))
                 raise
+
+    def tests_only_get_cases_on_phone(self):
+        # hack - just for tests
+        return [CaseState(case_id=id) for id in self.case_ids_on_phone]
+
+    def test_only_clear_cases_on_phone(self):
+        self. case_ids_on_phone = set()
 
 
 def get_properly_wrapped_sync_log(doc_id):

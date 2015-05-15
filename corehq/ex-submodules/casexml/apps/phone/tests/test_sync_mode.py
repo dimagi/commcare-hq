@@ -15,7 +15,7 @@ from casexml.apps.case.tests.util import (check_user_has_case, delete_all_sync_l
     delete_all_xforms, delete_all_cases, assert_user_doesnt_have_case,
     assert_user_has_case)
 from casexml.apps.case.xform import process_cases
-from casexml.apps.phone.models import SyncLog, User
+from casexml.apps.phone.models import SyncLog, User, get_properly_wrapped_sync_log, SimplifiedSyncLog
 from casexml.apps.phone.restore import CachedResponse, RestoreConfig, RestoreParams, RestoreCacheSettings
 from dimagi.utils.parsing import json_format_datetime
 from couchforms.models import XFormInstance
@@ -97,22 +97,32 @@ class SyncBaseTest(TestCase):
     
     def _testUpdate(self, sync_id, case_id_map, dependent_case_id_map=None):
         dependent_case_id_map = dependent_case_id_map or {}
-        sync_log = SyncLog.get(sync_id)
+        sync_log = get_properly_wrapped_sync_log(sync_id)
         
-        # check case map
-        self.assertEqual(len(case_id_map), len(sync_log.cases_on_phone))
-        for case_id, indices in case_id_map.items():
-            self.assertTrue(sync_log.phone_has_case(case_id))
-            state = sync_log.get_case_state(case_id)
-            self._checkLists(indices, state.indices)
-        
-        # check dependent case map
-        self.assertEqual(len(dependent_case_id_map), len(sync_log.dependent_cases_on_phone))
-        for case_id, indices in dependent_case_id_map.items():
-            self.assertTrue(sync_log.phone_has_dependent_case(case_id))
-            state = sync_log.get_dependent_case_state(case_id)
-            self._checkLists(indices, state.indices)
-        
+        if isinstance(sync_log, SimplifiedSyncLog):
+            # simplified sync logs treat cases + depedents as the same and don't store indices
+            # as a result we need to do a simpler check
+            all_ids = {}
+            all_ids.update(case_id_map)
+            all_ids.update(dependent_case_id_map)
+            self.assertEqual(len(all_ids), len(sync_log.case_ids_on_phone))
+            for case_id in all_ids:
+                self.assertTrue(case_id in sync_log.case_ids_on_phone)
+        else:
+            # check case map
+            self.assertEqual(len(case_id_map), len(sync_log.cases_on_phone))
+            for case_id, indices in case_id_map.items():
+                self.assertTrue(sync_log.phone_has_case(case_id))
+                state = sync_log.get_case_state(case_id)
+                self._checkLists(indices, state.indices)
+
+            # check dependent case map
+            self.assertEqual(len(dependent_case_id_map), len(sync_log.dependent_cases_on_phone))
+            for case_id, indices in dependent_case_id_map.items():
+                self.assertTrue(sync_log.phone_has_dependent_case(case_id))
+                state = sync_log.get_dependent_case_state(case_id)
+                self._checkLists(indices, state.indices)
+
     
 class SyncTokenUpdateTest(SyncBaseTest):
     """
@@ -1042,11 +1052,12 @@ class SyncTokenReprocessingTest(SyncBaseTest):
         case_id = "should_have"
         self._createCaseStubs([case_id])
         sync_log = SyncLog.get(self.sync_log._id)
-        self.assertEqual(1, len(sync_log.cases_on_phone))
-        self.assertEqual(case_id, sync_log.cases_on_phone[0].case_id)
+        cases_on_phone = sync_log.tests_only_get_cases_on_phone()
+        self.assertEqual(1, len(cases_on_phone))
+        self.assertEqual(case_id, cases_on_phone[0].case_id)
 
         # manually delete it and then try to update
-        sync_log.cases_on_phone = []
+        sync_log.test_only_clear_cases_on_phone()
         sync_log.save()
 
         update = CaseBlock(
