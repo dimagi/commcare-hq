@@ -1,14 +1,16 @@
 from django.test import TestCase
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack.models import CommtrackConfig, ConsumptionConfig, StockRestoreConfig
-from corehq.apps.commtrack.tests.util import bootstrap_domain
 from corehq.apps.commtrack.const import DAYS_IN_MONTH
 from corehq.apps.consumption.shortcuts import set_default_monthly_consumption_for_domain
+
+from .util import bootstrap_domain, bootstrap_products
 
 
 class CommTrackSettingsTest(TestCase):
     def testOTASettings(self):
         self.domain = bootstrap_domain()
+        bootstrap_products(self.domain.name)
         ct_settings = CommtrackConfig.for_domain(self.domain.name)
         ct_settings.consumption_config = ConsumptionConfig(
             min_transactions=10,
