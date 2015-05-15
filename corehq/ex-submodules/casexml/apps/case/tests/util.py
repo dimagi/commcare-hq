@@ -159,7 +159,8 @@ def check_user_has_case(testcase, user, case_blocks, should_have=True,
         n = 0
 
         def extra_info():
-            return "\n%s\n%s" % (case_block.to_string(), map(ElementTree.tostring, blocks))
+            return "\n%s\n%s" % (case_block.to_string(), map(lambda b: b.to_string(), blocks))
+
         match = None
         for block in blocks:
             if block.get_case_id() == case_id:
