@@ -374,13 +374,12 @@ class SimplifiedSyncLog(AbstractSyncLog):
     lists from the SyncLog class.
     """
     log_format = StringProperty(default=LOG_FORMAT_SIMPLIFIED)
-    case_ids_on_phone = StringListProperty()
+    case_ids_on_phone = SetProperty()
 
     def phone_is_holding_case(self, case_id):
         """
         Whether the phone currently has a case, according to this sync log
         """
-        # todo: if we do this a lot we may want to convert case_ids_on_phone to a memoized set
         return case_id in self.case_ids_on_phone
 
     def get_footprint_of_cases_on_phone(self):
