@@ -10,6 +10,7 @@ from django.conf import settings
 import os
 import stat
 from django_transfer import TransferHttpResponse
+from tempfile import mkstemp
 
 GLOBAL_RW = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH
 
