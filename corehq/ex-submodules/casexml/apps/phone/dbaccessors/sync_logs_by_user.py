@@ -11,4 +11,3 @@ def get_last_synclog_for_user(user_id):
         reduce=False,
         include_docs=True,
     ).one()
-
