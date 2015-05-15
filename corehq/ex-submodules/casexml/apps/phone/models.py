@@ -398,8 +398,8 @@ class SimplifiedSyncLog(AbstractSyncLog):
     lists from the SyncLog class.
     """
     log_format = StringProperty(default=LOG_FORMAT_SIMPLIFIED)
-    case_ids_on_phone = SetProperty()
-    owner_ids_on_phone = SetProperty()
+    case_ids_on_phone = SetProperty(unicode)
+    owner_ids_on_phone = SetProperty(unicode)
 
     def phone_is_holding_case(self, case_id):
         """
