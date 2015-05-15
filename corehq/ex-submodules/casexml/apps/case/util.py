@@ -5,7 +5,7 @@ from django.conf import settings
 from casexml.apps.case import const
 from casexml.apps.case.dbaccessors import get_indexed_case_ids
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
-from casexml.apps.phone.models import SyncLogAssertionError, SyncLog, get_properly_wrapped_sync_log
+from casexml.apps.phone.models import SyncLogAssertionError, get_properly_wrapped_sync_log
 from casexml.apps.stock.models import StockReport
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs

@@ -159,6 +159,7 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
     def test_only_clear_cases_on_phone(self):
         raise NotImplementedError()
 
+
 class SyncLog(AbstractSyncLog):
     """
     A log of a single sync operation.
