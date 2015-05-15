@@ -399,7 +399,7 @@ def get_properly_wrapped_sync_log(doc_id):
 def get_sync_log_class_by_format(format):
     return {
         LOG_FORMAT_LEGACY: SyncLog,
-        LOG_FORMAT_CLEAN_OWNERS: CleanOwnerSyncLog,
+        LOG_FORMAT_SIMPLIFIED: SimplifiedSyncLog,
     }.get(format, SyncLog)
 
 
