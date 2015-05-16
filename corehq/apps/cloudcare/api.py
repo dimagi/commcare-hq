@@ -1,6 +1,7 @@
 import json
 from couchdbkit.exceptions import ResourceNotFound
 from django.contrib.humanize.templatetags.humanize import naturaltime
+from django.conf import settings
 from casexml.apps.case.util import iter_cases
 from corehq.apps.cloudcare.exceptions import RemoteAppError
 from corehq.apps.users.models import CouchUser
@@ -183,8 +184,13 @@ class CaseAPIHelper(object):
                 for bool in status_to_closed_flags(self.status):
                     yield [self.domain, owner_id, bool]
 
-        view_results = CommCareCase.view('hqcase/by_owner', keys=keys,
-                                         include_docs=False, reduce=False)
+        view_results = CommCareCase.view(
+            'hqcase/by_owner',
+            keys=keys,
+            include_docs=False,
+            reduce=False,
+            stale=settings.COUCH_STALE_QUERY
+        )
         ids = [res["id"] for res in view_results]
         return self._case_results(ids)
 
