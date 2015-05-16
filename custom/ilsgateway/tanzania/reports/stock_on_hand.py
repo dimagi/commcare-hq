@@ -102,8 +102,9 @@ class SohPercentageTableData(ILSData):
     def rows(self):
         rows = []
         if not self.config['products']:
-            prd_id = SQLProduct.objects.filter(domain=self.config['domain'])\
-                .order_by('code').values_list('product_id', flat=True)
+            prd_id = SQLProduct.objects.filter(
+                domain=self.config['domain']
+            ).order_by('code').values_list('product_id', flat=True)
         else:
             prd_id = self.config['products']
 
@@ -111,9 +112,10 @@ class SohPercentageTableData(ILSData):
 
             locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'])
             for loc in locations:
-                org_summary = OrganizationSummary.objects.filter(date__range=(self.config['startdate'],
-                                                                 self.config['enddate']),
-                                                                 supply_point=loc.location_id)
+                org_summary = OrganizationSummary.objects.filter(
+                    date__range=(self.config['startdate'], self.config['enddate']),
+                    location_id=loc.location_id
+                )
                 self.config['org_summary'] = org_summary
                 soh_data = SohSubmissionData(config=self.config).rows[0]
 
@@ -122,7 +124,7 @@ class SohPercentageTableData(ILSData):
                 soh_on_time = soh_data.on_time * 100 / facs_count
                 soh_late = soh_data.late * 100 / facs_count
                 soh_not_responding = soh_data.not_responding * 100 / facs_count
-                fac_ids = facs.exclude(supply_point_id__isnull=True).values_list(*['supply_point_id'], flat=True)
+                fac_ids = facs.exclude(supply_point_id__isnull=True).values_list('supply_point_id', flat=True)
                 enddate = self.config['enddate']
                 month = enddate.month - 1 if enddate.month != 1 else 12
                 year = enddate.year - 1 if enddate.month == 1 else enddate.year
@@ -153,10 +155,10 @@ class SohPercentageTableData(ILSData):
 
                 for product in prd_id:
                     ps = ProductAvailabilityData.objects.filter(
-                        supply_point=org_summary[0].supply_point,
+                        location_id=org_summary[0].location_id,
                         product=product,
-                        date__range=(self.config['startdate'], self.config['enddate']))\
-                        .aggregate(without_stock=Avg('without_stock'), total=Max('total'))
+                        date__range=(self.config['startdate'], self.config['enddate'])
+                    ).aggregate(without_stock=Avg('without_stock'), total=Max('total'))
                     if ps['without_stock'] and ps['total']:
                         row_data.append(format_percent(ps['without_stock'] * 100 / float(ps['total'])))
                     else:
@@ -235,13 +237,13 @@ class DistrictSohPercentageTableData(ILSData):
                                                  domain=self.config['domain']).order_by('code')
         else:
             products = SQLProduct.objects.filter(domain=self.config['domain']).order_by('code')
-        headers = DataTablesHeader(*[
+        headers = DataTablesHeader(
             DataTablesColumn(_('MSD Code')),
             DataTablesColumn(_('Facility Name')),
             DataTablesColumn(_('DG')),
             DataTablesColumn(_('Last Reported')),
             DataTablesColumn(_('Hist. Resp. Rate')),
-        ])
+        )
 
         for p in products:
             headers.add_column(DataTablesColumn(_(p.code)))
@@ -275,8 +277,10 @@ class DistrictSohPercentageTableData(ILSData):
                 return sts, None
 
         def get_hisp_resp_rate(location):
-            statuses = SupplyPointStatus.objects.filter(supply_point=location.location_id,
-                                                        status_type=SupplyPointStatusTypes.SOH_FACILITY)
+            statuses = SupplyPointStatus.objects.filter(
+                location_id=location.location_id,
+                status_type=SupplyPointStatusTypes.SOH_FACILITY
+            )
             if not statuses:
                 return None
             status_month_years = set([(x.status_date.month, x.status_date.year) for x in statuses])
@@ -287,7 +291,8 @@ class DistrictSohPercentageTableData(ILSData):
                     Q(status_value=SupplyPointStatusValues.SUBMITTED) |
                     Q(status_value=SupplyPointStatusValues.NOT_SUBMITTED) |
                     Q(status_value=SupplyPointStatusValues.RECEIVED) |
-                    Q(status_value=SupplyPointStatusValues.NOT_RECEIVED)).order_by("-status_date")
+                    Q(status_value=SupplyPointStatusValues.NOT_RECEIVED)
+                ).order_by("-status_date")
                 if f.count():
                     num += 1
 
@@ -331,7 +336,8 @@ class DistrictSohPercentageTableData(ILSData):
                         srs = StockTransaction.objects.filter(
                             report__date__lt=first_of_the_next_month,
                             case_id=supply_point,
-                            product_id=product.product_id).order_by("-report__date")[0]
+                            product_id=product.product_id
+                        ).order_by("-report__date")[0]
                     except IndexError:
                         srs = None
 
@@ -406,7 +412,7 @@ class StockOnHandReport(DetailsReport):
         config = self.report_config
         data_providers = []
         if config['org_summary']:
-            location = SQLLocation.objects.get(location_id=config['org_summary'][0].supply_point)
+            location = SQLLocation.objects.get(location_id=config['org_summary'][0].location_id)
 
             data_providers = [
                 SohSubmissionData(config=config, css_class='row_chart'),
