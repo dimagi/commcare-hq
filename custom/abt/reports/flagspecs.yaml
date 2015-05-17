@@ -234,7 +234,12 @@ http://openrosa.org/formdesigner/54338047-CFB6-4D5B-861B-2256A10BBBC8:
     warning: " Problem reported: Spray operator(s) not properly fed or hydrated prior to donning PPE."
     warning_question: ~
     # answer and warning_question are optional
-  # TODO: q3
+  - question: [q3]
+    warning_type: "unchecked"
+    comment: [q3_comments_action]
+    ignore: ["none"]
+    warning: "Problem reported: Spray operator(s) not wearing {msg} before boarding transport."
+    french: "Problème signalé : Le ou les opérateurs de pulvérisation ne portent pas {msg} avant de prendre place dans le véhicule de transport."
   - question: [q4_action]
     warning: "Problem reported: Spray operator(s) eating or drinking after donning PPE."
   - question: [q5_action]
@@ -253,12 +258,31 @@ http://openrosa.org/formdesigner/54338047-CFB6-4D5B-861B-2256A10BBBC8:
   - question: [q12_action]
     warning: "Problem noted: Separate transportation needed for operators and pesticides other than the days supply."
   - question: [q13_action]
-  # TODO:
-  # q14_action
-  # q14_2_action
-  # q15_action
-  # q15_action
     warning: "Problem noted: Mixed goods transportation violation, suggest re-training."
+  - question: [q14]
+    warning_type: "unchecked"
+    comment: [q14_comments_action]
+    ignore: ["none"]
+    warning: "Problem noted: Missing {msg} for the vehicle."
+    french: "Problème constaté : {msg} manquants pour le véhicule."
+  - question: [q14]
+    warning_type: "unchecked"
+    comment: [q14_2_comments_action]
+    ignore: ["none"]
+    warning: "Confirm delivery date for {msg}"
+    french: "Confirmer la date de livraison pour {msg}"
+  - question: [q15]
+    warning_type: "unchecked"
+    comment: [q15_comments_action]
+    ignore: ["none"]
+    warning: "Problem noted: Missing {msg} for first aid kit for the vehicle."
+    french: "Problème constaté : {msg} manquants pour la trousse de premiers secours du véhicule."
+  - question: [q15]
+    warning_type: "unchecked"
+    comment: [q15_comments_action]
+    ignore: ["none"]
+    warning: "Confirm delivery date for {msg} for first aid kit."
+    french: "Confirmer la date de livraison pour {msg} pour la trousse de premiers secours."
   - question: [q16_action]
     warning: "Problem noted: Drivers do not have cell telephone and/or appropriate PPE."
   - question: [q17_action]
