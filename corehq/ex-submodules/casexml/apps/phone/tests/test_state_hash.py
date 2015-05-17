@@ -73,7 +73,7 @@ class StateHashTest(TestCase):
         
         try:
             generate_restore_payload(self.project, self.user, self.sync_log.get_id,
-                                                  version=V2, state_hash=str(bad_hash))
+                                     version=V2, state_hash=str(bad_hash))
             self.fail("Call to generate a payload with a bad hash should fail!")
         except BadStateException, e:
             self.assertEqual(real_hash, e.expected)
