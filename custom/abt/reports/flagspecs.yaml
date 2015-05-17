@@ -228,10 +228,10 @@ http://openrosa.org/formdesigner/BBBA67FC-4E25-46B4-AB64-56F820D48A9E:
 
 # Form 3
 http://openrosa.org/formdesigner/54338047-CFB6-4D5B-861B-2256A10BBBC8:
-  # TODO: French
   - question: [q2_action]
     answer: []
     warning: " Problem reported: Spray operator(s) not properly fed or hydrated prior to donning PPE."
+    french: "Problème signalé : Le ou les opérateurs de pulvérisation ne sont pas alimentés ou hydratés de manière appropriée avant de revêtir leur EPI."
     warning_question: ~
     # answer and warning_question are optional
   - question: [q3]
@@ -242,23 +242,32 @@ http://openrosa.org/formdesigner/54338047-CFB6-4D5B-861B-2256A10BBBC8:
     french: "Problème signalé : Le ou les opérateurs de pulvérisation ne portent pas {msg} avant de prendre place dans le véhicule de transport."
   - question: [q4_action]
     warning: "Problem reported: Spray operator(s) eating or drinking after donning PPE."
+    french: "Problème signalé : Un ou des opérateurs de pulvérisation mangent ou boivent après avoir revêtu leur EPI."
   - question: [q5_action]
     warning: "Problem reported: Team Leaders not conducting casual physical inspection of SOs in the morning."
+    french: "Problème signalé : Les chefs d’équipe ne procèdent pas à une inspection physique informelle des opérateurs de pulvérisation le matin."
   - question: [q6_action]
     warning: "Problem reported: Spray operator(s) not using insecticide left over from previous day."
+    french: "Problème signalé : Le ou les opérateurs de pulvérisation n’utilisent pas l’insecticide restant du jour précédent."
   - question:  [q7_action]
     warning: "Problem reported: Not all pesticide and contaminated rinse water used up to fill SOs tanks."
+    french: "Problème signalé : Les pesticides et l’eau de rinçage contaminée ne sont pas intégralement utilisés pour remplir les réservoirs des opérateurs de pulvérisation."
   - question: [q9_action]
     warning: "Problem noted: Vehicle was not inspected prior to contract."
+    french: "Problème constaté : Le véhicule n’a pas été inspecté avant d’établir le contrat."
   - question: [q10_action]
     warning: "Problem noted: Vehicle does not have required license or certificate."
+    french: "Problème constaté : Le véhicule n’a pas le permis ou le certificat requis."
   - question: [q11_action]
     answer: "no"
     warning: "Problem noted: Provide safety training for driver."
+    french: "Problème noté : Fournir une formation à la sécurité au conducteur."
   - question: [q12_action]
     warning: "Problem noted: Separate transportation needed for operators and pesticides other than the days supply."
+    french: "Problème constaté : Transport séparé requis pour les opérateurs et les pesticides autres que ceux de l’approvisionnement du jour."
   - question: [q13_action]
     warning: "Problem noted: Mixed goods transportation violation, suggest re-training."
+    french: "Problème constaté : Violation relative au transport de marchandises mélangées ; suggérer de fournir une nouvelle formation."
   - question: [q14]
     warning_type: "unchecked"
     comment: [q14_comments_action]
@@ -285,24 +294,34 @@ http://openrosa.org/formdesigner/54338047-CFB6-4D5B-861B-2256A10BBBC8:
     french: "Confirmer la date de livraison pour {msg} pour la trousse de premiers secours."
   - question: [q16_action]
     warning: "Problem noted: Drivers do not have cell telephone and/or appropriate PPE."
+    french: "Problème constaté : Les conducteurs n’ont pas un téléphone cellulaire et/ou un EPI approprié."
   - question: [q17_action]
     warning: "Problem noted: Need to provide materials for securing and tying down pesticides in the vehicle"
+    french: "Problème constaté : Il est nécessaire de fournir des matériaux pour sécuriser et attacher les pesticides dans le véhicule"
   - question: [q18_action]
     warning: "Problem reported: Pesticide transport vehicle must always carry a fire extinguisher."
+    french: "Problème signalé : Le véhicule de transport de pesticides doit toujours avoir un extincteur."
   - question: [q19_action]
     warning: "Problem noted: Spray operator transport vehicle must be configured with seats and railings"
+    french: "Problème constaté : Le véhicule de transport des opérateurs de pulvérisation doit être équipé de sièges et de barrières métalliques"
   - question: [q19a]
     warning: "Confirm date for transport vehicle to be modified."
+    french: "Confirmer la date à laquelle le véhicule de transport sera modifié."
   - question: [q20_action]
     warning: "Problem reported: Spray operators must be properly seated with the pump secured between their legs in the transport vehicle."
+    french: "Problème signalé : Les opérateurs de pulvérisation doivent être assis correctement dans le véhicule de transport, en maintenant la pompe de manière sécurisée entre les jambes."
   - question: [q21_action]
     warning: "Problem noted: Need to provide additional vehicle for spray operators."
+    french: "Problème constaté : Il faut fournir un véhicule supplémentaire pour les opérateurs de pulvérisation."
   - question: [q22_action]
     warning: "Problem noted: Evidence of pesticide leakage in vehicle."
+    french: "Problème constaté : Il y a des preuves de fuite de pesticides dans le véhicule."
   - question: [q23_action]
     warning: "Problem noted: Pesticide exposure incident reported. Follow-up to ensure that an incident report form is completed and sent to COP, ECO, Operations Manager, Technical Coordinator and ECM immediately."
+    french: "Problème constaté : Incident d’exposition aux pesticides signalé. Un travail de suivi est effectué pour s’assurer qu’un formulaire de rapport d’incident soit rempli et envoyé immédiatement au COP, à l’ECO, au responsable des opérations, au coordonnateur technique et à l’ECM."
   - question: [q24_action]
     warning: "Problem noted: Vehicle accident reported. Follow-up to ensure that an incident report form is completed and sent to COP, ECO, Operations Manager, Technical Coordinator and ECM immediately."
+    french: "Problème constaté : Accident de véhicule signalé. Un travail de suivi est effectué pour s’assurer qu’un formulaire de rapport d’incident soit rempli et envoyé immédiatement au COP, à l’ECO, au responsable des opérations, au coordonnateur technique et à l’ECM."
 # Form 4
 http://openrosa.org/formdesigner/2BAC5FDC-72F3-4AF4-8381-9160E8AE13CF:
   - question: [q1]
