@@ -952,7 +952,6 @@ class MultiUserSyncTest(SyncBaseTest):
         # original user syncs again
         latest_sync_log = SyncLog.last_for_user(self.user.user_id)
         # both cases should sync to original user with updated ownership / edits
-        print 'fail?'
         assert_user_has_case(self, self.user, case_id, restore_id=latest_sync_log.get_id)
         assert_user_has_case(self, self.user, parent_id, restore_id=latest_sync_log.get_id)
 
