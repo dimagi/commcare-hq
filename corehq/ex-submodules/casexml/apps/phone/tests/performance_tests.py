@@ -3,7 +3,7 @@ from casexml.apps.phone.caselogic import get_related_cases
 from casexml.apps.phone.data_providers import get_case_payload_batched
 from casexml.apps.phone.data_providers.case.batched import filter_cases_modified_elsewhere_since_sync
 from casexml.apps.phone.tests.test_sync_mode import SyncBaseTest, PARENT_TYPE
-from casexml.apps.phone.tests.utils import synclog_from_restore_payload, generate_restore_payload_with_project
+from casexml.apps.phone.tests.utils import synclog_from_restore_payload, generate_restore_payload
 from casexml.apps.case.tests.util import assert_user_has_cases
 from casexml.apps.phone.models import User
 from casexml.apps.phone.restore import RestoreConfig
@@ -43,10 +43,10 @@ class SyncPerformanceTest(SyncBaseTest):
                                additional_owner_ids=[REFERRED_TO_GROUP], domain=self.project.name)
 
         # this creates the initial blank sync token in the database
-        self.other_sync_log = synclog_from_restore_payload(generate_restore_payload_with_project(
+        self.other_sync_log = synclog_from_restore_payload(generate_restore_payload(
             self.project, self.other_user
         ))
-        self.referral_sync_log = synclog_from_restore_payload(generate_restore_payload_with_project(
+        self.referral_sync_log = synclog_from_restore_payload(generate_restore_payload(
             self.project, self.referral_user
         ))
 
@@ -54,7 +54,7 @@ class SyncPerformanceTest(SyncBaseTest):
         self.assertTrue(OTHER_USER_ID in self.other_sync_log.owner_ids_on_phone)
 
         self.user.additional_owner_ids = [SHARED_ID]
-        self.sync_log = synclog_from_restore_payload(generate_restore_payload_with_project(
+        self.sync_log = synclog_from_restore_payload(generate_restore_payload(
             self.project, self.user
         ))
         self.assertTrue(SHARED_ID in self.sync_log.owner_ids_on_phone)

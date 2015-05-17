@@ -9,7 +9,7 @@ from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.tests.util import delete_all_sync_logs, delete_all_xforms, delete_all_cases
 from casexml.apps.phone.exceptions import BadStateException
 from casexml.apps.phone.tests.utils import generate_restore_response, \
-    get_exactly_one_wrapped_sync_log, generate_restore_payload_with_project
+    get_exactly_one_wrapped_sync_log, generate_restore_payload
 from corehq import toggles
 from corehq.apps.domain.models import Domain
 from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
@@ -27,7 +27,7 @@ class StateHashTest(TestCase):
                          password="changeme", date_joined=datetime(2011, 6, 9))
 
         # this creates the initial blank sync token in the database
-        generate_restore_payload_with_project(self.project, self.user)
+        generate_restore_payload(self.project, self.user)
         self.sync_log = get_exactly_one_wrapped_sync_log()
 
     def testEmpty(self):
@@ -38,7 +38,7 @@ class StateHashTest(TestCase):
         self.assertEqual(200, response.status_code)
         
         try:
-            generate_restore_payload_with_project(
+            generate_restore_payload(
                 self.project, self.user, self.sync_log.get_id,
                 version=V2, state_hash=str(wrong_hash)
             )
@@ -66,13 +66,13 @@ class StateHashTest(TestCase):
         real_hash = CaseStateHash("409c5c597fa2c2a693b769f0d2ad432b")
         bad_hash = CaseStateHash("thisisntright")
         self.assertEqual(real_hash, self.sync_log.get_state_hash())
-        generate_restore_payload_with_project(
+        generate_restore_payload(
             self.project, self.user, self.sync_log.get_id,
             version=V2, state_hash=str(real_hash)
         )
         
         try:
-            generate_restore_payload_with_project(self.project, self.user, self.sync_log.get_id,
+            generate_restore_payload(self.project, self.user, self.sync_log.get_id,
                                                   version=V2, state_hash=str(bad_hash))
             self.fail("Call to generate a payload with a bad hash should fail!")
         except BadStateException, e:

@@ -4,7 +4,7 @@ from django.test import TestCase
 import os
 from casexml.apps.phone.exceptions import MissingSyncLog, RestoreException
 from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
-from casexml.apps.phone.tests.utils import get_exactly_one_wrapped_sync_log, generate_restore_payload_with_project
+from casexml.apps.phone.tests.utils import get_exactly_one_wrapped_sync_log, generate_restore_payload
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseRelationship
 from casexml.apps.phone.tests.utils import synclog_from_restore_payload
 from corehq.apps.domain.models import Domain
@@ -391,7 +391,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
 
         # create child case using a different sync log ID
         other_sync_log = synclog_from_restore_payload(
-            generate_restore_payload_with_project(self.project, self.user, version="2.0")
+            generate_restore_payload(self.project, self.user, version="2.0")
         )
         child = CaseBlock(
             create=True,
@@ -588,7 +588,7 @@ class MultiUserSyncTest(SyncBaseTest):
         
         # this creates the initial blank sync token in the database
         self.other_sync_log = synclog_from_restore_payload(
-            generate_restore_payload_with_project(self.project, self.other_user)
+            generate_restore_payload(self.project, self.other_user)
         )
         
         self.assertTrue(SHARED_ID in self.other_sync_log.owner_ids_on_phone)
@@ -596,7 +596,7 @@ class MultiUserSyncTest(SyncBaseTest):
         
         self.user.additional_owner_ids = [SHARED_ID]
         self.sync_log = synclog_from_restore_payload(
-            generate_restore_payload_with_project(self.project, self.user)
+            generate_restore_payload(self.project, self.user)
         )
         self.assertTrue(SHARED_ID in self.sync_log.owner_ids_on_phone)
         self.assertTrue(USER_ID in self.sync_log.owner_ids_on_phone)
@@ -699,10 +699,10 @@ class MultiUserSyncTest(SyncBaseTest):
 
         # both users syncs
         main_sync_log = synclog_from_restore_payload(
-            generate_restore_payload_with_project(self.project, self.user)
+            generate_restore_payload(self.project, self.user)
         )
         self.other_sync_log = synclog_from_restore_payload(
-            generate_restore_payload_with_project(self.project, self.other_user)
+            generate_restore_payload(self.project, self.other_user)
         )
 
         # update case from same user
@@ -760,7 +760,7 @@ class MultiUserSyncTest(SyncBaseTest):
 
         # sync then close case from another user
         other_sync_log = synclog_from_restore_payload(
-            generate_restore_payload_with_project(self.project, self.other_user)
+            generate_restore_payload(self.project, self.other_user)
         )
         close_block = CaseBlock(
             create=False,
@@ -926,7 +926,7 @@ class MultiUserSyncTest(SyncBaseTest):
         
         # sync cases to second user
         other_sync_log = synclog_from_restore_payload(
-            generate_restore_payload_with_project(self.project, self.other_user)
+            generate_restore_payload(self.project, self.other_user)
         )
         # change the child's owner from another user
         child_reassignment = CaseBlock(
@@ -957,7 +957,7 @@ class MultiUserSyncTest(SyncBaseTest):
         assert_user_has_case(self, self.user, parent_id, restore_id=latest_sync_log.get_id)
 
         # Ghetto
-        payload = generate_restore_payload_with_project(self.project, self.user, latest_sync_log.get_id, version=V2)
+        payload = generate_restore_payload(self.project, self.user, latest_sync_log.get_id, version=V2)
         self.assertTrue("something new" in payload)
         self.assertTrue("hi!" in payload)
         
@@ -1012,7 +1012,7 @@ class MultiUserSyncTest(SyncBaseTest):
         assert_user_has_case(self, self.user, parent_id, restore_id=latest_sync_log.get_id)
 
         # ghetto
-        payload = generate_restore_payload_with_project(
+        payload = generate_restore_payload(
             self.project, self.user, latest_sync_log.get_id, version=V2
         )
         self.assertTrue("something different" in payload)
@@ -1030,7 +1030,7 @@ class MultiUserSyncTest(SyncBaseTest):
             form = XFormInstance.get(form.get_id)
             self.assertFalse(hasattr(form, "problem"))
             synclog_from_restore_payload(
-                generate_restore_payload_with_project(self.project, self.user, version="2.0")
+                generate_restore_payload(self.project, self.user, version="2.0")
             )
 
 

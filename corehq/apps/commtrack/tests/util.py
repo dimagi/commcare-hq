@@ -4,7 +4,7 @@ from lxml import etree
 from casexml.apps.case.tests import delete_all_cases, delete_all_xforms
 from casexml.apps.case.tests.util import delete_all_sync_logs
 from casexml.apps.case.xml import V2
-from casexml.apps.phone.tests.utils import generate_restore_payload_with_project
+from casexml.apps.phone.tests.utils import generate_restore_payload
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from casexml.apps.stock.models import StockReport, StockTransaction
 from couchforms.models import XFormInstance
@@ -223,7 +223,7 @@ class CommTrackTest(TestCase):
 
 
 def get_ota_balance_xml(project, user):
-    xml = generate_restore_payload_with_project(project, user.to_casexml_user(), version=V2)
+    xml = generate_restore_payload(project, user.to_casexml_user(), version=V2)
     return extract_balance_xml(xml)
 
 
