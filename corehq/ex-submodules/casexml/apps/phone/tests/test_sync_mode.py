@@ -13,7 +13,7 @@ from couchforms.tests.testutils import post_xform_to_couch
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import (check_user_has_case, delete_all_sync_logs,
     delete_all_xforms, delete_all_cases, assert_user_doesnt_have_case,
-    assert_user_has_case)
+    assert_user_has_case, TEST_DOMAIN_NAME)
 from casexml.apps.case.xform import process_cases
 from casexml.apps.phone.models import SyncLog, User, get_properly_wrapped_sync_log, SimplifiedSyncLog
 from casexml.apps.phone.restore import CachedResponse, RestoreConfig, RestoreParams, RestoreCacheSettings
@@ -41,11 +41,11 @@ class SyncBaseTest(TestCase):
         delete_all_cases()
         delete_all_xforms()
         delete_all_sync_logs()
-
+        self.project = Domain(name=TEST_DOMAIN_NAME)
         self.user = User(user_id=USER_ID, username=USERNAME,
                          password="changeme", date_joined=datetime(2011, 6, 9))
         # this creates the initial blank sync token in the database
-        restore_config = RestoreConfig(user=self.user)
+        restore_config = RestoreConfig(self.project, user=self.user)
         self.sync_log = synclog_from_restore_payload(restore_config.get_payload().as_string())
         self.factory = CaseFactory(
             case_defaults={
@@ -59,7 +59,7 @@ class SyncBaseTest(TestCase):
         )
 
     def tearDown(self):
-        restore_config = RestoreConfig(user=self.user)
+        restore_config = RestoreConfig(project=self.project, user=self.user)
         restore_config.cache.delete(restore_config._initial_cache_key())
 
     def _createCaseStubs(self, id_list, **kwargs):
