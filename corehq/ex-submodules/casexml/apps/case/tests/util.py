@@ -3,6 +3,7 @@ import uuid
 from datetime import datetime
 from xml.etree import ElementTree
 from couchdbkit.exceptions import ResourceNotFound
+from corehq.apps.domain.models import Domain
 
 from dimagi.utils.couch.database import safe_delete
 from dimagi.utils.dates import utcnow_sans_milliseconds
@@ -151,7 +152,10 @@ def check_user_has_case(testcase, user, case_blocks, should_have=True,
 
     if restore_id and purge_restore_cache:
         SyncLog.get(restore_id).invalidate_cached_payloads()
-    restore_config = RestoreConfig(user=user, params=RestoreParams(restore_id, version=version))
+    restore_config = RestoreConfig(
+        project=Domain(name=user.domain or TEST_DOMAIN_NAME),
+        user=user, params=RestoreParams(restore_id, version=version)
+    )
     payload_string = restore_config.get_payload().as_string()
     blocks = extract_caseblocks_from_xml(payload_string, version)
 
