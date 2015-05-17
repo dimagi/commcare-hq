@@ -1,3 +1,4 @@
+import uuid
 from couchdbkit import ResourceNotFound
 from django.test.utils import override_settings
 from django.test import TestCase
@@ -404,6 +405,44 @@ class SyncTokenUpdateTest(SyncBaseTest):
 
         # ensure child case is included in sync using original sync log ID
         assert_user_has_case(self, self.user, child_id, restore_id=self.sync_log.get_id)
+
+    def test_tiered_parent_closing(self):
+        all_ids = [uuid.uuid4().hex for i in range(3)]
+        [grandparent_id, parent_id, child_id] = all_ids
+        self.factory.create_or_update_cases([
+            CaseStructure(
+                case_id=child_id,
+                attrs={'create': True},
+                relationships=[CaseRelationship(
+                    CaseStructure(
+                        case_id=parent_id,
+                        attrs={'create': True},
+                        relationships=[CaseRelationship(
+                            CaseStructure(case_id=grandparent_id, attrs={'create': True}),
+                            relationship=PARENT_TYPE,
+                            related_type=PARENT_TYPE,
+                        )],
+                    ),
+                    relationship=PARENT_TYPE,
+                    related_type=PARENT_TYPE,
+                )],
+            )
+        ])
+        self.factory.close_case(grandparent_id)
+        sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
+        for id in all_ids:
+            self.assertTrue(sync_log.phone_is_holding_case(id))
+
+        self.factory.close_case(parent_id)
+        sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
+        for id in all_ids:
+            self.assertTrue(sync_log.phone_is_holding_case(id))
+
+        self.factory.close_case(child_id)
+        sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
+        for id in all_ids:
+            # once the child is closed, all three are no longer relevant
+            self.assertFalse(sync_log.phone_is_holding_case(id))
 
 
 class FileRestoreSyncTokenUpdateTest(SyncTokenUpdateTest):
