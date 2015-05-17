@@ -893,18 +893,18 @@ class MultiUserSyncTest(SyncBaseTest):
         # create a parent and child case (with index) from one user
         parent_id = "other_reassigns_index_parent"
         case_id = "other_reassigns_index_child"
-        self._createCaseStubs([parent_id])
-        child = CaseBlock(
-            create=True,
-            case_id=case_id,
-            user_id=USER_ID,
-            owner_id=SHARED_ID,
-            version=V2,
-            index={'mother': ('mother', parent_id)}
-        ).as_xml()
-        self._postFakeWithSyncToken(child, self.sync_log.get_id)
-        
-        
+        self.factory.create_or_update_cases([
+            CaseStructure(
+                case_id=case_id,
+                attrs={'create': True},
+                relationships=[CaseRelationship(
+                    CaseStructure(case_id=parent_id, attrs={'create': True}),
+                    relationship=PARENT_TYPE,
+                    related_type=PARENT_TYPE,
+                )],
+            )
+        ])
+
         # assign the parent case away from the same user
         parent_update = CaseBlock(
             create=False, 
