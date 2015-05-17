@@ -347,6 +347,12 @@ class CaseFactory(object):
         kwargs['create'] = True
         return self.create_or_update_case(CaseStructure(case_id=uuid.uuid4().hex, attrs=kwargs))[0]
 
+    def close_case(self, case_id):
+        """
+        Shortcut to close a case (and do nothing else)
+        """
+        return self.create_or_update_case(CaseStructure(case_id=case_id, attrs={'close': True}))[0]
+
     def create_or_update_case(self, case_structure, form_extras=None):
         return self.create_or_update_cases([case_structure], form_extras)
 
