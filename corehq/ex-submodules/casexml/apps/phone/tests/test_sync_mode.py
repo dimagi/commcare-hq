@@ -13,7 +13,7 @@ from couchforms.tests.testutils import post_xform_to_couch
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import (check_user_has_case, delete_all_sync_logs,
     delete_all_xforms, delete_all_cases, assert_user_doesnt_have_case,
-    assert_user_has_case, TEST_DOMAIN_NAME)
+    assert_user_has_case, TEST_DOMAIN_NAME, assert_user_has_cases)
 from casexml.apps.case.xform import process_cases
 from casexml.apps.phone.models import SyncLog, User, get_properly_wrapped_sync_log, SimplifiedSyncLog
 from casexml.apps.phone.restore import CachedResponse, RestoreConfig, RestoreParams, RestoreCacheSettings
@@ -322,8 +322,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
                          {parent_id: []})
         
         # try a clean restore again
-        assert_user_has_case(self, self.user, parent_id)
-        assert_user_has_case(self, self.user, child_id)
+        assert_user_has_cases(self, self.user, [parent_id, child_id])
 
     def testAssignToNewOwner(self):
         # first create the parent case
