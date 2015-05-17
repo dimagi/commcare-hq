@@ -1,6 +1,7 @@
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from copy import copy
 from datetime import datetime
+import json
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from dimagi.ext.couchdbkit import *
 from django.db import models
@@ -390,6 +391,109 @@ class SyncLog(AbstractSyncLog):
         self.cases_on_phone = []
 
 
+PruneResult = namedtuple('PruneResult', ['seen', 'pruned'])
+
+
+class IndexTree(DocumentSchema):
+    """
+    Document type representing a case dependency tree (which is flattened to a single dict)
+    """
+    # a flat mapping of dependent cases to lists of case ids that depend on them
+    live_indices = SchemaDictProperty()
+    dependent_indices = SchemaDictProperty()
+
+    def __repr__(self):
+        return 'live: {}\ndependent: {}\n'.format(
+            json.dumps(self.live_indices, indent=2),
+            json.dumps(self.dependent_indices, indent=2)
+        )
+
+    def has_case(self, case_id):
+        return (case_id in _reverse_index_map(self.live_indices) or
+                case_id in _reverse_index_map(self.dependent_indices))
+
+    def prune_case(self, case_id, result=None):
+        """
+        Prunes a case from the tree while also pruning any dependencies as a result of this pruning.
+        """
+        result = result or PruneResult(seen=set(), pruned=set())
+        if case_id in result.seen:
+            # circular references! bail
+            return result
+
+        result.seen.add(case_id)
+        this_cases_indices = self.live_indices.pop(case_id, []) or self.dependent_indices.pop(case_id, [])
+        live_reverse_indices = _reverse_index_map(self.live_indices)
+        if case_id in live_reverse_indices:
+            # this means a live case still points at this case.
+            # if that's true, just move it to the dependent list, we know it is still important.
+            if this_cases_indices:
+                self.dependent_indices[case_id] = this_cases_indices
+        else:
+            dependent_reverse_indices = _reverse_index_map(self.dependent_indices)
+            if case_id in dependent_reverse_indices:
+                # this means a dependent case still points at this case.
+                # similarly to live cases, just move it to the dependent list
+                # UNLESS the only reason this is a dependent case is because of this case.
+                # in that case remove it.
+                dependencies = set(dependent_reverse_indices[case_id])
+                for dependent_case in dependencies:
+                    self.prune_case(dependent_case, result)
+
+                # if any dependencies weren't pruned, don't prune ourselves either
+                dont_prune = bool(dependencies - result.pruned)
+                if dont_prune:
+                    if this_cases_indices:
+                        self.dependent_indices[case_id] = this_cases_indices
+                else:
+                    result.pruned.add(case_id)
+
+            else:
+                # the case isn't relevant anymore
+                result.pruned.add(case_id)
+
+                # this means we can also recursively prune any dependencies
+                for index in this_cases_indices:
+                    if index not in live_reverse_indices and index not in dependent_reverse_indices:
+                        self.prune_case(index, result)
+
+        return result
+
+    def add_live_index(self, from_case_id, to_case_id):
+        self._add_index(self.live_indices, from_case_id, to_case_id)
+
+    def add_dependent_index(self, from_case_id, to_case_id):
+        self._add_index(self.dependent_indices, from_case_id, to_case_id)
+
+    def _add_index(self, indices, from_case_id, to_case_id):
+        prior_ids = set(indices.get(from_case_id, []))
+        prior_ids.add(to_case_id)
+        indices[from_case_id] = list(prior_ids)
+
+    def __or__(self, other):
+        assert isinstance(other, IndexTree)
+        new = IndexTree(
+            live_indices=copy(self.live_indices),
+            dependent_indices=copy(self.dependent_indices)
+        )
+        for attr in 'live_indices', 'dependent_indices':
+            indices = getattr(new, attr)
+            for case_id, other_case_ids in getattr(other, attr).items():
+                if case_id in indices:
+                    indices[case_id] = set(indices[case_id]) | set(other_case_ids)
+                else:
+                    indices[case_id] = set(other_case_ids)
+        return new
+
+
+def _reverse_index_map(index_map):
+    reverse_indices = defaultdict(set)
+    for case_id, indices in index_map.items():
+        for indexed_case_id in indices:
+            reverse_indices[indexed_case_id].add(case_id)
+    return dict(reverse_indices)
+
+
 class SimplifiedSyncLog(AbstractSyncLog):
     """
     New, simplified sync log class that is used by ownership cleanliness restore.
@@ -400,6 +504,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
     log_format = StringProperty(default=LOG_FORMAT_SIMPLIFIED)
     case_ids_on_phone = SetProperty(unicode)
     owner_ids_on_phone = SetProperty(unicode)
+    index_tree = SchemaProperty(IndexTree)
 
     def save(self, *args, **kwargs):
         # force doc type to SyncLog to avoid changing the couch view.
@@ -437,16 +542,27 @@ class SimplifiedSyncLog(AbstractSyncLog):
                     )
                     if not phone_owns_case:
                         # we must have just changed the owner_id to something we didn't own
-                        self.case_ids_on_phone.remove(case._id)
+                        prune_result = self.index_tree.prune_case(case._id)
+                        for case_id in prune_result.pruned:
+                            self.case_ids_on_phone.remove(case_id)
                         made_changes = True
+
                 elif action.action_type == const.CASE_ACTION_INDEX:
-                    # we should never have to do anything here - since the
-                    # indexed case should already be on the phone
-                    pass
+                    # we should never have to do anything with case IDs here since the
+                    # indexed case should already be on the phone.
+                    # however, we should update our index tree accordingly
+                    for index in action.indices:
+                        if phone_owns_case and not case.closed:
+                            self.index_tree.add_live_index(case._id, index.referenced_id)
+                        else:
+                            self.index_tree.add_dependent_index(case._id, index.referenced_id)
+
                 elif action.action_type == const.CASE_ACTION_CLOSE:
-                    # todo: we need to check if the phone still has any live indices
-                    # to this case. Might be a little hairy.
-                    pass
+                    # we must have just changed the owner_id to something we didn't own
+                    prune_result = self.index_tree.prune_case(case._id)
+                    for case_id in prune_result.pruned:
+                        self.case_ids_on_phone.remove(case_id)
+                    made_changes = True
 
         if made_changes or case_list:
             try:
