@@ -66,9 +66,9 @@ def generate_restore_payload_with_project(project, user, restore_id="", version=
     return config.get_payload().as_string()
 
 
-def generate_restore_response(user, restore_id="", version=V1, state_hash="",
-                              items=False):
+def generate_restore_response(project, user, restore_id="", version=V1, state_hash="", items=False):
     config = RestoreConfig(
+        project=project,
         user=user,
         params=RestoreParams(
             sync_log_id=restore_id,
