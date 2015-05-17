@@ -6,7 +6,8 @@ from casexml.apps.phone.data_providers.case.batched import BatchedCaseSyncOperat
 from casexml.apps.phone.tests.utils import generate_restore_payload
 from couchforms.tests.testutils import post_xform_to_couch
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.tests.util import check_xml_line_by_line, delete_all_cases, delete_all_sync_logs
+from casexml.apps.case.tests.util import check_xml_line_by_line, delete_all_cases, delete_all_sync_logs, \
+    TEST_DOMAIN_NAME
 from casexml.apps.phone.restore import RestoreConfig, RestoreState, RestoreParams
 from casexml.apps.case.xform import process_cases
 from datetime import datetime, date
@@ -18,6 +19,7 @@ from casexml.apps.case import const as case_const
 from casexml.apps.phone.tests.dummy import dummy_restore_xml, dummy_user,\
     dummy_user_xml, DUMMY_USERNAME
 from corehq import toggles
+from corehq.apps.domain.models import Domain
 from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
 
 
@@ -29,11 +31,12 @@ class OtaRestoreTest(TestCase):
     def setUpClass(cls):
         delete_all_cases()
         delete_all_sync_logs()
+        cls.project = Domain(name=TEST_DOMAIN_NAME)
 
     def tearDown(self):
         delete_all_cases()
         delete_all_sync_logs()
-        restore_config = RestoreConfig(user=dummy_user())
+        restore_config = RestoreConfig(project=self.project, user=dummy_user())
         restore_config.cache.delete(restore_config._initial_cache_key())
 
     def testFromDjangoUser(self):
@@ -87,7 +90,7 @@ class OtaRestoreTest(TestCase):
         # implicit length assertion
         [newcase] = CommCareCase.view("case/by_user", reduce=False, include_docs=True).all()
         self.assertEqual(1, len(list(
-            BatchedCaseSyncOperation(RestoreState(None, user, RestoreParams())).get_all_case_updates()
+            BatchedCaseSyncOperation(RestoreState(self.project, user, RestoreParams())).get_all_case_updates()
         )))
         expected_case_block = """
         <case>
