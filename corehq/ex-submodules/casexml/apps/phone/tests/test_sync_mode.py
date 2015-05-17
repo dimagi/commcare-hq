@@ -423,6 +423,7 @@ class SyncTokenCachingTest(SyncBaseTest):
         self.assertFalse(self.sync_log.has_cached_payload(V2))
         # first request should populate the cache
         original_payload = RestoreConfig(
+            project=self.project,
             user=self.user,
             params=RestoreParams(
                 version=V2,
@@ -436,6 +437,7 @@ class SyncTokenCachingTest(SyncBaseTest):
 
         # a second request with the same config should be exactly the same
         cached_payload = RestoreConfig(
+            project=self.project,
             user=self.user,
             params=RestoreParams(
                 version=V2,
@@ -446,6 +448,7 @@ class SyncTokenCachingTest(SyncBaseTest):
 
         # caching a different version should also produce something new
         versioned_payload = RestoreConfig(
+            project=self.project,
             user=self.user,
             params=RestoreParams(
                 version=V1,
@@ -458,13 +461,14 @@ class SyncTokenCachingTest(SyncBaseTest):
 
     def test_initial_cache(self):
         restore_config = RestoreConfig(
+            project=self.project,
             user=self.user,
             cache_settings=RestoreCacheSettings(force_cache=True),
         )
         original_payload = restore_config.get_payload()
         self.assertNotIsInstance(original_payload, CachedResponse)
 
-        restore_config = RestoreConfig(user=self.user)
+        restore_config = RestoreConfig(project=self.project, user=self.user)
         cached_payload = restore_config.get_payload()
         self.assertIsInstance(cached_payload, CachedResponse)
 
@@ -472,6 +476,7 @@ class SyncTokenCachingTest(SyncBaseTest):
 
     def testCacheInvalidation(self):
         original_payload = RestoreConfig(
+            project=self.project,
             user=self.user,
             params=RestoreParams(
                 version=V2,
@@ -489,6 +494,7 @@ class SyncTokenCachingTest(SyncBaseTest):
 
         # resyncing should recreate the cache
         next_payload = RestoreConfig(
+            project=self.project,
             user=self.user,
             params=RestoreParams(
                 version=V2,
@@ -506,6 +512,7 @@ class SyncTokenCachingTest(SyncBaseTest):
 
     def testCacheNonInvalidation(self):
         original_payload = RestoreConfig(
+            project=self.project,
             user=self.user,
             params=RestoreParams(
                 version=V2,
@@ -527,6 +534,7 @@ class SyncTokenCachingTest(SyncBaseTest):
             version=V2,
         ).as_xml()])
         next_payload = RestoreConfig(
+            project=self.project,
             user=self.user,
             params=RestoreParams(
                 version=V2,
@@ -550,6 +558,7 @@ class FileRestoreSyncTokenCachingTest(SyncTokenCachingTest):
     def testCacheInvalidationAfterFileDelete(self):
         # first request should populate the cache
         original_payload = RestoreConfig(
+            project=self.project,
             user=self.user,
             cache_settings=RestoreCacheSettings(force_cache=True)
         ).get_payload()
@@ -559,7 +568,7 @@ class FileRestoreSyncTokenCachingTest(SyncTokenCachingTest):
         os.remove(original_payload.get_filename())
 
         # resyncing should recreate the cache
-        next_file = RestoreConfig(user=self.user).get_payload()
+        next_file = RestoreConfig(project=self.project, user=self.user).get_payload()
         self.assertNotIsInstance(next_file, CachedResponse)
         self.assertNotEqual(original_payload.get_filename(), next_file.get_filename())
 
