@@ -20,6 +20,9 @@ from casexml.apps.case.util import post_case_blocks
 from django.conf import settings
 
 
+TEST_DOMAIN_NAME = 'test-domain'
+
+
 class RestoreCaseBlock(object):
     """
     Little shim class for working with XML case blocks in a restore payload
