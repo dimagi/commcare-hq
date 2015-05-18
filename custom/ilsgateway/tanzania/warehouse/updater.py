@@ -443,9 +443,9 @@ def process_facility_transactions(facility_id, transactions):
         product_data.save()
 
 
-def get_nested_children(location):
-    child_ids = location.sql_location.get_descendants().filter(
-        children__isnull=True
+def get_non_archived_facilities_below(location):
+    child_ids = location.sql_location.get_descendants(include_self=True).filter(
+        is_archived=False, location_type__name='FACILITY'
     ).values_list('location_id', flat=True)
     return [Location.wrap(doc) for doc in get_docs(Location.get_db(), child_ids)]
 
@@ -454,7 +454,7 @@ def get_nested_children(location):
 def process_non_facility_warehouse_data(location, start_date, end_date, runner, strict=True):
     runner.location = location.sql_location
     runner.save()
-    facs = get_nested_children(location)
+    facs = get_non_archived_facilities_below(location)
     fac_ids = [f._id for f in facs]
     logging.info("processing non-facility %s (%s), %s children" % (location.name, str(location._id), len(facs)))
     for year, month in months_between(start_date, end_date):
