@@ -106,8 +106,9 @@ class SyncBaseTest(TestCase):
             all_ids.update(case_id_map)
             all_ids.update(dependent_case_id_map)
             self.assertEqual(len(all_ids), len(sync_log.case_ids_on_phone))
-            for case_id in all_ids:
-                self.assertTrue(case_id in sync_log.case_ids_on_phone)
+            # dependent cases should be in the index tree somewhere
+            for dependent_id in dependent_case_id_map:
+                self.assertTrue(dependent_id in sync_log.dependent_case_ids_on_phone)
         else:
             # check case map
             self.assertEqual(len(case_id_map), len(sync_log.cases_on_phone))
@@ -326,7 +327,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
         assert_user_has_cases(self, self.user, [parent_id, child_id])
 
     def testAssignToNewOwner(self):
-        # first create the parent case
+        # create parent and child
         parent_id = "mommy"
         child_id = "baby"
         index_id = 'my_mom_is'
@@ -355,9 +356,8 @@ class SyncTokenUpdateTest(SyncBaseTest):
                       owner_id=new_owner
         ).as_xml(), self.sync_log.get_id)
         
-        # should be moved
-        self._testUpdate(self.sync_log.get_id, {parent_id: []},
-                         {})
+        # child should be moved, parent should still be there
+        self._testUpdate(self.sync_log.get_id, {parent_id: []}, {})
 
     def testArchiveUpdates(self):
         """
