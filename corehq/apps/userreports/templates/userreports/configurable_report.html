@@ -73,6 +73,9 @@
             defaultConfig.has_ucr_datespan = false;
             defaultConfig.datespan_filters = [];
         {% endif %}
+        if(!defaultConfig.datespan_slug) {
+            defaultConfig.datespan_slug = null;
+        }
         $("#savedReports").reportUserConfigurableConfigEditor({
             filterForm: $("#report-filters"),
             items: {{ report_configs|JSON }},
