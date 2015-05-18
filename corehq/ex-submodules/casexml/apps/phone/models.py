@@ -563,8 +563,6 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 phone_owns_case = not owner_id or owner_id in self.owner_ids_on_phone
 
                 if action.action_type == const.CASE_ACTION_CREATE:
-                    self._assert(not self.phone_is_holding_case(case._id),
-                                 'phone has case being created: %s' % case._id)
                     if phone_owns_case:
                         self.case_ids_on_phone.add(case._id)
                         made_changes = True
