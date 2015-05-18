@@ -1,15 +1,12 @@
 from StringIO import StringIO
 from mimetypes import guess_all_extensions, guess_type
 import uuid
-from wsgiref.util import FileWrapper
 import zipfile
 import logging
 import os
-from django.conf import settings
 from django.contrib.auth.decorators import login_required
 import json
 import itertools
-import tempfile
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.utils.decorators import method_decorator
@@ -24,7 +21,6 @@ import shutil
 from corehq import privileges
 
 from soil import DownloadBase
-from soil.util import expose_file_download
 
 from corehq.apps.app_manager.decorators import safe_download, require_can_edit_apps
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
@@ -38,7 +34,7 @@ from corehq.apps.hqmedia.controller import (
 )
 from corehq.apps.hqmedia.decorators import login_with_permission_from_post
 from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareMultimedia, MULTIMEDIA_PREFIX, CommCareVideo
-from corehq.apps.hqmedia.tasks import process_bulk_upload_zip
+from corehq.apps.hqmedia.tasks import process_bulk_upload_zip, build_application_zip
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from dimagi.utils.decorators.memoized import memoized
@@ -477,8 +473,8 @@ def iter_media_files(media_objects):
     return _media_files(), errors
 
 
-def iter_files_async(include_multimedia_files, include_index_files, app):
-    file_iterator = lambda: iter([])
+def iter_app_files(app, include_multimedia_files, include_index_files):
+    file_iterator = []
     errors = []
     if include_multimedia_files:
         app.remove_unused_mappings()
@@ -487,52 +483,10 @@ def iter_files_async(include_multimedia_files, include_index_files, app):
         from corehq.apps.app_manager.views import iter_index_files
         index_files, index_file_errors = iter_index_files(app)
         if index_file_errors:
-            errors.append(index_file_errors)
+            errors.extend(index_file_errors)
         file_iterator = itertools.chain(file_iterator, index_files)
 
     return file_iterator, errors
-
-
-def make_zip_tempfile_async(include_multimedia_files, include_index_files,
-                            app, download_id, compress_zip=False, filename="commcare.zip"):
-    MULTIMEDIA_EXTENSIONS = ('.mp3', '.wav', '.jpg', '.png', '.gif', '.3gp', '.mp4', '.zip', )
-    errors = []
-    compression = zipfile.ZIP_DEFLATED if compress_zip else zipfile.ZIP_STORED
-
-    use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
-    if use_transfer:
-        fpath = os.path.join(settings.SHARED_DRIVE_CONF.transfer_dir, "{}{}".format(app._id, app.version))
-    else:
-        _, fpath = tempfile.mkstemp()
-
-    if not (os.path.isfile(fpath) and use_transfer):  # Don't rebuild the file if it is already there
-        files, errors = iter_files_async(include_multimedia_files, include_index_files, app)
-        with open(fpath, 'wb') as tmp:
-            with zipfile.ZipFile(tmp, "w") as z:
-                for path, data in files:
-                    # don't compress multimedia files
-                    extension = os.path.splitext(path)[1]
-                    file_compression = zipfile.ZIP_STORED if extension in MULTIMEDIA_EXTENSIONS else compression
-                    z.writestr(path, data, file_compression)
-
-    common_kwargs = dict(
-        mimetype='application/zip' if compress_zip else 'application/x-zip-compressed',
-        content_disposition='attachment; filename="{fname}"'.format(fname=filename),
-        download_id=download_id,
-    )
-    if use_transfer:
-        download = expose_file_download(
-            fpath,
-            use_transfer=use_transfer,
-            **common_kwargs
-        )
-    else:
-        download = expose_cached_download(
-            FileWrapper(open(fpath)),
-            expiry=(1 * 60 * 60),
-            **common_kwargs
-        )
-    return download, errors
 
 
 class DownloadMultimediaZip(View, ApplicationViewMixin):
@@ -570,14 +524,13 @@ class DownloadMultimediaZip(View, ApplicationViewMixin):
         if error_response:
             return error_response
 
-        from corehq.util.tasks import make_zip_tempfile_task
         download = DownloadBase()
-        download.set_task(make_zip_tempfile_task.delay(
+        download.set_task(build_application_zip.delay(
             include_multimedia_files=self.include_multimedia_files,
             include_index_files=self.include_index_files,
             app=self.app,
-            compress_zip=self.compress_zip,
             download_id=download.download_id,
+            compress_zip=self.compress_zip,
             filename=self.zip_name)
         )
         return download.get_start_response()
