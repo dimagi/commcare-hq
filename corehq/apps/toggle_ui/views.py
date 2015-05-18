@@ -57,8 +57,14 @@ class ToggleEditView(ToggleBaseView):
     def toggle_slug(self):
         return self.args[0] if len(self.args) > 0 else self.kwargs.get('toggle', "")
 
+    @property
+    def static_toggle(self):
+        for toggle in all_toggles():
+            if toggle.slug == self.toggle_slug:
+                return toggle
+
     def get_toggle(self):
-        if not self.toggle_slug in [t.slug for t in all_toggles()]:
+        if not self.static_toggle:
             raise Http404()
         try:
             return Toggle.get(self.toggle_slug)
@@ -88,14 +94,14 @@ class ToggleEditView(ToggleBaseView):
         return context
 
     def call_save_fn(self, toggle, current):
-        if toggle.save_fn is None:
+        if self.static_toggle.save_fn is None:
             return
-        existing = toggle.enabled_users
-        for entry in existing ^ current:
+        existing = set(toggle.enabled_users)
+        for entry in existing.symmetric_difference(current):
             if entry.startswith(NAMESPACE_DOMAIN):
                 domain = entry[len(NAMESPACE_DOMAIN):]
-                is_enabled = entry in curent  # otherwise it's been disabled
-                toggle.save_fn(domain, is_enabled)
+                is_enabled = entry in current  # otherwise it's been disabled
+                self.static_toggle.save_fn(domain, is_enabled)
 
     def post(self, request, *args, **kwargs):
         toggle = self.get_toggle()
