@@ -133,7 +133,6 @@
                 {% trans 'Pay with Credit Card' %}
             </button>
         </p>
-        {% if request|toggle_enabled:"BULK_PAYMENTS" %}
         <p data-bind="visible: hasInitialLoadFinished() && totalDue()">
             <button type="button"
                     class="btn btn-success"
@@ -143,7 +142,6 @@
                 {% trans 'Pay by Wire' %}
             </button>
         </p>
-        {% endif %}
         {% else %}
         <span class="label">
             <i class="icon-info-sign"></i>
