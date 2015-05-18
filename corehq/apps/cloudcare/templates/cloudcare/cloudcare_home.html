@@ -2,7 +2,10 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% block head %} {{ block.super }}
+{% block head %}
+        {{ block.super }}
+    {% include "imports/proptable.html" %}
+    {% include "imports/fancy-code.html" %}
 {% endblock %}
 
 {% block js %} {{ block.super }}
@@ -10,7 +13,7 @@
     <script src="{% static 'hqwebapp/js/lib/underscore-1.4.4.js' %}"></script>
 <script type="text/javascript" src="{% static 'hqwebapp/js/lib/datatables-1.9/js/jquery.dataTables.min.js' %}"></script>
 
-<script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
     <script src="{% static 'case/js/cheapxml.js' %}"></script>
     <script src="{% static 'case/js/casexml.js' %}"></script>
     <script src="{% static 'cloudcare/js/case-edit-form.js' %}"></script>
@@ -190,7 +193,7 @@
             <div id="instance-xml-home" name="instance-xml-home">
                 <div id="question-viewer-pretty"></div>
                 <div id="xml-viewer-pretty"></div>
-                <input id="evaluate-result" name="evaluate-result"/>
+                <input id="evaluate-result" style="display: block;"/>
                 <section>
                     <input id="xpath" name="xpath" value="/data/[your path here]" style="min-width: 300px;"/>
                     <input id="evaluate-button" type="submit" value="Evaluate" />
