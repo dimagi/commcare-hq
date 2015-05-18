@@ -56,7 +56,7 @@ from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound, JSONReader
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
 from soil.exceptions import TaskFailedError
-from soil.util import get_download_context, expose_cached_download
+from soil.util import get_download_context, expose_download
 from .custom_data_fields import UserFieldsView
 
 BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
@@ -760,7 +760,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
         except UserUploadError as e:
             return HttpResponseBadRequest(e)
 
-        task_ref = expose_cached_download(None, expiry=1*60*60)
+        task_ref = expose_download(None, expiry=1*60*60)
         task = bulk_upload_async.delay(
             self.domain,
             list(self.user_specs),
