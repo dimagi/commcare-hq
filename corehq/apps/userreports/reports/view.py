@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
+from django.utils.translation import ugettext_noop as _
 from django.views.generic.base import TemplateView
 from braces.views import JSONResponseMixin
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
@@ -112,17 +113,37 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
 
     @property
     def saved_report_context_data(self):
+        def _update_daterange_filters(report_config):
+            report_config_data = report_config.to_json()
+            report_config_data['filters'].update(report_config.get_date_range())
+            return report_config_data
+
         current_config_id = self.request.GET.get('config_id')
         return {
-            'report_configs': ReportConfig.by_domain_and_owner(
-                self.domain, self.request.couch_user._id, report_slug=self.slug
-            ),
+            'report_configs': [
+                _update_daterange_filters(config)
+                for config in ReportConfig.by_domain_and_owner(
+                    self.domain, self.request.couch_user._id, report_slug=self.slug
+                )
+            ],
             'default_config': (
-                ReportConfig.get(current_config_id)
+                _update_daterange_filters(ReportConfig.get(current_config_id))
                 if current_config_id
                 else ReportConfig.default()
             ),
+            'datespan_filters': [{
+                'display': _('Choose a date filter...'),
+                'slug': None,
+            }] + self.spec.filters,
         }
+
+    @property
+    def has_datespan(self):
+        filters = self.spec.filters
+        return any(
+            f['type'] == 'date'
+            for f in filters
+        )
 
     @property
     def headers(self):
