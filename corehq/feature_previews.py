@@ -79,11 +79,10 @@ SPLIT_MULTISELECT_CASE_EXPORT = FeaturePreview(
 
 def _commtrackify(domain_name, checked):
     from corehq.apps.domain.models import Domain
-    from corehq.apps.commtrack.util import make_domain_commtrack
     domain = Domain.get_by_name(domain_name)
     if domain.commtrack_enabled != checked:
         if checked:
-            make_domain_commtrack(domain)
+            domain.convert_to_commtrack
         else:
             domain.commtrack_enabled = False
             domain.save()

@@ -12,7 +12,6 @@ from corehq.apps.registration.models import RegistrationRequest
 from dimagi.utils.web import get_ip, get_url_base, get_site_domain
 from django.conf import settings
 from django.core.urlresolvers import reverse
-from corehq.apps.commtrack.util import make_domain_commtrack
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser, CouchUser
 from dimagi.utils.django.email import send_HTML_email
@@ -210,7 +209,7 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
     new_domain.save(**get_safe_write_kwargs())
 
     if domain_type == 'commtrack':
-        make_domain_commtrack(new_domain)
+        domain.convert_to_commtrack()
 
     if not new_domain.name:
         new_domain.name = new_domain._id

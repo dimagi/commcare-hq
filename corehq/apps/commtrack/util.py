@@ -130,18 +130,6 @@ def enable_commtrack_previews(domain):
         toggle_class.set(domain, True, toggles.NAMESPACE_DOMAIN)
 
 
-def make_domain_commtrack(domain_obj, requisitions_enabled=False):
-    """
-    One-stop-shop to make a domain CommTrack
-    """
-    domain_obj.commtrack_enabled = True
-    domain_obj.locations_enabled = True
-    domain_obj.save()
-    bootstrap_commtrack_config(domain_obj, requisitions_enabled)
-    get_or_create_default_program(domain_obj.name)
-    enable_commtrack_previews(domain_obj.name)
-
-
 def get_default_requisition_config():
     return CommtrackRequisitionConfig(
         enabled=True,
