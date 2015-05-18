@@ -396,12 +396,6 @@ BULK_SMS_VERIFICATION = StaticToggle(
     [NAMESPACE_USER, NAMESPACE_DOMAIN],
 )
 
-BULK_PAYMENTS = StaticToggle(
-    'bulk_payments',
-    'Enable payment of invoices by bulk credit payments and invoice generation for wire transfers',
-    TAG_PRODUCT_CORE
-)
-
 USE_NEW_TIMEZONE_BEHAVIOR = StaticToggle(
     'use_new_timezone_behavior',
     ("Enable properly dealing with timezones in phone timestamps "
