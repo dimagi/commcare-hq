@@ -40,7 +40,7 @@ from dimagi.utils.decorators.view import get_file
 from copy import deepcopy
 from soil import CachedDownload, DownloadBase
 from soil.exceptions import TaskFailedError
-from soil.util import expose_cached_download, get_download_context
+from soil.util import expose_download, get_download_context
 
 
 def strip_json(obj, disallow_basic=None, disallow=None):
@@ -279,7 +279,7 @@ class UploadItemLists(TemplateView):
     def post(self, request):
         replace = 'replace' in request.POST
 
-        file_ref = expose_cached_download(request.file.read(),
+        file_ref = expose_download(request.file.read(),
                                    expiry=1*60*60)
 
         # catch basic validation in the synchronous UI
