@@ -116,7 +116,12 @@ def build_application_zip(include_multimedia_files, include_index_files,
 
     use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
     if use_transfer:
-        fpath = os.path.join(settings.SHARED_DRIVE_CONF.transfer_dir, "{}{}".format(app._id, app.version))
+        fpath = os.path.join(settings.SHARED_DRIVE_CONF.transfer_dir, "{}{}{}{}".format(
+            app._id,
+            'mm' if include_multimedia_files else '',
+            'ccz' if include_index_files else '',
+            app.version,
+        ))
     else:
         _, fpath = tempfile.mkstemp()
 
