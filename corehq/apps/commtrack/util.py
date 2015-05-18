@@ -122,7 +122,7 @@ def bootstrap_commtrack_config(domain, requisitions_enabled):
 
 def enable_commtrack_previews(domain):
     for toggle_class in (
-        feature_previews.COMMTRACK,
+        toggles.COMMTRACK,
         feature_previews.LOCATIONS,
         toggles.VELLUM_TRANSACTION_QUESTION_TYPES,
         toggles.VELLUM_ITEMSETS,

@@ -453,29 +453,31 @@ API_THROTTLE_WHITELIST = StaticToggle(
     namespaces=[NAMESPACE_USER],
 )
 
-# TODO move to commtrack module
-def commtrackify(domain_name, toggle_enabled):
+
+def _commtrackify(domain_name, toggle_enabled):
     from corehq.apps.domain.models import Domain
     domain = Domain.get_by_name(domain_name)
-    domain.commtrack_enabled = toggle_enabled
-    if toggle_enabled:
-        # turning on commtrack should turn on locations, but not the other way around
-        domain.locations_enabled = True
-        enable_commtrack_previews(domain)
+    if domain and domain.commtrack_enabled != toggle_enabled:
+        if toggle_enabled:
+            domain.convert_to_commtrack()
+        else:
+            domain.commtrack_enabled = False
+            domain.save()
 
-    domain.save()
 
-COMMTRACK2 = StaticToggle(
-    slug='commtrack',
-    label="CommCare Supply",
+COMMTRACK = StaticToggle(
+    'commtrack',
+    "CommCare Supply",
+    TAG_PRODUCT_CORE,
     description=(
         '<a href="http://www.commtrack.org/home/">CommCare Supply</a> '
         "is a logistics and supply chain management module. It is designed "
         "to improve the management, transport, and resupply of a variety of "
         "goods and materials, from medication to food to bednets. <br/>"
         "Note: You must also enable CommCare Supply on any CommCare Supply "
-        "application's settings page."),
+        "application's settings page."
+    ),
     help_link='https://help.commcarehq.org/display/commtrack/CommTrack+Home',
     namespaces=[NAMESPACE_DOMAIN],
-    save_fn=commtrackify,
+    save_fn=_commtrackify,
 )

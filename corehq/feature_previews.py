@@ -79,32 +79,6 @@ SPLIT_MULTISELECT_CASE_EXPORT = FeaturePreview(
 )
 
 
-def _commtrackify(domain_name, checked):
-    from corehq.apps.domain.models import Domain
-    domain = Domain.get_by_name(domain_name)
-    if domain.commtrack_enabled != checked:
-        if checked:
-            domain.convert_to_commtrack
-        else:
-            domain.commtrack_enabled = False
-            domain.save()
-
-
-COMMTRACK = FeaturePreview(
-    slug='commtrack',
-    label=_("CommCare Supply"),
-    description=_(
-        '<a href="http://www.commtrack.org/home/">CommCare Supply</a> '
-        "is a logistics and supply chain management module. It is designed "
-        "to improve the management, transport, and resupply of a variety of "
-        "goods and materials, from medication to food to bednets. <br/>"
-        "Note: You must also enable CommCare Supply on any CommCare Supply "
-        "application's settings page."),
-    help_link='https://help.commcarehq.org/display/commtrack/CommTrack+Home',
-    save_fn=_commtrackify,
-)
-
-
 def enable_callcenter(domain_name, checked):
     from corehq.apps.domain.models import Domain
     domain = Domain.get_by_name(domain_name)
