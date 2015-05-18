@@ -109,6 +109,8 @@ class SyncBaseTest(TestCase):
             # dependent cases should be in the index tree somewhere
             for dependent_id in dependent_case_id_map:
                 self.assertTrue(dependent_id in sync_log.dependent_case_ids_on_phone)
+            for dependent_id in sync_log.dependent_case_ids_on_phone:
+                self.assertTrue(dependent_id in dependent_case_id_map)
         else:
             # check case map
             self.assertEqual(len(case_id_map), len(sync_log.cases_on_phone))
