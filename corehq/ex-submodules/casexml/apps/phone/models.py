@@ -588,10 +588,14 @@ class SimplifiedSyncLog(AbstractSyncLog):
                     # indexed case should already be on the phone.
                     # however, we should update our index tree accordingly
                     for index in action.indices:
-                        self.index_tree.add_index(case._id, index.referenced_id)
-                        if index.referenced_id not in self.case_ids_on_phone:
-                            self.case_ids_on_phone.add(index.referenced_id)
-                            self.dependent_case_ids_on_phone.add(index.referenced_id)
+                        if index.referenced_id:
+                            self.index_tree.add_index(case._id, index.referenced_id)
+                            if index.referenced_id not in self.case_ids_on_phone:
+                                self.case_ids_on_phone.add(index.referenced_id)
+                                self.dependent_case_ids_on_phone.add(index.referenced_id)
+                        else:
+                            logger.error('Tried to delete index {} from case {}. '
+                                         'This is not currently supported.'.format(index.identifier, case._id))
                         made_changes = True
                 elif action.action_type == const.CASE_ACTION_CLOSE:
                     # this case is being closed.
