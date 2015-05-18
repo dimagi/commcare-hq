@@ -1095,6 +1095,48 @@ class MultiUserSyncTest(SyncBaseTest):
                 generate_restore_payload(self.project, self.user, version="2.0")
             )
 
+    def test_dependent_case_becomes_relevant_at_sync_time(self):
+        """
+        Make a case that is only relevant through a dependency.
+        Then update it to be actually relevant.
+        Make sure the sync removes it from the dependent list.
+        """
+        # create a parent and child case (with index) from one user
+        parent_id, child_id = [uuid.uuid4().hex for i in range(2)]
+        parent_id, child_id = ['parent', 'child']
+        self.factory.create_or_update_cases([
+            CaseStructure(
+                case_id=child_id,
+                attrs={'create': True},
+                relationships=[CaseRelationship(
+                    CaseStructure(case_id=parent_id, attrs={'create': True, 'owner_id': uuid.uuid4().hex}),
+                    relationship=PARENT_TYPE,
+                    related_type=PARENT_TYPE,
+                )],
+            )
+        ])
+        index_ref = CommCareCaseIndex(identifier=PARENT_TYPE,
+                                      referenced_type=PARENT_TYPE,
+                                      referenced_id=parent_id)
+
+        # sanity check that we are in the right state
+        self._testUpdate(self.sync_log._id, {child_id: [index_ref]}, {parent_id: []})
+
+        # have another user modify the owner ID of the dependent case to be the shared ID
+        self.factory.create_or_update_cases([
+            CaseStructure(
+                case_id=parent_id,
+                attrs={'owner_id': SHARED_ID},
+            )],
+            form_extras={
+                'last_sync_token': None,
+            }
+        )
+        latest_sync_log = synclog_from_restore_payload(
+            generate_restore_payload(self.project, self.user, restore_id=self.sync_log._id)
+        )
+        self._testUpdate(latest_sync_log._id, {child_id: [index_ref], parent_id: []})
+
 
 class SyncTokenReprocessingTest(SyncBaseTest):
     """
