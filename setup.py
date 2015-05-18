@@ -14,6 +14,7 @@ setup(
         "jsonobject-couchdbkit",
         "dimagi-utils>=1.3usec",
         'django-soil==0.10.0',
+        'django-transfer==dev',
         "openpyxl",
         "unidecode",
         "xlwt",
@@ -23,5 +24,6 @@ setup(
     dependency_links=[
         'git+git://github.com/dimagi/dimagi-utils.git@24e1eaad37ac735ab9309253011f09835c9ee67e#egg=dimagi-utils-1.3usec',
         'git+git://github.com/dimagi/django-soil.git@ad98c51dd95baec568c5f83af0807ef7965bf201#egg=django-soil-0.10.0',
+        'git+git://github.com/smartfile/django-transfer.git@6e0dc94c3341c358fca8eb2bf74e23aee3983ec4#egg=django-transfer-dev',
     ]
 )
