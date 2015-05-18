@@ -6,6 +6,7 @@
 {% block title %}{% trans 'Multimedia Map' %}{% endblock title %}
 
 {% block js %} {{ block.super }}
+    <script src="{% static 'hqwebapp/js/main.js' %}"></script>
     <script type="text/javascript" src="{% static 'hqmedia/js/jquery.jplayer.min.js' %}"></script> <!-- todo add the media player back in -->
     <script type="text/javascript" src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
 {% endblock %}
@@ -22,6 +23,8 @@
 
         $('.preview-media').tooltip();
     </script>
+    {% url "download_multimedia_zip" domain app.get_id as media_url%}
+    {% include 'app_manager/partials/download_async_modal.html' with element_id='multimedia-zip-modal' download_url=media_url%}
 {% endblock %}
 
 {% block centered-content %}
@@ -50,7 +53,7 @@
             {% if totals|length %}
             <div class="alert alert-info">
                 <h3><i class="icon-cloud-download"></i> {% trans 'Download Multimedia' %}</h3>
-                <p><a class="btn btn-primary" style="color: #ffffff;" href="{% url "download_multimedia_zip" domain app.get_id  %}"><i class="icon-cloud-download"></i> {% trans 'Download ZIP' %}</a></p>
+                <p><a class="btn btn-primary" style="color: #ffffff;" href="#multimedia-zip-modal" data-toggle="modal"><i class="icon-cloud-download"></i> {% trans 'Download ZIP' %}</a></p>
                 <ul style="margin-top:.5em;" data-bind="foreach: totals">
                     <li class="media-totals" data-bind="event: {refMediaAdded: $parent.incrementTotals}"><i data-bind="attr: {class: icon_class}"></i> <span data-bind="text: matched"></span>/<span data-bind="text: totals"></span> <span data-bind="text: media_type"></span> {% trans 'References' %}</li>
                 </ul>
@@ -127,4 +130,5 @@
     <div id="jquery_jplayer"></div>
     {% endif %}
 </div>
+
 {% endblock centered-content %}
