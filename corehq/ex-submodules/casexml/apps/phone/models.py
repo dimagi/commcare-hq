@@ -555,10 +555,6 @@ class SimplifiedSyncLog(AbstractSyncLog):
                     _remove_case(candidate)
 
     def update_phone_lists(self, xform, case_list):
-
-        def handle_pruning(case_id):
-            self.prune_case(case_id)
-
         made_changes = False
         for case in case_list:
             actions = case.get_actions_for_form(xform.get_id)
@@ -581,7 +577,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
                     if not phone_owns_case:
                         # we must have just changed the owner_id to something we didn't own
                         # we can try pruning this case since it's no longer relevant
-                        handle_pruning(case._id)
+                        self.prune_case(case._id)
                         made_changes = True
 
                 elif action.action_type == const.CASE_ACTION_INDEX:
@@ -597,7 +593,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 elif action.action_type == const.CASE_ACTION_CLOSE:
                     # this case is being closed.
                     # we can try pruning this case since it's no longer relevant
-                    handle_pruning(case._id)
+                    self.prune_case(case._id)
                     made_changes = True
 
         if made_changes or case_list:
