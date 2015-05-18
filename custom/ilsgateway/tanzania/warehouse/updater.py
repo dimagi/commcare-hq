@@ -239,7 +239,7 @@ def populate_report_data(start_date, end_date, domain, runner, locations=None, s
                 facilities
             )
 
-    facilities_chunked_list = chunked(facilities, 50)
+    facilities_chunked_list = chunked(facilities, 5)
     for chunk in facilities_chunked_list:
         res = chain(process_facility_warehouse_data.si(fac, start_date, end_date, runner) for fac in chunk)()
         res.get()
