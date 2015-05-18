@@ -558,6 +558,11 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 if not candidate_dependencies - self.dependent_case_ids_on_phone:
                     _remove_case(candidate)
 
+    def _add_primary_case(self, case_id):
+        self.case_ids_on_phone.add(case_id)
+        if case_id in self.dependent_case_ids_on_phone:
+            self.dependent_case_ids_on_phone.remove(case_id)
+
     def update_phone_lists(self, xform, case_list):
         made_changes = False
         logger.debug('case ids before update: {}'.format(', '.join(self.case_ids_on_phone)))
@@ -571,7 +576,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
                 if action.action_type == const.CASE_ACTION_CREATE:
                     if phone_owns_case:
-                        self.case_ids_on_phone.add(case._id)
+                        self._add_primary_case(case._id)
                         made_changes = True
                 elif action.action_type == const.CASE_ACTION_UPDATE:
                     if not phone_owns_case:
