@@ -1123,14 +1123,14 @@ class MultiUserSyncTest(SyncBaseTest):
         self._testUpdate(self.sync_log._id, {child_id: [index_ref]}, {parent_id: []})
 
         # have another user modify the owner ID of the dependent case to be the shared ID
-        self.factory.create_or_update_cases([
-            CaseStructure(
-                case_id=parent_id,
-                attrs={'owner_id': SHARED_ID},
-            )],
-            form_extras={
-                'last_sync_token': None,
-            }
+        self.factory.create_or_update_cases(
+            [
+                CaseStructure(
+                    case_id=parent_id,
+                    attrs={'owner_id': SHARED_ID},
+                )
+            ],
+            form_extras={'last_sync_token': None}
         )
         latest_sync_log = synclog_from_restore_payload(
             generate_restore_payload(self.project, self.user, restore_id=self.sync_log._id)
