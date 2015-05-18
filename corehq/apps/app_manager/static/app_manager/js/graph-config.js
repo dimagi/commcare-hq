@@ -336,7 +336,6 @@ var GraphViewModel = function(moduleOptions){
     self.fixtures = moduleOptions.fixtures || [];
 
     self.selectedGraphType.subscribe(function(newValue) {
-console.log("doing something");
         // Recreate the series objects to be of the correct type.
         self.series(_.map(self.series(), function(series){
             return new (self.getSeriesConstructor())(ko.toJS(series), self.childCaseTypes, self.fixtures);
