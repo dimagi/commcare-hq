@@ -509,7 +509,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
     def get_footprint_of_cases_on_phone(self):
         return list(self.case_ids_on_phone)
 
-    def prune_case(self, case_id, result=None):
+    def prune_case(self, case_id):
         """
         Prunes a case from the tree while also pruning any dependencies as a result of this pruning.
         """
