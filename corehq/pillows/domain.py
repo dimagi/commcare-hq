@@ -49,11 +49,11 @@ class DomainPillow(HQPillow):
                                        "mapping": self.default_mapping})
 
     def change_transform(self, doc_dict):
-        doc_ret = copy.deepcopy(doc_dict)
         sub =  Subscription.objects.filter(
                 subscriber__domain=doc_dict['name'],
                 is_active=True)
         doc_dict['deployment'] = doc_dict.get('deployment', None) or {}
+        doc_ret = copy.deepcopy(doc_dict)
         countries = doc_dict['deployment'].get('countries', [])
         doc_ret['deployment']['countries'] = []
         if sub:
