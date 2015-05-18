@@ -36,8 +36,10 @@
 </div>
 
 
+{% if include_js|default_if_none:True %}
 <script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
 <script type="text/javascript">
     new COMMCAREHQ.AsyncDownloader($("#{{element_id}}"), "{{download_url}}");
 </script>
+{% endif %}
 

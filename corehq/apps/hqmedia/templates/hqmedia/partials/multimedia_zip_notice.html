@@ -8,13 +8,11 @@
                 href="#multimedia-zip-modal" data-toggle="modal"
             }
             {% else %}
-                data-bind="click: function(){
-                // Not so nice...
-                // we aren't including the modal so assume that this is displayed within a modal,
-                // Hide the open modal so we don't get bootstrap recursion errors.
-                $('.modal.fade.in').modal('hide')
-                $('#multimedia-zip-modal').modal({show: true});
-            }"
+                {# This happens when the template gets included in app_manager/releases.html #}
+                {# See app_manager/js/releases.js #}
+                data-bind="click: function () {
+                    download_application_zip('{% url "download_multimedia_zip" app.domain '_____' %}');
+                }"
             {% endif %}
         >
         {% if multimedia.form_errors or multimedia.missing_refs %}
