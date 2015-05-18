@@ -36,7 +36,15 @@ def _report_to_fixture(report):
     # todo: set filter values properly?
     data_source = ReportFactory.from_spec(report)
 
-    report_elem.append(ElementTree.Element('rows'))
+    rows_elem = ElementTree.Element('rows')
+
+    for i, row in enumerate(data_source.get_data()):
+        row_elem = ElementTree.Element('row', attrib={'index': str(i)})
+        for k in sorted(row.keys()):
+            row_elem.append(_element('column', _serialize(row[k]), attrib={'id': k}))
+        rows_elem.append(row_elem)
+
+    report_elem.append(rows_elem)
     return report_elem
 
 
