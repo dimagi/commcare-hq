@@ -344,14 +344,6 @@ VELLUM_TRANSACTION_QUESTION_TYPES = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-VELLUM_ITEMSETS = StaticToggle(
-    'itemsets',
-    "Adds dynamic (itemset) select and multi-select question types to the "
-    "form builder",
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
-
 VELLUM_HELP_MARKDOWN = StaticToggle(
     'help_markdown',
     "Use markdown for the help text in the form builder",
