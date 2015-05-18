@@ -402,10 +402,7 @@ class IndexTree(DocumentSchema):
     indices = SchemaDictProperty()
 
     def __repr__(self):
-        return 'live: {}\ndependent: {}\n'.format(
-            json.dumps(self.live_indices, indent=2),
-            json.dumps(self.dependent_indices, indent=2)
-        )
+        return json.dumps(self.indices, indent=2)
 
     def has_case(self, case_id):
         return (case_id in _reverse_index_map(self.indices))
@@ -434,30 +431,21 @@ class IndexTree(DocumentSchema):
         _recursive_call(case_id, all_cases, cached_map)
         return all_cases
 
-    def add_live_index(self, from_case_id, to_case_id):
-        self._add_index(self.live_indices, from_case_id, to_case_id)
-
-    def add_dependent_index(self, from_case_id, to_case_id):
-        self._add_index(self.dependent_indices, from_case_id, to_case_id)
-
-    def _add_index(self, indices, from_case_id, to_case_id):
-        prior_ids = set(indices.get(from_case_id, []))
+    def add_index(self, from_case_id, to_case_id):
+        prior_ids = set(self.indices.get(from_case_id, []))
         prior_ids.add(to_case_id)
-        indices[from_case_id] = list(prior_ids)
+        self.indices[from_case_id] = list(prior_ids)
 
     def __or__(self, other):
         assert isinstance(other, IndexTree)
         new = IndexTree(
-            live_indices=copy(self.live_indices),
-            dependent_indices=copy(self.dependent_indices)
+            indices=copy(self.indices),
         )
-        for attr in 'indices':
-            indices = getattr(new, attr)
-            for case_id, other_case_ids in getattr(other, attr).items():
-                if case_id in indices:
-                    indices[case_id] = set(indices[case_id]) | set(other_case_ids)
-                else:
-                    indices[case_id] = set(other_case_ids)
+        for case_id, other_case_ids in other.indices.items():
+            if case_id in new.indices:
+                new.indices[case_id] = set(new.indices[case_id]) | set(other_case_ids)
+            else:
+                new.indices[case_id] = set(other_case_ids)
         return new
 
 
@@ -578,10 +566,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
                     # indexed case should already be on the phone.
                     # however, we should update our index tree accordingly
                     for index in action.indices:
-                        if phone_owns_case and not case.closed:
-                            self.index_tree.add_live_index(case._id, index.referenced_id)
-                        else:
-                            self.index_tree.add_dependent_index(case._id, index.referenced_id)
+                        self.index_tree.add_index(case._id, index.referenced_id)
 
                 elif action.action_type == const.CASE_ACTION_CLOSE:
                     # this case is being closed.
