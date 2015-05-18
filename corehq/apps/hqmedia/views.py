@@ -24,7 +24,6 @@ from corehq import privileges
 
 from soil import DownloadBase
 from soil.util import expose_file_download
-from django_transfer import is_enabled as transfer_enabled
 
 from corehq.apps.app_manager.decorators import safe_download, require_can_edit_apps
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
@@ -41,7 +40,6 @@ from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareMul
 from corehq.apps.hqmedia.tasks import process_bulk_upload_zip
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-from corehq.util.zip_utils import DownloadZipAsync
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.cached_object import CachedObject
 from soil.util import expose_cached_download
@@ -523,7 +521,7 @@ def make_zip_tempfile_async(include_multimedia_files, include_index_files,
                                 use_transfer=use_transfer), errors
 
 
-class DownloadMultimediaZip(DownloadZipAsync, ApplicationViewMixin):
+class DownloadMultimediaZip(ApplicationViewMixin):
     """
     This is where the Multimedia for an application gets generated.
     Expects domain and app_id to be in its args
