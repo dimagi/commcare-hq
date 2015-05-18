@@ -7,7 +7,7 @@ from corehq.apps.api.redis_assets import RedisAssetsAPI
 from corehq.apps.api.resources import v0_1, v0_2, v0_3, v0_4, v0_5
 from corehq.apps.commtrack.resources.v0_1 import ProductResource
 from corehq.apps.fixtures.resources.v0_1 import FixtureResource
-from corehq.apps.locations.resources.v0_1 import LocationResource
+from corehq.apps.locations import resources as locations
 from corehq.apps.reports.resources.v0_1 import ReportResource
 from django.conf.urls import *
 from django.http import HttpResponseNotFound
@@ -42,6 +42,8 @@ API_LIST = (
         FixtureResource,
         ReportResource,
         DomainMetadataResource,
+        locations.v0_1.LocationResource,
+        ProductResource,
     )),
     ((0, 4), (
         v0_1.CommCareUserResource,
@@ -72,11 +74,11 @@ API_LIST = (
         ReportResource,
         v0_5.DeviceReportResource,
         DomainMetadataResource,
+        locations.v0_5.LocationResource,
+        locations.v0_5.LocationTypeResource,
     )),
 )
 
-# eventually these will have to version too but this works for now
-COMMTRACK_RESOURCES = (LocationResource, ProductResource)
 
 class CommCareHqApi(Api):
     def top_level(self, request, api_name=None, **kwargs):
@@ -87,8 +89,6 @@ def api_url_patterns():
     for version, resources in API_LIST:
         api = CommCareHqApi(api_name='v%d.%d' % version)
         for R in resources:
-            api.register(R())
-        for R in COMMTRACK_RESOURCES:
             api.register(R())
         yield (r'^', include(api.urls))
     yield url(r'^v0.1/xform_es/$', XFormES.as_domain_specific_view())
