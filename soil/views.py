@@ -40,7 +40,7 @@ def ajax_job_poll(request, download_id, template="soil/partials/dl_status.html")
     try:
         context = get_download_context(download_id, check_state=True)
     except TaskFailedError as e:
-        context = {'error': str(e)}
+        context = {'error': list(e)}
         return HttpResponseServerError(render(request, template, context))
     return render(request, template, context)
 
