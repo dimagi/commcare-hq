@@ -1,6 +1,7 @@
 from StringIO import StringIO
 from mimetypes import guess_all_extensions, guess_type
 import uuid
+from wsgiref.util import FileWrapper
 import zipfile
 import logging
 import os
@@ -514,11 +515,24 @@ def make_zip_tempfile_async(include_multimedia_files, include_index_files,
                     file_compression = zipfile.ZIP_STORED if extension in MULTIMEDIA_EXTENSIONS else compression
                     z.writestr(path, data, file_compression)
 
-    return expose_file_download(fpath,
-                                mimetype='application/zip' if compress_zip else 'application/x-zip-compressed',
-                                download_id=download_id,
-                                content_disposition='attachment; filename="{fname}"'.format(fname=filename),
-                                use_transfer=use_transfer), errors
+    common_kwargs = dict(
+        mimetype='application/zip' if compress_zip else 'application/x-zip-compressed',
+        content_disposition='attachment; filename="{fname}"'.format(fname=filename),
+        download_id=download_id,
+    )
+    if use_transfer:
+        download = expose_file_download(
+            fpath,
+            use_transfer=use_transfer,
+            **common_kwargs
+        )
+    else:
+        download = expose_cached_download(
+            FileWrapper(open(fpath)),
+            expiry=(1 * 60 * 60),
+            **common_kwargs
+        )
+    return download, errors
 
 
 class DownloadMultimediaZip(ApplicationViewMixin):
