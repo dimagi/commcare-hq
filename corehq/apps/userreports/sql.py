@@ -6,6 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from corehq.db import Session
 from corehq.apps.reports.sqlreport import DatabaseColumn
 from dimagi.utils.decorators.memoized import memoized
+from fluff import TYPE_STRING
 from fluff.util import get_column_type
 
 metadata = sqlalchemy.MetaData()
@@ -84,7 +85,7 @@ def get_indicator_table(indicator_config, custom_metadata=None):
 def column_to_sql(column):
     return sqlalchemy.Column(
         column.id,
-        get_column_type(column.datatype),
+        _get_column_type(column.datatype),
         nullable=column.is_nullable,
         primary_key=column.is_primary_key,
     )
@@ -209,3 +210,11 @@ def _expand_column(report_column, distinct_values):
             help_text=report_column.description
         ))
     return columns
+
+
+def _get_column_type(data_type):
+    # Override the behavior of fluff.util.get_column_type by returning a
+    # unicode field of size 1024 instead of 255 when the data_type is TYPE_STRING
+    if data_type == TYPE_STRING:
+        return sqlalchemy.Unicode(1024)
+    return get_column_type(data_type)
