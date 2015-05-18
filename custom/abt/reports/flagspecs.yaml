@@ -150,7 +150,12 @@ http://openrosa.org/formdesigner/BBBA67FC-4E25-46B4-AB64-56F820D48A9E:
     warning: "Problem noted: Vehicle does not comply with insurance and inspection requirements. Cannot be used for IRS until rectified."
     base_path: [intro_vehicle2]
     french: "Problème constaté : Le véhicule n’est pas conforme aux exigences relatives à l’assurance et à l’inspection. Il ne peut pas être utilisé pour PID tant que ces exigences ne sont pas respectées."
-# TODO: q3 (requires unique logic)
+  - question: [q3]
+    base_path: [intro_vehicle2]
+    warning_type: "q3_special"
+    comment: ['q3_comments_action']
+    warning: "Problem noted: Driver does not have {msg}. Cannot be used for IRS until rectified."
+    french: "Problème constaté : Le conducteur n’a pas {msg}. Il ne peut pas être utilisé pour PID tant que ces exigences ne sont pas respectées."
   - question: [q4_action]
     warning: "Problem noted: Must provide safety training for driver before spray campaign."
     base_path: [intro_vehicle2]

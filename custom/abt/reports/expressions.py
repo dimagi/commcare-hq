@@ -77,6 +77,7 @@ class AbtSupervisorExpressionSpec(JsonObject):
         answer should be a string
         ignore should be a list of strings.
         """
+        answer = answer or ""
         options = set(cls._get_question_options(xform_instance, question_path))
         checked = set(answer.split(" "))
         unchecked = options - checked
@@ -132,8 +133,10 @@ class AbtSupervisorExpressionSpec(JsonObject):
             for partial in repeat_items:
 
                 form_value = self._get_val(partial, spec['question'])
+                warning_type = spec.get("warning_type", None)
 
-                if spec.get("warning_type", None) == "unchecked":
+                if warning_type == "unchecked" and form_value:
+                    # Don't raise flag if no answer given
                     ignore = spec.get("ignore", [])
                     unchecked = self._get_unchecked(
                         item,
@@ -146,6 +149,23 @@ class AbtSupervisorExpressionSpec(JsonObject):
                         docs.append({
                             'flag': spec['question'][-1],
                             'warning': self._get_warning(spec, item).format(msg=", ".join(unchecked)),
+                            'comments': self._get_comments(partial, spec)
+                        })
+
+                if warning_type == "q3_special" and form_value:
+                    # One of the questions doesn't follow the same format as the
+                    # others, hence this special case.
+                    missing_items = ""
+                    if form_value == "only_license":
+                        missing_items = "cell"
+                    if form_value == "only_cell":
+                        missing_items = "license"
+                    if form_value == "none":
+                        missing_items = "cell, license"
+                    if missing_items:
+                        docs.append({
+                            'flag': spec['question'][-1],
+                            'warning': self._get_warning(spec, item).format(msg=missing_items),
                             'comments': self._get_comments(partial, spec)
                         })
 
