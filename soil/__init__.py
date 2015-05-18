@@ -208,17 +208,18 @@ class FileDownload(DownloadBase):
 
     def toHttpResponse(self):
         if self.use_transfer:
-            return TransferHttpResponse(self.filename, mimetype=self.mimetype)
+            response = TransferHttpResponse(self.filename, mimetype=self.mimetype)
         else:
             response = StreamingHttpResponse(FileWrapper(open(self.filename), CHUNK_SIZE),
                                              mimetype=self.mimetype)
-            response['Content-Length'] = os.path.getsize(self.filename)
-            response['Content-Disposition'] = self.content_disposition
-            if self.transfer_encoding is not None:
-                response['Transfer-Encoding'] = self.transfer_encoding
-            for k, v in self.extras.items():
-                response[k] = v
-            return response
+
+        response['Content-Length'] = os.path.getsize(self.filename)
+        response['Content-Disposition'] = self.content_disposition
+        if self.transfer_encoding is not None:
+            response['Transfer-Encoding'] = self.transfer_encoding
+        for k, v in self.extras.items():
+            response[k] = v
+        return response
 
     @classmethod
     def create(cls, path, **kwargs):
