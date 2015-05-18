@@ -5,7 +5,7 @@ from soil import CachedDownload
 import uuid
 from celery.schedules import crontab
 from soil.heartbeat import write_file_heartbeat, write_cache_heartbeat
-from soil.util import expose_cached_download
+from soil.util import expose_download
 from django.conf import settings
 
 @task
@@ -28,7 +28,7 @@ def prepare_download(download_id, payload_func, content_disposition, mimetype, e
         payload = payload_func(process=prepare_download)
     except TypeError:
         payload = payload_func()
-    expose_cached_download(payload, expiry, mimetype=mimetype,
+    expose_download(payload, expiry, mimetype=mimetype,
                     content_disposition=content_disposition,
                     download_id=download_id)
     

@@ -1,25 +1,40 @@
-from soil import DownloadBase, CachedDownload, FileDownload
+from django.conf import settings
+from django.utils import importlib
+from soil import FileDownload, DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.heartbeat import heartbeat_enabled, is_alive
 
 
-def expose_cached_download(payload, expiry, **kwargs):
+def get_default_backend():
     """
-    Expose a cache download object.
+    Get default export class. To override set it in your settings.
+    
+    This defaults to FileDownload.
     """
-    ref = CachedDownload.create(payload, expiry, **kwargs)
+    if hasattr(settings, "SOIL_BACKEND"):
+        # Trying to import the given backend, in case it's a dotted path
+        backend = settings.SOIL_BACKEND
+        mod_path, cls_name = backend.rsplit('.', 1)
+        try:
+            mod = importlib.import_module(mod_path)
+            return getattr(mod, cls_name)
+        except (AttributeError, ImportError):
+            raise ValueError("Could not find soil backend '%s'" % backend)
+    
+    return FileDownload
+        
+def expose_download(payload, expiry, backend=None, **kwargs):
+    """
+    Expose a download object. Fully customizable, but allows 
+    you to rely on global defaults if you don't care how things
+    are stored.
+    """
+    if backend is None:
+        backend = get_default_backend()
+    
+    ref = backend.create(payload, expiry, **kwargs)
     ref.save(expiry)
     return ref
-
-
-def expose_file_download(path, **kwargs):
-    """
-    Expose a file download object that potentially uses the external drive
-    """
-    ref = FileDownload.create(path, **kwargs)
-    ref.save()
-    return ref
-
 
 def get_download_context(download_id, check_state=False):
     is_ready = False
@@ -42,8 +57,6 @@ def get_download_context(download_id, check_state=False):
             is_ready = True
             result = download_data.task.result
             context['result'] = result and result.get('messages')
-            if result and result.get('errors'):
-                raise TaskFailedError(result.get('errors'))
 
     alive = True
     if heartbeat_enabled():
