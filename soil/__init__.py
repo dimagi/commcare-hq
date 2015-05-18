@@ -4,12 +4,12 @@ from django.db import IntegrityError
 from django.core import cache
 from django.core.servers.basehttp import FileWrapper
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse
+from django.http import HttpResponse, StreamingHttpResponse
 import uuid
 from django.conf import settings
-import tempfile
 import os
 import stat
+from django_transfer import TransferHttpResponse
 from tempfile import mkstemp
 
 GLOBAL_RW = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH
@@ -19,6 +19,7 @@ if SOIL_DEFAULT_CACHE != 'default':
     assert SOIL_DEFAULT_CACHE in settings.CACHES, \
         "%s not found in settings.CACHES. Check you SOIL_DEFAULT_CACHE setting." % SOIL_DEFAULT_CACHE
 
+CHUNK_SIZE = 8192
 
 class DownloadBase(object):
     """
@@ -186,34 +187,43 @@ class CachedDownload(DownloadBase):
 class FileDownload(DownloadBase):
     """
     Download that lives on the filesystem
+    Uses django-transfer to get files stored on the external drive if use_transfer=True
     """
-    
-    def __init__(self, filename, mimetype="text/plain", 
+
+    def __init__(self, filename, mimetype="text/plain",
                  content_disposition='attachment; filename="download.txt"',
-                 transfer_encoding=None, extras=None, download_id=None, cache_backend='default'):
-        super(FileDownload, self).__init__(mimetype, content_disposition, 
+                 transfer_encoding=None, extras=None, download_id=None, cache_backend='default',
+                 use_transfer=False):
+        super(FileDownload, self).__init__(mimetype, content_disposition,
                                              transfer_encoding, extras, download_id, cache_backend)
         self.filename = filename
-    
+        self.use_transfer = use_transfer
+
     def get_content(self):
         with open(self.filename, 'rb') as f:
             return f.read()
-        
+
     def get_filename(self):
         return self.filename
 
+    def toHttpResponse(self):
+        if self.use_transfer:
+            return TransferHttpResponse(self.filename, mimetype=self.mimetype)
+        else:
+            response = StreamingHttpResponse(FileWrapper(open(self.filename), CHUNK_SIZE),
+                                             mimetype=self.mimetype)
+            response['Content-Length'] = os.path.getsize(self.filename)
+            response['Content-Disposition'] = self.content_disposition
+            if self.transfer_encoding is not None:
+                response['Transfer-Encoding'] = self.transfer_encoding
+            for k, v in self.extras.items():
+                response[k] = v
+            return response
+
     @classmethod
-    def create(cls, payload, expiry, **kwargs):
+    def create(cls, path, **kwargs):
         """
-        Create a FileDownload object from a payload, plus any 
+        Create a FileDownload object from a payload, plus any
         additional arguments to pass through to the constructor.
         """
-        fd, path = tempfile.mkstemp()
-        os.chmod(path, GLOBAL_RW)
-        with os.fdopen(fd, "wb") as f:
-            if isinstance(payload, FileWrapper):
-                for chunk in payload:
-                    f.write(chunk)
-            else:
-                f.write(payload)
         return cls(filename=path, **kwargs)
