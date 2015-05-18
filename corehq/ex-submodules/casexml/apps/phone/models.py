@@ -574,17 +574,15 @@ class SimplifiedSyncLog(AbstractSyncLog):
                         self.case_ids_on_phone.add(case._id)
                         made_changes = True
                 elif action.action_type == const.CASE_ACTION_UPDATE:
-                    self._assert(
-                        self.phone_is_holding_case(case._id),
-                        "phone doesn't have case being updated: %s" % case._id,
-                        case._id,
-                    )
                     if not phone_owns_case:
                         # we must have just changed the owner_id to something we didn't own
                         # we can try pruning this case since it's no longer relevant
                         self.prune_case(case._id)
                         made_changes = True
-
+                    else:
+                        if case._id in self.dependent_case_ids_on_phone:
+                            self.dependent_case_ids_on_phone.remove(case._id)
+                            made_changes = True
                 elif action.action_type == const.CASE_ACTION_INDEX:
                     # we should never have to do anything with case IDs here since the
                     # indexed case should already be on the phone.
