@@ -662,6 +662,7 @@ class MultiUserSyncTest(SyncBaseTest):
         self.assertTrue(USER_ID in self.sync_log.owner_ids_on_phone)
         # since we got a new sync log, have to update the factory as well
         self.factory.form_extras = {'last_sync_token': self.sync_log._id}
+        self.factory.case_defaults.update({'owner_id': SHARED_ID})
 
     def testSharedCase(self):
         # create a case by one user
@@ -987,6 +988,7 @@ class MultiUserSyncTest(SyncBaseTest):
         other_sync_log = synclog_from_restore_payload(
             generate_restore_payload(self.project, self.other_user)
         )
+
         # change the child's owner from another user
         child_reassignment = CaseBlock(
             create=False,
