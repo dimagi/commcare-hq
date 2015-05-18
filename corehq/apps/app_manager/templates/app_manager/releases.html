@@ -387,7 +387,15 @@
                                                     <ol>
                                                         <li>
                                                             {% trans "Download" %}
-                                                            <a data-bind="attr: {href: $root.url('ccz', id)}">CommCare.ccz</a>
+                                                            <a href="#" data-bind="click: function(){
+                                                                // Not so nice... Hide the open modal so we don't get bootstrap recursion errors
+                                                                // http://stackoverflow.com/questions/13649459/twitter-bootstrap-multiple-modal-error
+                                                                $('.modal.fade.in').modal('hide')
+
+                                                                $('#download-ccz-modal').modal({show: true});
+                                                            }">
+                                                                CommCare.ccz
+                                                            </a>
                                                         </li>
                                                         <li>
                                                             {% trans "Transfer it to your Android phone's file system" %}
@@ -509,7 +517,7 @@
                             </div>
                             <div class="accordion-body collapse" id="{{ saved_app.id }}_multimedia">
                                 <div class="accordion-inner">
-                                    {% include 'hqmedia/partials/multimedia_zip_notice.html' %}
+                                    {% include 'hqmedia/partials/multimedia_zip_notice.html' with include_modal=False %}
                                 </div>
                             </div>
                         </div>
@@ -532,4 +540,12 @@
             </div>
         </script>
     </div>
+
+<!-- Async Download Modals -->
+{% url "download_ccz" app.domain app.id as ccz_url %}
+{% include 'app_manager/partials/download_async_modal.html' with element_id='download-ccz-modal' download_url=ccz_url%}
+
+{% url "download_multimedia_zip" domain app.get_id as media_url%}
+{% include 'app_manager/partials/download_async_modal.html' with element_id='multimedia-zip-modal' download_url=media_url%}
+
 {% endblock %}

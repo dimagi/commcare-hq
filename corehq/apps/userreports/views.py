@@ -489,7 +489,7 @@ def process_url_params(params, columns):
 
         for suffix, fn in sql_directives:
             if key.endswith(suffix):
-                field = key.rstrip(suffix)
+                field = key[:-len(suffix)]
                 if field not in columns:
                     raise UserQueryError(_('No field named {}').format(field))
                 sql_filters.append(fn(columns[field], value))

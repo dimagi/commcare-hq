@@ -14,7 +14,7 @@ from casexml.apps.phone.exceptions import (
 )
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, FILE_RESTORE, STREAM_RESTORE_CACHE
 from dimagi.utils.decorators.memoized import memoized
-from casexml.apps.phone.models import SyncLog
+from casexml.apps.phone.models import SyncLog, get_properly_wrapped_sync_log
 import logging
 from dimagi.utils.couch.database import get_db, get_safe_write_kwargs
 from casexml.apps.phone import xml
@@ -122,8 +122,7 @@ class FileRestoreResponse(RestoreResponse):
 
     def __init__(self, username=None, items=False):
         super(FileRestoreResponse, self).__init__(username, items)
-        payload_dir = getattr(settings, 'RESTORE_PAYLOAD_DIR', None)
-        self.filename = path.join(payload_dir or tempfile.gettempdir(), uuid4().hex)
+        self.filename = path.join(settings.SHARED_DRIVE_CONF.restore_dir, uuid4().hex)
 
         self.response_body = FileIO(self.get_filename(self.BODY_TAG_SUFFIX), 'w+')
 
@@ -261,9 +260,9 @@ class CachedResponse(object):
             return HttpResponse(self.payload, mimetype="text/xml")
 
 
-def get_restore_class(user):
+def get_restore_class(domain, user):
     restore_class = StringRestoreResponse
-    if FILE_RESTORE.enabled(user.domain) or FILE_RESTORE.enabled(user.username):
+    if FILE_RESTORE.enabled(domain) or FILE_RESTORE.enabled(user.username):
         restore_class = FileRestoreResponse
 
     return restore_class
@@ -311,8 +310,9 @@ class RestoreState(object):
     This allows the providers to set values on the state, for either logging or performance
     reasons.
     """
-    def __init__(self, domain, user, params):
-        self.domain = domain
+    def __init__(self, project, user, params):
+        self.project = project
+        self.domain = project.name if project else ''
         self.user = user
         self.params = params
         self.provider_log = {}  # individual data providers can log stuff here
@@ -336,7 +336,7 @@ class RestoreState(object):
     def last_sync_log(self):
         if self.params.sync_log_id:
             try:
-                sync_log = SyncLog.get(self.params.sync_log_id)
+                sync_log = get_properly_wrapped_sync_log(self.params.sync_log_id)
             except ResourceNotFound:
                 # if we are in loose mode, return an HTTP 412 so that the phone will
                 # just force a fresh sync
@@ -368,8 +368,8 @@ class RestoreState(object):
     @property
     @memoized
     def stock_settings(self):
-        if self.domain and self.domain.commtrack_settings:
-            return self.domain.commtrack_settings.get_ota_restore_settings()
+        if self.project and self.project.commtrack_settings:
+            return self.project.commtrack_settings.get_ota_restore_settings()
         else:
             return StockSettings()
 
@@ -397,7 +397,7 @@ class RestoreState(object):
 
     @property
     def restore_class(self):
-        return get_restore_class(self.user)
+        return get_restore_class(self.domain, self.user)
 
 
 class RestoreConfig(object):
@@ -410,16 +410,16 @@ class RestoreConfig(object):
     :param cache_settings:  The RestoreCacheSettings associated with this (see above).
     """
 
-    def __init__(self, domain=None, user=None, params=None, cache_settings=None):
-        self.domain = domain
+    def __init__(self, project=None, user=None, params=None, cache_settings=None):
+        self.project = project
+        self.domain = project.name if project else ''
         self.user = user
         self.params = params or RestoreParams()
         self.cache_settings = cache_settings or RestoreCacheSettings()
 
         self.version = self.params.version
-        self.restore_state = RestoreState(self.domain, self.user, self.params)
+        self.restore_state = RestoreState(self.project, self.user, self.params)
 
-        self.domain = domain
         self.force_cache = self.cache_settings.force_cache
         self.cache_timeout = self.cache_settings.cache_timeout
         self.overwrite_cache = self.cache_settings.overwrite_cache
@@ -435,7 +435,7 @@ class RestoreConfig(object):
         try:
             self.restore_state.validate_state()
         except InvalidSyncLogException, e:
-            if LOOSE_SYNC_TOKEN_VALIDATION.enabled(self.domain.name):
+            if LOOSE_SYNC_TOKEN_VALIDATION.enabled(self.domain):
                 # This exception will get caught by the view and a 412 will be returned to the phone for resync
                 raise RestoreException(e)
             else:
@@ -501,7 +501,7 @@ class RestoreConfig(object):
             return CachedResponse(None)
 
         if self.sync_log:
-            stream = STREAM_RESTORE_CACHE.enabled(self.user.domain)
+            stream = STREAM_RESTORE_CACHE.enabled(self.domain)
             payload = self.sync_log.get_cached_payload(self.version, stream=stream)
         else:
             payload = self.cache.get(self._initial_cache_key())

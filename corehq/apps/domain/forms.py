@@ -1231,9 +1231,12 @@ class InternalSubscriptionManagementForm(forms.Form):
     @property
     @memoized
     def current_contact_emails(self):
-        return BillingContactInfo.objects.get_or_create(
-            account=self.current_subscription.account
-        )[0].emails
+        try:
+            return BillingContactInfo.objects.get(
+                account=self.current_subscription.account
+            ).emails
+        except BillingContactInfo.DoesNotExist:
+            return None
 
     def __init__(self, domain, web_user, *args, **kwargs):
         super(InternalSubscriptionManagementForm, self).__init__(*args, **kwargs)
@@ -1455,7 +1458,9 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
                     '<p><i class="icon-info-sign"></i> Clicking "Update" will set '
                     'up the subscription in CommCareHQ to one of our standard '
                     'contracted plans.  If you need to set up a non-standard plan, '
-                    'please email accounts@dimagi.com.</p>'
+                    'please email %(accounts_email)s.</p>' % {
+                        'accounts_email': settings.ACCOUNTS_EMAIL,
+                    }
                 )),
                 self.form_actions
             )

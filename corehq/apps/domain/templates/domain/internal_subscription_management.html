@@ -10,21 +10,17 @@
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-    <script type="text/javascript">
+    <script>
         var viewModel = {
             subscriptionType: ko.observable($('#id_subscription_type').val() || null)
         };
         ko.applyBindings(viewModel, document.getElementById('subscription_management'));
-    </script>
 
-    <script>
         var billingInfoHandler = new BillingContactInfoHandler(
             "{% trans "Please enter a valid email." %}"
         );
         billingInfoHandler.init();
-    </script>
 
-    <script>
         $('.date-picker').datepicker({ dateFormat: "yy-mm-dd" });
     </script>
 {% endblock %}

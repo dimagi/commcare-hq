@@ -43,13 +43,13 @@
 trunk: master
 name: autostaging
 branches:
+  - fix-time-ago-sort  # danny 5/15
   - process-timezone  # danny 5/7
   - subscription-no-contact-info # bb 8/4
   - vellum-staging # J$ 11/13
   - locations-as-groups # tw 1/20
   - fixtures-spike  # cz 1/29
   - usercase # Norman 3/27
-  - small-invoices-incr # Nick P 4/30
   - case-list-menu-icons # TS 5/4
   - update-submodules # TS 5/6
   - locations-for-robber-barons  # Ethan 5/7

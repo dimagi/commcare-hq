@@ -21,8 +21,7 @@ class ILSRandRTest(ILSTestScript):
                                                  "group_c": 0})
         self.run_script(script)
 
-        sp = self.dis.linked_supply_point()
-        sps = SupplyPointStatus.objects.filter(supply_point=sp.get_id,
+        sps = SupplyPointStatus.objects.filter(location_id=self.dis.get_id,
                                                status_type="rr_dist").order_by("-status_date")[0]
 
         self.assertEqual(SupplyPointStatusValues.SUBMITTED, sps.status_value)
@@ -40,8 +39,7 @@ class ILSRandRTest(ILSTestScript):
                                                  "group_c": 12})
         self.run_script(script)
 
-        sp = self.dis.linked_supply_point()
-        sps = SupplyPointStatus.objects.filter(supply_point=sp.get_id,
+        sps = SupplyPointStatus.objects.filter(location_id=self.dis.get_id,
                                                status_type="rr_dist").order_by("-status_date")[0]
 
         self.assertEqual(SupplyPointStatusValues.SUBMITTED, sps.status_value)
@@ -56,8 +54,7 @@ class ILSRandRTest(ILSTestScript):
                                         "sp_name": self.loc1.name})
         self.run_script(script)
 
-        sp = self.loc1.linked_supply_point()
-        sps = SupplyPointStatus.objects.filter(supply_point=sp.get_id,
+        sps = SupplyPointStatus.objects.filter(location_id=self.loc1.get_id,
                                                status_type="rr_fac").order_by("-status_date")[0]
 
         self.assertEqual(SupplyPointStatusValues.SUBMITTED, sps.status_value)
@@ -71,8 +68,7 @@ class ILSRandRTest(ILSTestScript):
         """.format(NOT_SUBMITTED_CONFIRM)
         self.run_script(script)
 
-        sp = self.loc1.linked_supply_point()
-        sps = SupplyPointStatus.objects.filter(supply_point=sp.get_id,
+        sps = SupplyPointStatus.objects.filter(location_id=self.loc1.get_id,
                                                status_type="rr_fac").order_by("-status_date")[0]
 
         self.assertEqual(SupplyPointStatusValues.NOT_SUBMITTED, sps.status_value)

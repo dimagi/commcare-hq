@@ -6,7 +6,7 @@ import zipfile
 from django.conf import settings
 from django.http import StreamingHttpResponse
 from django.views.generic import View
-from django_transfer import TransferHttpResponse, is_enabled as transfer_enabled
+from django_transfer import TransferHttpResponse
 from corehq.util.view_utils import set_file_download
 
 CHUNK_SIZE = 8192
@@ -51,15 +51,16 @@ class DownloadZip(View):
             return error_response
 
         path = None
-        if transfer_enabled() and os.path.isdir(settings.TRANSFER_FILE_DIR):
-            path = os.path.join(settings.TRANSFER_FILE_DIR, uuid.uuid4().hex)
+        transfer_enabled = settings.SHARED_DRIVE_CONF.transfer_enabled
+        if transfer_enabled:
+            path = os.path.join(settings.SHARED_DRIVE_CONF.transfer_dir, uuid.uuid4().hex)
 
         files, errors = self.iter_files()
         fpath = make_zip_file(files, compress=self.compress_zip, path=path)
         if errors:
             self.log_errors(errors)
 
-        if transfer_enabled():
+        if transfer_enabled:
             return TransferHttpResponse(fpath, mimetype=self.zip_mimetype)
         else:
             response = StreamingHttpResponse(FileWrapper(open(fpath), CHUNK_SIZE), mimetype=self.zip_mimetype)
