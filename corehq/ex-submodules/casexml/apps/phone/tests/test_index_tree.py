@@ -144,7 +144,6 @@ class PruningTest(SimpleTestCase):
         self.assertTrue(parent_id in sync_log.dependent_case_ids_on_phone)
         self.assertFalse(child_id_1 in sync_log.case_ids_on_phone)
 
-
         # pruning the other one should wipe it
         sync_log.prune_case(child_id_2)
         for id in all_ids:
@@ -217,7 +216,7 @@ class PruningTest(SimpleTestCase):
         tree = IndexTree(indices={
             id: [id],
         })
-        sync_log =  SimplifiedSyncLog(index_tree=tree, case_ids_on_phone=set([id]))
+        sync_log = SimplifiedSyncLog(index_tree=tree, case_ids_on_phone=set([id]))
         sync_log.prune_case(id)
         self.assertFalse(id in sync_log.case_ids_on_phone)
         self.assertFalse(id in sync_log.dependent_case_ids_on_phone)

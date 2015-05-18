@@ -517,7 +517,8 @@ class SimplifiedSyncLog(AbstractSyncLog):
             if to_remove != case_id:
                 # if the case had indexes they better also be in our removal list (except for ourselves)
                 for index in indices:
-                    assert index in candidates_to_remove, "expected {} in {} but wasn't".format(index, candidates_to_remove)
+                    assert index in candidates_to_remove, \
+                        "expected {} in {} but wasn't".format(index, candidates_to_remove)
             self.case_ids_on_phone.remove(to_remove)
             self.dependent_case_ids_on_phone.remove(to_remove)
 
@@ -530,7 +531,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
             for this_case_index in this_case_indices:
                 if (this_case_index in self.dependent_case_ids_on_phone and
-                            this_case_index not in candidates_to_remove):
+                        this_case_index not in candidates_to_remove):
                     self.prune_case(this_case_index)
         else:
             # we have some possible candidates for removal. we should check each of them.
