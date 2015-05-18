@@ -138,7 +138,6 @@ class SyncTokenUpdateTest(SyncBaseTest):
         sync_log = get_exactly_one_wrapped_sync_log()
         self._testUpdate(sync_log.get_id, {}, {})
                          
-        
     def testTokenAssociation(self):
         """
         Test that individual create, update, and close submissions update
@@ -443,6 +442,29 @@ class SyncTokenUpdateTest(SyncBaseTest):
         for id in all_ids:
             # once the child is closed, all three are no longer relevant
             self.assertFalse(sync_log.phone_is_holding_case(id))
+
+    def test_create_immediately_irrelevant_parent_case(self):
+        """
+        Make a case that is only relevant through a dependency at the same
+        time as the dependency is made. Make sure it is relevant.
+        """
+        # create a parent and child case (with index) from one user
+        parent_id, child_id = [uuid.uuid4().hex for i in range(2)]
+        self.factory.create_or_update_cases([
+            CaseStructure(
+                case_id=child_id,
+                attrs={'create': True},
+                relationships=[CaseRelationship(
+                    CaseStructure(case_id=parent_id, attrs={'create': True, 'owner_id': uuid.uuid4().hex}),
+                    relationship=PARENT_TYPE,
+                    related_type=PARENT_TYPE,
+                )],
+            )
+        ])
+        index_ref = CommCareCaseIndex(identifier=PARENT_TYPE,
+                                      referenced_type=PARENT_TYPE,
+                                      referenced_id=parent_id)
+        self._testUpdate(self.sync_log._id, {child_id: [index_ref]}, {parent_id: []})
 
 
 class FileRestoreSyncTokenUpdateTest(SyncTokenUpdateTest):
@@ -840,8 +862,7 @@ class MultiUserSyncTest(SyncBaseTest):
         # original user syncs again
         # make sure there are no new changes
         assert_user_doesnt_have_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
-        
-                
+
     def testIndexesSync(self):
         # create a parent and child case (with index) from one user
         parent_id = "indexes_sync_parent"

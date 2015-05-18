@@ -264,12 +264,12 @@ class SyncLog(AbstractSyncLog):
         state = self.get_case_state(case_id)
         self.cases_on_phone.remove(state)
         self._case_state_map.reset_cache(self)
-
         all_indices = [i for case_state in self.cases_on_phone + self.dependent_cases_on_phone
                        for i in case_state.indices]
         if any([i.referenced_id == case_id for i in all_indices]):
             self.dependent_cases_on_phone.append(state)
             self._dependent_case_state_map.reset_cache(self)
+        return state
 
     def _phone_owns(self, action):
         # whether the phone thinks it owns an action block.
@@ -284,6 +284,8 @@ class SyncLog(AbstractSyncLog):
         # for all the cases update the relevant lists in the sync log
         # so that we can build a historical record of what's associated
         # with the phone
+        removed_states = {}
+        new_indices = set()
         for case in case_list:
             actions = case.get_actions_for_form(xform.get_id)
             for action in actions:
@@ -291,10 +293,12 @@ class SyncLog(AbstractSyncLog):
                 if action.action_type == const.CASE_ACTION_CREATE:
                     self._assert(not self.phone_has_case(case._id),
                                  'phone has case being created: %s' % case._id)
+                    starter_state = CaseState(case_id=case.get_id, indices=[])
                     if self._phone_owns(action):
-                        self.cases_on_phone.append(CaseState(case_id=case.get_id,
-                                                             indices=[]))
+                        self.cases_on_phone.append(starter_state)
                         self._case_state_map.reset_cache(self)
+                    else:
+                        removed_states[case._id] = starter_state
                 elif action.action_type == const.CASE_ACTION_UPDATE:
                     self._assert(
                         self.phone_has_case(case._id),
@@ -305,7 +309,9 @@ class SyncLog(AbstractSyncLog):
                     if not self._phone_owns(action):
                         # only action necessary here is in the case of
                         # reassignment to an owner the phone doesn't own
-                        self.archive_case(case.get_id)
+                        state = self.archive_case(case.get_id)
+                        if state:
+                            removed_states[case._id] = state
                 elif action.action_type == const.CASE_ACTION_INDEX:
                     # in the case of parallel reassignment and index update
                     # the phone might not have the case
@@ -317,10 +323,27 @@ class SyncLog(AbstractSyncLog):
                         case_state = self.get_dependent_case_state(case.get_id)
                     # reconcile indices
                     if case_state:
+                        for index in action.indices:
+                            new_indices.add(index.referenced_id)
                         case_state.update_indices(action.indices)
+
                 elif action.action_type == const.CASE_ACTION_CLOSE:
                     if self.phone_has_case(case.get_id):
-                        self.archive_case(case.get_id)
+                        state = self.archive_case(case.get_id)
+                        if state:
+                            removed_states[case._id] = state
+
+        # if we just removed a state and added an index to it
+        # we have to put it back in our dependent case list
+        readded_any = False
+        for index in new_indices:
+            if index in removed_states:
+                self.dependent_cases_on_phone.append(removed_states[index])
+                readded_any = True
+
+        if readded_any:
+            self._dependent_case_state_map.reset_cache(self)
+
         if case_list:
             try:
                 self.save()
@@ -567,6 +590,9 @@ class SimplifiedSyncLog(AbstractSyncLog):
                     # however, we should update our index tree accordingly
                     for index in action.indices:
                         self.index_tree.add_index(case._id, index.referenced_id)
+                        if index.referenced_id not in self.case_ids_on_phone:
+                            self.case_ids_on_phone.add(index.referenced_id)
+                            self.dependent_case_ids_on_phone.add(index.referenced_id)
 
                 elif action.action_type == const.CASE_ACTION_CLOSE:
                     # this case is being closed.
