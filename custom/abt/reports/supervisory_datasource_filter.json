@@ -3,72 +3,72 @@
   "filters": [
     {
       "operator": "eq", 
-      "type": "boolean_expression", 
       "expression": {
         "datatype": null, 
         "type": "property_name", 
         "property_name": "xmlns"
       }, 
+      "type": "boolean_expression", 
       "property_value": "http://openrosa.org/formdesigner/BB2BF979-BD8F-4B8D-BCF8-A46451228BA9"
     }, 
     {
       "operator": "eq", 
-      "type": "boolean_expression", 
       "expression": {
         "datatype": null, 
         "type": "property_name", 
         "property_name": "xmlns"
       }, 
+      "type": "boolean_expression", 
       "property_value": "http://openrosa.org/formdesigner/BBBA67FC-4E25-46B4-AB64-56F820D48A9E"
     }, 
     {
       "operator": "eq", 
-      "type": "boolean_expression", 
       "expression": {
         "datatype": null, 
         "type": "property_name", 
         "property_name": "xmlns"
       }, 
+      "type": "boolean_expression", 
       "property_value": "http://openrosa.org/formdesigner/54338047-CFB6-4D5B-861B-2256A10BBBC8"
     }, 
     {
       "operator": "eq", 
-      "type": "boolean_expression", 
       "expression": {
         "datatype": null, 
         "type": "property_name", 
         "property_name": "xmlns"
       }, 
+      "type": "boolean_expression", 
       "property_value": "http://openrosa.org/formdesigner/2BAC5FDC-72F3-4AF4-8381-9160E8AE13CF"
     }, 
     {
       "operator": "eq", 
-      "type": "boolean_expression", 
       "expression": {
         "datatype": null, 
         "type": "property_name", 
         "property_name": "xmlns"
       }, 
+      "type": "boolean_expression", 
       "property_value": "http://openrosa.org/formdesigner/7B543EA4-A416-4E46-A121-C4F57412B5AA"
     }, 
     {
       "operator": "eq", 
-      "type": "boolean_expression", 
       "expression": {
         "datatype": null, 
         "type": "property_name", 
         "property_name": "xmlns"
       }, 
+      "type": "boolean_expression", 
       "property_value": "http://openrosa.org/formdesigner/89F60CF0-C6A7-4AD8-A48E-AA0F7A7A9B4D"
     }, 
     {
       "operator": "eq", 
-      "type": "boolean_expression", 
       "expression": {
         "datatype": null, 
         "type": "property_name", 
         "property_name": "xmlns"
       }, 
+      "type": "boolean_expression", 
       "property_value": "http://openrosa.org/formdesigner/1BE9CFE7-8EE6-4DFA-B9ED-D37993729843"
     }
   ]

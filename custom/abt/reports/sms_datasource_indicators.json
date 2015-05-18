@@ -33,7 +33,7 @@
       "value_expression": {
         "datatype": null, 
         "type": "property_name", 
-        "property_name": "level_1_data"
+        "property_name": "level_1_name"
       }, 
       "type": "related_doc", 
       "related_doc_type": "CommCareCase", 
@@ -60,7 +60,7 @@
       "value_expression": {
         "datatype": null, 
         "type": "property_name", 
-        "property_name": "level_2_data"
+        "property_name": "level_2_name"
       }, 
       "type": "related_doc", 
       "related_doc_type": "CommCareCase", 
@@ -87,7 +87,7 @@
       "value_expression": {
         "datatype": null, 
         "type": "property_name", 
-        "property_name": "level_3_data"
+        "property_name": "level_3_name"
       }, 
       "type": "related_doc", 
       "related_doc_type": "CommCareCase", 
@@ -114,7 +114,7 @@
       "value_expression": {
         "datatype": null, 
         "type": "property_name", 
-        "property_name": "level_4_data"
+        "property_name": "level_4_name"
       }, 
       "type": "related_doc", 
       "related_doc_type": "CommCareCase", 

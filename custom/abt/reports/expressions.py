@@ -110,17 +110,40 @@ class AbtSupervisorExpressionSpec(JsonObject):
             return spec.get("french", default)
         return default
 
+    @classmethod
+    def _get_inspector_names(cls, item):
+        repeat_items = cls._get_val(item, ['employee_group', 'employee'])
+        if repeat_items == ():
+            return ""
+        if type(repeat_items) != list:
+            repeat_items = [repeat_items]
+        repeat_items = [{'form': x} for x in repeat_items]
+
+
+
+        names = []
+        for i in repeat_items:
+            for q in ['other_abt_employee_name', 'abt_employee_name', 'other_non-abt_employee_name']:
+                name = cls._get_val(i, ['abt_emp_list', q])
+                if name:
+                    names.append(name)
+                    break
+
+        return ", ".join(names)
+
     def __call__(self, item, context=None):
         """
         Given a document (item), return a list of documents representing each
         of the flagged questions.
         """
-
+        names = self._get_inspector_names(item)
         docs = []
         for spec in self._flag_specs.get(item['xmlns'], []):
 
             if spec.get("base_path", False):
                 repeat_items = self._get_val(item, spec['base_path'])
+                if repeat_items == ():
+                    repeat_items = []
                 if type(repeat_items) != list:
                     # bases will be a dict if the repeat only happened once.
                     repeat_items = [repeat_items]
@@ -149,7 +172,8 @@ class AbtSupervisorExpressionSpec(JsonObject):
                         docs.append({
                             'flag': spec['question'][-1],
                             'warning': self._get_warning(spec, item).format(msg=", ".join(unchecked)),
-                            'comments': self._get_comments(partial, spec)
+                            'comments': self._get_comments(partial, spec),
+                            'names': names,
                         })
 
                 if warning_type == "q3_special" and form_value:
@@ -166,7 +190,8 @@ class AbtSupervisorExpressionSpec(JsonObject):
                         docs.append({
                             'flag': spec['question'][-1],
                             'warning': self._get_warning(spec, item).format(msg=missing_items),
-                            'comments': self._get_comments(partial, spec)
+                            'comments': self._get_comments(partial, spec),
+                            'names': names,
                         })
 
                 else:
@@ -180,7 +205,8 @@ class AbtSupervisorExpressionSpec(JsonObject):
                             'warning': self._get_warning(spec, item).format(
                                 msg=self._get_val(partial, spec.get('warning_question', None)) or ""
                             ),
-                            'comments': self._get_comments(partial, spec)
+                            'comments': self._get_comments(partial, spec),
+                            'names': names,
                         })
 
         return docs
