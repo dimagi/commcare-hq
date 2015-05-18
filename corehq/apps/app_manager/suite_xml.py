@@ -1416,6 +1416,22 @@ class SuiteGenerator(SuiteGeneratorBase):
 
         entry.require_instance(*instances)
 
+    def get_location_autoselect(self):
+        from .models import AUTO_SELECT_LOCATION
+        user_data_key = 'commtrack-supply-point'
+        xpath = XPath(u"instance('commcaresession')"
+                       "/session/user/data/{}".format(user_data_key))
+        datum = SessionDatum(
+            id='supply_point_id',
+            function=xpath,
+        )
+        assertions = self.get_auto_select_assertions(
+            xpath,
+            AUTO_SELECT_LOCATION,
+            [user_data_key],
+        )
+        return datum, assertions
+
     @property
     def entries(self):
         # avoid circular dependency
@@ -1437,6 +1453,12 @@ class SuiteGenerator(SuiteGeneratorBase):
                     'careplan_form': self.configure_entry_careplan_form,
                 }[form.form_type]
                 config_entry(module, e, form)
+
+                if self.app.commtrack_enabled:
+                    datum, assertions = self.get_location_autoselect()
+                    e.datums.append(datum)
+                    e.assertions.extend(assertions)
+
                 results.append(e)
 
             if hasattr(module, 'case_list') and module.case_list.show:
@@ -1816,6 +1838,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 })
 
         if module.get_app().commtrack_enabled:
+            # TODO add here?
             try:
                 last_action = list(form.actions.get_load_update_actions())[-1]
                 if last_action.show_product_stock:

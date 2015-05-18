@@ -140,21 +140,24 @@ class AppStringsBase(object):
                 (u'The lookup table settings for your user are incorrect. '
                     u'This user must have access to exactly one lookup table row for the table: ${0}')
 
-        from corehq.apps.app_manager.models import AUTO_SELECT_CASE, AUTO_SELECT_FIXTURE, AUTO_SELECT_USER
+        from corehq.apps.app_manager.models import (
+            AUTO_SELECT_CASE, AUTO_SELECT_FIXTURE, AUTO_SELECT_USER,
+            AUTO_SELECT_LOCATION
+        )
 
         mode_text = {
             AUTO_SELECT_FIXTURE: u'lookup table field',
             AUTO_SELECT_USER: u'user data key',
-            AUTO_SELECT_CASE: u'case index'
+            AUTO_SELECT_CASE: u'case index',
+            AUTO_SELECT_LOCATION: u'location',
         }
 
-        for mode in [AUTO_SELECT_FIXTURE, AUTO_SELECT_CASE, AUTO_SELECT_USER]:
+        for mode, text in mode_text.items():
             key = 'case_autoload.{0}.property_missing'.format(mode)
             if key not in messages:
                 messages[key] = (u'The {} specified for case auto-selecting '
-                                 u'could not be found: ${{0}}').format(mode_text[mode])
+                                 u'could not be found: ${{0}}').format(text)
 
-        for mode in [AUTO_SELECT_FIXTURE, AUTO_SELECT_CASE, AUTO_SELECT_USER]:
             key = 'case_autoload.{0}.case_missing'.format(mode)
             if key not in messages:
                 messages[key] = u'Unable to find case referenced by auto-select case ID.'

@@ -99,6 +99,7 @@ WORKFLOW_FORM = 'form'
 AUTO_SELECT_USER = 'user'
 AUTO_SELECT_FIXTURE = 'fixture'
 AUTO_SELECT_CASE = 'case'
+AUTO_SELECT_LOCATION = 'location'
 AUTO_SELECT_RAW = 'raw'
 
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
@@ -365,7 +366,8 @@ class AutoSelectCase(DocumentSchema):
                         xpath expression.
 
     """
-    mode = StringProperty(choices=[AUTO_SELECT_USER, AUTO_SELECT_FIXTURE, AUTO_SELECT_CASE, AUTO_SELECT_RAW])
+    mode = StringProperty(choices=[AUTO_SELECT_USER, AUTO_SELECT_FIXTURE,
+            AUTO_SELECT_CASE, AUTO_SELECT_LOCATION, AUTO_SELECT_RAW])
     value_source = StringProperty()
     value_key = StringProperty(required=True)
 
