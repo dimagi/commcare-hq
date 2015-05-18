@@ -12,20 +12,15 @@ http://openrosa.org/formdesigner/BB2BF979-BD8F-4B8D-BCF8-A46451228BA9:
   - question: [q5_2]
     answer: "no"
     warning: "Send picture of defect to contractor for roof and/or floor repair. Get completion date."
-  - french: "Envoyer une photo du défaut à l’entrepreneur pour les réparations du toit et/ou du plancher. Obtenir la date d’achèvement."
-  # TODO: There are two q5_2 question_ids. Is that intended?
-  - question: [q5_2]
+    french: "Envoyer une photo du défaut à l’entrepreneur pour les réparations du toit et/ou du plancher. Obtenir la date d’achèvement."
+  - question: [q6_2]
     answer: "no"
     warning: "Send picture to contractor for installing bars and screens on windows. Get completion date."
-    french: Envoyer une image à l’entrepreneur pour l’installation des barreaux et des blindages aux fenêtres. Obtenir la date d’achèvement.
-  - question: [q6_2]
-    warning: "Send picture to contractor for installing bars and screens on windows. Get completion date."
-    french: "Améliorer l’éclairage dans l’installation de stockage. Obtenir la date d’achèvement."
+    french: "Envoyer une image à l’entrepreneur pour l’installation des barreaux et des blindages aux fenêtres. Obtenir la date d’achèvement."
   - question: [q7_2]
     answer: "no"
     warning: "Improve lighting in storage facility. Get completion date."
   - question: [q10]
-    # TODO: Test this one.
     warning_type: unchecked
     ignore: ["none"]
     warning: "Contact logistics/central storekeeper to have {msg} delivered immediately. Get delivery date.\n\nAdvise all personnel not to enter pesticide storage without PPE."
@@ -46,7 +41,6 @@ http://openrosa.org/formdesigner/BB2BF979-BD8F-4B8D-BCF8-A46451228BA9:
     answer: "yes"
     warning: "Notify storekeeper to rearrange items that are stacked too high."
     french: "Si Oui, informer le magasinier afin qu’il réarrange les articles qui sont empilés trop haut."
-  # TODO: Test this.
   - question: [q15]
     warning_type: unchecked
     ignore: ["none"]
@@ -80,7 +74,6 @@ http://openrosa.org/formdesigner/BB2BF979-BD8F-4B8D-BCF8-A46451228BA9:
     answer: "no"
     warning: "Check with central storekeeper/logistics to get delivery date for fire extinguishers."
     french: "Si Non, vérifier auprès du service logistique/magasinier central pour obtenir la date de livraison des extincteurs."
-  # TODO: Test this one
   - question: [q23]
     warning_type: unchecked
     ignore: ["none"]
