@@ -118,7 +118,7 @@ class SoftwareProductRateResource(ModelResource):
 
 class SoftwarePlanVersionResource(ModelResource):
     plan = fields.IntegerField('plan_id', null=True)
-    product_rates = fields.IntegerField('product_rate_id', null=True)
+    product_rates = AccToManyField(FutureRateResource, 'product_rates', full=True, null=True)
     feature_rates = AccToManyField(FutureRateResource, 'feature_rates', full=True, null=True)
     role = fields.IntegerField('role_id', null=True)
 
@@ -173,7 +173,7 @@ class InvoiceResource(ModelResource):
 
 class LineItemResource(ModelResource):
     invoice = fields.IntegerField('invoice_id', null=True)
-    feature_rates = AccToManyField(FutureRateResource, 'feature_rates', full=False, null=True)
+    feature_rate = fields.IntegerField('feature_rate_id', null=True)
     product_rate = fields.IntegerField('product_rate_id', null=True)
 
     class Meta(AccountingResourceMeta):
