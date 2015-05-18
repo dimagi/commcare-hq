@@ -1639,7 +1639,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
     for SLUG in ('case_list', 'task_list'):
         show = '{SLUG}-show'.format(SLUG=SLUG)
         label = '{SLUG}-label'.format(SLUG=SLUG)
-        if request.POST.get(show) and request.POST.get(label) == '':
+        if request.POST.get(show) == 'true' and (request.POST.get(label) == ''):
             # Show item, but empty label, was just getting ignored
             return HttpResponseBadRequest("A label is required for {SLUG}".format(SLUG=SLUG))
         if should_edit(SLUG):
