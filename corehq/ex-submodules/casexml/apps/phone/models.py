@@ -587,7 +587,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
                         if index.referenced_id not in self.case_ids_on_phone:
                             self.case_ids_on_phone.add(index.referenced_id)
                             self.dependent_case_ids_on_phone.add(index.referenced_id)
-
+                        made_changes = True
                 elif action.action_type == const.CASE_ACTION_CLOSE:
                     # this case is being closed.
                     # we can try pruning this case since it's no longer relevant
