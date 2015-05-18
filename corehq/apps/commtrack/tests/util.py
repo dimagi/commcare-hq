@@ -80,8 +80,8 @@ def bootstrap_domain(domain_name=TEST_DOMAIN):
     # little test utility that makes a commtrack-enabled domain with
     # a default config and a location
     domain_obj = create_domain(domain_name)
-    domain_obj.commtrack_enabled = True
     domain_obj.save(**get_safe_write_kwargs())
+    domain_obj.convert_to_commtrack()
     return domain_obj
 
 
