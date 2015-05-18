@@ -1,5 +1,6 @@
 from django.core.management import BaseCommand
 from corehq.apps.domain.models import Domain
+from corehq.toggles import OWNERSHIP_CLEANLINESS
 
 
 class Command(BaseCommand):
@@ -15,5 +16,6 @@ class Command(BaseCommand):
         else:
             assert len(args) == 0
             for domain in Domain.get_all_names():
-                print 'updating flags for {}'.format(domain)
-                set_cleanliness_flags_for_domain(domain)
+                if OWNERSHIP_CLEANLINESS.enabled(domain):
+                    print 'updating flags for {}'.format(domain)
+                    set_cleanliness_flags_for_domain(domain)

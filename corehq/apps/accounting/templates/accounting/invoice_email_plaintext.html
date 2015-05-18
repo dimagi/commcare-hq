@@ -8,34 +8,66 @@ Statement No.: {{ statement_number }}
 Project Space: {{ domain }}
 Software Plan: {{ plan_name }}
 Status: {{ payment_status }}
-Amount Due: {{ amount_due }}
+Amount Due this Month: {{ amount_due }}
+Total Balance: {{ total_balance }}
+Payment Due Date: {{ date_due }}
 {% endblocktrans %}
 
-{% if can_view_statement %}
-{% blocktrans %}
-To view the full billing statement, log into your project space on
-CommCareHQ and navigate to Billing Statements at {{ statements_url }}
-{% endblocktrans %}
+{% if is_total_balance_due %}
+    {% if is_small_invoice %}
+        {% blocktrans %}
+        Please note that the due date for this {{ month_name }} payment has been
+        postponed, as the amount due this month is less than $100. However as
+        your total balance is now beyond $100, please note that you have to pay
+        your balance within the next 30 days.
+        {% endblocktrans %}
+    {% endif %}
+
+
+    {% if can_view_statement %}
+        {% blocktrans %}
+        To view the full billing statement, log into your project space on
+        CommCareHQ and navigate to Billing Statements at {{ statements_url }}
+        {% endblocktrans %}
+    {% else %}
+        {% blocktrans %}
+        Your project's administrator can view the full billing statement by
+        logging into your project space on CommCareHQ and navigating to
+        Billing Statements at {{ statements_url }}
+        {% endblocktrans %}
+    {% endif %}
+
+    {% blocktrans %}
+    To pay this bill, you can either choose a credit card or wire payment:
+        - To pay by credit card, please go to your Billing Statements page, click
+          on the green "Make Payment" button in front of your unpaid invoice(s),
+          and fill in the amount you want to pay as well as your credit card
+          details.
+        - To pay by wire, find Dimagi's bank account details on your invoice.
+          Please include the invoice number in your wire payment and make sure to
+          send an email to {{ accounts_email }} after you have made the payment,
+          mentioning the date of the payment, the amount, the invoice number, and
+          the project space.
+    {% endblocktrans %}
 {% else %}
-{% blocktrans %}
-Your project's administrator can view the full billing statement by
-logging into your project space on CommCareHQ and navigating to
-Billing Statements at {{ statements_url }}
-{% endblocktrans %}
-{% endif %}
+    {% blocktrans %}
+    Please note that the due date for this payment has been postponed, as
+    the amount due this month is less than $100.  You will start receiving
+    reminder emails for payments once your total balance reaches $100.
+    {% endblocktrans %}
 
-{% blocktrans %}
-To pay this bill, you can either choose a credit card or wire payment:
-    - To pay by credit card, please go to your Billing Statements page, click
-      on the green "Make Payment" button in front of your unpaid invoice(s),
-      and fill in the amount you want to pay as well as your credit card
-      details.
-    - To pay by wire, find Dimagi's bank account details on your invoice.
-      Please include the invoice number in your wire payment and make sure to
-      send an email to {{ accounts_email }} after you have made the payment,
-      mentioning the date of the payment, the amount, the invoice number, and
-      the project space.
-{% endblocktrans %}
+    {% if can_view_statement %}
+        {% blocktrans %}
+        To view and pay invoices, you can log into your project space on
+        CommCareHQ and navigate to Billing Statements at {{ statements_url }}
+        {% endblocktrans %}
+    {% else %}
+        {% blocktrans %}
+        To view and pay invoices, your project's administrator can log into your project space on
+        CommCareHQ and navigate to Billing Statements at {{ statements_url }}
+        {% endblocktrans %}
+    {% endif %}
+{% endif %}
 
 {% blocktrans %}
 Thank you for using {{ plan_name }}. If you have any questions, please don't hesitate to contact {{ invoicing_contact_email }}.

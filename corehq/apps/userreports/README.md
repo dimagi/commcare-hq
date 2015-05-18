@@ -788,6 +788,30 @@ Here's a sample spec:
 }
 ```
 
+# Export
+
+A UCR data source can be exported, to back an excel dashboard, for instance.
+This export can be filtered to restrict the results returned.  The filtering
+options are all based on the field names:
+
+URL parameter          | Value          | Description
+-----------------------|----------------|-----------------------------
+{field_name}           | {exact value}  | require an exact match
+{field_name}-range     | {start}..{end} | return results in range
+{field_name}-lastndays | {number}       | restrict to the last n days
+
+This is configured in `export_data_source` and tested in `test_export`.  It
+should be pretty straightforward to add support for additional filter types.
+
+### Export example
+
+Let's say you want to restrict the results to only cases owned by a particular
+user, opened in the last 90 days, and with a child between 12 and 24 months old.
+The querystring might look like this:
+```
+?owner_id=48l069n24myxk08hl563&opened_on-lastndays=90&child_age-range=12..24
+```
+
 # Practical Notes
 
 Some rough notes for working with user configurable reports.

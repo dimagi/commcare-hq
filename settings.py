@@ -28,6 +28,8 @@ LESS_WATCH = False
 # "dev-min" - use built/minified vellum (submodules/formdesigner/_build/src)
 VELLUM_DEBUG = None
 
+# gets set to False for unit tests that run without the database
+DB_ENABLED = True
 try:
     UNIT_TESTING = 'test' == sys.argv[1]
 except IndexError:
@@ -370,10 +372,9 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'south',
     'custom.apps.crs_reports',
     'custom.m4change',
-    'custom.succeed'
 
     # submodules with tests that run on travis
-    'couchexport',
+    # 'couchexport',
     'ctable',
     'ctable_view',
     'dimagi.utils',
@@ -504,6 +505,9 @@ SHARED_DRIVE_ROOT = None
 
 # name of the directory within SHARED_DRIVE_ROOT
 RESTORE_PAYLOAD_DIR_NAME = None
+
+# name of the directory within SHARED_DRIVE_ROOT
+SHARED_TEMP_DIR_NAME = None
 
 ## django-transfer settings
 # These settings must match the apache / nginx config
@@ -969,17 +973,6 @@ if not SQL_REPORTING_DATABASE_URL or UNIT_TESTING:
         **db_settings
     )
 
-### Shared drive settings ###
-if SHARED_DRIVE_ROOT and RESTORE_PAYLOAD_DIR_NAME:
-    # Defaults to tempfile.gettempdir()
-    RESTORE_PAYLOAD_DIR = os.path.join(SHARED_DRIVE_ROOT, RESTORE_PAYLOAD_DIR_NAME)
-
-if SHARED_DRIVE_ROOT and TRANSFER_FILE_DIR_NAME:
-    TRANSFER_FILE_DIR = os.path.join(SHARED_DRIVE_ROOT, TRANSFER_FILE_DIR_NAME)
-    TRANSFER_MAPPINGS = {
-        TRANSFER_FILE_DIR: '/{}'.format(TRANSFER_FILE_DIR_NAME),  # e.g. '/mnt/shared/downloads': '/downloads',
-    }
-
 MVP_INDICATOR_DB = 'mvp-indicators'
 
 INDICATOR_CONFIG = {
@@ -988,7 +981,12 @@ INDICATOR_CONFIG = {
 }
 
 ####### Couch Forms & Couch DB Kit Settings #######
-from settingshelper import get_dynamic_db_settings, make_couchdb_tuples, get_extra_couchdbs
+from settingshelper import (
+    get_dynamic_db_settings,
+    make_couchdb_tuples,
+    get_extra_couchdbs,
+    SharedDriveConfiguration
+)
 
 _dynamic_db_settings = get_dynamic_db_settings(
     COUCH_SERVER_ROOT,
@@ -1108,6 +1106,17 @@ if ENABLE_PRELOGIN_SITE:
     INSTALLED_APPS += PRELOGIN_APPS
 
 MIDDLEWARE_CLASSES += LOCAL_MIDDLEWARE_CLASSES
+
+### Shared drive settings ###
+SHARED_DRIVE_CONF = SharedDriveConfiguration(
+    SHARED_DRIVE_ROOT,
+    RESTORE_PAYLOAD_DIR_NAME,
+    TRANSFER_FILE_DIR_NAME,
+    SHARED_TEMP_DIR_NAME
+)
+TRANSFER_MAPPINGS = {
+    SHARED_DRIVE_CONF.transfer_dir: '/{}'.format(TRANSFER_FILE_DIR_NAME),  # e.g. '/mnt/shared/downloads': '/downloads',
+}
 
 # these are the official django settings
 # which really we should be using over the custom ones

@@ -45,51 +45,98 @@
     </tr>
     <tr>
         <th align="right">
-            {% trans 'Amount Due' %}:
+            {% trans 'Amount Due this Month' %}:
         </th>
         <td>
             {{ amount_due }}
         </td>
     </tr>
+    <tr>
+        <th align="right">
+            {% trans 'Total Balance' %}:
+        </th>
+        <td>
+            {{ total_balance }}
+        </td>
+    </tr>
+    <tr>
+        <th align="right">
+            {% trans 'Payment Due Date' %}:
+        </th>
+        <td>
+            {{ date_due }}
+        </td>
+    </tr>
 </table>
 
-<p>
-    {% if can_view_statement %}
+{% if is_total_balance_due %}
+    {% if is_small_invoice %}
         {% blocktrans %}
-        To view the full billing statement, log into your project space on
-        CommCareHQ and navigate to <a href="{{ statements_url }}">
-        Billing Statements</a>.
-        {% endblocktrans %}
-    {% else %}
-        {% blocktrans %}
-        Your project's administrator can view the full billing statement by
-        logging into your project space on CommCareHQ and navigating to
-        <a href="{{ statements_url }}">Billing Statements</a>.
+        Please note that the due date for this {{ month_name }} payment has been
+        postponed, as the amount due this month is less than $100. However as
+        your total balance is now beyond $100, please note that you have to pay
+        your balance within the next 30 days.
         {% endblocktrans %}
     {% endif %}
-</p>
 
-<p>
-    {% blocktrans %}
-    You can pay this bill by credit card or by wire:
-    <ul>
-        <li>
-            To pay by credit card, please go to your
-            <a href="{{ statements_url }}">Billing Statements</a> page, click
-            on the green "Make Payment" button in front of your unpaid
-            invoice(s), and fill in the amount you want to pay as well as your
-            credit card details.
-        </li>
-        <li>
-            To pay by wire, find Dimagi's bank account details on your invoice.
-            Please include the invoice number in your wire payment and make
-            sure to send an email to {{ accounts_email }} after you have made
-            the payment, mentioning the date of the payment, the amount, the
-            invoice number, and the project space.
-        </li>
-    </ul>
-    {% endblocktrans %}
-</p>
+    <p>
+        {% if can_view_statement %}
+            {% blocktrans %}
+            To view the full billing statement, log into your project space on
+            CommCareHQ and navigate to <a href="{{ statements_url }}">
+            Billing Statements</a>.
+            {% endblocktrans %}
+        {% else %}
+            {% blocktrans %}
+            Your project's administrator can view the full billing statement by
+            logging into your project space on CommCareHQ and navigating to
+            <a href="{{ statements_url }}">Billing Statements</a>.
+            {% endblocktrans %}
+        {% endif %}
+    </p>
+
+    <p>
+        {% blocktrans %}
+        You can pay this bill by credit card or by wire:
+        <ul>
+            <li>
+                To pay by credit card, please go to your
+                <a href="{{ statements_url }}">Billing Statements</a> page, click
+                on the green "Make Payment" button in front of your unpaid
+                invoice(s), and fill in the amount you want to pay as well as your
+                credit card details.
+            </li>
+            <li>
+                To pay by wire, find Dimagi's bank account details on your invoice.
+                Please include the invoice number in your wire payment and make
+                sure to send an email to {{ accounts_email }} after you have made
+                the payment, mentioning the date of the payment, the amount, the
+                invoice number, and the project space.
+            </li>
+        </ul>
+        {% endblocktrans %}
+    </p>
+{% else %}
+    <p>
+        {% blocktrans %}
+        Please note that the due date for this payment has been postponed, as
+        the amount due this month is less than $100.  You will start receiving
+        reminder emails for payments once your total balance reaches $100.
+        {% endblocktrans %}
+
+        {% if can_view_statement %}
+            {% blocktrans %}
+            To view and pay invoices, you can log into your project space on
+            CommCareHQ and navigate to <a href="{{ statements_url }}">Billing Statements</a>.
+            {% endblocktrans %}
+        {% else %}
+            {% blocktrans %}
+            To view and pay invoices, your project's administrator can log into your project space on
+            CommCareHQ and navigate to <a href="{{ statements_url }}">Billing Statements</a>.
+            {% endblocktrans %}
+        {% endif %}
+    </p>
+{% endif %}
 
 <p>
     {% blocktrans %}

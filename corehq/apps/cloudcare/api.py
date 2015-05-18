@@ -10,13 +10,10 @@ from corehq.apps.app_manager.models import (
     get_app,
 )
 from dimagi.utils.couch.safe_index import safe_index
-from dimagi.utils.decorators import inline
 from casexml.apps.phone.caselogic import get_footprint, get_related_cases
 from datetime import datetime
 from corehq.elastic import get_es
 import urllib
-from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.chunked import chunked
 from django.utils.translation import ugettext as _
 from dimagi.utils.parsing import json_format_date
 from touchforms.formplayer.models import EntrySession
@@ -176,15 +173,14 @@ class CaseAPIHelper(object):
         except AttributeError:
             owner_ids = [user_id]
 
-        @list
-        @inline
-        def keys():
-            for owner_id in owner_ids:
-                for bool in status_to_closed_flags(self.status):
-                    yield [self.domain, owner_id, bool]
-
-        view_results = CommCareCase.view('hqcase/by_owner', keys=keys,
-                                         include_docs=False, reduce=False)
+        view_results = CommCareCase.view(
+            'hqcase/by_owner',
+            keys=[[self.domain, owner_id, closed_flag]
+                  for owner_id in owner_ids
+                  for closed_flag in status_to_closed_flags(self.status)],
+            include_docs=False,
+            reduce=False,
+        )
         ids = [res["id"] for res in view_results]
         return self._case_results(ids)
 

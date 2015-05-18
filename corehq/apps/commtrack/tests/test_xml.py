@@ -509,7 +509,7 @@ class CommTrackSyncTest(CommTrackSubmissionTest):
 
         # get initial restore token
         restore_config = RestoreConfig(
-            domain=self.domain,
+            project=self.domain,
             user=self.casexml_user,
             params=RestoreParams(version=V2),
         )
@@ -619,9 +619,9 @@ def _report_soh(amounts, case_id, section_id='stock', report=None):
     return report
 
 
-def _get_ota_balance_blocks(domain, user):
+def _get_ota_balance_blocks(project, user):
     restore_config = RestoreConfig(
-        domain=domain,
+        project=project,
         user=user.to_casexml_user(),
         params=RestoreParams(version=V2),
     )

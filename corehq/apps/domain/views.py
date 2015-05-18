@@ -935,8 +935,11 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                 else:
                     payment_status = _("Not Paid")
                     payment_class = "label label-important"
-                date_due = (invoice.date_due.strftime(USER_DATE_FORMAT)
-                            if not invoice.is_paid else _("Already Paid"))
+                date_due = (
+                    (invoice.date_due.strftime(USER_DATE_FORMAT)
+                     if not invoice.is_paid else _("Already Paid"))
+                    if invoice.date_due else _("None")
+                )
                 yield {
                     'itemData': {
                         'id': invoice.id,
@@ -1726,7 +1729,10 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
     @memoized
     def snapshot_settings_form(self):
         if self.request.method == 'POST':
-            form = SnapshotSettingsForm(self.request.POST, self.request.FILES, domain=self.domain_object)
+            form = SnapshotSettingsForm(self.request.POST,
+                                        self.request.FILES,
+                                        domain=self.domain_object,
+                                        is_superuser=self.request.user.is_superuser)
             return form
 
         proj = self.published_snapshot if self.published_snapshot else self.domain_object
@@ -1743,7 +1749,9 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
         for attr in init_attribs:
             initial[attr] = getattr(proj, attr)
 
-        return SnapshotSettingsForm(initial=initial, domain=self.domain_object)
+        return SnapshotSettingsForm(initial=initial,
+                                    domain=self.domain_object,
+                                    is_superuser=self.request.user.is_superuser)
 
     @property
     @memoized
@@ -1810,6 +1818,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
             new_domain.author = request.POST.get('author', None)
 
             new_domain.is_approved = False
+            new_domain.is_starter_app = request.POST.get('is_starter_app', '') == 'on'
             publish_on_submit = request.POST.get('publish_on_submit', "no") == "yes"
 
             image = self.snapshot_settings_form.cleaned_data['image']

@@ -27,7 +27,7 @@ def send_delivery_reminder(domain, date, loc_type='FACILITY', test_list=None):
         location = user.location
         if user.is_active and location and location.location_type == loc_type:
             status_exists = SupplyPointStatus.objects.filter(
-                supply_point=location._id,
+                location_id=location.get_id,
                 status_type=status_type,
                 status_date__gte=date
             ).exists()

@@ -16,7 +16,8 @@ from corehq.apps.accounting.models import (
     Subscription, BillingAccount, SubscriptionAdjustment,
     SubscriptionAdjustmentMethod, BillingRecord,
     BillingContactInfo, SoftwarePlanEdition, CreditLine,
-    EntryPoint, WireInvoice, WireBillingRecord
+    EntryPoint, WireInvoice, WireBillingRecord,
+    SMALL_INVOICE_THRESHOLD,
 )
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.users.models import CommCareUser
@@ -156,12 +157,6 @@ class DomainInvoiceFactory(object):
                     permit_inactive=True,
                 )
 
-        days_until_due = DEFAULT_DAYS_UNTIL_DUE
-        if subscription.date_delay_invoicing is not None:
-            td = subscription.date_delay_invoicing - self.date_end
-            days_until_due = max(days_until_due, td.days)
-        date_due = self.date_end + datetime.timedelta(days_until_due)
-
         if subscription.date_start > self.date_start:
             invoice_start = subscription.date_start
         else:
@@ -179,7 +174,6 @@ class DomainInvoiceFactory(object):
             subscription=subscription,
             date_start=invoice_start,
             date_end=invoice_end,
-            date_due=date_due,
             is_hidden=subscription.do_not_invoice,
         )
         invoice.save()
@@ -195,6 +189,17 @@ class DomainInvoiceFactory(object):
         self.generate_line_items(invoice, subscription)
         invoice.calculate_credit_adjustments()
         invoice.update_balance()
+        invoice.save()
+        total_balance = sum(invoice.balance for invoice in Invoice.objects.filter(
+            is_hidden=False,
+            subscription__subscriber__domain=invoice.get_domain(),
+        ))
+        if total_balance > SMALL_INVOICE_THRESHOLD:
+            days_until_due = DEFAULT_DAYS_UNTIL_DUE
+            if subscription.date_delay_invoicing is not None:
+                td = subscription.date_delay_invoicing - self.date_end
+                days_until_due = max(days_until_due, td.days)
+            invoice.date_due = self.date_end + datetime.timedelta(days_until_due)
         invoice.save()
 
         record = BillingRecord.generate_record(invoice)

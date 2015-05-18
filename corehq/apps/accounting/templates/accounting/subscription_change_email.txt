@@ -1,10 +1,50 @@
+
 Dear Accounting Team,
 
-The project space {{ domain }} has changed its subscription from {{ old_plan }} to {{ new_plan }}, with an end date of {% if new_subscription_end_date %}{{ new_subscription_end_date }}{% else %}never{% endif %}.
+The project space {{ domain }} has changed its subscription.
 
-Previously, they had been on {{ old_plan }} since {{ old_subscription_start_date }}.
+{% if request %}
+Initiated by: {{ request.couch_user.username }}
+From the following web page: {{ referer }}
+{% endif %}
+
+Billing Account Information
+
+{% if billing_account %}
+Account name: {{ billing_account.name }}
+Contracted vs. Self-service: {{ billing_account.entry_type }}
+Dimagi Contact: {{ billing_account.dimagi_contact }}
+Billing Admins: {% for admin in billing_account.billing_admins.all %}{{ admin.web_user }}{% if not loop.last %}, {% endif %}{% endfor %}
+{% else %}
+Not available
+{% endif %}
+
+Previous Subscription
+
+{% if old_subscription %}
+Software Plan: {{ old_subscription.plan_version }}
+Start Date: {{ old_subscription.date_start }}
+End Date:{{ old_subscription.date_end }}
+Do not invoice: {{ old_subscription.do_not_invoice }}
+Auto generate credits: {{ old_subscription.auto_generate_credits }}
+{% else %}
+No previous subscription
+{% endif %}
+
+New Subscription
+
+{% if new_subscription %}
+Software Plan: {{ new_subscription.plan_version }}
+Start Date: {{ new_subscription.date_start }}
+End Date: {{ new_subscription.date_end }}
+Do not invoice: {{ new_subscription.do_not_invoice }}
+Auto generate credits: {{ new_subscription.auto_generate_credits }}
+{% else %}
+No new subscription
+{% endif %}
 
 You can view the project space here: {{ domain_url }}
 
 Cheers,
 --The CommCareHQ Team
+

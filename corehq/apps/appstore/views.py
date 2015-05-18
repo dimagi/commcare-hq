@@ -19,7 +19,7 @@ from dimagi.utils.couch.database import apply_update
 from corehq.apps.fixtures.models import FixtureDataType
 
 
-SNAPSHOT_FACETS = ['project_type', 'license', 'author.exact']
+SNAPSHOT_FACETS = ['project_type', 'license', 'author.exact', 'is_starter_app']
 DEPLOYMENT_FACETS = ['deployment.region']
 SNAPSHOT_MAPPING = [
     ("", True, [
@@ -108,6 +108,7 @@ def appstore(request, template="appstore/appstore_base.html"):
     hits = deduplicate(hits)
     d_results = [Domain.wrap(res['_source']) for res in hits]
 
+    starter_apps = request.GET.get('is_starter_app', None)
     sort_by = request.GET.get('sort_by', None)
     if sort_by == 'newest':
         pass
@@ -131,6 +132,7 @@ def appstore(request, template="appstore/appstore_base.html"):
         next_page=(page + 1),
         more_pages=more_pages,
         sort_by=sort_by,
+        show_starter_apps=starter_apps,
         include_unapproved=include_unapproved,
         facet_map=facet_map,
         facets=results.get("facets", []),

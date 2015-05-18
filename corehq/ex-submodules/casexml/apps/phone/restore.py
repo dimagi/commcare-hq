@@ -3,30 +3,22 @@ from io import FileIO
 from os import path
 import os
 from uuid import uuid4
-from collections import defaultdict
-from copy import deepcopy
 import shutil
 import hashlib
 import tempfile
 from couchdbkit import ResourceConflict, ResourceNotFound
-from casexml.apps.case.models import CommCareCase
-from casexml.apps.phone.caselogic import BatchedCaseSyncOperation, CaseSyncUpdate
 from casexml.apps.phone.data_providers import get_restore_providers, get_long_running_providers
 from casexml.apps.phone.exceptions import (
     MissingSyncLog, InvalidSyncLogException, SyncLogUserMismatch,
     BadStateException, RestoreException,
 )
-from casexml.apps.stock.consumption import compute_consumption_or_default
-from casexml.apps.stock.utils import get_current_ledger_transactions_multi
-from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, FILE_RESTORE, STREAM_RESTORE_CACHE, ENABLE_LOADTEST_USERS
+from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, FILE_RESTORE, STREAM_RESTORE_CACHE
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.parsing import json_format_datetime
-from casexml.apps.phone.models import SyncLog
+from casexml.apps.phone.models import SyncLog, get_properly_wrapped_sync_log
 import logging
 from dimagi.utils.couch.database import get_db, get_safe_write_kwargs
 from casexml.apps.phone import xml
 from datetime import datetime, timedelta
-from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from couchforms.xml import (
     ResponseNature,
@@ -130,8 +122,7 @@ class FileRestoreResponse(RestoreResponse):
 
     def __init__(self, username=None, items=False):
         super(FileRestoreResponse, self).__init__(username, items)
-        payload_dir = getattr(settings, 'RESTORE_PAYLOAD_DIR', None)
-        self.filename = path.join(payload_dir or tempfile.gettempdir(), uuid4().hex)
+        self.filename = path.join(settings.SHARED_DRIVE_CONF.restore_dir, uuid4().hex)
 
         self.response_body = FileIO(self.get_filename(self.BODY_TAG_SUFFIX), 'w+')
 
@@ -269,135 +260,12 @@ class CachedResponse(object):
             return HttpResponse(self.payload, mimetype="text/xml")
 
 
-def get_stock_payload(domain, stock_settings, case_state_list):
-    if domain and not domain.commtrack_enabled:
-        return
-
-    from lxml.builder import ElementMaker
-    E = ElementMaker(namespace=COMMTRACK_REPORT_XMLNS)
-
-    def entry_xml(id, quantity):
-        return E.entry(
-            id=id,
-            quantity=str(int(quantity)),
-        )
-
-    def transaction_to_xml(trans):
-        return entry_xml(trans.product_id, trans.stock_on_hand)
-
-    def consumption_entry(case_id, product_id, section_id):
-        consumption_value = compute_consumption_or_default(
-            case_id,
-            product_id,
-            datetime.utcnow(),
-            section_id,
-            stock_settings.consumption_config
-        )
-        if consumption_value is not None:
-            return entry_xml(product_id, consumption_value)
-
-    case_ids = [case.case_id for case in case_state_list]
-    all_current_ledgers = get_current_ledger_transactions_multi(case_ids)
-    for commtrack_case in case_state_list:
-        case_id = commtrack_case.case_id
-        current_ledgers = all_current_ledgers[case_id]
-
-        section_product_map = defaultdict(lambda: [])
-        section_timestamp_map = defaultdict(lambda: json_format_datetime(datetime.utcnow()))
-        for section_id in sorted(current_ledgers.keys()):
-            transactions_map = current_ledgers[section_id]
-            sorted_product_ids = sorted(transactions_map.keys())
-            transactions = [transactions_map[p] for p in sorted_product_ids]
-            as_of = json_format_datetime(max(txn.report.date for txn in transactions))
-            section_product_map[section_id] = sorted_product_ids
-            section_timestamp_map[section_id] = as_of
-            yield E.balance(*(transaction_to_xml(e) for e in transactions),
-                            **{'entity-id': case_id, 'date': as_of, 'section-id': section_id})
-
-        for section_id, consumption_section_id in stock_settings.section_to_consumption_types.items():
-
-            if (section_id in current_ledgers or
-                    stock_settings.force_consumption_case_filter(commtrack_case)):
-
-                consumption_product_ids = stock_settings.default_product_list \
-                    if stock_settings.default_product_list \
-                    else section_product_map[section_id]
-
-                consumption_entries = filter(lambda e: e is not None, [
-                    consumption_entry(case_id, p, section_id)
-                    for p in consumption_product_ids
-                ])
-
-                if consumption_entries:
-                    yield E.balance(
-                        *consumption_entries,
-                        **{
-                            'entity-id': case_id,
-                            'date': section_timestamp_map[section_id],
-                            'section-id': consumption_section_id,
-                        }
-                    )
-
-
-def get_restore_class(user):
+def get_restore_class(domain, user):
     restore_class = StringRestoreResponse
-    if FILE_RESTORE.enabled(user.domain) or FILE_RESTORE.enabled(user.username):
+    if FILE_RESTORE.enabled(domain) or FILE_RESTORE.enabled(user.username):
         restore_class = FileRestoreResponse
 
     return restore_class
-
-
-def _get_loadtest_factor(domain, user):
-    """
-    Gets the loadtest factor for a domain and user. Is always 1 unless
-    both the toggle is enabled for the domain, and the user has a non-zero,
-    non-null factor set.
-    """
-    if domain and ENABLE_LOADTEST_USERS.enabled(domain.name):
-        return getattr(user, 'loadtest_factor', 1) or 1
-    return 1
-
-
-def _transform_loadtest_update(update, factor):
-    """
-    Returns a new CaseSyncUpdate object (from an existing one) with all the
-    case IDs and names mapped to have the factor appended.
-    """
-    def _map_id(id, count):
-        return '{}-{}'.format(id, count)
-    case = CommCareCase.wrap(deepcopy(update.case._doc))
-    case._id = _map_id(case._id, factor)
-    for index in case.indices:
-        index.referenced_id = _map_id(index.referenced_id, factor)
-    case.name = '{} ({})'.format(case.name, factor)
-    return CaseSyncUpdate(case, update.sync_token, required_updates=update.required_updates)
-
-
-def get_case_payload_batched(domain, stock_settings, version, user, last_synclog, new_synclog):
-    response = get_restore_class(user)()
-
-    sync_operation = BatchedCaseSyncOperation(user, last_synclog)
-    factor = _get_loadtest_factor(domain, user)
-    for update in sync_operation.get_all_case_updates():
-        current_count = 0
-        original_update = update
-        while current_count < factor:
-            element = xml.get_case_element(update.case, update.required_updates, version)
-            response.append(element)
-            current_count += 1
-            if current_count < factor:
-                update = _transform_loadtest_update(original_update, current_count)
-
-    sync_state = sync_operation.global_state
-    new_synclog.cases_on_phone = sync_state.actual_owned_cases
-    new_synclog.dependent_cases_on_phone = sync_state.actual_extended_cases
-    new_synclog.save(**get_safe_write_kwargs())
-
-    # commtrack balance sections
-    commtrack_elements = get_stock_payload(domain, stock_settings, sync_state.all_synced_cases)
-    response.extend(commtrack_elements)
-
-    return response, sync_operation.batch_count
 
 
 class RestoreParams(object):
@@ -442,8 +310,9 @@ class RestoreState(object):
     This allows the providers to set values on the state, for either logging or performance
     reasons.
     """
-    def __init__(self, domain, user, params):
-        self.domain = domain
+    def __init__(self, project, user, params):
+        self.project = project
+        self.domain = project.name if project else ''
         self.user = user
         self.params = params
         self.provider_log = {}  # individual data providers can log stuff here
@@ -467,7 +336,7 @@ class RestoreState(object):
     def last_sync_log(self):
         if self.params.sync_log_id:
             try:
-                sync_log = SyncLog.get(self.params.sync_log_id)
+                sync_log = get_properly_wrapped_sync_log(self.params.sync_log_id)
             except ResourceNotFound:
                 # if we are in loose mode, return an HTTP 412 so that the phone will
                 # just force a fresh sync
@@ -487,6 +356,23 @@ class RestoreState(object):
     def is_initial(self):
         return self.last_sync_log is None
 
+    @property
+    def version(self):
+        return self.params.version
+
+    @property
+    @memoized
+    def owner_ids(self):
+        return self.user.get_owner_ids()
+
+    @property
+    @memoized
+    def stock_settings(self):
+        if self.project and self.project.commtrack_settings:
+            return self.project.commtrack_settings.get_ota_restore_settings()
+        else:
+            return StockSettings()
+
     def start_sync(self):
         self.start_time = datetime.utcnow()
         self.current_sync_log = self.create_sync_log()
@@ -502,7 +388,7 @@ class RestoreState(object):
         new_synclog = SyncLog(
             user_id=self.user.user_id,
             last_seq=last_seq,
-            owner_ids_on_phone=self.user.get_owner_ids(),
+            owner_ids_on_phone=self.owner_ids,
             date=datetime.utcnow(),
             previous_log_id=previous_log_id
         )
@@ -511,7 +397,7 @@ class RestoreState(object):
 
     @property
     def restore_class(self):
-        return get_restore_class(self.user)
+        return get_restore_class(self.domain, self.user)
 
 
 class RestoreConfig(object):
@@ -524,24 +410,21 @@ class RestoreConfig(object):
     :param cache_settings:  The RestoreCacheSettings associated with this (see above).
     """
 
-    def __init__(self, domain=None, user=None, params=None, cache_settings=None):
-        self.domain = domain
+    def __init__(self, project=None, user=None, params=None, cache_settings=None):
+        self.project = project
+        self.domain = project.name if project else ''
         self.user = user
         self.params = params or RestoreParams()
         self.cache_settings = cache_settings or RestoreCacheSettings()
 
         self.version = self.params.version
-        self.restore_state = RestoreState(self.domain, self.user, self.params)
+        self.restore_state = RestoreState(self.project, self.user, self.params)
 
-        self.domain = domain
         self.force_cache = self.cache_settings.force_cache
         self.cache_timeout = self.cache_settings.cache_timeout
         self.overwrite_cache = self.cache_settings.overwrite_cache
 
         self.cache = get_redis_default_cache()
-
-        # keep track of the number of batches (if any) for comparison in unit tests
-        self.num_batches = None
 
     @property
     @memoized
@@ -552,7 +435,7 @@ class RestoreConfig(object):
         try:
             self.restore_state.validate_state()
         except InvalidSyncLogException, e:
-            if LOOSE_SYNC_TOKEN_VALIDATION.enabled(self.domain.name):
+            if LOOSE_SYNC_TOKEN_VALIDATION.enabled(self.domain):
                 # This exception will get caught by the view and a 412 will be returned to the phone for resync
                 raise RestoreException(e)
             else:
@@ -571,12 +454,10 @@ class RestoreConfig(object):
         if cached_response.exists():
             return cached_response
 
-        user = self.user
-        # create a sync log for this
         self.restore_state.start_sync()
 
-        # start with standard response
-        with self.restore_state.restore_class(user.username, items=self.params.include_item_count) as response:
+        with self.restore_state.restore_class(
+                self.user.username, items=self.params.include_item_count) as response:
             normal_providers = get_restore_providers()
             for provider in normal_providers:
                 for element in provider.get_elements(self.restore_state):
@@ -620,7 +501,7 @@ class RestoreConfig(object):
             return CachedResponse(None)
 
         if self.sync_log:
-            stream = STREAM_RESTORE_CACHE.enabled(self.user.domain)
+            stream = STREAM_RESTORE_CACHE.enabled(self.domain)
             payload = self.sync_log.get_cached_payload(self.version, stream=stream)
         else:
             payload = self.cache.get(self._initial_cache_key())

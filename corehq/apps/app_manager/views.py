@@ -99,7 +99,7 @@ from corehq.apps.app_manager.util import (
     is_usercase_enabled,
     enable_usercase,
     actions_use_usercase,
-)
+    get_per_type_defaults)
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import LoginAndDomainMixin
 from corehq.util.compression import decompress
@@ -791,7 +791,11 @@ def get_module_view_context_and_template(app, module):
     defaults = ('name', 'date-opened', 'status')
     if app.case_sharing:
         defaults += ('#owner_name',)
-    builder = ParentCasePropertyBuilder(app, defaults=defaults)
+
+    per_type_defaults = None
+    if is_usercase_enabled(app.domain):
+        per_type_defaults = get_per_type_defaults(app.domain, [USERCASE_TYPE])
+    builder = ParentCasePropertyBuilder(app, defaults=defaults, per_type_defaults=per_type_defaults)
     child_case_types = set()
     for m in app.get_modules():
         if m.case_type == module.case_type:
@@ -1228,7 +1232,8 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None,
                             unique_form_id=form.unique_id)
 
     vellum_plugins = ["modeliteration"]
-    if toggles.VELLUM_ITEMSETS.enabled(domain):
+    if (toggles.VELLUM_ITEMSETS.enabled(domain) and request.subscription):
+        # request.subscription checks it's not a community subscription
         vellum_plugins.append("itemset")
     if toggles.VELLUM_TRANSACTION_QUESTION_TYPES.enabled(domain):
         vellum_plugins.append("commtrack")
