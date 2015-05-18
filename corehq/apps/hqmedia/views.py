@@ -535,7 +535,7 @@ def make_zip_tempfile_async(include_multimedia_files, include_index_files,
     return download, errors
 
 
-class DownloadMultimediaZip(ApplicationViewMixin):
+class DownloadMultimediaZip(View, ApplicationViewMixin):
     """
     This is where the Multimedia for an application gets generated.
     Expects domain and app_id to be in its args
