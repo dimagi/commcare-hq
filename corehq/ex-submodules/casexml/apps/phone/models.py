@@ -565,6 +565,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
     def update_phone_lists(self, xform, case_list):
         made_changes = False
+        logger.debug('syncing {}'.format(self.user_id))
         logger.debug('case ids before update: {}'.format(', '.join(self.case_ids_on_phone)))
         logger.debug('dependent case ids before update: {}'.format(', '.join(self.dependent_case_ids_on_phone)))
         for case in case_list:
