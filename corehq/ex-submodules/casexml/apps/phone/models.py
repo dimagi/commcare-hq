@@ -14,6 +14,9 @@ from casexml.apps.phone.checksum import Checksum, CaseStateHash
 import logging
 
 
+logger = logging.getLogger('phone.models')
+
+
 class User(object):
     """ 
     This is a basic user model that's used for OTA restore to properly
@@ -289,7 +292,6 @@ class SyncLog(AbstractSyncLog):
         for case in case_list:
             actions = case.get_actions_for_form(xform.get_id)
             for action in actions:
-
                 if action.action_type == const.CASE_ACTION_CREATE:
                     self._assert(not self.phone_has_case(case._id),
                                  'phone has case being created: %s' % case._id)
@@ -513,6 +515,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
         """
         Prunes a case from the tree while also pruning any dependencies as a result of this pruning.
         """
+        logger.debug('pruning: {}'.format(case_id))
         self.dependent_case_ids_on_phone.add(case_id)
         reverse_index_map = _reverse_index_map(self.index_tree.indices)
         dependencies = self.index_tree.get_all_cases_that_depend_on_case(case_id, cached_map=reverse_index_map)
@@ -523,6 +526,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
         def _remove_case(to_remove):
             # uses closures for assertions
+            logger.debug('removing: {}'.format(case_id))
             assert to_remove in self.dependent_case_ids_on_phone
             indices = self.index_tree.indices.pop(to_remove, [])
             if to_remove != case_id:
@@ -556,9 +560,12 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
     def update_phone_lists(self, xform, case_list):
         made_changes = False
+        logger.debug('case ids before update: {}'.format(', '.join(self.case_ids_on_phone)))
+        logger.debug('dependent case ids before update: {}'.format(', '.join(self.dependent_case_ids_on_phone)))
         for case in case_list:
             actions = case.get_actions_for_form(xform.get_id)
             for action in actions:
+                logger.debug('{}: {}'.format(case._id, action.action_type))
                 owner_id = action.updated_known_properties.get("owner_id")
                 phone_owns_case = not owner_id or owner_id in self.owner_ids_on_phone
 
@@ -594,6 +601,8 @@ class SimplifiedSyncLog(AbstractSyncLog):
                     self.prune_case(case._id)
                     made_changes = True
 
+        logger.debug('case ids after update: {}'.format(', '.join(self.case_ids_on_phone)))
+        logger.debug('dependent case ids after update: {}'.format(', '.join(self.dependent_case_ids_on_phone)))
         if made_changes or case_list:
             try:
                 if made_changes:
