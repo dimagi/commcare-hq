@@ -399,8 +399,7 @@ class IndexTree(DocumentSchema):
     Document type representing a case dependency tree (which is flattened to a single dict)
     """
     # a flat mapping of dependent cases to lists of case ids that depend on them
-    live_indices = SchemaDictProperty()
-    dependent_indices = SchemaDictProperty()
+    indices = SchemaDictProperty()
 
     def __repr__(self):
         return 'live: {}\ndependent: {}\n'.format(
@@ -409,55 +408,31 @@ class IndexTree(DocumentSchema):
         )
 
     def has_case(self, case_id):
-        return (case_id in _reverse_index_map(self.live_indices) or
-                case_id in _reverse_index_map(self.dependent_indices))
+        return (case_id in _reverse_index_map(self.indices))
 
-    def prune_case(self, case_id, result=None):
+    def get_cases_that_directly_depend_on_case(self, case_id, cached_map=None):
+        cached_map = cached_map or _reverse_index_map(self.indices)
+        return cached_map.get(case_id, [])
+
+    def get_all_cases_that_depend_on_case(self, case_id, cached_map=None):
         """
-        Prunes a case from the tree while also pruning any dependencies as a result of this pruning.
+        Recursively builds a tree of all cases that depend on this case and returns
+        a flat set of case ids.
+
+        Allows passing in a cached map of reverse index references if you know you are going
+        to call it more than once in a row to avoid rebuilding that.
         """
-        result = result or PruneResult(seen=set(), pruned=set())
-        if case_id in result.seen:
-            # circular references! bail
-            return result
+        def _recursive_call(case_id, all_cases, cached_map):
+            all_cases.add(case_id)
+            for dependent_case in self.get_cases_that_directly_depend_on_case(case_id, cached_map=cached_map):
+                if dependent_case not in all_cases:
+                    all_cases.add(dependent_case)
+                    _recursive_call(dependent_case, all_cases, cached_map)
 
-        result.seen.add(case_id)
-        this_cases_indices = self.live_indices.pop(case_id, []) or self.dependent_indices.pop(case_id, [])
-        live_reverse_indices = _reverse_index_map(self.live_indices)
-        if case_id in live_reverse_indices:
-            # this means a live case still points at this case.
-            # if that's true, just move it to the dependent list, we know it is still important.
-            if this_cases_indices:
-                self.dependent_indices[case_id] = this_cases_indices
-        else:
-            dependent_reverse_indices = _reverse_index_map(self.dependent_indices)
-            if case_id in dependent_reverse_indices:
-                # this means a dependent case still points at this case.
-                # similarly to live cases, just move it to the dependent list
-                # UNLESS the only reason this is a dependent case is because of this case.
-                # in that case remove it.
-                dependencies = set(dependent_reverse_indices[case_id])
-                for dependent_case in dependencies:
-                    self.prune_case(dependent_case, result)
-
-                # if any dependencies weren't pruned, don't prune ourselves either
-                dont_prune = bool(dependencies - result.pruned)
-                if dont_prune:
-                    if this_cases_indices:
-                        self.dependent_indices[case_id] = this_cases_indices
-                else:
-                    result.pruned.add(case_id)
-
-            else:
-                # the case isn't relevant anymore
-                result.pruned.add(case_id)
-
-                # this means we can also recursively prune any dependencies
-                for index in this_cases_indices:
-                    if index not in live_reverse_indices and index not in dependent_reverse_indices:
-                        self.prune_case(index, result)
-
-        return result
+        all_cases = set()
+        cached_map = cached_map or _reverse_index_map(self.indices)
+        _recursive_call(case_id, all_cases, cached_map)
+        return all_cases
 
     def add_live_index(self, from_case_id, to_case_id):
         self._add_index(self.live_indices, from_case_id, to_case_id)
@@ -476,7 +451,7 @@ class IndexTree(DocumentSchema):
             live_indices=copy(self.live_indices),
             dependent_indices=copy(self.dependent_indices)
         )
-        for attr in 'live_indices', 'dependent_indices':
+        for attr in 'indices':
             indices = getattr(new, attr)
             for case_id, other_case_ids in getattr(other, attr).items():
                 if case_id in indices:
@@ -503,6 +478,9 @@ class SimplifiedSyncLog(AbstractSyncLog):
     """
     log_format = StringProperty(default=LOG_FORMAT_SIMPLIFIED)
     case_ids_on_phone = SetProperty(unicode)
+    # this is a subset of case_ids_on_phone used to flag that a case is only around because it has dependencies
+    # this allows us to prune it if possible from other actions
+    dependent_case_ids_on_phone = SetProperty(unicode)
     owner_ids_on_phone = SetProperty(unicode)
     index_tree = SchemaProperty(IndexTree)
 
@@ -520,7 +498,55 @@ class SimplifiedSyncLog(AbstractSyncLog):
     def get_footprint_of_cases_on_phone(self):
         return list(self.case_ids_on_phone)
 
+    def prune_case(self, case_id, result=None):
+        """
+        Prunes a case from the tree while also pruning any dependencies as a result of this pruning.
+        """
+        self.dependent_case_ids_on_phone.add(case_id)
+        reverse_index_map = _reverse_index_map(self.index_tree.indices)
+        dependencies = self.index_tree.get_all_cases_that_depend_on_case(case_id, cached_map=reverse_index_map)
+        # we can only potentially remove a case if it's already in dependent case ids
+        # and therefore not directly owned
+        candidates_to_remove = dependencies & self.dependent_case_ids_on_phone
+        dependencies_not_to_remove = dependencies - self.dependent_case_ids_on_phone
+
+        def _remove_case(to_remove):
+            # uses closures for assertions
+            assert to_remove in self.dependent_case_ids_on_phone
+            indices = self.index_tree.indices.pop(to_remove, [])
+            if to_remove != case_id:
+                # if the case had indexes they better also be in our removal list (except for ourselves)
+                for index in indices:
+                    assert index in candidates_to_remove, "expected {} in {} but wasn't".format(index, candidates_to_remove)
+            self.case_ids_on_phone.remove(to_remove)
+            self.dependent_case_ids_on_phone.remove(to_remove)
+
+        if not dependencies_not_to_remove:
+            # this case's entire relevancy chain is in dependent cases
+            # this means they can all now be removed.
+            this_case_indices = self.index_tree.indices.get(case_id, [])
+            for to_remove in candidates_to_remove:
+                _remove_case(to_remove)
+
+            for this_case_index in this_case_indices:
+                if (this_case_index in self.dependent_case_ids_on_phone and
+                            this_case_index not in candidates_to_remove):
+                    self.prune_case(this_case_index)
+        else:
+            # we have some possible candidates for removal. we should check each of them.
+            candidates_to_remove.remove(case_id)  # except ourself
+            for candidate in candidates_to_remove:
+                candidate_dependencies = self.index_tree.get_all_cases_that_depend_on_case(
+                    candidate, cached_map=reverse_index_map
+                )
+                if not candidate_dependencies - self.dependent_case_ids_on_phone:
+                    _remove_case(candidate)
+
     def update_phone_lists(self, xform, case_list):
+
+        def handle_pruning(case_id):
+            self.prune_case(case_id)
+
         made_changes = False
         for case in case_list:
             actions = case.get_actions_for_form(xform.get_id)
@@ -542,9 +568,8 @@ class SimplifiedSyncLog(AbstractSyncLog):
                     )
                     if not phone_owns_case:
                         # we must have just changed the owner_id to something we didn't own
-                        prune_result = self.index_tree.prune_case(case._id)
-                        for case_id in prune_result.pruned:
-                            self.case_ids_on_phone.remove(case_id)
+                        # we can try pruning this case since it's no longer relevant
+                        handle_pruning(case._id)
                         made_changes = True
 
                 elif action.action_type == const.CASE_ACTION_INDEX:
@@ -558,10 +583,9 @@ class SimplifiedSyncLog(AbstractSyncLog):
                             self.index_tree.add_dependent_index(case._id, index.referenced_id)
 
                 elif action.action_type == const.CASE_ACTION_CLOSE:
-                    # we must have just changed the owner_id to something we didn't own
-                    prune_result = self.index_tree.prune_case(case._id)
-                    for case_id in prune_result.pruned:
-                        self.case_ids_on_phone.remove(case_id)
+                    # this case is being closed.
+                    # we can try pruning this case since it's no longer relevant
+                    handle_pruning(case._id)
                     made_changes = True
 
         if made_changes or case_list:

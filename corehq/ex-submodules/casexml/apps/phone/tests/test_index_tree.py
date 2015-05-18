@@ -1,161 +1,223 @@
 from django.test import SimpleTestCase
-from casexml.apps.phone.models import IndexTree
+from casexml.apps.phone.models import IndexTree, SimplifiedSyncLog
 
 
-class IndexTreePruningTest(SimpleTestCase):
+class TestExtendedFootprint(SimpleTestCase):
 
-    def test_prune_parent_then_child(self):
-        [parent_id, child_id] = ['parent', 'child']
-        tree = IndexTree(live_indices={
-            child_id: [parent_id],
-        })
-        # this has no effect
-        tree.prune_case(parent_id)
-        self.assertTrue(child_id in tree.live_indices)
-        self.assertFalse(child_id in tree.dependent_indices)
-
-        # this should prune it entirely
-        tree.prune_case(child_id)
-        self.assertFalse(child_id in tree.live_indices)
-        self.assertFalse(child_id in tree.dependent_indices)
-
-    def test_prune_child_then_parent(self):
-        [parent_id, child_id] = ['parent', 'child']
-        tree = IndexTree(live_indices={
-            child_id: [parent_id],
-        })
-        # this should prune it entirely
-        tree.prune_case(child_id)
-        self.assertFalse(child_id in tree.live_indices)
-        self.assertFalse(child_id in tree.dependent_indices)
-
-    def test_prune_tiered_top_down(self):
-        [grandparent_id, parent_id, child_id] = ['grandparent', 'parent', 'child']
-        tree = IndexTree(live_indices={
+    def test_simple_linear_structure(self):
+        [grandparent_id, parent_id, child_id] = all_cases = ['grandparent', 'parent', 'child']
+        tree = IndexTree(indices={
             child_id: [parent_id],
             parent_id: [grandparent_id],
         })
-        self.assertTrue(parent_id in tree.live_indices)
-        self.assertTrue(child_id in tree.live_indices)
-        self.assertFalse(parent_id in tree.dependent_indices)
-        self.assertFalse(child_id in tree.dependent_indices)
+        cases = tree.get_all_cases_that_depend_on_case(grandparent_id)
+        self.assertEqual(cases, set(all_cases))
 
-        # this has no effect
-        tree.prune_case(grandparent_id)
-        self.assertTrue(parent_id in tree.live_indices)
-        self.assertTrue(child_id in tree.live_indices)
-        self.assertFalse(parent_id in tree.dependent_indices)
-        self.assertFalse(child_id in tree.dependent_indices)
-
-        # this should push the parent from live to dependent
-        tree.prune_case(parent_id)
-        self.assertFalse(parent_id in tree.live_indices)
-        self.assertTrue(parent_id in tree.dependent_indices)
-        self.assertTrue(child_id in tree.live_indices)
-        self.assertFalse(child_id in tree.dependent_indices)
-
-        # this should prune everything
-        tree.prune_case(child_id)
-        self.assertFalse(parent_id in tree.live_indices)
-        self.assertFalse(parent_id in tree.dependent_indices)
-        self.assertFalse(child_id in tree.live_indices)
-        self.assertFalse(child_id in tree.dependent_indices)
-
-    def test_prune_tiered_bottom_up(self):
-        [grandparent_id, parent_id, child_id] = ['grandparent', 'parent', 'child']
-        tree = IndexTree(live_indices={
-            child_id: [parent_id],
-            parent_id: [grandparent_id],
-        })
-        # just pruing the child should prune everything
-        tree.prune_case(child_id)
-        self.assertFalse(parent_id in tree.live_indices)
-        self.assertFalse(parent_id in tree.dependent_indices)
-        self.assertFalse(child_id in tree.live_indices)
-        self.assertFalse(child_id in tree.dependent_indices)
-
-    def test_prune_multiple_children(self):
-        [grandparent_id, parent_id, child_id_1, child_id_2] = ['rickard', 'ned', 'bran', 'arya']
-        tree = IndexTree(live_indices={
+    def test_multiple_children(self):
+        [grandparent_id, parent_id, child_id_1, child_id_2] = all_cases = ['rickard', 'ned', 'bran', 'arya']
+        tree = IndexTree(indices={
             child_id_1: [parent_id],
             child_id_2: [parent_id],
             parent_id: [grandparent_id],
         })
+        cases = tree.get_all_cases_that_depend_on_case(grandparent_id)
+        self.assertEqual(cases, set(all_cases))
+
+
+class PruningTest(SimpleTestCase):
+
+    def test_prune_parent_then_child(self):
+        [parent_id, child_id] = all_ids = ['parent', 'child']
+        tree = IndexTree(indices={
+            child_id: [parent_id],
+        })
+        sync_log = SimplifiedSyncLog(index_tree=tree, case_ids_on_phone=set(all_ids))
+        # this has no effect
+        sync_log.prune_case(parent_id)
+        self.assertTrue(child_id in sync_log.case_ids_on_phone)
+        self.assertTrue(parent_id in sync_log.case_ids_on_phone)
+        self.assertFalse(child_id in sync_log.dependent_case_ids_on_phone)
+        self.assertTrue(parent_id in sync_log.dependent_case_ids_on_phone)
+
+        # this should prune it entirely
+        sync_log.prune_case(child_id)
+        self.assertFalse(child_id in sync_log.case_ids_on_phone)
+        self.assertFalse(parent_id in sync_log.case_ids_on_phone)
+
+    def test_prune_child_then_parent(self):
+        [parent_id, child_id] = all_ids = ['parent', 'child']
+        tree = IndexTree(indices={
+            child_id: [parent_id],
+        })
+        sync_log = SimplifiedSyncLog(index_tree=tree, case_ids_on_phone=set(all_ids))
+
+        # this should prune the child but not the parent
+        sync_log.prune_case(child_id)
+        self.assertFalse(child_id in sync_log.case_ids_on_phone)
+        self.assertTrue(parent_id in sync_log.case_ids_on_phone)
+        self.assertFalse(child_id in sync_log.dependent_case_ids_on_phone)
+        self.assertFalse(parent_id in sync_log.dependent_case_ids_on_phone)
+
+        # then pruning the parent should prune it
+        # this should prune the child but not the parent
+        sync_log.prune_case(parent_id)
+        self.assertFalse(parent_id in sync_log.case_ids_on_phone)
+        self.assertFalse(parent_id in sync_log.dependent_case_ids_on_phone)
+
+    def test_prune_tiered_top_down(self):
+        [grandparent_id, parent_id, child_id] = all_ids = ['grandparent', 'parent', 'child']
+        tree = IndexTree(indices={
+            child_id: [parent_id],
+            parent_id: [grandparent_id],
+        })
+        sync_log = SimplifiedSyncLog(index_tree=tree, case_ids_on_phone=set(all_ids))
+
+        # this has no effect other than to move the grandparent to dependent
+        sync_log.prune_case(grandparent_id)
+        for id in all_ids:
+            self.assertTrue(id in sync_log.case_ids_on_phone)
+
+        self.assertTrue(grandparent_id in sync_log.dependent_case_ids_on_phone)
+        self.assertFalse(parent_id in sync_log.dependent_case_ids_on_phone)
+        self.assertFalse(child_id in sync_log.dependent_case_ids_on_phone)
+
+        # likewise, this should have no effect other than to move the parent to dependent
+        sync_log.prune_case(parent_id)
+        for id in all_ids:
+            self.assertTrue(id in sync_log.case_ids_on_phone)
+
+        self.assertTrue(grandparent_id in sync_log.dependent_case_ids_on_phone)
+        self.assertTrue(parent_id in sync_log.dependent_case_ids_on_phone)
+        self.assertFalse(child_id in sync_log.dependent_case_ids_on_phone)
+
+        # this should now prune everything
+        sync_log.prune_case(child_id)
+        for id in all_ids:
+            self.assertFalse(id in sync_log.case_ids_on_phone)
+            self.assertFalse(id in sync_log.dependent_case_ids_on_phone)
+
+    def test_prune_tiered_bottom_up(self):
+        [grandparent_id, parent_id, child_id] = all_ids = ['grandparent', 'parent', 'child']
+        tree = IndexTree(indices={
+            child_id: [parent_id],
+            parent_id: [grandparent_id],
+        })
+        sync_log = SimplifiedSyncLog(index_tree=tree, case_ids_on_phone=set(all_ids))
+
+        # just pruning the child should prune just the child
+        sync_log.prune_case(child_id)
+        self.assertTrue(grandparent_id in sync_log.case_ids_on_phone)
+        self.assertTrue(parent_id in sync_log.case_ids_on_phone)
+        self.assertFalse(child_id in sync_log.case_ids_on_phone)
+
+        # same for the parent
+        sync_log.prune_case(parent_id)
+        self.assertTrue(grandparent_id in sync_log.case_ids_on_phone)
+        self.assertFalse(parent_id in sync_log.case_ids_on_phone)
+
+        # same for the grandparentparent
+        sync_log.prune_case(grandparent_id)
+        self.assertFalse(grandparent_id in sync_log.case_ids_on_phone)
+
+    def test_prune_multiple_children(self):
+        [grandparent_id, parent_id, child_id_1, child_id_2] = all_ids = ['rickard', 'ned', 'bran', 'arya']
+        tree = IndexTree(indices={
+            child_id_1: [parent_id],
+            child_id_2: [parent_id],
+            parent_id: [grandparent_id],
+        })
+        sync_log = SimplifiedSyncLog(index_tree=tree, case_ids_on_phone=set(all_ids))
+
+        # first prune the parent and grandparent
+        sync_log.prune_case(grandparent_id)
+        sync_log.prune_case(parent_id)
+        self.assertTrue(grandparent_id in sync_log.case_ids_on_phone)
+        self.assertTrue(grandparent_id in sync_log.dependent_case_ids_on_phone)
+        self.assertTrue(parent_id in sync_log.case_ids_on_phone)
+        self.assertTrue(parent_id in sync_log.dependent_case_ids_on_phone)
+
         # just pruning one child should preserve the parent index
-        tree.prune_case(child_id_1)
-        self.assertTrue(parent_id in tree.live_indices)
-        self.assertFalse(parent_id in tree.dependent_indices)
-        self.assertFalse(child_id_1 in tree.live_indices)
-        self.assertFalse(child_id_1 in tree.dependent_indices)
-        self.assertTrue(child_id_2 in tree.live_indices)
-        self.assertFalse(child_id_2 in tree.dependent_indices)
+        sync_log.prune_case(child_id_1)
+        self.assertTrue(grandparent_id in sync_log.case_ids_on_phone)
+        self.assertTrue(grandparent_id in sync_log.dependent_case_ids_on_phone)
+        self.assertTrue(parent_id in sync_log.case_ids_on_phone)
+        self.assertTrue(parent_id in sync_log.dependent_case_ids_on_phone)
+        self.assertFalse(child_id_1 in sync_log.case_ids_on_phone)
+
 
         # pruning the other one should wipe it
-        tree.prune_case(child_id_2)
-        for id in [parent_id, child_id_1, child_id_2]:
-            self.assertFalse(id in tree.live_indices)
-            self.assertFalse(id in tree.dependent_indices)
+        sync_log.prune_case(child_id_2)
+        for id in all_ids:
+            self.assertFalse(id in sync_log.case_ids_on_phone)
+            self.assertFalse(id in sync_log.dependent_case_ids_on_phone)
 
     def test_prune_multiple_parents(self):
-        [grandparent_id, mother_id, father_id, child_id] = ['heart-tree', 'catelyn', 'ned', 'arya']
-        tree = IndexTree(live_indices={
+        [grandparent_id, mother_id, father_id, child_id] = all_ids = ['heart-tree', 'catelyn', 'ned', 'arya']
+        tree = IndexTree(indices={
             child_id: [mother_id, father_id],
             mother_id: [grandparent_id],
             father_id: [grandparent_id],
         })
+        sync_log = SimplifiedSyncLog(index_tree=tree, case_ids_on_phone=set(all_ids))
+
+        # first prune everything but the child
+        sync_log.prune_case(grandparent_id)
+        sync_log.prune_case(mother_id)
+        sync_log.prune_case(father_id)
+
+        # everything should still be relevant because of the child
+        for id in all_ids:
+            self.assertTrue(id in sync_log.case_ids_on_phone)
+
         # pruning the child should wipe everything else
-        tree.prune_case(child_id)
-        for id in [mother_id, father_id, child_id]:
-            self.assertFalse(id in tree.live_indices)
-            self.assertFalse(id in tree.dependent_indices)
+        sync_log.prune_case(child_id)
+        for id in all_ids:
+            self.assertFalse(id in sync_log.case_ids_on_phone)
+            self.assertFalse(id in sync_log.dependent_case_ids_on_phone)
 
     def test_prune_circular_loops(self):
-        [peer_id_1, peer_id_2] = ['jaime', 'cersei']
-        tree = IndexTree(live_indices={
+        [peer_id_1, peer_id_2] = all_ids = ['jaime', 'cersei']
+        tree = IndexTree(indices={
             peer_id_1: [peer_id_2],
             peer_id_2: [peer_id_1],
         })
-        # pruning the child should wipe everything else
-        tree.prune_case(peer_id_1)
-        self.assertFalse(peer_id_1 in tree.live_indices)
-        self.assertTrue(peer_id_1 in tree.dependent_indices)
-        self.assertTrue(peer_id_2 in tree.live_indices)
-        self.assertFalse(peer_id_2 in tree.dependent_indices)
+        sync_log = SimplifiedSyncLog(index_tree=tree, case_ids_on_phone=set(all_ids))
 
-        tree.prune_case(peer_id_2)
-        # todo: this behavior isn't defined. not really sure whether this is right
-        self.assertFalse(peer_id_1 in tree.live_indices)
-        self.assertFalse(peer_id_1 in tree.dependent_indices)
-        self.assertFalse(peer_id_2 in tree.live_indices)
-        self.assertFalse(peer_id_2 in tree.dependent_indices)
+        # pruning one peer should keep everything around
+        sync_log.prune_case(peer_id_1)
+        for id in all_ids:
+            self.assertTrue(id in sync_log.case_ids_on_phone)
+
+        # pruning the second peer should remove everything
+        sync_log.prune_case(peer_id_2)
+        for id in all_ids:
+            self.assertFalse(id in sync_log.case_ids_on_phone)
 
     def test_prune_very_circular_loops(self):
-        [peer_id_1, peer_id_2, peer_id_3] = ['drogon', 'rhaegal', 'viserion']
-        tree = IndexTree(live_indices={
+        [peer_id_1, peer_id_2, peer_id_3] = all_ids = ['drogon', 'rhaegal', 'viserion']
+        tree = IndexTree(indices={
             peer_id_1: [peer_id_2],
             peer_id_2: [peer_id_3],
             peer_id_3: [peer_id_1],
         })
-        # prune the first two, should still be dependent
-        tree.prune_case(peer_id_1)
-        tree.prune_case(peer_id_2)
-        self.assertFalse(peer_id_1 in tree.live_indices)
-        self.assertTrue(peer_id_1 in tree.dependent_indices)
-        self.assertFalse(peer_id_2 in tree.live_indices)
-        self.assertTrue(peer_id_2 in tree.dependent_indices)
-        self.assertTrue(peer_id_3 in tree.live_indices)
-        self.assertFalse(peer_id_3 in tree.dependent_indices)
+        sync_log = SimplifiedSyncLog(index_tree=tree, case_ids_on_phone=set(all_ids))
 
-        tree.prune_case(peer_id_3)
-        for id in [peer_id_1, peer_id_2, peer_id_3]:
-            self.assertFalse(id in tree.live_indices)
-            self.assertFalse(id in tree.dependent_indices)
+        # pruning the first two, should still keep everything around
+        sync_log.prune_case(peer_id_1)
+        sync_log.prune_case(peer_id_2)
+        for id in all_ids:
+            self.assertTrue(id in sync_log.case_ids_on_phone)
+
+        sync_log.prune_case(peer_id_3)
+        for id in all_ids:
+            self.assertFalse(id in sync_log.case_ids_on_phone)
 
     def test_prune_self_indexing(self):
         [id] = ['recursive']
-        tree = IndexTree(live_indices={
+        tree = IndexTree(indices={
             id: [id],
         })
-        tree.prune_case(id)
-        self.assertFalse(id in tree.live_indices)
-        self.assertFalse(id in tree.dependent_indices)
+        sync_log =  SimplifiedSyncLog(index_tree=tree, case_ids_on_phone=set([id]))
+        sync_log.prune_case(id)
+        self.assertFalse(id in sync_log.case_ids_on_phone)
+        self.assertFalse(id in sync_log.dependent_case_ids_on_phone)
