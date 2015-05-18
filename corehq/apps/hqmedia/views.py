@@ -1,8 +1,10 @@
 from StringIO import StringIO
 from mimetypes import guess_all_extensions, guess_type
+import uuid
 import zipfile
 import logging
 import os
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 import json
 from django.core.urlresolvers import reverse
@@ -14,13 +16,19 @@ from couchdbkit.exceptions import ResourceNotFound
 from django.http import HttpResponse, Http404, HttpResponseServerError, HttpResponseBadRequest
 
 from django.shortcuts import render
+import shutil
 from corehq import privileges
 
 from corehq.apps.app_manager.decorators import safe_download, require_can_edit_apps
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
 from corehq.apps.app_manager.models import get_app
-from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache
-from corehq.apps.hqmedia.controller import MultimediaBulkUploadController, MultimediaImageUploadController, MultimediaAudioUploadController, MultimediaVideoUploadController
+from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache, BulkMultimediaStatusCacheNfs
+from corehq.apps.hqmedia.controller import (
+    MultimediaBulkUploadController,
+    MultimediaImageUploadController,
+    MultimediaAudioUploadController,
+    MultimediaVideoUploadController
+)
 from corehq.apps.hqmedia.decorators import login_with_permission_from_post
 from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareMultimedia, MULTIMEDIA_PREFIX, CommCareVideo
 from corehq.apps.hqmedia.tasks import process_bulk_upload_zip
@@ -267,13 +275,18 @@ class ProcessBulkUploadView(BaseProcessUploadedView):
             raise BadMediaFileException("The ZIP file provided was bad.")
 
     def process_upload(self):
-        # save the file w/ soil
-        self.uploaded_file.file.seek(0)
-        saved_file = expose_download(self.uploaded_file.file.read(), expiry=BulkMultimediaStatusCache.cache_expiry)
-        processing_id = saved_file.download_id
-
-        status = BulkMultimediaStatusCache(processing_id)
-        status.save()
+        if hasattr(self.uploaded_file, 'temporary_file_path') and settings.SHARED_DRIVE_CONF.temp_dir:
+            processing_id = uuid.uuid4().hex
+            path = '{}.{}'.format(os.path.join(settings.SHARED_DRIVE_CONF.temp_dir, processing_id), 'upload')
+            shutil.move(self.uploaded_file.temporary_file_path(), path)
+            status = BulkMultimediaStatusCacheNfs(processing_id, path)
+            status.save()
+        else:
+            self.uploaded_file.file.seek(0)
+            saved_file = expose_download(self.uploaded_file.file.read(), expiry=BulkMultimediaStatusCache.cache_expiry)
+            processing_id = saved_file.download_id
+            status = BulkMultimediaStatusCache(processing_id)
+            status.save()
 
         process_bulk_upload_zip.delay(processing_id, self.domain, self.app_id,
                                       username=self.username,
