@@ -16,9 +16,10 @@ class RandRSubmissionData(ILSData):
         rr_data = []
         if self.config['org_summary']:
             try:
-                rr = GroupSummary.objects.filter(title=SupplyPointStatusTypes.R_AND_R_FACILITY,
-                                                 org_summary__in=self.config['org_summary'])\
-                    .aggregate(Avg('responded'), Avg('on_time'), Avg('complete'), Max('total'))
+                rr = GroupSummary.objects.filter(
+                    title=SupplyPointStatusTypes.R_AND_R_FACILITY,
+                    org_summary__in=self.config['org_summary']
+                ).aggregate(Avg('responded'), Avg('on_time'), Avg('complete'), Max('total'))
 
                 rr_data.append(GroupSummary(
                     title=SupplyPointStatusTypes.R_AND_R_FACILITY,
@@ -67,8 +68,11 @@ class DistrictSummaryData(ILSData):
             delivery_group = dg.current_delivering_group(month=endmonth)
 
             (rr_complete, rr_total) = (rr_data.complete, rr_data.total) if rr_data else (0, 0)
-            (delivery_complete, delivery_total) = (delivery_data.complete, delivery_data.total)\
-                if delivery_data else (0, 0)
+            if delivery_data:
+                (delivery_complete, delivery_total) = (delivery_data.complete, delivery_data.total)
+            else:
+                (delivery_complete, delivery_total) = (0, 0)
+
             processing_numbers = prepare_processing_info([total, rr_total, delivery_total])
 
             return {
@@ -97,9 +101,10 @@ class SohSubmissionData(ILSData):
         soh_data = []
         if self.config['org_summary']:
             try:
-                sohs = GroupSummary.objects.filter(title=SupplyPointStatusTypes.SOH_FACILITY,
-                                                   org_summary__in=self.config['org_summary'])\
-                    .aggregate(Avg('responded'), Avg('on_time'), Avg('complete'), Max('total'))
+                sohs = GroupSummary.objects.filter(
+                    title=SupplyPointStatusTypes.SOH_FACILITY,
+                    org_summary__in=self.config['org_summary']
+                ).aggregate(Avg('responded'), Avg('on_time'), Avg('complete'), Max('total'))
 
                 soh_data.append(GroupSummary(
                     title=SupplyPointStatusTypes.SOH_FACILITY,
@@ -122,9 +127,10 @@ class DeliverySubmissionData(ILSData):
         del_data = []
         if self.config['org_summary']:
             try:
-                data = GroupSummary.objects.filter(title=SupplyPointStatusTypes.DELIVERY_FACILITY,
-                                                org_summary__in=self.config['org_summary'])\
-                    .aggregate(Avg('responded'), Avg('on_time'), Avg('complete'), Max('total'))
+                data = GroupSummary.objects.filter(
+                    title=SupplyPointStatusTypes.DELIVERY_FACILITY,
+                    org_summary__in=self.config['org_summary']
+                ).aggregate(Avg('responded'), Avg('on_time'), Avg('complete'), Max('total'))
 
                 del_data.append(GroupSummary(
                     title=SupplyPointStatusTypes.DELIVERY_FACILITY,
@@ -156,13 +162,13 @@ class ProductAvailabilitySummary(ILSData):
         if self.config['org_summary']:
             product_availability = ProductAvailabilityData.objects.filter(
                 date__range=(self.config['startdate'], self.config['enddate']),
-                supply_point=self.config['org_summary'][0].supply_point,
-                product__in=self.config['products']).values('product')\
-                .annotate(
-                    with_stock=Avg('with_stock'),
-                    without_data=Avg('without_data'),
-                    without_stock=Avg('without_stock'),
-                    total=Max('total')
+                location_id=self.config['org_summary'][0].location_id,
+                product__in=self.config['products']
+            ).values('product').annotate(
+                with_stock=Avg('with_stock'),
+                without_data=Avg('without_data'),
+                without_stock=Avg('without_stock'),
+                total=Max('total')
             )
         return product_availability
 

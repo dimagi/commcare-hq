@@ -13,7 +13,7 @@ from django.conf.urls import *
 from django.http import HttpResponseNotFound
 from tastypie.api import Api
 from corehq.apps.api.es import XFormES
-from dimagi.utils.decorators import inline
+
 
 API_LIST = (
     ((0, 1), (
@@ -85,7 +85,6 @@ class CommCareHqApi(Api):
         return HttpResponseNotFound()
 
 
-@inline
 def api_url_patterns():
     for version, resources in API_LIST:
         api = CommCareHqApi(api_name='v%d.%d' % version)
@@ -104,8 +103,7 @@ def api_url_patterns():
     yield url(r'^redis_assets/$', RedisAssetsAPI.as_view())
 
 
-urlpatterns = patterns('',
-    *list(api_url_patterns))
+urlpatterns = patterns('', *list(api_url_patterns()))
 
 ADMIN_API_LIST = (
     v0_5.AdminWebUserResource,
@@ -134,11 +132,11 @@ ADMIN_API_LIST = (
     BillingRecordResource,
 )
 
-@inline
+
 def api_url_patterns():
     api = CommCareHqApi(api_name='global')
     for resource in ADMIN_API_LIST:
         api.register(resource())
         yield (r'^', include(api.urls))
 
-admin_urlpatterns = patterns('', *list(api_url_patterns))
+admin_urlpatterns = patterns('', *list(api_url_patterns()))

@@ -18,8 +18,7 @@ class ILSDeliveredTest(ILSTestScript):
         """.format(DELIVERY_PARTIAL_CONFIRM)
         self.run_script(script)
 
-        sp = self.loc1.linked_supply_point()
-        sps = SupplyPointStatus.objects.filter(supply_point=sp.get_id,
+        sps = SupplyPointStatus.objects.filter(location_id=self.loc1.get_id,
                                                status_type="del_fac").order_by("-status_date")[0]
 
         self.assertEqual(SupplyPointStatusValues.RECEIVED, sps.status_value)
@@ -45,8 +44,7 @@ class ILSDeliveredTest(ILSTestScript):
             """.format(NOT_DELIVERED_CONFIRM)
         self.run_script(script)
 
-        sp = self.loc1.linked_supply_point()
-        sps = SupplyPointStatus.objects.filter(supply_point=sp.get_id,
+        sps = SupplyPointStatus.objects.filter(location_id=self.loc1.get_id,
                                                status_type="del_fac").order_by("-status_date")[0]
 
         self.assertEqual(SupplyPointStatusValues.NOT_RECEIVED, sps.status_value)
@@ -66,8 +64,7 @@ class ILSDeliveredTest(ILSTestScript):
 
         self.run_script(script)
 
-        sp = self.dis.linked_supply_point()
-        sps = SupplyPointStatus.objects.filter(supply_point=sp.get_id,
+        sps = SupplyPointStatus.objects.filter(location_id=self.dis.get_id,
                                                status_type="del_dist").order_by("-status_date")[0]
 
         self.assertEqual(SupplyPointStatusValues.RECEIVED, sps.status_value)
@@ -81,8 +78,7 @@ class ILSDeliveredTest(ILSTestScript):
         """.format(NOT_DELIVERED_CONFIRM)
         self.run_script(script)
 
-        sp = self.dis.linked_supply_point()
-        sps = SupplyPointStatus.objects.filter(supply_point=sp.get_id,
+        sps = SupplyPointStatus.objects.filter(location_id=self.dis.get_id,
                                                status_type="del_dist").order_by("-status_date")[0]
 
         self.assertEqual(SupplyPointStatusValues.NOT_RECEIVED, sps.status_value)
