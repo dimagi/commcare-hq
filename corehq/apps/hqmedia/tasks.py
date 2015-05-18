@@ -8,7 +8,6 @@ import zipfile
 from corehq.apps.app_manager.models import get_app
 from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache
 from corehq.apps.hqmedia.models import CommCareMultimedia
-from corehq.apps.hqmedia.views import iter_app_files
 from soil import DownloadBase
 from django.utils.translation import ugettext as _
 from soil.util import expose_file_download, expose_cached_download
@@ -108,6 +107,8 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
 @task
 def build_application_zip(include_multimedia_files, include_index_files,
                             app, download_id, compress_zip=False, filename="commcare.zip"):
+    from corehq.apps.hqmedia.views import iter_app_files
+    
     DownloadBase.set_progress(build_application_zip, 0, 100)
 
     errors = []
