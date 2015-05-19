@@ -1427,8 +1427,8 @@ def find_question_id(form, value):
     return None
 
 
+@login_or_digest
 @require_form_view_permission
-@login_and_domain_required
 @require_GET
 def form_multimedia_export(request, domain):
     try:
