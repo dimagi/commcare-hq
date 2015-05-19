@@ -31,8 +31,8 @@ def attach_locations(xform, cases):
         if unique_location_ids:
             if len(unique_location_ids) != 1:
                 raise Exception(
-                    'Submitted a commtrack case with multiple locations in a single form. '
-                    'This is currently not allowed.'
+                    'Submitted a commcare supply case with multiple locations '
+                    'in a single form. This is currently not allowed.'
                 )
             location_id = unique_location_ids.pop()
             xform.location_id = location_id

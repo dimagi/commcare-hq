@@ -6,7 +6,7 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
-from casexml.apps.phone.restore import RestoreConfig
+from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import format_username
@@ -21,7 +21,7 @@ class OtaRestoreBugTest(TestCase):
 
     def test_cross_domain_assignments(self):
         good_domain = 'main-domain'
-        create_domain(good_domain)
+        domain = create_domain(good_domain)
         bad_domain = 'bad-domain'
         create_domain(bad_domain)
         user = CommCareUser.create(good_domain, format_username('user', good_domain), 'secret')
@@ -53,7 +53,9 @@ class OtaRestoreBugTest(TestCase):
             self.assertEqual(user._id, case.owner_id)
 
         restore_config = RestoreConfig(
-            user.to_casexml_user(), version=V2,
+            project=domain,
+            user=user.to_casexml_user(),
+            params=RestoreParams(version=V2),
         )
         payload = restore_config.get_payload().as_string()
         self.assertTrue(good_case._id in payload)

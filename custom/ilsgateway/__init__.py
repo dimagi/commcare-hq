@@ -7,6 +7,7 @@ from custom.ilsgateway.tanzania.reports.randr import RRreport
 from custom.ilsgateway.tanzania.reports.facility_details import FacilityDetailsReport
 from custom.ilsgateway.tanzania.reports.stock_on_hand import StockOnHandReport
 from custom.ilsgateway.tanzania.reports.supervision import SupervisionReport
+from custom.ilsgateway.tanzania.reports.unrecognized_sms import UnrecognizedSMSReport
 
 
 CUSTOM_REPORTS = (
@@ -18,6 +19,7 @@ CUSTOM_REPORTS = (
         FacilityDetailsReport,
         DeliveryReport,
         SupervisionReport,
+        UnrecognizedSMSReport,
         ProductsCompareReport,
         LocationsCompareReport,
         WebUsersCompareReport,
@@ -25,7 +27,7 @@ CUSTOM_REPORTS = (
     )),
 )
 
-LOCATION_TYPES = ["MOHSW", "REGION", "DISTRICT", "FACILITY"]
+LOCATION_TYPES = ["MOHSW", "MSDZONE", "REGION", "DISTRICT", "FACILITY"]
 
 PRODUCTS_CODES_PROGRAMS_MAPPING = {
     "Reproductive Health": ['dp', 'ip', 'cc', 'id', 'pp', 'cond'],

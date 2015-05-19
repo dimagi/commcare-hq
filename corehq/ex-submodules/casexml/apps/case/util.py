@@ -3,8 +3,9 @@ from __future__ import absolute_import
 from xml.etree import ElementTree
 from django.conf import settings
 from casexml.apps.case import const
+from casexml.apps.case.dbaccessors import get_indexed_case_ids
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
-from casexml.apps.phone.models import SyncLogAssertionError, SyncLog
+from casexml.apps.phone.models import SyncLogAssertionError, get_properly_wrapped_sync_log
 from casexml.apps.stock.models import StockReport
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
@@ -99,7 +100,7 @@ def update_sync_log_with_checks(sync_log, xform, cases, case_db,
                             ),
                             case_db=case_db
                         )
-            updated_log = SyncLog.get(sync_log._id)
+            updated_log = get_properly_wrapped_sync_log(sync_log._id)
 
             update_sync_log_with_checks(updated_log, xform, cases, case_db,
                                         case_id_blacklist=case_id_blacklist)
@@ -117,13 +118,23 @@ def reverse_indices(db, case, wrap=True):
     ).all()
 
 
-def get_reverse_indexed_cases(cases):
+def get_indexed_cases(domain, case_ids):
+    """
+    Given a base list of cases, gets all wrapped cases that they reference
+    (parent cases).
+    """
+    from casexml.apps.case.models import CommCareCase
+    return [CommCareCase.wrap(doc) for doc in iter_docs(CommCareCase.get_db(),
+                                                        get_indexed_case_ids(domain, case_ids))]
+
+
+def get_reverse_indexed_cases(domain, case_ids):
     """
     Given a base list of cases, gets all wrapped cases that directly
     reference them (child cases).
     """
     from casexml.apps.case.models import CommCareCase
-    keys = [[c['domain'], c['_id'], 'reverse_index'] for c in cases]
+    keys = [[domain, id, 'reverse_index'] for id in case_ids]
     return CommCareCase.view(
         'case/related',
         keys=keys,

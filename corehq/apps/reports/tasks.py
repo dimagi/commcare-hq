@@ -32,9 +32,14 @@ from corehq.apps.reports.models import (
     ReportNotification,
     UnsupportedScheduledReportError,
 )
-from corehq.elastic import get_es, ES_URLS, stream_es_query
+from corehq.apps.es.domains import DomainES
+from corehq.elastic import (
+    get_es,
+    ES_URLS,
+    stream_es_query,
+    send_to_elasticsearch,
+)
 from corehq.pillows.mappings.app_mapping import APP_INDEX
-from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
 from dimagi.utils.parsing import json_format_datetime
 import settings
 
@@ -165,17 +170,12 @@ def rebuild_export_async(config, schema, output_dir):
 
 @periodic_task(run_every=crontab(hour="12, 22", minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def update_calculated_properties():
-    es = get_es()
-
-    q = {"filter": {"and": [
-        {"term": {"doc_type": "Domain"}},
-        {"term": {"is_snapshot": False}}
-    ]}}
-    results = stream_es_query(q=q, es_url=ES_URLS["domains"], size=999999, chunksize=500, fields=["name"])
+    results = DomainES().is_snapshot(False).fields(["name", "_id"]).run().hits
     all_stats = _all_domain_stats()
     for r in results:
-        dom = r["fields"]["name"]
+        dom = r["name"]
         calced_props = {
+            "_id": r["_id"],
             "cp_n_web_users": int(all_stats["web_users"][dom]),
             "cp_n_active_cc_users": int(CALC_FNS["mobile_users"](dom)),
             "cp_n_cc_users": int(all_stats["commcare_users"][dom]),
@@ -200,7 +200,7 @@ def update_calculated_properties():
         if calced_props['cp_first_form'] == 'No forms':
             del calced_props['cp_first_form']
             del calced_props['cp_last_form']
-        es.post("%s/hqdomain/%s/_update" % (DOMAIN_INDEX, r["_id"]), data={"doc": calced_props})
+        send_to_elasticsearch("domains", calced_props)
 
 
 def is_app_active(app_id, domain):

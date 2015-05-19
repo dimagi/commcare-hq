@@ -468,8 +468,13 @@ class EWSApi(APISynchronization):
         else:
             if self.domain not in user.get_domains():
                 user.add_domain_membership(self.domain, location_id=location_id)
+
         ews_webuser_extension(user, ews_webuser)
         dm = user.get_domain_membership(self.domain)
+
+        if dm.location_id != location_id:
+            dm.location_id = location_id
+
         if ews_webuser.is_superuser:
             dm.role_id = UserRole.by_domain_and_name(self.domain, 'Administrator')[0].get_id
         elif ews_webuser.groups and ews_webuser.groups[0].name == 'facility_manager':

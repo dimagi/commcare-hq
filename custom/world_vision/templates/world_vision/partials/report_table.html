@@ -67,7 +67,7 @@
         {% if charts and not report_table.table_only %}
             {% for chart in charts %}
             <div class="row">
-                {% if chart.title %}<h4 style="text-align: center;">{{ chart.title }}</h4>{% endif %}
+                {% if chart.title %}<h4 style="text-align: center; font-size: smaller">{{ chart.title }}</h4>{% endif %}
                 <div id='chart_{{ report.slug }}_{{ forloop.parentloop.counter }}{{ forloop.counter }}' class="span6 hide" style="width: 80%">
                     <svg style='height: {{ chart.height }}px; width: 100%'> </svg>
                 </div>
@@ -81,43 +81,44 @@
     </div>
 </div>
 {% endif %}
-
-<script type="text/javascript">
-    $(function () {
-        $("[data-trigger='hover']").popover({
-            trigger: "hover",
-            template: '<div class="popover" role="tooltip"><div class="arrow"></div><div class="popover-content"></div></div>'
-        });
-        $('#collapse_{{ report_table.slug }}').on('shown', function () {
-           $("#collapse_icon_{{ report_table.slug }}").removeClass("icon-chevron-down").addClass("icon-chevron-up");
-        });
-
-        $('#collapse_{{ report_table.slug }}').on('hidden', function () {
-           $("#collapse_icon_{{ report_table.slug }}").removeClass("icon-chevron-up").addClass("icon-chevron-down");
-        });
-    });
-    {% if report_table and report_table.datatables %}
-        var dataTablesDom = "frt<'row-fluid dataTables_control'<'span5'il><'span7'p>>";
-
-        var params = {
-                sDom: dataTablesDom,
-                "sPaginationType": "bootstrap",
-                iDisplayLength: 10,
-                iDisplayStart: 0,
-                sScrollX: "100%"
-            };
-
-        var id = '#report_table_{{ report_table.slug }}';
-        var datatable = $(id).dataTable(params);
-
-       {% if report_table.fix_column %}
-            new FixedColumns(datatable, {
-               iLeftColumns: 1,
-               iLeftWidth: 130
+{% if rendered_as != "print" %}
+    <script type="text/javascript">
+        $(function () {
+            $("[data-trigger='hover']").popover({
+                trigger: "hover",
+                template: '<div class="popover" role="tooltip"><div class="arrow"></div><div class="popover-content"></div></div>'
             });
-       {% endif %}
-    {% endif %}
-    $("body").change(function() {
-        $(".nv-legendWrap").attr("transform", "translate(200,-25)");
-    });
-</script>
+            $('#collapse_{{ report_table.slug }}').on('shown', function () {
+               $("#collapse_icon_{{ report_table.slug }}").removeClass("icon-chevron-down").addClass("icon-chevron-up");
+            });
+
+            $('#collapse_{{ report_table.slug }}').on('hidden', function () {
+               $("#collapse_icon_{{ report_table.slug }}").removeClass("icon-chevron-up").addClass("icon-chevron-down");
+            });
+        });
+        {% if report_table and report_table.datatables %}
+            var dataTablesDom = "frt<'row-fluid dataTables_control'<'span5'il><'span7'p>>";
+
+            var params = {
+                    sDom: dataTablesDom,
+                    "sPaginationType": "bootstrap",
+                    iDisplayLength: 10,
+                    iDisplayStart: 0,
+                    sScrollX: "100%"
+                };
+
+            var id = '#report_table_{{ report_table.slug }}';
+            var datatable = $(id).dataTable(params);
+
+           {% if report_table.fix_column %}
+                new FixedColumns(datatable, {
+                   iLeftColumns: 1,
+                   iLeftWidth: 130
+                });
+           {% endif %}
+        {% endif %}
+        $("body").change(function() {
+            $(".nv-legendWrap").attr("transform", "translate(200,-25)");
+        });
+    </script>
+{% endif %}

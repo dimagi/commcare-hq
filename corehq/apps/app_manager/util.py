@@ -6,6 +6,7 @@ import uuid
 from corehq.apps.app_manager.exceptions import SuiteError
 from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.app_manager.tasks import create_user_cases
+from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from couchdbkit.exceptions import DocTypeError
 from corehq import Domain
@@ -95,9 +96,10 @@ def is_valid_case_type(case_type):
 
 
 class ParentCasePropertyBuilder(object):
-    def __init__(self, app, defaults=()):
+    def __init__(self, app, defaults=(), per_type_defaults=None):
         self.app = app
         self.defaults = defaults
+        self.per_type_defaults = per_type_defaults or {}
 
     @property
     @memoized
@@ -146,7 +148,7 @@ class ParentCasePropertyBuilder(object):
             include_shared_properties=include_shared_properties
         )
 
-        case_properties = set(self.defaults)
+        case_properties = set(self.defaults) | set(self.per_type_defaults.get(case_type, []))
 
         for m_case_type, form in self.forms_info:
             case_properties.update(self.get_case_updates(form, case_type))
@@ -211,12 +213,28 @@ class ParentCasePropertyBuilder(object):
         }
 
 
-def get_case_properties(app, case_types, defaults=(),
-                        include_shared_properties=True):
-    builder = ParentCasePropertyBuilder(app, defaults)
+def get_case_properties(app, case_types, defaults=(), include_shared_properties=True):
+    per_type_defaults = get_per_type_defaults(app.domain, case_types)
+    builder = ParentCasePropertyBuilder(app, defaults, per_type_defaults=per_type_defaults)
     return builder.get_case_property_map(
         case_types, include_shared_properties=include_shared_properties
     )
+
+
+def get_per_type_defaults(domain, case_types=None):
+    from corehq.apps.callcenter.utils import get_call_center_case_type_if_enabled
+
+    per_type_defaults = {}
+    if not case_types or USERCASE_TYPE in case_types:
+        per_type_defaults = {
+            USERCASE_TYPE: get_usercase_default_properties(domain)
+        }
+
+    callcenter_case_type = get_call_center_case_type_if_enabled(domain)
+    if callcenter_case_type and (not case_types or callcenter_case_type in case_types):
+        per_type_defaults[callcenter_case_type] = get_usercase_default_properties(domain)
+
+    return per_type_defaults
 
 
 def is_usercase_enabled(domain_name):
@@ -430,6 +448,15 @@ def enable_usercase(domain_name):
             create_user_cases.delay(domain_name)
 
 
+@quickcache(['domain'])
+def get_usercase_default_properties(domain):
+    from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
+    from corehq.apps.users.views.mobile.custom_data_fields import CUSTOM_USER_DATA_FIELD_TYPE
+
+    fields_def = CustomDataFieldsDefinition.get_or_create(domain, CUSTOM_USER_DATA_FIELD_TYPE)
+    return [f.slug for f in fields_def.fields]
+
+
 def get_cloudcare_session_data(suite_gen, domain_name, form, couch_user):
     from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 
@@ -443,7 +470,7 @@ def get_cloudcare_session_data(suite_gen, domain_name, form, couch_user):
             _assert(False, 'Domain "%s": %s' % (domain_name, err))
         else:
             if suite_gen.any_usercase_datums(extra_datums):
-                usercase = get_case_by_domain_hq_user_id(domain_name, couch_user.get_id, include_docs=False)
+                usercase = get_case_by_domain_hq_user_id(domain_name, couch_user.get_id, USERCASE_TYPE)
                 if usercase:
                     session_data[USERCASE_ID] = usercase['id']
     return session_data

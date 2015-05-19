@@ -1,3 +1,5 @@
+from collections import namedtuple
+import datetime
 import json
 import os
 import tempfile
@@ -17,11 +19,13 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView, View
 
+from sqlalchemy import types, exc
+
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq import ConfigurableReport, privileges, Session, toggles
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
 from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
-from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.apps.userreports.exceptions import BadSpecError, UserQueryError
 from corehq.apps.userreports.reports.builder.forms import (
     ConfigurePieChartReportForm,
     ConfigureTableReportForm,
@@ -439,32 +443,98 @@ def preview_data_source(request, domain, config_id):
     return render(request, "userreports/preview_data.html", context)
 
 
+ExportParameters = namedtuple('ExportParameters',
+                              ['format', 'keyword_filters', 'sql_filters'])
+
+
+def _last_n_days(column, value):
+    if not isinstance(column.type, (types.Date, types.DateTime)):
+        raise UserQueryError(_("You can only use 'lastndays' on date columns"))
+    end = datetime.date.today()
+    start = end - datetime.timedelta(days=int(value))
+    return column.between(start, end)
+
+
+def _range_filter(column, value):
+    try:
+        start, end = value.split('..')
+    except ValueError:
+        raise UserQueryError(_('Ranges must have the format "start..end"'))
+    return column.between(start, end)
+
+
+sql_directives = [
+    # (suffix matching url parameter, callable returning a filter),
+    ('-lastndays', _last_n_days),
+    ('-range', _range_filter),
+]
+
+
+def process_url_params(params, columns):
+    """
+    Converts a dictionary of parameters from the user to sql filters.
+
+    If a parameter is of the form <field name>-<suffix>, where suffix is
+    defined in `sql_directives`, the corresponding function is used to
+    produce a filter.
+    """
+    # support passing `format` instead of `$format` so we don't break people's
+    # existing URLs.  Let's remove this once we can.
+    format_ = params.get('$format', params.get('format', Format.UNZIPPED_CSV))
+    keyword_filters = {}
+    sql_filters = []
+    for key, value in params.items():
+        if key in ('$format', 'format'):
+            continue
+
+        for suffix, fn in sql_directives:
+            if key.endswith(suffix):
+                field = key[:-len(suffix)]
+                if field not in columns:
+                    raise UserQueryError(_('No field named {}').format(field))
+                sql_filters.append(fn(columns[field], value))
+                break
+        else:
+            if key in columns:
+                keyword_filters[key] = value
+            else:
+                raise UserQueryError(_('Invalid filter parameter: {}')
+                                     .format(key))
+    return ExportParameters(format_, keyword_filters, sql_filters)
+
+
 @login_or_basic
 @require_permission(Permissions.view_reports)
 def export_data_source(request, domain, config_id):
-    format = request.GET.get('format', Format.UNZIPPED_CSV)
     config = get_document_or_404(DataSourceConfiguration, domain, config_id)
     table = get_indicator_table(config)
     q = Session.query(table)
-    column_headers = [col['name'] for col in q.column_descriptions]
 
-    # apply filtering if any
-    filter_values = {key: value for key, value in request.GET.items() if key != 'format'}
-    for key in filter_values:
-        if key not in column_headers:
-            return HttpResponse('Invalid filter parameter: {}'.format(key), status=400)
-    q = q.filter_by(**filter_values)
+    try:
+        params = process_url_params(request.GET, table.columns)
+    except UserQueryError as e:
+        return HttpResponse(e.message, status=400)
+
+    q = q.filter_by(**params.keyword_filters)
+    for sql_filter in params.sql_filters:
+        q = q.filter(sql_filter)
 
     # build export
     def get_table(q):
-        yield column_headers
+        yield table.columns.keys()
         for row in q:
             yield row
 
     fd, path = tempfile.mkstemp()
-    with os.fdopen(fd, 'wb') as temp:
-        export_from_tables([[config.table_id, get_table(q)]], temp, format)
-        return export_response(Temp(path), format, config.display_name)
+    with os.fdopen(fd, 'wb') as tmpfile:
+        try:
+            tables = [[config.table_id, get_table(q)]]
+            export_from_tables(tables, tmpfile, params.format)
+        except exc.DataError:
+            msg = _("There was a problem executing your query, please make "
+                    "sure your parameters are valid.")
+            return HttpResponse(msg, status=400)
+        return export_response(Temp(path), params.format, config.display_name)
 
 
 @login_and_domain_required

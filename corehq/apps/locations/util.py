@@ -3,6 +3,8 @@ from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.products.models import Product
 from corehq.apps.locations.models import (Location, SQLLocation,
                                           LOCATION_SHARING_PREFIX)
+from corehq.apps.locations.permissions import (user_can_edit_location,
+                                               user_can_view_location)
 from corehq.apps.domain.models import Domain
 from corehq.util.quickcache import quickcache
 from dimagi.utils.couch.database import iter_bulk_delete
@@ -15,7 +17,8 @@ from StringIO import StringIO
 from corehq.apps.consumption.shortcuts import get_loaded_default_monthly_consumption, build_consumption_dict
 
 
-def load_locs_json(domain, selected_loc_id=None, include_archived=False):
+def load_locs_json(domain, selected_loc_id=None, include_archived=False,
+        user=None):
     """initialize a json location tree for drill-down controls on
     the client. tree is only partially initialized and branches
     will be filled in on the client via ajax.
@@ -25,19 +28,26 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False):
     * if a 'selected' loc is provided, that loc and its complete
       ancestry
     """
-    def loc_to_json(loc):
-        return {
+    def loc_to_json(loc, project):
+        ret = {
             'name': loc.name,
             'location_type': loc.location_type.name,  # todo: remove when types aren't optional
             'uuid': loc.location_id,
             'is_archived': loc.is_archived,
+            'can_edit': True
         }
+        if user:
+            ret['can_edit'] = user_can_edit_location(user, loc, project)
+        return ret
+
+    project = Domain.get_by_name(domain)
 
     loc_json = [
-        loc_to_json(loc) for loc in
+        loc_to_json(loc, project) for loc in
         SQLLocation.root_locations(
             domain, include_archive_ancestors=include_archived
         )
+        if user is None or user_can_view_location(user, loc, project)
     ]
 
     # if a location is selected, we need to pre-populate its location hierarchy
@@ -55,7 +65,7 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False):
             # find existing entry in the json tree that corresponds to this loc
             this_loc = [k for k in parent['children'] if k['uuid'] == loc.location_id][0]
             this_loc['children'] = [
-                loc_to_json(loc) for loc in
+                loc_to_json(loc, project) for loc in
                 loc.child_locations(include_archive_ancestors=include_archived)
             ]
             parent = this_loc

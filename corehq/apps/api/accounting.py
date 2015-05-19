@@ -118,7 +118,7 @@ class SoftwareProductRateResource(ModelResource):
 
 class SoftwarePlanVersionResource(ModelResource):
     plan = fields.IntegerField('plan_id', null=True)
-    product_rates = fields.IntegerField('product_rate_id', null=True)
+    product_rates = AccToManyField(FutureRateResource, 'product_rates', full=True, null=True)
     feature_rates = AccToManyField(FutureRateResource, 'feature_rates', full=True, null=True)
     role = fields.IntegerField('role_id', null=True)
 
@@ -163,6 +163,8 @@ class SubscriptionResource(ModelResource):
 
 class InvoiceResource(ModelResource):
     subscription = fields.IntegerField('subscription_id')
+    subtotal = fields.IntegerField('subtotal')
+    applied_credit = fields.IntegerField('applied_credit')
 
     class Meta(AccountingResourceMeta):
         queryset = Invoice.objects.all()
@@ -173,8 +175,10 @@ class InvoiceResource(ModelResource):
 
 class LineItemResource(ModelResource):
     invoice = fields.IntegerField('invoice_id', null=True)
-    feature_rates = AccToManyField(FutureRateResource, 'feature_rates', full=False, null=True)
+    feature_rate = fields.IntegerField('feature_rate_id', null=True)
     product_rate = fields.IntegerField('product_rate_id', null=True)
+    subtotal = fields.IntegerField('subtotal')
+    applied_credit = fields.IntegerField('applied_credit')
 
     class Meta(AccountingResourceMeta):
         queryset = LineItem.objects.all()

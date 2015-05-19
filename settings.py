@@ -28,6 +28,8 @@ LESS_WATCH = False
 # "dev-min" - use built/minified vellum (submodules/formdesigner/_build/src)
 VELLUM_DEBUG = None
 
+# gets set to False for unit tests that run without the database
+DB_ENABLED = True
 try:
     UNIT_TESTING = 'test' == sys.argv[1]
 except IndexError:
@@ -370,10 +372,9 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'south',
     'custom.apps.crs_reports',
     'custom.m4change',
-    'custom.succeed'
 
     # submodules with tests that run on travis
-    'couchexport',
+    # 'couchexport',
     'ctable',
     'ctable_view',
     'dimagi.utils',
@@ -401,7 +402,7 @@ DOMAIN_SELECT_URL = "/domain/select/"
 # This is not used by anything in CommCare HQ, leaving it here in case anything
 # in Django unexpectedly breaks without it.  When you need the login url, you
 # should use reverse('login', kwargs={'domain_type': domain_type}) in order to
-# maintain CommCare HQ/CommTrack distinction.
+# maintain CommCare HQ/CommCare Supply distinction.
 LOGIN_URL = "/accounts/login/"
 # If a user tries to access domain admin pages but isn't a domain
 # administrator, here's where he/she is redirected
@@ -498,7 +499,21 @@ FIXTURE_GENERATORS = {
     ]
 }
 
-RESTORE_PAYLOAD_DIR = None  # Defaults to tempfile.gettempdir()
+### Shared drive settings ###
+# Also see section after localsettings import
+SHARED_DRIVE_ROOT = None
+
+# name of the directory within SHARED_DRIVE_ROOT
+RESTORE_PAYLOAD_DIR_NAME = None
+
+# name of the directory within SHARED_DRIVE_ROOT
+SHARED_TEMP_DIR_NAME = None
+
+## django-transfer settings
+# These settings must match the apache / nginx config
+TRANSFER_SERVER = None  # 'apache' or 'nginx'
+# name of the directory within SHARED_DRIVE_ROOT
+TRANSFER_FILE_DIR_NAME = None
 
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
 
@@ -678,8 +693,12 @@ ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_ID': '',
     'PINGDOM_ID': '',
     'ANALYTICS_ID_PUBLIC_COMMCARE': '',
-    'SEGMENT_ANALYTICS_KEY': '',
+    'KISSMETRICS_KEY': '',
     'HUBSPOT_ID': '',
+}
+
+ANALYTICS_CONFIG = {
+    "HQ_INSTANCE": '',  # e.g. "www" or "staging"
 }
 
 OPEN_EXCHANGE_RATES_ID = ''
@@ -962,7 +981,12 @@ INDICATOR_CONFIG = {
 }
 
 ####### Couch Forms & Couch DB Kit Settings #######
-from settingshelper import get_dynamic_db_settings, make_couchdb_tuples, get_extra_couchdbs
+from settingshelper import (
+    get_dynamic_db_settings,
+    make_couchdb_tuples,
+    get_extra_couchdbs,
+    SharedDriveConfiguration
+)
 
 _dynamic_db_settings = get_dynamic_db_settings(
     COUCH_SERVER_ROOT,
@@ -1082,6 +1106,17 @@ if ENABLE_PRELOGIN_SITE:
     INSTALLED_APPS += PRELOGIN_APPS
 
 MIDDLEWARE_CLASSES += LOCAL_MIDDLEWARE_CLASSES
+
+### Shared drive settings ###
+SHARED_DRIVE_CONF = SharedDriveConfiguration(
+    SHARED_DRIVE_ROOT,
+    RESTORE_PAYLOAD_DIR_NAME,
+    TRANSFER_FILE_DIR_NAME,
+    SHARED_TEMP_DIR_NAME
+)
+TRANSFER_MAPPINGS = {
+    SHARED_DRIVE_CONF.transfer_dir: '/{}'.format(TRANSFER_FILE_DIR_NAME),  # e.g. '/mnt/shared/downloads': '/downloads',
+}
 
 # these are the official django settings
 # which really we should be using over the custom ones
@@ -1384,6 +1419,7 @@ TRAVIS_TEST_GROUPS = (
         'facilities', 'fixtures', 'fluff_filter', 'formplayer',
         'formtranslate', 'fri', 'grapevine', 'groups', 'gsid', 'hope',
         'hqadmin', 'hqcase', 'hqcouchlog', 'hqmedia',
+        'smsbillables',
     ),
 )
 

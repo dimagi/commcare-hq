@@ -3,6 +3,10 @@
 {% load report_tags %}
 {% load i18n %}
 
+{% block js %}{{ block.super }}
+    <script src="{% static 'ewsghana/report_links.js' %}"></script>
+{% endblock %}
+
 {% block reportcontent %}
     {% if report.slug|safe == 'stock_summary_report' or report.slug|safe == 'cms_rms_summary_report' %}
         <h2 style="background-color: black; color: white">{{ title }}</h2>
@@ -302,10 +306,10 @@
         function updateExportButton() {
             var button = $("#export-report-excel");
             if ({{ split|yesno:"true,false" }}) {
-                button.text("Export table to Excel");
+                button.text("Export Table to Excel");
                 button.css('display', 'inline-block');
             } else if ({{ exportable|yesno:"true,false" }}){
-                button.text("Export table(s) to Excel");
+                button.text("Export Table(s) to Excel");
                 button.css('display', 'inline-block');
             } else {
                 button.css('display', 'None');
@@ -327,6 +331,10 @@
                 descDiv.text($('.nvtooltip h3').text());
                 descDiv.css('color', $(this).attr('fill'));
             });
-        }, 300);
+        }, 1000);
+    </script>
+    <script>
+        var slugs = {{ slugs | JSON }};
+        add_report_links(slugs);
     </script>
 {% endblock %}

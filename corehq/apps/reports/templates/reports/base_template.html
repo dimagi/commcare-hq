@@ -14,12 +14,14 @@
             {% else %}
                 defaultConfig.date_range = null;
             {% endif %}
+            defaultConfig.has_ucr_datespan = false;
+            defaultConfig.datespan_filters = [];
+            defaultConfig.datespan_slug = null;
 
             
             $("#savedReports").reportConfigEditor({
                 filterForm: $("#reportFilters"),
                 items: {{ report_configs|JSON }},
-                initialItemID: '{{ current_config_id }}',
                 defaultItem: defaultConfig,
                 saveUrl: '{% url "add_report_config" domain %}'
             });

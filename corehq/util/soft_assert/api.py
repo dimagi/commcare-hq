@@ -1,5 +1,5 @@
 from django.core.mail import mail_admins, send_mail
-from django.core.cache import cache
+from corehq.util.global_request import get_request
 from corehq.util.soft_assert.core import SoftAssert
 import settings
 
@@ -8,8 +8,11 @@ def _send_message(info, backend):
     backend(
         subject='Soft Assert: [{}] {}'.format(info.key[:8], info.msg),
         message=('Message: {info.msg}\n'
+                 'Value: {info.obj!r}\n'
                  'Traceback:\n{info.traceback}\n'
-                 'Occurrences to date: {info.count}\n').format(info=info)
+                 'Request:\n{request}\n'
+                 'Occurrences to date: {info.count}\n').format(
+                info=info, request=get_request())
     )
 
 
@@ -19,7 +22,7 @@ def soft_assert(to, notify_admins=False,
     send an email with stack trace if assertion is not True
 
     Parameters:
-    - to: List of email addresses that should receive the email
+    - to: Email address or list of email addresses that should receive the email
     - notify_admins: Send to all admins (using mail_admins) as well
     - fail_if_debug: if True, will fail hard (like a normal assert)
       if called in a developer environment (settings.DEBUG = True).

@@ -4,6 +4,8 @@ from django.utils.translation import ugettext_noop, ugettext as _
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 
 from corehq import privileges
+from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
+from corehq.apps.reports.standard.export import ExcelExportReport
 from corehq.apps.app_manager.models import Application
 from corehq.apps.dashboard.models import (
     TileConfiguration,
@@ -134,6 +136,8 @@ def _get_default_tile_configurations():
     )
 
     is_domain_admin = lambda request: request.couch_user.is_domain_admin(request.domain)
+    data_url_generator = lambda urlname, request: reverse(urlname,
+        args=[request.domain, ExcelExportReport.slug])
 
     return [
         TileConfiguration(
@@ -142,7 +146,7 @@ def _get_default_tile_configurations():
             icon='fcc fcc-applications',
             context_processor_class=AppsPaginatedContext,
             visibility_check=can_edit_apps,
-            urlname='default_new_app',
+            urlname='default_app',
             help_text=_('Build, update, and deploy applications'),
         ),
         TileConfiguration(
@@ -156,20 +160,21 @@ def _get_default_tile_configurations():
                         'project data'),
         ),
         TileConfiguration(
-            title=_('CommTrack Setup'),
+            title=_('CommCare Supply Setup'),
             slug='commtrack_setup',
             icon='fcc fcc-commtrack',
             context_processor_class=IconContext,
             urlname='default_commtrack_setup',
             visibility_check=can_view_commtrack_setup,
-            help_text=_("Update CommTrack Settings"),
+            help_text=_("Update CommCare Supply Settings"),
         ),
         TileConfiguration(
             title=_('Data'),
             slug='data',
             icon='fcc fcc-data',
             context_processor_class=IconContext,
-            urlname='data_interfaces_default',
+            urlname=DataInterfaceDispatcher.name(),
+            url_generator=data_url_generator,
             visibility_check=can_edit_data,
             help_text=_('Export and manage data'),
         ),

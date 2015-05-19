@@ -212,7 +212,7 @@ class PricingTableFeatures(object):
             cls.APP_BUILDER: {
                 Product.COMMCARE: _('CommCare Application Builder'),
                 Product.COMMCONNECT: _('CommCare Application Builder'),
-                Product.COMMTRACK: _('CommTrack Application Builder'),
+                Product.COMMTRACK: _('CommCare Supply Application Builder'),
             }[product],
             cls.EXCHANGE: _('CommCare Exchange (<a href="http://www.commcarehq.org/exchange/">visit the exchange</a>)'),
             cls.API_ACCESS: _("API Access"),
