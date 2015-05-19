@@ -1,6 +1,8 @@
+from smtplib import SMTPSenderRefused
 from django.conf import settings
 from django.core.mail import get_connection
 from django.core.mail.message import EmailMultiAlternatives
+from django.utils.translation import ugettext_noop as _
 
 NO_HTML_EMAIL_MESSAGE = """
 Your email client is trying to display the plaintext version of an email that
@@ -28,4 +30,32 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
             msg.attach(file["title"], file["file_obj"].getvalue(),
                        file["mimetype"])
     msg.attach_alternative(html_content, "text/html")
-    msg.send()
+    try:
+        msg.send()
+    except SMTPSenderRefused as e:
+        error_subject = _('ERROR: Could not send "%(subject)"') % {
+            'subject': subject,
+        }
+
+        if e.smtp_code == 552:
+            error_text = _('Could not send email: file size is too large.')
+        else:
+            error_text = e.smtp_error
+        error_text = '%s\n\n%s' % (
+            error_text,
+            _('Please contact %(support_email)s for assistance.') % {
+                'support_email': settings.SUPPORT_EMAIL,
+            },
+        )
+
+        error_msg = EmailMultiAlternatives(
+            error_subject,
+            error_text,
+            email_from,
+            recipient,
+            headers=from_header,
+            connection=connection,
+            cc=cc,
+            bcc=bcc,
+        )
+        error_msg.send()
