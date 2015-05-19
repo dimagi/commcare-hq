@@ -13,6 +13,7 @@ from casexml.apps.phone.exceptions import (
     BadStateException, RestoreException,
 )
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, FILE_RESTORE, STREAM_RESTORE_CACHE
+from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.phone.models import SyncLog, get_properly_wrapped_sync_log
 import logging
@@ -313,6 +314,9 @@ class RestoreState(object):
     def __init__(self, project, user, params):
         self.project = project
         self.domain = project.name if project else ''
+        _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'], fail_if_debug=True)
+        _assert(self.domain, 'Restore for {} missing a domain!'.format(user.username))
+
         self.user = user
         self.params = params
         self.provider_log = {}  # individual data providers can log stuff here
@@ -363,7 +367,7 @@ class RestoreState(object):
     @property
     @memoized
     def owner_ids(self):
-        return self.user.get_owner_ids()
+        return set(self.user.get_owner_ids())
 
     @property
     @memoized
@@ -388,7 +392,7 @@ class RestoreState(object):
         new_synclog = SyncLog(
             user_id=self.user.user_id,
             last_seq=last_seq,
-            owner_ids_on_phone=self.owner_ids,
+            owner_ids_on_phone=list(self.owner_ids),
             date=datetime.utcnow(),
             previous_log_id=previous_log_id
         )

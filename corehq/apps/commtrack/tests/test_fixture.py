@@ -124,7 +124,7 @@ class FixtureTest(CommTrackTest, TestFileMixin):
         self._initialize_product_names(len(product_list))
 
         fixture_original = product_fixture_generator(user, V1)
-        generate_restore_payload(user.to_casexml_user())
+        generate_restore_payload(self.domain, user.to_casexml_user())
         self.assertXmlEqual(
             expected_xml,
             ElementTree.tostring(fixture_original[0])
@@ -143,7 +143,7 @@ class FixtureTest(CommTrackTest, TestFileMixin):
         # second sync is before any changes are made, so there should
         # be no products synced
         fixture_pre_change = product_fixture_generator(user, V1, last_sync=first_sync)
-        generate_restore_payload(user.to_casexml_user())
+        generate_restore_payload(self.domain, user.to_casexml_user())
         self.assertEqual(
             [],
             fixture_pre_change,
@@ -229,7 +229,7 @@ class FixtureTest(CommTrackTest, TestFileMixin):
 
         fixture_original = program_fixture_generator(user, V1)
 
-        generate_restore_payload(user.to_casexml_user())
+        generate_restore_payload(self.domain, user.to_casexml_user())
         self.assertXmlEqual(
             program_xml,
             ElementTree.tostring(fixture_original[0])
@@ -248,7 +248,7 @@ class FixtureTest(CommTrackTest, TestFileMixin):
         # second sync is before any changes are made, so there should
         # be no programs synced
         fixture_pre_change = program_fixture_generator(user, V1, last_sync=first_sync)
-        generate_restore_payload(user.to_casexml_user())
+        generate_restore_payload(self.domain, user.to_casexml_user())
         self.assertEqual(
             [],
             fixture_pre_change,

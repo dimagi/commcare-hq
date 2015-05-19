@@ -177,6 +177,7 @@ class BatchedCaseSyncOperation(object):
         self.last_synclog = restore_state.last_sync_log
         if chunk_size:
             self.chunk_size = chunk_size
+
         self.domain = self.restore_state.domain
 
         try:
