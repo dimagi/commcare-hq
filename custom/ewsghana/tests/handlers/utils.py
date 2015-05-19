@@ -13,7 +13,7 @@ from corehq.apps.sms.mixin import MobileBackend
 from corehq.apps.users.models import CommCareUser
 from custom.ewsghana.models import EWSGhanaConfig
 from custom.ewsghana.utils import prepare_domain, bootstrap_user
-from custom.logistics.test.test_script import TestScript
+from custom.logistics.tests.test_script import TestScript
 from casexml.apps.stock.models import StockReport, StockTransaction
 from casexml.apps.stock.models import DocDomainMapping
 
