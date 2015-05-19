@@ -1237,6 +1237,9 @@ class InternalSubscriptionManagementForm(forms.Form):
             ).emails
         except BillingContactInfo.DoesNotExist:
             return None
+        except AttributeError:
+            # current_subscription is None. cf. FB 168555
+            return None
 
     def __init__(self, domain, web_user, *args, **kwargs):
         super(InternalSubscriptionManagementForm, self).__init__(*args, **kwargs)
