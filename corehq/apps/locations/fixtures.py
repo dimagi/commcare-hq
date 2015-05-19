@@ -1,7 +1,7 @@
 from collections import defaultdict
 from xml.etree.ElementTree import Element
 from corehq.apps.commtrack.util import unicode_slug
-from corehq.apps.locations.models import Location, SQLLocation
+from corehq.apps.locations.models import SQLLocation
 from corehq import toggles
 
 
