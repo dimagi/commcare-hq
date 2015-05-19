@@ -6,7 +6,7 @@ from couchexport.files import Temp
 from couchexport.models import Format, ExportSchema, GroupExportConfiguration
 import tempfile
 import os
-from soil.util import expose_download
+from soil.util import expose_cached_download
 from couchexport.export import SchemaMismatchException, ExportConfiguration
 
 logging = get_task_logger(__name__)
@@ -19,7 +19,7 @@ def export_async(custom_export, download_id, format=None, filename=None, **kwarg
         # fire off a delayed force update to prevent this from happening again
         rebuild_schemas.delay(custom_export.index)
         expiry = 10*60*60
-        expose_download(
+        expose_cached_download(
             "Sorry, the export failed for %s, please try again later" % custom_export._id,
             expiry,
             content_disposition="",
@@ -128,7 +128,7 @@ def cache_file_to_be_served(tmp, checkpoint, download_id, format=None, filename=
         escaped_filename = escape_quotes('%s.%s' % (filename, format.extension))
 
         payload = tmp.payload
-        expose_download(payload, expiry,
+        expose_cached_download(payload, expiry,
                         mimetype=format.mimetype,
                         content_disposition='attachment; filename="%s"' % escaped_filename,
                         extras={'X-CommCareHQ-Export-Token': checkpoint.get_id},
@@ -136,7 +136,7 @@ def cache_file_to_be_served(tmp, checkpoint, download_id, format=None, filename=
         tmp.delete()
     else:
         # this just gives you a link saying there wasn't anything there
-        expose_download("Sorry, there wasn't any data.", expiry,
+        expose_cached_download("Sorry, there wasn't any data.", expiry,
                         content_disposition="",
                         mimetype="text/html",
                         download_id=download_id).save(expiry)
