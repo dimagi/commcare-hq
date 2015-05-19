@@ -15,11 +15,14 @@ class LocationSet(object):
         self.by_parent = defaultdict(set)
         if locations is not None:
             for loc in locations:
-                self.add_location(loc)
+                if _valid_parent_type(loc):
+                    self.add_location(loc)
 
     def add_location(self, location):
         self.by_id[location.location_id] = location
-        self.by_parent[location.parent_id].add(location)
+        parent = location.parent
+        parent_id = parent.location_id if parent else None
+        self.by_parent[parent_id].add(location)
 
     def __contains__(self, item):
         return item in self.by_id
@@ -70,6 +73,7 @@ def location_fixture_generator(user, version, last_sync=None):
             # this might add duplicate locations but we filter that out later
             # TODO fix this lol
             locations += user.locations
+
         location_db = _location_footprint(locations)
 
     if not should_sync_locations(last_sync, location_db):
@@ -97,6 +101,12 @@ def location_fixture_generator(user, version, last_sync=None):
         return [root]
 
 
+def _valid_parent_type(location):
+    parent = location.parent
+    parent_type = parent.location_type if parent else None
+    return parent_type == location.location_type.parent_type
+
+
 def _location_footprint(locations):
     """
     Given a list of locations, generate the footprint of those by walking up parents.
@@ -107,10 +117,16 @@ def _location_footprint(locations):
     queue = list(locations)
     while queue:
         loc = queue.pop()
-        assert loc.location_id in all_locs
+
+        if loc.location_id not in all_locs:
+            # if it's not in there, it wasn't valid
+            continue
+
         parent = loc.parent
         if (parent and
-            parent.location_id not in all_locs):
+            parent.location_id not in all_locs and
+            _valid_parent_type(loc)
+           ):
             all_locs.add_location(parent)
             queue.append(parent)
 
