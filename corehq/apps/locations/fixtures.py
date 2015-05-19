@@ -18,7 +18,7 @@ class LocationSet(object):
                 self.add_location(loc)
 
     def add_location(self, location):
-        self.by_id[location._id] = location
+        self.by_id[location.location_id] = location
         self.by_parent[location.parent_id].add(location)
 
     def __contains__(self, item):
@@ -53,18 +53,22 @@ def location_fixture_generator(user, version, last_sync=None):
         return []
 
     if toggles.SYNC_ALL_LOCATIONS.enabled(user.domain):
-        location_db = _location_footprint(Location.by_domain(user.domain))
+        # TODO test this
+        location_db = _location_footprint(
+            SQLLocation.objects.filter(domain=user.domain)
+        )
     else:
         locations = []
         if user.location:
             # add users location (and ancestors) to fixture
-            locations.append(user.location)
+            locations.append(user.sql_location)
 
             # add all descendants as well
-            locations += user.location.descendants
+            locations += user.sql_location.get_descendants()
 
         if user.project.supports_multiple_locations_per_user:
             # this might add duplicate locations but we filter that out later
+            # TODO fix this lol
             locations += user.locations
         location_db = _location_footprint(locations)
 
@@ -84,7 +88,7 @@ def location_fixture_generator(user, version, last_sync=None):
     if toggles.SYNC_ALL_LOCATIONS.enabled(user.domain):
         root_locations = Location.root_locations(user.domain)
     else:
-        root_locations = filter(lambda loc: loc.parent_id is None, location_db.by_id.values())
+        root_locations = filter(lambda loc: loc.parent is None, location_db.by_id.values())
 
     if not root_locations:
         return []
@@ -103,10 +107,12 @@ def _location_footprint(locations):
     queue = list(locations)
     while queue:
         loc = queue.pop()
-        assert loc._id in all_locs
-        if loc.parent_id and loc.parent_id not in all_locs:
-            all_locs.add_location(loc.parent)
-            queue.append(loc.parent)
+        assert loc.location_id in all_locs
+        parent = loc.parent
+        if (parent and
+            parent.location_id not in all_locs):
+            all_locs.add_location(parent)
+            queue.append(parent)
 
     return all_locs
 
@@ -121,12 +127,15 @@ def _append_children(node, location_db, locations, type_lookup_function):
 def _group_by_type(locations):
     by_type = defaultdict(lambda: [])
     for loc in locations:
-        by_type[loc.location_type].append(loc)
+        # TODO we could save a bunch of work by removing everything
+        # that used to assume we couldn't get a real location type
+        # object easily
+        by_type[loc.location_type.name].append(loc)
     return by_type
 
 
 def _types_to_fixture(location_db, type, locs, type_lookup_function):
-    type_node = Element('%ss' % type_lookup_function(type))  # ghetto pluralization
+    type_node = Element('%ss' % type_lookup_function(type))  # hacky pluralization
     for loc in locs:
         type_node.append(_location_to_fixture(location_db, loc, type_lookup_function))
     return type_node
@@ -142,7 +151,7 @@ def _get_metadata_node(location):
 
 
 def _location_to_fixture(location_db, location, type_lookup_function):
-    root = Element(type_lookup_function(location.location_type), {'id': location._id})
+    root = Element(type_lookup_function(location.location_type.name), {'id': location.location_id})
     fixture_fields = [
         'name',
         'site_code',
@@ -158,5 +167,5 @@ def _location_to_fixture(location_db, location, type_lookup_function):
         root.append(field_node)
 
     root.append(_get_metadata_node(location))
-    _append_children(root, location_db, location_db.by_parent[location._id], type_lookup_function)
+    _append_children(root, location_db, location_db.by_parent[location.location_id], type_lookup_function)
     return root

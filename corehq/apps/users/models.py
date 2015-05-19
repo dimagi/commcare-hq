@@ -1770,6 +1770,14 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         else:
             return None
 
+    @property
+    def sql_location(self):
+        from corehq.apps.locations.models import SQLLocation
+        if self.location_id:
+            return SQLLocation.objects.get(location_id=self.location_id)
+        else:
+            return None
+
     def set_location(self, location):
         """
         Set the location, and all important user data, for
