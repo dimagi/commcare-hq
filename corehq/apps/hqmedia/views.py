@@ -536,6 +536,7 @@ class DownloadMultimediaZip(View, ApplicationViewMixin):
         return download.get_start_response()
 
     @method_decorator(safe_download)
+    @method_decorator(require_permission(Permissions.edit_apps, login_decorator=login_with_permission_from_post()))
     def dispatch(self, request, *args, **kwargs):
         return super(DownloadMultimediaZip, self).dispatch(request, *args, **kwargs)
 

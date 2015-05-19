@@ -51,4 +51,4 @@ def no_conflict_require_POST(f):
     return _no_conflict
 
 require_can_edit_apps = require_permission(Permissions.edit_apps)
-require_deploy_apps = login_and_domain_required  # todo: can fix this when it is better supported
+require_deploy_apps = require_can_edit_apps
