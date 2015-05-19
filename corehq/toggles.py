@@ -344,14 +344,6 @@ VELLUM_TRANSACTION_QUESTION_TYPES = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-VELLUM_ITEMSETS = StaticToggle(
-    'itemsets',
-    "Adds dynamic (itemset) select and multi-select question types to the "
-    "form builder",
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
-
 VELLUM_HELP_MARKDOWN = StaticToggle(
     'help_markdown',
     "Use markdown for the help text in the form builder",
@@ -394,12 +386,6 @@ BULK_SMS_VERIFICATION = StaticToggle(
     'Allow initiating the SMS phone verification workflow for all users in a group.',
     TAG_ONE_OFF,
     [NAMESPACE_USER, NAMESPACE_DOMAIN],
-)
-
-BULK_PAYMENTS = StaticToggle(
-    'bulk_payments',
-    'Enable payment of invoices by bulk credit payments and invoice generation for wire transfers',
-    TAG_PRODUCT_CORE
 )
 
 USE_NEW_TIMEZONE_BEHAVIOR = StaticToggle(

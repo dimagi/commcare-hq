@@ -26,7 +26,21 @@
                     </div>
                 </div>
 
-                <div data-bind="if: date_range()">
+                <div data-bind="visible: has_ucr_datespan">
+                    <div class="control-group">
+                        <label class="control-label">{% trans "Date Filter" %}</label>
+                        <div class="controls">
+                            <select data-bind="
+                                options: datespan_filters,
+                                optionsText: 'display',
+                                optionsValue: 'slug',
+                                value: datespan_slug
+                            "></select>
+                        </div>
+                    </div>
+                </div>
+
+                <div data-bind="if: ((!has_ucr_datespan()) && date_range()) || (has_ucr_datespan() && datespan_slug())">
                     <div class="control-group">
                         <label class="control-label" for="date_range">{% trans "Default Date Range" %}</label>
                         <div class="controls">

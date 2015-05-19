@@ -1,0 +1,18 @@
+{% extends "reports/async/basic.html" %}
+{% load hq_shared_tags %}
+{% load report_tags %}
+{% load i18n %}
+
+{% block js %} {{ block.super }}
+    <script src="{% static 'ewsghana/report_links.js' %}"></script>
+{% endblock %}
+{% block js-inline %}
+    {{ block.super }}
+    <script>
+        var slugs = [['dashboard_report', 'Dashboard'], ['stock_status', 'Stock Status Report'],
+            ['reporting_page', 'Reporting Rates'], ['ews_mapreport', 'Maps'],
+            ['stock_summary_report', 'Stock Summary Report'],
+            ['cms_rms_summary_report', 'CMS and RMS Summary Report']];
+        add_report_links(slugs);
+    </script>
+{% endblock %}
