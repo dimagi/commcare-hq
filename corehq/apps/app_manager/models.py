@@ -367,7 +367,7 @@ class AutoSelectCase(DocumentSchema):
 
     """
     mode = StringProperty(choices=[AUTO_SELECT_USER, AUTO_SELECT_FIXTURE,
-            AUTO_SELECT_CASE, AUTO_SELECT_LOCATION, AUTO_SELECT_RAW])
+                                   AUTO_SELECT_CASE, AUTO_SELECT_RAW])
     value_source = StringProperty()
     value_key = StringProperty(required=True)
 
