@@ -22,8 +22,8 @@ class MediaSuiteTest(SimpleTestCase, TestFileMixin):
 
         image_path = 'jr://file/commcare/case_list_image.jpg'
         audo_path = 'jr://file/commcare/case_list_audo.mp3'
-        app.get_module(0).case_list_form.set_icon('en', image_path, default_lang=app.default_language)
-        app.get_module(0).case_list_form.set_audio('en', audo_path, default_lang=app.default_language)
+        app.get_module(0).case_list_form.set_icon('en', image_path)
+        app.get_module(0).case_list_form.set_audio('en', audo_path)
 
         app.create_mapping(CommCareImage(_id='123'), image_path, save=False)
         app.create_mapping(CommCareImage(_id='456'), audo_path, save=False)
@@ -102,8 +102,8 @@ class LocalizedMediaSuiteTest(TestCase, TestFileMixin):
         app = Application.wrap(self.get_json('app'))
         app.get_module(0).case_list_form.form_id = app.get_module(0).get_form(0).unique_id
 
-        app.get_module(0).case_list_form.set_icon('en', self.image_path, default_lang=app.default_language)
-        app.get_module(0).case_list_form.set_audio('en', self.audio_path, default_lang=app.default_language)
+        app.get_module(0).case_list_form.set_icon('en', self.image_path)
+        app.get_module(0).case_list_form.set_audio('en', self.audio_path)
         app.build_spec = self.min_spec
 
         XML = self.makeXML("case_list_form.m0", "case_list_form.m0.icon", "case_list_form.m0.audio")

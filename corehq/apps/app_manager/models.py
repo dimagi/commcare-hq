@@ -989,11 +989,6 @@ class NavMenuItemMediaMixin(DocumentSchema):
     """
         Language-specific icon and audio.
         Properties are map of lang-code to filepath
-
-        Convention (for old docs): Unless a language key exists in the map,
-        by default, media for it will be same as that pointed by 'default' key.
-        This is enforced by set/get methods contained in this class.
-
     """
     media_image = SchemaDictProperty(JRResourceProperty)
     media_audio = SchemaDictProperty(JRResourceProperty)
@@ -1009,27 +1004,27 @@ class NavMenuItemMediaMixin(DocumentSchema):
 
         return super(NavMenuItemMediaMixin, cls).wrap(data)
 
-    @staticmethod
-    def _check_media_attribute(media_attr):
-        assert media_attr in ('media_image', 'media_audio')
-
     def _get_media_by_language(self, media_attr, lang):
-        self._check_media_attribute(media_attr)
+        assert media_attr in ('media_image', 'media_audio')
 
         media_dict = getattr(self, media_attr)
         if not media_dict:
             return None
-        default_media = media_dict.get('default', None)
-
-        return media_dict[lang] if lang in media_dict else default_media
+        if lang in media_dict:
+            return media_dict[lang]
+        else:
+            # if the queried lang key doesn't exist,
+            # return the first in the sorted list
+            for lang, item in sorted(media_dict.items()):
+                return item
 
     @property
     def default_media_image(self):
-        return self.icon_by_language('default')
+        return self.icon_by_language('en')
 
     @property
     def default_media_audio(self):
-        return self.audio_by_language('default')
+        return self.audio_by_language('en')
 
     def icon_by_language(self, lang):
         return self._get_media_by_language('media_image', lang)
@@ -1037,30 +1032,25 @@ class NavMenuItemMediaMixin(DocumentSchema):
     def audio_by_language(self, lang):
         return self._get_media_by_language('media_audio', lang)
 
-    def _set_media(self, media_attr, lang, media_path, default_lang=None):
+    def _set_media(self, media_attr, lang, media_path):
         """
             Caller's responsibility to save doc.
             Currently only called from the view which saves after all Edits
         """
-        self._check_media_attribute(media_attr)
+        assert media_attr in ('media_image', 'media_audio')
 
         media_dict = getattr(self, media_attr) or {}
         media_dict[lang] = media_path or ''
         setattr(self, media_attr, media_dict)
 
-        default_language = default_lang or self.get_app().default_language
-        if lang == default_language:
-            media_dict['default'] = media_path or ''
-            setattr(self, media_attr, media_dict)
+    def set_icon(self, lang, icon_path):
+        self._set_media('media_image', lang, icon_path)
 
-    def set_icon(self, lang, icon_path, default_lang=None):
-        self._set_media('media_image', lang, icon_path, default_lang=default_lang)
-
-    def set_audio(self, lang, audio_path, default_lang=None):
-        self._set_media('media_audio', lang, audio_path, default_lang=default_lang)
+    def set_audio(self, lang, audio_path):
+        self._set_media('media_audio', lang, audio_path)
 
     def _all_media_paths(self, media_attr):
-        self._check_media_attribute(media_attr)
+        assert media_attr in ('media_image', 'media_audio')
         media_dict = getattr(self, media_attr) or {}
         valid_media_paths = {media for media in media_dict.values() if media}
         return list(valid_media_paths)

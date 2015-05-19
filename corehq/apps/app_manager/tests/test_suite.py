@@ -531,10 +531,8 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
     def test_case_list_registration_form(self):
         app = self._prep_case_list_form_app()
         case_module = app.get_module(0)
-        case_module.case_list_form.set_icon('en', 'jr://file/commcare/image/new_case.png',
-                                            default_lang=app.default_language)
-        case_module.case_list_form.set_audio('en', 'jr://file/commcare/audio/new_case.mp3',
-                                             default_lang=app.default_language)
+        case_module.case_list_form.set_icon('en', 'jr://file/commcare/image/new_case.png')
+        case_module.case_list_form.set_audio('en', 'jr://file/commcare/audio/new_case.mp3')
 
         self.assertXmlEqual(self.get_xml('case-list-form-suite'), app.create_suite())
 
