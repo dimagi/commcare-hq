@@ -62,16 +62,10 @@ def sync_user_case(commcare_user, case_type, owner_id, copy_user_data=True):
             'phone_number': commcare_user.phone_number or ''
         })
 
-        try:
-            case = get_case_by_domain_hq_user_id(domain.name, commcare_user._id, include_docs=True)
-            found = bool(case)
-        except MultipleResultsFound:
-            return
-
+        case = get_case_by_domain_hq_user_id(domain.name, commcare_user._id, case_type)
         close = commcare_user.to_be_deleted() or not commcare_user.is_active
-
         caseblock = None
-        if found:
+        if case:
             props = dict(case.dynamic_case_properties())
 
             changed = close != case.closed

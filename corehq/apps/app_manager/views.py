@@ -1241,8 +1241,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None,
                             unique_form_id=form.unique_id)
 
     vellum_plugins = ["modeliteration"]
-    if (toggles.VELLUM_ITEMSETS.enabled(domain) and request.subscription):
-        # request.subscription checks it's not a community subscription
+    if domain_has_privilege(domain, privileges.LOOKUP_TABLES):
         vellum_plugins.append("itemset")
     if toggles.VELLUM_TRANSACTION_QUESTION_TYPES.enabled(domain):
         vellum_plugins.append("commtrack")

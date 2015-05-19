@@ -501,13 +501,14 @@
                     {% if multimedia %}
                         <div class="accordion-group">
                             <div class="accordion-heading">
-                                <a class="accordion-toggle" href="#{{ saved_app.id }}_multimedia" data-toggle="collapse" data-target="#{{ saved_app.id }}_multimedia" data-bind="
+                                <a class="accordion-toggle" data-toggle="collapse" data-bind="
                                     click: function() { track_deploy_type('Download Multimedia'); },
+                                    attr: {href: '#' + id() + '_multimedia', 'data-target': '#' + id() + '_multimedia'}
                                 ">
                                     {% trans 'Download Multimedia' %}
                                 </a>
                             </div>
-                            <div class="accordion-body collapse" id="{{ saved_app.id }}_multimedia">
+                            <div class="accordion-body collapse" data-bind="attr: {id: id() + '_multimedia'}">
                                 <div class="accordion-inner">
                                     {% include 'hqmedia/partials/multimedia_zip_notice.html' %}
                                 </div>

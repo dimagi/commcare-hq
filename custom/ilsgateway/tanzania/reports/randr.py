@@ -30,9 +30,8 @@ class RRStatus(ILSData):
             for child in locations:
                 try:
                     org_summary = OrganizationSummary.objects.filter(
-                        date__range=(self.config['startdate'],
-                                     self.config['enddate']),
-                        supply_point=child.location_id
+                        date__range=(self.config['startdate'], self.config['enddate']),
+                        location_id=child.location_id
                     )
                 except OrganizationSummary.DoesNotExist:
                     return []
@@ -46,14 +45,14 @@ class RRStatus(ILSData):
                 total_possible = 0
                 group_summaries = GroupSummary.objects.filter(
                     org_summary__date__lte=self.config['startdate'],
-                    org_summary__supply_point=child.location_id,
+                    org_summary__location_id=child.location_id,
                     title=SupplyPointStatusTypes.R_AND_R_FACILITY
                 )
 
-                for g in group_summaries:
-                    if g:
-                        total_responses += g.responded
-                        total_possible += g.total
+                for group_summary in group_summaries:
+                    if group_summary:
+                        total_responses += group_summary.responded
+                        total_possible += group_summary.total
                 hist_resp_rate = rr_format_percent(total_responses, total_possible)
 
                 url = make_url(RRreport, self.config['domain'],
@@ -122,13 +121,14 @@ class RRReportingHistory(ILSData):
 
             group_summaries = GroupSummary.objects.filter(
                 org_summary__date__lte=self.config['startdate'],
-                org_summary__supply_point=child.location_id, title=SupplyPointStatusTypes.R_AND_R_FACILITY
+                org_summary__location_id=child.location_id,
+                title=SupplyPointStatusTypes.R_AND_R_FACILITY
             )
 
-            for g in group_summaries:
-                if g:
-                    total_responses += g.responded
-                    total_possible += g.total
+            for group_summary in group_summaries:
+                if group_summary:
+                    total_responses += group_summary.responded
+                    total_possible += group_summary.total
             hist_resp_rate = rr_format_percent(total_responses, total_possible)
 
             url = make_url(FacilityDetailsReport, self.config['domain'],

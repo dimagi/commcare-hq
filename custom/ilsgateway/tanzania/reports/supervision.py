@@ -21,9 +21,10 @@ class SupervisionSummaryData(ILSData):
     def rows(self):
         super_data = []
         if self.config['org_summary']:
-            data = GroupSummary.objects.filter(title=SupplyPointStatusTypes.SUPERVISION_FACILITY,
-                                               org_summary__in=self.config['org_summary'])\
-                .aggregate(Avg('responded'), Avg('on_time'), Avg('complete'), Max('total'))
+            data = GroupSummary.objects.filter(
+                title=SupplyPointStatusTypes.SUPERVISION_FACILITY,
+                org_summary__in=self.config['org_summary']
+            ).aggregate(Avg('responded'), Avg('on_time'), Avg('complete'), Max('total'))
 
             super_data.append(GroupSummary(
                 title=SupplyPointStatusTypes.SUPERVISION_FACILITY,
@@ -43,13 +44,13 @@ class SupervisionData(ILSData):
 
     @property
     def headers(self):
-        return DataTablesHeader(*[
+        return DataTablesHeader(
             DataTablesColumn(_('Name')),
             DataTablesColumn(_('% Supervision Received')),
             DataTablesColumn(_('% Supervision Not Received')),
             DataTablesColumn(_('% Supervision Not Responding')),
             DataTablesColumn(_('Historical Response Rate')),
-        ])
+        )
 
     @property
     def rows(self):
@@ -58,20 +59,23 @@ class SupervisionData(ILSData):
             locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'])
             for loc in locations:
                 facilities = SQLLocation.objects.filter(parent=loc).count()
-                org_summary = OrganizationSummary.objects.filter(date__range=(self.config['startdate'],
-                                                                 self.config['enddate']),
-                                                                 supply_point=loc.location_id)
+                org_summary = OrganizationSummary.objects.filter(
+                    date__range=(self.config['startdate'], self.config['enddate']),
+                    location_id=loc.location_id
+                )
                 self.config['org_summary'] = org_summary
                 soh_data = SupervisionSummaryData(config=self.config).rows[0]
 
                 total_responses = 0
                 total_possible = 0
-                for g in GroupSummary.objects.filter(org_summary__date__lte=self.config['startdate'],
-                                                     org_summary__supply_point=loc.location_id,
-                                                     title=SupplyPointStatusTypes.SUPERVISION_FACILITY):
-                    if g:
-                        total_responses += g.responded
-                        total_possible += g.total
+                for group_summary in GroupSummary.objects.filter(
+                        org_summary__date__lte=self.config['startdate'],
+                        org_summary__location_id=loc.location_id,
+                        title=SupplyPointStatusTypes.SUPERVISION_FACILITY
+                ):
+                    if group_summary:
+                        total_responses += group_summary.responded
+                        total_possible += group_summary.total
 
                 if total_possible:
                     response_rate = "%.1f%%" % (100.0 * total_responses / total_possible)
@@ -103,13 +107,13 @@ class DistrictSupervisionData(ILSData):
 
     @property
     def headers(self):
-        return DataTablesHeader(*[
+        return DataTablesHeader(
             DataTablesColumn(_('MSD Code')),
             DataTablesColumn(_('Name')),
             DataTablesColumn(_('Supervision This Quarter')),
             DataTablesColumn(_('Date')),
             DataTablesColumn(_('Historical Response Rate')),
-        ])
+        )
 
     @property
     def rows(self):
@@ -119,12 +123,14 @@ class DistrictSupervisionData(ILSData):
             for loc in locations:
                 total_responses = 0
                 total_possible = 0
-                for g in GroupSummary.objects.filter(org_summary__date__lte=self.config['startdate'],
-                                                     org_summary__supply_point=loc.location_id,
-                                                     title=SupplyPointStatusTypes.SUPERVISION_FACILITY):
-                    if g:
-                        total_responses += g.responded
-                        total_possible += g.total
+                for group_summary in GroupSummary.objects.filter(
+                    org_summary__date__lte=self.config['startdate'],
+                    org_summary__location_id=loc.location_id,
+                    title=SupplyPointStatusTypes.SUPERVISION_FACILITY
+                ):
+                    if group_summary:
+                        total_responses += group_summary.responded
+                        total_possible += group_summary.total
 
                 if total_possible:
                     response_rate = "%.1f%%" % (100.0 * total_responses / total_possible)
@@ -178,7 +184,7 @@ class SupervisionReport(DetailsReport):
         config = self.report_config
         data_providers = []
         if config['org_summary']:
-            location = SQLLocation.objects.get(location_id=config['org_summary'][0].supply_point)
+            location = SQLLocation.objects.get(location_id=config['org_summary'][0].location_id)
 
             data_providers = [
                 SupervisionSummaryData(config=config, css_class='row_chart_all'),

@@ -91,12 +91,10 @@ def process_facility_task(api_object, facility, start_from=None):
     save_stock_data_checkpoint(checkpoint, '', 1000, 0, checkpoint.date, api_object.get_location_id(facility))
 
 
-@celery.task(ignore_result=True)
-def sms_users_fix(api):
-    endpoint = api.endpoint
-    api.set_default_backend()
-    synchronization(None, endpoint.get_smsusers, partial(api.add_language_to_user),
-                    None, None, 100, 0)
+@celery.task(queue='background_queue', ignore_result=True)
+def resync_web_users(api_object):
+    web_users_sync = api_object.apis[4]
+    synchronization(web_users_sync, None, None, 100, 0)
 
 
 @celery.task(ignore_result=True)

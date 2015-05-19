@@ -868,8 +868,8 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
         "owner_name": couch_user.full_name or couch_user.get_email(),
         "email": email,
         "notes": notes,
-        "startdate": date_range["startdate"] if date_range else "",
-        "enddate": date_range["enddate"] if date_range else "",
+        "startdate": date_range.get("startdate") if date_range else "",
+        "enddate": date_range.get("enddate") if date_range else "",
     }), excel_attachments
 
 @login_and_domain_required

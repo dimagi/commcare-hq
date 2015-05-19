@@ -45,7 +45,7 @@ class LoadtestUserTest(TestCase):
         case1 = self.factory.create_case(case_name='case1')
         case2 = self.factory.create_case(case_name='case2')
         restore_config = RestoreConfig(
-            domain=self.domain,
+            project=self.domain,
             user=self.user,
             params=RestoreParams(version=V2),
         )
@@ -69,7 +69,7 @@ class LoadtestUserTest(TestCase):
             )
         )
         restore_config = RestoreConfig(
-            domain=self.domain,
+            project=self.domain,
             user=self.user,
             params=RestoreParams(version=V2)
         )

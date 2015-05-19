@@ -7,13 +7,13 @@ from corehq.apps.api.redis_assets import RedisAssetsAPI
 from corehq.apps.api.resources import v0_1, v0_2, v0_3, v0_4, v0_5
 from corehq.apps.commtrack.resources.v0_1 import ProductResource
 from corehq.apps.fixtures.resources.v0_1 import FixtureResource
-from corehq.apps.locations.resources.v0_1 import LocationResource
+from corehq.apps.locations import resources as locations
 from corehq.apps.reports.resources.v0_1 import ReportResource
 from django.conf.urls import *
 from django.http import HttpResponseNotFound
 from tastypie.api import Api
 from corehq.apps.api.es import XFormES
-from dimagi.utils.decorators import inline
+
 
 API_LIST = (
     ((0, 1), (
@@ -42,6 +42,8 @@ API_LIST = (
         FixtureResource,
         ReportResource,
         DomainMetadataResource,
+        locations.v0_1.LocationResource,
+        ProductResource,
     )),
     ((0, 4), (
         v0_1.CommCareUserResource,
@@ -72,23 +74,21 @@ API_LIST = (
         ReportResource,
         v0_5.DeviceReportResource,
         DomainMetadataResource,
+        locations.v0_5.LocationResource,
+        locations.v0_5.LocationTypeResource,
     )),
 )
 
-# eventually these will have to version too but this works for now
-COMMTRACK_RESOURCES = (LocationResource, ProductResource)
 
 class CommCareHqApi(Api):
     def top_level(self, request, api_name=None, **kwargs):
         return HttpResponseNotFound()
 
-@inline
+
 def api_url_patterns():
     for version, resources in API_LIST:
         api = CommCareHqApi(api_name='v%d.%d' % version)
         for R in resources:
-            api.register(R())
-        for R in COMMTRACK_RESOURCES:
             api.register(R())
         yield (r'^', include(api.urls))
     yield url(r'^v0.1/xform_es/$', XFormES.as_domain_specific_view())
@@ -103,8 +103,7 @@ def api_url_patterns():
     yield url(r'^redis_assets/$', RedisAssetsAPI.as_view())
 
 
-urlpatterns = patterns('',
-    *list(api_url_patterns))
+urlpatterns = patterns('', *list(api_url_patterns()))
 
 ADMIN_API_LIST = (
     v0_5.AdminWebUserResource,
@@ -133,11 +132,11 @@ ADMIN_API_LIST = (
     BillingRecordResource,
 )
 
-@inline
+
 def api_url_patterns():
     api = CommCareHqApi(api_name='global')
     for resource in ADMIN_API_LIST:
         api.register(resource())
         yield (r'^', include(api.urls))
 
-admin_urlpatterns = patterns('', *list(api_url_patterns))
+admin_urlpatterns = patterns('', *list(api_url_patterns()))

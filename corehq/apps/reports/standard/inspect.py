@@ -184,7 +184,7 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport,
     @property
     def rows(self):
         def form_data_link(instance_id):
-            return "<a class='ajax_dialog' href='%(url)s'>%(text)s</a>" % {
+            return "<a class='ajax_dialog' target='_new' href='%(url)s'>%(text)s</a>" % {
                 "url": absolute_reverse('render_form_data', args=[self.domain, instance_id]),
                 "text": _("View Form")
             }

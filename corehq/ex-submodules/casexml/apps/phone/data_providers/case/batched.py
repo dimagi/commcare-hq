@@ -35,11 +35,10 @@ def get_case_payload_batched(restore_state):
     sync_state = sync_operation.global_state
     restore_state.current_sync_log.cases_on_phone = sync_state.actual_owned_cases
     restore_state.current_sync_log.dependent_cases_on_phone = sync_state.actual_extended_cases
-    restore_state.current_sync_log.save(**get_safe_write_kwargs())
 
     # commtrack ledger sections
     commtrack_elements = get_stock_payload(
-        restore_state.domain, restore_state.stock_settings, sync_state.all_synced_cases
+        restore_state.project, restore_state.stock_settings, sync_state.all_synced_cases
     )
     response.extend(commtrack_elements)
 
@@ -52,7 +51,7 @@ def _get_loadtest_factor(domain, user):
     both the toggle is enabled for the domain, and the user has a non-zero,
     non-null factor set.
     """
-    if domain and ENABLE_LOADTEST_USERS.enabled(domain.name):
+    if domain and ENABLE_LOADTEST_USERS.enabled(domain):
         return getattr(user, 'loadtest_factor', 1) or 1
     return 1
 
@@ -178,7 +177,7 @@ class BatchedCaseSyncOperation(object):
         self.last_synclog = restore_state.last_sync_log
         if chunk_size:
             self.chunk_size = chunk_size
-        self.domain = self.user.domain
+        self.domain = self.restore_state.domain
 
         try:
             self.owner_keys = [[owner_id, False] for owner_id in self.restore_state.owner_ids]

@@ -17,8 +17,8 @@ CUSTOM_REPORTS = (
 
 REASON_FOR_CLOSURE_MAPPING = OrderedDict((
     ('change_of_location', 'Migration'),
-    ('end_of_pregnancy', 'End of care (Postpartum Completed)'),
-    ('not_pregnant', 'Not Pregnant (mostly  incorrect registrations)'),
+    ('end_of_pregnancy', 'End of care (PNC complete)'),
+    ('not_pregnant', 'Not Pregnant (incorrect registration)'),
     ('abortion', 'Abortion'),
     ('death', 'Death'),
     ('unknown', 'Unknown')
@@ -31,11 +31,11 @@ CLOSED_CHILD_CASES_BREAKDOWN = {
 }
 
 MOTHER_DEATH_MAPPING = {
-    'seizure': 'Seizure or fits',
-    'high_bp': 'High blood pressure',
-    'bleeding_postpartum': 'Excessive bleeding post-delivery',
-    'fever_or_infection_post_delivery': 'Fever or infection post-delivery',
-    'during_caeserian_surgery': 'During Caeserian Surgery',
+    'fever_or_infection_post_delivery': 'Fever/infection',
+    'during_caeserian_surgery': 'Caeserian Surgery',
+    'seizure': 'Seizure',
+    'bleeding_postpartum': 'Excessive bleeding',
+    'high_bp': 'High BP',
     'other': 'Other reason',
 }
 
