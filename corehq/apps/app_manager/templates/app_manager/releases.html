@@ -387,7 +387,11 @@
                                                     <ol>
                                                         <li>
                                                             {% trans "Download" %}
-                                                            <a data-bind="attr: {href: $root.url('ccz', id)}">CommCare.ccz</a>
+                                                            <a href="#" data-bind="click: function () {
+                                                                download_application_zip('{% url "download_ccz" app.domain '_____' %}');
+                                                            }">
+                                                                CommCare.ccz
+                                                            </a>
                                                         </li>
                                                         <li>
                                                             {% trans "Transfer it to your Android phone's file system" %}
@@ -510,7 +514,7 @@
                             </div>
                             <div class="accordion-body collapse" data-bind="attr: {id: id() + '_multimedia'}">
                                 <div class="accordion-inner">
-                                    {% include 'hqmedia/partials/multimedia_zip_notice.html' %}
+                                    {% include 'hqmedia/partials/multimedia_zip_notice.html' with include_modal=False %}
                                 </div>
                             </div>
                         </div>
@@ -533,4 +537,8 @@
             </div>
         </script>
     </div>
+
+<!-- Async Download Modals -->
+<script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
+{% include 'app_manager/partials/download_async_modal.html' with element_id='download-zip-modal' include_js=False%}
 {% endblock %}

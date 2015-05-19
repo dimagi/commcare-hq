@@ -1,0 +1,45 @@
+{% comment %}
+    For use when trying to download a file that is asychronously generated (ie. using DownloadBase)
+    Opens a modal which fetches a link from the download's start_response(), and polls that link until the file is generated
+
+    Usage:
+
+    <a href="#{ID_OF_MODAL}" data-toggle="modal">Click me!</a>
+    {% include 'app_manager/partials/download_async_modal.html' with element_id={ID_OF_MODAL} download_url={URL_TO_DOWNLOAD} %}
+
+    Simply set ID_OF_MODAL and URL_TO_DOWNLOAD.
+    Clicking the link should open the modal, start the polling, and will give the user a link when the download is ready.
+{% endcomment %}
+
+{% load i18n %}
+{% load hq_shared_tags %}
+<div class="modal hide fade" id="{{element_id}}">
+    <div class="modal-header">
+        <a class="close" data-dismiss="modal">&times;</a>
+        <h3>{% trans "Downloading Your File" %}</h3>
+    </div>
+    <div class="modal-body">
+        <div id="{{element_id}}-downloading">
+          <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+          {% trans 'Processing data. Please wait...' %}
+        </div>
+        <div class="hide" id="{{element_id}}-download-progress"></div>
+        <div class="hide" id="{{element_id}}-download-complete">
+            <p class="alert alert-success">{% trans "Your file is ready." %}</p>
+            <a href="#" id="{{element_id}}-file-download-url">
+            <button type="submit" class="btn btn-primary">
+                <i class="icon icon-cloud-download"></i> {% trans 'Download File Now' %}
+            </button>
+            </a>
+        </div>
+    </div>
+</div>
+
+
+{% if include_js|default_if_none:True %}
+<script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
+<script type="text/javascript">
+    new COMMCAREHQ.AsyncDownloader($("#{{element_id}}"), "{{download_url}}");
+</script>
+{% endif %}
+
