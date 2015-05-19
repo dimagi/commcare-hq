@@ -1,7 +1,7 @@
 from corehq.apps.users.models import CommCareUser
 from custom.ilsgateway.tanzania.reminders import STOP_CONFIRM
 from custom.ilsgateway.tanzania.test.utils import ILSTestScript
-from custom.logistics.test.utils import bootstrap_user
+from custom.logistics.tests.utils import bootstrap_user
 
 
 class TestStop(ILSTestScript):
