@@ -679,8 +679,12 @@ cloudCare.AppView = Backbone.View.extend({
             cloudCare.dispatch.trigger("form:ready", form, caseModel);
         };
         data.answerCallback = function(sessionId) {
-            // TODO obvious
-            var render_xml_url = 'http://127.0.0.1:8000/a/willslearningproject/cloudcare/render_xml/' + sessionId
+
+            var rawBaseUrl = self.options.urlRoot;
+            var lastIndex = self.options.urlRoot.lastIndexOf('/apps/');
+            var baseUrl = rawBaseUrl.substring(0, lastIndex);
+
+            var render_xml_url = baseUrl + "/render_xml/" + sessionId
             $.ajax({
                 url: render_xml_url,
                 success: function (data) {
@@ -688,7 +692,7 @@ cloudCare.AppView = Backbone.View.extend({
                 }
             });
 
-            var render_xml_url = 'http://127.0.0.1:8000/a/willslearningproject/cloudcare/render_form/' + sessionId
+            var render_xml_url = baseUrl + "/render_form/" + sessionId
             $.ajax({
                 url: render_xml_url,
                 success: function (data) {
