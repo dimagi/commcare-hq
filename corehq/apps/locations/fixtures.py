@@ -69,8 +69,10 @@ def location_fixture_generator(user, version, last_sync=None):
 
         if user.project.supports_multiple_locations_per_user:
             # this might add duplicate locations but we filter that out later
-            # TODO fix this lol
-            locations += user.locations
+            location_ids = [loc._id for loc in user.locations]
+            locations += SQLLocation.objects.filter(
+                location_id__in=location_ids
+            )
 
     location_db = _location_footprint(locations)
 
