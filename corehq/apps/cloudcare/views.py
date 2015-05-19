@@ -213,32 +213,6 @@ def form_context(request, domain, app_id, module_id, form_id):
 
 cloudcare_api = login_or_digest_ex(allow_cc_users=True)
 
-@login_and_domain_required
-@requires_privilege_for_commcare_user(privileges.CLOUDCARE)
-def view_case(request, domain, case_id=None):
-    context = {}
-    case_json = CommCareCase.get(case_id).get_json() if case_id else None
-    case_type = case_json['properties']['case_type'] if case_json else None
-    case_spec_id = request.GET.get('spec')
-    if case_spec_id:
-        case_spec = CaseSpec.get(case_spec_id)
-    else:
-        case_spec = None
-        context.update(dict(
-            suggested_case_specs=CaseSpec.get_suggested(domain, case_type)
-        ))
-    context.update({
-        'case': case_json,
-        'domain': domain,
-        'case_spec': case_spec
-    })
-    return render(request, 'cloudcare/view_case.html', context)
-
-@cloudcare_api
-def get_groups(request, domain, user_id):
-    user = CouchUser.get_by_user_id(user_id, domain)
-    groups = Group.by_user(user)
-    return json_response(sorted([{'label': group.name, 'value': group.get_id} for group in groups], key=lambda x: x['label']))
 
 @cloudcare_api
 def get_cases(request, domain):
