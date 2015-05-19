@@ -69,6 +69,9 @@ class AppGroup(DocumentSchema):
 
 
 class ApplicationAccess(Document):
+    """
+    This is used to control which users/groups can access which applications on cloudcare.
+    """
     domain = StringProperty()
     app_groups = SchemaListProperty(AppGroup, default=[])
     restrict = BooleanProperty(default=False)
