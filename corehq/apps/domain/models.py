@@ -13,7 +13,7 @@ from dimagi.ext.couchdbkit import (
     StringListProperty, SchemaListProperty, TimeProperty, DecimalProperty
 )
 from django.core.urlresolvers import reverse
-from django.db import models
+from django.db import models, connection
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.util.quickcache import skippable_quickcache
@@ -913,6 +913,16 @@ class Domain(Document, SnapshotMixin):
         return Domain.view('domain/copied_from_snapshot', keys=[s._id for s in self.copied_from.snapshots()], include_docs=True)
 
     def delete(self):
+        from corehq.apps.domain.signals import commcare_domain_pre_delete
+
+        results = commcare_domain_pre_delete.send_robust(sender='domain', domain=self)
+        for result in results:
+            if result[1]:
+                notify_exception(
+                    None,
+                    message="Error occured during domain pre_delete %s: %s" %
+                            (self.name, str(result[1]))
+                )
         # delete all associated objects
         db = self.get_db()
         related_doc_ids = [row['id'] for row in db.view('domain/related_to_domain',
@@ -921,8 +931,43 @@ class Domain(Document, SnapshotMixin):
             include_docs=False,
         )]
         iter_bulk_delete(db, related_doc_ids, chunksize=500)
+        self._delete_web_users_from_domain()
+        self._delete_sql_objects()
         super(Domain, self).delete()
         Domain.get_by_name.clear(Domain, self.name)  # clear the domain cache
+
+    def _delete_web_users_from_domain(self):
+        from corehq.apps.users.models import WebUser
+        web_users = WebUser.by_domain(self.name)
+        for web_user in web_users:
+            web_user.delete_domain_membership(self.name)
+
+    def _delete_sql_objects(self):
+        from casexml.apps.stock.models import DocDomainMapping
+        from corehq.apps.locations.models import SQLLocation, LocationType
+        from corehq.apps.products.models import SQLProduct
+
+        cursor = connection.cursor()
+
+        # Delete stock data
+        cursor.execute(
+            "DELETE FROM stock_stocktransaction "
+            "WHERE report_id IN (SELECT id FROM stock_stockreport WHERE domain=%s)", [self.name]
+        )
+
+        cursor.execute(
+            "DELETE FROM stock_stockreport WHERE domain=%s", [self.name]
+        )
+
+        cursor.execute(
+            "DELETE FROM commtrack_stockstate"
+            " WHERE product_id IN (SELECT product_id FROM products_sqlproduct WHERE domain=%s)", [self.name]
+        )
+
+        SQLProduct.objects.filter(domain=self.name).delete()
+        SQLLocation.objects.filter(domain=self.name).delete()
+        LocationType.objects.filter(domain=self.name).delete()
+        DocDomainMapping.objects.filter(domain_name=self.name).delete()
 
     def all_media(self, from_apps=None):  # todo add documentation or refactor
         from corehq.apps.hqmedia.models import CommCareMultimedia
