@@ -1547,7 +1547,7 @@ class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin
             self.domain, current_privs, return_plan=True,
         )
         if plan_version is None:
-            logging.error("[BILLING] Could not find a matching renwabled plan "
+            logging.error("[BILLING] Could not find a matching renewable plan "
                           "for %(domain)s, subscription number %(sub_pk)s." % {
                 'domain': self.domain,
                 'sub_pk': self.subscription.pk
