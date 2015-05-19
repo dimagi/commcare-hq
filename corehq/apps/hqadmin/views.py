@@ -745,9 +745,11 @@ def callcenter_test(request):
     elif doc_id:
         try:
             doc = CommCareUser.get_db().get(doc_id)
+            domain = Domain.get_by_name(doc['domain'])
             doc_type = doc.get('doc_type', None)
             if doc_type == 'CommCareUser':
-                user_case = get_case_by_domain_hq_user_id(doc['domain'], doc['_id'], include_docs=True)
+                case_type = domain.call_center_config.case_type
+                user_case = get_case_by_domain_hq_user_id(doc['domain'], doc['_id'], case_type)
             elif doc_type == 'CommCareCase':
                 if doc.get('hq_user_id'):
                     user_case = CommCareCase.wrap(doc)
@@ -755,9 +757,6 @@ def callcenter_test(request):
                     error = 'Case ID does does not refer to a Call Center Case'
         except ResourceNotFound:
             error = "User Not Found"
-
-    if user_case:
-        domain = Domain.get_by_name(user_case['domain'])
 
     try:
         query_date = dateutil.parser.parse(date_param)

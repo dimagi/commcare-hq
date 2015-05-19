@@ -23,6 +23,10 @@ class SavedReportConfigForm(forms.Form):
     end_date = forms.DateField(
         required=False,
     )
+    datespan_slug = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput(),
+    )
     date_range = forms.CharField(
         required=False,
         widget=forms.HiddenInput(),

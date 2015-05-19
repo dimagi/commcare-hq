@@ -470,7 +470,7 @@ def get_cloudcare_session_data(suite_gen, domain_name, form, couch_user):
             _assert(False, 'Domain "%s": %s' % (domain_name, err))
         else:
             if suite_gen.any_usercase_datums(extra_datums):
-                usercase = get_case_by_domain_hq_user_id(domain_name, couch_user.get_id, include_docs=False)
+                usercase = get_case_by_domain_hq_user_id(domain_name, couch_user.get_id, USERCASE_TYPE)
                 if usercase:
                     session_data[USERCASE_ID] = usercase['id']
     return session_data
