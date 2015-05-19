@@ -1231,14 +1231,13 @@ class InternalSubscriptionManagementForm(forms.Form):
     @property
     @memoized
     def current_contact_emails(self):
+        if self.current_subscription is None:
+            return None
         try:
             return BillingContactInfo.objects.get(
                 account=self.current_subscription.account
             ).emails
         except BillingContactInfo.DoesNotExist:
-            return None
-        except AttributeError:
-            # current_subscription is None. cf. FB 168555
             return None
 
     def __init__(self, domain, web_user, *args, **kwargs):
