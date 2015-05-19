@@ -1,7 +1,7 @@
 from collections import defaultdict
 from xml.etree.ElementTree import Element
 from corehq.apps.commtrack.util import unicode_slug
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import Location, SQLLocation
 from corehq import toggles
 
 
@@ -15,14 +15,14 @@ class LocationSet(object):
         self.by_parent = defaultdict(set)
         if locations is not None:
             for loc in locations:
-                if _valid_parent_type(loc):
-                    self.add_location(loc)
+                self.add_location(loc)
 
     def add_location(self, location):
-        self.by_id[location.location_id] = location
-        parent = location.parent
-        parent_id = parent.location_id if parent else None
-        self.by_parent[parent_id].add(location)
+        if _valid_parent_type(location):
+            self.by_id[location.location_id] = location
+            parent = location.parent
+            parent_id = parent.location_id if parent else None
+            self.by_parent[parent_id].add(location)
 
     def __contains__(self, item):
         return item in self.by_id
@@ -56,10 +56,8 @@ def location_fixture_generator(user, version, last_sync=None):
         return []
 
     if toggles.SYNC_ALL_LOCATIONS.enabled(user.domain):
-        # TODO test this
-        location_db = _location_footprint(
-            SQLLocation.objects.filter(domain=user.domain)
-        )
+        unfiltered_locations = SQLLocation.objects.filter(domain=user.domain)
+        locations = [loc for loc in unfiltered_locations if _valid_parent_type(loc)]
     else:
         locations = []
         if user.location:
@@ -74,7 +72,7 @@ def location_fixture_generator(user, version, last_sync=None):
             # TODO fix this lol
             locations += user.locations
 
-        location_db = _location_footprint(locations)
+    location_db = _location_footprint(locations)
 
     if not should_sync_locations(last_sync, location_db):
         return []
@@ -89,10 +87,7 @@ def location_fixture_generator(user, version, last_sync=None):
     def location_type_lookup(location_type):
         return type_to_slug_mapping.get(location_type, unicode_slug(location_type))
 
-    if toggles.SYNC_ALL_LOCATIONS.enabled(user.domain):
-        root_locations = Location.root_locations(user.domain)
-    else:
-        root_locations = filter(lambda loc: loc.parent is None, location_db.by_id.values())
+    root_locations = filter(lambda loc: loc.parent is None, location_db.by_id.values())
 
     if not root_locations:
         return []
