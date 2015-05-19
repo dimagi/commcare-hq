@@ -454,10 +454,8 @@ def render_form(request, domain, session_id):
         session = EntrySession.objects.get(session_id=session_id)
     except EntrySession.DoesNotExist:
         session = None
-    # query touchforms to get XML
-    # TODO make this not terrible
 
-    response = requests.post('http://127.0.0.1:8000/webforms/get-xml/' + session_id)
+    response = requests.post(get_url_base() + '/webforms/get-xml/' + session_id)
     json_response = json.loads(response.text)
     xmlns = json_response["xmlns"]
     form_data_xml = json_response["output"]
@@ -473,10 +471,7 @@ def render_form(request, domain, session_id):
 
 def render_xml(request, domain, session_id):
 
-    # query touchforms to get XML
-    # TODO make this not terrible
-
-    m_response = requests.post('http://127.0.0.1:8000/webforms/get-xml/' + session_id)
+    m_response = requests.post(get_url_base() + '/webforms/get-xml/' + session_id)
 
     json_response = json.loads(m_response.text)
     form_data_xml = json_response["output"]
