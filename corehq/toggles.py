@@ -358,6 +358,13 @@ VELLUM_SAVE_TO_CASE = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+VELLUM_ADVANCED_ITEMSETS = StaticToggle(
+    'advanced_itemsets',
+    "Allows a user to configure itemsets for more than lookup tables",
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
+
 CACHE_AND_INDEX = StaticToggle(
     'cache_and_index',
     'Enable the "Cache and Index" format option when choosing sort properties '
