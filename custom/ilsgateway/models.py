@@ -470,7 +470,7 @@ def domain_pre_delete_receiver(domain, **kwargs):
     locations_ids = SQLLocation.objects.filter(domain=domain_name).values_list('location_id', flat=True)
     if locations_ids:
         DeliveryGroupReport.objects.filter(location_id__in=locations_ids).delete()
-        SupplyPointWarehouseRecord.objects.filter(supply_point__in=locations_ids)
+        SupplyPointWarehouseRecord.objects.filter(supply_point__in=locations_ids).delete()
 
         cursor = connection.cursor()
         cursor.execute(
