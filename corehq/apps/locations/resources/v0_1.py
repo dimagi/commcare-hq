@@ -4,9 +4,46 @@ from tastypie import fields
 from corehq.apps.api.resources.v0_1 import CustomResourceMeta, LoginAndDomainAuthentication
 from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.api.resources import HqBaseResource
+from corehq.apps.users.models import WebUser
+from corehq.util.quickcache import quickcache
 
-from ..models import Location, root_locations
-from ..permissions import editable_locations_ids, viewable_locations_ids
+from ..models import Location, SQLLocation, root_locations
+
+
+@quickcache(['user._id', 'project.name'])
+def editable_locations_ids(user, project):
+    if (user.is_domain_admin(project.name) or
+            not project.location_restriction_for_users):
+        return (SQLLocation.by_domain(project.name)
+                           .values_list('location_id', flat=True))
+
+    if isinstance(user, WebUser):
+        user_loc = user.get_location(project.name)
+    else:
+        user_loc = user.location
+    if not user_loc:
+        return []
+
+    return list(user_loc.sql_location.get_descendants(include_self=True)
+                                     .values_list('location_id', flat=True))
+
+
+def viewable_locations_ids(user, project):
+    if (user.is_domain_admin(project.name) or
+            not project.location_restriction_for_users):
+        return (SQLLocation.by_domain(project.name)
+                           .values_list('location_id', flat=True))
+
+    if isinstance(user, WebUser):
+        user_loc = user.get_location(project.name)
+    else:
+        user_loc = user.location
+    if not user_loc:
+        return []
+
+    return (list(user_loc.sql_location.get_ancestors()
+            .values_list('location_id', flat=True)) +
+            editable_locations_ids(user, project))
 
 
 class LocationResource(HqBaseResource):

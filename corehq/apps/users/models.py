@@ -1763,6 +1763,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             return self.language
 
     @property
+    @memoized
     def location(self):
         from corehq.apps.locations.models import Location
         if self.location_id:
@@ -2264,6 +2265,7 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
     def get_location_id(self, domain):
         return getattr(self.get_domain_membership(domain), 'location_id', None)
 
+    @memoized
     def get_location(self, domain):
         from corehq.apps.locations.models import Location
         loc_id = self.get_location_id(domain)
