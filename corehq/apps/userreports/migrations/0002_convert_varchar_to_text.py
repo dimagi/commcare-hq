@@ -99,7 +99,7 @@ def _should_alter_column(col):
         if col.type.length == 255:
             return True
         else:
-            raise Exception("Unexpted Unicode column length: {}".format(col.type.length))
+            raise Exception("Unexpected Unicode column length: {}".format(col.type.length))
     return False
 
 
