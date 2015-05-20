@@ -1103,7 +1103,6 @@ class MultiUserSyncTest(SyncBaseTest):
         """
         # create a parent and child case (with index) from one user
         parent_id, child_id = [uuid.uuid4().hex for i in range(2)]
-        parent_id, child_id = ['parent', 'child']
         self.factory.create_or_update_cases([
             CaseStructure(
                 case_id=child_id,
