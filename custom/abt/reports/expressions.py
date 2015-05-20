@@ -3,12 +3,12 @@ from jsonobject import JsonObject
 import yaml
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.app_manager.models import Application
+from corehq.util.quickcache import quickcache
 from dimagi.utils.decorators.memoized import memoized
 
 
 class AbtSupervisorExpressionSpec(JsonObject):
     type = TypeProperty('abt_supervisor')
-    _questions_cache = {}
 
     @property
     @memoized
@@ -50,20 +50,20 @@ class AbtSupervisorExpressionSpec(JsonObject):
         return danger_value == []
 
     @classmethod
+    @quickcache(['app_id', 'xmlns'])
+    def _get_questions(cls, app_id, xmlns):
+        form = Application.get(app_id).get_form_by_xmlns(xmlns)
+        return {
+            q['value']: q for q in form.get_questions([], include_groups=True)
+        }
+
+    @classmethod
     def _get_question_options(cls, item, question_path):
         """
         Return a list of option values for the given question path and item
         (which is a dict representation of an XFormInstance)
         """
-        app_id, xmlns = item['app_id'], item['xmlns']
-        questions = cls._questions_cache.get((app_id, xmlns), None)
-        if questions is None:
-            form = Application.get(app_id).get_form_by_xmlns(xmlns)
-            questions = {
-                q['value']: q for q in form.get_questions([], include_groups=True)
-            }
-            cls._questions_cache[(app_id, xmlns)] = questions
-
+        questions = cls._get_questions(item['app_id'], item['xmlns'])
         question = questions.get('/data/' + "/".join(question_path), {})
         options = [o['value'] for o in question.get("options", [])]
         return options
