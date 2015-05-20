@@ -1,0 +1,8 @@
+{% load hq_shared_tags %}
+
+<script src="{% static 'hqwebapp/js/lib/require.js' %}"></script>
+{% if not vellum_debug %}
+<link href="{% static 'app_manager/js/vellum/style.css' %}" type="text/css" rel="stylesheet"></link>
+{% elif vellum_debug == "dev-min" %}
+<link href="{% static 'formdesigner/_build/style.css' %}" type="text/css" rel="stylesheet"></link>
+{% endif %}

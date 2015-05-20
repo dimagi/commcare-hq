@@ -1,0 +1,115 @@
+{% load hq_shared_tags %}
+<script>
+    var nav_key = {{ request.couch_user.keyboard_shortcuts.main_key|JSON }};
+
+    // overrides default behavior and allows for shortcuts in inputs
+    KEY.filter = function(event) {
+        return true;
+    };
+
+    function gen_sidebar_elements() {
+        return $('.sidebar .nav-list a:not(a:has(.icon-pencil))');
+    }
+    var sidebar_navigator = new KeyboardNavigator();
+    sidebar_navigator.init({
+        name: 'sidebar',
+        nav_key: nav_key,
+        action_key: 'enter',
+        forward_keys: ['j', 'down'],
+        back_keys: ['k', 'up'],
+        element_list_generator: gen_sidebar_elements,
+        reset_index: false
+    });
+
+    function gen_question_tree_elements() {
+        return $('.jstree-leaf:visible a, .jstree-open a, .jstree-closed a:first');
+    }
+    var question_tree_navigator = new KeyboardNavigator();
+    question_tree_navigator.init({
+        name: 'question tree',
+        ready_scope: 'qt-ready',
+        nav_key: nav_key,
+        action_key: 'enter',
+        forward_keys: ['j', 'down'],
+        back_keys: ['k', 'up'],
+        element_list_generator: gen_question_tree_elements,
+        focus_in_fn: function($ele) { $ele.addClass('jstree-hovered') },
+        focus_out_fn: function($ele) { $ele.removeClass('jstree-hovered') },
+        reset_index: true,
+        regen_list_on_exit: true
+    });
+
+    function gen_change_question_elements() {
+        return $('.change-question');
+    }
+    var change_question_navigator = new KeyboardNavigator();
+    change_question_navigator.init({
+        name: 'change question',
+        ready_scope: 'cq-ready',
+        nav_key: nav_key,
+        action_key: 'enter',
+        forward_keys: ['j', 'down'],
+        back_keys: ['k', 'up'],
+        element_list_generator: gen_change_question_elements,
+        start_fn: function() { $('.fd-question-changer').addClass('open') },
+        stop_fn: function() { $('.fd-question-changer').removeClass('open') },
+        reset_index: true,
+        regen_list_on_leave: true
+    });
+
+    function gen_tools_elements() {
+        return $('.fd-form-actions li a');
+    }
+    var tools_navigator = new KeyboardNavigator();
+    tools_navigator.init({
+        name: 'tools',
+        ready_scope: 'tools-ready',
+        nav_key: nav_key,
+        action_key: 'enter',
+        forward_keys: ['j', 'down'],
+        back_keys: ['k', 'up'],
+        element_list_generator: gen_tools_elements,
+        start_fn: function() { $('.fd-form-actions .btn-group').addClass('open') },
+        stop_fn: function() { $('.fd-form-actions .btn-group').removeClass('open') },
+        reset_index: true,
+        regen_list_on_leave: true
+    });
+
+    function handle_properties_shortcut() {
+        $('.fd-props-content').find('input[type="text"]').first().focus();
+        return false;
+    }
+
+    KEYBOARD_SHORTCUTS = KEYBOARD_SHORTCUTS.concat([
+        {
+            shortcut: nav_key + "+s",
+            handler: KS.gen_click_fn("#settings-save-btn .btn, .fd-save-button .btn"),
+            desc: "Save Form"
+        },
+        {
+            shortcut: nav_key + "+[",
+            handler: question_tree_navigator.activate,
+            desc: "Navigate the Question Tree"
+        },
+        {
+            shortcut: nav_key + "+]",
+            handler: handle_properties_shortcut,
+            desc: "Change Focus to Question Properties"
+        },
+        {
+            shortcut: nav_key + "+d",
+            handler: change_question_navigator.activate,
+            desc: "Change Current Question"
+        },
+        {
+            shortcut: nav_key + "+t",
+            handler: tools_navigator.activate,
+            desc: "Access Tools Menu"
+        },
+        {
+            shortcut: nav_key + "+c",
+            handler: KS.gen_click_fn(".fd-button-copy"),
+            desc: "Make Copy of Selected Node"
+        }
+    ]);
+</script>
