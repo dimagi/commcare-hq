@@ -2,6 +2,7 @@ from __future__ import absolute_import
 import hashlib
 import datetime
 import logging
+import uuid
 
 from StringIO import StringIO
 from django.test.client import Client
@@ -473,7 +474,11 @@ class SubmissionPost(object):
             errors = []
             with lock_manager as xforms:
                 instance = xforms[0]
-                if instance.doc_type == 'XFormInstance':
+                if instance.xmlns == couchforms.const.DEVICE_LOG_XMLNS:
+                    # Skip processing and saving of device logs and send them directly to postgres
+                    instance['_id'] = uuid.uuid4.hex
+                    process_sql(instance)
+                elif instance.doc_type == 'XFormInstance':
                     if len(xforms) > 1:
                         assert len(xforms) == 2
                         assert is_deprecation(xforms[1])
