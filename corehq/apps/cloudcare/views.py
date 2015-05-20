@@ -38,8 +38,7 @@ from xml.etree import ElementTree
 from corehq.apps.cloudcare.decorators import require_cloudcare_access
 import HTMLParser
 from django.contrib import messages
-from django.utils.translation import ugettext as _, ugettext_
-noop
+from django.utils.translation import ugettext as _, ugettext_noop
 from touchforms.formplayer.models import EntrySession
 from xml2json.lib import xml2json
 import requests
