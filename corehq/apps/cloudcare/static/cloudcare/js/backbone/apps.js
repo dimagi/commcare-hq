@@ -132,6 +132,9 @@ cloudCare.App = LocalizableModel.extend({
     renderXmlRoot: function () {
         return this.get("renderXmlRoot");
     },
+    instanceViewerEnabled: function () {
+        return this.get("instanceViewerEnabled");
+    },
     updateModules: function () {
         var self = this;
         if (self.get("modules")) {
@@ -687,23 +690,27 @@ cloudCare.AppView = Backbone.View.extend({
         };
         data.answerCallback = function(sessionId) {
 
-            var render_xml_url = self.options.renderXmlRoot
-            $.ajax({
-                url: render_xml_url,
-                data: {'session_id': sessionId},
-                success: function (data) {
-                    showRenderedForm(data, $("#xml-viewer-pretty"));
-                }
-            });
+            var instanceViewerEnabled = self.options.instanceViewerEnabled;
 
-            var render_form_url = self.options.renderFormRoot
-            $.ajax({
-                url: render_form_url,
-                data: {'session_id': sessionId},
-                success: function (data) {
-                    showRenderedForm(data, $("#question-viewer-pretty"));
-                }
-            });
+            if(instanceViewerEnabled) {
+                var render_xml_url = self.options.renderXmlRoot
+                $.ajax({
+                    url: render_xml_url,
+                    data: {'session_id': sessionId},
+                    success: function (data) {
+                        showRenderedForm(data, $("#xml-viewer-pretty"));
+                    }
+                });
+
+                var render_form_url = self.options.renderFormRoot
+                $.ajax({
+                    url: render_form_url,
+                    data: {'session_id': sessionId},
+                    success: function (data) {
+                        showRenderedForm(data, $("#question-viewer-pretty"));
+                    }
+                });
+            }
         };
         data.resourceMap = function(resource_path) {
             if (resource_path.substring(0, 7) === 'http://') {
@@ -886,7 +893,8 @@ cloudCare.AppMainView = Backbone.View.extend({
             sessionUrlRoot: self.options.sessionUrlRoot,
             submitUrlRoot: self.options.submitUrlRoot,
             renderXmlRoot: self.options.renderXmlRoot,
-            renderFormRoot: self.options.renderFormRoot
+            renderFormRoot: self.options.renderFormRoot,
+            instanceViewerEnabled: self.options.instanceViewerEnabled
         });
 
         // fetch session list here

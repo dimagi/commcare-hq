@@ -76,6 +76,11 @@
         var initialCase = {{ case|JSON }};
         var initialParent = {{ parent|JSON }};
         var sessionsEnabled = {{ sessions_enabled|JSON }};
+        var instanceViewerEnabled = false;
+        {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
+                instanceViewerEnabled = true;
+        {% endif %}
+
         window.mainView = new cloudCare.AppMainView({
             apps: apps,
             language: language,
@@ -89,7 +94,8 @@
             initialParent: initialParent,
             sessionsEnabled: sessionsEnabled,
             renderXmlRoot: renderXmlRoot,
-            renderFormRoot: renderFormRoot
+            renderFormRoot: renderFormRoot,
+            instanceViewerEnabled: instanceViewerEnabled
         });
         // TODO: when we figure out what to do about get params, use this
         Backbone.history.start({pushState: true, root: urlRoot});
