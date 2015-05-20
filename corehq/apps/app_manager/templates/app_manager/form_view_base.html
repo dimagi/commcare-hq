@@ -242,12 +242,12 @@
                     $(".source-only").hide();
                     $(".view-only").show();
                     $(".hq-content.span10").removeClass("hq-flush-content");
-                    $(".edit-form-li.active .edit-form-pencil").removeClass("sticky").hide();
+                    $('.edit-form-li.active .edit-form-pencil').hide();
                 },
                 showFormSource: function() {
                     $(".source-only").show();
                     $(".view-only").hide();
-                    $(".edit-form-li.active .edit-form-pencil").addClass("sticky").show();
+                    $('.edit-form-li.active .edit-form-pencil').show();
                     $(".hq-content.span10").addClass("hq-flush-content");
                     if (!loadedVellum) {
                         require(["jquery", "jquery.vellum"], function ($) {

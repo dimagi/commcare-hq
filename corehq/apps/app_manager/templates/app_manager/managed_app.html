@@ -21,6 +21,9 @@
         position: relative;
         width: 110%;
     }
+    .edit-form-li.active .icon-pencil {
+        color: white;
+    }
     /* Push tooltips away from icons that trigger them */
     .tooltip {
         margin-right: 12px;
@@ -90,12 +93,14 @@
                 placement: 'left'
             });
             $('.edit-form-li').each(function () {
+                if ($(this).is('.active') && {{ formdesigner|JSON }}) {
+                    $(this).find('.edit-form-pencil').show();
+                }
                 $(this).mouseenter(function () {
                     $(this).find('.edit-form-pencil').show();
                 }).mouseleave(function () {
-                    var $pencil = $(this).find('.edit-form-pencil');
-                    if (!$pencil.hasClass('sticky')) {
-                        $pencil.hide();
+                    if (!$(this).is('.active') || !$('#formdesigner:visible').length) {
+                        $(this).find('.edit-form-pencil').hide();
                     }
                 });
             });
@@ -260,7 +265,7 @@
                                                     href="{% url "view_form" domain app.id module.id form.id %}#source"
                                                     {% endifequal %}
                                                 >
-                                                    <i class="icon-pencil" {% ifequal form selected_form %}style="color: white"{% endifequal %}"></i>
+                                                    <i class="icon-pencil"></i>
                                                 </a>
                                             </div>
                                         {% endif %}
