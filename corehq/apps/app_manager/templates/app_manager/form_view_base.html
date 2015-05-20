@@ -90,6 +90,12 @@
         <script src="{% static 'app_manager/js/case-config-ui-1.js' %}"></script>
     {% endif %}
     <script src="{% static 'cloudcare/js/util.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/require.js' %}"></script>
+    {% if not vellum_debug %}
+    <link href="{% static 'app_manager/js/vellum/style.css' %}" type="text/css" rel="stylesheet"></link>
+    {% elif vellum_debug == "dev-min" %}
+    <link href="{% static 'formdesigner/_build/style.css' %}" type="text/css" rel="stylesheet"></link>
+    {% endif %}
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -225,12 +231,234 @@
                 '{% url "validate_form_for_build" domain app.id form.unique_id %}');
         });
     </script>
+    <script>
+
+        var VELLUM_OPTIONS = {
+            plugins: {{ plugins|JSON }},
+            features: {{ features|JSON }},
+            core: {
+                dataSources: [
+                    {
+                        key: 'fixture',
+                        name: 'Fixtures',
+                        endpoint: '{% url 'fixture_metadata' domain=domain %}'
+                    }
+                ],
+                form: {{ form.source|to_javascript_string }},
+                formId: '{{ form.get_unique_id }}',
+                formName: "{{ form.name|trans:app.langs|escapejs }}",
+                saveType: 'patch',
+                saveUrl: '{% url "edit_form_attr" domain app.id form.get_unique_id "xform" %}',
+                patchUrl: '{% url "patch_xform" domain app.id form.get_unique_id %}',
+                allowedDataNodeReferences: [
+                    "meta/deviceID",
+                    "meta/instanceID",
+                    "meta/username",
+                    "meta/userID",
+                    "meta/timeStart",
+                    "meta/timeEnd"
+                ],
+                onFormSave: function (data) {
+                    COMMCAREHQ.app_manager.updateDOM(data.update);
+                },
+                {% if vellum_debug == "dev" %}
+                onReady: function () {
+                    var less_error_id = "#less-error-message\\:static-style-less-hqstyle-core",
+                        less_error = $(less_error_id);
+                    if (less_error) {
+                        console.log("hiding less error:", less_error_id);
+                        console.log(less_error.text());
+                        less_error.hide();
+                    }
+                },
+                {% endif %}
+                sessionid: {{ sessionid|JSON }}
+            },
+            javaRosa: {
+                langs: {{ app.langs|JSON }},
+                displayLanguage: {{ lang|JSON }},
+            },
+            uploader: {
+                uploadUrls: {
+                    image: '{% url "hqmedia_uploader_image" domain app.id %}',
+                    audio: '{% url "hqmedia_uploader_audio" domain app.id %}',
+                    video: '{% url "hqmedia_uploader_video" domain app.id %}'
+                },
+                objectMap: {{ multimedia_object_map|JSON }},
+                sessionid: {{ sessionid|JSON }}
+            },
+            windowManager: {
+                bottomOffset: $('footer').outerHeight(),
+                leftOffset: function () {
+                    return $('.sidebar').outerWidth() + 2;
+                },
+                topOffset: function () {
+                    return $('header').outerHeight() + 
+                        $('.hq-page-header-container').outerHeight();
+                }
+            }
+        };
+
+        define("jquery", [], function () { return window.jQuery; });
+        define("jquery-ui", ["jquery"], function () {});
+        define("jquery.bootstrap", ["jquery"], function () {});
+
+        require.config({
+            {% comment %} 
+            to use non-built files in HQ:
+                * clone Vellum into submodules/formdesigner
+                * Run make in that directory (requires node.js)
+                * set settings.VELLUM_DEBUG to "dev" or "dev-min"
+            {% endcomment %}
+            {% if not vellum_debug %}
+            baseUrl: "{% static 'app_manager/js/vellum/src' %}",
+            {% elif vellum_debug == "dev-min" %}
+            baseUrl: "{% static 'formdesigner/_build/src' %}",
+            {% else %}
+            baseUrl: "{% static 'formdesigner/src' %}",
+            {% endif %}
+            // handle very bad connections
+            waitSeconds: 60,
+            urlArgs: 'version={% cachebuster "app_manager/js/vellum/src/main-components.js" %}{% cachebuster "app_manager/js/vellum/src/local-deps.js" %}',
+            paths: {
+                'jquery.vellum': 'main'
+            }
+        });
+
+        require(["jquery", "jquery.vellum"], function ($) {
+            $(function () {
+                $("#edit").hide();
+                $('footer').addClass('fixed-footer');
+
+                $('#formdesigner').vellum(VELLUM_OPTIONS);
+            });
+        });
+        analytics.track('Entered the Form Builder');
+
+    </script>
+{% endblock %}
+
+{% block keyboard_shortcuts %}
+    <script>
+        var nav_key = {{ request.couch_user.keyboard_shortcuts.main_key|JSON }};
+
+        // overrides default behavior and allows for shortcuts in inputs
+        KEY.filter = function(event) {
+            return true;
+        };
+
+        function gen_sidebar_elements() {
+            return $('.sidebar .nav-list a:not(a:has(.icon-pencil))');
+        }
+        var sidebar_navigator = new KeyboardNavigator();
+        sidebar_navigator.init({
+            name: 'sidebar',
+            nav_key: nav_key,
+            action_key: 'enter',
+            forward_keys: ['j', 'down'],
+            back_keys: ['k', 'up'],
+            element_list_generator: gen_sidebar_elements,
+            reset_index: false
+        });
+
+        function gen_question_tree_elements() {
+            return $('.jstree-leaf:visible a, .jstree-open a, .jstree-closed a:first');
+        }
+        var question_tree_navigator = new KeyboardNavigator();
+        question_tree_navigator.init({
+            name: 'question tree',
+            ready_scope: 'qt-ready',
+            nav_key: nav_key,
+            action_key: 'enter',
+            forward_keys: ['j', 'down'],
+            back_keys: ['k', 'up'],
+            element_list_generator: gen_question_tree_elements,
+            focus_in_fn: function($ele) { $ele.addClass('jstree-hovered') },
+            focus_out_fn: function($ele) { $ele.removeClass('jstree-hovered') },
+            reset_index: true,
+            regen_list_on_exit: true
+        });
+
+        function gen_change_question_elements() {
+            return $('.change-question');
+        }
+        var change_question_navigator = new KeyboardNavigator();
+        change_question_navigator.init({
+            name: 'change question',
+            ready_scope: 'cq-ready',
+            nav_key: nav_key,
+            action_key: 'enter',
+            forward_keys: ['j', 'down'],
+            back_keys: ['k', 'up'],
+            element_list_generator: gen_change_question_elements,
+            start_fn: function() { $('.fd-question-changer').addClass('open') },
+            stop_fn: function() { $('.fd-question-changer').removeClass('open') },
+            reset_index: true,
+            regen_list_on_leave: true
+        });
+
+        function gen_tools_elements() {
+            return $('.fd-form-actions li a');
+        }
+        var tools_navigator = new KeyboardNavigator();
+        tools_navigator.init({
+            name: 'tools',
+            ready_scope: 'tools-ready',
+            nav_key: nav_key,
+            action_key: 'enter',
+            forward_keys: ['j', 'down'],
+            back_keys: ['k', 'up'],
+            element_list_generator: gen_tools_elements,
+            start_fn: function() { $('.fd-form-actions .btn-group').addClass('open') },
+            stop_fn: function() { $('.fd-form-actions .btn-group').removeClass('open') },
+            reset_index: true,
+            regen_list_on_leave: true
+        });
+
+        function handle_properties_shortcut() {
+            $('.fd-props-content').find('input[type="text"]').first().focus();
+            return false;
+        }
+
+        KEYBOARD_SHORTCUTS = KEYBOARD_SHORTCUTS.concat([
+            {
+                shortcut: nav_key + "+s",
+                handler: KS.gen_click_fn("#settings-save-btn .btn, .fd-save-button .btn"),
+                desc: "Save Form"
+            },
+            {
+                shortcut: nav_key + "+[",
+                handler: question_tree_navigator.activate,
+                desc: "Navigate the Question Tree"
+            },
+            {
+                shortcut: nav_key + "+]",
+                handler: handle_properties_shortcut,
+                desc: "Change Focus to Question Properties"
+            },
+            {
+                shortcut: nav_key + "+d",
+                handler: change_question_navigator.activate,
+                desc: "Change Current Question"
+            },
+            {
+                shortcut: nav_key + "+t",
+                handler: tools_navigator.activate,
+                desc: "Access Tools Menu"
+            },
+            {
+                shortcut: nav_key + "+c",
+                handler: KS.gen_click_fn(".fd-button-copy"),
+                desc: "Make Copy of Selected Node"
+            }
+        ]);
+    </script>
 {% endblock %}
 
 {% block form-view %}
-    <div id="build_errors"></div>
+    <div id="build_errors" class="view-only"></div>
     {% if not is_user_registration %}
-        <div class="delete-me">
+        <div class="delete-me view-only">
             <form action="{% url "delete_form" domain app.id module.unique_id form.unique_id %}" method="post">
                 <button type="submit" class="disable-on-submit btn btn-danger">
                     <i class="icon-trash"></i>
@@ -240,7 +468,7 @@
         </div>
     {% endif %}
 
-    <h3>
+    <h3 class="view-only">
         <i class="icon icon-file-alt"></i>
     {% if is_user_registration %}
         <span class="app-manager-title">{% trans "User Registration" %}</span>
@@ -249,7 +477,7 @@
     {% endif %}
     </h3>
 
-    <div class="btn-group">
+    <div class="btn-group view-only">
         {% if not form.no_vellum %}
         <a id="edit_label" href="{% if is_user_registration %}
                                     {% url "user_registration_source" domain app.id %}
@@ -277,14 +505,14 @@
             {% endif %}
         {% endif %}
     </div>
-    <hr/>
+    <hr class="view-only"/>
 
     {% if is_user_registration %}
-    <h4>{% trans "User Registration Properties" %}</h4>
-    <div id="user_reg_home" class="config"></div>
+    <h4 class="view-only">{% trans "User Registration Properties" %}</h4>
+    <div id="user_reg_home" class="config view-only"></div>
     {% else %}
 
-    <div class="tabbable">
+    <div class="tabbable view-only">
         <ul class="nav nav-tabs">
             <li class="active">
                 <a href="#form-settings" data-toggle="tab">{% trans "Settings" %}</a>
@@ -354,9 +582,16 @@
         </div>
     </div>
     {% endif %}
-    <div id="questions"></div>
+    <div id="questions view-only"></div>
+
+    <div id="formdesigner" class="clearfix source-only"></div>
 {% endblock %}
 
 {% block modals %}{{ block.super }}
 {% include "app_manager/partials/nav_menu_media_modals.html" %}
 {% endblock modals %}
+
+{% block breadcrumbs %}
+    {{ block.super }}
+    <li class="source-only"><span class="divider">&gt;</span> <i class="icon-pencil"></i> {{ form.name|trans:app.langs }}</li>
+{% endblock %}
