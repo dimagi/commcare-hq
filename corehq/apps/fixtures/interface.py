@@ -79,7 +79,8 @@ class FixtureViewInterface(GenericTabularReport, FixtureInterface):
                 domain=self.domain,
                 couch_user=self.request.couch_user,
                 project=self.request.project
-        )})
+            )
+        })
         return context
 
     @memoized
@@ -122,8 +123,7 @@ class FixtureEditInterface(FixtureInterface):
                 couch_user=self.request.couch_user,
                 project=self.request.project
             )
-            }
-        )
+        })
         return context
 
     @property
