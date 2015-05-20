@@ -112,7 +112,7 @@ class FixtureEditInterface(FixtureInterface):
 
     @property
     def report_context(self):
-        context = super(FixtureInterface, self).report_context
+        context = super(FixtureEditInterface, self).report_context
         context.update(types=self.data_types)
         context.update({
             'active_tab': ProjectDataTab(
