@@ -342,15 +342,18 @@
                 showFormSource: function() {
                     $(".source-only").show();
                     $(".view-only").hide();
-                    $(".hq-content.span10").addClass("hq-flush-content");
                     $(".edit-form-li.active .edit-form-pencil").addClass("sticky").show();
-                    if (!loadedVellum) {
-                        require(["jquery", "jquery.vellum"], function ($) {
-                            $(function () {
-                                $('#formdesigner').vellum(VELLUM_OPTIONS);
-                                loadedVellum = true;
+                    var $formdesigner = $('#formdesigner');
+                    if ($formdesigner.length) {
+                        $(".hq-content.span10").addClass("hq-flush-content");
+                        if (!loadedVellum) {
+                            require(["jquery", "jquery.vellum"], function ($) {
+                                $(function () {
+                                    $('#formdesigner').vellum(VELLUM_OPTIONS);
+                                    loadedVellum = true;
+                                });
                             });
-                        });
+                        }
                     }
                     analytics.track('Entered the Form Builder');
                 },
@@ -615,7 +618,14 @@
     {% endif %}
     <div id="questions view-only"></div>
 
-    <div id="formdesigner" class="clearfix source-only"></div>
+    {% if form.no_vellum %}
+        <div class="alert alert-info source-only">
+            <i class="icon-info-sign"></i>
+            Your administrator has locked this form against editing.
+        </div>
+    {% else %}
+        <div id="formdesigner" class="clearfix source-only"></div>
+    {% endif %}
 {% endblock %}
 
 {% block modals %}{{ block.super }}
