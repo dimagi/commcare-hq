@@ -24,7 +24,7 @@ function LocationSettingsViewModel() {
 
     this.loc_type_options = function(loc_type) {
         return this.loc_types().filter(function(type) {
-            return type.name !== loc_type.name
+            return type.name !== loc_type.name;
         });
     };
 
