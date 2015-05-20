@@ -509,6 +509,7 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
         'allow_form_filtering': not isinstance(form, CareplanForm),
         'allow_form_workflow': not isinstance(form, CareplanForm),
     }
+    context.update(vellum_context(request, app.domain, app, form, is_user_registration))
 
     if isinstance(form, CareplanForm):
         context.update({
@@ -1231,6 +1232,11 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None,
         return back_to_main(request, domain, app_id=app_id,
                             unique_form_id=form.unique_id)
 
+    context = vellum_context(request, domain, app, form, is_user_registration)
+    return render(request, 'app_manager/form_designer.html', context)
+
+
+def vellum_context(request, domain, app, form, is_user_registration=False):
     vellum_plugins = ["modeliteration"]
     if (toggles.VELLUM_ITEMSETS.enabled(domain) and request.subscription):
         # request.subscription checks it's not a community subscription
@@ -1256,7 +1262,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None,
         'features': vellum_features,
         'plugins': vellum_plugins,
     })
-    return render(request, 'app_manager/form_designer.html', context)
+    return context
 
 
 
