@@ -56,8 +56,7 @@ def location_fixture_generator(user, version, last_sync=None):
         return []
 
     if toggles.SYNC_ALL_LOCATIONS.enabled(user.domain):
-        unfiltered_locations = SQLLocation.objects.filter(domain=user.domain)
-        locations = [loc for loc in unfiltered_locations if _valid_parent_type(loc)]
+        locations = SQLLocation.objects.filter(domain=user.domain)
     else:
         locations = []
         if user.location:
