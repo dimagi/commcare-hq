@@ -22,6 +22,12 @@ function LocationSettingsViewModel() {
         }));
     };
 
+    this.loc_type_options = function(loc_type) {
+        return this.loc_types().filter(function(type) {
+            return type.name !== loc_type.name
+        });
+    };
+
     var settings = this;
 
     this.remove_loctype = function(loc_type) {
