@@ -337,13 +337,13 @@
                     $(".source-only").hide();
                     $(".view-only").show();
                     $(".hq-content.span10").removeClass("hq-flush-content");
-                    $(".edit-form-li.active .edit-form-pencil").hide();
+                    $(".edit-form-li.active .edit-form-pencil").removeClass("sticky").hide();
                 },
                 showFormSource: function() {
                     $(".source-only").show();
                     $(".view-only").hide();
                     $(".hq-content.span10").addClass("hq-flush-content");
-                    $(".edit-form-li.active .edit-form-pencil").show();
+                    $(".edit-form-li.active .edit-form-pencil").addClass("sticky").show();
                     if (!loadedVellum) {
                         require(["jquery", "jquery.vellum"], function ($) {
                             $(function () {
@@ -357,10 +357,12 @@
             });
 
             var router = new FormRouter();
-            Backbone.history.start({
+            var matched = Backbone.history.start({
                 root: "{% url "view_form" domain app.id module.id form.id %}",
             });
-            router.navigate("view", { trigger: true, replace: true });
+            if (!matched) {
+                router.navigate("view", { trigger: true, replace: true });
+            }
 
             $('footer').addClass('fixed-footer');//jls
         });

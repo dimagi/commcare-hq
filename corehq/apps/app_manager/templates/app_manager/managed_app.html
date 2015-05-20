@@ -95,9 +95,9 @@
                 $(this).mouseenter(function () {
                     $(this).find('.edit-form-pencil').show();
                 }).mouseleave(function () {
-                    if (!$(this).is('.active')) {
-                        // TODO: hide if active but we're not in form builder
-                        $(this).find('.edit-form-pencil').hide();
+                    var $pencil = $(this).find('.edit-form-pencil');
+                    if (!$pencil.hasClass('sticky')) {
+                        $pencil.hide();
                     }
                 });
             });
