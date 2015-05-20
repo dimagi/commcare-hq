@@ -557,6 +557,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
         to_user.add_domain_membership(domain, is_admin=is_admin)
         self.delete_domain_membership(domain, create_record=create_record)
 
+    @memoized
     def is_domain_admin(self, domain=None):
         if not domain:
             # hack for template

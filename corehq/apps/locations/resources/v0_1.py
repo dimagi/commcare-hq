@@ -10,40 +10,30 @@ from corehq.util.quickcache import quickcache
 from ..models import Location, SQLLocation, root_locations
 
 
-@quickcache(['user._id', 'project.name'])
-def editable_locations_ids(user, project):
-    if (user.is_domain_admin(project.name) or
-            not project.location_restriction_for_users):
+@quickcache(['user._id', 'project.name', 'only_editable'])
+def _user_locations_ids(user, project, only_editable):
+    # admins and users not assigned to a location can see and edit everything
+    def all_ids():
         return (SQLLocation.by_domain(project.name)
                            .values_list('location_id', flat=True))
 
-    if isinstance(user, WebUser):
-        user_loc = user.get_location(project.name)
-    else:
-        user_loc = user.location
-    if not user_loc:
-        return []
-
-    return list(user_loc.sql_location.get_descendants(include_self=True)
-                                     .values_list('location_id', flat=True))
-
-
-def viewable_locations_ids(user, project):
     if (user.is_domain_admin(project.name) or
             not project.location_restriction_for_users):
-        return (SQLLocation.by_domain(project.name)
-                           .values_list('location_id', flat=True))
+        return all_ids()
 
-    if isinstance(user, WebUser):
-        user_loc = user.get_location(project.name)
-    else:
-        user_loc = user.location
+    user_loc = (user.get_location(project.name) if isinstance(user, WebUser)
+                else user.location)
     if not user_loc:
-        return []
+        return all_ids()
 
-    return (list(user_loc.sql_location.get_ancestors()
-            .values_list('location_id', flat=True)) +
-            editable_locations_ids(user, project))
+    editable = list(user_loc.sql_location.get_descendants(include_self=True)
+                    .values_list('location_id', flat=True))
+    if only_editable:
+        return editable
+    else:
+        viewable = list(user_loc.sql_location.get_ancestors()
+                        .values_list('location_id', flat=True))
+        return viewable + editable
 
 
 class LocationResource(HqBaseResource):
@@ -65,7 +55,7 @@ class LocationResource(HqBaseResource):
         parent_id = bundle.request.GET.get('parent_id', None)
         include_inactive = json.loads(bundle.request.GET.get('include_inactive', 'false'))
         user = bundle.request.couch_user
-        viewable = viewable_locations_ids(user, project)
+        viewable = _user_locations_ids(user, project, only_editable=False)
 
         if not parent_id:
             locs = root_locations(domain)
@@ -76,7 +66,9 @@ class LocationResource(HqBaseResource):
         return [child for child in locs if child.location_id in viewable]
 
     def dehydrate_can_edit(self, bundle):
-        return bundle.obj.location_id in editable_locations_ids(bundle.request.couch_user, bundle.request.project)
+        editable_ids = _user_locations_ids(bundle.request.couch_user,
+                bundle.request.project, only_editable=True)
+        return bundle.obj.location_id in editable_ids
 
     class Meta(CustomResourceMeta):
         authentication = LoginAndDomainAuthentication()
