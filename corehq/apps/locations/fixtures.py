@@ -121,9 +121,8 @@ def _location_footprint(locations):
 
         parent = loc.parent
         if (parent and
-            parent.location_id not in all_locs and
-            _valid_parent_type(loc)
-           ):
+                parent.location_id not in all_locs and
+                _valid_parent_type(loc)):
             all_locs.add_location(parent)
             queue.append(parent)
 
