@@ -59,7 +59,6 @@ class PruningTest(SimpleTestCase):
         self.assertFalse(parent_id in sync_log.dependent_case_ids_on_phone)
 
         # then pruning the parent should prune it
-        # this should prune the child but not the parent
         sync_log.prune_case(parent_id)
         self.assertFalse(parent_id in sync_log.case_ids_on_phone)
         self.assertFalse(parent_id in sync_log.dependent_case_ids_on_phone)
