@@ -103,11 +103,8 @@ var showSuccess = function (message, location, autoHideTime) {
     _show(message, location, autoHideTime, "alert alert-success");
 };
 
-var showRenderedForm = function (message, location, autoHideTime) {
-    if (message === undefined) {
-        message = "Couldn't render questions.";
-    }
-    location.html(message);
+var showRenderedForm = function (message, $location) {
+    $location.html(message || "Could not render form");
 };
 
 var _show = function (message, location, autoHideTime, classes) {

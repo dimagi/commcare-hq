@@ -28,6 +28,8 @@ api_urls = patterns('corehq.apps.cloudcare.views',
     url(r'^sessions/$', 'get_sessions', name='cloudcare_get_sessions'),
     url(r'^sessions/(?P<session_id>[\w-]*)/$', 'get_session_context', name='cloudcare_get_session_context'),
     url(r'^ledgers/$', 'get_ledgers', name='cloudcare_get_ledgers'),
+    url(r'^render_form/$', 'render_form', name='cloudcare_render_form'),
+    url(r'^render_xml/$', 'render_xml', name='cloudcare_render_xml'),
 )
 
 # used in settings urls
@@ -41,6 +43,4 @@ urlpatterns = patterns('corehq.apps.cloudcare.views',
     url(r'^cases/', include(cases_urls)),
     url(r'^test/$', TemplateView.as_view(template_name='cloudcare/test.html')),
     url(r'^api/', include(api_urls)),
-    url(r'^render_form/(?P<session_id>[\w-]+)/$', 'render_form', name='cloudcare_render_form'),
-    url(r'^render_xml/(?P<session_id>[\w-]+)/$', 'render_xml', name='cloudcare_render_xml'),
 )

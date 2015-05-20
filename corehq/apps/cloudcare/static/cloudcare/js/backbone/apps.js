@@ -126,6 +126,12 @@ cloudCare.App = LocalizableModel.extend({
     getSubmitUrl: function () {
         return this.get('post_url');
     },
+    renderFormRoot: function () {
+        return this.get("renderFormRoot");
+    },
+    renderXmlRoot: function () {
+        return this.get("renderXmlRoot");
+    },
     updateModules: function () {
         var self = this;
         if (self.get("modules")) {
@@ -626,6 +632,7 @@ cloudCare.AppView = Backbone.View.extend({
         });
     },
     _playForm: function (data, options) {
+
         var self = this;
         options = options || {};
 
@@ -680,21 +687,19 @@ cloudCare.AppView = Backbone.View.extend({
         };
         data.answerCallback = function(sessionId) {
 
-            var rawBaseUrl = self.options.urlRoot;
-            var lastIndex = self.options.urlRoot.lastIndexOf('/apps/');
-            var baseUrl = rawBaseUrl.substring(0, lastIndex);
-
-            var render_xml_url = baseUrl + "/render_xml/" + sessionId
+            var render_xml_url = self.options.renderXmlRoot
             $.ajax({
                 url: render_xml_url,
+                data: {'session_id': sessionId},
                 success: function (data) {
                     showRenderedForm(data, $("#xml-viewer-pretty"));
                 }
             });
 
-            var render_xml_url = baseUrl + "/render_form/" + sessionId
+            var render_form_url = self.options.renderFormRoot
             $.ajax({
-                url: render_xml_url,
+                url: render_form_url,
+                data: {'session_id': sessionId},
                 success: function (data) {
                     showRenderedForm(data, $("#question-viewer-pretty"));
                 }
@@ -879,7 +884,9 @@ cloudCare.AppMainView = Backbone.View.extend({
             caseUrlRoot: self.options.caseUrlRoot,
             urlRoot: self.options.urlRoot,
             sessionUrlRoot: self.options.sessionUrlRoot,
-            submitUrlRoot: self.options.submitUrlRoot
+            submitUrlRoot: self.options.submitUrlRoot,
+            renderXmlRoot: self.options.renderXmlRoot,
+            renderFormRoot: self.options.renderFormRoot
         });
 
         // fetch session list here

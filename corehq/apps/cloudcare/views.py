@@ -46,6 +46,8 @@ from xml2json.lib import xml2json
 import requests;
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.reports.formdetails.readable import get_readable_form_data
+from corehq.apps.reports.templatetags.xform_tags import render_pretty_xml
+from django.shortcuts import get_object_or_404
 
 
 @require_cloudcare_access
@@ -448,14 +450,19 @@ def get_ledgers(request, domain):
         default=custom_json_handler,
     )
 @cloudcare_api
-def render_form(request, domain, session_id):
+def render_form(request, domain):
     # get session
-    try:
-        session = EntrySession.objects.get(session_id=session_id)
-    except EntrySession.DoesNotExist:
-        session = None
+    session_id = request.GET.get('session_id')
 
-    response = requests.post(get_url_base() + '/webforms/get-xml/' + session_id)
+    session = get_object_or_404(EntrySession, session_id=session_id)
+
+    response = requests.post("{base_url}/webforms/get-xml/{session_id}".format(base_url=get_url_base(),
+                                                                               session_id=session_id))
+
+    if response.status_code is not 200:
+        err = "Session XML could not be found"
+        return HttpResponse(err, status=500, content_type="text/plain")
+
     json_response = json.loads(response.text)
     xmlns = json_response["xmlns"]
     form_data_xml = json_response["output"]
@@ -469,14 +476,19 @@ def render_form(request, domain, session_id):
 
     return rendered_readable_form
 
-def render_xml(request, domain, session_id):
+def render_xml(request, domain):
 
-    m_response = requests.post(get_url_base() + '/webforms/get-xml/' + session_id)
+    session_id = request.GET.get('session_id')
 
-    json_response = json.loads(m_response.text)
+    response = requests.post("{base_url}/webforms/get-xml/{session_id}".format(base_url=get_url_base(),
+                                                                               session_id=session_id))
+
+    if response.status_code is not 200:
+        err = "Session XML could not be found"
+        return HttpResponse(err, status=500, content_type="text/plain")
+
+    json_response = json.loads(response.text)
     form_data_xml = json_response["output"]
-
-    from corehq.apps.reports.templatetags.xform_tags import render_pretty_xml
 
     return HttpResponse(render_pretty_xml(form_data_xml))
 
