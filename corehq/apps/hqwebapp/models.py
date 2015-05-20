@@ -11,7 +11,10 @@ from django.core.cache import cache
 from corehq import toggles, privileges, Domain
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.accounting.models import BillingAccountAdmin, Invoice
-from corehq.apps.accounting.utils import is_accounting_admin
+from corehq.apps.accounting.utils import (
+    domain_has_privilege,
+    is_accounting_admin
+)
 from corehq.apps.domain.utils import get_adm_enabled_domains
 from corehq.apps.hqadmin.reports import (
     RealProjectSpacesReport,
@@ -571,6 +574,11 @@ class ProjectDataTab(UITab):
                 and self.couch_user.can_export_data())
 
     @property
+    @memoized
+    def can_use_lookup_tables(self):
+        return domain_has_privilege(self.domain, privileges.LOOKUP_TABLES)
+
+    @property
     def is_viewable(self):
         return self.domain and (self.can_edit_commcare_data or self.can_export_data)
 
@@ -612,6 +620,10 @@ class ProjectDataTab(UITab):
                     'url': reverse(ArchiveFormView.urlname, args=[self.domain]),
                 })
             items.extend(edit_section)
+
+        if self.can_use_lookup_tables:
+            from corehq.apps.fixtures.dispatcher import FixtureInterfaceDispatcher
+            items.extend(FixtureInterfaceDispatcher.navigation_sections(context))
 
         return items
 

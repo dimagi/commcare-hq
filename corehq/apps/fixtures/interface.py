@@ -1,6 +1,7 @@
 from couchdbkit import ResourceNotFound
 from django.contrib import messages
 from django.http import HttpResponseRedirect
+from corehq.apps.hqwebapp.models import ProjectDataTab
 from corehq.apps.fixtures.views import fixtures_home, FixtureViewMixIn
 from corehq.apps.reports.generic import GenericReportView, GenericTabularReport
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
@@ -66,7 +67,16 @@ class FixtureViewInterface(GenericTabularReport, FixtureInterface):
             context = super(FixtureViewInterface, self).report_context
         except ResourceNotFound:
             return {"table_not_selected": True}
-        context.update({"selected_table": self.table.get("table_id", "")})
+        context.update({
+            "selected_table": self.table.get("table_id", ""),
+            'active_tab': ProjectDataTab(
+                self.request,
+                self.slug,
+                domain=self.domain,
+                couch_user=self.request.couch_user,
+                project=self.request.project
+            )
+        })
         return context
 
     @memoized
@@ -99,8 +109,17 @@ class FixtureEditInterface(FixtureInterface):
 
     @property
     def report_context(self):
-        context = super(FixtureInterface, self).report_context
+        context = super(FixtureEditInterface, self).report_context
         context.update(types=self.data_types)
+        context.update({
+            'active_tab': ProjectDataTab(
+                self.request,
+                self.slug,
+                domain=self.domain,
+                couch_user=self.request.couch_user,
+                project=self.request.project
+            )
+        })
         return context
 
     @property
