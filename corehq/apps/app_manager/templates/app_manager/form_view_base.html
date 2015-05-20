@@ -78,6 +78,7 @@
     <script src="{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
     <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
     <script src="{% static 'style/lib/jquery/plugins/jquery.caret-1.5.2.min.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/backbone.js' %}"></script>
 
     {% if app.application_version == '2.0' %}
         <script src="{% static 'app_manager/js/case-knockout-bindings.js' %}"></script>
@@ -232,7 +233,6 @@
         });
     </script>
     <script>
-
         var VELLUM_OPTIONS = {
             plugins: {{ plugins|JSON }},
             features: {{ features|JSON }},
@@ -324,17 +324,46 @@
                 'jquery.vellum': 'main'
             }
         });
-
-        require(["jquery", "jquery.vellum"], function ($) {
-            $(function () {
-                $("#edit").hide();
-                $('footer').addClass('fixed-footer');
-
-                $('#formdesigner').vellum(VELLUM_OPTIONS);
+    </script>
+    <script>
+        $(function() {
+            var loadedVellum = false;
+            var FormRouter = Backbone.Router.extend({
+                routes: {
+                    "source": "showFormSource",
+                    "view": "hideFormSource",
+                },
+                hideFormSource: function() {
+                    $(".source-only").hide();
+                    $(".view-only").show();
+                    $(".hq-content.span10").removeClass("hq-flush-content");
+                    $(".edit-form-li.active .edit-form-pencil").hide();
+                },
+                showFormSource: function() {
+                    $(".source-only").show();
+                    $(".view-only").hide();
+                    $(".hq-content.span10").addClass("hq-flush-content");
+                    $(".edit-form-li.active .edit-form-pencil").show();
+                    if (!loadedVellum) {
+                        require(["jquery", "jquery.vellum"], function ($) {
+                            $(function () {
+                                $('#formdesigner').vellum(VELLUM_OPTIONS);
+                                loadedVellum = true;
+                            });
+                        });
+                    }
+                    analytics.track('Entered the Form Builder');
+                },
             });
-        });
-        analytics.track('Entered the Form Builder');
 
+            var router = new FormRouter();
+            Backbone.history.start({
+                root: "{% url "view_form" domain app.id module.id form.id %}",
+            });
+            router.navigate("view", { trigger: true, replace: true });
+
+            $('footer').addClass('fixed-footer');//jls
+        });
     </script>
 {% endblock %}
 
@@ -482,7 +511,7 @@
         <a id="edit_label" href="{% if is_user_registration %}
                                     {% url "user_registration_source" domain app.id %}
                                  {% else %}
-                                    {% url "form_source" domain app.id module.id form.id %}
+                                    #source
                                  {% endif %}
                                  "
                                  class="btn btn-primary">
