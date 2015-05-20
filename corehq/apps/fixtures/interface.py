@@ -18,10 +18,6 @@ class FixtureInterface(FixtureViewMixIn, GenericReportView):
     exportable = False
     needs_filters = False
 
-    @classmethod
-    def display_in_dropdown(cls, domain=None, project=None, user=None):
-        return True
-
 
 class FixtureSelectFilter(BaseSingleOptionFilter):
     slug = "table_id"
