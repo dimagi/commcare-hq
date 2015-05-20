@@ -248,17 +248,14 @@
                     $(".source-only").show();
                     $(".view-only").hide();
                     $(".edit-form-li.active .edit-form-pencil").addClass("sticky").show();
-                    var $formdesigner = $('#formdesigner');
-                    if ($formdesigner.length) {
-                        $(".hq-content.span10").addClass("hq-flush-content");
-                        if (!loadedVellum) {
-                            require(["jquery", "jquery.vellum"], function ($) {
-                                $(function () {
-                                    $('#formdesigner').vellum(VELLUM_OPTIONS);
-                                    loadedVellum = true;
-                                });
+                    $(".hq-content.span10").addClass("hq-flush-content");
+                    if (!loadedVellum) {
+                        require(["jquery", "jquery.vellum"], function ($) {
+                            $(function () {
+                                $('#formdesigner').vellum(VELLUM_OPTIONS);
+                                loadedVellum = true;
                             });
-                        }
+                        });
                     }
                     analytics.track('Entered the Form Builder');
                 },
@@ -271,8 +268,7 @@
             if (!matched) {
                 router.navigate("view", { trigger: true, replace: true });
             }
-
-            $('footer').addClass('fixed-footer');//jls
+            $('footer').addClass('fixed-footer');
         });
     </script>
 {% endblock %}
@@ -411,7 +407,7 @@
     <div id="questions view-only"></div>
 
     {% if form.no_vellum %}
-        <div class="alert alert-info source-only">
+        <div class="alert alert-full alert-info source-only">
             <i class="icon-info-sign"></i>
             Your administrator has locked this form against editing.
         </div>
