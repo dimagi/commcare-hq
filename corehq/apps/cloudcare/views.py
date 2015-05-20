@@ -38,12 +38,11 @@ from xml.etree import ElementTree
 from corehq.apps.cloudcare.decorators import require_cloudcare_access
 import HTMLParser
 from django.contrib import messages
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_
+noop
 from touchforms.formplayer.models import EntrySession
-from touchforms.formplayer.api import post_data
-from corehq.apps.app_manager.xform import XForm
 from xml2json.lib import xml2json
-import requests;
+import requests
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.reports.formdetails.readable import get_readable_form_data
 from corehq.apps.reports.templatetags.xform_tags import render_pretty_xml
@@ -449,6 +448,8 @@ def get_ledgers(request, domain):
         },
         default=custom_json_handler,
     )
+
+
 @cloudcare_api
 def render_form(request, domain):
     # get session
@@ -472,9 +473,11 @@ def render_form(request, domain):
 
     readable_form = get_readable_form_data(form_data_json, pretty_questions)
 
-    rendered_readable_form = render(request, 'reports/form/partials/readable_form.html', {'questions': readable_form})
+    rendered_readable_form = render(request, 'reports/form/partials/readable_form.html',
+                                    {'questions': readable_form})
 
     return rendered_readable_form
+
 
 def render_xml(request, domain):
 

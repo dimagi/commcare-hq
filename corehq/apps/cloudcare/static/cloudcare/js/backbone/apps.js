@@ -693,7 +693,7 @@ cloudCare.AppView = Backbone.View.extend({
             var instanceViewerEnabled = self.options.instanceViewerEnabled;
 
             if(instanceViewerEnabled) {
-                var render_xml_url = self.options.renderXmlRoot
+                var render_xml_url = self.options.renderXmlRoot;
                 $.ajax({
                     url: render_xml_url,
                     data: {'session_id': sessionId},
@@ -702,7 +702,7 @@ cloudCare.AppView = Backbone.View.extend({
                     }
                 });
 
-                var render_form_url = self.options.renderFormRoot
+                var render_form_url = self.options.renderFormRoot;
                 $.ajax({
                     url: render_form_url,
                     data: {'session_id': sessionId},
