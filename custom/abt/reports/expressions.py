@@ -119,8 +119,6 @@ class AbtSupervisorExpressionSpec(JsonObject):
             repeat_items = [repeat_items]
         repeat_items = [{'form': x} for x in repeat_items]
 
-
-
         names = []
         for i in repeat_items:
             for q in ['other_abt_employee_name', 'abt_employee_name', 'other_non-abt_employee_name']:
