@@ -1231,6 +1231,8 @@ class InternalSubscriptionManagementForm(forms.Form):
     @property
     @memoized
     def current_contact_emails(self):
+        if self.current_subscription is None:
+            return None
         try:
             return BillingContactInfo.objects.get(
                 account=self.current_subscription.account

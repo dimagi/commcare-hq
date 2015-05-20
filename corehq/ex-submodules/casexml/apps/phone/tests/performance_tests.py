@@ -9,6 +9,7 @@ from casexml.apps.phone.models import User
 from casexml.apps.phone.restore import RestoreConfig
 from dimagi.utils.decorators.profile import line_profile
 from casexml.apps.case.xml import V2
+from corehq.apps.domain.models import Domain
 from datetime import datetime
 
 USER_ID = "main_user"
@@ -32,23 +33,30 @@ class SyncPerformanceTest(SyncBaseTest):
         super(SyncPerformanceTest, self).setUp()
         # the other user is an "owner" of the original users cases as well,
         # for convenience
+        self.project = Domain(name='sync-performance-tests')
         self.other_user = User(user_id=OTHER_USER_ID, username=OTHER_USERNAME,
                                password="changeme", date_joined=datetime(2011, 6, 9),
-                               additional_owner_ids=[SHARED_ID])
+                               additional_owner_ids=[SHARED_ID], domain=self.project.name)
 
         self.referral_user = User(user_id=REFERRAL_USER_ID, username=REFERRAL_USERNAME,
                                password="changeme", date_joined=datetime(2011, 6, 9),
-                               additional_owner_ids=[REFERRED_TO_GROUP])
+                               additional_owner_ids=[REFERRED_TO_GROUP], domain=self.project.name)
 
         # this creates the initial blank sync token in the database
-        self.other_sync_log = synclog_from_restore_payload(generate_restore_payload(self.other_user))
-        self.referral_sync_log = synclog_from_restore_payload(generate_restore_payload(self.referral_user))
+        self.other_sync_log = synclog_from_restore_payload(generate_restore_payload(
+            self.project, self.other_user
+        ))
+        self.referral_sync_log = synclog_from_restore_payload(generate_restore_payload(
+            self.project, self.referral_user
+        ))
 
         self.assertTrue(SHARED_ID in self.other_sync_log.owner_ids_on_phone)
         self.assertTrue(OTHER_USER_ID in self.other_sync_log.owner_ids_on_phone)
 
         self.user.additional_owner_ids = [SHARED_ID]
-        self.sync_log = synclog_from_restore_payload(generate_restore_payload(self.user))
+        self.sync_log = synclog_from_restore_payload(generate_restore_payload(
+            self.project, self.user
+        ))
         self.assertTrue(SHARED_ID in self.sync_log.owner_ids_on_phone)
         self.assertTrue(USER_ID in self.sync_log.owner_ids_on_phone)
 

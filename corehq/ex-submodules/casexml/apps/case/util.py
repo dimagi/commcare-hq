@@ -26,7 +26,8 @@ def post_case_blocks(case_blocks, form_extras=None, domain=None):
 
     domain = domain or form_extras.pop('domain', None)
     if getattr(settings, 'UNIT_TESTING', False):
-        domain = domain or 'test-domain'
+        from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
+        domain = domain or TEST_DOMAIN_NAME
 
     form = ElementTree.Element("data")
     form.attrib['xmlns'] = "https://www.commcarehq.org/test/casexml-wrapper"

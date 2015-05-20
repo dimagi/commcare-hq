@@ -1,6 +1,7 @@
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from copy import copy
 from datetime import datetime
+import json
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from dimagi.ext.couchdbkit import *
 from django.db import models
@@ -11,6 +12,9 @@ from casexml.apps.case import const
 from casexml.apps.case.sharedmodels import CommCareCaseIndex, IndexHoldingMixIn
 from casexml.apps.phone.checksum import Checksum, CaseStateHash
 import logging
+
+
+logger = logging.getLogger('phone.models')
 
 
 class User(object):
@@ -263,12 +267,12 @@ class SyncLog(AbstractSyncLog):
         state = self.get_case_state(case_id)
         self.cases_on_phone.remove(state)
         self._case_state_map.reset_cache(self)
-
         all_indices = [i for case_state in self.cases_on_phone + self.dependent_cases_on_phone
                        for i in case_state.indices]
         if any([i.referenced_id == case_id for i in all_indices]):
             self.dependent_cases_on_phone.append(state)
             self._dependent_case_state_map.reset_cache(self)
+        return state
 
     def _phone_owns(self, action):
         # whether the phone thinks it owns an action block.
@@ -283,17 +287,20 @@ class SyncLog(AbstractSyncLog):
         # for all the cases update the relevant lists in the sync log
         # so that we can build a historical record of what's associated
         # with the phone
+        removed_states = {}
+        new_indices = set()
         for case in case_list:
             actions = case.get_actions_for_form(xform.get_id)
             for action in actions:
-
                 if action.action_type == const.CASE_ACTION_CREATE:
                     self._assert(not self.phone_has_case(case._id),
                                  'phone has case being created: %s' % case._id)
+                    starter_state = CaseState(case_id=case.get_id, indices=[])
                     if self._phone_owns(action):
-                        self.cases_on_phone.append(CaseState(case_id=case.get_id,
-                                                             indices=[]))
+                        self.cases_on_phone.append(starter_state)
                         self._case_state_map.reset_cache(self)
+                    else:
+                        removed_states[case._id] = starter_state
                 elif action.action_type == const.CASE_ACTION_UPDATE:
                     self._assert(
                         self.phone_has_case(case._id),
@@ -304,7 +311,9 @@ class SyncLog(AbstractSyncLog):
                     if not self._phone_owns(action):
                         # only action necessary here is in the case of
                         # reassignment to an owner the phone doesn't own
-                        self.archive_case(case.get_id)
+                        state = self.archive_case(case.get_id)
+                        if state:
+                            removed_states[case._id] = state
                 elif action.action_type == const.CASE_ACTION_INDEX:
                     # in the case of parallel reassignment and index update
                     # the phone might not have the case
@@ -316,10 +325,27 @@ class SyncLog(AbstractSyncLog):
                         case_state = self.get_dependent_case_state(case.get_id)
                     # reconcile indices
                     if case_state:
+                        for index in action.indices:
+                            new_indices.add(index.referenced_id)
                         case_state.update_indices(action.indices)
+
                 elif action.action_type == const.CASE_ACTION_CLOSE:
                     if self.phone_has_case(case.get_id):
-                        self.archive_case(case.get_id)
+                        state = self.archive_case(case.get_id)
+                        if state:
+                            removed_states[case._id] = state
+
+        # if we just removed a state and added an index to it
+        # we have to put it back in our dependent case list
+        readded_any = False
+        for index in new_indices:
+            if index in removed_states:
+                self.dependent_cases_on_phone.append(removed_states[index])
+                readded_any = True
+
+        if readded_any:
+            self._dependent_case_state_map.reset_cache(self)
+
         if case_list:
             try:
                 self.save()
@@ -390,6 +416,72 @@ class SyncLog(AbstractSyncLog):
         self.cases_on_phone = []
 
 
+PruneResult = namedtuple('PruneResult', ['seen', 'pruned'])
+
+
+class IndexTree(DocumentSchema):
+    """
+    Document type representing a case dependency tree (which is flattened to a single dict)
+    """
+    # a flat mapping of dependent cases to lists of case ids that depend on them
+    indices = SchemaDictProperty()
+
+    def __repr__(self):
+        return json.dumps(self.indices, indent=2)
+
+    def has_case(self, case_id):
+        return (case_id in _reverse_index_map(self.indices))
+
+    def get_cases_that_directly_depend_on_case(self, case_id, cached_map=None):
+        cached_map = cached_map or _reverse_index_map(self.indices)
+        return cached_map.get(case_id, [])
+
+    def get_all_cases_that_depend_on_case(self, case_id, cached_map=None):
+        """
+        Recursively builds a tree of all cases that depend on this case and returns
+        a flat set of case ids.
+
+        Allows passing in a cached map of reverse index references if you know you are going
+        to call it more than once in a row to avoid rebuilding that.
+        """
+        def _recursive_call(case_id, all_cases, cached_map):
+            all_cases.add(case_id)
+            for dependent_case in self.get_cases_that_directly_depend_on_case(case_id, cached_map=cached_map):
+                if dependent_case not in all_cases:
+                    all_cases.add(dependent_case)
+                    _recursive_call(dependent_case, all_cases, cached_map)
+
+        all_cases = set()
+        cached_map = cached_map or _reverse_index_map(self.indices)
+        _recursive_call(case_id, all_cases, cached_map)
+        return all_cases
+
+    def add_index(self, from_case_id, to_case_id):
+        prior_ids = set(self.indices.get(from_case_id, []))
+        prior_ids.add(to_case_id)
+        self.indices[from_case_id] = list(prior_ids)
+
+    def __or__(self, other):
+        assert isinstance(other, IndexTree)
+        new = IndexTree(
+            indices=copy(self.indices),
+        )
+        for case_id, other_case_ids in other.indices.items():
+            if case_id in new.indices:
+                new.indices[case_id] = set(new.indices[case_id]) | set(other_case_ids)
+            else:
+                new.indices[case_id] = set(other_case_ids)
+        return new
+
+
+def _reverse_index_map(index_map):
+    reverse_indices = defaultdict(set)
+    for case_id, indices in index_map.items():
+        for indexed_case_id in indices:
+            reverse_indices[indexed_case_id].add(case_id)
+    return dict(reverse_indices)
+
+
 class SimplifiedSyncLog(AbstractSyncLog):
     """
     New, simplified sync log class that is used by ownership cleanliness restore.
@@ -399,7 +491,16 @@ class SimplifiedSyncLog(AbstractSyncLog):
     """
     log_format = StringProperty(default=LOG_FORMAT_SIMPLIFIED)
     case_ids_on_phone = SetProperty(unicode)
+    # this is a subset of case_ids_on_phone used to flag that a case is only around because it has dependencies
+    # this allows us to prune it if possible from other actions
+    dependent_case_ids_on_phone = SetProperty(unicode)
     owner_ids_on_phone = SetProperty(unicode)
+    index_tree = SchemaProperty(IndexTree)
+
+    def save(self, *args, **kwargs):
+        # force doc type to SyncLog to avoid changing the couch view.
+        self.doc_type = "SyncLog"
+        super(SimplifiedSyncLog, self).save(*args, **kwargs)
 
     def phone_is_holding_case(self, case_id):
         """
@@ -408,41 +509,108 @@ class SimplifiedSyncLog(AbstractSyncLog):
         return case_id in self.case_ids_on_phone
 
     def get_footprint_of_cases_on_phone(self):
-        return self.case_ids_on_phone
+        return list(self.case_ids_on_phone)
+
+    def prune_case(self, case_id):
+        """
+        Prunes a case from the tree while also pruning any dependencies as a result of this pruning.
+        """
+        logger.debug('pruning: {}'.format(case_id))
+        self.dependent_case_ids_on_phone.add(case_id)
+        reverse_index_map = _reverse_index_map(self.index_tree.indices)
+        dependencies = self.index_tree.get_all_cases_that_depend_on_case(case_id, cached_map=reverse_index_map)
+        # we can only potentially remove a case if it's already in dependent case ids
+        # and therefore not directly owned
+        candidates_to_remove = dependencies & self.dependent_case_ids_on_phone
+        dependencies_not_to_remove = dependencies - self.dependent_case_ids_on_phone
+
+        def _remove_case(to_remove):
+            # uses closures for assertions
+            logger.debug('removing: {}'.format(case_id))
+            assert to_remove in self.dependent_case_ids_on_phone
+            indices = self.index_tree.indices.pop(to_remove, [])
+            if to_remove != case_id:
+                # if the case had indexes they better also be in our removal list (except for ourselves)
+                for index in indices:
+                    assert index in candidates_to_remove, \
+                        "expected {} in {} but wasn't".format(index, candidates_to_remove)
+            self.case_ids_on_phone.remove(to_remove)
+            self.dependent_case_ids_on_phone.remove(to_remove)
+
+        if not dependencies_not_to_remove:
+            # this case's entire relevancy chain is in dependent cases
+            # this means they can all now be removed.
+            this_case_indices = self.index_tree.indices.get(case_id, [])
+            for to_remove in candidates_to_remove:
+                _remove_case(to_remove)
+
+            for this_case_index in this_case_indices:
+                if (this_case_index in self.dependent_case_ids_on_phone and
+                        this_case_index not in candidates_to_remove):
+                    self.prune_case(this_case_index)
+        else:
+            # we have some possible candidates for removal. we should check each of them.
+            candidates_to_remove.remove(case_id)  # except ourself
+            for candidate in candidates_to_remove:
+                candidate_dependencies = self.index_tree.get_all_cases_that_depend_on_case(
+                    candidate, cached_map=reverse_index_map
+                )
+                if not candidate_dependencies - self.dependent_case_ids_on_phone:
+                    _remove_case(candidate)
+
+    def _add_primary_case(self, case_id):
+        self.case_ids_on_phone.add(case_id)
+        if case_id in self.dependent_case_ids_on_phone:
+            self.dependent_case_ids_on_phone.remove(case_id)
 
     def update_phone_lists(self, xform, case_list):
         made_changes = False
+        logger.debug('syncing {}'.format(self.user_id))
+        logger.debug('case ids before update: {}'.format(', '.join(self.case_ids_on_phone)))
+        logger.debug('dependent case ids before update: {}'.format(', '.join(self.dependent_case_ids_on_phone)))
         for case in case_list:
             actions = case.get_actions_for_form(xform.get_id)
             for action in actions:
+                logger.debug('{}: {}'.format(case._id, action.action_type))
                 owner_id = action.updated_known_properties.get("owner_id")
                 phone_owns_case = not owner_id or owner_id in self.owner_ids_on_phone
 
                 if action.action_type == const.CASE_ACTION_CREATE:
-                    self._assert(not self.phone_is_holding_case(case._id),
-                                 'phone has case being created: %s' % case._id)
                     if phone_owns_case:
-                        self.case_ids_on_phone.add(case._id)
+                        self._add_primary_case(case._id)
                         made_changes = True
                 elif action.action_type == const.CASE_ACTION_UPDATE:
-                    self._assert(
-                        self.phone_is_holding_case(case._id),
-                        "phone doesn't have case being updated: %s" % case._id,
-                        case._id,
-                    )
                     if not phone_owns_case:
                         # we must have just changed the owner_id to something we didn't own
-                        self.case_ids_on_phone.remove(case._id)
+                        # we can try pruning this case since it's no longer relevant
+                        self.prune_case(case._id)
                         made_changes = True
+                    else:
+                        if case._id in self.dependent_case_ids_on_phone:
+                            self.dependent_case_ids_on_phone.remove(case._id)
+                            made_changes = True
                 elif action.action_type == const.CASE_ACTION_INDEX:
-                    # we should never have to do anything here - since the
-                    # indexed case should already be on the phone
-                    pass
+                    # we should never have to do anything with case IDs here since the
+                    # indexed case should already be on the phone.
+                    # however, we should update our index tree accordingly
+                    for index in action.indices:
+                        if index.referenced_id:
+                            self.index_tree.add_index(case._id, index.referenced_id)
+                            if index.referenced_id not in self.case_ids_on_phone:
+                                self.case_ids_on_phone.add(index.referenced_id)
+                                self.dependent_case_ids_on_phone.add(index.referenced_id)
+                        else:
+                            logger.error('Tried to delete index {} from case {}. '
+                                         'This is not currently supported.'.format(index.identifier, case._id))
+                        made_changes = True
                 elif action.action_type == const.CASE_ACTION_CLOSE:
-                    # todo: we need to check if the phone still has any live indices
-                    # to this case. Might be a little hairy.
-                    pass
+                    # this case is being closed.
+                    # we can try pruning this case since it's no longer relevant
+                    self.prune_case(case._id)
+                    made_changes = True
 
+        logger.debug('case ids after update: {}'.format(', '.join(self.case_ids_on_phone)))
+        logger.debug('dependent case ids after update: {}'.format(', '.join(self.dependent_case_ids_on_phone)))
         if made_changes or case_list:
             try:
                 if made_changes:

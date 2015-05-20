@@ -222,8 +222,8 @@ class CommTrackTest(TestCase):
         )
 
 
-def get_ota_balance_xml(user):
-    xml = generate_restore_payload(user.to_casexml_user(), version=V2)
+def get_ota_balance_xml(project, user):
+    xml = generate_restore_payload(project, user.to_casexml_user(), version=V2)
     return extract_balance_xml(xml)
 
 
