@@ -1196,11 +1196,6 @@ def multimedia_ajax(request, domain, app_id, template='app_manager/partials/mult
 
 
 @require_can_edit_apps
-def form_source(request, domain, app_id, module_id, form_id):
-    return form_designer(request, domain, app_id, module_id, form_id)
-
-
-@require_can_edit_apps
 def user_registration_source(request, domain, app_id):
     return form_designer(request, domain, app_id, is_user_registration=True)
 
