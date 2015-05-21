@@ -109,7 +109,8 @@ class MyAccountSettingsView(BaseMyAccountView):
         from corehq.apps.users.forms import UpdateMyAccountInfoForm
         if self.request.method == 'POST':
             form = UpdateMyAccountInfoForm(
-                self.request.POST, username=self.request.couch_user.username
+                self.request.POST, username=self.request.couch_user.username,
+                user=self.request.user
             )
         else:
             form = UpdateMyAccountInfoForm(
