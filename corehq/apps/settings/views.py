@@ -96,6 +96,13 @@ class MyAccountSettingsView(BaseMyAccountView):
     def dispatch(self, request, *args, **kwargs):
         return super(MyAccountSettingsView, self).dispatch(request, *args, **kwargs)
 
+    def get_or_create_api_key(self):
+        user = self.request.user
+        try:
+            return ApiKey.objects.get(user=user).key
+        except ApiKey.DoesNotExist:
+            return ApiKey.objects.create(user=user)
+
     @property
     def template_name(self):
         template = {
@@ -131,6 +138,7 @@ class MyAccountSettingsView(BaseMyAccountView):
     def page_context(self):
         return {
             'form': self.settings_form,
+            'api_key': self.get_or_create_api_key(),
         }
 
     def post(self, request, *args, **kwargs):

@@ -168,7 +168,6 @@ class BaseUserInfoForm(forms.Form):
 
 
 class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
-    api_key = forms.CharField(label=ugettext_lazy("API Key"), required=False)
     email_opt_out = forms.BooleanField(
         required=False,
         label=ugettext_noop("Opt out of emails about CommCare updates."),
@@ -240,7 +239,6 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
         if existing_user is None:
             return
         super(UpdateMyAccountInfoForm, self).initialize_form(domain, existing_user)
-        self.initial['api_key'] = self.api_key
 
 
 class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
