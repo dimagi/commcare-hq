@@ -1,6 +1,7 @@
 from django.test import TestCase
 import os
 from django.test.utils import override_settings
+from casexml.apps.case.dbaccessors import get_total_case_count
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests import delete_all_xforms, delete_all_cases
 from couchforms.tests.testutils import post_xform_to_couch
@@ -13,9 +14,9 @@ class MultiCaseTest(TestCase):
     def setUp(self):
         delete_all_xforms()
         delete_all_cases()
+        self.assertEqual(0, get_total_case_count())
 
     def testParallel(self):
-        self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))
         file_path = os.path.join(os.path.dirname(__file__), "data", "multicase", "parallel_cases.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
@@ -26,7 +27,6 @@ class MultiCaseTest(TestCase):
         self._check_ids(form, cases)
 
     def testMixed(self):
-        self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))
         file_path = os.path.join(os.path.dirname(__file__), "data", "multicase", "mixed_cases.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
@@ -39,7 +39,6 @@ class MultiCaseTest(TestCase):
 
 
     def testCasesInRepeats(self):
-        self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))
         file_path = os.path.join(os.path.dirname(__file__), "data", "multicase", "case_in_repeats.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
