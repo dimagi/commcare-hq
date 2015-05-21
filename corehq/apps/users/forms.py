@@ -12,6 +12,9 @@ from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from django.template.loader import get_template
 from django.template import Context
 from django_countries.countries import COUNTRIES
+
+from tastypie.models import ApiKey
+
 from corehq import toggles
 from corehq.apps.domain.forms import EditBillingAccountInfoForm
 from corehq.apps.domain.models import Domain
@@ -165,6 +168,7 @@ class BaseUserInfoForm(forms.Form):
 
 
 class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
+    api_key = forms.CharField(label=ugettext_lazy("API Key"), required=False)
     email_opt_out = forms.BooleanField(
         required=False,
         label=ugettext_noop("Opt out of emails about CommCare updates."),
@@ -172,6 +176,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
 
     def __init__(self, *args, **kwargs):
         self.username = kwargs.pop('username') if 'username' in kwargs else None
+        self.user = kwargs.pop('user') if 'user' in kwargs else None
         super(UpdateMyAccountInfoForm, self).__init__(*args, **kwargs)
 
         username_controls = []
@@ -215,6 +220,15 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
     @property
     def direct_properties(self):
         return self.fields.keys()
+
+    def initialize_form(self, domain, existing_user=None):
+        if existing_user is None:
+            return
+        super(UpdateMyAccountInfoForm, self).initialize_form(domain, existing_user)
+        try:
+            self.initial['api_key'] = ApiKey.objects.get(user=self.user).key
+        except ApiKey.DoesNotExist:
+            self.initial['api_key'] = ApiKey.objects.create(user=self.user)
 
 
 class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
