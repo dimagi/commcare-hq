@@ -36,8 +36,6 @@ class MultiCaseTest(TestCase):
         self.assertEqual(4, len(cases))
         self._check_ids(form, cases)
 
-
-
     def testCasesInRepeats(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "multicase", "case_in_repeats.xml")
         with open(file_path, "rb") as f:
