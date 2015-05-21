@@ -1084,7 +1084,6 @@ class MultiUserSyncTest(SyncBaseTest):
         # found this bug in the wild, used the real (test) forms to fix it
         # just running through this test used to fail hard, even though there
         # are no asserts
-        self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))
         folder_path = os.path.join("bugs", "dependent_case_conflicts")
         files = ["reg1.xml", "reg2.xml", "cf.xml", "close.xml"]
         for f in files:
