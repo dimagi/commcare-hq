@@ -6,7 +6,7 @@ from django.contrib.auth.forms import PasswordChangeForm
 from django.views.decorators.http import require_POST
 import langcodes
 
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from corehq import MySettingsTab
@@ -19,6 +19,8 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
 
 import corehq.apps.style.utils as style_utils
+
+from tastypie.models import ApiKey
 
 
 @login_and_domain_required
@@ -223,3 +225,12 @@ def keyboard_config(request):
     request.couch_user.keyboard_shortcuts["main_key"] = request.POST.get('main-key', 'option')
     request.couch_user.save()
     return HttpResponseRedirect(request.GET.get('next'))
+
+
+@require_POST
+@login_required
+def new_api_key(request):
+    api_key = ApiKey.objects.get(user=request.user)
+    api_key.key = api_key.generate_key()
+    api_key.save()
+    return HttpResponse(api_key.key)
