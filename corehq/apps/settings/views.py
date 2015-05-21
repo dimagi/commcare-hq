@@ -113,7 +113,8 @@ class MyAccountSettingsView(BaseMyAccountView):
             )
         else:
             form = UpdateMyAccountInfoForm(
-                username=self.request.couch_user.username
+                username=self.request.couch_user.username,
+                user=self.request.user
             )
         try:
             domain = self.request.domain
