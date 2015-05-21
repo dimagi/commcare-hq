@@ -230,13 +230,9 @@ def is_usercase_in_use(domain_name):
 
 
 def get_all_case_properties(app):
-    extra_types = set()
-    if is_usercase_in_use(app.domain):
-        extra_types.add(USERCASE_TYPE)
-
     return get_case_properties(
         app,
-        set(itertools.chain.from_iterable(m.get_case_types() for m in app.modules)) | extra_types,
+        set(itertools.chain.from_iterable(m.get_case_types() for m in app.modules)),
         defaults=('name',)
     )
 
