@@ -7,6 +7,7 @@ from couchdbkit.exceptions import ResourceConflict
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.template.loader import render_to_string
+from corehq.apps.domain.exceptions import DomainDeleteException
 from dimagi.ext.couchdbkit import (
     Document, StringProperty, BooleanProperty, DateTimeProperty, IntegerProperty,
     DocumentSchema, SchemaProperty, DictProperty,
@@ -918,10 +919,8 @@ class Domain(Document, SnapshotMixin):
         results = commcare_domain_pre_delete.send_robust(sender='domain', domain=self)
         for result in results:
             if result[1]:
-                notify_exception(
-                    None,
-                    message="Error occured during domain pre_delete %s: %s" %
-                            (self.name, str(result[1]))
+                raise DomainDeleteException(
+                    u"Error occurred during domain pre_delete {}: {}".format(self.name, str(result[1]))
                 )
         # delete all associated objects
         db = self.get_db()
