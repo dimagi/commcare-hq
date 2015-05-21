@@ -38,41 +38,25 @@ class ProductAvailabilityData(EWSData):
             if not supply_points:
                 return rows
             total = supply_points.count()
-            unique_products = self.unique_products(locations, all=True)
+            unique_products = self.unique_products(locations, all=True).order_by('code')
 
             result_dict = {}
             for product in unique_products:
                 result_dict[product.product_id] = [0, 0]
 
-            with_stock_aggregated = StockTransaction.objects.filter(
+            last_stocks_in_period = StockTransaction.objects.filter(
                 type='stockonhand',
                 case_id__in=supply_points,
                 report__date__lte=self.config['enddate'],
                 report__date__gte=self.config['startdate'],
                 sql_product__in=unique_products,
-                stock_on_hand__gt=0
-            ).values('product_id').annotate(
-                count=Count('case_id', distinct=True)
-            )
+            ).distinct('case_id', 'product_id').order_by('-case_id', '-product_id')
 
-            without_stock_aggregated = StockTransaction.objects.filter(
-                type='stockonhand',
-                case_id__in=supply_points,
-                report__date__lte=self.config['enddate'],
-                report__date__gte=self.config['startdate'],
-                sql_product__in=unique_products,
-                stock_on_hand=0
-            ).values('product_id').annotate(
-                count=Count('case_id', distinct=True)
-            )
+            for last_stock in last_stocks_in_period:
+                index = 0 if last_stock.stock_on_hand > 0 else 1
+                result_dict[last_stock.product_id][index] += 1
 
-            for with_stock in with_stock_aggregated:
-                result_dict[with_stock['product_id']][0] = with_stock['count']
-
-            for without_stock in without_stock_aggregated:
-                result_dict[without_stock['product_id']][1] = without_stock['count']
-
-            for product in unique_products.order_by('code'):
+            for product in unique_products:
                 with_stock = result_dict[product.product_id][0]
                 without_stock = result_dict[product.product_id][1]
                 without_data = total - with_stock - without_stock
