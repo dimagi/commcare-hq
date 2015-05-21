@@ -14,7 +14,6 @@ try:
     from .test_indexes import *
     from .test_multi_case_submits import *
     from .test_multimedia import *
-    from .test_ota_restore import *
     from .test_out_of_order_processing import *
     from .test_rebuild import *
     from .test_tags import *
