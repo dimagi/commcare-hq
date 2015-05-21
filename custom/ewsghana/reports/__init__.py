@@ -8,7 +8,7 @@ from corehq.apps.reports.commtrack.standard import CommtrackReportMixin
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.graph_models import LineChart, MultiBarChart
+from corehq.apps.reports.graph_models import LineChart, MultiBarChart, PieChart
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 from custom.ewsghana.filters import ProductByProgramFilter
 from dimagi.utils.decorators.memoized import memoized
@@ -27,6 +27,10 @@ def get_url_with_location(view_name, text, location_id, domain):
 
 class EWSLineChart(LineChart):
     template_partial = 'ewsghana/partials/ews_line_chart.html'
+
+
+class EWSPieChart(PieChart):
+    template_partial = 'ewsghana/partials/ews_pie_chart.html'
 
 
 class EWSMultiBarChart(MultiBarChart):
