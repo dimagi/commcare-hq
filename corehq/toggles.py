@@ -445,6 +445,13 @@ MOBILE_UCR = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+RESTRICT_WEB_USERS_BY_LOCATION = StaticToggle(
+    'restrict_web_users_by_location',
+    "Allow project to restrict web user permissions by location",
+    TAG_PRODUCT_CORE,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 FM_FACING_SUBSCRIPTIONS = StaticToggle(
     'fm_facing_subscriptions',
     'FM Facing Subscription Management Interface',
