@@ -1,7 +1,6 @@
 from django.test import TestCase
 import os
 from django.test.utils import override_settings
-from casexml.apps.case.dbaccessors import get_total_case_count
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests import delete_all_xforms, delete_all_cases
 from couchforms.tests.testutils import post_xform_to_couch
@@ -14,7 +13,6 @@ class MultiCaseTest(TestCase):
     def setUp(self):
         delete_all_xforms()
         delete_all_cases()
-        self.assertEqual(0, get_total_case_count())
 
     def testParallel(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "multicase", "parallel_cases.xml")
