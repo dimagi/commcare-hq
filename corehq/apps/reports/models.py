@@ -166,7 +166,13 @@ DATE_RANGE_CHOICES = ['last7', 'last30', 'lastn', 'lastmonth', 'since', 'range',
 
 
 class ReportConfig(CachedCouchDocumentMixin, Document):
-    _extra_json_properties = ['url', 'report_name', 'date_description']
+    _extra_json_properties = [
+        'url',
+        'report_name',
+        'date_description',
+        'datespan_filters',
+        'has_ucr_datespan',
+    ]
 
     domain = StringProperty()
 
@@ -499,6 +505,20 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     def is_configurable_report(self):
         from corehq.apps.userreports.reports.view import ConfigurableReport
         return isinstance(self._dispatcher, ConfigurableReport)
+
+    @property
+    def datespan_filters(self):
+        from corehq.apps.userreports.reports.view import ConfigurableReport
+        return [
+            f for f in ConfigurableReport.get_report(
+                self.domain, self.report_slug, self.subreport_slug
+            ).spec.filters
+            if f['type'] == 'date'
+        ] if self.is_configurable_report else []
+
+    @property
+    def has_ucr_datespan(self):
+        return self.is_configurable_report and self.datespan_filters
 
 
 class UnsupportedScheduledReportError(Exception):
