@@ -1,18 +1,16 @@
 import StringIO
 import hashlib
-import os
 import time
 
 from django.test.client import Client
-from django.utils import http
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqadmin.dbaccessors import get_all_forms_in_all_domains
 
 from corehq.apps.users.models import WebUser
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.tests import TEST_CASE_ID, BaseCaseMultimediaTest, MEDIA_FILES, TEST_DOMAIN
-from couchforms.models import XFormInstance
+from casexml.apps.case.tests import TEST_CASE_ID, BaseCaseMultimediaTest
+from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
 
 
 TEST_USER = 'case_attachment@hqtesting.com'
@@ -45,8 +43,8 @@ class CaseObjectCacheTest(BaseCaseMultimediaTest):
     """
 
     def setUp(self):
-        self.domain = Domain.get_or_create_with_name(TEST_DOMAIN, is_active=True)
-        self.user = WebUser.create(TEST_DOMAIN, TEST_USER, TEST_PASSWORD)
+        self.domain = Domain.get_or_create_with_name(TEST_DOMAIN_NAME, is_active=True)
+        self.user = WebUser.create(TEST_DOMAIN_NAME, TEST_USER, TEST_PASSWORD)
         self.user.set_role(self.domain.name, 'admin')
         self.user.save()
         for item in CommCareCase.view("case/by_user", include_docs=True, reduce=False).all():
@@ -74,7 +72,7 @@ class CaseObjectCacheTest(BaseCaseMultimediaTest):
 
         self._doCreateCaseWithMultimedia(attachments=attachments)
         case = CommCareCase.get(TEST_CASE_ID)
-        case.domain = TEST_DOMAIN
+        case.domain = TEST_DOMAIN_NAME
         self.assertEqual(2, len(case.case_attachments))
         client = Client()
         client.login(username=TEST_USER, password=TEST_PASSWORD)

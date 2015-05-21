@@ -31,7 +31,7 @@ from custom.ewsghana.stock_data import EWSStockDataSynchronization
 from custom.ewsghana.tasks import ews_bootstrap_domain_task, ews_clear_stock_data_task
 from custom.ewsghana.utils import make_url, has_input_stock_permissions
 from custom.ilsgateway.views import GlobalStats
-from custom.logistics.tasks import sms_users_fix, add_products_to_loc, locations_fix
+from custom.logistics.tasks import add_products_to_loc, locations_fix, resync_web_users
 from custom.logistics.tasks import stock_data_task
 from custom.logistics.views import BaseConfigView, BaseRemindersTester
 from dimagi.utils.dates import force_to_datetime
@@ -225,10 +225,10 @@ def ews_clear_stock_data(request, domain):
 
 @domain_admin_required
 @require_POST
-def ews_fix_sms_users(request, domain):
+def ews_resync_web_users(request, domain):
     config = EWSGhanaConfig.for_domain(domain)
     endpoint = GhanaEndpoint.from_config(config)
-    sms_users_fix.delay(EWSApi(domain=domain, endpoint=endpoint))
+    resync_web_users.delay(EWSApi(domain=domain, endpoint=endpoint))
     return HttpResponse('OK')
 
 

@@ -19,6 +19,11 @@
 .accordion-inner {
     width: 100%;
 }
+
+.accordion {
+    overflow: hidden;
+}
+
 .mother_report table + .row, .mother_report .row + .row, .child_report table + .row, .child_report .row + .row {
     width: 45%;
     float:right;

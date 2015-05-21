@@ -3,6 +3,10 @@
 {% load report_tags %}
 {% load i18n %}
 
+{% block js %}{{ block.super }}
+    <script src="{% static 'ewsghana/report_links.js' %}"></script>
+{% endblock %}
+
 {% block reportcontent %}
     {% if report.slug|safe == 'stock_summary_report' or report.slug|safe == 'cms_rms_summary_report' %}
         <h2 style="background-color: black; color: white">{{ title }}</h2>
@@ -327,22 +331,10 @@
                 descDiv.text($('.nvtooltip h3').text());
                 descDiv.css('color', $(this).attr('fill'));
             });
-        }, 500);
+        }, 1000);
     </script>
     <script>
         var slugs = {{ slugs | JSON }};
-        var url = window.location.href;
-        var lastSlash = url.lastIndexOf('/');
-        var previousSlash = url.lastIndexOf('/', lastSlash - 1);
-        var content = '<div style="margin: 0 0 30px 120px;">';
-
-        $.each(slugs, function() {
-            content += '<a class="btn" style="margin-left: 10px" href="' +
-                    url.substring(0, previousSlash + 1) + this[0] + url.substring(lastSlash) +
-                    '">' + this[1] + '</a>';
-        });
-
-        content += '</div>';
-        $('legend').after(content);
+        add_report_links(slugs);
     </script>
 {% endblock %}

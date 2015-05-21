@@ -126,6 +126,15 @@ cloudCare.App = LocalizableModel.extend({
     getSubmitUrl: function () {
         return this.get('post_url');
     },
+    renderFormRoot: function () {
+        return this.get("renderFormRoot");
+    },
+    renderXmlRoot: function () {
+        return this.get("renderXmlRoot");
+    },
+    instanceViewerEnabled: function () {
+        return this.get("instanceViewerEnabled");
+    },
     updateModules: function () {
         var self = this;
         if (self.get("modules")) {
@@ -598,6 +607,7 @@ cloudCare.AppView = Backbone.View.extend({
     playSession: function (session) {
         var self = this;
         var session_id = session.get('id');
+
         var resp = $.ajax({
             url: getSessionContextUrl(self.options.sessionUrlRoot, session_id),
             async: false,
@@ -625,6 +635,7 @@ cloudCare.AppView = Backbone.View.extend({
         });
     },
     _playForm: function (data, options) {
+
         var self = this;
         options = options || {};
 
@@ -676,6 +687,30 @@ cloudCare.AppView = Backbone.View.extend({
         };
         data.onload = function (adapter, resp) {
             cloudCare.dispatch.trigger("form:ready", form, caseModel);
+        };
+        data.answerCallback = function(sessionId) {
+
+            var instanceViewerEnabled = self.options.instanceViewerEnabled;
+
+            if(instanceViewerEnabled) {
+                var render_xml_url = self.options.renderXmlRoot;
+                $.ajax({
+                    url: render_xml_url,
+                    data: {'session_id': sessionId},
+                    success: function (data) {
+                        showRenderedForm(data, $("#xml-viewer-pretty"));
+                    }
+                });
+
+                var render_form_url = self.options.renderFormRoot;
+                $.ajax({
+                    url: render_form_url,
+                    data: {'session_id': sessionId},
+                    success: function (data) {
+                        showRenderedForm(data, $("#question-viewer-pretty"));
+                    }
+                });
+            }
         };
         data.resourceMap = function(resource_path) {
             if (resource_path.substring(0, 7) === 'http://') {
@@ -856,7 +891,10 @@ cloudCare.AppMainView = Backbone.View.extend({
             caseUrlRoot: self.options.caseUrlRoot,
             urlRoot: self.options.urlRoot,
             sessionUrlRoot: self.options.sessionUrlRoot,
-            submitUrlRoot: self.options.submitUrlRoot
+            submitUrlRoot: self.options.submitUrlRoot,
+            renderXmlRoot: self.options.renderXmlRoot,
+            renderFormRoot: self.options.renderFormRoot,
+            instanceViewerEnabled: self.options.instanceViewerEnabled
         });
 
         // fetch session list here
