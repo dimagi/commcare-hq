@@ -1564,11 +1564,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         else:
             return 0
 
-    def get_cases(self, deleted=False, last_submitter=False, wrap=True):
+    def _get_cases(self, deleted=False, wrap=True):
         if deleted:
             view_name = 'users/deleted_cases_by_user'
-        elif last_submitter:
-            view_name = 'case/by_user'
         else:
             view_name = 'case/by_owner'
 
@@ -1633,7 +1631,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self.base_doc += suffix
             self['-deletion_id'] = deletion_id
 
-        for caselist in chunked(self.get_cases(wrap=False), 50):
+        for caselist in chunked(self._get_cases(wrap=False), 50):
             tag_docs_as_deleted.delay(CommCareCase, caselist, deletion_id)
             for case in caselist:
                 deleted_cases.add(case['_id'])
@@ -1662,7 +1660,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         for form in self.get_forms(deleted=True):
             form.doc_type = chop_suffix(form.doc_type)
             form.save()
-        for case in self.get_cases(deleted=True):
+        for case in self._get_cases(deleted=True):
             case.doc_type = chop_suffix(case.doc_type)
             case.save()
         self.save()
