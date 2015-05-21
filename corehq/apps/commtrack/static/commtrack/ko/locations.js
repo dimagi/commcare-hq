@@ -6,6 +6,10 @@ $(function() {
 
     model.load(settings);
     ko.applyBindings(model, $('#settings').get(0));
+
+    $("form#settings").on("change input", function() {
+        $(this).find(":submit").enable();
+    });
 });
 
 
