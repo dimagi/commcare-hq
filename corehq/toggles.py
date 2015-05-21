@@ -464,3 +464,10 @@ API_THROTTLE_WHITELIST = StaticToggle(
     TAG_EXPERIMENTAL,
     namespaces=[NAMESPACE_USER],
 )
+
+INSTANCE_VIEWER = StaticToggle(
+    'instance_viewer',
+    'View curent instance when using Touchforms',
+    TAG_EXPERIMENTAL,
+    namespaces=[NAMESPACE_USER],
+)
