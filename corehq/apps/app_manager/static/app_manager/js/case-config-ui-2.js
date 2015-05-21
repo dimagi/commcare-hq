@@ -807,10 +807,8 @@ var CaseConfig = (function () {
         },
         to_usercase_transaction: function (o, caseConfig) {
             var self = HQFormActions.normalize(o);
-            // TODO: usercase required properties?
-            var required_properties = [];
             var case_properties = CC_UTILS.propertyDictToArray(
-                required_properties,
+                [],  // usercase has no required properties; it has already been created with everything it needs
                 self.usercase_update.update,
                 caseConfig
             );
@@ -821,12 +819,10 @@ var CaseConfig = (function () {
                 true
             );
             return UserCaseTransaction.wrap({
-                case_properties: case_properties,  // TODO: Name this usercase_properties?
-                case_preload: case_preload,  // TODO: Or "case_preload: usercase_preload"?
-                                             // TODO: Or "usercase_preload: usercase_preload"?
+                case_properties: case_properties,
+                case_preload: case_preload,
 
                 suggestedProperties: function () {
-                    // TODO: Pass user case type from the view.
                     if (_(caseConfig.usercasePropertiesMap).has('commcare-user')) {
                         return caseConfig.usercasePropertiesMap['commcare-user']();
                     } else {
@@ -837,12 +833,13 @@ var CaseConfig = (function () {
         },
         from_usercase_transaction: function (usercase_transaction) {
             var o = UserCaseTransaction.unwrap(usercase_transaction);
-            var x = CC_UTILS.propertyArrayToDict([], o.case_properties);  // "name" required?
+            var x = CC_UTILS.propertyArrayToDict([], o.case_properties);
             var case_properties = x[0];
             var case_preload = CC_UTILS.preloadArrayToDict(o.case_preload);
             return {
                 usercase_update: {
-                    update: case_properties
+                    update: case_properties,
+                    condition: cleanCondition(DEFAULT_CONDITION_ALWAYS)  // usercase_update action is always active
                 },
                 usercase_preload: {
                     preload: case_preload
