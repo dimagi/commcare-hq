@@ -174,9 +174,19 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
         label=ugettext_noop("Opt out of emails about CommCare updates."),
     )
 
+    def get_or_create_api_key(self):
+        try:
+            return self.api_key
+        except AttributeError:
+            try:
+                return ApiKey.objects.get(user=self.user).key
+            except ApiKey.DoesNotExist:
+                return ApiKey.objects.create(user=self.user)
+
     def __init__(self, *args, **kwargs):
         self.username = kwargs.pop('username') if 'username' in kwargs else None
         self.user = kwargs.pop('user') if 'user' in kwargs else None
+        self.api_key = self.get_or_create_api_key()
         super(UpdateMyAccountInfoForm, self).__init__(*args, **kwargs)
 
         username_controls = []
@@ -184,6 +194,10 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
             username_controls.append(hqcrispy.StaticField(
                 _('Username'), self.username)
             )
+
+        api_key_controls = [
+            hqcrispy.StaticField(_('API Key'), self.get_or_create_api_key())
+        ]
 
         self.fields['language'].label = _("My Language")
 
@@ -207,6 +221,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
             cb3_layout.Fieldset(
                 _("Other Options"),
                 hqcrispy.Field('language'),
+                cb3_layout.Div(*api_key_controls),
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
@@ -225,10 +240,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
         if existing_user is None:
             return
         super(UpdateMyAccountInfoForm, self).initialize_form(domain, existing_user)
-        try:
-            self.initial['api_key'] = ApiKey.objects.get(user=self.user).key
-        except ApiKey.DoesNotExist:
-            self.initial['api_key'] = ApiKey.objects.create(user=self.user)
+        self.initial['api_key'] = self.api_key
 
 
 class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
