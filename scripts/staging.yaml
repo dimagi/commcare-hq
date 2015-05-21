@@ -54,8 +54,8 @@ branches:
   - update-submodules # TS 5/6
   - locations-for-robber-barons  # Ethan 5/7
   - form-context-simple # Ben 5/13
-  - langMedia+fix-time-ago-sort # daniel 5/21
-  - langMedia # Sravan 5/20
+  # - langMedia+fix-time-ago-sort # daniel 5/21
+  # - langMedia # Sravan 5/20
   - form-view-ajax # Jenny 5/21
 submodules:
   submodules/touchforms-src:
