@@ -11,7 +11,7 @@ function LocationSelectViewModel(hierarchy, default_caption, auto_drill, loc_fil
   var model = this;
 
   this.default_caption = default_caption || 'All';
-  this.auto_drill = (auto_drill === null ? true : auto_drill);
+  this.auto_drill = (_.isBoolean(auto_drill) ? auto_drill : true);
   this.loc_filter = loc_filter || function(loc) { return true; };
   this.func = typeof func !== 'undefined' ? func : LocationModel;
 
@@ -109,7 +109,7 @@ function LocationModel(data, root, depth, func, withAllOption) {
   this.selected_child = ko.observable();
   // when a location is selected, update the drill-down tree
   this.selected_child.subscribe(function(val) {
-      if (val === null) {
+      if (!val) {
         return;
       }
 
@@ -125,7 +125,7 @@ function LocationModel(data, root, depth, func, withAllOption) {
         }
       };
 
-      if (val.uuid() !== null && !val.children_loaded) {
+      if (!!val.uuid() && !val.children_loaded) {
         val.load_children_async(post_children_loaded);
       } else {
         post_children_loaded(val);
@@ -149,9 +149,9 @@ function LocationModel(data, root, depth, func, withAllOption) {
     this.uuid(data.uuid);
     this.can_edit(data.can_edit);
     this.location_restriction(data.restriction);
-    if (data.children !== null) {
+    if (!!data.children) {
         $.map(data.children, function(e) {
-            e.restriction = data.restriction
+            e.restriction = data.restriction;
         });
       this.set_children(data.children);
     }
