@@ -7,7 +7,7 @@ from corehq.apps.api.resources import HqBaseResource
 from corehq.apps.users.models import WebUser
 from corehq.util.quickcache import quickcache
 
-from ..models import Location, SQLLocation, root_locations
+from ..models import Location, SQLLocation
 
 
 @quickcache(['user._id', 'project.name', 'only_editable'])
@@ -58,10 +58,10 @@ class LocationResource(HqBaseResource):
         viewable = _user_locations_ids(user, project, only_editable=False)
 
         if not parent_id:
-            locs = root_locations(domain)
+            locs = SQLLocation.root_locations(domain, include_inactive)
         else:
             parent = get_object_or_not_exist(Location, parent_id, domain)
-            locs = parent.sql_location.child_locations(include_archive_ancestors=include_inactive)
+            locs = parent.sql_location.child_locations(include_inactive)
 
         return [child for child in locs if child.location_id in viewable]
 
