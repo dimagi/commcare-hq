@@ -1568,7 +1568,7 @@ class HealthMapReport(BaseMixin, ElasticSearchMapReport, GetParamsMixin, CustomP
         self.context['report_table'].update(
             rows=self.rows
         )
-        rendered_report = render_to_string(self.template_report, self.context,
-            context_instance=RequestContext(self.request)
+        rendered_report = render_to_string(
+            self.template_report, self.context, context_instance=RequestContext(self.request)
         )
         return HttpResponse(rendered_report)
