@@ -59,12 +59,13 @@ def location_fixture_generator(user, version, last_sync=None):
         locations = SQLLocation.objects.filter(domain=user.domain)
     else:
         locations = []
-        if user.location:
+        user_location = user.sql_location
+        if user_location:
             # add users location (and ancestors) to fixture
-            locations.append(user.sql_location)
+            locations.append(user_location)
 
             # add all descendants as well
-            locations += user.sql_location.get_descendants()
+            locations += user_location.get_descendants()
 
         if user.project.supports_multiple_locations_per_user:
             # this might add duplicate locations but we filter that out later
