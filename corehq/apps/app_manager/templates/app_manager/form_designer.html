@@ -247,5 +247,11 @@
 
 {% block breadcrumbs %}
     {{ block.super }}
-    <li><span class="divider">&gt;</span> <i class="icon-pencil"></i> {{ form.name|trans:app.langs }}</li>
+    <li>
+        <span class="divider">&gt;</span>
+        <a href="{% url "view_form" domain app.id module.id form.id %}">
+            {{ form.name|trans:app.langs }}
+        </a>
+    </li>
+    <li><span class="divider">&gt;</span> <i class="icon-pencil"></i> Edit</li>
 {% endblock %}
