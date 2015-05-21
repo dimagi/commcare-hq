@@ -40,6 +40,12 @@ import HTMLParser
 from django.contrib import messages
 from django.utils.translation import ugettext as _, ugettext_noop
 from touchforms.formplayer.models import EntrySession
+from xml2json.lib import xml2json
+import requests
+from corehq.apps.reports.formdetails import readable
+from corehq.apps.reports.formdetails.readable import get_readable_form_data
+from corehq.apps.reports.templatetags.xform_tags import render_pretty_xml
+from django.shortcuts import get_object_or_404
 
 
 @require_cloudcare_access
@@ -415,6 +421,53 @@ def get_ledgers(request, domain):
         },
         default=custom_json_handler,
     )
+
+
+@cloudcare_api
+def render_form(request, domain):
+    # get session
+    session_id = request.GET.get('session_id')
+
+    session = get_object_or_404(EntrySession, session_id=session_id)
+
+    response = requests.post("{base_url}/webforms/get-xml/{session_id}".format(base_url=get_url_base(),
+                                                                               session_id=session_id))
+
+    if response.status_code is not 200:
+        err = "Session XML could not be found"
+        return HttpResponse(err, status=500, content_type="text/plain")
+
+    json_response = json.loads(response.text)
+    xmlns = json_response["xmlns"]
+    form_data_xml = json_response["output"]
+
+    _, form_data_json = xml2json(form_data_xml)
+    pretty_questions = readable.get_questions(domain, session.app_id, xmlns)
+
+    readable_form = get_readable_form_data(form_data_json, pretty_questions)
+
+    rendered_readable_form = render(request, 'reports/form/partials/readable_form.html',
+                                    {'questions': readable_form})
+
+    return rendered_readable_form
+
+
+def render_xml(request, domain):
+
+    session_id = request.GET.get('session_id')
+
+    response = requests.post("{base_url}/webforms/get-xml/{session_id}".format(base_url=get_url_base(),
+                                                                               session_id=session_id))
+
+    if response.status_code is not 200:
+        err = "Session XML could not be found"
+        return HttpResponse(err, status=500, content_type="text/plain")
+
+    json_response = json.loads(response.text)
+    form_data_xml = json_response["output"]
+
+    return HttpResponse(render_pretty_xml(form_data_xml))
+
 
 
 class HttpResponseConflict(HttpResponse):

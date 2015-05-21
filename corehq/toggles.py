@@ -445,6 +445,13 @@ MOBILE_UCR = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+RESTRICT_WEB_USERS_BY_LOCATION = StaticToggle(
+    'restrict_web_users_by_location',
+    "Allow project to restrict web user permissions by location",
+    TAG_PRODUCT_CORE,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 FM_FACING_SUBSCRIPTIONS = StaticToggle(
     'fm_facing_subscriptions',
     'FM Facing Subscription Management Interface',
@@ -454,6 +461,13 @@ FM_FACING_SUBSCRIPTIONS = StaticToggle(
 API_THROTTLE_WHITELIST = StaticToggle(
     'api_throttle_whitelist',
     ('API throttle whitelist'),
+    TAG_EXPERIMENTAL,
+    namespaces=[NAMESPACE_USER],
+)
+
+INSTANCE_VIEWER = StaticToggle(
+    'instance_viewer',
+    'View curent instance when using Touchforms',
     TAG_EXPERIMENTAL,
     namespaces=[NAMESPACE_USER],
 )
