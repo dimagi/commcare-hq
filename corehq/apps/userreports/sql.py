@@ -2,10 +2,12 @@ import hashlib
 from sqlagg import SumWhen
 import sqlalchemy
 from django.conf import settings
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, ProgrammingError
+from corehq.apps.userreports.exceptions import TableRebuildError
 from corehq.db import Session
 from corehq.apps.reports.sqlreport import DatabaseColumn
 from dimagi.utils.decorators.memoized import memoized
+from fluff import TYPE_STRING
 from fluff.util import get_column_type
 
 metadata = sqlalchemy.MetaData()
@@ -36,7 +38,10 @@ class IndicatorSqlAdapter(object):
         return get_indicator_table(self.config)
 
     def rebuild_table(self):
-        rebuild_table(self.engine, self.get_table())
+        try:
+            rebuild_table(self.engine, self.get_table())
+        except ProgrammingError, e:
+            raise TableRebuildError('problem rebuilding UCR table {}: {}'.format(self.config, e))
 
     def drop_table(self):
         with self.engine.begin() as connection:
@@ -84,7 +89,7 @@ def get_indicator_table(indicator_config, custom_metadata=None):
 def column_to_sql(column):
     return sqlalchemy.Column(
         column.id,
-        get_column_type(column.datatype),
+        _get_column_type(column.datatype),
         nullable=column.is_nullable,
         primary_key=column.is_primary_key,
     )
@@ -209,3 +214,9 @@ def _expand_column(report_column, distinct_values):
             help_text=report_column.description
         ))
     return columns
+
+
+def _get_column_type(data_type):
+    if data_type == TYPE_STRING:
+        return sqlalchemy.UnicodeText
+    return get_column_type(data_type)

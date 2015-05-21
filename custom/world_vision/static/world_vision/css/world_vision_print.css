@@ -10,7 +10,7 @@ svg {
     width: 100% !important;
 }
 
-.nv-controlsWrap, .icon-question-sign, .accordion-heading, br, .row h4 {
+.nv-controlsWrap, .icon-question-sign, .accordion-heading, br, .hq-help {
     display: none;
 }
 
@@ -22,6 +22,19 @@ td {
     font-size: small !important;
 }
 
+.mother_child_report .row h4 {
+    margin-top: -0.75cm;
+}
+
+.mother_child_report .row:first-of-type h4 {
+    margin-top: -0.35cm;
+    margin-bottom: -0.4cm;
+}
+
+.mother_child_report .row:nth-last-of-type(4) h4, .mother_child_report .row:last-of-type h4 {
+    margin-top: auto;
+}
+
 .mother_child_report table, .mother_child_report .row {
     width: 8cm !important;
     margin-left: 0.5cm;
@@ -29,15 +42,6 @@ td {
     float:left;
     display: inline-block;
     page-break-inside: avoid;
-}
-
-.mother_child_report #report_table_children_feeding_details,
-.mother_child_report #report_table_Child_health_indicators {
-    margin-top: -1cm;
-}
-
-.mother_child_report #report_table_children_deaths {
-    margin-left: 1cm;
 }
 
 .mother_report table, .child_report table {
@@ -63,6 +67,15 @@ td {
     display: inline-block;
     float: left;
     margin: 0;
+    border: 0;
+}
+
+.mother_report #report_table_delivery_still_birth_details {
+    margin-top: -4cm;
+}
+
+.mother_report #collapse_postnatal_care_overview, .mother_report #collapse_Cause_of_maternal_deaths {
+    margin-top: -1.5cm;
 }
 
 @page {

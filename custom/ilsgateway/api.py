@@ -22,7 +22,8 @@ MSDZONE_MAP = {
     'Mwanza Zone': ['MZ', 'geita', 'shinyanga', 'simiyu', 'mwanza', 'kagera', 'mara'],
     'Tabora Zone': ['TB', 'kigoma', 'tabora'],
     'Tanga Zone': ['TG', 'tanga'],
-    'Zanzibar Zone': ["pemba north", "pemba south", "zanzibar central/south", "zanzibar north", "zanzibar west"],
+    'Zanzibar Zone': ['D', "pemba north", "pemba south", "zanzibar central/south", "zanzibar north",
+                      "zanzibar west"],
     'UNKNOWN': ['UN']
 }
 

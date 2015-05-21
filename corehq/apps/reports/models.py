@@ -186,6 +186,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     days = IntegerProperty(default=None)
     start_date = DateProperty(default=None)
     end_date = DateProperty(default=None)
+    datespan_slug = StringProperty(default=None)
 
     def delete(self, *args, **kwargs):
         notifications = self.view('reportconfig/notifications_by_config',
@@ -295,8 +296,20 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             logging.error('scheduled report %s is in a bad state (no startdate or enddate)' % self._id)
             return {}
 
-        return {'startdate': start_date.isoformat(),
-                'enddate': end_date.isoformat()}
+        dates = {
+            'startdate': start_date.isoformat(),
+            'enddate': end_date.isoformat(),
+        }
+
+        if self.is_configurable_report:
+            filter_slug = self.datespan_slug
+            if filter_slug:
+                return {
+                    '%s-start' % filter_slug: start_date.isoformat(),
+                    '%s-end' % filter_slug: end_date.isoformat(),
+                    filter_slug: '%(startdate)s to %(enddate)s' % dates,
+                }
+        return dates
 
     @property
     @memoized
@@ -412,7 +425,11 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         request.GET = QueryDict(
             self.query_string
             + '&filterSet=true'
-            + ('&' + urlencode(self.filters, True) if self.is_configurable_report else '')
+            + ('&'
+               + urlencode(self.filters, True)
+               + '&'
+               + urlencode(self.get_date_range(), True)
+               if self.is_configurable_report else '')
         )
 
         # Make sure the request gets processed by PRBAC Middleware

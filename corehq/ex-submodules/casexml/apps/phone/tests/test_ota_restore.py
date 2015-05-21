@@ -18,6 +18,7 @@ from casexml.apps.case import const as case_const
 from casexml.apps.phone.tests.dummy import dummy_restore_xml, dummy_user,\
     dummy_user_xml, DUMMY_USERNAME
 from corehq import toggles
+from corehq.apps.domain.models import Domain
 from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
 
 
@@ -29,11 +30,12 @@ class OtaRestoreTest(TestCase):
     def setUpClass(cls):
         delete_all_cases()
         delete_all_sync_logs()
+        cls.project = Domain(name='ota-restore-tests')
 
     def tearDown(self):
         delete_all_cases()
         delete_all_sync_logs()
-        restore_config = RestoreConfig(user=dummy_user())
+        restore_config = RestoreConfig(project=self.project, user=dummy_user())
         restore_config.cache.delete(restore_config._initial_cache_key())
 
     def testFromDjangoUser(self):
@@ -56,7 +58,7 @@ class OtaRestoreTest(TestCase):
             include_docs=True,
             reduce=False,
         ).count())
-        restore_payload = generate_restore_payload(dummy_user(), items=True)
+        restore_payload = generate_restore_payload(self.project, dummy_user(), items=True)
         sync_log = SyncLog.view(
             "phone/sync_logs_by_user",
             include_docs=True,
@@ -69,9 +71,15 @@ class OtaRestoreTest(TestCase):
         )
 
     def testOverwriteCache(self):
-        restore_payload = generate_restore_payload(dummy_user(), items=True, force_cache=True)
-        restore_payload_cached = generate_restore_payload(dummy_user(), items=True)
-        restore_payload_overwrite = generate_restore_payload(dummy_user(), items=True, overwrite_cache=True)
+        restore_payload = generate_restore_payload(
+            self.project, dummy_user(), items=True, force_cache=True
+        )
+        restore_payload_cached = generate_restore_payload(
+            self.project, dummy_user(), items=True
+        )
+        restore_payload_overwrite = generate_restore_payload(
+            self.project, dummy_user(), items=True, overwrite_cache=True
+        )
         self.assertEqual(restore_payload, restore_payload_cached)
         self.assertNotEqual(restore_payload, restore_payload_overwrite)
 
@@ -87,7 +95,7 @@ class OtaRestoreTest(TestCase):
         # implicit length assertion
         [newcase] = CommCareCase.view("case/by_user", reduce=False, include_docs=True).all()
         self.assertEqual(1, len(list(
-            BatchedCaseSyncOperation(RestoreState(None, user, RestoreParams())).get_all_case_updates()
+            BatchedCaseSyncOperation(RestoreState(self.project, user, RestoreParams())).get_all_case_updates()
         )))
         expected_case_block = """
         <case>
@@ -126,6 +134,7 @@ class OtaRestoreTest(TestCase):
         )
 
         restore_payload = generate_restore_payload(
+            project=self.project,
             user=dummy_user(),
             items=True,
         )
@@ -158,7 +167,7 @@ class OtaRestoreTest(TestCase):
         process_cases(form)
 
         time.sleep(1)
-        restore_payload = generate_restore_payload(dummy_user(), items=items)
+        restore_payload = generate_restore_payload(self.project, dummy_user(), items=items)
 
         sync_log_id = SyncLog.view(
             "phone/sync_logs_by_user",
@@ -174,6 +183,7 @@ class OtaRestoreTest(TestCase):
 
         time.sleep(1)
         sync_restore_payload = generate_restore_payload(
+            project=self.project,
             user=dummy_user(),
             restore_id=sync_log_id,
             items=items,
@@ -204,6 +214,7 @@ class OtaRestoreTest(TestCase):
 
         time.sleep(1)
         sync_restore_payload = generate_restore_payload(
+            self.project,
             user=dummy_user(),
             restore_id=latest_log.get_id,
             items=items,
@@ -244,7 +255,7 @@ class OtaRestoreTest(TestCase):
         self.assertTrue(isinstance(newcase.stringattr, dict))
         self.assertEqual("neither should this", newcase.stringattr["#text"])
         self.assertEqual("i am a string", newcase.stringattr["@somestring"])
-        restore_payload = generate_restore_payload(dummy_user())
+        restore_payload = generate_restore_payload(self.project, dummy_user())
         # ghetto
         self.assertTrue('<dateattr somedate="2012-01-01">' in restore_payload)
         self.assertTrue('<stringattr somestring="i am a string">' in restore_payload)

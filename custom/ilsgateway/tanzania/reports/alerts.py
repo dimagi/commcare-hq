@@ -25,7 +25,7 @@ class AlertReport(GenericTabularReport, CustomProjectReport, ProjectReportParame
     def rows(self):
         end_date = self.datespan.enddate
         alerts = Alert.objects.filter(
-            supply_point=self.request.GET.get('location_id', ''),
+            location_id=self.request.GET.get('location_id', ''),
             date__lte=end_date,
             expires__lte=end_date
         ).order_by('-id')

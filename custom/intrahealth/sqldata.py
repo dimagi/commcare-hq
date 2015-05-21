@@ -645,8 +645,8 @@ class RecouvrementDesCouts(BaseSqlData):
     @property
     def columns(self):
         columns = [DatabaseColumn(_("District"), SimpleColumn('district_name'))]
-        columns.append(DatabaseColumn(_(u"Montant dû"), SumColumn('payments_amount_paid')))
-        columns.append(DatabaseColumn(_(u"Montant payé"), SumColumn('payments_amount_to_pay')))
+        columns.append(DatabaseColumn(_(u"Montant dû"), SumColumn('payments_amount_to_pay')))
+        columns.append(DatabaseColumn(_(u"Montant payé"), SumColumn('payments_amount_paid')))
         columns.append(DatabaseColumn(_(u"Payé dans le 30 jours"), SumColumn('payments_in_30_days')))
         columns.append(DatabaseColumn(_(u"Payé dans le 3 mois"), SumColumn('payments_in_3_months')))
         columns.append(DatabaseColumn(_(u"Payé dans l`annèe"), SumColumn('payments_in_year')))

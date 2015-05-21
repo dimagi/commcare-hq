@@ -596,7 +596,7 @@ class HQMediaMixin(Document):
 
     def _get_item_media(self, item, media_kwargs):
         menu_media = {}
-        to_language = media_kwargs.pop('to_language')
+        to_language = media_kwargs.pop('to_language', self.default_language)
         image_ref = ApplicationMediaReference(
             item.icon_by_language(to_language),
             media_class=CommCareImage,

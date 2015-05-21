@@ -114,6 +114,9 @@ class BaseCreateCustomExportView(BaseExportView):
         except ValueError:
             return HttpResponseBadRequest()
 
+        if self.export_helper.export_type == "form" and not export_tag[1]:
+            return HttpResponseRedirect(ExcelExportReport.get_url(domain=self.domain))
+
         schema = build_latest_schema(export_tag)
 
         if not schema and self.export_helper.export_type == "form":

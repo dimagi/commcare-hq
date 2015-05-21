@@ -14,6 +14,9 @@
             {% else %}
                 defaultConfig.date_range = null;
             {% endif %}
+            defaultConfig.has_ucr_datespan = false;
+            defaultConfig.datespan_filters = [];
+            defaultConfig.datespan_slug = null;
 
             
             $("#savedReports").reportConfigEditor({

@@ -9,7 +9,7 @@ import lxml
 from django.core.files.uploadedfile import UploadedFile
 
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
+from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms, TEST_DOMAIN_NAME
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.models import SyncLog
 import couchforms
@@ -29,7 +29,6 @@ MEDIA_FILES = {
     "house_file": os.path.join(media_path, "house.jpg"),
 }
 
-TEST_DOMAIN = "test-domain"
 
 
 class BaseCaseMultimediaTest(TestCase):
@@ -81,7 +80,7 @@ class BaseCaseMultimediaTest(TestCase):
         """
         sp = couchforms.SubmissionPost(
             instance=xml_data,
-            domain=TEST_DOMAIN,
+            domain=TEST_DOMAIN_NAME,
             attachments=dict_attachments,
             last_sync_token=sync_token,
         )
