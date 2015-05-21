@@ -10,6 +10,7 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
+from corehq.apps.sofabed.models import CaseData
 from dimagi.ext.couchdbkit import *
 from couchdbkit.resource import ResourceNotFound
 from corehq.util.view_utils import absolute_reverse
@@ -1580,15 +1581,13 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             yield CommCareCase.wrap(doc) if wrap else doc
 
     @property
-    def case_count(self):
-        result = CommCareCase.view('case/by_user',
-            startkey=[self.user_id],
-            endkey=[self.user_id, {}], group_level=0
-        ).one()
-        if result:
-            return result['value']
-        else:
-            return 0
+    def analytics_only_case_count(self):
+        """
+        Get an approximate count of cases which were last submitted to by this user.
+
+        This number is not guaranteed to be 100% accurate since it depends on a secondary index (sofabed)
+        """
+        return CaseData.objects.filter(user_id=self._id).count()
 
     def location_group_ids(self):
         """
