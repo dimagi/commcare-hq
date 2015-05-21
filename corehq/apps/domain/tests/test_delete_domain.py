@@ -51,25 +51,31 @@ class TestDeleteDomain(TestCase):
             domain='test2',
             name='facility',
         )
+        LocationType.objects.create(
+            domain='test',
+            name='facility2',
+        )
+        LocationType.objects.create(
+            domain='test2',
+            name='facility2',
+        )
         for i in xrange(2):
             self._create_data('test', i)
             self._create_data('test2', i)
 
-    def test_sql_objects_deletion(self):
-        self.domain.delete()
-        self.assertEqual(StockTransaction.objects.filter(report__domain='test').count(), 0)
-        self.assertEqual(StockReport.objects.filter(domain='test').count(), 0)
-        self.assertEqual(SQLLocation.objects.filter(domain='test').count(), 0)
-        self.assertEqual(SQLProduct.objects.filter(domain='test').count(), 0)
-        self.assertEqual(LocationType.objects.filter(domain='test').count(), 0)
-        self.assertEqual(DocDomainMapping.objects.filter(domain_name='test').count(), 0)
+    def _assert_sql_counts(self, domain, number):
+        self.assertEqual(StockTransaction.objects.filter(report__domain=domain).count(), number)
+        self.assertEqual(StockReport.objects.filter(domain=domain).count(), number)
+        self.assertEqual(SQLLocation.objects.filter(domain=domain).count(), number)
+        self.assertEqual(SQLProduct.objects.filter(domain=domain).count(), number)
+        self.assertEqual(DocDomainMapping.objects.filter(domain_name=domain).count(), number)
+        self.assertEqual(LocationType.objects.filter(domain=domain).count(), number)
 
-        self.assertEqual(StockTransaction.objects.filter(report__domain='test2').count(), 2)
-        self.assertEqual(StockReport.objects.filter(domain='test2').count(), 2)
-        self.assertEqual(SQLLocation.objects.filter(domain='test2').count(), 2)
-        self.assertEqual(SQLProduct.objects.filter(domain='test2').count(), 2)
-        self.assertEqual(LocationType.objects.filter(domain='test2').count(), 1)
-        self.assertEqual(DocDomainMapping.objects.filter(domain_name='test2').count(), 2)
+    def test_sql_objects_deletion(self):
+        self._assert_sql_counts('test', 2)
+        self.domain.delete()
+        self._assert_sql_counts('test', 0)
+        self._assert_sql_counts('test2', 2)
 
     def tearDown(self):
         self.domain2.delete()
