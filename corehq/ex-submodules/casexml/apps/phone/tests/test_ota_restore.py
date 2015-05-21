@@ -89,11 +89,10 @@ class OtaRestoreTest(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
         form = post_xform_to_couch(xml_data)
-        process_cases(form)
+        # implicit length assertion
+        [newcase] = process_cases(form)
         user = dummy_user()
 
-        # implicit length assertion
-        [newcase] = CommCareCase.view("case/by_user", reduce=False, include_docs=True).all()
         self.assertEqual(1, len(list(
             BatchedCaseSyncOperation(RestoreState(self.project, user, RestoreParams())).get_all_case_updates()
         )))
@@ -243,9 +242,8 @@ class OtaRestoreTest(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
         form = post_xform_to_couch(xml_data)
-        process_cases(form)
+        [newcase] = process_cases(form)
         
-        [newcase] = CommCareCase.view("case/by_user", reduce=False, include_docs=True).all()
         self.assertTrue(isinstance(newcase.adate, dict))
         self.assertEqual(date(2012,02,01), newcase.adate["#text"])
         self.assertEqual("i am an attribute", newcase.adate["@someattr"])

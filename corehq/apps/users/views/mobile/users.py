@@ -439,7 +439,7 @@ class AsyncListCommCareUsersView(ListCommCareUsersView):
             if self.more_columns:
                 u_data.update({
                     'form_count': user.form_count,
-                    'case_count': user.case_count,
+                    'case_count': user.analytics_only_case_count,
                 })
                 if self.show_case_sharing:
                     u_data.update({
