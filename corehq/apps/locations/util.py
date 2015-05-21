@@ -47,7 +47,7 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False,
         SQLLocation.root_locations(
             domain, include_archive_ancestors=include_archived
         )
-        if user_can_view_location(user, loc, project)
+        if user is None or user_can_view_location(user, loc, project)
     ]
 
     # if a location is selected, we need to pre-populate its location hierarchy

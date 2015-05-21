@@ -60,7 +60,7 @@ def get_restore_response(domain, couch_user, since=None, version='1.0',
 
     project = Domain.get_by_name(domain)
     restore_config = RestoreConfig(
-        domain=project,
+        project=project,
         user=couch_user.to_casexml_user(),
         params=RestoreParams(
             sync_log_id=since,

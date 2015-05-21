@@ -9,7 +9,7 @@ import pytz
 from corehq import Domain
 from corehq.apps import reports
 from corehq.apps.app_manager.models import get_app, Form, RemoteApp
-from corehq.apps.app_manager.util import ParentCasePropertyBuilder
+from corehq.apps.app_manager.util import get_case_properties
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.domain.middleware import CCHQPRBACMiddleware
 from corehq.apps.export.models import FormQuestionSchema
@@ -18,7 +18,6 @@ from dimagi.ext.couchdbkit import *
 from corehq.apps.reports.exportfilters import form_matches_users, is_commconnect_form, default_form_filter, \
     default_case_filter
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
-from corehq.feature_previews import CALLCENTER
 from corehq.util.view_utils import absolute_reverse
 from couchexport.models import SavedExportSchema, GroupExportConfiguration, FakeSavedExportSchema, SplitColumn
 from couchexport.transforms import couch_to_excel_datetime, identity
@@ -805,14 +804,9 @@ class CaseExportSchema(HQExportSchema):
     def case_properties(self):
         props = set([])
 
-        if CALLCENTER.enabled(self.domain):
-            from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
-            user_fields = CustomDataFieldsDefinition.get_or_create(self.domain, 'UserFields')
-            props |= {field.slug for field in user_fields.fields}
-
         for app in self.applications:
-            builder = ParentCasePropertyBuilder(app, ("name",))
-            props |= set(builder.get_properties(self.case_type))
+            prop_map = get_case_properties(app, [self.case_type], defaults=("name",))
+            props |= set(prop_map[self.case_type])
 
         return props
 

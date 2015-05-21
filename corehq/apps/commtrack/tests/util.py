@@ -1,26 +1,28 @@
 from django.test import TestCase
+from lxml import etree
+
 from casexml.apps.case.tests import delete_all_cases, delete_all_xforms
 from casexml.apps.case.tests.util import delete_all_sync_logs
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.tests.utils import generate_restore_payload
-from casexml.apps.stock.models import StockReport, StockTransaction
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
-from corehq.apps.commtrack import const
-from corehq.apps.groups.models import Group
-from corehq.apps.locations.models import Location, LocationType
-from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.domain.models import Domain
-from corehq.apps.commtrack.sms import StockReportParser, process
-from corehq.apps.commtrack.util import get_default_requisition_config, \
-    bootstrap_location_types
-from corehq.apps.commtrack.models import SupplyPointCase, CommtrackConfig, ConsumptionConfig
-from corehq.apps.users.models import CommCareUser
-from corehq.apps.sms.backend import test
-from corehq.apps.commtrack.helpers import make_supply_point
-from corehq.apps.products.models import Product
+from casexml.apps.stock.models import StockReport, StockTransaction
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_safe_write_kwargs
-from lxml import etree
+
+from corehq.apps.domain.models import Domain
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.groups.models import Group
+from corehq.apps.locations.models import Location, LocationType
+from corehq.apps.products.models import Product
+from corehq.apps.sms.backend import test
+from corehq.apps.users.models import CommCareUser
+
+from .. import const
+from ..helpers import make_supply_point
+from ..models import SupplyPointCase, CommtrackConfig, ConsumptionConfig
+from ..sms import StockReportParser, process
+from ..util import get_default_requisition_config, get_or_create_default_program
 
 
 TEST_DOMAIN = 'commtrack-test'
@@ -73,6 +75,7 @@ PACKER_USER = {
     },
 }
 
+
 def bootstrap_domain(domain_name=TEST_DOMAIN):
     # little test utility that makes a commtrack-enabled domain with
     # a default config and a location
@@ -107,6 +110,43 @@ def bootstrap_user(setup, username=TEST_USER, domain=TEST_DOMAIN,
     return CommCareUser.wrap(user.to_json())
 
 
+def bootstrap_location_types(domain):
+    previous = None
+    for name, administrative in [
+        ('state', True),
+        ('district', True),
+        ('block', True),
+        ('village', True),
+        ('outlet', False),
+    ]:
+        location_type, _ = LocationType.objects.get_or_create(
+            domain=domain,
+            name=name,
+            defaults={
+                'parent_type': previous,
+                'administrative': administrative,
+            },
+        )
+        previous = location_type
+
+
+def make_product(domain, name, code, program_id):
+    p = Product()
+    p.domain = domain
+    p.name = name
+    p.code = code.lower()
+    p.program_id = program_id
+    p.save()
+    return p
+
+
+def bootstrap_products(domain):
+    program = get_or_create_default_program(domain)
+    make_product(domain, 'Sample Product 1', 'pp', program.get_id)
+    make_product(domain, 'Sample Product 2', 'pq', program.get_id)
+    make_product(domain, 'Sample Product 3', 'pr', program.get_id)
+
+
 def make_loc(code, name=None, domain=TEST_DOMAIN, type=TEST_LOCATION_TYPE, parent=None):
     name = name or code
     LocationType.objects.get_or_create(domain=domain, name=type)
@@ -131,6 +171,7 @@ class CommTrackTest(TestCase):
         self.backend = test.bootstrap(TEST_BACKEND, to_console=True)
         self.domain = bootstrap_domain()
         bootstrap_location_types(self.domain.name)
+        bootstrap_products(self.domain.name)
         self.ct_settings = CommtrackConfig.for_domain(self.domain.name)
         self.ct_settings.consumption_config = ConsumptionConfig(
             min_transactions=0,

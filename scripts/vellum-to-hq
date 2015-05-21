@@ -40,6 +40,13 @@ def main():
         help="Build Vellum, but do not run tests (mutually exclusive with --no-make).")
     parser.add_argument("--push", action="store_true",
         help="Push the result to HQ if everything else succeeds.")
+    parser.add_argument("--fix-staging",
+        action="store_true", default=os.environ.get("VELLUM_STAGING_FIX"),
+        help="Rebase vellum-staging on master (only in 'master' mode). "
+             "If this option is not specified, the vellum-staging branch will "
+             "likely be left in a state that will make the next staging "
+             "deployment fail due to merge conflicts. NOTE: this will discard "
+             "any unpushed commits on the local vellum-staging branch.")
     args = parser.parse_args()
 
     vellum_dir = args.vellum_dir
@@ -52,6 +59,8 @@ def main():
         sys.exit("Please use --vellum-dir=... or set VELLUM_DIR in your environment")
     if args.no_make and args.no_test:
         sys.exit("--no-make and --no-test options are mutually exclusive. Pick one.")
+    if args.mode != "master" and args.fix_staging:
+        print("WARNING --fix-staging has no effect in {} mode".format(args.mode))
 
     try:
         if args.no_make:
@@ -76,6 +85,8 @@ def main():
             vellum_rev = build_vellum(vellum_dir, vellum_branch, not args.no_test)
 
         update_hq(hq_dir, hq_branch, args.hq_base, vellum_dir, vellum_rev, args.push)
+        if args.mode == "master" and args.fix_staging:
+            fix_staging(hq_dir, args.push)
     except sh.ErrorReturnCode as err:
         print("Aborted due to error: {}".format(err))
 
@@ -142,6 +153,22 @@ def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push):
         git.push("origin", branch, *opts)
 
     print_vellum_changes(old_vellum_rev, vellum_dir)
+
+
+def fix_staging(path, push):
+    git = get_git(path)
+    git.checkout("-B", "vellum-staging", "origin/vellum-staging")
+    code = subprocess.call([
+        "git", "rebase", "-X", "theirs", "-i", ("origin/master" if push else "master")
+    ], cwd=path)
+    if code != 0:
+        sys.exit(code)
+    if push:
+        git.push("-f", "origin", "vellum-staging")
+    else:
+        print("vellum-staging still needs to be pushed:")
+        print("  git checkout vellum-staging && git push -f origin vellum-staging")
+    git.checkout("master")
 
 
 def require_branch_up_to_date(git, branch, remote="origin", context="Your local", abort=sys.exit):

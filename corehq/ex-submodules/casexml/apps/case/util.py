@@ -5,7 +5,7 @@ from django.conf import settings
 from casexml.apps.case import const
 from casexml.apps.case.dbaccessors import get_indexed_case_ids
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
-from casexml.apps.phone.models import SyncLogAssertionError, SyncLog
+from casexml.apps.phone.models import SyncLogAssertionError, get_properly_wrapped_sync_log
 from casexml.apps.stock.models import StockReport
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
@@ -100,7 +100,7 @@ def update_sync_log_with_checks(sync_log, xform, cases, case_db,
                             ),
                             case_db=case_db
                         )
-            updated_log = SyncLog.get(sync_log._id)
+            updated_log = get_properly_wrapped_sync_log(sync_log._id)
 
             update_sync_log_with_checks(updated_log, xform, cases, case_db,
                                         case_id_blacklist=case_id_blacklist)

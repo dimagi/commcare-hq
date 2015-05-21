@@ -19,7 +19,6 @@
             $("#savedReports").reportConfigEditor({
                 filterForm: $("#reportFilters"),
                 items: {{ report_configs|JSON }},
-                initialItemID: '{{ current_config_id }}',
                 defaultItem: defaultConfig,
                 saveUrl: '{% url "add_report_config" domain %}'
             });

@@ -107,10 +107,12 @@
     {% endif %}
     <script>
         $(function () {
-            // this has to be done after bootstrap does it's magic
             setTimeout(function () {
                 // https://github.com/twitter/bootstrap/issues/6122
-                $('.collapse, .tab-content').hover(
+                // this is necessary to get popovers to be able to extend
+                // outside the borders of their containing div
+                $('.tab-content').css('overflow', 'visible');
+                $('.collapse').hover(
                         function () {
                             $(this).css('overflow','visible');
                         },

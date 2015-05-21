@@ -70,7 +70,7 @@ function LocationSettingsViewModel() {
     this.has_cycles = function() {
         var loc_type_parents = {};
         $.each(this.loc_types(), function(i, loc_type) {
-            loc_type_parents[loc_type.name()] = loc_type.parent_type();
+            loc_type_parents[loc_type.pk] = loc_type.parent_type();
         });
 
         var already_visited = function(lt, visited) {
@@ -85,7 +85,7 @@ function LocationSettingsViewModel() {
         };
         for (var i = 0; i < this.loc_types().length; i++) {
             var visited = [];
-                loc_type = this.loc_types()[i].name();
+                loc_type = this.loc_types()[i].pk;
             if (already_visited(loc_type, visited)) {
                 return true;
             }
@@ -108,10 +108,19 @@ function LocationSettingsViewModel() {
     };
 }
 
+// Make a fake pk to refer to this location type even if the name changes
+var get_fake_pk = function () {
+    var counter = 0;
+    return function() {
+        counter ++;
+        return "fake-pk-" + counter;
+    };
+}();
+
 function LocationTypeModel(data, root) {
     var name = data.name || '';
     var self = this;
-    this.pk = data.pk || null;
+    this.pk = data.pk || get_fake_pk();
     this.name = ko.observable(name);
 
     this.parent_type = ko.observable(data.parent_type);

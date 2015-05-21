@@ -217,6 +217,7 @@ def domain_admin_required_ex(redirect_page_name=None):
         redirect_page_name = getattr(settings, 'DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME', 'homepage')
 
     def _outer(view_func):
+        @login_and_domain_required
         @wraps(view_func)
         def _inner(request, domain, *args, **kwargs):
             if not hasattr(request, 'couch_user'):

@@ -3,11 +3,52 @@
 </p>
 
 <p>
-    The project space <a href="{{ domain_url }}">{{ domain }}</a> has changed its subscription from {{ old_plan }} to {{ new_plan }}, with {% if new_subscription_end_date %}an end date of {{ new_subscription_end_date }}{% else %} no end date{% endif %}.
+The project space <a href="{{ domain_url }}">{{ domain }}</a> has changed its subscription.
 </p>
 
 <p>
-    Previously, they had been on {{ old_plan }} since {{ old_subscription_start_date }}.
+{% if request %}
+Initiated by: {{ request.couch_user.username }}<br/>
+From the following web page</b>: {{ referer }}<br/>
+{% endif %}
+</p>
+
+<b>Billing Account Information</b><br/>
+<p>
+{% if billing_account %}
+Account name: {{ billing_account.name }}<br/>
+Contracted vs. Self-service: {{ billing_account.entry_type }}<br/>
+Dimagi Contact: {{ billing_account.dimagi_contact }}<br/>
+Billing Admins: {% for admin in billing_account.billing_admins.all %}{{ admin.web_user }}{% if not loop.last %}, {% endif %}{% endfor %}
+{% else %}
+Not available
+{% endif %}
+</p>
+
+<b>Previous Subscription</b>
+<p>
+{% if old_subscription %}
+Software Plan: {{ old_subscription.plan_version }}<br/>
+Start Date: {{ old_subscription.date_start }}<br/>
+End Date:{{ old_subscription.date_end }}<br/>
+Do not invoice: {{ old_subscription.do_not_invoice }}<br/>
+Auto generate credits: {{ old_subscription.auto_generate_credits }}<br/>
+{% else %}
+No previous subscription
+{% endif %}
+</p>
+
+<b>New Subscription</b><p>
+<p>
+{% if new_subscription %}
+Software Plan: {{ new_subscription.plan_version }}
+Start Date: {{ new_subscription.date_start }}
+End Date: {{ new_subscription.date_end }}
+Do not invoice: {{ new_subscription.do_not_invoice }}
+Auto generate credits: {{ new_subscription.auto_generate_credits }}
+{% else %}
+No new subscription
+{% endif %}
 </p>
 
 <p>

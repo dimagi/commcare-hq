@@ -273,7 +273,7 @@ class CaseUpdate(object):
         """
         Guess the modified date, defaulting to the current time in UTC.
         """
-        return string_to_utc_datetime(self.modified_on_str) if self.modified_on_str else datetime.utcnow()
+        return string_to_utc_datetime(self.modified_on_str) if self.modified_on_str else datetime.datetime.utcnow()
 
     def creates_case(self):
         # creates have to have actual data in them so this is fine
