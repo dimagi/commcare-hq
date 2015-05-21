@@ -62,6 +62,7 @@ submodules:
     # just so we always get latest master
     branches:
     #  - tf-persistence  # wsp 3/10
+      - use-redis+tf-persistence
       - tf-persistence  # wsp 5/7
       - use-classes # ben 5/7
       - 221-jars # wsp 5/20
