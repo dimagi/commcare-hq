@@ -949,7 +949,11 @@ class Domain(Document, SnapshotMixin):
 
         cursor = connection.cursor()
 
-        # Delete stock data
+        """
+            We use raw queries instead of ORM because Django queryset delete needs to
+            fetch objects into memory to send signals and handle cascades. It makes deletion very slow
+            if we have a millions of rows in stock data tables.
+        """
         cursor.execute(
             "DELETE FROM stock_stocktransaction "
             "WHERE report_id IN (SELECT id FROM stock_stockreport WHERE domain=%s)", [self.name]
