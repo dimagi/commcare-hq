@@ -279,7 +279,7 @@ def process_facility_warehouse_data(facility, start_date, end_date, runner):
         location_id=facility._id,
         status_date__gte=start_date,
         status_date__lt=end_date
-    ).order_by('status_date')
+    ).order_by('status_date').iterator()
     process_facility_statuses(location_id, new_statuses)
 
     new_reports = StockReport.objects.filter(
@@ -287,14 +287,14 @@ def process_facility_warehouse_data(facility, start_date, end_date, runner):
         date__gte=start_date,
         date__lt=end_date,
         stocktransaction__type='stockonhand'
-    ).order_by('date')
+    ).order_by('date').iterator()
     process_facility_product_reports(location_id, new_reports)
 
     new_trans = StockTransaction.objects.filter(
         case_id=supply_point_id,
         report__date__gte=start_date,
         report__date__lt=end_date,
-    ).exclude(type='consumption').order_by('report__date')
+    ).exclude(type='consumption').order_by('report__date').iterator()
     process_facility_transactions(location_id, new_trans)
 
     # go through all the possible values in the date ranges
