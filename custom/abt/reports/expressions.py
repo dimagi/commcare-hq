@@ -174,7 +174,7 @@ class AbtSupervisorExpressionSpec(JsonObject):
                             'names': names,
                         })
 
-                if warning_type == "q3_special" and form_value:
+                elif warning_type == "q3_special" and form_value:
                     # One of the questions doesn't follow the same format as the
                     # others, hence this special case.
                     missing_items = ""
