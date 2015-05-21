@@ -14,9 +14,7 @@ xforms/
 submissions/
 /export/
 bad/
-rapidsms-django.log*
-rapidsms.log*
-*.log
+*.log*
 CommCare.ja*
 startover.sh
 celery.db

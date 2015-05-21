@@ -25,7 +25,7 @@ def _canonical_decimal_round_tiny_exp(n):
     scientific notation, rounding them to zero
 
     """
-    exp_match = re.match(r'^\d.\d+E-(\d)$', n)
+    exp_match = re.match(r'^-?\d.\d+E-(\d)$', n)
     if exp_match:
         e = int(exp_match.group(1))
         if e < 4:
@@ -49,6 +49,10 @@ class GeoPointProperty(JsonProperty):
 
     # Test scientific notation hack
     >>> GeoPointProperty().wrap('-7.130 -41.563 7.53E-4 8.0')
+    GeoPoint(latitude=Decimal('-7.130'), longitude=Decimal('-41.563'),
+             altitude=Decimal('0'), accuracy=Decimal('8.0'))
+
+    >>> GeoPointProperty().wrap('-7.130 -41.563 -2.2709742188453674E-4 8.0')
     GeoPoint(latitude=Decimal('-7.130'), longitude=Decimal('-41.563'),
              altitude=Decimal('0'), accuracy=Decimal('8.0'))
 

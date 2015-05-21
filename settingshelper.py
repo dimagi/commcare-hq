@@ -1,3 +1,38 @@
+import os
+import tempfile
+
+
+class SharedDriveConfiguration(object):
+    def __init__(self, shared_drive_path, restore_dir, transfer_dir, temp_dir):
+        self.shared_drive_path = shared_drive_path
+        self.restore_dir_name = restore_dir
+        self.transfer_dir_name = transfer_dir
+        self.temp_dir_name = temp_dir
+
+        self._restore_dir = self._init_dir(restore_dir)
+        self.transfer_dir = self._init_dir(transfer_dir)
+        self.temp_dir = self._init_dir(temp_dir)
+
+    def _init_dir(self, name):
+        if not self.shared_drive_path or not os.path.isdir(self.shared_drive_path) or not name:
+            return None
+
+        path = os.path.join(self.shared_drive_path, name)
+        if not os.path.exists(path):
+            os.mkdir(path)
+        elif not os.path.isdir(path):
+            raise Exception('Shared folder is not a directory: {}'.format(name))
+
+        return path
+
+    @property
+    def restore_dir(self):
+        return self._restore_dir or tempfile.gettempdir()
+
+    @property
+    def transfer_enabled(self):
+        from django_transfer import is_enabled
+        return is_enabled() and self.transfer_dir
 
 
 def get_server_url(http_method, server_root, username, password):

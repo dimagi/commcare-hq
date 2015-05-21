@@ -2,14 +2,14 @@ def get_open_case_ids(owner_id):
     """
     Get all open case ids for a given owner
     """
-    return _get_case_ids(owner_id, False)
+    return _get_case_ids(owner_id, is_closed=False)
 
 
 def get_closed_case_ids(owner_id):
     """
     Get all closed case ids for a given owner
     """
-    return _get_case_ids(owner_id, True)
+    return _get_case_ids(owner_id, is_closed=True)
 
 
 def _get_case_ids(owner_id, is_closed):

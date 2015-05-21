@@ -4,6 +4,7 @@ import logging
 from tempfile import NamedTemporaryFile
 from decimal import Decimal
 from couchdbkit import ResourceNotFound
+from corehq.util.global_request import get_request
 from dimagi.ext.couchdbkit import DateTimeProperty, StringProperty, SafeSaveDocument
 
 from django.conf import settings
@@ -45,6 +46,7 @@ logger = logging.getLogger('accounting')
 integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
 
 MAX_INVOICE_COMMUNICATIONS = 5
+SMALL_INVOICE_THRESHOLD = 100
 
 
 class BillingAccountType(object):
@@ -778,6 +780,13 @@ class Subscriber(models.Model):
             )
         ):
             from corehq.apps.domain.views import DefaultProjectSettingsView
+            billing_account = (
+                new_subscription.account if new_subscription else
+                old_subscription.account if old_subscription else None
+            )
+            # this can be None, though usually this will be initiated
+            # by an http request
+            request = get_request()
             email_context = {
                 'domain': self.domain,
                 'domain_url': absolute_reverse(
@@ -786,8 +795,11 @@ class Subscriber(models.Model):
                 ),
                 'old_plan': old_subscription.plan_version if old_subscription else None,
                 'new_plan': new_subscription.plan_version if new_subscription else None,
-                'old_subscription_start_date': old_subscription.date_start if old_subscription else None,
-                'new_subscription_end_date': new_subscription.date_end if new_subscription else None,
+                'old_subscription': old_subscription,
+                'new_subscription': new_subscription,
+                'billing_account': billing_account,
+                'request': request,
+                'referer': request.META.get('HTTP_REFERER') if request else None,
             }
             send_HTML_email(
                 "Subscription Change Alert: %(domain)s from %(old_plan)s to %(new_plan)s" % email_context,
@@ -821,7 +833,7 @@ class Subscription(models.Model):
     pro_bono_status = models.CharField(
         max_length=25,
         choices=ProBonoStatus.CHOICES,
-        default=SubscriptionType.NOT_SET,
+        default=ProBonoStatus.NOT_SET,
     )
     last_modified = models.DateTimeField(auto_now=True)
 
@@ -1364,7 +1376,7 @@ class InvoiceBase(models.Model):
     is_hidden = models.BooleanField(default=False)
     tax_rate = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
     balance = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
-    date_due = models.DateField(db_index=True)
+    date_due = models.DateField(db_index=True, null=True)
     date_paid = models.DateField(blank=True, null=True)
     date_start = models.DateField()
     date_end = models.DateField()
@@ -1713,11 +1725,20 @@ class BillingRecord(BillingRecordBase):
 
     def email_context(self):
         context = super(BillingRecord, self).email_context()
+        total_balance = sum(invoice.balance for invoice in Invoice.objects.filter(
+            is_hidden=False,
+            subscription__subscriber__domain=self.invoice.get_domain(),
+        ))
+        is_small_invoice = self.invoice.balance <= SMALL_INVOICE_THRESHOLD
         context.update({
             'plan_name': "%(product)s %(name)s" % {
                 'product': self.invoice.subscription.plan_version.core_product,
                 'name': self.invoice.subscription.plan_version.plan.edition,
             },
+            'date_due': self.invoice.date_due,
+            'is_small_invoice': is_small_invoice,
+            'total_balance': total_balance,
+            'is_total_balance_due': total_balance > SMALL_INVOICE_THRESHOLD,
         })
         return context
 

@@ -9,6 +9,7 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 from casexml.apps.phone.tests.utils import synclog_id_from_restore_payload
+from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.commtrack.models import ConsumptionConfig, StockRestoreConfig, RequisitionCase, StockState
 from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import Product
@@ -51,7 +52,7 @@ class CommTrackOTATest(CommTrackTest):
 
     def test_ota_blank_balances(self):
         user = self.user
-        self.assertFalse(get_ota_balance_xml(user))
+        self.assertFalse(get_ota_balance_xml(self.domain, user))
 
     def test_ota_basic(self):
         user = self.user
@@ -65,7 +66,7 @@ class CommTrackOTATest(CommTrackTest):
                 amounts,
                 datestring=json_format_datetime(report.date),
             ),
-            get_ota_balance_xml(user)[0],
+            get_ota_balance_xml(self.domain, user)[0],
         )
 
     def test_ota_multiple_stocks(self):
@@ -79,7 +80,7 @@ class CommTrackOTATest(CommTrackTest):
         for section_id in section_ids:
             _report_soh(amounts, self.sp._id, section_id, report=report)
 
-        balance_blocks = get_ota_balance_xml(user)
+        balance_blocks = get_ota_balance_xml(self.domain, user)
         self.assertEqual(3, len(balance_blocks))
         for i, section_id in enumerate(section_ids):
             check_xml_line_by_line(
@@ -351,9 +352,16 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         for product in self.products:
             self.check_product_stock(self.sp, product._id, 100, 0)
 
+    def test_blank_product_id(self):
+        initial = float(100)
+        balances = [('', initial)]
+        with self.assertRaises(MissingProductId):
+            # todo: if we ever want to fail more gracefully we can catch this exception and change this test
+            self.submit_xml_form(balance_submission(balances))
 
 
 class BugSubmissionsTest(CommTrackSubmissionTest):
+
     def test_device_report_submissions_ignored(self):
         """
         submit a device report with a stock block and make sure it doesn't
@@ -501,7 +509,7 @@ class CommTrackSyncTest(CommTrackSubmissionTest):
 
         # get initial restore token
         restore_config = RestoreConfig(
-            domain=self.domain,
+            project=self.domain,
             user=self.casexml_user,
             params=RestoreParams(version=V2),
         )
@@ -611,9 +619,9 @@ def _report_soh(amounts, case_id, section_id='stock', report=None):
     return report
 
 
-def _get_ota_balance_blocks(domain, user):
+def _get_ota_balance_blocks(project, user):
     restore_config = RestoreConfig(
-        domain=domain,
+        project=project,
         user=user.to_casexml_user(),
         params=RestoreParams(version=V2),
     )

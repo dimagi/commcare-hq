@@ -54,16 +54,6 @@ def get_supply_point(domain, site_code=None, loc=None):
     }
 
 
-def make_product(domain, name, code, program_id):
-    p = Product()
-    p.domain = domain
-    p.name = name
-    p.code = code.lower()
-    p.program_id = program_id
-    p.save()
-    return p
-
-
 def make_program(domain, name, code, default=False):
     p = Program()
     p.domain = domain
@@ -86,27 +76,6 @@ def get_or_create_default_program(domain):
             _('uncategorized'),
             default=True
         )
-
-
-def bootstrap_location_types(domain):
-    previous = None
-    for name, administrative in [
-        ('state', True),
-        ('district', True),
-        ('block', True),
-        ('village', True),
-        ('outlet', False),
-    ]:
-        location_type, _ = LocationType.objects.get_or_create(
-            domain=domain,
-            name=name,
-            defaults={
-                'parent_type': previous,
-                'administrative': administrative,
-            },
-        )
-        previous = location_type
-
 
 
 def bootstrap_commtrack_settings_if_necessary(domain, requisitions_enabled=False):
@@ -165,11 +134,6 @@ def bootstrap_commtrack_settings_if_necessary(domain, requisitions_enabled=False
     config.save()
 
     program = get_or_create_default_program(domain.name)
-    make_product(domain.name, 'Sample Product 1', 'pp', program.get_id)
-    make_product(domain.name, 'Sample Product 2', 'pq', program.get_id)
-    make_product(domain.name, 'Sample Product 3', 'pr', program.get_id)
-
-    bootstrap_location_types(domain.name)
 
     # Enable feature flags if necessary - this is required by exchange
     # and should have no effect on changing the project settings directly

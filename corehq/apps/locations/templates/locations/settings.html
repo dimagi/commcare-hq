@@ -115,9 +115,9 @@
                             </div>
                         </td>
                         <td class="control-group">
-                            <select data-bind="options: $root.loc_types,
+                            <select data-bind="options: $root.loc_type_options($data),
                                                optionsText: 'name',
-                                               optionsValue: 'name',
+                                               optionsValue: 'pk',
                                                value: parent_type,
                                                optionsCaption: '\u2013top level\u2013'">
                             </select>

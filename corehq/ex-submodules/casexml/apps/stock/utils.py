@@ -12,7 +12,7 @@ def months_of_stock_remaining(stock, daily_consumption):
 def stock_category(stock, daily_consumption, understock, overstock):
     if stock is None:
         return 'nodata'
-    elif stock == 0:
+    elif stock <= 0:
         return 'stockout'
     elif daily_consumption is None:
         return 'nodata'

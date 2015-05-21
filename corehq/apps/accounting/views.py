@@ -606,7 +606,7 @@ class TriggerBookkeeperEmailView(AccountingSectionView):
 
 
 class TestRenewalEmailView(AccountingSectionView):
-    urlname = 'accocunting_test_renewal_email'
+    urlname = 'accounting_test_renewal_email'
     page_title = "Test Renewal Reminder Email"
     template_name = 'accounting/test_reminder_emails.html'
 

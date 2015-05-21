@@ -14,7 +14,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq import toggles, privileges
 from corehq.apps.app_manager.suite_xml import SuiteGenerator
 from corehq.apps.cloudcare.exceptions import RemoteAppError
-from corehq.apps.cloudcare.models import CaseSpec, ApplicationAccess
+from corehq.apps.cloudcare.models import ApplicationAccess
 from corehq.apps.cloudcare.touchforms_api import DELEGATION_STUB_CASE_TYPE, SessionDataHelper
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest_ex, domain_admin_required
 from corehq.apps.groups.models import Group
@@ -40,6 +40,12 @@ import HTMLParser
 from django.contrib import messages
 from django.utils.translation import ugettext as _, ugettext_noop
 from touchforms.formplayer.models import EntrySession
+from xml2json.lib import xml2json
+import requests
+from corehq.apps.reports.formdetails import readable
+from corehq.apps.reports.formdetails.readable import get_readable_form_data
+from corehq.apps.reports.templatetags.xform_tags import render_pretty_xml
+from django.shortcuts import get_object_or_404
 
 
 @require_cloudcare_access
@@ -213,32 +219,6 @@ def form_context(request, domain, app_id, module_id, form_id):
 
 cloudcare_api = login_or_digest_ex(allow_cc_users=True)
 
-@login_and_domain_required
-@requires_privilege_for_commcare_user(privileges.CLOUDCARE)
-def view_case(request, domain, case_id=None):
-    context = {}
-    case_json = CommCareCase.get(case_id).get_json() if case_id else None
-    case_type = case_json['properties']['case_type'] if case_json else None
-    case_spec_id = request.GET.get('spec')
-    if case_spec_id:
-        case_spec = CaseSpec.get(case_spec_id)
-    else:
-        case_spec = None
-        context.update(dict(
-            suggested_case_specs=CaseSpec.get_suggested(domain, case_type)
-        ))
-    context.update({
-        'case': case_json,
-        'domain': domain,
-        'case_spec': case_spec
-    })
-    return render(request, 'cloudcare/view_case.html', context)
-
-@cloudcare_api
-def get_groups(request, domain, user_id):
-    user = CouchUser.get_by_user_id(user_id, domain)
-    groups = Group.by_user(user)
-    return json_response(sorted([{'label': group.name, 'value': group.get_id} for group in groups], key=lambda x: x['label']))
 
 @cloudcare_api
 def get_cases(request, domain):
@@ -441,6 +421,53 @@ def get_ledgers(request, domain):
         },
         default=custom_json_handler,
     )
+
+
+@cloudcare_api
+def render_form(request, domain):
+    # get session
+    session_id = request.GET.get('session_id')
+
+    session = get_object_or_404(EntrySession, session_id=session_id)
+
+    response = requests.post("{base_url}/webforms/get-xml/{session_id}".format(base_url=get_url_base(),
+                                                                               session_id=session_id))
+
+    if response.status_code is not 200:
+        err = "Session XML could not be found"
+        return HttpResponse(err, status=500, content_type="text/plain")
+
+    json_response = json.loads(response.text)
+    xmlns = json_response["xmlns"]
+    form_data_xml = json_response["output"]
+
+    _, form_data_json = xml2json(form_data_xml)
+    pretty_questions = readable.get_questions(domain, session.app_id, xmlns)
+
+    readable_form = get_readable_form_data(form_data_json, pretty_questions)
+
+    rendered_readable_form = render(request, 'reports/form/partials/readable_form.html',
+                                    {'questions': readable_form})
+
+    return rendered_readable_form
+
+
+def render_xml(request, domain):
+
+    session_id = request.GET.get('session_id')
+
+    response = requests.post("{base_url}/webforms/get-xml/{session_id}".format(base_url=get_url_base(),
+                                                                               session_id=session_id))
+
+    if response.status_code is not 200:
+        err = "Session XML could not be found"
+        return HttpResponse(err, status=500, content_type="text/plain")
+
+    json_response = json.loads(response.text)
+    form_data_xml = json_response["output"]
+
+    return HttpResponse(render_pretty_xml(form_data_xml))
+
 
 
 class HttpResponseConflict(HttpResponse):

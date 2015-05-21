@@ -16,3 +16,7 @@ class NoDefaultLocationException(Exception):
 
 class MultipleSupplyPointException(Exception):
     pass
+
+
+class MissingProductId(Exception):
+    pass

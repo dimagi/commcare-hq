@@ -553,7 +553,7 @@ class SubscriptionForm(forms.Form):
             if (
                 not self.cleaned_data['do_not_invoice']
                 and (
-                    not account.billingcontactinfo
+                    not BillingContactInfo.objects.filter(account=account).exists()
                     or not account.billingcontactinfo.emails
                 )
             ):

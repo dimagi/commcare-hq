@@ -58,27 +58,37 @@ class MotherRegistrationDetails(BaseSqlData):
             ])
         else:
             columns.extend([
-                DatabaseColumn("Mother cases open at end of time period",
-                    CountUniqueColumn('doc_id',
-                        alias="opened",
-                        filters=self.filters + [AND([LTE('opened_on', "stred"), OR([EQ('closed_on', 'empty'), GT('closed_on', "stred")])])]
+                DatabaseColumn(
+                    "Mother cases open at end of period", CountUniqueColumn(
+                        'doc_id', alias="opened",
+                        filters=self.filters + [AND([LTE('opened_on', "stred"), OR([EQ('closed_on', 'empty'),
+                                                                                    GT('closed_on', "stred")])])]
                     )
                 ),
-                DatabaseColumn("Mother cases closed during the time period",
-                    CountUniqueColumn('doc_id',
-                        alias="closed",
+                DatabaseColumn(
+                    "Mother cases closed during period", CountUniqueColumn(
+                        'doc_id', alias="closed",
                         filters=self.filters + [AND([GTE('closed_on', "strsd"), LTE('closed_on', "stred")])]
                     )
                 ),
-                DatabaseColumn("Total mothers followed during the time period",
-                    CountUniqueColumn('doc_id',
-                        alias="followed",
-                        filters=self.filters + [AND([LTE('opened_on', "stred"), OR([EQ('closed_on', 'empty'), GTE('closed_on', "strsd")])])]
+                DatabaseColumn(
+                    "Total mothers followed during period", CountUniqueColumn(
+                        'doc_id', alias="followed",
+                        filters=self.filters + [AND([LTE('opened_on', "stred"), OR([EQ('closed_on', 'empty'),
+                                                                                    GTE('closed_on', "strsd")])])]
                     )
                 ),
-                DatabaseColumn("New registrations during time period",
-                    CountUniqueColumn('doc_id',
-                        alias="new_registrations",
+                DatabaseColumn(
+                    "Total pregnant", CountUniqueColumn(
+                        'doc_id', alias="total_pregnant",
+                        filters=self.filters + [AND([LTE('opened_on', "stred"),
+                                                     OR([EQ('closed_on', 'empty'), GTE('closed_on', "strsd")]),
+                                                     EQ('mother_state', 'pregnant_mother_type')])]
+                    )
+                ),
+                DatabaseColumn(
+                    "New registrations during time period", CountUniqueColumn(
+                        'doc_id', alias="new_registrations",
                         filters=self.filters + [AND([LTE('opened_on', "stred"), GTE('opened_on', "strsd")])]
                     )
                 )
@@ -92,6 +102,7 @@ class ClosedMotherCasesBreakdown(BaseSqlData):
     title = 'Closed Mother Cases Breakdown'
     show_total = True
     total_row_name = "Mother cases closed during the time period"
+    chart_title = 'Closed Maternal Cases'
     show_charts = True
     chart_x_label = ''
     chart_y_label = ''
@@ -131,6 +142,7 @@ class PregnantMotherBreakdownByTrimester(BaseSqlData):
     table_name = "fluff_WorldVisionMotherFluff"
     slug = 'pregnant_mother_by_trimester'
     title = 'Pregnant Woman Breakdown by Trimester'
+    chart_title = 'Pregnant Mother Visits'
     show_total = True
     total_row_name = "Total pregnant "
     show_charts = True
@@ -229,13 +241,13 @@ class AnteNatalCareServiceOverviewExtended(AnteNatalCareServiceOverview):
                                                     filters=self.filters + [EQ('tt_2', 'yes')])),
             DatabaseColumn("TT Booster", CountUniqueColumn('doc_id', alias="tt_booster",
                                                            filters=self.filters + [EQ('tt_booster', 'yes')])),
-            DatabaseColumn("TT Completed (TT2 or Booster)",
+            DatabaseColumn("TT Complete",
                            CountUniqueColumn('doc_id', alias="tt_completed",
                                              filters=self.filters + [OR([EQ('tt_2', 'yes'),
                                                                          EQ('tt_booster', 'yes')])])),
-            DatabaseColumn("IFA tablets", CountUniqueColumn('doc_id', alias="ifa_tablets",
-                                                            filters=self.filters + [EQ('iron_folic', 'yes')])),
-            DatabaseColumn("Completed 100 IFA tablets",
+            DatabaseColumn("IFA received", CountUniqueColumn('doc_id', alias="ifa_tablets",
+                                                             filters=self.filters + [EQ('iron_folic', 'yes')])),
+            DatabaseColumn("100 IFA consumed",
                            CountUniqueColumn('doc_id', alias="100_tablets",
                                              filters=self.filters[1:-1] + [AND([EQ('completed_100_ifa', 'yes'),
                                                                                 GTE('delivery_date', 'strsd'),
@@ -325,6 +337,7 @@ class DeliveryLiveBirthDetails(BaseSqlData):
     chart_y_label = ''
     show_total = True
     total_row_name = "Total live births"
+    chart_title = 'Live Births'
     accordion_start = False
     accordion_end = False
     chart_only = True
@@ -413,6 +426,7 @@ class PostnatalCareOverview(BaseSqlData):
     slug = 'postnatal_care_overview'
     title = 'Postnatal Care Overview'
     show_charts = True
+    chart_title = 'PNC Visits'
     chart_x_label = ''
     chart_y_label = ''
     accordion_end = False
@@ -450,19 +464,19 @@ class PostnatalCareOverview(BaseSqlData):
     def columns(self):
         return [
             DatabaseColumn(
-                "PNC visits in 48 hours of delivery",
+                "PNC in 48 hours",
                 CountUniqueColumn('doc_id', alias="pnc_1", filters=self.filters + [EQ('pp_1_done', 'yes')]),
             ),
             DatabaseColumn(
-                "PNC visits within 2-4 days of delivery",
+                "PNC in 2-4 days",
                 CountUniqueColumn('doc_id', alias="pnc_2", filters=self.filters + [EQ('pp_2_done', 'yes')]),
             ),
             DatabaseColumn(
-                "PNC visits within 5-7 days of delivery",
+                "PNC in 5-7",
                 CountUniqueColumn('doc_id', alias="pnc_3", filters=self.filters + [EQ('pp_3_done', 'yes')]),
             ),
             DatabaseColumn(
-                "PNC visits within 21-42 days of delivery",
+                "PNC in 21-42 days",
                 CountUniqueColumn('doc_id', alias="pnc_4", filters=self.filters + [EQ('pp_4_done', 'yes')]),
             ),
             DatabaseColumn(
@@ -495,6 +509,7 @@ class CauseOfMaternalDeaths(BaseSqlData):
     show_charts = True
     chart_x_label = ''
     chart_y_label = ''
+    chart_title = 'Mother Deaths'
     table_only = True
 
     @property
@@ -518,7 +533,8 @@ class CauseOfMaternalDeaths(BaseSqlData):
 
     @property
     def headers(self):
-        return DataTablesHeader(*[DataTablesColumn('Reason'), DataTablesColumn('Number'), DataTablesColumn('Percentage')])
+        return DataTablesHeader(*[DataTablesColumn('Maternal Death'), DataTablesColumn('Number'),
+                                  DataTablesColumn('Percentage')])
 
     @property
     def columns(self):
@@ -535,6 +551,7 @@ class FamilyPlanningMethods(BaseSqlData):
     show_total = True
     total_row_name = "Total Families who reported using Family Planning"
     show_charts = True
+    chart_title = 'Family Planning Methods'
     chart_x_label = ''
     chart_y_label = ''
 
@@ -567,6 +584,7 @@ class FamilyPlanningMethods(BaseSqlData):
 
 class DeliveryPlaceDetailsExtended(DeliveryPlaceDetails):
     show_charts = True
+    chart_title = 'Delivery Place'
     chart_x_label = ''
     chart_y_label = ''
     slug = 'delivery_place_details_extended'
@@ -594,6 +612,7 @@ class DeliveryPlaceMotherDetails(DeliveryPlaceDetails):
     show_charts = True
     chart_x_label = ''
     chart_y_label = ''
+    chart_title = 'Delivery Place Mother'
     slug = 'delivery_place_mother_details'
     accordion_start = False
     accordion_end = False
@@ -628,6 +647,7 @@ class NumberOfPNCVisits(BaseSqlData):
     show_total = True
     total_row_name = "Total mothers who delivered more than 42 days ago"
     show_charts = True
+    chart_title = 'PNC Visits'
     chart_x_label = ''
     chart_y_label = ''
     accordion_start = False
