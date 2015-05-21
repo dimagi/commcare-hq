@@ -1447,8 +1447,9 @@ class HealthMapSource(HealthStatusReport):
 class HealthMapReport(BaseMixin, ElasticSearchMapReport, GetParamsMixin, CustomProjectReport):
     name = "Health Status (Map)"
     slug = "health_status_map"
-
     fields = [HierarchyFilter, OpenCloseFilter, DatespanFilter]
+    report_partial_path = 'opm/map_template.html'
+    printable = True
 
     data_source = {
         'adapter': 'legacyreport',
@@ -1553,3 +1554,21 @@ class HealthMapReport(BaseMixin, ElasticSearchMapReport, GetParamsMixin, CustomP
             DataTablesColumn(name=name, sortable=False) for name in columns]
         )
         return headers
+
+    @property
+    @request_cache()
+    def print_response(self):
+        """
+        Returns the report for printing.
+        """
+        self.is_rendered_as_email = True
+        self.use_datatables = False
+        self.update_report_context()
+        self.pagination.count = 1000000
+        self.context['report_table'].update(
+            rows=self.rows
+        )
+        rendered_report = render_to_string(self.template_report, self.context,
+            context_instance=RequestContext(self.request)
+        )
+        return HttpResponse(rendered_report)
