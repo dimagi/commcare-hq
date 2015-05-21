@@ -2,7 +2,8 @@ import hashlib
 from sqlagg import SumWhen
 import sqlalchemy
 from django.conf import settings
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, ProgrammingError
+from corehq.apps.userreports.exceptions import TableRebuildError
 from corehq.db import Session
 from corehq.apps.reports.sqlreport import DatabaseColumn
 from dimagi.utils.decorators.memoized import memoized
@@ -37,7 +38,10 @@ class IndicatorSqlAdapter(object):
         return get_indicator_table(self.config)
 
     def rebuild_table(self):
-        rebuild_table(self.engine, self.get_table())
+        try:
+            rebuild_table(self.engine, self.get_table())
+        except ProgrammingError, e:
+            raise TableRebuildError('problem rebuilding UCR table {}: {}'.format(self.config, e))
 
     def drop_table(self):
         with self.engine.begin() as connection:
