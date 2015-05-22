@@ -193,9 +193,16 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
             username_controls.append(hqcrispy.StaticField(
                 _('Username'), self.username)
             )
-
         api_key_controls = [
-            hqcrispy.StaticField(_('API Key'), self.get_or_create_api_key())
+            hqcrispy.StaticField(_('API Key'), self.api_key),
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    _('Generate API Key'),
+                    type="button",
+                    id='generate-api-key',
+                ),
+                css_class="form-group"
+            ),
         ]
 
         self.fields['language'].label = _("My Language")
