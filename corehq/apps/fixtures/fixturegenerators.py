@@ -2,8 +2,7 @@ from collections import defaultdict
 from xml.etree import ElementTree
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.products.models import SQLProduct
-from corehq.apps.products.fixtures import PRODUCT_FIELDS
+from corehq.apps.products.fixtures import product_fixture_generator_json
 
 
 def item_lists_by_domain(domain):
@@ -21,18 +20,9 @@ def item_lists_by_domain(domain):
                 } for f in data_type.fields},
         })
 
-    if SQLProduct.objects.filter(domain=domain).count() > 1:
-        ret.append({
-            'sourceUri': 'jr://fixture/commtrack:products',
-            'defaultId': 'products',
-            'initialQuery': "instance('products')/products/product",
-            'name': 'Products',
-            'structure': {
-                f: {
-                    'name': f,
-                    'no_option': True
-                } for f in PRODUCT_FIELDS},
-        })
+    products = product_fixture_generator_json(domain)
+    if products:
+        ret.append(products)
     return ret
 
 
