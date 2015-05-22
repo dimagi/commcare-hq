@@ -22,7 +22,6 @@
         $('#generate-api-key').click(function() {
             $.post('{% url 'new_api_key' %}', '', function(data) {
                 $('#api-key').text(data);
-                return false;
             });
         });
     </script>
