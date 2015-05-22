@@ -57,7 +57,6 @@ branches:
   - form-context-simple # Ben 5/13
   - langMedia+fix-time-ago-sort # daniel 5/21
   - langMedia # Sravan 5/20
-  - lwyszomi:changes-in-domain-delete
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
