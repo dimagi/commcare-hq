@@ -21,7 +21,7 @@ class LocationFixturesTest(SimpleTestCase):
                       'in_westeros': "false"},
         )
         location_db = _location_footprint([location])
-        fixture = _location_to_fixture(location_db, location, id)
+        fixture = _location_to_fixture(location_db, location)
         location_data = {
             e.tag: e.text for e in fixture.find('location_data')
         }

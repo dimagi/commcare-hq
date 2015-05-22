@@ -1,6 +1,5 @@
 from collections import defaultdict
 from xml.etree.ElementTree import Element
-from corehq.apps.commtrack.util import unicode_slug
 from corehq.apps.locations.models import SQLLocation
 from corehq import toggles
 
@@ -83,18 +82,14 @@ def location_fixture_generator(user, version, last_sync=None):
                    {'id': 'commtrack:locations',
                     'user_id': user.user_id})
 
-    loc_types = user.project.location_types
-    type_to_slug_mapping = dict((ltype.name, ltype.code) for ltype in loc_types)
-
-    def location_type_lookup(location_type):
-        return type_to_slug_mapping.get(location_type, unicode_slug(location_type))
-
-    root_locations = filter(lambda loc: loc.parent is None, location_db.by_id.values())
+    root_locations = filter(
+        lambda loc: loc.parent is None, location_db.by_id.values()
+    )
 
     if not root_locations:
         return []
     else:
-        _append_children(root, location_db, root_locations, location_type_lookup)
+        _append_children(root, location_db, root_locations)
         return [root]
 
 
@@ -129,11 +124,11 @@ def _location_footprint(locations):
     return all_locs
 
 
-def _append_children(node, location_db, locations, type_lookup_function):
+def _append_children(node, location_db, locations):
     by_type = _group_by_type(locations)
     for type, locs in by_type.items():
         locs = sorted(locs, key=lambda loc: loc.name)
-        node.append(_types_to_fixture(location_db, type, locs, type_lookup_function))
+        node.append(_types_to_fixture(location_db, type, locs))
 
 
 def _group_by_type(locations):
@@ -142,14 +137,14 @@ def _group_by_type(locations):
         # TODO we could save a bunch of work by removing everything
         # that used to assume we couldn't get a real location type
         # object easily
-        by_type[loc.location_type.name].append(loc)
+        by_type[loc.location_type].append(loc)
     return by_type
 
 
-def _types_to_fixture(location_db, type, locs, type_lookup_function):
-    type_node = Element('%ss' % type_lookup_function(type))  # hacky pluralization
+def _types_to_fixture(location_db, type, locs):
+    type_node = Element('%ss' % type.code)  # hacky pluralization
     for loc in locs:
-        type_node.append(_location_to_fixture(location_db, loc, type_lookup_function))
+        type_node.append(_location_to_fixture(location_db, loc))
     return type_node
 
 
@@ -162,8 +157,8 @@ def _get_metadata_node(location):
     return node
 
 
-def _location_to_fixture(location_db, location, type_lookup_function):
-    root = Element(type_lookup_function(location.location_type.name), {'id': location.location_id})
+def _location_to_fixture(location_db, location):
+    root = Element(location.location_type.code, {'id': location.location_id})
     fixture_fields = [
         'name',
         'site_code',
@@ -179,5 +174,5 @@ def _location_to_fixture(location_db, location, type_lookup_function):
         root.append(field_node)
 
     root.append(_get_metadata_node(location))
-    _append_children(root, location_db, location_db.by_parent[location.location_id], type_lookup_function)
+    _append_children(root, location_db, location_db.by_parent[location.location_id])
     return root
