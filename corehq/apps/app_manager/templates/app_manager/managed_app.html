@@ -128,6 +128,7 @@
             gaTrackLink($('#edit_label'), 'App Builder', 'Open Form', 'Edit Label');
             {% for module in app.get_modules %}
                 {% for form in module.get_forms %}
+                    gaTrackLink($('#view_form_{{ module.id }}_{{ form.id }}_sidebar'), 'App Builder', 'View Form', 'Sidebar');
                     gaTrackLink($('#edit_pen_{{ module.id }}_{{ form.id }}'), 'App Builder', 'Open Form', 'Edit Pen');
                 {% endfor %}
             {% endfor %}
@@ -243,7 +244,7 @@
                                 {% for form in module.get_forms %}
                                     <li class="edit-form-li{% ifequal form selected_form %} active{% endifequal %}" data-moduleid="{{ module.id }}" data-index="{{ form.id }}">
                                         <!--[F]-->
-                                        <a href="{% url "view_form" domain app.id module.id form.id %}">
+                                        <a id="view_form_{{ module.id }}_{{ form.id }}_sidebar" href="{% url "view_form" domain app.id module.id form.id %}">
                                             <i class="drag_handle"></i>
                                             <span {% if form == selected_form %}class="variable-form_name"{% endif %}>
                                             {{ form.name|html_trans:langs }}
