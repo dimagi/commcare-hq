@@ -102,11 +102,11 @@ def bulk_export_async(bulk_export_helper, download_id,
 
 
 @task(queue='background_queue', ignore_result=True)
-def rebuild_export_task(groupexport_id, index, output_dir='couch', last_access_cutoff=None):
+def rebuild_export_task(groupexport_id, index, output_dir='couch', last_access_cutoff=None, filter=None):
     from couchexport.groupexports import rebuild_export
     group_config = GroupExportConfiguration.get(groupexport_id)
     config, schema = group_config.all_exports[index]
-    rebuild_export(config, schema, output_dir, last_access_cutoff)
+    rebuild_export(config, schema, output_dir, last_access_cutoff, filter=filter)
 
 
 def escape_quotes(s):

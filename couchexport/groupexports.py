@@ -28,7 +28,7 @@ def export_for_group(export_id_or_group, output_dir, last_access_cutoff=None):
             ))
 
 
-def rebuild_export(config, schema, output_dir, last_access_cutoff=None):
+def rebuild_export(config, schema, output_dir, last_access_cutoff=None, filter=None):
     if output_dir == "couch":
         saved = get_saved_export_and_delete_copies(config.index)
         if last_access_cutoff and saved and saved.last_accessed and \
@@ -37,7 +37,7 @@ def rebuild_export(config, schema, output_dir, last_access_cutoff=None):
             return
 
     try:
-        files = schema.get_export_files(format=config.format)
+        files = schema.get_export_files(format=config.format, filter=filter)
     except SchemaMismatchException:
         # fire off a delayed force update to prevent this from happening again
         rebuild_schemas.delay(config.index)
