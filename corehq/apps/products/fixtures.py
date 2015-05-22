@@ -1,17 +1,18 @@
 from corehq.apps.products.models import Product
 from corehq.apps.commtrack.fixtures import _simple_fixture_generator
 
+PRODUCT_FIELDS = [
+    'name',
+    'unit',
+    'code',
+    'description',
+    'category',
+    'program_id',
+    'cost',
+    'product_data'
+]
+
 
 def product_fixture_generator(user, version, last_sync=None):
-    fields = [
-        'name',
-        'unit',
-        'code',
-        'description',
-        'category',
-        'program_id',
-        'cost',
-        'product_data'
-    ]
     data_fn = lambda: Product.by_domain(user.domain, include_archived=True)
-    return _simple_fixture_generator(user, "product", fields, data_fn, last_sync)
+    return _simple_fixture_generator(user, "product", PRODUCT_FIELDS, data_fn, last_sync)
