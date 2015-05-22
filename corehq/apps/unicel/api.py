@@ -21,7 +21,7 @@ class InboundParams(object):
     MESSAGE = "msg"
     TIMESTAMP = "stime"
     UDHI = "UDHI"
-    DCS = "dcs"
+
 
 class OutboundParams(object):
     """

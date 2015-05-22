@@ -25,7 +25,6 @@ class IncomingPostTest(TestCase):
             self.couch_user = WebUser.get_by_username(self.user)
         self.couch_user.add_phone_number(self.number)
         self.couch_user.save()
-        self.dcs = '8'
         self.message_ascii = 'It Works'
         self.message_utf_hex = '0939093F0928094D092609400020091509300924093E00200939094800200907093800200938092E092F00200915093E092E002009390948003F'
 
@@ -45,7 +44,6 @@ class IncomingPostTest(TestCase):
         fake_post = {InboundParams.SENDER: str(self.number),
                      InboundParams.MESSAGE: self.message_ascii,
                      InboundParams.TIMESTAMP: datetime.utcnow().strftime(DATE_FORMAT),
-                     InboundParams.DCS: self.dcs,
                      InboundParams.UDHI: '0'}
         response, log = post(fake_post)
         self.assertEqual(200, response.status_code)
@@ -59,7 +57,6 @@ class IncomingPostTest(TestCase):
         fake_post = {InboundParams.SENDER: str(self.number),
                      InboundParams.MESSAGE: self.message_utf_hex,
                      InboundParams.TIMESTAMP: datetime.utcnow().strftime(DATE_FORMAT),
-                     InboundParams.DCS: self.dcs,
                      InboundParams.UDHI: '1'}
         response, log = post(fake_post)
         self.assertEqual(200, response.status_code)
