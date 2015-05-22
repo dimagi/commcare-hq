@@ -340,6 +340,7 @@ HQ_APPS = (
     'bootstrap3_crispy',
 
     'custom.dhis2',
+    'custom.evin',
 )
 
 TEST_APPS = ()
