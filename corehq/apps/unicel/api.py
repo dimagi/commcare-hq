@@ -19,7 +19,6 @@ class InboundParams(object):
     """
     SENDER = "send"
     MESSAGE = "msg"
-    TIMESTAMP = "stime"
     UDHI = "UDHI"
     MID = "MID"
 
@@ -86,22 +85,6 @@ class UnicelBackend(SMSBackend):
 
         return data
 
-DATE_FORMAT = "%m/%d/%y %I:%M:%S %p"
-DATE_FORMAT2 = "%Y-%m-%d %H:%M:%S"
-DATE_FORMAT3 = "%Y-%m-%d%%20%H:%M:%S"
-
-
-def convert_timestamp(timestamp):
-    for format in [DATE_FORMAT, DATE_FORMAT2, DATE_FORMAT3]:
-        try:
-            actual_timestamp = datetime.strptime(timestamp, format)
-        except ValueError:
-            pass
-        else:
-            return (UserTime(actual_timestamp, pytz.timezone('Asia/Kolkata'))
-                    .server_time().done())
-    raise ValueError('could not parse unicel inbound timestamp [%s]' % timestamp)
-
 
 def create_from_request(request):
     """
@@ -110,21 +93,10 @@ def create_from_request(request):
     """
     sender = request.REQUEST[InboundParams.SENDER]
     message = request.REQUEST[InboundParams.MESSAGE]
-    timestamp = request.REQUEST.get(InboundParams.TIMESTAMP, "")
 
     if len(sender) == 10:
         # add india country code
         sender = '91' + sender
-
-    # parse date or default to current utc time
-    if timestamp:
-        try:
-            actual_timestamp = convert_timestamp(timestamp)
-        except ValueError:
-            logging.warning('could not parse unicel inbound timestamp [%s]' % timestamp)
-            actual_timestamp = None
-    else:
-        actual_timestamp = None
 
     # if the message is a unicode hex string, then the UDHI parameter is set to 1, otherwise it's 0
     is_unicode = request.REQUEST.get(InboundParams.UDHI, "") == "1"
@@ -133,7 +105,7 @@ def create_from_request(request):
 
     backend_message_id = request.REQUEST.get(InboundParams.MID, None)
 
-    log = incoming(sender, message, UnicelBackend.get_api_id(), timestamp=actual_timestamp, backend_message_id=backend_message_id)
+    log = incoming(sender, message, UnicelBackend.get_api_id(), backend_message_id=backend_message_id)
 
     return log
 
