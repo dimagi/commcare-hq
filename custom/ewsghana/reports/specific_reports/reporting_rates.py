@@ -4,11 +4,10 @@ from corehq.apps.es import UserES
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
-from corehq.apps.reports.graph_models import PieChart
 from custom.common import ALL_OPTION
 from custom.ewsghana import StockLevelsReport
 from custom.ewsghana.filters import ProductByProgramFilter
-from custom.ewsghana.reports import MultiReport, ReportingRatesData, ProductSelectionPane
+from custom.ewsghana.reports import MultiReport, ReportingRatesData, ProductSelectionPane, EWSPieChart
 from casexml.apps.stock.models import StockTransaction
 from custom.ewsghana.reports.stock_levels_report import FacilityReportData, StockLevelsLegend, FacilitySMSUsers, \
     FacilityUsers, FacilityInChargeUsers, InventoryManagementData, InputStock
@@ -65,7 +64,7 @@ class ReportingRates(ReportingRatesData):
                      color='red'),
             ]
 
-        return [PieChart('', '', chart_data, ['green', 'red'])]
+        return [EWSPieChart('', '', chart_data, ['green', 'red'])]
 
 
 class ReportingDetails(ReportingRatesData):
@@ -131,7 +130,7 @@ class ReportingDetails(ReportingRatesData):
                      color='purple'),
             ]
 
-        return [PieChart('', '', chart_data, ['green', 'purple'])]
+        return [EWSPieChart('', '', chart_data, ['green', 'purple'])]
 
 
 class SummaryReportingRates(ReportingRatesData):

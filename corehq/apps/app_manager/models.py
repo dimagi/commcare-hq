@@ -2355,7 +2355,7 @@ class AdvancedModule(ModuleBase):
                         'expected_tag': case_tag
                     })
 
-                if case_action and case_action.details_module != self.unique_id:
+                if case_action and case_action.details_module and case_action.details_module != self.unique_id:
                     errors.append({
                         'type': 'forms in case list module must use modules details',
                         'module': info,
