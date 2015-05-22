@@ -103,7 +103,7 @@ def convert_timestamp(timestamp):
     raise ValueError('could not parse unicel inbound timestamp [%s]' % timestamp)
 
 
-def create_from_request(request, delay=True):
+def create_from_request(request):
     """
     From an inbound request (representing an incoming message),
     create a message (log) object with the right fields populated.
@@ -133,7 +133,7 @@ def create_from_request(request, delay=True):
 
     backend_message_id = request.REQUEST.get(InboundParams.MID, None)
 
-    log = incoming(sender, message, UnicelBackend.get_api_id(), timestamp=actual_timestamp, delay=delay, backend_message_id=backend_message_id)
+    log = incoming(sender, message, UnicelBackend.get_api_id(), timestamp=actual_timestamp, backend_message_id=backend_message_id)
 
     return log
 
