@@ -357,6 +357,7 @@
 
 {% block breadcrumbs %}
     {{ block.super }}
+    {% include 'app_manager/partials/module_view_breadcrumbs.html' %}
     <li>
         <span class="divider">&gt;</span>
         <a class="view-form" href="{% url "view_form" domain app.id module.id form.id %}">

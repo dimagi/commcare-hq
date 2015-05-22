@@ -140,7 +140,7 @@
     {% if app %}
     <li>
         <span class="divider">&gt;</span>
-        <a href="{% url "view_module" domain app.id module.id %}">
+        <a href="{% url "view_app" domain app.id %}">
             <span class="app-manager-title variable-app_name">{{ app.name|html_name }}</span>
         </a>
     </li>
