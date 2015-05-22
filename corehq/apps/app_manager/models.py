@@ -4189,7 +4189,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @memoized
     def get_case_types(self):
-        return set(chain(*[m.get_case_types() for m in self.get_modules()]))
+        extra_types = set()
+        if is_usercase_in_use(self.domain):
+            extra_types.add(USERCASE_TYPE)
+        return set(chain(*[m.get_case_types() for m in self.get_modules()])) | extra_types
 
     def has_media(self):
         return len(self.multimedia_map) > 0
