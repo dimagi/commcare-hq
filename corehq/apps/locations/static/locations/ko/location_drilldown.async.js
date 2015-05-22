@@ -146,7 +146,7 @@ function LocationModel(data, root, depth, func, withAllOption) {
     this.name(data.name);
     this.type(data.location_type);
     this.uuid(data.uuid);
-    this.can_edit(data.can_edit);
+    this.can_edit(_.isBoolean(data.can_edit) ? data.can_edit : true);
     if (!!data.children) {
       this.set_children(data.children);
     }
@@ -197,6 +197,13 @@ function LocationModel(data, root, depth, func, withAllOption) {
 
   this.filter = function() {
       return this.name() == '_all' || root.loc_filter(this);
+  };
+
+  this.can_edit_children = function() {
+      // Are there more than one editable options?
+      return this.children().filter(function(child) {
+          return (child.name() !== '_all' && child.can_edit());
+      }).length > 1;
   };
 
   this.load(data);
