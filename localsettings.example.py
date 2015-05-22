@@ -12,9 +12,6 @@ DATABASES = {
     }
 }
 
-### Reporting database
-SQL_REPORTING_DATABASE_URL = "postgresql://%(USER)s:%(PASSWORD)s@%(HOST)s:%(PORT)s/commcarehq_reporting" % DATABASES['default']
-
 ####### Couch Config ######
 COUCH_HTTPS = False # recommended production value is True if enabling https
 COUCH_SERVER_ROOT = '127.0.0.1:5984' #6984 for https couch
