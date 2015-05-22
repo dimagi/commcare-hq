@@ -5,7 +5,7 @@ from django.conf import settings
 
 def create_and_save_xform(xml_string):
     assert getattr(settings, 'UNIT_TESTING', False)
-    xform, lock = create_xform(xml_string)
+    xform, lock = create_xform(xml_string, attachments={})
     with ReleaseOnError(lock):
         xform.save()
     return LockManager(xform.get_id, lock)
