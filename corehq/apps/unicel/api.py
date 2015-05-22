@@ -21,6 +21,7 @@ class InboundParams(object):
     MESSAGE = "msg"
     TIMESTAMP = "stime"
     UDHI = "UDHI"
+    MID = "MID"
 
 
 class OutboundParams(object):
@@ -130,7 +131,9 @@ def create_from_request(request, delay=True):
     if is_unicode:
         message = message.decode("hex").decode("utf_16_be")
 
-    log = incoming(sender, message, UnicelBackend.get_api_id(), timestamp=actual_timestamp, delay=delay)
+    backend_message_id = request.REQUEST.get(InboundParams.MID, None)
+
+    log = incoming(sender, message, UnicelBackend.get_api_id(), timestamp=actual_timestamp, delay=delay, backend_message_id=backend_message_id)
 
     return log
 

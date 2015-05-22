@@ -44,11 +44,13 @@ class IncomingPostTest(TestCase):
         fake_post = {InboundParams.SENDER: str(self.number),
                      InboundParams.MESSAGE: self.message_ascii,
                      InboundParams.TIMESTAMP: datetime.utcnow().strftime(DATE_FORMAT),
+                     InboundParams.MID: '00001',
                      InboundParams.UDHI: '0'}
         response, log = post(fake_post)
         self.assertEqual(200, response.status_code)
         self.assertEqual(self.message_ascii, log.text)
         self.assertEqual(INCOMING, log.direction)
+        self.assertEqual(log.backend_message_id, fake_post[InboundParams.MID])
         self.assertEqual((log.date + self.INDIA_TZ_OFFSET).strftime(DATE_FORMAT),
                          fake_post[InboundParams.TIMESTAMP])
 
@@ -57,12 +59,14 @@ class IncomingPostTest(TestCase):
         fake_post = {InboundParams.SENDER: str(self.number),
                      InboundParams.MESSAGE: self.message_utf_hex,
                      InboundParams.TIMESTAMP: datetime.utcnow().strftime(DATE_FORMAT),
+                     InboundParams.MID: '00002',
                      InboundParams.UDHI: '1'}
         response, log = post(fake_post)
         self.assertEqual(200, response.status_code)
         self.assertEqual(self.message_utf_hex.decode("hex").decode("utf_16_be"),
                         log.text)
         self.assertEqual(INCOMING, log.direction)
+        self.assertEqual(log.backend_message_id, fake_post[InboundParams.MID])
         self.assertEqual((log.date + self.INDIA_TZ_OFFSET).strftime(DATE_FORMAT),
                          fake_post[InboundParams.TIMESTAMP])
 
