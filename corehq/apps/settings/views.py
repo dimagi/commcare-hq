@@ -90,6 +90,7 @@ class DefaultMySettingsView(BaseMyAccountView):
 class MyAccountSettingsView(BaseMyAccountView):
     urlname = 'my_account_settings'
     page_title = ugettext_lazy("My Information")
+    api_key = None
 
     @method_decorator(check_preview_bootstrap3())
     @method_decorator(use_select2())
@@ -97,11 +98,10 @@ class MyAccountSettingsView(BaseMyAccountView):
         return super(MyAccountSettingsView, self).dispatch(request, *args, **kwargs)
 
     def get_or_create_api_key(self):
-        user = self.request.user
-        try:
-            return ApiKey.objects.get(user=user).key
-        except ApiKey.DoesNotExist:
-            return ApiKey.objects.create(user=user)
+        if not self.api_key:
+            api_key, _ = ApiKey.objects.get_or_create(user=self.request.user)
+            self.api_key = api_key.key
+        return self.api_key
 
     @property
     def template_name(self):
@@ -115,16 +115,17 @@ class MyAccountSettingsView(BaseMyAccountView):
     @memoized
     def settings_form(self):
         language_choices = langcodes.get_all_langs_for_select()
+        api_key = self.get_or_create_api_key()
         from corehq.apps.users.forms import UpdateMyAccountInfoForm
         if self.request.method == 'POST':
             form = UpdateMyAccountInfoForm(
                 self.request.POST, username=self.request.couch_user.username,
-                user=self.request.user
+                api_key=api_key
             )
         else:
             form = UpdateMyAccountInfoForm(
                 username=self.request.couch_user.username,
-                user=self.request.user
+                api_key=api_key
             )
         try:
             domain = self.request.domain
