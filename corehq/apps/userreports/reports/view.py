@@ -134,7 +134,7 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
             'datespan_filters': [{
                 'display': _('Choose a date filter...'),
                 'slug': None,
-            }] + self.spec.filters,
+            }] + self.datespan_filters,
         }
 
     @property
