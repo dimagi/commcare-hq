@@ -22,6 +22,7 @@ def product_fixture_generator_json(domain):
         return None
 
     fields = filter(lambda x: x != CUSTOM_DATA_SLUG, PRODUCT_FIELDS)
+    fields.append('@id')
 
     custom_fields = CustomDataFieldsDefinition.get_by_domain_and_type(domain, 'ProductFields')
     if custom_fields:
