@@ -13,8 +13,6 @@ from django.template.loader import get_template
 from django.template import Context
 from django_countries.countries import COUNTRIES
 
-from tastypie.models import ApiKey
-
 from corehq import toggles
 from corehq.apps.domain.forms import EditBillingAccountInfoForm
 from corehq.apps.domain.models import Domain
