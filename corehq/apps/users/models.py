@@ -558,6 +558,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
         to_user.add_domain_membership(domain, is_admin=is_admin)
         self.delete_domain_membership(domain, create_record=create_record)
 
+    @memoized
     def is_domain_admin(self, domain=None):
         if not domain:
             # hack for template
@@ -1760,10 +1761,19 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             return self.language
 
     @property
+    @memoized
     def location(self):
         from corehq.apps.locations.models import Location
         if self.location_id:
             return Location.get(self.location_id)
+        else:
+            return None
+
+    @property
+    def sql_location(self):
+        from corehq.apps.locations.models import SQLLocation
+        if self.location_id:
+            return SQLLocation.objects.get(location_id=self.location_id)
         else:
             return None
 
@@ -2261,6 +2271,7 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
     def get_location_id(self, domain):
         return getattr(self.get_domain_membership(domain), 'location_id', None)
 
+    @memoized
     def get_location(self, domain):
         from corehq.apps.locations.models import Location
         loc_id = self.get_location_id(domain)

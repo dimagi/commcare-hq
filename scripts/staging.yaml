@@ -44,6 +44,7 @@ trunk: master
 name: autostaging
 branches:
   - fix-time-ago-sort  # danny 5/15
+  - changes-in-domain-delete+process-timezone #TS 5/22
   - process-timezone  # danny 5/7
   - subscription-no-contact-info # bb 8/4
   - vellum-staging # J$ 11/13
@@ -56,6 +57,7 @@ branches:
   - form-context-simple # Ben 5/13
   - langMedia+fix-time-ago-sort # daniel 5/21
   - langMedia # Sravan 5/20
+  - lwyszomi:changes-in-domain-delete
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
