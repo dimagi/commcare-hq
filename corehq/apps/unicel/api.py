@@ -20,7 +20,7 @@ class InboundParams(object):
     SENDER = "send"
     MESSAGE = "msg"
     TIMESTAMP = "stime"
-    UDHI = "udhi"
+    UDHI = "UDHI"
     DCS = "dcs"
 
 class OutboundParams(object):
@@ -125,7 +125,7 @@ def create_from_request(request, delay=True):
     else:
         actual_timestamp = None
 
-    # not sure yet if this check is valid
+    # if the message is a unicode hex string, then the UDHI parameter is set to 1, otherwise it's 0
     is_unicode = request.REQUEST.get(InboundParams.UDHI, "") == "1"
     if is_unicode:
         message = message.decode("hex").decode("utf_16_be")
