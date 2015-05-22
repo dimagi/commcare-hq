@@ -134,9 +134,6 @@ def _append_children(node, location_db, locations):
 def _group_by_type(locations):
     by_type = defaultdict(lambda: [])
     for loc in locations:
-        # TODO we could save a bunch of work by removing everything
-        # that used to assume we couldn't get a real location type
-        # object easily
         by_type[loc.location_type].append(loc)
     return by_type
 
@@ -144,7 +141,7 @@ def _group_by_type(locations):
 def _types_to_fixture(location_db, type, locs):
     type_node = Element('%ss' % type.code)  # hacky pluralization
     for loc in locs:
-        type_node.append(_location_to_fixture(location_db, loc))
+        type_node.append(_location_to_fixture(location_db, loc, type))
     return type_node
 
 
@@ -157,8 +154,8 @@ def _get_metadata_node(location):
     return node
 
 
-def _location_to_fixture(location_db, location):
-    root = Element(location.location_type.code, {'id': location.location_id})
+def _location_to_fixture(location_db, location, type):
+    root = Element(type.code, {'id': location.location_id})
     fixture_fields = [
         'name',
         'site_code',
