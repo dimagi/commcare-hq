@@ -186,6 +186,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
         self.username = kwargs.pop('username') if 'username' in kwargs else None
         self.user = kwargs.pop('user') if 'user' in kwargs else None
         self.api_key = self.get_or_create_api_key()
+
         super(UpdateMyAccountInfoForm, self).__init__(*args, **kwargs)
 
         username_controls = []
@@ -193,6 +194,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
             username_controls.append(hqcrispy.StaticField(
                 _('Username'), self.username)
             )
+
         api_key_controls = [
             hqcrispy.StaticField(_('API Key'), self.api_key),
             hqcrispy.FormActions(
@@ -241,11 +243,6 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
     @property
     def direct_properties(self):
         return self.fields.keys()
-
-    def initialize_form(self, domain, existing_user=None):
-        if existing_user is None:
-            return
-        super(UpdateMyAccountInfoForm, self).initialize_form(domain, existing_user)
 
 
 class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):

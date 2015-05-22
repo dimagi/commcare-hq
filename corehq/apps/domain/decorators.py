@@ -110,8 +110,7 @@ def api_key(realm=''):
             if auth:
                 if isinstance(auth, HttpUnauthorized):
                     return auth
-                else:
-                    return view(request, *args, **kwargs)
+                return view(request, *args, **kwargs)
 
             response = HttpUnauthorized()
             return response
