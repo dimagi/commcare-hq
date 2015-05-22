@@ -1,4 +1,5 @@
 from django.core.urlresolvers import reverse
+from django.http import Http404
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 from couchdbkit.resource import ResourceNotFound
@@ -39,7 +40,9 @@ from corehq.apps.sms.models import (
     OUTGOING,
     SMSLog,
     MessagingEvent,
+    MessagingSubEvent,
 )
+from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.reminders.models import (SurveyKeyword,
     CaseReminderHandler)
 from corehq.apps.reminders.views import (EditStructuredKeywordView,
@@ -326,33 +329,14 @@ class MessageLogReport(BaseCommConnectLogReport):
         return result
 
 
-class MessagingEventsReport(BaseCommConnectLogReport):
-    name = ugettext_noop('Messaging Events')
-    slug = 'messaging_events'
-    fields = [
-        'corehq.apps.reports.filters.dates.DatespanFilter',
-    ]
-
-    @property
-    def headers(self):
-        header = DataTablesHeader(
-            DataTablesColumn(_('Date')),
-            DataTablesColumn(_('Content')),
-            DataTablesColumn(_('Type')),
-            DataTablesColumn(_('Recipient')),
-            DataTablesColumn(_('Status')),
-            DataTablesColumn(_('Detail')),
-        )
-        header.custom_sort = [[0, 'desc']]
-        return header
-
+class BaseMessagingEventReport(BaseCommConnectLogReport):
     def get_source_display(self, event):
         source = dict(MessagingEvent.SOURCE_CHOICES).get(event.source)
         content_type = dict(MessagingEvent.CONTENT_CHOICES).get(event.content_type)
         return '%s | %s' % (_(source), _(content_type))
 
-    def get_status_display(self, event):
-        status = dict(MessagingEvent.STATUS_CHOICES).get(event.status)
+    def get_status_display(self, status):
+        status = dict(MessagingEvent.STATUS_CHOICES).get(status)
         return _(status)
 
     def get_keyword_display(self, keyword_id, content_cache):
@@ -402,6 +386,34 @@ class MessagingEventsReport(BaseCommConnectLogReport):
         else:
             return '-'
 
+    def get_event_detail_link(self, event):
+        return '<a target="_blank" href="/a/%s/reports/message_event_detail/?id=%s">%s</a>' % (
+            self.domain,
+            event.pk,
+            _('View Details'),
+        )
+
+
+class MessagingEventsReport(BaseMessagingEventReport):
+    name = ugettext_noop('Messaging Events')
+    slug = 'messaging_events'
+    fields = [
+        'corehq.apps.reports.filters.dates.DatespanFilter',
+    ]
+
+    @property
+    def headers(self):
+        header = DataTablesHeader(
+            DataTablesColumn(_('Date')),
+            DataTablesColumn(_('Content')),
+            DataTablesColumn(_('Type')),
+            DataTablesColumn(_('Recipient')),
+            DataTablesColumn(_('Status')),
+            DataTablesColumn(_('Detail')),
+        )
+        header.custom_sort = [[0, 'desc']]
+        return header
+
     @property
     def rows(self):
         data = MessagingEvent.objects.filter(
@@ -424,8 +436,66 @@ class MessagingEventsReport(BaseCommConnectLogReport):
                 self.get_content_display(event, content_cache),
                 self.get_source_display(event),
                 self._fmt_contact_link(event.recipient_id, doc_info),
-                self.get_status_display(event),
-                '',
+                self.get_status_display(event.status),
+                self.get_event_detail_link(event),
             ])
 
+        return result
+
+
+class MessageEventDetailReport(BaseMessagingEventReport):
+    name = ugettext_noop('Message Event Detail')
+    slug = 'message_event_detail'
+    description = ugettext_noop('Displays the detail for a given messaging event.')
+    emailable = False
+    exportable = False
+    hide_filters = True
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn(_('Date')),
+            DataTablesColumn(_('Recipient')),
+            DataTablesColumn(_('Content')),
+            DataTablesColumn(_('Phone Number')),
+            DataTablesColumn(_('Gateway')),
+            DataTablesColumn(_('Status')),
+        )
+
+    def get_messaging_event(self):
+        messaging_event_id = self.request.GET.get('id', None)
+
+        try:
+            messaging_event_id = int(messaging_event_id)
+            messaging_event = MessagingEvent.objects.get(pk=messaging_event_id)
+        except (TypeError, ValueError, MessagingEvent.DoesNotExist):
+            raise Http404
+
+        if messaging_event.domain != self.domain:
+            raise Http404
+
+        return messaging_event
+
+    @property
+    def rows(self):
+        result = []
+        contact_cache = {}
+        messaging_event = self.get_messaging_event()
+        for messaging_subevent in MessagingSubEvent.objects.filter(parent=messaging_event):
+            doc_info = self.get_recipient_info(messaging_subevent.get_recipient_doc_type(),
+                messaging_subevent.recipient_id, contact_cache)
+
+            if messaging_subevent.content_type == MessagingEvent.CONTENT_SMS:
+                continue
+            elif messaging_subevent.content_type == MessagingEvent.CONTENT_SMS_SURVEY:
+                xforms_session = messaging_subevent.xforms_session
+                timestamp = ServerTime(xforms_session.start_time).user_time(self.timezone).done()
+                result.append([
+                    self._fmt_timestamp(timestamp),
+                    self._fmt_contact_link(messaging_subevent.recipient_id, doc_info),
+                    _('View Survey Details'),
+                    '-',
+                    '-',
+                    self.get_status_display(messaging_subevent.status),
+                ])
         return result

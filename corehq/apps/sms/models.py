@@ -767,14 +767,18 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             recipient_type = None
         return recipient_type
 
-    def get_recipient_doc_type(self):
+    @classmethod
+    def _get_recipient_doc_type(cls, recipient_type):
         return {
             MessagingEvent.RECIPIENT_MOBILE_WORKER: 'CommCareUser',
             MessagingEvent.RECIPIENT_WEB_USER: 'WebUser',
             MessagingEvent.RECIPIENT_CASE: 'CommCareCase',
             MessagingEvent.RECIPIENT_USER_GROUP: 'Group',
             MessagingEvent.RECIPIENT_CASE_GROUP: 'CommCareCaseGroup',
-        }.get(self.recipient_type, None)
+        }.get(recipient_type, None)
+
+    def get_recipient_doc_type(self):
+        return MessagingEvent._get_recipient_doc_type(self.recipient_type)
 
     def create_sub_event(self, reminder_definition, reminder, recipient):
         from corehq.apps.reminders.models import CASE_CRITERIA
@@ -901,3 +905,6 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
     case_id = models.CharField(max_length=255, null=True)
     status = models.CharField(max_length=3, choices=MessagingEvent.STATUS_CHOICES, null=False)
     error_code = models.CharField(max_length=255, null=True)
+
+    def get_recipient_doc_type(self):
+        return MessagingEvent._get_recipient_doc_type(self.recipient_type)
