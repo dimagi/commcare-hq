@@ -173,19 +173,10 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
         label=ugettext_noop("Opt out of emails about CommCare updates."),
     )
 
-    def get_or_create_api_key(self):
-        try:
-            return self.api_key
-        except AttributeError:
-            try:
-                return ApiKey.objects.get(user=self.user).key
-            except ApiKey.DoesNotExist:
-                return ApiKey.objects.create(user=self.user)
-
     def __init__(self, *args, **kwargs):
         self.username = kwargs.pop('username') if 'username' in kwargs else None
         self.user = kwargs.pop('user') if 'user' in kwargs else None
-        self.api_key = self.get_or_create_api_key()
+        api_key = kwargs.pop('api_key')
 
         super(UpdateMyAccountInfoForm, self).__init__(*args, **kwargs)
 
@@ -196,7 +187,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
             )
 
         api_key_controls = [
-            hqcrispy.StaticField(_('API Key'), self.api_key),
+            hqcrispy.StaticField(_('API Key'), api_key),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
                     _('Generate API Key'),
