@@ -509,12 +509,9 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     @property
     def datespan_filters(self):
         from corehq.apps.userreports.reports.view import ConfigurableReport
-        return [
-            f for f in ConfigurableReport.get_report(
-                self.domain, self.report_slug, self.subreport_slug
-            ).spec.filters
-            if f['type'] == 'date'
-        ] if self.is_configurable_report else []
+        return ConfigurableReport.get_report(
+            self.domain, self.report_slug, self.subreport_slug
+        ).datespan_filters if self.is_configurable_report else []
 
     @property
     def has_ucr_datespan(self):
