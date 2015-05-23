@@ -41,7 +41,7 @@ class DateFilterValue(FilterValue):
             'enddate': (
                 self.value.enddate
                 if not self.value.inclusive
-                else self.value.enddate + timedelta(days=1)
+                else self.value.enddate + timedelta(days=1) - timedelta.resolution
             ),
         }
 
