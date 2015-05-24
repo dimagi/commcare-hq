@@ -5,11 +5,10 @@ import time
 from django.test.client import Client
 
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqadmin.dbaccessors import get_all_forms_in_all_domains
 
 from corehq.apps.users.models import WebUser
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.tests import TEST_CASE_ID, BaseCaseMultimediaTest
+from casexml.apps.case.tests import TEST_CASE_ID, BaseCaseMultimediaTest, delete_all_cases, delete_all_xforms
 from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
 
 
@@ -36,7 +35,6 @@ def rebuild_stream(response_iter):
     return data
 
 
-
 class CaseObjectCacheTest(BaseCaseMultimediaTest):
     """
     test case object caching - for case-attachments and api access.
@@ -47,10 +45,8 @@ class CaseObjectCacheTest(BaseCaseMultimediaTest):
         self.user = WebUser.create(TEST_DOMAIN_NAME, TEST_USER, TEST_PASSWORD)
         self.user.set_role(self.domain.name, 'admin')
         self.user.save()
-        for item in CommCareCase.view("case/by_user", include_docs=True, reduce=False).all():
-            item.delete()
-        for item in get_all_forms_in_all_domains():
-            item.delete()
+        delete_all_cases()
+        delete_all_xforms()
         time.sleep(1)
 
     def tearDown(self):

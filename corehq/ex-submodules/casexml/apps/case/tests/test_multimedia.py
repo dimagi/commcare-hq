@@ -13,7 +13,7 @@ from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms, TE
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.models import SyncLog
 import couchforms
-from couchforms.models import XFormInstance, XFormDeprecated
+from couchforms.models import XFormInstance
 from dimagi.utils.parsing import json_format_datetime
 
 
@@ -131,8 +131,6 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
         delete_all_xforms()
 
     def testAttachInCreate(self):
-        self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))
-
         single_attach = 'fruity_file'
         self._doCreateCaseWithMultimedia(attachments=[single_attach])
 
@@ -143,8 +141,6 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
         self.assertEqual(self._calc_file_hash(single_attach), hashlib.md5(case.get_attachment(single_attach)).hexdigest())
 
     def testArchiveAfterAttach(self):
-        self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))
-
         single_attach = 'fruity_file'
         self._doCreateCaseWithMultimedia(attachments=[single_attach])
 

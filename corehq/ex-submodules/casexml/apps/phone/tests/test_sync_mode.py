@@ -11,7 +11,6 @@ from casexml.apps.phone.tests.utils import synclog_from_restore_payload
 from corehq.apps.domain.models import Domain
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, FILE_RESTORE
 from couchforms.tests.testutils import post_xform_to_couch
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import (check_user_has_case, delete_all_sync_logs,
     delete_all_xforms, delete_all_cases, assert_user_doesnt_have_case,
     assert_user_has_case, TEST_DOMAIN_NAME, assert_user_has_cases)
@@ -1084,7 +1083,6 @@ class MultiUserSyncTest(SyncBaseTest):
         # found this bug in the wild, used the real (test) forms to fix it
         # just running through this test used to fail hard, even though there
         # are no asserts
-        self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))
         folder_path = os.path.join("bugs", "dependent_case_conflicts")
         files = ["reg1.xml", "reg2.xml", "cf.xml", "close.xml"]
         for f in files:
