@@ -112,6 +112,35 @@
         },
 
         /**
+         * Update properties for the given user in our marketing tracking system.
+         * Creates a new user in the marketing system if one does not already exist.
+         *
+         * @param {object} properties - A dictionary of properties to set on the user.
+         */
+        marketing: function (properties) {
+            {% if HUBSPOT_KEY and request.couch_user %}
+
+            // TODO: It's rate limited!
+            // TODO: Probably can't straight up do https
+            $.ajax(
+                "https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/" +
+                    encodeURIComponent('{{ request.couch_user.username }}') +
+                    "?hapikey=" + encodeURIComponent("{{ HUBSPOT_KEY }}"),
+                {
+                    method: "POST",
+                    contentType: "application/json",
+                    data: {
+                        "properties": _.map(properties, function(val, key){
+                            return {"property": key, "value": val};
+                        })
+                    }
+                }
+            );
+            // TODO: Handle errors. Callback.
+            {% endif %}
+        },
+
+        /**
          * Track an event when the given element is clicked.
          * Uses a callback to ensure that the request to the analytics services
          * completes before the default click action happens. This is useful if

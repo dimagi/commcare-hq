@@ -139,6 +139,7 @@
         <button class="btn btn-primary" data-bind="
             click: function() {
                 analytics.track('Clicked Make New Version');
+                analytics.marketing({'built app': true});
                 return makeNewBuild();
             },
             attr: {disabled: !buildButtonEnabled() ? 'disabled' : undefined},
