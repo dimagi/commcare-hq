@@ -72,12 +72,17 @@
         },
 
         /**
-         * Track an event.
+         * Track a workflow event.
+         *
+         * This is a wrapper for an analytics backend that tracks workflow
+         * events. For example, a backend that links one event to another to
+         * track a user's progress throught the site.
+         *
          * @param {string} event - Event name
          * @param {object} [properties] - Dictionary of properties to set along with the event.
          * @param {function} [callback] - A Callback to be executed after the event has been successfully tracked.
          */
-        track: function(event, properties, callback) {
+        workflow: function(event, properties, callback) {
             if (properties === undefined){
                 properties = {};
             }
@@ -86,6 +91,24 @@
                 args.push(callback);
             }
             _kmq.push(args);
+        },
+
+        /**
+         * Track a usage event.
+         *
+         * This is a wrapper for an analytics backend that tracks site usage
+         * events. For example, a backend that aggregates how many times an
+         * event occurs over some period of time.
+         *
+         * https://developers.google.com/analytics/devguides/collection/analyticsjs/events#overview
+         *
+         * @param {string} category - required
+         * @param {string} action - required
+         * @param {string} label - optional
+         * @param {number} value - optional
+         */
+        usage: function () {
+            ga_track_event.apply(null, arguments);
         },
 
         /**
@@ -105,6 +128,9 @@
             trackLinkHelper(element, function (cb) {self.track(event, properties, cb);});
         }
     };
+
+    // DEPRECATED
+    window.analytics.track = window.analytics.workflow;
 
     {% if request.couch_user %}
         analytics.identify(
