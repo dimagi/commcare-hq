@@ -12,7 +12,7 @@
         gaTrackLink($helpLink, 'Dashboard', 'Welcome Tile', 'help');
         gaTrackLink($newAppLink, 'Dashboard', 'Welcome Tile', 'app');
 
-        analytics.track('Visited new user dashboard');
+        analytics.workflow('Visited new user dashboard');
         analytics.trackWorkflowLink($appstoreLink, 'Clicked Exchange in new user dashboard');
         analytics.trackWorkflowLink($helpLink, "Clicked Help Site in new user dashboard");
         analytics.trackWorkflowLink($newAppLink, "Clicked Applications in new user dashboard");
