@@ -104,12 +104,12 @@
          * @param {string} event - The name of the event
          * @param {object} [properties] - Dictionary of properties to set along with the event.
          */
-        trackLink: function(element, event, properties) {
+        trackWorkflowLink: function(element, event, properties) {
             var self = this;
             if (properties === undefined){
                 properties = {};
             }
-            trackLinkHelper(element, function (cb) {self.track(event, properties, cb);});
+            trackLinkHelper(element, function (cb) {self.workflow(event, properties, cb);});
         }
     };
 

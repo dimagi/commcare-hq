@@ -13,9 +13,9 @@
         gaTrackLink($newAppLink, 'Dashboard', 'Welcome Tile', 'app');
 
         analytics.track('Visited new user dashboard');
-        analytics.trackLink($appstoreLink, 'Clicked Exchange in new user dashboard');
-        analytics.trackLink($helpLink, "Clicked Help Site in new user dashboard");
-        analytics.trackLink($newAppLink, "Clicked Applications in new user dashboard");
+        analytics.trackWorkflowLink($appstoreLink, 'Clicked Exchange in new user dashboard');
+        analytics.trackWorkflowLink($helpLink, "Clicked Help Site in new user dashboard");
+        analytics.trackWorkflowLink($newAppLink, "Clicked Applications in new user dashboard");
 
     });
 </script>
