@@ -218,7 +218,9 @@ class SMSLog(SyncCouchToSQLMixin, MessageLog):
     # True if this was an inbound message that was an
     # invalid response to a survey question
     invalid_survey_response = BooleanProperty(default=False)
-    
+
+    messaging_subevent_id = IntegerProperty()
+
     @property
     def outbound_backend(self):
         """appropriate outbound sms backend"""
@@ -312,6 +314,10 @@ class SMS(SyncSQLToCouchMixin, models.Model):
     reminder_id = models.CharField(max_length=126, null=True)
     location_id = models.CharField(max_length=126, null=True)
 
+    # The MessagingSubEvent that this SMS is tied to. Only applies to
+    # SMS that are not part of a survey (i.e., xforms_session_couch_id is None)
+    messaging_subevent = models.ForeignKey('MessagingSubEvent', null=True, on_delete=models.PROTECT)
+
     """ Custom properties. For the initial migration, it makes it easier
     to put these here. Eventually they should be moved to a separate table. """
     fri_message_bank_lookup_completed = models.NullBooleanField(default=False)
@@ -342,6 +348,7 @@ class SMS(SyncSQLToCouchMixin, models.Model):
             'ignore_opt_out',
             'invalid_survey_response',
             'location_id',
+            'messaging_subevent_id',
             'num_processing_attempts',
             'phone_number',
             'processed',
