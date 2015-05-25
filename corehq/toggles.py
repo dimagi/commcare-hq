@@ -190,12 +190,6 @@ IS_DEVELOPER = StaticToggle(
     TAG_EXPERIMENTAL
 )
 
-PATHWAYS_PREVIEW = StaticToggle(
-    'pathways_preview',
-    'Is Pathways preview',
-    TAG_ONE_OFF
-)
-
 MM_CASE_PROPERTIES = StaticToggle(
     'mm_case_properties',
     'Multimedia Case Properties',
