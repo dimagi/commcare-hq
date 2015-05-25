@@ -130,7 +130,6 @@ ANALYTICS_IDS = {
     'PINGDOM_ID': '*****',
     'ANALYTICS_ID_PUBLIC_COMMCARE': '*****',
     'KISSMETRICS_KEY': '*****',
-    'HUBSPOT_API_KEY': '*****'
 }
 
 ANALYTICS_CONFIG = {
