@@ -2347,7 +2347,6 @@ def save_copy(request, domain, app_id):
     See VersionedDoc.save_copy
 
     """
-    # TODO: Is this only called when making a new build?
     track_built_app_on_hubspot.delay(request.user.username)
     comment = request.POST.get('comment')
     app = get_app(domain, app_id)
