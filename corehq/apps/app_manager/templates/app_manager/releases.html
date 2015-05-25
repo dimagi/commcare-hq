@@ -58,7 +58,7 @@
         el.show();
     });
 
-    analytics.track('Visited the Release Manager');
+    analytics.workflow('Visited the Release Manager');
 </script>
 <script>
     function track_deploy_type(type) {
@@ -138,7 +138,7 @@
         </div>
         <button class="btn btn-primary" data-bind="
             click: function() {
-                analytics.track('Clicked Make New Version');
+                analytics.workflow('Clicked Make New Version');
                 return makeNewBuild();
             },
             attr: {disabled: !buildButtonEnabled() ? 'disabled' : undefined},
@@ -216,7 +216,7 @@
                                 click: function() {
                                     generate_short_url('short_odk_url');
                                     ga_track_event('App Manager', 'Deploy Button', '{{ app.id }}');
-                                    analytics.track('Clicked Deploy');
+                                    analytics.workflow('Clicked Deploy');
                                 }
                             ">
                                 <span class="icon icon-exclamation-sign" data-bind="visible: build_broken"></span>
@@ -387,7 +387,11 @@
                                                     <ol>
                                                         <li>
                                                             {% trans "Download" %}
-                                                            <a data-bind="attr: {href: $root.url('ccz', id)}">CommCare.ccz</a>
+                                                            <a href="#" data-bind="click: function () {
+                                                                download_application_zip('{% url "download_ccz" app.domain '_____' %}');
+                                                            }">
+                                                                CommCare.ccz
+                                                            </a>
                                                         </li>
                                                         <li>
                                                             {% trans "Transfer it to your Android phone's file system" %}
@@ -510,7 +514,7 @@
                             </div>
                             <div class="accordion-body collapse" data-bind="attr: {id: id() + '_multimedia'}">
                                 <div class="accordion-inner">
-                                    {% include 'hqmedia/partials/multimedia_zip_notice.html' %}
+                                    {% include 'hqmedia/partials/multimedia_zip_notice.html' with include_modal=False %}
                                 </div>
                             </div>
                         </div>
@@ -533,4 +537,8 @@
             </div>
         </script>
     </div>
+
+<!-- Async Download Modals -->
+<script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
+{% include 'app_manager/partials/download_async_modal.html' with element_id='download-zip-modal' include_js=False%}
 {% endblock %}

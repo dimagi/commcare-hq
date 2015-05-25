@@ -358,6 +358,13 @@ VELLUM_SAVE_TO_CASE = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+VELLUM_ADVANCED_ITEMSETS = StaticToggle(
+    'advanced_itemsets',
+    "Allows a user to configure itemsets for more than lookup tables",
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
+
 CACHE_AND_INDEX = StaticToggle(
     'cache_and_index',
     'Enable the "Cache and Index" format option when choosing sort properties '
@@ -449,6 +456,13 @@ MOBILE_UCR = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+RESTRICT_WEB_USERS_BY_LOCATION = StaticToggle(
+    'restrict_web_users_by_location',
+    "Allow project to restrict web user permissions by location",
+    TAG_PRODUCT_CORE,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 FM_FACING_SUBSCRIPTIONS = StaticToggle(
     'fm_facing_subscriptions',
     'FM Facing Subscription Management Interface',
@@ -458,6 +472,13 @@ FM_FACING_SUBSCRIPTIONS = StaticToggle(
 API_THROTTLE_WHITELIST = StaticToggle(
     'api_throttle_whitelist',
     ('API throttle whitelist'),
+    TAG_EXPERIMENTAL,
+    namespaces=[NAMESPACE_USER],
+)
+
+INSTANCE_VIEWER = StaticToggle(
+    'instance_viewer',
+    'View curent instance when using Touchforms',
     TAG_EXPERIMENTAL,
     namespaces=[NAMESPACE_USER],
 )

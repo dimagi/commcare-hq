@@ -6,6 +6,10 @@ $(function() {
 
     model.load(settings);
     ko.applyBindings(model, $('#settings').get(0));
+
+    $("form#settings").on("change input", function() {
+        $(this).find(":submit").enable();
+    });
 });
 
 
@@ -20,6 +24,12 @@ function LocationSettingsViewModel() {
         this.loc_types($.map(data.loc_types, function(e) {
             return new LocationTypeModel(e);
         }));
+    };
+
+    this.loc_type_options = function(loc_type) {
+        return this.loc_types().filter(function(type) {
+            return type.name !== loc_type.name;
+        });
     };
 
     var settings = this;

@@ -22,10 +22,11 @@ Set up form forwarding as follows:
 from datetime import date
 import json
 import logging
+from casexml.apps.case.xform import cases_referenced_by_xform
 from corehq.apps.receiverwrapper.exceptions import IgnoreDocument
 from corehq.apps.receiverwrapper.models import RegisterGenerator, FormRepeater
 from corehq.apps.receiverwrapper.repeater_generators import BasePayloadGenerator
-from custom.dhis2.models import Dhis2Api, json_serializer, Dhis2Settings, Dhis2IntegrationError
+from custom.dhis2.models import Dhis2Api, json_serializer, Dhis2Settings
 from custom.dhis2.const import NUTRITION_ASSESSMENT_EVENT_FIELDS, RISK_ASSESSMENT_EVENT_FIELDS, \
     RISK_ASSESSMENT_PROGRAM_FIELDS, REGISTER_CHILD_XMLNS, GROWTH_MONITORING_XMLNS, RISK_ASSESSMENT_XMLNS, \
     NUTRITION_ASSESSMENT_PROGRAM_FIELDS, CASE_TYPE
@@ -61,13 +62,12 @@ class FormRepeaterDhis2EventPayloadGenerator(BasePayloadGenerator):
             # This is not a form we care about
             raise IgnoreDocument
 
-        from casexml.apps.case.models import CommCareCase
 
         settings = Dhis2Settings.for_domain(form['domain'])
         dhis2_api = Dhis2Api(settings.dhis2['host'], settings.dhis2['username'], settings.dhis2['password'],
                              settings.dhis2['top_org_unit_name'])
-        cases = CommCareCase.get_by_xform_id(form.get_id)
-        case = next(c for c in cases.iterator() if c.type == CASE_TYPE)
+        cases = cases_referenced_by_xform(form)
+        case = next(c for c in cases if c.type == CASE_TYPE)
         event = None
 
         if form['xmlns'] == REGISTER_CHILD_XMLNS:

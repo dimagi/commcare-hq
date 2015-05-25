@@ -1,3 +1,4 @@
+from casexml.apps.case.xform import cases_referenced_by_xform
 from couchforms.models import XFormInstance
 import fluff
 from corehq.fluff.calculators import xform as xcalculators
@@ -84,7 +85,11 @@ class CareSAForm(XFormInstance):
     @property
     @memoized
     def care_case(self):
-        return CommCareCase.get_by_xform_id(self._id).first()
+        try:
+            return cases_referenced_by_xform(self)[0]
+        except IndexError:
+            return None
+
 
 class CareSAFluff(fluff.IndicatorDocument):
     document_class = XFormInstance

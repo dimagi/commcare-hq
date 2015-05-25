@@ -32,6 +32,7 @@ from django.template.loader import render_to_string
 from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django_digest.decorators import httpdigest
+from no_exceptions.exceptions import Http403
 
 from dimagi.utils.web import json_response
 
@@ -943,6 +944,8 @@ def audit_logs(request, domain):
 @domain_admin_required
 @require_POST
 def location_restriction_for_users(request, domain):
+    if not toggles.RESTRICT_WEB_USERS_BY_LOCATION.enabled(request.domain):
+        raise Http403()
     project = Domain.get_by_name(domain)
     if "restrict_users" in request.POST:
         project.location_restriction_for_users = json.loads(request.POST["restrict_users"])
