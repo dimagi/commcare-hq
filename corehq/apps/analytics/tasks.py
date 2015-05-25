@@ -15,6 +15,7 @@ def _track_on_hubspot(email, properties):
     Note that property names must exist on hubspot prior to use.
     """
     # TODO: Use OAuth
+    # TODO: Use batch requests / don't violate rate limit
     req = requests.post(
         "https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(urllib.quote(email)),
         params={'hapikey': ANALYTICS_IDS.get('HUBSPOT_KEY', None)},
@@ -24,7 +25,7 @@ def _track_on_hubspot(email, properties):
             ]}
         ),
     )
-    # TODO: Raise errors for bad requests etc.
+    req.raise_for_status()
 
 
 @task(queue='background_queue')
