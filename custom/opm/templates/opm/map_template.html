@@ -1,0 +1,44 @@
+{% extends "reports/async/partials/maps.html" %}
+{% load hq_shared_tags %}
+{% load report_tags %}
+{% load i18n %}
+
+{% block js-libs %}
+    {% if "print" in report.url_root %}
+        <script src="{% static 'hqstyle/js/jquery/jquery-1.7.1.min.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/lib/knockout-2.3.0.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/lib/underscore-1.4.4.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/lib/datatables-1.9/js/jquery.dataTables.min.js' %}"></script>
+        <script src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
+
+        <script>
+           setTimeout(function() {
+               var reportTables = new HQReportDataTables({
+                   dataTableElem: '#report_table_{{ report.slug }}',
+                   autoWidth: false,
+                   show_pagination: false,
+                   defaultRows: 100000,
+                   ajaxSource: '{{ report_table.pagination.source }}',
+                   ajaxParams: {{ report_table.pagination.params|JSON }},
+                   badRequestErrorText: "<span class='label label-important'>Sorry!</span> {{ report_table.bad_request_error_text }}"
+               });
+               reportTables.render();
+           }, 500);
+        </script>
+
+        <style>
+            body {
+                width: 297mm;
+            }
+            #map {
+                height: 18cm !important;
+                page-break-after: always;
+            }
+            tr {
+                page-break-inside: avoid;
+            }
+        </style>
+    {% endif %}
+
+    {{ block.super }}
+{% endblock js-libs %}

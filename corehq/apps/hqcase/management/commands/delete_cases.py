@@ -16,10 +16,6 @@ class Command(BaseCommand):
                     action='store_true',
                     dest='no_prompt',
                     help='Delete cases without prompting for confirmation'),
-        make_option('--by-last-submitter',
-                    action='store_true',
-                    dest='last_submitter',
-                    help='delete cases last updated by the specified user'),
     )
 
     @property
@@ -28,12 +24,8 @@ class Command(BaseCommand):
         return CommCareCase.get_db()
 
     def case_query(self, reduce=False):
-        if self.last_submitter:
-            view_name = 'case/by_user'
-        else:
-            view_name = 'case/by_owner'
         return self.db.view(
-            view_name,
+            'case/by_owner',
             startkey=[self.user.user_id],
             endkey=[self.user.user_id, {}],
             reduce=reduce,
@@ -48,7 +40,6 @@ class Command(BaseCommand):
         iter_bulk_delete(self.db, case_ids)
 
     def handle(self, *args, **options):
-        self.last_submitter = options.get('last_submitter', False)
         if not len(args):
             print "Usage: ./manage.py delete_cases <user>"
             return
@@ -63,7 +54,7 @@ class Command(BaseCommand):
         if not options.get('no_prompt'):
             msg = "Delete all {} cases {} by {}? (y/n)\n".format(
                 self.get_case_count(),
-                "submitted" if self.last_submitter else "owned",
+                "owned",
                 self.user.username,
             )
             if not raw_input(msg) == 'y':

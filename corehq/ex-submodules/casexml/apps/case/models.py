@@ -128,10 +128,6 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
 
 
 class CaseQueryMixin(object):
-    @classmethod
-    def get_by_xform_id(cls, xform_id):
-        return cls.view("case/by_xform_id", reduce=False, include_docs=True,
-                        key=xform_id)
 
     @classmethod
     def get_all_cases(cls, domain, case_type=None, owner_id=None, status=None,

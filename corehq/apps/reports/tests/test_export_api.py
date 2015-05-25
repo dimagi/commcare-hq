@@ -21,24 +21,31 @@ FORM_TEMPLATE = """<?xml version='1.0' ?>
 
 DOMAIN = "test"
 
+
 def get_form():
     return FORM_TEMPLATE % {"uid": uuid.uuid4().hex}
-    
+
+
 def submit_form(f=None, domain=DOMAIN):
     if f is None:
         f = get_form()
     url = get_submit_url(domain)
     return spoof_submission(url, f, hqsubmission=False)
 
+
 def get_export_response(client, previous="", include_errors=False):
     # e.g. /a/wvtest/reports/export/?export_tag=%22http://openrosa.org/formdesigner/0B5AEAF6-0394-4E4B-B2FD-6CDDE1BCBC8D%22
-    return client.get(reverse("corehq.apps.reports.views.export_data", 
-                            args=[DOMAIN]),
-                 {"export_tag": '"http://www.commcarehq.org/export/test"',
-                  "previous_export": previous,
-                  "include_errors": include_errors,
-                  "format": "html",
-                  "use_cache": False})
+    return client.get(
+        reverse("corehq.apps.reports.views.export_data", args=[DOMAIN]),
+        {
+            "export_tag": '"http://www.commcarehq.org/export/test"',
+            "previous_export": previous,
+            "include_errors": include_errors,
+            "format": "html",
+            "use_cache": False
+        }
+    )
+
 
 def _content(streaming_response):
     return ''.join(streaming_response.streaming_content)
@@ -79,7 +86,6 @@ class ExportTest(TestCase):
         prev_token = resp["X-CommCareHQ-Export-Token"]
         prev_checkpoint = ExportSchema.get(prev_token)
         assert prev_checkpoint.timestamp
-
 
     def testExportTokens(self):
         c = Client()

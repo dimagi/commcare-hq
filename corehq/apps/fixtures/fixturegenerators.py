@@ -7,16 +7,25 @@ from corehq.apps.users.models import CommCareUser
 def item_lists_by_domain(domain):
     ret = list()
     for data_type in FixtureDataType.by_domain(domain):
+        structure = {
+            f.field_name: {
+                'name': f.field_name,
+                'no_option': True
+            } for f in data_type.fields
+        }
+
+        for attr in data_type.item_attributes:
+            structure['@' + attr] = {
+                'name': attr,
+                'no_option': True
+            }
+
         ret.append({
             'sourceUri': 'jr://fixture/item-list:%s' % data_type.tag,
             'defaultId': data_type.tag,
             'initialQuery': "instance('{tag}')/{tag}_list/{tag}".format(tag=data_type.tag),
             'name': data_type.tag,
-            'structure': {
-                f.field_name: {
-                    'name': f.field_name,
-                    'no_option': True
-                } for f in data_type.fields},
+            'structure': structure,
         })
     return ret
 

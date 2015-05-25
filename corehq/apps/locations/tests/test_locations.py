@@ -4,7 +4,7 @@ from corehq.apps.locations.models import Location, LocationType, SQLLocation, \
 from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.locations.fixtures import location_fixture_generator
 from corehq.apps.commtrack.helpers import make_supply_point, make_product
-from corehq.apps.commtrack.util import bootstrap_location_types
+from corehq.apps.commtrack.tests.util import bootstrap_location_types
 from corehq.apps.users.models import CommCareUser
 from django.test import TestCase
 from couchdbkit import ResourceNotFound
@@ -390,34 +390,53 @@ class LocationGroupTest(LocationTestBase):
         self.domain.commtrack_enabled = True
         self.domain.save()
         self.loc.delete()
-        loc = make_loc(
-            'testregion1',
+
+        state = make_loc(
+            'teststate1',
             type='state',
             domain=self.domain.name
         )
-        loc2 = make_loc(
+        district = make_loc(
+            'testdistrict1',
+            type='district',
+            domain=self.domain.name,
+            parent=state
+        )
+        block = make_loc(
+            'testblock1',
+            type='block',
+            domain=self.domain.name,
+            parent=district
+        )
+        village = make_loc(
+            'testvillage1',
+            type='village',
+            domain=self.domain.name,
+            parent=block
+        )
+        outlet1 = make_loc(
             'testoutlet1',
             type='outlet',
             domain=self.domain.name,
-            parent=loc
+            parent=village
         )
-        loc3 = make_loc(
+        outlet2 = make_loc(
             'testoutlet2',
             type='outlet',
             domain=self.domain.name,
-            parent=loc
+            parent=village
         )
-        loc4 = make_loc(
+        outlet3 = make_loc(
             'testoutlet3',
             type='outlet',
             domain=self.domain.name,
-            parent=loc
+            parent=village
         )
-        self.user.set_location(loc2)
-        self.user.add_location_delegate(loc)
-        self.user.add_location_delegate(loc2)
-        self.user.add_location_delegate(loc3)
-        self.user.add_location_delegate(loc4)
+        self.user.set_location(outlet2)
+        self.user.add_location_delegate(outlet1)
+        self.user.add_location_delegate(outlet2)
+        self.user.add_location_delegate(outlet3)
+        self.user.add_location_delegate(state)
         self.user.save()
         fixture = location_fixture_generator(self.user, '2.0')
         self.assertEquals(len(fixture[0].findall('.//state')), 1)

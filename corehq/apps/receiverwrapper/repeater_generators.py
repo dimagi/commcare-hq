@@ -1,9 +1,9 @@
 import json
+from casexml.apps.case.xform import cases_referenced_by_xform
 
 from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater, ShortFormRepeater, \
     AppStructureRepeater, RegisterGenerator
 
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2
 
 from dimagi.utils.parsing import json_format_datetime
@@ -47,7 +47,7 @@ class AppStructureGenerator(BasePayloadGenerator):
 @RegisterGenerator(ShortFormRepeater, "short_form_json", "Default JSON", is_default=True)
 class ShortFormRepeaterXMLPayloadGenerator(BasePayloadGenerator):
     def get_payload(self, repeat_record, form):
-        cases = CommCareCase.get_by_xform_id(form.get_id)
+        cases = cases_referenced_by_xform(form)
         return json.dumps({'form_id': form._id,
                            'received_on': json_format_datetime(form.received_on),
                            'case_ids': [case._id for case in cases]})

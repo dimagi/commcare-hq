@@ -52,7 +52,7 @@ class CommTrackOTATest(CommTrackTest):
 
     def test_ota_blank_balances(self):
         user = self.user
-        self.assertFalse(get_ota_balance_xml(user))
+        self.assertFalse(get_ota_balance_xml(self.domain, user))
 
     def test_ota_basic(self):
         user = self.user
@@ -66,7 +66,7 @@ class CommTrackOTATest(CommTrackTest):
                 amounts,
                 datestring=json_format_datetime(report.date),
             ),
-            get_ota_balance_xml(user)[0],
+            get_ota_balance_xml(self.domain, user)[0],
         )
 
     def test_ota_multiple_stocks(self):
@@ -80,7 +80,7 @@ class CommTrackOTATest(CommTrackTest):
         for section_id in section_ids:
             _report_soh(amounts, self.sp._id, section_id, report=report)
 
-        balance_blocks = get_ota_balance_xml(user)
+        balance_blocks = get_ota_balance_xml(self.domain, user)
         self.assertEqual(3, len(balance_blocks))
         for i, section_id in enumerate(section_ids):
             check_xml_line_by_line(
@@ -509,7 +509,7 @@ class CommTrackSyncTest(CommTrackSubmissionTest):
 
         # get initial restore token
         restore_config = RestoreConfig(
-            domain=self.domain,
+            project=self.domain,
             user=self.casexml_user,
             params=RestoreParams(version=V2),
         )
@@ -619,9 +619,9 @@ def _report_soh(amounts, case_id, section_id='stock', report=None):
     return report
 
 
-def _get_ota_balance_blocks(domain, user):
+def _get_ota_balance_blocks(project, user):
     restore_config = RestoreConfig(
-        domain=domain,
+        project=project,
         user=user.to_casexml_user(),
         params=RestoreParams(version=V2),
     )

@@ -107,10 +107,12 @@
     {% endif %}
     <script>
         $(function () {
-            // this has to be done after bootstrap does it's magic
             setTimeout(function () {
                 // https://github.com/twitter/bootstrap/issues/6122
-                $('.collapse, .tab-content').hover(
+                // this is necessary to get popovers to be able to extend
+                // outside the borders of their containing div
+                $('.tab-content').css('overflow', 'visible');
+                $('.collapse').hover(
                         function () {
                             $(this).css('overflow','visible');
                         },
@@ -126,6 +128,7 @@
             gaTrackLink($('#edit_label'), 'App Builder', 'Open Form', 'Edit Label');
             {% for module in app.get_modules %}
                 {% for form in module.get_forms %}
+                    gaTrackLink($('#view_form_{{ module.id }}_{{ form.id }}_sidebar'), 'App Builder', 'View Form', 'Sidebar');
                     gaTrackLink($('#edit_pen_{{ module.id }}_{{ form.id }}'), 'App Builder', 'Open Form', 'Edit Pen');
                 {% endfor %}
             {% endfor %}
@@ -137,7 +140,9 @@
     {% if app %}
     <li>
         <span class="divider">&gt;</span>
-        <span class="app-manager-title variable-app_name">{{ app.name|html_name }}</span>
+        <a href="{% url "view_app" domain app.id %}">
+            <span class="app-manager-title variable-app_name">{{ app.name|html_name }}</span>
+        </a>
     </li>
     {% endif %}
 {% endblock %}
@@ -239,7 +244,7 @@
                                 {% for form in module.get_forms %}
                                     <li class="edit-form-li{% ifequal form selected_form %} active{% endifequal %}" data-moduleid="{{ module.id }}" data-index="{{ form.id }}">
                                         <!--[F]-->
-                                        <a href="{% url "view_form" domain app.id module.id form.id %}">
+                                        <a id="view_form_{{ module.id }}_{{ form.id }}_sidebar" href="{% url "view_form" domain app.id module.id form.id %}">
                                             <i class="drag_handle"></i>
                                             <span {% if form == selected_form %}class="variable-form_name"{% endif %}>
                                             {{ form.name|html_trans:langs }}

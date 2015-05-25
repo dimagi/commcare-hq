@@ -3,7 +3,7 @@ from dateutil import rrule
 from corehq.apps.locations.models import SQLLocation, Location
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.users.models import CommCareUser
-from custom.ilsgateway.filters import MonthAndQuarterFilter, ProgramFilter
+from custom.ilsgateway.filters import ProgramFilter, ILSDateFilter
 from custom.ilsgateway.models import OrganizationSummary, GroupSummary, SupplyPointStatusTypes, DeliveryGroups
 from custom.ilsgateway.tanzania import ILSData, DetailsReport
 from custom.ilsgateway.tanzania.reports.mixins import RandRSubmissionData
@@ -11,7 +11,6 @@ from custom.ilsgateway.tanzania.reports.utils import randr_value, get_span, \
     rr_format_percent, link_format, make_url
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
-from corehq.apps.reports.filters.select import YearFilter
 from custom.ilsgateway.tanzania.reports.facility_details import FacilityDetailsReport, InventoryHistoryData, \
     RegistrationData, RandRHistory, Notes, RecentMessages
 from django.utils.translation import ugettext as _
@@ -31,9 +30,8 @@ class RRStatus(ILSData):
             for child in locations:
                 try:
                     org_summary = OrganizationSummary.objects.filter(
-                        date__range=(self.config['startdate'],
-                                     self.config['enddate']),
-                        supply_point=child.location_id
+                        date__range=(self.config['startdate'], self.config['enddate']),
+                        location_id=child.location_id
                     )
                 except OrganizationSummary.DoesNotExist:
                     return []
@@ -47,20 +45,22 @@ class RRStatus(ILSData):
                 total_possible = 0
                 group_summaries = GroupSummary.objects.filter(
                     org_summary__date__lte=self.config['startdate'],
-                    org_summary__supply_point=child.location_id,
+                    org_summary__location_id=child.location_id,
                     title=SupplyPointStatusTypes.R_AND_R_FACILITY
                 )
 
-                for g in group_summaries:
-                    if g:
-                        total_responses += g.responded
-                        total_possible += g.total
+                for group_summary in group_summaries:
+                    if group_summary:
+                        total_responses += group_summary.responded
+                        total_possible += group_summary.total
                 hist_resp_rate = rr_format_percent(total_responses, total_possible)
 
                 url = make_url(RRreport, self.config['domain'],
-                               '?location_id=%s&month=%s&year=%s&filter_by_program=%s',
-                               (child.location_id, self.config['month'], self.config['year'],
-                               self.config['program']))
+                               '?location_id=%s&filter_by_program=%s&'
+                               'datespan_type=%s&datespan_first=%s&datespan_second=%s',
+                               (child.location_id,
+                                self.config['program'], self.config['datespan_type'],
+                                self.config['datespan_first'], self.config['datespan_second']))
 
                 rows.append(
                     [
@@ -96,9 +96,10 @@ class RRReportingHistory(ILSData):
         super(RRReportingHistory, self).__init__(config, css_class)
         self.config = config or {}
         self.css_class = css_class
-        month = self.config.get('month')
-        if month:
-            self.title = "R&R Reporting History (Group %s)" % DeliveryGroups(int(month)).current_submitting_group()
+        datespan_type = self.config.get('datespan_type')
+        if datespan_type == 1:
+            self.title = "R&R Reporting History (Group %s)" %\
+                         DeliveryGroups(int(self.config['datespan_first'])).current_submitting_group()
         else:
             self.title = "R&R Reporting History"
 
@@ -114,23 +115,29 @@ class RRReportingHistory(ILSData):
         for child in dg:
             total_responses = 0
             total_possible = 0
+            rr_value = randr_value(child.location_id, self.config['startdate'], self.config['enddate'])
+            if child.is_archived and not rr_value:
+                continue
+
             group_summaries = GroupSummary.objects.filter(
                 org_summary__date__lte=self.config['startdate'],
-                org_summary__supply_point=child.location_id, title=SupplyPointStatusTypes.R_AND_R_FACILITY
+                org_summary__location_id=child.location_id,
+                title=SupplyPointStatusTypes.R_AND_R_FACILITY
             )
 
-            for g in group_summaries:
-                if g:
-                    total_responses += g.responded
-                    total_possible += g.total
+            for group_summary in group_summaries:
+                if group_summary:
+                    total_responses += group_summary.responded
+                    total_possible += group_summary.total
             hist_resp_rate = rr_format_percent(total_responses, total_possible)
 
             url = make_url(FacilityDetailsReport, self.config['domain'],
-                           '?location_id=%s&month=%s&year=%s&filter_by_program=%s',
-                           (self.config['location_id'], self.config['month'], self.config['year'],
-                           self.config['program']))
+                           '?location_id=%s&filter_by_program=%s&'
+                           'datespan_type=%s&datespan_first=%s&datespan_second=%s',
+                           (self.config['location_id'],
+                            self.config['program'], self.config['datespan_type'],
+                            self.config['datespan_first'], self.config['datespan_second']))
 
-            rr_value = randr_value(child.location_id, self.config['startdate'], self.config['enddate'])
             contact = CommCareUser.get_db().view(
                 'locations/users_by_location_id',
                 startkey=[child.location_id],
@@ -185,7 +192,7 @@ class RRreport(DetailsReport):
 
     @property
     def fields(self):
-        fields = [AsyncLocationFilter, MonthAndQuarterFilter, YearFilter, ProgramFilter]
+        fields = [AsyncLocationFilter, ILSDateFilter, ProgramFilter]
         if self.location and self.location.location_type.name.upper() == 'FACILITY':
             fields = []
         return fields

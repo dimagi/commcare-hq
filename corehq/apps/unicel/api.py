@@ -122,6 +122,8 @@ def create_from_request(request, delay=True):
         except ValueError:
             logging.warning('could not parse unicel inbound timestamp [%s]' % timestamp)
             actual_timestamp = None
+    else:
+        actual_timestamp = None
 
     # not sure yet if this check is valid
     is_unicode = request.REQUEST.get(InboundParams.UDHI, "") == "1"

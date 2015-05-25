@@ -13,34 +13,6 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.groups.models import Group
 from dimagi.utils.decorators.memoized import memoized
 
-class SelectChoice(DocumentSchema):
-    label = DictProperty()
-    stringValue = StringProperty()
-    value = Property()
-
-class CasePropertySpec(DocumentSchema):
-    key = StringProperty()
-    label = DictProperty()
-    type = StringProperty(choices=['string', 'select', 'date', 'group'], default='string')
-    choices = SchemaListProperty(SelectChoice)
-
-class CaseSpec(Document):
-    name = StringProperty()
-    domain = StringProperty()
-    case_type = StringProperty()
-    propertySpecs = SchemaListProperty(CasePropertySpec)
-
-    @classmethod
-    def get_suggested(cls, domain, case_type=None):
-        key = [domain]
-        if case_type:
-            key.append(case_type)
-        return cls.view('cloudcare/case_specs_by_domain_case_type',
-            reduce=False,
-            include_docs=True,
-            startkey=key,
-            endkey=key + [{}],
-        )
 
 class AppGroup(DocumentSchema):
     app_id = StringProperty()
@@ -97,6 +69,9 @@ class AppGroup(DocumentSchema):
 
 
 class ApplicationAccess(Document):
+    """
+    This is used to control which users/groups can access which applications on cloudcare.
+    """
     domain = StringProperty()
     app_groups = SchemaListProperty(AppGroup, default=[])
     restrict = BooleanProperty(default=False)
