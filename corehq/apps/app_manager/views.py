@@ -2347,7 +2347,7 @@ def save_copy(request, domain, app_id):
     See VersionedDoc.save_copy
 
     """
-    track_built_app_on_hubspot.delay(request.user.username)
+    track_built_app_on_hubspot.delay(request.couch_user)
     comment = request.POST.get('comment')
     app = get_app(domain, app_id)
     try:
