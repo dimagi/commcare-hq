@@ -50,10 +50,13 @@ class HQUserType(object):
                       ugettext_noop("demo_user"),
                       ugettext_noop("admin"),
                       ugettext_noop("Unknown Users"),
-                      ugettext_noop("CommCare Supply")]
-    toggle_defaults = (True, False, False, False, False)
+                      ugettext_noop("CommCare Supply"),
+                      # "Owned by Group" uses the "Unknown Users" filter, but is less misleading because the users
+                      # aren't necessarily unknown. cf. FB 166197 for more details.
+                      ugettext_noop("Owned by Group")]
+    toggle_defaults = (True, False, False, False, False, False)
     count = len(human_readable)
-    included_defaults = (True, True, True, True, False)
+    included_defaults = (True, True, True, True, False, True)
 
     @classmethod
     def use_defaults(cls):
