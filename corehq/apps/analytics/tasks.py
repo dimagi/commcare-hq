@@ -16,16 +16,18 @@ def _track_on_hubspot(email, properties):
     """
     # TODO: Use OAuth
     # TODO: Use batch requests / don't violate rate limit
-    req = requests.post(
-        "https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(urllib.quote(email)),
-        params={'hapikey': ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)},
-        data=json.dumps(
-            {'properties': [
-                {'property': k, 'value': v} for k, v in properties.items()
-            ]}
-        ),
-    )
-    req.raise_for_status()
+    api_key = ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
+    if api_key:
+        req = requests.post(
+            "https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(urllib.quote(email)),
+            params={'hapikey': api_key},
+            data=json.dumps(
+                {'properties': [
+                    {'property': k, 'value': v} for k, v in properties.items()
+                ]}
+            ),
+        )
+        req.raise_for_status()
 
 
 @task(queue='background_queue')
