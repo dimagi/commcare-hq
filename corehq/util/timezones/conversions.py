@@ -1,52 +1,11 @@
-from django.conf import settings
 from django.utils.encoding import smart_str
 import pytz
+
+from corehq.apps.tzmigration import phone_timezones_have_been_processed
+
 from corehq.const import USER_DATETIME_FORMAT
-from corehq.toggles import PHONE_TIMEZONES_HAVE_BEEN_PROCESSED, \
-    PHONE_TIMEZONES_SHOULD_BE_PROCESSED
 from corehq.util.soft_assert import soft_assert
-from corehq.util.view_utils import get_request
 from dimagi.utils.dates import safe_strftime
-
-
-def phone_timezones_have_been_processed():
-    """
-    The timezone data migration happening some time in Apr-May 2015
-    will shift all phone times (form.timeEnd, case.modified_on, etc.) to UTC
-    so functions that deal with converting to or from phone times
-    use this function to decide what type of timezone conversion is necessary
-
-    """
-    if settings.UNIT_TESTING:
-        override = getattr(
-            settings, 'PHONE_TIMEZONES_HAVE_BEEN_PROCESSED', None)
-        if override is not None:
-            return override
-    return _get_timezone_flag(PHONE_TIMEZONES_HAVE_BEEN_PROCESSED)
-
-
-def phone_timezones_should_be_processed():
-    if settings.UNIT_TESTING:
-        override = getattr(
-            settings, 'PHONE_TIMEZONES_SHOULD_BE_PROCESSED', None)
-        if override is not None:
-            return override
-    return _get_timezone_flag(PHONE_TIMEZONES_SHOULD_BE_PROCESSED)
-
-
-def _get_timezone_flag(flag):
-    _default = False
-    _assert = soft_assert(['droberts' + '@' + 'dimagi.com'])
-    try:
-        request = get_request()
-        try:
-            domain = request.domain
-        except AttributeError:
-            return _default
-        return flag.enabled(domain)
-    except Exception:
-        _assert(False, 'Error in _get_timezone_flag')
-        return _default
 
 
 class _HQTime(object):

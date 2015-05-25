@@ -402,20 +402,6 @@ BULK_PAYMENTS = StaticToggle(
 )
 
 
-PHONE_TIMEZONES_SHOULD_BE_PROCESSED = StaticToggle(
-    'phone_timezones_should_be_processed',
-    "Process timezones correctly in (DO NOT SET MANUALLY)",
-    TAG_UNKNOWN,
-    [NAMESPACE_DOMAIN],
-)
-
-PHONE_TIMEZONES_HAVE_BEEN_PROCESSED = StaticToggle(
-    'phone_timezones_have_been_processed',
-    "Treat phone times as meaning UTC in reports, etc. (DO NOT SET MANUALLY)",
-    TAG_UNKNOWN,
-    [NAMESPACE_DOMAIN],
-)
-
 USER_AS_A_CASE = StaticToggle(
     'user_as_a_case',
     'Enable "User-As-A-Case" to store user properties in a case and use them in forms',

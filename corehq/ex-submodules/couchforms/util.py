@@ -16,9 +16,8 @@ from django.http import (
 )
 import iso8601
 from redis import ConnectionError
+from corehq.apps.tzmigration import phone_timezones_should_be_processed
 from dimagi.ext.jsonobject import re_loose_datetime
-from corehq.util.timezones.conversions import \
-    phone_timezones_should_be_processed
 
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import uid, LockManager, ReleaseOnError

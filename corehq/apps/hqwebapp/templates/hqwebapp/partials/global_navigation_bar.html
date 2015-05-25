@@ -1,6 +1,7 @@
 {% load menu_tags %}
 {% load i18n %}
 {% load hq_shared_tags %}
+{% load tzmigration %}
 
 <div class="btn-toolbar pull-right">
     <div class="btn-group">
@@ -31,8 +32,10 @@
             {% else %}
                 <a class="btn btn-project{% if is_project_settings %} btn-project-active{% endif %}"
                    href="{% url "domain_settings_default" domain %}">
-                    {% if request|toggle_enabled:'PHONE_TIMEZONES_SHOULD_BE_PROCESSED' %}
-                    <i class="icon-globe" title="{% if request|toggle_enabled:'PHONE_TIMEZONES_HAVE_BEEN_PROCESSED' %}New timezone behavior enabled{% else %}Timezone migration started but not complete{% endif %}"></i>
+                    {% if request|tzmigration_status == 'complete' %}
+                    <i class="icon-globe" title="New timezone behavior enabled"></i>
+                    {% elif request|tzmigration_status == 'in_progress' %}
+                    <i class="icon-globe" title="Timezone migration started but not complete"></i>
                     {% else %}
                     <i class="icon-cog"></i>
                     {% endif %}
