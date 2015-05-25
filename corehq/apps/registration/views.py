@@ -10,6 +10,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 import sys
 
+from corehq.apps.analytics.tasks import track_created_hq_account_on_hubspot
 from corehq.apps.domain.decorators import login_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.orgs.views import orgs_landing
@@ -284,6 +285,7 @@ def confirm_domain(request, guid=None):
     ) % requesting_user.username
     context['is_error'] = False
     context['valid_confirmation'] = True
+    track_created_hq_account_on_hubspot.delay(requesting_user.username)
     return render(request, 'registration/confirmation_complete.html', context)
 
 

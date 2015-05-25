@@ -234,6 +234,7 @@ HQ_APPS = (
     'formtranslate',
     'langcodes',
     'corehq.apps.adm',
+    'corehq.apps.analytics',
     'corehq.apps.announcements',
     'corehq.apps.callcenter',
     'corehq.apps.crud',
