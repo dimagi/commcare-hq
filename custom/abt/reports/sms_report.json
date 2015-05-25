@@ -6,6 +6,14 @@
     "title":"SMS Indicator Report",
     "filters":[
         {
+            "datatype":"date",
+            "required":false,
+            "display":"Date soumis",
+            "field":"timeEnd",
+            "type":"date",
+            "slug":"timeEnd"
+        },
+        {
             "required":false,
             "datatype":"string",
             "show_all":true,

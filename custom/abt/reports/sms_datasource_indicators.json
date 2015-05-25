@@ -1,6 +1,7 @@
 [
   {
     "display_name": "country", 
+    "transform": {}, 
     "datatype": "string", 
     "expression": {
       "value_expression": {
@@ -20,14 +21,14 @@
         ]
       }
     }, 
-    "transform": {}, 
-    "is_nullable": true, 
     "is_primary_key": false, 
+    "is_nullable": true, 
     "column_id": "country", 
     "type": "expression"
   }, 
   {
     "display_name": "level_1", 
+    "transform": {}, 
     "datatype": "string", 
     "expression": {
       "value_expression": {
@@ -47,14 +48,14 @@
         ]
       }
     }, 
-    "transform": {}, 
-    "is_nullable": true, 
     "is_primary_key": false, 
+    "is_nullable": true, 
     "column_id": "level_1", 
     "type": "expression"
   }, 
   {
     "display_name": "level_2", 
+    "transform": {}, 
     "datatype": "string", 
     "expression": {
       "value_expression": {
@@ -74,14 +75,14 @@
         ]
       }
     }, 
-    "transform": {}, 
-    "is_nullable": true, 
     "is_primary_key": false, 
+    "is_nullable": true, 
     "column_id": "level_2", 
     "type": "expression"
   }, 
   {
     "display_name": "level_3", 
+    "transform": {}, 
     "datatype": "string", 
     "expression": {
       "value_expression": {
@@ -101,14 +102,14 @@
         ]
       }
     }, 
-    "transform": {}, 
-    "is_nullable": true, 
     "is_primary_key": false, 
+    "is_nullable": true, 
     "column_id": "level_3", 
     "type": "expression"
   }, 
   {
     "display_name": "level_4", 
+    "transform": {}, 
     "datatype": "string", 
     "expression": {
       "value_expression": {
@@ -128,14 +129,14 @@
         ]
       }
     }, 
-    "transform": {}, 
-    "is_nullable": true, 
     "is_primary_key": false, 
+    "is_nullable": true, 
     "column_id": "level_4", 
     "type": "expression"
   }, 
   {
     "display_name": "worker_code", 
+    "transform": {}, 
     "datatype": "string", 
     "expression": {
       "value_expression": {
@@ -155,9 +156,8 @@
         ]
       }
     }, 
-    "transform": {}, 
-    "is_nullable": true, 
     "is_primary_key": false, 
+    "is_nullable": true, 
     "column_id": "worker_code", 
     "type": "expression"
   }, 
@@ -295,6 +295,7 @@
   }, 
   {
     "display_name": "target_number", 
+    "transform": {}, 
     "datatype": "integer", 
     "expression": {
       "test": {
@@ -304,7 +305,7 @@
           "value_expression": {
             "datatype": null, 
             "type": "property_name", 
-            "property_name": "country"
+            "property_name": "level_2_data"
           }, 
           "type": "related_doc", 
           "related_doc_type": "CommCareCase", 
@@ -318,10 +319,10 @@
             ]
           }
         }, 
-        "property_value": "senegal"
+        "property_value": "koumpentoum"
       }, 
       "expression_if_true": {
-        "constant": 120553, 
+        "constant": 45118, 
         "type": "constant"
       }, 
       "type": "conditional", 
@@ -333,7 +334,7 @@
             "value_expression": {
               "datatype": null, 
               "type": "property_name", 
-              "property_name": "country"
+              "property_name": "level_2_data"
             }, 
             "type": "related_doc", 
             "related_doc_type": "CommCareCase", 
@@ -347,10 +348,10 @@
               ]
             }
           }, 
-          "property_value": "benin"
+          "property_value": "malem_hodar"
         }, 
         "expression_if_true": {
-          "constant": 265907, 
+          "constant": 5304, 
           "type": "constant"
         }, 
         "type": "conditional", 
@@ -362,7 +363,7 @@
               "value_expression": {
                 "datatype": null, 
                 "type": "property_name", 
-                "property_name": "country"
+                "property_name": "level_2_data"
               }, 
               "type": "related_doc", 
               "related_doc_type": "CommCareCase", 
@@ -376,23 +377,52 @@
                 ]
               }
             }, 
-            "property_value": "ethiopia"
+            "property_value": "koungheul"
           }, 
           "expression_if_true": {
-            "constant": 120553, 
+            "constant": 45733, 
             "type": "constant"
           }, 
           "type": "conditional", 
           "expression_if_false": {
-            "constant": 0, 
-            "type": "constant"
+            "test": {
+              "operator": "eq", 
+              "type": "boolean_expression", 
+              "expression": {
+                "value_expression": {
+                  "datatype": null, 
+                  "type": "property_name", 
+                  "property_name": "level_2_data"
+                }, 
+                "type": "related_doc", 
+                "related_doc_type": "CommCareCase", 
+                "doc_id_expression": {
+                  "datatype": null, 
+                  "type": "property_path", 
+                  "property_path": [
+                    "form", 
+                    "case", 
+                    "@case_id"
+                  ]
+                }
+              }, 
+              "property_value": "nioro"
+            }, 
+            "expression_if_true": {
+              "constant": 85891, 
+              "type": "constant"
+            }, 
+            "type": "conditional", 
+            "expression_if_false": {
+              "constant": 0, 
+              "type": "constant"
+            }
           }
         }
       }
     }, 
-    "transform": {}, 
-    "is_nullable": true, 
     "is_primary_key": false, 
+    "is_nullable": true, 
     "column_id": "target_number", 
     "type": "expression"
   }
