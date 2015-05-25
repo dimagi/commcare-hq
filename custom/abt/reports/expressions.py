@@ -50,11 +50,11 @@ class AbtSupervisorExpressionSpec(JsonObject):
         return danger_value == []
 
     @classmethod
-    @quickcache(['app_id', 'xmlns'])
-    def _get_questions(cls, app_id, xmlns):
+    @quickcache(['app_id', 'xmlns', 'lang'])
+    def _get_questions(cls, app_id, xmlns, lang):
         form = Application.get(app_id).get_form_by_xmlns(xmlns)
         return {
-            q['value']: q for q in form.get_questions([], include_groups=True)
+            q['value']: q for q in form.get_questions([lang], include_groups=True)
         }
 
     @classmethod
@@ -63,10 +63,9 @@ class AbtSupervisorExpressionSpec(JsonObject):
         Return a list of option values for the given question path and item
         (which is a dict representation of an XFormInstance)
         """
-        questions = cls._get_questions(item['app_id'], item['xmlns'])
+        questions = cls._get_questions(item['app_id'], item['xmlns'], cls._get_language(item))
         question = questions.get('/data/' + "/".join(question_path), {})
-        options = [o['value'] for o in question.get("options", [])]
-        return options
+        return question.get("options", [])
 
     @classmethod
     def _get_unchecked(cls, xform_instance, question_path, answer, ignore=None):
@@ -78,11 +77,11 @@ class AbtSupervisorExpressionSpec(JsonObject):
         ignore should be a list of strings.
         """
         answer = answer or ""
-        options = set(cls._get_question_options(xform_instance, question_path))
+        options = {o['value']: o['label'] for o in cls._get_question_options(xform_instance, question_path)}
         checked = set(answer.split(" "))
-        unchecked = options - checked
-        ret = unchecked - set(ignore)
-        return list(ret)
+        unchecked = set(options.keys()) - checked
+        relevant_unchecked = unchecked - set(ignore)
+        return [options[u] for u in relevant_unchecked]
 
     @classmethod
     def _get_comments(cls, item, spec):
@@ -103,10 +102,19 @@ class AbtSupervisorExpressionSpec(JsonObject):
         return comments if comments != () else ""
 
     @classmethod
-    def _get_warning(cls, spec, item):
+    def _get_language(cls, item):
+        """
+        Return the language in which this row should be rendered.
+        """
         country = cls._get_val(item, ["location_data", "country"])
-        default = spec.get("warning", "")
         if country in ["Senegal", "Benin", "Mali", "Madagascar"]:
+            return "fra"
+        return "en"
+
+    @classmethod
+    def _get_warning(cls, spec, item):
+        default = spec.get("warning", "")
+        if cls._get_language(item) == "fra":
             return spec.get("french", default)
         return default
 
