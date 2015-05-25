@@ -1948,12 +1948,7 @@ def edit_form_actions(request, domain, app_id, module_id, form_id):
     form.actions = FormActions.wrap(json.loads(request.POST['actions']))
     form.requires = request.POST.get('requires', form.requires)
     if actions_use_usercase(form.actions) and not is_usercase_enabled(domain):
-        if toggle_enabled_shortcut('user_as_a_case', domain, namespace='domain'):
-            enable_usercase(domain)
-        else:
-            return HttpResponseBadRequest(json.dumps({
-                'reason': _('This form uses usercase properties, but User-As-A-Case is not enabled for this '
-                            'project. To use this feature, please enable the "User-As-A-Case" Feature Flag.')}))
+        enable_usercase(domain)
     response_json = {}
     app.save(response_json)
     response_json['propertiesMap'] = get_all_case_properties(app)
