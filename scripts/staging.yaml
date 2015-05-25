@@ -56,18 +56,15 @@ branches:
   - form-context-simple # Ben 5/13
   - langMedia+fix-time-ago-sort # daniel 5/21
   - langMedia # Sravan 5/20
-  - lwyszomi:changes-in-domain-delete
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
     branches:
     #  - tf-persistence  # wsp 3/10
-      - use-redis+tf-persistance
       - tf-persistence  # wsp 5/7
       - use-classes # ben 5/7
       - 221-jars # wsp 5/20
-      - use-redis # ben 5/20
   submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master

@@ -134,16 +134,19 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
             'datespan_filters': [{
                 'display': _('Choose a date filter...'),
                 'slug': None,
-            }] + self.spec.filters,
+            }] + self.datespan_filters,
         }
 
     @property
     def has_datespan(self):
-        filters = self.spec.filters
-        return any(
-            f['type'] == 'date'
-            for f in filters
-        )
+        return bool(self.datespan_filters)
+
+    @property
+    def datespan_filters(self):
+        return [
+            f for f in self.spec.filters
+            if f['type'] == 'date'
+        ]
 
     @property
     def headers(self):
