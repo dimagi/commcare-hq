@@ -34,7 +34,8 @@ require.config({
             "vellum/saveToCase", 
             "vellum/uploader", 
             "vellum/window", 
-            "vellum/polyfills"
+            "vellum/polyfills", 
+            "vellum/copy-paste"
         ]
     }
 });
@@ -56,6 +57,7 @@ define([
     'vellum/saveToCase',
     'vellum/uploader',
     'vellum/window',
-    'vellum/polyfills'
+    'vellum/polyfills',
+    'vellum/copy-paste'
 ], function () {});
 
