@@ -14,7 +14,7 @@ def _track_on_hubspot(webuser, properties):
     properties is a dictionary mapping property names to values.
     Note that property names must exist on hubspot prior to use.
     """
-    # TODO: Use OAuth
+    # Note: Hubspot recommends OAuth instead of api key
     # TODO: Use batch requests / be mindful of rate limit
     api_key = ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
     if api_key and not webuser.is_dimagi:
@@ -30,7 +30,7 @@ def _track_on_hubspot(webuser, properties):
         req.raise_for_status()
 
 
-@task(queue='background_queue')
+@task(queue='background_queue', acks_late=True)
 def track_created_hq_account_on_hubspot(webuser):
     _track_on_hubspot(webuser, {
         'created_account_in_hq': True,
@@ -38,7 +38,7 @@ def track_created_hq_account_on_hubspot(webuser):
     })
 
 
-@task(queue='background_queue')
+@task(queue='background_queue', acks_late=True)
 def track_built_app_on_hubspot(webuser):
     # TODO: Confirm that previously untracked users should be tracked
     _track_on_hubspot(webuser, {'built_app': True})
