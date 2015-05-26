@@ -9,7 +9,7 @@ from corehq.apps.app_manager.xpath import (
     LocationXpath,
     XPath,
     dot_interpolate,
-)
+    UserCaseXPath)
 
 CASE_PROPERTY_MAP = {
     # IMPORTANT: if you edit this you probably want to also edit
@@ -466,8 +466,11 @@ class PropertyXpathGenerator(BaseXpathGenerator):
         else:
             case = CaseXPath(u'current()')
 
-        for index in indexes:
-            case = case.index_id(index).case()
+        if indexes and indexes[0] == 'user':
+            case = CaseXPath(UserCaseXPath().case())
+        else:
+            for index in indexes:
+                case = case.index_id(index).case()
 
         if property == '#owner_name':
             return self.owner_name(case.property('@owner_id'))
