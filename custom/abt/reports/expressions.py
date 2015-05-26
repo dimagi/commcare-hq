@@ -115,7 +115,7 @@ class AbtSupervisorExpressionSpec(JsonObject):
     def _get_warning(cls, spec, item):
         default = unicode(spec.get("warning", u""))
         if cls._get_language(item) == "fra":
-            return unicode(spec.get("french", default))
+            return unicode(spec.get("warning_fr", default))
         return default
 
     @classmethod
@@ -136,6 +136,21 @@ class AbtSupervisorExpressionSpec(JsonObject):
                     break
 
         return ", ".join(names)
+
+    @classmethod
+    def _get_flag_name(cls, item, spec):
+        """
+        Return value that should be in the flag column. Defaults to the
+        question id if spec doesn't specify something else.
+        """
+        ret = spec['question'][-1]
+        if cls._get_language(item) == "fra":
+            name = spec.get('flag_name_fr', None)
+            ret = name if name else ret
+        elif cls._get_language(item) == "en":
+            name = spec.get('flag_name', None)
+            ret = name if name else ret
+        return ret
 
     def __call__(self, item, context=None):
         """
@@ -176,7 +191,7 @@ class AbtSupervisorExpressionSpec(JsonObject):
                     if unchecked:
                         # Raise a flag because there are unchecked answers.
                         docs.append({
-                            'flag': spec['question'][-1],
+                            'flag': self._get_flag_name(item, spec),
                             'warning': self._get_warning(spec, item).format(msg=u", ".join(unchecked)),
                             'comments': self._get_comments(partial, spec),
                             'names': names,
@@ -194,7 +209,7 @@ class AbtSupervisorExpressionSpec(JsonObject):
                         missing_items = "cell, license"
                     if missing_items:
                         docs.append({
-                            'flag': spec['question'][-1],
+                            'flag': self._get_flag_name(item, spec),
                             'warning': self._get_warning(spec, item).format(msg=missing_items),
                             'comments': self._get_comments(partial, spec),
                             'names': names,
@@ -207,7 +222,7 @@ class AbtSupervisorExpressionSpec(JsonObject):
                         self._raise_for_any_answer(danger_value)
                     ):
                         docs.append({
-                            'flag': spec['question'][-1],
+                            'flag': self._get_flag_name(item, spec),
                             'warning': self._get_warning(spec, item).format(
                                 msg=self._get_val(partial, spec.get('warning_question', None)) or ""
                             ),
