@@ -43,6 +43,7 @@
 trunk: master
 name: autostaging
 branches:
+  - submit-history-tz  # danny 5/25
   - fix-time-ago-sort  # danny 5/15
   - process-timezone  # danny 5/7
   - subscription-no-contact-info # bb 8/4
@@ -56,6 +57,7 @@ branches:
   - form-context-simple # Ben 5/13
   - langMedia+fix-time-ago-sort # daniel 5/21
   - langMedia # Sravan 5/20
+  - api-key # SK 5/26
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
