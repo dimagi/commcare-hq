@@ -9,7 +9,7 @@ class CasePayloadProvider(LongRunningRestoreDataProvider):
     Long running restore provider responsible for generating the case and stock payloads.
     """
     def get_response(self, restore_state):
-        if OWNERSHIP_CLEANLINESS_RESTORE.enabled(restore_state.domain) or True:
+        if OWNERSHIP_CLEANLINESS_RESTORE.enabled(restore_state.domain):
             return get_case_payload(restore_state)
         else:
             return _batched_response(restore_state)
