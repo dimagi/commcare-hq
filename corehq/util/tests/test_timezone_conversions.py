@@ -7,7 +7,7 @@ from corehq.const import USER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime, PhoneTime, \
     UserTime
 from dimagi.utils.dates import safe_strftime
-from corehq.util.timezones.test_utils import \
+from corehq.apps.tzmigration.test_utils import \
     run_pre_and_post_timezone_migration
 
 

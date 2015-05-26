@@ -2,7 +2,7 @@ import json
 from django.test import TestCase
 import os
 from corehq.apps.tzmigration import phone_timezones_should_be_processed
-from corehq.util.timezones.test_utils import \
+from corehq.apps.tzmigration.test_utils import \
     run_pre_and_post_timezone_migration
 from couchforms.models import XFormInstance
 from couchforms.tests.testutils import create_and_save_xform
