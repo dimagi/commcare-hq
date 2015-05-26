@@ -3795,9 +3795,12 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         prev_multimedia_map = previous_version.multimedia_map if previous_version else {}
 
         for path, map_item in self.multimedia_map.iteritems():
-            pre_map_item = prev_multimedia_map.get(path, None)
-            if pre_map_item and pre_map_item.version and pre_map_item.multimedia_id == map_item.multimedia_id:
-                map_item.version = pre_map_item.version
+            prev_map_item = prev_multimedia_map.get(path, None)
+            if prev_map_item and prev_map_item.unique_id:
+                map_item.unique_id = prev_map_item.unique_id
+            if (prev_map_item and prev_map_item.version
+                    and prev_map_item.multimedia_id == map_item.multimedia_id):
+                map_item.version = prev_map_item.version
             else:
                 map_item.version = self.version
 
