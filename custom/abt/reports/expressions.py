@@ -113,9 +113,9 @@ class AbtSupervisorExpressionSpec(JsonObject):
 
     @classmethod
     def _get_warning(cls, spec, item):
-        default = spec.get("warning", "")
+        default = unicode(spec.get("warning", u""))
         if cls._get_language(item) == "fra":
-            return spec.get("warning_fr", default)
+            return unicode(spec.get("warning_fr", default))
         return default
 
     @classmethod
@@ -192,7 +192,7 @@ class AbtSupervisorExpressionSpec(JsonObject):
                         # Raise a flag because there are unchecked answers.
                         docs.append({
                             'flag': self._get_flag_name(item, spec),
-                            'warning': self._get_warning(spec, item).format(msg=", ".join(unchecked)),
+                            'warning': self._get_warning(spec, item).format(msg=u", ".join(unchecked)),
                             'comments': self._get_comments(partial, spec),
                             'names': names,
                         })

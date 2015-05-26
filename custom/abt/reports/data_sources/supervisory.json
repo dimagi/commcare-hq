@@ -1,0 +1,326 @@
+{
+    "domains": ["abt-test-2", "airs"],
+    "config": {
+        "configured_filter": {
+            "type": "or",
+            "filters": [
+                {
+                    "operator": "eq",
+                    "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "xmlns"
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "http://openrosa.org/formdesigner/BB2BF979-BD8F-4B8D-BCF8-A46451228BA9"
+                },
+                {
+                    "operator": "eq",
+                    "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "xmlns"
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "http://openrosa.org/formdesigner/BBBA67FC-4E25-46B4-AB64-56F820D48A9E"
+                },
+                {
+                    "operator": "eq",
+                    "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "xmlns"
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "http://openrosa.org/formdesigner/54338047-CFB6-4D5B-861B-2256A10BBBC8"
+                },
+                {
+                    "operator": "eq",
+                    "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "xmlns"
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "http://openrosa.org/formdesigner/2BAC5FDC-72F3-4AF4-8381-9160E8AE13CF"
+                },
+                {
+                    "operator": "eq",
+                    "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "xmlns"
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "http://openrosa.org/formdesigner/7B543EA4-A416-4E46-A121-C4F57412B5AA"
+                },
+                {
+                    "operator": "eq",
+                    "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "xmlns"
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "http://openrosa.org/formdesigner/89F60CF0-C6A7-4AD8-A48E-AA0F7A7A9B4D"
+                },
+                {
+                    "operator": "eq",
+                    "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "xmlns"
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "http://openrosa.org/formdesigner/1BE9CFE7-8EE6-4DFA-B9ED-D37993729843"
+                }
+            ]
+        },
+        "description": "",
+        "referenced_doc_type": "XFormInstance",
+        "configured_indicators": [
+            {
+                "display_name": "timeEnd",
+                "datatype": "datetime",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "type": "root_doc",
+                    "expression": {
+                        "datatype": null,
+                        "type": "property_path",
+                        "property_path": [
+                            "form",
+                            "meta",
+                            "timeEnd"
+                        ]
+                    }
+                },
+                "column_id": "timeEnd"
+            },
+            {
+                "display_name": "country",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "type": "root_doc",
+                    "expression": {
+                        "datatype": null,
+                        "type": "property_path",
+                        "property_path": [
+                            "form",
+                            "location_data",
+                            "country"
+                        ]
+                    }
+                },
+                "column_id": "country"
+            },
+            {
+                "display_name": "level_1",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "type": "root_doc",
+                    "expression": {
+                        "datatype": null,
+                        "type": "property_path",
+                        "property_path": [
+                            "form",
+                            "location_data",
+                            "level_1_name"
+                        ]
+                    }
+                },
+                "column_id": "level_1"
+            },
+            {
+                "display_name": "level_2",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "type": "root_doc",
+                    "expression": {
+                        "datatype": null,
+                        "type": "property_path",
+                        "property_path": [
+                            "form",
+                            "location_data",
+                            "level_2_name"
+                        ]
+                    }
+                },
+                "column_id": "level_2"
+            },
+            {
+                "display_name": "level_3",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "type": "root_doc",
+                    "expression": {
+                        "datatype": null,
+                        "type": "property_path",
+                        "property_path": [
+                            "form",
+                            "location_data",
+                            "level_3_name"
+                        ]
+                    }
+                },
+                "column_id": "level_3"
+            },
+            {
+                "display_name": "level_4",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "type": "root_doc",
+                    "expression": {
+                        "datatype": null,
+                        "type": "property_path",
+                        "property_path": [
+                            "form",
+                            "location_data",
+                            "level_4_name"
+                        ]
+                    }
+                },
+                "column_id": "level_4"
+            },
+            {
+                "display_name": "username",
+                "datatype": "string",
+                "type": "expression",
+                "transform": {
+                },
+                "is_nullable": true,
+                "is_primary_key": false,
+                "column_id": "username",
+                "expression": {
+                    "type": "root_doc",
+                    "expression": {
+                        "datatype": null,
+                        "type": "property_path",
+                        "property_path": [
+                            "form",
+                            "meta",
+                            "username"
+                        ]
+                    }
+                }
+            },
+            {
+                "display_name": "form_name",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "type": "root_doc",
+                    "expression": {
+                        "datatype": null,
+                        "type": "property_path",
+                        "property_path": [
+                            "form",
+                            "@name"
+                        ]
+                    }
+                },
+                "column_id": "form_name"
+            },
+            {
+                "display_name": "inspector_names",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "names"
+                },
+                "column_id": "inspector_names"
+            },
+            {
+                "display_name": "flag",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "flag"
+                },
+                "column_id": "flag"
+            },
+            {
+                "display_name": "warning",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "warning"
+                },
+                "column_id": "warning"
+            },
+            {
+                "display_name": "comments",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "comments"
+                },
+                "column_id": "comments"
+            }
+        ],
+        "table_id": "supervisor-indicators-static",
+        "named_filters": {
+        },
+        "base_item_expression": {
+            "type": "abt_supervisor"
+        },
+        "display_name": "Supervisory Indicators"
+    }
+}
