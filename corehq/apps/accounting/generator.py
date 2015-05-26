@@ -101,7 +101,8 @@ def delete_all_accounts():
 def arbitrary_subscribable_plan():
     return DefaultProductPlan.objects.get(
         edition=random.choice(SUBSCRIBABLE_EDITIONS),
-        product_type=SoftwareProductType.COMMCARE
+        product_type=SoftwareProductType.COMMCARE,
+        is_trial=False
     ).plan.get_version()
 
 
