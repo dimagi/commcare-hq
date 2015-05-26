@@ -2,6 +2,7 @@ from collections import defaultdict
 from xml.etree import ElementTree
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.products.fixtures import product_fixture_generator_json
 
 
 def item_lists_by_domain(domain):
@@ -27,7 +28,12 @@ def item_lists_by_domain(domain):
             'name': data_type.tag,
             'structure': structure,
         })
+
+    products = product_fixture_generator_json(domain)
+    if products:
+        ret.append(products)
     return ret
+
 
 def item_lists(user, version, last_sync=None):
     assert isinstance(user, CommCareUser)
