@@ -18,7 +18,7 @@ class Command(BaseCommand):
         ).all()
         for session in sessions:
             try:
-                get_raw_instance(session.session_id)
+                get_raw_instance(session.session_id)['output']
             except InvalidSessionIdException:
                 print "Closing %s %s" % (session.domain, session._id)
                 session.end(False)
