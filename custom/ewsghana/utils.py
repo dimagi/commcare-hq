@@ -334,4 +334,3 @@ def filter_slugs_by_role(couch_user, domain):
     permissions = domain_membership.permissions
     if not permissions.view_reports:
         return [slug for slug in slugs if REPORT_MAPPING[slug[0]] in permissions.view_report_list]
-
