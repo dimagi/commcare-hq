@@ -30,11 +30,15 @@
         </div>
         <div class="span8">
             <div class="well">
-                <legend>
-                    First time here?
-                </legend>
-                <p>Try refreshing: often the problem is temporary and the page will succeed if you try again.</p>
-                <button id="refresh" class="btn btn-primary">{% trans "Refresh Page" %}</button>
+                <form>
+                    <fieldset>
+                        <legend>
+                            First time here?
+                        </legend>
+                        Try refreshing. Often the problem is temporary and the page will succeed if you try again.<br><br>
+                        <button id="refresh" class="btn btn-primary">{% trans "Refresh Page" %}</button>
+                    </fieldset>
+                </form>
             </div>
             <form class="well form form-horizontal" style="padding-bottom: 0;" action="{% url "bug_report" %}" method="post">
                 <input type="hidden" id="bug-report-500-url" name="url" value="{{ request.build_absolute_uri }}"/>
@@ -53,20 +57,17 @@
                             Been here before? <small>Report an issue to help us get this problem fixed faster.</small>
                         {% endblocktrans %}
                     </legend>
-                    <p>{% trans "We would appreciate it a lot if you could provide us with any additional info about what happened before you encountered this problem." %}</p>
+                    {% trans "We would appreciate it a lot if you could provide us with any additional info about what happened before you encountered this problem." %}<br><br>
                     <div class="control-group">
                         <label class="control-label" for="bug-report-500-subject">{% trans "Short Description" %}</label>
                         <div class="controls">
                             <input type="text" class="input-xlarge" name="subject" id="bug-report-500-subject">
-                            <p class="help-block">{% trans "Please summarize the issue in one sentence&mdash;the message field below should contain more detail." %}</p>
                         </div>
                     </div>
                     <div class="control-group">
                         <label class="control-label" for="bug-report-500-message">{% trans "Full Description" %}</label>
                         <div class="controls">
-                            <textarea class="input-xlarge" name="message" id="bug-report-500-message" rows="10"></textarea>
-                            <p class="help-block">{% trans "Please try to include as much information as possible." %}
-                            </p>
+                            <textarea class="input-xlarge" name="message" id="bug-report-500-message" rows="5"></textarea>
                         </div>
                     </div>
                 </fieldset>
