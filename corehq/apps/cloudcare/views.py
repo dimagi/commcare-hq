@@ -21,14 +21,14 @@ from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.apps.users.views import BaseUserSettingsView
 from dimagi.utils.web import json_response, get_url_base, json_handler
-from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404,\
-    HttpResponseServerError
+from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404
 from django.shortcuts import render
 from corehq.apps.app_manager.models import Application, ApplicationBase, get_app
 import json
 from corehq.apps.cloudcare.api import look_up_app_json, get_cloudcare_apps, get_filtered_cases, get_filters_from_request,\
     api_closed_to_status, CaseAPIResult, CASE_STATUS_OPEN, get_app_json, get_open_form_sessions
 from dimagi.utils.parsing import string_to_boolean
+from dimagi.utils.logging import notify_exception
 from django.conf import settings
 from touchforms.formplayer.api import DjangoAuth
 from django.core.urlresolvers import reverse
@@ -284,8 +284,11 @@ def filter_cases(request, domain, app_id, module_id, parent_id=None):
         result = helper.filter_cases(xpath, additional_filters, DjangoAuth(auth_cookie),
                                      extra_instances=extra_instances)
         if result.get('status', None) == 'error':
-            return HttpResponseServerError(
-                result.get("message", _("Something went wrong filtering your cases.")))
+            code = result.get('code', 500)
+            message = result.get('message', _("Something went wrong filtering your cases."))
+            if code == 500:
+                notify_exception(None, message=message)
+            return json_response(message, status_code=code)
 
         case_ids = result.get("cases", [])
     else:
