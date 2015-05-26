@@ -2,6 +2,7 @@ from django.conf.urls import patterns, url, include
 from corehq.apps.app_manager.view_helpers import DynamicTemplateView
 from corehq.apps.app_manager.views import DownloadCCZ, AppSummaryView
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
+from corehq.apps.hqmedia.urls import download_urls as media_download_urls
 
 app_urls = patterns('corehq.apps.app_manager.views',
     url(r'^languages/$', 'view_app', name='app_languages'),
@@ -126,8 +127,10 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
     url(r'^delete_copy/(?P<app_id>[\w-]+)/$', 'delete_copy'),
 
     url(r'^download/(?P<app_id>[\w-]+)/$', 'download_index', name='download_index'),
+    # the order of these download urls is important
     url(r'^download/(?P<app_id>[\w-]+)/CommCare.ccz$', DownloadCCZ.as_view(),
         name=DownloadCCZ.name),
+    url(r'^download/(?P<app_id>[\w-]+)/multimedia/', include(media_download_urls)),
     url(r'^download/(?P<app_id>[\w-]+)/(?P<path>.*)$', 'download_file',
         name='app_download_file'),
     url(r'^download/(?P<app_id>[\w-]+)/',

@@ -85,12 +85,10 @@
     </script>
 
 <script>
-    /*
-    A wrapper function for Google Analytics event tracking.
-
-    Avoids duplicating checks that GA has been loaded.
-
-    Returns true if the event is tracked, and false otherwise.
+    /**
+     * A wrapper function for Google Analytics event tracking.
+     *
+     * Avoids duplicating checks that GA has been loaded.
      */
     function ga_track_event() {
         var args = ['send', 'event'];

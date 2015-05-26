@@ -4,6 +4,7 @@ from django.test.testcases import SimpleTestCase
 from django.test.utils import override_settings
 from casexml.apps.case.xml import V3
 from casexml.apps.phone.tests.utils import generate_restore_payload
+from corehq.apps.domain.models import Domain
 from couchforms.tests.testutils import post_xform_to_couch
 from casexml.apps.case.tests.util import check_xml_line_by_line, delete_all_cases, delete_all_sync_logs
 from casexml.apps.case.xform import process_cases
@@ -41,6 +42,7 @@ class OtaV3RestoreTest(TestCase):
         </case>"""
 
         restore_payload = generate_restore_payload(
+            project=Domain(name='dummy-project'),
             user=dummy_user(),
             items=True,
             version=V3

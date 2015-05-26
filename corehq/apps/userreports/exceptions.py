@@ -6,3 +6,11 @@ class UserReportsError(Exception):
 
 class BadSpecError(UserReportsError):
     pass
+
+
+class UserQueryError(UserReportsError):
+    pass
+
+
+class TableRebuildError(UserReportsError):
+    pass

@@ -671,7 +671,8 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             DataTablesColumn(_("Deployment Country"), prop_name="deployment.countries.exact"),
             DataTablesColumn(_("# Active Mobile Workers"), sort_type=DTSortType.NUMERIC,
                 prop_name="cp_n_active_cc_users",
-                help_text=_("The number of mobile workers who have submitted a form or SMS in the last 30 days.  Includes deactivated workers.")),
+                help_text=_("the number of mobile workers who have submitted a form or sent or received an SMS "
+                            "in the last 30 days.  Includes deactivated workers.")),
             DataTablesColumn(_("# Mobile Workers"), sort_type=DTSortType.NUMERIC,
                              prop_name="cp_n_cc_users",
                              help_text=_("Does not include deactivated users.")),
@@ -981,7 +982,7 @@ class CommConnectProjectSpacesReport(GlobalAdminReports):
     name = ugettext_noop('Project Spaces Using Messaging')
     default_params = {
         'es_is_test': 'false',
-        'es_cp_sms_ever': 'true',
+        'es_cp_sms_ever': 'T',
     }
     indicators = [
         'commconnect_domain_count',

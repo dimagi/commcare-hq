@@ -20,8 +20,11 @@ hqdb0.internal.commcarehq.org
 hqdb0.internal.commcarehq.org
 
 [celery]
-hqcelery0.internal.commcarehq.org
+# ansible makes the first thing in this list the flower url
+# a little bit redundant with with more explicit settings in environments.yml
+# but ansible doesn't currently have access to that
 hqcelery1.internal.commcarehq.org
+hqcelery0.internal.commcarehq.org
 
 [celery:vars]
 newrelic_app_name=celery

@@ -11,7 +11,7 @@ from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.utils.translation import ugettext as _, ugettext_noop
 from django.contrib import messages
 from soil.exceptions import TaskFailedError
-from soil.util import expose_download, get_download_context
+from soil.util import expose_cached_download, get_download_context
 from StringIO import StringIO
 from dimagi.utils.web import json_response
 from dimagi.utils.couch.database import iter_docs
@@ -278,7 +278,7 @@ class UploadProductView(BaseCommTrackManageView):
 
         domain = args[0]
         # stash this in soil to make it easier to pass to celery
-        file_ref = expose_download(upload.read(),
+        file_ref = expose_cached_download(upload.read(),
                                    expiry=1*60*60)
         task = import_products_async.delay(
             domain,

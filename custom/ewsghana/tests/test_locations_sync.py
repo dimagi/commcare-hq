@@ -2,7 +2,8 @@ import json
 import os
 from django.test import TestCase
 from corehq.apps.commtrack.models import SupplyPointCase
-from corehq.apps.commtrack.tests.util import bootstrap_domain as initial_bootstrap
+from corehq.apps.commtrack.tests.util import (bootstrap_products,
+                                              bootstrap_domain as initial_bootstrap)
 from corehq.apps.locations.models import Location as CouchLocation, SQLLocation
 from corehq.apps.products.models import SQLProduct
 from custom.ewsghana.api import Location, EWSApi, Product
@@ -19,6 +20,7 @@ class LocationSyncTest(TestCase):
         cls.api_object = EWSApi(TEST_DOMAIN, cls.endpoint)
         cls.datapath = os.path.join(os.path.dirname(__file__), 'data')
         initial_bootstrap(TEST_DOMAIN)
+        bootstrap_products(TEST_DOMAIN)
         cls.api_object.prepare_commtrack_config()
         with open(os.path.join(cls.datapath, 'sample_products.json')) as f:
             for p in json.loads(f.read()):

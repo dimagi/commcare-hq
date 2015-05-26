@@ -3,7 +3,7 @@ from casexml.apps.case.tests.util import assert_user_has_cases, assert_user_does
 from casexml.apps.phone.tests.test_sync_mode import USER_ID, SyncBaseTest
 
 
-@patch('casexml.apps.phone.caselogic.BatchedCaseSyncOperation.chunk_size', new=3)
+@patch('casexml.apps.phone.data_providers.case.batched.BatchedCaseSyncOperation.chunk_size', new=3)
 class BatchRestoreTests(SyncBaseTest):
 
     def test_multiple_batches_restore(self):

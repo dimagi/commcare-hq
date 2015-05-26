@@ -22,7 +22,7 @@ def soft_assert(to, notify_admins=False,
     send an email with stack trace if assertion is not True
 
     Parameters:
-    - to: List of email addresses that should receive the email
+    - to: Email address or list of email addresses that should receive the email
     - notify_admins: Send to all admins (using mail_admins) as well
     - fail_if_debug: if True, will fail hard (like a normal assert)
       if called in a developer environment (settings.DEBUG = True).

@@ -3,6 +3,7 @@ import mailchimp
 import uuid
 from datetime import datetime, date, timedelta
 from django.core.mail import send_mail
+from django.contrib.auth.models import User
 from corehq.apps.accounting.models import (
     SoftwarePlanEdition, DefaultProductPlan, BillingAccount,
     BillingAccountType, Subscription, SubscriptionAdjustmentMethod, Currency,
@@ -92,27 +93,36 @@ def safe_unsubscribe_user_from_mailchimp_list(user, list_id, email=None):
         logging.error(e.message)
 
 
-def handle_changed_mailchimp_email(user, old_email, new_email, list_id):
-    def is_user_subscribed_with_email(couch_user):
-        return (couch_user.subscribed_to_commcare_users
-                and couch_user.email == old_email)
-    users_subscribed_with_old_email = [
-        other_user
-        for other_user in CouchUser.all()
-        if is_user_subscribed_with_email(other_user)
-    ]
-    if (len(users_subscribed_with_old_email) == 1 and
-            users_subscribed_with_old_email[0].get_id == user.get_id):
-        safe_unsubscribe_user_from_mailchimp_list(
-            user,
-            list_id,
-            email=old_email,
-        )
-    safe_subscribe_user_to_mailchimp_list(
-        user,
-        list_id,
-        email=new_email,
-    )
+def handle_changed_mailchimp_email(user, old_email, new_email):
+    """
+        Checks whether there are other users with old_email who are also subscribed to any mailchimp lists.
+        If not, it safely unsubscribes that email from mailchimp. Then, adds new_email to mailchimp.
+    """
+    users_with_old_email = User.objects.filter(email=old_email).values_list('username', flat=True)
+
+    couch_users = CouchUser.view('users/by_username',
+                                 keys=list(users_with_old_email),
+                                 include_docs=True,
+                                 reduce=False,
+                                 ).all()
+
+    if user.subscribed_to_commcare_users:
+        users_subscribed_with_old_email = [couch_user.get_id for couch_user in couch_users
+                                           if couch_user.subscribed_to_commcare_users]
+        if (len(users_subscribed_with_old_email) == 1 and users_subscribed_with_old_email[0] == user.get_id):
+            safe_unsubscribe_user_from_mailchimp_list(user, settings.MAILCHIMP_COMMCARE_USERS_ID, email=old_email)
+
+    if not user.email_opt_out:
+        users_subscribed_with_old_email = [couch_user.get_id for couch_user in couch_users
+                                           if not couch_user.email_opt_out]
+        if (len(users_subscribed_with_old_email) == 1 and users_subscribed_with_old_email[0] == user.get_id):
+            safe_unsubscribe_user_from_mailchimp_list(user, settings.MAILCHIMP_MASS_EMAIL_ID, email=old_email)
+
+    # subscribe new_email to lists
+    if user.subscribed_to_commcare_users:
+        safe_subscribe_user_to_mailchimp_list(user, settings.MAILCHIMP_COMMCARE_USERS_ID, email=new_email)
+    if not user.email_opt_out:
+        safe_subscribe_user_to_mailchimp_list(user, settings.MAILCHIMP_MASS_EMAIL_ID, email=new_email)
 
 
 def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):

@@ -62,11 +62,23 @@
 
         // Bind the ReportConfigsViewModel to the save button.
         var defaultConfig = {{ default_config|JSON }};
-        defaultConfig.date_range = null;
+        {% if report.has_datespan %}
+            if(!defaultConfig.date_range) {
+                defaultConfig.date_range = 'last7';
+            }
+            defaultConfig.has_ucr_datespan = true;
+            defaultConfig.datespan_filters = {{ datespan_filters|JSON }};
+        {% else %}
+            defaultConfig.date_range = null;
+            defaultConfig.has_ucr_datespan = false;
+            defaultConfig.datespan_filters = [];
+        {% endif %}
+        if(!defaultConfig.datespan_slug) {
+            defaultConfig.datespan_slug = null;
+        }
         $("#savedReports").reportUserConfigurableConfigEditor({
             filterForm: $("#report-filters"),
             items: {{ report_configs|JSON }},
-            initialItemID: '{{ current_config_id }}',
             defaultItem: defaultConfig,
             saveUrl: '{% url "add_report_config" domain %}'
         });

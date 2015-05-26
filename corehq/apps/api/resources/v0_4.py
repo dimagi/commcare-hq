@@ -329,13 +329,17 @@ class ApplicationResource(HqBaseResource, DomainSpecificResourceMixin):
                 app, [module.case_type], defaults=['name']
             )[module.case_type]
 
+            dehydrated['unique_id'] = module.unique_id
+
             dehydrated['forms'] = []
             for form in module.forms:
-                form = Form.get_form(form.unique_id)
+                form_unique_id = form.unique_id
+                form = Form.get_form(form_unique_id)
                 form_jvalue = {
                     'xmlns': form.xmlns,
                     'name': form.name,
                     'questions': form.get_questions(langs, include_translations=True),
+                    'unique_id': form_unique_id,
                 }
                 dehydrated['forms'].append(form_jvalue)
             return dehydrated

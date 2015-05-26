@@ -38,16 +38,30 @@ class ProductAvailabilityData(EWSData):
             if not supply_points:
                 return rows
             total = supply_points.count()
-            for p in self.unique_products(locations, all=True):
-                stocks = StockTransaction.objects.filter(
-                    type='stockonhand', product_id=p.product_id, case_id__in=supply_points,
-                    report__date__lte=self.config['enddate'], report__date__gte=self.config['startdate']
-                ).order_by('case_id', '-report__date').distinct('case_id')
-                with_stock = stocks.filter(stock_on_hand__gt=0).count()
-                without_stock = stocks.filter(stock_on_hand=0).count()
+            unique_products = self.unique_products(locations, all=True).order_by('code')
+
+            result_dict = {}
+            for product in unique_products:
+                result_dict[product.product_id] = [0, 0]
+
+            last_stocks_in_period = StockTransaction.objects.filter(
+                type='stockonhand',
+                case_id__in=supply_points,
+                report__date__lte=self.config['enddate'],
+                report__date__gte=self.config['startdate'],
+                sql_product__in=unique_products,
+            ).distinct('case_id', 'product_id').order_by('case_id', 'product_id', '-report__date')
+
+            for last_stock in last_stocks_in_period:
+                index = 0 if last_stock.stock_on_hand > 0 else 1
+                result_dict[last_stock.product_id][index] += 1
+
+            for product in unique_products:
+                with_stock = result_dict[product.product_id][0]
+                without_stock = result_dict[product.product_id][1]
                 without_data = total - with_stock - without_stock
-                rows.append({"product_code": p.code,
-                             "product_name": p.name,
+                rows.append({"product_code": product.code,
+                             "product_name": product.name,
                              "total": total,
                              "with_stock": with_stock,
                              "without_stock": without_stock,
@@ -162,18 +176,22 @@ class MonthOfStockProduct(EWSData):
                     self.config['enddate'].date(), self.config['report_type']))
 
                 row = [link_format(sp.name, url)]
+
+                products = self.unique_products(self.get_supply_points, all=True)
                 transactions = list(StockTransaction.objects.filter(
                     type='stockonhand',
+                    product_id__in=products.values_list('product_id', flat=True),
                     case_id=sp.supply_point_id,
                     report__date__lte=self.config['enddate']
                 ).order_by('-report__date'))
 
                 states = list(StockState.objects.filter(
                     case_id=sp.supply_point_id,
+                    product_id__in=products.values_list('product_id', flat=True),
                     section_id='stock'
                 ))
 
-                for p in self.unique_products(self.get_supply_points, all=True):
+                for p in products:
                     transaction = first_item(transactions, lambda x: x.product_id == p.product_id)
                     state = first_item(states, lambda x: x.product_id == p.product_id)
 

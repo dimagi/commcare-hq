@@ -22,11 +22,11 @@ class InventoryHistoryData(ILSData):
 
     @property
     def headers(self):
-        headers = DataTablesHeader(*[
+        headers = DataTablesHeader(
             DataTablesColumn(_('Product')),
             DataTablesColumn(_('Stock on Hand')),
             DataTablesColumn(_('Months of stock'))
-        ])
+        )
         return headers
 
     @property
@@ -34,9 +34,11 @@ class InventoryHistoryData(ILSData):
         rows = []
         if self.config['location_id']:
             sp = SQLLocation.objects.get(location_id=self.config['location_id']).supply_point_id
-            ss = StockState.objects.filter(sql_product__is_archived=False,
-                                           case_id=sp,
-                                           product_id__in=self.config['products'])
+            ss = StockState.objects.filter(
+                sql_product__is_archived=False,
+                case_id=sp,
+                product_id__in=self.config['products']
+            )
             for stock in ss:
                 def calculate_months_remaining(stock_state, quantity):
                     consumption = stock_state.get_monthly_consumption()
@@ -64,12 +66,12 @@ class RegistrationData(ILSData):
 
     @property
     def headers(self):
-        return DataTablesHeader(*[
+        return DataTablesHeader(
             DataTablesColumn(_('Name')),
             DataTablesColumn(_('Role')),
             DataTablesColumn(_('Phone')),
             DataTablesColumn(_('Email')),
-        ])
+        )
 
     @property
     def rows(self):
@@ -115,13 +117,13 @@ class Notes(ILSData):
 
     @property
     def headers(self):
-        return DataTablesHeader(*[
+        return DataTablesHeader(
             DataTablesColumn(_('Name')),
             DataTablesColumn(_('Role')),
             DataTablesColumn(_('Date')),
             DataTablesColumn(_('Phone')),
             DataTablesColumn(_('Text'))
-        ])
+        )
 
     @property
     def rows(self):
@@ -159,11 +161,11 @@ class RecentMessages(ILSData):
 
     @property
     def headers(self):
-        return DataTablesHeader(*[
+        return DataTablesHeader(
             DataTablesColumn('Date'),
             DataTablesColumn('Direction'),
             DataTablesColumn('Text')
-        ])
+        )
 
     @property
     def rows(self):

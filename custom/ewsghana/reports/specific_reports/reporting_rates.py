@@ -4,11 +4,10 @@ from corehq.apps.es import UserES
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
-from corehq.apps.reports.graph_models import PieChart
 from custom.common import ALL_OPTION
 from custom.ewsghana import StockLevelsReport
 from custom.ewsghana.filters import ProductByProgramFilter
-from custom.ewsghana.reports import MultiReport, ReportingRatesData, ProductSelectionPane
+from custom.ewsghana.reports import MultiReport, ReportingRatesData, ProductSelectionPane, EWSPieChart
 from casexml.apps.stock.models import StockTransaction
 from custom.ewsghana.reports.stock_levels_report import FacilityReportData, StockLevelsLegend, FacilitySMSUsers, \
     FacilityUsers, FacilityInChargeUsers, InventoryManagementData, InputStock
@@ -65,7 +64,7 @@ class ReportingRates(ReportingRatesData):
                      color='red'),
             ]
 
-        return [PieChart('', '', chart_data, ['green', 'red'])]
+        return [EWSPieChart('', '', chart_data, ['green', 'red'])]
 
 
 class ReportingDetails(ReportingRatesData):
@@ -84,16 +83,23 @@ class ReportingDetails(ReportingRatesData):
             ).values_list('supply_point_id', flat=True)
             complete = 0
             incomplete = 0
-            for supply_point in self.reporting_supply_points(supply_points):
-                products = SQLLocation.objects.get(
-                    supply_point_id=supply_point
-                ).products.values_list('product_id', flat=True)
+            supply_points_ids = self.reporting_supply_points(supply_points)
+            transactions = StockTransaction.objects.filter(
+                case_id__in=supply_points_ids,
+                report__date__range=[self.config['startdate'], self.config['enddate']]
+            ).values_list('case_id', 'product_id')
+            grouped_by_case = {}
+            for (case_id, product_id) in transactions:
+                if case_id in grouped_by_case:
+                    grouped_by_case[case_id].add(product_id)
+                else:
+                    grouped_by_case[case_id] = {product_id}
 
-                st = StockTransaction.objects.filter(
-                    case_id=supply_point,
-                    report__date__range=[self.config['startdate'], self.config['enddate']]
-                ).distinct('product_id').values_list('product_id', flat=True)
-                if not (set(products) - set(st)):
+            for case_id, products in grouped_by_case.iteritems():
+                location_products = SQLLocation.objects.get(
+                    supply_point_id=case_id
+                ).products.values_list('product_id', flat=True)
+                if not (set(location_products) - products):
                     complete += 1
                 else:
                     incomplete += 1
@@ -124,7 +130,7 @@ class ReportingDetails(ReportingRatesData):
                      color='purple'),
             ]
 
-        return [PieChart('', '', chart_data, ['green', 'purple'])]
+        return [EWSPieChart('', '', chart_data, ['green', 'purple'])]
 
 
 class SummaryReportingRates(ReportingRatesData):
