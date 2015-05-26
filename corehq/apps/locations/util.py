@@ -135,6 +135,7 @@ class LocationExporter(object):
         self.domain_obj = Domain.get_by_name(domain)
         self.include_consumption_flag = include_consumption
         self.data_model = get_location_data_model(domain)
+        self.administrative_types = {}
 
     @property
     @memoized
