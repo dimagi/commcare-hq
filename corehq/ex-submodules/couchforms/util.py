@@ -525,6 +525,7 @@ class SubmissionPost(object):
                                     )
                                 )
                         try:
+                            # save both the forms and cases
                             XFormInstance.get_db().bulk_save(docs)
                         except BulkSaveError as e:
                             logging.error('BulkSaveError saving forms', exc_info=1,
