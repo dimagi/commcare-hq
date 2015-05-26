@@ -43,6 +43,7 @@
 trunk: master
 name: autostaging
 branches:
+  - submit-history-tz  # danny 5/25
   - fix-time-ago-sort  # danny 5/15
   - process-timezone  # danny 5/7
   - subscription-no-contact-info # bb 8/4
