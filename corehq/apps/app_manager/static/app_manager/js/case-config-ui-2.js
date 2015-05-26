@@ -821,6 +821,13 @@ var CaseConfig = (function () {
             return UserCaseTransaction.wrap({
                 case_properties: case_properties,
                 case_preload: case_preload,
+                allow: {
+                    repeats: function () {
+                        // This placeholder function allows us to reuse the "case-config:case-properties:question"
+                        // template in case_config_shared.html
+                        return true;
+                    }
+                },
 
                 suggestedProperties: function () {
                     if (_(caseConfig.usercasePropertiesMap).has('commcare-user')) {
