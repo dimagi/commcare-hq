@@ -308,3 +308,30 @@ def first_item(items, f):
     for item in items:
         if f(item):
             return item
+
+REPORT_MAPPING = {
+    'dashboard_report': 'custom.ewsghana.reports.specific_reports.dashboard_report.DashboardReport',
+    'stock_status': 'custom.ewsghana.reports.specific_reports.stock_status_report.StockStatus',
+    'reporting_page': 'custom.ewsghana.reports.specific_reports.reporting_rates.ReportingRatesReport',
+    'ews_mapreport': 'custom.ewsghana.reports.maps.EWSMapReport',
+    'cms_rms_summary_report': 'custom.ewsghana.reports.email_reports.CMSRMSReport',
+    'stock_summary_report': 'custom.ewsghana.reports.email_reports.StockSummaryReport'
+}
+
+
+def filter_slugs_by_role(couch_user, domain):
+    slugs = [
+        ['dashboard_report', 'Dashboard'],
+        ['stock_status', 'Stock Status Report'],
+        ['reporting_page', 'Reporting Rates'],
+        ['ews_mapreport', 'Maps'],
+        ['stock_summary_report', 'Stock Summary Report'],
+        ['cms_rms_summary_report', 'CMS and RMS Summary Report']
+    ]
+    if couch_user.is_domain_admin(domain) or couch_user.is_superuser:
+        return slugs
+    domain_membership = couch_user.get_domain_membership(domain)
+    permissions = domain_membership.permissions
+    if not permissions.view_reports:
+        return [slug for slug in slugs if REPORT_MAPPING[slug[0]] in permissions.view_report_list]
+
