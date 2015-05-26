@@ -153,7 +153,7 @@ class Command(BaseCommand):
                     default_product_plan = DefaultProductPlan(product_type=product.product_type, edition=edition, is_trial=is_trial)
                     if dry_run:
                         logger.info("[DRY RUN] Setting plan as default for product '%s' and edition '%s'." %
-                                     (product.product_type, default_product_plan.edition))
+                                (product.product_type, default_product_plan.edition))
                     else:
                         try:
                             default_product_plan = DefaultProductPlan.objects.get(product_type=product.product_type,
@@ -161,8 +161,8 @@ class Command(BaseCommand):
                             if self.verbose:
                                 logger.info("Default for product '%s' and edition "
                                             "'%s' already exists." % (
-                                    product.product_type, default_product_plan.edition
-                                ))
+                                                product.product_type, default_product_plan.edition
+                                            ))
                         except ObjectDoesNotExist:
                             default_product_plan.plan = software_plan
                             default_product_plan.save()
