@@ -606,11 +606,12 @@ class HQMediaMixin(Document):
         media_kwargs.update(to_language=to_language or self.default_language)
         return self._get_item_media(module.case_list_form, media_kwargs)
 
-    def get_case_list_menu_item_media(self, module, module_index):
+    def get_case_list_menu_item_media(self, module, module_index, to_language=None):
         if not module:
             # user_registration isn't a real module, for instance
             return {}
         media_kwargs = self.get_media_ref_kwargs(module, module_index)
+        media_kwargs.update(to_language=to_language or self.default_language)
         return self._get_item_media(module.case_list, media_kwargs)
 
     def _get_item_media(self, item, media_kwargs):

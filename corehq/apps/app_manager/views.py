@@ -1072,7 +1072,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
                 'default_file_name': '{}_case_list_form'.format(default_file_name),
             }
             specific_media['case_list_menu_item'] = {
-                'menu_refs': app.get_case_list_menu_item_media(module, module_id),
+                'menu_refs': app.get_case_list_menu_item_media(module, module_id, to_language=context['lang']),
                 'default_file_name': '{}_case_list_menu_item'.format(default_file_name),
             }
         context.update({
@@ -1614,7 +1614,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
             resp,
             request.POST.get('case_list_form_media_audio')
         )
-        module.case_list_form.set_audio(lang, new_path, default_lang=app.default_language)
+        module.case_list_form.set_audio(lang, new_path)
 
     if should_edit('case_list-menu_item_media_image'):
         val = _process_media_attribute(
@@ -1622,14 +1622,14 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
             resp,
             request.POST.get('case_list-menu_item_media_image')
         )
-        module.case_list.media_image = val
+        module.case_list.set_icon(lang, val)
     if should_edit('case_list-menu_item_media_audio'):
         val = _process_media_attribute(
             'case_list-menu_item_media_audio',
             resp,
             request.POST.get('case_list-menu_item_media_audio')
         )
-        module.case_list.media_audio = val
+        module.case_list.set_audio(lang, val)
 
     for attribute in ("name", "case_label", "referral_label"):
         if should_edit(attribute):
