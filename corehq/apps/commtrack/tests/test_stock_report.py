@@ -4,7 +4,7 @@ import string
 
 from django.test import TestCase
 from casexml.apps.case.tests.util import delete_all_xforms
-from casexml.apps.stock.utils import get_current_ledger_transactions, get_current_ledger_transactions_multi
+from casexml.apps.stock.utils import get_current_ledger_transactions, get_current_ledger_state
 from corehq.apps.commtrack.models import NewStockReport, SQLProduct, StockTransaction as STrans
 
 from casexml.apps.stock.const import REPORT_TYPE_BALANCE
@@ -132,12 +132,12 @@ class StockReportDomainTest(TestCase):
 
         self.assertEqual({}, get_current_ledger_transactions('non-existent'))
 
-    def test_get_current_ledger_transactions_multi(self):
+    def test_get_current_ledger_state(self):
         def test_transactions(expected):
-            transactions = get_current_ledger_transactions_multi(self.case_ids.keys())
-            for case, sections in transactions.items():
+            state = get_current_ledger_state(self.case_ids.keys())
+            for case, sections in state.items():
                 self._validate_case_data(sections, expected[case])
 
         self._test_get_current_ledger_transactions(test_transactions)
 
-        self.assertEqual({}, get_current_ledger_transactions_multi([]))
+        self.assertEqual({}, get_current_ledger_state([]))
