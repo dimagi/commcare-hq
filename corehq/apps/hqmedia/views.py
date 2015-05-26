@@ -279,7 +279,7 @@ class ProcessBulkUploadView(BaseProcessUploadedView):
     def process_upload(self):
         if hasattr(self.uploaded_file, 'temporary_file_path') and settings.SHARED_DRIVE_CONF.temp_dir:
             processing_id = uuid.uuid4().hex
-            path = '{}.{}'.format(os.path.join(settings.SHARED_DRIVE_CONF.temp_dir, processing_id), 'upload')
+            path = settings.SHARED_DRIVE_CONF.get_temp_file(suffix='.upload')
             shutil.move(self.uploaded_file.temporary_file_path(), path)
             status = BulkMultimediaStatusCacheNfs(processing_id, path)
             status.save()
