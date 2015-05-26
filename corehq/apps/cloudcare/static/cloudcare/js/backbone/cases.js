@@ -181,18 +181,6 @@ cloudCare.CaseList = Backbone.Collection.extend({
     setUrl: function (url) {
         this.caseUrl = url;
     },
-    parse: function (resp) {
-        var self = this;
-        if (resp.parents) {
-            // object: {cases: [...], parents: [...]}
-            _.each(['cases', 'parents'], function(key) {
-                var cases = resp[key];
-                // maps ids to their corresponding case
-                _.extend(self.casedb, _.object(_.pluck(cases, '_id'), cases));
-            });
-        }
-        return resp.cases;
-    }
 });
 
 cloudCare.CaseListView = Backbone.View.extend({
