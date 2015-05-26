@@ -25,7 +25,7 @@ class ASHAFunctionalityChecklistReport(GenericTabularReport, NRHMDatespanMixin, 
 
     @property
     def ashas(self):
-        return sorted(self.model_data.data.values(), key=lambda x: x['hv_asha_name'])
+        return sorted(self.model_data.data.values(), key=lambda x: x['completed_on'])
 
     @property
     def headers(self):

@@ -2,6 +2,18 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
+{% block js %}
+    {{ block.super }}
+    <link href="{% static 'up_nrhm/css/report.css' %}" rel="stylesheet">
+    <style>
+        @media print {
+            .table th, .table td {
+                border-right: 1px solid #dddddd;
+            }
+        }
+    </style>
+{% endblock js %}
+
 {% block pretable %}
     {{ block.super }}
     {% if sf == "sf2" %}
