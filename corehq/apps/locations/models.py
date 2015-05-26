@@ -343,11 +343,16 @@ class Location(CachedCouchDocumentMixin, Document):
     def __hash__(self):
         return hash(self._id)
 
-    # Method return a non save SQLLocation object, because when we want sync location in task, we can have some
-    # problems. For example: we can have location in SQL but without location type.
-    # this behavior causes problems when we want go to locations page - 500 error.
-    # SQLlocation object is saved together with Couch object in save method.
     def _sync_location(self):
+        """
+        Method return a non save SQLLocation object, because when we
+        want sync location in task, we can have some problems.
+        For example: we can have location in SQL but without location type.
+        This behavior causes problems when we want go to
+        locations page - 500 error.
+        SQLlocation object is saved together with Couch object in save method.
+        """
+
         properties_to_sync = [
             ('location_id', '_id'),
             'domain',
@@ -360,23 +365,24 @@ class Location(CachedCouchDocumentMixin, Document):
             'metadata'
         ]
 
+        # The location type must already exist
+        try:
+            location_type = LocationType.objects.get(
+                domain=self.domain,
+                name=self.location_type,
+            )
+        except LocationType.DoesNotExist:
+            msg = "You can't create a location without a real location type"
+            raise LocationType.DoesNotExist(msg)
+
         try:
             sql_location = SQLLocation.objects.get(location_id=self._id)
         except SQLLocation.DoesNotExist:
-            # The location type must already exist
-            try:
-                location_type = LocationType.objects.get(
-                    domain=self.domain,
-                    name=self.location_type,
-                )
-            except LocationType.DoesNotExist:
-                msg = "You can't create a location without a real location type"
-                raise LocationType.DoesNotExist(msg)
-
             sql_location = SQLLocation(
                 domain=self.domain,
-                location_type=location_type,
             )
+
+        sql_location.location_type = location_type
 
         for prop in properties_to_sync:
             if isinstance(prop, tuple):
