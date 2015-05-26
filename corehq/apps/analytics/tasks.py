@@ -32,7 +32,10 @@ def _track_on_hubspot(webuser, properties):
 
 @task(queue='background_queue')
 def track_created_hq_account_on_hubspot(webuser):
-    _track_on_hubspot(webuser, {'created_account_in_hq': True})
+    _track_on_hubspot(webuser, {
+        'created_account_in_hq': True,
+        'commcare_user': True,
+    })
 
 
 @task(queue='background_queue')

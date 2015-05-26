@@ -285,7 +285,7 @@ def confirm_domain(request, guid=None):
     ) % requesting_user.username
     context['is_error'] = False
     context['valid_confirmation'] = True
-    track_created_hq_account_on_hubspot.delay(requesting_user.username)
+    track_created_hq_account_on_hubspot.delay(requesting_user)
     return render(request, 'registration/confirmation_complete.html', context)
 
 
