@@ -18,7 +18,7 @@ CUSTOM_DATA_SLUG = 'product_data'
 
 
 def product_fixture_generator_json(domain):
-    if SQLProduct.objects.filter(domain=domain).count() == 0:
+    if not SQLProduct.objects.filter(domain=domain).exists():
         return None
 
     fields = filter(lambda x: x != CUSTOM_DATA_SLUG, PRODUCT_FIELDS)
