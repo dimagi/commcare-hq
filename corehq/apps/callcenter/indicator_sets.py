@@ -21,6 +21,7 @@ AAROHI_CHILD_FORM = 'http://openrosa.org/formdesigner/09486EF6-04C8-480C-BA11-2F
 AAROHI_MOTHER_FORM = 'http://openrosa.org/formdesigner/6C63E53D-2F6C-4730-AA5E-BAD36B50A170'
 INFOMOVAL_FIND_PATIENT_FORM = 'http://openrosa.org/formdesigner/DA10DCC2-8240-4101-B964-6F5424BD2B86'
 INFOMOVAL_REGISTER_CONTACT_FORM = 'http://openrosa.org/formdesigner/c0671536f2087bb80e460d57f60c98e5b785b955'
+INFOMOVAL_HOME_VISIT_FORM = 'http://openrosa.org/formdesigner/74BD43B5-5253-4855-B195-F3F049B8F8CC'
 
 
 TYPE_DURATION = 'duration'
@@ -39,6 +40,7 @@ PER_DOMAIN_FORM_INDICATORS = {
     'infomovel': [
         {'slug': 'findPatientForms', 'type': TYPE_SUM, 'xmlns': INFOMOVAL_FIND_PATIENT_FORM},
         {'slug': 'registerContactForms', 'type': TYPE_SUM, 'xmlns': INFOMOVAL_REGISTER_CONTACT_FORM},
+        {'slug': 'homeVisitForms', 'type': TYPE_SUM, 'xmlns': INFOMOVAL_HOME_VISIT_FORM},
     ]
 }
 
