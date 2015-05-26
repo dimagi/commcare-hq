@@ -6,8 +6,10 @@ from sqlagg import (
 from sqlalchemy.exc import ProgrammingError
 from corehq.apps.reports.sqlreport import SqlData
 from corehq.apps.userreports.exceptions import UserReportsError
-from corehq.apps.userreports.models import DataSourceConfiguration
+from corehq.apps.userreports.models import DataSourceConfiguration, \
+    CustomDataSourceConfiguration
 from corehq.apps.userreports.sql import get_table_name
+from corehq.apps.userreports.views import get_datasource_config_or_404
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -42,7 +44,7 @@ class ConfigurableReportDataSource(SqlData):
     @property
     def config(self):
         if self._config is None:
-            self._config = DataSourceConfiguration.get(self._config_id)
+            self._config, _ = get_datasource_config_or_404(self._config_id, self.domain)
         return self._config
 
     @property
