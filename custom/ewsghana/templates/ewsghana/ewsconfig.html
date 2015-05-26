@@ -118,6 +118,16 @@
                 </div>
             </div>
         </div>
+        <div class="row-fluid">
+            <div class="span12">
+                <div class="btn-toolbar">
+                    <button class="btn" id="delete_last_stock_data">
+                        {% trans "Delete last migrated stock data" %}
+                    </button>
+                </div>
+            </div>
+        </div>
+
     {% endif %}
 {% endblock %}
 
@@ -174,6 +184,12 @@
         });
         $("#clear_products").click(function() {
             var url = '{% url 'clear_products' domain %}';
+            var successMessage = "{% trans "Resync started" %}";
+            _post(this, url, {success: successMessage});
+        });
+
+        $("#delete_last_stock_data").click(function() {
+            var url = '{% url 'delete_last_stock_data' domain %}';
             var successMessage = "{% trans "Resync started" %}";
             _post(this, url, {success: successMessage});
         });

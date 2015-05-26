@@ -221,7 +221,7 @@ class Domain(Document, SnapshotMixin):
     call_center_config = SchemaProperty(CallCenterProperties)
     has_careplan = BooleanProperty(default=False)
     restrict_superusers = BooleanProperty(default=False)
-    location_restriction_for_users = BooleanProperty(default=True)
+    location_restriction_for_users = BooleanProperty(default=False)
     usercase_enabled = BooleanProperty(default=False)
 
     case_display = SchemaProperty(CaseDisplaySettings)
@@ -659,6 +659,7 @@ class Domain(Document, SnapshotMixin):
             new_domain_name = new_id
         new_domain = Domain.get(new_id)
         new_domain.name = new_domain_name
+        new_domain.hr_name = None
         new_domain.copy_history = self.get_updated_history()
         new_domain.is_snapshot = False
         new_domain.snapshot_time = None

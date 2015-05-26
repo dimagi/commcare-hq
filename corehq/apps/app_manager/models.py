@@ -68,7 +68,7 @@ from corehq.apps.app_manager.util import (
     save_xform,
     get_correct_app_class,
     ParentCasePropertyBuilder,
-    is_usercase_enabled)
+    is_usercase_in_use)
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
@@ -314,6 +314,9 @@ class FormActions(DocumentSchema):
 
     case_preload = SchemaProperty(PreloadAction)
     referral_preload = SchemaProperty(PreloadAction)
+
+    usercase_update = SchemaProperty(UpdateCaseAction)
+    usercase_preload = SchemaProperty(PreloadAction)
 
     subcases = SchemaListProperty(OpenSubCaseAction)
 
@@ -1112,16 +1115,19 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
             if self.requires == 'none':
                 action_types = (
                     'open_case', 'update_case', 'close_case', 'subcases',
+                    'usercase_update', 'usercase_preload',
                 )
             elif self.requires == 'case':
                 action_types = (
                     'update_case', 'close_case', 'case_preload', 'subcases',
+                    'usercase_update', 'usercase_preload',
                 )
             else:
                 # this is left around for legacy migrated apps
                 action_types = (
                     'open_case', 'update_case', 'close_case',
                     'case_preload', 'subcases',
+                    'usercase_update', 'usercase_preload',
                 )
         return self._get_active_actions(action_types)
 
@@ -1207,11 +1213,14 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         return errors
 
     def get_case_updates(self, case_type):
-        if self.get_module().case_type == case_type:
+        # This method is used by both get_all_case_properties and
+        # get_usercase_properties. In the case of usercase properties, use
+        # the usercase_update action, and for normal cases, use the
+        # update_case action
+        if case_type == self.get_module().case_type or case_type == USERCASE_TYPE:
             format_key = self.get_case_property_name_formatter()
-            return [format_key(*item)
-                    for item in self.actions.update_case.update.items()]
-
+            action = self.actions.usercase_update if case_type == USERCASE_TYPE else self.actions.update_case
+            return [format_key(*item) for item in action.update.items()]
         return []
 
     @memoized
@@ -2275,7 +2284,7 @@ class AdvancedModule(ModuleBase):
 
                 if from_module.parent_select.active:
                     app = self.get_app()
-                    gen = suite_xml.SuiteGenerator(app, is_usercase_enabled(app.domain))
+                    gen = suite_xml.SuiteGenerator(app, is_usercase_in_use(app.domain))
                     select_chain = gen.get_select_chain(from_module, include_self=False)
                     for n, link in enumerate(reversed(list(enumerate(select_chain)))):
                         i, module = link
@@ -2420,7 +2429,7 @@ class AdvancedModule(ModuleBase):
                         'expected_tag': case_tag
                     })
 
-                if case_action and case_action.details_module != self.unique_id:
+                if case_action and case_action.details_module and case_action.details_module != self.unique_id:
                     errors.append({
                         'type': 'forms in case list module must use modules details',
                         'module': info,
@@ -3659,8 +3668,18 @@ def validate_lang(lang):
 
 
 def validate_property(property):
+    """
+    Validate a case property name
+
+    >>> validate_property('parent/maternal-grandmother_fullName')
+    >>> validate_property('foo+bar')
+    Traceback (most recent call last):
+      ...
+    ValueError: Invalid Property
+
+    """
     # this regex is also copied in propertyList.ejs
-    if not re.match(r'^[a-zA-Z][\w_-]*([/:][a-zA-Z][\w_-]*)*$', property):
+    if not re.match(r'^[a-zA-Z][\w_-]*(/[a-zA-Z][\w_-]*)*$', property):
         raise ValueError("Invalid Property")
 
 
@@ -3967,7 +3986,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 'langs': ["default"] + self.build_langs
             })
         else:
-            return suite_xml.SuiteGenerator(self, is_usercase_enabled(self.domain)).generate_suite()
+            return suite_xml.SuiteGenerator(self, is_usercase_in_use(self.domain)).generate_suite()
 
     def create_media_suite(self):
         return suite_xml.MediaSuiteGenerator(self).generate_suite()
@@ -4244,7 +4263,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @memoized
     def get_case_types(self):
-        return set(chain(*[m.get_case_types() for m in self.get_modules()]))
+        extra_types = set()
+        if is_usercase_in_use(self.domain):
+            extra_types.add(USERCASE_TYPE)
+        return set(chain(*[m.get_case_types() for m in self.get_modules()])) | extra_types
 
     def has_media(self):
         return len(self.multimedia_map) > 0

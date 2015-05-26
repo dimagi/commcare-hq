@@ -152,7 +152,7 @@ def not_responding_facility(org_summary):
         group_summary.save()
 
 
-@transaction.commit_on_success
+@transaction.atomic
 def update_product_availability_facility_data(org_summary):
     # product availability
 
@@ -266,8 +266,14 @@ def process_facility_warehouse_data(facility, start_date, end_date, runner):
     process all the facility-level warehouse tables
     """
     logging.info("processing facility %s (%s)" % (facility.name, str(facility._id)))
-    runner.location = facility.sql_location
-    runner.save()
+    try:
+        runner.location = facility.sql_location
+        runner.save()
+    except SQLLocation.DoesNotExist:
+        # TODO Temporary fix
+        facility.delete()
+        return
+
     for alert_type in [const.SOH_NOT_RESPONDING, const.RR_NOT_RESPONDED, const.DELIVERY_NOT_RESPONDING]:
         alert = Alert.objects.filter(location_id=facility._id, date__gte=start_date, date__lt=end_date,
                                      type=alert_type)
@@ -279,7 +285,7 @@ def process_facility_warehouse_data(facility, start_date, end_date, runner):
         location_id=facility._id,
         status_date__gte=start_date,
         status_date__lt=end_date
-    ).order_by('status_date')
+    ).order_by('status_date').iterator()
     process_facility_statuses(location_id, new_statuses)
 
     new_reports = StockReport.objects.filter(
@@ -287,14 +293,14 @@ def process_facility_warehouse_data(facility, start_date, end_date, runner):
         date__gte=start_date,
         date__lt=end_date,
         stocktransaction__type='stockonhand'
-    ).order_by('date')
+    ).order_by('date').iterator()
     process_facility_product_reports(location_id, new_reports)
 
     new_trans = StockTransaction.objects.filter(
         case_id=supply_point_id,
         report__date__gte=start_date,
         report__date__lt=end_date,
-    ).exclude(type='consumption').order_by('report__date')
+    ).exclude(type='consumption').order_by('report__date').iterator()
     process_facility_transactions(location_id, new_trans)
 
     # go through all the possible values in the date ranges
@@ -415,7 +421,7 @@ def process_facility_product_reports(facility_id, reports):
         months_updated[warehouse_date] = None  # update the cache of stuff we've dealt with
 
 
-@transaction.commit_on_success
+@transaction.atomic
 def process_facility_transactions(facility_id, transactions):
     """
     For a given facility and list of transactions, update the appropriate

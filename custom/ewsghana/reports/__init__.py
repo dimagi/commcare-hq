@@ -8,12 +8,12 @@ from corehq.apps.reports.commtrack.standard import CommtrackReportMixin
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.graph_models import LineChart, MultiBarChart
+from corehq.apps.reports.graph_models import LineChart, MultiBarChart, PieChart
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 from custom.ewsghana.filters import ProductByProgramFilter
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import Location, SQLLocation
-from custom.ewsghana.utils import get_supply_points
+from custom.ewsghana.utils import get_supply_points, filter_slugs_by_role
 from casexml.apps.stock.models import StockTransaction
 
 
@@ -27,6 +27,10 @@ def get_url_with_location(view_name, text, location_id, domain):
 
 class EWSLineChart(LineChart):
     template_partial = 'ewsghana/partials/ews_line_chart.html'
+
+
+class EWSPieChart(PieChart):
+    template_partial = 'ewsghana/partials/ews_pie_chart.html'
 
 
 class EWSMultiBarChart(MultiBarChart):
@@ -214,10 +218,7 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
             'fpr_filters': self.fpr_report_filters(),
             'exportable': self.is_exportable,
             'location_id': self.request.GET.get('location_id'),
-            'slugs': [['dashboard_report', 'Dashboard'], ['stock_status', 'Stock Status Report'],
-                      ['reporting_page', 'Reporting Rates'], ['ews_mapreport', 'Maps'],
-                      ['stock_summary_report', 'Stock Summary Report'],
-                      ['cms_rms_summary_report', 'CMS and RMS Summary Report']]
+            'slugs': filter_slugs_by_role(self.request.couch_user, self.domain)
         }
         return context
 

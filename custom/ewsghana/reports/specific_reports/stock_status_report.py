@@ -50,7 +50,7 @@ class ProductAvailabilityData(EWSData):
                 report__date__lte=self.config['enddate'],
                 report__date__gte=self.config['startdate'],
                 sql_product__in=unique_products,
-            ).distinct('case_id', 'product_id').order_by('-case_id', '-product_id')
+            ).distinct('case_id', 'product_id').order_by('case_id', 'product_id', '-report__date')
 
             for last_stock in last_stocks_in_period:
                 index = 0 if last_stock.stock_on_hand > 0 else 1
@@ -176,18 +176,22 @@ class MonthOfStockProduct(EWSData):
                     self.config['enddate'].date(), self.config['report_type']))
 
                 row = [link_format(sp.name, url)]
+
+                products = self.unique_products(self.get_supply_points, all=True)
                 transactions = list(StockTransaction.objects.filter(
                     type='stockonhand',
+                    product_id__in=products.values_list('product_id', flat=True),
                     case_id=sp.supply_point_id,
                     report__date__lte=self.config['enddate']
                 ).order_by('-report__date'))
 
                 states = list(StockState.objects.filter(
                     case_id=sp.supply_point_id,
+                    product_id__in=products.values_list('product_id', flat=True),
                     section_id='stock'
                 ))
 
-                for p in self.unique_products(self.get_supply_points, all=True):
+                for p in products:
                     transaction = first_item(transactions, lambda x: x.product_id == p.product_id)
                     state = first_item(states, lambda x: x.product_id == p.product_id)
 

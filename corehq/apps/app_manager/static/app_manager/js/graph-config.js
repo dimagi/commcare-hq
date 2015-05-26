@@ -306,8 +306,9 @@ var GraphViewModel = function(moduleOptions){
         'y-labels',
         'secondary-y-labels',
         // other:
-        'show-grid',
         'show-axes',
+        'show-grid',
+        'show-legend',
         'zoom'
     ];
     // Note: I don't like repeating the list of property options in the hints map.
@@ -328,8 +329,9 @@ var GraphViewModel = function(moduleOptions){
         'y-labels': 'ex: 3 or \'[1,3,5]\' or \'{"0":"freezing"}\'',
         'secondary-y-labels': 'ex: 3 or [1,3,5] or {"0":"freezing"}',
         // other:
-        'show-grid': 'true() or false()',
         'show-axes': 'true() or false()',
+        'show-grid': 'true() or false()',
+        'show-legend': 'true() or false()',
         'zoom': 'true() or false()'
     };
     self.childCaseTypes = moduleOptions.childCaseTypes || [];
@@ -480,12 +482,14 @@ var GraphSeries = function (original, childCaseTypes, fixtures){
     self.configPropertyOptions = [
         'fill-above',
         'fill-below',
-        'line-color'
+        'line-color',
+        'name',
     ];
     self.configPropertyHints = {
         'fill-above': "ex: '#aarrggbb'",
         'fill-below': "ex: '#aarrggbb'",
-        'line-color': "ex: '#aarrggbb'"
+        'line-color': "ex: '#aarrggbb'",
+        'name': "ex: 'My Series 1'",
     };
 
     self.toggleShowDataPath = function() {
