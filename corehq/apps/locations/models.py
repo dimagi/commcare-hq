@@ -345,12 +345,10 @@ class Location(CachedCouchDocumentMixin, Document):
 
     def _sync_location(self):
         """
-        Method return a non save SQLLocation object, because when we
-        want sync location in task, we can have some problems.
-        For example: we can have location in SQL but without location type.
-        This behavior causes problems when we want go to
-        locations page - 500 error.
-        SQLlocation object is saved together with Couch object in save method.
+        This method returns an unsaved SQLLocation object, as it lets
+        us more easily handle the bulk syncing of data in tasks and
+        lets us only save the SQLLocation if the Location was successfuly
+        saved. The actual saving is done in the Location save method.
         """
 
         properties_to_sync = [
