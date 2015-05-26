@@ -115,7 +115,7 @@ class AbtSupervisorExpressionSpec(JsonObject):
     def _get_warning(cls, spec, item):
         default = spec.get("warning", "")
         if cls._get_language(item) == "fra":
-            return spec.get("french", default)
+            return spec.get("warning_fr", default)
         return default
 
     @classmethod
