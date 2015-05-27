@@ -20,7 +20,9 @@ def _track_on_hubspot(webuser, properties):
     api_key = ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
     if api_key and not webuser.is_dimagi:
         req = requests.post(
-            u"https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(urllib.quote(webuser.username)),
+            u"https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(
+                urllib.quote(webuser.username)
+            ),
             params={'hapikey': api_key},
             data=json.dumps(
                 {'properties': [
