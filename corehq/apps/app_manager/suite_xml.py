@@ -1679,7 +1679,7 @@ class SuiteGenerator(SuiteGeneratorBase):
 
     def get_auto_select_datums_and_assertions(self, action, auto_select, form):
         from corehq.apps.app_manager.models import AUTO_SELECT_USER, AUTO_SELECT_CASE, \
-            AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW
+            AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW, AUTO_SELECT_USERCASE
         if auto_select.mode == AUTO_SELECT_USER:
             xpath = session_var(auto_select.value_key, path='user/data')
             assertions = self.get_auto_select_assertions(xpath, auto_select.mode, [auto_select.value_key])
@@ -1717,6 +1717,17 @@ class SuiteGenerator(SuiteGeneratorBase):
                 id=action.case_session_var,
                 function=auto_select.value_key
             ), []
+        elif auto_select.mode == AUTO_SELECT_USERCASE:
+            case = UserCaseXPath().case()
+            return SessionDatum(
+                id=USERCASE_ID,
+                function=case.slash('@case_id')
+            ), [
+                self.get_assertion(
+                    "{0} = 1".format(case.count()),
+                    'case_autoload.{0}.case_missing'.format(auto_select.mode)
+                )
+            ]
 
     def configure_entry_advanced_form(self, module, e, form, **kwargs):
         def case_sharing_requires_assertion(form):

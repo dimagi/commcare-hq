@@ -100,6 +100,7 @@ AUTO_SELECT_USER = 'user'
 AUTO_SELECT_FIXTURE = 'fixture'
 AUTO_SELECT_CASE = 'case'
 AUTO_SELECT_RAW = 'raw'
+AUTO_SELECT_USERCASE = 'usercase'
 
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 
@@ -368,7 +369,11 @@ class AutoSelectCase(DocumentSchema):
                         xpath expression.
 
     """
-    mode = StringProperty(choices=[AUTO_SELECT_USER, AUTO_SELECT_FIXTURE, AUTO_SELECT_CASE, AUTO_SELECT_RAW])
+    mode = StringProperty(choices=[AUTO_SELECT_USER,
+                                   AUTO_SELECT_FIXTURE,
+                                   AUTO_SELECT_CASE,
+                                   AUTO_SELECT_USERCASE,
+                                   AUTO_SELECT_RAW])
     value_source = StringProperty()
     value_key = StringProperty(required=True)
 
@@ -488,6 +493,7 @@ class AdvancedFormActions(DocumentSchema):
                 AUTO_SELECT_USER: [],
                 AUTO_SELECT_CASE: [],
                 AUTO_SELECT_FIXTURE: [],
+                AUTO_SELECT_USERCASE: [],
                 AUTO_SELECT_RAW: [],
             }
         }
@@ -1971,13 +1977,14 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             if isinstance(action, LoadUpdateAction) and action.auto_select:
                 mode = action.auto_select.mode
                 if not action.auto_select.value_key:
-                    key_name = {
+                    key_names = {
                         AUTO_SELECT_CASE: _('Case property'),
                         AUTO_SELECT_FIXTURE: _('Lookup Table field'),
                         AUTO_SELECT_USER: _('custom user property'),
                         AUTO_SELECT_RAW: _('custom XPath expression'),
-                    }[mode]
-                    errors.append({'type': 'auto select key', 'key_name': key_name})
+                    }
+                    if mode in key_names:
+                        errors.append({'type': 'auto select key', 'key_name': key_names[mode]})
 
                 if not action.auto_select.value_source:
                     source_names = {
