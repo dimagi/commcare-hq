@@ -1,3 +1,4 @@
+from corehq.util.test_utils import unit_testing_only
 from couchforms.const import DEVICE_LOG_XMLNS
 from couchforms.exceptions import ViewTooLarge
 from couchforms.models import XFormInstance, doc_types
@@ -100,7 +101,8 @@ def get_forms_in_date_range(domain, start, end):
     return forms
 
 
-def clear_all_forms(domain):
+@unit_testing_only
+def clear_forms_in_domain(domain):
     items = get_forms_of_all_types(domain)
     for item in items:
         item.delete()
