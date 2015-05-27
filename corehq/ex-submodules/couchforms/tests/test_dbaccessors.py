@@ -11,6 +11,8 @@ class TestDBAccessors(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        from casexml.apps.case.tests import delete_all_xforms
+        delete_all_xforms()
         cls.domain = 'evelyn'
         cls.now = datetime.datetime.utcnow()
         cls.xforms = [
