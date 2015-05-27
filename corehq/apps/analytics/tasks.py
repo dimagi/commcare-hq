@@ -18,7 +18,7 @@ def _track_on_hubspot(webuser, properties):
     # TODO: Use batch requests / be mindful of rate limit
 
     api_key = ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
-    if api_key and not webuser.is_dimagi:
+    if api_key:
         req = requests.post(
             u"https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(
                 urllib.quote(webuser.username)
