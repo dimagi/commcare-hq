@@ -1956,6 +1956,9 @@ def edit_form_actions(request, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
     form = app.get_module(module_id).get_form(form_id)
     form.actions = FormActions.wrap(json.loads(request.POST['actions']))
+    for condition in (form.actions.open_case.condition, form.actions.close_case.condition):
+        if isinstance(condition.answer, basestring):
+            condition.answer = condition.answer.strip('"\'')
     form.requires = request.POST.get('requires', form.requires)
     if actions_use_usercase(form.actions) and not is_usercase_in_use(domain):
         if toggles.USER_AS_A_CASE.enabled(domain):
