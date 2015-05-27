@@ -303,7 +303,7 @@ HQ_APPS = (
     'custom.bihar',
     'custom.penn_state',
     'dca',
-    'custom.apps.gsid',
+    # 'custom.apps.gsid', no longer in use
     'hsph',
     'mvp',
     'mvp_docs',
@@ -1067,7 +1067,7 @@ COUCHDB_APPS = [
     'penn_state',
     'care_benin',
     'dca',
-    'gsid',
+    # 'gsid', no longer in use
     'hsph',
     'mvp',
     ('mvp_docs', MVP_INDICATOR_DB),
@@ -1365,8 +1365,7 @@ DOMAIN_MODULE_MAP = {
     'eagles-fahu': 'dca',
     'fri': 'custom.fri.reports',
     'fri-testing': 'custom.fri.reports',
-    'gsid': 'custom.apps.gsid',
-    'gsid-demo': 'custom.apps.gsid',
+    # 'gsid': 'custom.apps.gsid', no longer in use
     'hsph-dev': 'hsph',
     'hsph-betterbirth-pilot-2': 'hsph',
     'mc-inscale': 'custom.reports.mc',
@@ -1418,7 +1417,7 @@ TRAVIS_TEST_GROUPS = (
         'couchapps', 'couchlog', 'crud', 'cvsu', 'dca', 'django_digest',
         'domain', 'domainsync', 'export',
         'facilities', 'fixtures', 'fluff_filter', 'formplayer',
-        'formtranslate', 'fri', 'grapevine', 'groups', 'gsid', 'hope',
+        'formtranslate', 'fri', 'grapevine', 'groups', 'hope',
         'hqadmin', 'hqcase', 'hqcouchlog', 'hqmedia',
         'care_pathways', 'colalife', 'common', 'compressor',
     ),
