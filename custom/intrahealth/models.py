@@ -1,16 +1,13 @@
-from couchdbkit import ResourceNotFound
-from corehq.apps.locations.models import SQLLocation
 from corehq.fluff.calculators.case import CasePropertyFilter
 import fluff
 from couchforms.models import XFormInstance
 from fluff.filters import ORFilter, ANDFilter, CustomFilter
-from corehq.apps.users.models import CommCareCase, CommCareUser
+from corehq.apps.users.models import CommCareCase
 from corehq.fluff.calculators.xform import FormPropertyFilter
 from custom.intrahealth import INTRAHEALTH_DOMAINS, report_calcs, OPERATEUR_XMLNSES, get_real_date, \
     get_location_id, get_location_id_by_type, COMMANDE_XMLNSES, get_products, IsExistFormPropertyFilter,\
     RAPTURE_XMLNSES, get_rupture_products, LIVRAISON_XMLNSES, get_pps_name, get_district_name, get_month,\
     get_products_code, get_rupture_products_code, get_region_id, get_district_id
-import logging
 from custom.utils.utils import flat_field
 
 IH_DELETED_TYPES = ('XFormArchived', 'XFormDuplicate', 'XFormDeprecated', 'XFormError')

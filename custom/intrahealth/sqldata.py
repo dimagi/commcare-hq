@@ -3,7 +3,7 @@ from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn
 from sqlagg.columns import SumColumn, MaxColumn, SimpleColumn, CountColumn, CountUniqueColumn, MeanColumn
 from sqlalchemy.sql.expression import alias
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.products.models import Product, SQLProduct
+from corehq.apps.products.models import SQLProduct
 
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.sqlreport import DataFormatter, \
@@ -645,8 +645,6 @@ class RecouvrementDesCouts(BaseSqlData):
     @property
     def filters(self):
         filters = super(RecouvrementDesCouts, self).filters
-        print self.config
-        print filters
         return filters
 
     @property
