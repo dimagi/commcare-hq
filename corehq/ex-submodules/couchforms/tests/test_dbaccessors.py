@@ -2,7 +2,8 @@ import datetime
 from django.test import TestCase
 from couchforms.dbaccessors import get_forms_by_type, clear_all_forms, \
     get_number_of_forms_by_type, get_number_of_forms_of_all_types, \
-    get_form_ids_by_type, get_forms_in_date_range
+    get_form_ids_by_type, get_forms_in_date_range, \
+    get_number_of_forms_all_domains_in_couch
 from couchforms.models import XFormInstance, XFormError
 
 
@@ -71,3 +72,9 @@ class TestDBAccessors(TestCase):
                                         self.now + datetime.timedelta(days=1))
         self.assertEqual(len(forms), 1)
         self.assertEqual(forms[0]._id, 'xform_2')
+
+    def test_get_number_of_forms_all_domains_in_couch(self):
+        self.assertEqual(
+            get_number_of_forms_all_domains_in_couch(),
+            len(self.xforms)
+        )
