@@ -225,6 +225,7 @@ HQ_APPS = (
     'corehq.apps.programs',
     'corehq.apps.commtrack',
     'corehq.apps.consumption',
+    'corehq.apps.tzmigration',
     'couchforms',
     'couchexport',
     'couchlog',
@@ -234,6 +235,7 @@ HQ_APPS = (
     'formtranslate',
     'langcodes',
     'corehq.apps.adm',
+    'corehq.apps.analytics',
     'corehq.apps.announcements',
     'corehq.apps.callcenter',
     'corehq.apps.crud',
@@ -693,6 +695,7 @@ ANALYTICS_IDS = {
     'PINGDOM_ID': '',
     'ANALYTICS_ID_PUBLIC_COMMCARE': '',
     'KISSMETRICS_KEY': '',
+    'HUBSPOT_API_KEY': '',
     'HUBSPOT_ID': '',
 }
 
@@ -1417,7 +1420,7 @@ TRAVIS_TEST_GROUPS = (
         'facilities', 'fixtures', 'fluff_filter', 'formplayer',
         'formtranslate', 'fri', 'grapevine', 'groups', 'gsid', 'hope',
         'hqadmin', 'hqcase', 'hqcouchlog', 'hqmedia',
-        'smsbillables',
+        'care_pathways', 'colalife', 'common', 'compressor',
     ),
 )
 
