@@ -1,7 +1,7 @@
 def get_by_domain_and_type(domain, field_type):
     from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 
-    return CustomDataFieldsDefinition.get_db().view(
+    return CustomDataFieldsDefinition.view(
         'custom_data_fields/by_field_type',
         key=[domain, field_type],
         include_docs=True,

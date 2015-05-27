@@ -62,7 +62,7 @@ class CustomDataFieldsDefinition(Document):
         existing = get_by_domain_and_type(domain, field_type)
 
         if existing:
-            return cls.wrap(existing)
+            return existing
         else:
             new = cls(domain=domain, field_type=field_type)
             new.save()

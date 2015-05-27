@@ -26,8 +26,8 @@ def product_fixture_generator_json(domain):
 
     custom_fields = get_by_domain_and_type(domain, 'ProductFields')
     if custom_fields:
-        for f in custom_fields['doc']['fields']:
-            fields.append(CUSTOM_DATA_SLUG + '/' + f['slug'])
+        for f in custom_fields.fields:
+            fields.append(CUSTOM_DATA_SLUG + '/' + f.slug)
 
     return {
         'sourceUri': 'jr://fixture/commtrack:products',
