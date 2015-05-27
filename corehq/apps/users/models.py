@@ -1783,7 +1783,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         the user.
         """
         from corehq.apps.commtrack.models import SupplyPointCase
-        from corehq.apps.locations.models import LOCATION_SHARING_PREFIX
 
         self.user_data['commcare_location_id'] = location._id
 
@@ -1809,7 +1808,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         self.user_data.update({
             'commcare_primary_case_sharing_id':
-            LOCATION_SHARING_PREFIX + location._id
+            location._id
         })
 
         self.location_id = location._id

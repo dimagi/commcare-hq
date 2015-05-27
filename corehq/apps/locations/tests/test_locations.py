@@ -1,6 +1,6 @@
 from corehq.apps.groups.tests import WrapGroupTest
 from corehq.apps.locations.models import Location, LocationType, SQLLocation, \
-    LOCATION_SHARING_PREFIX, LOCATION_REPORTING_PREFIX
+    LOCATION_REPORTING_PREFIX
 from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.locations.fixtures import location_fixture_generator
 from corehq.apps.commtrack.helpers import make_supply_point, make_product
