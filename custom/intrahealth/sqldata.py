@@ -643,6 +643,13 @@ class RecouvrementDesCouts(BaseSqlData):
         return ['district_name']
 
     @property
+    def filters(self):
+        filters = super(RecouvrementDesCouts, self).filters
+        print self.config
+        print filters
+        return filters
+
+    @property
     def columns(self):
         columns = [DatabaseColumn(_("District"), SimpleColumn('district_name'))]
         columns.append(DatabaseColumn(_(u"Montant dû"), SumColumn('payments_amount_to_pay')))
