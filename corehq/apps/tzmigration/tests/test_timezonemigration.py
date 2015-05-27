@@ -5,8 +5,11 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests import delete_all_xforms, delete_all_cases
 from corehq.apps.app_manager.tests import TestFileMixin
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
+from corehq.apps.tzmigration import set_migration_complete, \
+    set_migration_started
 from corehq.apps.tzmigration.timezonemigration import \
-    run_timezone_migration_for_domain
+    run_timezone_migration_for_domain, _run_timezone_migration_for_domain
 from corehq.apps.receiverwrapper import submit_form_locally
 from couchforms.dbaccessors import get_forms_by_type
 from couchforms.models import XFormInstance
@@ -102,3 +105,13 @@ class TimeZoneMigrationTest(TestCase, TestFileMixin):
         case, = CommCareCase.get_all_cases(self.domain, include_docs=True)
         self._compare_cases(case.to_json(), case_good_tz,
                             "Case after migration does not match")
+
+    def test_pause(self):
+        xform = self.get_xml('form')
+        set_migration_started(self.domain)
+        with self.assertRaisesRegexp(LocalSubmissionError, 'status code 503'):
+            submit_form_locally(xform, self.domain)
+        _run_timezone_migration_for_domain(self.domain)
+        set_migration_complete(self.domain)
+        # no issue
+        submit_form_locally(xform, self.domain)

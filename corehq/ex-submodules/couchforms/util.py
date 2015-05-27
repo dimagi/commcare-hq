@@ -455,7 +455,7 @@ class SubmissionPost(object):
         if timezone_migration_in_progress(self.domain):
             # keep submissions on the phone
             # until ready to start accepting again
-            raise HttpException(status=503)
+            return HttpResponse(status=503), None, []
 
         if not self.auth_context.is_valid():
             return self.failed_auth_response, None, []
