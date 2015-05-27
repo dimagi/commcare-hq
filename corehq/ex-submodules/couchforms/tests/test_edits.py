@@ -15,6 +15,17 @@ from couchforms.tests.testutils import post_xform_to_couch
 from dimagi.utils.parsing import json_format_datetime
 
 
+def access_edits(**kwargs):
+    return XFormDeprecated.temp_view({'map': """
+        function (doc) {
+            //function to reveal prior edits of xforms.
+            if(doc['doc_type'] == "XFormDeprecated") {
+                emit(doc.orig_id, null);
+            }
+        }
+    """}, **kwargs)
+
+
 class EditFormTest(TestCase):
     ID = '7H46J37FGH3'
     domain = 'test-form-edits'
@@ -24,10 +35,7 @@ class EditFormTest(TestCase):
             XFormInstance.get_db().delete_doc(self.ID)
         except ResourceNotFound:
             pass
-        deprecated_xforms = XFormDeprecated.view(
-            'couchforms/edits',
-            include_docs=True,
-        ).all()
+        deprecated_xforms = access_edits(include_docs=True).all()
         for form in deprecated_xforms:
             form.delete()
 
@@ -64,7 +72,7 @@ class EditFormTest(TestCase):
 
         docs.append(doc)
 
-        deprecated_doc = XFormDeprecated.view('couchforms/edits', include_docs=True).first()
+        deprecated_doc = access_edits(include_docs=True).first()
         self.assertEqual(self.ID, deprecated_doc.orig_id)
         self.assertNotEqual(self.ID, deprecated_doc._id)
         self.assertEqual(XFormDeprecated.__name__, deprecated_doc.doc_type)
@@ -102,8 +110,7 @@ class EditFormTest(TestCase):
             def __exit__(self, exc_type, exc_val, exc_tb):
                 self.db.bulk_save = self.old['bulk_save']
 
-        self.assertEqual(
-            XFormInstance.view('couchforms/edits', key=self.ID).count(), 0)
+        self.assertEqual(access_edits(key=self.ID).count(), 0)
         self.assertFalse(XFormInstance.get_db().doc_exist(self.ID))
 
         xml_data1, xml_data2 = self._get_files()
@@ -124,8 +131,7 @@ class EditFormTest(TestCase):
                 submit_form_locally(xml_data2, self.domain)
 
         # it didn't go through, so make sure there are no edits still
-        self.assertEqual(
-            XFormInstance.view('couchforms/edits', key=self.ID).count(), 0)
+        self.assertEqual(access_edits(key=self.ID).count(), 0)
         self.assertTrue(XFormInstance.get_db().doc_exist(self.ID))
         self.assertEqual(
             UnfinishedSubmissionStub.objects.filter(xform_id=self.ID,
