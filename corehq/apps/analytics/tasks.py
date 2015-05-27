@@ -6,7 +6,7 @@ import urllib
 from settings import ANALYTICS_IDS
 
 
-def _track_on_hubspot(webuser, properties):
+def _track_on_hubspot(webuser, properties, update_only=False):
     """
     Update or create a new "contact" on hubspot. Record that the user has
     created an account on HQ.
@@ -17,9 +17,13 @@ def _track_on_hubspot(webuser, properties):
     # Note: Hubspot recommends OAuth instead of api key
     # TODO: Use batch requests / be mindful of rate limit
     api_key = ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
+    url = "https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}"
+    if update_only:
+        url = "https://api.hubapi.com/contacts/v1/contact/email/{}/profile"
+
     if api_key and not webuser.is_dimagi:
         req = requests.post(
-            "https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(urllib.quote(webuser.username)),
+            url.format(urllib.quote(webuser.username)),
             params={'hapikey': api_key},
             data=json.dumps(
                 {'properties': [
@@ -40,5 +44,4 @@ def track_created_hq_account_on_hubspot(webuser):
 
 @task(queue='background_queue', acks_late=True)
 def track_built_app_on_hubspot(webuser):
-    # TODO: Confirm that previously untracked users should be tracked
-    _track_on_hubspot(webuser, {'built_app': True})
+    _track_on_hubspot(webuser, {'built_app': True}, update_only=True)
