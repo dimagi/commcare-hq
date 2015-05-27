@@ -147,7 +147,7 @@ def submit_unfinished_form(session_id, include_case_side_effects=False):
     if session is not None and session.end_time is None:
         # Get and clean the raw xml
         try:
-            xml = get_raw_instance(session_id)
+            xml = get_raw_instance(session_id)['output']
         except InvalidSessionIdException:
             session.end(completed=False)
             session.save()
