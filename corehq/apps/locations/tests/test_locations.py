@@ -298,7 +298,7 @@ class LocationGroupTest(LocationTestBase):
     def test_id_assignment(self):
         # each should have the same id, but with a different prefix
         self.assertEqual(
-            LOCATION_SHARING_PREFIX + self.test_outlet._id,
+            self.test_outlet._id,
             self.test_outlet.sql_location.case_sharing_group_object()._id
         )
         self.assertEqual(
@@ -346,8 +346,7 @@ class LocationGroupTest(LocationTestBase):
         # accessing a group object should not cause it to save
         # in the DB
         group_obj = self.test_outlet.sql_location.case_sharing_group_object()
-        with self.assertRaises(ResourceNotFound):
-            Group.get(group_obj._id)
+        self.assertNotEqual(group_obj.doc_type, 'Group')
 
     def test_cant_save_wont_save(self):
         group_obj = self.test_outlet.sql_location.case_sharing_group_object()
