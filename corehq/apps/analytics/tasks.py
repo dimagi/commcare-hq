@@ -18,7 +18,7 @@ def _track_on_hubspot(webuser, properties):
     # TODO: Use batch requests / be mindful of rate limit
 
     api_key = ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
-    if api_key and not webuser.is_dimagi:
+    if api_key:
         req = requests.post(
             u"https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(
                 urllib.quote(webuser.username)
@@ -49,7 +49,7 @@ def _get_user_hubspot_id(webuser):
     return None
 
 
-@task(queue='background_queue', acks_late=True)
+@task(queue='background_queue', acks_late=True, ignore_result=True)
 def track_created_hq_account_on_hubspot(webuser):
     _track_on_hubspot(webuser, {
         'created_account_in_hq': True,
@@ -57,7 +57,7 @@ def track_created_hq_account_on_hubspot(webuser):
     })
 
 
-@task(queue='background_queue', acks_late=True)
+@task(queue='background_queue', acks_late=True, ignore_result=True)
 def track_built_app_on_hubspot(webuser):
     vid = _get_user_hubspot_id(webuser)
     if vid:
