@@ -35,7 +35,9 @@ def _get_user_hubspot_id(webuser):
     api_key = ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
     if api_key:
         req = requests.get(
-            u"https://api.hubapi.com/contacts/v1/contact/email/{}/profile".format(urllib.quote(webuser.username)),
+            u"https://api.hubapi.com/contacts/v1/contact/email/{}/profile".format(
+                urllib.quote(webuser.username)
+            ),
             params={'hapikey': api_key},
         )
         if req.status_code == 404:
