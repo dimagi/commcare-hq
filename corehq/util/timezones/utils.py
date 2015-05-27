@@ -28,7 +28,7 @@ def get_timezone_for_request(request=None):
     domain = getattr(request, 'domain', None)
 
     if user or domain:
-        return get_timezone_for_user(request.couch_user, request.domain)
+        return get_timezone_for_user(user, domain)
     else:
         return None
 
