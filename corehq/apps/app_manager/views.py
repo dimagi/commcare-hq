@@ -1961,12 +1961,7 @@ def edit_form_actions(request, domain, app_id, module_id, form_id):
             condition.answer = condition.answer.strip('"\'')
     form.requires = request.POST.get('requires', form.requires)
     if actions_use_usercase(form.actions) and not is_usercase_in_use(domain):
-        if toggles.USER_AS_A_CASE.enabled(domain):
-            enable_usercase(domain)
-        else:
-            return HttpResponseBadRequest(json.dumps({
-                'reason': _('This form uses usercase properties, but User-As-A-Case is not enabled for this '
-                            'project. To use this feature, please enable the "User-As-A-Case" Feature Flag.')}))
+        enable_usercase(domain)
     response_json = {}
     app.save(response_json)
     response_json['propertiesMap'] = get_all_case_properties(app)
