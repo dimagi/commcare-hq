@@ -423,7 +423,7 @@ class EWSApi(APISynchronization):
                                       include_docs=True,
                                       limit=1).first()
             if sp:
-                sql_location = sp.location.sql_location
+                sql_location = sp.sql_location
                 if set(sql_location.products.values_list('code', flat=True)) != supply_point.products:
                     sql_location.products = SQLProduct.objects.filter(
                         domain=self.domain,

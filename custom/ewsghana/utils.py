@@ -200,10 +200,6 @@ class ProductsReportHelper(object):
         self.location = location
         self.transactions = transactions
 
-    @property
-    def sql_location(self):
-        return self.location.sql_location
-
     def reported_products_ids(self):
         return {transaction.product_id for transaction in self.transactions}
 
@@ -218,9 +214,9 @@ class ProductsReportHelper(object):
         date = datetime.utcnow() - timedelta(days=7)
         earlier_reported_products = StockState.objects.filter(
             product_id__in=products_ids,
-            case_id=self.location.sql_location.supply_point_id
+            case_id=self.location.supply_point_id
         ).exclude(last_modified_date__lte=date).values_list('product_id', flat=True).distinct()
-        missing_products = self.location.sql_location.products.distinct().values_list(
+        missing_products = self.location.products.distinct().values_list(
             'product_id', flat=True
         ).exclude(product_id__in=earlier_reported_products).exclude(product_id__in=self.reported_products_ids())
         if not missing_products:
@@ -231,7 +227,7 @@ class ProductsReportHelper(object):
         product_ids = [product.product_id for product in self.reported_products()]
         return StockState.objects.filter(
             product_id__in=product_ids,
-            case_id=self.sql_location.supply_point_id
+            case_id=self.location.supply_point_id
         )
 
     def stockouts(self):
