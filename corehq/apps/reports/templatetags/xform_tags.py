@@ -8,6 +8,7 @@ from django.utils.html import escape
 from django.utils.translation import ugettext as _
 from couchdbkit.exceptions import ResourceNotFound
 from corehq import privileges
+from corehq.apps.cloudcare import CLOUDCARE_DEVICE_ID
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 
 from corehq.apps.receiverwrapper.auth import AuthContext
@@ -119,7 +120,10 @@ def render_form(form, domain, options):
         else:
             url = "#"
 
-        definition = get_default_definition(sorted_case_update_keys(b.keys()))
+        definition = get_default_definition(
+            sorted_case_update_keys(b.keys()),
+            assume_phonetimes=(form.metadata.deviceID != CLOUDCARE_DEVICE_ID)
+        )
         cases.append({
             "is_current_case": case_id and this_case_id == case_id,
             "name": case_inline_display(this_case),
