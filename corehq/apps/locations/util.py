@@ -289,8 +289,3 @@ def purge_locations(domain):
     domain_json.pop('obsolete_location_types', None)
     domain_json.pop('location_types', None)
     db.save_doc(domain_json)
-
-
-def loc_group_id_or_none(group_id):
-    if group_id.startswith(LOCATION_SHARING_PREFIX):
-        return group_id.split(LOCATION_SHARING_PREFIX, 1)[1]
