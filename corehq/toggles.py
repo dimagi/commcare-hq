@@ -452,12 +452,6 @@ RESTRICT_WEB_USERS_BY_LOCATION = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-FM_FACING_SUBSCRIPTIONS = StaticToggle(
-    'fm_facing_subscriptions',
-    'FM Facing Subscription Management Interface',
-    TAG_PRODUCT_CORE,
-)
-
 API_THROTTLE_WHITELIST = StaticToggle(
     'api_throttle_whitelist',
     ('API throttle whitelist'),
