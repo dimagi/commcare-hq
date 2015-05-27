@@ -44,19 +44,19 @@ trunk: master
 name: autostaging
 branches:
   - submit-history-tz  # danny 5/25
-  - fix-time-ago-sort  # danny 5/15
   - process-timezone  # danny 5/7
   - subscription-no-contact-info # bb 8/4
   - vellum-staging # J$ 11/13
   - locations-as-groups # tw 1/20
   - fixtures-spike  # cz 1/29
   - usercase # Norman 3/27
-  - case-list-menu-icons # TS 5/4
+  - case-list-menu-icons+langMedia # TS 5/4
   - update-submodules # TS 5/6
   - locations-for-robber-barons  # Ethan 5/7
   - form-context-simple # Ben 5/13
-  - langMedia+fix-time-ago-sort # daniel 5/21
   - langMedia # Sravan 5/20
+  - api-key # SK 5/26
+  - multimedia  # Ethan 5/26
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

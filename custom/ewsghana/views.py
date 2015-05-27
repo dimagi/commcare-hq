@@ -28,7 +28,8 @@ from custom.ewsghana.reminders.reminders import first_soh_process_user, second_s
 from custom.ewsghana.reports.specific_reports.stock_status_report import StockoutsProduct
 from custom.ewsghana.reports.stock_levels_report import InventoryManagementData, StockLevelsReport
 from custom.ewsghana.stock_data import EWSStockDataSynchronization
-from custom.ewsghana.tasks import ews_bootstrap_domain_task, ews_clear_stock_data_task
+from custom.ewsghana.tasks import ews_bootstrap_domain_task, ews_clear_stock_data_task, \
+    delete_last_migrated_stock_data
 from custom.ewsghana.utils import make_url, has_input_stock_permissions
 from custom.ilsgateway.views import GlobalStats
 from custom.logistics.tasks import add_products_to_loc, locations_fix, resync_web_users
@@ -255,6 +256,13 @@ def clear_products(request, domain):
     for loc in locations:
         loc.products = []
         loc.save()
+    return HttpResponse('OK')
+
+
+@domain_admin_required
+@require_POST
+def delete_last_stock_data(request, domain):
+    delete_last_migrated_stock_data.delay(domain)
     return HttpResponse('OK')
 
 

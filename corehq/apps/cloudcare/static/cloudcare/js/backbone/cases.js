@@ -5,9 +5,14 @@ if (typeof cloudCare === 'undefined') {
 cloudCare.EMPTY = '---';
 
 var _caseListLoadError = function (model, response) {
+    var errorMessage = translatedStrings.caseListError;
     hideLoadingCallback();
     console.error(response.responseText);
-    showError(translatedStrings.caseListError, $("#cloudcare-notifications"));
+
+    if (response.status === 400 || response.status === 401) {
+        errorMessage = response.responseText;
+    }
+    showError(errorMessage, $("#cloudcare-notifications"));
 };
 
 cloudCare.CASE_PROPERTY_MAP = {

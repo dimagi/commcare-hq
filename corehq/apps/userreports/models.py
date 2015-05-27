@@ -348,10 +348,18 @@ class CustomDataSourceConfiguration(JsonObject):
 
     @classmethod
     def by_domain(cls, domain):
+        """
+        Returns a list of DataSourceConfiguration objects,
+        NOT CustomDataSourceConfigurations.
+        """
         return [ds for ds in cls.all() if ds.domain == domain]
 
     @classmethod
     def by_id(cls, config_id):
+        """
+        Returns a DataSourceConfiguration object,
+        NOT a CustomDataSourceConfiguration.
+        """
         for ds in cls.all():
             if ds.get_id == config_id:
                 return ds
