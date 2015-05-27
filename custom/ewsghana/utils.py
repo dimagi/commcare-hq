@@ -322,11 +322,11 @@ REPORT_MAPPING = {
 def filter_slugs_by_role(couch_user, domain):
     slugs = [
         ['dashboard_report', 'Dashboard'],
-        ['stock_status', 'Stock Status Report'],
-        ['reporting_page', 'Reporting Rates'],
+        ['stock_status', 'Stock Status'],
+        ['reporting_page', 'Reporting'],
         ['ews_mapreport', 'Maps'],
-        ['stock_summary_report', 'Stock Summary Report'],
-        ['cms_rms_summary_report', 'CMS and RMS Summary Report']
+        ['stock_summary_report', 'Stock Summary'],
+        ['cms_rms_summary_report', 'CMS and RMS Summary']
     ]
     if couch_user.is_domain_admin(domain) or couch_user.is_superuser:
         return slugs
