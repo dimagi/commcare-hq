@@ -1011,7 +1011,9 @@ COUCHDB_APPS = [
     'appstore',
     'orgs',
     'builds',
-    'case',
+    'case'
+    # uncomment this to switch to separated db for cases
+    # ('case', 'case'),
     'callcenter',
     'cleanup',
     'cloudcare',
