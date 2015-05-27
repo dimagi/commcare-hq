@@ -225,6 +225,7 @@ HQ_APPS = (
     'corehq.apps.programs',
     'corehq.apps.commtrack',
     'corehq.apps.consumption',
+    'corehq.apps.tzmigration',
     'couchforms',
     'couchexport',
     'couchlog',
