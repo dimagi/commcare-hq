@@ -25,6 +25,9 @@
     <script type="text/javascript">
         (function (angular, undefined) {
             'use strict';
+            // NOTE: It's not a best practice to define the app in a script tag,
+            //       better to have it in a separate file. Leaving this here
+            //       though because this is just for an A/B test (temporary code)
             var dashboardApp = angular.module('dashboardApp', []);
             dashboardApp.controller("DashBoardController", ["$scope", "$timeout", function ($scope, $timeout) {
                 $scope.tilesReady = false;
