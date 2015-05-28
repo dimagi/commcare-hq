@@ -311,7 +311,6 @@ HQ_APPS = (
     'custom.opm',
     'pathindia',
     'pact',
-    'psi',
 
     'custom.apps.care_benin',
     'custom.apps.cvsu',
@@ -1073,7 +1072,6 @@ COUCHDB_APPS = [
     ('mvp_docs', MVP_INDICATOR_DB),
     'pathindia',
     'pact',
-    'psi',
     'accounting',
     'succeed',
     'ilsgateway',
@@ -1379,7 +1377,6 @@ DOMAIN_MODULE_MAP = {
     'mvp-koraro': 'mvp',
     'mvp-pampaida': 'mvp',
     'opm': 'custom.opm',
-    'psi-unicef': 'psi',
     'project': 'custom.apps.care_benin',
 
     'ipm-senegal': 'custom.intrahealth',
