@@ -46,11 +46,6 @@
             "_all_docs"
         ]
     }, {
-        "database": "commcarehq__fluff-care_sa",
-        "views": [
-            "_all_docs"
-        ]
-    }, {
         "database": "commcarehq__fluff-cvsu",
         "views": [
             "_all_docs"
