@@ -19,8 +19,9 @@ class InboundParams(object):
     """
     SENDER = "send"
     MESSAGE = "msg"
-    UDHI = "UDHI"
-    MID = "MID"
+    UDHI = "UDHI" # 1 if message is multipart message, 0 otherwise
+    MID = "MID" # gateway message id
+    DCS = "DCS" # 8 if message is a unicode hex string, 0 if ascii
 
 
 class OutboundParams(object):
@@ -98,8 +99,7 @@ def create_from_request(request):
         # add india country code
         sender = '91' + sender
 
-    # if the message is a unicode hex string, then the UDHI parameter is set to 1, otherwise it's 0
-    is_unicode = request.REQUEST.get(InboundParams.UDHI, "") == "1"
+    is_unicode = request.REQUEST.get(InboundParams.DCS, "") == "8"
     if is_unicode:
         message = message.decode("hex").decode("utf_16_be")
 
