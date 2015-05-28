@@ -1288,6 +1288,7 @@ CUSTOM_DATA_SOURCES = [
     os.path.join('custom', 'up_nrhm', 'data_sources', 'location_hierarchy.json'),
     os.path.join('custom', 'up_nrhm', 'data_sources', 'asha_facilitators.json'),
     os.path.join('custom', 'succeed', 'data_sources', 'submissions.json'),
+    os.path.join('custom', 'apps', 'gsid', 'data_sources', 'patient_summary.json'),
 ]
 
 
