@@ -1,8 +1,7 @@
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.products.models import Product
-from corehq.apps.locations.models import (Location, SQLLocation,
-                                          LOCATION_SHARING_PREFIX)
+from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.locations.permissions import (user_can_edit_location,
                                                user_can_view_location)
 from corehq.apps.domain.models import Domain
