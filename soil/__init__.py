@@ -192,7 +192,7 @@ class FileDownload(DownloadBase):
 
     def __init__(self, filename, mimetype="text/plain",
                  content_disposition='attachment; filename="download.txt"',
-                 transfer_encoding=None, extras=None, download_id=None, cache_backend='default',
+                 transfer_encoding=None, extras=None, download_id=None, cache_backend=SOIL_DEFAULT_CACHE,
                  use_transfer=False):
         super(FileDownload, self).__init__(mimetype, content_disposition,
                                              transfer_encoding, extras, download_id, cache_backend)
