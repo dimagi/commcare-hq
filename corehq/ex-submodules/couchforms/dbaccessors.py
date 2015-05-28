@@ -1,6 +1,5 @@
 from corehq.util.test_utils import unit_testing_only
 from couchforms.const import DEVICE_LOG_XMLNS
-from couchforms.exceptions import ViewTooLarge
 from couchforms.models import XFormInstance, doc_types
 from django.conf import settings
 
@@ -82,23 +81,6 @@ def get_number_of_forms_of_all_types(domain):
         reduce=True,
     ).one()
     return submissions['value'] if submissions else 0
-
-
-def get_forms_in_date_range(domain, start, end):
-    # arbitrary hard limit of 10,000; can expand if this disturbs anything
-    limit = 10000
-    forms = XFormInstance.view(
-        "couchforms/all_submissions_by_domain",
-        startkey=[domain, "by_date", start.isoformat()],
-        endkey=[domain, "by_date", end.isoformat(), {}],
-        include_docs=True,
-        reduce=False,
-        limit=limit + 1
-    ).all()
-    if len(forms) > limit:
-        forms.pop(limit)
-        raise ViewTooLarge(forms)
-    return forms
 
 
 @unit_testing_only
