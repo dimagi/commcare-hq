@@ -1793,7 +1793,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
 
                     m_file.save()
 
-            ignore = []
+            ignore = ['UserRole']
             if not request.POST.get('share_reminders', False):
                 ignore.append('CaseReminderHandler')
 
