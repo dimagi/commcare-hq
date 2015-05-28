@@ -19,9 +19,15 @@ class InboundParams(object):
     """
     SENDER = "send"
     MESSAGE = "msg"
-    UDHI = "UDHI" # 1 if message is multipart message, 0 otherwise
-    MID = "MID" # gateway message id
-    DCS = "DCS" # 8 if message is a unicode hex string, 0 if ascii
+
+    # 1 if message is multipart message, 0 otherwise
+    UDHI = "UDHI"
+
+    # gateway message id
+    MID = "MID"
+
+    # 8 if message is a unicode hex string, 0 if ascii
+    DCS = "DCS"
 
 
 class OutboundParams(object):
