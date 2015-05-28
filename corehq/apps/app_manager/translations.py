@@ -335,9 +335,6 @@ def expected_bulk_app_sheet_rows(app):
 
                         for value_node in text_node.findall("./{f}value"):
                             value_form = value_node.attrib.get("form", "default")
-                            #jls
-                            #value = value_node.text
-                            #value = ItextValue.from_node(value_node).with_refs({})
                             value = ''
                             for part in ItextValue.from_node(value_node).parts:
                                 if isinstance(part, ItextOutput):
