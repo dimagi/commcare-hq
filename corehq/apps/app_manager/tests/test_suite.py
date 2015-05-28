@@ -5,7 +5,7 @@ from corehq.apps.app_manager.models import (
     Application, AutoSelectCase, AUTO_SELECT_USER, AUTO_SELECT_CASE, LoadUpdateAction, AUTO_SELECT_FIXTURE,
     AUTO_SELECT_RAW, WORKFLOW_MODULE, DetailColumn, ScheduleVisit, FormSchedule, Module, AdvancedModule,
     WORKFLOW_ROOT, AdvancedOpenCaseAction, SortElement, PreloadAction, MappingItem, OpenCaseAction,
-    OpenSubCaseAction, FormActionCondition, UpdateCaseAction, WORKFLOW_FORM, FormLink,
+    OpenSubCaseAction, FormActionCondition, UpdateCaseAction, WORKFLOW_FORM, FormLink, AUTO_SELECT_USERCASE,
     ReportModule, ReportAppConfig)
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.xpath import dot_interpolate, UserCaseXPath, interpolate_xpath
@@ -181,6 +181,14 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
             )
         ))
         self.assertXmlPartialEqual(self.get_xml('suite-advanced-autoselect-case'), app.create_suite(),
+                                   './entry[2]')
+
+    def test_advanced_suite_auto_select_usercase(self):
+        app = Application.wrap(self.get_json('suite-advanced'))
+        app.get_module(1).get_form(0).actions.load_update_cases[0].auto_select = AutoSelectCase(
+            mode=AUTO_SELECT_USERCASE
+        )
+        self.assertXmlPartialEqual(self.get_xml('suite-advanced-autoselect-usercase'), app.create_suite(),
                                    './entry[2]')
 
     def test_advanced_suite_auto_select_with_filter(self):

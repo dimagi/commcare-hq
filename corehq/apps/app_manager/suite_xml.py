@@ -1720,7 +1720,7 @@ class SuiteGenerator(SuiteGeneratorBase):
         elif auto_select.mode == AUTO_SELECT_USERCASE:
             case = UserCaseXPath().case()
             return SessionDatum(
-                id=USERCASE_ID,
+                id=action.case_session_var,
                 function=case.slash('@case_id')
             ), [
                 self.get_assertion(
