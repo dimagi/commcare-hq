@@ -7,6 +7,8 @@ from couchdbkit.exceptions import ResourceConflict
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.template.loader import render_to_string
+from corehq.apps.domain.dbaccessors import \
+    get_public_documents_related_to_domain, get_all_documents_related_to_domain
 from corehq.apps.tzmigration import set_migration_complete
 from corehq.util.timezones.conversions import \
     USE_NEW_TZ_BEHAVIOR_ON_NEW_DOMAINS
@@ -693,26 +695,30 @@ class Domain(Document, SnapshotMixin):
                 comp.data_type_id = new_type_id
                 comp.save()
 
-        for res in db.view('domain/related_to_domain', key=[self.name, True]):
-            if (copy_by_id and res['value']['_id'] not in copy_by_id and
-                res['value']['doc_type'] in ('Application', 'RemoteApp',
-                                             'FixtureDataType')):
+        APP_TYPES = ('Application', 'RemoteApp')
+
+        for doc_id, doc_type in get_public_documents_related_to_domain(self.name):
+            if (copy_by_id and doc_id not in copy_by_id and
+                    doc_type in APP_TYPES + ('FixtureDataType',)):
                 continue
-            if not self.is_snapshot and res['value']['doc_type'] in ('Application', 'RemoteApp'):
-                app = get_app(self.name, res['value']['_id']).get_latest_saved()
+            if not self.is_snapshot and doc_type in APP_TYPES:
+                app = get_app(self.name, doc_id).get_latest_saved()
                 if app:
-                    comp = self.copy_component(app.doc_type, app._id, new_domain_name, user=user)
+                    comp = self.copy_component(
+                        app.doc_type, app._id, new_domain_name, user=user)
                 else:
-                    comp = self.copy_component(res['value']['doc_type'], res['value']['_id'], new_domain_name, user=user)
-            elif res['value']['doc_type'] not in ignore:
-                comp = self.copy_component(res['value']['doc_type'], res['value']['_id'], new_domain_name, user=user)
-                if res['value']['doc_type'] == 'FixtureDataType':
-                    copy_data_items(res['value']['_id'], comp._id)
+                    comp = self.copy_component(
+                        doc_type, doc_id, new_domain_name, user=user)
+            elif doc_type not in ignore:
+                comp = self.copy_component(
+                    doc_type, doc_id, new_domain_name, user=user)
+                if doc_type == 'FixtureDataType':
+                    copy_data_items(doc_id, comp._id)
             else:
                 comp = None
 
             if comp:
-                new_comps[res['value']['_id']] = comp
+                new_comps[doc_id] = comp
 
         new_domain.save()
 
@@ -921,11 +927,8 @@ class Domain(Document, SnapshotMixin):
     def delete(self):
         # delete all associated objects
         db = self.get_db()
-        related_doc_ids = [row['id'] for row in db.view('domain/related_to_domain',
-            startkey=[self.name],
-            endkey=[self.name, {}],
-            include_docs=False,
-        )]
+        related_doc_ids = [doc_id for doc_id, _
+                           in get_all_documents_related_to_domain(self.name)]
         iter_bulk_delete(db, related_doc_ids, chunksize=500)
         super(Domain, self).delete()
         Domain.get_by_name.clear(Domain, self.name)  # clear the domain cache
