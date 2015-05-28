@@ -281,6 +281,7 @@ class FacilitySMSUsers(EWSData):
     @property
     def rows(self):
         from corehq.apps.users.views.mobile import CreateCommCareUserView
+        from corehq.apps.users.views.mobile import EditCommCareUserView
 
         users = CommCareUser.view(
             'locations/users_by_location_id',
@@ -291,9 +292,13 @@ class FacilitySMSUsers(EWSData):
 
         for user in users:
             if user.full_name and user.phone_numbers:
+                user_link = '<a href="%s">%s</a>' % (
+                    reverse(EditCommCareUserView.urlname,
+                            args=[self.config['domain'], user._id]), user.full_name)
+
                 yield ['<div val="%s" sel=%s>%s</div>' % (
                     user._id, 'true' if user.user_data.get('role') == 'In Charge' else 'false',
-                    user.full_name), user.phone_numbers[0]]
+                    user_link), user.phone_numbers[0]]
 
         yield [get_url_with_location(CreateCommCareUserView.urlname, 'Create new Mobile Worker',
                                      self.config['location_id'], self.config['domain'])]
@@ -313,12 +318,20 @@ class FacilityUsers(EWSData):
 
     @property
     def rows(self):
+        from corehq.apps.users.views import InviteWebUserView
+        from corehq.apps.users.views import EditWebUserView
+
         query = (UserES().web_users().domain(self.config['domain'])
                  .term("domain_memberships.location_id", self.config['location_id']))
 
         for hit in query.run().hits:
             if (hit['first_name'] or hit['last_name']) and hit['email']:
-                yield [hit['first_name'] + ' ' + hit['last_name'], hit['email']]
+                user_link = '<a href="%s">%s</a>' % (
+                    reverse(EditWebUserView.urlname,
+                            args=[self.config['domain'], hit['_id']]), hit['first_name'] + ' ' + hit['last_name'])
+                yield [user_link, hit['email']]
+        yield [get_url_with_location(InviteWebUserView.urlname, 'Invite Web User',
+                                     self.config['location_id'], self.config['domain'])]
 
 
 class FacilityInChargeUsers(EWSData):
@@ -334,6 +347,7 @@ class FacilityInChargeUsers(EWSData):
 
     @property
     def rows(self):
+        from corehq.apps.users.views.mobile import EditCommCareUserView
         users = CommCareUser.view(
             'locations/users_by_location_id',
             startkey=[self.config['location_id']],
@@ -343,7 +357,10 @@ class FacilityInChargeUsers(EWSData):
 
         for user in users:
             if user.user_data.get('role') == 'In Charge' and user.full_name:
-                yield [user.full_name]
+                user_link = '<a href="%s">%s</a>' % (
+                    reverse(EditCommCareUserView.urlname,
+                            args=[self.config['domain'], user._id]), user.full_name)
+                yield [user_link]
         yield ['<button id="in-charge-button" class="btn" data-target="#configureInCharge" data-toggle="modal">'
                'Configure In Charge</button>']
 
