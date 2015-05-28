@@ -9,7 +9,7 @@ from corehq.apps.app_manager.exceptions import (
     XFormException)
 from corehq.apps.app_manager.models import ReportModule
 from corehq.apps.app_manager.util import save_xform
-from corehq.apps.app_manager.xform import namespaces, WrappedNode
+from corehq.apps.app_manager.xform import namespaces, WrappedNode, ItextValue, ItextOutput
 from dimagi.utils.excel import WorkbookJSONReader, HeaderValueError
 
 from django.contrib import messages
@@ -335,7 +335,15 @@ def expected_bulk_app_sheet_rows(app):
 
                         for value_node in text_node.findall("./{f}value"):
                             value_form = value_node.attrib.get("form", "default")
-                            value = value_node.text
+                            #jls
+                            #value = value_node.text
+                            #value = ItextValue.from_node(value_node).with_refs({})
+                            value = ''
+                            for part in ItextValue.from_node(value_node).parts:
+                                if isinstance(part, ItextOutput):
+                                    value += "<output value=\"" + part.ref + "\"/>"
+                                else:
+                                    value += part
                             itext_items[text_id][(lang, value_form)] = value
 
                 for text_id, values in itext_items.iteritems():
