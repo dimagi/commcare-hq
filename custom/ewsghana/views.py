@@ -89,7 +89,7 @@ class RemindersTester(BaseRemindersTester):
                 reminder_function = self.reminders.get(reminder)
                 if reminder_function:
                     if reminder == 'third_soh':
-                        reminder_function([user], [user.location.sql_location], test=True)
+                        reminder_function([user], [user.sql_location], test=True)
                     else:
                         reminder_function(user, test=True)
         messages.success(request, "Reminder was sent successfully")

@@ -225,6 +225,7 @@ HQ_APPS = (
     'corehq.apps.programs',
     'corehq.apps.commtrack',
     'corehq.apps.consumption',
+    'corehq.apps.tzmigration',
     'couchforms',
     'couchexport',
     'couchlog',
@@ -234,6 +235,7 @@ HQ_APPS = (
     'formtranslate',
     'langcodes',
     'corehq.apps.adm',
+    'corehq.apps.analytics',
     'corehq.apps.announcements',
     'corehq.apps.callcenter',
     'corehq.apps.crud',
@@ -338,6 +340,7 @@ HQ_APPS = (
     'bootstrap3_crispy',
 
     'custom.dhis2',
+    'custom.evin',
 )
 
 TEST_APPS = ()
@@ -693,6 +696,7 @@ ANALYTICS_IDS = {
     'PINGDOM_ID': '',
     'ANALYTICS_ID_PUBLIC_COMMCARE': '',
     'KISSMETRICS_KEY': '',
+    'HUBSPOT_API_KEY': '',
     'HUBSPOT_ID': '',
 }
 

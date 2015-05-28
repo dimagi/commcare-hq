@@ -7,6 +7,9 @@ from couchdbkit.exceptions import ResourceConflict
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.template.loader import render_to_string
+from corehq.apps.tzmigration import set_migration_complete
+from corehq.util.timezones.conversions import \
+    USE_NEW_TZ_BEHAVIOR_ON_NEW_DOMAINS
 from dimagi.ext.couchdbkit import (
     Document, StringProperty, BooleanProperty, DateTimeProperty, IntegerProperty,
     DocumentSchema, SchemaProperty, DictProperty,
@@ -628,6 +631,8 @@ class Domain(Document, SnapshotMixin):
 
     def save(self, **params):
         self.last_modified = datetime.utcnow()
+        if not self._rev and USE_NEW_TZ_BEHAVIOR_ON_NEW_DOMAINS:
+            set_migration_complete(self.name)
         super(Domain, self).save(**params)
         Domain.get_by_name.clear(Domain, self.name)  # clear the domain cache
 

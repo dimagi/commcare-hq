@@ -390,15 +390,12 @@ BULK_SMS_VERIFICATION = StaticToggle(
     [NAMESPACE_USER, NAMESPACE_DOMAIN],
 )
 
-USE_NEW_TIMEZONE_BEHAVIOR = StaticToggle(
-    'use_new_timezone_behavior',
-    ("Enable properly dealing with timezones in phone timestamps "
-     "during submission and in reports. "
-     "(Please do not set manually, "
-     "because it has to be accompanied by a migration.)"),
-    TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN],
+BULK_PAYMENTS = StaticToggle(
+    'bulk_payments',
+    'Enable payment of invoices by bulk credit payments and invoice generation for wire transfers',
+    TAG_PRODUCT_CORE
 )
+
 
 USER_AS_A_CASE = StaticToggle(
     'user_as_a_case',
@@ -445,12 +442,6 @@ RESTRICT_WEB_USERS_BY_LOCATION = StaticToggle(
     "Allow project to restrict web user permissions by location",
     TAG_PRODUCT_CORE,
     namespaces=[NAMESPACE_DOMAIN],
-)
-
-FM_FACING_SUBSCRIPTIONS = StaticToggle(
-    'fm_facing_subscriptions',
-    'FM Facing Subscription Management Interface',
-    TAG_PRODUCT_CORE,
 )
 
 API_THROTTLE_WHITELIST = StaticToggle(

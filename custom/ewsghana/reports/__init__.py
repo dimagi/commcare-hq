@@ -168,8 +168,8 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
         request = kwargs.get('request')
         user = getattr(request, 'couch_user', None)
 
-        if user:
-            dm = user.get_domain_membership(domain)
+        dm = user.get_domain_membership(domain) if user else None
+        if dm:
             if dm.program_id:
                 program_id = dm.program_id
             else:

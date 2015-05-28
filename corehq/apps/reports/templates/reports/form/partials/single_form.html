@@ -51,11 +51,16 @@ requires imports/proptable.html to be included in the main template
         $("#archive-form").submit(function() {
             document.getElementById('archive-form-btn').disabled=true;
             document.getElementById('archive-spinner').style.display='inline-block';
-            ga_track_event('Reports', 'Case History', 'Archive this form', {
-                'hitCallback': function () {
+
+            // _.after(2,...) means the callback will only be called after *both* analytics
+            // functions have finished.
+            var analyticsCallback = _.after(2, function() {
                     document.getElementById('archive-form').submit();
                 }
-            });
+            );
+            analytics.usage('Reports', 'Case History', 'Archive this form', {'hitCallback': analyticsCallback});
+            analytics.workflow("Clicked on Archive Form", {}, analyticsCallback);
+
             return false;
         });
         $("#unarchive-form").submit(function() {
