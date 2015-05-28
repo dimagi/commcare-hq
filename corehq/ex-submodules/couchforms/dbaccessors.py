@@ -6,7 +6,7 @@ from django.conf import settings
 
 def get_form_ids_by_type(domain, type_, start=None, end=None):
     assert type_ in doc_types()
-    startkey = [domain, 'by_type', type_]
+    startkey = [domain, type_]
     if end:
         endkey = startkey + end.isoformat()
     else:
@@ -28,7 +28,7 @@ def get_forms_by_type(domain, type_, recent_first=False,
     assert type_ in doc_types()
     # no production code should be pulling all forms in one go!
     assert limit is not None
-    startkey = [domain, 'by_type', type_]
+    startkey = [domain, type_]
     endkey = startkey + [{}]
     if recent_first:
         startkey, endkey = endkey, startkey
@@ -46,7 +46,7 @@ def get_forms_by_type(domain, type_, recent_first=False,
 
 def get_forms_of_all_types(domain):
     assert settings.UNIT_TESTING
-    startkey = [domain, 'by_type']
+    startkey = [domain]
     endkey = startkey + [{}]
     return XFormInstance.view(
         "couchforms/all_submissions_by_domain",
@@ -60,7 +60,7 @@ def get_forms_of_all_types(domain):
 
 def get_number_of_forms_by_type(domain, type_):
     assert type_ in doc_types()
-    startkey = [domain, 'by_type', type_]
+    startkey = [domain, type_]
     endkey = startkey + [{}]
     submissions = XFormInstance.view(
         "couchforms/all_submissions_by_domain",
@@ -72,7 +72,7 @@ def get_number_of_forms_by_type(domain, type_):
 
 
 def get_number_of_forms_of_all_types(domain):
-    startkey = [domain, 'by_type']
+    startkey = [domain]
     endkey = startkey + [{}]
     submissions = XFormInstance.view(
         "couchforms/all_submissions_by_domain",
