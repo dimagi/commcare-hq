@@ -5,6 +5,9 @@ from django.conf import settings
 from dimagi.utils.couch.cache import cache_core
 from pillow_retry.models import PillowError
 from pillowtop.utils import import_pillow_string, get_pillow_by_name
+from celery.utils.log import get_task_logger
+
+logger = get_task_logger(__name__)
 
 
 @task(queue='pillow_retry_queue', ignore_result=True)
@@ -37,7 +40,12 @@ def process_pillow_retry(error_doc_id):
             pillow = get_pillow_by_name(pillow_class_name)
 
         if not pillow:
-            raise ValueError("Could not find pillowtop class '%s'" % pillow_class)
+            logger.warning("Could not find pillowtop class '%s'" % pillow_class)
+            try:
+                error_doc.delete()
+            finally:
+                lock.release()
+
         change = error_doc.change_dict
         if pillow.include_docs:
             try:
