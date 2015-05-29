@@ -16,7 +16,6 @@ from corehq.toggles import LOCATION_TYPE_STOCK_RATES
 from mptt.models import MPTTModel, TreeForeignKey
 
 
-LOCATION_SHARING_PREFIX = 'locationgroup-'
 LOCATION_REPORTING_PREFIX = 'locationreportinggroup-'
 
 
@@ -237,7 +236,7 @@ class SQLLocation(MPTTModel):
 
         return self._make_group_object(
             user_id,
-            True,
+            case_sharing=True,
         )
 
     def reporting_group_object(self, user_id=None):
@@ -250,7 +249,7 @@ class SQLLocation(MPTTModel):
 
         return self._make_group_object(
             user_id,
-            False,
+            case_sharing=False,
         )
 
     @property
