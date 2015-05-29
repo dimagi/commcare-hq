@@ -36,11 +36,12 @@ def instantiate_accounting_for_tests():
 
 def init_default_currency():
     currency, _ = Currency.objects.get_or_create(
-        code=settings.DEFAULT_CURRENCY,
-        name="Default Currency",
-        rate_to_default=Decimal('1.0'),
-        symbol=settings.DEFAULT_CURRENCY_SYMBOL,
+        code=settings.DEFAULT_CURRENCY
     )
+    currency.name = "Default Currency"
+    currency.rate_to_default = Decimal('1.0')
+    currency.symbol = settings.DEFAULT_CURRENCY_SYMBOL
+    currency.save()
     return currency
 
 

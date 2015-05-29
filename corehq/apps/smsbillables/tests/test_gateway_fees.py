@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.test import TestCase
+from corehq.apps.accounting.generator import init_default_currency
 
 from corehq.apps.sms.models import SMSLog
 from corehq.apps.sms.util import get_available_backends
@@ -10,12 +11,7 @@ from corehq.apps.smsbillables import generator
 class TestGatewayFee(TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.currency_usd, _ = Currency.objects.get_or_create(
-            code=settings.DEFAULT_CURRENCY,
-            name="Default Currency",
-            symbol="$",
-            rate_to_default=Decimal('1.0')
-        )
+        cls.currency_usd = init_default_currency()
         cls.available_backends = get_available_backends().values()
 
         cls.backend_ids = generator.arbitrary_backend_ids()
