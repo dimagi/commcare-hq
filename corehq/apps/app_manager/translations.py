@@ -546,6 +546,9 @@ def update_form_translations(sheet, rows, missing_cols, app):
                         text_node.xml.append(e)
                         value_node = WrappedNode(e)
                     # Update the translation
+                    value_node.xml.tail = ''
+                    for node in value_node.findall("./*"):
+                        node.xml.getparent().remove(node.xml)
                     value_node.xml.text = new_translation
                 else:
                     # Remove the node if it already exists
