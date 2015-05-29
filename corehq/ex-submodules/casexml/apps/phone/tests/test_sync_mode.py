@@ -5,8 +5,7 @@ from django.test.utils import override_settings
 from django.test import TestCase
 import os
 from casexml.apps.phone.exceptions import MissingSyncLog, RestoreException
-from corehq.apps.tzmigration.test_utils import run_with_multiple_settings, RunWithMultipleSettings, \
-    call_with_settings
+from corehq.apps.tzmigration.test_utils import RunWithMultipleSettings, call_with_settings
 from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
 from casexml.apps.phone.tests.utils import get_exactly_one_wrapped_sync_log, generate_restore_payload
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseRelationship
