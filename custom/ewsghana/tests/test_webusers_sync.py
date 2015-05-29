@@ -2,7 +2,7 @@ import json
 import os
 from django.test import TestCase
 from corehq.apps.commtrack.tests.util import bootstrap_domain as initial_bootstrap
-from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.models import SQLLocation, Location as CouchLocation
 from corehq.apps.users.models import WebUser, UserRole, CommCareUser
 from custom.ewsghana.api import EWSUser, EWSApi, Product, Location
 
@@ -28,6 +28,12 @@ class WebUsersSyncTest(TestCase):
         with open(os.path.join(cls.datapath, 'sample_locations.json')) as f:
             for loc in json.loads(f.read()):
                 cls.api_object.location_sync(Location(loc))
+
+    @classmethod
+    def tearDownClass(cls):
+        for location in CouchLocation.by_domain(TEST_DOMAIN):
+            location.delete()
+        SQLLocation.objects.filter(domain=TEST_DOMAIN).delete()
 
     def tearDown(self):
         for user in WebUser.by_domain(TEST_DOMAIN):
@@ -66,3 +72,17 @@ class WebUsersSyncTest(TestCase):
         self.assertEqual(facility_manager_role.get_id, dm.role_id)
         location = SQLLocation.objects.get(external_id=1, domain=TEST_DOMAIN)
         self.assertEqual(ewsghana_webuser.get_domain_membership(TEST_DOMAIN).location_id, location.location_id)
+
+    def test_create_web_reporter(self):
+        with open(os.path.join(self.datapath, 'sample_webusers.json')) as f:
+            webuser = EWSUser(json.loads(f.read())[2])
+        ewsghana_webuser = self.api_object.web_user_sync(webuser)
+        web_users = list(WebUser.by_domain(TEST_DOMAIN))
+        self.assertEqual(1, len(web_users))
+        self.assertEqual(0, len(CommCareUser.by_domain(TEST_DOMAIN)))
+        web_reporter_role = UserRole.by_domain_and_name(TEST_DOMAIN, 'Web Reporter')[0]
+        dm = web_users[0].get_domain_membership(TEST_DOMAIN)
+        self.assertEqual(web_reporter_role.get_id, dm.role_id)
+        location = SQLLocation.objects.get(external_id=620, domain=TEST_DOMAIN)
+        print location
+        self.assertEqual(location.location_id, ewsghana_webuser.get_domain_membership(TEST_DOMAIN).location_id)
