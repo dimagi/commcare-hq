@@ -156,16 +156,15 @@ def case_needs_to_sync(case, last_sync_log):
     if not last_sync_log or owner_id not in last_sync_log.owner_ids_on_phone:
         # initial sync or new owner IDs always sync down everything
         return True
-    elif case.server_modified_on < last_sync_log.date:
-        # if the case wasn't touched since last sync, and the phone was aware of this owner_id last time
-        # don't worry about it
-        return False
-    else:
+    elif case.server_modified_on >= last_sync_log.date:
         # check all of the actions since last sync for one that had a different sync token
         return any(filter(
             lambda action: action.server_date > last_sync_log.date and action.sync_log_id != last_sync_log._id,
             case.actions,
         ))
+    # if the case wasn't touched since last sync, and the phone was aware of this owner_id last time
+    # don't worry about it
+    return False
 
 
 def pop_ids(set_, how_many):
