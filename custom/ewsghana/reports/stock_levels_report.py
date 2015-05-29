@@ -270,15 +270,13 @@ class UsersData(EWSData):
 
     @property
     def rendered_content(self):
-        users = [
-            user
-            for user in CommCareUser.view(
-                'locations/users_by_location_id',
-                startkey=[self.config['location_id']],
-                endkey=[self.config['location_id'], {}],
-                include_docs=True
-            ).all()
-        ]
+        users = CommCareUser.view(
+            'locations/users_by_location_id',
+            startkey=[self.config['location_id']],
+            endkey=[self.config['location_id'], {}],
+            include_docs=True
+        ).all()
+
         user_to_dict = lambda sms_user: {
             'id': sms_user.get_id,
             'full_name': sms_user.full_name,
