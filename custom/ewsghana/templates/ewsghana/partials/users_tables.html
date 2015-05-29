@@ -81,7 +81,7 @@
     {% if rendered_as != 'email' %}
         <div class="modal hide fade" id="configureInCharge">
             <div class="modal-header">
-                <a class="close" data-dismiss="modal">&times;</a>
+                <a class="close" data-dismiss="modal" data-bind="click: cancel">&times;</a>
                 <h3>
                     {% trans "Configure In Charge users" %}
                 </h3>
@@ -91,7 +91,7 @@
                 <div class="control-group">
                     <label class="control-label" for="in_charge_select">{% trans "Select In Charge users" %}</label>
                     <div class="controls">
-                        <select style="width: 100px" multiple data-bind="options: users, optionsText: 'full_name', optionsValue: 'id', selectedOptions: selectedUsers, select2: {}"></select>
+                        <select style="width: 250px" multiple data-bind="options: users, optionsText: 'full_name', optionsValue: 'id', selectedOptions: selectedUsers, select2: {}"></select>
                     </div>
                 </div>
             </div>

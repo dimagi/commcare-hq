@@ -18,6 +18,7 @@ from django.utils.translation import ugettext as _, get_language, ugettext_noop
 from django.views.decorators.cache import cache_control
 from corehq import ApplicationsTab, toggles, privileges, feature_previews, ReportConfiguration
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.analytics.tasks import track_built_app_on_hubspot
 from corehq.apps.app_manager import commcare_settings
 from corehq.apps.app_manager.exceptions import (
     AppEditingError,
@@ -1955,14 +1956,12 @@ def edit_form_actions(request, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
     form = app.get_module(module_id).get_form(form_id)
     form.actions = FormActions.wrap(json.loads(request.POST['actions']))
+    for condition in (form.actions.open_case.condition, form.actions.close_case.condition):
+        if isinstance(condition.answer, basestring):
+            condition.answer = condition.answer.strip('"\'')
     form.requires = request.POST.get('requires', form.requires)
     if actions_use_usercase(form.actions) and not is_usercase_in_use(domain):
-        if toggles.USER_AS_A_CASE.enabled(domain):
-            enable_usercase(domain)
-        else:
-            return HttpResponseBadRequest(json.dumps({
-                'reason': _('This form uses usercase properties, but User-As-A-Case is not enabled for this '
-                            'project. To use this feature, please enable the "User-As-A-Case" Feature Flag.')}))
+        enable_usercase(domain)
     response_json = {}
     app.save(response_json)
     response_json['propertiesMap'] = get_all_case_properties(app)
@@ -2356,6 +2355,7 @@ def save_copy(request, domain, app_id):
     See VersionedDoc.save_copy
 
     """
+    track_built_app_on_hubspot.delay(request.couch_user)
     comment = request.POST.get('comment')
     app = get_app(domain, app_id)
     try:

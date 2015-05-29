@@ -13,7 +13,7 @@ from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParam
 from custom.ewsghana.filters import ProductByProgramFilter
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import Location, SQLLocation
-from custom.ewsghana.utils import get_supply_points
+from custom.ewsghana.utils import get_supply_points, filter_slugs_by_role
 from casexml.apps.stock.models import StockTransaction
 
 
@@ -169,8 +169,8 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
         request = kwargs.get('request')
         user = getattr(request, 'couch_user', None)
 
-        if user:
-            dm = user.get_domain_membership(domain)
+        dm = user.get_domain_membership(domain) if user else None
+        if dm:
             if dm.program_id:
                 program_id = dm.program_id
             else:
@@ -219,10 +219,7 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
             'fpr_filters': self.fpr_report_filters(),
             'exportable': self.is_exportable,
             'location_id': self.request.GET.get('location_id'),
-            'slugs': [['dashboard_report', 'Dashboard'], ['stock_status', 'Stock Status Report'],
-                      ['reporting_page', 'Reporting Rates'], ['ews_mapreport', 'Maps'],
-                      ['stock_summary_report', 'Stock Summary Report'],
-                      ['cms_rms_summary_report', 'CMS and RMS Summary Report']]
+            'slugs': filter_slugs_by_role(self.request.couch_user, self.domain)
         }
         return context
 

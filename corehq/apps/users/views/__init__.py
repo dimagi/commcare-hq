@@ -600,7 +600,7 @@ class ListWebUsersView(BaseUserSettingsView):
 
 
 def get_web_user_list_view(request):
-    if toggles.PAGINATE_WEB_USERS.enabled(request.couch_user.username):
+    if toggles.PAGINATE_WEB_USERS.enabled(request.domain):
         return NewListWebUsersView
     return ListWebUsersView
 
