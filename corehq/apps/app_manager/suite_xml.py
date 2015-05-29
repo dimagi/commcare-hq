@@ -1449,6 +1449,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                     command=Command(
                         id=self.id_strings.case_list_command(module),
                         locale_id=self.id_strings.case_list_locale(module),
+                        media_image=module.case_list.media_image,
+                        media_audio=module.case_list.media_audio,
                     )
                 )
                 if isinstance(module, Module):

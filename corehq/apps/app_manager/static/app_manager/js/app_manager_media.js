@@ -10,6 +10,7 @@ var AppMenuMediaManager = function (o) {
     });
     self.objectMap = ko.observable(o.objectMap);
     self.defaultPath = o.defaultPath;
+    self.inputElement = o.inputElement;
 
     self.uploadController = o.uploadController;
 
@@ -128,7 +129,7 @@ var AppMenuMediaManager = function (o) {
     };
 
     self.updateResource = function () {
-        $('.jr-resource-field').trigger('change');
+        self.inputElement.trigger('change');
     };
 };
 
