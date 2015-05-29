@@ -64,7 +64,7 @@ class Command(BaseCommand):
                         subscription.pro_bono_status = ProBonoStatus.NO
 
                     print "setting %s's service_type=%s, entry_point=%s, pro_bono=%s" % (
-                        domain, subscription.service_type, account.entry_point, subscription.pro_bono
+                        domain, subscription.service_type, account.entry_point, subscription.pro_bono_status
                     )
 
                     subscription.save()
