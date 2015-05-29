@@ -3,9 +3,9 @@ from corehq.apps.accounting.models import BillingAccount, Subscription, Subscrip
 import csv
 import re
 
+
 class Command(BaseCommand):
     help = ("Updates service type, entry point, and pro bono status based on given CSV file")
-
 
     def handle(self, *args, **options):
         if len(args) != 1:
