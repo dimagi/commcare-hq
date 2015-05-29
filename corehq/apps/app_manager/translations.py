@@ -1,4 +1,6 @@
 from collections import OrderedDict
+from django.utils.html import escape
+import HTMLParser
 from lxml import etree
 import copy
 from openpyxl.shared.exc import InvalidFileException
@@ -341,7 +343,7 @@ def expected_bulk_app_sheet_rows(app):
                                     value += "<output value=\"" + part.ref + "\"/>"
                                 else:
                                     value += part
-                            itext_items[text_id][(lang, value_form)] = value
+                            itext_items[text_id][(lang, value_form)] = escape(value)
 
                 for text_id, values in itext_items.iteritems():
                     row = [text_id]
@@ -544,15 +546,15 @@ def update_form_translations(sheet, rows, missing_cols, app):
                         text_node.xml.append(e)
                         value_node = WrappedNode(e)
                     # Update the translation
-                    new_value_node = WrappedNode('<value>%s</value>' % new_translation)
-                    new_value_node.namespaces = value_node.namespaces
-                    value_node.xml.getparent().replace(value_node.xml, new_value_node.xml)
+                    value_node.xml.clear()
+                    value_node.xml.text = new_translation
                 else:
                     # Remove the node if it already exists
                     if value_node.exists():
                         value_node.xml.getparent().remove(value_node.xml)
 
-    save_xform(app, form, etree.tostring(xform.xml, encoding="unicode"))
+    parser = HTMLParser.HTMLParser()
+    save_xform(app, form, parser.unescape(parser.unescape(etree.tostring(xform.xml, encoding="unicode"))))
     return msgs
 
 
