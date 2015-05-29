@@ -1,3 +1,6 @@
+[_indiacloud6]
+10.10.1.26
+
 [_indiacloud8]
 10.10.1.28
 
@@ -37,4 +40,10 @@ _indiacloud8
 _indiacloud8
 
 [shared_dir_host:children]
+_indiacloud8
+
+[load_test_runner:children]
+_indiacloud6
+
+[load_test_host:children]
 _indiacloud8
