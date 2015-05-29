@@ -1,4 +1,3 @@
-from optparse import make_option
 from django.core.management import BaseCommand
 from corehq.apps.accounting.models import BillingAccount, Subscription, SubscriptionType, ProBonoStatus, EntryPoint
 import csv
@@ -6,6 +5,7 @@ import re
 
 class Command(BaseCommand):
     help = ("Updates service type, entry point, and pro bono status based on given CSV file")
+
 
     def handle(self, *args, **options):
         if len(args) != 1:
@@ -63,7 +63,9 @@ class Command(BaseCommand):
                         #print "%s pro_bono_status => NO" % domain
                         subscription.pro_bono_status = ProBonoStatus.NO
 
-                    print "setting %s's service_type=%s, entry_point=%s, pro_bono=%s" % (domain, subscription.service_type, account.entry_point, subscription.pro_bono)
+                    print "setting %s's service_type=%s, entry_point=%s, pro_bono=%s" % (
+                        domain, subscription.service_type, account.entry_point, subscription.pro_bono
+                    )
 
                     subscription.save()
                     account.save()
