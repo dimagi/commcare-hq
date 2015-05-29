@@ -1,3 +1,5 @@
+from cStringIO import StringIO
+from codecs import BOM_UTF8
 import os
 import re
 import tempfile
@@ -93,6 +95,8 @@ class ExportFileWriter(object):
 class CsvFileWriter(ExportFileWriter):
 
     def _open(self):
+        # Excel needs UTF8-encoded CSVs to start with the UTF-8 byte-order mark (FB 163268)
+        self._file.write(BOM_UTF8)
         self._csvwriter = csv.writer(self._file, csv.excel)
 
     def write_row(self, row):
