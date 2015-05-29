@@ -9,8 +9,8 @@ from custom.ewsghana import StockLevelsReport
 from custom.ewsghana.filters import ProductByProgramFilter
 from custom.ewsghana.reports import MultiReport, ReportingRatesData, ProductSelectionPane, EWSPieChart
 from casexml.apps.stock.models import StockTransaction
-from custom.ewsghana.reports.stock_levels_report import FacilityReportData, StockLevelsLegend, FacilitySMSUsers, \
-    FacilityUsers, FacilityInChargeUsers, InventoryManagementData, InputStock
+from custom.ewsghana.reports.stock_levels_report import FacilityReportData, StockLevelsLegend, \
+    InventoryManagementData, InputStock, UsersData
 from custom.ewsghana.utils import calculate_last_period, get_country_id
 from corehq.apps.reports.filters.dates import DatespanFilter
 from custom.ilsgateway.tanzania import make_url
@@ -386,9 +386,7 @@ class ReportingRatesReport(MultiReport):
                     FacilityReportData(config),
                     StockLevelsLegend(config),
                     InputStock(config),
-                    FacilitySMSUsers(config),
-                    FacilityUsers(config),
-                    FacilityInChargeUsers(config),
+                    UsersData(config),
                     InventoryManagementData(config),
                     ProductSelectionPane(config)
                 ]

@@ -3,8 +3,8 @@ from custom.ewsghana.filters import EWSLocationFilter
 from custom.ewsghana.reports import MultiReport, ProductSelectionPane
 from custom.ewsghana.reports.specific_reports.reporting_rates import ReportingRates, ReportingDetails
 from custom.ewsghana.reports.specific_reports.stock_status_report import ProductAvailabilityData
-from custom.ewsghana.reports.stock_levels_report import FacilityReportData, StockLevelsLegend, InputStock, \
-    FacilitySMSUsers, FacilityUsers, FacilityInChargeUsers, InventoryManagementData
+from custom.ewsghana.reports.stock_levels_report import FacilityReportData, StockLevelsLegend, InputStock,\
+    InventoryManagementData, UsersData
 from custom.ewsghana.utils import get_country_id
 
 
@@ -40,9 +40,7 @@ class DashboardReport(MultiReport):
                     FacilityReportData(config),
                     StockLevelsLegend(config),
                     InputStock(config),
-                    FacilitySMSUsers(config),
-                    FacilityUsers(config),
-                    FacilityInChargeUsers(config),
+                    UsersData(config),
                     InventoryManagementData(config),
                     ProductSelectionPane(config)
                 ]
