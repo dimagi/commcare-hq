@@ -21,7 +21,6 @@ from custom.ewsghana.utils import has_input_stock_permissions
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 from corehq.apps.locations.models import Location, SQLLocation
-from dimagi.utils.decorators.profile import line_profile
 from dimagi.utils.parsing import json_format_date
 
 
@@ -167,7 +166,6 @@ class InventoryManagementData(EWSData):
         return []
 
     @property
-    @line_profile()
     def chart_data(self):
         def calculate_weeks_remaining(state, daily_consumption, date):
             if not daily_consumption:
