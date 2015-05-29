@@ -26,14 +26,14 @@ ko.bindingHandlers.select2 = {
                 textAccessor = function(value) {
                     var valueAccessor = function (item) { return item; };
                     if ("optionsValue" in allBindings) {
-                        valueAccessor = function (item) { return item[allBindings.optionsValue]; }
+                        valueAccessor = function (item) { return item[allBindings.optionsValue]; };
                     }
-                    var items = $.grep(allBindings.options(), function (e) { return valueAccessor(e) == value});
-                    if (items.length == 0 || items.length > 1) {
+                    var items = $.grep(allBindings.options(), function (e) { return valueAccessor(e) == value;});
+                    if (items.length === 0 || items.length > 1) {
                         return "UNKNOWN";
                     }
                     return items[0][allBindings.optionsText];
-                }
+                };
             }
             $.each(allBindings.selectedOptions(), function (key, value) {
                 converted.push({id: value, text: textAccessor(value)});
@@ -61,7 +61,7 @@ function UsersViewModel(sms_users, location_id, submit_url) {
 
     var mapInChargesToIds = function() {
         return ko.utils.arrayMap(self.inCharges(), function (user) {
-            return user.id
+            return user.id;
         });
     };
 
