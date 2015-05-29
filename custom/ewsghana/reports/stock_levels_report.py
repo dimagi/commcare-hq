@@ -301,7 +301,7 @@ class FacilitySMSUsers(EWSData):
                     user_link), user.phone_numbers[0]]
 
         yield [get_url_with_location(CreateCommCareUserView.urlname, 'Create new Mobile Worker',
-                                     self.config['location_id'], self.config['domain'])]
+                                     self.config['location_id'], self.config['domain']), '']
 
 
 class FacilityUsers(EWSData):
