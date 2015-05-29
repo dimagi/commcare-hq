@@ -248,7 +248,11 @@ class BillingAccountBasicForm(forms.Form):
         contact_info.save()
 
 
-class BillingAccountContactForm(forms.Form):
+class BillingAccountContactForm(forms.ModelForm):
+
+    class Meta:
+        model = BillingContactInfo
+
     first_name = forms.CharField(label='First Name', required=False)
     last_name = forms.CharField(label='Last Name', required=False)
     company_name = forms.CharField(label='Company Name', required=False)
@@ -1353,7 +1357,7 @@ class FeatureRateForm(forms.ModelForm):
     """
     A form for creating a new FeatureRate.
     """
-    # feature id will point to a  select2 field, hence the CharField here.
+    # feature id will point to a select2 field, hence the CharField here.
     feature_id = forms.CharField(
         required=False,
         widget=forms.HiddenInput,
