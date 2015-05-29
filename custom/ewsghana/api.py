@@ -1,5 +1,7 @@
 import logging
 from django.core.validators import validate_email
+from corehq.apps.commtrack.dbaccessors.supply_point_case_by_domain_external_id import \
+    get_supply_point_case_by_domain_external_id
 from corehq.apps.products.models import SQLProduct
 from dimagi.utils.dates import force_to_datetime
 from corehq.apps.commtrack.models import SupplyPointCase, CommtrackConfig
@@ -443,11 +445,7 @@ class EWSApi(APISynchronization):
             if location_dict and apply_updates(location, location_dict):
                 location.save()
         for supply_point in ews_location.supply_points:
-            sp = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                      key=[self.domain, str(supply_point.id)],
-                                      reduce=False,
-                                      include_docs=True,
-                                      limit=1).first()
+            sp = get_supply_point_case_by_domain_external_id(self.domain, supply_point.id)
             if sp:
                 sql_location = sp.sql_location
                 if set(sql_location.products.values_list('code', flat=True)) != supply_point.products:
@@ -507,11 +505,7 @@ class EWSApi(APISynchronization):
             dm.role_id = UserRole.by_domain_and_name(self.domain, 'Facility manager')[0].get_id
         else:
             if ews_webuser.supply_point:
-                supply_point = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                                    key=[self.domain, str(ews_webuser.supply_point)],
-                                                    reduce=False,
-                                                    include_docs=True,
-                                                    limit=1).first()
+                supply_point = get_supply_point_case_by_domain_external_id(self.domain, ews_webuser.supply_point)
                 if supply_point:
                     dm.location_id = supply_point.location_id
                     dm.role_id = UserRole.by_domain_and_name(self.domain, 'Web Reporter')[0].get_id
@@ -530,11 +524,7 @@ class EWSApi(APISynchronization):
         sms_user.save()
         if ews_smsuser.supply_point:
             if ews_smsuser.supply_point.id:
-                sp = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                          key=[self.domain, str(ews_smsuser.supply_point.id)],
-                                          reduce=False,
-                                          include_docs=True,
-                                          limit=1).first()
+                sp = get_supply_point_case_by_domain_external_id(self.domain, ews_smsuser.supply_point.id)
             else:
                 sp = None
 

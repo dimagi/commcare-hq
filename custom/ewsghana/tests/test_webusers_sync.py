@@ -84,5 +84,4 @@ class WebUsersSyncTest(TestCase):
         dm = web_users[0].get_domain_membership(TEST_DOMAIN)
         self.assertEqual(web_reporter_role.get_id, dm.role_id)
         location = SQLLocation.objects.get(external_id=620, domain=TEST_DOMAIN)
-        print location
         self.assertEqual(location.location_id, ewsghana_webuser.get_domain_membership(TEST_DOMAIN).location_id)
