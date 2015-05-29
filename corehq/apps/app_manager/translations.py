@@ -342,8 +342,8 @@ def expected_bulk_app_sheet_rows(app):
                                 if isinstance(part, ItextOutput):
                                     value += "<output value=\"" + part.ref + "\"/>"
                                 else:
-                                    value += part
-                            itext_items[text_id][(lang, value_form)] = escape(value)
+                                    value += escape(part)
+                            itext_items[text_id][(lang, value_form)] = value
 
                 for text_id, values in itext_items.iteritems():
                     row = [text_id]
@@ -554,7 +554,7 @@ def update_form_translations(sheet, rows, missing_cols, app):
                         value_node.xml.getparent().remove(value_node.xml)
 
     parser = HTMLParser.HTMLParser()
-    save_xform(app, form, parser.unescape(parser.unescape(etree.tostring(xform.xml, encoding="unicode"))))
+    save_xform(app, form, parser.unescape(etree.tostring(xform.xml, encoding="unicode")))
     return msgs
 
 
