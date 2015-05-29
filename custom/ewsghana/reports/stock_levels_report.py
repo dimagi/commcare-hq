@@ -15,7 +15,8 @@ from corehq.apps.reports.graph_models import Axis
 from corehq.apps.users.models import CommCareUser
 from custom.common import ALL_OPTION
 from custom.ewsghana.filters import ProductByProgramFilter
-from custom.ewsghana.reports import EWSData, MultiReport, get_url_with_location, EWSLineChart, ProductSelectionPane
+from custom.ewsghana.reports import EWSData, MultiReport, get_url_with_location, EWSLineChart, ProductSelectionPane, \
+    ews_date_format
 from custom.ewsghana.utils import has_input_stock_permissions
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
@@ -119,10 +120,9 @@ class FacilityReportData(EWSData):
                     state_grouping[state.product_id]['stockout_duration_helper'] = False
 
                 if not state_grouping[state.product_id]['last_report']:
-                    state_grouping[state.product_id]['last_report'] = json_format_date(state.report.date)
+                    state_grouping[state.product_id]['last_report'] = ews_date_format(state.report.date)
                 if state_grouping[state.product_id]['current_stock'] is None:
                     state_grouping[state.product_id]['current_stock'] = state.stock_on_hand
-
 
         for values in state_grouping.values():
             yield {

@@ -40,6 +40,11 @@
     {% include 'reports/standard/partials/description.html' %}
 {% else %}
     <style>
+        .nvd3.nv-pie path {
+            stroke-width: 0px !important;
+            stroke-opacity: 0 !important;
+        }
+
         {% if rendered_as == "email" %}
             td {
                 border: 1px solid black;

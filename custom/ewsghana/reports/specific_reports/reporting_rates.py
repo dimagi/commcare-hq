@@ -1,13 +1,16 @@
 from datetime import datetime, timedelta
+import json
 from corehq import Domain
 from corehq.apps.es import UserES
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
+from corehq.apps.users.models import CommCareUser
 from custom.common import ALL_OPTION
 from custom.ewsghana import StockLevelsReport
 from custom.ewsghana.filters import ProductByProgramFilter
-from custom.ewsghana.reports import MultiReport, ReportingRatesData, ProductSelectionPane, EWSPieChart
+from custom.ewsghana.reports import MultiReport, ReportingRatesData, ProductSelectionPane, EWSPieChart, \
+    ews_date_format
 from casexml.apps.stock.models import StockTransaction
 from custom.ewsghana.reports.stock_levels_report import FacilityReportData, StockLevelsLegend, FacilitySMSUsers, \
     FacilityUsers, FacilityInChargeUsers, InventoryManagementData, InputStock
@@ -18,6 +21,7 @@ from custom.ilsgateway.tanzania.reports.utils import link_format
 from django.utils.translation import ugettext as _
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.parsing import json_format_date
+from freddy.util import to_json_string
 
 
 class ReportingRates(ReportingRatesData):
@@ -233,7 +237,7 @@ class NonReporting(ReportingRatesData):
                     report__date__lte=self.config['startdate']
                 ).order_by('-report__date')
                 if st:
-                    date = st[0].report.date.strftime("%m-%d-%Y")
+                    date = ews_date_format(st[0].report.date)
                 else:
                     date = '---'
                 rows.append([link_format(location.name, url), date])
@@ -262,10 +266,7 @@ class InCompleteReports(ReportingRatesData):
     def rows(self):
         rows = []
         if self.location_id:
-            if self.location.location_type.name == 'country':
-                supply_points = self.reporting_supply_points(self.all_reporting_locations())
-            else:
-                supply_points = self.reporting_supply_points()
+            supply_points = self.reporting_supply_points()
             for location in SQLLocation.objects.filter(supply_point_id__in=supply_points):
                 st = StockTransaction.objects.filter(
                     case_id=location.supply_point_id,
@@ -274,7 +275,7 @@ class InCompleteReports(ReportingRatesData):
                 products_per_location = {product.product_id for product in location.products}
                 if products_per_location - set(st.values_list('product_id', flat=True)):
                     if st:
-                        date = st[0].report.date.strftime("%m-%d-%Y")
+                        date = ews_date_format(st[0].report.date)
                     else:
                         date = '---'
 
@@ -307,15 +308,15 @@ class AlertsData(ReportingRatesData):
         return result
 
     def supply_points_users(self, supply_points):
-        query = UserES().mobile_users().domain(self.config['domain']).term("domain_membership.location_id",
+        query = UserES().mobile_users().domain(self.config['domain']).term("location_id",
                                                                            [sp for sp in supply_points])
         with_reporters = set()
         with_in_charge = set()
 
         for hit in query.run().hits:
-            with_reporters.add(hit['domain_membership']['location_id'])
+            with_reporters.add(hit['location_id'])
             if hit['user_data'].get('role') == 'In Charge':
-                with_in_charge.add(hit['domain_membership']['location_id'])
+                with_in_charge.add(hit['location_id'])
 
         return with_reporters, with_in_charge
 
