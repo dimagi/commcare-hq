@@ -4,7 +4,7 @@ from custom.ewsghana.reports import MultiReport, ProductSelectionPane
 from custom.ewsghana.reports.specific_reports.reporting_rates import ReportingRates, ReportingDetails
 from custom.ewsghana.reports.specific_reports.stock_status_report import ProductAvailabilityData
 from custom.ewsghana.reports.stock_levels_report import FacilityReportData, StockLevelsLegend, InputStock, \
-     InventoryManagementData
+    InventoryManagementData, UsersData
 from custom.ewsghana.utils import get_country_id, calculate_last_period
 
 
