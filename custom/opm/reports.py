@@ -1458,6 +1458,25 @@ class HealthMapReport(BaseMixin, ElasticSearchMapReport, GetParamsMixin, CustomP
     }
 
     @property
+    def report_subtitles(self):
+        subtitles = ["For filters:"]
+        awcs = self.request.GET.getlist('hierarchy_awc', [])
+        gps = self.request.GET.getlist('hierarchy_gp', [])
+        blocks = self.request.GET.getlist('hierarchy_block', [])
+        if awcs:
+            subtitles.append("Awc's - %s" % ", ".join(awcs))
+        if gps:
+            subtitles.append("Gram Panchayat - %s" % ", ".join(gps))
+        if blocks:
+            subtitles.append("Blocks - %s" % ", ".join(blocks))
+        startdate = self.request_params.get('startdate', '')
+        enddate = self.request_params.get('enddate', '')
+        subtitles.append(" From %s to %s" % (startdate, enddate))
+        subtitles.append("Generated {}".format(
+            datetime.datetime.utcnow().strftime(SERVER_DATETIME_FORMAT)))
+        return subtitles
+
+    @property
     def display_config(self):
         colorstops = [
             [40, 'rgba(255, 0, 0, .8)'],
