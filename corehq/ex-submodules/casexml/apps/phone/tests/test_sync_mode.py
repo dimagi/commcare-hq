@@ -83,11 +83,11 @@ run_with_all_restore_configs = functools.partial(
     run_with_multiple_configs,
     run_configs=[
         RunConfig(
-            settings={'SHOULD_USE_CLEAN_RESTORE': True},
+            settings={'SHOULD_USE_CLEAN_RESTORE': False},
             post_run=lambda *args, **kwargs: args[0].tearDown()
         ),
         RunConfig(
-            settings={'SHOULD_USE_CLEAN_RESTORE': False},
+            settings={'SHOULD_USE_CLEAN_RESTORE': True},
             pre_run=lambda *args, **kwargs: args[0].setUp()
         ),
     ]
