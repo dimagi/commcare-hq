@@ -1,51 +1,22 @@
-# -*- coding: utf-8 -*-
+# encoding: utf-8
 import datetime
 from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
 
-
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-
-        # Changing field 'SmsBillable.gateway_fee'
-        db.alter_column(u'smsbillables_smsbillable', 'gateway_fee_id', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['smsbillables.SmsGatewayFee'], null=True, on_delete=models.PROTECT))
+        
         # Adding index on 'SmsBillable', fields ['log_id']
         db.create_index(u'smsbillables_smsbillable', ['log_id'])
 
 
-        # Changing field 'SmsBillable.usage_fee'
-        db.alter_column(u'smsbillables_smsbillable', 'usage_fee_id', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['smsbillables.SmsUsageFee'], null=True, on_delete=models.PROTECT))
-
-        # Changing field 'SmsGatewayFee.currency'
-        db.alter_column(u'smsbillables_smsgatewayfee', 'currency_id', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['accounting.Currency'], on_delete=models.PROTECT))
-
-        # Changing field 'SmsGatewayFee.criteria'
-        db.alter_column(u'smsbillables_smsgatewayfee', 'criteria_id', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['smsbillables.SmsGatewayFeeCriteria'], on_delete=models.PROTECT))
-
-        # Changing field 'SmsUsageFee.criteria'
-        db.alter_column(u'smsbillables_smsusagefee', 'criteria_id', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['smsbillables.SmsUsageFeeCriteria'], on_delete=models.PROTECT))
-
     def backwards(self, orm):
+        
         # Removing index on 'SmsBillable', fields ['log_id']
         db.delete_index(u'smsbillables_smsbillable', ['log_id'])
 
-
-        # Changing field 'SmsBillable.gateway_fee'
-        db.alter_column(u'smsbillables_smsbillable', 'gateway_fee_id', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['smsbillables.SmsGatewayFee'], null=True))
-
-        # Changing field 'SmsBillable.usage_fee'
-        db.alter_column(u'smsbillables_smsbillable', 'usage_fee_id', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['smsbillables.SmsUsageFee'], null=True))
-
-        # Changing field 'SmsGatewayFee.currency'
-        db.alter_column(u'smsbillables_smsgatewayfee', 'currency_id', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['accounting.Currency']))
-
-        # Changing field 'SmsGatewayFee.criteria'
-        db.alter_column(u'smsbillables_smsgatewayfee', 'criteria_id', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['smsbillables.SmsGatewayFeeCriteria']))
-
-        # Changing field 'SmsUsageFee.criteria'
-        db.alter_column(u'smsbillables_smsusagefee', 'criteria_id', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['smsbillables.SmsUsageFeeCriteria']))
 
     models = {
         u'accounting.currency': {
@@ -64,19 +35,19 @@ class Migration(SchemaMigration):
             'date_sent': ('django.db.models.fields.DateField', [], {}),
             'direction': ('django.db.models.fields.CharField', [], {'max_length': '10', 'db_index': 'True'}),
             'domain': ('django.db.models.fields.CharField', [], {'max_length': '25', 'db_index': 'True'}),
-            'gateway_fee': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['smsbillables.SmsGatewayFee']", 'null': 'True', 'on_delete': 'models.PROTECT'}),
+            'gateway_fee': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['smsbillables.SmsGatewayFee']", 'null': 'True'}),
             'gateway_fee_conversion_rate': ('django.db.models.fields.DecimalField', [], {'default': "'1.0'", 'null': 'True', 'max_digits': '20', 'decimal_places': '9'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'is_valid': ('django.db.models.fields.BooleanField', [], {'default': 'True', 'db_index': 'True'}),
             'log_id': ('django.db.models.fields.CharField', [], {'max_length': '50', 'db_index': 'True'}),
             'phone_number': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
-            'usage_fee': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['smsbillables.SmsUsageFee']", 'null': 'True', 'on_delete': 'models.PROTECT'})
+            'usage_fee': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['smsbillables.SmsUsageFee']", 'null': 'True'})
         },
         u'smsbillables.smsgatewayfee': {
             'Meta': {'object_name': 'SmsGatewayFee'},
             'amount': ('django.db.models.fields.DecimalField', [], {'default': '0.0', 'max_digits': '10', 'decimal_places': '4'}),
-            'criteria': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['smsbillables.SmsGatewayFeeCriteria']", 'on_delete': 'models.PROTECT'}),
-            'currency': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['accounting.Currency']", 'on_delete': 'models.PROTECT'}),
+            'criteria': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['smsbillables.SmsGatewayFeeCriteria']"}),
+            'currency': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['accounting.Currency']"}),
             'date_created': ('django.db.models.fields.DateField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         },
@@ -92,7 +63,7 @@ class Migration(SchemaMigration):
         u'smsbillables.smsusagefee': {
             'Meta': {'object_name': 'SmsUsageFee'},
             'amount': ('django.db.models.fields.DecimalField', [], {'default': '0.0', 'max_digits': '10', 'decimal_places': '4'}),
-            'criteria': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['smsbillables.SmsUsageFeeCriteria']", 'on_delete': 'models.PROTECT'}),
+            'criteria': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['smsbillables.SmsUsageFeeCriteria']"}),
             'date_created': ('django.db.models.fields.DateField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         },
