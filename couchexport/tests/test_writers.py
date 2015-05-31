@@ -1,5 +1,4 @@
 # coding: utf-8
-from cStringIO import StringIO
 from codecs import BOM_UTF8
 from couchexport.writers import ZippedExportWriter, CsvFileWriter
 from django.test import SimpleTestCase
@@ -38,25 +37,14 @@ class ZippedExportWriterTests(SimpleTestCase):
 
 class CsvFileWriterTests(SimpleTestCase):
 
-    def setUp(self):
-        self.csv_file = StringIO()
-        self.fdopen_patch = patch('os.fdopen')
-        fdopen_mock = self.fdopen_patch.start()
-        fdopen_mock.return_value = self.csv_file
-        self.writer = CsvFileWriter()
-
-    def tearDown(self):
-        self.writer.close()
-        self.fdopen_patch.stop()
-
     def test_csv_file_writer_bom(self):
         """
         CsvFileWriter should prepend a byte-order mark to the start of the CSV file for Excel
         """
+        writer = CsvFileWriter()
         headers = ['ham', 'spam', 'eggs']
-        self.writer.open('Spam')
-        self.writer.write_row(headers)
-
-        self.csv_file.seek(0)
-        file_start = self.csv_file.read(6)
+        writer.open('Spam')
+        writer.write_row(headers)
+        writer.finish()
+        file_start = writer.get_file().read(6)
         self.assertEqual(file_start, BOM_UTF8 + 'ham')
