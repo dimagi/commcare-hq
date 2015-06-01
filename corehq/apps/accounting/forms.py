@@ -248,35 +248,29 @@ class BillingAccountBasicForm(forms.Form):
         contact_info.save()
 
 
-class BillingAccountContactForm(forms.Form):
-    first_name = forms.CharField(label='First Name', required=False)
-    last_name = forms.CharField(label='Last Name', required=False)
-    company_name = forms.CharField(label='Company Name', required=False)
-    phone_number = forms.CharField(label='Phone Number', required=False)
-    address_line_1 = forms.CharField(label='Address Line 1')
-    address_line_2 = forms.CharField(label='Address Line 2', required=False)
-    city = forms.CharField()
-    region = forms.CharField(label="State/Province/Region")
-    postal_code = forms.CharField(label="Postal Code")
-    country = forms.CharField()
+class BillingAccountContactForm(forms.ModelForm):
+
+    class Meta:
+        model = BillingContactInfo
+        fields = [
+            'first_name',
+            'last_name',
+            'company_name',
+            'phone_number',
+            'first_line',
+            'second_line',
+            'city',
+            'state_province_region',
+            'postal_code',
+            'country',
+        ]
 
     def __init__(self, account, *args, **kwargs):
         contact_info, _ = BillingContactInfo.objects.get_or_create(
             account=account,
         )
-        kwargs['initial'] = {
-            'first_name': contact_info.first_name,
-            'last_name': contact_info.last_name,
-            'company_name': contact_info.company_name,
-            'phone_number': contact_info.phone_number,
-            'address_line_1': contact_info.first_line,
-            'address_line_2': contact_info.second_line,
-            'city': contact_info.city,
-            'region': contact_info.state_province_region,
-            'postal_code': contact_info.postal_code,
-            'country': contact_info.country,
-        }
-        super(BillingAccountContactForm, self).__init__(*args, **kwargs)
+        super(BillingAccountContactForm, self).__init__(instance=contact_info,
+                                                        *args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_class = "form-horizontal"
         self.helper.layout = crispy.Layout(
@@ -286,10 +280,10 @@ class BillingAccountContactForm(forms.Form):
                 'last_name',
                 'company_name',
                 'phone_number',
-                'address_line_1',
-                'address_line_2',
+                'first_line',
+                'second_line',
                 'city',
-                'region',
+                'state_province_region',
                 'postal_code',
                 crispy.Field(
                     'country',
@@ -310,22 +304,6 @@ class BillingAccountContactForm(forms.Form):
                 )
             ),
         )
-
-    def update_contact_info(self, account):
-        contact_info, _ = BillingContactInfo.objects.get_or_create(
-            account=account,
-        )
-        contact_info.first_name = self.cleaned_data['first_name']
-        contact_info.last_name = self.cleaned_data['last_name']
-        contact_info.company_name = self.cleaned_data['company_name']
-        contact_info.phone_number = self.cleaned_data['phone_number']
-        contact_info.first_line = self.cleaned_data['address_line_1']
-        contact_info.second_line = self.cleaned_data['address_line_2']
-        contact_info.city = self.cleaned_data['city']
-        contact_info.state_province_region = self.cleaned_data['region']
-        contact_info.postal_code = self.cleaned_data['postal_code']
-        contact_info.country = self.cleaned_data['country']
-        contact_info.save()
 
 
 class SubscriptionForm(forms.Form):
@@ -1353,7 +1331,7 @@ class FeatureRateForm(forms.ModelForm):
     """
     A form for creating a new FeatureRate.
     """
-    # feature id will point to a  select2 field, hence the CharField here.
+    # feature id will point to a select2 field, hence the CharField here.
     feature_id = forms.CharField(
         required=False,
         widget=forms.HiddenInput,

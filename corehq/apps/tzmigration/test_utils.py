@@ -7,29 +7,29 @@ class RunWithMultipleSettings(object):
         self.fn = fn
         self.settings_dicts = settings_dicts
 
-    def call_with_settings(self, settings_dict, args, kwargs):
-        keys = settings_dict.keys()
-        original_settings = {key: getattr(settings, key, None) for key in keys}
-        try:
-            # set settings to new values
-            for key, value in settings_dict.items():
-                setattr(settings, key, value)
-            self.fn(*args, **kwargs)
-        finally:
-            # set settings back to original values
-            for key, value in original_settings.items():
-                setattr(settings, key, value)
-
     def __call__(self, *args, **kwargs):
         for settings_dict in self.settings_dicts:
             try:
-                self.call_with_settings(settings_dict, args, kwargs)
+                call_with_settings(self.fn, settings_dict, args, kwargs)
             except Exception:
                 print self.fn, 'failed with the following settings:'
                 for key, value in settings_dict.items():
                     print 'settings.{} = {!r}'.format(key, value)
                 raise
 
+
+def call_with_settings(fn, settings_dict, args, kwargs):
+    keys = settings_dict.keys()
+    original_settings = {key: getattr(settings, key, None) for key in keys}
+    try:
+        # set settings to new values
+        for key, value in settings_dict.items():
+            setattr(settings, key, value)
+        fn(*args, **kwargs)
+    finally:
+        # set settings back to original values
+        for key, value in original_settings.items():
+            setattr(settings, key, value)
 
 def run_with_multiple_settings(fn, settings_dicts):
     helper = RunWithMultipleSettings(fn, settings_dicts)

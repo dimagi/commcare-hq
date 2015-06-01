@@ -425,7 +425,8 @@ def hq_update_saved_export(req, domain):
     index = int(req.POST['index'])
     group_config = get_document_or_404(HQGroupExportConfiguration, domain, group_id)
     config, schema = group_config.all_exports[index]
-    rebuild_export_task.delay(group_id, index)
+    filter = SerializableFunction(instances)
+    rebuild_export_task.delay(group_id, index, filter=filter)
     messages.success(
         req,
         _('Data update for {} has started and the saved export will be automatically updated soon. '
