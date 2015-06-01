@@ -151,12 +151,8 @@ class SyncBaseTest(TestCase):
         return post_case_blocks(caseblocks, form_extras={"last_sync_token": token_id})
 
     def _checkLists(self, l1, l2):
-        self.assertEqual(len(l1), len(l2))
-        for i in l1:
-            self.assertTrue(i in l2, "%s found in %s" % (i, l2))
-        for i in l2:
-            self.assertTrue(i in l1, "%s found in %s" % (i, l1))
-    
+        self.assertEqual(set(l1), set(l2))
+
     def _testUpdate(self, sync_id, case_id_map, dependent_case_id_map=None):
         dependent_case_id_map = dependent_case_id_map or {}
         sync_log = get_properly_wrapped_sync_log(sync_id)
