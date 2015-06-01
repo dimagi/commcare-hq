@@ -6,7 +6,7 @@ from datetime import datetime
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 
 
-def get_stock_payload(project, stock_settings, case_state_list):
+def get_stock_payload(project, stock_settings, case_stub_list):
     if project and not project.commtrack_enabled:
         return
 
@@ -33,10 +33,10 @@ def get_stock_payload(project, stock_settings, case_state_list):
         if consumption_value is not None:
             return entry_xml(product_id, consumption_value)
 
-    case_ids = [case.case_id for case in case_state_list]
+    case_ids = [case.case_id for case in case_stub_list]
     all_current_ledgers = get_current_ledger_state(case_ids)
-    for commtrack_case in case_state_list:
-        case_id = commtrack_case.case_id
+    for commtrack_case_stub in case_stub_list:
+        case_id = commtrack_case_stub.case_id
         current_ledgers = all_current_ledgers[case_id]
 
         section_product_map = defaultdict(lambda: [])
@@ -54,7 +54,7 @@ def get_stock_payload(project, stock_settings, case_state_list):
         for section_id, consumption_section_id in stock_settings.section_to_consumption_types.items():
 
             if (section_id in current_ledgers or
-                    stock_settings.force_consumption_case_filter(commtrack_case)):
+                    stock_settings.force_consumption_case_filter(commtrack_case_stub)):
 
                 consumption_product_ids = stock_settings.default_product_list \
                     if stock_settings.default_product_list \
