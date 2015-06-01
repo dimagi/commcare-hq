@@ -3,11 +3,9 @@ import itertools
 import logging
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.caselogic import get_footprint
-from casexml.apps.phone.data_providers.case.load_testing import get_loadtest_factor, transform_loadtest_update, \
-    append_update_to_response
+from casexml.apps.phone.data_providers.case.load_testing import append_update_to_response
 from casexml.apps.phone.data_providers.case.stock import get_stock_payload
 from casexml.apps.phone.data_providers.case.utils import get_case_sync_updates
-from casexml.apps.phone import xml
 from casexml.apps.phone.models import CaseState
 from corehq.util.dates import iso_string_to_datetime
 from dimagi.utils.parsing import string_to_utc_datetime
