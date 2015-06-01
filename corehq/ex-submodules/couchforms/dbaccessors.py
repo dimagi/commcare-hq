@@ -59,27 +59,6 @@ def get_forms_of_all_types(domain):
     ).all()
 
 
-def get_number_of_forms_all_domains_in_couch():
-    """
-    Return number of non-error, non-log forms total across all domains
-    specifically as stored in couch.
-
-    (Can't rewrite to pull from ES or SQL; this function is used as a point
-    of comparison between row counts in other stores.)
-
-    """
-    all_forms = (
-        XFormInstance.get_db().view('couchforms/by_xmlns').one()
-        or {'value': 0}
-    )['value']
-    device_logs = (
-        XFormInstance.get_db().view('couchforms/by_xmlns',
-                                    key=DEVICE_LOG_XMLNS).one()
-        or {'value': 0}
-    )['value']
-    return all_forms - device_logs
-
-
 def get_form_xml_element(form_id):
     return XFormInstance(_id=form_id).get_xml_element()
 
