@@ -1,0 +1,8 @@
+{
+    "from_db_postfix": "",
+    "to_db_postfix": "devicelogs",
+    "doc_types": [
+        "XFormInstance"
+    ],
+    "couch_views": []
+}

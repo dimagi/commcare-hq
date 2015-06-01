@@ -1,17 +1,23 @@
 import json
-from django.core.management.base import LabelCommand, CommandError
+from datetime import datetime
 from optparse import make_option
+
+from django.core.management.base import LabelCommand, CommandError
 from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty
-from corehq import Domain
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.couch.database import get_db
+
+from corehq import Domain
+from corehq.apps.domainsync.config import DocumentTransform, save
 
 
 class Command(LabelCommand):
     help = "Run couch migrations of docs from one database to another"
     args = "config_file"
     label = "config file"
+    pillow_class = None  # Specify a pillow class to save the sequence_id
+    file_prefix = "couch_migrate_"
 
     option_list = LabelCommand.option_list + (
         make_option('--replicate',
@@ -31,9 +37,26 @@ class Command(LabelCommand):
                     help="Check views."),
     )
 
+    def log(self, message):
+        print '[{}] {}'.format(self.__module__.split('.')[-1], message)
+
+    def get_seq_filename(self):
+        datestring = datetime.utcnow().strftime("%Y-%m-%d-%H%M")
+        seq_filename = "{}{}_{}_seq.txt".format(self.file_prefix, self.pillow_class.__name__, datestring)
+        return seq_filename
+
     def handle(self, *args, **options):
         if len(args) != 1:
             raise CommandError("Usage is ./manage.py couch_migrate [config_file]!")
+
+        if self.pillow_class:
+            self.pillow = self.pillow_class()
+            seq_id = self.pillow.couch_db.info()['update_seq']
+            # Write sequence file to disk
+            seq_filename = self.get_seq_filename()
+            self.log('Writing sequence file to disk: {}'.format(seq_filename))
+            with open(seq_filename, 'w') as f:
+                f.write(str(seq_id))
 
         file_path = args[0]
         with open(file_path) as f:
@@ -72,10 +95,11 @@ def _copy(config):
                     for doc in docs:
                         if doc['_id'] in new_revs:
                             doc['_rev'] = new_revs[doc['_id']]
-                    config.dest_db.bulk_save(docs)
+                        dt = DocumentTransform(doc, database)
+                        save(dt, config.dest_db)
 
-            print 'copied {} {}s from {}'.format(len(ids_of_this_type), doc_type, domain)
-    print 'copy docs complete'
+            self.log('copied {} {}s from {}'.format(len(ids_of_this_type), doc_type, domain))
+    self.log('copy docs complete')
 
 
 def _replicate(config):
@@ -86,7 +110,7 @@ def _replicate(config):
         filter="hqadmin/domains_and_doc_types",
         query_params={'doc_types': ' '.join(config.doc_types)},
     )
-    print 'started replication: {}'.format(result)
+    self.log('started replication: {}'.format(result))
 
 
 def _check(config):
@@ -94,12 +118,12 @@ def _check(config):
         source_rows = config.source_db.view(view, limit=0, reduce=False).total_rows
         dest_rows = config.dest_db.view(view, limit=0, reduce=False).total_rows
         if source_rows == dest_rows:
-            print 'WOOT! {} looks good: {} rows in both databases'.format(view, source_rows)
+            self.log('WOOT! {} looks good: {} rows in both databases'.format(view, source_rows))
         else:
-            print 'SHUCKS... {} has different data: {} rows in source db and {} in dest'.format(
+            self.log('SHUCKS... {} has different data: {} rows in source db and {} in dest'.format(
                 view, source_rows, dest_rows
-            )
-    print 'check complete'
+            ))
+    self.log('check complete')
 
 
 class MigrationConfig(JsonObject):
