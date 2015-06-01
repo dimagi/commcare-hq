@@ -81,7 +81,7 @@ class CleanOwnerCaseSyncOperation(object):
 
                 # update the indices in the new sync log
                 if case.indices:
-                    all_indices[case._id] = set([index.referenced_id for index in case.indices])
+                    all_indices[case._id] = {index.identifier: index.referenced_id for index in case.indices}
                     # and double check footprint for non-live cases
                     for index in case.indices:
                         if index.referenced_id not in all_syncing:

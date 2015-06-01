@@ -453,10 +453,16 @@ class IndexTree(DocumentSchema):
         _recursive_call(case_id, all_cases, cached_map)
         return all_cases
 
-    def add_index(self, from_case_id, to_case_id):
-        prior_ids = set(self.indices.get(from_case_id, []))
-        prior_ids.add(to_case_id)
-        self.indices[from_case_id] = list(prior_ids)
+    def delete_index(self, from_case_id, index_name):
+        prior_ids = self.indices.pop(from_case_id, {})
+        prior_ids.pop(index_name, None)
+        if prior_ids:
+            self.indices[from_case_id] = prior_ids
+
+    def set_index(self, from_case_id, index_name, to_case_id):
+        prior_ids = self.indices.get(from_case_id, {})
+        prior_ids[index_name] = to_case_id
+        self.indices[from_case_id] = prior_ids
 
     def apply_updates(self, other_tree):
         """
@@ -476,7 +482,7 @@ class IndexTree(DocumentSchema):
 def _reverse_index_map(index_map):
     reverse_indices = defaultdict(set)
     for case_id, indices in index_map.items():
-        for indexed_case_id in indices:
+        for indexed_case_id in indices.values():
             reverse_indices[indexed_case_id].add(case_id)
     return dict(reverse_indices)
 
@@ -527,10 +533,10 @@ class SimplifiedSyncLog(AbstractSyncLog):
             # uses closures for assertions
             logger.debug('removing: {}'.format(case_id))
             assert to_remove in self.dependent_case_ids_on_phone
-            indices = self.index_tree.indices.pop(to_remove, [])
+            indices = self.index_tree.indices.pop(to_remove, {})
             if to_remove != case_id:
                 # if the case had indexes they better also be in our removal list (except for ourselves)
-                for index in indices:
+                for index in indices.values():
                     assert index in candidates_to_remove, \
                         "expected {} in {} but wasn't".format(index, candidates_to_remove)
             self.case_ids_on_phone.remove(to_remove)
@@ -539,11 +545,11 @@ class SimplifiedSyncLog(AbstractSyncLog):
         if not dependencies_not_to_remove:
             # this case's entire relevancy chain is in dependent cases
             # this means they can all now be removed.
-            this_case_indices = self.index_tree.indices.get(case_id, [])
+            this_case_indices = self.index_tree.indices.get(case_id, {})
             for to_remove in candidates_to_remove:
                 _remove_case(to_remove)
 
-            for this_case_index in this_case_indices:
+            for this_case_index in this_case_indices.values():
                 if (this_case_index in self.dependent_case_ids_on_phone and
                         this_case_index not in candidates_to_remove):
                     self.prune_case(this_case_index)
@@ -594,13 +600,12 @@ class SimplifiedSyncLog(AbstractSyncLog):
                     # however, we should update our index tree accordingly
                     for index in action.indices:
                         if index.referenced_id:
-                            self.index_tree.add_index(case._id, index.referenced_id)
+                            self.index_tree.set_index(case._id, index.identifier, index.referenced_id)
                             if index.referenced_id not in self.case_ids_on_phone:
                                 self.case_ids_on_phone.add(index.referenced_id)
                                 self.dependent_case_ids_on_phone.add(index.referenced_id)
                         else:
-                            logger.error('Tried to delete index {} from case {}. '
-                                         'This is not currently supported.'.format(index.identifier, case._id))
+                            self.index_tree.delete_index(case._id, index.identifier)
                         made_changes = True
                 elif action.action_type == const.CASE_ACTION_CLOSE:
                     # this case is being closed.

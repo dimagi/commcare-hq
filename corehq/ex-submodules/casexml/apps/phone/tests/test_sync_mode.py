@@ -166,11 +166,11 @@ class SyncBaseTest(TestCase):
             for case_id, indices in case_id_map.items():
                 if indices:
                     index_ids = [i.referenced_id for i in case_id_map[case_id]]
-                    self._checkLists(index_ids, sync_log.index_tree.indices[case_id])
+                    self._checkLists(index_ids, sync_log.index_tree.indices[case_id].values())
             for case_id, indices in dependent_case_id_map.items():
                 if indices:
                     index_ids = [i.referenced_id for i in case_id_map[case_id]]
-                    self._checkLists(index_ids, sync_log.index_tree.indices[case_id])
+                    self._checkLists(index_ids, sync_log.index_tree.indices[case_id].values())
 
         else:
             # check case map
