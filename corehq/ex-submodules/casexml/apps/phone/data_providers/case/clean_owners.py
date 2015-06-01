@@ -6,6 +6,7 @@ from casexml.apps.case.dbaccessors import get_open_case_ids
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone import xml
 from casexml.apps.phone.cleanliness import get_case_footprint_info
+from casexml.apps.phone.data_providers.case.load_testing import append_update_to_response
 from casexml.apps.phone.data_providers.case.utils import get_case_sync_updates
 from casexml.apps.phone.models import OwnershipCleanlinessFlag, LOG_FORMAT_SIMPLIFIED, IndexTree, SimplifiedSyncLog
 from corehq.apps.users.cases import get_owner_id
@@ -76,8 +77,7 @@ class CleanOwnerCaseSyncOperation(object):
             )
             for update in updates:
                 case = update.case
-                element = xml.get_case_element(case, update.required_updates, self.restore_state.version)
-                response.append(element)
+                append_update_to_response(response, update, self.restore_state)
 
                 # update the indices in the new sync log
                 if case.indices:
