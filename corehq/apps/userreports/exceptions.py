@@ -10,3 +10,7 @@ class BadSpecError(UserReportsError):
 
 class UserQueryError(UserReportsError):
     pass
+
+
+class TableRebuildError(UserReportsError):
+    pass

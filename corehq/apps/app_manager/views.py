@@ -18,6 +18,7 @@ from django.utils.translation import ugettext as _, get_language, ugettext_noop
 from django.views.decorators.cache import cache_control
 from corehq import ApplicationsTab, toggles, privileges, feature_previews, ReportConfiguration
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.analytics.tasks import track_built_app_on_hubspot
 from corehq.apps.app_manager import commcare_settings
 from corehq.apps.app_manager.exceptions import (
     AppEditingError,
@@ -64,7 +65,6 @@ from corehq.apps.sms.views import get_sms_autocomplete_context
 from django.utils.http import urlencode as django_urlencode
 from couchdbkit.exceptions import ResourceConflict
 from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseForbidden
-from toggle.shortcuts import toggle_enabled as toggle_enabled_shortcut
 from unidecode import unidecode
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse, RegexURLResolver, Resolver404
@@ -96,10 +96,13 @@ from corehq.apps.app_manager.util import (
     get_commcare_versions,
     save_xform,
     get_settings_values,
-    is_usercase_enabled,
+    is_usercase_in_use,
     enable_usercase,
     actions_use_usercase,
-    get_per_type_defaults)
+    get_usercase_properties, 
+    prefix_usercase_properties,
+    get_per_type_defaults
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import LoginAndDomainMixin
 from corehq.util.compression import decompress
@@ -793,7 +796,7 @@ def get_module_view_context_and_template(app, module):
         defaults += ('#owner_name',)
 
     per_type_defaults = None
-    if is_usercase_enabled(app.domain):
+    if is_usercase_in_use(app.domain):
         per_type_defaults = get_per_type_defaults(app.domain, [USERCASE_TYPE])
     builder = ParentCasePropertyBuilder(app, defaults=defaults, per_type_defaults=per_type_defaults)
     child_case_types = set()
@@ -803,8 +806,8 @@ def get_module_view_context_and_template(app, module):
     child_case_types = list(child_case_types)
     fixtures = [f.tag for f in FixtureDataType.by_domain(app.domain)]
 
-    def get_parent_modules(case_type):
-        parent_types = builder.get_parent_types(case_type)
+    def get_parent_modules(case_type_):
+        parent_types = builder.get_parent_types(case_type_)
         modules = app.modules
         parent_module_ids = [mod.unique_id for mod in modules
                              if mod.case_type in parent_types]
@@ -812,14 +815,14 @@ def get_module_view_context_and_template(app, module):
             'unique_id': mod.unique_id,
             'name': mod.name,
             'is_parent': mod.unique_id in parent_module_ids,
-        } for mod in app.modules if mod.case_type != case_type and mod.unique_id != module.unique_id]
+        } for mod in app.modules if mod.case_type != case_type_ and mod.unique_id != module.unique_id]
 
-    def case_list_form_options(case_type):
+    def case_list_form_options(case_type_):
         options = OrderedDict()
         forms = [
             form
             for mod in app.get_modules() if module.unique_id != mod.unique_id
-            for form in mod.get_forms() if form.is_registration_form(case_type)
+            for form in mod.get_forms() if form.is_registration_form(case_type_)
         ]
         if forms or module.case_list_form.form_id:
             options['disabled'] = _("Don't Show")
@@ -827,7 +830,7 @@ def get_module_view_context_and_template(app, module):
 
         return options
 
-    def get_details():
+    def get_details(case_type_):
         item = {
             'label': _('Case List'),
             'detail_label': _('Case Detail'),
@@ -838,10 +841,12 @@ def get_module_view_context_and_template(app, module):
             'long': module.case_details.long,
             'child_case_types': child_case_types,
         }
-        if is_usercase_enabled(app.domain):
-            item['properties'] = sorted(builder.get_properties(case_type) | builder.get_properties(USERCASE_TYPE))
-        else:
-            item['properties'] = sorted(builder.get_properties(case_type))
+        case_properties = builder.get_properties(case_type_)
+        if is_usercase_in_use(app.domain) and case_type_ != USERCASE_TYPE:
+            usercase_properties = prefix_usercase_properties(builder.get_properties(USERCASE_TYPE))
+            case_properties |= usercase_properties
+
+        item['properties'] = sorted(case_properties)
 
         if isinstance(module, AdvancedModule):
             details = [item]
@@ -898,7 +903,7 @@ def get_module_view_context_and_template(app, module):
         form_options = case_list_form_options(case_type)
         return "app_manager/module_view_advanced.html", {
             'fixtures': fixtures,
-            'details': get_details(),
+            'details': get_details(case_type),
             'case_list_form_options': form_options,
             'case_list_form_allowed': bool(module.all_forms_require_a_case and form_options),
             'valid_parent_modules': [
@@ -934,7 +939,7 @@ def get_module_view_context_and_template(app, module):
         return "app_manager/module_view.html", {
             'parent_modules': get_parent_modules(case_type),
             'fixtures': fixtures,
-            'details': get_details(),
+            'details': get_details(case_type),
             'case_list_form_options': form_options,
             'case_list_form_allowed': bool(
                 module.all_forms_require_a_case and not module.parent_select.active and form_options
@@ -1031,6 +1036,12 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
                 )
             })
 
+        uc_on = toggles.USER_AS_A_CASE.enabled(domain)
+        context.update({
+            'usercase_toggle_on': uc_on,
+            'usercase_properties': get_usercase_properties(app) if uc_on else None,
+        })
+
         context.update(form_context)
     elif module:
         template, module_context = get_module_view_context_and_template(app, module)
@@ -1060,6 +1071,10 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
             specific_media['case_list_form'] = {
                 'menu_refs': app.get_case_list_form_media(module, module_id),
                 'default_file_name': '{}_case_list_form'.format(default_file_name),
+            }
+            specific_media['case_list_menu_item'] = {
+                'menu_refs': app.get_case_list_menu_item_media(module, module_id),
+                'default_file_name': '{}_case_list_menu_item'.format(default_file_name),
             }
         context.update({
             'multimedia': {
@@ -1093,7 +1108,6 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
     })
 
     context['latest_commcare_version'] = get_commcare_versions(request.user)[-1]
-    context['usercase_enabled'] = is_usercase_enabled(domain)
 
     if app and app.doc_type == 'Application' and has_privilege(request, privileges.COMMCARE_LOGO_UPLOADER):
         uploader_slugs = ANDROID_LOGO_PROPERTY_MAPPING.keys()
@@ -1520,6 +1534,8 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         "case_list_form_label": None,
         "case_list_form_media_image": None,
         "case_list_form_media_audio": None,
+        'case_list-menu_item_media_image': None,
+        'case_list-menu_item_media_audio': None,
         "parent_module": None,
         "root_module_id": None,
         "module_filter": None,
@@ -1600,6 +1616,21 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         )
         module.case_list_form.media_audio = val
 
+    if should_edit('case_list-menu_item_media_image'):
+        val = _process_media_attribute(
+            'case_list-menu_item_media_image',
+            resp,
+            request.POST.get('case_list-menu_item_media_image')
+        )
+        module.case_list.media_image = val
+    if should_edit('case_list-menu_item_media_audio'):
+        val = _process_media_attribute(
+            'case_list-menu_item_media_audio',
+            resp,
+            request.POST.get('case_list-menu_item_media_audio')
+        )
+        module.case_list.media_audio = val
+
     for attribute in ("name", "case_label", "referral_label"):
         if should_edit(attribute):
             name = request.POST.get(attribute, None)
@@ -1607,9 +1638,14 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
             if should_edit("name"):
                 resp['update'].update({'.variable-module_name': module.name[lang]})
     for SLUG in ('case_list', 'task_list'):
+        show = '{SLUG}-show'.format(SLUG=SLUG)
+        label = '{SLUG}-label'.format(SLUG=SLUG)
+        if request.POST.get(show) == 'true' and (request.POST.get(label) == ''):
+            # Show item, but empty label, was just getting ignored
+            return HttpResponseBadRequest("A label is required for {SLUG}".format(SLUG=SLUG))
         if should_edit(SLUG):
-            module[SLUG].show = json.loads(request.POST['{SLUG}-show'.format(SLUG=SLUG)])
-            module[SLUG].label[lang] = request.POST['{SLUG}-label'.format(SLUG=SLUG)]
+            module[SLUG].show = json.loads(request.POST[show])
+            module[SLUG].label[lang] = request.POST[label]
 
     if isinstance(module, AdvancedModule):
         module.has_schedule = should_edit('has_schedule')
@@ -1946,17 +1982,16 @@ def edit_form_actions(request, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
     form = app.get_module(module_id).get_form(form_id)
     form.actions = FormActions.wrap(json.loads(request.POST['actions']))
+    for condition in (form.actions.open_case.condition, form.actions.close_case.condition):
+        if isinstance(condition.answer, basestring):
+            condition.answer = condition.answer.strip('"\'')
     form.requires = request.POST.get('requires', form.requires)
-    if actions_use_usercase(form.actions) and not is_usercase_enabled(domain):
-        if toggle_enabled_shortcut('user_as_a_case', domain, namespace='domain'):
-            enable_usercase(domain)
-        else:
-            return HttpResponseBadRequest(json.dumps({
-                'reason': _('This form uses usercase properties, but User-As-A-Case is not enabled for this '
-                            'project. To use this feature, please enable the "User-As-A-Case" Feature Flag.')}))
+    if actions_use_usercase(form.actions) and not is_usercase_in_use(domain):
+        enable_usercase(domain)
     response_json = {}
     app.save(response_json)
     response_json['propertiesMap'] = get_all_case_properties(app)
+    response_json['usercasePropertiesMap'] = get_usercase_properties(app)
     return json_response(response_json)
 
 @no_conflict_require_POST
@@ -2346,6 +2381,7 @@ def save_copy(request, domain, app_id):
     See VersionedDoc.save_copy
 
     """
+    track_built_app_on_hubspot.delay(request.couch_user)
     comment = request.POST.get('comment')
     app = get_app(domain, app_id)
     try:

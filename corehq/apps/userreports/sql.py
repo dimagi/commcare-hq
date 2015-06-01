@@ -2,10 +2,12 @@ import hashlib
 from sqlagg import SumWhen
 import sqlalchemy
 from django.conf import settings
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, ProgrammingError
+from corehq.apps.userreports.exceptions import TableRebuildError
 from corehq.db import Session
 from corehq.apps.reports.sqlreport import DatabaseColumn
 from dimagi.utils.decorators.memoized import memoized
+from fluff import TYPE_STRING
 from fluff.util import get_column_type
 
 metadata = sqlalchemy.MetaData()
@@ -36,7 +38,10 @@ class IndicatorSqlAdapter(object):
         return get_indicator_table(self.config)
 
     def rebuild_table(self):
-        rebuild_table(self.engine, self.get_table())
+        try:
+            rebuild_table(self.engine, self.get_table())
+        except ProgrammingError, e:
+            raise TableRebuildError('problem rebuilding UCR table {}: {}'.format(self.config, e))
 
     def drop_table(self):
         with self.engine.begin() as connection:
@@ -84,7 +89,7 @@ def get_indicator_table(indicator_config, custom_metadata=None):
 def column_to_sql(column):
     return sqlalchemy.Column(
         column.id,
-        get_column_type(column.datatype),
+        _get_column_type(column.datatype),
         nullable=column.is_nullable,
         primary_key=column.is_primary_key,
     )
@@ -102,6 +107,15 @@ def rebuild_table(engine, table):
 
 
 def get_column_name(path):
+    """
+    :param path: xpath from form or case
+    :return: column name for postgres
+
+    Postgres only allows columns up to 63 characters
+    Anyone viewing the table directly will want to know the last parts of the path, not the first parts e.g.
+    this: 'my_long_choice_list_option_1_ABCDEFGH', 'my_long_choice_list_option_2_ABCD1234'
+    not: 'question_group_1_my_long_choice_ABCDEFGH', 'question_group_1_my_long_choice_ABCD1234'
+    """
     parts = path.split("/")
 
     def _hash(parts):
@@ -109,7 +123,8 @@ def get_column_name(path):
         end = parts[-1]
         return hashlib.sha1('{}_{}'.format(hashlib.sha1(front).hexdigest(), end)).hexdigest()[:8]
 
-    return "_".join(parts + [_hash(parts)])
+    new_parts = path[-54:].split("/")
+    return "_".join(new_parts + [_hash(parts)])
 
 
 def get_table_name(domain, table_id):
@@ -209,3 +224,9 @@ def _expand_column(report_column, distinct_values):
             help_text=report_column.description
         ))
     return columns
+
+
+def _get_column_type(data_type):
+    if data_type == TYPE_STRING:
+        return sqlalchemy.UnicodeText
+    return get_column_type(data_type)

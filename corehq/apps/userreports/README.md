@@ -791,8 +791,13 @@ Here's a sample spec:
 # Export
 
 A UCR data source can be exported, to back an excel dashboard, for instance.
-This export can be filtered to restrict the results returned.  The filtering
-options are all based on the field names:
+The URL for exporting data takes the form https://www.commcarehq.org/a/[domain]/configurable_reports/data_sources/export/[data source id]/
+The export supports a "$format" parameter which can be any of the following options: html, csv, xlsx, xls.
+The default format is csv.
+
+This export can also be filtered to restrict the results returned.
+The filtering options are all based on the field names:
+
 
 URL parameter          | Value          | Description
 -----------------------|----------------|-----------------------------
@@ -806,10 +811,10 @@ should be pretty straightforward to add support for additional filter types.
 ### Export example
 
 Let's say you want to restrict the results to only cases owned by a particular
-user, opened in the last 90 days, and with a child between 12 and 24 months old.
+user, opened in the last 90 days, and with a child between 12 and 24 months old as an xlsx file.
 The querystring might look like this:
 ```
-?owner_id=48l069n24myxk08hl563&opened_on-lastndays=90&child_age-range=12..24
+?$format=xlsx&owner_id=48l069n24myxk08hl563&opened_on-lastndays=90&child_age-range=12..24
 ```
 
 # Practical Notes
@@ -870,6 +875,24 @@ and rebuild it.
 Changes to the data source require restarting the pillow which will rebuild the SQL table. Alternately you
 can use the UI to rebuild the data source (requires Celery to be running).
 
+
+## Extending User Configurable Reports
+
+When building a custom report for a client, you may find that you want to extend
+UCR with custom functionality. The UCR framework allows developers to write
+custom expressions, and register them with the framework. To do so, simply add
+a tuple to the `CUSTOM_UCR_EXPRESSIONS` setting list. The first item in the tuple
+is the name of the expression type, the second item is the path to a function
+with a signature like conditional_expression(spec, context) that returns an
+expression object. e.g.:
+
+```
+# settings.py
+
+CUSTOM_UCR_EXPRESSIONS = [
+    ('abt_supervisor', 'custom.abt.reports.expressions.abt_supervisor'),
+]
+```
 
 ## Inspecting database tables
 

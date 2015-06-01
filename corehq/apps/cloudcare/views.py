@@ -4,7 +4,7 @@ from casexml.apps.stock.models import StockTransaction
 from casexml.apps.stock.utils import get_current_ledger_transactions
 from corehq.apps.accounting.decorators import requires_privilege_for_commcare_user, requires_privilege_with_fallback
 from corehq.apps.app_manager.exceptions import FormNotFoundException, ModuleNotFoundException
-from corehq.apps.app_manager.util import is_usercase_enabled, get_cloudcare_session_data
+from corehq.apps.app_manager.util import is_usercase_in_use, get_cloudcare_session_data
 from corehq.util.couch import get_document_or_404
 from couchforms.const import ATTACHMENT_NAME
 from couchforms.models import XFormInstance
@@ -21,14 +21,14 @@ from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.apps.users.views import BaseUserSettingsView
 from dimagi.utils.web import json_response, get_url_base, json_handler
-from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404,\
-    HttpResponseServerError
+from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404
 from django.shortcuts import render
 from corehq.apps.app_manager.models import Application, ApplicationBase, get_app
 import json
 from corehq.apps.cloudcare.api import look_up_app_json, get_cloudcare_apps, get_filtered_cases, get_filters_from_request,\
     api_closed_to_status, CaseAPIResult, CASE_STATUS_OPEN, get_app_json, get_open_form_sessions
 from dimagi.utils.parsing import string_to_boolean
+from dimagi.utils.logging import notify_exception
 from django.conf import settings
 from touchforms.formplayer.api import DjangoAuth
 from django.core.urlresolvers import reverse
@@ -40,6 +40,12 @@ import HTMLParser
 from django.contrib import messages
 from django.utils.translation import ugettext as _, ugettext_noop
 from touchforms.formplayer.models import EntrySession
+from xml2json.lib import xml2json
+import requests
+from corehq.apps.reports.formdetails import readable
+from corehq.apps.reports.formdetails.readable import get_readable_form_data
+from corehq.apps.reports.templatetags.xform_tags import render_pretty_xml
+from django.shortcuts import get_object_or_404
 
 
 @require_cloudcare_access
@@ -199,7 +205,7 @@ def form_context(request, domain, app_id, module_id, form_id):
 
 
     session_extras = {'session_name': session_name, 'app_id': app._id}
-    suite_gen = SuiteGenerator(app, is_usercase_enabled(domain))
+    suite_gen = SuiteGenerator(app, is_usercase_in_use(domain))
     session_extras.update(get_cloudcare_session_data(suite_gen, domain, form, request.couch_user))
 
     delegation = request.GET.get('task-list') == 'true'
@@ -255,7 +261,7 @@ def filter_cases(request, domain, app_id, module_id, parent_id=None):
     delegation = request.GET.get('task-list') == 'true'
     auth_cookie = request.COOKIES.get('sessionid')
 
-    suite_gen = SuiteGenerator(app, is_usercase_enabled(domain))
+    suite_gen = SuiteGenerator(app, is_usercase_in_use(domain))
     xpath = suite_gen.get_filter_xpath(module, delegation=delegation)
     extra_instances = [{'id': inst.id, 'src': inst.src}
                        for inst in suite_gen.get_instances_for_module(module, additional_xpaths=[xpath])]
@@ -278,8 +284,11 @@ def filter_cases(request, domain, app_id, module_id, parent_id=None):
         result = helper.filter_cases(xpath, additional_filters, DjangoAuth(auth_cookie),
                                      extra_instances=extra_instances)
         if result.get('status', None) == 'error':
-            return HttpResponseServerError(
-                result.get("message", _("Something went wrong filtering your cases.")))
+            code = result.get('code', 500)
+            message = result.get('message', _("Something went wrong filtering your cases."))
+            if code == 500:
+                notify_exception(None, message=message)
+            return json_response(message, status_code=code)
 
         case_ids = result.get("cases", [])
     else:
@@ -415,6 +424,53 @@ def get_ledgers(request, domain):
         },
         default=custom_json_handler,
     )
+
+
+@cloudcare_api
+def render_form(request, domain):
+    # get session
+    session_id = request.GET.get('session_id')
+
+    session = get_object_or_404(EntrySession, session_id=session_id)
+
+    response = requests.post("{base_url}/webforms/get-xml/{session_id}".format(base_url=get_url_base(),
+                                                                               session_id=session_id))
+
+    if response.status_code is not 200:
+        err = "Session XML could not be found"
+        return HttpResponse(err, status=500, content_type="text/plain")
+
+    json_response = json.loads(response.text)
+    xmlns = json_response["xmlns"]
+    form_data_xml = json_response["output"]
+
+    _, form_data_json = xml2json(form_data_xml)
+    pretty_questions = readable.get_questions(domain, session.app_id, xmlns)
+
+    readable_form = get_readable_form_data(form_data_json, pretty_questions)
+
+    rendered_readable_form = render(request, 'reports/form/partials/readable_form.html',
+                                    {'questions': readable_form})
+
+    return rendered_readable_form
+
+
+def render_xml(request, domain):
+
+    session_id = request.GET.get('session_id')
+
+    response = requests.post("{base_url}/webforms/get-xml/{session_id}".format(base_url=get_url_base(),
+                                                                               session_id=session_id))
+
+    if response.status_code is not 200:
+        err = "Session XML could not be found"
+        return HttpResponse(err, status=500, content_type="text/plain")
+
+    json_response = json.loads(response.text)
+    form_data_xml = json_response["output"]
+
+    return HttpResponse(render_pretty_xml(form_data_xml))
+
 
 
 class HttpResponseConflict(HttpResponse):
