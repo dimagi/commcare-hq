@@ -948,16 +948,21 @@ class SuiteGenerator(SuiteGeneratorBase):
     def _get_entries_datums(self, suite):
         datums = defaultdict(lambda: defaultdict(list))
         entries = {}
-        for e in suite.entries:
+
+        def _include_datums(entry):
+            # might want to make this smarter in the future, but for now just hard-code
+            # formats that we know we don't need or don't work
+            return not entry.command.id.startswith('reports') and not entry.command.id.endswith('case-list')
+
+        for e in filter(_include_datums, suite.entries):
             command = e.command.id
             module_id, form_id = command.split('-', 1)
-            if form_id != 'case-list':
-                entries[command] = e
-                if not e.datums:
-                    datums[module_id][form_id] = []
-                else:
-                    for d in e.datums:
-                        datums[module_id][form_id].append(DatumMeta(d))
+            entries[command] = e
+            if not e.datums:
+                datums[module_id][form_id] = []
+            else:
+                for d in e.datums:
+                    datums[module_id][form_id].append(DatumMeta(d))
 
         return entries, datums
 
@@ -1444,6 +1449,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                     command=Command(
                         id=self.id_strings.case_list_command(module),
                         locale_id=self.id_strings.case_list_locale(module),
+                        media_image=module.case_list.media_image,
+                        media_audio=module.case_list.media_audio,
                     )
                 )
                 if isinstance(module, Module):
