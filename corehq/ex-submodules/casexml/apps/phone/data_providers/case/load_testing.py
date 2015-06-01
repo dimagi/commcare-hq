@@ -1,6 +1,5 @@
 from copy import deepcopy
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.xml import V2
 from casexml.apps.phone.data_providers.case.utils import CaseSyncUpdate
 from casexml.apps.phone.xml import get_case_element
 from corehq.toggles import ENABLE_LOADTEST_USERS
@@ -45,4 +44,3 @@ def append_update_to_response(response, update, restore_state):
         current_count += 1
         if current_count < restore_state.loadtest_factor:
             update = transform_loadtest_update(original_update, current_count)
-
