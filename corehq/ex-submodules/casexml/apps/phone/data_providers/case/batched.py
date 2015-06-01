@@ -1,11 +1,11 @@
 from collections import defaultdict
-from copy import deepcopy
 import itertools
 import logging
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.caselogic import get_footprint
+from casexml.apps.phone.data_providers.case.load_testing import get_loadtest_factor, transform_loadtest_update
 from casexml.apps.phone.data_providers.case.stock import get_stock_payload
-from casexml.apps.phone.data_providers.case.utils import CaseSyncUpdate, get_case_sync_updates, get_loadtest_factor
+from casexml.apps.phone.data_providers.case.utils import get_case_sync_updates
 from casexml.apps.phone import xml
 from casexml.apps.phone.models import CaseState
 from corehq.util.dates import iso_string_to_datetime
@@ -28,7 +28,7 @@ def get_case_payload_batched(restore_state):
             response.append(element)
             current_count += 1
             if current_count < factor:
-                update = _transform_loadtest_update(original_update, current_count)
+                update = transform_loadtest_update(original_update, current_count)
 
     sync_state = sync_operation.global_state
     restore_state.current_sync_log.cases_on_phone = sync_state.actual_owned_cases
@@ -41,21 +41,6 @@ def get_case_payload_batched(restore_state):
     response.extend(commtrack_elements)
 
     return response, sync_operation.batch_count
-
-
-def _transform_loadtest_update(update, factor):
-    """
-    Returns a new CaseSyncUpdate object (from an existing one) with all the
-    case IDs and names mapped to have the factor appended.
-    """
-    def _map_id(id, count):
-        return '{}-{}'.format(id, count)
-    case = CommCareCase.wrap(deepcopy(update.case._doc))
-    case._id = _map_id(case._id, factor)
-    for index in case.indices:
-        index.referenced_id = _map_id(index.referenced_id, factor)
-    case.name = '{} ({})'.format(case.name, factor)
-    return CaseSyncUpdate(case, update.sync_token, required_updates=update.required_updates)
 
 
 class GlobalSyncState(object):
