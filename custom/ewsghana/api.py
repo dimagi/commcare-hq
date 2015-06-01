@@ -1,5 +1,7 @@
 import logging
 from django.core.validators import validate_email
+from corehq.apps.commtrack.dbaccessors.supply_point_case_by_domain_external_id import \
+    get_supply_point_case_by_domain_external_id
 from corehq.apps.products.models import SQLProduct
 from dimagi.utils.dates import force_to_datetime
 from corehq.apps.commtrack.models import SupplyPointCase, CommtrackConfig
@@ -112,6 +114,15 @@ class GhanaEndpoint(LogisticsEndpoint):
     def get_supply_points(self, **kwargs):
         meta, supply_points = self.get_objects(self.supply_point_url, **kwargs)
         return meta, [SupplyPoint(supply_point) for supply_point in supply_points]
+
+    def get_stocktransactions(self, start_date=None, end_date=None, **kwargs):
+        kwargs.get('filters', {}).update({
+            'date__gte': start_date,
+            'date__lte': end_date
+        })
+        meta, stock_transactions = self.get_objects(self.stocktransactions_url, **kwargs)
+        return meta, [(self.models_map['stock_transaction'])(stock_transaction)
+                      for stock_transaction in stock_transactions]
 
 
 class EWSApi(APISynchronization):
