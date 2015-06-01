@@ -5,9 +5,7 @@ import logging
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.caselogic import get_footprint
 from casexml.apps.phone.data_providers.case.stock import get_stock_payload
-from casexml.apps.phone.data_providers.case.utils import CaseSyncUpdate, get_case_sync_updates
-from corehq.toggles import ENABLE_LOADTEST_USERS
-from dimagi.utils.couch.database import get_safe_write_kwargs
+from casexml.apps.phone.data_providers.case.utils import CaseSyncUpdate, get_case_sync_updates, get_loadtest_factor
 from casexml.apps.phone import xml
 from casexml.apps.phone.models import CaseState
 from corehq.util.dates import iso_string_to_datetime
@@ -21,7 +19,7 @@ def get_case_payload_batched(restore_state):
     response = restore_state.restore_class()
 
     sync_operation = BatchedCaseSyncOperation(restore_state)
-    factor = _get_loadtest_factor(restore_state.domain, restore_state.user)
+    factor = get_loadtest_factor(restore_state.domain, restore_state.user)
     for update in sync_operation.get_all_case_updates():
         current_count = 0
         original_update = update
@@ -43,17 +41,6 @@ def get_case_payload_batched(restore_state):
     response.extend(commtrack_elements)
 
     return response, sync_operation.batch_count
-
-
-def _get_loadtest_factor(domain, user):
-    """
-    Gets the loadtest factor for a domain and user. Is always 1 unless
-    both the toggle is enabled for the domain, and the user has a non-zero,
-    non-null factor set.
-    """
-    if domain and ENABLE_LOADTEST_USERS.enabled(domain):
-        return getattr(user, 'loadtest_factor', 1) or 1
-    return 1
 
 
 def _transform_loadtest_update(update, factor):
