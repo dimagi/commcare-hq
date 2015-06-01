@@ -57,6 +57,7 @@ class WebUsersSyncTest(TestCase):
         self.assertEqual(TEST_DOMAIN, domain_name)
         self.assertEqual(UserRole.get_read_only_role_by_domain(TEST_DOMAIN)._id,
                          ewsghana_webuser.get_domain_membership(TEST_DOMAIN).role_id)
+        ewsghana_webuser.delete()
 
     def test_create_facility_manager(self):
         with open(os.path.join(self.datapath, 'sample_webusers.json')) as f:
