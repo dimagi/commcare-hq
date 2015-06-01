@@ -56,7 +56,7 @@ class CaseProcessingResult(object):
         """
         Updates any dirtiness flags in the database.
         """
-        if self.track_cleanliness:
+        if self.track_cleanliness and self.domain:
             flags_to_save = self.get_flags_to_save()
             if should_create_flags_on_submission(self.domain):
                 assert settings.UNIT_TESTING  # this is currently only true when unit testing
