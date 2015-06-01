@@ -312,9 +312,9 @@ class FixtureDataItem(Document):
     def _get_case_sharing_groups(self, group_ids):
         groups = []
 
-        case_sharing_locations = set(SQLLocation.objects.filter(
+        case_sharing_locations = SQLLocation.objects.filter(
             location_id__in=group_ids
-        ).values_list('location_id', flat=True))
+        ).values_list('location_id', flat=True).distinct()
 
         for case_sharing_location in case_sharing_locations:
             groups.append(case_sharing_location.case_sharing_group_object())
