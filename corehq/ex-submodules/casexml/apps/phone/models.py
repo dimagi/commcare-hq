@@ -429,9 +429,6 @@ class IndexTree(DocumentSchema):
     def __repr__(self):
         return json.dumps(self.indices, indent=2)
 
-    def has_case(self, case_id):
-        return (case_id in _reverse_index_map(self.indices))
-
     def get_cases_that_directly_depend_on_case(self, case_id, cached_map=None):
         cached_map = cached_map or _reverse_index_map(self.indices)
         return cached_map.get(case_id, [])
