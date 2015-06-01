@@ -27,6 +27,12 @@ def format_decimal(d):
         return None
 
 
+def geopoint(location):
+    if None in (location.latitude, location.longitude):
+        return None
+    return '{} {}'.format(location.latitude, location.longitude)
+
+
 class CommtrackDataSourceMixin(object):
 
     @property
@@ -373,19 +379,24 @@ class StockStatusBySupplyPointDataSource(StockStatusDataSource):
         product_ids = sorted(products.keys(), key=lambda e: products[e])
 
         by_supply_point = map_reduce(lambda e: [(e['location_id'],)], data=data, include_docs=True)
-        locs = dict((loc._id, loc) for loc in Location.view(
-                '_all_docs',
-                keys=by_supply_point.keys(),
-                include_docs=True))
+        locs = {
+            loc.location_id: loc
+            for loc in (SQLLocation.objects
+                        .filter(is_archived=False,
+                                location_id__in=by_supply_point.keys())
+                        .prefetch_related('location_type'))
+        }
 
         for loc_id, subcases in by_supply_point.iteritems():
+            if loc_id not in locs:
+                continue  # it's archived, skip
             loc = locs[loc_id]
             by_product = dict((c['product_id'], c) for c in subcases)
 
             rec = {
                 'name': loc.name,
-                'type': loc.location_type,
-                'geo': loc._geopoint,
+                'type': loc.location_type.name,
+                'geo': geopoint(loc),
             }
             for prod in product_ids:
                 rec.update(dict(('%s-%s' % (prod, key), by_product.get(prod, {}).get(key)) for key in
@@ -434,6 +445,8 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
 
             for spoint_id, loc_id in spoint_loc_map.items():
                 loc = locations[loc_id]
+                if loc.is_archived:
+                    continue
 
                 results = StockReport.objects.filter(
                     stocktransaction__case_id=spoint_id
@@ -456,7 +469,7 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
                                 'name': loc.name,
                                 'type': loc.location_type,
                                 'reporting_status': 'reporting',
-                                'geo': loc._geopoint,
+                                'geo': geopoint(loc),
                                 'last_reporting_date': date,
                             }
                             matched = True
@@ -479,6 +492,6 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
                         'name': loc.name,
                         'type': loc.location_type,
                         'reporting_status': 'nonreporting',
-                        'geo': loc._geopoint,
+                        'geo': geopoint(loc),
                         'last_reporting_date': result[0][0] if result else ''
                     }

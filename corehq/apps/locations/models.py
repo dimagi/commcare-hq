@@ -628,10 +628,6 @@ class Location(CachedCouchDocumentMixin, Document):
         keys = [e['key'] for e in q if len(e['key']) == depth]
         return self.view('locations/hierarchy', keys=keys, reduce=False, include_docs=True).all()
 
-    @property
-    def _geopoint(self):
-        return '%s %s' % (self.latitude, self.longitude) if self.latitude is not None and self.longitude is not None else None
-
     def linked_supply_point(self):
         from corehq.apps.commtrack.models import SupplyPointCase
         return SupplyPointCase.get_by_location(self)
