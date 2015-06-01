@@ -76,6 +76,6 @@ def _get_migration_status_from_threadlocals():
         except AttributeError:
             return _default
         return get_migration_status(domain)
-    except Exception:
-        _assert(False, 'Error in _get_migration_status')
+    except Exception as e:
+        _assert(False, 'Error in _get_migration_status', e)
         return _default

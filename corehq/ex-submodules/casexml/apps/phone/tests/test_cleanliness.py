@@ -1,7 +1,9 @@
 import uuid
+from django.test import SimpleTestCase
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseRelationship
 from casexml.apps.phone.cleanliness import set_cleanliness_flags, hint_still_valid, \
     get_cleanliness_flag_from_scratch
+from casexml.apps.phone.data_providers.case.clean_owners import pop_ids
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from casexml.apps.phone.tests.test_sync_mode import SyncBaseTest
 from corehq.toggles import OWNERSHIP_CLEANLINESS
@@ -188,3 +190,20 @@ class OwnerCleanlinessTest(SyncBaseTest):
         # original domain should stay clean but the new one should be dirty
         self.assertTrue(get_cleanliness_flag_from_scratch(self.domain, self.owner_id).is_clean)
         self.assertFalse(get_cleanliness_flag_from_scratch(new_domain, self.owner_id).is_clean)
+
+
+class CleanlinessUtilitiesTest(SimpleTestCase):
+
+    def test_pop_ids(self):
+        five = set(range(5))
+        three = pop_ids(five, 3)
+        self.assertEqual(3, len(three))
+        self.assertEqual(2, len(five))
+        self.assertEqual(five | set(three), set(range(5)))
+
+    def test_pop_ids_too_many(self):
+        five = set(range(5))
+        back = pop_ids(five, 6)
+        self.assertEqual(5, len(back))
+        self.assertEqual(0, len(five))
+        self.assertEqual(set(back), set(range(5)))

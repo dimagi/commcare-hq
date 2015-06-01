@@ -360,6 +360,12 @@ VELLUM_ADVANCED_ITEMSETS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+VELLUM_EXPERIMENTAL_UI = StaticToggle(
+    'experimental_ui',
+    "Enables some experimental UI enhancements for the form builder",
+    TAG_EXPERIMENTAL,
+)
+
 CACHE_AND_INDEX = StaticToggle(
     'cache_and_index',
     'Enable the "Cache and Index" format option when choosing sort properties '
@@ -429,6 +435,14 @@ OWNERSHIP_CLEANLINESS = PredictablyRandomToggle(
     help_link='https://docs.google.com/a/dimagi.com/document/d/12WfZLerFL832LZbMwqRAvXt82scdjDL51WZVNa31f28/edit#heading=h.gu9sjekp0u2p',
 )
 
+OWNERSHIP_CLEANLINESS_RESTORE = StaticToggle(
+    'enable_owner_cleanliness_restore',
+    'Enable restoring with updated owner cleanliness logic.',
+    TAG_EXPERIMENTAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link='https://docs.google.com/a/dimagi.com/document/d/12WfZLerFL832LZbMwqRAvXt82scdjDL51WZVNa31f28/edit#heading=h.gu9sjekp0u2p',
+)
+
 MOBILE_UCR = StaticToggle(
     'mobile_ucr',
     ('Mobile UCR: Configure viewing user configurable reports on the mobile '
@@ -442,12 +456,6 @@ RESTRICT_WEB_USERS_BY_LOCATION = StaticToggle(
     "Allow project to restrict web user permissions by location",
     TAG_PRODUCT_CORE,
     namespaces=[NAMESPACE_DOMAIN],
-)
-
-FM_FACING_SUBSCRIPTIONS = StaticToggle(
-    'fm_facing_subscriptions',
-    'FM Facing Subscription Management Interface',
-    TAG_PRODUCT_CORE,
 )
 
 API_THROTTLE_WHITELIST = StaticToggle(

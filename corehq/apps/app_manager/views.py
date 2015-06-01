@@ -1072,6 +1072,10 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
                 'menu_refs': app.get_case_list_form_media(module, module_id),
                 'default_file_name': '{}_case_list_form'.format(default_file_name),
             }
+            specific_media['case_list_menu_item'] = {
+                'menu_refs': app.get_case_list_menu_item_media(module, module_id),
+                'default_file_name': '{}_case_list_menu_item'.format(default_file_name),
+            }
         context.update({
             'multimedia': {
                 "references": app.get_references(),
@@ -1530,6 +1534,8 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         "case_list_form_label": None,
         "case_list_form_media_image": None,
         "case_list_form_media_audio": None,
+        'case_list-menu_item_media_image': None,
+        'case_list-menu_item_media_audio': None,
         "parent_module": None,
         "root_module_id": None,
         "module_filter": None,
@@ -1610,6 +1616,21 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         )
         module.case_list_form.media_audio = val
 
+    if should_edit('case_list-menu_item_media_image'):
+        val = _process_media_attribute(
+            'case_list-menu_item_media_image',
+            resp,
+            request.POST.get('case_list-menu_item_media_image')
+        )
+        module.case_list.media_image = val
+    if should_edit('case_list-menu_item_media_audio'):
+        val = _process_media_attribute(
+            'case_list-menu_item_media_audio',
+            resp,
+            request.POST.get('case_list-menu_item_media_audio')
+        )
+        module.case_list.media_audio = val
+
     for attribute in ("name", "case_label", "referral_label"):
         if should_edit(attribute):
             name = request.POST.get(attribute, None)
@@ -1617,9 +1638,14 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
             if should_edit("name"):
                 resp['update'].update({'.variable-module_name': module.name[lang]})
     for SLUG in ('case_list', 'task_list'):
+        show = '{SLUG}-show'.format(SLUG=SLUG)
+        label = '{SLUG}-label'.format(SLUG=SLUG)
+        if request.POST.get(show) == 'true' and (request.POST.get(label) == ''):
+            # Show item, but empty label, was just getting ignored
+            return HttpResponseBadRequest("A label is required for {SLUG}".format(SLUG=SLUG))
         if should_edit(SLUG):
-            module[SLUG].show = json.loads(request.POST['{SLUG}-show'.format(SLUG=SLUG)])
-            module[SLUG].label[lang] = request.POST['{SLUG}-label'.format(SLUG=SLUG)]
+            module[SLUG].show = json.loads(request.POST[show])
+            module[SLUG].label[lang] = request.POST[label]
 
     if isinstance(module, AdvancedModule):
         module.has_schedule = should_edit('has_schedule')
@@ -1956,14 +1982,12 @@ def edit_form_actions(request, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
     form = app.get_module(module_id).get_form(form_id)
     form.actions = FormActions.wrap(json.loads(request.POST['actions']))
+    for condition in (form.actions.open_case.condition, form.actions.close_case.condition):
+        if isinstance(condition.answer, basestring):
+            condition.answer = condition.answer.strip('"\'')
     form.requires = request.POST.get('requires', form.requires)
     if actions_use_usercase(form.actions) and not is_usercase_in_use(domain):
-        if toggles.USER_AS_A_CASE.enabled(domain):
-            enable_usercase(domain)
-        else:
-            return HttpResponseBadRequest(json.dumps({
-                'reason': _('This form uses usercase properties, but User-As-A-Case is not enabled for this '
-                            'project. To use this feature, please enable the "User-As-A-Case" Feature Flag.')}))
+        enable_usercase(domain)
     response_json = {}
     app.save(response_json)
     response_json['propertiesMap'] = get_all_case_properties(app)

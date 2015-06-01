@@ -32,7 +32,7 @@ class IncomingPostTest(TestCase):
         fake_post = {InboundParams.SENDER: str(self.number),
                      InboundParams.MESSAGE: self.message_ascii,
                      InboundParams.MID: '00001',
-                     InboundParams.UDHI: '0'}
+                     InboundParams.DCS: '0'}
         response, log = post(fake_post)
         self.assertEqual(200, response.status_code)
         self.assertEqual(self.message_ascii, log.text)
@@ -43,7 +43,7 @@ class IncomingPostTest(TestCase):
         fake_post = {InboundParams.SENDER: str(self.number),
                      InboundParams.MESSAGE: self.message_utf_hex,
                      InboundParams.MID: '00002',
-                     InboundParams.UDHI: '1'}
+                     InboundParams.DCS: '8'}
         response, log = post(fake_post)
         self.assertEqual(200, response.status_code)
         self.assertEqual(self.message_utf_hex.decode("hex").decode("utf_16_be"),

@@ -1,6 +1,7 @@
 from collections import OrderedDict
 from datetime import timedelta
 from django.core.urlresolvers import reverse
+from django.template.loader import render_to_string
 from django.utils.timesince import timesince
 from math import ceil
 from casexml.apps.stock.models import StockTransaction
@@ -13,16 +14,15 @@ from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.graph_models import Axis
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.views.mobile.users import EditCommCareUserView
 from custom.common import ALL_OPTION
 from custom.ewsghana.filters import ProductByProgramFilter
-from custom.ewsghana.reports import EWSData, MultiReport, get_url_with_location, EWSLineChart, ProductSelectionPane, \
+from custom.ewsghana.reports import EWSData, MultiReport, EWSLineChart, ProductSelectionPane, \
     ews_date_format
 from custom.ewsghana.utils import has_input_stock_permissions
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 from corehq.apps.locations.models import Location, SQLLocation
-from dimagi.utils.decorators.profile import line_profile
-from dimagi.utils.parsing import json_format_date
 
 
 class StockLevelsLegend(EWSData):
@@ -166,7 +166,6 @@ class InventoryManagementData(EWSData):
         return []
 
     @property
-    @line_profile()
     def chart_data(self):
         def calculate_weeks_remaining(state, daily_consumption, date):
             if not daily_consumption:
@@ -266,23 +265,11 @@ class InputStock(EWSData):
         return rows
 
 
-class FacilitySMSUsers(EWSData):
-    title = 'SMS Users'
-    slug = 'facility_sms_users'
-    show_table = True
+class UsersData(EWSData):
+    custom_table = True
 
     @property
-    def headers(self):
-        return DataTablesHeader(*[
-            DataTablesColumn(_('User')),
-            DataTablesColumn(_('Phone Number'))
-        ])
-
-    @property
-    def rows(self):
-        from corehq.apps.users.views.mobile import CreateCommCareUserView
-        from corehq.apps.users.views.mobile import EditCommCareUserView
-
+    def rendered_content(self):
         users = CommCareUser.view(
             'locations/users_by_location_id',
             startkey=[self.config['location_id']],
@@ -290,79 +277,24 @@ class FacilitySMSUsers(EWSData):
             include_docs=True
         ).all()
 
-        for user in users:
-            if user.full_name and user.phone_numbers:
-                user_link = '<a href="%s">%s</a>' % (
-                    reverse(EditCommCareUserView.urlname,
-                            args=[self.config['domain'], user._id]), user.full_name)
+        user_to_dict = lambda sms_user: {
+            'id': sms_user.get_id,
+            'full_name': sms_user.full_name,
+            'phone_numbers': sms_user.phone_numbers,
+            'in_charge': user.user_data.get('role') == 'In Charge',
+            'url': reverse(EditCommCareUserView.urlname, args=[self.config['domain'], sms_user.get_id])
+        }
 
-                yield ['<div val="%s" sel=%s>%s</div>' % (
-                    user._id, 'true' if user.user_data.get('role') == 'In Charge' else 'false',
-                    user_link), user.phone_numbers[0]]
+        web_users = UserES().web_users().domain(self.config['domain']).term(
+            "domain_memberships.location_id", self.config['location_id']
+        ).run().hits
 
-        yield [get_url_with_location(CreateCommCareUserView.urlname, 'Create new Mobile Worker',
-                                     self.config['location_id'], self.config['domain']), '']
-
-
-class FacilityUsers(EWSData):
-    title = 'Web Users'
-    slug = 'facility_users'
-    show_table = True
-
-    @property
-    def headers(self):
-        return DataTablesHeader(*[
-            DataTablesColumn(_('User')),
-            DataTablesColumn(_('Email'))
-        ])
-
-    @property
-    def rows(self):
-        from corehq.apps.users.views import InviteWebUserView
-        from corehq.apps.users.views import EditWebUserView
-
-        query = (UserES().web_users().domain(self.config['domain'])
-                 .term("domain_memberships.location_id", self.config['location_id']))
-
-        for hit in query.run().hits:
-            if (hit['first_name'] or hit['last_name']) and hit['email']:
-                user_link = '<a href="%s">%s</a>' % (
-                    reverse(EditWebUserView.urlname,
-                            args=[self.config['domain'], hit['_id']]), hit['first_name'] + ' ' + hit['last_name'])
-                yield [user_link, hit['email']]
-        yield [get_url_with_location(InviteWebUserView.urlname, 'Invite Web User',
-                                     self.config['location_id'], self.config['domain'])]
-
-
-class FacilityInChargeUsers(EWSData):
-    title = ''
-    slug = 'in_charge'
-    show_table = True
-
-    @property
-    def headers(self):
-        return DataTablesHeader(*[
-            DataTablesColumn(_('In charge')),
-        ])
-
-    @property
-    def rows(self):
-        from corehq.apps.users.views.mobile import EditCommCareUserView
-        users = CommCareUser.view(
-            'locations/users_by_location_id',
-            startkey=[self.config['location_id']],
-            endkey=[self.config['location_id'], {}],
-            include_docs=True
-        ).all()
-
-        for user in users:
-            if user.user_data.get('role') == 'In Charge' and user.full_name:
-                user_link = '<a href="%s">%s</a>' % (
-                    reverse(EditCommCareUserView.urlname,
-                            args=[self.config['domain'], user._id]), user.full_name)
-                yield [user_link]
-        yield ['<button id="in-charge-button" class="btn" data-target="#configureInCharge" data-toggle="modal">'
-               'Configure In Charge</button>']
+        return render_to_string('ewsghana/partials/users_tables.html', {
+            'users': [user_to_dict(user) for user in users],
+            'domain': self.domain,
+            'location_id': self.location_id,
+            'web_users': web_users
+        })
 
 
 class StockLevelsReport(MultiReport):
@@ -402,9 +334,7 @@ class StockLevelsReport(MultiReport):
                 return [FacilityReportData(config),
                         StockLevelsLegend(config),
                         InputStock(config),
-                        FacilitySMSUsers(config),
-                        FacilityUsers(config),
-                        FacilityInChargeUsers(config),
+                        UsersData(config),
                         InventoryManagementData(config),
                         ProductSelectionPane(config)]
 

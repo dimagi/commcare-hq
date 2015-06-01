@@ -1,6 +1,6 @@
 from collections import defaultdict
 from casexml.apps.stock.models import StockTransaction
-from corehq.apps.commtrack.models import StockState, CommtrackConfig
+from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
@@ -153,7 +153,7 @@ class CMSRMSSummaryReportingData(EmailReportingData):
 
 class StockSummaryReport(MultiReport):
     fields = [AsyncLocationFilter, DatespanFilter]
-    name = "Stock Summary Report"
+    name = "Stock Summary"
     slug = 'stock_summary_report'
     exportable = False
     is_exportable = False
@@ -192,7 +192,7 @@ class StockSummaryReport(MultiReport):
 
 class CMSRMSReport(MultiReport):
     fields = [DatespanFilter]
-    name = "CMS and RMS Summary Report"
+    name = "CMS and RMS Summary"
     slug = 'cms_rms_summary_report'
     exportable = True
     is_exportable = True

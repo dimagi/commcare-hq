@@ -238,3 +238,25 @@ class IsExistFormPropertyFilter(FormPropertyFilter):
                 self.operator(self.property_value, form.xpath(self.property_path))
             )
         )
+
+
+def get_loc_from_case(case):
+    loc = SQLLocation.objects.filter(
+        domain=case.get_case_property('domain'),
+        name=case.get_case_property('district_name'))
+    if loc:
+        if loc[0].location_type.name == 'PPS':
+            return loc[0].parent
+        if loc.count() > 1:
+            loc = loc.filter(location_type__name='District')
+        return loc[0]
+
+
+def get_region_id(case):
+    loc = get_loc_from_case(case)
+    return loc.parent.location_id if loc else None
+
+
+def get_district_id(case):
+    loc = get_loc_from_case(case)
+    return loc.location_id if loc else None
