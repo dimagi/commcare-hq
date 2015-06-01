@@ -35,7 +35,8 @@ class CaseProcessingResult(object):
     """
     Lightweight class used to collect results of case processing
     """
-    def __init__(self, cases, dirtiness_flags, track_cleanliness):
+    def __init__(self, domain, cases, dirtiness_flags, track_cleanliness):
+        self.domain = domain
         self.cases = cases
         self.dirtiness_flags = dirtiness_flags
         self.track_cleanliness = track_cleanliness
@@ -50,6 +51,7 @@ class CaseProcessingResult(object):
         if self.track_cleanliness:
             flags_to_save = {f.owner_id: f.case_id for f in self.dirtiness_flags}
             flags_to_update = OwnershipCleanlinessFlag.objects.filter(
+                Q(domain=self.domain),
                 Q(owner_id__in=flags_to_save.keys()),
                 Q(is_clean=True) | Q(hint__isnull=True)
             )
@@ -369,7 +371,7 @@ def _get_or_update_cases(xforms, case_db):
         # only do this extra step if the toggle is enabled since we know we aren't going to
         # care about the dirtiness flags otherwise.
         dirtiness_flags += list(_get_dirtiness_flags_for_child_cases(domain, touched_cases.values()))
-    return CaseProcessingResult(touched_cases.values(), dirtiness_flags, track_cleanliness)
+    return CaseProcessingResult(domain, touched_cases.values(), dirtiness_flags, track_cleanliness)
 
 
 def _get_or_update_model(case_update, xform, case_db):

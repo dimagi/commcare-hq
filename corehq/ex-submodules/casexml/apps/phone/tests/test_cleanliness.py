@@ -162,6 +162,26 @@ class OwnerCleanlinessTest(SyncBaseTest):
         self.assert_owner_clean()
         self.assertEqual(None, self.owner_cleanliness.hint)
 
+    def test_cross_domain_on_submission(self):
+        # create a form that makes a dirty owner with the same ID but in a different domain
+        # make sure the original owner stays clean
+        new_domain = uuid.uuid4().hex
+        # initialize the new cleanliness flag
+        OwnershipCleanlinessFlag.objects.create(domain=new_domain, owner_id=self.owner_id, is_clean=True)
+        self.factory.domain = new_domain
+        self.factory.create_or_update_case(
+            CaseStructure(
+                relationships=[
+                    CaseRelationship(CaseStructure(attrs={'owner_id': uuid.uuid4().hex}))
+                ]
+            )
+        )
+        self.assert_owner_clean()
+        self.assertEqual(
+            False,
+            OwnershipCleanlinessFlag.objects.get(owner_id=self.owner_id, domain=new_domain).is_clean,
+        )
+
     def test_cross_domain_both_clean(self):
         new_domain = uuid.uuid4().hex
         self.factory.domain = new_domain
