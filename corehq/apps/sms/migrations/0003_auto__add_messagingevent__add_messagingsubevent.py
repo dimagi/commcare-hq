@@ -55,7 +55,7 @@ class Migration(SchemaMigration):
         db.delete_table('sms_messagingsubevent')
 
         # Remove foreign key to MessagingSubEvent from SMS
-        db.delete_column('sms_sms', 'messaging_subevent')
+        db.delete_column('sms_sms', 'messaging_subevent_id')
 
     models = {
         u'smsforms.sqlxformssession': {

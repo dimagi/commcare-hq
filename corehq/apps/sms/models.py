@@ -762,20 +762,18 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     recipient_id = models.CharField(max_length=255, null=True, db_index=True)
 
     @classmethod
+    def get_recipient_type_from_doc_type(cls, recipient_doc_type):
+        return {
+            'CommCareUser': cls.RECIPIENT_MOBILE_WORKER,
+            'WebUser': cls.RECIPIENT_WEB_USER,
+            'CommCareCase': cls.RECIPIENT_CASE,
+            'Group': cls.RECIPIENT_USER_GROUP,
+            'CommCareCaseGroup': cls.RECIPIENT_CASE_GROUP,
+        }.get(recipient_doc_type, None)
+
+    @classmethod
     def get_recipient_type(cls, recipient):
-        if isinstance(recipient, CommCareUser):
-            recipient_type = cls.RECIPIENT_MOBILE_WORKER
-        elif isinstance(recipient, WebUser):
-            recipient_type = cls.RECIPIENT_WEB_USER
-        elif isinstance(recipient, CommCareCase):
-            recipient_type = cls.RECIPIENT_CASE
-        elif isinstance(recipient, Group):
-            recipient_type = cls.RECIPIENT_USER_GROUP
-        elif isinstance(recipient, CommCareCaseGroup):
-            recipient_type = cls.RECIPIENT_CASE_GROUP
-        else:
-            recipient_type = None
-        return recipient_type
+        return cls.get_recipient_type_from_doc_type(recipient.doc_type)
 
     @classmethod
     def _get_recipient_doc_type(cls, recipient_type):
@@ -807,6 +805,17 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             case_id=case_id,
             status=MessagingEvent.STATUS_IN_PROGRESS,
         )
+
+    def create_subevent_for_single_sms(self, recipient_doc_type, recipient_id, case=None):
+        subevent = MessagingSubEvent.objects.create(
+            parent=self,
+            recipient_type=MessagingEvent.get_recipient_type_from_doc_type(recipient_doc_type),
+            recipient_id=recipient_id,
+            content_type=MessagingEvent.CONTENT_SMS,
+            case_id=case.get_id if case else None,
+            status=MessagingEvent.STATUS_COMPLETED,
+        )
+        return subevent
 
     @classmethod
     def get_source_from_reminder(cls, reminder_definition):

@@ -41,6 +41,7 @@ from corehq.apps.sms.models import (
     SMSLog,
     MessagingEvent,
     MessagingSubEvent,
+    SMS,
 )
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.reminders.models import (SurveyKeyword,
@@ -132,6 +133,12 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
             return format_datatables_data("-", "-")
         else:
             return format_datatables_data(val, val)
+
+    def _fmt_direction(self, direction):
+        return self._fmt({
+            INCOMING: _('Incoming'),
+            OUTGOING: _('Outgoing'),
+        }.get(direction, '-'))
 
     def _fmt_timestamp(self, timestamp):
         return self.table_cell(
@@ -285,10 +292,6 @@ class MessageLogReport(BaseCommConnectLogReport):
         data = SMSLog.by_domain_date(self.domain, startdate, enddate)
         result = []
 
-        direction_map = {
-            INCOMING: _("Incoming"),
-            OUTGOING: _("Outgoing"),
-        }
         reporting_locations_id = self.get_location_filter() if self.locations_enabled else []
         # Retrieve message log options
         message_log_options = getattr(settings, "MESSAGE_LOG_OPTIONS", {})
@@ -321,7 +324,7 @@ class MessageLogReport(BaseCommConnectLogReport):
                 self._fmt_timestamp(timestamp),
                 self._fmt_contact_link(message.couch_recipient, doc_info),
                 self._fmt(phone_number),
-                self._fmt(direction_map.get(message.direction,"-")),
+                self._fmt_direction(message.direction),
                 self._fmt(message.text),
                 self._fmt(", ".join(message_types)),
             ])
@@ -458,6 +461,7 @@ class MessageEventDetailReport(BaseMessagingEventReport):
             DataTablesColumn(_('Recipient')),
             DataTablesColumn(_('Content')),
             DataTablesColumn(_('Phone Number')),
+            DataTablesColumn(_('Direction')),
             DataTablesColumn(_('Gateway')),
             DataTablesColumn(_('Status')),
         )
@@ -486,7 +490,17 @@ class MessageEventDetailReport(BaseMessagingEventReport):
                 messaging_subevent.recipient_id, contact_cache)
 
             if messaging_subevent.content_type == MessagingEvent.CONTENT_SMS:
-                continue
+                for sms in SMS.objects.filter(messaging_subevent_id=messaging_subevent.pk):
+                    timestamp = ServerTime(sms.date).user_time(self.timezone).done()
+                    result.append([
+                        self._fmt_timestamp(timestamp),
+                        self._fmt_contact_link(messaging_subevent.recipient_id, doc_info),
+                        sms.text,
+                        sms.phone_number,
+                        self._fmt_direction(sms.direction),
+                        sms.backend_api,
+                        self.get_status_display(messaging_subevent.status),
+                    ])
             elif messaging_subevent.content_type == MessagingEvent.CONTENT_SMS_SURVEY:
                 xforms_session = messaging_subevent.xforms_session
                 timestamp = ServerTime(xforms_session.start_time).user_time(self.timezone).done()
@@ -494,6 +508,7 @@ class MessageEventDetailReport(BaseMessagingEventReport):
                     self._fmt_timestamp(timestamp),
                     self._fmt_contact_link(messaging_subevent.recipient_id, doc_info),
                     _('View Survey Details'),
+                    '-',
                     '-',
                     '-',
                     self.get_status_display(messaging_subevent.status),

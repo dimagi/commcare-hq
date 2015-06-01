@@ -142,10 +142,6 @@ def get_custom_content_handler(handler, logged_event):
 
 
 def fire_sms_event(reminder, handler, recipients, verified_numbers, logged_event, workflow=None):
-    metadata = MessageMetadata(
-        workflow=workflow or get_workflow(handler),
-        reminder_id=reminder._id,
-    )
     current_event = reminder.current_event
     case = reminder.case
     template_params = get_message_template_params(case)
@@ -177,6 +173,11 @@ def fire_sms_event(reminder, handler, recipients, verified_numbers, logged_event
 
         domain_obj = Domain.get_by_name(reminder.domain, strict=True)
         if message:
+            metadata = MessageMetadata(
+                workflow=workflow or get_workflow(handler),
+                reminder_id=reminder._id,
+                messaging_subevent_id=logged_subevent.pk,
+            )
             if verified_number is not None:
                 send_sms_to_verified_number(verified_number,
                     message, metadata)

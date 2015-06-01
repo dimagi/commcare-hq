@@ -434,9 +434,15 @@ def user_can_access_case(user, case):
     )
 
 
-def send_keyword_response(vn, message_id):
+def send_keyword_response(vn, message_id, logged_event):
+    subevent = logged_event.create_subevent_for_single_sms(
+        vn.owner_doc_type,
+        vn.owner_id,
+        case
+    )
     metadata = MessageMetadata(
         workflow=WORKFLOW_KEYWORD,
+        messaging_subevent_id=subevent.pk,
     )
     message = get_message(message_id, vn)
     send_sms_to_verified_number(vn, message, metadata=metadata)
@@ -464,15 +470,15 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
                 case, matches = get_case_by_external_id(verified_number.domain,
                     external_id, sender)
                 if matches == 0:
-                    send_keyword_response(verified_number, MSG_CASE_NOT_FOUND)
+                    send_keyword_response(verified_number, MSG_CASE_NOT_FOUND, logged_event)
                     logged_event.error(MessagingEvent.ERROR_CASE_EXTERNAL_ID_NOT_FOUND)
                     return
                 elif matches > 1:
-                    send_keyword_response(verified_number, MSG_MULTIPLE_CASES_FOUND)
+                    send_keyword_response(verified_number, MSG_MULTIPLE_CASES_FOUND, logged_event)
                     logged_event.error(MessagingEvent.MULTIPLE_CASES_WITH_EXTERNAL_ID_FOUND)
                     return
             else:
-                send_keyword_response(verified_number, MSG_MISSING_EXTERNAL_ID)
+                send_keyword_response(verified_number, MSG_MISSING_EXTERNAL_ID, logged_event)
                 logged_event.error(MessagingEvent.NO_EXTERNAL_ID_GIVEN)
                 return
             args = args[2:]
@@ -489,6 +495,15 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
             return 1
         else:
             return 0
+
+    # Log a messaging subevent for the incoming message
+    subevent = logged_event.create_subevent_for_single_sms(
+        msg.couch_recipient_doc_type,
+        msg.couch_recipient,
+        case
+    )
+    add_msg_tags(msg, MessageMetadata(messaging_subevent_id=subevent.pk))
+
     # Process structured sms actions first
     actions = sorted(survey_keyword.actions, cmp=cmp_fcn)
     for survey_keyword_action in actions:
