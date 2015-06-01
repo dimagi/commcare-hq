@@ -35,9 +35,8 @@ from restkit.errors import Unauthorized
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from couchdbkit import ResourceNotFound
+from corehq.apps.hqadmin.dbaccessors import get_number_of_forms_in_all_domains
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
-from couchforms.const import DEVICE_LOG_XMLNS
-from couchforms.dbaccessors import get_number_of_forms_all_domains_in_couch
 from couchforms.models import XFormInstance
 from pillowtop import get_all_pillows_json, get_pillow_by_name
 
@@ -420,8 +419,8 @@ def db_comparisons(request):
             'sql_rows': None,
         },
         {
-            'description': 'Forms (doc_type is "XFormInstance")',
-            'couch_docs': get_number_of_forms_all_domains_in_couch(),
+            'description': 'Forms (doc_type is "XFormInstance", couch includes logs)',
+            'couch_docs': get_number_of_forms_in_all_domains(),
             'es_query': FormES().remove_default_filter('has_xmlns')
                 .remove_default_filter('has_user')
                 .size(0),
