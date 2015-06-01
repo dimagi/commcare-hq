@@ -27,6 +27,16 @@ def format_decimal(d):
         return None
 
 
+def _locations_map(location_ids):
+    return {
+        loc.location_id: loc
+        for loc in SQLLocation.objects.filter(
+            is_archived=False,
+            location_id__in=location_ids,
+        )
+    }
+
+
 class CommtrackDataSourceMixin(object):
 
     @property
@@ -373,10 +383,7 @@ class StockStatusBySupplyPointDataSource(StockStatusDataSource):
         product_ids = sorted(products.keys(), key=lambda e: products[e])
 
         by_supply_point = map_reduce(lambda e: [(e['location_id'],)], data=data, include_docs=True)
-        locs = dict((loc._id, loc) for loc in Location.view(
-                '_all_docs',
-                keys=by_supply_point.keys(),
-                include_docs=True))
+        slocs = _locations_map(by_supply_point.keys())
 
         for loc_id, subcases in by_supply_point.iteritems():
             loc = locs[loc_id]
@@ -427,10 +434,7 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
                 doc['_id']: doc['location_id']
                 for doc in iter_docs(SupplyPointCase.get_db(), sp_ids)
             }
-            locations = {
-                doc['_id']: Location.wrap(doc)
-                for doc in iter_docs(Location.get_db(), spoint_loc_map.values())
-            }
+            locations = _locations_map(spoint_loc_map.values())
 
             for spoint_id, loc_id in spoint_loc_map.items():
                 loc = locations[loc_id]
