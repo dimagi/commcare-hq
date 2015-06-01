@@ -15,7 +15,7 @@ class ASHAFunctionalityChecklistReport(GenericTabularReport, NRHMDatespanMixin, 
         return {
             'domain': self.domain,
             'startdate': self.datespan.startdate,
-            'enddate': self.datespan.enddate,
+            'enddate': self.datespan.enddate.replace(hour=23, minute=59, second=59),
             'af': self.request.GET.get('hierarchy_af'),
         }
 
@@ -78,7 +78,10 @@ class ASHAFunctionalityChecklistReport(GenericTabularReport, NRHMDatespanMixin, 
                 if data[p] == 1:
                     ttotal[idx] += 1
                     total += 1
-                default_row_data[idx].append(data[p] if data[p] != 88 else 'NA')
+                if p == 'completed_on':
+                    default_row_data[idx].append(data[p].strftime('%Y-%m-%d %H:%M'))
+                else:
+                    default_row_data[idx].append(data[p] if data[p] != 88 else 'NA')
             if total >= 6:
                 total_of_functional += 1
             default_row_data[-3].append(total)
