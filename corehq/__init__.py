@@ -87,6 +87,7 @@ def REPORTS(project):
     messaging_reports.extend([
         sms.MessagingEventsReport,
         sms.MessageEventDetailReport,
+        sms.SurveyDetailReport,
         sms.MessageLogReport,
         ivr.CallLogReport,
         ivr.ExpectedCallbackReport,

@@ -48,6 +48,7 @@ from corehq.apps.reminders.models import (SurveyKeyword,
     CaseReminderHandler)
 from corehq.apps.reminders.views import (EditStructuredKeywordView,
     EditNormalKeywordView, EditScheduledReminderView)
+from couchforms.models import XFormInstance
 
 
 class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
@@ -396,6 +397,13 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
             _('View Details'),
         )
 
+    def get_survey_detail_link(self, subevent):
+        return '<a target="_blank" href="/a/%s/reports/survey_detail/?id=%s">%s</a>' % (
+            self.domain,
+            subevent.xforms_session_id,
+            _('View Survey Details'),
+        )
+
 
 class MessagingEventsReport(BaseMessagingEventReport):
     name = ugettext_noop('Messaging Events')
@@ -507,10 +515,71 @@ class MessageEventDetailReport(BaseMessagingEventReport):
                 result.append([
                     self._fmt_timestamp(timestamp),
                     self._fmt_contact_link(messaging_subevent.recipient_id, doc_info),
-                    _('View Survey Details'),
+                    self.get_survey_detail_link(messaging_subevent),
                     '-',
                     '-',
                     '-',
                     self.get_status_display(messaging_subevent.status),
                 ])
+        return result
+
+
+class SurveyDetailReport(BaseMessagingEventReport):
+    name = ugettext_noop('Survey Detail')
+    slug = 'survey_detail'
+    description = ugettext_noop('Displays the detail for a given messaging survey.')
+    emailable = False
+    exportable = False
+    hide_filters = True
+    report_template_path = "reports/messaging/survey_detail.html"
+
+    @property
+    def template_context(self):
+        return {
+            'xforms_session': self.xforms_session,
+            'xform_instance': (XFormInstance.get(self.xforms_session.submission_id)
+                               if self.xforms_session.submission_id else None),
+        }
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn(_('Date')),
+            DataTablesColumn(_('Content')),
+            DataTablesColumn(_('Phone Number')),
+            DataTablesColumn(_('Direction')),
+            DataTablesColumn(_('Gateway')),
+            DataTablesColumn(_('Status')),
+        )
+
+    @property
+    @memoized
+    def xforms_session(self):
+        xforms_session_id = self.request.GET.get('id', None)
+
+        try:
+            xforms_session_id = int(xforms_session_id)
+            xforms_session = SQLXFormsSession.objects.get(pk=xforms_session_id)
+        except (TypeError, ValueError, SQLXFormsSession.DoesNotExist):
+            raise Http404
+
+        if xforms_session.domain != self.domain:
+            raise Http404
+
+        return xforms_session
+
+    @property
+    def rows(self):
+        result = []
+        xforms_session = self.xforms_session
+        for sms in SMS.objects.filter(xforms_session_couch_id=xforms_session.couch_id):
+            timestamp = ServerTime(sms.date).user_time(self.timezone).done()
+            result.append([
+                self._fmt_timestamp(timestamp),
+                sms.text,
+                sms.phone_number,
+                self._fmt_direction(sms.direction),
+                sms.backend_api,
+                '-',
+            ])
         return result
