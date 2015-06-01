@@ -108,7 +108,7 @@ class CleanOwnerCaseSyncOperation(object):
                 self.restore_state.last_sync_log.dependent_case_ids_on_phone -
                 primary_cases_syncing
             )
-            index_tree = index_tree | self.restore_state.last_sync_log.index_tree
+            index_tree = self.restore_state.last_sync_log.index_tree.apply_updates(index_tree)
 
         self.restore_state.current_sync_log.case_ids_on_phone = case_ids_on_phone
         self.restore_state.current_sync_log.dependent_case_ids_on_phone = all_dependencies_syncing

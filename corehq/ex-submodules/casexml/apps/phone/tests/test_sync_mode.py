@@ -1230,6 +1230,63 @@ class MultiUserSyncTest(SyncBaseTest):
         )
         self._testUpdate(latest_sync_log._id, {child_id: [index_ref], parent_id: []})
 
+    @run_with_all_restore_configs
+    def test_index_tree_conflict_handling(self):
+        """
+        Test that if another user changes the index tree, the original user
+        gets the appropriate index tree update after sync.
+        """
+        # create a parent and child case (with index) from one user
+        mom_id, dad_id, child_id = [uuid.uuid4().hex for i in range(3)]
+        self.factory.create_or_update_cases([
+            CaseStructure(
+                case_id=child_id,
+                attrs={'create': True},
+                relationships=[
+                    CaseRelationship(
+                        CaseStructure(case_id=mom_id, attrs={'create': True}),
+                        relationship='mom',
+                        related_type='mom',
+                    ),
+                    CaseRelationship(
+                        CaseStructure(case_id=dad_id, attrs={'create': True}),
+                        relationship='dad',
+                        related_type='dad',
+                    ),
+
+                ],
+            )
+        ])
+        mom_ref = CommCareCaseIndex(identifier='mom', referenced_type='mom', referenced_id=mom_id)
+        dad_ref = CommCareCaseIndex(identifier='dad', referenced_type='dad', referenced_id=dad_id)
+        # sanity check that we are in the right state
+        self._testUpdate(self.sync_log._id, {child_id: [mom_ref, dad_ref], mom_id: [], dad_id: []})
+
+        # have another user modify the index ID of one of the cases
+        new_mom_id = uuid.uuid4().hex
+        self.factory.create_or_update_cases(
+            [
+                CaseStructure(
+                    case_id=child_id,
+                    relationships=[
+                        CaseRelationship(
+                            CaseStructure(case_id=new_mom_id, attrs={'create': True}),
+                            relationship='mom',
+                            related_type='mom',
+                        ),
+                    ]
+                )
+            ],
+            form_extras={'last_sync_token': None}
+        )
+        latest_sync_log = synclog_from_restore_payload(
+            generate_restore_payload(self.project, self.user, restore_id=self.sync_log._id)
+        )
+        new_mom_ref = CommCareCaseIndex(identifier='mom', referenced_type='mom', referenced_id=new_mom_id)
+        self._testUpdate(latest_sync_log._id, {
+            child_id: [new_mom_ref, dad_ref], mom_id: [], dad_id: [], new_mom_id: []
+        })
+
 
 class SyncTokenReprocessingTest(SyncBaseTest):
     """

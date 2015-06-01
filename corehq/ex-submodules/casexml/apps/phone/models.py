@@ -461,16 +461,18 @@ class IndexTree(DocumentSchema):
         prior_ids.add(to_case_id)
         self.indices[from_case_id] = list(prior_ids)
 
-    def __or__(self, other):
-        assert isinstance(other, IndexTree)
+    def apply_updates(self, other_tree):
+        """
+        Apply updates from another IndexTree and return a copy with those applied.
+
+        If an id is found in the new one, use that id's indices, otherwise, use this ones,
+        (defaulting to nothing).
+        """
+        assert isinstance(other_tree, IndexTree)
         new = IndexTree(
             indices=copy(self.indices),
         )
-        for case_id, other_case_ids in other.indices.items():
-            if case_id in new.indices:
-                new.indices[case_id] = set(new.indices[case_id]) | set(other_case_ids)
-            else:
-                new.indices[case_id] = set(other_case_ids)
+        new.indices.update(other_tree.indices)
         return new
 
 
