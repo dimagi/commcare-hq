@@ -4,13 +4,14 @@ from corehq.apps.es import UserES
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
+from corehq.apps.reports.generic import GenericTabularReport
 from custom.common import ALL_OPTION
 from custom.ewsghana import StockLevelsReport
 from custom.ewsghana.filters import ProductByProgramFilter
 from custom.ewsghana.reports import MultiReport, ReportingRatesData, ProductSelectionPane, EWSPieChart
 from casexml.apps.stock.models import StockTransaction
-from custom.ewsghana.reports.stock_levels_report import FacilityReportData, StockLevelsLegend, FacilitySMSUsers, \
-    FacilityUsers, FacilityInChargeUsers, InventoryManagementData, InputStock
+from custom.ewsghana.reports.stock_levels_report import FacilityReportData, StockLevelsLegend, \
+    InventoryManagementData, InputStock, UsersData
 from custom.ewsghana.utils import calculate_last_period, get_country_id
 from corehq.apps.reports.filters.dates import DatespanFilter
 from custom.ilsgateway.tanzania import make_url
@@ -197,9 +198,9 @@ class NonReporting(ReportingRatesData):
         if self.location_id:
             location_type = self.location.location_type.name.lower()
             if location_type == 'country':
-                return _('Non Reporting RMS and THs')
+                return _('Non Report RMS and THs')
             else:
-                return _('Non Reporting Facilities')
+                return _('Non Report Facilities')
         return ''
 
     @property
@@ -338,10 +339,10 @@ class AlertsData(ReportingRatesData):
                     rows.append(['<div style="background-color: rgba(255, 0, 0, 0.2)">%s has not reported last '
                                  'month. <a href="%s" target="_blank">[details]</a></div>' % (sp.name, url)])
                 if sp.location_id not in with_reporters:
-                    rows.append(['<div style="background-color: rgba(255, 0, 0, 0.2)">%s has not no reporters'
+                    rows.append(['<div style="background-color: rgba(255, 0, 0, 0.2)">%s has no reporters'
                                  ' registered. <a href="%s" target="_blank">[details]</a></div>' % (sp.name, url)])
                 if sp.location_id not in with_in_charge:
-                    rows.append(['<div style="background-color: rgba(255, 0, 0, 0.2)">%s has not no in-charge '
+                    rows.append(['<div style="background-color: rgba(255, 0, 0, 0.2)">%s has no in-charge '
                                  'registered. <a href="%s" target="_blank">[details]</a></div>' % (sp.name, url)])
 
         if not rows:
@@ -352,11 +353,12 @@ class AlertsData(ReportingRatesData):
 
 class ReportingRatesReport(MultiReport):
 
-    name = 'Reporting Page'
-    title = 'Reporting Page'
+    name = 'Reporting'
+    title = 'Reporting'
     slug = 'reporting_page'
     fields = [AsyncLocationFilter, ProductByProgramFilter, DatespanFilter]
     split = False
+    is_exportable = True
 
     def report_filters(self):
         return [f.slug for f in [AsyncLocationFilter, DatespanFilter]]
@@ -386,9 +388,7 @@ class ReportingRatesReport(MultiReport):
                     FacilityReportData(config),
                     StockLevelsLegend(config),
                     InputStock(config),
-                    FacilitySMSUsers(config),
-                    FacilityUsers(config),
-                    FacilityInChargeUsers(config),
+                    UsersData(config),
                     InventoryManagementData(config),
                     ProductSelectionPane(config)
                 ]
@@ -403,10 +403,11 @@ class ReportingRatesReport(MultiReport):
             if location.location_type.name.lower() in ['country', 'region']:
                 data_providers.append(SummaryReportingRates(config=config))
 
-        data_providers.extend([
-            NonReporting(config=config),
-            InCompleteReports(config=config)
-        ])
+        if self.is_rendered_as_email:
+            data_providers = [NonReporting(config=config), InCompleteReports(config=config)]
+        else:
+            data_providers.extend([NonReporting(config=config), InCompleteReports(config=config)])
+
         return data_providers
 
     @property
@@ -424,3 +425,31 @@ class ReportingRatesReport(MultiReport):
 
         self.request.datespan = self.default_datespan
         return self.default_datespan
+
+    @property
+    def export_table(self):
+        if self.is_reporting_type():
+            return super(ReportingRatesReport, self).export_table
+
+        reports = [self.report_context['reports'][-2]['report_table'],
+                   self.report_context['reports'][-1]['report_table']]
+        return [self._export(r['title'], r['headers'], r['rows']) for r in reports]
+
+    def _export(self, export_sheet_name, headers, formatted_rows, total_row=None):
+        def _unformat_row(row):
+            return [col.get("sort_key", col) if isinstance(col, dict) else col for col in row]
+
+        table = headers.as_export_table
+        rows = [_unformat_row(row) for row in formatted_rows]
+        for row in rows:
+            row[0] = GenericTabularReport._strip_tags(row[0])
+        replace = ''
+
+        for k, v in enumerate(table[0]):
+            if v != ' ':
+                replace = v
+            else:
+                table[0][k] = replace
+        table.extend(rows)
+
+        return [export_sheet_name, table]

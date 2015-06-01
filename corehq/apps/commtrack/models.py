@@ -610,6 +610,10 @@ class SupplyPointCase(CommCareCase):
         except ResourceNotFound:
             return None
 
+    @property
+    def sql_location(self):
+        return SQLLocation.objects.get(location_id=self.location_id)
+
     @classmethod
     def _from_caseblock(cls, domain, caseblock):
         username = const.COMMTRACK_USERNAME

@@ -403,7 +403,14 @@ class EditLocationView(NewLocationView):
     @property
     @memoized
     def sql_location(self):
-        return self.location.sql_location
+        try:
+            location = SQLLocation.objects.get(location_id=self.location_id)
+            if location.domain != self.domain:
+                raise Http404()
+        except ResourceNotFound:
+            raise Http404()
+        else:
+            return location
 
     @property
     @memoized

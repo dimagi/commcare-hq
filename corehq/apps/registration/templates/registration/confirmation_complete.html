@@ -3,9 +3,11 @@
 {% if valid_confirmation %}
 {% block js-inline %}{{ block.super }}
 <script>
+    {% if not is_error %}
     $(function () {
         analytics.workflow("Confirmed new project");
     });
+    {% endif %}
 </script>
 {% endblock js-inline %}
 {% endif %}

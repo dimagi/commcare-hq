@@ -152,7 +152,7 @@ def iter_update(db, fn, ids, max_retries=3):
     DocUpdate or None (which will skip the doc)
 
     iter_update returns an object with the following properties:
-    saved_ids, deleted_ids, ignored_ids,
+    'ignored_ids', 'not_found_ids', 'deleted_ids', 'updated_ids', 'error_ids'
 
     Ex: mark dimagi users as cool, delete the Canadians, and ignore the rest
 

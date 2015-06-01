@@ -31,7 +31,6 @@ from corehq.apps.indicators.utils import get_indicator_domains
 from corehq.apps.reminders.util import can_use_survey_reminders
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from django_prbac.utils import has_privilege
-from corehq.toggles import FM_FACING_SUBSCRIPTIONS
 from corehq.util.markup import mark_up_urls
 
 from dimagi.utils.couch.database import get_db
@@ -1295,7 +1294,7 @@ class ProjectSettingsTab(UITab):
                                            args=[self.domain]),
                         }
                     )
-                if self.couch_user.is_superuser and FM_FACING_SUBSCRIPTIONS.enabled(self.couch_user.username):
+                if self.couch_user.is_superuser:
                     subscription.append({
                         'title': _('Internal Subscription Management (Dimagi Only)'),
                         'url': reverse(

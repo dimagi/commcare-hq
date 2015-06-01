@@ -1,6 +1,8 @@
 /*globals $, COMMCAREHQ, ko, _, CC_UTILS */
 
-var action_names = ["open_case", "update_case", "close_case", "case_preload"];
+var action_names = ["open_case", "update_case", "close_case", "case_preload",
+    // Usercase actions are managed in the User Case Management tab.
+    "usercase_update", "usercase_preload"];
 
 var CaseConfig = (function () {
     "use strict";
@@ -32,6 +34,11 @@ var CaseConfig = (function () {
         };
         self.setPropertiesMap(params.propertiesMap);
 
+        self.setUsercasePropertiesMap = function (propertiesMap) {
+            self.usercasePropertiesMap = ko.mapping.fromJS(propertiesMap);
+        };
+        self.setUsercasePropertiesMap(params.usercasePropertiesMap);
+
         self.saveButton = COMMCAREHQ.SaveButton.init({
             unsavedMessage: "You have unchanged case settings",
             save: function () {
@@ -59,6 +66,27 @@ var CaseConfig = (function () {
                         COMMCAREHQ.app_manager.updateDOM(data.update);
                         self.requires(requires);
                         self.setPropertiesMap(data.propertiesMap);
+                    }
+                });
+            }
+        });
+
+        self.saveUsercaseButton = COMMCAREHQ.SaveButton.init({
+            unsavedMessage: "You have unchanged user case settings",
+            save: function () {
+                var actions = JSON.stringify(_(self.actions).extend(
+                    HQFormActions.from_usercase_transaction(self.caseConfigViewModel.usercase_transaction)
+                ));
+                self.saveUsercaseButton.ajax({
+                    type: 'post',
+                    url: self.save_url,
+                    data: {
+                        actions: actions
+                    },
+                    dataType: 'json',
+                    success: function (data) {
+                        COMMCAREHQ.app_manager.updateDOM(data.update);
+                        self.setUsercasePropertiesMap(data.setUsercasePropertiesMap);
                     }
                 });
             }
@@ -100,10 +128,16 @@ var CaseConfig = (function () {
         self.change = function () {
             self.saveButton.fire('change');
             self.ensureBlankProperties();
-            self.forceRefreshTextchangeBinding();
+            self.forceRefreshTextchangeBinding($('#case-config-ko'));
         };
 
-        self.forceRefreshTextchangeBinding = function () {
+        self.usercaseChange = function () {
+            self.saveUsercaseButton.fire('change');
+            self.caseConfigViewModel.usercase_transaction.ensureBlankProperties();
+            self.forceRefreshTextchangeBinding($('#usercase-config-ko'));
+        };
+
+        self.forceRefreshTextchangeBinding = function (domNode) {
             // This is a hack that I do not understand,
             // and really shouldn't be necessary.
             // For some reason, $home.on('textchange', 'input', blah)
@@ -114,13 +148,14 @@ var CaseConfig = (function () {
             // (this is potentially expensive just because it's O(N)
             // but I'd be surprised if other things weren't too)
             var x = function () {};
-            $('#case-config-ko').find('input')
+            domNode.find('input')
                 .off('textchange', x)
                 .on('textchange', x);
         };
 
         self.init = function () {
             var $home = $('#case-config-ko');
+            var $usercaseMgmt = $('#usercase-config-ko');
             _.delay(function () {
                 ko.applyBindings(self, $home.get(0));
                 $home.on('textchange', 'input', self.change)
@@ -128,7 +163,14 @@ var CaseConfig = (function () {
                      .on('change', 'select, input[type="hidden"]', self.change)
                      .on('click', 'a', self.change);
                 self.ensureBlankProperties();
-                self.forceRefreshTextchangeBinding();
+                self.forceRefreshTextchangeBinding($home);
+
+                ko.applyBindings(self, $usercaseMgmt.get(0));
+                $usercaseMgmt.on('textchange', 'input', self.usercaseChange)
+                             .on('change', 'select, input[type="hidden"]', self.usercaseChange)
+                             .on('click', 'a', self.usercaseChange);
+                self.caseConfigViewModel.usercase_transaction.ensureBlankProperties();
+                self.forceRefreshTextchangeBinding($usercaseMgmt);
             });
 
         };
@@ -158,6 +200,7 @@ var CaseConfig = (function () {
             return label + ' (' + caseType + ')';
         };
         self.case_transaction = HQFormActions.to_case_transaction(caseConfig.actions, caseConfig);
+        self.usercase_transaction = HQFormActions.to_usercase_transaction(caseConfig.actions, caseConfig);
         self.subcases = ko.observableArray(
             _(caseConfig.actions.subcases).map(function (subcase) {
                 return HQOpenSubCaseAction.to_case_transaction(subcase, caseConfig);
@@ -387,6 +430,174 @@ var CaseConfig = (function () {
     };
 
 
+    var UserCaseTransaction = {
+        mapping: function (self) {
+            return {
+                include: [
+                    'case_properties',
+                    'case_preload'
+                ],
+                case_properties: {
+                    create: function (options) {
+                        return CaseProperty.wrap(options.data, self);
+                    }
+                },
+                case_preload: {
+                    create: function (options) {
+                        return CasePreload.wrap(options.data, self);
+                    }
+                }
+            };
+        },
+
+        wrap: function (data, caseConfig) {
+            var self = {};
+            ko.mapping.fromJS(data, UserCaseTransaction.mapping(self), self);
+            self.caseConfig = caseConfig;
+
+            // link self.case_name to corresponding path observable
+            // in case_properties for convenience
+            try {
+                self.case_name = _(self.case_properties()).find(function (p) {
+                    return p.key() === 'name' && p.required();
+                }).path;
+            } catch (e) {
+                self.case_name = null;
+            }
+            self.suggestedPreloadProperties = ko.computed(function () {
+                if (!self.case_preload) {
+                    return [];
+                }
+                return CC_UTILS.filteredSuggestedProperties(self.suggestedProperties(), self.case_preload());
+            }, self);
+            self.suggestedSaveProperties = ko.computed(function () {
+                return CC_UTILS.filteredSuggestedProperties(self.suggestedProperties(), self.case_properties());
+            }, self);
+
+            self.addProperty = function () {
+                var property = CaseProperty.wrap({
+                    path: '',
+                    key: '',
+                    required: false
+                }, self);
+
+                self.case_properties.push(property);
+            };
+
+            self.removeProperty = function (property) {
+                self.case_properties.remove(property);
+            };
+
+            self.propertyCounts = ko.computed(function () {
+                var count = {};
+                _(self.case_properties()).each(function (p) {
+                    var key = p.key();
+                    if (!count.hasOwnProperty(key)) {
+                        count[key] = 0;
+                    }
+                    return count[key] += 1;
+                });
+                return count;
+            });
+
+            if (self.case_preload) {
+                self.addPreload = function () {
+                    var property = CasePreload.wrap({
+                        path: '',
+                        key: '',
+                        required: false
+                    }, self);
+
+                    self.case_preload.push(property);
+                };
+
+                self.removePreload = function (property) {
+                    self.case_preload.remove(property);
+                };
+
+                self.preloadCounts = ko.computed(function () {
+                    var count = {};
+                    _(self.case_preload()).each(function (p) {
+                        var path = p.path();
+                        if (!count.hasOwnProperty(path)) {
+                            count[path] = 0;
+                        }
+                        return count[path] += 1;
+                    });
+                    return count;
+                });
+            }
+
+            self.repeat_context = function () {
+                if (self.case_name) {
+                    return self.caseConfig.get_repeat_context(self.case_name());
+                } else {
+                    return null;
+                }
+            };
+
+            self.setRequired = function (required) {
+                var delete_me = [];
+                _(self.case_properties()).each(function (case_property) {
+                    var key = case_property.key();
+                    if (_(required).contains(key)) {
+                        case_property.required(true);
+                        required.splice(required.indexOf(key), 1);
+                    } else {
+                        if (case_property.required()) {
+                            case_property.required(false);
+                            if (!case_property.path()) {
+                                delete_me.push(case_property);
+                            }
+                        }
+
+                    }
+                });
+                _(delete_me).each(function (case_property) {
+                    self.case_properties.remove(case_property);
+                });
+                _(required).each(function (key) {
+                    self.case_properties.splice(0, 0, CaseProperty.wrap({
+                        path: '',
+                        key: key,
+                        required: true
+                    }, self));
+                });
+            };
+
+            self.unwrap = function () {
+                UserCaseTransaction.unwrap(self);
+            };
+
+            self.ensureBlankProperties = function () {
+                var items = [{
+                    properties: self.case_properties(),
+                    addProperty: self.addProperty
+                }];
+                if (self.case_preload) {
+                    items.push({
+                        properties: self.case_preload(),
+                        addProperty: self.addPreload
+                    });
+                }
+                _(items).each(function (item) {
+                    var properties = item.properties;
+                    var last = properties[properties.length-1];
+                    if (last && !last.isBlank()) {
+                        item.addProperty();
+                    }
+                });
+            };
+
+            return self;
+        },
+
+        unwrap: function (self) {
+            return ko.mapping.toJS(self, UserCaseTransaction.mapping(self));
+        }
+    };
+
+
     var CasePropertyBase = {
         mapping: {
             include: ['key', 'path', 'required']
@@ -495,6 +706,12 @@ var CaseConfig = (function () {
             self.close_case = {
                 condition: (o.close_case || {}).condition || DEFAULT_CONDITION_ALWAYS
             };
+            self.usercase_update = {
+                update: (o.usercase_update || {}).update || {}
+            };
+            self.usercase_preload = {
+                preload: (o.usercase_preload || {}).preload || {}
+            };
             return self;
         },
         to_case_transaction: function (o, caseConfig) {
@@ -585,6 +802,54 @@ var CaseConfig = (function () {
                 },
                 close_case: {
                     condition: cleanCondition(close_condition)
+                }
+            };
+        },
+        to_usercase_transaction: function (o, caseConfig) {
+            var self = HQFormActions.normalize(o);
+            var case_properties = CC_UTILS.propertyDictToArray(
+                [],  // usercase has no required properties; it has already been created with everything it needs
+                self.usercase_update.update,
+                caseConfig
+            );
+            var case_preload = CC_UTILS.propertyDictToArray(
+                [],
+                self.usercase_preload.preload,
+                caseConfig,
+                true
+            );
+            return UserCaseTransaction.wrap({
+                case_properties: case_properties,
+                case_preload: case_preload,
+                allow: {
+                    repeats: function () {
+                        // This placeholder function allows us to reuse the "case-config:case-properties:question"
+                        // template in case_config_shared.html
+                        return true;
+                    }
+                },
+
+                suggestedProperties: function () {
+                    if (_(caseConfig.usercasePropertiesMap).has('commcare-user')) {
+                        return caseConfig.usercasePropertiesMap['commcare-user']();
+                    } else {
+                        return [];
+                    }
+                }
+            }, caseConfig);
+        },
+        from_usercase_transaction: function (usercase_transaction) {
+            var o = UserCaseTransaction.unwrap(usercase_transaction);
+            var x = CC_UTILS.propertyArrayToDict([], o.case_properties);
+            var case_properties = x[0];
+            var case_preload = CC_UTILS.preloadArrayToDict(o.case_preload);
+            return {
+                usercase_update: {
+                    update: case_properties,
+                    condition: cleanCondition(DEFAULT_CONDITION_ALWAYS)  // usercase_update action is always active
+                },
+                usercase_preload: {
+                    preload: case_preload
                 }
             };
         }

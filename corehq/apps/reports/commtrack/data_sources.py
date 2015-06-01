@@ -98,12 +98,14 @@ class SimplifiedInventoryDataSource(ReportDataSource, CommtrackDataSourceMixin):
 
             locations += list(
                 current_location.get_descendants().filter(
+                    is_archived=False,
                     supply_point_id__isnull=False
                 )
             )
         else:
             locations = SQLLocation.objects.filter(
                 domain=self.domain,
+                is_archived=False,
                 supply_point_id__isnull=False
             )
 

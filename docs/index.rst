@@ -32,6 +32,7 @@ Welcome to CommCareHQ's documentation!
    dhis2_integration
    test_coverage
    advanced_app_features
+   nfs
 
 Tips for documenting
 --------------------
