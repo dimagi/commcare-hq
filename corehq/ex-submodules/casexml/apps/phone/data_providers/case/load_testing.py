@@ -1,6 +1,8 @@
 from copy import deepcopy
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.xml import V2
 from casexml.apps.phone.data_providers.case.utils import CaseSyncUpdate
+from casexml.apps.phone.xml import get_case_element
 from corehq.toggles import ENABLE_LOADTEST_USERS
 
 
@@ -28,4 +30,19 @@ def transform_loadtest_update(update, factor):
         index.referenced_id = _map_id(index.referenced_id, factor)
     case.name = '{} ({})'.format(case.name, factor)
     return CaseSyncUpdate(case, update.sync_token, required_updates=update.required_updates)
+
+
+def append_update_to_response(response, update, restore_state):
+    """
+    Adds the XML from the case_update to the restore response.
+    If factor is > 1 it will append that many updates to the response for load testing purposes.
+    """
+    current_count = 0
+    original_update = update
+    while current_count < restore_state.loadtest_factor:
+        element = get_case_element(update.case, update.required_updates, restore_state.version)
+        response.append(element)
+        current_count += 1
+        if current_count < restore_state.loadtest_factor:
+            update = transform_loadtest_update(original_update, current_count)
 

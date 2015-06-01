@@ -3,7 +3,8 @@ import itertools
 import logging
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.caselogic import get_footprint
-from casexml.apps.phone.data_providers.case.load_testing import get_loadtest_factor, transform_loadtest_update
+from casexml.apps.phone.data_providers.case.load_testing import get_loadtest_factor, transform_loadtest_update, \
+    append_update_to_response
 from casexml.apps.phone.data_providers.case.stock import get_stock_payload
 from casexml.apps.phone.data_providers.case.utils import get_case_sync_updates
 from casexml.apps.phone import xml
@@ -19,16 +20,8 @@ def get_case_payload_batched(restore_state):
     response = restore_state.restore_class()
 
     sync_operation = BatchedCaseSyncOperation(restore_state)
-    factor = get_loadtest_factor(restore_state.domain, restore_state.user)
     for update in sync_operation.get_all_case_updates():
-        current_count = 0
-        original_update = update
-        while current_count < factor:
-            element = xml.get_case_element(update.case, update.required_updates, restore_state.version)
-            response.append(element)
-            current_count += 1
-            if current_count < factor:
-                update = transform_loadtest_update(original_update, current_count)
+        append_update_to_response(response, update, restore_state)
 
     sync_state = sync_operation.global_state
     restore_state.current_sync_log.cases_on_phone = sync_state.actual_owned_cases
