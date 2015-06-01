@@ -43,6 +43,7 @@ class EWSData(object):
     title = ''
     slug = ''
     use_datatables = False
+    custom_table = False
 
     def __init__(self, config=None):
         self.config = config or {}
@@ -230,22 +231,30 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
         if not self.needs_filters and data_provider.show_table:
             headers = data_provider.headers
             rows = data_provider.rows
-
-        context = dict(
-            report_table=dict(
-                title=data_provider.title,
-                slug=data_provider.slug,
-                headers=headers,
-                rows=rows,
-                total_row=total_row,
-                start_at_row=0,
-                use_datatables=data_provider.use_datatables,
-            ),
-            show_table=data_provider.show_table,
-            show_chart=data_provider.show_chart,
-            charts=data_provider.charts if data_provider.show_chart else [],
-            chart_span=12,
-        )
+        if not data_provider.custom_table:
+            context = dict(
+                report_table=dict(
+                    title=data_provider.title,
+                    slug=data_provider.slug,
+                    headers=headers,
+                    rows=rows,
+                    total_row=total_row,
+                    start_at_row=0,
+                    use_datatables=data_provider.use_datatables,
+                ),
+                show_table=data_provider.show_table,
+                show_chart=data_provider.show_chart,
+                charts=data_provider.charts if data_provider.show_chart else [],
+                chart_span=12,
+            )
+        else:
+            context = dict(
+                report_table=dict(),
+                show_table=data_provider.show_table,
+                show_chart=data_provider.show_chart,
+                charts=data_provider.charts if data_provider.show_chart else [],
+                rendered_content=data_provider.rendered_content
+            )
 
         return context
 

@@ -12,7 +12,7 @@ from corehq.apps.reports.filters.dates import DatespanFilter
 from custom.common import ALL_OPTION
 from custom.ewsghana.filters import ProductByProgramFilter, ViewReportFilter
 from custom.ewsghana.reports.stock_levels_report import StockLevelsReport, InventoryManagementData, \
-    FacilityInChargeUsers, FacilityUsers, FacilitySMSUsers, StockLevelsLegend, FacilityReportData, InputStock
+    StockLevelsLegend, FacilityReportData, InputStock, UsersData
 from custom.ewsghana.reports import MultiReport, EWSData, EWSMultiBarChart, ProductSelectionPane, EWSLineChart
 from casexml.apps.stock.models import StockTransaction
 from django.db.models import Q
@@ -343,9 +343,7 @@ class StockStatus(MultiReport):
                     FacilityReportData(config),
                     StockLevelsLegend(config),
                     InputStock(config),
-                    FacilitySMSUsers(config),
-                    FacilityUsers(config),
-                    FacilityInChargeUsers(config),
+                    UsersData(config),
                     InventoryManagementData(config),
                     ProductSelectionPane(config)
                 ]
