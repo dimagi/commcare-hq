@@ -43,7 +43,8 @@ class CaseProcessingResult(object):
         self.track_cleanliness = track_cleanliness
 
     def get_clean_owner_ids(self):
-        return set(c.owner_id for c in self.cases if c.owner_id and c.owner_id not in self.get_flags_to_save())
+        dirty_flags = self.get_flags_to_save()
+        return {c.owner_id for c in self.cases if c.owner_id and c.owner_id not in dirty_flags}
 
     def set_cases(self, cases):
         self.cases = cases
@@ -60,10 +61,10 @@ class CaseProcessingResult(object):
             if should_create_flags_on_submission(self.domain):
                 assert settings.UNIT_TESTING  # this is currently only true when unit testing
                 all_touched_ids = set(flags_to_save.keys()) | self.get_clean_owner_ids()
-                to_update = dict((f.owner_id, f) for f in OwnershipCleanlinessFlag.objects.filter(
+                to_update = {f.owner_id: f for f in OwnershipCleanlinessFlag.objects.filter(
                     domain=self.domain,
                     owner_id__in=list(all_touched_ids),
-                ))
+                )}
                 for owner_id in all_touched_ids:
                     if owner_id not in to_update:
                         # making from scratch - default to clean, but set to dirty if needed
