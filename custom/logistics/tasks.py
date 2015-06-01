@@ -152,9 +152,10 @@ def sync_stock_transactions_for_facility(domain, endpoint, facility, checkpoint,
     while has_next:
         meta, stocktransactions = endpoint.get_stocktransactions(next_url_params=next_url,
                                                                  limit=limit,
+                                                                 start_date=date,
+                                                                 end_date=checkpoint.start_date,
                                                                  offset=offset,
-                                                                 filters=(dict(supply_point=supply_point,
-                                                                               date__gte=date)))
+                                                                 filters=(dict(supply_point=supply_point)))
 
         # set the checkpoint right before the data we are about to process
         meta_limit = meta.get('limit') or limit
@@ -163,7 +164,7 @@ def sync_stock_transactions_for_facility(domain, endpoint, facility, checkpoint,
             checkpoint, 'stock_transaction', meta_limit, meta_offset, date, location_id, True
         )
         transactions_to_add = []
-        with transaction.commit_on_success():
+        with transaction.atomic():
             for stocktransaction in stocktransactions:
                 params = dict(
                     form_id='logistics-xform',
