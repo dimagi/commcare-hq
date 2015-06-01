@@ -28,7 +28,6 @@
                         .datum(response)
                         .transition().duration(500).call(line_chart);
                 show_hide_line_chart_data();
-                $('.nv-series').slice(-2).css("display", "none");
             },
             error: function() {
             }
@@ -154,8 +153,7 @@
         {% endif %}
 
         show_hide_line_chart_data();
-
-        $('.nv-series').slice(-2).css("display", "none");
+        $('.nv-legend').find('.nv-series').slice(-2).hide();
         return line_chart;
     });
 </script>
