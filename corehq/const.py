@@ -1,4 +1,6 @@
 USER_DATETIME_FORMAT = "%b %d, %Y %H:%M %Z"
+USER_DATETIME_FORMAT_WITH_SEC = "%b %d, %Y %H:%M:%S %Z"
+
 USER_DATE_FORMAT = "%b %d, %Y"
 USER_TIME_FORMAT = "%H:%M %Z"
 USER_MONTH_FORMAT = "%B %Y"

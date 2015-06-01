@@ -876,6 +876,24 @@ Changes to the data source require restarting the pillow which will rebuild the 
 can use the UI to rebuild the data source (requires Celery to be running).
 
 
+## Extending User Configurable Reports
+
+When building a custom report for a client, you may find that you want to extend
+UCR with custom functionality. The UCR framework allows developers to write
+custom expressions, and register them with the framework. To do so, simply add
+a tuple to the `CUSTOM_UCR_EXPRESSIONS` setting list. The first item in the tuple
+is the name of the expression type, the second item is the path to a function
+with a signature like conditional_expression(spec, context) that returns an
+expression object. e.g.:
+
+```
+# settings.py
+
+CUSTOM_UCR_EXPRESSIONS = [
+    ('abt_supervisor', 'custom.abt.reports.expressions.abt_supervisor'),
+]
+```
+
 ## Inspecting database tables
 
 

@@ -1,0 +1,2 @@
+class TimezoneMigrationProgressError(Exception):
+    pass

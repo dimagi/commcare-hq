@@ -1,6 +1,7 @@
 from collections import OrderedDict
 from datetime import timedelta
 from django.core.urlresolvers import reverse
+from django.template.loader import render_to_string
 from django.utils.timesince import timesince
 from math import ceil
 from casexml.apps.stock.models import StockTransaction
@@ -20,7 +21,6 @@ from custom.ewsghana.utils import has_input_stock_permissions
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 from corehq.apps.locations.models import Location, SQLLocation
-from dimagi.utils.decorators.profile import line_profile
 from dimagi.utils.parsing import json_format_date
 
 
@@ -266,22 +266,11 @@ class InputStock(EWSData):
         return rows
 
 
-class FacilitySMSUsers(EWSData):
-    title = 'SMS Users'
-    slug = 'facility_sms_users'
-    show_table = True
+class UsersData(EWSData):
+    custom_table = True
 
     @property
-    def headers(self):
-        return DataTablesHeader(*[
-            DataTablesColumn(_('User')),
-            DataTablesColumn(_('Phone Number'))
-        ])
-
-    @property
-    def rows(self):
-        from corehq.apps.users.views.mobile import CreateCommCareUserView
-
+    def rendered_content(self):
         users = CommCareUser.view(
             'locations/users_by_location_id',
             startkey=[self.config['location_id']],
@@ -289,63 +278,23 @@ class FacilitySMSUsers(EWSData):
             include_docs=True
         ).all()
 
-        for user in users:
-            if user.full_name and user.phone_numbers:
-                yield ['<div val="%s" sel=%s>%s</div>' % (
-                    user._id, 'true' if user.user_data.get('role') == 'In Charge' else 'false',
-                    user.full_name), user.phone_numbers[0]]
+        user_to_dict = lambda sms_user: {
+            'id': sms_user.get_id,
+            'full_name': sms_user.full_name,
+            'phone_numbers': sms_user.phone_numbers,
+            'in_charge': user.user_data.get('role') == 'In Charge'
+        }
 
-        yield [get_url_with_location(CreateCommCareUserView.urlname, 'Create new Mobile Worker',
-                                     self.config['location_id'], self.config['domain'])]
+        web_users = UserES().web_users().domain(self.config['domain']).term(
+            "domain_memberships.location_id", self.config['location_id']
+        ).run().hits
 
-
-class FacilityUsers(EWSData):
-    title = 'Web Users'
-    slug = 'facility_users'
-    show_table = True
-
-    @property
-    def headers(self):
-        return DataTablesHeader(*[
-            DataTablesColumn(_('User')),
-            DataTablesColumn(_('Email'))
-        ])
-
-    @property
-    def rows(self):
-        query = (UserES().web_users().domain(self.config['domain'])
-                 .term("domain_memberships.location_id", self.config['location_id']))
-
-        for hit in query.run().hits:
-            if (hit['first_name'] or hit['last_name']) and hit['email']:
-                yield [hit['first_name'] + ' ' + hit['last_name'], hit['email']]
-
-
-class FacilityInChargeUsers(EWSData):
-    title = ''
-    slug = 'in_charge'
-    show_table = True
-
-    @property
-    def headers(self):
-        return DataTablesHeader(*[
-            DataTablesColumn(_('In charge')),
-        ])
-
-    @property
-    def rows(self):
-        users = CommCareUser.view(
-            'locations/users_by_location_id',
-            startkey=[self.config['location_id']],
-            endkey=[self.config['location_id'], {}],
-            include_docs=True
-        ).all()
-
-        for user in users:
-            if user.user_data.get('role') == 'In Charge' and user.full_name:
-                yield [user.full_name]
-        yield ['<button id="in-charge-button" class="btn" data-target="#configureInCharge" data-toggle="modal">'
-               'Configure In Charge</button>']
+        return render_to_string('ewsghana/partials/users_tables.html', {
+            'users': [user_to_dict(user) for user in users],
+            'domain': self.domain,
+            'location_id': self.location_id,
+            'web_users': web_users
+        })
 
 
 class StockLevelsReport(MultiReport):
@@ -385,9 +334,7 @@ class StockLevelsReport(MultiReport):
                 return [FacilityReportData(config),
                         StockLevelsLegend(config),
                         InputStock(config),
-                        FacilitySMSUsers(config),
-                        FacilityUsers(config),
-                        FacilityInChargeUsers(config),
+                        UsersData(config),
                         InventoryManagementData(config),
                         ProductSelectionPane(config)]
 

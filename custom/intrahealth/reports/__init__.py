@@ -39,8 +39,8 @@ class IntraHealthReportConfigMixin(object):
     def report_config(self):
         config = dict(
             domain=self.domain,
-            startdate=self.datespan.startdate,
-            enddate=self.datespan.enddate,
+            startdate=self.datespan.startdate.replace(hour=0, minute=0, second=0),
+            enddate=self.datespan.enddate.replace(hour=23, minute=59, second=59),
             visit="''",
             strsd=json_format_date(self.datespan.startdate),
             stred=json_format_date(self.datespan.enddate)
