@@ -1,4 +1,3 @@
-from cStringIO import StringIO
 from codecs import BOM_UTF8
 import os
 import re
