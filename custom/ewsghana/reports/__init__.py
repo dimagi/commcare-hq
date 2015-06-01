@@ -162,6 +162,7 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
     flush_layout = True
     split = True
     exportable = True
+    printable = True
     is_exportable = False
     base_template = 'ewsghana/base_template.html'
 
