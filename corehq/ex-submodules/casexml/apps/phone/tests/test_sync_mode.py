@@ -162,17 +162,20 @@ class SyncBaseTest(TestCase):
         sync_log = get_properly_wrapped_sync_log(sync_id)
         
         if isinstance(sync_log, SimplifiedSyncLog):
-            # simplified sync logs treat cases + dependents as the same and don't store indices
-            # as a result we need to do a simpler check
             all_ids = {}
             all_ids.update(case_id_map)
             all_ids.update(dependent_case_id_map)
             self.assertEqual(set(all_ids), sync_log.case_ids_on_phone)
-            # dependent cases should be in the index tree somewhere
-            for dependent_id in dependent_case_id_map:
-                self.assertTrue(dependent_id in sync_log.dependent_case_ids_on_phone)
-            for dependent_id in sync_log.dependent_case_ids_on_phone:
-                self.assertTrue(dependent_id in dependent_case_id_map)
+            self.assertEqual(set(dependent_case_id_map.keys()), sync_log.dependent_case_ids_on_phone)
+            for case_id, indices in case_id_map.items():
+                if indices:
+                    index_ids = [i.referenced_id for i in case_id_map[case_id]]
+                    self._checkLists(index_ids, sync_log.index_tree.indices[case_id])
+            for case_id, indices in dependent_case_id_map.items():
+                if indices:
+                    index_ids = [i.referenced_id for i in case_id_map[case_id]]
+                    self._checkLists(index_ids, sync_log.index_tree.indices[case_id])
+
         else:
             # check case map
             self.assertEqual(len(case_id_map), len(sync_log.cases_on_phone))
