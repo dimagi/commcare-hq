@@ -9,7 +9,7 @@ from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersM
 from corehq.apps.reports.filters.commtrack import SelectReportingType
 from corehq.util.dates import iso_string_to_datetime
 from dimagi.utils.couch.loosechange import map_reduce
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import Location, SQLLocation
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.reports.standard.cases.basic import CaseListReport
@@ -462,24 +462,26 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
 
         master_tally = self.status_tally([site['reporting_status'] for site in statuses])
 
-        locs = sorted(Location.view('_all_docs', keys=status_counts.keys(), include_docs=True),
-                      key=lambda loc: loc.name)
+        locs = (SQLLocation.objects
+                .filter(is_archived=False,
+                        location_id__in=status_counts.keys())
+                .order_by('name'))
 
         def fmt(pct):
             return '%.1f%%' % (100. * pct)
 
-        def fmt_pct_col(loc, col_type):
-            return fmt(status_counts[loc._id].get(col_type, {'pct': 0.})['pct'])
+        def fmt_pct_col(loc_id, col_type):
+            return fmt(status_counts[loc_id].get(col_type, {'pct': 0.})['pct'])
 
-        def fmt_count_col(loc, col_type):
-            return status_counts[loc._id].get(col_type, {'count': 0})['count']
+        def fmt_count_col(loc_id, col_type):
+            return status_counts[loc_id].get(col_type, {'count': 0})['count']
 
         def _rows():
             for loc in locs:
-                row = [loc.name, len(sites_by_agg_site[loc._id])]
+                row = [loc.name, len(sites_by_agg_site[loc.location_id])]
                 for k in ('reporting', 'nonreporting'):
-                    row.append(fmt_count_col(loc, k))
-                    row.append(fmt_pct_col(loc, k))
+                    row.append(fmt_count_col(loc.location_id, k))
+                    row.append(fmt_pct_col(loc.location_id, k))
 
                 yield row
 
