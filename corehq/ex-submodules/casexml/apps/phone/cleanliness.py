@@ -7,10 +7,24 @@ from casexml.apps.case.util import get_indexed_cases
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.toggles import OWNERSHIP_CLEANLINESS
+from django.conf import settings
 
 
 FootprintInfo = namedtuple('FootprintInfo', ['base_ids', 'all_ids'])
 CleanlinessFlag = namedtuple('CleanlinessFlag', ['is_clean', 'hint'])
+
+
+def should_track_cleanliness(domain):
+    """
+    Whether a domain should track cleanliness on submission.
+    """
+    if settings.UNIT_TESTING:
+        override = getattr(
+            settings, 'TESTS_SHOULD_TRACK_CLEANLINESS', None)
+        if override is not None:
+            return override
+
+    return domain and OWNERSHIP_CLEANLINESS.enabled(domain)
 
 
 def set_cleanliness_flags_for_domain(domain):

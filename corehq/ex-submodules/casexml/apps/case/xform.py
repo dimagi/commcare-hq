@@ -8,8 +8,9 @@ import datetime
 from django.db.models import Q
 import redis
 from casexml.apps.case.signals import cases_received, case_post_save
+from casexml.apps.phone.cleanliness import should_track_cleanliness
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
-from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, OWNERSHIP_CLEANLINESS
+from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
 from casexml.apps.case.util import iter_cases, get_reverse_indexed_cases
 from couchforms.models import XFormInstance
 from casexml.apps.case.exceptions import (
@@ -366,7 +367,7 @@ def _get_or_update_cases(xforms, case_db):
 
     dirtiness_flags = [flag for case in case_db.cache.values() for flag in _validate_indices(case)]
     domain = getattr(case_db, 'domain', None)
-    track_cleanliness = domain and OWNERSHIP_CLEANLINESS.enabled(domain)
+    track_cleanliness = should_track_cleanliness(domain)
     if track_cleanliness:
         # only do this extra step if the toggle is enabled since we know we aren't going to
         # care about the dirtiness flags otherwise.
