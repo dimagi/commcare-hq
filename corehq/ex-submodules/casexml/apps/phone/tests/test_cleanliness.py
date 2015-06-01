@@ -1,5 +1,6 @@
 import uuid
 from django.test import SimpleTestCase
+from django.test.utils import override_settings
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseRelationship
 from casexml.apps.phone.cleanliness import set_cleanliness_flags, hint_still_valid, \
     get_cleanliness_flag_from_scratch
@@ -162,6 +163,26 @@ class OwnerCleanlinessTest(SyncBaseTest):
         self.assert_owner_clean()
         self.assertEqual(None, self.owner_cleanliness.hint)
 
+    def test_cross_domain_on_submission(self):
+        # create a form that makes a dirty owner with the same ID but in a different domain
+        # make sure the original owner stays clean
+        new_domain = uuid.uuid4().hex
+        # initialize the new cleanliness flag
+        OwnershipCleanlinessFlag.objects.create(domain=new_domain, owner_id=self.owner_id, is_clean=True)
+        self.factory.domain = new_domain
+        self.factory.create_or_update_case(
+            CaseStructure(
+                relationships=[
+                    CaseRelationship(CaseStructure(attrs={'owner_id': uuid.uuid4().hex}))
+                ]
+            )
+        )
+        self.assert_owner_clean()
+        self.assertEqual(
+            False,
+            OwnershipCleanlinessFlag.objects.get(owner_id=self.owner_id, domain=new_domain).is_clean,
+        )
+
     def test_cross_domain_both_clean(self):
         new_domain = uuid.uuid4().hex
         self.factory.domain = new_domain
@@ -190,6 +211,23 @@ class OwnerCleanlinessTest(SyncBaseTest):
         # original domain should stay clean but the new one should be dirty
         self.assertTrue(get_cleanliness_flag_from_scratch(self.domain, self.owner_id).is_clean)
         self.assertFalse(get_cleanliness_flag_from_scratch(new_domain, self.owner_id).is_clean)
+
+    @override_settings(TESTS_SHOULD_TRACK_CLEANLINESS=False)
+    def test_autocreate_flag_off(self):
+        new_owner = uuid.uuid4().hex
+        self.factory.create_or_update_case(
+            CaseStructure(case_id=uuid.uuid4().hex, attrs={'create': True, 'owner_id': new_owner})
+        )[0]
+        self.assertFalse(OwnershipCleanlinessFlag.objects.filter(domain=self.domain, owner_id=new_owner).exists())
+
+    @override_settings(TESTS_SHOULD_TRACK_CLEANLINESS=True)
+    def test_autocreate_flag_on(self):
+        new_owner = uuid.uuid4().hex
+        self.factory.create_or_update_case(
+            CaseStructure(case_id=uuid.uuid4().hex, attrs={'create': True, 'owner_id': new_owner})
+        )[0]
+        flag = OwnershipCleanlinessFlag.objects.get(domain=self.domain, owner_id=new_owner)
+        self.assertEqual(True, flag.is_clean)
 
 
 class CleanlinessUtilitiesTest(SimpleTestCase):
