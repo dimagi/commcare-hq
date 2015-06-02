@@ -33,7 +33,7 @@ $(function(){
                                 }
                             }
                             if (keep_polling) {
-                                setTimeout(pollDownloadStatus, self.POLL_FREQUENCY)
+                                setTimeout(pollDownloadStatus, self.POLL_FREQUENCY);
                             }
                         },
                         error: function (resp) {

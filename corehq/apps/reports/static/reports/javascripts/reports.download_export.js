@@ -17,7 +17,7 @@ var HQExportDownloader = function (options) {
                 $.getJSON($(this).data('dlocation'), function (d) {
                     var autoRefresh = true;
                     var pollDownloader = function () {
-                        if (autoRefresh && $('#ready_'+d.download_id).length == 0)
+                        if (autoRefresh && $('#ready_'+d.download_id).length === 0)
                         {
                             $.get(d.download_url, function(data) {
                                 $modal.find(self.loadedData).html(data);

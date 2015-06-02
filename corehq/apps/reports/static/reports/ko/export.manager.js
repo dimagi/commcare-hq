@@ -48,7 +48,7 @@ var ExportManager = function (o) {
         updateModal = function(params) {
             var autoRefresh = true;
             var pollDownloader = function () {
-                if (autoRefresh && $('#ready_'+params.data.download_id).length == 0) {
+                if (autoRefresh && $('#ready_'+params.data.download_id).length === 0) {
                     $.get(params.data.download_url, function(data) {
                         self.$modal.find(self.exportModalLoadedData).html(data);
                         self.setUpEventTracking({
