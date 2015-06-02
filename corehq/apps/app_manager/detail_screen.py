@@ -345,19 +345,6 @@ class EnumImage(Enum):
             return '13%'
         return str(width)
 
-    '''
-    @property
-    def xpath_function(self):
-            parts.append(
-                xpath_fragment_template.format(
-                    key=item.key,
-                    key_as_var=item.key_as_variable,
-                    xpath=self.xpath,
-                    i=i,
-                )
-            )
-        return self.xpath_function()
-    '''
 
 @register_format_type('late-flag')
 class LateFlag(HideShortHeaderColumn):
