@@ -104,10 +104,14 @@ class ConfigurableReportDataSource(SqlData):
             raise UserReportsError(e.message)
         # arbitrarily sort by the first column in memory
         # todo: should get pushed to the database but not currently supported in sqlagg
-        return sorted(ret, key=lambda x: x.get(
-            self.column_configs[0].column_id,
-            next(x.itervalues())
-        ))
+        try:
+            return sorted(ret, key=lambda x: x.get(
+                self.column_configs[0].column_id,
+                next(x.itervalues())
+            ))
+        except TypeError:
+            # if the first column isn't sortable just return the data in the order we got it
+            return ret
 
     def get_total_records(self):
         return len(self.get_data())
