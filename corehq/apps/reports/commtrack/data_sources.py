@@ -27,6 +27,16 @@ def format_decimal(d):
         return None
 
 
+def _location_map(location_ids):
+    return {
+        loc.location_id: loc
+        for loc in (SQLLocation.objects
+                    .filter(is_archived=False,
+                            location_id__in=location_ids)
+                    .prefetch_related('location_type'))
+    }
+
+
 def geopoint(location):
     if None in (location.latitude, location.longitude):
         return None
@@ -379,13 +389,7 @@ class StockStatusBySupplyPointDataSource(StockStatusDataSource):
         product_ids = sorted(products.keys(), key=lambda e: products[e])
 
         by_supply_point = map_reduce(lambda e: [(e['location_id'],)], data=data, include_docs=True)
-        locs = {
-            loc.location_id: loc
-            for loc in (SQLLocation.objects
-                        .filter(is_archived=False,
-                                location_id__in=by_supply_point.keys())
-                        .prefetch_related('location_type'))
-        }
+        locs = _location_map(by_supply_point.keys())
 
         for loc_id, subcases in by_supply_point.iteritems():
             if loc_id not in locs:
@@ -438,15 +442,12 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
                 doc['_id']: doc['location_id']
                 for doc in iter_docs(SupplyPointCase.get_db(), sp_ids)
             }
-            locations = {
-                doc['_id']: Location.wrap(doc)
-                for doc in iter_docs(Location.get_db(), spoint_loc_map.values())
-            }
+            locations = _location_map(spoint_loc_map.values())
 
             for spoint_id, loc_id in spoint_loc_map.items():
+                if loc_id not in locations:
+                    continue  # it's archived, skip
                 loc = locations[loc_id]
-                if loc.is_archived:
-                    continue
 
                 results = StockReport.objects.filter(
                     stocktransaction__case_id=spoint_id
@@ -464,10 +465,10 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
                         if XFormInstance.get(form_id).xmlns in form_xmlnses:
                             yield {
                                 'loc': loc,
-                                'loc_id': loc._id,
+                                'loc_id': loc.location_id,
                                 'loc_path': loc.path,
                                 'name': loc.name,
-                                'type': loc.location_type,
+                                'type': loc.location_type.name,
                                 'reporting_status': 'reporting',
                                 'geo': geopoint(loc),
                                 'last_reporting_date': date,
@@ -476,7 +477,7 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
                             break
                     except ResourceNotFound:
                         logging.error('Stock report for location {} in {} references non-existent form {}'.format(
-                            loc._id, loc.domain, form_id
+                            loc.location_id, loc.domain, form_id
                         ))
 
                 if not matched:
@@ -487,10 +488,10 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
                     ).order_by('-date')[:1]
                     yield {
                         'loc': loc,
-                        'loc_id': loc._id,
+                        'loc_id': loc.location_id,
                         'loc_path': loc.path,
                         'name': loc.name,
-                        'type': loc.location_type,
+                        'type': loc.location_type.name,
                         'reporting_status': 'nonreporting',
                         'geo': geopoint(loc),
                         'last_reporting_date': result[0][0] if result else ''
