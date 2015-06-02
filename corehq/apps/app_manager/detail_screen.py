@@ -333,14 +333,15 @@ class EnumImage(Enum):
         Set column width to accommodate widest image.
         '''
         width = 0
-        for i, item in enumerate(self.column.enum):
-            for path in item.value.values():
-                map_item = self.app.multimedia_map[path]
-                if map_item is not None:
-                    image = CommCareMultimedia.get(map_item.multimedia_id)
-                    if image is not None:
-                        for media in image.aux_media:
-                            width = max(width, media.media_meta['size']['width'])
+        if self.app.enable_case_list_icon_dynamic_width:
+            for i, item in enumerate(self.column.enum):
+                for path in item.value.values():
+                    map_item = self.app.multimedia_map[path]
+                    if map_item is not None:
+                        image = CommCareMultimedia.get(map_item.multimedia_id)
+                        if image is not None:
+                            for media in image.aux_media:
+                                width = max(width, media.media_meta['size']['width'])
         if width == 0:
             return '13%'
         return str(width)
