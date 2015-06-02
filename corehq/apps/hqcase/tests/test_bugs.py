@@ -21,7 +21,7 @@ class OtaRestoreBugTest(TestCase):
 
     def test_cross_domain_assignments(self):
         good_domain = 'main-domain'
-        create_domain(good_domain)
+        domain = create_domain(good_domain)
         bad_domain = 'bad-domain'
         create_domain(bad_domain)
         user = CommCareUser.create(good_domain, format_username('user', good_domain), 'secret')
@@ -53,6 +53,7 @@ class OtaRestoreBugTest(TestCase):
             self.assertEqual(user._id, case.owner_id)
 
         restore_config = RestoreConfig(
+            project=domain,
             user=user.to_casexml_user(),
             params=RestoreParams(version=V2),
         )

@@ -15,7 +15,6 @@ class MultiCaseTest(TestCase):
         delete_all_cases()
 
     def testParallel(self):
-        self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))
         file_path = os.path.join(os.path.dirname(__file__), "data", "multicase", "parallel_cases.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
@@ -26,7 +25,6 @@ class MultiCaseTest(TestCase):
         self._check_ids(form, cases)
 
     def testMixed(self):
-        self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))
         file_path = os.path.join(os.path.dirname(__file__), "data", "multicase", "mixed_cases.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
@@ -36,10 +34,7 @@ class MultiCaseTest(TestCase):
         self.assertEqual(4, len(cases))
         self._check_ids(form, cases)
 
-
-
     def testCasesInRepeats(self):
-        self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))
         file_path = os.path.join(os.path.dirname(__file__), "data", "multicase", "case_in_repeats.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()

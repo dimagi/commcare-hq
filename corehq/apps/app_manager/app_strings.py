@@ -142,7 +142,7 @@ class AppStringsBase(object):
 
         from corehq.apps.app_manager.models import (
             AUTO_SELECT_CASE, AUTO_SELECT_FIXTURE, AUTO_SELECT_USER,
-            AUTO_SELECT_LOCATION
+            AUTO_SELECT_LOCATION, AUTO_SELECT_USERCASE
         )
 
         mode_text = {
@@ -150,6 +150,7 @@ class AppStringsBase(object):
             AUTO_SELECT_USER: u'user data key',
             AUTO_SELECT_CASE: u'case index',
             AUTO_SELECT_LOCATION: u'location',
+            AUTO_SELECT_USERCASE: u'user case',
         }
 
         for mode, text in mode_text.items():
@@ -157,7 +158,6 @@ class AppStringsBase(object):
             if key not in messages:
                 messages[key] = (u'The {} specified for case auto-selecting '
                                  u'could not be found: ${{0}}').format(text)
-
             key = 'case_autoload.{0}.case_missing'.format(mode)
             if key not in messages:
                 messages[key] = u'Unable to find case referenced by auto-select case ID.'

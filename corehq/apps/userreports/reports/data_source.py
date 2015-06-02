@@ -8,6 +8,7 @@ from corehq.apps.reports.sqlreport import SqlData
 from corehq.apps.userreports.exceptions import UserReportsError
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.sql import get_table_name
+from corehq.apps.userreports.views import get_datasource_config_or_404
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -42,7 +43,7 @@ class ConfigurableReportDataSource(SqlData):
     @property
     def config(self):
         if self._config is None:
-            self._config = DataSourceConfiguration.get(self._config_id)
+            self._config, _ = get_datasource_config_or_404(self._config_id, self.domain)
         return self._config
 
     @property
@@ -103,10 +104,14 @@ class ConfigurableReportDataSource(SqlData):
             raise UserReportsError(e.message)
         # arbitrarily sort by the first column in memory
         # todo: should get pushed to the database but not currently supported in sqlagg
-        return sorted(ret, key=lambda x: x.get(
-            self.column_configs[0].column_id,
-            next(x.itervalues())
-        ))
+        try:
+            return sorted(ret, key=lambda x: x.get(
+                self.column_configs[0].column_id,
+                next(x.itervalues())
+            ))
+        except TypeError:
+            # if the first column isn't sortable just return the data in the order we got it
+            return ret
 
     def get_total_records(self):
         return len(self.get_data())

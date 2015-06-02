@@ -2,23 +2,38 @@ from collections import defaultdict
 from xml.etree import ElementTree
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.products.fixtures import product_fixture_generator_json
 
 
 def item_lists_by_domain(domain):
     ret = list()
     for data_type in FixtureDataType.by_domain(domain):
+        structure = {
+            f.field_name: {
+                'name': f.field_name,
+                'no_option': True
+            } for f in data_type.fields
+        }
+
+        for attr in data_type.item_attributes:
+            structure['@' + attr] = {
+                'name': attr,
+                'no_option': True
+            }
+
         ret.append({
             'sourceUri': 'jr://fixture/item-list:%s' % data_type.tag,
             'defaultId': data_type.tag,
             'initialQuery': "instance('{tag}')/{tag}_list/{tag}".format(tag=data_type.tag),
             'name': data_type.tag,
-            'structure': {
-                f.field_name: {
-                    'name': f.field_name,
-                    'no_option': True
-                } for f in data_type.fields},
+            'structure': structure,
         })
+
+    products = product_fixture_generator_json(domain)
+    if products:
+        ret.append(products)
     return ret
+
 
 def item_lists(user, version, last_sync=None):
     assert isinstance(user, CommCareUser)

@@ -5,7 +5,7 @@ from django.conf import settings
 from casexml.apps.case import const
 from casexml.apps.case.dbaccessors import get_indexed_case_ids
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
-from casexml.apps.phone.models import SyncLogAssertionError, SyncLog
+from casexml.apps.phone.models import SyncLogAssertionError, get_properly_wrapped_sync_log
 from casexml.apps.stock.models import StockReport
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
@@ -26,7 +26,8 @@ def post_case_blocks(case_blocks, form_extras=None, domain=None):
 
     domain = domain or form_extras.pop('domain', None)
     if getattr(settings, 'UNIT_TESTING', False):
-        domain = domain or 'test-domain'
+        from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
+        domain = domain or TEST_DOMAIN_NAME
 
     form = ElementTree.Element("data")
     form.attrib['xmlns'] = "https://www.commcarehq.org/test/casexml-wrapper"
@@ -100,7 +101,7 @@ def update_sync_log_with_checks(sync_log, xform, cases, case_db,
                             ),
                             case_db=case_db
                         )
-            updated_log = SyncLog.get(sync_log._id)
+            updated_log = get_properly_wrapped_sync_log(sync_log._id)
 
             update_sync_log_with_checks(updated_log, xform, cases, case_db,
                                         case_id_blacklist=case_id_blacklist)

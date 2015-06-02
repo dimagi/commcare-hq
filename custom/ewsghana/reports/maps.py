@@ -1,14 +1,13 @@
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop
-from corehq import Domain
 from corehq.apps.commtrack.models import StockState, CommtrackConfig
-from corehq.apps.locations.models import Location, SQLLocation
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.commtrack.data_sources import StockStatusBySupplyPointDataSource
 from corehq.apps.reports.commtrack.maps import StockStatusMapReport
 from corehq.apps.reports.standard import CustomProjectReport
-from custom.ewsghana.utils import get_country_id
+from custom.ewsghana.utils import get_country_id, filter_slugs_by_role
 
 
 class EWSStockStatusBySupplyPointDataSource(StockStatusBySupplyPointDataSource):
@@ -108,6 +107,7 @@ class EWSMapReport(CustomProjectReport, StockStatusMapReport):
     name = ugettext_noop("Maps")
     title = ugettext_noop("Maps")
     slug = "ews_mapreport"
+    template_report = 'ewsghana/map_template.html'
 
     data_source = {
         'adapter': 'report',
@@ -119,6 +119,12 @@ class EWSMapReport(CustomProjectReport, StockStatusMapReport):
         'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
         'custom.ewsghana.filters.ProductFilter',
     ]
+
+    @property
+    def report_context(self):
+        context = super(StockStatusMapReport, self).report_context
+        context['context']['slugs'] = filter_slugs_by_role(self.request.couch_user, self.domain)
+        return context
 
     @classmethod
     def get_url(cls, domain=None, render_as=None, **kwargs):

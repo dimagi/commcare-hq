@@ -21,59 +21,63 @@ class ChildRegistrationDetails(MotherRegistrationDetails):
         result = []
         for column in self.columns:
             result.append([{'sort_key': column.header, 'html': column.header,
-                            'tooltip': self.get_tooltip(CHILD_INDICATOR_TOOLTIPS['child_registration_details'], column.slug)},
+                            'tooltip': self.get_tooltip(CHILD_INDICATOR_TOOLTIPS['child_registration_details'],
+                                                        column.slug)},
                            {'sort_key': self.data[column.slug], 'html': self.data[column.slug]}])
         return result
 
     @property
     def columns(self):
         columns = [
-            DatabaseColumn("Total children registered ever", CountUniqueColumn('doc_id', alias="total"))
+            DatabaseColumn("Total child registered ever", CountUniqueColumn('doc_id', alias="total"))
         ]
-        if 'startdate' not in self.config and 'enddate' not in self.config or 'startdate' not in self.config and 'enddate' in self.config:
+        if 'startdate' not in self.config and 'enddate' not in self.config or 'startdate' not in self.config \
+                and 'enddate' in self.config:
             columns.extend([
-                DatabaseColumn("Total open children cases",
-                    CountUniqueColumn('doc_id',
-                        alias="no_date_opened",
+                DatabaseColumn(
+                    "Total open children cases", CountUniqueColumn(
+                        'doc_id', alias="no_date_opened",
                         filters=self.filters + [EQ('closed_on', 'empty')]
                     )
                 ),
-                DatabaseColumn("Total closed children cases",
-                    CountUniqueColumn('doc_id',
-                        alias="no_date_closed",
-                        filters=self.filters +  [NOTEQ('closed_on', 'empty')]
+                DatabaseColumn(
+                    "Total closed children cases", CountUniqueColumn(
+                        'doc_id', alias="no_date_closed",
+                        filters=self.filters + [NOTEQ('closed_on', 'empty')]
                     )
                 ),
-                DatabaseColumn("New registrations during last 30 days",
-                        CountUniqueColumn('doc_id',
-                            alias="no_date_new_registrations",
-                            filters=self.filters + [AND([GTE('opened_on', "last_month"), LTE('opened_on', "today")])]
-                        )
+                DatabaseColumn(
+                    "New registrations during last 30 days", CountUniqueColumn(
+                        'doc_id', alias="no_date_new_registrations",
+                        filters=self.filters + [AND([GTE('opened_on', "last_month"), LTE('opened_on', "today")])]
+                    )
                 )
             ])
         else:
             columns.extend([
-                DatabaseColumn("Children cases open at end of time period",
-                    CountUniqueColumn('doc_id',
-                        alias="opened",
-                        filters=self.filters + [AND([LTE('opened_on', "stred"), OR([EQ('closed_on', 'empty'), GT('closed_on', "stred")])])]
+                DatabaseColumn(
+                    "Children cases open at end period", CountUniqueColumn(
+                        'doc_id', alias="opened",
+                        filters=self.filters + [AND([LTE('opened_on', "stred"), OR([EQ('closed_on', 'empty'),
+                                                                                    GT('closed_on', "stred")])])]
                     )
                 ),
-                DatabaseColumn("Children cases closed during the time period",
-                    CountUniqueColumn('doc_id',
-                        alias="closed",
+                DatabaseColumn(
+                    "Children cases closed during period", CountUniqueColumn(
+                        'doc_id', alias="closed",
                         filters=self.filters + [AND([GTE('closed_on', "strsd"), LTE('closed_on', "stred")])]
                     )
                 ),
-                DatabaseColumn("Total children followed during the time period",
-                    CountUniqueColumn('doc_id',
-                        alias="followed",
-                        filters=self.filters + [AND([LTE('opened_on', "stred"), OR([EQ('closed_on', 'empty'), GTE('closed_on', "strsd")])])]
+                DatabaseColumn(
+                    "Total children followed during period", CountUniqueColumn(
+                        'doc_id', alias="followed",
+                        filters=self.filters + [AND([LTE('opened_on', "stred"), OR([EQ('closed_on', 'empty'),
+                                                                                    GTE('closed_on', "strsd")])])]
                     )
                 ),
-                DatabaseColumn("New registrations during time period",
-                    CountUniqueColumn('doc_id',
-                        alias="new_registrations",
+                DatabaseColumn(
+                    "New registrations during period", CountUniqueColumn(
+                        'doc_id', alias="new_registrations",
                         filters=self.filters + [AND([LTE('opened_on', "stred"), GTE('opened_on', "strsd")])]
                     )
                 )
@@ -86,6 +90,7 @@ class ClosedChildCasesBreakdown(BaseSqlData):
     title = 'Closed Child Cases Breakdown'
     show_total = True
     total_row_name = "Children cases closed during the time period"
+    chart_title = 'Closed Child Cases'
     show_charts = True
     chart_x_label = ''
     chart_y_label = ''
@@ -153,8 +158,8 @@ class ChildrenDeaths(BaseSqlData):
     @property
     def rows(self):
         result = []
-        total = self.data['total_births']
-        for idx, column in enumerate(self.columns):
+        total = self.data['total_deaths']
+        for idx, column in enumerate(self.columns[:-1]):
             if idx == 0:
                 percent = 'n/a'
             else:
@@ -184,18 +189,21 @@ class ChildrenDeaths(BaseSqlData):
                                              filters=[AND([IN('mother_id', 'mother_ids'),
                                                            OR([EQ('gender', 'female'), EQ('gender', 'male')])])],
                                              alias='total_births')),
-            DatabaseColumn("Newborn deaths (< 1 month)",
+            DatabaseColumn("Newborn deaths (< 1 m)",
                            CountUniqueColumn('doc_id', filters=self.filters + [AND(
                                [EQ('reason_for_child_closure', 'death'),
                                 EQ('type_of_child_death', 'newborn_death')])], alias='newborn_death')),
-            DatabaseColumn("Infant deaths (< 1 year)",
+            DatabaseColumn("Infant deaths (< 1 y)",
                            CountUniqueColumn('doc_id', filters=self.filters + [AND(
                                [EQ('reason_for_child_closure', 'death'),
                                 EQ('type_of_child_death', 'infant_death')])], alias='infant_death')),
-            DatabaseColumn("Child deaths (> 1yr)",
+            DatabaseColumn("Child deaths (2-5y)",
                            CountUniqueColumn('doc_id', filters=self.filters + [AND(
                                [EQ('reason_for_child_closure', 'death'),
                                 EQ('type_of_child_death', 'child_death')])], alias='child_death')),
+            DatabaseColumn("Total deaths",
+                           CountUniqueColumn('doc_id', filters=self.filters + [EQ('reason_for_child_closure',
+                                                                                  'death')], alias='total_deaths'))
         ]
 
 
@@ -205,6 +213,7 @@ class ChildrenDeathDetails(BaseSqlData):
     title = ''
     show_total = True
     total_row_name = "Total Deaths"
+    chart_title = 'Child Deaths'
     show_charts = True
     chart_x_label = ''
     chart_y_label = ''
@@ -246,6 +255,7 @@ class ChildrenDeathsByMonth(BaseSqlData):
     slug = 'children_death_by_month'
     title = ''
     show_charts = True
+    chart_title = 'Seasonal Variation of Child Deaths'
     chart_x_label = ''
     chart_y_label = ''
     accordion_start = False
@@ -328,6 +338,7 @@ class NutritionBirthWeightDetails(BaseSqlData):
     slug = 'children_birth_details_2'
     title = ''
     show_charts = True
+    chart_title = 'Birth Weight'
     chart_x_label = ''
     chart_y_label = ''
     accordion_start = False
@@ -420,7 +431,7 @@ class NutritionFeedingDetails(BaseSqlData):
             DatabaseColumn("Early initiation of breastfeeding Total Eligible",
                            CountUniqueColumn('doc_id', alias="colostrum_feeding_total_eligible",
                                              filters=self.filters + [NOTEQ('breastfeed_1_hour', 'empty')])),
-            DatabaseColumn("Exclusive Breastfeeding (EBF)",
+            DatabaseColumn("Exclusive breastfeeding",
                            CountUniqueColumn('doc_id', alias="exclusive_breastfeeding",
                                              filters=self.filters + [AND([EQ('exclusive_breastfeeding', "yes"),
                                                                           GTE('dob', "today_minus_183")])])),
@@ -486,10 +497,10 @@ class ChildHealthIndicators(BaseSqlData):
                                'doc_id', alias="total_child_ill",
                                filters=self.filters + [OR([EQ('pneumonia_since_last_visit', 'yes'),
                                                            EQ('has_diarrhea_since_last_visit', 'yes')])])),
-            DatabaseColumn("ARI (Pneumonia) cases",
+            DatabaseColumn("ARI (Pneumonia)",
                            CountUniqueColumn('doc_id', alias="ari_cases",
                                              filters=self.filters + [EQ('pneumonia_since_last_visit', 'yes')])),
-            DatabaseColumn("Diarrhea cases",
+            DatabaseColumn("Diarrhea",
                            CountUniqueColumn('doc_id', alias="diarrhea_cases",
                                              filters=self.filters + [EQ('has_diarrhea_since_last_visit', 'yes')])),
             DatabaseColumn("ORS given during diarrhea",

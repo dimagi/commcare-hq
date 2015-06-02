@@ -153,7 +153,7 @@ class CMSRMSSummaryReportingData(EmailReportingData):
 
 class StockSummaryReport(MultiReport):
     fields = [AsyncLocationFilter, DatespanFilter]
-    name = "Stock Summary Report"
+    name = "Stock Summary"
     slug = 'stock_summary_report'
     exportable = False
     is_exportable = False
@@ -161,7 +161,7 @@ class StockSummaryReport(MultiReport):
 
     @property
     def title(self):
-        return 'Weekly Stock Summary Report - ' + SQLLocation.objects.get(
+        return 'Weekly Stock Summary - ' + SQLLocation.objects.get(
             location_id=self.report_config['location_id']).name
 
     @property
@@ -188,9 +188,9 @@ class StockSummaryReport(MultiReport):
 
 
 class CMSRMSReport(MultiReport):
-    title = "Weekly Stock Summary Report - CMS and RMS"
+    title = "Weekly Stock Summary - CMS and RMS"
     fields = [DatespanFilter]
-    name = "CMS and RMS Summary Report"
+    name = "CMS and RMS Summary"
     slug = 'cms_rms_summary_report'
     exportable = True
     is_exportable = True
