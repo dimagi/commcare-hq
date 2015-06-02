@@ -389,7 +389,7 @@ def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id, export_
                     for a in form_info['attachments']:
                         fname = filename(form_info, a['question_id'], a['extension'])
                         zi = zipfile.ZipInfo(fname, a['timestamp'])
-                        z.writestr(zi, f.fetch_attachment(a['name'], stream=True).read())
+                        z.writestr(zi, f.fetch_attachment(a['name'], stream=True).read(), zipfile.ZIP_STORED)
                     DownloadBase.set_progress(build_form_multimedia_zip, form_number, num_forms)
 
     common_kwargs = dict(
