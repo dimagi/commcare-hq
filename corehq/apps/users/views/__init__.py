@@ -8,7 +8,6 @@ from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
 from corehq import Domain, privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.views import BaseDomainView
-from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms.mixin import BadSMSConfigException
 from corehq.apps.style.decorators import (
     check_preview_bootstrap3,
@@ -764,6 +763,7 @@ class InviteWebUserView(BaseManageWebUserView):
         role_choices = UserRole.role_choices(self.domain)
         loc = None
         if 'location_id' in self.request.GET:
+            from corehq.apps.locations.models import SQLLocation
             loc = SQLLocation.objects.get(location_id=self.request.GET.get('location_id'))
         if self.request.method == 'POST':
             current_users = [user.username for user in WebUser.by_domain(self.domain)]
