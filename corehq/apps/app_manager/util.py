@@ -273,7 +273,6 @@ def get_settings_values(app):
             'doc_type': app.get_doc_type(),
             '_id': app.get_id,
             'domain': app.domain,
-            'commtrack_enabled': domain.commtrack_enabled,
         }
     }
 

@@ -691,7 +691,7 @@ def get_apps_base_context(request, domain, app):
                                and toggles.APP_BUILDER_CAREPLAN.enabled(request.user.username)),
             'show_advanced': (v2_app
                                and (toggles.APP_BUILDER_ADVANCED.enabled(request.user.username)
-                                    or getattr(app, 'commtrack_enabled', False))),
+                                    or app.commtrack_enabled)),
         })
 
     return context
@@ -2247,7 +2247,6 @@ def edit_app_attr(request, domain, app_id, attr):
         ('build_spec', BuildSpec.from_string),
         ('case_sharing', None),
         ('cloudcare_enabled', None),
-        ('commtrack_enabled', None),
         ('commtrack_requisition_mode', lambda m: None if m == 'disabled' else m),
         ('manage_urls', None),
         ('name', None),
