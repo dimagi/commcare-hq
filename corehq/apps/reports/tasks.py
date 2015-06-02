@@ -6,6 +6,7 @@ from unidecode import unidecode
 from dateutil.parser import parse
 import zipfile
 import tempfile
+from wsgiref.util import FileWrapper
 
 from celery.schedules import crontab
 from celery.task import periodic_task
@@ -53,6 +54,7 @@ from dimagi.utils.couch.database import iter_docs
 from casexml.apps.case.xform import extract_case_blocks
 from casexml.apps.case.models import CommCareCase
 from soil import DownloadBase
+from soil.util import expose_file_download, expose_cached_download
 
 
 logging = get_task_logger(__name__)
@@ -274,7 +276,7 @@ def _store_excel_in_redis(file):
 
 
 @task
-def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id, export_id, zip_name):
+def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id, export_id, zip_name, download_id):
     print "build_form_multimedia_zip"
     print domain, xmlns, startdate, enddate, app_id, export_id, zip_name
     DownloadBase.set_progress(build_form_multimedia_zip, 0, 100)
@@ -386,5 +388,25 @@ def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id, export_
                         zi = zipfile.ZipInfo(fname, a['timestamp'])
                         z.writestr(zi, f.fetch_attachment(a['name'], stream=True).read())
 
+    common_kwargs = dict(
+        mimetype='application/zip',
+        content_disposition='attachment; filename="{fname}.zip"'.format(fname=unidecode(zip_name)),
+        download_id=download_id,
+    )
+
+    if use_transfer:
+        expose_file_download(
+            fpath,
+            use_transfer=use_transfer,
+            **common_kwargs
+        )
+    else:
+        expose_cached_download(
+            FileWrapper(open(fpath)),
+            expiry=(1 * 60 * 60),
+            **common_kwargs
+        )
+
     DownloadBase.set_progress(build_form_multimedia_zip, 0, 100)
+
     return {"errors": None}

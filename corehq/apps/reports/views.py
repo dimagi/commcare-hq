@@ -1450,6 +1450,7 @@ def form_multimedia_export(request, domain):
         return HttpResponseBadRequest()
 
     download = DownloadBase()
+    task_kwargs['download_id'] = download.download_id
     download.set_task(build_form_multimedia_zip.delay(**task_kwargs))
 
     return download.get_start_response()
