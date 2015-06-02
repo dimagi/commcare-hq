@@ -258,11 +258,11 @@ function ReleasesMain(o) {
             } else if (data.latestRelease !== self.lastAppVersion()) {
                 window.alert("The versions list has changed since you loaded the page.");
                 self.reloadApps();
-            } else if (self.lastAppVersion() !== self.currentAppVersion()) {
+            } else /*if (self.lastAppVersion() !== self.currentAppVersion())*/ {
                 self.actuallyMakeBuild();
-            } else {
+            } /*else {
                 window.alert("No new changes to deploy!");
-            }
+            }*/
         }).error(function () {
             self.fetchState('error');
             window.alert(self.reload_message);

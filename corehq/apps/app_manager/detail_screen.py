@@ -318,12 +318,31 @@ class Enum(FormattedDetailColumn):
         return variables
 
 
+#jls
+# all_media from domain for current app
 @register_format_type('enum-image')
 class EnumImage(Enum):
     template_form = 'image'
     header_width = '13%'
     template_width = '13%'
 
+    '''
+    @property
+    def xpath_function(self):
+        import pdb; pdb.set_trace()
+        #CommCareMultimedia.get(self.app.multimedia_map['jr://file/commcare/image/data/five.jpg'].multimedia_id).aux_media[0].media_meta['size'][‘width’]
+
+        for i, item in enumerate(self.column.enum):
+            parts.append(
+                xpath_fragment_template.format(
+                    key=item.key,
+                    key_as_var=item.key_as_variable,
+                    xpath=self.xpath,
+                    i=i,
+                )
+            )
+        return self.xpath_function()
+    '''
 
 @register_format_type('late-flag')
 class LateFlag(HideShortHeaderColumn):
