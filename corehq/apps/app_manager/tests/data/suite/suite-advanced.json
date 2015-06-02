@@ -741,7 +741,6 @@
     }
   ],
   "attribution_notes": null,
-  "commtrack_enabled": false,
   "commtrack_requisition_mode": null,
   "translation_strategy": "dump-known",
   "case_sharing": false,

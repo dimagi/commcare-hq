@@ -60,7 +60,7 @@ from corehq.apps.hqmedia.models import HQMediaMixin
 from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import cc_user_domain
-from corehq.apps.domain.models import cached_property
+from corehq.apps.domain.models import cached_property, Domain
 from corehq.apps.app_manager import current_builds, app_strings, remote_app
 from corehq.apps.app_manager import suite_xml, commcare_settings
 from corehq.apps.app_manager.util import (
@@ -3663,8 +3663,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     @property
     @memoized
     def commtrack_enabled(self):
-        from corehq.apps.domain.models import Domain
-        domain_obj = Domain.get_by_name(self.domain)
+        if settings.UNIT_TESTING:
+            return False  # override with .tests.util.commtrack_enabled
+        domain_obj = Domain.get_by_name(self.domain) if self.domain else None
         return domain_obj.commtrack_enabled if domain_obj else False
 
     @classmethod
