@@ -90,28 +90,27 @@ class SyncBaseTest(TestCase):
         return post_case_blocks(caseblocks, form_extras={"last_sync_token": token_id})
 
     def _checkLists(self, l1, l2):
-        self.assertEqual(len(l1), len(l2))
-        for i in l1:
-            self.assertTrue(i in l2, "%s found in %s" % (i, l2))
-        for i in l2:
-            self.assertTrue(i in l1, "%s found in %s" % (i, l1))
-    
+        self.assertEqual(set(l1), set(l2))
+
     def _testUpdate(self, sync_id, case_id_map, dependent_case_id_map=None):
         dependent_case_id_map = dependent_case_id_map or {}
         sync_log = get_properly_wrapped_sync_log(sync_id)
         
         if isinstance(sync_log, SimplifiedSyncLog):
-            # simplified sync logs treat cases + dependents as the same and don't store indices
-            # as a result we need to do a simpler check
             all_ids = {}
             all_ids.update(case_id_map)
             all_ids.update(dependent_case_id_map)
             self.assertEqual(set(all_ids), sync_log.case_ids_on_phone)
-            # dependent cases should be in the index tree somewhere
-            for dependent_id in dependent_case_id_map:
-                self.assertTrue(dependent_id in sync_log.dependent_case_ids_on_phone)
-            for dependent_id in sync_log.dependent_case_ids_on_phone:
-                self.assertTrue(dependent_id in dependent_case_id_map)
+            self.assertEqual(set(dependent_case_id_map.keys()), sync_log.dependent_case_ids_on_phone)
+            for case_id, indices in case_id_map.items():
+                if indices:
+                    index_ids = [i.referenced_id for i in case_id_map[case_id]]
+                    self._checkLists(index_ids, sync_log.index_tree.indices[case_id].values())
+            for case_id, indices in dependent_case_id_map.items():
+                if indices:
+                    index_ids = [i.referenced_id for i in case_id_map[case_id]]
+                    self._checkLists(index_ids, sync_log.index_tree.indices[case_id].values())
+
         else:
             # check case map
             self.assertEqual(len(case_id_map), len(sync_log.cases_on_phone))
@@ -220,84 +219,133 @@ class SyncTokenUpdateTest(SyncBaseTest):
         assert_user_doesnt_have_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
 
     @run_with_all_restore_configs
-    def testIndexReferences(self):
+    def test_change_index_type(self):
         """
-        Tests that indices properly get set in the sync log when created. 
+        Test that changing an index type updates the sync log
         """
-        # first create the parent case
-        parent_id = "mommy"
-        updated_id = "updated_mommy_id"
-        new_parent_id = "daddy"
-        self._createCaseStubs([parent_id, updated_id, new_parent_id])
-        self._testUpdate(self.sync_log.get_id, {parent_id: [], updated_id: [], new_parent_id: []})
-        
-        # create the child        
-        child_id = "baby"
-        index_id = 'my_mom_is'
+        child_id, parent_id, index_id, parent_ref = self._initialize_parent_child()
+        # update the child's index (parent type)
+        updated_type = "updated_type"
+        child = CaseBlock(
+            create=False, case_id=child_id, user_id=USER_ID, version=V2,
+            index={index_id: (updated_type, parent_id)},
+        ).as_xml()
+        self._postFakeWithSyncToken(child, self.sync_log.get_id)
+        parent_ref.referenced_type = updated_type
+        self._testUpdate(self.sync_log.get_id, {parent_id: [],
+                                                child_id: [parent_ref]})
+
+    @run_with_all_restore_configs
+    def test_change_index_id(self):
+        """
+        Test that changing an index ID updates the sync log
+        """
+        child_id, parent_id, index_id, parent_ref = self._initialize_parent_child()
+
+        # update the child's index (parent id)
+        updated_id = 'changed_index_id'
+        self.factory.create_or_update_case(CaseStructure(
+            case_id=child_id,
+            relationships=[CaseRelationship(
+                CaseStructure(case_id=updated_id, attrs={'create': True}),
+                relationship=index_id,
+                related_type=PARENT_TYPE,
+            )],
+        ))
+        parent_ref.referenced_id = updated_id
+        self._testUpdate(self.sync_log.get_id, {parent_id: [], updated_id: [],
+                                                child_id: [parent_ref]})
+
+    @run_with_all_restore_configs
+    def test_add_multiple_indices(self):
+        """
+        Test that adding multiple indices works as expected
+        """
+        child_id, parent_id, index_id, parent_ref = self._initialize_parent_child()
+        # add new index
+        new_case_id = 'new_case_id'
+        new_index_id = 'new_index_id'
+
+        self.factory.create_or_update_case(CaseStructure(
+            case_id=child_id,
+            relationships=[CaseRelationship(
+                CaseStructure(case_id=new_case_id, attrs={'create': True}),
+                relationship=new_index_id,
+                related_type=PARENT_TYPE,
+            )],
+        ))
+        new_index_ref = CommCareCaseIndex(identifier=new_index_id, referenced_type=PARENT_TYPE,
+                                          referenced_id=new_case_id)
+
+        self._testUpdate(self.sync_log.get_id, {parent_id: [], new_case_id: [],
+                                                child_id: [parent_ref, new_index_ref]})
+
+    @run_with_all_restore_configs
+    def test_delete_only_index(self):
+        child_id, parent_id, index_id, parent_ref = self._initialize_parent_child()
+        # delete the first index
+        child = CaseBlock(create=False, case_id=child_id, user_id=USER_ID, version=V2,
+                          index={index_id: (PARENT_TYPE, "")},
+        ).as_xml()
+        self._postFakeWithSyncToken(child, self.sync_log.get_id)
+        self._testUpdate(self.sync_log.get_id, {parent_id: [], child_id: []})
+
+    @run_with_all_restore_configs
+    def test_delete_one_of_multiple_indices(self):
+        child_id = "child_id"
+        parent_id_1 = "parent_id"
+        index_id_1 = 'parent_index_id'
+        parent_id_2 = "parent_id_2"
+        index_id_2 = 'parent_index_id_2'
+
+        self.factory.create_or_update_case(CaseStructure(
+            case_id=child_id,
+            attrs={'create': True},
+            relationships=[
+                CaseRelationship(
+                    CaseStructure(case_id=parent_id_1, attrs={'create': True}),
+                    relationship=index_id_1,
+                    related_type=PARENT_TYPE,
+                ),
+                CaseRelationship(
+                    CaseStructure(case_id=parent_id_2, attrs={'create': True}),
+                    relationship=index_id_2,
+                    related_type=PARENT_TYPE,
+                ),
+            ],
+        ))
+        parent_ref_1 = CommCareCaseIndex(
+            identifier=index_id_1, referenced_type=PARENT_TYPE, referenced_id=parent_id_1)
+        parent_ref_2 = CommCareCaseIndex(
+            identifier=index_id_2, referenced_type=PARENT_TYPE, referenced_id=parent_id_2)
+        self._testUpdate(self.sync_log.get_id, {parent_id_1: [], parent_id_2: [],
+                                                child_id: [parent_ref_1, parent_ref_2]})
+
+        # delete the first index
+        child = CaseBlock(create=False, case_id=child_id, user_id=USER_ID, version=V2,
+                          index={index_id_1: (PARENT_TYPE, "")},
+        ).as_xml()
+        self._postFakeWithSyncToken(child, self.sync_log.get_id)
+        self._testUpdate(self.sync_log.get_id, {parent_id_1: [], parent_id_2: [],
+                                                child_id: [parent_ref_2]})
+
+    def _initialize_parent_child(self):
+        child_id = "child_id"
+        parent_id = "parent_id"
+        index_id = 'parent_index_id'
         self.factory.create_or_update_case(CaseStructure(
             case_id=child_id,
             attrs={'create': True},
             relationships=[CaseRelationship(
-                CaseStructure(case_id=parent_id),
+                CaseStructure(case_id=parent_id, attrs={'create': True}),
                 relationship=index_id,
                 related_type=PARENT_TYPE,
             )],
-            walk_related=False,
         ))
-        index_ref = CommCareCaseIndex(identifier=index_id,
-                                      referenced_type=PARENT_TYPE,
-                                      referenced_id=parent_id)
-    
-        self._testUpdate(self.sync_log.get_id, {parent_id: [], updated_id: [], new_parent_id: [],
-                                                child_id: [index_ref]})
-        
-        # update the child's index (parent type)
-        updated_type = "updated_mother_type"
-        child = CaseBlock(create=False, case_id=child_id, user_id=USER_ID, version=V2,
-                          index={index_id: (updated_type, parent_id)},
-        ).as_xml()
-        self._postFakeWithSyncToken(child, self.sync_log.get_id)
-        index_ref = CommCareCaseIndex(identifier=index_id,
-                                      referenced_type=updated_type,
-                                      referenced_id=parent_id)
-    
-        self._testUpdate(self.sync_log.get_id, {parent_id: [], updated_id: [], new_parent_id: [],
-                                                child_id: [index_ref]})
-        
-        # update the child's index (parent id)
-        child = CaseBlock(create=False, case_id=child_id, user_id=USER_ID, version=V2,
-                          index={index_id: (updated_type, updated_id)},
-        ).as_xml()
-        self._postFakeWithSyncToken(child, self.sync_log.get_id)
-        index_ref = CommCareCaseIndex(identifier=index_id,
-                                      referenced_type=updated_type,
-                                      referenced_id=updated_id)
-    
-        self._testUpdate(self.sync_log.get_id, {parent_id: [], updated_id: [], new_parent_id: [],
-                                                child_id: [index_ref]})
-        
-        # add new index
-        new_index_id = "my_daddy"
-        new_index_type = "dad"
-        child = CaseBlock(create=False, case_id=child_id, user_id=USER_ID, version=V2,
-                          index={new_index_id: (new_index_type, new_parent_id)},
-        ).as_xml()
-        self._postFakeWithSyncToken(child, self.sync_log.get_id)
-        new_index_ref = CommCareCaseIndex(identifier=new_index_id,
-                                          referenced_type=new_index_type,
-                                          referenced_id=new_parent_id)
-    
-        self._testUpdate(self.sync_log.get_id, {parent_id: [], updated_id: [], new_parent_id: [],
-                                                child_id: [index_ref, new_index_ref]})
-        
-        # delete index
-        child = CaseBlock(create=False, case_id=child_id, user_id=USER_ID, version=V2,
-                          index={index_id: (updated_type, "")},
-        ).as_xml()
-        self._postFakeWithSyncToken(child, self.sync_log.get_id)
-        self._testUpdate(self.sync_log.get_id, {parent_id: [], updated_id: [], new_parent_id: [],
-                                                child_id: [new_index_ref]})
-        
+        parent_ref = CommCareCaseIndex(identifier=index_id, referenced_type=PARENT_TYPE, referenced_id=parent_id)
+        self._testUpdate(self.sync_log.get_id, {parent_id: [], child_id: [parent_ref]})
+        return (child_id, parent_id, index_id, parent_ref)
+
     @run_with_all_restore_configs
     def testClosedParentIndex(self):
         """
@@ -1165,6 +1213,63 @@ class MultiUserSyncTest(SyncBaseTest):
             generate_restore_payload(self.project, self.user, restore_id=self.sync_log._id)
         )
         self._testUpdate(latest_sync_log._id, {child_id: [index_ref], parent_id: []})
+
+    @run_with_all_restore_configs
+    def test_index_tree_conflict_handling(self):
+        """
+        Test that if another user changes the index tree, the original user
+        gets the appropriate index tree update after sync.
+        """
+        # create a parent and child case (with index) from one user
+        mom_id, dad_id, child_id = [uuid.uuid4().hex for i in range(3)]
+        self.factory.create_or_update_cases([
+            CaseStructure(
+                case_id=child_id,
+                attrs={'create': True},
+                relationships=[
+                    CaseRelationship(
+                        CaseStructure(case_id=mom_id, attrs={'create': True}),
+                        relationship='mom',
+                        related_type='mom',
+                    ),
+                    CaseRelationship(
+                        CaseStructure(case_id=dad_id, attrs={'create': True}),
+                        relationship='dad',
+                        related_type='dad',
+                    ),
+
+                ],
+            )
+        ])
+        mom_ref = CommCareCaseIndex(identifier='mom', referenced_type='mom', referenced_id=mom_id)
+        dad_ref = CommCareCaseIndex(identifier='dad', referenced_type='dad', referenced_id=dad_id)
+        # sanity check that we are in the right state
+        self._testUpdate(self.sync_log._id, {child_id: [mom_ref, dad_ref], mom_id: [], dad_id: []})
+
+        # have another user modify the index ID of one of the cases
+        new_mom_id = uuid.uuid4().hex
+        self.factory.create_or_update_cases(
+            [
+                CaseStructure(
+                    case_id=child_id,
+                    relationships=[
+                        CaseRelationship(
+                            CaseStructure(case_id=new_mom_id, attrs={'create': True}),
+                            relationship='mom',
+                            related_type='mom',
+                        ),
+                    ]
+                )
+            ],
+            form_extras={'last_sync_token': None}
+        )
+        latest_sync_log = synclog_from_restore_payload(
+            generate_restore_payload(self.project, self.user, restore_id=self.sync_log._id)
+        )
+        new_mom_ref = CommCareCaseIndex(identifier='mom', referenced_type='mom', referenced_id=new_mom_id)
+        self._testUpdate(latest_sync_log._id, {
+            child_id: [new_mom_ref, dad_ref], mom_id: [], dad_id: [], new_mom_id: []
+        })
 
 
 class SyncTokenReprocessingTest(SyncBaseTest):

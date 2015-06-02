@@ -122,7 +122,8 @@ def render_form(form, domain, options):
 
         definition = get_default_definition(
             sorted_case_update_keys(b.keys()),
-            assume_phonetimes=(form.metadata.deviceID != CLOUDCARE_DEVICE_ID)
+            assume_phonetimes=(not form.metadata or
+                               (form.metadata.deviceID != CLOUDCARE_DEVICE_ID)),
         )
         cases.append({
             "is_current_case": case_id and this_case_id == case_id,

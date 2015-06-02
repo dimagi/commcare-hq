@@ -28,7 +28,7 @@ def _batched_response(restore_state):
 def should_use_clean_restore(domain):
     if settings.UNIT_TESTING:
         override = getattr(
-            settings, 'SHOULD_USE_CLEAN_RESTORE', None)
+            settings, 'TESTS_SHOULD_USE_CLEAN_RESTORE', None)
         if override is not None:
             return override
     return OWNERSHIP_CLEANLINESS_RESTORE.enabled(domain)

@@ -62,12 +62,15 @@ class StockSettings(object):
         """
         section_to_consumption_types should be a dict of stock section-ids to corresponding
         consumption section-ids. any stock sections not found in the dict will not have
-        any consumption data set in the restore
+        any consumption data set in the restore.
+
+        force_consumption_case_filter allows you to force sending consumption data even if
+        empty for a given CaseStub (id + type)
         """
         self.section_to_consumption_types = section_to_consumption_types or {}
         self.consumption_config = consumption_config
         self.default_product_list = default_product_list or []
-        self.force_consumption_case_filter = force_consumption_case_filter or (lambda case: False)
+        self.force_consumption_case_filter = force_consumption_case_filter or (lambda stub: False)
 
 
 class RestoreResponse(object):
