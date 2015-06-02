@@ -266,6 +266,12 @@ class SQLLocation(MPTTModel):
     def by_domain(cls, domain):
         return cls.objects.filter(domain=domain)
 
+    @property
+    def path(self):
+        # This exists for backwards compatability with couch locations
+        return list(self.get_ancestors(include_self=True)
+                    .values_list('location_id', flat=True))
+
 
 def _filter_for_archived(locations, include_archive_ancestors):
     """
