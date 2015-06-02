@@ -410,14 +410,6 @@ USER_AS_A_CASE = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-STREAM_RESTORE_CACHE = PredictablyRandomToggle(
-    'stream_cached_restore',
-    'Stream cached restore from couchdb',
-    TAG_EXPERIMENTAL,
-    randomness=.5,
-    namespaces=[NAMESPACE_DOMAIN]
-)
-
 ENABLE_LOADTEST_USERS = StaticToggle(
     'enable_loadtest_users',
     'Enable creating loadtest users on HQ',
