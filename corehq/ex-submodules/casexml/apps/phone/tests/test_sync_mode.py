@@ -226,8 +226,9 @@ class SyncTokenUpdateTest(SyncBaseTest):
         child_id, parent_id, index_id, parent_ref = self._initialize_parent_child()
         # update the child's index (parent type)
         updated_type = "updated_type"
-        child = CaseBlock(create=False, case_id=child_id, user_id=USER_ID, version=V2,
-                          index={index_id: (updated_type, parent_id)},
+        child = CaseBlock(
+            create=False, case_id=child_id, user_id=USER_ID, version=V2,
+            index={index_id: (updated_type, parent_id)},
         ).as_xml()
         self._postFakeWithSyncToken(child, self.sync_log.get_id)
         parent_ref.referenced_type = updated_type
