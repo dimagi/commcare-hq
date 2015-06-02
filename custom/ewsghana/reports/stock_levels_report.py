@@ -14,7 +14,6 @@ from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.graph_models import Axis
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.users.views.mobile.users import EditCommCareUserView
 from custom.common import ALL_OPTION
 from custom.ewsghana.filters import ProductByProgramFilter
 from custom.ewsghana.reports import EWSData, MultiReport, EWSLineChart, ProductSelectionPane, \
@@ -270,6 +269,7 @@ class UsersData(EWSData):
 
     @property
     def rendered_content(self):
+        from corehq.apps.users.views.mobile.users import EditCommCareUserView
         users = CommCareUser.view(
             'locations/users_by_location_id',
             startkey=[self.config['location_id']],
