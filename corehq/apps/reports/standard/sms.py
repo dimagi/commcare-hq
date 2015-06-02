@@ -29,7 +29,7 @@ from django.conf import settings
 # and that ends up mattering.
 # todo: figure out what that circular dependency is
 from corehq.apps.users.views import mobile
-from corehq.apps.hqwebapp.doc_info import get_doc_info
+from corehq.apps.hqwebapp.doc_info import get_doc_info, get_doc_info_by_id
 from corehq.apps.sms.models import (
     WORKFLOW_REMINDER,
     WORKFLOW_KEYWORD,
@@ -539,6 +539,9 @@ class SurveyDetailReport(BaseMessagingEventReport):
             'xforms_session': self.xforms_session,
             'xform_instance': (XFormInstance.get(self.xforms_session.submission_id)
                                if self.xforms_session.submission_id else None),
+            'contact': get_doc_info_by_id(self.domain, self.xforms_session.connection_id),
+            'start_time': (ServerTime(self.xforms_session.start_time)
+                           .user_time(self.timezone).done().strftime(SERVER_DATETIME_FORMAT)),
         }
 
     @property

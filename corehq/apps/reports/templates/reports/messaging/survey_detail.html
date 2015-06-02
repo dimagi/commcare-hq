@@ -6,7 +6,7 @@
 <table style="width: 30%;" class="table table-bordered">
     <tbody>
         <tr>
-            <th>Survey Type</th>
+            <th>{% trans 'Survey Type' %}</th>
             <td>
                 {% if xforms_session.session_type == 'SMS' %}
                     {% trans 'SMS' %}
@@ -20,7 +20,17 @@
             </td>
         </tr>
         <tr>
-            <th>Status</th>
+            <th>{% trans 'Contact' %}</th>
+            <td>
+                <a target="_blank" href="{{ contact.link }}">{{ contact.display }}</a>
+            </td>
+        </tr>
+        <tr>
+            <th>{% trans 'Start Time' %}</th>
+            <td>{{ start_time }}</td>
+        </tr>
+        <tr>
+            <th>{% trans 'Status' %}</th>
             <td>
                 {% if xform_instance %}
                     {% if xform_instance.partial_submission %}
@@ -38,7 +48,7 @@
             </td>
         </tr>
         <tr>
-            <th>Form Submission</th>
+            <th>{% trans 'Form Submission' %}</th>
             <td>
                 {% if xform_instance %}
                     <a target="_blank" href="{% url 'render_form_data' domain xform_instance.get_id %}">{% trans 'View' %}</a>
