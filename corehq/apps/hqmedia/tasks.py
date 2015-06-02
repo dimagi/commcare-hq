@@ -1,16 +1,20 @@
-import StringIO
 import os
+import tempfile
+from wsgiref.util import FileWrapper
 from celery.task import task
 from celery.utils.log import get_task_logger
-from django.core.cache import cache
+from django.conf import settings
 import zipfile
 from corehq.apps.app_manager.models import get_app
 from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache
-from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareMultimedia
+from corehq.apps.hqmedia.models import CommCareMultimedia
 from soil import DownloadBase
 from django.utils.translation import ugettext as _
+from soil.util import expose_file_download, expose_cached_download
 
 logging = get_task_logger(__name__)
+
+MULTIMEDIA_EXTENSIONS = ('.mp3', '.wav', '.jpg', '.png', '.gif', '.3gp', '.mp4', '.zip', )
 
 @task
 def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_media=False,
@@ -99,3 +103,57 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
     status.complete = True
     status.save()
 
+
+@task
+def build_application_zip(include_multimedia_files, include_index_files,
+                            app, download_id, compress_zip=False, filename="commcare.zip"):
+    from corehq.apps.hqmedia.views import iter_app_files
+    
+    DownloadBase.set_progress(build_application_zip, 0, 100)
+
+    errors = []
+    compression = zipfile.ZIP_DEFLATED if compress_zip else zipfile.ZIP_STORED
+
+    use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
+    if use_transfer:
+        fpath = os.path.join(settings.SHARED_DRIVE_CONF.transfer_dir, "{}{}{}{}".format(
+            app._id,
+            'mm' if include_multimedia_files else '',
+            'ccz' if include_index_files else '',
+            app.version,
+        ))
+    else:
+        _, fpath = tempfile.mkstemp()
+
+    if not (os.path.isfile(fpath) and use_transfer):  # Don't rebuild the file if it is already there
+        files, errors = iter_app_files(app, include_multimedia_files, include_index_files)
+        with open(fpath, 'wb') as tmp:
+            with zipfile.ZipFile(tmp, "w") as z:
+                for path, data in files:
+                    # don't compress multimedia files
+                    extension = os.path.splitext(path)[1]
+                    file_compression = zipfile.ZIP_STORED if extension in MULTIMEDIA_EXTENSIONS else compression
+                    z.writestr(path, data, file_compression)
+
+    common_kwargs = dict(
+        mimetype='application/zip' if compress_zip else 'application/x-zip-compressed',
+        content_disposition='attachment; filename="{fname}"'.format(fname=filename),
+        download_id=download_id,
+    )
+    if use_transfer:
+        expose_file_download(
+            fpath,
+            use_transfer=use_transfer,
+            **common_kwargs
+        )
+    else:
+        expose_cached_download(
+            FileWrapper(open(fpath)),
+            expiry=(1 * 60 * 60),
+            **common_kwargs
+        )
+
+    DownloadBase.set_progress(build_application_zip, 100, 100)
+    return {
+        "errors": errors,
+    }

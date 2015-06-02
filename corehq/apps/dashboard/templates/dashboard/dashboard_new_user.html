@@ -12,14 +12,48 @@
         gaTrackLink($helpLink, 'Dashboard', 'Welcome Tile', 'help');
         gaTrackLink($newAppLink, 'Dashboard', 'Welcome Tile', 'app');
 
-        analytics.track('Visited new user dashboard');
-        analytics.trackLink($appstoreLink, 'Clicked Exchange in new user dashboard');
-        analytics.trackLink($helpLink, "Clicked Help Site in new user dashboard");
-        analytics.trackLink($newAppLink, "Clicked Applications in new user dashboard");
+        analytics.workflow('Visited new user dashboard');
+        analytics.trackWorkflowLink($appstoreLink, 'Clicked Exchange in new user dashboard');
+        analytics.trackWorkflowLink($helpLink, "Clicked Help Site in new user dashboard");
+        analytics.trackWorkflowLink($newAppLink, "Clicked Applications in new user dashboard");
 
     });
 </script>
 {% endblock js-inline %}
+
+{% block uncompressed-js %} {{ block.super }}
+    <script type="text/javascript">
+        (function (angular, undefined) {
+            'use strict';
+            // NOTE: It's not a best practice to define the app in a script tag,
+            //       better to have it in a separate file. Leaving this here
+            //       though because this is just for an A/B test (temporary code)
+            var dashboardApp = angular.module('dashboardApp', []);
+            dashboardApp.controller("DashBoardController", ["$scope", "$timeout", function ($scope, $timeout) {
+                $scope.tilesReady = false;
+                $scope.variant = "wide applications tile";
+
+                var abFallback = $timeout(function () {
+                    // Show the default variant if something goes wrong with KISSmetrics
+                    $scope.tilesReady = true;
+                }, 1500);
+
+                _kmq.push(function () {
+                    // When KISSmetrics is loaded, get the variant for this user.
+                    $scope.$apply(function () {
+                        $scope.variant = KM.ab('New user dashboard tiles', ["equal size", "wide applications tile"]);
+                        $scope.tilesReady = true;
+                    });
+                    // Cancel the fallback because we were able to reach KISSmetrics.
+                    $timeout.cancel(abFallback);
+                });
+
+
+            }]);
+        }(window.angular));
+    </script>
+{% endblock %}
+
 
 {% block dashboard-content %}
 <div class="page-header">
@@ -31,8 +65,9 @@
         {% endif %}
          <small>{% trans 'What would you like to do?' %}</small></h1>
 </div>
-<div class="row">
-    <div class="col-md-3">
+<div class="row" ng-app="dashboardApp" ng-controller="DashBoardController as dashboard">
+<div ng-show="tilesReady" ng-cloak>
+    <div ng-class="(variant == 'wide applications tile') ? 'col-md-3' : 'col-md-4'">
         <div class="panel panel-dashboard">
             <div class="panel-heading">
                 {% trans 'Exchange' %}
@@ -47,7 +82,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-6">
+    <div ng-class="(variant == 'wide applications tile') ? 'col-md-6' : 'col-md-4'">
         <div class="panel panel-dashboard">
             <div class="panel-heading">
                 {% if project.commtrack_enabled %}
@@ -70,7 +105,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div ng-class="(variant == 'wide applications tile') ? 'col-md-3' : 'col-md-4'">
         <div class="panel panel-dashboard">
             <div class="panel-heading">{% trans 'Help Site' %}</div>
             <div class="panel-body">
@@ -86,5 +121,6 @@
             </div>
         </div>
     </div>
+</div>
 </div>
 {% endblock dashboard-content %}

@@ -1,3 +1,8 @@
+├─┬ At.js#1.2.0
+│ ├─┬ Caret.js#0.2.2
+│ │ └── jquery#1.11.3
+│ └── jquery#1.11.3 (2.1.4 available)
+├── Caret.js#0.2.2
 ├── MediaUploader#8146915116
 ├── XMLWriter#ab8760d6e0
 ├── almond#0.2.9 (latest is 0.3.1)
@@ -10,11 +15,11 @@
 ├── jsdiff#1.4.0
 ├─┬ jstree#110b6681ff
 │ └── jquery#1.11.3 (2.1.4 available)
-├── langcodes#1168def14e
+├── langcodes#27dcfc401e
 ├── markdown-it#4.2.1 extraneous
 ├── require-css#0.1.8
 ├── require-less#0.1.5
-├── requirejs#2.1.17
+├── requirejs#2.1.17 (2.1.18 available)
 ├── requirejs-plugins#1.0.3
 ├── requirejs-text#2.0.14
 ├── requirejs-tpl#a3ca1e0e7f

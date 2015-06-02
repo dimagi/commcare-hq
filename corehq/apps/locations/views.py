@@ -15,7 +15,7 @@ from couchexport.models import Format
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
 from soil.exceptions import TaskFailedError
-from soil.util import expose_download, get_download_context
+from soil.util import expose_cached_download, get_download_context
 
 from corehq import toggles
 from corehq.apps.commtrack.exceptions import MultipleSupplyPointException
@@ -403,7 +403,14 @@ class EditLocationView(NewLocationView):
     @property
     @memoized
     def sql_location(self):
-        return self.location.sql_location
+        try:
+            location = SQLLocation.objects.get(location_id=self.location_id)
+            if location.domain != self.domain:
+                raise Http404()
+        except ResourceNotFound:
+            raise Http404()
+        else:
+            return location
 
     @property
     @memoized
@@ -624,7 +631,7 @@ class LocationImportView(BaseLocationView):
         domain = args[0]
 
         # stash this in soil to make it easier to pass to celery
-        file_ref = expose_download(upload.read(),
+        file_ref = expose_cached_download(upload.read(),
                                    expiry=1*60*60)
         task = import_locations_async.delay(
             domain,

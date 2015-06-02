@@ -43,6 +43,7 @@ class OpmCaseFluff(fluff.IndicatorDocument):
     account_number = case_property('bank_account_number')
     block = case_property('block_name')
     village = case_property('village_name')
+    edd = case_property('edd')
 
     opened_on = flat_field(lambda case: case.opened_on)
     closed_on = flat_field(lambda case: case.closed_on)

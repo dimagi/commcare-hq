@@ -91,12 +91,10 @@ def process_facility_task(api_object, facility, start_from=None):
     save_stock_data_checkpoint(checkpoint, '', 1000, 0, checkpoint.date, api_object.get_location_id(facility))
 
 
-@celery.task(ignore_result=True)
-def sms_users_fix(api):
-    endpoint = api.endpoint
-    api.set_default_backend()
-    synchronization(None, endpoint.get_smsusers, partial(api.add_language_to_user),
-                    None, None, 100, 0)
+@celery.task(queue='background_queue', ignore_result=True)
+def resync_web_users(api_object):
+    web_users_sync = api_object.apis[4]
+    synchronization(web_users_sync, None, None, 100, 0)
 
 
 @celery.task(ignore_result=True)
@@ -154,9 +152,10 @@ def sync_stock_transactions_for_facility(domain, endpoint, facility, checkpoint,
     while has_next:
         meta, stocktransactions = endpoint.get_stocktransactions(next_url_params=next_url,
                                                                  limit=limit,
+                                                                 start_date=date,
+                                                                 end_date=checkpoint.start_date,
                                                                  offset=offset,
-                                                                 filters=(dict(supply_point=supply_point,
-                                                                               date__gte=date)))
+                                                                 filters=(dict(supply_point=supply_point)))
 
         # set the checkpoint right before the data we are about to process
         meta_limit = meta.get('limit') or limit
@@ -165,7 +164,7 @@ def sync_stock_transactions_for_facility(domain, endpoint, facility, checkpoint,
             checkpoint, 'stock_transaction', meta_limit, meta_offset, date, location_id, True
         )
         transactions_to_add = []
-        with transaction.commit_on_success():
+        with transaction.atomic():
             for stocktransaction in stocktransactions:
                 params = dict(
                     form_id='logistics-xform',

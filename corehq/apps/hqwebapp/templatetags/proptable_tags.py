@@ -236,13 +236,22 @@ def render_tables(tables, options=None):
         })
 
 
-def get_definition(keys, num_columns=1, name=None):
+def get_default_definition(keys, num_columns=1, name=None, assume_phonetimes=True):
     """
     Get a default single table layout definition for `keys` split across
     `num_columns` columns.
-    
+
+    All datetimes will be treated as "phone times".
+    (See corehq.util.timezones.conversions.PhoneTime for more context.)
+
     """
-    layout = chunked([{"expr": prop} for prop in keys], num_columns)
+
+    # is_phone_time isn't necessary on non-datetime columns,
+    # but doesn't hurt either, and is easier than trying to detect.
+    # I believe no caller uses this on non-phone-time datetimes
+    # but if something does, we'll have to do this in a more targetted way
+    layout = chunked([{"expr": prop, "is_phone_time": assume_phonetimes}
+                      for prop in keys], num_columns)
 
     return [
         {

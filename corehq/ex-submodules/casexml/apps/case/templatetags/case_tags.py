@@ -44,7 +44,7 @@ def render_case(case, options):
     Uses options since Django 1.3 doesn't seem to support templatetag kwargs.
     Change to kwargs when we're on a version of Django that does.
     """
-    from corehq.apps.hqwebapp.templatetags.proptable_tags import get_tables_as_rows, get_definition
+    from corehq.apps.hqwebapp.templatetags.proptable_tags import get_tables_as_rows, get_default_definition
     case = wrapped_case(case)
     timezone = options.get('timezone', pytz.utc)
     timezone = timezone.localize(datetime.datetime.utcnow()).tzinfo
@@ -71,8 +71,8 @@ def render_case(case, options):
 
     if dynamic_data:
         dynamic_keys = sorted(dynamic_data.keys())
-        definition = get_definition(
-                dynamic_keys, num_columns=DYNAMIC_CASE_PROPERTIES_COLUMNS)
+        definition = get_default_definition(
+            dynamic_keys, num_columns=DYNAMIC_CASE_PROPERTIES_COLUMNS)
 
         dynamic_properties = _get_tables_as_rows(dynamic_data, definition)
     else:

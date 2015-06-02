@@ -75,7 +75,7 @@ class DataSourceBuilder(object):
             prop_map = get_case_properties(
                 self.app, [self.source_id], defaults=DEFAULT_CASE_PROPERTY_DATATYPES.keys()
             )
-            self.case_properties = list(prop_map[self.source_id] | {'closed'})
+            self.case_properties = list(set(prop_map[self.source_id]) | {'closed'})
 
     @property
     @memoized

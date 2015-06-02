@@ -2,9 +2,17 @@ from django.test.testcases import SimpleTestCase
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application, Module, OpenCaseAction, ParentSelect, OpenSubCaseAction, \
     AdvancedModule, LoadUpdateAction, AdvancedOpenCaseAction
+from mock import patch
 
 
 class CaseMetaTest(SimpleTestCase):
+    def setUp(self):
+        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
+        self.is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
+
+    def tearDown(self):
+        self.is_usercase_in_use_patch.stop()
+
     def _make_module(self, app, module_id, case_type):
         m = app.add_module(Module.new_module('Module{}'.format(module_id), lang='en'))
         m.case_type = case_type

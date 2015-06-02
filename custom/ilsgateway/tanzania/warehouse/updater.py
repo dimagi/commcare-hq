@@ -152,7 +152,7 @@ def not_responding_facility(org_summary):
         group_summary.save()
 
 
-@transaction.commit_on_success
+@transaction.atomic
 def update_product_availability_facility_data(org_summary):
     # product availability
 
@@ -239,7 +239,7 @@ def populate_report_data(start_date, end_date, domain, runner, locations=None, s
                 facilities
             )
 
-    facilities_chunked_list = chunked(facilities, 50)
+    facilities_chunked_list = chunked(facilities, 5)
     for chunk in facilities_chunked_list:
         res = chain(process_facility_warehouse_data.si(fac, start_date, end_date, runner) for fac in chunk)()
         res.get()
@@ -266,8 +266,14 @@ def process_facility_warehouse_data(facility, start_date, end_date, runner):
     process all the facility-level warehouse tables
     """
     logging.info("processing facility %s (%s)" % (facility.name, str(facility._id)))
-    runner.location = facility.sql_location
-    runner.save()
+    try:
+        runner.location = facility.sql_location
+        runner.save()
+    except SQLLocation.DoesNotExist:
+        # TODO Temporary fix
+        facility.delete()
+        return
+
     for alert_type in [const.SOH_NOT_RESPONDING, const.RR_NOT_RESPONDED, const.DELIVERY_NOT_RESPONDING]:
         alert = Alert.objects.filter(location_id=facility._id, date__gte=start_date, date__lt=end_date,
                                      type=alert_type)
@@ -279,7 +285,7 @@ def process_facility_warehouse_data(facility, start_date, end_date, runner):
         location_id=facility._id,
         status_date__gte=start_date,
         status_date__lt=end_date
-    ).order_by('status_date')
+    ).order_by('status_date').iterator()
     process_facility_statuses(location_id, new_statuses)
 
     new_reports = StockReport.objects.filter(
@@ -287,14 +293,14 @@ def process_facility_warehouse_data(facility, start_date, end_date, runner):
         date__gte=start_date,
         date__lt=end_date,
         stocktransaction__type='stockonhand'
-    ).order_by('date')
+    ).order_by('date').iterator()
     process_facility_product_reports(location_id, new_reports)
 
     new_trans = StockTransaction.objects.filter(
         case_id=supply_point_id,
         report__date__gte=start_date,
         report__date__lt=end_date,
-    ).exclude(type='consumption').order_by('report__date')
+    ).exclude(type='consumption').order_by('report__date').iterator()
     process_facility_transactions(location_id, new_trans)
 
     # go through all the possible values in the date ranges
@@ -415,7 +421,7 @@ def process_facility_product_reports(facility_id, reports):
         months_updated[warehouse_date] = None  # update the cache of stuff we've dealt with
 
 
-@transaction.commit_on_success
+@transaction.atomic
 def process_facility_transactions(facility_id, transactions):
     """
     For a given facility and list of transactions, update the appropriate
@@ -443,9 +449,9 @@ def process_facility_transactions(facility_id, transactions):
         product_data.save()
 
 
-def get_nested_children(location):
-    child_ids = location.sql_location.get_descendants().filter(
-        children__isnull=True
+def get_non_archived_facilities_below(location):
+    child_ids = location.sql_location.get_descendants(include_self=True).filter(
+        is_archived=False, location_type__name='FACILITY'
     ).values_list('location_id', flat=True)
     return [Location.wrap(doc) for doc in get_docs(Location.get_db(), child_ids)]
 
@@ -454,7 +460,7 @@ def get_nested_children(location):
 def process_non_facility_warehouse_data(location, start_date, end_date, runner, strict=True):
     runner.location = location.sql_location
     runner.save()
-    facs = get_nested_children(location)
+    facs = get_non_archived_facilities_below(location)
     fac_ids = [f._id for f in facs]
     logging.info("processing non-facility %s (%s), %s children" % (location.name, str(location._id), len(facs)))
     for year, month in months_between(start_date, end_date):

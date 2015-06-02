@@ -67,6 +67,7 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False,
             this_loc['children'] = [
                 loc_to_json(loc, project) for loc in
                 loc.child_locations(include_archive_ancestors=include_archived)
+                if user is None or user_can_view_location(user, loc, project)
             ]
             parent = this_loc
 
@@ -135,6 +136,7 @@ class LocationExporter(object):
         self.domain_obj = Domain.get_by_name(domain)
         self.include_consumption_flag = include_consumption
         self.data_model = get_location_data_model(domain)
+        self.administrative_types = {}
 
     @property
     @memoized

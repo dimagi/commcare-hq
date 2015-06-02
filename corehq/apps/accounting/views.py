@@ -196,7 +196,7 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
             return HttpResponseRedirect(self.page_url)
         elif ('account_contact' in self.request.POST
               and self.contact_form.is_valid()):
-            self.contact_form.update_contact_info(self.account)
+            self.contact_form.save()
             messages.success(request, "Account Contact Info successfully updated.")
             return HttpResponseRedirect(self.page_url)
         elif ('adjust_credit' in self.request.POST
@@ -606,7 +606,7 @@ class TriggerBookkeeperEmailView(AccountingSectionView):
 
 
 class TestRenewalEmailView(AccountingSectionView):
-    urlname = 'accocunting_test_renewal_email'
+    urlname = 'accounting_test_renewal_email'
     page_title = "Test Renewal Reminder Email"
     template_name = 'accounting/test_reminder_emails.html'
 

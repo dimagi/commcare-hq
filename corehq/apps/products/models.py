@@ -297,7 +297,7 @@ class SQLProduct(models.Model):
     name = models.CharField(max_length=100, null=True)
     is_archived = models.BooleanField(default=False)
     code = models.CharField(max_length=100, default='', null=True)
-    description = models.CharField(max_length=100, null=True, default='')
+    description = models.TextField(null=True, default='')
     category = models.CharField(max_length=100, null=True, default='')
     program_id = models.CharField(max_length=100, null=True, default='')
     cost = models.DecimalField(max_digits=20, decimal_places=5, null=True)
