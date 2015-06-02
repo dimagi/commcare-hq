@@ -270,7 +270,7 @@ class CommtrackConfig(CachedCouchDocumentMixin, Document):
         from casexml.apps.phone.restore import StockSettings
         default_product_ids = Product.ids_by_domain(self.domain) \
             if self.ota_restore_config.use_dynamic_product_list else []
-        case_filter = lambda case: case.type in set(self.ota_restore_config.force_consumption_case_types)
+        case_filter = lambda stub: stub.type in set(self.ota_restore_config.force_consumption_case_types)
         return StockSettings(
             section_to_consumption_types=self.ota_restore_config.section_to_consumption_types,
             consumption_config=self.get_consumption_config(),
