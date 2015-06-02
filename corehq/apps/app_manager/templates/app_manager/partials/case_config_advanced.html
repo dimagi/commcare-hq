@@ -36,7 +36,7 @@
             <div data-bind="template: 'case-config:case-transaction:case-properties'"></div>
         </div>
     </div>
-    <!-- ko if: !auto_select || auto_select.mode() !== 'usercase' -->
+    <!-- ko if:  actionType !== 'load' || !auto_select || auto_select.mode() !== 'usercase' -->
     <div class="well well-small">
         <div class="form-inline">
         <!-- ko if:  actionType === 'load' -->
