@@ -264,7 +264,6 @@ class SyncTokenUpdateTest(SyncBaseTest):
         # add new index
         new_case_id = 'new_case_id'
         new_index_id = 'new_index_id'
-        new_index_type = 'new_index_type'
 
         self.factory.create_or_update_case(CaseStructure(
             case_id=child_id,
