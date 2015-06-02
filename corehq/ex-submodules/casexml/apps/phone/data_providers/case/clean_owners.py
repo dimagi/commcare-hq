@@ -6,6 +6,7 @@ from casexml.apps.case.dbaccessors import get_open_case_ids
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone import xml
 from casexml.apps.phone.cleanliness import get_case_footprint_info
+from casexml.apps.phone.data_providers.case.load_testing import append_update_to_response
 from casexml.apps.phone.data_providers.case.utils import get_case_sync_updates
 from casexml.apps.phone.models import OwnershipCleanlinessFlag, LOG_FORMAT_SIMPLIFIED, IndexTree, SimplifiedSyncLog
 from corehq.apps.users.cases import get_owner_id
@@ -76,12 +77,11 @@ class CleanOwnerCaseSyncOperation(object):
             )
             for update in updates:
                 case = update.case
-                element = xml.get_case_element(case, update.required_updates, self.restore_state.version)
-                response.append(element)
+                append_update_to_response(response, update, self.restore_state)
 
                 # update the indices in the new sync log
                 if case.indices:
-                    all_indices[case._id] = set([index.referenced_id for index in case.indices])
+                    all_indices[case._id] = {index.identifier: index.referenced_id for index in case.indices}
                     # and double check footprint for non-live cases
                     for index in case.indices:
                         if index.referenced_id not in all_syncing:
@@ -108,7 +108,7 @@ class CleanOwnerCaseSyncOperation(object):
                 self.restore_state.last_sync_log.dependent_case_ids_on_phone -
                 primary_cases_syncing
             )
-            index_tree = index_tree | self.restore_state.last_sync_log.index_tree
+            index_tree = self.restore_state.last_sync_log.index_tree.apply_updates(index_tree)
 
         self.restore_state.current_sync_log.case_ids_on_phone = case_ids_on_phone
         self.restore_state.current_sync_log.dependent_case_ids_on_phone = all_dependencies_syncing
@@ -156,16 +156,15 @@ def case_needs_to_sync(case, last_sync_log):
     if not last_sync_log or owner_id not in last_sync_log.owner_ids_on_phone:
         # initial sync or new owner IDs always sync down everything
         return True
-    elif case.server_modified_on < last_sync_log.date:
-        # if the case wasn't touched since last sync, and the phone was aware of this owner_id last time
-        # don't worry about it
-        return False
-    else:
+    elif case.server_modified_on >= last_sync_log.date:
         # check all of the actions since last sync for one that had a different sync token
         return any(filter(
             lambda action: action.server_date > last_sync_log.date and action.sync_log_id != last_sync_log._id,
             case.actions,
         ))
+    # if the case wasn't touched since last sync, and the phone was aware of this owner_id last time
+    # don't worry about it
+    return False
 
 
 def pop_ids(set_, how_many):

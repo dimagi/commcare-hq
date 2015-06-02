@@ -46,7 +46,6 @@ branches:
   - subscription-no-contact-info # bb 8/4
   - vellum-staging # J$ 11/13
   - fixtures-spike  # cz 1/29
-  - usercase # Norman 3/27
   - case-list-menu-icons+langMedia # TS 5/4
   - update-submodules # TS 5/6
   - locations-for-robber-barons  # Ethan 5/7

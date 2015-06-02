@@ -45,19 +45,33 @@ def state_stock_category(state):
 def get_current_ledger_transactions(case_id):
     """
     Given a case returns a dict of all current ledger data.
+    {
+        "section_id": {
+             "product_id": StockTransaction,
+             "product_id": StockTransaction,
+             ...
+        },
+        ...
+    }
     """
-    trans = get_current_ledger_transactions_multi([case_id])
-    return trans[case_id]
+    from corehq.apps.commtrack.models import StockState
+    results = StockState.objects.filter(case_id=case_id).values_list('case_id', 'section_id', 'product_id')
+
+    ret = {}
+    for case_id, section_id, product_id in results:
+        sections = ret.setdefault(section_id, {})
+        sections[product_id] = StockTransaction.latest(case_id, section_id, product_id)
+    return ret
 
 
-def get_current_ledger_transactions_multi(case_ids):
+def get_current_ledger_state(case_ids):
     """
     Given a list of cases returns a dict of all current ledger data of the following format:
     {
         "case_id": {
             "section_id": {
-                 "product_id": StockTransaction,
-                 "product_id": StockTransaction,
+                 "product_id": StockState,
+                 "product_id": StockState,
                  ...
             },
             ...
@@ -66,16 +80,16 @@ def get_current_ledger_transactions_multi(case_ids):
     }
     Where you get one stock transaction per product/section which is the last one seen.
     """
+    from corehq.apps.commtrack.models import StockState
     if not case_ids:
         return {}
 
-    results = StockTransaction.objects.filter(
+    states = StockState.objects.filter(
         case_id__in=case_ids
-    ).values_list('case_id', 'section_id', 'product_id').distinct()
-
+    )
     ret = {case_id: {} for case_id in case_ids}
-    for case_id, section_id, product_id in results:
-        sections = ret[case_id].setdefault(section_id, {})
-        sections[product_id] = StockTransaction.latest(case_id, section_id, product_id)
+    for state in states:
+        sections = ret[state.case_id].setdefault(state.section_id, {})
+        sections[state.product_id] = state
 
     return ret

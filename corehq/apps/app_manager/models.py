@@ -100,6 +100,7 @@ AUTO_SELECT_USER = 'user'
 AUTO_SELECT_FIXTURE = 'fixture'
 AUTO_SELECT_CASE = 'case'
 AUTO_SELECT_RAW = 'raw'
+AUTO_SELECT_USERCASE = 'usercase'
 
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 
@@ -368,7 +369,11 @@ class AutoSelectCase(DocumentSchema):
                         xpath expression.
 
     """
-    mode = StringProperty(choices=[AUTO_SELECT_USER, AUTO_SELECT_FIXTURE, AUTO_SELECT_CASE, AUTO_SELECT_RAW])
+    mode = StringProperty(choices=[AUTO_SELECT_USER,
+                                   AUTO_SELECT_FIXTURE,
+                                   AUTO_SELECT_CASE,
+                                   AUTO_SELECT_USERCASE,
+                                   AUTO_SELECT_RAW])
     value_source = StringProperty()
     value_key = StringProperty(required=True)
 
@@ -488,6 +493,7 @@ class AdvancedFormActions(DocumentSchema):
                 AUTO_SELECT_USER: [],
                 AUTO_SELECT_CASE: [],
                 AUTO_SELECT_FIXTURE: [],
+                AUTO_SELECT_USERCASE: [],
                 AUTO_SELECT_RAW: [],
             }
         }
@@ -1276,7 +1282,6 @@ class GraphSeries(DocumentSchema):
     data_path = StringProperty()
     x_function = StringProperty()
     y_function = StringProperty()
-    radius_function = StringProperty()
 
 
 class GraphConfiguration(DocumentSchema):
@@ -1971,13 +1976,14 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             if isinstance(action, LoadUpdateAction) and action.auto_select:
                 mode = action.auto_select.mode
                 if not action.auto_select.value_key:
-                    key_name = {
+                    key_names = {
                         AUTO_SELECT_CASE: _('Case property'),
                         AUTO_SELECT_FIXTURE: _('Lookup Table field'),
                         AUTO_SELECT_USER: _('custom user property'),
                         AUTO_SELECT_RAW: _('custom XPath expression'),
-                    }[mode]
-                    errors.append({'type': 'auto select key', 'key_name': key_name})
+                    }
+                    if mode in key_names:
+                        errors.append({'type': 'auto select key', 'key_name': key_names[mode]})
 
                 if not action.auto_select.value_source:
                     source_names = {
@@ -2742,29 +2748,16 @@ class ReportAppConfig(DocumentSchema):
                     def _column_to_series(column):
                         return suite_xml.Series(
                             nodeset="instance('reports')/reports/report[@id='{}']/rows/row".format(self.report_id),
-                            x_function='@index',
+                            x_function="column[@id='{}']".format(chart_config.x_axis_column),
                             y_function="column[@id='{}']".format(column),
-                            radius_function='5',
                         )
-                    _xlabels_xpath = (
-                        "instance('reports')/reports/report[@id='{}']/xlabels[@column='{}']"
-                        .format(self.report_id, chart_config.x_axis_column)
-                    )
                     yield suite_xml.Field(
                         header=suite_xml.Header(text=suite_xml.Text()),
                         template=suite_xml.GraphTemplate(
                             form='graph',
                             graph=suite_xml.Graph(
-                                type='xy',
+                                type='bar',
                                 series=[_column_to_series(c) for c in chart_config.y_axis_columns],
-                                configuration=suite_xml.ConfigurationGroup(
-                                    configs=[suite_xml.ConfigurationItem(
-                                        id='x-labels',
-                                        xpath=suite_xml.Xpath(
-                                            function=_xlabels_xpath
-                                        )
-                                    )]
-                                )
                             )
                         )
                     )

@@ -7,10 +7,40 @@ from casexml.apps.case.util import get_indexed_cases
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.toggles import OWNERSHIP_CLEANLINESS
+from django.conf import settings
 
 
 FootprintInfo = namedtuple('FootprintInfo', ['base_ids', 'all_ids'])
 CleanlinessFlag = namedtuple('CleanlinessFlag', ['is_clean', 'hint'])
+
+
+def should_track_cleanliness(domain):
+    """
+    Whether a domain should track cleanliness on submission.
+    """
+    if settings.UNIT_TESTING:
+        override = getattr(
+            settings, 'TESTS_SHOULD_TRACK_CLEANLINESS', None)
+        if override is not None:
+            return override
+
+    return domain and OWNERSHIP_CLEANLINESS.enabled(domain)
+
+
+def should_create_flags_on_submission(domain):
+    """
+    Whether a domain should create default cleanliness flags on submission.
+
+    Right now this is only ever true for tests, though that might change once we more fully
+    switch over to this restore model (requires having a complete set of existing cleanliness
+    flags already in the database).
+    """
+    if settings.UNIT_TESTING:
+        override = getattr(
+            settings, 'TESTS_SHOULD_TRACK_CLEANLINESS', None)
+        if override is not None:
+            return override
+    return False
 
 
 def set_cleanliness_flags_for_domain(domain):
