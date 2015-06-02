@@ -10,6 +10,7 @@ from corehq.apps.app_manager.xpath import (
     XPath,
     dot_interpolate,
     UserCaseXPath)
+from corehq.apps.hqmedia.models import CommCareMultimedia
 
 CASE_PROPERTY_MAP = {
     # IMPORTANT: if you edit this you probably want to also edit
@@ -318,21 +319,35 @@ class Enum(FormattedDetailColumn):
         return variables
 
 
-#jls
-# all_media from domain for current app
 @register_format_type('enum-image')
 class EnumImage(Enum):
     template_form = 'image'
-    header_width = '13%'
-    template_width = '13%'
+
+    @property
+    def header_width(self):
+        return self.template_width
+
+    @property
+    def template_width(self):
+        '''
+        Set column width to accommodate widest image.
+        '''
+        width = 0
+        for i, item in enumerate(self.column.enum):
+            for path in item.value.values():
+                map_item = self.app.multimedia_map[path]
+                if map_item is not None:
+                    image = CommCareMultimedia.get(map_item.multimedia_id)
+                    if image is not None:
+                        for media in image.aux_media:
+                            width = max(width, media.media_meta['size']['width'])
+        if width == 0:
+            return '13%'
+        return str(width)
 
     '''
     @property
     def xpath_function(self):
-        import pdb; pdb.set_trace()
-        #CommCareMultimedia.get(self.app.multimedia_map['jr://file/commcare/image/data/five.jpg'].multimedia_id).aux_media[0].media_meta['size'][‘width’]
-
-        for i, item in enumerate(self.column.enum):
             parts.append(
                 xpath_fragment_template.format(
                     key=item.key,
