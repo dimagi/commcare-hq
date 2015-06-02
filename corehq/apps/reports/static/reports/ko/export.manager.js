@@ -320,7 +320,9 @@ var ExportManager = function (o) {
         var $button = $(event.srcElement || event.currentTarget),
             xmlns = $button.data('xmlns'),
             downloadUrl = $button.data('downloadurl') + '&xmlns=' + xmlns,
-            title = $button.data('modulename') + " > " + $button.data('formname');
+            title = $button.data('modulename');
+
+        title = $button.data('formname').length ? title + " > " + $button.data('formname') : title;
 
         resetModal("'" + title + "' (multimedia)", true);
 

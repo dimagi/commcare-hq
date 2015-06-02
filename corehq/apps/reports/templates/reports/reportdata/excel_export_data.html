@@ -326,7 +326,7 @@
                             {% else %}
                                 data-downloadurl='{% url "form_multimedia_export" domain %}?{{ get_filter_params.urlencode|safe }}'
                             {% endif %}
-                            data-xmlns={{form.xmlns}}
+                            data-xmlns="{{form.xmlns}}"
                             data-modulename="{% if form.has_app and form.module %}{{ form.module.name|trans:form.app.langs }}{% endif %}"
                             data-formname="{% include 'reports/partials/form_name.html' %}"
                             data-bind='click: requestMultimediaDownload'
