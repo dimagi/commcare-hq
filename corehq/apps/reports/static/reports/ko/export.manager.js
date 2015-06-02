@@ -316,6 +316,22 @@ var ExportManager = function (o) {
         });
     };
 
+    self.requestMultimediaDownload = function(data, event){
+        var $button = $(event.srcElement || event.currentTarget),
+            xmlns = $button.data('xmlns'),
+            downloadUrl = $button.data('downloadurl') + '&xmlns=' + xmlns,
+            title = $button.data('modulename') + " > " + $button.data('formname');
+
+        resetModal("'" + title + "' (multimedia)", true);
+
+        self.downloadExport({
+            downloadUrl: downloadUrl,
+            xmlns: xmlns,
+            isBulkDownload: "multimedia",
+            exportName: xmlns
+        });
+    };
+
     self.checkCustomSheetNameLength = function(data, event) {
         var src = event.srcElement || event.currentTarget;
         var $input = $(src);
