@@ -1,4 +1,5 @@
 from alembic.autogenerate.api import compare_metadata
+import gevent
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.userreports.exceptions import TableRebuildError
 from corehq.apps.userreports.models import DataSourceConfiguration, CustomDataSourceConfiguration
@@ -79,11 +80,20 @@ class ConfigurableIndicatorPillow(PythonPillow):
         return super(ConfigurableIndicatorPillow, self).change_trigger(changes_dict)
 
     def change_transport(self, doc):
+        jobs = []
+
         for table in self.tables:
-            if table.config.filter(doc):
-                table.save(doc)
-            elif table.config.deleted_filter(doc):
-                table.delete(doc)
+            jobs.append(gevent.spawn(self._transport_one, table, doc))
+
+        gevent.joinall(jobs)
+
+    def _transport_one(self, table, doc):
+        if table.config.filter(doc):
+            table.save(doc)
+        elif table.config.deleted_filter(doc):
+            table.delete(doc)
+
+
 
     def set_checkpoint(self, change):
         # override this to rebootstrap the tables
