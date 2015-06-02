@@ -1,5 +1,6 @@
 from collections import defaultdict
 from functools import wraps
+from unittest.util import strclass
 from couchdbkit.ext.django import loading
 from couchdbkit.ext.django.testrunner import CouchDbKitTestSuiteRunner
 import datetime
@@ -108,11 +109,37 @@ class TimingTestSuite(unittest.TestSuite):
 
         klass.__call__ = new_call
 
+        original_setUpClass = getattr(klass, 'setUpClass', None)
+        if original_setUpClass:
+            @wraps(original_setUpClass)
+            def new_setUpClass(cls, *args, **kwargs):
+                start = datetime.datetime.utcnow()
+                result = original_setUpClass(*args, **kwargs)
+                end = datetime.datetime.utcnow()
+                suite.test_times.append((cls.setUpClass, end - start))
+                return result
+            klass.setUpClass = classmethod(new_setUpClass)
+
         self._patched_test_classes.add(klass)
 
     def addTest(self, test):
         self.patch_test_class(test.__class__)
         super(TimingTestSuite, self).addTest(test)
+
+    @staticmethod
+    def get_test_class(method):
+        """
+        return the TestCase class associated with method
+
+        method can either be a test_* method, or setUpClass
+
+        """
+        try:
+            # setUpClass
+            return method.im_self
+        except AttributeError:
+            # test_* method
+            return method.__class__
 
 
 class TwoStageTestRunner(HqTestSuiteRunner):
@@ -248,7 +275,7 @@ class TwoStageTestRunner(HqTestSuiteRunner):
     def print_test_times_by_class(self, suite, percent=.5):
         times_by_class = defaultdict(datetime.timedelta)
         for test, test_time in suite.test_times:
-            times_by_class[test.__class__.__name__] += test_time
+            times_by_class[strclass(TimingTestSuite.get_test_class(test))] += test_time
         self._print_test_times(
             sorted(times_by_class.items(), key=lambda x: x[1], reverse=True),
             percent,
