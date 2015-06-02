@@ -96,7 +96,12 @@ from corehq.apps.reports.models import (
     HQGroupExportConfiguration
 )
 from corehq.apps.reports.standard.cases.basic import CaseListReport
-from corehq.apps.reports.tasks import create_metadata_export, rebuild_export_async, send_delayed_report
+from corehq.apps.reports.tasks import (
+    create_metadata_export,
+    rebuild_export_async,
+    send_delayed_report,
+    build_form_multimedia_zip,
+)
 from corehq.apps.reports import util
 from corehq.apps.reports.util import (
     get_all_users_by_domain,
@@ -1431,107 +1436,20 @@ def find_question_id(form, value):
 @require_form_view_permission
 @require_GET
 def form_multimedia_export(request, domain):
+    print "form_multimedia_export"
+    task_kwargs = {'domain': domain}
     try:
-        xmlns = request.GET["xmlns"]
-        startdate = request.GET["startdate"]
-        enddate = request.GET["enddate"]
-        enddate = json_format_date(string_to_datetime(enddate) + timedelta(days=1))
-        app_id = request.GET.get("app_id", None)
-        export_id = request.GET.get("export_id", None)
-        zip_name = request.GET.get("name", None)
+        task_kwargs['xmlns'] = request.GET["xmlns"]
+        task_kwargs['startdate'] = request.GET["startdate"]
+        task_kwargs['enddate'] = request.GET["enddate"]
+        task_kwargs['enddate'] = json_format_date(string_to_datetime(task_kwargs['enddate']) + timedelta(days=1))
+        task_kwargs['app_id'] = request.GET.get("app_id", None)
+        task_kwargs['export_id'] = request.GET.get("export_id", None)
+        task_kwargs['zip_name'] = request.GET.get("name", None)
     except (KeyError, ValueError):
         return HttpResponseBadRequest()
 
-    def filename(form_info, question_id, extension):
-        fname = u"%s-%s-%s-%s%s"
-        if form_info['cases']:
-            fname = u'-'.join(form_info['cases']) + u'-' + fname
-        return fname % (form_info['name'],
-                        unidecode(question_id),
-                        form_info['user'],
-                        form_info['id'], extension)
+    download = DownloadBase()
+    download.set_task(build_form_multimedia_zip.delay(**task_kwargs))
 
-    case_ids = set()
-
-    def extract_form_info(form, properties=None, case_ids=case_ids):
-        unknown_number = 0
-        meta = form['form'].get('meta', dict())
-        # get case ids
-        case_blocks = extract_case_blocks(form)
-        cases = {c['@case_id'] for c in case_blocks}
-        case_ids |= cases
-
-        form_info = {
-            'form': form,
-            'attachments': list(),
-            'name': form['form'].get('@name', 'unknown form'),
-            'user': meta.get('username', 'unknown_user'),
-            'cases': cases,
-            'id': form['_id']
-        }
-        for k, v in form['_attachments'].iteritems():
-            if v['content_type'] == 'text/xml':
-                continue
-            try:
-                question_id = unicode(u'-'.join(find_question_id(form['form'], k)))
-            except TypeError:
-                question_id = unicode(u'unknown' + unicode(unknown_number))
-                unknown_number += 1
-
-            if not properties or question_id in properties:
-                extension = unicode(os.path.splitext(k)[1])
-                form_info['attachments'].append({
-                    'size': v['length'],
-                    'name': k,
-                    'question_id': question_id,
-                    'extension': extension,
-                    'timestamp': parse(form['received_on']).timetuple(),
-                })
-
-        return form_info
-
-    key = [domain, app_id, xmlns]
-    form_ids = {f['id'] for f in XFormInstance.get_db().view("attachments/attachments",
-                                         start_key=key + [startdate],
-                                         end_key=key + [enddate, {}],
-                                         reduce=False)}
-
-    properties = set()
-    if export_id:
-        schema = FormExportSchema.get(export_id)
-        for table in schema.tables:
-            # - in question id is replaced by . in excel exports
-            properties |= {c.display.replace('.', '-') for c in table.columns}
-
-    if not app_id:
-        zip_name = 'Unrelated Form'
-    forms_info = list()
-    for form in iter_docs(XFormInstance.get_db(), form_ids):
-        if not zip_name:
-            zip_name = form['form'].get('@name', 'unknown form')
-        forms_info.append(extract_form_info(form, properties))
-
-    # get case names
-    case_id_to_name = {c: c for c in case_ids}
-    for case in iter_docs(CommCareCase.get_db(), case_ids):
-        if case['name']:
-            case_id_to_name[case['_id']] = case['name']
-
-    stream_file = cStringIO.StringIO()
-    size = 22  # overhead for a zipfile
-    zf = zipfile.ZipFile(stream_file, mode='w', compression=zipfile.ZIP_STORED)
-    for form_info in forms_info:
-        f = XFormInstance.wrap(form_info['form'])
-        form_info['cases'] = {case_id_to_name[case_id] for case_id in form_info['cases']}
-        for a in form_info['attachments']:
-            fname = filename(form_info, a['question_id'], a['extension'])
-            zi = zipfile.ZipInfo(fname, a['timestamp'])
-            zf.writestr(zi, f.fetch_attachment(a['name'], stream=True).read())
-            size += a['size'] + 88 + 2 * len(fname)  # zip file overhead
-
-    zf.close()
-
-    response = HttpResponse(stream_file.getvalue(), mimetype="application/zip")
-    response['Content-Length'] = size
-    response['Content-Disposition'] = 'attachment; filename=%s.zip' % unidecode(zip_name)
-    return response
+    return download.get_start_response()
