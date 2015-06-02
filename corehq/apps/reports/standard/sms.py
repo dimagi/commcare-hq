@@ -339,9 +339,29 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
         content_type = dict(MessagingEvent.CONTENT_CHOICES).get(event.content_type)
         return '%s | %s' % (_(source), _(content_type))
 
-    def get_status_display(self, status):
+    def get_status_display(self, event, sms=None):
+        """
+        event can be a MessagingEvent or MessagingSubEvent
+        """
+        if event.status != MessagingEvent.STATUS_ERROR and sms and sms.error:
+            status = MessagingEvent.STATUS_ERROR
+            error_code = sms.system_error_message
+        else:
+            status = event.status
+            error_code = event.error_code
+            if status == MessagingEvent.STATUS_ERROR and not error_code:
+                error_code = MessagingEvent.ERROR_SUBEVENT_ERROR
+        status_display = dict(MessagingEvent.STATUS_CHOICES).get(status)
+        return (_(status_display), error_code)
+
+    def get_sms_status_display(self, sms):
+        if sms.error:
+            status = MessagingEvent.STATUS_ERROR
+        else:
+            status = MessagingEvent.STATUS_COMPLETED
         status = dict(MessagingEvent.STATUS_CHOICES).get(status)
-        return _(status)
+        error_code = sms.system_error_message
+        return (_(status), error_code)
 
     def get_keyword_display(self, keyword_id, content_cache):
         if keyword_id in content_cache:
@@ -420,6 +440,7 @@ class MessagingEventsReport(BaseMessagingEventReport):
             DataTablesColumn(_('Type')),
             DataTablesColumn(_('Recipient')),
             DataTablesColumn(_('Status')),
+            DataTablesColumn(_('Error Message')),
             DataTablesColumn(_('Detail')),
         )
         header.custom_sort = [[0, 'desc']]
@@ -442,12 +463,14 @@ class MessagingEventsReport(BaseMessagingEventReport):
                 event.recipient_id, contact_cache)
 
             timestamp = ServerTime(event.date).user_time(self.timezone).done()
+            status, error_message = self.get_status_display(event)
             result.append([
                 self._fmt_timestamp(timestamp),
                 self.get_content_display(event, content_cache),
                 self.get_source_display(event),
                 self._fmt_contact_link(event.recipient_id, doc_info),
-                self.get_status_display(event.status),
+                self._fmt(status),
+                self._fmt(error_message),
                 self.get_event_detail_link(event),
             ])
 
@@ -472,6 +495,7 @@ class MessageEventDetailReport(BaseMessagingEventReport):
             DataTablesColumn(_('Direction')),
             DataTablesColumn(_('Gateway')),
             DataTablesColumn(_('Status')),
+            DataTablesColumn(_('Error Message')),
         )
 
     def get_messaging_event(self):
@@ -500,6 +524,7 @@ class MessageEventDetailReport(BaseMessagingEventReport):
             if messaging_subevent.content_type == MessagingEvent.CONTENT_SMS:
                 for sms in SMS.objects.filter(messaging_subevent_id=messaging_subevent.pk):
                     timestamp = ServerTime(sms.date).user_time(self.timezone).done()
+                    status, error_message = self.get_status_display(messaging_subevent, sms)
                     result.append([
                         self._fmt_timestamp(timestamp),
                         self._fmt_contact_link(messaging_subevent.recipient_id, doc_info),
@@ -507,9 +532,11 @@ class MessageEventDetailReport(BaseMessagingEventReport):
                         sms.phone_number,
                         self._fmt_direction(sms.direction),
                         sms.backend_api,
-                        self.get_status_display(messaging_subevent.status),
+                        self._fmt(status),
+                        self._fmt(error_message),
                     ])
             elif messaging_subevent.content_type == MessagingEvent.CONTENT_SMS_SURVEY:
+                status, error_message = self.get_status_display(messaging_subevent)
                 xforms_session = messaging_subevent.xforms_session
                 timestamp = ServerTime(xforms_session.start_time).user_time(self.timezone).done()
                 result.append([
@@ -519,7 +546,8 @@ class MessageEventDetailReport(BaseMessagingEventReport):
                     '-',
                     '-',
                     '-',
-                    self.get_status_display(messaging_subevent.status),
+                    self._fmt(status),
+                    self._fmt(error_message),
                 ])
         return result
 
@@ -553,6 +581,7 @@ class SurveyDetailReport(BaseMessagingEventReport):
             DataTablesColumn(_('Direction')),
             DataTablesColumn(_('Gateway')),
             DataTablesColumn(_('Status')),
+            DataTablesColumn(_('Error Message')),
         )
 
     @property
@@ -577,12 +606,14 @@ class SurveyDetailReport(BaseMessagingEventReport):
         xforms_session = self.xforms_session
         for sms in SMS.objects.filter(xforms_session_couch_id=xforms_session.couch_id):
             timestamp = ServerTime(sms.date).user_time(self.timezone).done()
+            status, error_message = self.get_sms_status_display(sms)
             result.append([
                 self._fmt_timestamp(timestamp),
                 sms.text,
                 sms.phone_number,
                 self._fmt_direction(sms.direction),
                 sms.backend_api,
-                '-',
+                self._fmt(status),
+                self._fmt(error_message),
             ])
         return result

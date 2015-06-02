@@ -748,6 +748,34 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     ERROR_MULTIPLE_CASES_WITH_EXTERNAL_ID_FOUND = 'MULTIPLE_CASES_WITH_EXTERNAL_ID_FOUND'
     ERROR_NO_EXTERNAL_ID_GIVEN = 'NO_EXTERNAL_ID_GIVEN'
     ERROR_COULD_NOT_PROCESS_STRUCTURED_SMS = 'COULD_NOT_PROCESS_STRUCTURED_SMS'
+    ERROR_SUBEVENT_ERROR = 'SUBEVENT_ERROR'
+
+    ERROR_MESSAGES = {
+        ERROR_NO_RECIPIENT:
+            ugettext_noop('No recipient'),
+        ERROR_CANNOT_RENDER_MESSAGE:
+            ugettext_noop('Error rendering message; please check syntax.'),
+        ERROR_NO_PHONE_NUMBER:
+            ugettext_noop('Contact has no phone number.'),
+        ERROR_NO_TWO_WAY_PHONE_NUMBER:
+            ugettext_noop('Contact has no two-way phone number.'),
+        ERROR_INVALID_CUSTOM_CONTENT_HANDLER:
+            ugettext_noop('Invalid custom content handler.'),
+        ERROR_CANNOT_LOAD_CUSTOM_CONTENT_HANDLER:
+            ugettext_noop('Cannot load custom content handler.'),
+        ERROR_CANNOT_FIND_FORM:
+            ugettext_noop('Cannot find form.'),
+        ERROR_CASE_EXTERNAL_ID_NOT_FOUND:
+            ugettext_noop('The case with the given external ID was not found.'),
+        ERROR_MULTIPLE_CASES_WITH_EXTERNAL_ID_FOUND:
+            ugettext_noop('Multiple cases were found with the given external ID.'),
+        ERROR_NO_EXTERNAL_ID_GIVEN:
+            ugettext_noop('No external ID given; please include case external ID after keyword.'),
+        ERROR_COULD_NOT_PROCESS_STRUCTURED_SMS:
+            ugettext_noop('Error processing structured SMS.'),
+        ERROR_SUBEVENT_ERROR:
+            ugettext_noop('View details for more information.'),
+    }
 
     domain = models.CharField(max_length=255, null=False, db_index=True)
     date = models.DateTimeField(null=False, db_index=True)
@@ -924,6 +952,13 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
     case_id = models.CharField(max_length=255, null=True)
     status = models.CharField(max_length=3, choices=MessagingEvent.STATUS_CHOICES, null=False)
     error_code = models.CharField(max_length=255, null=True)
+
+    def save(self, *args, **kwargs):
+        super(MessagingSubEvent, self).save(*args, **kwargs)
+        if self.status == MessagingEvent.STATUS_ERROR:
+            parent = self.parent
+            parent.status = MessagingEvent.STATUS_ERROR
+            parent.save()
 
     def get_recipient_doc_type(self):
         return MessagingEvent._get_recipient_doc_type(self.recipient_type)
