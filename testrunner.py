@@ -1,3 +1,4 @@
+from collections import defaultdict
 from functools import wraps
 from couchdbkit.ext.django import loading
 from couchdbkit.ext.django.testrunner import CouchDbKitTestSuiteRunner
@@ -208,11 +209,18 @@ class TwoStageTestRunner(HqTestSuiteRunner):
         return failures
 
     def print_test_times(self, suite, percent=.5):
-        total_time = reduce(
+        self.print_test_times_by_test(suite, percent)
+        self.print_test_times_by_class(suite, percent)
+
+    def _get_total_time(self, time_tuples):
+        return reduce(
             lambda x, y: x + y,
-            (test_time for _, test_time in suite.test_times),
+            (test_time for _, test_time in time_tuples),
             datetime.timedelta(seconds=0)
         )
+
+    def _print_test_times(self, sorted_times, percent):
+        total_time = self._get_total_time(sorted_times)
         rounded_total_time = total_time - datetime.timedelta(
             microseconds=total_time.microseconds
         )
@@ -225,11 +233,26 @@ class TwoStageTestRunner(HqTestSuiteRunner):
                 rounded_total_time,
             )
         )
-        for test, test_time in sorted(suite.test_times, key=lambda x: x[1], reverse=True):
+        for test, test_time in sorted_times:
             cumulative_time += test_time
             print ' ', test, test_time
             if cumulative_time > total_time / 2:
                 break
+
+    def print_test_times_by_test(self, suite, percent=.5):
+        self._print_test_times(
+            sorted(suite.test_times, key=lambda x: x[1], reverse=True),
+            percent,
+        )
+
+    def print_test_times_by_class(self, suite, percent=.5):
+        times_by_class = defaultdict(datetime.timedelta)
+        for test, test_time in suite.test_times:
+            times_by_class[test.__class__.__name__] += test_time
+        self._print_test_times(
+            sorted(times_by_class.items(), key=lambda x: x[1], reverse=True),
+            percent,
+        )
 
 
 class NonDbOnlyTestRunner(TwoStageTestRunner):
