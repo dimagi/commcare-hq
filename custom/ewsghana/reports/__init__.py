@@ -111,31 +111,9 @@ class EWSData(object):
 
 
 class ReportingRatesData(EWSData):
-    def get_supply_points(self, location_id=None):
-        location = SQLLocation.objects.get(location_id=location_id) if location_id else self.location
-        location_types = self.reporting_types()
-        if location.location_type.name == 'district':
-            locations = SQLLocation.objects.filter(parent=location)
-        elif location.location_type.name == 'region':
-            locations = SQLLocation.objects.filter(
-                Q(parent__parent=location) | Q(parent=location, location_type__name__in=location_types)
-            )
-        elif location.location_type in location_types:
-            locations = SQLLocation.objects.filter(id=location.id)
-        else:
-            locations = SQLLocation.objects.filter(
-                domain=self.domain,
-                location_type__name__in=location_types,
-                parent=location
-            )
-        return locations.exclude(supply_point_id__isnull=True).exclude(is_archived=True)
-
-    def supply_points_list(self, location_id=None):
-        return self.get_supply_points(location_id).values_list('supply_point_id')
-
     def reporting_supply_points(self, supply_points=None):
         if not supply_points:
-            supply_points = self.get_supply_points().values_list('supply_point_id', flat=True)
+            supply_points = get_supply_points(self.location_id).values_list('supply_point_id', flat=True)
         return StockTransaction.objects.filter(
             case_id__in=supply_points,
             report__date__range=[self.config['startdate'], self.config['enddate']]
@@ -146,11 +124,6 @@ class ReportingRatesData(EWSData):
         return "last %d days" % (today - self.config['startdate']).days if today == self.config['enddate'] else\
             "%s to %s" % (self.config['startdate'].strftime("%Y-%m-%d"),
                           self.config['enddate'].strftime("%Y-%m-%d"))
-
-    def all_reporting_locations(self):
-        return SQLLocation.objects.filter(
-            domain=self.domain, location_type__administrative=False, is_archived=False
-        ).values_list('supply_point_id', flat=True)
 
 
 class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParametersMixin, DatespanMixin):
@@ -307,7 +280,7 @@ class ProductSelectionPane(EWSData):
 
     @property
     def rows(self):
-        locations = get_supply_points(self.config['location_id'], self.config['domain'])
+        locations = get_supply_points(self.location_id)
         products = self.unique_products(locations, all=True)
         programs = {program.get_id: program.name for program in Program.by_domain(self.domain)}
         headers = []

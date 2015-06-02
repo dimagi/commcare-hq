@@ -18,19 +18,9 @@ from custom.ewsghana.models import EWSGhanaConfig
 TEST_DOMAIN = 'ewsghana-receipts-test'
 
 
-def get_supply_points(location_id, domain):
+def get_supply_points(location_id):
     loc = SQLLocation.objects.get(location_id=location_id)
-    if loc.location_type.name == 'district':
-        locations = SQLLocation.objects.filter(parent=loc)
-    elif loc.location_type.name == 'region':
-        locations = SQLLocation.objects.filter(
-            Q(parent__parent=loc) | Q(parent=loc, location_type__administrative=False)
-        )
-    elif not loc.location_type.administrative:
-        locations = SQLLocation.objects.filter(id=loc.id)
-    else:
-        locations = SQLLocation.objects.filter(domain=domain, location_type__administrative=False)
-    return locations.exclude(supply_point_id__isnull=True).exclude(is_archived=True)
+    return loc.get_descendants().exclude(supply_point_id__isnull=True).exclude(is_archived=True)
 
 
 def get_second_week(start_date, end_date):
