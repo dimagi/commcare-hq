@@ -340,9 +340,9 @@ def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id, export_
 
     key = [domain, app_id, xmlns]
     form_ids = {f['id'] for f in XFormInstance.get_db().view("attachments/attachments",
-                                         start_key=key + [startdate],
-                                         end_key=key + [enddate, {}],
-                                         reduce=False)}
+                                                             start_key=key + [startdate],
+                                                             end_key=key + [enddate, {}],
+                                                             reduce=False)}
 
     properties = set()
     if export_id:
@@ -356,7 +356,7 @@ def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id, export_
     forms_info = list()
     for form in iter_docs(XFormInstance.get_db(), form_ids):
         if not zip_name:
-            zip_name = form['form'].get('@name', 'unknown form')
+            zip_name = unidecode(form['form'].get('@name', 'unknown form'))
         forms_info.append(extract_form_info(form, properties))
 
     num_forms = len(forms_info)
@@ -370,9 +370,12 @@ def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id, export_
 
     use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
     if use_transfer:
-        fpath = os.path.join(settings.SHARED_DRIVE_CONF.transfer_dir, "{}{}".format(
+        root_dir = settings.SHARED_DRIVE_CONF.transfer_dir
+        root_dir = os.path.join('/Users', 'farid', 'Desktop/')
+        fpath = os.path.join(root_dir, "{}{}{}".format(
             app_id,
             zip_name,
+            num_forms,  # if there are more forms than last time this file was downloaded, regenerate
         ))
     else:
         _, fpath = tempfile.mkstemp()
@@ -391,7 +394,7 @@ def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id, export_
 
     common_kwargs = dict(
         mimetype='application/zip',
-        content_disposition='attachment; filename="{fname}.zip"'.format(fname=unidecode(zip_name)),
+        content_disposition='attachment; filename="{fname}.zip"'.format(fname=zip_name),
         download_id=download_id,
     )
 
@@ -409,5 +412,3 @@ def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id, export_
         )
 
     DownloadBase.set_progress(build_form_multimedia_zip, num_forms, num_forms)
-
-    return {"errors": None}

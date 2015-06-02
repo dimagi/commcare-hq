@@ -1436,7 +1436,6 @@ def find_question_id(form, value):
 @require_form_view_permission
 @require_GET
 def form_multimedia_export(request, domain):
-    print "form_multimedia_export"
     task_kwargs = {'domain': domain}
     try:
         task_kwargs['xmlns'] = request.GET["xmlns"]
