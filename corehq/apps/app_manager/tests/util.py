@@ -136,3 +136,10 @@ def _get_default(self, application_version):
 
 patch_default_builds = mock.patch.object(CommCareBuildConfig, 'get_default',
                                          _get_default)
+
+
+def commtrack_enabled(is_enabled):
+    return mock.patch(
+        'corehq.apps.app_manager.models.Application.commtrack_enabled',
+        new=is_enabled,
+    )
