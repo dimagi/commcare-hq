@@ -132,12 +132,12 @@ def adjust_datetimes(data, parent=None, key=None):
             pass
         else:
             if phone_timezones_should_be_processed():
-                parent[key] = json_format_datetime(
+                parent[key] = unicode(json_format_datetime(
                     matching_datetime.astimezone(pytz.utc).replace(tzinfo=None)
-                )
+                ))
             else:
-                parent[key] = json_format_datetime(
-                    matching_datetime.replace(tzinfo=None))
+                parent[key] = unicode(json_format_datetime(
+                    matching_datetime.replace(tzinfo=None)))
 
     elif isinstance(data, dict):
         for key, value in data.items():
