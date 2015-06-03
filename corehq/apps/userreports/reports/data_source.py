@@ -26,6 +26,7 @@ class ConfigurableReportDataSource(SqlData):
 
         self._filters = {f.slug: f for f in filters}
         self._filter_values = {}
+        self._order_by = []
         self.aggregation_columns = aggregation_columns
         self._column_configs = SortedDict()
         for column in columns:
@@ -57,6 +58,9 @@ class ConfigurableReportDataSource(SqlData):
     def set_filter_values(self, filter_values):
         for filter_slug, value in filter_values.items():
             self._filter_values[filter_slug] = self._filters[filter_slug].create_filter_value(value)
+
+    def set_order_by(self, columns):
+        self._order_by = columns
 
     @property
     def filter_values(self):
@@ -105,10 +109,18 @@ class ConfigurableReportDataSource(SqlData):
         # arbitrarily sort by the first column in memory
         # todo: should get pushed to the database but not currently supported in sqlagg
         try:
-            return sorted(ret, key=lambda x: x.get(
-                self.column_configs[0].column_id,
-                next(x.itervalues())
-            ))
+            if self._order_by:
+                for col in reversed(self._order_by):
+                    ret.sort(
+                        key=lambda x: x.get(col[0], None),
+                        reverse=col[1] == "DESC"
+                    )
+                return ret
+            else:
+                return sorted(ret, key=lambda x: x.get(
+                    self.column_configs[0].column_id,
+                    next(x.itervalues())
+                ))
         except TypeError:
             # if the first column isn't sortable just return the data in the order we got it
             return ret

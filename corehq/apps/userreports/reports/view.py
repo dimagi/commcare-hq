@@ -157,6 +157,7 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         try:
             data = self.data_source
             data.set_filter_values(self.filter_values)
+            data.set_order_by([(o['field'], o['order']) for o in self.spec.sort_expression])
             total_records = data.get_total_records()
         except UserReportsError as e:
             if settings.DEBUG:
@@ -217,6 +218,7 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         try:
             data = self.data_source
             data.set_filter_values(self.filter_values)
+            data.set_order_by([(o['field'], o['order']) for o in self.spec.sort_expression])
         except UserReportsError as e:
             return self.render_json_response({
                 'error': e.message,
