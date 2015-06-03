@@ -94,8 +94,13 @@ class FacilityReportData(EWSData):
         ).order_by('-report__date')
 
         for state in stock_states:
-            monthly_consumption = round(state.get_monthly_consumption()) if state.get_monthly_consumption() else 0
-            max_level = round(monthly_consumption * float(loc.location_type.overstock_threshold))
+            if state.daily_consumption:
+                monthly_consumption = round(state.get_monthly_consumption())
+                max_level = round(monthly_consumption * float(loc.location_type.overstock_threshold))
+            else:
+                monthly_consumption = None
+                max_level = 0
+
             if state.product_id not in state_grouping:
                 state_grouping[state.product_id] = {
                     'commodity': state.sql_product.name,
@@ -123,16 +128,19 @@ class FacilityReportData(EWSData):
                 if state_grouping[state.product_id]['current_stock'] is None:
                     state_grouping[state.product_id]['current_stock'] = state.stock_on_hand
 
-
         for values in state_grouping.values():
+            if values['monthly_consumption'] is not None:
+                months_until_stockout = get_months_until_stockout_icon(
+                    values['months_until_stockout'] if values['months_until_stockout'] else 0.0, loc
+                )
+            else:
+                months_until_stockout = '-'
             yield {
                 'commodity': values['commodity'],
                 'current_stock': int(values['current_stock'] or 0),
                 'monthly_consumption': values['monthly_consumption'] if values['monthly_consumption'] != 0.00
                 else 'not enough data',
-                'months_until_stockout': get_months_until_stockout_icon(values['months_until_stockout']
-                                                                        if values['months_until_stockout']
-                                                                        else 0.0, loc),
+                'months_until_stockout': months_until_stockout,
                 'stockout_duration': values['stockout_duration'],
                 'last_report': values['last_report'],
                 'reorder_level': values['reorder_level'] if values['reorder_level'] != 0.00
