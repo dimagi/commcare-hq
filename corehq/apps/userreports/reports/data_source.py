@@ -106,9 +106,9 @@ class ConfigurableReportDataSource(SqlData):
             ProgrammingError,
         ) as e:
             raise UserReportsError(e.message)
-        # arbitrarily sort by the first column in memory
-        # todo: should get pushed to the database but not currently supported in sqlagg
+        # TODO: Should sort in the database instead of memory, but not currently supported by sqlagg.
         try:
+            # If a sort order is specified, sort by it.
             if self._order_by:
                 for col in reversed(self._order_by):
                     ret.sort(
@@ -116,6 +116,7 @@ class ConfigurableReportDataSource(SqlData):
                         reverse=col[1] == "DESC"
                     )
                 return ret
+            # Otherwise sort by the first column
             else:
                 return sorted(ret, key=lambda x: x.get(
                     self.column_configs[0].column_id,
