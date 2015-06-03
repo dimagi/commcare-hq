@@ -77,9 +77,11 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         filter_fn = self._get_deleted_filter()
         return filter_fn and filter_fn(document, EvaluationContext(document, 0))
 
+    @memoized
     def _get_main_filter(self):
         return self._get_filter([self.referenced_doc_type])
 
+    @memoized
     def _get_deleted_filter(self):
         return self._get_filter(get_deleted_doc_types(self.referenced_doc_type))
 
