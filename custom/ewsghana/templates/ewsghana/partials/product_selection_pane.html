@@ -32,6 +32,9 @@
         $tbody.find('input.toggle-column').each(function(idx, element) {
             if (element.checked !== self.checked) {
                 element.checked = self.checked;
+                if (datatable.fnSettings().aoColumns.length > 1) {
+                    show_hide_table_columns(element);
+                }
             }
         });
         if (typeof multibar_chart_data !== 'undefined') {
