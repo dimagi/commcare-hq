@@ -75,10 +75,7 @@ class Migration(DataMigration):
             'is_archived',
         ]
 
-        location_ids = set([r['id'] for r in Location.get_db().view(
-            'locations/by_name',
-            reduce=False,
-        ).all()])
+        location_ids = SQLLocation.all_objects.ids()
 
         for location, sp in iter_location_join_supply_point(location_ids):
             try:
