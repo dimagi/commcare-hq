@@ -7,9 +7,9 @@ from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.dates import DatespanFilter
-from custom.ewsghana.reports import EWSData, MultiReport, ews_date_format
+from custom.ewsghana.reports import EWSData, MultiReport
 from django.utils.translation import ugettext as _
-from custom.ewsghana.utils import get_supply_points, get_country_id
+from custom.ewsghana.utils import get_supply_points, get_country_id, ews_date_format
 from dimagi.utils.decorators.memoized import memoized
 
 

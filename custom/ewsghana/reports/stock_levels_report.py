@@ -16,9 +16,8 @@ from corehq.apps.reports.graph_models import Axis
 from corehq.apps.users.models import CommCareUser
 from custom.common import ALL_OPTION
 from custom.ewsghana.filters import ProductByProgramFilter
-from custom.ewsghana.reports import EWSData, MultiReport, EWSLineChart, ProductSelectionPane, \
-    ews_date_format
-from custom.ewsghana.utils import has_input_stock_permissions
+from custom.ewsghana.reports import EWSData, MultiReport, EWSLineChart, ProductSelectionPane
+from custom.ewsghana.utils import has_input_stock_permissions, ews_date_format
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 from corehq.apps.locations.models import Location, SQLLocation
