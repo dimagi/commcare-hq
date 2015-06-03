@@ -385,7 +385,7 @@ FILE_RESTORE = PredictablyRandomToggle(
     'file_restore',
     'Use files to do phone restore',
     TAG_PRODUCT_PATH,
-    randomness=.5,
+    randomness=1,
     namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
 
