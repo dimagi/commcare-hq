@@ -22,7 +22,7 @@ class EmailReportData(EWSData):
 
     @property
     def headers(self):
-        return DataTablesHeader(*[
+        return DataTablesHeader(
             DataTablesColumn(_('Product')),
             DataTablesColumn(_('% Facilities with Stockouts')),
             DataTablesColumn(_('Total # Facilities Registered with this Product')),
@@ -31,7 +31,7 @@ class EmailReportData(EWSData):
             DataTablesColumn(_('Monthly Consumption')),
             DataTablesColumn(_('Months of Stock')),
             DataTablesColumn(_('Stock Status'))
-        ])
+        )
 
     @property
     def rows(self):
@@ -85,7 +85,7 @@ class StockSummaryReportData(EmailReportData):
     slug = 'stock_summary'
 
     def get_locations(self, loc_id, domain):
-        return get_supply_points(loc_id, domain)
+        return get_supply_points(loc_id)
 
 
 class CMSRMSReportData(EmailReportData):
@@ -137,7 +137,7 @@ class EmailReportingData(EWSData):
 
 class StockSummaryReportingData(EmailReportingData):
     def get_locations(self, loc_id, domain):
-        return [loc.supply_point_id for loc in get_supply_points(loc_id, domain)]
+        return [loc.supply_point_id for loc in get_supply_points(loc_id)]
 
 
 class CMSRMSSummaryReportingData(EmailReportingData):

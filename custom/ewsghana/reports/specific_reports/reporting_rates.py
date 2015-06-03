@@ -12,7 +12,7 @@ from custom.ewsghana.reports import MultiReport, ReportingRatesData, ProductSele
 from casexml.apps.stock.models import StockTransaction
 from custom.ewsghana.reports.stock_levels_report import FacilityReportData, StockLevelsLegend, \
     InventoryManagementData, InputStock, UsersData
-from custom.ewsghana.utils import calculate_last_period, get_country_id
+from custom.ewsghana.utils import calculate_last_period, get_country_id, get_supply_points
 from corehq.apps.reports.filters.dates import DatespanFilter
 from custom.ilsgateway.tanzania import make_url
 from custom.ilsgateway.tanzania.reports.utils import link_format
@@ -52,16 +52,19 @@ class ReportingRates(ReportingRatesData):
         if data:
             reported_percent = float(data['reported']) * 100 / (data['total'] or 1)
             non_reported_percent = float(data['non_reported']) * 100 / (data['total'] or 1)
+            reported_formatted = ("%d" if reported_percent.is_integer() else "%.1f") % reported_percent
+            non_reported_formatted = ("%d" if non_reported_percent.is_integer() else "%.1f") % non_reported_percent
+
             chart_data = [
                 dict(value=reported_percent,
                      label=_('Reporting'),
-                     description=_("%.1f%% (%d) Reported (%s)" % (reported_percent, data['reported'],
-                                                                  self.datetext())),
+                     description=_("%s%% (%d) Reported (%s)" % (reported_formatted, data['reported'],
+                                                                self.datetext())),
                      color='green'),
                 dict(value=non_reported_percent,
                      label=_('Non-Reporting'),
-                     description=_("%.1f%% (%d) Non-Reported (%s)" %
-                                   (non_reported_percent, data['non_reported'], self.datetext())),
+                     description=_("%s%% (%d) Non-Reported (%s)" %
+                                   (non_reported_formatted, data['non_reported'], self.datetext())),
                      color='red'),
             ]
 
@@ -118,16 +121,18 @@ class ReportingDetails(ReportingRatesData):
         if data:
             complete_percent = float(data['complete']) * 100 / (data['total'] or 1)
             incomplete_percent = float(data['incomplete']) * 100 / (data['total'] or 1)
+            complete_formatted = ("%d" if complete_percent.is_integer() else "%.1f") % complete_percent
+            incomplete_formatted = ("%d" if incomplete_percent.is_integer() else "%.1f") % incomplete_percent
             chart_data = [
                 dict(value=complete_percent,
                      label=_('Complete'),
-                     description=_("%.1f%% (%d) Complete Reports in %s" %
-                                   (complete_percent, data['complete'], self.datetext())),
+                     description=_("%s%% (%d) Complete Reports in %s" %
+                                   (complete_formatted, data['complete'], self.datetext())),
                      color='green'),
                 dict(value=incomplete_percent,
                      label=_('Incomplete'),
-                     description=_("%.1f%% (%d) Incomplete Reports in %s" %
-                                   (incomplete_percent, data['incomplete'], self.datetext())),
+                     description=_("%s%% (%d) Incomplete Reports in %s" %
+                                   (incomplete_formatted, data['incomplete'], self.datetext())),
                      color='purple'),
             ]
 
@@ -144,13 +149,11 @@ class SummaryReportingRates(ReportingRatesData):
 
     @property
     def get_locations(self):
-        location_types = [
-            location_type.name
-            for location_type in Domain.get_by_name(self.domain).location_types
-            if location_type.administrative
-        ]
-        return SQLLocation.objects.filter(parent__location_id=self.config['location_id'],
-                                          location_type__name__in=location_types, is_archived=False)
+        return SQLLocation.objects.filter(
+            parent__location_id=self.location_id,
+            location_type__administrative=False,
+            is_archived=False
+        )
 
     @property
     def headers(self):
@@ -169,7 +172,7 @@ class SummaryReportingRates(ReportingRatesData):
         rows = []
         if self.location_id:
             for location in self.get_locations:
-                supply_points = self.get_supply_points(location.location_id)
+                supply_points = get_supply_points(location.location_id)
                 sites = supply_points.count()
                 reported = StockTransaction.objects.filter(
                     case_id__in=supply_points.values_list('supply_point_id', flat=True),
@@ -181,7 +184,8 @@ class SummaryReportingRates(ReportingRatesData):
                     ReportingRatesReport,
                     self.config['domain'],
                     '?location_id=%s&startdate=%s&enddate=%s',
-                    (location.location_id, self.config['startdate'], self.config['enddate']))
+                    (location.location_id, self.config['startdate'], self.config['enddate'])
+                )
 
                 rows.append([link_format(location.name, url), sites, reported, reporting_rates])
         return rows
@@ -206,7 +210,6 @@ class NonReporting(ReportingRatesData):
     @property
     def headers(self):
         if self.location_id:
-
             return DataTablesHeader(
                 DataTablesColumn(_('Name')),
                 DataTablesColumn(_('Last Stock Report Received')),
@@ -218,7 +221,7 @@ class NonReporting(ReportingRatesData):
     def rows(self):
         rows = []
         if self.location_id:
-            supply_points = self.get_supply_points()
+            supply_points = get_supply_points(self.location_id)
             not_reported = supply_points.exclude(supply_point_id__in=self.reporting_supply_points())
 
             for location in not_reported:
@@ -229,12 +232,12 @@ class NonReporting(ReportingRatesData):
                     (location.location_id, self.config['startdate'], self.config['enddate'])
                 )
 
-                st = StockTransaction.objects.filter(
+                stock_transactions = StockTransaction.objects.filter(
                     case_id=location.supply_point_id,
                     report__date__lte=self.config['startdate']
                 ).order_by('-report__date')
-                if st:
-                    date = st[0].report.date.strftime("%m-%d-%Y")
+                if stock_transactions:
+                    date = stock_transactions[0].report.date.strftime("%m-%d-%Y")
                 else:
                     date = '---'
                 rows.append([link_format(location.name, url), date])
@@ -263,10 +266,11 @@ class InCompleteReports(ReportingRatesData):
     def rows(self):
         rows = []
         if self.location_id:
-            if self.location.location_type.name == 'country':
-                supply_points = self.reporting_supply_points(self.all_reporting_locations())
-            else:
-                supply_points = self.reporting_supply_points()
+            supply_points = self.reporting_supply_points(
+                self.location.get_descendants().filter(
+                    location_type__administrative=False
+                ).values_list('supply_point_id', flat=True)
+            )
             for location in SQLLocation.objects.filter(supply_point_id__in=supply_points):
                 st = StockTransaction.objects.filter(
                     case_id=location.supply_point_id,
@@ -283,7 +287,8 @@ class InCompleteReports(ReportingRatesData):
                         StockLevelsReport,
                         self.config['domain'],
                         '?location_id=%s&startdate=%s&enddate=%s',
-                        (location.location_id, self.config['startdate'], self.config['enddate']))
+                        (location.location_id, self.config['startdate'], self.config['enddate'])
+                    )
                     rows.append([link_format(location.name, url), date])
         return rows
 
@@ -301,11 +306,10 @@ class AlertsData(ReportingRatesData):
     def supply_points_reporting_last_month(self, supply_points):
         enddate = datetime.today()
         startdate = enddate - timedelta(days=30)
-        result = StockTransaction.objects.filter(
+        return StockTransaction.objects.filter(
             case_id__in=supply_points,
             report__date__range=[startdate, enddate]
         ).distinct('case_id').values_list('case_id', flat=True)
-        return result
 
     def supply_points_users(self, supply_points):
         query = UserES().mobile_users().domain(self.config['domain']).term("domain_membership.location_id",
@@ -324,7 +328,7 @@ class AlertsData(ReportingRatesData):
     def rows(self):
         rows = []
         if self.location_id:
-            supply_points = self.get_supply_points()
+            supply_points = get_supply_points(self.location_id)
             reported = self.supply_points_reporting_last_month(supply_points.values_list('supply_point_id',
                                                                                          flat=True))
             with_reporters, with_in_charge = self.supply_points_users(supply_points.values_list('location_id',

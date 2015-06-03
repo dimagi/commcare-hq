@@ -22,8 +22,20 @@ from custom.ewsghana.utils import get_supply_points, make_url, get_second_week, 
 class ProductAvailabilityData(EWSData):
     show_chart = True
     show_table = False
-    title = 'Product Availability'
     slug = 'product_availability'
+
+    @property
+    def title(self):
+        if not self.location:
+            return ""
+
+        location_type = self.location.location_type.name.lower()
+        if location_type == 'country':
+            return "Product availability - National Aggregate"
+        elif location_type == 'region':
+            return "Product availability - Regional Aggregate"
+        elif location_type == 'district':
+            return "Product availability - District Aggregate"
 
     @property
     def headers(self):
@@ -32,8 +44,8 @@ class ProductAvailabilityData(EWSData):
     @property
     def rows(self):
         rows = []
-        if self.config['location_id']:
-            locations = get_supply_points(self.config['location_id'], self.config['domain'])
+        if self.location_id:
+            locations = self.location.get_descendants().exclude(is_archived=True)
             supply_points = locations.values_list('supply_point_id', flat=True)
             if not supply_points:
                 return rows
@@ -107,7 +119,7 @@ class ProductAvailabilityData(EWSData):
                                              row['product_name']])
                     ret_data.append({'color': chart_config['label_color'][k], 'label': k, 'data': datalist})
                 return ret_data
-            chart = EWSMultiBarChart('', x_axis=Axis('Products'), y_axis=Axis('', '.2%'))
+            chart = EWSMultiBarChart('', x_axis=Axis('Products'), y_axis=Axis('', '%'))
             chart.rotateLabels = -45
             chart.marginBottom = 120
             chart.stacked = False
@@ -134,26 +146,22 @@ class MonthOfStockProduct(EWSData):
     @memoized
     def get_supply_points(self):
         supply_points = []
-        if self.config['location_id']:
-            location = SQLLocation.objects.get(
-                domain=self.config['domain'],
-                location_id=self.config['location_id']
-            )
-            if location.location_type.name == 'country':
+        if self.location_id:
+            if self.location.location_type.name == 'country':
                 supply_points = SQLLocation.objects.filter(
-                    Q(parent__location_id=self.config['location_id'], is_archived=False) |
+                    Q(parent__location_id=self.location_id, is_archived=False) |
                     Q(location_type__name='Regional Medical Store', domain=self.config['domain'])
                 ).order_by('name').exclude(supply_point_id__isnull=True)
             else:
                 supply_points = SQLLocation.objects.filter(
-                    parent__location_id=self.config['location_id'], is_archived=False,
+                    parent__location_id=self.location_id, is_archived=False,
                     location_type__administrative=False,
                 ).order_by('name').exclude(supply_point_id__isnull=True)
         return supply_points
 
     @property
     def headers(self):
-        headers = DataTablesHeader(*[DataTablesColumn('Location')])
+        headers = DataTablesHeader(DataTablesColumn('Location'))
         for product in self.unique_products(self.get_supply_points, all=True):
             headers.add_column(DataTablesColumn(product.code))
 
@@ -162,7 +170,7 @@ class MonthOfStockProduct(EWSData):
     @property
     def rows(self):
         rows = []
-        if self.config['location_id']:
+        if self.location_id:
             for sp in self.get_supply_points:
                 if sp.location_type.administrative:
                     cls = StockLevelsReport
@@ -223,7 +231,7 @@ class StockoutsProduct(EWSData):
     def rows(self):
         rows = {}
         if self.config['location_id']:
-            supply_points = get_supply_points(self.config['location_id'], self.config['domain'])
+            supply_points = get_supply_points(self.location_id)
             products = self.unique_products(supply_points, all=True)
             for product in products:
                 rows[product.code] = []
@@ -258,33 +266,41 @@ class StockoutsProduct(EWSData):
 class StockoutTable(EWSData):
 
     slug = 'stockouts_product_table'
-    title = 'Stockouts'
     show_chart = False
     show_table = True
 
     @property
+    def title(self):
+        if not self.location:
+            return ""
+
+        location_type = self.location.location_type.name.lower()
+        if location_type == 'country':
+            return "Stockouts - CMS, RMS, and Teaching Hospitals"
+        elif location_type == 'region':
+            return "Stockouts - RMS and Teaching Hospitals"
+        elif location_type == 'district':
+            return "Stockouts"
+
+    @property
     def headers(self):
-        return DataTablesHeader(*[
+        return DataTablesHeader(
             DataTablesColumn('Medical Store'),
             DataTablesColumn('Stockouts')
-        ])
+        )
 
     @property
     def rows(self):
         rows = []
         if self.config['location_id']:
-            location = SQLLocation.objects.get(
-                domain=self.config['domain'],
-                location_id=self.config['location_id']
-            )
-            if location.location_type.name == 'country':
+            if self.location.location_type.name == 'country':
                 supply_points = SQLLocation.objects.filter(
-                    Q(parent__location_id=self.config['location_id']) |
-                    Q(location_type__name='Regional Medical Store', domain=self.config['domain'])
+                    Q(parent__location_id=self.location_id) |
+                    Q(location_type__name='Regional Medical Store', domain=self.domain)
                 ).order_by('name').exclude(supply_point_id__isnull=True).exclude(is_archived=True)
             else:
                 supply_points = SQLLocation.objects.filter(
-                    parent__location_id=self.config['location_id']
+                    parent__location_id=self.location_id
                 ).order_by('name').exclude(supply_point_id__isnull=True).exclude(is_archived=True)
 
             products = set(self.unique_products(supply_points))

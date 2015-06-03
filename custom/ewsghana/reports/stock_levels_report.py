@@ -31,10 +31,10 @@ class StockLevelsLegend(EWSData):
 
     @property
     def headers(self):
-        return DataTablesHeader(*[
+        return DataTablesHeader(
             DataTablesColumn(_('Icon')),
             DataTablesColumn(_('Stock status')),
-        ])
+        )
 
     @property
     def rows(self):
@@ -55,7 +55,7 @@ class FacilityReportData(EWSData):
 
     @property
     def headers(self):
-        return DataTablesHeader(*[
+        return DataTablesHeader(
             DataTablesColumn(_('Commodity')),
             DataTablesColumn(_('Months of Stock')),
             DataTablesColumn(_('Stockout Duration')),
@@ -64,7 +64,7 @@ class FacilityReportData(EWSData):
             DataTablesColumn(_('Reorder Level')),
             DataTablesColumn(_('Maximum Level')),
             DataTablesColumn(_('Date of Last Report'))
-        ])
+        )
 
     def get_prod_data(self):
         def get_months_until_stockout_icon(value, loc):
@@ -79,23 +79,22 @@ class FacilityReportData(EWSData):
 
         state_grouping = {}
 
-        loc = SQLLocation.objects.get(location_id=self.config['location_id'])
         stock_states = StockState.objects.filter(
-            case_id=loc.supply_point_id,
+            case_id=self.location.supply_point_id,
             section_id=STOCK_SECTION_TYPE,
-            sql_product__in=self.unique_products(SQLLocation.objects.filter(pk=loc.pk))
+            sql_product__in=self.unique_products(SQLLocation.objects.filter(pk=self.location.pk))
         ).order_by('-last_modified_date')
 
         st = StockTransaction.objects.filter(
-            case_id=loc.supply_point_id,
-            sql_product__in=self.unique_products(SQLLocation.objects.filter(pk=loc.pk)),
+            case_id=self.location.supply_point_id,
+            sql_product__in=self.unique_products(SQLLocation.objects.filter(pk=self.location.pk)),
             report__date__lte=self.config['enddate'],
             type='stockonhand',
         ).order_by('-report__date')
 
         for state in stock_states:
             monthly_consumption = round(state.get_monthly_consumption()) if state.get_monthly_consumption() else 0
-            max_level = round(monthly_consumption * float(loc.location_type.overstock_threshold))
+            max_level = round(monthly_consumption * float(self.location.location_type.overstock_threshold))
             if state.product_id not in state_grouping:
                 state_grouping[state.product_id] = {
                     'commodity': state.sql_product.name,
@@ -123,7 +122,6 @@ class FacilityReportData(EWSData):
                 if state_grouping[state.product_id]['current_stock'] is None:
                     state_grouping[state.product_id]['current_stock'] = state.stock_on_hand
 
-
         for values in state_grouping.values():
             yield {
                 'commodity': values['commodity'],
@@ -132,7 +130,7 @@ class FacilityReportData(EWSData):
                 else 'not enough data',
                 'months_until_stockout': get_months_until_stockout_icon(values['months_until_stockout']
                                                                         if values['months_until_stockout']
-                                                                        else 0.0, loc),
+                                                                        else 0.0, self.location),
                 'stockout_duration': values['stockout_duration'],
                 'last_report': values['last_report'],
                 'reorder_level': values['reorder_level'] if values['reorder_level'] != 0.00
@@ -179,18 +177,16 @@ class InventoryManagementData(EWSData):
         enddate = self.config['enddate']
         startdate = self.config['startdate'] if 'custom_date' in self.config else enddate - timedelta(days=30)
 
-        loc = SQLLocation.objects.get(location_id=self.config['location_id'])
-
         stoke_states = StockState.objects.filter(
-            case_id=loc.supply_point_id,
+            case_id=self.location.supply_point_id,
             section_id=STOCK_SECTION_TYPE,
-            sql_product__in=loc.products,
+            sql_product__in=self.location.products,
         )
 
         consumptions = {ss.product_id: ss.daily_consumption for ss in stoke_states}
         st = StockTransaction.objects.filter(
-            case_id=loc.supply_point_id,
-            sql_product__in=loc.products,
+            case_id=self.location.supply_point_id,
+            sql_product__in=self.location.products,
             type='stockonhand',
             report__date__lte=enddate
         ).select_related('report', 'sql_product').order_by('report__date')
@@ -214,15 +210,14 @@ class InventoryManagementData(EWSData):
         rows['Understock'] = []
         rows['Overstock'] = []
         for i in range(1, int(weeks + 1)):
-            rows['Understock'].append({'x': i, 'y': float(loc.location_type.understock_threshold)})
-            rows['Overstock'].append({'x': i, 'y': float(loc.location_type.overstock_threshold)})
+            rows['Understock'].append({'x': i, 'y': float(self.location.location_type.understock_threshold)})
+            rows['Overstock'].append({'x': i, 'y': float(self.location.location_type.overstock_threshold)})
 
         return rows
 
     @property
     def charts(self):
         if self.show_chart:
-            loc = SQLLocation.objects.get(location_id=self.config['location_id'])
             chart = EWSLineChart("Inventory Management Trends", x_axis=Axis(self.chart_x_label, 'd'),
                                  y_axis=Axis(self.chart_y_label, '.1f'))
             chart.height = 600
@@ -230,7 +225,10 @@ class InventoryManagementData(EWSData):
             for product, value in self.chart_data.iteritems():
                 values.extend([a['y'] for a in value])
                 chart.add_dataset(product, value, color='red' if product in ['Understock', 'Overstock'] else None)
-            chart.forceY = [0, loc.location_type.understock_threshold + loc.location_type.overstock_threshold]
+            chart.forceY = [
+                0,
+                self.location.location_type.understock_threshold + self.location.location_type.overstock_threshold
+            ]
             return [chart]
         return []
 
@@ -322,11 +320,8 @@ class StockLevelsReport(MultiReport):
     @memoized
     def data_providers(self):
         config = self.report_config
-        location_types = [loc_type.name for loc_type in filter(
-            lambda loc_type: not loc_type.administrative,
-            Domain.get_by_name(self.domain).location_types
-        )]
-        if not self.needs_filters and Location.get(config['location_id']).location_type in location_types:
+        location = SQLLocation.objects.get(location_id=config['location_id'])
+        if not self.needs_filters and not location.administrative:
             if self.is_rendered_as_email:
                 return [FacilityReportData(config)]
             else:
