@@ -189,10 +189,6 @@ class BackendTestCase(BaseAccountingTest):
         self.backend7.delete()
         self.backend_mapping7.delete()
 
-        self.backend8.delete()
-        self.backend9.delete()
-        self.backend10.delete()
-
         self.contact.delete_verified_number()
         self.case.delete()
 
