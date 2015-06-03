@@ -371,7 +371,6 @@ def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id, export_
     use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
     if use_transfer:
         root_dir = settings.SHARED_DRIVE_CONF.transfer_dir
-        root_dir = os.path.join('/Users', 'farid', 'Desktop/')
         fpath = os.path.join(root_dir, "{}{}{}".format(
             app_id,
             zip_name,
