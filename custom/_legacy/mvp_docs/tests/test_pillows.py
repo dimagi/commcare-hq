@@ -1,11 +1,10 @@
 import json
 import os
 from couchdbkit import ResourceNotFound, ResourceConflict
-from django.test.testcases import TestCase, SimpleTestCase
+from django.test.testcases import TestCase
 from mock import patch
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.indicators.models import (
-    FormIndicatorDefinition,
     FormLabelIndicatorDefinition,
     FormDataInCaseIndicatorDefinition,
     FormDataAliasIndicatorDefinition,
