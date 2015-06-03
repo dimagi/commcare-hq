@@ -1419,19 +1419,6 @@ def export_report(request, domain, export_hash, format):
                                       " that download links expire after 24 hours."))
 
 
-def find_question_id(form, value):
-    for k, v in form.iteritems():
-        if isinstance(v, dict):
-            ret = find_question_id(v, value)
-            if ret:
-                return [k] + ret
-        else:
-            if v == value:
-                return [k]
-
-    return None
-
-
 @login_or_digest
 @require_form_view_permission
 @require_GET
