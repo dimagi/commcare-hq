@@ -263,36 +263,6 @@ def write_to_file(locations):
     return outfile.getvalue()
 
 
-def purge_locations(domain):
-    """
-    Delete all location data associated with <domain>.
-
-    This means Locations, SQLLocations, LocationTypes, and anything which
-    has a ForeignKey relationship to SQLLocation (as of 2015-03-02, this
-    includes only StockStates and some custom stuff).
-    """
-    location_ids = set([r['id'] for r in Location.get_db().view(
-        'locations/by_type',
-        reduce=False,
-        startkey=[domain],
-        endkey=[domain, {}],
-    ).all()])
-    iter_bulk_delete(Location.get_db(), location_ids)
-
-    for loc in SQLLocation.objects.filter(domain=domain).iterator():
-        if loc.supply_point_id:
-            case = CommCareCase.get(loc.supply_point_id)
-            case.delete()
-        loc.delete()
-
-    db = Domain.get_db()
-    domain_obj = Domain.get_by_name(domain)  # cached lookup is fast but stale
-    domain_json = db.get(domain_obj._id)  # get latest raw, unwrapped doc
-    domain_json.pop('obsolete_location_types', None)
-    domain_json.pop('location_types', None)
-    db.save_doc(domain_json)
-
-
 def loc_group_id_or_none(group_id):
     if group_id.startswith(LOCATION_SHARING_PREFIX):
         return group_id.split(LOCATION_SHARING_PREFIX, 1)[1]
