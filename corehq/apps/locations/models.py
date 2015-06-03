@@ -266,6 +266,12 @@ class SQLLocation(MPTTModel):
     def by_domain(cls, domain):
         return cls.objects.filter(domain=domain)
 
+    @property
+    def path(self):
+        # This exists for backwards compatability with couch locations
+        return list(self.get_ancestors(include_self=True)
+                    .values_list('location_id', flat=True))
+
 
 def _filter_for_archived(locations, include_archive_ancestors):
     """
@@ -627,10 +633,6 @@ class Location(CachedCouchDocumentMixin, Document):
         q = self.view('locations/hierarchy', startkey=startkey, endkey=endkey, group_level=depth)
         keys = [e['key'] for e in q if len(e['key']) == depth]
         return self.view('locations/hierarchy', keys=keys, reduce=False, include_docs=True).all()
-
-    @property
-    def _geopoint(self):
-        return '%s %s' % (self.latitude, self.longitude) if self.latitude is not None and self.longitude is not None else None
 
     def linked_supply_point(self):
         from corehq.apps.commtrack.models import SupplyPointCase
