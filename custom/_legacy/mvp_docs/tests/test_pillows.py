@@ -155,7 +155,6 @@ class IndicatorPillowTests(TestCase):
 
         self._call_with_patches(_test)
 
-
     @patch('corehq.apps.indicators.utils.get_namespaces')
     @patch('corehq.apps.indicators.models.CaseDataInFormIndicatorDefinition.get_all')
     @patch('corehq.apps.indicators.models.CaseIndicatorDefinition.get_all')
@@ -167,6 +166,7 @@ class IndicatorPillowTests(TestCase):
         case_form_get_all_patch.return_value = _fake_indicators('mvp-sauri-case-form-indicators.json')
         get_namespaces_patch.return_value = ['mvp_indicators']
         fn()
+
 
 def _save_form_and_case():
     form_json = _get_doc_data('bug_form.json')
