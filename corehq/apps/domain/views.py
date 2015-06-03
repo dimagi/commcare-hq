@@ -1245,6 +1245,7 @@ class SelectPlanView(DomainAccountingSettings):
     page_title = ugettext_noop("Change Plan")
     step_title = ugettext_noop("Select Plan")
     edition = None
+    lead_text = ugettext_noop("Please select a plan below that fits your organization's needs.")
 
     @property
     def edition_name(self):
@@ -1281,6 +1282,7 @@ class SelectPlanView(DomainAccountingSettings):
         context.update({
             'steps': self.steps,
             'step_title': self.step_title,
+            'lead_text': self.lead_text,
         })
         return context
 
@@ -1521,8 +1523,19 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
 
 class SubscriptionRenewalView(SelectPlanView):
     urlname = "domain_subscription_renewal"
-    page_title = "Renew Plan"
-    step_title = "Select or Confirm Plan"
+    page_title = ugettext_noop("Renew Plan")
+    step_title = ugettext_noop("Renew or Change Plan")
+
+    @property
+    def lead_text(self):
+        return ugettext_noop("Based on your current usage we recommend you use the {plan} plan".format(
+                             plan=self.current_subscription.plan_version.plan.edition))
+
+    @property
+    def main_context(self):
+        context = super(SubscriptionRenewalView, self).main_context
+        context.update({'is_renewal': True})
+        return context
 
 
 class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin):
