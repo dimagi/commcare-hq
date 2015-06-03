@@ -153,6 +153,7 @@ def _fake_indicators(filename):
         indicators = json.loads(f.read())
         return [_wrap(i) for i in indicators]
 
+
 def _wrap(indicator):
     wrap_classes = {
         'FormLabelIndicatorDefinition': FormLabelIndicatorDefinition,
