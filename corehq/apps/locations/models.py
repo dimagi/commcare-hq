@@ -120,6 +120,9 @@ class LocationQueries(object):
     def to_couch(self):
         return {}  # TODO return spoof of `Location`
 
+    def domain(self, domain):
+        return self.filter(domain=domain)
+
 
 class LocationQuerySet(LocationQueries, models.query.QuerySet):
     pass
@@ -551,13 +554,7 @@ class Location(CachedCouchDocumentMixin, Document):
 
     @classmethod
     def by_domain(cls, domain, include_docs=True):
-        relevant_ids = set([r['id'] for r in cls.get_db().view(
-            'locations/by_type',
-            reduce=False,
-            startkey=[domain],
-            endkey=[domain, {}],
-        ).all()])
-
+        relevant_ids = SQLLocation.all_objects.domain(domain).ids()
         if not include_docs:
             return relevant_ids
         else:

@@ -4,6 +4,11 @@ from .util import make_loc
 
 
 class TestReupholster(LocationTestBase):
+    """
+    These tests were written to drive removal of sepecific queries. It
+    is safe to delete this when the reuholstering of Location is done
+    and somone has written test coverage for the methods used in here.
+    """
     def setUp(self):
         super(TestReupholster, self).setUp()
         locs = [
@@ -22,6 +27,18 @@ class TestReupholster(LocationTestBase):
         ).all()])
 
         new_result = set(SQLLocation.all_objects.ids())
+
+        self.assertEqual(original_result, new_result)
+
+    def test_all_for_domain_by_type(self):
+        original_result = set([r['id'] for r in Location.get_db().view(
+            'locations/by_type',
+            reduce=False,
+            startkey=[self.domain.name],
+            endkey=[self.domain.name, {}],
+        ).all()])
+
+        new_result = set(SQLLocation.all_objects.domain(self.domain.name).ids())
 
         self.assertEqual(original_result, new_result)
 
