@@ -10,9 +10,7 @@ from casexml.apps.case.tests.util import delete_all_sync_logs, delete_all_xforms
 from casexml.apps.phone.exceptions import BadStateException
 from casexml.apps.phone.tests.utils import generate_restore_response, \
     get_exactly_one_wrapped_sync_log, generate_restore_payload
-from corehq import toggles
 from corehq.apps.domain.models import Domain
-from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
 
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
@@ -81,13 +79,3 @@ class StateHashTest(TestCase):
             self.assertEqual(2, len(e.case_ids))
             self.assertTrue("abc123" in e.case_ids)
             self.assertTrue("123abc" in e.case_ids)
-
-
-class FileResponseStateHashTest(StateHashTest):
-
-    def setUp(self):
-        super(FileResponseStateHashTest, self).setUp()
-        update_toggle_cache(toggles.FILE_RESTORE.slug, self.user.username, True)
-
-    def tearDown(self):
-        clear_toggle_cache(toggles.FILE_RESTORE.slug, self.user.username)

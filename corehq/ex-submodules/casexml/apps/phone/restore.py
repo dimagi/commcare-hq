@@ -12,7 +12,7 @@ from casexml.apps.phone.exceptions import (
     MissingSyncLog, InvalidSyncLogException, SyncLogUserMismatch,
     BadStateException, RestoreException,
     IncompatibleSyncLogType)
-from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, FILE_RESTORE, OWNERSHIP_CLEANLINESS_RESTORE
+from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, OWNERSHIP_CLEANLINESS_RESTORE
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.phone.models import SyncLog, get_properly_wrapped_sync_log, LOG_FORMAT_SIMPLIFIED, \
@@ -188,51 +188,6 @@ class FileRestoreResponse(RestoreResponse):
         return stream_response(self.get_filename())
 
 
-class StringRestoreResponse(RestoreResponse):
-
-    def __init__(self, username=None, items=False):
-        super(StringRestoreResponse, self).__init__(username, items)
-        self.response_body = StringIO()
-        self.response = None
-
-    def __add__(self, other):
-        if not isinstance(other, StringRestoreResponse):
-            raise NotImplemented()
-
-        response = StringRestoreResponse(self.username, self.items)
-        response.num_items = self.num_items + other.num_items
-        response.response_body.write(self.response_body.getvalue())
-        response.response_body.write(other.response_body.getvalue())
-
-        return response
-
-    def finalize(self):
-        # Add 1 to num_items to account for message element
-        items = self.items_template.format(self.num_items + 1) if self.items else ''
-        self.response = '{start}{body}{end}'.format(
-            start=self.start_tag_template.format(
-                items=items,
-                username=self.username,
-                nature=ResponseNature.OTA_RESTORE_SUCCESS),
-            body=self.response_body.getvalue(),
-            end=self.closing_tag
-        )
-        self.finalized = True
-        self.close()
-
-    def get_cache_payload(self, full=False):
-        return {
-            'is_file': False,
-            'data': self.response
-        }
-
-    def as_string(self):
-        return self.response
-
-    def get_http_response(self):
-        return HttpResponse(self.response, mimetype="text/xml")
-
-
 class CachedResponse(object):
     def __init__(self, payload):
         self.is_file = False
@@ -263,14 +218,6 @@ class CachedResponse(object):
             return stream_response(self.payload, is_file=True)
         else:
             return HttpResponse(self.payload, mimetype="text/xml")
-
-
-def get_restore_class(domain, user):
-    restore_class = StringRestoreResponse
-    if FILE_RESTORE.enabled(domain) or FILE_RESTORE.enabled(user.username):
-        restore_class = FileRestoreResponse
-
-    return restore_class
 
 
 class RestoreParams(object):
@@ -428,7 +375,7 @@ class RestoreState(object):
 
     @property
     def restore_class(self):
-        return get_restore_class(self.domain, self.user)
+        return FileRestoreResponse
 
     @property
     @memoized
@@ -480,9 +427,7 @@ class RestoreConfig(object):
 
     def get_payload(self):
         """
-        This function currently returns either a full string payload or a string name of a file
-        that contains the contents of the payload. If FILE_RESTORE toggle is enabled, then this will return
-        the filename, otherwise it will return the full string payload
+        This function returns a RestoreResponse class that encapsulates the response.
         """
         self.validate()
 
