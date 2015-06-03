@@ -113,10 +113,35 @@ class LocationType(models.Model):
         return LocationType.objects.filter(parent_type=self).exists()
 
 
-class LocationManager(TreeManager):
-    def get_query_set(self):
-        queryset = super(LocationManager, self).get_query_set()
-        return queryset.filter(is_archived=False)
+class LocationQueries(object):
+    def ids(self):
+        return self.values_list('location_id', flat=True)
+
+    def to_couch(self):
+        return {}  # TODO return spoof of `Location`
+
+
+class LocationQuerySet(LocationQueries, models.query.QuerySet):
+    pass
+
+
+class BaseLocationManager(LocationQueries, TreeManager):
+    def _get_base_queryset(self):
+        return LocationQuerySet(self.model, using=self._db)
+
+    def get_queryset(self):
+        return (self._get_base_queryset()
+                .order_by(self.tree_id_attr, self.left_attr))  # mptt default
+
+
+class LocationManager(BaseLocationManager):
+    def get_queryset(self):
+        return (super(LocationManager, self).get_queryset()
+                .filter(is_archived=False))
+
+
+class IncludeArchivedManager(BaseLocationManager):
+    pass
 
 
 class SQLLocation(MPTTModel):
@@ -144,7 +169,7 @@ class SQLLocation(MPTTModel):
     supply_point_id = models.CharField(max_length=255, db_index=True, unique=True, null=True)
 
     objects = LocationManager()
-    all_objects = TreeManager()  # includes archived locations
+    all_objects = IncludeArchivedManager()
 
     @property
     def products(self):
