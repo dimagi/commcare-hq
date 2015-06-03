@@ -680,7 +680,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
                     days_left = (subscription.date_end - datetime.date.today()).days
                     next_subscription.update({
                         'can_renew': days_left <= 30,
-                        'renew_url': reverse(ConfirmSubscriptionRenewalView.urlname, args=[self.domain]),
+                        'renew_url': reverse(SubscriptionRenewalView.urlname, args=[self.domain]),
                     })
             general_credits = CreditLine.get_credits_by_subscription_and_features(subscription)
         elif self.account is not None:
@@ -1519,9 +1519,15 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
         return super(ConfirmBillingAccountInfoView, self).post(request, *args, **kwargs)
 
 
+class SubscriptionRenewalView(SelectPlanView):
+    urlname = "domain_subscription_renewal"
+    page_title = "Renew Plan"
+    step_title = "Select or Confirm Plan"
+
+
 class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin):
     template_name = 'domain/confirm_subscription_renewal.html'
-    urlname = 'domain_subscription_renewal'
+    urlname = 'domain_subscription_renewal_confirmation'
     page_title = ugettext_noop("Renew Plan")
     async_handlers = [
         Select2BillingInfoHandler,
