@@ -155,7 +155,7 @@ class EWSMapReport(CustomProjectReport, StockStatusMapReport):
                 'product': self.product,
                 'columns': [
                     {'id': 'quantity', 'title': 'Quantity'},
-                    {'id': 'months_until_stockout', 'title': 'Months Until Stockout'},
+                    {'id': 'months_until_stockout', 'title': 'Months of Stock'},
                     {'id': 'category', 'name': 'Stock status'}
                 ],
             }),

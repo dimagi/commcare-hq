@@ -16,12 +16,12 @@ from corehq.apps.reports.graph_models import Axis
 from corehq.apps.users.models import CommCareUser
 from custom.common import ALL_OPTION
 from custom.ewsghana.filters import ProductByProgramFilter
-from custom.ewsghana.reports import EWSData, MultiReport, get_url_with_location, EWSLineChart, ProductSelectionPane
+from custom.ewsghana.reports import EWSData, MultiReport, EWSLineChart, ProductSelectionPane, \
+    ews_date_format
 from custom.ewsghana.utils import has_input_stock_permissions
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 from corehq.apps.locations.models import Location, SQLLocation
-from dimagi.utils.parsing import json_format_date
 
 
 class StockLevelsLegend(EWSData):
@@ -124,7 +124,7 @@ class FacilityReportData(EWSData):
                     state_grouping[state.product_id]['stockout_duration_helper'] = False
 
                 if not state_grouping[state.product_id]['last_report']:
-                    state_grouping[state.product_id]['last_report'] = json_format_date(state.report.date)
+                    state_grouping[state.product_id]['last_report'] = ews_date_format(state.report.date)
                 if state_grouping[state.product_id]['current_stock'] is None:
                     state_grouping[state.product_id]['current_stock'] = state.stock_on_hand
 
@@ -278,6 +278,7 @@ class UsersData(EWSData):
 
     @property
     def rendered_content(self):
+        from corehq.apps.users.views.mobile.users import EditCommCareUserView
         users = CommCareUser.view(
             'locations/users_by_location_id',
             startkey=[self.config['location_id']],
@@ -289,7 +290,8 @@ class UsersData(EWSData):
             'id': sms_user.get_id,
             'full_name': sms_user.full_name,
             'phone_numbers': sms_user.phone_numbers,
-            'in_charge': user.user_data.get('role') == 'In Charge'
+            'in_charge': user.user_data.get('role') == 'In Charge',
+            'url': reverse(EditCommCareUserView.urlname, args=[self.config['domain'], sms_user.get_id])
         }
 
         web_users = UserES().web_users().domain(self.config['domain']).term(

@@ -12,9 +12,13 @@ from corehq.apps.reports.graph_models import LineChart, MultiBarChart, PieChart
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 from custom.ewsghana.filters import ProductByProgramFilter
 from dimagi.utils.decorators.memoized import memoized
-from corehq.apps.locations.models import Location, SQLLocation
+from corehq.apps.locations.models import Location, SQLLocation, LocationType
 from custom.ewsghana.utils import get_supply_points, filter_slugs_by_role
 from casexml.apps.stock.models import StockTransaction
+
+
+def ews_date_format(date):
+    return date.strftime("%b %d, %Y")
 
 
 def get_url(view_name, text, domain):
@@ -22,7 +26,11 @@ def get_url(view_name, text, domain):
 
 
 def get_url_with_location(view_name, text, location_id, domain):
-    return '<a href="%s?location_id=%s">%s</a>' % (reverse(view_name, args=[domain]), location_id, text)
+    return '<a href="%s?location_id=%s">%s</a><h4><strong>' % (
+        reverse(view_name, args=[domain]),
+        location_id,
+        text
+    )
 
 
 class EWSLineChart(LineChart):
@@ -80,11 +88,7 @@ class EWSData(object):
 
     @memoized
     def reporting_types(self):
-        return [
-            location_type.name
-            for location_type in Domain.get_by_name(self.domain).location_types
-            if not location_type.administrative
-        ]
+        return LocationType.objects.filter(domain=self.domain, administrative=False)
 
     @property
     def sublocations(self):
@@ -113,20 +117,24 @@ class EWSData(object):
 class ReportingRatesData(EWSData):
     def get_supply_points(self, location_id=None):
         location = SQLLocation.objects.get(location_id=location_id) if location_id else self.location
+
         location_types = self.reporting_types()
         if location.location_type.name == 'district':
             locations = SQLLocation.objects.filter(parent=location)
         elif location.location_type.name == 'region':
+            loc_types = location_types.exclude(name='Central Medical Store')
             locations = SQLLocation.objects.filter(
-                Q(parent__parent=location) | Q(parent=location, location_type__name__in=location_types)
+                Q(parent__parent=location, location_type__in=loc_types) |
+                Q(parent=location, location_type__in=loc_types)
             )
         elif location.location_type in location_types:
             locations = SQLLocation.objects.filter(id=location.id)
         else:
+            types = ['Central Medical Store', 'Regional Medical Store', 'Teaching Hospital']
+            loc_types = location_types.filter(name__in=types)
             locations = SQLLocation.objects.filter(
                 domain=self.domain,
-                location_type__name__in=location_types,
-                parent=location
+                location_type__in=loc_types
             )
         return locations.exclude(supply_point_id__isnull=True).exclude(is_archived=True)
 
@@ -159,6 +167,7 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
     flush_layout = True
     split = True
     exportable = True
+    printable = True
     is_exportable = False
     base_template = 'ewsghana/base_template.html'
 
