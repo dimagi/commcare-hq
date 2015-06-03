@@ -790,7 +790,7 @@ Here's a sample spec:
 
 ## Sort Expression
 
-A sort order for the report rows can be specified. Multiple fields, in either ascending or descending order, may be specified. E.g.:
+A sort order for the report rows can be specified. Multiple fields, in either ascending or descending order, may be specified. Example:
 ```
 [
   {
