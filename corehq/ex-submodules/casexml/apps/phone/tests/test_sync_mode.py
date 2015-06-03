@@ -290,7 +290,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
         self._postFakeWithSyncToken(child, self.sync_log.get_id)
         self._testUpdate(self.sync_log.get_id, {parent_id: [], child_id: []})
 
-    @run_with_all_restore_configs
+    # @run_with_all_restore_configs
     def test_delete_one_of_multiple_indices(self):
         child_id = "child_id"
         parent_id_1 = "parent_id"
