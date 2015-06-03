@@ -509,14 +509,23 @@ class AddSavedReportConfigView(View):
                 setattr(self.config, field, update_config_data[field])
 
         # remove start and end date if the date range is "last xx days"
-        if (
-            self.saved_report_config_form.cleaned_data['days']
-            or self.saved_report_config_form.cleaned_data['date_range'] == 'lastmonth'
-        ):
+        if self.saved_report_config_form.cleaned_data['date_range'] in [
+            'last30',
+            'last7',
+            'lastn',
+            'lastmonth',
+        ]:
             if "start_date" in self.config:
                 delattr(self.config, "start_date")
             if "end_date" in self.config:
                 delattr(self.config, "end_date")
+        # remove days if the date range has specific dates
+        elif self.saved_report_config_form.cleaned_data['date_range'] in [
+            'since',
+            'range',
+        ]:
+            if "days" in self.config:
+                delattr(self.config, "days")
 
         self.config.save()
         ReportsTab.clear_dropdown_cache(request, self.domain)
