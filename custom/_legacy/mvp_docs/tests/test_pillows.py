@@ -119,32 +119,61 @@ class IndicatorPillowTests(TestCase):
             {'_id': 'some-bad-id', '_rev': 'whatrever', 'doc_type': 'XFormArchived'}
         )
 
+    def test_mixed_form_and_case_indicators_process_form_then_case(self):
+        # this is a regression test for http://manage.dimagi.com/default.asp?165274
+        def _test():
+            form_json, case_json = _save_form_and_case()
+            MVPFormIndicatorPillow().change_transform(form_json)
+            updated_form = IndicatorXForm.get(form_json['_id'])
+            computed = updated_form.computed_['mvp_indicators']
+            self.assertEqual(29, len(computed))
+            self.assertEqual('child_visit_form', computed['child_visit_form']['value'])
+            case_json = _get_doc_data('bug_case.json')
+            MVPCaseIndicatorPillow().change_transform(case_json)
+            updated_form = IndicatorXForm.get(form_json['_id'])
+            updated_computed = updated_form.computed_['mvp_indicators']
+            self.assertEqual(29, len(updated_computed))
+            self.assertEqual('child_visit_form', updated_computed['child_visit_form']['value'])
+
+        self._call_with_patches(_test)
+
+    def test_mixed_form_and_case_indicators_process_case_then_form(self):
+        # this is a regression test for http://manage.dimagi.com/default.asp?165274
+        def _test():
+            form_json, case_json = _save_form_and_case()
+            MVPCaseIndicatorPillow().change_transform(case_json)
+            updated_form = IndicatorXForm.get(form_json['_id'])
+            computed = updated_form.computed_['mvp_indicators']
+            self.assertEqual(29, len(computed))
+            self.assertEqual('child_visit_form', computed['child_visit_form']['value'])
+
+            MVPFormIndicatorPillow().change_transform(form_json)
+            updated_form = IndicatorXForm.get(form_json['_id'])
+            updated_computed = updated_form.computed_['mvp_indicators']
+            self.assertEqual(29, len(updated_computed))
+            self.assertEqual('child_visit_form', updated_computed['child_visit_form']['value'])
+
+        self._call_with_patches(_test)
+
+
     @patch('corehq.apps.indicators.utils.get_namespaces')
     @patch('corehq.apps.indicators.models.CaseDataInFormIndicatorDefinition.get_all')
     @patch('corehq.apps.indicators.models.CaseIndicatorDefinition.get_all')
     @patch('corehq.apps.indicators.models.FormIndicatorDefinition.get_all')
-    def test_mixed_form_and_case_indicators(self, form_get_all_patch, case_get_all_patch,
-                                            case_form_get_all_patch, get_namespaces_patch):
-        # this is a regression test for http://manage.dimagi.com/default.asp?165274
+    def _call_with_patches(self, fn, form_get_all_patch, case_get_all_patch,
+                           case_form_get_all_patch, get_namespaces_patch):
         form_get_all_patch.return_value = _fake_indicators('mvp-sauri-form-indicators.json')
         case_get_all_patch.return_value = _fake_indicators('mvp-sauri-case-indicators.json')
         case_form_get_all_patch.return_value = _fake_indicators('mvp-sauri-case-form-indicators.json')
         get_namespaces_patch.return_value = ['mvp_indicators']
+        fn()
 
-        self._save_doc_to_db('indicator_form.json', XFormInstance)
-        form_json = _get_doc_data('bug_form.json')
-        XFormInstance.wrap(form_json).save()
-        MVPFormIndicatorPillow().change_transform(form_json)
-        updated_form = IndicatorXForm.get(form_json['_id'])
-        computed = updated_form.computed_['mvp_indicators']
-        self.assertEqual(29, len(computed))
-        self.assertEqual('child_visit_form', computed['child_visit_form']['value'])
-        case_json = _get_doc_data('bug_case.json')
-        MVPCaseIndicatorPillow().change_transform(case_json)
-        updated_form = IndicatorXForm.get(form_json['_id'])
-        updated_computed = updated_form.computed_['mvp_indicators']
-        self.assertEqual(29, len(updated_computed))
-        self.assertEqual('child_visit_form', computed['child_visit_form']['value'])
+def _save_form_and_case():
+    form_json = _get_doc_data('bug_form.json')
+    XFormInstance.wrap(form_json).save()
+    case_json = _get_doc_data('bug_case.json')
+    CommCareCase.wrap(case_json).save()
+    return form_json, case_json
 
 
 def _fake_indicators(filename):

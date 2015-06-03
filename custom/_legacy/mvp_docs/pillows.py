@@ -81,11 +81,8 @@ class MVPFormIndicatorPillow(MVPIndicatorPillowBase):
         if not xmlns:
             return
 
-        form_indicator_defs = []
-        for namespace in namespaces:
-            form_indicator_defs.extend(
-                FormIndicatorDefinition.get_all(namespace, domain, xmlns=xmlns)
-            )
+        form_indicator_defs = get_form_indicators(namespaces, domain, xmlns)
+
         if not form_indicator_defs:
             return
 
@@ -148,6 +145,7 @@ class MVPCaseIndicatorPillow(MVPIndicatorPillowBase):
             return
 
         for xform_id in xform_ids:
+            related_xform_indicators = []
             try:
                 # first try to get the doc from the indicator DB
                 xform_doc = IndicatorXForm.get(xform_id)
@@ -156,6 +154,7 @@ class MVPCaseIndicatorPillow(MVPIndicatorPillowBase):
                 try:
                     xform_dict = XFormInstance.get_db().get(xform_id)
                     xform_doc = IndicatorXForm.wrap_for_indicator_db(xform_dict)
+                    related_xform_indicators = get_form_indicators(namespaces, domain, xform_doc.xmlns)
                 except ResourceNotFound:
                     pillow_eval_logging.error(
                         "Could not find an XFormInstance with id %(xform_id)s "
@@ -168,9 +167,9 @@ class MVPCaseIndicatorPillow(MVPIndicatorPillowBase):
 
             if not xform_doc.xmlns:
                 continue
-            related_xform_defs = []
+
             for namespace in namespaces:
-                related_xform_defs.extend(
+                related_xform_indicators.extend(
                     CaseDataInFormIndicatorDefinition.get_all(
                         namespace,
                         domain,
@@ -178,8 +177,15 @@ class MVPCaseIndicatorPillow(MVPIndicatorPillowBase):
                     )
                 )
             xform_doc.update_indicators_in_bulk(
-                related_xform_defs,
+                related_xform_indicators,
                 logger=pillow_eval_logging,
                 save_on_update=False
             )
             xform_doc.save()
+
+
+def get_form_indicators(namespaces, domain, xmlns):
+    return [
+        indicator for namespace in namespaces
+        for indicator in FormIndicatorDefinition.get_all(namespace, domain, xmlns=xmlns)
+    ]
