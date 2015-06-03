@@ -7,7 +7,7 @@ from corehq.apps.app_manager.models import (
     WORKFLOW_ROOT, AdvancedOpenCaseAction, SortElement, PreloadAction, MappingItem, OpenCaseAction,
     OpenSubCaseAction, FormActionCondition, UpdateCaseAction, WORKFLOW_FORM, FormLink, AUTO_SELECT_USERCASE,
     ReportModule, ReportAppConfig)
-from corehq.apps.app_manager.tests.util import TestFileMixin
+from corehq.apps.app_manager.tests.util import TestFileMixin, commtrack_enabled
 from corehq.apps.app_manager.xpath import dot_interpolate, UserCaseXPath, interpolate_xpath
 from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.feature_previews import MODULE_FILTER
@@ -134,10 +134,20 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         app.get_module(1).get_form(0).actions.load_update_cases[0].details_module = clinic_module_id
         self.assertXmlEqual(self.get_xml('suite-advanced-filter'), app.create_suite())
 
+    @commtrack_enabled(True)
     def test_advanced_suite_commtrack(self):
         app = Application.wrap(self.get_json('suite-advanced'))
-        app.commtrack_enabled = True
         self.assertXmlEqual(self.get_xml('suite-advanced-commtrack'), app.create_suite())
+
+    @commtrack_enabled(True)
+    def test_autoload_supplypoint(self):
+        app = Application.wrap(self.get_json('app'))
+        app_xml = app.create_suite()
+        self.assertXmlPartialEqual(
+            self.get_xml('autoload_supplypoint'),
+            app_xml,
+            './entry[1]'
+        )
 
     def test_advanced_suite_auto_select_user(self):
         app = Application.wrap(self.get_json('suite-advanced'))
@@ -921,6 +931,7 @@ class RegexTest(SimpleTestCase):
                 interpolate_xpath(case[0], replacements['case']),
                 case[1].format(**replacements)
             )
+
 
 class TestFormLinking(SimpleTestCase, TestFileMixin):
     file_path = ('data', 'suite')

@@ -60,7 +60,7 @@ from corehq.apps.hqmedia.models import HQMediaMixin
 from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import cc_user_domain
-from corehq.apps.domain.models import cached_property
+from corehq.apps.domain.models import cached_property, Domain
 from corehq.apps.app_manager import current_builds, app_strings, remote_app
 from corehq.apps.app_manager import suite_xml, commcare_settings
 from corehq.apps.app_manager.util import (
@@ -99,6 +99,7 @@ WORKFLOW_FORM = 'form'
 AUTO_SELECT_USER = 'user'
 AUTO_SELECT_FIXTURE = 'fixture'
 AUTO_SELECT_CASE = 'case'
+AUTO_SELECT_LOCATION = 'location'
 AUTO_SELECT_RAW = 'raw'
 AUTO_SELECT_USERCASE = 'usercase'
 
@@ -3656,9 +3657,16 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     cloudcare_enabled = BooleanProperty(default=False)
     translation_strategy = StringProperty(default='select-known',
                                           choices=app_strings.CHOICES.keys())
-    commtrack_enabled = BooleanProperty(default=False)
     commtrack_requisition_mode = StringProperty(choices=CT_REQUISITION_MODES)
     auto_gps_capture = BooleanProperty(default=False)
+
+    @property
+    @memoized
+    def commtrack_enabled(self):
+        if settings.UNIT_TESTING:
+            return False  # override with .tests.util.commtrack_enabled
+        domain_obj = Domain.get_by_name(self.domain) if self.domain else None
+        return domain_obj.commtrack_enabled if domain_obj else False
 
     @classmethod
     def wrap(cls, data):
@@ -3673,6 +3681,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     module['referral_label'][lang] = commcare_translations.load_translations(lang).get('cchq.referral', 'Referrals')
         if not data.get('build_langs'):
             data['build_langs'] = data['langs']
+        data.pop('commtrack_enabled', None)  # Remove me after migrating apps
         self = super(Application, cls).wrap(data)
 
         # make sure all form versions are None on working copies
