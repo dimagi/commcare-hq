@@ -788,6 +788,22 @@ Here's a sample spec:
 }
 ```
 
+## Sort Expression
+
+A sort order for the report rows can be specified. Multiple fields, in either ascending or descending order, may be specified. E.g.:
+```
+[
+  {
+    "field": "district", 
+    "order": "DESC"
+  }, 
+  {
+    "field": "date_of_data_collection", 
+    "order": "ASC"
+  }
+]
+```
+
 # Export
 
 A UCR data source can be exported, to back an excel dashboard, for instance.
