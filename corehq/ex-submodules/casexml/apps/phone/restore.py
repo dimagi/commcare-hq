@@ -13,7 +13,7 @@ from casexml.apps.phone.exceptions import (
     MissingSyncLog, InvalidSyncLogException, SyncLogUserMismatch,
     BadStateException, RestoreException,
 )
-from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, FILE_RESTORE, STREAM_RESTORE_CACHE
+from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, FILE_RESTORE
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.phone.models import SyncLog, get_properly_wrapped_sync_log
@@ -514,8 +514,7 @@ class RestoreConfig(object):
             return CachedResponse(None)
 
         if self.sync_log:
-            stream = STREAM_RESTORE_CACHE.enabled(self.domain)
-            payload = self.sync_log.get_cached_payload(self.version, stream=stream)
+            payload = self.sync_log.get_cached_payload(self.version, stream=True)
         else:
             payload = self.cache.get(self._initial_cache_key())
 
