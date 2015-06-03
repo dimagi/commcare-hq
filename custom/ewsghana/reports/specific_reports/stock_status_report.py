@@ -2,6 +2,7 @@ from datetime import timedelta
 from django.db.models.aggregates import Count
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.programs.models import Program
 from corehq.apps.reports.generic import GenericTabularReport
 from custom.ilsgateway.tanzania.reports.utils import link_format
 from dimagi.utils.decorators.memoized import memoized
@@ -154,7 +155,7 @@ class MonthOfStockProduct(EWSData):
     @property
     def headers(self):
         headers = DataTablesHeader(*[DataTablesColumn('Location')])
-        for product in self.unique_products(self.get_supply_points, all=True):
+        for product in self.unique_products(self.get_supply_points, all=(not self.config['export'])):
             headers.add_column(DataTablesColumn(product.code))
 
         return headers
@@ -176,8 +177,8 @@ class MonthOfStockProduct(EWSData):
                     self.config['enddate'].date(), self.config['report_type']))
 
                 row = [link_format(sp.name, url)]
+                products = self.unique_products(self.get_supply_points, all=(not self.config['export']))
 
-                products = self.unique_products(self.get_supply_points, all=True)
                 transactions = list(StockTransaction.objects.filter(
                     type='stockonhand',
                     product_id__in=products.values_list('product_id', flat=True),
@@ -326,7 +327,8 @@ class StockStatus(MultiReport):
             program=program if program != ALL_OPTION else None,
             products=products if products and products[0] != ALL_OPTION else [],
             report_type=self.request.GET.get('report_type', None),
-            user=self.request.couch_user
+            user=self.request.couch_user,
+            export=False
         )
 
     @property
@@ -375,13 +377,17 @@ class StockStatus(MultiReport):
             return super(StockStatus, self).export_table
 
         report_type = self.request.GET.get('report_type', None)
+        config = self.report_config
+        config['export'] = True
         if report_type == 'stockouts' or not report_type:
-            r = self.report_context['reports'][2]['report_table']
-            return [self._export(r['title'], r['headers'], r['rows'])]
+            r = MonthOfStockProduct(config=config)
+            return [self._export(r.title, r.headers, r.rows)]
         else:
-            reports = [self.report_context['reports'][2]['report_table'],
-                       self.report_context['reports'][4]['report_table']]
-            return [self._export(r['title'], r['headers'], r['rows']) for r in reports]
+            reports = [
+                MonthOfStockProduct(config=config),
+                StockoutTable(config=config)
+            ]
+            return [self._export(r.title, r.headers, r.rows) for r in reports]
 
     def _export(self, export_sheet_name, headers, formatted_rows, total_row=None):
         def _unformat_row(row):
@@ -402,4 +408,4 @@ class StockStatus(MultiReport):
         if total_row:
             table.append(_unformat_row(total_row))
 
-        return [export_sheet_name, table]
+        return [export_sheet_name, self._report_info + table]

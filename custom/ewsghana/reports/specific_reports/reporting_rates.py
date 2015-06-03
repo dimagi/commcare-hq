@@ -452,4 +452,4 @@ class ReportingRatesReport(MultiReport):
                 table[0][k] = replace
         table.extend(rows)
 
-        return [export_sheet_name, table]
+        return [export_sheet_name, self._report_info + table]

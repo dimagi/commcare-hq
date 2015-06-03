@@ -296,7 +296,20 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
         if total_row:
             table.append(_unformat_row(total_row))
 
-        return [export_sheet_name, table]
+        return [export_sheet_name, self._report_info + table]
+
+    @property
+    def _report_info(self):
+        program_id = self.request.GET.get('filter_by_program')
+        return [
+            ['Title of report', 'Date range', 'Program'],
+            [
+                self.title,
+                '{} - {}'.format(self.datespan.startdate_display, self.datespan.enddate_display),
+                'All' if not program_id else Program.get(docid=program_id).name
+            ],
+            []
+        ]
 
 
 class ProductSelectionPane(EWSData):
