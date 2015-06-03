@@ -532,25 +532,16 @@ class Location(CachedCouchDocumentMixin, Document):
 
     @classmethod
     def filter_by_type(cls, domain, loc_type, root_loc=None):
-        loc_id = root_loc._id if root_loc else None
-        relevant_ids = [r['id'] for r in cls.get_db().view('locations/by_type',
-            reduce=False,
-            startkey=[domain, loc_type, loc_id],
-            endkey=[domain, loc_type, loc_id, {}],
-        ).all()]
+        if root_loc:
+            query = root_loc.sql_location.get_descendants(include_self=True)
+        else:
+            query = SQLLocation.objects
+        ids = query.filter(domain=domain, location_type__name=loc_type).ids()
+
         return (
-            cls.wrap(l) for l in iter_docs(cls.get_db(), list(relevant_ids))
+            cls.wrap(l) for l in iter_docs(cls.get_db(), list(ids))
             if not l.get('is_archived', False)
         )
-
-    @classmethod
-    def filter_by_type_count(cls, domain, loc_type, root_loc=None):
-        loc_id = root_loc._id if root_loc else None
-        return cls.get_db().view('locations/by_type',
-            reduce=True,
-            startkey=[domain, loc_type, loc_id],
-            endkey=[domain, loc_type, loc_id, {}],
-        ).one()['value']
 
     @classmethod
     def by_domain(cls, domain, include_docs=True):
