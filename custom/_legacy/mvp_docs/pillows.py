@@ -82,7 +82,6 @@ class MVPFormIndicatorPillow(MVPIndicatorPillowBase):
             return
 
         form_indicator_defs = get_form_indicators(namespaces, domain, xmlns)
-
         if not form_indicator_defs:
             return
 

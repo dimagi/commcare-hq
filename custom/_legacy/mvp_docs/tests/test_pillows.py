@@ -20,7 +20,8 @@ INDICATOR_TEST_NAMESPACE = 'indicator_test'
 
 class IndicatorPillowTests(TestCase):
 
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
         try:
             get_db().delete_doc('INDICATOR_CONFIGURATION')
         except ResourceNotFound:
@@ -36,8 +37,8 @@ class IndicatorPillowTests(TestCase):
                 ],
             }
         })
-        self.form_pillow = MVPFormIndicatorPillow()
-        self.case_pillow = MVPCaseIndicatorPillow()
+        cls.form_pillow = MVPFormIndicatorPillow()
+        cls.case_pillow = MVPCaseIndicatorPillow()
 
     def _save_doc_to_db(self, docname, doc_class):
         doc_dict = _get_doc_data(docname)
@@ -71,7 +72,6 @@ class IndicatorPillowTests(TestCase):
             xmlns='http://openrosa.org/formdesigner/indicator-create-xmlns',
         )
         form_alias.save()
-
         self.form_pillow.run_burst()
 
         indicator_form = IndicatorXForm.get(form_id)
@@ -122,36 +122,46 @@ class IndicatorPillowTests(TestCase):
     def test_mixed_form_and_case_indicators_process_form_then_case(self):
         # this is a regression test for http://manage.dimagi.com/default.asp?165274
         def _test():
-            form_json, case_json = _save_form_and_case()
-            MVPFormIndicatorPillow().change_transform(form_json)
-            updated_form = IndicatorXForm.get(form_json['_id'])
+            form, case = _save_form_and_case()
+            MVPFormIndicatorPillow().change_transform(form.to_json())
+            updated_form = IndicatorXForm.get(form._id)
             computed = updated_form.computed_['mvp_indicators']
             self.assertEqual(29, len(computed))
             self.assertEqual('child_visit_form', computed['child_visit_form']['value'])
             case_json = _get_doc_data('bug_case.json')
             MVPCaseIndicatorPillow().change_transform(case_json)
-            updated_form = IndicatorXForm.get(form_json['_id'])
+            updated_form = IndicatorXForm.get(form._id)
             updated_computed = updated_form.computed_['mvp_indicators']
             self.assertEqual(29, len(updated_computed))
             self.assertEqual('child_visit_form', updated_computed['child_visit_form']['value'])
+
+            # cleanup
+            updated_form.delete()
+            form.delete()
+            case.delete()
 
         self._call_with_patches(_test)
 
     def test_mixed_form_and_case_indicators_process_case_then_form(self):
         # this is a regression test for http://manage.dimagi.com/default.asp?165274
         def _test():
-            form_json, case_json = _save_form_and_case()
-            MVPCaseIndicatorPillow().change_transform(case_json)
-            updated_form = IndicatorXForm.get(form_json['_id'])
+            form, case = _save_form_and_case()
+            MVPCaseIndicatorPillow().change_transform(case.to_json())
+            updated_form = IndicatorXForm.get(form._id)
             computed = updated_form.computed_['mvp_indicators']
             self.assertEqual(29, len(computed))
             self.assertEqual('child_visit_form', computed['child_visit_form']['value'])
 
-            MVPFormIndicatorPillow().change_transform(form_json)
-            updated_form = IndicatorXForm.get(form_json['_id'])
+            MVPFormIndicatorPillow().change_transform(form.to_json())
+            updated_form = IndicatorXForm.get(form._id)
             updated_computed = updated_form.computed_['mvp_indicators']
             self.assertEqual(29, len(updated_computed))
             self.assertEqual('child_visit_form', updated_computed['child_visit_form']['value'])
+
+            # cleanup
+            updated_form.delete()
+            form.delete()
+            case.delete()
 
         self._call_with_patches(_test)
 
@@ -169,11 +179,11 @@ class IndicatorPillowTests(TestCase):
 
 
 def _save_form_and_case():
-    form_json = _get_doc_data('bug_form.json')
-    XFormInstance.wrap(form_json).save()
-    case_json = _get_doc_data('bug_case.json')
-    CommCareCase.wrap(case_json).save()
-    return form_json, case_json
+    form = XFormInstance.wrap(_get_doc_data('bug_form.json'))
+    form.save()
+    case = CommCareCase.wrap(_get_doc_data('bug_case.json'))
+    case.save()
+    return form, case
 
 
 def _fake_indicators(filename):
