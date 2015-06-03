@@ -111,9 +111,11 @@ class SmsGatewayFee(models.Model):
         criteria_class = criteria_class or SmsGatewayFeeCriteria
         currency = currency or Currency.get_default()
 
-        # caller's responsibility to pass the right combination of criteria_class and prefix
-        # will error if bad combination is passed
-        if prefix:
+        if 'prefix' in [
+            field.name
+            for field, _ in criteria_class._meta.get_fields_with_model()
+        ]:
+            prefix = prefix or ''
             criteria, _ = criteria_class.objects.get_or_create(
                 backend_api_id=backend_api_id,
                 direction=direction,
