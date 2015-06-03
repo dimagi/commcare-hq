@@ -262,6 +262,8 @@ class RestoreState(object):
     This allows the providers to set values on the state, for either logging or performance
     reasons.
     """
+    restore_class = FileRestoreResponse
+
     def __init__(self, project, user, params):
         self.project = project
         self.domain = project.name if project else ''
@@ -372,10 +374,6 @@ class RestoreState(object):
     def sync_log_class(self):
         format = LOG_FORMAT_SIMPLIFIED if self.use_clean_restore else LOG_FORMAT_LEGACY
         return get_sync_log_class_by_format(format)
-
-    @property
-    def restore_class(self):
-        return FileRestoreResponse
 
     @property
     @memoized
