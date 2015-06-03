@@ -19,31 +19,37 @@ $(function(){
         };
 
         self.startPollDownloadStatus = function(data){
+            var keep_polling = true;
             var pollDownloadStatus = function(){
-                $.ajax({
-                    url: data.download_url,
-                    success: function(resp) {
-                        if (resp.trim().length) {
-                            self.$downloading.hide();
-                            self.$download_progress.show().html(resp);
-                            if (self.$download_progress.find(".alert-success").length) {
-                                clearInterval(interval);
+                if (keep_polling) {
+                    $.ajax({
+                        url: data.download_url,
+                        success: function (resp) {
+                            if (resp.trim().length) {
+                                self.$downloading.hide();
+                                self.$download_progress.show().html(resp);
+                                if (self.$download_progress.find(".alert-success").length) {
+                                    keep_polling = false;
+                                }
                             }
+                            if (keep_polling) {
+                                setTimeout(pollDownloadStatus, self.POLL_FREQUENCY);
+                            }
+                        },
+                        error: function (resp) {
+                            self.downloadError(resp.responseText);
                         }
-                    },
-                    error: function(resp) {
-                        self.downloadError(resp.responseText);
-                        clearInterval(interval);
-                    }
-                });
+                    });
+                }
             };
 
-            var interval = setInterval(pollDownloadStatus, self.POLL_FREQUENCY);
 
             self.$el.on("hidden", function(){
-                clearInterval(interval);
+                keep_polling = false;
                 self.init();
             });
+
+            pollDownloadStatus();
         };
 
         self.generateDownload = function(){
