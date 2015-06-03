@@ -1054,7 +1054,8 @@ class Subscription(models.Model):
 
     def renew_subscription(self, date_end=None, note=None, web_user=None,
                            adjustment_method=None,
-                           service_type=None, pro_bono_status=None):
+                           service_type=None, pro_bono_status=None,
+                           new_version=None):
         """
         This creates a new subscription with a date_start that is
         equivalent to the current subscription's date_end.
@@ -1073,11 +1074,14 @@ class Subscription(models.Model):
             raise SubscriptionRenewalError(
                 "Cannot renew a subscription with no date_end set."
             )
-        current_privileges = get_privileges(self.plan_version)
-        new_version = DefaultProductPlan.get_lowest_edition_by_domain(
-            self.subscriber.domain, current_privileges,
-            return_plan=True,
-        )
+
+        if new_version is None:
+            current_privileges = get_privileges(self.plan_version)
+            new_version = DefaultProductPlan.get_lowest_edition_by_domain(
+                self.subscriber.domain, current_privileges,
+                return_plan=True,
+            )
+
         if new_version is None:
             # this should NEVER happen, but on the off-chance that it does...
             raise SubscriptionRenewalError(
