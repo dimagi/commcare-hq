@@ -4,6 +4,7 @@ from sqlagg import (
     TableNotFoundException,
 )
 from sqlalchemy.exc import ProgrammingError
+from apps.userreports.reports.specs import DESCENDING
 from corehq.apps.reports.sqlreport import SqlData
 from corehq.apps.userreports.exceptions import UserReportsError
 from corehq.apps.userreports.models import DataSourceConfiguration
@@ -113,7 +114,7 @@ class ConfigurableReportDataSource(SqlData):
                 for col in reversed(self._order_by):
                     ret.sort(
                         key=lambda x: x.get(col[0], None),
-                        reverse=col[1] == "DESC"
+                        reverse=col[1] == DESCENDING
                     )
                 return ret
             # Otherwise sort by the first column
