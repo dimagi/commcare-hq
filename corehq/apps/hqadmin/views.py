@@ -14,6 +14,7 @@ from django.views.decorators.http import require_POST, require_GET
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.models import User
+from django.contrib.auth import login
 from django.core import management, cache
 from django.core.urlresolvers import reverse
 from django.shortcuts import render, redirect
@@ -49,6 +50,7 @@ from corehq.apps.es.forms import FormES
 from corehq.apps.hqadmin.history import get_recent_changes, download_changes
 from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.hqadmin.forms import EmailForm, BrokenBuildsForm
+from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.domain.decorators import require_superuser, require_superuser_or_developer
 from corehq.apps.domain.models import Domain
@@ -76,12 +78,14 @@ from corehq.apps.users.util import format_username
 from corehq.db import Session
 from corehq.elastic import parse_args_for_es, ES_URLS, run_query
 from dimagi.utils.couch.database import get_db, is_bigcouch
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.parsing import json_format_datetime, json_format_date
 from dimagi.utils.web import json_response, get_url_base
 from dimagi.utils.django.email import send_HTML_email
 
 from .multimech import GlobalConfig
+from .forms import AuthenticateAsForm
 
 
 @require_superuser
@@ -223,6 +227,46 @@ def contact_email(request):
     response["Access-Control-Max-Age"] = "1000"
     response["Access-Control-Allow-Headers"] = "*"
     return response
+
+
+class AuthenticateAs(BasePageView):
+    urlname = 'authenticate_as'
+    page_title = _("Login as other user")
+    template_name = 'hqadmin/authenticate_as.html'
+
+    @property
+    @memoized
+    def authenticate_as_form(self):
+        if self.request.method == 'POST':
+            return AuthenticateAsForm(self.request.POST)
+        else:
+            return AuthenticateAsForm()
+
+    @method_decorator(require_superuser)
+    def dispatch(self, *args, **kwargs):
+        return super(AuthenticateAs, self).dispatch(*args, **kwargs)
+
+    def page_url(self):
+        return reverse(self.urlname)
+
+    @property
+    def page_context(self):
+        return {
+            'hide_filters': True,
+            'form': self.authenticate_as_form
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.authenticate_as_form.is_valid():
+            username = self.authenticate_as_form.cleaned_data['username']
+            request.user = User.objects.get(username=username)
+
+            # http://stackoverflow.com/a/2787747/835696
+            # This allows us to bypass the authenticate call
+            request.user.backend = 'django.contrib.auth.backends.ModelBackend'
+            login(request, request.user)
+            return HttpResponseRedirect('/')
+        return self.get(request, *args, **kwargs)
 
 
 @require_superuser

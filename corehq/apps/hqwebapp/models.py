@@ -1389,12 +1389,15 @@ class AdminReportsTab(UITab):
         admin_operations = []
 
         if self.couch_user and self.couch_user.is_staff:
+            from corehq.apps.hqadmin.views import AuthenticateAs
             admin_operations.extend([
                 {'title': _('Mass Email Users'),
                  'url': reverse('mass_email')},
                 {'title': _('PillowTop Errors'),
                  'url': reverse('admin_report_dispatcher',
                                 args=('pillow_errors',))},
+                {'title': _('Login as another user'),
+                 'url': reverse(AuthenticateAs.urlname)},
             ])
         return [
             (_('Administrative Reports'), [
