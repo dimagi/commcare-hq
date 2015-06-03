@@ -237,7 +237,8 @@ class InventoryManagementData(EWSData):
             values = []
             for product, value in self.chart_data.iteritems():
                 values.extend([a['y'] for a in value])
-                chart.add_dataset(product, value, color='red' if product in ['Understock', 'Overstock'] else None)
+                chart.add_dataset(product, value,
+                                  color='black' if product in ['Understock', 'Overstock'] else None)
             chart.forceY = [0, loc.location_type.understock_threshold + loc.location_type.overstock_threshold]
             return [chart]
         return []

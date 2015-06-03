@@ -1,6 +1,7 @@
 from datetime import datetime
 from django.core.urlresolvers import reverse
 from django.db.models import Q
+from django.template.loader import render_to_string
 from corehq import Domain
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
@@ -313,9 +314,14 @@ class ProductSelectionPane(EWSData):
     show_table = True
     title = 'Select Products'
     use_datatables = True
+    custom_table = True
 
     @property
     def rows(self):
+        return []
+
+    @property
+    def rendered_content(self):
         locations = get_supply_points(self.config['location_id'], self.config['domain'])
         products = self.unique_products(locations, all=True)
         programs = {program.get_id: program.name for program in Program.by_domain(self.domain)}
@@ -323,23 +329,29 @@ class ProductSelectionPane(EWSData):
         if 'report_type' in self.config:
             from custom.ewsghana.reports.specific_reports.stock_status_report import MonthOfStockProduct
             headers = [h.html for h in MonthOfStockProduct(self.config).headers]
-        result = [
-            [
-                '<input class=\"toggle-column\" name=\"{1} ({0})\" data-column={2} value=\"{0}\" type=\"checkbox\"'
-                '{3}>{1} ({0})</input>'.format(
-                    p.code, p.name, idx if not headers else headers.index(p.code) if p.code in headers else -1,
-                    'checked' if self.config['program'] is None or self.config['program'] == p.program_id else ''),
-                programs[p.program_id], p.code
-            ] for idx, p in enumerate(products, start=1)
-        ]
 
-        result.sort(key=lambda r: (r[1], r[2]))
+        result = {}
+        for idx, product in enumerate(products, start=1):
+            program = programs[product.program_id]
+            product_dict = {
+                'name': product.name,
+                'code': product.code,
+                'idx': idx if not headers else headers.index(product.code) if product.code in headers else -1,
+                'checked': self.config['program'] is None or self.config['program'] == product.program_id
+            }
+            if program in result:
+                result[program]['product_list'].append(product_dict)
+                if result[program]['all'] and not product_dict['checked']:
+                    result[program]['all'] = False
+            else:
+                result[program] = {
+                    'product_list': [product_dict],
+                    'all': product_dict['checked']
+                }
 
-        current_program = result[0][1] if result else ''
-        rows = [['<div class="program">%s</div>' % current_program]]
-        for r in result:
-            if r[1] != current_program:
-                rows.append(['<div class="program">%s</div>' % r[1]])
-                current_program = r[1]
-            rows.append([r[0]])
-        return rows
+        for _, product_dict in result.iteritems():
+            product_dict['product_list'].sort(key=lambda prd: prd['name'])
+
+        return render_to_string('ewsghana/partials/product_selection_pane.html', {
+            'products_by_program': result
+        })
