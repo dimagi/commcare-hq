@@ -6,6 +6,7 @@ from uuid import uuid4
 import shutil
 import hashlib
 import tempfile
+from celery.exceptions import TimeoutError
 from couchdbkit import ResourceConflict, ResourceNotFound
 from casexml.apps.phone.data_providers import get_restore_providers, get_long_running_providers
 from casexml.apps.phone.data_providers.case.load_testing import get_loadtest_factor
@@ -13,6 +14,7 @@ from casexml.apps.phone.exceptions import (
     MissingSyncLog, InvalidSyncLogException, SyncLogUserMismatch,
     BadStateException, RestoreException,
 )
+from casexml.apps.phone.tasks import async_restore_response
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, FILE_RESTORE
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
@@ -26,7 +28,7 @@ from couchforms.xml import (
     ResponseNature,
     get_simple_response_xml,
 )
-from casexml.apps.case.xml import check_version, V1
+from casexml.apps.case.xml import check_version, V1, V3
 from django.http import HttpResponse, StreamingHttpResponse
 from django.conf import settings
 from casexml.apps.phone.checksum import CaseStateHash
@@ -43,11 +45,14 @@ INITIAL_SYNC_CACHE_TIMEOUT = 60 * 60  # 1 hour
 INITIAL_SYNC_CACHE_THRESHOLD = 60  # 1 minute
 
 
-def stream_response(payload, is_file=True):
+def stream_response(payload, is_file=True, status=None, headers=None):
     try:
         if is_file:
-            response = StreamingHttpResponse(FileWrapper(open(payload, 'r')), mimetype="text/xml")
+            response = StreamingHttpResponse(FileWrapper(open(payload, 'r')), status=status, mimetype="text/xml")
             response['Content-Length'] = os.path.getsize(payload)
+            if headers:
+                for name, value in headers.items():
+                    response[name] = value
             return response
         else:
             return StreamingHttpResponse(FileWrapper(payload), mimetype="text/xml")
@@ -76,16 +81,19 @@ class StockSettings(object):
 class RestoreResponse(object):
     start_tag_template = (
         '<OpenRosaResponse xmlns="http://openrosa.org/http/response"{items}>'
-        '<message nature="{nature}">Successfully restored account {username}!</message>'
+        '<message nature="{nature}">{message}</message>'
     )
     items_template = ' items="{}"'
     closing_tag = '</OpenRosaResponse>'
+    full_response_message = 'Successfully restored account {username}!'
+    partial_response_message = 'Partial response for account {username}. Retry again in 30 seconds.'
 
     def __init__(self, username=None, items=False):
         self.username = username
         self.items = items
         self.num_items = 0
         self.finalized = False
+        self.is_full_restore = False
 
     def close(self):
         self.response_body.close()
@@ -107,7 +115,7 @@ class RestoreResponse(object):
         for element in iterable:
             self.append(element)
 
-    def finalize(self):
+    def finalize(self, is_full_restore):
         raise NotImplemented()
 
     def get_cache_payload(self, full=False):
@@ -153,16 +161,17 @@ class FileRestoreResponse(RestoreResponse):
 
         return response
 
-    def finalize(self):
+    def finalize(self, is_full_restore):
         """
         Creates the final file with start and ending tag
         """
         with open(self.get_filename(), 'w') as response:
             # Add 1 to num_items to account for message element
             items = self.items_template.format(self.num_items + 1) if self.items else ''
+            message = self.full_response_message if is_full_restore else self.partial_response_message
             response.write(self.start_tag_template.format(
                 items=items,
-                username=self.username,
+                message=message.format(username=self.username),
                 nature=ResponseNature.OTA_RESTORE_SUCCESS
             ))
 
@@ -172,6 +181,7 @@ class FileRestoreResponse(RestoreResponse):
             response.write(self.closing_tag)
         
         self.finalized = True
+        self.is_full_restore = is_full_restore
         self.close()
 
     def get_cache_payload(self, full=False):
@@ -185,7 +195,12 @@ class FileRestoreResponse(RestoreResponse):
             return f.read()
 
     def get_http_response(self):
-        return stream_response(self.get_filename())
+        headers = {}
+        status = None
+        if not self.is_full_restore:
+            headers['Retry-After'] = 30
+            status = 202
+        return stream_response(self.get_filename(), status=status, headers=headers)
 
 
 class StringRestoreResponse(RestoreResponse):
@@ -455,6 +470,13 @@ class RestoreConfig(object):
                 # This exception will fail hard and we'll get a 500 error message
                 raise
 
+    def get_async_payload(self):
+        if self.version == V3:
+            async_response = async_restore_response.delay(self.restore_state)
+            return async_response.get(timeout=10)
+        else:
+            return async_restore_response(self.restore_state)
+
     def get_payload(self):
         """
         This function currently returns either a full string payload or a string name of a file
@@ -463,6 +485,7 @@ class RestoreConfig(object):
         """
         self.validate()
 
+        # TODO: figure out what to do if this is a V3 retry request
         cached_response = self.get_cached_payload()
         if cached_response.exists():
             return cached_response
@@ -476,14 +499,13 @@ class RestoreConfig(object):
                 for element in provider.get_elements(self.restore_state):
                     response.append(element)
 
-            # in the future these will be done asynchronously so keep them separate
-            long_running_providers = get_long_running_providers()
-            for provider in long_running_providers:
-                partial_response = provider.get_response(self.restore_state)
-                response = response + partial_response
-                partial_response.close()
-
-            response.finalize()
+            try:
+                response = response + self.get_async_payload()
+            except TimeoutError:
+                # TODO: figure out how to cache this for the next request
+                response.finalize(is_full_restore=False)
+            else:
+                response.finalize(is_full_restore=True)
 
         self.restore_state.finish_sync()
         self.set_cached_payload_if_necessary(response, self.restore_state.duration)
