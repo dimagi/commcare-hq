@@ -8,7 +8,7 @@ from corehq.apps.indicators.models import (
     FormLabelIndicatorDefinition,
     FormDataInCaseIndicatorDefinition,
     FormDataAliasIndicatorDefinition,
-    CaseDataInFormIndicatorDefinition)
+    CaseDataInFormIndicatorDefinition, IndicatorDefinition)
 from mvp_docs.models import IndicatorXForm, IndicatorCase
 from mvp_docs.pillows import MVPFormIndicatorPillow, MVPCaseIndicatorPillow
 from couchforms.models import XFormInstance
@@ -39,6 +39,10 @@ class IndicatorPillowTests(TestCase):
         })
         cls.form_pillow = MVPFormIndicatorPillow()
         cls.case_pillow = MVPCaseIndicatorPillow()
+
+    def setUp(self):
+        # memoization across tests can break things
+        IndicatorDefinition.get_all.reset_cache()
 
     def _save_doc_to_db(self, docname, doc_class):
         doc_dict = _get_doc_data(docname)
