@@ -337,7 +337,7 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
     def get_source_display(self, event):
         source = dict(MessagingEvent.SOURCE_CHOICES).get(event.source)
         content_type = dict(MessagingEvent.CONTENT_CHOICES).get(event.content_type)
-        return '%s | %s' % (_(source), _(content_type))
+        return self._fmt('%s | %s' % (_(source), _(content_type)))
 
     def get_status_display(self, event, sms=None):
         """
@@ -365,42 +365,50 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
 
     def get_keyword_display(self, keyword_id, content_cache):
         if keyword_id in content_cache:
-            return content_cache[keyword_id]
+            args = content_cache[keyword_id]
+            return self.table_cell(*args)
         try:
             keyword = SurveyKeyword.get(keyword_id)
             if keyword.deleted():
-                result = '%s %s' % (keyword.description, _('(Deleted Keyword)'))
+                display = '%s %s' % (keyword.description, _('(Deleted Keyword)'))
+                display_text = display
             else:
                 urlname = (EditStructuredKeywordView.urlname if keyword.is_structured_sms()
                     else EditNormalKeywordView.urlname)
-                result = '<a target="_blank" href="%s">%s</a>' % (
+                display = '<a target="_blank" href="%s">%s</a>' % (
                     reverse(urlname, args=[keyword.domain, keyword_id]),
                     keyword.description,
                 )
+                display_text = keyword.description
+            args = (display_text, display)
         except ResourceNotFound:
-            result = '-'
+            args = ('-', '-')
 
-        content_cache[keyword_id] = result
-        return result
+        content_cache[keyword_id] = args
+        return self.table_cell(*args)
 
     def get_reminder_display(self, handler_id, content_cache):
         if handler_id in content_cache:
-            return content_cache[handler_id]
+            args = content_cache[handler_id]
+            return self.table_cell(*args)
         try:
             reminder_definition = CaseReminderHandler.get(handler_id)
             if reminder_definition.deleted():
-                result = '%s %s' % (reminder_definition.nickname, _('(Deleted Reminder)'))
+                display = '%s %s' % (reminder_definition.nickname, _('(Deleted Reminder)'))
+                display_text = display
             else:
                 urlname = EditScheduledReminderView.urlname
-                result = '<a target="_blank" href="%s">%s</a>' % (
+                display = '<a target="_blank" href="%s">%s</a>' % (
                     reverse(urlname, args=[reminder_definition.domain, handler_id]),
                     reminder_definition.nickname,
                 )
+                display_text = reminder_definition.nickname
+            args = (display_text, display)
         except ResourceNotFound:
-            result = '-'
+            args = ('-', '-')
 
-        content_cache[handler_id] = result
-        return result
+        content_cache[handler_id] = args
+        return self.table_cell(*args)
 
     def get_content_display(self, event, content_cache):
         if event.source == MessagingEvent.SOURCE_KEYWORD and event.source_id:
@@ -408,21 +416,28 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
         elif event.source == MessagingEvent.SOURCE_REMINDER and event.source_id:
             return self.get_reminder_display(event.source_id, content_cache)
         else:
-            return '-'
+            return self._fmt('-')
 
     def get_event_detail_link(self, event):
-        return '<a target="_blank" href="/a/%s/reports/message_event_detail/?id=%s">%s</a>' % (
+        display_text = _('View Details')
+        display = '<a target="_blank" href="/a/%s/reports/message_event_detail/?id=%s">%s</a>' % (
             self.domain,
             event.pk,
-            _('View Details'),
+            display_text,
         )
+        return self.table_cell(display_text, display)
 
     def get_survey_detail_link(self, subevent):
-        return '<a target="_blank" href="/a/%s/reports/survey_detail/?id=%s">%s</a>' % (
-            self.domain,
-            subevent.xforms_session_id,
-            _('View Survey Details'),
-        )
+        if not subevent.xforms_session_id:
+            return self._fmt('(No survey was initiated)')
+        else:
+            display_text = _('View Survey Details')
+            display = '<a target="_blank" href="/a/%s/reports/survey_detail/?id=%s">%s</a>' % (
+                self.domain,
+                subevent.xforms_session_id,
+                _('View Survey Details'),
+            )
+            return self.table_cell(display_text, display)
 
 
 class MessagingEventsReport(BaseMessagingEventReport):
@@ -468,7 +483,9 @@ class MessagingEventsReport(BaseMessagingEventReport):
                 self._fmt_timestamp(timestamp),
                 self.get_content_display(event, content_cache),
                 self.get_source_display(event),
-                self._fmt_contact_link(event.recipient_id, doc_info),
+                (self._fmt(_('Multiple Recipients'))
+                    if event.recipient_type == MessagingEvent.RECIPIENT_VARIOUS
+                    else self._fmt_contact_link(event.recipient_id, doc_info)),
                 self._fmt(status),
                 self._fmt(error_message),
                 self.get_event_detail_link(event),
@@ -528,24 +545,25 @@ class MessageEventDetailReport(BaseMessagingEventReport):
                     result.append([
                         self._fmt_timestamp(timestamp),
                         self._fmt_contact_link(messaging_subevent.recipient_id, doc_info),
-                        sms.text,
-                        sms.phone_number,
+                        self._fmt(sms.text),
+                        self._fmt(sms.phone_number),
                         self._fmt_direction(sms.direction),
-                        sms.backend_api,
+                        self._fmt(sms.backend_api),
                         self._fmt(status),
                         self._fmt(error_message),
                     ])
             elif messaging_subevent.content_type == MessagingEvent.CONTENT_SMS_SURVEY:
                 status, error_message = self.get_status_display(messaging_subevent)
                 xforms_session = messaging_subevent.xforms_session
-                timestamp = ServerTime(xforms_session.start_time).user_time(self.timezone).done()
+                timestamp = xforms_session.start_time if xforms_session else messaging_subevent.date
+                timestamp = ServerTime(timestamp).user_time(self.timezone).done()
                 result.append([
                     self._fmt_timestamp(timestamp),
                     self._fmt_contact_link(messaging_subevent.recipient_id, doc_info),
                     self.get_survey_detail_link(messaging_subevent),
-                    '-',
-                    '-',
-                    '-',
+                    self._fmt('-'),
+                    self._fmt('-'),
+                    self._fmt('-'),
                     self._fmt(status),
                     self._fmt(error_message),
                 ])
@@ -609,10 +627,10 @@ class SurveyDetailReport(BaseMessagingEventReport):
             status, error_message = self.get_sms_status_display(sms)
             result.append([
                 self._fmt_timestamp(timestamp),
-                sms.text,
-                sms.phone_number,
+                self._fmt(sms.text),
+                self._fmt(sms.phone_number),
                 self._fmt_direction(sms.direction),
-                sms.backend_api,
+                self._fmt(sms.backend_api),
                 self._fmt(status),
                 self._fmt(error_message),
             ])

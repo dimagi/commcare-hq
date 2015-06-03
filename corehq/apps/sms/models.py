@@ -669,16 +669,20 @@ class PhoneNumber(models.Model):
 
 class MessagingStatusMixin(object):
 
+    def refresh(self):
+        return self.__class__.objects.get(pk=self.pk)
+
     def error(self, error_code):
         self.status = MessagingEvent.STATUS_ERROR
         self.error_code = error_code
         self.save()
 
     def completed(self):
-        if self.status != MessagingEvent.STATUS_ERROR:
-            self.status = MessagingEvent.STATUS_COMPLETED
-            self.save()
-
+        obj = self.refresh()
+        if obj.status != MessagingEvent.STATUS_ERROR:
+            obj.status = MessagingEvent.STATUS_COMPLETED
+            obj.save()
+        return obj
 
 class MessagingEvent(models.Model, MessagingStatusMixin):
     """
@@ -824,8 +828,9 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             if reminder_definition.start_condition_type == CASE_CRITERIA
             else None)
 
-        return MessagingSubEvent.objects.create(
+        obj = MessagingSubEvent.objects.create(
             parent=self,
+            date=datetime.utcnow(),
             recipient_type=recipient_type,
             recipient_id=recipient.get_id if recipient_type else None,
             content_type=self.get_content_type_from_reminder(reminder_definition),
@@ -833,17 +838,19 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             case_id=case_id,
             status=MessagingEvent.STATUS_IN_PROGRESS,
         )
+        return obj
 
     def create_subevent_for_single_sms(self, recipient_doc_type, recipient_id, case=None):
-        subevent = MessagingSubEvent.objects.create(
+        obj = MessagingSubEvent.objects.create(
             parent=self,
+            date=datetime.utcnow(),
             recipient_type=MessagingEvent.get_recipient_type_from_doc_type(recipient_doc_type),
             recipient_id=recipient_id,
             content_type=MessagingEvent.CONTENT_SMS,
             case_id=case.get_id if case else None,
             status=MessagingEvent.STATUS_COMPLETED,
         )
-        return subevent
+        return obj
 
     @classmethod
     def get_source_from_reminder(cls, reminder_definition):
@@ -940,6 +947,7 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
     )
 
     parent = models.ForeignKey('MessagingEvent')
+    date = models.DateTimeField(null=False, db_index=True)
     recipient_type = models.CharField(max_length=3, choices=RECIPIENT_CHOICES, null=False)
     recipient_id = models.CharField(max_length=255, null=True)
     content_type = models.CharField(max_length=3, choices=MessagingEvent.CONTENT_CHOICES, null=False)
@@ -955,9 +963,17 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
 
     def save(self, *args, **kwargs):
         super(MessagingSubEvent, self).save(*args, **kwargs)
+        parent = self.parent
         if self.status == MessagingEvent.STATUS_ERROR:
-            parent = self.parent
             parent.status = MessagingEvent.STATUS_ERROR
+            parent.save()
+
+        if (
+            parent.recipient_id != self.recipient_id and
+            parent.recipient_type != MessagingEvent.RECIPIENT_VARIOUS
+        ):
+            parent.recipient_type = MessagingEvent.RECIPIENT_VARIOUS
+            parent.recipient_id = None
             parent.save()
 
     def get_recipient_doc_type(self):

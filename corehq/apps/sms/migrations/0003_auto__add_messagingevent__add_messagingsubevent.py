@@ -32,6 +32,7 @@ class Migration(SchemaMigration):
         db.create_table('sms_messagingsubevent', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('parent', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['sms.MessagingEvent'])),
+            ('date', self.gf('django.db.models.fields.DateTimeField')(null=False, db_index=True)),
             ('recipient_type', self.gf('django.db.models.fields.CharField')(max_length=3, null=False)),
             ('recipient_id', self.gf('django.db.models.fields.CharField')(max_length=255, null=True)),
             ('content_type', self.gf('django.db.models.fields.CharField')(max_length=3, null=False)),
@@ -103,6 +104,7 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'MessagingSubEvent'},
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'parent': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['sms.MessagingEvent']"}),
+            'date': ('django.db.models.fields.DateTimeField', [], {'null': 'False', 'db_index': 'True'}),
             'recipient_type': ('django.db.models.fields.CharField', [], {'max_length': '3', 'null': 'False'}),
             'recipient_id': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True'}),
             'content_type': ('django.db.models.fields.CharField', [], {'max_length': '3', 'null': 'False'}),
