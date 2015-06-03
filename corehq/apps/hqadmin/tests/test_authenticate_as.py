@@ -1,4 +1,4 @@
-from django.test import TestCase, SimpleTestCase
+from django.test import TestCase
 from django.core.urlresolvers import reverse
 
 from corehq.apps.users.models import WebUser, CommCareUser
@@ -9,9 +9,15 @@ from ..views import AuthenticateAs
 
 class AuthenticateAsFormTest(TestCase):
 
-    def test_valid_data(self):
-        mobile_worker = CommCareUser.create('potter', 'harry', '123')
+    @classmethod
+    def setUpClass(cls):
+        cls.mobile_worker = CommCareUser.create('potter', 'harry', '123')
 
+    @classmethod
+    def tearDownClass(cls):
+        cls.mobile_worker.delete()
+
+    def test_valid_data(self):
         data = {
             'username': 'harry',
             'domain': 'potter'
@@ -26,14 +32,14 @@ class AuthenticateAsFormTest(TestCase):
 
     def test_invalid_data(self):
         data = {
-            'username': 'harry',
+            'username': 'ron-weasley',
             'domain': 'potter'
         }
         form = AuthenticateAsForm(data)
         self.assertFalse(form.is_valid())
 
         data = {
-            'username': 'harry',
+            'username': 'ron-weasley',
         }
         form = AuthenticateAsForm(data)
         self.assertFalse(form.is_valid())
@@ -45,17 +51,22 @@ class AuthenticateAsIntegrationTest(TestCase):
     def setUpClass(cls):
         cls.domain = 'my-test-views'
         cls.username = 'cornelius'
+        cls.regular_name = 'ron'
         cls.password = 'fudge'
         cls.user = WebUser.create(cls.domain, cls.username, cls.password, is_active=True)
+
         cls.user.is_superuser = True
         cls.user.save()
+        cls.mobile_worker = CommCareUser.create('potter', 'harry', '123')
+        cls.regular = WebUser.create(cls.domain, cls.regular_name, cls.password, is_active=True)
 
     @classmethod
     def tearDownClass(cls):
         cls.user.delete()
+        cls.mobile_worker.delete()
+        cls.regular.delete()
 
     def test_authenticate_as(self):
-        mobile_worker = CommCareUser.create('potter', 'harry', '123')
         self.client.login(username=self.username, password=self.password)
 
         resp = self.client.get(reverse(AuthenticateAs.urlname))
@@ -67,5 +78,20 @@ class AuthenticateAsIntegrationTest(TestCase):
         form.data['domain'] = 'potter'
 
         resp = self.client.post(reverse(AuthenticateAs.urlname), form.data, follow=True)
-        self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.context['user'].username, 'harry')
+        self.assertEqual(
+            self.client.session['_auth_user_id'],
+            self.mobile_worker.get_django_user().id
+        )
+
+    def test_permisssions_for_authenticate_as(self):
+        self.client.login(username=self.regular_name, password=self.password)
+
+        resp = self.client.get(reverse(AuthenticateAs.urlname))
+        self.assertTrue('no_permissions' in resp.url)
+
+        resp = self.client.post(reverse(AuthenticateAs.urlname), {})
+        self.assertTrue('no_permissions' in resp.url)
+        self.assertEqual(
+            self.client.session['_auth_user_id'],
+            self.regular.get_django_user().id
+        )
