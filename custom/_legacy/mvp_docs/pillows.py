@@ -3,7 +3,7 @@ from couchdbkit import ChangesStream, ResourceNotFound
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.indicators.models import FormIndicatorDefinition, \
     CaseIndicatorDefinition, CaseDataInFormIndicatorDefinition
-from corehq.apps.indicators.utils import get_namespaces, get_indicator_domains
+from corehq.apps.indicators.utils import get_indicator_domains
 from corehq.pillows.utils import get_deleted_doc_types
 from couchforms.models import XFormInstance
 from mvp_docs.models import IndicatorXForm, IndicatorCase
@@ -48,6 +48,7 @@ class MVPIndicatorPillowBase(BasicPillow):
                 self.processor(change)
 
     def change_transform(self, doc_dict):
+        from corehq.apps.indicators.utils import get_namespaces
         doc_type = doc_dict.get('doc_type')
         if doc_type in self._deleted_doc_types:
             self._delete_doc(doc_dict)
@@ -85,7 +86,6 @@ class MVPFormIndicatorPillow(MVPIndicatorPillowBase):
             form_indicator_defs.extend(
                 FormIndicatorDefinition.get_all(namespace, domain, xmlns=xmlns)
             )
-
         if not form_indicator_defs:
             return
 

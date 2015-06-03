@@ -1,14 +1,15 @@
 import json
 import os
 from couchdbkit import ResourceNotFound, ResourceConflict
-import datetime
-from django.test.testcases import TestCase
+from django.test.testcases import TestCase, SimpleTestCase
+from mock import patch
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.indicators.models import (
+    FormIndicatorDefinition,
     FormLabelIndicatorDefinition,
     FormDataInCaseIndicatorDefinition,
     FormDataAliasIndicatorDefinition,
-)
+    CaseDataInFormIndicatorDefinition)
 from mvp_docs.models import IndicatorXForm, IndicatorCase
 from mvp_docs.pillows import MVPFormIndicatorPillow, MVPCaseIndicatorPillow
 from couchforms.models import XFormInstance
@@ -39,13 +40,8 @@ class IndicatorPillowTests(TestCase):
         self.form_pillow = MVPFormIndicatorPillow()
         self.case_pillow = MVPCaseIndicatorPillow()
 
-    def _get_doc_data(self, docname):
-        file_path = os.path.join(os.path.dirname(__file__), "data", docname)
-        with open(file_path, "rb") as f:
-            return json.loads(f.read())
-
     def _save_doc_to_db(self, docname, doc_class):
-        doc_dict = self._get_doc_data(docname)
+        doc_dict = _get_doc_data(docname)
         try:
             doc_instance = doc_class.wrap(doc_dict)
             doc_instance.save()
@@ -123,3 +119,51 @@ class IndicatorPillowTests(TestCase):
         self.form_pillow.change_transform(
             {'_id': 'some-bad-id', '_rev': 'whatrever', 'doc_type': 'XFormArchived'}
         )
+
+    @patch('corehq.apps.indicators.utils.get_namespaces')
+    @patch('corehq.apps.indicators.models.CaseDataInFormIndicatorDefinition.get_all')
+    @patch('corehq.apps.indicators.models.CaseIndicatorDefinition.get_all')
+    @patch('corehq.apps.indicators.models.FormIndicatorDefinition.get_all')
+    def test_mixed_form_and_case_indicators(self, form_get_all_patch, case_get_all_patch,
+                                            case_form_get_all_patch, get_namespaces_patch):
+        # this is a regression test for http://manage.dimagi.com/default.asp?165274
+        form_get_all_patch.return_value = _fake_indicators('mvp-sauri-form-indicators.json')
+        case_get_all_patch.return_value = _fake_indicators('mvp-sauri-case-indicators.json')
+        case_form_get_all_patch.return_value = _fake_indicators('mvp-sauri-case-form-indicators.json')
+        get_namespaces_patch.return_value = ['mvp_indicators']
+
+        self._save_doc_to_db('indicator_form.json', XFormInstance)
+        form_json = _get_doc_data('bug_form.json')
+        XFormInstance.wrap(form_json).save()
+        MVPFormIndicatorPillow().change_transform(form_json)
+        updated_form = IndicatorXForm.get(form_json['_id'])
+        computed = updated_form.computed_['mvp_indicators']
+        self.assertEqual(29, len(computed))
+        self.assertEqual('child_visit_form', computed['child_visit_form']['value'])
+        case_json = _get_doc_data('bug_case.json')
+        MVPCaseIndicatorPillow().change_transform(case_json)
+        updated_form = IndicatorXForm.get(form_json['_id'])
+        updated_computed = updated_form.computed_['mvp_indicators']
+        self.assertEqual(29, len(updated_computed))
+        self.assertEqual('child_visit_form', computed['child_visit_form']['value'])
+
+
+def _fake_indicators(filename):
+    with open(os.path.join(os.path.dirname(__file__), 'data', filename)) as f:
+        indicators = json.loads(f.read())
+        return [_wrap(i) for i in indicators]
+
+def _wrap(indicator):
+    wrap_classes = {
+        'FormLabelIndicatorDefinition': FormLabelIndicatorDefinition,
+        'FormDataAliasIndicatorDefinition': FormDataAliasIndicatorDefinition,
+        'CaseDataInFormIndicatorDefinition': CaseDataInFormIndicatorDefinition,
+        'FormDataInCaseIndicatorDefinition': FormDataInCaseIndicatorDefinition
+    }
+    return wrap_classes[indicator['doc_type']].wrap(indicator)
+
+
+def _get_doc_data(docname):
+    file_path = os.path.join(os.path.dirname(__file__), "data", docname)
+    with open(file_path, "rb") as f:
+        return json.loads(f.read())
