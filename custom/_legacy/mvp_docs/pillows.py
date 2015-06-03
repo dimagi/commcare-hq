@@ -149,17 +149,22 @@ class MVPCaseIndicatorPillow(MVPIndicatorPillowBase):
 
         for xform_id in xform_ids:
             try:
-                xform_dict = XFormInstance.get_db().get(xform_id)
-                xform_doc = IndicatorXForm.wrap_for_indicator_db(xform_dict)
+                # first try to get the doc from the indicator DB
+                xform_doc = IndicatorXForm.get(xform_id)
             except ResourceNotFound:
-                pillow_eval_logging.error(
-                    "Could not find an XFormInstance with id %(xform_id)s "
-                    "related to Case %(case_id)s" % {
-                        'xform_id': xform_id,
-                        'case_id': doc_dict['_id'],
-                    }
-                )
-                continue
+                # if that fails fall back to the main DB
+                try:
+                    xform_dict = XFormInstance.get_db().get(xform_id)
+                    xform_doc = IndicatorXForm.wrap_for_indicator_db(xform_dict)
+                except ResourceNotFound:
+                    pillow_eval_logging.error(
+                        "Could not find an XFormInstance with id %(xform_id)s "
+                        "related to Case %(case_id)s" % {
+                            'xform_id': xform_id,
+                            'case_id': doc_dict['_id'],
+                        }
+                    )
+                    continue
 
             if not xform_doc.xmlns:
                 continue
