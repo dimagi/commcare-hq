@@ -3,14 +3,15 @@ from corehq import Domain
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.accounting import generator
 from corehq.apps.accounting.models import (
-        Subscription,
-        BillingAccount,
-        DefaultProductPlan,
-        SoftwarePlanEdition
-    )
+    Subscription,
+    BillingAccount,
+    DefaultProductPlan,
+    SoftwarePlanEdition
+)
 
 
 class TestRenewSubscriptions(BaseAccountingTest):
+
     def setUp(self):
         super(TestRenewSubscriptions, self).setUp()
         self.domain = Domain(
