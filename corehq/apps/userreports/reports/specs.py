@@ -23,6 +23,8 @@ SQLAGG_COLUMN_MAP = {
     'simple': SimpleColumn,
     'year': YearColumn,
 }
+ASCENDING = "ASC"
+DESCENDING = "DESC"
 
 
 class ReportFilter(JsonObject):
@@ -281,3 +283,8 @@ class MultibarAggregateChartSpec(ChartSpec):
     primary_aggregation = StringProperty(required=True)
     secondary_aggregation = StringProperty(required=True)
     value_column = StringProperty(required=True)
+
+
+class OrderBySpec(JsonObject):
+    field = StringProperty()
+    order = StringProperty(choices=[ASCENDING, DESCENDING], default=ASCENDING)
