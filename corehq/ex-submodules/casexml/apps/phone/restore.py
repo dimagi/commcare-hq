@@ -47,6 +47,7 @@ def stream_response(payload, headers=None):
         if headers:
             for header, value in headers.items():
                 response[header] = value
+        return response
     except IOError as e:
         return HttpResponse(e, status=500)
 
@@ -194,7 +195,7 @@ class CachedResponse(object):
                 self.payload = open(self.payload_path, 'r')
             else:
                 self.payload = None
-        else:
+        elif payload:
             assert hasattr(payload, 'read'), 'expected file like object'
 
     def exists(self):
