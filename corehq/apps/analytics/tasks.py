@@ -67,7 +67,7 @@ def track_built_app_on_hubspot(webuser):
 
 
 @task(queue='background_queue', acks_late=True, ignore_result=True)
-def track_usage(email, event, properties=None):
+def track_workflow(email, event, properties=None):
     """
     Record an event in KISSmetrics.
     :param email: The email address by which to identify the user.
