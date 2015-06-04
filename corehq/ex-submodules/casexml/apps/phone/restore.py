@@ -1,6 +1,4 @@
-from StringIO import StringIO
 from io import FileIO
-from os import path
 import os
 from uuid import uuid4
 import shutil
@@ -43,14 +41,12 @@ INITIAL_SYNC_CACHE_TIMEOUT = 60 * 60  # 1 hour
 INITIAL_SYNC_CACHE_THRESHOLD = 60  # 1 minute
 
 
-def stream_response(payload, is_file=True):
+def stream_response(payload, headers=None):
     try:
-        if is_file:
-            response = StreamingHttpResponse(FileWrapper(open(payload, 'r')), mimetype="text/xml")
-            response['Content-Length'] = os.path.getsize(payload)
-            return response
-        else:
-            return StreamingHttpResponse(FileWrapper(payload), mimetype="text/xml")
+        response = StreamingHttpResponse(FileWrapper(payload), mimetype="text/xml")
+        if headers:
+            for header, value in headers.items():
+                response[header] = value
     except IOError as e:
         return HttpResponse(e, status=500)
 
@@ -127,7 +123,7 @@ class FileRestoreResponse(RestoreResponse):
 
     def __init__(self, username=None, items=False):
         super(FileRestoreResponse, self).__init__(username, items)
-        self.filename = path.join(settings.SHARED_DRIVE_CONF.restore_dir, uuid4().hex)
+        self.filename = os.path.join(settings.SHARED_DRIVE_CONF.restore_dir, uuid4().hex)
 
         self.response_body = FileIO(self.get_filename(self.BODY_TAG_SUFFIX), 'w+')
 
@@ -176,7 +172,6 @@ class FileRestoreResponse(RestoreResponse):
 
     def get_cache_payload(self, full=False):
         return {
-            'is_file': True,
             'data': self.get_filename() if not full else open(self.get_filename(), 'r')
         }
 
@@ -185,39 +180,37 @@ class FileRestoreResponse(RestoreResponse):
             return f.read()
 
     def get_http_response(self):
-        return stream_response(self.get_filename())
+        headers = {'Content-Length': os.path.getsize(self.get_filename())}
+        return stream_response(open(self.get_filename(), 'r'), headers)
 
 
 class CachedResponse(object):
     def __init__(self, payload):
-        self.is_file = False
-        self.is_stream = False
         self.payload = payload
+        self.payload_path = None
         if isinstance(payload, dict):
-            self.payload = payload['data']
-            self.is_file = payload['is_file']
-        elif hasattr(payload, 'read'):
-            self.is_stream = True
+            self.payload_path = payload['data']
+            if os.path.exists(self.payload_path):
+                self.payload = open(self.payload_path, 'r')
+            else:
+                self.payload = None
+        else:
+            assert hasattr(payload, 'read'), 'expected file like object'
 
     def exists(self):
-        return self.payload and (not self.is_file or path.exists(self.payload))
+        return bool(self.payload)
 
     def as_string(self):
-        if self.is_stream:
+        try:
             return self.payload.read()
-        if self.is_file:
-            with open(self.payload, 'r') as f:
-                return f.read()
-        else:
-            return self.payload
+        finally:
+            self.payload.close()
 
     def get_http_response(self):
-        if self.is_stream:
-            return stream_response(self.payload, is_file=False)
-        if self.is_file:
-            return stream_response(self.payload, is_file=True)
-        else:
-            return HttpResponse(self.payload, mimetype="text/xml")
+        headers = {}
+        if self.payload_path:
+            headers['Content-Length'] = os.path.getsize(self.payload_path)
+        return stream_response(self.payload, headers)
 
 
 class RestoreParams(object):
