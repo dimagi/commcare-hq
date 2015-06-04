@@ -113,38 +113,25 @@ class LocationType(models.Model):
         return LocationType.objects.filter(parent_type=self).exists()
 
 
-class LocationQueries(object):
+class LocationQueriesMixin(object):
     def ids(self):
         return self.values_list('location_id', flat=True)
-
-    def to_couch(self):
-        return {}  # TODO return spoof of `Location`
 
     def domain(self, domain):
         return self.filter(domain=domain)
 
 
-class LocationQuerySet(LocationQueries, models.query.QuerySet):
+class LocationQuerySet(LocationQueriesMixin, models.query.QuerySet):
     pass
 
 
-class BaseLocationManager(LocationQueries, TreeManager):
+class LocationManager(LocationQueriesMixin, TreeManager):
     def _get_base_queryset(self):
         return LocationQuerySet(self.model, using=self._db)
 
     def get_queryset(self):
         return (self._get_base_queryset()
                 .order_by(self.tree_id_attr, self.left_attr))  # mptt default
-
-
-class LocationManager(BaseLocationManager):
-    def get_queryset(self):
-        return (super(LocationManager, self).get_queryset()
-                .filter(is_archived=False))
-
-
-class IncludeArchivedManager(BaseLocationManager):
-    pass
 
 
 class SQLLocation(MPTTModel):
@@ -172,7 +159,6 @@ class SQLLocation(MPTTModel):
     supply_point_id = models.CharField(max_length=255, db_index=True, unique=True, null=True)
 
     objects = LocationManager()
-    all_objects = IncludeArchivedManager()
 
     @property
     def products(self):
@@ -214,26 +200,19 @@ class SQLLocation(MPTTModel):
         """
         Returns a list of archived descendants for this location.
         """
-        # TODO rewrite
         return self.get_descendants().filter(is_archived=True)
 
-    # TODO this (and root_locations) seem inconsistent by the old implementation
-    # - it says "include_archive_ancestors", but actually shows ONLY archived
-    # locations.
-    def child_locations(self, include_archived=False):
+    def child_locations(self, include_archive_ancestors=False):
         """
         Returns a list of this location's children.
         """
-        manager = self.all_objects if include_archived else self.objects
-        if self.is_leaf_node():
-            return manager.none()
-        else:
-            return manager._mptt_filter(parent=self)
+        children = self.get_children()
+        return _filter_for_archived(children, include_archive_ancestors)
 
     @classmethod
-    def root_locations(cls, domain, include_archived=False):
-        manager = self.all_objects if include_archived else self.objects
-        return manager.root_nodes().filter(domain=domain)
+    def root_locations(cls, domain, include_archive_ancestors=False):
+        roots = cls.objects.root_nodes().filter(domain=domain)
+        return _filter_for_archived(roots, include_archive_ancestors)
 
     def _make_group_object(self, user_id, case_sharing):
         def group_name():
@@ -315,6 +294,24 @@ class SQLLocation(MPTTModel):
         # This exists for backwards compatability with couch locations
         return list(self.get_ancestors(include_self=True)
                     .values_list('location_id', flat=True))
+
+
+
+def _filter_for_archived(locations, include_archive_ancestors):
+    """
+    Perform filtering on a location queryset.
+
+    include_archive_ancestors toggles between selecting only active
+    children and selecting any child that is archived or has
+    archived descendants.
+    """
+    if include_archive_ancestors:
+        return [
+            item for item in locations
+            if item.is_archived or item.archived_descendants()
+        ]
+    else:
+        return locations.filter(is_archived=False)
 
 
 class Location(CachedCouchDocumentMixin, Document):
