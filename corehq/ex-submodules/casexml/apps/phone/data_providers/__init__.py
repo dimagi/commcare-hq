@@ -1,5 +1,12 @@
-from .standard import *
-from .case import *
+from .standard import (
+    SyncElementProvider,
+    RegistrationElementProvider,
+    FixtureElementProvider,
+    FixtureResponseProvider,
+    LongRunningRestoreDataProvider
+)
+from .case import CasePayloadProvider
+from django.conf import settings
 
 
 def get_restore_providers():
@@ -11,7 +18,7 @@ def get_restore_providers():
     return [
         SyncElementProvider(),
         RegistrationElementProvider(),
-        FixtureElementProvider(),
+        FixtureElementProvider(settings.FIXTURE_GROUP_STANDALONE),
     ]
 
 
@@ -21,4 +28,7 @@ def get_long_running_providers():
 
     These have different API semantics to be able to support asynchronous calls in hte future.
     """
-    return [CasePayloadProvider()]
+    return [
+        FixtureResponseProvider(settings.FIXTURE_GROUP_CASE),
+        CasePayloadProvider()
+    ]

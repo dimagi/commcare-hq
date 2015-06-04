@@ -478,11 +478,12 @@ PAGINATOR_MAX_PAGE_LINKS = 5
 OPENROSA_VERSION = "1.0"
 
 # OTA restore fixture generators
+FIXTURE_GROUP_STANDALONE = 'standalone'
+FIXTURE_GROUP_CASE = 'case'
 FIXTURE_GENERATORS = {
     # fixtures that may be sent to the phone independent of cases
-    'standalone': [
+    FIXTURE_GROUP_STANDALONE: [
         # core
-        "corehq.apps.users.fixturegenerators.user_groups",
         "corehq.apps.fixtures.fixturegenerators.item_lists",
         "corehq.apps.callcenter.fixturegenerators.indicators_fixture_generator",
         "corehq.apps.products.fixtures.product_fixture_generator",
@@ -494,7 +495,8 @@ FIXTURE_GENERATORS = {
         "custom.m4change.fixtures.location_fixtures.generator",
     ],
     # fixtures that must be sent along with the phones cases
-    'case': [
+    FIXTURE_GROUP_CASE: [
+        "corehq.apps.users.fixturegenerators.user_groups",
         "corehq.apps.locations.fixtures.location_fixture_generator",
     ]
 }

@@ -36,15 +36,30 @@ class RegistrationElementProvider(RestoreDataProvider):
         yield xml.get_registration_element(restore_state.user)
 
 
-class FixtureElementProvider(RestoreDataProvider):
+class FixtureElementMixin(object):
     """
     Gets any associated fixtures.
     """
+    def __init__(self, fixture_group):
+        self.fixture_group = fixture_group
+
     def get_elements(self, restore_state):
         # fixture block
         for fixture in generator.get_fixtures(
             restore_state.user,
             restore_state.version,
-            restore_state.last_sync_log
+            restore_state.last_sync_log,
+            group=self.fixture_group
         ):
             yield fixture
+
+
+class FixtureElementProvider(FixtureElementMixin, RestoreDataProvider):
+    pass
+
+
+class FixtureResponseProvider(FixtureElementMixin, LongRunningRestoreDataProvider):
+    def get_response(self, restore_state):
+        response = restore_state.restore_class()
+        response.extend(self.get_elements(restore_state))
+        return response

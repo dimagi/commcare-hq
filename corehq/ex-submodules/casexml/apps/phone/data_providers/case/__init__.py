@@ -1,1 +1,1 @@
-from .providers import *
+from .providers import CasePayloadProvider
