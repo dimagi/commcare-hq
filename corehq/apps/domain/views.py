@@ -1575,7 +1575,7 @@ class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin
     @property
     @memoized
     def confirm_form(self):
-        if self.request.method == 'POST':
+        if self.request.method == 'POST' and "from_plan_page" not in self.request.POST:
             return ConfirmSubscriptionRenewalForm(
                 self.account, self.domain, self.request.couch_user.username,
                 self.subscription, self.next_plan_version,

@@ -39,7 +39,12 @@
                 {% else %}
                     action="{% url 'confirm_selected_plan' domain %}"
                 {% endif %}
-                method="post" class="form">
+                method="post"
+                class="form"
+            >
+                {% if is_renewal %}
+                <input type="hidden" name="from_plan_page" value="true">
+                {% endif %}
                 <input type="hidden" name="plan_edition" data-bind="value: selected_edition">
                 <div class="form-actions" data-bind="visible: isSubmitVisible">
                     <button type="submit" class="btn btn-primary btn-large">{% trans 'Next' %}</button>
