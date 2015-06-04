@@ -88,9 +88,13 @@ def update_sync_log_with_checks(sync_log, xform, cases, case_db,
         sync_log.update_phone_lists(xform, cases)
     except SyncLogAssertionError, e:
         _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'])
-        _assert(False, 'Sync log assertion error {} for log {}, user {}, form {}, domain {}'.format(
-            e, sync_log._id, sync_log.user_id, xform._id, xform.domain
-        ))
+        _assert(False, 'Sync log assertion error', {
+            'message': unicode(e),
+            'log_id': sync_log._id,
+            'user_id': sync_log.user_id,
+            'form_id': xform._id,
+            'domain': xform.domain,
+        })
         if e.case_id and e.case_id not in case_id_blacklist:
             form_ids = get_case_xform_ids(e.case_id)
             case_id_blacklist.append(e.case_id)
