@@ -33,7 +33,7 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
     try:
         msg.send()
     except SMTPSenderRefused as e:
-        error_subject = _('ERROR: Could not send "%(subject)"') % {
+        error_subject = _('ERROR: Could not send "%(subject)s"') % {
             'subject': subject,
         }
 
