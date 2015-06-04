@@ -21,9 +21,7 @@
 
 {% block form_content %}
 <p class="lead">
-{% blocktrans %}
-    {{ lead_text }}
-{% endblocktrans %}
+    {{ lead_text|safe }}
 </p>
 <p>
 {% blocktrans %}

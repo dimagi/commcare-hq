@@ -1528,8 +1528,8 @@ class SubscriptionRenewalView(SelectPlanView):
 
     @property
     def lead_text(self):
-        return ugettext_noop("Based on your current usage we recommend you use the {plan} plan".format(
-                             plan=self.current_subscription.plan_version.plan.edition))
+        return ugettext_noop("Based on your current usage we recommend you use the <strong>{plan}</strong> plan"
+                             .format(plan=self.current_subscription.plan_version.plan.edition))
 
     @property
     def main_context(self):
