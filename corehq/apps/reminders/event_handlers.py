@@ -272,6 +272,7 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers, logge
                         send_sms_to_verified_number(vn, resp.event.text_prompt, metadata)
     else:
         reminder.xforms_session_ids = []
+        domain_obj = Domain.get_by_name(reminder.domain, strict=True)
 
         # Get the app, module, and form
         try:
@@ -290,7 +291,6 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers, logge
             verified_number, unverified_number = get_recipient_phone_number(
                 reminder, recipient, verified_numbers)
 
-            domain_obj = Domain.get_by_name(reminder.domain, strict=True)
             no_verified_number = verified_number is None
             cant_use_unverified_number = (unverified_number is None or
                 not domain_obj.send_to_duplicated_case_numbers or
@@ -301,15 +301,21 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers, logge
 
             key = "start-sms-survey-for-contact-%s" % recipient.get_id
             with CriticalSection([key], timeout=60):
-                # Close all currently open sessions
-                SQLXFormsSession.close_all_open_sms_sessions(reminder.domain, recipient.get_id)
-
-                # Start the new session
+                # Get the case to submit the form against, if any
                 if (isinstance(recipient, CommCareCase) and
                     not handler.force_surveys_to_use_triggered_case):
                     case_id = recipient.get_id
                 else:
                     case_id = reminder.case_id
+
+                if form.requires_case() and not case_id:
+                    logged_subevent.error(MessagingEvent.ERROR_NO_CASE_GIVEN)
+                    continue
+
+                # Close all currently open sessions
+                SQLXFormsSession.close_all_open_sms_sessions(reminder.domain, recipient.get_id)
+
+                # Start the new session
                 session, responses = start_session(reminder.domain, recipient,
                     app, module, form, case_id, case_for_case_submission=
                     handler.force_surveys_to_use_triggered_case)

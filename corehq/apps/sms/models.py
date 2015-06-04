@@ -750,6 +750,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     ERROR_CANNOT_FIND_FORM = 'CANNOT_FIND_FORM'
     ERROR_CASE_EXTERNAL_ID_NOT_FOUND = 'CASE_EXTERNAL_ID_NOT_FOUND'
     ERROR_MULTIPLE_CASES_WITH_EXTERNAL_ID_FOUND = 'MULTIPLE_CASES_WITH_EXTERNAL_ID_FOUND'
+    ERROR_NO_CASE_GIVEN = 'NO_CASE_GIVEN'
     ERROR_NO_EXTERNAL_ID_GIVEN = 'NO_EXTERNAL_ID_GIVEN'
     ERROR_COULD_NOT_PROCESS_STRUCTURED_SMS = 'COULD_NOT_PROCESS_STRUCTURED_SMS'
     ERROR_SUBEVENT_ERROR = 'SUBEVENT_ERROR'
@@ -773,6 +774,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             ugettext_noop('The case with the given external ID was not found.'),
         ERROR_MULTIPLE_CASES_WITH_EXTERNAL_ID_FOUND:
             ugettext_noop('Multiple cases were found with the given external ID.'),
+        ERROR_NO_CASE_GIVEN:
+            ugettext_noop('The form requires a case but no case was provided.'),
         ERROR_NO_EXTERNAL_ID_GIVEN:
             ugettext_noop('No external ID given; please include case external ID after keyword.'),
         ERROR_COULD_NOT_PROCESS_STRUCTURED_SMS:
