@@ -7,8 +7,6 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # db.execute("DROP INDEX IF EXISTS accounting_billingaccount_name_like")
-        db.execute("DROP INDEX IF EXISTS accounting_billingaccount_salesforce_account_id_like")
         db.execute("DROP INDEX IF EXISTS accounting_billingaccountadmin_domain_like")
         db.execute("DROP INDEX IF EXISTS accounting_billingaccountadmin_web_user_like")
         db.execute("DROP INDEX IF EXISTS accounting_billingrecord_emailed_to_like")
@@ -16,14 +14,11 @@ class Migration(SchemaMigration):
         db.execute("DROP INDEX IF EXISTS accounting_currency_name_like")
         db.execute("DROP INDEX IF EXISTS accounting_defaultproductplan_product_type_like")
         db.execute("DROP INDEX IF EXISTS accounting_feature_feature_type_like")
-        # db.execute("DROP INDEX IF EXISTS accounting_feature_name_like")
         db.execute("DROP INDEX IF EXISTS accounting_paymentmethod_method_type_like")
-        # db.execute("DROP INDEX IF EXISTS accounting_softwareplan_name_like")
-        # db.execute("DROP INDEX IF EXISTS accounting_softwareproduct_name_like")
         db.execute("DROP INDEX IF EXISTS accounting_softwareproduct_product_type_like")
         db.execute("DROP INDEX IF EXISTS accounting_subscriber_domain_like")
-        # db.execute("DROP INDEX IF EXISTS accounting_subscriber_organization_like")
-        # db.execute("DROP INDEX IF EXISTS accounting_wirebillingrecord_emailed_to_like")
+        db.execute("DROP INDEX IF EXISTS accounting_subscriber_organization_like")
+        db.execute("DROP INDEX IF EXISTS accounting_wirebillingrecord_emailed_to_like")
 
     def backwards(self, orm):
         # don't want to add them back

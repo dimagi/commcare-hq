@@ -8,7 +8,6 @@ class Migration(SchemaMigration):
 
     def forwards(self, orm):
         db.execute("DROP INDEX IF EXISTS ilsgateway_alert_supply_point_like")
-        # db.execute("DROP INDEX IF EXISTS ilsgateway_deliverygroupreport_message_like")
         db.execute("DROP INDEX IF EXISTS ilsgateway_deliverygroupreport_supply_point_like")
         db.execute("DROP INDEX IF EXISTS ilsgateway_organizationsummary_supply_point_like")
         db.execute("DROP INDEX IF EXISTS ilsgateway_productavailabilitydata_product_like")
