@@ -1601,9 +1601,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             if location_type.view_descendants:
                 return [
                     loc.case_sharing_group_object(self._id)._id
-                    for loc in self.sql_location.get_descendants(include_self=True)
-                    if loc.location_type.shares_cases
-                ]
+                    for loc in self.sql_location.get_descendants(include_self=True).filter(
+                        location_type__shares_cases=True,
+                    )]
+
             else:
                 return [self.sql_location.case_sharing_group_object(self._id)._id]
 
