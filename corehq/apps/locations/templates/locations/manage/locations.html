@@ -114,9 +114,11 @@ $(function() {
 <div class="row-fluid">
     <div class="span12">
         <div class="btn-toolbar">
-            <a class="btn btn-info" href="{% url "location_import" domain %}">
-                <i class="icon-upload"></i> {% trans 'Bulk Import Locations' %}
-            </a>
+            {% if has_location_types %}
+                <a class="btn btn-info" href="{% url "location_import" domain %}">
+                    <i class="icon-upload"></i> {% trans 'Bulk Import Locations' %}
+                </a>
+            {% endif %}
             <a class="btn" href="{% url "location_types" domain %}">
                 {% trans "Edit Location Types" %}
             </a>

@@ -14,6 +14,7 @@ from couchdbkit import ResourceNotFound, MultipleResultsFound
 from couchexport.models import Format
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
+from no_exceptions.exceptions import Http400
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
 
@@ -663,6 +664,8 @@ def location_importer_job_poll(request, domain, download_id, template="hqwebapp/
 
 @locations_access_required
 def location_export(request, domain):
+    if not LocationType.objects.filter(domain=domain).exists():
+        raise Http400
     include_consumption = request.GET.get('include_consumption') == 'true'
     response = HttpResponse(mimetype=Format.from_format('xlsx').mimetype)
     response['Content-Disposition'] = 'attachment; filename="locations.xlsx"'
