@@ -151,7 +151,10 @@ class LocationForm(forms.Form):
         return errors
 
     def clean_parent_id(self):
-        parent_id = self.cleaned_data['parent_id'] or self.location.parent_id
+        if self.is_new_location:
+            parent_id = self.location.parent_id
+        else:
+            parent_id = self.cleaned_data['parent_id'] or None
         parent = Location.get(parent_id) if parent_id else None
         self.cleaned_data['parent'] = parent
 
