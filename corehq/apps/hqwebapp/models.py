@@ -1,5 +1,6 @@
 from collections import namedtuple
 from urllib import urlencode
+from corehq.toggles import OPENLMIS
 
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe, mark_for_escaping
@@ -494,7 +495,7 @@ class SetupTab(UITab):
         from corehq.apps.locations.views import FacilitySyncView
 
         if self.project.commtrack_enabled:
-            return [[_('CommCare Supply Setup'), [
+            commcare_supply_setup = [
                 # products
                 {
                     'title': ProductListView.page_title,
@@ -544,17 +545,20 @@ class SetupTab(UITab):
                     'title': CommTrackSettingsView.page_title,
                     'url': reverse(CommTrackSettingsView.urlname, args=[self.domain]),
                 },
-                # external sync
-                {
-                    'title': FacilitySyncView.page_title,
-                    'url': reverse(FacilitySyncView.urlname, args=[self.domain]),
-                },
                 # stock levels
                 {
                     'title': StockLevelsView.page_title,
                     'url': reverse(StockLevelsView.urlname, args=[self.domain]),
                 },
-            ]]]
+            ]
+            if OPENLMIS.enabled(self.domain):
+                commcare_supply_setup.append(
+                    # external sync
+                    {
+                        'title': FacilitySyncView.page_title,
+                        'url': reverse(FacilitySyncView.urlname, args=[self.domain]),
+                    })
+            return [[_('CommCare Supply Setup'), commcare_supply_setup]]
 
 
 class ProjectDataTab(UITab):
