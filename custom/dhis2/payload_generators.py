@@ -22,7 +22,6 @@ Set up form forwarding as follows:
 from datetime import date
 import json
 import logging
-from casexml.apps.case.xform import cases_referenced_by_xform
 from corehq.apps.receiverwrapper.exceptions import IgnoreDocument
 from corehq.apps.receiverwrapper.models import RegisterGenerator, FormRepeater
 from corehq.apps.receiverwrapper.repeater_generators import BasePayloadGenerator
@@ -57,6 +56,8 @@ class FormRepeaterDhis2EventPayloadGenerator(BasePayloadGenerator):
             dhis2_api.update_te_inst(instance)
 
     def get_payload(self, repeat_record, form):
+        from casexml.apps.case.xform import cases_referenced_by_xform
+
         logger.debug('DHIS2: Form domain "%s" XMLNS "%s"', form['domain'], form['xmlns'])
         if form['xmlns'] not in (REGISTER_CHILD_XMLNS, GROWTH_MONITORING_XMLNS, RISK_ASSESSMENT_XMLNS):
             # This is not a form we care about

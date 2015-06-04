@@ -17,10 +17,9 @@ from corehq.apps.app_manager.const import (
     CT_REQUISITION_MODE_4,
     CT_LEDGER_APPROVED,
     CT_LEDGER_PREFIX,
-    USERCASE_PREFIX,
     USERCASE_TYPE,
-    USERCASE_ID
-)
+    USERCASE_ID,
+    USERCASE_PREFIX)
 from corehq.apps.app_manager.xform import XForm, XFormException, parse_xml
 from dimagi.utils.couch import CriticalSection
 import re
@@ -167,19 +166,7 @@ class ParentCasePropertyBuilder(object):
                         app, [case_type], include_shared_properties=False
                     ).get(case_type, [])
                 )
-
-        # prefix user case properties with "user:".
-        prefix_user = lambda p: USERCASE_PREFIX + p if case_type == USERCASE_TYPE else p
-
-        # .. note:: if the user case type has a parent case type, its
-        #           properties will be returned as `user:parent/property`
-        #
-        # .. note:: if this case type is not the user case type, but it has a
-        #           parent case type which is the user case type, then the
-        #           parent case type's properties will be returned as
-        #           `parent/user:property`.
-        #
-        return {prefix_user(p) for p in case_properties}
+        return case_properties
 
     @memoized
     def get_case_updates(self, form, case_type):
@@ -237,20 +224,28 @@ def get_per_type_defaults(domain, case_types=None):
     return per_type_defaults
 
 
-def is_usercase_enabled(domain_name):
+def is_usercase_in_use(domain_name):
     domain = Domain.get_by_name(domain_name) if domain_name else None
     return domain and domain.usercase_enabled
 
 
 def get_all_case_properties(app):
-    case_types = set(itertools.chain.from_iterable(m.get_case_types() for m in app.modules))
-    if is_usercase_enabled(app.domain):
-        case_types.add(USERCASE_TYPE)
+    extra_types = set()
+    if is_usercase_in_use(app.domain):
+        extra_types.add(USERCASE_TYPE)
     return get_case_properties(
         app,
-        case_types,
+        set(itertools.chain.from_iterable(m.get_case_types() for m in app.modules)) | extra_types,
         defaults=('name',)
     )
+
+
+def get_usercase_properties(app):
+    # No need to check toggles.USER_AS_A_CASE. This function is only called
+    # from app_manager.views, and it checks the toggle.
+    if is_usercase_in_use(app.domain):
+        return get_case_properties(app, [USERCASE_TYPE])
+    return {USERCASE_TYPE: []}
 
 
 def get_settings_values(app):
@@ -278,7 +273,6 @@ def get_settings_values(app):
             'doc_type': app.get_doc_type(),
             '_id': app.get_id,
             'domain': app.domain,
-            'commtrack_enabled': domain.commtrack_enabled,
         }
     }
 
@@ -413,30 +407,9 @@ def get_commcare_versions(request_user):
     return sorted(versions, key=version_key)
 
 
-def get_usercase_keys(dict_):
-    n = len(USERCASE_PREFIX)
-    return {k[n:]: v for k, v in dict_.items() if k.startswith(USERCASE_PREFIX)}
-
-
-def get_usercase_values(dict_):
-    n = len(USERCASE_PREFIX)
-    return {k: v[n:] for k, v in dict_.items() if v.startswith(USERCASE_PREFIX)}
-
-
-def skip_usercase_values(dict_):
-    return {k: v for k, v in dict_.items() if not v.startswith(USERCASE_PREFIX)}
-
-
-def any_usercase_items(iter_):
-    return any(i.startswith(USERCASE_PREFIX) for i in iter_)
-
-
 def actions_use_usercase(actions):
-    if 'update_case' in actions and hasattr(actions['update_case'], 'update'):
-        return any_usercase_items(actions['update_case'].update.iterkeys())
-    if 'case_preload' in actions:
-        return any_usercase_items(actions['case_preload'].preload.itervalues())
-    return False
+    return (('usercase_update' in actions and actions['usercase_update'].update) or
+            ('usercase_preload' in actions and actions['usercase_preload'].preload))
 
 
 def enable_usercase(domain_name):
@@ -457,6 +430,10 @@ def get_usercase_default_properties(domain):
     return [f.slug for f in fields_def.fields]
 
 
+def prefix_usercase_properties(properties):
+    return {'{}{}'.format(USERCASE_PREFIX, prop) for prop in properties}
+
+
 def get_cloudcare_session_data(suite_gen, domain_name, form, couch_user):
     from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 
@@ -472,5 +449,5 @@ def get_cloudcare_session_data(suite_gen, domain_name, form, couch_user):
             if suite_gen.any_usercase_datums(extra_datums):
                 usercase = get_case_by_domain_hq_user_id(domain_name, couch_user.get_id, USERCASE_TYPE)
                 if usercase:
-                    session_data[USERCASE_ID] = usercase['id']
+                    session_data[USERCASE_ID] = usercase.get_id
     return session_data

@@ -650,11 +650,22 @@ def hotfix_deploy():
         execute(record_successful_deploy)
 
 
+def _confirm_translated():
+    if datetime.datetime.now().isoweekday() != 3:
+        return True
+    return console.confirm(
+        "It's Wednesday, did you update the translations from transifex? "
+        "\n(https://confluence.dimagi.com/display/commcarehq/"
+        "Internationalization+and+Localization+-+Transifex+Translations)"
+    )
+
+
 @task
 def deploy():
     """deploy code to remote host by checking out the latest via git"""
     _require_target()
     user_confirm = (
+        _confirm_translated() and
         console.confirm("Hey girl, you sure you didn't mean to run AWESOME DEPLOY?", default=False) and
         console.confirm('Are you sure you want to deploy to {env.environment}?'.format(env=env), default=False) and
         console.confirm('Did you run "fab {env.environment} preindex_views"?'.format(env=env), default=False)
@@ -721,9 +732,12 @@ def force_update_static():
 def awesome_deploy(confirm="yes"):
     """preindex and deploy if it completes quickly enough, otherwise abort"""
     _require_target()
-    if strtobool(confirm) and not console.confirm(
+    if strtobool(confirm) and (
+        not _confirm_translated() or
+        not console.confirm(
             'Are you sure you want to preindex and deploy to '
-            '{env.environment}?'.format(env=env), default=False):
+            '{env.environment}?'.format(env=env), default=False)
+    ):
         utils.abort('Deployment aborted.')
 
     if datetime.datetime.now().isoweekday() == 5:

@@ -5,9 +5,9 @@ from corehq.apps.app_manager.models import (
     Application, AutoSelectCase, AUTO_SELECT_USER, AUTO_SELECT_CASE, LoadUpdateAction, AUTO_SELECT_FIXTURE,
     AUTO_SELECT_RAW, WORKFLOW_MODULE, DetailColumn, ScheduleVisit, FormSchedule, Module, AdvancedModule,
     WORKFLOW_ROOT, AdvancedOpenCaseAction, SortElement, PreloadAction, MappingItem, OpenCaseAction,
-    OpenSubCaseAction, FormActionCondition, UpdateCaseAction, WORKFLOW_FORM, FormLink,
+    OpenSubCaseAction, FormActionCondition, UpdateCaseAction, WORKFLOW_FORM, FormLink, AUTO_SELECT_USERCASE,
     ReportModule, ReportAppConfig)
-from corehq.apps.app_manager.tests.util import TestFileMixin
+from corehq.apps.app_manager.tests.util import TestFileMixin, commtrack_enabled
 from corehq.apps.app_manager.xpath import dot_interpolate, UserCaseXPath, interpolate_xpath
 from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.feature_previews import MODULE_FILTER
@@ -26,12 +26,12 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         update_toggle_cache(MODULE_FILTER.slug, 'skelly', True, NAMESPACE_DOMAIN)
         update_toggle_cache(MODULE_FILTER.slug, 'domain', True, NAMESPACE_DOMAIN)
         update_toggle_cache(MODULE_FILTER.slug, 'example', True, NAMESPACE_DOMAIN)
-        self.usercase_enabled_patch = patch('corehq.apps.app_manager.models.is_usercase_enabled')
-        self.usercase_enabled_mock = self.usercase_enabled_patch.start()
-        self.usercase_enabled_mock.return_value = True
+        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
+        self.is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
+        self.is_usercase_in_use_mock.return_value = True
 
     def tearDown(self):
-        self.usercase_enabled_patch.stop()
+        self.is_usercase_in_use_patch.stop()
         clear_toggle_cache(MODULE_FILTER.slug, 'skelly', NAMESPACE_DOMAIN)
         clear_toggle_cache(MODULE_FILTER.slug, 'domain', NAMESPACE_DOMAIN)
         clear_toggle_cache(MODULE_FILTER.slug, 'example', NAMESPACE_DOMAIN)
@@ -134,10 +134,20 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         app.get_module(1).get_form(0).actions.load_update_cases[0].details_module = clinic_module_id
         self.assertXmlEqual(self.get_xml('suite-advanced-filter'), app.create_suite())
 
+    @commtrack_enabled(True)
     def test_advanced_suite_commtrack(self):
         app = Application.wrap(self.get_json('suite-advanced'))
-        app.commtrack_enabled = True
         self.assertXmlEqual(self.get_xml('suite-advanced-commtrack'), app.create_suite())
+
+    @commtrack_enabled(True)
+    def test_autoload_supplypoint(self):
+        app = Application.wrap(self.get_json('app'))
+        app_xml = app.create_suite()
+        self.assertXmlPartialEqual(
+            self.get_xml('autoload_supplypoint'),
+            app_xml,
+            './entry[1]'
+        )
 
     def test_advanced_suite_auto_select_user(self):
         app = Application.wrap(self.get_json('suite-advanced'))
@@ -181,6 +191,14 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
             )
         ))
         self.assertXmlPartialEqual(self.get_xml('suite-advanced-autoselect-case'), app.create_suite(),
+                                   './entry[2]')
+
+    def test_advanced_suite_auto_select_usercase(self):
+        app = Application.wrap(self.get_json('suite-advanced'))
+        app.get_module(1).get_form(0).actions.load_update_cases[0].auto_select = AutoSelectCase(
+            mode=AUTO_SELECT_USERCASE
+        )
+        self.assertXmlPartialEqual(self.get_xml('suite-advanced-autoselect-usercase'), app.create_suite(),
                                    './entry[2]')
 
     def test_advanced_suite_auto_select_with_filter(self):
@@ -445,8 +463,8 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         child_form = app.new_form(0, "Untitled Form", None)
         child_form.xmlns = 'http://id_m1-f0'
         child_form.requires = 'case'
-        child_form.actions.update_case = UpdateCaseAction(update={'user:name': '/data/question1'})
-        child_form.actions.update_case.condition.type = 'always'
+        child_form.actions.usercase_update = UpdateCaseAction(update={'name': '/data/question1'})
+        child_form.actions.usercase_update.condition.type = 'always'
 
         self.assertXmlPartialEqual(self.get_xml('usercase_entry'), app.create_suite(), "./entry[1]")
 
@@ -459,8 +477,8 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         child_form = app.new_form(0, "Untitled Form", None)
         child_form.xmlns = 'http://id_m1-f0'
         child_form.requires = 'case'
-        child_form.actions.case_preload = PreloadAction(preload={'/data/question1': 'user:name'})
-        child_form.actions.case_preload.condition.type = 'always'
+        child_form.actions.usercase_preload = PreloadAction(preload={'/data/question1': 'name'})
+        child_form.actions.usercase_preload.condition.type = 'always'
 
         self.assertXmlPartialEqual(self.get_xml('usercase_entry'), app.create_suite(), "./entry[1]")
 
@@ -533,7 +551,6 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         case_module = app.get_module(0)
         case_module.case_list_form.media_image = 'jr://file/commcare/image/new_case.png'
         case_module.case_list_form.media_audio = 'jr://file/commcare/audio/new_case.mp3'
-
         self.assertXmlEqual(self.get_xml('case-list-form-suite'), app.create_suite())
 
     def test_case_list_registration_form_end_for_form_nav(self):
@@ -756,11 +773,11 @@ class AdvancedModuleAsChildTest(SimpleTestCase, TestFileMixin):
         for m_id in range(2):
             self.app.new_form(m_id, "Form", None)
 
-        self.usercase_enabled_patch = patch('corehq.apps.app_manager.models.is_usercase_enabled')
-        self.usercase_enabled_mock = self.usercase_enabled_patch.start()
+        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
+        self.is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
 
     def tearDown(self):
-        self.usercase_enabled_patch.stop()
+        self.is_usercase_in_use_patch.stop()
         clear_toggle_cache(MODULE_FILTER.slug, self.app.domain, NAMESPACE_DOMAIN)
 
     def test_basic_workflow(self):
@@ -915,6 +932,7 @@ class RegexTest(SimpleTestCase):
                 case[1].format(**replacements)
             )
 
+
 class TestFormLinking(SimpleTestCase, TestFileMixin):
     file_path = ('data', 'suite')
     default_spec = {
@@ -938,11 +956,11 @@ class TestFormLinking(SimpleTestCase, TestFileMixin):
 
     def setUp(self):
         update_toggle_cache(MODULE_FILTER.slug, 'domain', True, NAMESPACE_DOMAIN)
-        self.is_usercase_enabled_patch = patch('corehq.apps.app_manager.models.is_usercase_enabled')
-        self.is_usercase_enabled_patch.start()
+        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
+        self.is_usercase_in_use_patch.start()
 
     def tearDown(self):
-        self.is_usercase_enabled_patch.stop()
+        self.is_usercase_in_use_patch.stop()
         clear_toggle_cache(MODULE_FILTER.slug, 'domain', NAMESPACE_DOMAIN)
 
     def make_app(self, spec):

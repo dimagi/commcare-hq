@@ -1,0 +1,52 @@
+<span class="report">
+    <table id="report_table_product_selection_pane" class="table table-nonfluid datatable">
+        {% for program, product_dict in products_by_program.iteritems %}
+            <tbody data-program="{{ program }}">
+                <tr>
+                    <td>
+                        <div class="program">{{ program }} <span>
+                            <input class="program-checkbox" type="checkbox" {% if product_dict.all %}checked{% endif %}/></span></div>
+                    </td>
+                </tr>
+                {% for product in product_dict.product_list %}
+                    <tr>
+                        <td>
+                            <input data-column="{{ product.idx }}" class="toggle-column"
+                                   type="checkbox" name="{{ product.name }} ({{ product.code }})"
+                                   value="{{ product.code }}" {% if product.checked %}checked{% endif %}>
+                            {{ product.name }} ({{ product.code }})
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        {% endfor %}
+    </table>
+
+</span>
+
+
+<script>
+    $('.program-checkbox').click(function() {
+        var self = this;
+        var $tbody = $(this).parents('tbody');
+        $tbody.find('input.toggle-column').each(function(idx, element) {
+            if (element.checked !== self.checked) {
+                element.checked = self.checked;
+                if (datatable.fnSettings().aoColumns.length > 1) {
+                    show_hide_table_columns(element);
+                }
+            }
+        });
+        if (typeof multibar_chart_data !== 'undefined') {
+            show_hide_multibar_chart_data();
+        }
+        if (typeof line_chart_data !== 'undefined') {
+            show_hide_line_chart_data();
+        }
+    });
+
+    $('.toggle-column').click(function() {
+        var $checkbox = $(this).parents('tbody').find('.program-checkbox');
+        $checkbox.prop('checked', $(this).parents('tbody').find('.toggle-column:not(:checked)').length === 0);
+    });
+</script>

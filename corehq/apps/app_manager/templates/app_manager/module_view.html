@@ -31,6 +31,7 @@
     {% include "hqwebapp/ko/value-or-none-ui.html" %}
     {% include "app_manager/partials/nav_menu_media_js_common.html" %}
     {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.menu %}
+    {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.case_list_menu_item qualifier='case_list-menu_item_' %}
     {% if case_list_form_options %}
         {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.case_list_form qualifier='case_list_form_' %}
     {% endif %}

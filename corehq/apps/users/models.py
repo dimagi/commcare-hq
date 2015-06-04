@@ -1599,14 +1599,13 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         location_type = self.location.location_type_object
         if location_type.shares_cases:
             if location_type.view_descendants:
-                from corehq.apps.locations.models import SQLLocation
-                sql_loc = SQLLocation.objects.get(location_id=self.location._id)
                 return [
                     loc.case_sharing_group_object(self._id)._id
-                    for loc in sql_loc.get_descendants()
+                    for loc in self.sql_location.get_descendants(include_self=True)
+                    if loc.location_type.shares_cases
                 ]
             else:
-                return [self.location.sql_location.case_sharing_group_object(self._id)._id]
+                return [self.sql_location.case_sharing_group_object(self._id)._id]
 
         else:
             return []
@@ -1619,7 +1618,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         if self.project.locations_enabled and self.location:
             owner_ids.extend(self.location_group_ids())
-
         return owner_ids
 
     def retire(self):
@@ -1694,14 +1692,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         groups = []
         if self.location and self.location.location_type_object.shares_cases:
             if self.location.location_type_object.view_descendants:
-                from corehq.apps.locations.models import SQLLocation
-                sql_loc = SQLLocation.objects.get(location_id=self.location._id)
-                for loc in sql_loc.get_descendants():
+                for loc in self.sql_location.get_descendants():
                     groups.append(loc.case_sharing_group_object(
                         self._id,
                     ))
 
-            groups.append(self.location.sql_location.case_sharing_group_object(self._id))
+            groups.append(self.sql_location.case_sharing_group_object(self._id))
 
         groups += [group for group in Group.by_user(self) if group.case_sharing]
 

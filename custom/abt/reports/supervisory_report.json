@@ -6,6 +6,13 @@
     "title":"Supervisory Report",
     "filters":[
         {
+            "field":"timeEnd",
+            "required":false,
+            "type":"date",
+            "slug":"timeEnd",
+            "display":"Date soumis"
+        },
+        {
             "required":false,
             "datatype":"string",
             "show_all":true,

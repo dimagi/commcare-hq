@@ -12,17 +12,29 @@
         <script src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
 
         <script>
-           setTimeout(function() {
-               var reportTables = new HQReportDataTables({
-                   dataTableElem: '#report_table_{{ report.slug }}',
-                   autoWidth: false,
-                   show_pagination: false,
-                   defaultRows: 100000,
-                   ajaxSource: '{{ report_table.pagination.source }}',
-                   ajaxParams: {{ report_table.pagination.params|JSON }},
-                   badRequestErrorText: "<span class='label label-important'>Sorry!</span> {{ report_table.bad_request_error_text }}"
-               });
-               reportTables.render();
+            setTimeout(function() {
+                var reportTables = new HQReportDataTables({
+                    dataTableElem: '#report_table_{{ report.slug }}',
+                    autoWidth: false,
+                    show_pagination: false,
+                    defaultRows: 100000,
+                    ajaxSource: '{{ report_table.pagination.source }}',
+                    ajaxParams: {{ report_table.pagination.params|JSON }},
+                    badRequestErrorText: "<span class='label label-important'>Sorry!</span> {{ report_table.bad_request_error_text }}"
+                });
+                reportTables.render();
+                $('.media-heading').append('<br/><small>Selected indicator: -</small>');
+                $('#map').on('click', '.choice', function() {
+                    var text = $(this).text().trim();
+                    if (text !== 'Auto') {
+                        $('small:last-child').remove();
+                        $('.media-heading').append('<small>Selected indicator: ' + text + '</small>');
+
+                        var canvas = document.getElementsByTagName('canvas');
+                        var img    = canvas[0].toDataURL("image/png");
+                        $('#scalebar').innerHTML = "<img src='" + img + "'>";
+                    }
+                });
            }, 500);
         </script>
 
@@ -31,11 +43,26 @@
                 width: 297mm;
             }
             #map {
-                height: 18cm !important;
+                height: 15cm !important;
                 page-break-after: always;
             }
             tr {
                 page-break-inside: avoid;
+            }
+            small {
+                font-size: 1em !important;
+            }
+
+            @page {
+                size: A4 landscape;
+            }
+            @media print {
+                #report_table_health_status_map_processing {
+                    display: none;
+                }
+                .leaflet-top {
+                    display: none;
+                }
             }
         </style>
     {% endif %}

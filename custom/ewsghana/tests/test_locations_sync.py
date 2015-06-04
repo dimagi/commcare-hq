@@ -107,8 +107,12 @@ class LocationSyncTest(TestCase):
             domain=TEST_DOMAIN,
             location_type__administrative=False).count()
         )
-        self.assertIsNotNone(ewsghana_location.linked_supply_point())
+
+        supply_point = ewsghana_location.linked_supply_point()
+        self.assertIsNotNone(supply_point)
         self.assertIsNotNone(ewsghana_location.sql_location.supply_point_id)
+
+        self.assertEqual(supply_point.external_id, '')
         self.assertEqual(ewsghana_location.name, location.name)
         self.assertEqual(ewsghana_location.site_code, location.code)
         self.assertTrue(ewsghana_location.is_archived)

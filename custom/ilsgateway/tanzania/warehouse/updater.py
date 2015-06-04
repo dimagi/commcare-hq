@@ -266,8 +266,14 @@ def process_facility_warehouse_data(facility, start_date, end_date, runner):
     process all the facility-level warehouse tables
     """
     logging.info("processing facility %s (%s)" % (facility.name, str(facility._id)))
-    runner.location = facility.sql_location
-    runner.save()
+    try:
+        runner.location = facility.sql_location
+        runner.save()
+    except SQLLocation.DoesNotExist:
+        # TODO Temporary fix
+        facility.delete()
+        return
+
     for alert_type in [const.SOH_NOT_RESPONDING, const.RR_NOT_RESPONDED, const.DELIVERY_NOT_RESPONDING]:
         alert = Alert.objects.filter(location_id=facility._id, date__gte=start_date, date__lt=end_date,
                                      type=alert_type)

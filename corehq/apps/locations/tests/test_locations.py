@@ -210,6 +210,7 @@ class LocationsTest(LocationTestBase):
 
         # Location.get_in_domain
         test_village2.domain = 'rejected'
+        bootstrap_location_types('rejected')
         test_village2.save()
         self.assertEqual(
             Location.get_in_domain(self.domain.name, test_village1._id)._id,

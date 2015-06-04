@@ -1,5 +1,11 @@
 {% load hq_shared_tags %}
 <script type="text/javascript">
+
+    var moveLegend = function (chart_id) {
+        var x = $(chart_id).width() / 2;
+        d3.select(chart_id + ' svg').select('.nv-legendWrap').attr("transform", "translate(" + (-x) + ", -30)");
+    };
+
     nv.addGraph(function() {
         var chart_config = {{ chart.config_dict|JSON }};
         var chart_data = {{ chart.data|JSON }};
@@ -15,6 +21,7 @@
         chart.donut(chart_config.donut);
         chart.tooltips(chart_config.tooltips);
         chart.margin(chart_config.margin);
+        chart.pieLabelsOutside(false);
         if (chart_config.color.length !== 0) {
             chart.color(chart_config.color);
         }
@@ -24,6 +31,15 @@
                 .transition().duration(500).call(chart);
 
         nv.utils.windowResize(chart.update);
+
+        {# move legend to the left side of chart on initial load #}
+        moveLegend(chart_id);
+
+        {# move legend to the left side of chart on every click in legend circle #}
+        $('.nv-series').on('click', function() {
+           moveLegend(chart_id);
+        });
+
 
         $('.nv-slice').on('mouseenter', function() {
             var descDiv = $(this).parents('.row').find('.desc');

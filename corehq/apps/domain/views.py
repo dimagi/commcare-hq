@@ -1189,12 +1189,10 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
     form_classes = INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS
 
     @method_decorator(require_superuser)
-    @method_decorator(toggles.FM_FACING_SUBSCRIPTIONS.required_decorator())
     def get(self, request, *args, **kwargs):
         return super(InternalSubscriptionManagementView, self).get(request, *args, **kwargs)
 
     @method_decorator(require_superuser)
-    @method_decorator(toggles.FM_FACING_SUBSCRIPTIONS.required_decorator())
     def post(self, request, *args, **kwargs):
         form = self.get_post_form
         if form.is_valid():
@@ -1793,7 +1791,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
 
                     m_file.save()
 
-            ignore = []
+            ignore = ['UserRole']
             if not request.POST.get('share_reminders', False):
                 ignore.append('CaseReminderHandler')
 

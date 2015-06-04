@@ -461,7 +461,7 @@ class PayloadGeneratorTest(SimpleTestCase):
             payload_generator.get_payload(None, form_mock)
 
     @patch('custom.dhis2.payload_generators.push_case')
-    @patch('custom.dhis2.payload_generators.cases_referenced_by_xform')
+    @patch('casexml.apps.case.xform.cases_referenced_by_xform')
     @patch('custom.dhis2.payload_generators.Dhis2Settings')
     def test_get_payload_ignores_registration(self, Dhis2SettingsPatch, cases_referenced_by_xform, push_case):
 

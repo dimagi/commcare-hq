@@ -294,9 +294,26 @@
         <locale id="forms.m0f0"/>
       </text>
     </command>
+    <instance id="casedb" src="jr://instance/casedb"/>
+    <instance id="commcaresession" src="jr://instance/session"/>
     <session>
       <datum id="case_id_new_clinic_0" function="uuid()"/>
+      <datum id="supply_point_id" function="instance('commcaresession')/session/user/data/commtrack-supply-point"/>
     </session>
+    <assertions>
+      <assert test="count(instance('commcaresession')/session/user/data/commtrack-supply-point) = 1">
+        <text>
+          <locale id="case_autoload.location.property_missing">
+            <argument>commtrack-supply-point</argument>
+          </locale>
+        </text>
+      </assert>
+      <assert test="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/user/data/commtrack-supply-point]) = 1">
+        <text>
+          <locale id="case_autoload.location.case_missing"/>
+        </text>
+      </assert>
+    </assertions>
   </entry>
   <entry>
     <form>http://openrosa.org/formdesigner/5FBED77B-E327-495D-97E8-0733B97D8EA5</form>
@@ -312,7 +329,22 @@
     <session>
       <datum id="case_id_case_clinic" nodeset="instance('casedb')/casedb/case[@case_type='clinic'][@status='open']" value="./@case_id" detail-select="m1_case_short" detail-confirm="m1_case_long"/>
       <datum id="product_id" nodeset="instance('commtrack:products')/products/product" value="./@id" detail-select="m1_product_short"/>
+      <datum id="supply_point_id" function="instance('commcaresession')/session/user/data/commtrack-supply-point"/>
     </session>
+    <assertions>
+      <assert test="count(instance('commcaresession')/session/user/data/commtrack-supply-point) = 1">
+        <text>
+          <locale id="case_autoload.location.property_missing">
+            <argument>commtrack-supply-point</argument>
+          </locale>
+        </text>
+      </assert>
+      <assert test="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/user/data/commtrack-supply-point]) = 1">
+        <text>
+          <locale id="case_autoload.location.case_missing"/>
+        </text>
+      </assert>
+    </assertions>
   </entry>
   <entry>
     <form>http://openrosa.org/formdesigner/A0B00710-9AD6-4887-98EC-6D3D2F4B1F0D</form>
@@ -322,10 +354,26 @@
       </text>
     </command>
     <instance id="casedb" src="jr://instance/casedb"/>
+    <instance id="commcaresession" src="jr://instance/session"/>
     <session>
       <datum id="case_id_load_clinic0" nodeset="instance('casedb')/casedb/case[@case_type='clinic'][@status='open']" value="./@case_id" detail-select="m1_case_short" detail-confirm="m1_case_long"/>
       <datum id="case_id_new_requisition_0" function="uuid()"/>
+      <datum id="supply_point_id" function="instance('commcaresession')/session/user/data/commtrack-supply-point"/>
     </session>
+    <assertions>
+      <assert test="count(instance('commcaresession')/session/user/data/commtrack-supply-point) = 1">
+        <text>
+          <locale id="case_autoload.location.property_missing">
+            <argument>commtrack-supply-point</argument>
+          </locale>
+        </text>
+      </assert>
+      <assert test="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/user/data/commtrack-supply-point]) = 1">
+        <text>
+          <locale id="case_autoload.location.case_missing"/>
+        </text>
+      </assert>
+    </assertions>
   </entry>
   <entry>
     <form>http://openrosa.org/formdesigner/E42CCD8F-AD30-48ED-98C8-84451C855AE4</form>
@@ -342,7 +390,22 @@
       <datum id="case_id_load_clinic0" nodeset="instance('casedb')/casedb/case[@case_type='clinic'][@status='open']" value="./@case_id" detail-select="m1_case_short"/>
       <datum id="case_id_case_requisition" nodeset="instance('casedb')/casedb/case[@case_type='requisition'][@status='open'][index/parent=instance('commcaresession')/session/data/case_id_load_clinic0]" value="./@case_id" detail-select="m2_case_short" detail-confirm="m2_case_long"/>
       <datum id="product_id" nodeset="instance('commtrack:products')/products/product" value="./@id" detail-select="m2_product_short"/>
+      <datum id="supply_point_id" function="instance('commcaresession')/session/user/data/commtrack-supply-point"/>
     </session>
+    <assertions>
+      <assert test="count(instance('commcaresession')/session/user/data/commtrack-supply-point) = 1">
+        <text>
+          <locale id="case_autoload.location.property_missing">
+            <argument>commtrack-supply-point</argument>
+          </locale>
+        </text>
+      </assert>
+      <assert test="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/user/data/commtrack-supply-point]) = 1">
+        <text>
+          <locale id="case_autoload.location.case_missing"/>
+        </text>
+      </assert>
+    </assertions>
   </entry>
   <entry>
     <command id="m1-case-list">
@@ -373,7 +436,22 @@
     <session>
       <datum id="case_id_case_requisition" nodeset="instance('casedb')/casedb/case[@case_type='requisition'][@status='open']" value="./@case_id" detail-select="m2_case_short" detail-confirm="m2_case_long"/>
       <datum id="product_id" nodeset="instance('commtrack:products')/products/product[program_id='abc123def']" value="./@id" detail-select="m2_product_short"/>
+      <datum id="supply_point_id" function="instance('commcaresession')/session/user/data/commtrack-supply-point"/>
     </session>
+    <assertions>
+      <assert test="count(instance('commcaresession')/session/user/data/commtrack-supply-point) = 1">
+        <text>
+          <locale id="case_autoload.location.property_missing">
+            <argument>commtrack-supply-point</argument>
+          </locale>
+        </text>
+      </assert>
+      <assert test="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/user/data/commtrack-supply-point]) = 1">
+        <text>
+          <locale id="case_autoload.location.case_missing"/>
+        </text>
+      </assert>
+    </assertions>
   </entry>
   <menu id="m0">
     <text>

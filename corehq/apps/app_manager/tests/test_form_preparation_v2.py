@@ -19,6 +19,7 @@ from django.test import SimpleTestCase
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.util import new_careplan_module
 from corehq.apps.app_manager.xform import XForm
+from mock import patch
 
 
 class FormPreparationV2Test(SimpleTestCase, TestFileMixin):
@@ -31,6 +32,11 @@ class FormPreparationV2Test(SimpleTestCase, TestFileMixin):
         self.form = self.app.new_form(0, 'New Form', lang='en')
         self.module.case_type = 'test_case_type'
         self.form.source = self.get_xml('original')
+        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
+        self.is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
+
+    def tearDown(self):
+        self.is_usercase_in_use_patch.stop()
 
     def test_no_actions(self):
         self.assertXmlEqual(self.get_xml('no_actions'), self.form.render_xform())
@@ -161,6 +167,13 @@ class SubcaseRepeatTest(SimpleTestCase, TestFileMixin):
 class SubcaseParentRefTeset(SimpleTestCase, TestFileMixin):
     file_path = ('data', 'form_preparation_v2')
 
+    def setUp(self):
+        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
+        self.is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
+
+    def tearDown(self):
+        self.is_usercase_in_use_patch.stop()
+
     def test_parent_ref(self):
         self.app = Application.wrap(self.get_json('subcase-parent-ref'))
         self.assertXmlEqual(self.app.get_module(1).get_form(0).render_xform(),
@@ -245,6 +258,11 @@ class FormPreparationV2TestAdvanced(SimpleTestCase, TestFileMixin):
         self.form = self.module.get_form(-1)
         self.module.case_type = 'test_case_type'
         self.form.source = self.get_xml('original')
+        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
+        self.is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
+
+    def tearDown(self):
+        self.is_usercase_in_use_patch.stop()
 
     def test_no_actions(self):
         self.assertXmlEqual(self.get_xml('no_actions'), self.form.render_xform())
@@ -427,6 +445,12 @@ class SubcaseRepeatTestAdvanced(SimpleTestCase, TestFileMixin):
         child_module_1.case_type ='child1'
         child_module_2 = self.app.add_module(Module.new_module('New Module', lang='en'))
         child_module_2.case_type ='child2'
+        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
+        self.is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
+
+    def tearDown(self):
+        self.is_usercase_in_use_patch.stop()
+
 
 
     def test_subcase(self):
