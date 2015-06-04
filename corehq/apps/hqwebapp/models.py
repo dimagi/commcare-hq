@@ -545,16 +545,15 @@ class SetupTab(UITab):
                     'title': CommTrackSettingsView.page_title,
                     'url': reverse(CommTrackSettingsView.urlname, args=[self.domain]),
                 },
-                # (external sync goes here, if OpenLMIS toggle is enabled)
                 # stock levels
                 {
                     'title': StockLevelsView.page_title,
                     'url': reverse(StockLevelsView.urlname, args=[self.domain]),
                 },
             ]
-            if OPENLMIS.enabled(self.domain, namespace='domain'):
-                commcare_supply_setup.insert(-1,
-                    # insert external sync just above stock levels
+            if OPENLMIS.enabled(self.domain):
+                commcare_supply_setup.append(
+                    # external sync
                     {
                         'title': FacilitySyncView.page_title,
                         'url': reverse(FacilitySyncView.urlname, args=[self.domain]),
