@@ -640,6 +640,7 @@ def hotfix_deploy():
 
     try:
         execute(update_code)
+        _execute_with_timing(do_update_translations)
     except Exception:
         execute(mail_admins, "Deploy failed", "You had better check the logs.")
         # hopefully bring the server back to life
