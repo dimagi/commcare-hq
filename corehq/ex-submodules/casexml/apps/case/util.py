@@ -7,6 +7,7 @@ from casexml.apps.case.dbaccessors import get_indexed_case_ids
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.phone.models import SyncLogAssertionError, get_properly_wrapped_sync_log
 from casexml.apps.stock.models import StockReport
+from corehq.util.soft_assert import soft_assert
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
 
@@ -86,13 +87,17 @@ def update_sync_log_with_checks(sync_log, xform, cases, case_db,
     try:
         sync_log.update_phone_lists(xform, cases)
     except SyncLogAssertionError, e:
+        _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'])
+        _assert(False, 'Sync log assertion error {} for log {}, user {}, form {}, domain {}'.format(
+            e, sync_log._id, sync_log.user_id, xform._id, xform.domain
+        ))
         if e.case_id and e.case_id not in case_id_blacklist:
             form_ids = get_case_xform_ids(e.case_id)
             case_id_blacklist.append(e.case_id)
             for form_id in form_ids:
                 if form_id != xform._id:
                     form = XFormInstance.get(form_id)
-                    if form.doc_type in ['XFormInstance', 'XFormError']:
+                    if form.doc_type == 'XFormInstance':
                         reprocess_form_cases(
                             form,
                             CaseProcessingConfig(
