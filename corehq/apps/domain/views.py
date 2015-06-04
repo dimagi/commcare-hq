@@ -1549,8 +1549,23 @@ class SubscriptionRenewalView(SelectPlanView, SubscriptionMixin):
         context.update({'is_renewal': True})
         return context
 
+    @property
+    def page_context(self):
+        context = super(SubscriptionRenewalView, self).page_context
 
-class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin):
+        current_privs = get_privileges(self.subscription.plan_version)
+        plan = DefaultProductPlan.get_lowest_edition_by_domain(
+            self.domain, current_privs, return_plan=False,
+        ).lower()
+
+        context['current_edition'] = (plan
+                                      if self.current_subscription is not None
+                                      and not self.current_subscription.is_trial
+                                      else "")
+        return context
+
+
+class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin, SubscriptionMixin):
     template_name = 'domain/confirm_subscription_renewal.html'
     urlname = 'domain_subscription_renewal_confirmation'
     page_title = ugettext_noop("Renew Plan")
