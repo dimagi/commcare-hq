@@ -4,51 +4,56 @@ from corehq.apps.locations.models import LocationType
 
 
 class TestLocationTypes(TestCase):
-    def setUp(self):
-        self.domain = create_domain('locations-test')
 
-        def make_loc_type(name, parent_type=None):
-            return LocationType.objects.create(
-                domain=self.domain.name,
-                name=name,
-                code=name,
-                parent_type=parent_type,
-            )
+    @classmethod
+    def setUpClass(cls):
+        cls.domain = create_domain('locations-test')
 
-        self.state = make_loc_type('state')
-
-        self.district = make_loc_type('district', self.state)
-        self.section = make_loc_type('section', self.district)
-        self.block = make_loc_type('block', self.district)
-        self.center = make_loc_type('center', self.block)
-
-        self.county = make_loc_type('county', self.state)
-        self.city = make_loc_type('city', self.county)
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain.delete()
 
     def tearDown(self):
-        self.domain.delete()
         LocationType.objects.filter(domain=self.domain.name).delete()
 
     def test_hierarchy(self):
+        state = self.make_loc_type('state')
+
+        district = self.make_loc_type('district', state)
+        section = self.make_loc_type('section', district)
+        block = self.make_loc_type('block', district)
+        center = self.make_loc_type('center', block)
+
+        county = self.make_loc_type('county', state)
+        city = self.make_loc_type('city', county)
+
         hierarchy = LocationType.objects.full_hierarchy(self.domain.name)
         desired_hierarchy = {
-            self.state.id: (
-                self.state,
+            state.id: (
+                state,
                 {
-                    self.district.id: (
-                        self.district,
+                    district.id: (
+                        district,
                         {
-                            self.section.id: (self.section, {}),
-                            self.block.id: (self.block, {
-                                self.center.id: (self.center, {}),
+                            section.id: (section, {}),
+                            block.id: (block, {
+                                center.id: (center, {}),
                             }),
                         },
                     ),
-                    self.county.id: (
-                        self.county,
-                        {self.city.id: (self.city, {})},
+                    county.id: (
+                        county,
+                        {city.id: (city, {})},
                     ),
                 },
             ),
         }
         self.assertEqual(hierarchy, desired_hierarchy)
+
+    def make_loc_type(self, name, parent_type=None):
+        return LocationType.objects.create(
+            domain=self.domain.name,
+            name=name,
+            code=name,
+            parent_type=parent_type,
+        )
