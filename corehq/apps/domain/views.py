@@ -1521,7 +1521,19 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
         return super(ConfirmBillingAccountInfoView, self).post(request, *args, **kwargs)
 
 
-class SubscriptionRenewalView(SelectPlanView):
+class SubscriptionMixin(object):
+    @property
+    @memoized
+    def subscription(self):
+        subscription = Subscription.get_subscribed_plan_by_domain(self.domain_object)[1]
+        if subscription is None:
+            raise Http404
+        if subscription.is_renewed:
+            raise Http404
+        return subscription
+
+
+class SubscriptionRenewalView(SelectPlanView, SubscriptionMixin):
     urlname = "domain_subscription_renewal"
     page_title = ugettext_noop("Renew Plan")
     step_title = ugettext_noop("Renew or Change Plan")
@@ -1548,21 +1560,9 @@ class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin
 
     @property
     @memoized
-    def subscription(self):
-        subscription = Subscription.get_subscribed_plan_by_domain(self.domain_object)[1]
-        if subscription is None:
-            raise Http404
-        if subscription.is_renewed:
-            raise Http404
-        return subscription
-
-    @property
-    @memoized
     def next_plan_version(self):
-        current_privs = get_privileges(self.subscription.plan_version)
-        plan_version = DefaultProductPlan.get_lowest_edition_by_domain(
-            self.domain, current_privs, return_plan=True,
-        )
+        new_edition = self.request.POST.get('plan_edition').title()
+        plan_version = DefaultProductPlan.get_default_plan_by_domain(self.domain, new_edition)
         if plan_version is None:
             logging.error("[BILLING] Could not find a matching renewable plan "
                           "for %(domain)s, subscription number %(sub_pk)s." % {
