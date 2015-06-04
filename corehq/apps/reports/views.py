@@ -566,7 +566,7 @@ class AddSavedReportConfigView(View):
 
 @login_and_domain_required
 @datespan_default
-def email_report(request, domain, report_slug, report_type=ProjectReportDispatcher.prefix):
+def email_report(request, domain, report_slug, report_type=ProjectReportDispatcher.prefix, once=False):
     from dimagi.utils.django.email import send_HTML_email
     from forms import EmailReportForm
     user_id = request.couch_user._id
@@ -605,7 +605,8 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
                                   domain,
                                   user_id, request.couch_user,
                                   True,
-                                  notes=form.cleaned_data['notes'])[0].content
+                                  notes=form.cleaned_data['notes'],
+                                  once=once)[0].content
 
     subject = form.cleaned_data['subject'] or _("Email report from CommCare HQ")
 
@@ -838,7 +839,7 @@ def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
                                   couch_user,
                                   email, attach_excel=attach_excel)
 
-def _render_report_configs(request, configs, domain, owner_id, couch_user, email, notes=None, attach_excel=False):
+def _render_report_configs(request, configs, domain, owner_id, couch_user, email, notes=None, attach_excel=False, once=False):
     from dimagi.utils.web import get_url_base
 
     report_outputs = []
@@ -870,6 +871,7 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
         "notes": notes,
         "startdate": date_range.get("startdate") if date_range else "",
         "enddate": date_range.get("enddate") if date_range else "",
+        "once": once,
     }), excel_attachments
 
 @login_and_domain_required
