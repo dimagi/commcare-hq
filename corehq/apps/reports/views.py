@@ -839,7 +839,9 @@ def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
                                   couch_user,
                                   email, attach_excel=attach_excel)
 
-def _render_report_configs(request, configs, domain, owner_id, couch_user, email, notes=None, attach_excel=False, once=False):
+
+def _render_report_configs(request, configs, domain, owner_id, couch_user, email,
+                           notes=None, attach_excel=False, once=False):
     from dimagi.utils.web import get_url_base
 
     report_outputs = []
