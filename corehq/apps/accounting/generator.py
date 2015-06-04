@@ -34,6 +34,11 @@ def instantiate_accounting_for_tests():
     call_command('cchq_software_plan_bootstrap', testing=True)
 
 
+def tear_down_accounting_for_tests():
+    call_command('cchq_prbac_bootstrap', testing=True, flush=True)
+    call_command('cchq_software_plan_bootstrap', testing=True, flush=True)
+
+
 def init_default_currency():
     currency, _ = Currency.objects.get_or_create(
         code=settings.DEFAULT_CURRENCY,

@@ -29,30 +29,40 @@ class Command(BaseCommand):
                     help='Enable debug output'),
         make_option('--fresh-start', action='store_true',  default=False,
                     help='We changed the core v0 plans, wipe all existing plans and start over. USE CAUTION.'),
-        make_option('--testing', action='store_true',  default=False,
+        make_option('--flush', action='store_true', default=False,
+                    help='Wipe all roles and start over. USE CAUTION.'),
+
+        make_option('--testing', action='store_true', default=False,
                     help='Run this command for tests.'),
     )
 
-    def handle(self, dry_run=False, verbose=False, fresh_start=False, testing=False, *args, **options):
+    def handle(self, dry_run=False, verbose=False, fresh_start=False,
+               testing=False, flush=False, *args, **options):
 
         self.verbose = verbose
 
-        if fresh_start:
-            confirm_fresh_start = raw_input("Are you sure you want to delete all Roles and start over? You can't do this"
-                                            " if accounting is already set up. Type 'yes' to continue.")
-            if confirm_fresh_start == 'yes':
+        if fresh_start or flush:
+            confirm_fresh_start = testing or (
+                'yes' == raw_input(
+                    "Are you sure you want to delete all Roles and start over? "
+                    "You can't do this if accounting is already set up. "
+                    "Type 'yes' to continue."
+                )
+            )
+            if confirm_fresh_start:
                 self.flush_roles()
 
-        for role in self.BOOTSTRAP_PRIVILEGES + self.BOOTSTRAP_PLANS:
-            self.ensure_role(role, dry_run=dry_run)
+        if not flush:
+            for role in self.BOOTSTRAP_PRIVILEGES + self.BOOTSTRAP_PLANS:
+                self.ensure_role(role, dry_run=dry_run)
 
-        for (plan_role_slug, privs) in self.BOOTSTRAP_GRANTS.items():
-            for priv_role_slug in privs:
-                self.ensure_grant(plan_role_slug, priv_role_slug, dry_run=dry_run)
+            for (plan_role_slug, privs) in self.BOOTSTRAP_GRANTS.items():
+                for priv_role_slug in privs:
+                    self.ensure_grant(plan_role_slug, priv_role_slug, dry_run=dry_run)
 
-        for old_priv in self.OLD_PRIVILEGES:
-            for plan_role_slug in self.BOOTSTRAP_GRANTS.keys():
-                self.remove_grant(plan_role_slug, old_priv)
+            for old_priv in self.OLD_PRIVILEGES:
+                for plan_role_slug in self.BOOTSTRAP_GRANTS.keys():
+                    self.remove_grant(plan_role_slug, old_priv)
 
     def flush_roles(self):
         logger.info('Flushing ALL Roles...')
