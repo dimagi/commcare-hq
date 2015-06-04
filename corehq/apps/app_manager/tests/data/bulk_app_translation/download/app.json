@@ -13,6 +13,7 @@
   "build_signed": true,
   "recipients": "",
   "copy_history": [
+    
   ],
   "platform": "nokia\/s40",
   "application_version": "2.0",
@@ -27,8 +28,10 @@
   "admin_password_charset": "n",
   "build_comment": null,
   "success_message": {
+    
   },
   "profile": {
+    
   },
   "amplifies_workers": "not_set",
   "comment_from": null,
@@ -38,6 +41,7 @@
     "doc_type": "UserRegistrationForm",
     "xmlns": null,
     "name": {
+      
     },
     "password_path": "password",
     "auto_gps_capture": false,
@@ -45,15 +49,18 @@
     "version": null,
     "no_vellum": false,
     "form_links": [
+      
     ],
     "post_form_workflow": "default",
     "form_type": "user_registration",
     "username_path": "username",
     "unique_id": "b8076f0217ee748fc2f2a1593b4c29efe0eb49bb",
     "data_paths": {
+      
     }
   },
   "translations": {
+    
   },
   "built_on": null,
   "built_with": {
@@ -68,6 +75,7 @@
     "jr:\/\/file\/commcare\/image\/data\/What_does_this_look_like.png": {
       "doc_type": "HQMediaMapItem",
       "output_size": {
+        
       },
       "version": null,
       "multimedia_id": "bdee5d5d5619bd3704a2ac4fa8c7be4c",
@@ -77,6 +85,7 @@
     "jr:\/\/file\/commcare\/image\/module0_form0.png": {
       "doc_type": "HQMediaMapItem",
       "output_size": {
+        
       },
       "version": null,
       "multimedia_id": "bdee5d5d5619bd3704a2ac4fa84a6cd8",
@@ -86,6 +95,7 @@
     "jr:\/\/file\/commcare\/image\/module0.png": {
       "doc_type": "HQMediaMapItem",
       "output_size": {
+        
       },
       "version": null,
       "multimedia_id": "bdee5d5d5619bd3704a2ac4fa84a6cd8",
@@ -98,10 +108,12 @@
   ],
   "use_custom_suite": false,
   "logo_refs": {
+    
   },
   "build_broken_reason": null,
   "doc_type": "Application",
   "cached_properties": {
+    
   },
   "name": "Untitled Application",
   "amplifies_project": "not_set",
@@ -117,6 +129,7 @@
       "referral_list": {
         "doc_type": "CaseList",
         "label": {
+          
         },
         "show": false
       },
@@ -130,12 +143,14 @@
       "task_list": {
         "doc_type": "CaseList",
         "label": {
+          
         },
         "show": false
       },
       "case_list": {
         "doc_type": "CaseList",
         "label": {
+          
         },
         "show": false
       },
@@ -153,10 +168,12 @@
           "actions": {
             "doc_type": "FormActions",
             "subcases": [
+              
             ],
             "update_case": {
               "doc_type": "UpdateCaseAction",
               "update": {
+                
               },
               "condition": {
                 "operator": "=",
@@ -213,6 +230,7 @@
             },
             "referral_preload": {
               "preload": {
+                
               },
               "doc_type": "PreloadAction",
               "condition": {
@@ -225,6 +243,7 @@
             },
             "case_preload": {
               "preload": {
+                
               },
               "doc_type": "PreloadAction",
               "condition": {
@@ -250,6 +269,7 @@
           "no_vellum": false,
           "media_image": "jr:\/\/file\/commcare\/image\/module0_form0.png",
           "form_links": [
+            
           ],
           "post_form_workflow": "default",
           "form_type": "module_form",
@@ -274,8 +294,10 @@
         "short": {
           "doc_type": "Detail",
           "sort_elements": [
+            
           ],
           "tabs": [
+            
           ],
           "filter": null,
           "use_case_tiles": null,
@@ -289,6 +311,7 @@
               "format": "plain",
               "late_flag": 30,
               "enum": [
+                
               ],
               "time_ago_interval": 365.25,
               "header": {
@@ -301,13 +324,17 @@
               "graph_configuration": {
                 "doc_type": "GraphConfiguration",
                 "series": [
+                  
                 ],
                 "locale_specific_config": {
+                  
                 },
                 "graph_type": null,
                 "config": {
+                  
                 },
                 "annotations": [
+                  
                 ]
               },
               "advanced": ""
@@ -317,8 +344,10 @@
         "long": {
           "doc_type": "Detail",
           "sort_elements": [
+            
           ],
           "tabs": [
+            
           ],
           "filter": null,
           "use_case_tiles": null,
@@ -332,6 +361,7 @@
               "format": "plain",
               "late_flag": 30,
               "enum": [
+                
               ],
               "time_ago_interval": 365.25,
               "header": {
@@ -344,13 +374,17 @@
               "graph_configuration": {
                 "doc_type": "GraphConfiguration",
                 "series": [
+                  
                 ],
                 "locale_specific_config": {
+                  
                 },
                 "graph_type": null,
                 "config": {
+                  
                 },
                 "annotations": [
+                  
                 ]
               },
               "advanced": ""
@@ -368,8 +402,10 @@
         "short": {
           "doc_type": "Detail",
           "sort_elements": [
+            
           ],
           "tabs": [
+            
           ],
           "filter": null,
           "use_case_tiles": null,
@@ -377,13 +413,16 @@
           "persist_tile_on_forms": null,
           "display": "short",
           "columns": [
+            
           ]
         },
         "long": {
           "doc_type": "Detail",
           "sort_elements": [
+            
           ],
           "tabs": [
+            
           ],
           "filter": null,
           "use_case_tiles": null,
@@ -391,6 +430,7 @@
           "persist_tile_on_forms": null,
           "display": "long",
           "columns": [
+            
           ]
         }
       }
@@ -400,6 +440,7 @@
     "c480ace490edc870ae952765e8dfacec33c69fec.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<h:html xmlns:h=\"http:\/\/www.w3.org\/1999\/xhtml\" xmlns:orx=\"http:\/\/openrosa.org\/jr\/xforms\" xmlns=\"http:\/\/www.w3.org\/2002\/xforms\" xmlns:xsd=\"http:\/\/www.w3.org\/2001\/XMLSchema\" xmlns:jr=\"http:\/\/openrosa.org\/javarosa\" xmlns:vellum=\"http:\/\/commcarehq.org\/xforms\/vellum\">\n\t<h:head>\n\t\t<h:title>Stethoscope Form<\/h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http:\/\/dev.commcarehq.org\/jr\/xforms\" xmlns=\"http:\/\/openrosa.org\/formdesigner\/4B8AA771-D8CD-4E27-9775-B768C19C9E78\" uiVersion=\"1\" version=\"1\" name=\"Stethoscope Form\">\n\t\t\t\t\t<What_does_this_look_like \/>\n\t\t\t\t\t<no_media \/>\n\t\t\t\t\t<has_refs \/>\n\t\t\t\t<\/data>\n\t\t\t<\/instance>\n\t\t\t<bind nodeset=\"\/data\/What_does_this_look_like\" type=\"xsd:string\" \/>\n\t\t\t<bind nodeset=\"\/data\/no_media\" type=\"xsd:string\" \/>\n\t\t\t<bind nodeset=\"\/data\/has_refs\" type=\"xsd:string\" \/>\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"What_does_this_look_like-label\">\n\t\t\t\t\t\t<value>What does this look like?<\/value>\n\t\t\t\t\t\t<value form=\"image\">jr:\/\/file\/commcare\/image\/data\/What_does_this_look_like.png<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"no_media-label\">\n\t\t\t\t\t\t<value>No media<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"has_refs-label\">\n\t\t\t\t\t\t<value>Here is a ref <output value=\"\/data\/no_media\" \/> with some trailing text and bad &lt; xml.<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t<\/translation>\n\t\t\t<\/itext>\n\t\t<\/model>\n\t<\/h:head>\n\t<h:body>\n\t\t<input ref=\"\/data\/What_does_this_look_like\">\n\t\t\t<label ref=\"jr:itext('What_does_this_look_like-label')\" \/>\n\t\t<\/input>\n\t\t<input ref=\"\/data\/no_media\">\n\t\t\t<label ref=\"jr:itext('no_media-label')\" \/>\n\t\t<\/input>\n\t\t<input ref=\"\/data\/has_refs\">\n\t\t\t<label ref=\"jr:itext('has_refs-label')\" \/>\n\t\t<\/input>\n\t<\/h:body>\n<\/h:html>"
   },
   "attribution_notes": null,
+  "commtrack_enabled": false,
   "commtrack_requisition_mode": null,
   "translation_strategy": "select-known",
   "case_sharing": false
