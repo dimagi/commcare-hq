@@ -5,8 +5,9 @@ from django.conf import settings
 from casexml.apps.case import const
 from casexml.apps.case.dbaccessors import get_indexed_case_ids
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
-from casexml.apps.phone.models import SyncLogAssertionError, SyncLog
+from casexml.apps.phone.models import SyncLogAssertionError, get_properly_wrapped_sync_log
 from casexml.apps.stock.models import StockReport
+from corehq.util.soft_assert import soft_assert
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
 
@@ -26,7 +27,8 @@ def post_case_blocks(case_blocks, form_extras=None, domain=None):
 
     domain = domain or form_extras.pop('domain', None)
     if getattr(settings, 'UNIT_TESTING', False):
-        domain = domain or 'test-domain'
+        from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
+        domain = domain or TEST_DOMAIN_NAME
 
     form = ElementTree.Element("data")
     form.attrib['xmlns'] = "https://www.commcarehq.org/test/casexml-wrapper"
@@ -85,13 +87,21 @@ def update_sync_log_with_checks(sync_log, xform, cases, case_db,
     try:
         sync_log.update_phone_lists(xform, cases)
     except SyncLogAssertionError, e:
+        _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'])
+        _assert(False, 'Sync log assertion error', {
+            'message': unicode(e),
+            'log_id': sync_log._id,
+            'user_id': sync_log.user_id,
+            'form_id': xform._id,
+            'domain': xform.domain,
+        })
         if e.case_id and e.case_id not in case_id_blacklist:
             form_ids = get_case_xform_ids(e.case_id)
             case_id_blacklist.append(e.case_id)
             for form_id in form_ids:
                 if form_id != xform._id:
                     form = XFormInstance.get(form_id)
-                    if form.doc_type in ['XFormInstance', 'XFormError']:
+                    if form.doc_type == 'XFormInstance':
                         reprocess_form_cases(
                             form,
                             CaseProcessingConfig(
@@ -100,7 +110,7 @@ def update_sync_log_with_checks(sync_log, xform, cases, case_db,
                             ),
                             case_db=case_db
                         )
-            updated_log = SyncLog.get(sync_log._id)
+            updated_log = get_properly_wrapped_sync_log(sync_log._id)
 
             update_sync_log_with_checks(updated_log, xform, cases, case_db,
                                         case_id_blacklist=case_id_blacklist)

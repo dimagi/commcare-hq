@@ -15,7 +15,7 @@ def calc_lead_time(supply_point, start_date=None, end_date=None):
     """
 
     deliveries = SupplyPointStatus.objects.filter(
-        supply_point=supply_point,
+        location_id=supply_point,
         status_type__in=[SupplyPointStatusTypes.DELIVERY_FACILITY,
                          SupplyPointStatusTypes.DELIVERY_DISTRICT],
         status_value=SupplyPointStatusValues.RECEIVED
@@ -27,7 +27,7 @@ def calc_lead_time(supply_point, start_date=None, end_date=None):
     if deliveries:
         latest_delivery = deliveries[0]
         previous_submissions = SupplyPointStatus.objects.filter(
-            supply_point=supply_point,
+            location_id=supply_point,
             status_type__in=[SupplyPointStatusTypes.R_AND_R_FACILITY,
                              SupplyPointStatusTypes.R_AND_R_DISTRICT],
             status_value=SupplyPointStatusValues.SUBMITTED,
@@ -49,19 +49,20 @@ def get_this_lead_time(supply_point_id, start_date, end_date):
 
 
 def get_avg_lead_time(supply_point_id, start_date, end_date):
-    org_sum = OrganizationSummary.objects.filter(supply_point=supply_point_id, date__range=(start_date, end_date))\
-        .aggregate(average_lead_time_in_days=Avg('average_lead_time_in_days'))
-    if org_sum:
-        if org_sum['average_lead_time_in_days']:
-            return org_sum['average_lead_time_in_days']
+    org_sum = OrganizationSummary.objects.filter(
+        location_id=supply_point_id,
+        date__range=(start_date, end_date)
+    ).aggregate(average_lead_time_in_days=Avg('average_lead_time_in_days'))
+    if org_sum and org_sum['average_lead_time_in_days']:
+        return org_sum['average_lead_time_in_days']
     return "None"
 
 
 def rr_format_percent(numerator, denominator):
-            if numerator and denominator:
-                return "%.1f%%" % ((float(numerator) / float(denominator)) * 100.0)
-            else:
-                return "No data"
+    if numerator and denominator:
+        return "%.1f%%" % ((float(numerator) / float(denominator)) * 100.0)
+    else:
+        return "No data"
 
 
 def get_default_contact_for_location(domain, location_id):
@@ -133,13 +134,14 @@ def reporting_window(start_date, end_date):
 
 
 def latest_status(location_id, type, value=None, start_date=None, end_date=None):
-    qs = SupplyPointStatus.objects.filter(supply_point=location_id, status_type=type)
+    qs = SupplyPointStatus.objects.filter(location_id=location_id, status_type=type)
     if value:
         qs = qs.filter(status_value=value)
+
     if start_date and end_date:
         rr = reporting_window(start_date, end_date)
-        qs = qs.filter(status_date__gt=rr[0],
-                       status_date__lte=rr[1])
+        qs = qs.filter(status_date__gt=rr[0], status_date__lte=rr[1])
+
     if qs.exclude(status_value="reminder_sent").exists():
         # HACK around bad data.
         qs = qs.exclude(status_value="reminder_sent")
@@ -148,11 +150,13 @@ def latest_status(location_id, type, value=None, start_date=None, end_date=None)
 
 
 def latest_status_or_none(location_id, type, start_date, end_date, value=None):
-    t = latest_status(location_id, type,
-                      start_date=start_date,
-                      end_date=end_date,
-                      value=value)
-    return t
+    return latest_status(
+        location_id,
+        type,
+        start_date=start_date,
+        end_date=end_date,
+        value=value
+    )
 
 
 def randr_value(location_id, start_date, end_date):

@@ -34,9 +34,10 @@ from restkit.errors import Unauthorized
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
-from couchdbkit import ResourceNotFound
+from couchdbkit import ResourceNotFound, Database
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from couchforms.const import DEVICE_LOG_XMLNS
+from couchforms.dbaccessors import get_number_of_forms_all_domains_in_couch
 from couchforms.models import XFormInstance
 from pillowtop import get_all_pillows_json, get_pillow_by_name
 
@@ -405,11 +406,6 @@ def db_comparisons(request):
     def _simple_view_couch_query(db, view_name):
         return db.view(view_name, reduce=True).one()['value']
 
-    def _count_real_forms():
-        all_forms = _simple_view_couch_query(XFormInstance.get_db(), 'couchforms/by_xmlns')
-        device_logs = XFormInstance.get_db().view('couchforms/by_xmlns', key=DEVICE_LOG_XMLNS).one()['value']
-        return all_forms - device_logs
-
     comparison_config = [
         {
             'description': 'Users (base_doc is "CouchUser")',
@@ -425,7 +421,7 @@ def db_comparisons(request):
         },
         {
             'description': 'Forms (doc_type is "XFormInstance")',
-            'couch_docs': _count_real_forms(),
+            'couch_docs': get_number_of_forms_all_domains_in_couch(),
             'es_query': FormES().remove_default_filter('has_xmlns')
                 .remove_default_filter('has_user')
                 .size(0),
@@ -689,10 +685,15 @@ def doc_in_es(request):
     doc_id = request.GET.get("id")
     if not doc_id:
         return render(request, "hqadmin/doc_in_es.html", {})
-    try:
-        couch_doc = get_db().get(doc_id)
-    except ResourceNotFound:
-        couch_doc = {}
+
+    couch_doc = {}
+    db_urls = [settings.COUCH_DATABASE] + settings.EXTRA_COUCHDB_DATABASES.values()
+    for url in db_urls:
+        try:
+            couch_doc = Database(url).get(doc_id)
+            break
+        except ResourceNotFound:
+            pass
     query = {"filter":
                 {"ids": {
                     "values": [doc_id]}}}
@@ -745,9 +746,11 @@ def callcenter_test(request):
     elif doc_id:
         try:
             doc = CommCareUser.get_db().get(doc_id)
+            domain = Domain.get_by_name(doc['domain'])
             doc_type = doc.get('doc_type', None)
             if doc_type == 'CommCareUser':
-                user_case = get_case_by_domain_hq_user_id(doc['domain'], doc['_id'], include_docs=True)
+                case_type = domain.call_center_config.case_type
+                user_case = get_case_by_domain_hq_user_id(doc['domain'], doc['_id'], case_type)
             elif doc_type == 'CommCareCase':
                 if doc.get('hq_user_id'):
                     user_case = CommCareCase.wrap(doc)
@@ -755,9 +758,6 @@ def callcenter_test(request):
                     error = 'Case ID does does not refer to a Call Center Case'
         except ResourceNotFound:
             error = "User Not Found"
-
-    if user_case:
-        domain = Domain.get_by_name(user_case['domain'])
 
     try:
         query_date = dateutil.parser.parse(date_param)

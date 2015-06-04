@@ -32,6 +32,7 @@ class BaseSqlData(SqlData):
     no_value = {'sort_key': 0, 'html': 0}
     fix_left_col = False
     total_row_name = "Total"
+    chart_title = ''
     custom_total_calculate = False
     accordion_start = True
     accordion_end = True

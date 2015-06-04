@@ -1,15 +1,26 @@
 {% load multimedia_tags %}
 {% load i18n %}
-
 {% if multimedia.references.form_media.images.maps or multimedia.references.form_media.audio.maps or multimedia.references.menu_media.icons.maps or multimedia.references.menu_media.audio.maps %}
     <p>{% blocktrans %}This .zip file is structured to match the multimedia paths referenced in your CommCare Application.{% endblocktrans %}</p>
-
     <p>
+        <a class="btn btn-warning" style="color: #ffffff;"
+            {% if include_modal %}
+                href="#multimedia-zip-modal" data-toggle="modal"
+            }
+            {% else %}
+                {# This happens when the template gets included in app_manager/releases.html #}
+                {# See app_manager/js/releases.js #}
+                data-bind="click: function () {
+                    download_application_zip('{% url "download_multimedia_zip" app.domain '_____' %}');
+                }"
+            {% endif %}
+        >
         {% if multimedia.form_errors or multimedia.missing_refs %}
-            <a class="btn btn-warning" style="color: #ffffff;" href="{% url "download_multimedia_zip" domain app.get_id  %}"><i class="icon icon-white icon-bolt"></i> {% trans 'Download Incomplete ZIP' %}</a>
+            <i class="icon icon-white icon-bolt"></i> {% trans 'Download Incomplete ZIP' %}
         {% else %}
-            <a id="download_zip" class="btn btn-primary" style="color: #ffffff;" href="{% url "download_multimedia_zip" domain app.get_id  %}"><i class="icon icon-white icon-download-alt"></i> {% trans 'Download ZIP' %}</a>
+            <i class="icon icon-white icon-download-alt"></i> {% trans 'Download ZIP' %}
         {% endif %}
+        </a>
     </p>
 {% else %}
     <div class="alert alert-info">{% blocktrans %}This application currently does not contain any multimedia references.{% endblocktrans %}</div>
@@ -30,4 +41,9 @@
             starting your Application, or it might be unstable.
         </p>
     {% endblocktrans %}</div>
+{% endif %}
+
+{% if include_modal %}
+    {% url "download_multimedia_zip" domain app.get_id as multimedia_url%}
+    {% include 'app_manager/partials/download_async_modal.html' with element_id='multimedia-zip-modal' download_url=multimedia_url%}
 {% endif %}

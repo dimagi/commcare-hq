@@ -225,6 +225,7 @@ HQ_APPS = (
     'corehq.apps.programs',
     'corehq.apps.commtrack',
     'corehq.apps.consumption',
+    'corehq.apps.tzmigration',
     'couchforms',
     'couchexport',
     'couchlog',
@@ -234,6 +235,7 @@ HQ_APPS = (
     'formtranslate',
     'langcodes',
     'corehq.apps.adm',
+    'corehq.apps.analytics',
     'corehq.apps.announcements',
     'corehq.apps.callcenter',
     'corehq.apps.crud',
@@ -307,13 +309,10 @@ HQ_APPS = (
     'mvp_docs',
     'mvp_indicators',
     'custom.opm',
-    'pathfinder',
     'pathindia',
     'pact',
-    'psi',
 
     'custom.apps.care_benin',
-    'custom.reports.care_sa',
     'custom.apps.cvsu',
     'custom.reports.mc',
     'custom.apps.crs_reports',
@@ -339,6 +338,7 @@ HQ_APPS = (
     'bootstrap3_crispy',
 
     'custom.dhis2',
+    'custom.evin',
 )
 
 TEST_APPS = ()
@@ -505,6 +505,9 @@ SHARED_DRIVE_ROOT = None
 
 # name of the directory within SHARED_DRIVE_ROOT
 RESTORE_PAYLOAD_DIR_NAME = None
+
+# name of the directory within SHARED_DRIVE_ROOT
+SHARED_TEMP_DIR_NAME = None
 
 ## django-transfer settings
 # These settings must match the apache / nginx config
@@ -691,6 +694,7 @@ ANALYTICS_IDS = {
     'PINGDOM_ID': '',
     'ANALYTICS_ID_PUBLIC_COMMCARE': '',
     'KISSMETRICS_KEY': '',
+    'HUBSPOT_API_KEY': '',
     'HUBSPOT_ID': '',
 }
 
@@ -970,17 +974,6 @@ if not SQL_REPORTING_DATABASE_URL or UNIT_TESTING:
         **db_settings
     )
 
-### Shared drive settings ###
-if SHARED_DRIVE_ROOT and RESTORE_PAYLOAD_DIR_NAME:
-    # Defaults to tempfile.gettempdir()
-    RESTORE_PAYLOAD_DIR = os.path.join(SHARED_DRIVE_ROOT, RESTORE_PAYLOAD_DIR_NAME)
-
-if SHARED_DRIVE_ROOT and TRANSFER_FILE_DIR_NAME:
-    TRANSFER_FILE_DIR = os.path.join(SHARED_DRIVE_ROOT, TRANSFER_FILE_DIR_NAME)
-    TRANSFER_MAPPINGS = {
-        TRANSFER_FILE_DIR: '/{}'.format(TRANSFER_FILE_DIR_NAME),  # e.g. '/mnt/shared/downloads': '/downloads',
-    }
-
 MVP_INDICATOR_DB = 'mvp-indicators'
 
 INDICATOR_CONFIG = {
@@ -989,7 +982,12 @@ INDICATOR_CONFIG = {
 }
 
 ####### Couch Forms & Couch DB Kit Settings #######
-from settingshelper import get_dynamic_db_settings, make_couchdb_tuples, get_extra_couchdbs
+from settingshelper import (
+    get_dynamic_db_settings,
+    make_couchdb_tuples,
+    get_extra_couchdbs,
+    SharedDriveConfiguration
+)
 
 _dynamic_db_settings = get_dynamic_db_settings(
     COUCH_SERVER_ROOT,
@@ -1072,10 +1070,8 @@ COUCHDB_APPS = [
     'hsph',
     'mvp',
     ('mvp_docs', MVP_INDICATOR_DB),
-    'pathfinder',
     'pathindia',
     'pact',
-    'psi',
     'accounting',
     'succeed',
     'ilsgateway',
@@ -1090,7 +1086,6 @@ COUCHDB_APPS = [
     ('bihar', 'fluff-bihar'),
     ('opm', 'fluff-opm'),
     ('fluff', 'fluff-opm'),
-    ('care_sa', 'fluff-care_sa'),
     ('cvsu', 'fluff-cvsu'),
     ('mc', 'fluff-mc'),
     ('m4change', 'm4change'),
@@ -1109,6 +1104,17 @@ if ENABLE_PRELOGIN_SITE:
     INSTALLED_APPS += PRELOGIN_APPS
 
 MIDDLEWARE_CLASSES += LOCAL_MIDDLEWARE_CLASSES
+
+### Shared drive settings ###
+SHARED_DRIVE_CONF = SharedDriveConfiguration(
+    SHARED_DRIVE_ROOT,
+    RESTORE_PAYLOAD_DIR_NAME,
+    TRANSFER_FILE_DIR_NAME,
+    SHARED_TEMP_DIR_NAME
+)
+TRANSFER_MAPPINGS = {
+    SHARED_DRIVE_CONF.transfer_dir: '/{}'.format(TRANSFER_FILE_DIR_NAME),  # e.g. '/mnt/shared/downloads': '/downloads',
+}
 
 # these are the official django settings
 # which really we should be using over the custom ones
@@ -1238,7 +1244,6 @@ PILLOWTOPS = {
         'custom.opm.models.OPMHierarchyFluffPillow',
         'custom.opm.models.VhndAvailabilityFluffPillow',
         'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
-        'custom.reports.care_sa.models.CareSAFluffPillow',
         'custom.reports.mc.models.MalariaConsortiumFluffPillow',
         'custom.m4change.models.AncHmisCaseFluffPillow',
         'custom.m4change.models.LdHmisCaseFluffPillow',
@@ -1278,6 +1283,7 @@ CUSTOM_DATA_SOURCES = [
     os.path.join('custom', 'up_nrhm', 'data_sources', 'location_hierarchy.json'),
     os.path.join('custom', 'up_nrhm', 'data_sources', 'asha_facilitators.json'),
     os.path.join('custom', 'succeed', 'data_sources', 'submissions.json'),
+    os.path.join('custom', 'apps', 'gsid', 'data_sources', 'patient_summary.json'),
 ]
 
 
@@ -1350,7 +1356,6 @@ DOMAIN_MODULE_MAP = {
     'a5288-study': 'a5288',
     'care-bihar': 'custom.bihar',
     'bihar': 'custom.bihar',
-    'care-ihapc-live': 'custom.reports.care_sa',
     'cvsulive': 'custom.apps.cvsu',
     'dca-malawi': 'dca',
     'eagles-fahu': 'dca',
@@ -1373,7 +1378,6 @@ DOMAIN_MODULE_MAP = {
     'mvp-koraro': 'mvp',
     'mvp-pampaida': 'mvp',
     'opm': 'custom.opm',
-    'psi-unicef': 'psi',
     'project': 'custom.apps.care_benin',
 
     'ipm-senegal': 'custom.intrahealth',
@@ -1405,13 +1409,13 @@ TRAVIS_TEST_GROUPS = (
     (
         'accounting', 'adm', 'announcements', 'api', 'app_manager', 'appstore',
         'auditcare', 'bihar', 'builds', 'cachehq', 'callcenter', 'care_benin',
-        'care_sa', 'case', 'cleanup', 'cloudcare', 'commtrack', 'consumption',
+        'case', 'cleanup', 'cloudcare', 'commtrack', 'consumption',
         'couchapps', 'couchlog', 'crud', 'cvsu', 'dca', 'django_digest',
         'domain', 'domainsync', 'export',
         'facilities', 'fixtures', 'fluff_filter', 'formplayer',
         'formtranslate', 'fri', 'grapevine', 'groups', 'gsid', 'hope',
         'hqadmin', 'hqcase', 'hqcouchlog', 'hqmedia',
-        'smsbillables',
+        'care_pathways', 'colalife', 'common', 'compressor',
     ),
 )
 

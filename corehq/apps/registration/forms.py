@@ -180,12 +180,18 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
 
     def __init__(self, data=None, excluded_emails=None, *args, **kwargs):
         domain = None
+        location = None
         if 'domain' in kwargs:
             domain = Domain.get_by_name(kwargs['domain'])
             del kwargs['domain']
+        if 'location' in kwargs:
+            location = kwargs['location']
+            del kwargs['location']
         super(AdminInvitesUserForm, self).__init__(data=data, *args, **kwargs)
         if domain and domain.commtrack_enabled:
-            self.fields['supply_point'] = forms.CharField(label='Supply Point:', required=False, widget=SupplyPointSelectWidget(domain=domain.name))
+            self.fields['supply_point'] = forms.CharField(label='Supply Point:', required=False,
+                                                          widget=SupplyPointSelectWidget(domain=domain.name),
+                                                          initial=location.location_id if location else '')
             self.fields['program'] = forms.ChoiceField(label="Program", choices=(), required=False)
             programs = Program.by_domain(domain.name, wrap=False)
             choices = list((prog['_id'], prog['name']) for prog in programs)

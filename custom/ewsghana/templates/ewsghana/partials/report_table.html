@@ -126,6 +126,8 @@
             d3.select(line_chart_id + ' svg')
                     .datum(data)
                     .transition().duration(500).call(line_chart);
+            $('.nv-legend').find('.nv-series').show();
+            $('.nv-legend').find('.nv-series').slice(-2).hide();
         };
 
         $('.toggle-column').bind('click', function() {

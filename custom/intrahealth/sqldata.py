@@ -3,7 +3,7 @@ from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn
 from sqlagg.columns import SumColumn, MaxColumn, SimpleColumn, CountColumn, CountUniqueColumn, MeanColumn
 from sqlalchemy.sql.expression import alias
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.products.models import Product, SQLProduct
+from corehq.apps.products.models import SQLProduct
 
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.sqlreport import DataFormatter, \
@@ -643,10 +643,15 @@ class RecouvrementDesCouts(BaseSqlData):
         return ['district_name']
 
     @property
+    def filters(self):
+        filters = super(RecouvrementDesCouts, self).filters
+        return filters
+
+    @property
     def columns(self):
         columns = [DatabaseColumn(_("District"), SimpleColumn('district_name'))]
-        columns.append(DatabaseColumn(_(u"Montant dû"), SumColumn('payments_amount_paid')))
-        columns.append(DatabaseColumn(_(u"Montant payé"), SumColumn('payments_amount_to_pay')))
+        columns.append(DatabaseColumn(_(u"Montant dû"), SumColumn('payments_amount_to_pay')))
+        columns.append(DatabaseColumn(_(u"Montant payé"), SumColumn('payments_amount_paid')))
         columns.append(DatabaseColumn(_(u"Payé dans le 30 jours"), SumColumn('payments_in_30_days')))
         columns.append(DatabaseColumn(_(u"Payé dans le 3 mois"), SumColumn('payments_in_3_months')))
         columns.append(DatabaseColumn(_(u"Payé dans l`annèe"), SumColumn('payments_in_year')))

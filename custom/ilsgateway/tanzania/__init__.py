@@ -5,18 +5,15 @@ import pytz
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.filters.select import YearFilter
 from corehq.apps.reports.sqlreport import SqlTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
 from couchexport.models import Format
 from custom.common import ALL_OPTION
-from custom.ilsgateway.filters import MonthAndQuarterFilter
 from custom.ilsgateway.models import SupplyPointStatusTypes, OrganizationSummary
 from corehq.apps.reports.graph_models import PieChart
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 from custom.ilsgateway.tanzania.reports.utils import make_url
-from django.utils import html
 from dimagi.utils.parsing import ISO_DATE_FORMAT
 
 
@@ -125,32 +122,32 @@ class ILSMixin(object):
 class ILSDateSpan(DateSpan):
 
     @classmethod
-    def from_month_or_quarter(cls, month_or_quarter=None, year=None, format=ISO_DATE_FORMAT,
-                              inclusive=True, timezone=pytz.utc):
+    def get_date(cls, type=None, month_or_quarter=None, year=None, format=ISO_DATE_FORMAT,
+                 inclusive=True, timezone=pytz.utc):
         """
-        Generate a DateSpan object given a numerical month and year.
-        Both are optional and default to the current month/year.
+        Generate a DateSpan object given type, month or quarter and year.
 
-            april = DateSpan.from_month(04, 2013)
-            First Quarter: DateSpan.from_month(-1, 2015)
+            april = DateSpan.get_date(1, 04, 2013)
+            First Quarter: DateSpan.from_month(2, 1, 2015)
+            2015: DateSpan.from_month(3, None, 2015)
         """
         if month_or_quarter is None:
             month_or_quarter = datetime.datetime.date.today().month
         if year is None:
             year = datetime.datetime.date.today().year
         assert isinstance(month_or_quarter, int) and isinstance(year, int)
-        if month_or_quarter == -5:
+        if type == 3:
             start = datetime(int(year), 1, 1)
             end = datetime(int(year), 12, 31)
-        elif month_or_quarter < 0:
+        elif type == 2:
             quarters = list(rrule.rrule(rrule.MONTHLY,
                                         bymonth=(1, 4, 7, 10),
                                         bysetpos=-1,
                                         dtstart=datetime(year, 1, 1),
                                         count=5))
 
-            start = quarters[month_or_quarter * (-1) - 1]
-            end = quarters[month_or_quarter * (-1)] - relativedelta(days=1)
+            start = quarters[month_or_quarter - 1]
+            end = quarters[month_or_quarter] - relativedelta(days=1)
         else:
             start = datetime(year, month_or_quarter, 1)
             end = start + relativedelta(months=1) - relativedelta(days=1)
@@ -158,35 +155,46 @@ class ILSDateSpan(DateSpan):
 
 
 class MonthQuarterYearMixin(object):
-    """
-        Similar to DatespanMixin, but works with MonthAndQuarterFilter and YearField
-        months = 1:12
-        quarters = -1:-4
-        annual = -5
-    """
-    fields = [MonthAndQuarterFilter, YearFilter]
     _datespan = None
 
     @property
     def datespan(self):
         if self._datespan is None:
-            datespan = ILSDateSpan.from_month_or_quarter(self.month_or_quater, self.year)
+            datespan = ILSDateSpan.get_date(self.type, self.first, self.second)
             self.request.datespan = datespan
             self.context.update(dict(datespan=datespan))
             self._datespan = datespan
         return self._datespan
 
     @property
-    def month_or_quater(self):
-        if 'month' in self.request_params:
-            return int(self.request_params['month'])
+    def type(self):
+        """
+            We have a 3 possible type:
+            1 - month
+            2 - quarter
+            3 - year
+        """
+        if 'datespan_type' in self.request_params:
+            return int(self.request_params['datespan_type'])
+        else:
+            return 1
+
+    @property
+    def first(self):
+        """
+            If we choose type 1 in this we get a month [00-12]
+            If we choose type 2 we get quarter [1-4]
+            This property is unused when we choose type 3
+        """
+        if 'datespan_first' in self.request_params:
+            return int(self.request_params['datespan_first'])
         else:
             return datetime.utcnow().month
 
     @property
-    def year(self):
-        if 'year' in self.request_params:
-            return int(self.request_params['year'])
+    def second(self):
+        if 'datespan_second' in self.request_params:
+            return int(self.request_params['datespan_second'])
         else:
             return datetime.utcnow().year
 
@@ -229,17 +237,18 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport,
 
     @property
     def report_config(self):
-        org_summary = OrganizationSummary.objects.filter(date__range=(self.datespan.startdate,
-                                                                      self.datespan.enddate),
-                                                         supply_point=self.request.GET.get('location_id'))
-
+        org_summary = OrganizationSummary.objects.filter(
+            date__range=(self.datespan.startdate, self.datespan.enddate),
+            location_id=self.request.GET.get('location_id')
+        )
         config = dict(
             domain=self.domain,
             org_summary=org_summary if len(org_summary) > 0 else None,
             startdate=self.datespan.startdate,
             enddate=self.datespan.enddate,
-            month=self.request_params['month'] if 'month' in self.request_params else '',
-            year=self.request_params['year'] if 'year' in self.request_params else '',
+            datespan_type=self.type,
+            datespan_first=self.first,
+            datespan_second=self.second,
             location_id=self.request.GET.get('location_id'),
             soh_month=True if self.request.GET.get('soh_month', '') == 'True' else False,
             products=[],
@@ -384,12 +393,13 @@ class DetailsReport(MultiReport):
         return context
 
     def ils_make_url(self, cls):
-        params = '?location_id=%s&month=%s&year=%s&filter_by_program=%s'
+        params = '?location_id=%s&filter_by_program=%s&datespan_type=%s&datespan_first=%s&datespan_second=%s'
         return make_url(cls, self.domain, params, (
             self.request.GET.get('location_id'),
-            self.request.GET.get('month'),
-            self.request.GET.get('year'),
             self.request.GET.get('filter_by_program'),
+            self.request.GET.get('datespan_type'),
+            self.request.GET.get('datespan_first'),
+            self.request.GET.get('datespan_second'),
         ))
 
 

@@ -509,14 +509,23 @@ class AddSavedReportConfigView(View):
                 setattr(self.config, field, update_config_data[field])
 
         # remove start and end date if the date range is "last xx days"
-        if (
-            self.saved_report_config_form.cleaned_data['days']
-            or self.saved_report_config_form.cleaned_data['date_range'] == 'lastmonth'
-        ):
+        if self.saved_report_config_form.cleaned_data['date_range'] in [
+            'last30',
+            'last7',
+            'lastn',
+            'lastmonth',
+        ]:
             if "start_date" in self.config:
                 delattr(self.config, "start_date")
             if "end_date" in self.config:
                 delattr(self.config, "end_date")
+        # remove days if the date range has specific dates
+        elif self.saved_report_config_form.cleaned_data['date_range'] in [
+            'since',
+            'range',
+        ]:
+            if "days" in self.config:
+                delattr(self.config, "days")
 
         self.config.save()
         ReportsTab.clear_dropdown_cache(request, self.domain)
@@ -868,8 +877,8 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
         "owner_name": couch_user.full_name or couch_user.get_email(),
         "email": email,
         "notes": notes,
-        "startdate": date_range["startdate"] if date_range else "",
-        "enddate": date_range["enddate"] if date_range else "",
+        "startdate": date_range.get("startdate") if date_range else "",
+        "enddate": date_range.get("enddate") if date_range else "",
     }), excel_attachments
 
 @login_and_domain_required
@@ -1427,8 +1436,8 @@ def find_question_id(form, value):
     return None
 
 
+@login_or_digest
 @require_form_view_permission
-@login_and_domain_required
 @require_GET
 def form_multimedia_export(request, domain):
     try:

@@ -1,6 +1,7 @@
 from datetime import datetime
 from django.core.urlresolvers import reverse
 from django.db.models import Q
+from django.template.loader import render_to_string
 from corehq import Domain
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
@@ -8,13 +9,17 @@ from corehq.apps.reports.commtrack.standard import CommtrackReportMixin
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.graph_models import LineChart, MultiBarChart
+from corehq.apps.reports.graph_models import LineChart, MultiBarChart, PieChart
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 from custom.ewsghana.filters import ProductByProgramFilter
 from dimagi.utils.decorators.memoized import memoized
-from corehq.apps.locations.models import Location, SQLLocation
-from custom.ewsghana.utils import get_supply_points
+from corehq.apps.locations.models import Location, SQLLocation, LocationType
+from custom.ewsghana.utils import get_supply_points, filter_slugs_by_role
 from casexml.apps.stock.models import StockTransaction
+
+
+def ews_date_format(date):
+    return date.strftime("%b %d, %Y")
 
 
 def get_url(view_name, text, domain):
@@ -22,11 +27,19 @@ def get_url(view_name, text, domain):
 
 
 def get_url_with_location(view_name, text, location_id, domain):
-    return '<a href="%s?location_id=%s">%s</a>' % (reverse(view_name, args=[domain]), location_id, text)
+    return '<a href="%s?location_id=%s">%s</a><h4><strong>' % (
+        reverse(view_name, args=[domain]),
+        location_id,
+        text
+    )
 
 
 class EWSLineChart(LineChart):
     template_partial = 'ewsghana/partials/ews_line_chart.html'
+
+
+class EWSPieChart(PieChart):
+    template_partial = 'ewsghana/partials/ews_pie_chart.html'
 
 
 class EWSMultiBarChart(MultiBarChart):
@@ -39,6 +52,7 @@ class EWSData(object):
     title = ''
     slug = ''
     use_datatables = False
+    custom_table = False
 
     def __init__(self, config=None):
         self.config = config or {}
@@ -75,11 +89,7 @@ class EWSData(object):
 
     @memoized
     def reporting_types(self):
-        return [
-            location_type.name
-            for location_type in Domain.get_by_name(self.domain).location_types
-            if not location_type.administrative
-        ]
+        return LocationType.objects.filter(domain=self.domain, administrative=False)
 
     @property
     def sublocations(self):
@@ -108,20 +118,24 @@ class EWSData(object):
 class ReportingRatesData(EWSData):
     def get_supply_points(self, location_id=None):
         location = SQLLocation.objects.get(location_id=location_id) if location_id else self.location
+
         location_types = self.reporting_types()
         if location.location_type.name == 'district':
             locations = SQLLocation.objects.filter(parent=location)
         elif location.location_type.name == 'region':
+            loc_types = location_types.exclude(name='Central Medical Store')
             locations = SQLLocation.objects.filter(
-                Q(parent__parent=location) | Q(parent=location, location_type__name__in=location_types)
+                Q(parent__parent=location, location_type__in=loc_types) |
+                Q(parent=location, location_type__in=loc_types)
             )
         elif location.location_type in location_types:
             locations = SQLLocation.objects.filter(id=location.id)
         else:
+            types = ['Central Medical Store', 'Regional Medical Store', 'Teaching Hospital']
+            loc_types = location_types.filter(name__in=types)
             locations = SQLLocation.objects.filter(
                 domain=self.domain,
-                location_type__name__in=location_types,
-                parent=location
+                location_type__in=loc_types
             )
         return locations.exclude(supply_point_id__isnull=True).exclude(is_archived=True)
 
@@ -154,6 +168,7 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
     flush_layout = True
     split = True
     exportable = True
+    printable = True
     is_exportable = False
     base_template = 'ewsghana/base_template.html'
 
@@ -164,8 +179,8 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
         request = kwargs.get('request')
         user = getattr(request, 'couch_user', None)
 
-        if user:
-            dm = user.get_domain_membership(domain)
+        dm = user.get_domain_membership(domain) if user else None
+        if dm:
             if dm.program_id:
                 program_id = dm.program_id
             else:
@@ -214,10 +229,7 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
             'fpr_filters': self.fpr_report_filters(),
             'exportable': self.is_exportable,
             'location_id': self.request.GET.get('location_id'),
-            'slugs': [['dashboard_report', 'Dashboard'], ['stock_status', 'Stock Status Report'],
-                      ['reporting_page', 'Reporting Rates'], ['ews_mapreport', 'Maps'],
-                      ['stock_summary_report', 'Stock Summary Report'],
-                      ['cms_rms_summary_report', 'CMS and RMS Summary Report']]
+            'slugs': filter_slugs_by_role(self.request.couch_user, self.domain)
         }
         return context
 
@@ -229,22 +241,30 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
         if not self.needs_filters and data_provider.show_table:
             headers = data_provider.headers
             rows = data_provider.rows
-
-        context = dict(
-            report_table=dict(
-                title=data_provider.title,
-                slug=data_provider.slug,
-                headers=headers,
-                rows=rows,
-                total_row=total_row,
-                start_at_row=0,
-                use_datatables=data_provider.use_datatables,
-            ),
-            show_table=data_provider.show_table,
-            show_chart=data_provider.show_chart,
-            charts=data_provider.charts if data_provider.show_chart else [],
-            chart_span=12,
-        )
+        if not data_provider.custom_table:
+            context = dict(
+                report_table=dict(
+                    title=data_provider.title,
+                    slug=data_provider.slug,
+                    headers=headers,
+                    rows=rows,
+                    total_row=total_row,
+                    start_at_row=0,
+                    use_datatables=data_provider.use_datatables,
+                ),
+                show_table=data_provider.show_table,
+                show_chart=data_provider.show_chart,
+                charts=data_provider.charts if data_provider.show_chart else [],
+                chart_span=12,
+            )
+        else:
+            context = dict(
+                report_table=dict(),
+                show_table=data_provider.show_table,
+                show_chart=data_provider.show_chart,
+                charts=data_provider.charts if data_provider.show_chart else [],
+                rendered_content=data_provider.rendered_content
+            )
 
         return context
 
@@ -286,7 +306,20 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
         if total_row:
             table.append(_unformat_row(total_row))
 
-        return [export_sheet_name, table]
+        return [export_sheet_name, self._report_info + table]
+
+    @property
+    def _report_info(self):
+        program_id = self.request.GET.get('filter_by_program')
+        return [
+            ['Title of report', 'Date range', 'Program'],
+            [
+                self.title,
+                '{} - {}'.format(self.datespan.startdate_display, self.datespan.enddate_display),
+                'All' if not program_id else Program.get(docid=program_id).name
+            ],
+            []
+        ]
 
 
 class ProductSelectionPane(EWSData):
@@ -294,9 +327,14 @@ class ProductSelectionPane(EWSData):
     show_table = True
     title = 'Select Products'
     use_datatables = True
+    custom_table = True
 
     @property
     def rows(self):
+        return []
+
+    @property
+    def rendered_content(self):
         locations = get_supply_points(self.config['location_id'], self.config['domain'])
         products = self.unique_products(locations, all=True)
         programs = {program.get_id: program.name for program in Program.by_domain(self.domain)}
@@ -304,23 +342,29 @@ class ProductSelectionPane(EWSData):
         if 'report_type' in self.config:
             from custom.ewsghana.reports.specific_reports.stock_status_report import MonthOfStockProduct
             headers = [h.html for h in MonthOfStockProduct(self.config).headers]
-        result = [
-            [
-                '<input class=\"toggle-column\" name=\"{1} ({0})\" data-column={2} value=\"{0}\" type=\"checkbox\"'
-                '{3}>{1} ({0})</input>'.format(
-                    p.code, p.name, idx if not headers else headers.index(p.code) if p.code in headers else -1,
-                    'checked' if self.config['program'] is None or self.config['program'] == p.program_id else ''),
-                programs[p.program_id], p.code
-            ] for idx, p in enumerate(products, start=1)
-        ]
 
-        result.sort(key=lambda r: (r[1], r[2]))
+        result = {}
+        for idx, product in enumerate(products, start=1):
+            program = programs[product.program_id]
+            product_dict = {
+                'name': product.name,
+                'code': product.code,
+                'idx': idx if not headers else headers.index(product.code) if product.code in headers else -1,
+                'checked': self.config['program'] is None or self.config['program'] == product.program_id
+            }
+            if program in result:
+                result[program]['product_list'].append(product_dict)
+                if result[program]['all'] and not product_dict['checked']:
+                    result[program]['all'] = False
+            else:
+                result[program] = {
+                    'product_list': [product_dict],
+                    'all': product_dict['checked']
+                }
 
-        current_program = result[0][1] if result else ''
-        rows = [['<div class="program">%s</div>' % current_program]]
-        for r in result:
-            if r[1] != current_program:
-                rows.append(['<div class="program">%s</div>' % r[1]])
-                current_program = r[1]
-            rows.append([r[0]])
-        return rows
+        for _, product_dict in result.iteritems():
+            product_dict['product_list'].sort(key=lambda prd: prd['name'])
+
+        return render_to_string('ewsghana/partials/product_selection_pane.html', {
+            'products_by_program': result
+        })

@@ -266,6 +266,12 @@ class SQLLocation(MPTTModel):
     def by_domain(cls, domain):
         return cls.objects.filter(domain=domain)
 
+    @property
+    def path(self):
+        # This exists for backwards compatability with couch locations
+        return list(self.get_ancestors(include_self=True)
+                    .values_list('location_id', flat=True))
+
 
 def _filter_for_archived(locations, include_archive_ancestors):
     """
@@ -343,11 +349,14 @@ class Location(CachedCouchDocumentMixin, Document):
     def __hash__(self):
         return hash(self._id)
 
-    # Method return a non save SQLLocation object, because when we want sync location in task, we can have some
-    # problems. For example: we can have location in SQL but without location type.
-    # this behavior causes problems when we want go to locations page - 500 error.
-    # SQLlocation object is saved together with Couch object in save method.
     def _sync_location(self):
+        """
+        This method returns an unsaved SQLLocation object, as it lets
+        us more easily handle the bulk syncing of data in tasks and
+        lets us only save the SQLLocation if the Location was successfuly
+        saved. The actual saving is done in the Location save method.
+        """
+
         properties_to_sync = [
             ('location_id', '_id'),
             'domain',
@@ -360,23 +369,24 @@ class Location(CachedCouchDocumentMixin, Document):
             'metadata'
         ]
 
+        # The location type must already exist
+        try:
+            location_type = LocationType.objects.get(
+                domain=self.domain,
+                name=self.location_type,
+            )
+        except LocationType.DoesNotExist:
+            msg = "You can't create a location without a real location type"
+            raise LocationType.DoesNotExist(msg)
+
         try:
             sql_location = SQLLocation.objects.get(location_id=self._id)
         except SQLLocation.DoesNotExist:
-            # The location type must already exist
-            try:
-                location_type = LocationType.objects.get(
-                    domain=self.domain,
-                    name=self.location_type,
-                )
-            except LocationType.DoesNotExist:
-                msg = "You can't create a location without a real location type"
-                raise LocationType.DoesNotExist(msg)
-
             sql_location = SQLLocation(
                 domain=self.domain,
-                location_type=location_type,
             )
+
+        sql_location.location_type = location_type
 
         for prop in properties_to_sync:
             if isinstance(prop, tuple):
@@ -623,10 +633,6 @@ class Location(CachedCouchDocumentMixin, Document):
         q = self.view('locations/hierarchy', startkey=startkey, endkey=endkey, group_level=depth)
         keys = [e['key'] for e in q if len(e['key']) == depth]
         return self.view('locations/hierarchy', keys=keys, reduce=False, include_docs=True).all()
-
-    @property
-    def _geopoint(self):
-        return '%s %s' % (self.latitude, self.longitude) if self.latitude is not None and self.longitude is not None else None
 
     def linked_supply_point(self):
         from corehq.apps.commtrack.models import SupplyPointCase

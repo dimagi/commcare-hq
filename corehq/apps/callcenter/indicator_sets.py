@@ -19,6 +19,10 @@ PCI_CHILD_FORM = 'http://openrosa.org/formdesigner/85823851-3622-4E9E-9E86-40150
 PCI_MOTHER_FORM = 'http://openrosa.org/formdesigner/366434ec56aba382966f77639a2414bbc3c56cbc'
 AAROHI_CHILD_FORM = 'http://openrosa.org/formdesigner/09486EF6-04C8-480C-BA11-2F8887BBBADD'
 AAROHI_MOTHER_FORM = 'http://openrosa.org/formdesigner/6C63E53D-2F6C-4730-AA5E-BAD36B50A170'
+INFOMOVAL_FIND_PATIENT_FORM = 'http://openrosa.org/formdesigner/DA10DCC2-8240-4101-B964-6F5424BD2B86'
+INFOMOVAL_REGISTER_CONTACT_FORM = 'http://openrosa.org/formdesigner/c0671536f2087bb80e460d57f60c98e5b785b955'
+INFOMOVAL_HOME_VISIT_FORM = 'http://openrosa.org/formdesigner/74BD43B5-5253-4855-B195-F3F049B8F8CC'
+
 
 TYPE_DURATION = 'duration'
 TYPE_SUM = 'sum'
@@ -32,6 +36,11 @@ PER_DOMAIN_FORM_INDICATORS = {
     'pci-india': [
         {'slug': 'motherForms', 'type': TYPE_SUM, 'xmlns': PCI_MOTHER_FORM},
         {'slug': 'childForms', 'type': TYPE_SUM, 'xmlns': PCI_CHILD_FORM},
+    ],
+    'infomovel': [
+        {'slug': 'findPatientForms', 'type': TYPE_SUM, 'xmlns': INFOMOVAL_FIND_PATIENT_FORM},
+        {'slug': 'registerContactForms', 'type': TYPE_SUM, 'xmlns': INFOMOVAL_REGISTER_CONTACT_FORM},
+        {'slug': 'homeVisitForms', 'type': TYPE_SUM, 'xmlns': INFOMOVAL_HOME_VISIT_FORM},
     ]
 }
 

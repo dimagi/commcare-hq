@@ -9,7 +9,8 @@ from corehq.apps.app_manager.xpath import (
     LocationXpath,
     XPath,
     dot_interpolate,
-)
+    UserCaseXPath)
+from corehq.apps.hqmedia.models import CommCareMultimedia
 
 CASE_PROPERTY_MAP = {
     # IMPORTANT: if you edit this you probably want to also edit
@@ -263,6 +264,7 @@ class Date(FormattedDetailColumn):
 @register_format_type('time-ago')
 class TimeAgo(FormattedDetailColumn):
     XPATH_FUNCTION = u"if({xpath} = '', '', string(int((today() - date({xpath})) div {column.time_ago_interval})))"
+    SORT_XPATH_FUNCTION = u"{xpath}"
 
 
 @register_format_type('phone')
@@ -320,8 +322,29 @@ class Enum(FormattedDetailColumn):
 @register_format_type('enum-image')
 class EnumImage(Enum):
     template_form = 'image'
-    header_width = '13%'
-    template_width = '13%'
+
+    @property
+    def header_width(self):
+        return self.template_width
+
+    @property
+    def template_width(self):
+        '''
+        Set column width to accommodate widest image.
+        '''
+        width = 0
+        if self.app.enable_case_list_icon_dynamic_width:
+            for i, item in enumerate(self.column.enum):
+                for path in item.value.values():
+                    map_item = self.app.multimedia_map[path]
+                    if map_item is not None:
+                        image = CommCareMultimedia.get(map_item.multimedia_id)
+                        if image is not None:
+                            for media in image.aux_media:
+                                width = max(width, media.media_meta['size']['width'])
+        if width == 0:
+            return '13%'
+        return str(width)
 
 
 @register_format_type('late-flag')
@@ -466,8 +489,11 @@ class PropertyXpathGenerator(BaseXpathGenerator):
         else:
             case = CaseXPath(u'current()')
 
-        for index in indexes:
-            case = case.index_id(index).case()
+        if indexes and indexes[0] == 'user':
+            case = CaseXPath(UserCaseXPath().case())
+        else:
+            for index in indexes:
+                case = case.index_id(index).case()
 
         if property == '#owner_name':
             return self.owner_name(case.property('@owner_id'))
