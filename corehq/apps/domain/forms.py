@@ -1037,7 +1037,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
         super(ConfirmSubscriptionRenewalForm, self).__init__(
             account, domain, creating_user, data=data, *args, **kwargs
         )
-
+        self.renewed_version = renewed_version
         self.fields['plan_edition'].initial = renewed_version.plan.edition
         self.fields['confirm_legal'].label = mark_safe(ugettext_noop(
             'I have read and agree to the <a href="%(pa_url)s" '
@@ -1099,6 +1099,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 adjustment_method=SubscriptionAdjustmentMethod.USER,
                 service_type=SubscriptionType.SELF_SERVICE,
                 pro_bono_status=ProBonoStatus.NO,
+                new_version=self.renewed_version,
             )
         except SubscriptionRenewalError as e:
             logger.error("[BILLING] Subscription for %(domain)s failed to "
