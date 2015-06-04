@@ -648,7 +648,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
                 try:
                     self[item] = value
                 except BadValueError:
-                    notify_exception(None, "Can't set property {} on case {} from form form {}".format(
+                    notify_exception(None, "Can't set property {} on case {} from form {}".format(
                         item, self._id, update_action.xform_id
                     ))
                     raise
