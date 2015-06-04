@@ -7,6 +7,7 @@ from corehq.apps.userreports.models import CustomDataSourceConfiguration
 from corehq.apps.userreports.sql import get_table_name, get_indicator_table
 
 TABLE_ID = 'asha_facilitators'
+DOMAIN = 'up-nrhm'
 
 
 class FunctionalityChecklistMeta(QueryMeta):
@@ -46,7 +47,9 @@ class FunctionalityChecklistMeta(QueryMeta):
         self.columns.append(column.sql_column)
 
     def get_asha_table(self, metadata):
-        config = CustomDataSourceConfiguration.by_id(CustomDataSourceConfiguration.get_doc_id(TABLE_ID))
+        config = CustomDataSourceConfiguration.by_id(
+            CustomDataSourceConfiguration.get_doc_id(DOMAIN, TABLE_ID)
+        )
         return get_indicator_table(config, custom_metadata=metadata)
 
     def execute(self, metadata, connection, filter_values):
