@@ -21,7 +21,7 @@ class TestReupholster(LocationTestBase):
             reduce=False,
         ).all()])
 
-        new_result = set(SQLLocation.all_objects.ids())
+        new_result = set(SQLLocation.objects.ids())
 
         self.assertEqual(original_result, new_result)
 
@@ -33,7 +33,7 @@ class TestReupholster(LocationTestBase):
             endkey=[self.domain.name, {}],
         ).all()])
 
-        new_result = set(SQLLocation.all_objects.domain(self.domain.name).ids())
+        new_result = set(SQLLocation.objects.domain(self.domain.name).ids())
 
         self.assertEqual(original_result, new_result)
 

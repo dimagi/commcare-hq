@@ -542,7 +542,7 @@ class Location(CachedCouchDocumentMixin, Document):
 
     @classmethod
     def by_domain(cls, domain, include_docs=True):
-        relevant_ids = SQLLocation.all_objects.domain(domain).ids()
+        relevant_ids = SQLLocation.objects.domain(domain).ids()
         if not include_docs:
             return relevant_ids
         else:
