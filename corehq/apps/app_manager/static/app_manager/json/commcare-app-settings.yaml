@@ -79,7 +79,7 @@
   name: "CommCare Supply Requisition Mode"
   description: "CommCare Supply Requisition Mode"
   description_format: html
-  requires: "{parent.commtrack_enabled}=true"
+  requires: "{$parent.commtrack_enabled}=true"
   values: ['disabled', '3-step', '4-step']
   value_names:
    - "Disable Requisitions"
