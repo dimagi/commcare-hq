@@ -34,7 +34,7 @@ from restkit.errors import Unauthorized
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
-from couchdbkit import ResourceNotFound
+from couchdbkit import ResourceNotFound, Database
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from couchforms.const import DEVICE_LOG_XMLNS
 from couchforms.dbaccessors import get_number_of_forms_all_domains_in_couch
@@ -685,10 +685,15 @@ def doc_in_es(request):
     doc_id = request.GET.get("id")
     if not doc_id:
         return render(request, "hqadmin/doc_in_es.html", {})
-    try:
-        couch_doc = get_db().get(doc_id)
-    except ResourceNotFound:
-        couch_doc = {}
+
+    couch_doc = {}
+    db_urls = [settings.COUCH_DATABASE] + settings.EXTRA_COUCHDB_DATABASES.values()
+    for url in db_urls:
+        try:
+            couch_doc = Database(url).get(doc_id)
+            break
+        except ResourceNotFound:
+            pass
     query = {"filter":
                 {"ids": {
                     "values": [doc_id]}}}
