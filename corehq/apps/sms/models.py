@@ -672,9 +672,10 @@ class MessagingStatusMixin(object):
     def refresh(self):
         return self.__class__.objects.get(pk=self.pk)
 
-    def error(self, error_code):
+    def error(self, error_code, additional_error_text=None):
         self.status = MessagingEvent.STATUS_ERROR
         self.error_code = error_code
+        self.additional_error_text = additional_error_text
         self.save()
 
     def completed(self):
@@ -754,6 +755,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     ERROR_NO_EXTERNAL_ID_GIVEN = 'NO_EXTERNAL_ID_GIVEN'
     ERROR_COULD_NOT_PROCESS_STRUCTURED_SMS = 'COULD_NOT_PROCESS_STRUCTURED_SMS'
     ERROR_SUBEVENT_ERROR = 'SUBEVENT_ERROR'
+    ERROR_TOUCHFORMS_ERROR = 'TOUCHFORMS_ERROR'
 
     ERROR_MESSAGES = {
         ERROR_NO_RECIPIENT:
@@ -782,6 +784,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             ugettext_noop('Error processing structured SMS.'),
         ERROR_SUBEVENT_ERROR:
             ugettext_noop('View details for more information.'),
+        ERROR_TOUCHFORMS_ERROR:
+            ugettext_noop('An error occurred in the formplayer service.'),
     }
 
     domain = models.CharField(max_length=255, null=False, db_index=True)
@@ -793,6 +797,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     # If any of the MessagingSubEvent status's are STATUS_ERROR, this is STATUS_ERROR
     status = models.CharField(max_length=3, choices=STATUS_CHOICES, null=False)
     error_code = models.CharField(max_length=255, null=True)
+    additional_error_text = models.TextField(null=True)
     recipient_type = models.CharField(max_length=3, choices=RECIPIENT_CHOICES, null=True, db_index=True)
     recipient_id = models.CharField(max_length=255, null=True, db_index=True)
 
@@ -963,6 +968,7 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
     case_id = models.CharField(max_length=255, null=True)
     status = models.CharField(max_length=3, choices=MessagingEvent.STATUS_CHOICES, null=False)
     error_code = models.CharField(max_length=255, null=True)
+    additional_error_text = models.TextField(null=True)
 
     def save(self, *args, **kwargs):
         super(MessagingSubEvent, self).save(*args, **kwargs)

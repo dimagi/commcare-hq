@@ -5,7 +5,7 @@ from corehq.apps.smsforms.app import submit_unfinished_form
 from corehq.apps.smsforms.models import get_session_by_session_id, SQLXFormsSession
 from corehq.apps.sms.mixin import (VerifiedNumber, apply_leniency,
     CommCareMobileContactMixin, InvalidFormatException)
-from touchforms.formplayer.api import current_question
+from touchforms.formplayer.api import current_question, TouchformsError
 from corehq.apps.sms.api import (
     send_sms, send_sms_to_verified_number, MessageMetadata
 )
@@ -17,7 +17,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.sms.models import (
     CallLog, ExpectedCallbackEventLog, CALLBACK_PENDING, CALLBACK_RECEIVED,
     CALLBACK_MISSED, WORKFLOW_REMINDER, WORKFLOW_KEYWORD, WORKFLOW_BROADCAST,
-    WORKFLOW_CALLBACK,
+    WORKFLOW_CALLBACK, MessagingEvent,
 )
 from django.conf import settings
 from corehq.apps.app_manager.models import Form
@@ -316,9 +316,32 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers, logge
                 SQLXFormsSession.close_all_open_sms_sessions(reminder.domain, recipient.get_id)
 
                 # Start the new session
-                session, responses = start_session(reminder.domain, recipient,
-                    app, module, form, case_id, case_for_case_submission=
-                    handler.force_surveys_to_use_triggered_case)
+                try:
+                    session, responses = start_session(reminder.domain, recipient,
+                        app, module, form, case_id, case_for_case_submission=
+                        handler.force_surveys_to_use_triggered_case)
+                except TouchformsError as e:
+                    human_readable_message = e.response_data.get('human_readable_message', None)
+                    error_type = e.response_data.get('error_type', '')
+
+                    logged_subevent.error(MessagingEvent.ERROR_TOUCHFORMS_ERROR,
+                        additional_error_text=human_readable_message)
+
+                    if any([s in error_type for s in (
+                        'XPathTypeMismatchException',
+                        'XPathUnhandledException',
+                        'XFormParseException',
+                    )]):
+                        # Don't reraise the exception because this means there are configuration
+                        # issues with the form that need to be fixed
+                        continue
+                    else:
+                        # Reraise the exception so that the framework retries it again later
+                        raise
+                except Exception as e:
+                    logged_subevent.error(MessagingEvent.ERROR_TOUCHFORMS_ERROR)
+                    # Reraise the exception so that the framework retries it again later
+                    raise
                 session.survey_incentive = handler.survey_incentive
                 session.workflow = get_workflow(handler)
                 session.reminder_id = reminder._id

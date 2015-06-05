@@ -352,7 +352,10 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
             if status == MessagingEvent.STATUS_ERROR and not error_code:
                 error_code = MessagingEvent.ERROR_SUBEVENT_ERROR
         status_display = dict(MessagingEvent.STATUS_CHOICES).get(status)
-        return (_(status_display), error_code)
+        error_message = error_code or ''
+        if event.additional_error_text:
+            error_message += ' %s' % event.additional_error_text
+        return (_(status_display), error_message)
 
     def get_sms_status_display(self, sms):
         if sms.error:
