@@ -14,14 +14,27 @@ def get_number_of_cases_in_domain(domain, type=None):
 
 
 def get_case_ids_in_domain(domain, type=None):
-    type_key = [type] if type else []
-    return [res['id'] for res in CommCareCase.get_db().view(
-        'hqcase/types_by_domain',
-        startkey=[domain] + type_key,
-        endkey=[domain] + type_key + [{}],
-        reduce=False,
-        include_docs=False,
-    )]
+    if type is None:
+        type_keys = [[]]
+    elif isinstance(type, (list, tuple)):
+        type_keys = [[t] for t in type]
+    elif isinstance(type, basestring):
+        type_keys = [[type]]
+    else:
+        raise ValueError(
+            "Argument type should be a string, tuple, or None: {!r}"
+            .format(type)
+        )
+    return [
+        res['id'] for type_key in type_keys
+        for res in CommCareCase.get_db().view(
+            'hqcase/types_by_domain',
+            startkey=[domain] + type_key,
+            endkey=[domain] + type_key + [{}],
+            reduce=False,
+            include_docs=False,
+        )
+    ]
 
 
 def get_cases_in_domain(domain, type=None):
