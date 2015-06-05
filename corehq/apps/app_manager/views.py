@@ -1040,6 +1040,10 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
                 'menu_refs': app.get_case_list_form_media(module, module_id),
                 'default_file_name': '{}_case_list_form'.format(default_file_name),
             }
+            specific_media['case_list_callout'] = {
+                'menu_refs': app.get_case_list_callout_media(module, module_id),
+                'default_file_name': '{}_case_list_callout'.format(default_file_name),
+            }
         context.update({
             'multimedia': {
                 "references": app.get_references(),
@@ -1564,6 +1568,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         module.case_list_form.form_id = request.POST.get('case_list_form_id')
     if should_edit('case_list_form_label'):
         module.case_list_form.label[lang] = request.POST.get('case_list_form_label')
+    # Do something like this...
     if should_edit('case_list_form_media_image'):
         val = _process_media_attribute(
             'case_list_form_media_image',

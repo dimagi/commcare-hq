@@ -1,5 +1,6 @@
 {% load i18n %}
 {% load hq_shared_tags %}
+{% if not EXCLUDE_IMAGE %}
 <div id="{{ qualifier|default_if_none:"" }}media_image">
     <div class="control-group">
         <label class="control-label" for="menu_image_path">{% trans ICON_LABEL %}</label>
@@ -77,6 +78,8 @@
         </div>
     </div>
 </div>
+{% endif %}
+{% if not EXCLUDE_AUDIO %}
 <div id="{{ qualifier|default_if_none:"" }}media_audio">
     <div class="control-group">
         <label class="control-label" for="menu_audio_path">{% trans AUDIO_LABEL %}</label>
@@ -163,3 +166,4 @@
         </div>
     </div>
 </div>
+{% endif %}

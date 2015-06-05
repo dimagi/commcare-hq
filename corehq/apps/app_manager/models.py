@@ -1415,7 +1415,7 @@ class Detail(IndexedSchema):
     pull_down_tile = BooleanProperty()
     search_callout_enabled = BooleanProperty(default=False)
     search_callout_action = StringProperty()
-    search_callout_image = StringProperty()
+    search_callout_image = JRResourceProperty(required=False)
 
     def get_tab_spans(self):
         '''

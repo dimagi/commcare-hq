@@ -211,3 +211,32 @@
     </div>
 </div>
 {% endif %}
+
+
+<div id="{{ detail.type }}-list-callout-configuration" data-bind="with: callout">
+    <legend>{% trans "Case List Search Callout" %}</legend>
+    <label class="checkbox">
+        <input type="checkbox"/>
+        {% trans "Enabled" %}
+    </label>
+
+    <form class="form-horizontal">
+        <div class="control-group">
+            <label class="control-label" for="{{ detail.type }}_callout_action">Action</label>
+            <div class="controls">
+                <input class="span6" type="text" id="{{ detail.type }}_callout_action" placeholder="ex: callout.commcarehq.org.dummycallout.LAUNCH">
+                {# TODO: input_callout_action also has the potential to not be unique #}
+            </div>
+        </div>
+        {% comment %}
+            The stopBinding binding is required here to allow another view model to be bound
+            to the content in nav_menu_media.html.
+            The other binding is applied when we include nav_menu_media_js.html with our
+            "search_callout" qualifier in module_view.html
+        {% endcomment %}
+        <!-- ko stopBinding: true -->
+        {% include "app_manager/partials/nav_menu_media.html" with qualifier="search_callout" ICON_LABEL="Icon" EXCLUDE_AUDIO=True %}
+        <!-- /ko -->
+        {# TODO: qualify the qualifier with {{detail.type}} #}
+    </form>
+</div>

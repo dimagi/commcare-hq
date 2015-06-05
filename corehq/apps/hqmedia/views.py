@@ -347,6 +347,7 @@ class BaseProcessFileUploadView(BaseProcessUploadedView):
         return {
             'ref': multimedia.get_media_info(self.form_path),
         }
+        # TODO: Does this update the media_image field or whatever?
 
     @classmethod
     def valid_base_types(cls):

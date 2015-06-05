@@ -31,6 +31,8 @@
     {% include "hqwebapp/ko/value-or-none-ui.html" %}
     {% include "app_manager/partials/nav_menu_media_js_common.html" %}
     {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.menu %}
+    {# TODO: do the following include for each detail in details. Will require modifying the view and qualifying the qualifier #}
+    {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.case_list_callout qualifier='search_callout'%}
     {% if case_list_form_options %}
         {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.case_list_form qualifier='case_list_form_' %}
     {% endif %}

@@ -193,6 +193,36 @@ var filterViewModel = function(filterText, saveButton){
     };
 };
 
+var calloutViewModel = function($home, saveButton){
+    var self = this;
+    self.$home = $home;
+    self.$form = $home.find('form');
+    self.enabled = ko.observable(true); // TODO: Get enabled state from server.
+    self.action = ko.observable(""); // TODO: Get action from server.
+    // TODO: Track the action and enabled in the normal way pls
+
+    // Set up listeners to update save button state when configuration changes.
+    function _fireChange(){
+        saveButton.fire('change');
+    }
+    // Copied from: corehq/apps/hqwebapp/static/hqwebapp/js/main.js: SaveButton.initForm
+    $form.find('*').change(_fireChange);
+    $form.find('input, textarea').bind('textchange', _fireChange);
+
+    self.enabled.subscribe(_fireChange);
+    self.action.subscribe(_fireChange);
+
+    self.serialize = function(){
+        return {
+            'enabled': self.enabled(),
+            'action': self.action(),
+            // TODO: Pass the qualifier into here somehow, or maybe read it from the form?
+            // Alternatively we could get the only named field maybe?
+            'image': $form.find('input[name="'+qualifier+'media_image"]').val()
+        }
+    };
+};
+
 // http://www.knockmeout.net/2011/05/dragging-dropping-and-sorting-with.html
 // connect items with observableArrays
 ko.bindingHandlers.sortableList = {
@@ -750,6 +780,9 @@ var DetailScreenConfig = (function () {
                 if (this.containsFilterConfiguration) {
                     data.filter = JSON.stringify(this.config.filter.serialize());
                 }
+                if (this.containsCalloutConfiguration) {
+                    data.callout = JSON.stringify(this.config.callout.serialize());
+                }
                 if (this.containsCustomXMLConfiguration){
                     data.custom_xml = this.config.customXMLViewModel.xml();
                 }
@@ -845,6 +878,9 @@ var DetailScreenConfig = (function () {
                 // Set up filter
                 var filter_xpath = spec.state.short.filter;
                 this.filter = new filterViewModel(filter_xpath ? filter_xpath : null, this.shortScreen.saveButton);
+                // Set up callout config
+                // TODO: This code used to do something like this with the selectors, (search for $home maybe) but now it doesn't and I can't remember why.
+                this.callout = new calloutViewModel($("#" + spec.state.type + "-list-callout-configuration"), this.shortScreen.saveButton);
                 // Set up SortRows
                 this.sortRows = new SortRows(this.properties, this.shortScreen.saveButton);
                 if (spec.sortRows) {

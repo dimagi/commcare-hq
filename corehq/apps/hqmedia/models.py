@@ -537,6 +537,16 @@ class HQMediaMixin(Document):
                 'app_lang': self.default_language,
             }
             _add_menu_media(module, **media_kwargs)
+
+            if (module.case_details.short.search_callout_image
+                    and module.case_details.short.search_callout_enabled):
+                # TODO: This doesn't support modules will multiple case lists
+                media.append(ApplicationMediaReference(
+                    module.case_details.short.search_callout_image,
+                    media_class=CommCareImage,
+                    **media_kwargs
+                ))
+
             if module.case_list_form.form_id:
                 media.append(ApplicationMediaReference(
                     module.case_list_form.media_audio,
@@ -582,6 +592,20 @@ class HQMediaMixin(Document):
         item = form or module
         return self._get_item_media(item, media_kwargs)
 
+    def get_case_list_callout_media(self, module, module_index):
+        # TODO: This doesn't support multiple case lists (advanced modules and stuff)
+        if not module:
+            # user_registration isn't a real module, for instance
+            return {}
+        return {
+            'image': ApplicationMediaReference(
+                module.case_details.short.search_callout_image,
+                media_class=CommCareImage,
+                **self.get_media_ref_kwargs(module, module_index) #TODO: Should this have "is_menu_media" set to True?
+            ).as_dict()
+        }
+
+
     def get_case_list_form_media(self, module, module_index):
         if not module:
             # user_registration isn't a real module, for instance
@@ -607,6 +631,8 @@ class HQMediaMixin(Document):
         audio_ref = audio_ref.as_dict()
         menu_media['audio'] = audio_ref
         return menu_media
+
+    # TODO: Don't forget to update all_media
 
     @property
     @memoized
