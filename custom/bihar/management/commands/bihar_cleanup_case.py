@@ -4,6 +4,7 @@ import csv
 from couchdbkit.exceptions import ResourceNotFound
 from django.core.management import BaseCommand
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from dimagi.utils.couch.database import iter_docs
 
 logger = logging.getLogger('case_cleanup')
@@ -13,6 +14,7 @@ logger.setLevel('DEBUG')
 MOTECH_ID = "fb6e0b19cbe3ef683a10c4c4766a1ef3"
 
 MissingParent = namedtuple("MissingParent", 'get_id owner_id')
+
 
 class CaseRow(object):
     headers = ['case_id', 'old_case_type', 'new_case_type',
@@ -48,6 +50,7 @@ class CaseRow(object):
             self.save
         ]
 
+
 class Command(BaseCommand):
     """
     One time command for cleaning up care-bihar data
@@ -75,7 +78,7 @@ class Command(BaseCommand):
                     ).all()
                 ]
 
-            task_case_ids = [c['id'] for c in CommCareCase.get_all_cases("care-bihar", case_type="task")]
+            task_case_ids = get_case_ids_in_domain('care-bihar', type='task')
 
             case_ids = set(blank_case_ids) | set(task_case_ids)
             to_save = []
