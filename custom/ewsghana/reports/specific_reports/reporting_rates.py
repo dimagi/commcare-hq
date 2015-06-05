@@ -7,7 +7,6 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.standard import DatespanMixin
 from custom.common import ALL_OPTION
 from custom.ewsghana import StockLevelsReport
 from custom.ewsghana.filters import ProductByProgramFilter, EWSDateFilter
@@ -15,7 +14,7 @@ from custom.ewsghana.reports import MultiReport, ReportingRatesData, ProductSele
 from casexml.apps.stock.models import StockTransaction
 from custom.ewsghana.reports.stock_levels_report import FacilityReportData, StockLevelsLegend, \
     InventoryManagementData, InputStock, UsersData
-from custom.ewsghana.utils import calculate_last_period, get_country_id, ews_date_format
+from custom.ewsghana.utils import get_country_id, ews_date_format
 from custom.ilsgateway.tanzania import make_url
 from custom.ilsgateway.tanzania.reports.utils import link_format
 from django.utils.translation import ugettext as _

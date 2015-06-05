@@ -1,6 +1,5 @@
 from collections import OrderedDict
 from casexml.apps.stock.models import StockTransaction
-from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
@@ -18,7 +17,6 @@ class StockTransactionReport(CustomProjectReport, GenericTabularReport,
     slug = "export_stock_transaction"
     exportable = True
     is_exportable = True
-    # base_template = "ewsghana/export_stock_transaction.html"
     fields = [AsyncLocationFilter, MultiProductFilter, DatespanFilter]
 
     @property
@@ -66,7 +64,7 @@ class StockTransactionReport(CustomProjectReport, GenericTabularReport,
                 rows[key] = ['No Data'] * self.products.count() * 2
             product_idx = product_dict[tr.sql_product.code] * 2
             rows[key][product_idx] = tr.stock_on_hand
-            rows[key][product_idx+1] = tr.quantity if tr.quantity else 'No Data'
+            rows[key][product_idx + 1] = tr.quantity if tr.quantity else 'No Data'
 
         for key, val in rows.iteritems():
             loc = SQLLocation.objects.get(supply_point_id=key[0])
@@ -76,4 +74,3 @@ class StockTransactionReport(CustomProjectReport, GenericTabularReport,
                 ews_date_format(date),
                 key[2]
             ] + val
-
