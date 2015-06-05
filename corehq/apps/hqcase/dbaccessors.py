@@ -1,3 +1,4 @@
+from dimagi.utils.couch.database import iter_docs
 from casexml.apps.case.models import CommCareCase
 
 
@@ -21,6 +22,12 @@ def get_case_ids_in_domain(domain, type=None):
         reduce=False,
         include_docs=False,
     )]
+
+
+def get_cases_in_domain(domain, type=None):
+    for doc in iter_docs(CommCareCase.get_db(),
+                         get_case_ids_in_domain(domain, type)):
+        yield CommCareCase.wrap(doc)
 
 
 def get_case_types_for_domain(domain):

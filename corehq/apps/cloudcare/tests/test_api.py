@@ -5,6 +5,7 @@ from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.xml import date_to_xml_string
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.hqcase.dbaccessors import get_cases_in_domain
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
 from corehq.apps.cloudcare.api import get_filtered_cases, CaseAPIResult, CASE_STATUS_OPEN, CASE_STATUS_ALL,\
@@ -61,8 +62,8 @@ class CaseAPITest(TestCase):
     def _clearData(self):
         for case_type in self.case_types:
             for subtype in [case_type, _child_case_type(case_type)]:
-                for c in CommCareCase.get_all_cases(self.domain, case_type=subtype, include_docs=True):
-                    c.delete()
+                CommCareCase.get_db().bulk_delete(
+                    list(get_cases_in_domain(self.domain, type=subtype)))
 
     def assertListMatches(self, list, function):
         for item in list:

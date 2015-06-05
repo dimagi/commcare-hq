@@ -2,7 +2,7 @@ from django.test import TestCase
 from casexml.apps.case.dbaccessors import get_open_case_docs_by_type
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqcase.dbaccessors import get_number_of_cases_in_domain, \
-    get_case_ids_in_domain, get_case_types_for_domain
+    get_case_ids_in_domain, get_case_types_for_domain, get_cases_in_domain
 
 
 class DBAccessorsTest(TestCase):
@@ -48,27 +48,45 @@ class DBAccessorsTest(TestCase):
              if case.domain == self.domain and case.type == 'type1'}
         )
 
+    def assert_doc_list_equal(self, doc_list_1, doc_list_2, raw_json=False):
+        if not raw_json:
+            doc_list_1 = [doc.to_json() for doc in doc_list_1]
+            doc_list_2 = [doc.to_json() for doc in doc_list_2]
+        doc_list_1 = sorted(doc_list_1, key=lambda doc: doc['_id'])
+        doc_list_2 = sorted(doc_list_2, key=lambda doc: doc['_id'])
+        self.assertEqual(doc_list_1, doc_list_2)
+
+    def test_get_cases_in_domain(self):
+        self.assert_doc_list_equal(
+            get_cases_in_domain(self.domain),
+            [case for case in self.cases if case.domain == self.domain]
+        )
+
+    def test_get_cases_in_domain__type(self):
+        self.assert_doc_list_equal(
+            get_cases_in_domain(self.domain, type='type1'),
+            [case for case in self.cases
+             if case.domain == self.domain and case.type == 'type1'],
+        )
+
     def test_get_open_case_docs_by_type(self):
         # this is actually in case/all_cases, but testing here
-        self.assertEqual(
-            sorted(get_open_case_docs_by_type(self.domain, 'type1'),
-                   key=lambda doc: doc['_id']),
-            sorted([case.to_json() for case in self.cases
-                    if case.domain == self.domain and case.type == 'type1'
-                    and not case.closed],
-                   key=lambda doc: doc['_id'])
+        self.assert_doc_list_equal(
+            get_open_case_docs_by_type(self.domain, 'type1'),
+            [case.to_json() for case in self.cases
+             if case.domain == self.domain and case.type == 'type1'
+                and not case.closed],
+            raw_json=True
         )
 
     def test_get_open_case_docs_by_type__owner_id(self):
         # this is actually in case/all_cases, but testing here
-        self.assertEqual(
-            sorted(get_open_case_docs_by_type(self.domain, 'type1',
-                                              owner_id='XXX'),
-                   key=lambda doc: doc['_id']),
-            sorted([case.to_json() for case in self.cases
-                    if case.domain == self.domain and case.type == 'type1'
-                    and not case.closed and case.user_id == 'XXX'],
-                   key=lambda doc: doc['_id'])
+        self.assert_doc_list_equal(
+            get_open_case_docs_by_type(self.domain, 'type1', owner_id='XXX'),
+            [case.to_json() for case in self.cases
+             if case.domain == self.domain and case.type == 'type1'
+                and not case.closed and case.user_id == 'XXX'],
+            raw_json=True
         )
 
     def test_get_case_types_for_domain(self):
