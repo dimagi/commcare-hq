@@ -142,7 +142,7 @@ class AppStringsBase(object):
 
         from corehq.apps.app_manager.models import (
             AUTO_SELECT_CASE, AUTO_SELECT_FIXTURE, AUTO_SELECT_USER,
-            AUTO_SELECT_LOCATION, AUTO_SELECT_USERCASE
+            AUTO_SELECT_LOCATION, AUTO_SELECT_USERCASE, AUTO_SELECT_RAW
         )
 
         mode_text = {
@@ -151,6 +151,7 @@ class AppStringsBase(object):
             AUTO_SELECT_CASE: u'case index',
             AUTO_SELECT_LOCATION: u'location',
             AUTO_SELECT_USERCASE: u'user case',
+            AUTO_SELECT_RAW: u'custom xpath expression',
         }
 
         for mode, text in mode_text.items():
