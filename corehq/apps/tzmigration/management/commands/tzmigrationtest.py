@@ -4,7 +4,10 @@ import json
 from django.core.management.base import LabelCommand
 from couchdbkit import ResourceNotFound
 import sqlite3
+from casexml.apps.case.dbaccessors import get_total_case_count
 from casexml.apps.case.xform import get_case_updates
+from corehq.apps.hqcase.dbaccessors import get_number_of_cases_in_domain, \
+    get_case_ids_in_domain
 from corehq.apps.tzmigration import force_phone_timezones_should_be_processed
 from corehq.apps.tzmigration.timezonemigration import json_diff
 from corehq.util.dates import iso_string_to_datetime
@@ -48,11 +51,17 @@ def get_new_form_json(xml, xform_id):
 
 
 class CaseFormRelations(object):
-    def __init__(self):
-        self.connection = None
+    def __init__(self, db_filepath):
+        self.db_filepath = db_filepath
+        self._connection = None
+
+    @property
+    def connection(self):
+        if not self._connection:
+            self._connection = sqlite3.connect(self.db_filepath)
+        return self._connection
 
     def setup(self):
-        self.connection = sqlite3.connect('example.db')
         cursor = self.connection.cursor()
         cursor.execute("""
           CREATE TABLE commcare_form(
@@ -100,13 +109,41 @@ class CaseFormRelations(object):
         )
         self.connection.commit()
 
+    def get_all_form_ids(self):
+        cursor = self.connection.cursor()
+        form_ids = {uuid for (uuid,) in
+                    cursor.execute('SELECT uuid FROM commcare_form')}
+        return form_ids
+
+    def get_all_case_ids(self):
+        cursor = self.connection.cursor()
+        case_ids = {uuid for (uuid,) in
+                    cursor.execute('SELECT uuid FROM commcare_case')}
+        return case_ids
+
 
 class Command(LabelCommand):
     def handle_label(self, domain, **options):
-        self.tzmigrationtest(domain)
+        case_form_relations = CaseFormRelations('wvindia2-tzmigration.db')
+        # self.tzmigrationtest(domain, case_form_relations)
+        self.valiate_forms_and_cases(domain, case_form_relations)
 
-    def tzmigrationtest(self, domain):
-        case_form_relations = CaseFormRelations()
+    def valiate_forms_and_cases(self, domain, case_form_relations):
+        form_ids_in_couch = set(get_form_ids_by_type(domain, 'XFormInstance'))
+        form_ids_in_sqlite = set(case_form_relations.get_all_form_ids())
+
+        print 'Forms in Couch: {}'.format(len(form_ids_in_couch))
+        print 'Forms in Sqlite: {}'.format(len(form_ids_in_sqlite))
+        print 'In Couch only: {}'.format(list(form_ids_in_couch - form_ids_in_sqlite))
+
+        case_ids_in_couch = set(get_case_ids_in_domain(domain))
+        case_ids_in_sqlite = set(case_form_relations.get_all_case_ids())
+
+        print 'Cases in Couch: {}'.format(len(case_ids_in_couch))
+        print 'Cases in Sqlite: {}'.format(len(case_ids_in_sqlite))
+        print 'In Couch only: {}'.format(list(case_ids_in_couch - case_ids_in_sqlite))
+
+    def tzmigrationtest(self, domain, case_form_relations):
         case_form_relations.setup()
         xform_ids = get_form_ids_by_type(domain, 'XFormInstance')
         if not xform_ids:
