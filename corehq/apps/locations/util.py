@@ -1,8 +1,7 @@
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.products.models import Product
-from corehq.apps.locations.models import (Location, SQLLocation,
-                                          LOCATION_SHARING_PREFIX)
+from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.locations.permissions import (user_can_edit_location,
                                                user_can_view_location)
 from corehq.apps.domain.models import Domain
@@ -261,8 +260,3 @@ def write_to_file(locations):
         writer.write([(loc_type, tab_rows)])
     writer.close()
     return outfile.getvalue()
-
-
-def loc_group_id_or_none(group_id):
-    if group_id.startswith(LOCATION_SHARING_PREFIX):
-        return group_id.split(LOCATION_SHARING_PREFIX, 1)[1]

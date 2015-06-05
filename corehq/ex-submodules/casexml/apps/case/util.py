@@ -92,7 +92,7 @@ def update_sync_log_with_checks(sync_log, xform, cases, case_db,
             for form_id in form_ids:
                 if form_id != xform._id:
                     form = XFormInstance.get(form_id)
-                    if form.doc_type in ['XFormInstance', 'XFormError']:
+                    if form.doc_type == 'XFormInstance':
                         reprocess_form_cases(
                             form,
                             CaseProcessingConfig(

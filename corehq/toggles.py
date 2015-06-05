@@ -463,3 +463,10 @@ INSTANCE_VIEWER = StaticToggle(
     TAG_EXPERIMENTAL,
     namespaces=[NAMESPACE_USER],
 )
+
+OPENLMIS = StaticToggle(
+    'openlmis',
+    'Offer OpenLMIS settings',
+    TAG_UNKNOWN,
+    namespaces=[NAMESPACE_DOMAIN],
+)

@@ -13,7 +13,7 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
 from dimagi.ext.couchdbkit import *
-from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
+from couchdbkit.exceptions import ResourceNotFound, ResourceConflict, BadValueError
 from PIL import Image
 from casexml.apps.case.exceptions import MissingServerDate, ReconciliationError
 from corehq.util.couch_helpers import CouchAttachmentsBuilder
@@ -28,6 +28,7 @@ from casexml.apps.case.util import (
 )
 from casexml.apps.case import const
 from casexml.apps.case.exceptions import UsesReferrals
+from dimagi.utils.logging import notify_exception
 from dimagi.utils.modules import to_function
 from dimagi.utils import parsing, web
 from dimagi.utils.decorators.memoized import memoized
@@ -644,7 +645,13 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
                 value = update_action.updated_unknown_properties[item]
                 if isinstance(properties.get(item), StringProperty):
                     value = unicode(value)
-                self[item] = value
+                try:
+                    self[item] = value
+                except BadValueError:
+                    notify_exception(None, "Can't set property {} on case {} from form {}".format(
+                        item, self._id, update_action.xform_id
+                    ))
+                    raise
 
     def apply_attachments(self, attachment_action, xform=None):
         """

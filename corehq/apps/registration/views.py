@@ -11,7 +11,7 @@ from django.utils.translation import ugettext as _
 import sys
 
 from corehq.apps.analytics.tasks import track_created_hq_account_on_hubspot, \
-    track_usage
+    track_workflow
 from corehq.apps.domain.decorators import login_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.orgs.views import orgs_landing
@@ -67,7 +67,7 @@ def register_user(request, domain_type=None):
                 new_user = authenticate(username=form.cleaned_data['email'],
                                         password=form.cleaned_data['password'])
                 login(request, new_user)
-                track_usage.delay(new_user.email, "Requested new account")
+                track_workflow.delay(new_user.email, "Requested new account")
                 return redirect(
                     'registration_domain', domain_type=domain_type)
         else:

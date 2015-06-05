@@ -37,6 +37,10 @@ def get_url_with_location(view_name, text, location_id, domain):
 class EWSLineChart(LineChart):
     template_partial = 'ewsghana/partials/ews_line_chart.html'
 
+    def __init__(self, title, x_axis, y_axis, y_tick_values=None):
+        super(EWSLineChart, self).__init__(title, x_axis, y_axis)
+        self.y_tick_values = y_tick_values or []
+
 
 class EWSPieChart(PieChart):
     template_partial = 'ewsghana/partials/ews_pie_chart.html'
@@ -306,7 +310,20 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
         if total_row:
             table.append(_unformat_row(total_row))
 
-        return [export_sheet_name, table]
+        return [export_sheet_name, self._report_info + table]
+
+    @property
+    def _report_info(self):
+        program_id = self.request.GET.get('filter_by_program')
+        return [
+            ['Title of report', 'Date range', 'Program'],
+            [
+                self.title,
+                '{} - {}'.format(self.datespan.startdate_display, self.datespan.enddate_display),
+                'all' if not program_id or program_id == 'all' else Program.get(docid=program_id).name
+            ],
+            []
+        ]
 
 
 class ProductSelectionPane(EWSData):
@@ -315,6 +332,10 @@ class ProductSelectionPane(EWSData):
     title = 'Select Products'
     use_datatables = True
     custom_table = True
+
+    def __init__(self, config, hide_columns=True):
+        super(ProductSelectionPane, self).__init__(config)
+        self.hide_columns = hide_columns
 
     @property
     def rows(self):
@@ -353,5 +374,6 @@ class ProductSelectionPane(EWSData):
             product_dict['product_list'].sort(key=lambda prd: prd['name'])
 
         return render_to_string('ewsghana/partials/product_selection_pane.html', {
-            'products_by_program': result
+            'products_by_program': result,
+            'hide_columns': self.hide_columns
         })

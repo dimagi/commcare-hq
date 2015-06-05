@@ -18,7 +18,7 @@ from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
 from corehq.apps.userreports.indicators import CompoundIndicator
 from corehq.apps.userreports.reports.factory import ReportFactory, ChartFactory, ReportFilterFactory, \
-    ReportColumnFactory
+    ReportColumnFactory, ReportOrderByFactory
 from corehq.apps.userreports.reports.specs import FilterSpec
 from django.utils.translation import ugettext as _
 from corehq.apps.userreports.specs import EvaluationContext
@@ -247,6 +247,7 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     filters = ListProperty()
     columns = ListProperty()
     configured_charts = ListProperty()
+    sort_expression = ListProperty()
     report_meta = SchemaProperty(ReportMeta)
 
     def __unicode__(self):
@@ -274,6 +275,11 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     @memoized
     def charts(self):
         return [ChartFactory.from_spec(g._obj) for g in self.configured_charts]
+
+    @property
+    @memoized
+    def sort_order(self):
+        return [ReportOrderByFactory.from_spec(e) for e in self.sort_expression]
 
     @property
     def table_id(self):
@@ -312,6 +318,7 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         ReportFactory.from_spec(self)
         self.ui_filters
         self.charts
+        self.sort_order
 
     @classmethod
     def by_domain(cls, domain):
@@ -334,8 +341,8 @@ class CustomDataSourceConfiguration(JsonObject):
     config = DictProperty()
 
     @classmethod
-    def get_doc_id(cls, table_id):
-        return '{}{}'.format(cls._datasource_id_prefix, table_id)
+    def get_doc_id(cls, domain, table_id):
+        return '{}{}-{}'.format(cls._datasource_id_prefix, domain, table_id)
 
     @classmethod
     def all(cls):
@@ -345,7 +352,7 @@ class CustomDataSourceConfiguration(JsonObject):
                 for domain in wrapped.domains:
                     doc = copy(wrapped.config)
                     doc['domain'] = domain
-                    doc['_id'] = cls.get_doc_id(doc['table_id'])
+                    doc['_id'] = cls.get_doc_id(domain, doc['table_id'])
                     yield DataSourceConfiguration.wrap(doc)
 
     @classmethod

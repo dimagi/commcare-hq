@@ -337,3 +337,10 @@ TEACHING_HOSPITAL_MAPPING = {
 }
 
 TEACHING_HOSPITALS = ['kath', 'kbth', 'ccmh', 'trh']
+
+
+def drange(start, stop, step):
+    r = start
+    while r < stop:
+        yield r
+        r += step

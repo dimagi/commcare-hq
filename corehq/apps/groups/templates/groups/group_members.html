@@ -86,8 +86,8 @@
                     } else {
                         alertClass = 'alert-error';
                         message = 'Failed to save ' + name.toLowerCase() + '.';
-                        $(id).find(':button').enableButton();
                     }
+                    $(id).find(':button').enableButton();
                     $('.alert').removeClass('alert-error alert-success alert-info').addClass(alertClass);
                     $('.alert').html(message).show();
                     $('#editGroupSettings').modal('hide');

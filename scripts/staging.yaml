@@ -43,18 +43,17 @@
 trunk: master
 name: autostaging
 branches:
+  - remove-couchforms/edits  # danny 6/5
+  - clean-up-all_submissions_by_domain  # danny 6/5
   - subscription-no-contact-info # bb 8/4
   - vellum-staging # J$ 11/13
   - fixtures-spike  # cz 1/29
-  - case-list-menu-icons+langMedia # TS 5/4
   - update-submodules # TS 5/6
   - locations-for-robber-barons  # Ethan 5/7
   - form-context-simple # Ben 5/13
   - langMedia # Sravan 5/20
-  - api-key # SK 5/26
   - location-group-changes # tw 5/29
-  - number-site-codes # tw 6/2
-  - fix-loc-cache-bug # tw 6/2
+  - renew-plan # Farid 6/4
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

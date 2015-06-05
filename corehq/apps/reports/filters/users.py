@@ -3,7 +3,7 @@ from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.utils.translation import ugettext as _
 
 from corehq.apps.es import users as user_es, filters
-from corehq.apps.locations.models import LOCATION_SHARING_PREFIX, LOCATION_REPORTING_PREFIX
+from corehq.apps.locations.models import LOCATION_REPORTING_PREFIX
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.hierarchy import get_user_data_from_hierarchy
 from corehq.apps.groups.models import Group
@@ -321,9 +321,10 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
     @classmethod
     def selected_location_sharing_group_ids(cls, request):
         emws = request.GET.getlist(cls.slug)
-        return [
-            g for g in emws if g.startswith(LOCATION_SHARING_PREFIX)
-        ]
+        return SQLLocation.objects.filter(
+            location_id__in=emws,
+            is_archived=False
+        ).values_list('location_id', flat=True)
 
     @classmethod
     def selected_location_reporting_group_ids(cls, request):
@@ -374,10 +375,10 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
 
         if location_sharing_ids:
             from corehq.apps.commtrack.models import SQLLocation
-            for loc_group_id in location_sharing_ids:
-                loc = SQLLocation.objects.get(
-                    location_id=loc_group_id.replace(LOCATION_SHARING_PREFIX, '')
-                )
+            locs = SQLLocation.objects.filter(
+                location_id__in=location_sharing_ids
+            )
+            for loc in locs:
                 loc_group = loc.case_sharing_group_object()
                 selected.append((loc_group._id, loc_group.name + ' [case sharing]'))
 

@@ -20,7 +20,7 @@
         </thead>
         <tbody data-bind="foreach: visibleUsers">
             <tr data-bind="if: full_name && phone_numbers && !in_charge">
-                <td><a data-bind="attr: { href: url, text: full_name"></a></td>
+                <td><a data-bind="attr: { href: url }, text: full_name"></a></td>
                 <td data-bind="text: phone_numbers"></td>
             </tr>
         </tbody>
@@ -50,7 +50,7 @@
             {% if user.first_name or user.last_name %}
                 {% if user.email %}
                     <tr>
-                        <td><a href="{% url 'user_account' domain user._id %}">{{ user.first_name }} {{ user.last_name }}</a></td>
+                        <td><a href="{% url 'user_account' domain user.get_id %}">{{ user.first_name }} {{ user.last_name }}</a></td>
                         <td>{{ user.email }}</td>
                     </tr>
                 {% endif %}
