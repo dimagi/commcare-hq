@@ -1,5 +1,6 @@
 from django.test import TestCase
-from casexml.apps.case.dbaccessors import get_open_case_docs_by_type
+from casexml.apps.case.dbaccessors import get_open_case_docs_in_domain, \
+    get_open_case_ids_in_domain
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqcase.dbaccessors import get_number_of_cases_in_domain, \
     get_case_ids_in_domain, get_case_types_for_domain, get_cases_in_domain
@@ -69,10 +70,28 @@ class DBAccessorsTest(TestCase):
              if case.domain == self.domain and case.type == 'type1'],
         )
 
+    def test_get_open_case_ids_in_domain(self):
+        # this is actually in case/all_cases, but testing here
+        self.assertEqual(
+            set(get_open_case_ids_in_domain(self.domain, 'type1')),
+            {case.get_id for case in self.cases
+             if case.domain == self.domain and case.type == 'type1'
+                and not case.closed},
+        )
+
+    def test_get_open_case_ids_in_domain__owner_id(self):
+        # this is actually in case/all_cases, but testing here
+        self.assertEqual(
+            set(get_open_case_ids_in_domain(self.domain, 'type1', owner_id='XXX')),
+            {case.get_id for case in self.cases
+             if case.domain == self.domain and case.type == 'type1'
+                and not case.closed and case.user_id == 'XXX'},
+        )
+
     def test_get_open_case_docs_by_type(self):
         # this is actually in case/all_cases, but testing here
         self.assert_doc_list_equal(
-            get_open_case_docs_by_type(self.domain, 'type1'),
+            get_open_case_docs_in_domain(self.domain, 'type1'),
             [case.to_json() for case in self.cases
              if case.domain == self.domain and case.type == 'type1'
                 and not case.closed],
@@ -82,7 +101,7 @@ class DBAccessorsTest(TestCase):
     def test_get_open_case_docs_by_type__owner_id(self):
         # this is actually in case/all_cases, but testing here
         self.assert_doc_list_equal(
-            get_open_case_docs_by_type(self.domain, 'type1', owner_id='XXX'),
+            get_open_case_docs_in_domain(self.domain, 'type1', owner_id='XXX'),
             [case.to_json() for case in self.cases
              if case.domain == self.domain and case.type == 'type1'
                 and not case.closed and case.user_id == 'XXX'],

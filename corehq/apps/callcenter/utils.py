@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from collections import namedtuple
 from datetime import datetime, timedelta
 import pytz
-from casexml.apps.case.dbaccessors import get_open_case_docs_by_type
+from casexml.apps.case.dbaccessors import get_open_case_docs_in_domain
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2
@@ -155,10 +155,10 @@ def get_call_center_cases(domain_name, case_type, user=None):
 
     if user:
         docs = (doc for owner_id in user.get_owner_ids()
-                for doc in get_open_case_docs_by_type(domain_name, case_type,
-                                                      owner_id=owner_id))
+                for doc in get_open_case_docs_in_domain(domain_name, case_type,
+                                                        owner_id=owner_id))
     else:
-        docs = get_open_case_docs_by_type(domain_name, case_type)
+        docs = get_open_case_docs_in_domain(domain_name, case_type)
 
     for case_doc in docs:
         hq_user_id = case_doc.get('hq_user_id', None)
