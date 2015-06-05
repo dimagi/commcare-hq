@@ -748,14 +748,14 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
             app.create_app_strings('default'),
         )
 
-    def test_case_list_search_callout_wo_image(self):
+    def test_case_list_lookup_wo_image(self):
         callout_action = "callout.commcarehq.org.dummycallout.LAUNCH"
 
         app = Application.new_app('domain', 'Untitled Application', application_version=APP_V2)
         module = app.add_module(Module.new_module('Untitled Module', None))
         module.case_type = 'patient'
-        module.case_details.short.search_callout_enabled = True
-        module.case_details.short.search_callout_action = callout_action
+        module.case_details.short.lookup_enabled = True
+        module.case_details.short.lookup_action = callout_action
 
         expected = """
             <partial>
@@ -769,16 +769,16 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
             "./detail/lookup"
         )
 
-    def test_case_list_search_callout_w_image(self):
+    def test_case_list_lookup_w_image(self):
         action = "callout.commcarehq.org.dummycallout.LAUNCH"
         image = "jr://file/commcare/image/callout"
 
         app = Application.new_app('domain', 'Untitled Application', application_version=APP_V2)
         module = app.add_module(Module.new_module('Untitled Module', None))
         module.case_type = 'patient'
-        module.case_details.short.search_callout_enabled = True
-        module.case_details.short.search_callout_action = action
-        module.case_details.short.search_callout_image = image
+        module.case_details.short.lookup_enabled = True
+        module.case_details.short.lookup_action = action
+        module.case_details.short.lookup_image = image
 
         expected = """
             <partial>
@@ -791,6 +791,56 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
             app.create_suite(),
             "./detail/lookup"
         )
+
+    def test_case_list_lookup_w_extras_and_responses(self):
+        app = Application.new_app('domain', 'Untitled Application', application_version=APP_V2)
+        module = app.add_module(Module.new_module('Untitled Module', None))
+        module.case_type = 'patient'
+        module.case_details.short.lookup_enabled = True
+        module.case_details.short.lookup_action = "callout.commcarehq.org.dummycallout.LAUNCH"
+        module.case_details.short.lookup_extras = [
+            {'key': 'action_0', 'value': 'com.biometrac.core.SCAN'},
+            {'key': "action_1", 'value': "com.biometrac.core.IDENTIFY"},
+        ]
+        module.case_details.short.lookup_responses = [
+            {"key": "match_id_0", "value": "left_index"},
+            {"key": "match_id_1", "value": "right_index"},
+        ]
+
+        expected = """
+        <partial>
+            <lookup action="callout.commcarehq.org.dummycallout.LAUNCH">
+                <extra key="action_0" value="com.biometrac.core.SCAN"/>
+                <extra key="action_1" value="com.biometrac.core.IDENTIFY"/>
+                <response key="match_id_0" value="left_index"/>
+                <response key="match_id_1" value="right_index"/>
+            </lookup>
+        </partial>
+        """
+
+        self.assertXmlPartialEqual(
+            expected,
+            app.create_suite(),
+            "./detail/lookup"
+        )
+
+    def test_case_list_lookup_disabled(self):
+        action = "callout.commcarehq.org.dummycallout.LAUNCH"
+        app = Application.new_app('domain', 'Untitled Application', application_version=APP_V2)
+        module = app.add_module(Module.new_module('Untitled Module', None))
+        module.case_type = 'patient'
+        module.case_details.short.lookup_enabled = False
+        module.case_details.short.lookup_action = action
+        module.case_details.short.lookup_responses = ["match_id_0", "left_index"]
+
+        expected = "<partial></partial>"
+
+        self.assertXmlPartialEqual(
+            expected,
+            app.create_suite(),
+            "./detail/lookup"
+        )
+
 
 class AdvancedModuleAsChildTest(SimpleTestCase, TestFileMixin):
     file_path = ('data', 'suite')

@@ -1428,9 +1428,11 @@ class Detail(IndexedSchema):
     use_case_tiles = BooleanProperty()
     persist_tile_on_forms = BooleanProperty()
     pull_down_tile = BooleanProperty()
-    search_callout_enabled = BooleanProperty(default=False)
-    search_callout_action = StringProperty()
-    search_callout_image = StringProperty()
+    lookup_enabled = BooleanProperty(default=False)
+    lookup_action = StringProperty()
+    lookup_image = JRResourceProperty(required=False)
+    lookup_extras = SchemaListProperty()
+    lookup_responses = SchemaListProperty()
 
     def get_tab_spans(self):
         '''

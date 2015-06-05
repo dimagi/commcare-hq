@@ -408,11 +408,27 @@ class Style(XmlObject):
     grid_y = StringField("grid/@grid-y")
 
 
+class Extra(XmlObject):
+    ROOT_NAME = 'extra'
+
+    key = StringField("@key")
+    value = StringField("@value")
+
+
+class Response(XmlObject):
+    ROOT_NAME = 'response'
+
+    key = StringField("@key")
+    value = StringField("@value")
+
+
 class Lookup(XmlObject):
     ROOT_NAME = 'lookup'
 
     action = StringField("@action", required=True)
     image = StringField("@image")
+    extras = NodeListField('extra', Extra)
+    responses = NodeListField('response', Response)
 
 
 class Field(OrderedXmlObject):
@@ -1057,11 +1073,13 @@ class SuiteGenerator(SuiteGeneratorBase):
         # Base case (has no tabs)
         else:
             # Add lookup
-            if detail.search_callout_enabled and detail.search_callout_action:
+            if detail.lookup_enabled and detail.lookup_action:
                 d.lookup = Lookup(
-                    action=detail.search_callout_action,
-                    image=detail.search_callout_image or None
+                    action=detail.lookup_action,
+                    image=detail.lookup_image or None,
                 )
+                d.lookup.extras = [Extra(key=e['key'], value=e['value']) for e in detail.lookup_extras]
+                d.lookup.responses = [Response(key=r['key'], value=r['value']) for r in detail.lookup_responses]
 
             # Add variables
             variables = list(
