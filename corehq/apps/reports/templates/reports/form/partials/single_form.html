@@ -263,7 +263,7 @@ requires imports/proptable.html to be included in the main template
                 <div class="accordion-body collapse 
                     {% if cases|length == 1 %}in{% endif %}" 
                     id="form-case-acc-{{ forloop.counter }}">
-                    <div class="accordion-inner">
+                    <div class="accordion-inner" style="display: inline-block">
                         {% render_tables case_data.table form_table_options %}
                     </div>
                 </div>
