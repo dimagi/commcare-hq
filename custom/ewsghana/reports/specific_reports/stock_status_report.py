@@ -347,7 +347,7 @@ class StockStatus(MultiReport):
                     InputStock(config),
                     UsersData(config),
                     InventoryManagementData(config),
-                    ProductSelectionPane(config)
+                    ProductSelectionPane(config, hide_columns=False)
                 ]
         self.split = False
         if report_type == 'stockouts':

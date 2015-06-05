@@ -316,7 +316,7 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
             [
                 self.title,
                 '{} - {}'.format(self.datespan.startdate_display, self.datespan.enddate_display),
-                'All' if not program_id else Program.get(docid=program_id).name
+                'all' if not program_id or program_id == 'all' else Program.get(docid=program_id).name
             ],
             []
         ]
@@ -328,6 +328,10 @@ class ProductSelectionPane(EWSData):
     title = 'Select Products'
     use_datatables = True
     custom_table = True
+
+    def __init__(self, config, hide_columns=True):
+        super(ProductSelectionPane, self).__init__(config)
+        self.hide_columns = hide_columns
 
     @property
     def rows(self):
@@ -367,5 +371,6 @@ class ProductSelectionPane(EWSData):
 
         return render_to_string('ewsghana/partials/product_selection_pane.html', {
             'products_by_program': result,
-            'is_rendered_as_email': self.config.get('is_rendered_as_email', False)
+            'is_rendered_as_email': self.config.get('is_rendered_as_email', False),
+            'hide_columns': self.hide_columns
         })
