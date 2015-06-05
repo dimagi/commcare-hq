@@ -52,7 +52,6 @@ branches:
   - langMedia # Sravan 5/20
   - location-group-changes # tw 5/29
   - renew-plan # Farid 6/4
-  - locations_for_robber_barons_staging_migration_conflict
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
