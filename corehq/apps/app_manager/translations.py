@@ -556,6 +556,12 @@ def update_form_translations(sheet, rows, missing_cols, app):
                         value_node.xml.getparent().remove(value_node.xml)
 
     parser = HTMLParser.HTMLParser()
+
+    # Form sheets are escaped on download, but the modules_and_forms sheet,
+    # where form names are updated, is not. Escape form name here so it
+    # surives the subsequent form unescaping.
+    xform.set_name(escape(form.default_name()))
+
     save_xform(app, form, parser.unescape(etree.tostring(xform.xml, encoding="unicode")))
     return msgs
 
