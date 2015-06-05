@@ -37,6 +37,10 @@ def get_url_with_location(view_name, text, location_id, domain):
 class EWSLineChart(LineChart):
     template_partial = 'ewsghana/partials/ews_line_chart.html'
 
+    def __init__(self, title, x_axis, y_axis, y_tick_values=None):
+        super(EWSLineChart, self).__init__(title, x_axis, y_axis)
+        self.y_tick_values = y_tick_values or []
+
 
 class EWSPieChart(PieChart):
     template_partial = 'ewsghana/partials/ews_pie_chart.html'
