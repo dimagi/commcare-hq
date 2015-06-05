@@ -160,7 +160,8 @@ class SummaryReportingRates(ReportingRatesData):
                 DataTablesColumn(_(self.get_locations[0].location_type.name.title())),
                 DataTablesColumn(_('# Sites')),
                 DataTablesColumn(_('# Reporting')),
-                DataTablesColumn(_('Reporting Rate'))
+                DataTablesColumn(_('Reporting Rate')),
+                DataTablesColumn(_('Completed Report Rates'))
             )
         else:
             return []
@@ -178,13 +179,22 @@ class SummaryReportingRates(ReportingRatesData):
                 ).distinct('case_id').count()
                 reporting_rates = '%.2f%%' % (reported * 100 / (float(sites) or 1.0))
 
+                completed = 0
+                for supply_point in supply_points:
+                    reported_products = StockTransaction.objects.filter(
+                        case_id=supply_point.supply_point_id,
+                        report__date__range=[self.config['startdate'], self.config['enddate']]
+                    ).distinct('product_id').values_list('product_id', flat=True)
+                    if not (set(supply_point.products) - set(reported_products)):
+                        completed += 1
+                completed_rates = '%.2f%%' % (completed * 100 / (float(sites) or 1.0))
                 url = make_url(
                     ReportingRatesReport,
                     self.config['domain'],
                     '?location_id=%s&startdate=%s&enddate=%s',
                     (location.location_id, self.config['startdate'], self.config['enddate']))
 
-                rows.append([link_format(location.name, url), sites, reported, reporting_rates])
+                rows.append([link_format(location.name, url), sites, reported, reporting_rates, completed_rates])
         return rows
 
 
@@ -434,7 +444,7 @@ class ReportingRatesReport(MonthWeekMixin, MultiReport):
         return dict(
             domain=self.domain,
             startdate=self.datespan.startdate,
-            enddate=self.datespan.enddate,
+            enddate=self.datespan.end_of_end_day,
             location_id=self.request.GET.get('location_id') or get_country_id(self.domain),
             products=None,
             program=program if program != ALL_OPTION else None,

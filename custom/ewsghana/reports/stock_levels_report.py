@@ -136,7 +136,7 @@ class FacilityReportData(EWSData):
                 months_until_stockout = '-'
             yield {
                 'commodity': values['commodity'],
-                'current_stock': int(values['current_stock'] or 0),
+                'current_stock': values['current_stock'],
                 'monthly_consumption': values['monthly_consumption'] if values['monthly_consumption'] != 0.00
                 else 'not enough data',
                 'months_until_stockout': months_until_stockout,

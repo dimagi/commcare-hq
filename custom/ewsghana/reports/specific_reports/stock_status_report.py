@@ -294,8 +294,7 @@ class StockoutTable(EWSData):
                     type='stockonhand',
                     product_id__in=product_map.keys(),
                     case_id=supply_point.supply_point_id,
-                    report__date__lte=self.config['enddate'],
-                    report__date__gte=self.config['startdate'],
+                    report__date__range=[self.config['startdate'], self.config['enddate']],
                     stock_on_hand=0
                 ).order_by('product_id', '-report__date').distinct('product_id').values_list('product_id',
                                                                                              flat=True)
