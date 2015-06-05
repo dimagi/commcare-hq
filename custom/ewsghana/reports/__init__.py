@@ -366,5 +366,6 @@ class ProductSelectionPane(EWSData):
             product_dict['product_list'].sort(key=lambda prd: prd['name'])
 
         return render_to_string('ewsghana/partials/product_selection_pane.html', {
-            'products_by_program': result
+            'products_by_program': result,
+            'is_rendered_as_email': self.config.get('is_rendered_as_email', False)
         })
