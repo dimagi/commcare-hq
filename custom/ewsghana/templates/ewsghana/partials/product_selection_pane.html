@@ -11,10 +11,10 @@
                 {% for product in product_dict.product_list %}
                     <tr>
                         <td>
-                            <input data-column="{{ product.idx }}" class="toggle-column"
+                            <input data-column="{{ product.idx }}" class="toggle-column product-checkbox"
                                    type="checkbox" name="{{ product.name }} ({{ product.code }})"
                                    value="{{ product.code }}" {% if product.checked %}checked{% endif %}>
-                            {{ product.name }} ({{ product.code }})
+                            {{ product.name }} ({{ product.code }}) {{ product.idx }}
                         </td>
                     </tr>
                 {% endfor %}
@@ -28,15 +28,17 @@
 <script>
     $('.program-checkbox').click(function() {
         var self = this;
-        var $tbody = $(this).parents('tbody');
-        $tbody.find('input.toggle-column').each(function(idx, element) {
-            if (element.checked !== self.checked) {
-                element.checked = self.checked;
-                if (datatable.fnSettings().aoColumns.length > 1) {
-                    show_hide_table_columns(element);
+            var $tbody = $(this).parents('tbody');
+            $tbody.find('input.toggle-column').each(function(idx, element) {
+                if (element.checked !== self.checked) {
+                    element.checked = self.checked;
+                    {% if hide_columns %}
+                        if (datatable.fnSettings().aoColumns.length > 1) {
+                            show_hide_table_columns(element);
+                        }
+                    {% endif %}
                 }
-            }
-        });
+            });
         if (typeof multibar_chart_data !== 'undefined') {
             show_hide_multibar_chart_data();
         }

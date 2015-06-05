@@ -346,7 +346,7 @@ class StockLevelsReport(MultiReport):
                         InputStock(config),
                         UsersData(config),
                         InventoryManagementData(config),
-                        ProductSelectionPane(config)]
+                        ProductSelectionPane(config, hide_columns=False)]
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
