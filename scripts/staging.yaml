@@ -43,6 +43,8 @@
 trunk: master
 name: autostaging
 branches:
+  - remove-couchforms/edits  # danny 6/5
+  - clean-up-all_submissions_by_domain  # danny 6/5
   - subscription-no-contact-info # bb 8/4
   - vellum-staging # J$ 11/13
   - fixtures-spike  # cz 1/29
