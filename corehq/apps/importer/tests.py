@@ -3,7 +3,8 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests import delete_all_cases
 
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.hqcase.utils import get_case_ids_in_domain, get_cases_in_domain
+from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
+from corehq.apps.hqcase.utils import get_cases_in_domain
 from corehq.apps.importer.tasks import do_import
 from corehq.apps.importer.util import ImporterConfig
 from corehq.apps.users.models import WebUser
