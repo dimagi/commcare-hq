@@ -10,7 +10,8 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
-from corehq.apps.hqcase.utils import submit_case_blocks, get_cases_in_domain
+from corehq.apps.hqcase.dbaccessors import get_cases_in_domain
+from corehq.apps.hqcase.utils import submit_case_blocks
 from dimagi.utils.decorators.memoized import memoized
 
 DOMAINS = ["hsph-dev", "hsph-betterbirth", "hsph-learning-sites", "hsph-test"]

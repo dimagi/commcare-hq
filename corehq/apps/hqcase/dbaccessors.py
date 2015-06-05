@@ -25,9 +25,9 @@ def get_case_ids_in_domain(domain, type=None):
 
 
 def get_cases_in_domain(domain, type=None):
-    for doc in iter_docs(CommCareCase.get_db(),
-                         get_case_ids_in_domain(domain, type)):
-        yield CommCareCase.wrap(doc)
+    return (CommCareCase.wrap(doc)
+            for doc in iter_docs(CommCareCase.get_db(),
+                                 get_case_ids_in_domain(domain, type=type)))
 
 
 def get_case_types_for_domain(domain):
