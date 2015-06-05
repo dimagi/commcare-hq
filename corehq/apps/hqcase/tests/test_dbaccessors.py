@@ -71,7 +71,7 @@ class DBAccessorsTest(TestCase):
         )
 
     def test_get_open_case_ids_in_domain(self):
-        # this is actually in case/all_cases, but testing here
+        # this is actually in the 'case' app, but testing here
         self.assertEqual(
             set(get_open_case_ids_in_domain(self.domain, 'type1')),
             {case.get_id for case in self.cases
@@ -80,7 +80,7 @@ class DBAccessorsTest(TestCase):
         )
 
     def test_get_open_case_ids_in_domain__owner_id(self):
-        # this is actually in case/all_cases, but testing here
+        # this is actually in the 'case' app, but testing here
         self.assertEqual(
             set(get_open_case_ids_in_domain(self.domain, 'type1', owner_id='XXX')),
             {case.get_id for case in self.cases
@@ -89,7 +89,7 @@ class DBAccessorsTest(TestCase):
         )
 
     def test_get_open_case_docs_by_type(self):
-        # this is actually in case/all_cases, but testing here
+        # this is actually in the 'case' app, but testing here
         self.assert_doc_list_equal(
             get_open_case_docs_in_domain(self.domain, 'type1'),
             [case.to_json() for case in self.cases
@@ -99,7 +99,7 @@ class DBAccessorsTest(TestCase):
         )
 
     def test_get_open_case_docs_by_type__owner_id(self):
-        # this is actually in case/all_cases, but testing here
+        # this is actually in the 'case' app, but testing here
         self.assert_doc_list_equal(
             get_open_case_docs_in_domain(self.domain, 'type1', owner_id='XXX'),
             [case.to_json() for case in self.cases
