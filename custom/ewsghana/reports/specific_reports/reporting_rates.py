@@ -19,6 +19,7 @@ from custom.ilsgateway.tanzania import make_url
 from custom.ilsgateway.tanzania.reports.utils import link_format
 from django.utils.translation import ugettext as _
 from dimagi.utils.dates import DateSpan
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_date
 
 
@@ -144,14 +145,14 @@ class SummaryReportingRates(ReportingRatesData):
     use_datatables = True
 
     @property
+    @memoized
     def get_locations(self):
-        location_types = [
-            location_type.name
-            for location_type in Domain.get_by_name(self.domain).location_types
-            if location_type.administrative
-        ]
-        return SQLLocation.objects.filter(parent__location_id=self.config['location_id'],
-                                          location_type__name__in=location_types, is_archived=False)
+        return SQLLocation.objects.filter(
+            domain=self.domain,
+            parent__location_id=self.config['location_id'],
+            location_type__administrative=True,
+            is_archived=False,
+        )
 
     @property
     def headers(self):
