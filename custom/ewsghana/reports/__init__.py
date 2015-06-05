@@ -158,7 +158,7 @@ class ReportingRatesData(EWSData):
         ).values_list('supply_point_id', flat=True)
 
 
-class MultiReport(CustomProjectReport, ProjectReportParametersMixin):
+class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParametersMixin):
     title = ''
     report_template_path = "ewsghana/multi_report.html"
     flush_layout = True
