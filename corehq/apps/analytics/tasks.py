@@ -67,16 +67,37 @@ def track_built_app_on_hubspot(webuser):
 
 
 @task(queue='background_queue', acks_late=True, ignore_result=True)
-def track_workflow(email, event, properties=None):
+def track_workflow(email, event_or_properties, properties=None):
     """
     Record an event in KISSmetrics.
     :param email: The email address by which to identify the user.
-    :param event: The name of the event.
+    :param event_or_properties: The name of the event, or properties to set on the user.
     :param properties: A dictionary or properties to set on the user.
     :return:
+
+    Examples:
+
+        track_workflow("foo@bar.com", "Deployed App", {"is_dimagi": True})
+        track_workflow("foo@bar.com", "Deployed App")
+        track_workflow("foo@bar.com", {"is_dimagi": True})
+
     """
+    if isinstance(event_or_properties, basestring):
+        event = event_or_properties
+    else:
+        if properties:
+            raise ValueError("The third argument may only be used if the "
+                             "second argument is an event name.")
+        event = None
+        properties = event_or_properties
+
+
     api_key = ANALYTICS_IDS.get("KISSMETRICS_KEY", None)
     if api_key:
         km = KISSmetrics.Client(key=api_key)
-        km.record(email, event, properties if properties else {})
+        if event:
+            km.record(email, event, properties if properties else {})
+        else:
+            km.set(email, properties if properties else {})
+
         # TODO: Consider adding some error handling for bad/failed requests.
