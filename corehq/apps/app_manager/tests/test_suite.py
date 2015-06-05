@@ -748,6 +748,49 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
             app.create_app_strings('default'),
         )
 
+    def test_case_list_search_callout_wo_image(self):
+        callout_action = "callout.commcarehq.org.dummycallout.LAUNCH"
+
+        app = Application.new_app('domain', 'Untitled Application', application_version=APP_V2)
+        module = app.add_module(Module.new_module('Untitled Module', None))
+        module.case_type = 'patient'
+        module.case_details.short.search_callout_enabled = True
+        module.case_details.short.search_callout_action = callout_action
+
+        expected = """
+            <partial>
+                <lookup action="{}"/>
+            </partial>
+        """.format(callout_action)
+
+        self.assertXmlPartialEqual(
+            expected,
+            app.create_suite(),
+            "./detail/lookup"
+        )
+
+    def test_case_list_search_callout_w_image(self):
+        action = "callout.commcarehq.org.dummycallout.LAUNCH"
+        image = "jr://file/commcare/image/callout"
+
+        app = Application.new_app('domain', 'Untitled Application', application_version=APP_V2)
+        module = app.add_module(Module.new_module('Untitled Module', None))
+        module.case_type = 'patient'
+        module.case_details.short.search_callout_enabled = True
+        module.case_details.short.search_callout_action = action
+        module.case_details.short.search_callout_image = image
+
+        expected = """
+            <partial>
+                <lookup action="{}" image="{}"/>
+            </partial>
+        """.format(action, image)
+
+        self.assertXmlPartialEqual(
+            expected,
+            app.create_suite(),
+            "./detail/lookup"
+        )
 
 class AdvancedModuleAsChildTest(SimpleTestCase, TestFileMixin):
     file_path = ('data', 'suite')
