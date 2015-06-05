@@ -14,7 +14,7 @@
                             <input data-column="{{ product.idx }}" class="toggle-column product-checkbox"
                                    type="checkbox" name="{{ product.name }} ({{ product.code }})"
                                    value="{{ product.code }}" {% if product.checked %}checked{% endif %}>
-                            {{ product.name }} ({{ product.code }}) {{ product.idx }}
+                            {{ product.name }} ({{ product.code }})
                         </td>
                     </tr>
                 {% endfor %}
