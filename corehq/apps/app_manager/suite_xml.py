@@ -408,6 +408,13 @@ class Style(XmlObject):
     grid_y = StringField("grid/@grid-y")
 
 
+class Lookup(XmlObject):
+    ROOT_NAME = 'lookup'
+
+    action = StringField("@action", required=True)
+    image = StringField("@image")
+
+
 class Field(OrderedXmlObject):
     ROOT_NAME = 'field'
     ORDER = ('header', 'template', 'sort_node')
@@ -451,6 +458,8 @@ class Detail(OrderedXmlObject, IdNode):
     """
     <detail id="">
         <title><text/></title>
+        <lookup action="", image="">
+        </lookup>
         <variables>
             <__ function=""/>
         </variables>
@@ -462,9 +471,10 @@ class Detail(OrderedXmlObject, IdNode):
     """
 
     ROOT_NAME = 'detail'
-    ORDER = ('title', 'fields')
+    ORDER = ('title', 'lookup', 'fields')
 
     title = NodeField('title/text', Text)
+    lookup = NodeField('lookup', Lookup)
     fields = NodeListField('field', Field)
     action = NodeField('action', Action)
     details = NodeListField('detail', "self")
@@ -1039,13 +1049,23 @@ class SuiteGenerator(SuiteGeneratorBase):
             else:
                 return None
 
+        # Base case (has no tabs)
         else:
-            # Base case (has no tabs)
+            # Add lookup
+            if detail.search_callout_enabled and detail.search_callout_action:
+                d.lookup = Lookup(
+                    action=detail.search_callout_action,
+                    image=detail.search_callout_image or None
+                )
+
+            # Add variables
             variables = list(
                 self.detail_variables(module, detail, detail_column_infos[start:end])
             )
             if variables:
                 d.variables.extend(variables)
+
+            # Add fields
             for column_info in detail_column_infos[start:end]:
                 fields = get_column_generator(
                     self.app, module, detail,
@@ -1053,6 +1073,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 ).fields
                 d.fields.extend(fields)
 
+            # Add actions
             if module.case_list_form.form_id and detail_type.endswith('short') and \
                     not (hasattr(module, 'parent_select') and module.parent_select.active):
                 # add form action to detail
