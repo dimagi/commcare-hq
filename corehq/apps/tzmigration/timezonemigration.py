@@ -8,7 +8,7 @@ def run_timezone_migration_for_domain(domain):
     set_migration_complete(domain)
 
 
-def json_diff(obj1, obj2, path=()):
+def _json_diff(obj1, obj2, path):
     if isinstance(obj1, str):
         obj1 = unicode(obj1)
     if isinstance(obj2, str):
@@ -27,9 +27,9 @@ def json_diff(obj1, obj2, path=()):
             return obj.get(key, Ellipsis)
 
         for key in keys:
-            for result in json_diff(value_or_ellipsis(obj1, key),
-                                    value_or_ellipsis(obj2, key),
-                                    path=path + (key,)):
+            for result in _json_diff(value_or_ellipsis(obj1, key),
+                                     value_or_ellipsis(obj2, key),
+                                     path=path + (key,)):
                 yield result
     elif isinstance(obj1, list):
 
@@ -40,12 +40,20 @@ def json_diff(obj1, obj2, path=()):
                 return Ellipsis
 
         for i in range(max(len(obj1), len(obj2))):
-            for result in json_diff(value_or_ellipsis(obj1, i),
-                                    value_or_ellipsis(obj2, i),
-                                    path=path + (i,)):
+            for result in _json_diff(value_or_ellipsis(obj1, i),
+                                     value_or_ellipsis(obj2, i),
+                                     path=path + (i,)):
                 yield result
     else:
         yield 'diff', path, obj1, obj2
+
+
+def json_diff(obj1, obj2):
+    items = []
+    for type_, path, val1, val2 in _json_diff(obj1, obj2, path=()):
+        assert type_ in ('missing', 'type', 'diff')
+        items.append((type_, path, val1, val2))
+    return items
 
 
 def _run_timezone_migration_for_domain(domain):
