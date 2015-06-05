@@ -1,14 +1,17 @@
 import json
 from couchdbkit.exceptions import ResourceNotFound
 from django.contrib.humanize.templatetags.humanize import naturaltime
+from casexml.apps.case.dbaccessors import get_open_case_ids_in_domain
 from casexml.apps.case.util import iter_cases
 from corehq.apps.cloudcare.exceptions import RemoteAppError
+from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase, CASE_STATUS_ALL, CASE_STATUS_CLOSED, CASE_STATUS_OPEN
 from corehq.apps.app_manager.models import (
     ApplicationBase,
     get_app,
 )
+from corehq.util.soft_assert import soft_assert
 from dimagi.utils.couch.safe_index import safe_index
 from casexml.apps.phone.caselogic import get_footprint, get_related_cases
 from datetime import datetime
@@ -159,9 +162,25 @@ class CaseAPIHelper(object):
         return [CaseAPIResult(couch_doc=case, id_only=self.ids_only) for case in case_list]
 
     def get_all(self):
-        view_results = CommCareCase.get_all_cases(self.domain, case_type=self.case_type, status=self.status)
-        ids = [res["id"] for res in view_results]
-        return self._case_results(ids)
+        status = self.status or CASE_STATUS_ALL
+        if status == CASE_STATUS_ALL:
+            case_ids = get_case_ids_in_domain(self.domain, type=self.case_type)
+        elif status == CASE_STATUS_OPEN:
+            case_ids = get_open_case_ids_in_domain(self.domain, type=self.case_type)
+        elif status == CASE_STATUS_CLOSED:
+            _assert = soft_assert('@'.join(['droberts', 'dimagi.com']))
+            _assert(False, "I'm surprised CaseAPIHelper "
+                           "ever gets called with status=closed")
+            # this is rare so we don't care if it requires two calls to get
+            # all the ids
+            case_ids = (
+                set(get_case_ids_in_domain(self.domain, type=self.case_type))
+                - set(get_open_case_ids_in_domain(self.domain, type=self.case_type))
+            )
+        else:
+            raise ValueError("Invalid value for 'status': '%s'" % status)
+
+        return self._case_results(case_ids)
 
     def get_owned(self, user_id):
         try:
