@@ -113,24 +113,25 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
 
     @property
     def saved_report_context_data(self):
-        def _update_daterange_filters(report_config):
-            report_config_data = report_config.to_json()
-            report_config_data['filters'].update(report_config.get_date_range())
-            return report_config_data
+        def _get_context_for_saved_report(report_config):
+            if report_config:
+                report_config_data = report_config.to_json()
+                report_config_data['filters'].update(report_config.get_date_range())
+                return report_config_data
+            else:
+                return ReportConfig.default()
 
-        current_config_id = self.request.GET.get('config_id')
+        saved_report_config_id = self.request.GET.get('config_id')
+        saved_report_config = get_document_or_404(ReportConfig, self.domain, saved_report_config_id) \
+            if saved_report_config_id else None
         return {
             'report_configs': [
-                _update_daterange_filters(config)
-                for config in ReportConfig.by_domain_and_owner(
+                _get_context_for_saved_report(saved_report)
+                for saved_report in ReportConfig.by_domain_and_owner(
                     self.domain, self.request.couch_user._id, report_slug=self.slug
                 )
             ],
-            'default_config': (
-                _update_daterange_filters(ReportConfig.get(current_config_id))
-                if current_config_id
-                else ReportConfig.default()
-            ),
+            'default_config': _get_context_for_saved_report(saved_report_config),
             'datespan_filters': [{
                 'display': _('Choose a date filter...'),
                 'slug': None,
@@ -156,6 +157,7 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         try:
             data = self.data_source
             data.set_filter_values(self.filter_values)
+            data.set_order_by([(o['field'], o['order']) for o in self.spec.sort_expression])
             total_records = data.get_total_records()
         except UserReportsError as e:
             if settings.DEBUG:
@@ -216,6 +218,7 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         try:
             data = self.data_source
             data.set_filter_values(self.filter_values)
+            data.set_order_by([(o['field'], o['order']) for o in self.spec.sort_expression])
         except UserReportsError as e:
             return self.render_json_response({
                 'error': e.message,

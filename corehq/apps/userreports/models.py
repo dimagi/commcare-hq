@@ -18,7 +18,7 @@ from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
 from corehq.apps.userreports.indicators import CompoundIndicator
 from corehq.apps.userreports.reports.factory import ReportFactory, ChartFactory, ReportFilterFactory, \
-    ReportColumnFactory
+    ReportColumnFactory, ReportOrderByFactory
 from corehq.apps.userreports.reports.specs import FilterSpec
 from django.utils.translation import ugettext as _
 from corehq.apps.userreports.specs import EvaluationContext
@@ -77,9 +77,11 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         filter_fn = self._get_deleted_filter()
         return filter_fn and filter_fn(document, EvaluationContext(document, 0))
 
+    @memoized
     def _get_main_filter(self):
         return self._get_filter([self.referenced_doc_type])
 
+    @memoized
     def _get_deleted_filter(self):
         return self._get_filter(get_deleted_doc_types(self.referenced_doc_type))
 
@@ -245,6 +247,7 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     filters = ListProperty()
     columns = ListProperty()
     configured_charts = ListProperty()
+    sort_expression = ListProperty()
     report_meta = SchemaProperty(ReportMeta)
 
     def __unicode__(self):
@@ -272,6 +275,11 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     @memoized
     def charts(self):
         return [ChartFactory.from_spec(g._obj) for g in self.configured_charts]
+
+    @property
+    @memoized
+    def sort_order(self):
+        return [ReportOrderByFactory.from_spec(e) for e in self.sort_expression]
 
     @property
     def table_id(self):
@@ -310,6 +318,7 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         ReportFactory.from_spec(self)
         self.ui_filters
         self.charts
+        self.sort_order
 
     @classmethod
     def by_domain(cls, domain):

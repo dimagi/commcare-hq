@@ -13,7 +13,7 @@ from casexml.apps.phone.exceptions import (
     MissingSyncLog, InvalidSyncLogException, SyncLogUserMismatch,
     BadStateException, RestoreException,
 )
-from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, FILE_RESTORE, STREAM_RESTORE_CACHE
+from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, FILE_RESTORE
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.phone.models import SyncLog, get_properly_wrapped_sync_log
@@ -62,12 +62,15 @@ class StockSettings(object):
         """
         section_to_consumption_types should be a dict of stock section-ids to corresponding
         consumption section-ids. any stock sections not found in the dict will not have
-        any consumption data set in the restore
+        any consumption data set in the restore.
+
+        force_consumption_case_filter allows you to force sending consumption data even if
+        empty for a given CaseStub (id + type)
         """
         self.section_to_consumption_types = section_to_consumption_types or {}
         self.consumption_config = consumption_config
         self.default_product_list = default_product_list or []
-        self.force_consumption_case_filter = force_consumption_case_filter or (lambda case: False)
+        self.force_consumption_case_filter = force_consumption_case_filter or (lambda stub: False)
 
 
 class RestoreResponse(object):
@@ -511,8 +514,7 @@ class RestoreConfig(object):
             return CachedResponse(None)
 
         if self.sync_log:
-            stream = STREAM_RESTORE_CACHE.enabled(self.domain)
-            payload = self.sync_log.get_cached_payload(self.version, stream=stream)
+            payload = self.sync_log.get_cached_payload(self.version, stream=True)
         else:
             payload = self.cache.get(self._initial_cache_key())
 

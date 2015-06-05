@@ -428,6 +428,14 @@ def rebuild_data_source(request, domain, config_id):
 
 @login_and_domain_required
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
+def data_source_json(request, domain, config_id):
+    config, _ = get_datasource_config_or_404(config_id, domain)
+    del config._doc['_rev']
+    return json_response(config)
+
+
+@login_and_domain_required
+@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def preview_data_source(request, domain, config_id):
     config, is_static = get_datasource_config_or_404(config_id, domain)
     table = get_indicator_table(config)

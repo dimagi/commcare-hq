@@ -13,7 +13,7 @@ from dimagi.utils.couch.database import get_safe_write_kwargs
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.models import Group
-from corehq.apps.locations.models import Location, LocationType
+from corehq.apps.locations.models import Location, LocationType, SQLLocation
 from corehq.apps.products.models import Product
 from corehq.apps.sms.backend import test
 from corehq.apps.users.models import CommCareUser
@@ -208,6 +208,7 @@ class CommTrackTest(TestCase):
         self.assertEqual(3, len(self.products))
 
     def tearDown(self):
+        SQLLocation.objects.all().delete()
         self.backend.delete()
         for u in self.users:
             u.delete()

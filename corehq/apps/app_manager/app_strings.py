@@ -141,13 +141,15 @@ class AppStringsBase(object):
                     u'This user must have access to exactly one lookup table row for the table: ${0}')
 
         from corehq.apps.app_manager.models import (
-            AUTO_SELECT_CASE, AUTO_SELECT_FIXTURE, AUTO_SELECT_USER, AUTO_SELECT_USERCASE
+            AUTO_SELECT_CASE, AUTO_SELECT_FIXTURE, AUTO_SELECT_USER,
+            AUTO_SELECT_LOCATION, AUTO_SELECT_USERCASE
         )
 
         mode_text = {
             AUTO_SELECT_FIXTURE: u'lookup table field',
             AUTO_SELECT_USER: u'user data key',
             AUTO_SELECT_CASE: u'case index',
+            AUTO_SELECT_LOCATION: u'location',
             AUTO_SELECT_USERCASE: u'user case',
         }
 

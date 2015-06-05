@@ -1599,12 +1599,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         location_type = self.location.location_type_object
         if location_type.shares_cases:
             if location_type.view_descendants:
-                from corehq.apps.locations.models import SQLLocation
-                sql_loc = SQLLocation.objects.get(location_id=self.location._id)
                 return [
                     loc.case_sharing_group_object(self._id)._id
-                    for loc in sql_loc.get_descendants()
-                ]
+                    for loc in self.sql_location.get_descendants(include_self=True).filter(
+                        location_type__shares_cases=True,
+                    )]
+
             else:
                 return [self.sql_location.case_sharing_group_object(self._id)._id]
 
@@ -1619,7 +1619,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         if self.project.locations_enabled and self.location:
             owner_ids.extend(self.location_group_ids())
-
         return owner_ids
 
     def retire(self):

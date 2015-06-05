@@ -166,7 +166,7 @@ class CaseData(BaseDataIndex):
     external_id = models.CharField(max_length=128, null=True)
 
     # owner_id || user_id
-    case_owner = models.CharField(max_length=128, null=True)
+    case_owner = models.CharField(max_length=128, null=True, db_index=True)
 
     @classmethod
     def get_instance_id(cls, instance):
@@ -267,9 +267,9 @@ class CaseActionData(models.Model):
     sync_log_id = models.CharField(max_length=128, null=True)
 
     # de-normalized fields
-    domain = models.CharField(max_length=128, null=True)
-    case_owner = models.CharField(max_length=128, null=True)
-    case_type = models.CharField(max_length=128, null=True)
+    domain = models.CharField(max_length=128, null=True, db_index=True)
+    case_owner = models.CharField(max_length=128, null=True, db_index=True)
+    case_type = models.CharField(max_length=128, null=True, db_index=True)
 
     def __unicode__(self):
         return "CaseAction: {xform}: {type} - {date} ({server_date})".format(

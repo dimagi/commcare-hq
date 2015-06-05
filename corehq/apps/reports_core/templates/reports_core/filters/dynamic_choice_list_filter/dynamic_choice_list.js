@@ -22,3 +22,4 @@ $(filter_id).select2({
         cache: true
     }
 });
+$('#{{ filter.css_id }}').find('.select2-chosen')[0].innerHTML = $(filter_id).val();
