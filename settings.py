@@ -311,10 +311,8 @@ HQ_APPS = (
     'custom.opm',
     'pathindia',
     'pact',
-    'psi',
 
     'custom.apps.care_benin',
-    'custom.reports.care_sa',
     'custom.apps.cvsu',
     'custom.reports.mc',
     'custom.apps.crs_reports',
@@ -1074,7 +1072,6 @@ COUCHDB_APPS = [
     ('mvp_docs', MVP_INDICATOR_DB),
     'pathindia',
     'pact',
-    'psi',
     'accounting',
     'succeed',
     'ilsgateway',
@@ -1089,7 +1086,6 @@ COUCHDB_APPS = [
     ('bihar', 'fluff-bihar'),
     ('opm', 'fluff-opm'),
     ('fluff', 'fluff-opm'),
-    ('care_sa', 'fluff-care_sa'),
     ('cvsu', 'fluff-cvsu'),
     ('mc', 'fluff-mc'),
     ('m4change', 'm4change'),
@@ -1248,7 +1244,6 @@ PILLOWTOPS = {
         'custom.opm.models.OPMHierarchyFluffPillow',
         'custom.opm.models.VhndAvailabilityFluffPillow',
         'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
-        'custom.reports.care_sa.models.CareSAFluffPillow',
         'custom.reports.mc.models.MalariaConsortiumFluffPillow',
         'custom.m4change.models.AncHmisCaseFluffPillow',
         'custom.m4change.models.LdHmisCaseFluffPillow',
@@ -1288,6 +1283,7 @@ CUSTOM_DATA_SOURCES = [
     os.path.join('custom', 'up_nrhm', 'data_sources', 'location_hierarchy.json'),
     os.path.join('custom', 'up_nrhm', 'data_sources', 'asha_facilitators.json'),
     os.path.join('custom', 'succeed', 'data_sources', 'submissions.json'),
+    os.path.join('custom', 'apps', 'gsid', 'data_sources', 'patient_summary.json'),
 ]
 
 
@@ -1360,7 +1356,6 @@ DOMAIN_MODULE_MAP = {
     'a5288-study': 'a5288',
     'care-bihar': 'custom.bihar',
     'bihar': 'custom.bihar',
-    'care-ihapc-live': 'custom.reports.care_sa',
     'cvsulive': 'custom.apps.cvsu',
     'dca-malawi': 'dca',
     'eagles-fahu': 'dca',
@@ -1383,7 +1378,6 @@ DOMAIN_MODULE_MAP = {
     'mvp-koraro': 'mvp',
     'mvp-pampaida': 'mvp',
     'opm': 'custom.opm',
-    'psi-unicef': 'psi',
     'project': 'custom.apps.care_benin',
 
     'ipm-senegal': 'custom.intrahealth',
@@ -1415,7 +1409,7 @@ TRAVIS_TEST_GROUPS = (
     (
         'accounting', 'adm', 'announcements', 'api', 'app_manager', 'appstore',
         'auditcare', 'bihar', 'builds', 'cachehq', 'callcenter', 'care_benin',
-        'care_sa', 'case', 'cleanup', 'cloudcare', 'commtrack', 'consumption',
+        'case', 'cleanup', 'cloudcare', 'commtrack', 'consumption',
         'couchapps', 'couchlog', 'crud', 'cvsu', 'dca', 'django_digest',
         'domain', 'domainsync', 'export',
         'facilities', 'fixtures', 'fluff_filter', 'formplayer',

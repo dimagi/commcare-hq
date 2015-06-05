@@ -17,7 +17,7 @@ class ASHAFacilitatorsReport(GenericTabularReport, DatespanMixin, CustomProjectR
         return {
             'domain': self.domain,
             'startdate': self.datespan.startdate,
-            'enddate': self.datespan.enddate,
+            'enddate': self.datespan.enddate.replace(hour=23, minute=59, second=59),
             'af': self.request.GET.get('hierarchy_af'),
         }
 

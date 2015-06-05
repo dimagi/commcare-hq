@@ -1,6 +1,9 @@
 import logging
 from django.core.validators import validate_email
+from corehq.apps.commtrack.dbaccessors.supply_point_case_by_domain_external_id import \
+    get_supply_point_case_by_domain_external_id
 from corehq.apps.products.models import SQLProduct
+from custom.ewsghana.utils import TEACHING_HOSPITAL_MAPPING, TEACHING_HOSPITALS
 from dimagi.utils.dates import force_to_datetime
 from corehq.apps.commtrack.models import SupplyPointCase, CommtrackConfig
 from corehq.apps.locations.models import SQLLocation, LocationType
@@ -113,6 +116,15 @@ class GhanaEndpoint(LogisticsEndpoint):
         meta, supply_points = self.get_objects(self.supply_point_url, **kwargs)
         return meta, [SupplyPoint(supply_point) for supply_point in supply_points]
 
+    def get_stocktransactions(self, start_date=None, end_date=None, **kwargs):
+        kwargs.get('filters', {}).update({
+            'date__gte': start_date,
+            'date__lte': end_date
+        })
+        meta, stock_transactions = self.get_objects(self.stocktransactions_url, **kwargs)
+        return meta, [(self.models_map['stock_transaction'])(stock_transaction)
+                      for stock_transaction in stock_transactions]
+
 
 class EWSApi(APISynchronization):
     LOCATION_CUSTOM_FIELDS = [
@@ -136,7 +148,11 @@ class EWSApi(APISynchronization):
             sql_location = SQLLocation.objects.get(domain=self.domain, site_code=supply_point.code)
             return Loc.get(sql_location.location_id)
         except SQLLocation.DoesNotExist:
-            new_location = Loc(parent=location)
+            parent = location
+            if supply_point.code in TEACHING_HOSPITAL_MAPPING:
+                parent = self._sync_parent(TEACHING_HOSPITAL_MAPPING[supply_point.code]['parent_external_id'])
+
+            new_location = Loc(parent=parent)
             new_location.domain = self.domain
             new_location.location_type = supply_point.type
             new_location.name = supply_point.name
@@ -176,10 +192,10 @@ class EWSApi(APISynchronization):
 
         country = self._make_loc_type(name="country", administrative=True)
         self._make_loc_type(name="Central Medical Store", parent_type=country)
-        self._make_loc_type(name="Teaching Hospital", parent_type=country)
 
         region = self._make_loc_type(name="region", administrative=True,
                                      parent_type=country)
+        self._make_loc_type(name="Teaching Hospital", parent_type=region)
         self._make_loc_type(name="Regional Medical Store", parent_type=region)
         self._make_loc_type(name="Regional Hospital", parent_type=region)
 
@@ -281,9 +297,35 @@ class EWSApi(APISynchronization):
         read_only_role.permissions.view_reports = False
         read_only_role.save()
 
+    def _create_or_edit_web_reporter_role(self):
+        web_reporter_roles = UserRole.by_domain_and_name(self.domain, 'Web Reporter')
+        report_list = [
+            "corehq.apps.reports.standard.sms.MessageLogReport",
+            "custom.ewsghana.reports.specific_reports.dashboard_report.DashboardReport",
+            "custom.ewsghana.reports.specific_reports.stock_status_report.StockStatus",
+            "custom.ewsghana.reports.specific_reports.reporting_rates.ReportingRatesReport",
+            "custom.ewsghana.reports.maps.EWSMapReport"
+        ]
+        if web_reporter_roles:
+            web_reporter_role = web_reporter_roles[0]
+            web_reporter_role.permissions.view_reports = False
+            web_reporter_role.permissions.view_report_list = report_list
+            web_reporter_role.save()
+        else:
+            role = UserRole(
+                domain=self.domain,
+                permissions=Permissions(
+                    view_reports=False,
+                    view_report_list=report_list
+                ),
+                name='Web Reporter'
+            )
+            role.save()
+
     def create_or_edit_roles(self):
         self._create_or_edit_facility_manager_role()
         self._create_or_edit_administrator_role()
+        self._create_or_edit_web_reporter_role()
         self._edit_read_only_role()
 
     def product_sync(self, ews_product):
@@ -329,7 +371,11 @@ class EWSApi(APISynchronization):
                 supply_point = ews_location.supply_points[0]
             location.name = supply_point.name
             location.site_code = supply_point.code
-            location.location_type = supply_point.type
+            if supply_point.code in TEACHING_HOSPITALS:
+                location.location_type = 'Teaching Hospital'
+                location.lineage = location.lineage[1:]
+            else:
+                location.location_type = supply_point.type
             try:
                 sql_location = SQLLocation.objects.get(domain=self.domain, site_code=supply_point.code)
                 if not sql_location.location_type.administrative:
@@ -349,11 +395,22 @@ class EWSApi(APISynchronization):
                 sql_location.save()
         else:
             location.save()
-            supply_point = SupplyPointCase.get_or_create_by_location(location)
+            fake_location = Loc(
+                _id=location.get_id,
+                name=location.name,
+                external_id=None,
+                domain=self.domain
+            )
+            supply_point = SupplyPointCase.get_or_create_by_location(fake_location)
             sql_location = location.sql_location
             sql_location.supply_point_id = supply_point.get_id
             sql_location.save()
             location.archive()
+
+    def _sync_parent(self, parent_id):
+        parent = self.endpoint.get_location(parent_id)
+        loc_parent = self.location_sync(Location(parent))
+        return loc_parent.get_id
 
     def location_sync(self, ews_location):
         try:
@@ -373,9 +430,7 @@ class EWSApi(APISynchronization):
                     )
                     loc_parent_id = loc_parent.location_id
                 except SQLLocation.DoesNotExist:
-                    parent = self.endpoint.get_location(ews_location.parent_id)
-                    loc_parent = self.location_sync(Location(parent))
-                    loc_parent_id = loc_parent._id
+                    loc_parent_id = self._sync_parent(ews_location.parent_id)
 
                 location = Loc(parent=loc_parent_id)
             else:
@@ -417,11 +472,7 @@ class EWSApi(APISynchronization):
             if location_dict and apply_updates(location, location_dict):
                 location.save()
         for supply_point in ews_location.supply_points:
-            sp = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                      key=[self.domain, str(supply_point.id)],
-                                      reduce=False,
-                                      include_docs=True,
-                                      limit=1).first()
+            sp = get_supply_point_case_by_domain_external_id(self.domain, supply_point.id)
             if sp:
                 sql_location = sp.sql_location
                 if set(sql_location.products.values_list('code', flat=True)) != supply_point.products:
@@ -480,7 +531,15 @@ class EWSApi(APISynchronization):
         elif ews_webuser.groups and ews_webuser.groups[0].name == 'facility_manager':
             dm.role_id = UserRole.by_domain_and_name(self.domain, 'Facility manager')[0].get_id
         else:
-            dm.role_id = UserRole.get_read_only_role_by_domain(self.domain).get_id
+            if ews_webuser.supply_point:
+                supply_point = get_supply_point_case_by_domain_external_id(self.domain, ews_webuser.supply_point)
+                if supply_point:
+                    dm.location_id = supply_point.location_id
+                    dm.role_id = UserRole.by_domain_and_name(self.domain, 'Web Reporter')[0].get_id
+                else:
+                    dm.role_id = UserRole.get_read_only_role_by_domain(self.domain).get_id
+            else:
+                dm.role_id = UserRole.get_read_only_role_by_domain(self.domain).get_id
         user.save()
         return user
 
@@ -492,11 +551,7 @@ class EWSApi(APISynchronization):
         sms_user.save()
         if ews_smsuser.supply_point:
             if ews_smsuser.supply_point.id:
-                sp = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                          key=[self.domain, str(ews_smsuser.supply_point.id)],
-                                          reduce=False,
-                                          include_docs=True,
-                                          limit=1).first()
+                sp = get_supply_point_case_by_domain_external_id(self.domain, ews_smsuser.supply_point.id)
             else:
                 sp = None
 

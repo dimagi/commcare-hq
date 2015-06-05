@@ -244,7 +244,7 @@ class SmsBillable(models.Model):
     gateway_fee_conversion_rate = models.DecimalField(default=Decimal('1.0'), null=True, max_digits=20,
                                                       decimal_places=EXCHANGE_RATE_DECIMAL_PLACES)
     usage_fee = models.ForeignKey(SmsUsageFee, null=True, on_delete=models.PROTECT)
-    log_id = models.CharField(max_length=50)
+    log_id = models.CharField(max_length=50, db_index=True)
     phone_number = models.CharField(max_length=50)
     api_response = models.TextField(null=True, blank=True)
     is_valid = models.BooleanField(default=True, db_index=True)

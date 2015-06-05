@@ -43,18 +43,16 @@
 trunk: master
 name: autostaging
 branches:
-  - form-data-tz  # danny 5/27
   - subscription-no-contact-info # bb 8/4
   - vellum-staging # J$ 11/13
-  - locations-as-groups # tw 1/20
   - fixtures-spike  # cz 1/29
-  - usercase # Norman 3/27
-  - case-list-menu-icons+langMedia # TS 5/4
   - update-submodules # TS 5/6
   - locations-for-robber-barons  # Ethan 5/7
   - form-context-simple # Ben 5/13
   - langMedia # Sravan 5/20
-  - api-key # SK 5/26
+  - location-group-changes # tw 5/29
+  - renew-plan # Farid 6/4
+  - locations_for_robber_barons_staging_migration_conflict
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

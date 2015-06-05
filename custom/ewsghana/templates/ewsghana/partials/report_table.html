@@ -126,6 +126,8 @@
             d3.select(line_chart_id + ' svg')
                     .datum(data)
                     .transition().duration(500).call(line_chart);
+            $('.nv-legend').find('.nv-series').show();
+            $('.nv-legend').find('.nv-series').slice(-2).hide();
         };
 
         $('.toggle-column').bind('click', function() {
@@ -144,7 +146,7 @@
         });
 
         {% if report_table.slug != 'product_selection_pane' and report_table.slug != 'facility_report' %}
-            $("#report_table_product_selection_pane input:not(:checked)").each(function () {
+            $("#report_table_product_selection_pane input.product-checkbox:not(:checked)").each(function () {
                 if (datatable.fnSettings().aoColumns.length > 1) {
                     show_hide_table_columns(this);
                 }

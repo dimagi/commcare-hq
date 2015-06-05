@@ -109,20 +109,20 @@ def _noauth_post(request, domain, app_id=None):
         are submitting against for any previously existing cases matches the submission
         domain.
         """
+        allowed_ids = ('demo_user', 'demo_user_group_id', None)
         case_ids = set()
         for case_update in case_updates:
             case_ids.add(case_update.id)
             create_action = case_update.get_create_action()
             update_action = case_update.get_update_action()
             index_action = case_update.get_index_action()
-            # todo: Should these all (or at least the owner-based ones) also check demo_user_group_id?
             if create_action:
-                if create_action.user_id not in ('demo_user', None):
+                if create_action.user_id not in allowed_ids:
                     return False
-                if create_action.owner_id not in ('demo_user', None):
+                if create_action.owner_id not in allowed_ids:
                     return False
             if update_action:
-                if update_action.owner_id not in ('demo_user', None):
+                if update_action.owner_id not in allowed_ids:
                     return False
             if index_action:
                 for index in index_action.indices:
@@ -134,7 +134,7 @@ def _noauth_post(request, domain, app_id=None):
         for case in cases:
             if case.domain != domain:
                 return False
-            if case.owner_id or case.user_id != 'demo_user':
+            if case.owner_id or case.user_id not in allowed_ids:
                 return False
         return True
 

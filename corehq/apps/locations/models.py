@@ -16,7 +16,6 @@ from corehq.toggles import LOCATION_TYPE_STOCK_RATES
 from mptt.models import MPTTModel, TreeForeignKey
 
 
-LOCATION_SHARING_PREFIX = 'locationgroup-'
 LOCATION_REPORTING_PREFIX = 'locationreportinggroup-'
 
 
@@ -207,7 +206,7 @@ class SQLLocation(MPTTModel):
 
         if case_sharing:
             g.name = group_name() + '-Cases'
-            g._id = LOCATION_SHARING_PREFIX + self.location_id
+            g._id = self.location_id
             g.case_sharing = True
             g.reporting = False
         else:
@@ -237,7 +236,7 @@ class SQLLocation(MPTTModel):
 
         return self._make_group_object(
             user_id,
-            True,
+            case_sharing=True,
         )
 
     def reporting_group_object(self, user_id=None):
@@ -250,7 +249,7 @@ class SQLLocation(MPTTModel):
 
         return self._make_group_object(
             user_id,
-            False,
+            case_sharing=False,
         )
 
     @property
@@ -265,6 +264,12 @@ class SQLLocation(MPTTModel):
     @classmethod
     def by_domain(cls, domain):
         return cls.objects.filter(domain=domain)
+
+    @property
+    def path(self):
+        # This exists for backwards compatability with couch locations
+        return list(self.get_ancestors(include_self=True)
+                    .values_list('location_id', flat=True))
 
 
 def _filter_for_archived(locations, include_archive_ancestors):
@@ -628,10 +633,6 @@ class Location(CachedCouchDocumentMixin, Document):
         keys = [e['key'] for e in q if len(e['key']) == depth]
         return self.view('locations/hierarchy', keys=keys, reduce=False, include_docs=True).all()
 
-    @property
-    def _geopoint(self):
-        return '%s %s' % (self.latitude, self.longitude) if self.latitude is not None and self.longitude is not None else None
-
     def linked_supply_point(self):
         from corehq.apps.commtrack.models import SupplyPointCase
         return SupplyPointCase.get_by_location(self)
@@ -639,13 +640,10 @@ class Location(CachedCouchDocumentMixin, Document):
     @property
     def group_id(self):
         """
-        Returns the id with a prefix because this is
-        the magic id we are force setting the locations
-        case sharing group to be.
-
-        This is also the id that owns supply point cases.
+        This just returns the location's id. It used to add
+        a prefix.
         """
-        return LOCATION_SHARING_PREFIX + self._id
+        return self._id
 
     @property
     def location_type_object(self):

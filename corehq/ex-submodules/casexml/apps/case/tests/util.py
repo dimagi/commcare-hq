@@ -4,6 +4,7 @@ from datetime import datetime
 from xml.etree import ElementTree
 from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.domain.models import Domain
+from corehq.util.test_utils import unit_testing_only
 
 from dimagi.utils.couch.database import safe_delete
 from dimagi.utils.dates import utcnow_sans_milliseconds
@@ -231,16 +232,16 @@ def _delete_all(db, viewname):
                 pass
 
 
+@unit_testing_only
 def delete_all_cases():
-    assert settings.UNIT_TESTING
     _delete_all(CommCareCase.get_db(), 'case/get_lite')
 
 
+@unit_testing_only
 def delete_all_xforms():
-    assert settings.UNIT_TESTING
     _delete_all(XFormInstance.get_db(), 'couchforms/all_submissions_by_domain')
 
 
+@unit_testing_only
 def delete_all_sync_logs():
-    assert settings.UNIT_TESTING
     _delete_all(SyncLog.get_db(), 'phone/sync_logs_by_user')

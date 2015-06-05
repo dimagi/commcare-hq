@@ -761,6 +761,10 @@ class InviteWebUserView(BaseManageWebUserView):
     @memoized
     def invite_web_user_form(self):
         role_choices = UserRole.role_choices(self.domain)
+        loc = None
+        if 'location_id' in self.request.GET:
+            from corehq.apps.locations.models import SQLLocation
+            loc = SQLLocation.objects.get(location_id=self.request.GET.get('location_id'))
         if self.request.method == 'POST':
             current_users = [user.username for user in WebUser.by_domain(self.domain)]
             pending_invites = [di.email for di in DomainInvitation.by_domain(self.domain)]
@@ -770,7 +774,7 @@ class InviteWebUserView(BaseManageWebUserView):
                 role_choices=role_choices,
                 domain=self.domain
             )
-        return AdminInvitesUserForm(role_choices=role_choices, domain=self.domain)
+        return AdminInvitesUserForm(role_choices=role_choices, domain=self.domain, location=loc)
 
     @property
     def page_context(self):

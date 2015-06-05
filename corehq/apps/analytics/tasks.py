@@ -2,6 +2,7 @@ from celery.task import task
 import json
 import requests
 import urllib
+import KISSmetrics
 
 from settings import ANALYTICS_IDS
 
@@ -63,3 +64,19 @@ def track_built_app_on_hubspot(webuser):
     if vid:
         # Only track the property if the contact already exists.
         _track_on_hubspot(webuser, {'built_app': True})
+
+
+@task(queue='background_queue', acks_late=True, ignore_result=True)
+def track_workflow(email, event, properties=None):
+    """
+    Record an event in KISSmetrics.
+    :param email: The email address by which to identify the user.
+    :param event: The name of the event.
+    :param properties: A dictionary or properties to set on the user.
+    :return:
+    """
+    api_key = ANALYTICS_IDS.get("KISSMETRICS_KEY", None)
+    if api_key:
+        km = KISSmetrics.Client(key=api_key)
+        km.record(email, event, properties if properties else {})
+        # TODO: Consider adding some error handling for bad/failed requests.

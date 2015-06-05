@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from mock import MagicMock
 
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.mock import CaseFactory
 from casexml.apps.case.tests.util import check_xml_line_by_line
 from casexml.apps.case.xml import V1
 
@@ -79,6 +80,9 @@ class BaseRepeaterTest(TestCase):
             }
         )
 
+    def repeat_records(self):
+        return RepeatRecord.all(domain=self.domain, due_before=datetime.utcnow())
+
 
 class RepeaterTest(BaseRepeaterTest):
     def setUp(self):
@@ -125,6 +129,7 @@ class RepeaterTest(BaseRepeaterTest):
             repeat_record.delete()
 
     def test_repeater(self):
+        #  this test should probably be divided into more units
 
         CommCareCase.get(case_id)
 
@@ -195,13 +200,14 @@ class RepeaterTest(BaseRepeaterTest):
             self.assertEqual(repeat_record.succeeded, True)
             self.assertEqual(repeat_record.next_check, None)
 
-        repeat_records = RepeatRecord.all(domain=self.domain, due_before=now())
-        self.assertEqual(len(repeat_records), 0)
+        self.assertEqual(len(self.repeat_records()), 0)
 
         self.post_xml(update_xform_xml)
+        self.assertEqual(len(self.repeat_records()), 2)
 
-        repeat_records = RepeatRecord.all(domain=self.domain, due_before=now())
-        self.assertEqual(len(repeat_records), 2)
+        CaseFactory().close_case(case_id)
+        #  closed case should be forwarded too
+        self.assertEqual(len(self.repeat_records()), 4)
 
 
 class IgnoreDocumentTest(BaseRepeaterTest):
