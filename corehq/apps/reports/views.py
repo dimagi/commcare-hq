@@ -873,7 +873,7 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
         "notes": notes,
         "startdate": date_range.get("startdate") if date_range else "",
         "enddate": date_range.get("enddate") if date_range else "",
-        "once": once,
+        "report_type": _("once off report") if once else _("scheduled report"),
     }), excel_attachments
 
 @login_and_domain_required

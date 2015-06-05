@@ -19,10 +19,8 @@ td.null-entry {
 <body>
     {% if email %}
     <p>
-        {% trans "This is a" %}
-        {% if once %}{% trans "once off" %}{% else %}{% trans "scheduled" %}{% endif %}
         {% blocktrans %}
-        report from <a href="{{ DNS_name }}">CommCareHQ</a> for the project '{{ domain }}'.
+        This is a {{ report_type }} from <a href="{{ DNS_name }}">CommCareHQ</a> for the project '{{ domain }}'.
         {% endblocktrans %}
     </p>
     <p>
