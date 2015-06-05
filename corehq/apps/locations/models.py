@@ -16,7 +16,6 @@ from corehq.toggles import LOCATION_TYPE_STOCK_RATES
 from mptt.models import MPTTModel, TreeForeignKey
 
 
-LOCATION_SHARING_PREFIX = 'locationgroup-'
 LOCATION_REPORTING_PREFIX = 'locationreportinggroup-'
 
 
@@ -207,7 +206,7 @@ class SQLLocation(MPTTModel):
 
         if case_sharing:
             g.name = group_name() + '-Cases'
-            g._id = LOCATION_SHARING_PREFIX + self.location_id
+            g._id = self.location_id
             g.case_sharing = True
             g.reporting = False
         else:
@@ -237,7 +236,7 @@ class SQLLocation(MPTTModel):
 
         return self._make_group_object(
             user_id,
-            True,
+            case_sharing=True,
         )
 
     def reporting_group_object(self, user_id=None):
@@ -250,7 +249,7 @@ class SQLLocation(MPTTModel):
 
         return self._make_group_object(
             user_id,
-            False,
+            case_sharing=False,
         )
 
     @property
@@ -641,13 +640,10 @@ class Location(CachedCouchDocumentMixin, Document):
     @property
     def group_id(self):
         """
-        Returns the id with a prefix because this is
-        the magic id we are force setting the locations
-        case sharing group to be.
-
-        This is also the id that owns supply point cases.
+        This just returns the location's id. It used to add
+        a prefix.
         """
-        return LOCATION_SHARING_PREFIX + self._id
+        return self._id
 
     @property
     def location_type_object(self):
