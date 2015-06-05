@@ -719,6 +719,7 @@ Transforms can be used to transform the value returned by a column just before i
 ```
 
 ### Rounding decimals
+Rounds decimal and floating point numbers to two decimal places.
 
 ```
 {
