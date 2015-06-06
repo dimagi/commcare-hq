@@ -327,7 +327,8 @@ class StockStatus(MultiReport):
             products=products if products and products[0] != ALL_OPTION else [],
             report_type=self.request.GET.get('report_type', None),
             user=self.request.couch_user,
-            export=False
+            export=False,
+            is_rendered_as_email=self.is_rendered_as_email
         )
 
     @property

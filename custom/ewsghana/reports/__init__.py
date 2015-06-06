@@ -375,5 +375,6 @@ class ProductSelectionPane(EWSData):
 
         return render_to_string('ewsghana/partials/product_selection_pane.html', {
             'products_by_program': result,
+            'is_rendered_as_email': self.config.get('is_rendered_as_email', False),
             'hide_columns': self.hide_columns
         })
