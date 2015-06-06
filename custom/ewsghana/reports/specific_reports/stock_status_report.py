@@ -22,8 +22,20 @@ from custom.ewsghana.utils import get_supply_points, make_url, get_second_week, 
 class ProductAvailabilityData(EWSData):
     show_chart = True
     show_table = False
-    title = 'Product Availability'
     slug = 'product_availability'
+
+    @property
+    def title(self):
+        if not self.location:
+            return ""
+
+        location_type = self.location.location_type.name.lower()
+        if location_type == 'country':
+            return "Product availability - National Aggregate"
+        elif location_type == 'region':
+            return "Product availability - Regional Aggregate"
+        elif location_type == 'district':
+            return "Product availability - District Aggregate"
 
     @property
     def headers(self):
@@ -107,7 +119,7 @@ class ProductAvailabilityData(EWSData):
                                              row['product_name']])
                     ret_data.append({'color': chart_config['label_color'][k], 'label': k, 'data': datalist})
                 return ret_data
-            chart = EWSMultiBarChart('', x_axis=Axis('Products'), y_axis=Axis('', '.2%'))
+            chart = EWSMultiBarChart('', x_axis=Axis('Products'), y_axis=Axis('', '%'))
             chart.rotateLabels = -45
             chart.marginBottom = 120
             chart.stacked = False
@@ -125,10 +137,22 @@ class ProductAvailabilityData(EWSData):
 class MonthOfStockProduct(EWSData):
 
     slug = 'mos_product'
-    title = 'Current MOS by Product'
     show_chart = False
     show_table = True
     use_datatables = True
+
+    @property
+    def title(self):
+        if not self.location:
+            return ""
+
+        location_type = self.location.location_type.name.lower()
+        if location_type == 'country':
+            return "Current MOS by Product - CMS, RMS, and Teaching Hospitals"
+        elif location_type == 'region':
+            return "Current MOS by Product - RMS and Teaching Hospitals"
+        elif location_type == 'district':
+            return "Current MOS by Product"
 
     @property
     @memoized
@@ -209,11 +233,23 @@ class MonthOfStockProduct(EWSData):
 class StockoutsProduct(EWSData):
 
     slug = 'stockouts_product'
-    title = 'Stockout by Product'
     show_chart = True
     show_table = False
     chart_x_label = 'Months'
     chart_y_label = 'Facility count'
+
+    @property
+    def title(self):
+        if not self.location:
+            return ""
+
+        location_type = self.location.location_type.name.lower()
+        if location_type == 'country':
+            return "Stockouts - CMS, RMS, and Teaching Hospitals"
+        elif location_type == 'region':
+            return "Stockouts - RMS and Teaching Hospitals"
+        elif location_type == 'district':
+            return "Stockouts"
 
     @property
     def headers(self):
