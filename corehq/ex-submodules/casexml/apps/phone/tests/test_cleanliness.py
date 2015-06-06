@@ -10,6 +10,7 @@ from casexml.apps.phone.tests.test_sync_mode import SyncBaseTest
 from corehq.toggles import OWNERSHIP_CLEANLINESS
 
 
+@override_settings(TESTS_SHOULD_TRACK_CLEANLINESS=None)
 class OwnerCleanlinessTest(SyncBaseTest):
 
     def setUp(self):
@@ -228,9 +229,6 @@ class OwnerCleanlinessTest(SyncBaseTest):
         )[0]
         flag = OwnershipCleanlinessFlag.objects.get(domain=self.domain, owner_id=new_owner)
         self.assertEqual(True, flag.is_clean)
-
-
-OwnerCleanlinessTest = override_settings(TESTS_SHOULD_TRACK_CLEANLINESS=None)(OwnerCleanlinessTest)
 
 
 class CleanlinessUtilitiesTest(SimpleTestCase):
