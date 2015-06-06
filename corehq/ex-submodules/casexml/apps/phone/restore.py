@@ -5,18 +5,18 @@ import os
 from uuid import uuid4
 import shutil
 import hashlib
-import tempfile
 from couchdbkit import ResourceConflict, ResourceNotFound
 from casexml.apps.phone.data_providers import get_restore_providers, get_long_running_providers
 from casexml.apps.phone.data_providers.case.load_testing import get_loadtest_factor
 from casexml.apps.phone.exceptions import (
     MissingSyncLog, InvalidSyncLogException, SyncLogUserMismatch,
     BadStateException, RestoreException,
-)
-from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, FILE_RESTORE
+    IncompatibleSyncLogType)
+from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, FILE_RESTORE, OWNERSHIP_CLEANLINESS_RESTORE
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
-from casexml.apps.phone.models import SyncLog, get_properly_wrapped_sync_log
+from casexml.apps.phone.models import SyncLog, get_properly_wrapped_sync_log, LOG_FORMAT_SIMPLIFIED, \
+    LOG_FORMAT_LEGACY, get_sync_log_class_by_format
 import logging
 from dimagi.utils.couch.database import get_db, get_safe_write_kwargs
 from casexml.apps.phone import xml
@@ -331,13 +331,19 @@ class RestoreState(object):
 
     def validate_state(self):
         check_version(self.params.version)
-        if self.last_sync_log and self.params.state_hash:
-            parsed_hash = CaseStateHash.parse(self.params.state_hash)
-            computed_hash = self.last_sync_log.get_state_hash()
-            if computed_hash != parsed_hash:
-                raise BadStateException(expected=computed_hash,
-                                        actual=parsed_hash,
-                                        case_ids=self.last_sync_log.get_footprint_of_cases_on_phone())
+        if self.last_sync_log:
+            if type(self.last_sync_log) != self.sync_log_class:
+                raise IncompatibleSyncLogType('Unable to convert from {} to {}'.format(
+                    type(self.last_sync_log), self.sync_log_class,
+                ))
+            if self.params.state_hash:
+                parsed_hash = CaseStateHash.parse(self.params.state_hash)
+                computed_hash = self.last_sync_log.get_state_hash()
+                if computed_hash != parsed_hash:
+                    raise BadStateException(expected=computed_hash,
+                                            actual=parsed_hash,
+                                            case_ids=self.last_sync_log.get_footprint_of_cases_on_phone())
+
 
     @property
     @memoized
@@ -367,6 +373,18 @@ class RestoreState(object):
     @property
     def version(self):
         return self.params.version
+
+    @property
+    def use_clean_restore(self):
+        def should_use_clean_restore(domain):
+            if settings.UNIT_TESTING:
+                override = getattr(
+                    settings, 'TESTS_SHOULD_USE_CLEAN_RESTORE', None)
+                if override is not None:
+                    return override
+            return OWNERSHIP_CLEANLINESS_RESTORE.enabled(domain)
+
+        return should_use_clean_restore(self.domain)
 
     @property
     @memoized
@@ -402,6 +420,11 @@ class RestoreState(object):
         )
         new_synclog.save(**get_safe_write_kwargs())
         return new_synclog
+
+    @property
+    def sync_log_class(self):
+        format = LOG_FORMAT_SIMPLIFIED if self.use_clean_restore else LOG_FORMAT_LEGACY
+        return get_sync_log_class_by_format(format)
 
     @property
     def restore_class(self):
