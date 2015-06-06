@@ -138,7 +138,6 @@ class OwnerCleanlinessTest(SyncBaseTest):
         self.assertEqual(self.child._id, self.owner_cleanliness.hint)
         self._verify_set_cleanliness_flags()
 
-    @override_settings(TESTS_SHOULD_TRACK_CLEANLINESS=None)
     def test_toggle(self):
         # make sure the flag gets removed
         OWNERSHIP_CLEANLINESS.randomness = 0
@@ -229,6 +228,9 @@ class OwnerCleanlinessTest(SyncBaseTest):
         )[0]
         flag = OwnershipCleanlinessFlag.objects.get(domain=self.domain, owner_id=new_owner)
         self.assertEqual(True, flag.is_clean)
+
+
+OwnerCleanlinessTest = override_settings(TESTS_SHOULD_TRACK_CLEANLINESS=None)(OwnerCleanlinessTest)
 
 
 class CleanlinessUtilitiesTest(SimpleTestCase):
