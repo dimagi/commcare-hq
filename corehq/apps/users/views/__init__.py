@@ -45,7 +45,13 @@ from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser,
 from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser, domain_admin_required)
 from corehq.apps.orgs.models import Team
 from corehq.apps.reports.util import get_possible_reports
-from corehq.apps.sms import verify as smsverify
+from corehq.apps.sms.verify import (
+    initiate_sms_verification_workflow,
+    VERIFICATION__ALREADY_IN_USE,
+    VERIFICATION__ALREADY_VERIFIED,
+    VERIFICATION__RESENT_PENDING,
+    VERIFICATION__WORKFLOW_STARTED,
+)
 from corehq.util.couch import get_document_or_404
 
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
@@ -847,14 +853,15 @@ def verify_phone_number(request, domain, couch_user_id):
     phone_number = urllib.unquote(request.GET['phone_number'])
     user = CouchUser.get_by_user_id(couch_user_id, domain)
 
-    try:
-        # send verification message
-        smsverify.send_verification(domain, user, phone_number)
-
-        # create pending verified entry if doesn't exist already
-        user.save_verified_number(domain, phone_number, False, None)
-    except BadSMSConfigException:
-        messages.error(request, "Could not verify phone number. It seems there is no usable SMS backend.")
+    result = initiate_sms_verification_workflow(user, phone_number)
+    if result == VERIFICATION__ALREADY_IN_USE:
+        messages.error(request, _('Cannot start verification workflow. Phone number is already in use.'))
+    elif result == VERIFICATION__ALREADY_VERIFIED:
+        messages.error(request, _('Phone number is already verified.'))
+    elif result == VERIFICATION__RESENT_PENDING:
+        messages.success(request, _('Verification message resent.'))
+    elif result == VERIFICATION__WORKFLOW_STARTED:
+        messages.success(request, _('Verification workflow started.'))
 
     if user.is_commcare_user():
         from corehq.apps.users.views.mobile import EditCommCareUserView
