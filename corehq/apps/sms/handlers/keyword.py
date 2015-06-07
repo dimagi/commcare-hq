@@ -437,8 +437,7 @@ def user_can_access_case(user, case):
 def send_keyword_response(vn, message_id, logged_event):
     subevent = logged_event.create_subevent_for_single_sms(
         vn.owner_doc_type,
-        vn.owner_id,
-        case
+        vn.owner_id
     )
     metadata = MessageMetadata(
         workflow=WORKFLOW_KEYWORD,
@@ -475,11 +474,11 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
                     return
                 elif matches > 1:
                     send_keyword_response(verified_number, MSG_MULTIPLE_CASES_FOUND, logged_event)
-                    logged_event.error(MessagingEvent.MULTIPLE_CASES_WITH_EXTERNAL_ID_FOUND)
+                    logged_event.error(MessagingEvent.ERROR_MULTIPLE_CASES_WITH_EXTERNAL_ID_FOUND)
                     return
             else:
                 send_keyword_response(verified_number, MSG_MISSING_EXTERNAL_ID, logged_event)
-                logged_event.error(MessagingEvent.NO_EXTERNAL_ID_GIVEN)
+                logged_event.error(MessagingEvent.ERROR_NO_EXTERNAL_ID_GIVEN)
                 return
             args = args[2:]
         else:
@@ -544,6 +543,6 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
             if not res:
                 # If the structured sms processing wasn't successful, don't
                 # process any of the other actions
-                logged_event.error(COULD_NOT_PROCESS_STRUCTURED_SMS)
+                logged_event.error(MessagingEvent.ERROR_COULD_NOT_PROCESS_STRUCTURED_SMS)
                 return
     logged_event.completed()

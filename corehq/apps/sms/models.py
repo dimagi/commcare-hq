@@ -915,9 +915,6 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             source=source,
             source_id=source_id,
             content_type=content_type,
-            form_unique_id=(reminder.current_event.form_unique_id
-                if reminder_definition.method in (METHOD_SMS_SURVEY, METHOD_IVR_SURVEY)
-                else None),
             status=cls.STATUS_IN_PROGRESS,
             recipient_type=recipient_type,
             recipient_id=recipient.get_id if recipient_type else None

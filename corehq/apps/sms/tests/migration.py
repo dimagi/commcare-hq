@@ -57,6 +57,7 @@ class SQLMigrationTestCase(TestCase):
         )
         event.save()
         subevent = MessagingSubEvent(
+            date=self.randomDateTime(),
             parent=event,
             recipient_type=MessagingEvent.RECIPIENT_CASE,
             content_type=MessagingEvent.CONTENT_SMS,
