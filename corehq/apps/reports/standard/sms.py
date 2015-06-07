@@ -505,6 +505,10 @@ class MessageEventDetailReport(BaseMessagingEventReport):
     exportable = False
     hide_filters = True
 
+    @classmethod
+    def show_in_navigation(cls, *args, **kwargs):
+        return False
+
     @property
     def headers(self):
         return DataTablesHeader(
@@ -581,6 +585,10 @@ class SurveyDetailReport(BaseMessagingEventReport):
     exportable = False
     hide_filters = True
     report_template_path = "reports/messaging/survey_detail.html"
+
+    @classmethod
+    def show_in_navigation(cls, *args, **kwargs):
+        return False
 
     @property
     def template_context(self):
