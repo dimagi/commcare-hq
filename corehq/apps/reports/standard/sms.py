@@ -336,8 +336,11 @@ class MessageLogReport(BaseCommConnectLogReport):
 class BaseMessagingEventReport(BaseCommConnectLogReport):
     def get_source_display(self, event):
         source = dict(MessagingEvent.SOURCE_CHOICES).get(event.source)
-        content_type = dict(MessagingEvent.CONTENT_CHOICES).get(event.content_type)
-        return self._fmt('%s | %s' % (_(source), _(content_type)))
+        if event.content_type == MessagingEvent.CONTENT_NONE:
+            return self._fmt(_(source))
+        else:
+            content_type = dict(MessagingEvent.CONTENT_CHOICES).get(event.content_type)
+            return self._fmt('%s | %s' % (_(source), _(content_type)))
 
     def get_status_display(self, event, sms=None):
         """

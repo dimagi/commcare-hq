@@ -694,11 +694,13 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     """
     STATUS_IN_PROGRESS = 'PRG'
     STATUS_COMPLETED = 'CMP'
+    STATUS_NOT_COMPLETED = 'NOT'
     STATUS_ERROR = 'ERR'
 
     STATUS_CHOICES = (
         (STATUS_IN_PROGRESS, ugettext_noop('In Progress')),
         (STATUS_COMPLETED, ugettext_noop('Completed')),
+        (STATUS_NOT_COMPLETED, ugettext_noop('Not Completed')),
         (STATUS_ERROR, ugettext_noop('Error')),
     )
 
@@ -706,12 +708,14 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     SOURCE_KEYWORD = 'KWD'
     SOURCE_REMINDER = 'RMD'
     SOURCE_OTHER = 'OTH'
+    SOURCE_PHONE_VERIFICATION = 'VER'
 
     SOURCE_CHOICES = (
         (SOURCE_BROADCAST, ugettext_noop('Broadcast')),
         (SOURCE_KEYWORD, ugettext_noop('Keyword')),
         (SOURCE_REMINDER, ugettext_noop('Reminder')),
         (SOURCE_OTHER, ugettext_noop('Other')),
+        (SOURCE_PHONE_VERIFICATION, ugettext_noop('Phone Verification')),
     )
 
     CONTENT_NONE = 'NOP'
@@ -939,6 +943,34 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             recipient_type=recipient_type,
             recipient_id=contact.get_id if recipient_type else None
         )
+
+    @classmethod
+    def create_verification_event(cls, domain, contact):
+        recipient_type = cls.get_recipient_type(contact)
+        return cls.objects.create(
+            domain=domain,
+            date=datetime.utcnow(),
+            source=cls.SOURCE_PHONE_VERIFICATION,
+            content_type=cls.CONTENT_NONE,
+            status=cls.STATUS_IN_PROGRESS,
+            recipient_type=recipient_type,
+            recipient_id=contact.get_id if recipient_type else None
+        )
+
+    @classmethod
+    def get_current_verification_event(cls, domain, contact_id, phone_number):
+        """
+        Returns the latest phone verification event that is in progress
+        for the given contact and phone number, or None if one does not exist.
+        """
+        qs = cls.objects.filter(
+            domain=domain,
+            recipient_id=contact_id,
+            messagingsubevent__sms__phone_number=smsutil.clean_phone_number(phone_number),
+            source=cls.SOURCE_PHONE_VERIFICATION,
+            status=cls.STATUS_IN_PROGRESS
+        )
+        return qs.order_by('-date')[0] if qs.count() > 0 else None
 
 
 class MessagingSubEvent(models.Model, MessagingStatusMixin):
