@@ -182,7 +182,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         id that is important for case sharing group selection
         is that actual group id.
         """
-        return EMWF.selected_location_sharing_group_ids(self.request)
+        return EMWF.selected_sharing_location_ids(self.request)
 
     def location_reporting_owner_ids(self):
         """

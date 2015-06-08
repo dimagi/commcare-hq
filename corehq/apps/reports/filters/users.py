@@ -60,7 +60,7 @@ class LinkedUserFilter(BaseDrilldownOptionFilter):
         for type in cls.user_types:
             yield (
                 type,
-                _("Select %(child_type)s") % {'child_type': type}, 
+                _("Select %(child_type)s") % {'child_type': type},
                 type
             )
 
@@ -91,7 +91,7 @@ class LinkedUserFilter(BaseDrilldownOptionFilter):
                 ret['text'] = node['user'].raw_username
 
             if 'descendants' in node:
-                ret['next'] = [get_values(node, level + 1) 
+                ret['next'] = [get_values(node, level + 1)
                                for node in node['descendants']]
             elif node.get('child_users'):
                 ret['next'] = [{
@@ -230,6 +230,9 @@ class EmwfMixin(object):
             "[%s]" % HQUserType.human_readable[t]
         )
 
+    def location_group_tuple(self, loc_group):
+        return (loc_group._id, loc_group.name + ' [group]')
+
     @property
     @memoized
     def user_types(self):
@@ -286,26 +289,12 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
 
     @classmethod
     def selected_group_ids(cls, request):
-        return cls.selected_reporting_group_ids(request) +\
-               cls.selected_sharing_group_ids(request)
+        return cls.selected_reporting_group_ids(request)
 
     @classmethod
     def selected_reporting_group_ids(cls, request):
         emws = request.GET.getlist(cls.slug)
         return [g[3:] for g in emws if g.startswith("g__")]
-
-    @classmethod
-    def selected_sharing_group_ids(cls, request):
-        emws = request.GET.getlist(cls.slug)
-        return [g[4:] for g in emws if g.startswith("sg__")]
-
-    @classmethod
-    def selected_location_sharing_group_ids(cls, request):
-        emws = request.GET.getlist(cls.slug)
-        return SQLLocation.objects.filter(
-            location_id__in=emws,
-            is_archived=False
-        ).values_list('location_id', flat=True)
 
     @classmethod
     def selected_location_reporting_group_ids(cls, request):
@@ -331,58 +320,10 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
                 })
             return defaults
 
-        user_ids = self.selected_user_ids(self.request)
-        user_types = self.selected_user_types(self.request)
-        group_ids = self.selected_group_ids(self.request)
-        location_sharing_ids = self.selected_location_sharing_group_ids(self.request)
-        location_reporting_ids = self.selected_location_reporting_group_ids(self.request)
-
-        selected = [t for t in self.user_types
-                    if t[0][3:].isdigit() and int(t[0][3:]) in user_types]
-        if group_ids:
-            q = {"query": {"filtered": {"filter": {
-                "ids": {"values": group_ids}
-            }}}}
-            res = es_query(
-                es_url=ES_URLS["groups"],
-                q=q,
-                fields=['_id', 'name', "case_sharing", "reporting"],
-            )
-            for group in res['hits']['hits']:
-                if group['fields'].get("reporting", False):
-                    selected.append(self.reporting_group_tuple(group['fields']))
-                if group['fields'].get("case_sharing", False):
-                    # FIXME
-                    selected.append(self.sharing_group_tuple(group['fields']))
-
-        if location_sharing_ids:
-            from corehq.apps.commtrack.models import SQLLocation
-            locs = SQLLocation.objects.filter(
-                location_id__in=location_sharing_ids
-            )
-            for loc in locs:
-                loc_group = loc.case_sharing_group_object()
-                selected.append((loc_group._id, loc_group.name + ' [case sharing]'))
-
-        if location_reporting_ids:
-            from corehq.apps.commtrack.models import SQLLocation
-            for loc_group_id in location_reporting_ids:
-                loc = SQLLocation.objects.get(
-                    location_id=loc_group_id.replace(LOCATION_REPORTING_PREFIX, '')
-                )
-                loc_group = loc.reporting_group_object()
-                selected.append((loc_group._id, loc_group.name + ' [group]'))
-
-        if user_ids:
-            q = {"query": {"filtered": {"filter": {
-                "ids": {"values": user_ids}
-            }}}}
-            res = es_query(
-                es_url=ES_URLS["users"],
-                q=q,
-                fields=['_id', 'username', 'first_name', 'last_name', 'doc_type'],
-            )
-            selected += [self.user_tuple(hit['fields']) for hit in res['hits']['hits']]
+        selected = (self.selected_user_type_entries(self.request) +
+                    self.selected_user_entries(self.request) +
+                    self.selected_group_entries(self.request) +
+                    self.selected_location_entries(self.request))
 
         known_ids = dict(selected)
         return [
@@ -390,6 +331,58 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
             for id in selected_ids
             if id in known_ids
         ]
+
+
+    def selected_user_type_entries(self, request):
+        user_types = self.selected_user_types(request)
+        return [t for t in self.user_types
+                if t[0][3:].isdigit() and int(t[0][3:]) in user_types]
+
+    def selected_user_entries(self, request):
+        user_ids = self.selected_user_ids(request)
+        if not user_ids:
+            return []
+        q = {"query": {"filtered": {"filter": {
+            "ids": {"values": user_ids}
+        }}}}
+        res = es_query(
+            es_url=ES_URLS["users"],
+            q=q,
+            fields=['_id', 'username', 'first_name', 'last_name', 'doc_type'],
+        )
+        return [self.user_tuple(hit['fields']) for hit in res['hits']['hits']]
+
+    def selected_groups_query(self, request):
+        group_ids = self.selected_group_ids(request)
+        if not group_ids:
+            return []
+        q = {"query": {"filtered": {"filter": {
+            "ids": {"values": group_ids}
+        }}}}
+        return es_query(
+            es_url=ES_URLS["groups"],
+            q=q,
+            fields=['_id', 'name', "case_sharing", "reporting"],
+        )['hits']['hits']
+
+    def selected_group_entries(self, request):
+        return [self.reporting_group_tuple(group['fields'])
+                for group in self.selected_groups_query(request)
+                if group['fields'].get("reporting", False)]
+
+    def selected_location_entries(self, request):
+        location_reporting_ids = self.selected_location_reporting_group_ids(request)
+        if not location_reporting_ids:
+            return []
+
+        selected = []
+        for loc_group_id in location_reporting_ids:
+            loc = SQLLocation.objects.get(
+                location_id=loc_group_id.replace(LOCATION_REPORTING_PREFIX, '')
+            )
+            loc_group = loc.reporting_group_object()
+            selected.append(self.location_group_tuple(loc_group))
+        return selected
 
     @property
     def filter_context(self):
