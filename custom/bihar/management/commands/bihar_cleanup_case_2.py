@@ -15,17 +15,22 @@ MOTECH_ID = "fb6e0b19cbe3ef683a10c4c4766a1ef3"
 
 class Command(BaseCommand):
     """
-    One time command for cleaning up care-bihar data
+    One time command for cleaning up care-bihar data.
+    Takes one argument, the directory containing the three input files.
     """
 
     def handle(self, *args, **options):
-        case_type_keys = [
-                ["all type", "care-bihar", "task"],
-                ["all type", "care-bihar", ""],
-                ["all type", "care-bihar", None]
-            ]
+        if len(args) != 1:
+            print "Invalid arguments: %s" % str(args)
+            return
+        dir = args[0]
+        domain = "care-bihar"
+        domain = "project-commcarehq"
+
+        case_types = ["task", "", None]
         cases = []
-        for key in case_type_keys:
+        for case_type in case_types:
+            key = ["all type", domain, case_type]
             cases += CommCareCase.view(
                 'case/all_cases',
                 startkey=key,
@@ -37,7 +42,7 @@ class Command(BaseCommand):
         cases_to_save = set()
 
         # sheet1: update user id for task cases
-        with open('update_userid.csv') as f:
+        with open(dir + '/update_userid.csv') as f:
             reader = csv.reader(f)
             reader.next()
             for row in reader:
@@ -46,7 +51,7 @@ class Command(BaseCommand):
                 cases_to_save.add(case.id)
 
         # sheet2: check owner id for task cases
-        with open('blank_case_type.csv') as f:
+        with open(dir + '/blank_case_type.csv') as f:
             reader = csv.reader(f)
             reader.next()
             for row in reader:
@@ -58,7 +63,7 @@ class Command(BaseCommand):
                     logger.info("Updated case with id " + case.id + " to have owner with id " + case.owner_id)
 
         # sheet3: update cases without types
-        with open('update_ownerid.csv') as f:#blank/None
+        with open(dir + '/update_ownerid.csv') as f:#blank/None
             reader = csv.reader(f)
             reader.next()
             for row in reader:
