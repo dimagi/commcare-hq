@@ -46,32 +46,3 @@ def change_submissions_app_id(request, domain):
         sub.save()
     messages.success(request, 'Your fix was successful and affected %s submissions' % len(submissions))
     return HttpResponseRedirect(next)
-
-
-@require_superuser
-def delete_all_data(request, domain, template="cleanup/delete_all_data.html"):
-    if request.method == 'GET':
-        return render(request, template, {
-            'domain': domain
-        })
-    key = make_form_couch_key(domain)
-    xforms = XFormInstance.view('reports_forms/all_forms',
-        startkey=key,
-        endkey=key+[{}],
-        include_docs=True,
-        reduce=False
-    )
-    cases = CommCareCase.view('case/by_date_modified_owner',
-        startkey=[domain, {}, {}],
-        endkey=[domain, {}, {}, {}],
-        include_docs=True,
-        reduce=False
-    )
-    suffix = DELETED_SUFFIX
-    deletion_id = random_hex()
-    for thing_list in (xforms, cases):
-        for thing in thing_list:
-            thing.doc_type += suffix
-            thing['-deletion_id'] = deletion_id
-            thing.save()
-    return HttpResponseRedirect(reverse('homepage'))
