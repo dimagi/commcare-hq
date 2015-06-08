@@ -194,7 +194,7 @@ class TestExpandedColumn(TestCase):
             format="default",
             description="foo"
         ))
-        cols = _expand_column(column, ["positive", "negative"])
+        cols = _expand_column(column, ["positive", "negative"], "en")
 
         self.assertEqual(len(cols), 2)
         self.assertEqual(type(cols[0].view), SumWhen)
