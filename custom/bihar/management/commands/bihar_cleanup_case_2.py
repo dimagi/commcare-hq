@@ -40,7 +40,7 @@ class Command(BaseCommand):
                     self.cases_to_save[case.case_id] = case
 
         # sheet2: check owner id for task cases
-        with open(dir + '/update_ownerid.csv') as f:#blank/None
+        with open(dir + '/update_ownerid.csv') as f:
             reader = csv.reader(f)
             reader.next()
             for row in reader:
