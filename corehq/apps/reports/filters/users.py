@@ -213,6 +213,7 @@ class BaseGroupedMobileWorkerFilter(BaseSingleOptionFilter):
 
 
 class EmwfMixin(object):
+    additional_options = None
 
     def user_tuple(self, u):
         user = util._report_user_dict(u)
@@ -222,9 +223,6 @@ class EmwfMixin(object):
 
     def reporting_group_tuple(self, g):
         return ("g__%s" % g['_id'], '%s [group]' % g['name'])
-
-    def sharing_group_tuple(self, g):
-        return ("sg__%s" % g['_id'], '%s [case sharing]' % g['name'])
 
     def user_type_tuple(self, t):
         return (
@@ -241,27 +239,9 @@ class EmwfMixin(object):
         user_types = [getattr(HQUserType, t) for t in types]
         user_type_tuples = [("t__0", _("[All mobile workers]"))] + \
             [self.user_type_tuple(t) for t in user_types]
-        if (getattr(self, "show_all_filter", False)
-            or (getattr(self, "kwargs", None)
-                and "all_data" in self.kwargs)):
-            user_type_tuples = [("all_data", "[All Data]")] + user_type_tuples
+        if self.additional_options:
+            user_type_tuples = self.additional_options + user_type_tuples
         return user_type_tuples
-
-    def get_location_groups(self):
-        locations = SQLLocation.objects.filter(
-            name__icontains=self.q.lower(),
-            domain=self.domain,
-        )
-        for loc in locations:
-            group = loc.reporting_group_object()
-            yield (group._id, group.name + ' [group]')
-
-        if self.include_share_groups:
-            # filter out any non case share type locations for this part
-            locations = locations.filter(location_type__shares_cases=True)
-            for loc in locations:
-                group = loc.case_sharing_group_object()
-                yield (group._id, group.name + ' [case sharing]')
 
 
 _UserData = namedtupledict('_UserData', (
@@ -288,6 +268,7 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
         "Start typing to specify the groups and users to include in the report."
         " You can select multiple users and groups.")
     is_cacheable = False
+    options_url = 'emwf_options'
 
     @classmethod
     def selected_user_ids(cls, request):
@@ -371,6 +352,7 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
                 if group['fields'].get("reporting", False):
                     selected.append(self.reporting_group_tuple(group['fields']))
                 if group['fields'].get("case_sharing", False):
+                    # FIXME
                     selected.append(self.sharing_group_tuple(group['fields']))
 
         if location_sharing_ids:
@@ -412,7 +394,7 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
     @property
     def filter_context(self):
         context = super(ExpandedMobileWorkerFilter, self).filter_context
-        url = reverse('emwf_options', args=[self.domain])
+        url = reverse(self.options_url, args=[self.domain])
         context.update({'endpoint': url})
         return context
 
@@ -515,30 +497,6 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
         return {
             cls.slug: 'g__%s' % group_id
         }
-
-
-class ExpandedMobileWorkerFilterWithAllData(ExpandedMobileWorkerFilter):
-    show_all_filter = True
-
-    @property
-    def filter_context(self):
-        context = super(ExpandedMobileWorkerFilterWithAllData, self).filter_context
-        url = reverse('emwf_options_with_all_data', args=[self.domain])
-        context.update({'endpoint': url})
-        return context
-
-    @classmethod
-    def show_all_data(cls, request):
-        emws = request.GET.getlist(cls.slug)
-        return 'all_data' in emws
-
-    @property
-    @memoized
-    def selected(self):
-        selected = super(ExpandedMobileWorkerFilterWithAllData, self).selected
-        if self.show_all_data(self.request):
-            selected = [{'id': 'all_data', 'text': "[All Data]"}] + selected
-        return selected
 
 
 def get_user_toggle(request):
