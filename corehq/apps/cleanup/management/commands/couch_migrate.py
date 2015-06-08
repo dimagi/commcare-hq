@@ -73,12 +73,14 @@ def _copy(config):
     database = Domain.get_db()
     assert database.uri == config.source_db.uri, 'can only use "copy" with the main HQ DB as the source'
     domain_names = Domain.get_all_names()
-    filter_ = FilterFactory.from_spec(
-        {
-            'type': 'and',
-            'filters': config.filters
-        }
-    )
+    filter_ = None
+    if config.filters:
+        filter_ = FilterFactory.from_spec(
+            {
+                'type': 'and',
+                'filters': config.filters
+            }
+        )
     for domain in domain_names:
         for doc_type in config.doc_types:
             copied = 0
@@ -98,7 +100,7 @@ def _copy(config):
                 for id_group in chunked(ids_of_this_type, 500):
                     docs = get_docs(database, id_group)
                     for doc in docs:
-                        if not filter_(doc):
+                        if filter_ and not filter_(doc):
                             continue
                         if doc['_id'] in new_revs:
                             doc['_rev'] = new_revs[doc['_id']]
@@ -143,6 +145,7 @@ class MigrationConfig(JsonObject):
     to_db_postfix = StringProperty()
     doc_types = ListProperty(required=True)
     couch_views = ListProperty()
+    filters = ListProperty()
 
     @property
     def source_db(self):
