@@ -234,14 +234,6 @@ class AuthenticateAs(BasePageView):
     page_title = _("Login as other user")
     template_name = 'hqadmin/authenticate_as.html'
 
-    @property
-    @memoized
-    def authenticate_as_form(self):
-        if self.request.method == 'POST':
-            return AuthenticateAsForm(self.request.POST)
-        else:
-            return AuthenticateAsForm()
-
     @method_decorator(require_superuser)
     def dispatch(self, *args, **kwargs):
         return super(AuthenticateAs, self).dispatch(*args, **kwargs)
@@ -249,17 +241,19 @@ class AuthenticateAs(BasePageView):
     def page_url(self):
         return reverse(self.urlname)
 
-    @property
-    def page_context(self):
-        return {
+    def get_context_data(self, **kwargs):
+        context = super(AuthenticateAs, self).get_context_data(**kwargs)
+        context.update({
             'hide_filters': True,
             'page_url': self.page_url(),
-            'form': self.authenticate_as_form
-        }
+            'form': AuthenticateAsForm(initial=kwargs)
+        })
+        return context
 
     def post(self, request, *args, **kwargs):
-        if self.authenticate_as_form.is_valid():
-            username = self.authenticate_as_form.cleaned_data['username']
+        form = AuthenticateAsForm(self.request.POST)
+        if form.is_valid():
+            username = form.cleaned_data['username']
             request.user = User.objects.get(username=username)
 
             # http://stackoverflow.com/a/2787747/835696
