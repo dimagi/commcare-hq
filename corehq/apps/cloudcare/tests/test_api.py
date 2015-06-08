@@ -1,18 +1,18 @@
 from django.test import TestCase
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.tests import delete_all_cases
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.xml import date_to_xml_string
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.hqcase.dbaccessors import get_cases_in_domain
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
 from corehq.apps.cloudcare.api import get_filtered_cases, CaseAPIResult, CASE_STATUS_OPEN, CASE_STATUS_ALL,\
     CASE_STATUS_CLOSED
 import uuid
 
-TEST_DOMAIN = "test-domain"
+TEST_DOMAIN = "test-domain-uCSArw4SkbM6F04"
 
 
 class CaseAPITest(TestCase):
@@ -25,7 +25,6 @@ class CaseAPITest(TestCase):
 
     def setUp(self):
         create_domain(self.domain)
-        self._clearData()
         password = "****"
 
         def create_user(username):
@@ -57,13 +56,7 @@ class CaseAPITest(TestCase):
             django_user = user.get_django_user()
             django_user.delete()
             user.delete()
-        self._clearData()
-
-    def _clearData(self):
-        for case_type in self.case_types:
-            for subtype in [case_type, _child_case_type(case_type)]:
-                CommCareCase.get_db().bulk_delete(
-                    list(get_cases_in_domain(self.domain, type=subtype)))
+        delete_all_cases()
 
     def assertListMatches(self, list, function):
         for item in list:
