@@ -17,7 +17,7 @@ from corehq.apps.users.models import CommCareUser
 from custom.common import ALL_OPTION
 from custom.ewsghana.filters import ProductByProgramFilter
 from custom.ewsghana.reports import EWSData, MultiReport, EWSLineChart, ProductSelectionPane
-from custom.ewsghana.utils import has_input_stock_permissions, ews_date_format
+from custom.ewsghana.utils import has_input_stock_permissions, drange, ews_date_format
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 from corehq.apps.locations.models import Location, SQLLocation
@@ -239,6 +239,11 @@ class InventoryManagementData(EWSData):
                 chart.add_dataset(product, value,
                                   color='black' if product in ['Understock', 'Overstock'] else None)
             chart.forceY = [0, loc.location_type.understock_threshold + loc.location_type.overstock_threshold]
+            y_max = loc.location_type.understock_threshold + loc.location_type.overstock_threshold
+            chart.y_tick_values = [
+                y
+                for y in drange(0, y_max, 0.5)
+            ] + [loc.location_type.understock_threshold, loc.location_type.overstock_threshold]
             return [chart]
         return []
 
@@ -345,7 +350,7 @@ class StockLevelsReport(MultiReport):
                         InputStock(config),
                         UsersData(config),
                         InventoryManagementData(config),
-                        ProductSelectionPane(config)]
+                        ProductSelectionPane(config, hide_columns=False)]
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):

@@ -26,7 +26,7 @@
         // Customize tooltip message
         {% if chart.tooltipFormat %}
             multibar_chart.tooltipContent(function(key, y, e, graph) {
-                return '<h3>' + key + '</h3><p>' + e + '{{ chart.tooltipFormat }}' + graph.point.name + ' (' + y + ')';
+                return '<h3>' + graph.point.name + ' (' + y + ')' + '</h3><p>' + e + ' - ' + key;
             });
         {% endif %}
         multibar_chart.stacked(chart_config.stacked);

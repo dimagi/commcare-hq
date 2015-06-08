@@ -1,7 +1,7 @@
 import uuid
 from django.test import TestCase
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.locations.models import LocationType, LOCATION_SHARING_PREFIX
+from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.users.models import CommCareUser
 
@@ -126,4 +126,4 @@ def make_loc_type(name, parent_type=None, domain='locations-test',
 
 
 def _group_id(location_id):
-    return LOCATION_SHARING_PREFIX + location_id
+    return location_id

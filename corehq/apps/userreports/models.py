@@ -341,8 +341,8 @@ class CustomDataSourceConfiguration(JsonObject):
     config = DictProperty()
 
     @classmethod
-    def get_doc_id(cls, table_id):
-        return '{}{}'.format(cls._datasource_id_prefix, table_id)
+    def get_doc_id(cls, domain, table_id):
+        return '{}{}-{}'.format(cls._datasource_id_prefix, domain, table_id)
 
     @classmethod
     def all(cls):
@@ -352,7 +352,7 @@ class CustomDataSourceConfiguration(JsonObject):
                 for domain in wrapped.domains:
                     doc = copy(wrapped.config)
                     doc['domain'] = domain
-                    doc['_id'] = cls.get_doc_id(doc['table_id'])
+                    doc['_id'] = cls.get_doc_id(domain, doc['table_id'])
                     yield DataSourceConfiguration.wrap(doc)
 
     @classmethod

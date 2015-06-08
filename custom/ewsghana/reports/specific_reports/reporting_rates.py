@@ -53,16 +53,19 @@ class ReportingRates(ReportingRatesData):
         if data:
             reported_percent = float(data['reported']) * 100 / (data['total'] or 1)
             non_reported_percent = float(data['non_reported']) * 100 / (data['total'] or 1)
+            reported_formatted = ("%d" if reported_percent.is_integer() else "%.1f") % reported_percent
+            non_reported_formatted = ("%d" if non_reported_percent.is_integer() else "%.1f") % non_reported_percent
+
             chart_data = [
                 dict(value=reported_percent,
                      label=_('Reporting'),
-                     description=_("%.1f%% (%d) Reported (%s)" % (reported_percent, data['reported'],
-                                                                  self.datetext())),
+                     description=_("%s%% (%d) Reported (%s)" % (reported_formatted, data['reported'],
+                                                                self.datetext())),
                      color='green'),
                 dict(value=non_reported_percent,
                      label=_('Non-Reporting'),
-                     description=_("%.1f%% (%d) Non-Reported (%s)" %
-                                   (non_reported_percent, data['non_reported'], self.datetext())),
+                     description=_("%s%% (%d) Non-Reported (%s)" %
+                                   (non_reported_formatted, data['non_reported'], self.datetext())),
                      color='red'),
             ]
 
@@ -465,7 +468,7 @@ class ReportingRatesReport(MonthWeekMixin, MultiReport):
                     InputStock(config),
                     UsersData(config),
                     InventoryManagementData(config),
-                    ProductSelectionPane(config)
+                    ProductSelectionPane(config, hide_columns=False)
                 ]
         self.split = False
         data_providers = [
