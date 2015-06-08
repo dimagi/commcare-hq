@@ -118,21 +118,6 @@
                                 <span class="help-inline"
                                       style="margin-right: 10px;"
                                       data-bind="text: amount"></span>
-                                {% if not is_ops_user_but_not_admin %}
-                                <button type="button"
-                                        class="btn add-credit-button"
-                                        data-toggle="modal"
-                                        data-target="#paymentModal"
-                                        data-bind="click: triggerPayment, visible: canPurchaseCredits">
-                                    <i class="icon-plus"></i>
-                                    {% trans 'Add Credit' %}
-                                </button>
-                                {% else %}
-                                    <span class="label">
-                                        <i class="icon-info-sign"></i>
-                                        {% trans "Not Billing Admin, Can't Add Credit" %}
-                                    </span>
-                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -196,9 +181,6 @@
                         {% if not plan.is_trial %}
                         <th>{% trans "Credits Available" %}</th>
                         {% endif %}
-                        {% if can_purchase_credits and not plan.is_trial %}
-                        <th>{% trans "Add Credit" %}</th>
-                        {% endif %}
                     </tr>
                 </thead>
                 <tbody data-bind="foreach: features">
@@ -208,25 +190,6 @@
                         <td data-bind="text: remaining"></td>
                         {% if not plan.is_trial %}
                         <td data-bind="text: amount"></td>
-                        {% endif %}
-                        {% if can_purchase_credits and not plan.is_trial %}
-                        <td data-bind="visible: canPurchaseCredits">
-                            {% if not is_ops_user_but_not_admin %}
-                                <button type="button"
-                                        class="btn"
-                                        data-toggle="modal"
-                                        data-target="#paymentModal"
-                                        data-bind="click: triggerPayment">
-                                    <i class="icon-plus"></i>
-                                    {% trans 'Add Credit' %}
-                                </button>
-                            {% else %}
-                                <span class="label">
-                                    <i class="icon-info-sign"></i>
-                                    {% trans "Not Billing Admin, Can't Add Credit" %}
-                                </span>
-                            {% endif %}
-                        </td>
                         {% endif %}
                     </tr>
                 </tbody>
