@@ -78,7 +78,6 @@ from corehq.apps.users.util import format_username
 from corehq.db import Session
 from corehq.elastic import parse_args_for_es, ES_URLS, run_query
 from dimagi.utils.couch.database import get_db, is_bigcouch
-from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.parsing import json_format_datetime, json_format_date
 from dimagi.utils.web import json_response, get_url_base
