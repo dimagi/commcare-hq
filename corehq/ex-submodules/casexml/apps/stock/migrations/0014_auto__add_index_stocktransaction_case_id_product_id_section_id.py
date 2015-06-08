@@ -7,12 +7,14 @@ class Migration(SchemaMigration):
 
     def forwards(self, orm):
         # Adding index on 'StockTransaction', fields ['case_id', 'product_id', 'section_id']
-        db.create_index(u'stock_stocktransaction', ['case_id', 'product_id', 'section_id'])
+        db.commit_transaction()
+        db.execute('CREATE INDEX CONCURRENTLY "stock_stocktransaction_case_id_prod_id_sec_id" ON "stock_stocktransaction" ("case_id","product_id","section_id")')
+        db.start_transaction()
 
 
     def backwards(self, orm):
         # Removing index on 'StockTransaction', fields ['case_id', 'product_id', 'section_id']
-        db.delete_index(u'stock_stocktransaction', ['case_id', 'product_id', 'section_id'])
+        db.execute('DROP INDEX "stock_stocktransaction_case_id_prod_id_sec_id"')
 
 
     models = {
