@@ -117,3 +117,13 @@ def get_total_case_count():
         reduce=True,
     ).one()
     return results['value'] if results else 0
+
+
+def get_number_of_cases_in_domain_by_owner(domain, owner_id):
+    res = CommCareCase.get_db().view(
+        'hqcase/by_owner',
+        startkey=[domain, owner_id],
+        endkey=[domain, owner_id, {}],
+        reduce=True,
+    ).one()
+    return res['value'] if res else 0
