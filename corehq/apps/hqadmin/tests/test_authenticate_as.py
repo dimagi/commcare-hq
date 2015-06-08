@@ -12,7 +12,7 @@ class AuthenticateAsFormTest(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.mobile_worker = CommCareUser.create('potter', 'harry@potter.commcarehq.org', '123')
-        cls.regular = WebUser.create('potter', 'awebuser', '***', is_active=True)
+        cls.regular = WebUser.create('pottery', 'awebuser', '***', is_active=True)
 
     @classmethod
     def tearDownClass(cls):
