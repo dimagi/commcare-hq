@@ -253,6 +253,7 @@ class AuthenticateAs(BasePageView):
     def page_context(self):
         return {
             'hide_filters': True,
+            'page_url': self.page_url(),
             'form': self.authenticate_as_form
         }
 

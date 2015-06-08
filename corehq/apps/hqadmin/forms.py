@@ -56,6 +56,7 @@ class AuthenticateAsForm(forms.Form):
         super(AuthenticateAsForm, self).__init__(*args, **kwargs)
 
         self.helper = FormHelper()
+        self.helper.form_id = 'auth-as-form'
         self.helper.layout = crispy.Layout(
             'username',
             'domain',

@@ -8,3 +8,19 @@ Use this form to login as a different user. You can fill out the fully qualified
 </p>
 {% crispy form %}
 {% endblock %}
+
+{% block js-inline %} {{ block.super }}
+    <script>
+        $('#id_username, #id_domain').change(function() {
+            var username = $('#id_username').val(),
+                domain = $('#id_domain').val();
+
+            var action = '{{ page_url }}' + username + '/';
+            if (domain) {
+                action += domain + '/'
+            }
+
+            $('#auth-as-form').attr('action', action)
+        });
+    </script>
+{% endblock %}
