@@ -674,6 +674,36 @@ Then you will get a report like this:
 +----------+----------------------+----------------------+
 ```
 
+### Internationalization
+Report columns can be translated into multiple languages. To specify translations
+for a column header, use an object as the `display` value in the configuration
+instead of a string. For example:
+```
+{
+    "type": "field",
+    "field": "owner_id",
+    "column_id": "owner_id",
+    "display": {
+        "en": "Owner Name",
+        "he": "שם"
+    },
+    "format": "default",
+    "transform": {
+        "type": "custom",
+        "custom_type": "owner_display"
+    },
+    "aggregation": "simple"
+}
+```
+The value displayed to the user is determined as follows:
+- If a display value is specified for the users language, that value will appear in the report.
+- If the users language is not present, display the `"en"` value.
+- If `"en"` is not present, show an arbitrary translation from the `display` object.
+- If `display` is a string, and not an object, the report shows the string.
+
+Valid `display` languages are any of the two letter language codes specified by [ISO 639-1](http://en.wikipedia.org/wiki/List_of_ISO_639-1_codes).
+
+
 ## Aggregation
 
 TODO: finish aggregation docs
