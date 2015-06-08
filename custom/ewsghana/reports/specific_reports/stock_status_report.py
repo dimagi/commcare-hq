@@ -274,6 +274,9 @@ class StockoutsProduct(EWSData):
                     type='stockonhand',
                     stock_on_hand=0
                 ).values('sql_product__code').annotate(count=Count('case_id')))
+                for product in products:
+                    if not any([product.code == tx['sql_product__code'] for tx in txs]):
+                        rows[product.code].append({'x': d['start_date'], 'y': 0})
                 for tx in txs:
                     rows[tx['sql_product__code']].append({'x': d['start_date'], 'y': tx['count']})
         return rows
@@ -388,7 +391,7 @@ class StockStatus(MultiReport):
         self.split = False
         if report_type == 'stockouts':
             return [
-                ProductSelectionPane(config=config),
+                ProductSelectionPane(config=config, hide_columns=False),
                 StockoutsProduct(config=config),
                 StockoutTable(config=config)
             ]
