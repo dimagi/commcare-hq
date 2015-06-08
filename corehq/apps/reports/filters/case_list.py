@@ -1,3 +1,5 @@
+from django.utils.translation import ugettext as _
+
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import SQLLocation
 from corehq.elastic import es_wrapper
@@ -7,7 +9,10 @@ from .api import EmwfOptionsView
 
 
 class CaseListFilterMixin(object):
-    additional_options = [("all_data", "[All Data]")]
+    @property
+    def additional_options(self):
+        return [("all_data", _("[All Data]")),
+                ('project_data', _("[Project Data]"))]
 
     def sharing_group_tuple(self, g):
         return ("sg__%s" % g['_id'], '%s [case sharing]' % g['name'])
@@ -23,6 +28,11 @@ class CaseListFilter(CaseListFilterMixin, ExpandedMobileWorkerFilter):
     def show_all_data(cls, request):
         emws = request.GET.getlist(cls.slug)
         return 'all_data' in emws
+
+    @classmethod
+    def show_project_data(cls, request):
+        emws = request.GET.getlist(cls.slug)
+        return 'project_data' in emws
 
     @classmethod
     def selected_sharing_group_ids(cls, request):
@@ -54,12 +64,6 @@ class CaseListFilter(CaseListFilterMixin, ExpandedMobileWorkerFilter):
                 selected.append(self.sharing_location_tuple(loc_group))
         return selected
 
-    def selected_user_type_entries(self, request):
-        selected = super(CaseListFilter, self).selected_user_type_entries(request)
-        if self.show_all_data(self.request):
-            selected = [('all_data', "[All Data]")] + selected
-        return selected
-
     def selected_group_entries(self, request):
         query_results = self.selected_groups_query(request)
         reporting = [self.reporting_group_tuple(group['fields'])
@@ -69,6 +73,9 @@ class CaseListFilter(CaseListFilterMixin, ExpandedMobileWorkerFilter):
                    for group in query_results
                    if group['fields'].get("case_sharing", False)]
         return reporting + sharing
+
+    def get_default_selections(self):
+        return [('project_data', _("[Project Data]"))]
 
 
 class CaseListFilterOptions(CaseListFilterMixin, EmwfOptionsView):

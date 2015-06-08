@@ -88,7 +88,7 @@ class EmwfOptionsView(LoginAndDomainMixin, EmwfMixin, JSONResponseMixin, View):
     def _init_counts(self):
         groups, _ = self.group_es_call(size=0, return_count=True)
         users, _ = self.user_es_call(size=0, return_count=True)
-        self.group_start = len(self.user_types)
+        self.group_start = len(self.static_options)
         self.location_start = self.group_start + groups
         self.user_start = self.location_start + self.get_locations_size()
         self.total_results = self.user_start + users
@@ -99,7 +99,7 @@ class EmwfOptionsView(LoginAndDomainMixin, EmwfMixin, JSONResponseMixin, View):
         start = limit * (page - 1)
         stop = start + limit
 
-        options = self.user_types[start:stop]
+        options = self.static_options[start:stop]
 
         g_start = max(0, start - self.group_start)
         g_size = limit - len(options) if start < self.location_start else 0
@@ -119,10 +119,10 @@ class EmwfOptionsView(LoginAndDomainMixin, EmwfMixin, JSONResponseMixin, View):
 
     @property
     @memoized
-    def user_types(self):
+    def static_options(self):
         return filter(
             lambda user_type: self.q.lower() in user_type[1].lower(),
-            super(EmwfOptionsView, self).user_types
+            super(EmwfOptionsView, self).static_options
         )
 
     def user_es_call(self, **kwargs):

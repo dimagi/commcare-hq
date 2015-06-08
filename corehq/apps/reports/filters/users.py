@@ -235,16 +235,20 @@ class EmwfMixin(object):
 
     @property
     @memoized
-    def user_types(self):
+    def static_options(self):
+        static_options = [("t__0", _("[All mobile workers]"))]
+
+        if self.additional_options:
+            static_options.extend(self.additional_options)
+
         types = ['DEMO_USER', 'ADMIN', 'UNKNOWN']
         if Domain.get_by_name(self.domain).commtrack_enabled:
             types.append('COMMTRACK')
-        user_types = [getattr(HQUserType, t) for t in types]
-        user_type_tuples = [("t__0", _("[All mobile workers]"))] + \
-            [self.user_type_tuple(t) for t in user_types]
-        if self.additional_options:
-            user_type_tuples = self.additional_options + user_type_tuples
-        return user_type_tuples
+        for t in types:
+            user_type = getattr(HQUserType, t)
+            static_options.append(self.user_type_tuple(user_type))
+
+        return static_options
 
 
 _UserData = namedtupledict('_UserData', (
@@ -303,28 +307,24 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
             g for g in emws if g.startswith(LOCATION_REPORTING_PREFIX)
         ]
 
+    def get_default_selections(self):
+        defaults = [('t__0', _("[All mobile workers]"))]
+        if self.request.project.commtrack_enabled:
+            defaults.append(self.user_type_tuple(HQUserType.COMMTRACK))
+        return defaults
+
     @property
     @memoized
     def selected(self):
         selected_ids = self.request.GET.getlist(self.slug)
         if not selected_ids:
-            defaults = [{
-                'id': 't__0',
-                'text': _("[All mobile workers]"),
-            }]
-            if self.request.project.commtrack_enabled:
-                commtrack_tuple = self.user_type_tuple(HQUserType.COMMTRACK)
-                defaults.append({
-                    'id': commtrack_tuple[0],
-                    'text': commtrack_tuple[1]
-                })
-            return defaults
+            return [{'id': url_id, 'text': text}
+                    for url_id, text in self.get_default_selections()]
 
-        selected = (self.selected_user_type_entries(self.request) +
+        selected = (self.selected_static_options(self.request) +
                     self.selected_user_entries(self.request) +
                     self.selected_group_entries(self.request) +
                     self.selected_location_entries(self.request))
-
         known_ids = dict(selected)
         return [
             {'id': id, 'text': known_ids[id]}
@@ -332,11 +332,10 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
             if id in known_ids
         ]
 
-
-    def selected_user_type_entries(self, request):
-        user_types = self.selected_user_types(request)
-        return [t for t in self.user_types
-                if t[0][3:].isdigit() and int(t[0][3:]) in user_types]
+    def selected_static_options(self, request):
+        selected_ids = self.request.GET.getlist(self.slug)
+        return [option for option in self.static_options
+                if option[0] in selected_ids]
 
     def selected_user_entries(self, request):
         user_ids = self.selected_user_ids(request)
