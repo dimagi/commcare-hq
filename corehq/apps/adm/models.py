@@ -1,6 +1,10 @@
 import logging
+from copy import copy
+
 import pytz
 import dateutil
+from casexml.apps.case.dbaccessors import get_cases_by_owner_type_status_date
+
 from dimagi.ext.couchdbkit import *
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.adm.admin.crud import *
@@ -12,7 +16,7 @@ from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.modules import to_function
 from corehq.apps.users.models import CommCareUser
-from copy import copy
+
 
 def standard_start_end_key(key, datespan=None):
     startkey_suffix = [datespan.startdate_param_utc] if datespan else []
@@ -584,22 +588,21 @@ class CaseFilterADMColumnMixin(DocumentSchema):
     case_types = ListProperty()
     case_status = StringProperty(default='', choices=[s[0] for s in CASE_STATUS_OPTIONS])
 
-    def get_filtered_cases(self, domain, user_id, include_groups=True, status=None, include_docs=False, datespan_keys=None):
-        if not datespan_keys:
-            datespan_keys = [[], [{}]]
+    def get_filtered_cases(self, domain, user_id, status=None,
+                           date_range=None):
 
         owner_ids = [user_id]
-        if include_groups:
-            groups = Group.by_user(user_id, wrap=False)
-            owner_ids.extend(groups)
+        groups = Group.by_user(user_id, wrap=False)
+        owner_ids.extend(groups)
 
         pass_filter_types = self.case_types if self.filter_option == CASE_FILTER_OPTIONS[1][0] else [None]
 
         all_cases = list()
         for case_type in pass_filter_types:
             for owner in owner_ids:
-                data = self._cases_by_type(domain, owner, case_type, status=status,
-                    include_docs=include_docs, datespan_keys=datespan_keys)
+                data = get_cases_by_owner_type_status_date(
+                    domain, owner, case_type, status=status,
+                    date_range=date_range)
                 all_cases.extend(data)
         if self.filter_option == CASE_FILTER_OPTIONS[2][0] and self.case_types:
             filtered_cases = list()
@@ -616,25 +619,14 @@ class CaseFilterADMColumnMixin(DocumentSchema):
             all_cases = filtered_cases
         return all_cases
 
-    def _cases_by_type(self, domain, owner_id, case_type, status=None, include_docs=False, datespan_keys=None):
-        couch_key = [domain, {}, {}, owner_id]
-        if case_type:
-            couch_key[2] = case_type
-        if status:
-            couch_key[1] = status
-        return CommCareCase.view('case/by_date_modified_owner',
-            reduce=False,
-            startkey=couch_key+datespan_keys[0],
-            endkey=couch_key+datespan_keys[1],
-            include_docs=include_docs
-        ).all()
-
 
 class CaseCountADMColumn(ConfigurableADMColumn, CaseFilterADMColumnMixin,
-    NumericalADMColumnMixin, IgnoreDatespanADMColumnMixin):
+                         NumericalADMColumnMixin,
+                         IgnoreDatespanADMColumnMixin):
     """
-        Returns the count of the number of cases specified by the filters in CaseFilterADMColumnMixin and
-        inactivity_milestone.
+    Returns the count of the number of cases specified by the filters
+    in CaseFilterADMColumnMixin and inactivity_milestone.
+
     """
     inactivity_milestone = IntegerProperty(default=0)
 
@@ -646,7 +638,7 @@ class CaseCountADMColumn(ConfigurableADMColumn, CaseFilterADMColumnMixin,
 
     def raw_value(self, **kwargs):
         user_id = kwargs.get('user_id')
-        datespan_keys = None
+        date_range = None
         if self.inactivity_milestone > 0:
             # inactivity milestone takes precedence over any ignore_datespan configurations
             milestone_days_ago = UserTime(
@@ -655,11 +647,11 @@ class CaseCountADMColumn(ConfigurableADMColumn, CaseFilterADMColumnMixin,
             # in refactoring tz stuff,
             # milestone_days_ago is now tz naive, so isoformat()
             # no longer has +00:00 at the end. I think that's fine.
-            datespan_keys = [[], [milestone_days_ago.isoformat()]]
+            date_range = (None, milestone_days_ago)
         elif not self.ignore_datespan:
-            datespan_keys = [[self.report_datespan.startdate_param_utc], [self.report_datespan.enddate_param_utc]]
+            date_range = (self.report_datespan.startdate_utc, self.report_datespan.enddate_utc)
         status = self.case_status if self.case_status else None
-        cases = self.get_filtered_cases(self.report_domain, user_id, status=status, datespan_keys=datespan_keys)
+        cases = self.get_filtered_cases(self.report_domain, user_id, status=status, date_range=date_range)
         return len(cases) if isinstance(cases, list) else None
 
     def clean_value(self, value):
