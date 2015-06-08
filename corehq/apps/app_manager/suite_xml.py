@@ -424,6 +424,7 @@ class Response(XmlObject):
 class Lookup(XmlObject):
     ROOT_NAME = 'lookup'
 
+    name = StringField("@name")
     action = StringField("@action", required=True)
     image = StringField("@image")
     extras = NodeListField('extra', Extra)
@@ -1074,6 +1075,7 @@ class SuiteGenerator(SuiteGeneratorBase):
             # Add lookup
             if detail.lookup_enabled and detail.lookup_action:
                 d.lookup = Lookup(
+                    name = detail.lookup_name or None,
                     action=detail.lookup_action,
                     image=detail.lookup_image or None,
                 )
