@@ -1,5 +1,58 @@
 {% load i18n %}
 {% load hq_shared_tags %}
-Case List Lookup Placeholder
 
-{{detail.short.lookup_enabled}}
+<div id="{{ detail.type }}-list-callout-configuration" data-bind="with: caseListLookup">
+    <legend>
+        {% trans "Case List Search Callout" %}
+    </legend>
+    <label class="checkbox">
+        <input type="checkbox" data-bind="checked: lookup_enabled"/>
+        {% trans "Enable case list search callout" %}
+    </label>
+    <div data-bind="visible: lookup_enabled">
+        <form class="form-horizontal">
+            <div class="control-group">
+                <label class="control-label" for="lookup-action">
+                    {% trans "Action" %}
+                </label>
+                <div class="controls">
+                    <input type="text" id="lookup-action" data-bind="value: lookup_action" placeholder="{% trans 'ex: callout.commcarehq.org.dummycallout.LAUNCH' %}"/>
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" for="lookup-name">
+                    {% trans "Action Name" %}
+                </label>
+                <div class="controls">
+                    <input type="text" id="lookup-name" data-bind="value: lookup_name" placeholder="{% trans 'ex: Scan fingerprint'%}"/>
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" for="lookup-action">
+                    {% trans "Extra" %}
+                </label>
+                <div class="controls">
+                    <div class="well well-small form form-inline clearfix span6">
+                        <!-- ko foreach: extras() -->
+                        <div class="fd-kv-pair control-row clearfix" style="margin-bottom: 5px;">
+                            <div class="span3">
+                                <input class="fd-kv-key input-block-level" type="text" data-bind="value: key, addSaveButtonListener: true" placeholder="key" />
+                                </div>
+                            <div class="span1" style="text-align:center;">&rarr;</div>
+                            <div class="span7">
+                                <input class="fd-kv-val input-block-level" type="text" data-bind="value: value, addSaveButtonListener: true" placeholder="value" />
+                            </div>
+                            <div class="span1">
+                                <a href="#" class="btn fd-kv-remove-pair btn-small btn-danger" data-bind="visible: ($parent.extras().length > 1), click: $parent.remove_extra">
+                                    <i class="icon-remove"></i>
+                                </a>
+                            </div>
+                        </div>
+                        <!-- /ko -->
+                        <a href="#" class="btn fd-kv-add-pair" data-bind="visible: show_add_extra(), click: add_extra"><i class="icon-plus"></i> Add Key&rarr;Value Pair</a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

@@ -1671,8 +1671,10 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
 
 
 def _save_case_list_lookup_params(short, case_list_lookup):
-    short.lookup_enabled = case_list_lookup.get("lookup_enabled")
-
+    short.lookup_enabled = case_list_lookup.get("lookup_enabled", short.lookup_enabled)
+    short.lookup_action = case_list_lookup.get("lookup_action", short.lookup_action)
+    short.lookup_name = case_list_lookup.get("lookup_name", short.lookup_name)
+    short.lookup_extras = case_list_lookup.get("lookup_extras", short.lookup_extras)
 
 @no_conflict_require_POST
 @require_can_edit_apps

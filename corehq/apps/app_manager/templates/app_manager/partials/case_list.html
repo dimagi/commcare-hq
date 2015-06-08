@@ -212,15 +212,4 @@
 </div>
 {% endif %}
 
-<div id="{{ detail.type }}-list-callout-configuration" data-bind="with: caseListLookup">
-    <legend>
-        {% trans "Case List Search Callout" %}
-    </legend>
-    <label class="checkbox">
-        <input type="checkbox" data-bind="checked: lookup_enabled"/>
-        {% trans "Enable case list search callout" %}
-    </label>
-    <div data-bind="visible: lookup_enabled">
-        {% include "app_manager/partials/case_list_lookup.html" %}
-    </div>
-</div>
+{% include "app_manager/partials/case_list_lookup.html" %}

@@ -196,21 +196,53 @@ var filterViewModel = function(filterText, saveButton){
 var caseListLookupViewModel = function($el, state, saveButton){
     var self = this;
 
-    _fireChange = function(){
+    var ObservableKeyValue = function(obs){
+        this.key = ko.observable(obs.key);
+        this.value = ko.observable(obs.value);
+    };
+
+    var _fireChange = function(){
         saveButton.fire('change');
     };
 
-    _initSaveButtonListeners = function($el){
-        $el.find('*').change(_fireChange);
-        $el.find('input, textarea').bind('textchange', _fireChange);
+    self.initSaveButtonListeners = function($el){
+        $el.find('input[type=text], textarea').bind('textchange', _fireChange);
+        $el.find('input[type=checkbox]').bind('change', _fireChange);
+    };
+
+    var _remove_empty_extras = function(){
+        self.extras.remove(function(extra){
+            var is_blank = extra.key() === "" && extra.value() === "";
+            return is_blank;
+        });
+    };
+
+    self.add_extra = function(){
+        _remove_empty_extras();
+        self.extras.push(new ObservableKeyValue({key:'', value:''}));
+    };
+
+    self.remove_extra = function(extra){
+        self.extras.remove(extra);
+        _fireChange();
     };
 
     self.serialize = function(){
+        var serialized_extras = _.compact(_.map(self.extras(), function(extra){
+            if (!(extra.key() === "" && extra.value() ==="")){
+                return {key: extra.key(), value: extra.value()};
+            }
+        }));
+
         var data = {
             lookup_enabled: self.lookup_enabled(),
+            lookup_action: self.lookup_action(),
+            lookup_name: self.lookup_name(),
+            lookup_extras: serialized_extras,
         };
         return data;
     };
+
 
     self.$el = $el;
     self.$form = $el.find('form');
@@ -218,9 +250,28 @@ var caseListLookupViewModel = function($el, state, saveButton){
     self.lookup_enabled = ko.observable(state.lookup_enabled);
     self.lookup_action = ko.observable(state.lookup_action);
     self.lookup_name = ko.observable(state.lookup_name);
+    self.extras = ko.observableArray(ko.utils.arrayMap(state.lookup_extras, function(extra){
+        return new ObservableKeyValue(extra);
+    }));
 
+    if (self.extras().length === 0){
+        //Add empty extra to start if there are none
+        self.add_extra();
+    }
 
-    _initSaveButtonListeners(self.$el);
+    self.show_add_extra = ko.computed(function(){
+        var last_key = self.extras()[self.extras().length - 1].key(),
+            last_value = self.extras()[self.extras().length - 1].value();
+        return !(last_key === "" && last_value === "");
+    });
+
+    self.initSaveButtonListeners(self.$el);
+};
+
+ko.bindingHandlers.addSaveButtonListener = {
+    init: function(element, valueAccessor, allBindings, viewModel, bindingContext){
+        bindingContext.$parent.initSaveButtonListeners($(element).parent());
+    }
 };
 
 // http://www.knockmeout.net/2011/05/dragging-dropping-and-sorting-with.html
