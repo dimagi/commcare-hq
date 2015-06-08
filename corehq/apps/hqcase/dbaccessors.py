@@ -77,3 +77,43 @@ def get_case_ids_in_domain_by_owner(domain, owner_id=None, owner_id__in=None,
         include_docs=False,
         reduce=False,
     )]
+
+
+def get_open_case_ids(domain, owner_id):
+    """
+    Get all open case ids for a given owner
+    """
+    return _get_case_ids(domain, owner_id, is_closed=False)
+
+
+def get_closed_case_ids(domain, owner_id):
+    """
+    Get all closed case ids for a given owner
+    """
+    return _get_case_ids(domain, owner_id, is_closed=True)
+
+
+def _get_case_ids(domain, owner_id, is_closed):
+    from casexml.apps.case.models import CommCareCase
+    if is_closed is None:
+        key = [domain, owner_id]
+    else:
+        key = [domain, owner_id, is_closed]
+
+    return [row['id'] for row in CommCareCase.get_db().view(
+        'hqcase/by_owner',
+        reduce=False,
+        key=key,
+    )]
+
+
+def get_total_case_count():
+    """
+    Total count of all cases in the database.
+    """
+    from casexml.apps.case.models import CommCareCase
+    results = CommCareCase.get_db().view(
+        'hqcase/by_owner',
+        reduce=True,
+    ).one()
+    return results['value'] if results else 0
