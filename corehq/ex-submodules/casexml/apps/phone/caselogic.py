@@ -1,6 +1,3 @@
-"""
-Logic about chws phones and cases go here.
-"""
 import itertools
 import logging
 from casexml.apps.case.models import CommCareCase
