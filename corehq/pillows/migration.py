@@ -22,11 +22,11 @@ class MigrationPillow(BasicPillow):
     dest_db = lambda: None
 
     def change_trigger(self, changes_dict):
-        if changed_dict.get('deleted', False):
-            self.dest_db().delete_doc(changed_dict['id'])
+        if changes_dict.get('deleted', False):
+            self.dest_db().delete_doc(changes_dict['id'])
             return None
         # This seems to defe the purpose of making it a mixin...
-        super(MigrationPillow, self).change_trigger(changes_dic)
+        super(MigrationPillow, self).change_trigger(changes_dict)
 
     def change_transport(self, doc):
         self.dest_db().save(doc)
