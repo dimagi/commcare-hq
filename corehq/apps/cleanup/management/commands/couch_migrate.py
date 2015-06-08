@@ -9,6 +9,7 @@ from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.couch.database import get_db
 
 from corehq import Domain
+from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.domainsync.config import DocumentTransform, save
 
 
@@ -37,9 +38,6 @@ class Command(LabelCommand):
                     help="Check views."),
     )
 
-    def log(self, message):
-        print '[{}] {}'.format(self.__module__.split('.')[-1], message)
-
     def get_seq_filename(self):
         datestring = datetime.utcnow().strftime("%Y-%m-%d-%H%M")
         seq_filename = "{}{}_{}_seq.txt".format(self.file_prefix, self.pillow_class.__name__, datestring)
@@ -54,7 +52,7 @@ class Command(LabelCommand):
             seq_id = self.pillow.couch_db.info()['update_seq']
             # Write sequence file to disk
             seq_filename = self.get_seq_filename()
-            self.log('Writing sequence file to disk: {}'.format(seq_filename))
+            log('Writing sequence file to disk: {}'.format(seq_filename))
             with open(seq_filename, 'w') as f:
                 f.write(str(seq_id))
 
@@ -75,8 +73,15 @@ def _copy(config):
     database = Domain.get_db()
     assert database.uri == config.source_db.uri, 'can only use "copy" with the main HQ DB as the source'
     domain_names = Domain.get_all_names()
+    filter_ = FilterFactory.from_spec(
+        {
+            'type': 'and',
+            'filters': config.filters
+        }
+    )
     for domain in domain_names:
         for doc_type in config.doc_types:
+            copied = 0
             ids_of_this_type = [row['id'] for row in database.view(
                 'domain/docs',
                 startkey=[domain, doc_type],
@@ -93,13 +98,16 @@ def _copy(config):
                 for id_group in chunked(ids_of_this_type, 500):
                     docs = get_docs(database, id_group)
                     for doc in docs:
+                        if not filter_(doc):
+                            continue
                         if doc['_id'] in new_revs:
                             doc['_rev'] = new_revs[doc['_id']]
                         dt = DocumentTransform(doc, database)
                         save(dt, config.dest_db)
+                        copied += 1
 
-            self.log('copied {} {}s from {}'.format(len(ids_of_this_type), doc_type, domain))
-    self.log('copy docs complete')
+            log('copied {} {}s from {}'.format(copied, doc_type, domain))
+    log('copy docs complete')
 
 
 def _replicate(config):
@@ -110,7 +118,7 @@ def _replicate(config):
         filter="hqadmin/domains_and_doc_types",
         query_params={'doc_types': ' '.join(config.doc_types)},
     )
-    self.log('started replication: {}'.format(result))
+    log('started replication: {}'.format(result))
 
 
 def _check(config):
@@ -118,12 +126,16 @@ def _check(config):
         source_rows = config.source_db.view(view, limit=0, reduce=False).total_rows
         dest_rows = config.dest_db.view(view, limit=0, reduce=False).total_rows
         if source_rows == dest_rows:
-            self.log('WOOT! {} looks good: {} rows in both databases'.format(view, source_rows))
+            log('WOOT! {} looks good: {} rows in both databases'.format(view, source_rows))
         else:
-            self.log('SHUCKS... {} has different data: {} rows in source db and {} in dest'.format(
+            log('SHUCKS... {} has different data: {} rows in source db and {} in dest'.format(
                 view, source_rows, dest_rows
             ))
-    self.log('check complete')
+    log('check complete')
+
+
+def log(message):
+    print '[{}] {}'.format(__name__.split('.')[-1], message)
 
 
 class MigrationConfig(JsonObject):
