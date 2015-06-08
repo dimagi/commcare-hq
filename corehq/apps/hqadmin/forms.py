@@ -4,7 +4,7 @@ from crispy_forms import layout as crispy
 from django import forms
 from django.core.exceptions import ValidationError
 
-from corehq.apps.users.models import User
+from corehq.apps.users.models import CommCareUser
 
 
 class EmailForm(forms.Form):
@@ -34,20 +34,21 @@ class AuthenticateAsForm(forms.Form):
         domain = self.cleaned_data['domain']
 
         # Ensure that the username exists either as the raw input or with fully qualified name
-        try:
-            User.objects.get(username=username)
-        except User.DoesNotExist:
-            try:
-                extended_username = u"{}@{}.commcarehq.org".format(username, domain)
-                User.objects.get(username=extended_username)
-                self.cleaned_data['username'] = extended_username
-            except User.DoesNotExist:
-                if domain:
-                    raise forms.ValidationError(
-                        u"Cannot find user '{}' for domain '{}'".format(username, domain)
-                    )
-                else:
-                    raise forms.ValidationError(u"Cannot find user '{}'".format(username))
+        if domain:
+            extended_username = u"{}@{}.commcarehq.org".format(username, domain)
+            user = CommCareUser.get_by_username(username=extended_username)
+            self.cleaned_data['username'] = extended_username
+            if user is None:
+                raise forms.ValidationError(
+                    u"Cannot find user '{}' for domain '{}'".format(username, domain)
+                )
+        else:
+            user = CommCareUser.get_by_username(username=username)
+            if user is None:
+                raise forms.ValidationError(u"Cannot find user '{}'".format(username))
+
+        if not user.is_commcare_user():
+            raise forms.ValidationError(u"User '{}' is not a CommCareUser".format(username))
 
         return self.cleaned_data
 

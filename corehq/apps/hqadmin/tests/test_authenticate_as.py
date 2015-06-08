@@ -11,11 +11,13 @@ class AuthenticateAsFormTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.mobile_worker = CommCareUser.create('potter', 'harry', '123')
+        cls.mobile_worker = CommCareUser.create('potter', 'harry@potter.commcarehq.org', '123')
+        cls.regular = WebUser.create('potter', 'awebuser', '***', is_active=True)
 
     @classmethod
     def tearDownClass(cls):
         cls.mobile_worker.delete()
+        cls.regular.delete()
 
     def test_valid_data(self):
         data = {
@@ -28,6 +30,7 @@ class AuthenticateAsFormTest(TestCase):
         data = {
             'username': 'harry@potter.commcarehq.org',
         }
+        form = AuthenticateAsForm(data)
         self.assertTrue(form.is_valid(), form.errors)
 
     def test_invalid_data(self):
@@ -44,6 +47,14 @@ class AuthenticateAsFormTest(TestCase):
         form = AuthenticateAsForm(data)
         self.assertFalse(form.is_valid())
 
+    def test_no_login_as_other_webuser(self):
+        data = {
+            'username': 'awebuser'
+        }
+        form = AuthenticateAsForm(data)
+        self.assertFalse(form.is_valid())
+        self.assertTrue('not a CommCareUser' in str(form.errors))
+
 
 class AuthenticateAsIntegrationTest(TestCase):
 
@@ -57,7 +68,7 @@ class AuthenticateAsIntegrationTest(TestCase):
 
         cls.user.is_superuser = True
         cls.user.save()
-        cls.mobile_worker = CommCareUser.create('potter', 'harry', '123')
+        cls.mobile_worker = CommCareUser.create('potter', 'harry@potter.commcarehq.org', '123')
         cls.regular = WebUser.create(cls.domain, cls.regular_name, cls.password, is_active=True)
 
     @classmethod
