@@ -381,14 +381,6 @@ CUSTOM_PROPERTIES = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-FILE_RESTORE = PredictablyRandomToggle(
-    'file_restore',
-    'Use files to do phone restore',
-    TAG_PRODUCT_PATH,
-    randomness=1,
-    namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
-)
-
 BULK_SMS_VERIFICATION = StaticToggle(
     'bulk_sms_verification',
     'Allow initiating the SMS phone verification workflow for all users in a group.',
