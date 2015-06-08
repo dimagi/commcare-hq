@@ -9,6 +9,7 @@ from datetime import timedelta, datetime
 from dateutil import rrule
 from dateutil.rrule import MO
 from django.utils import html
+from corehq.util.quickcache import quickcache
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.api import add_msg_tags
 from corehq.apps.sms.models import SMSLog, OUTGOING
@@ -266,17 +267,11 @@ class ProductsReportHelper(object):
         ]
 
 
-def get_reporting_types(domain):
-    return [
-        location_type for location_type in Domain.get_by_name(domain).location_types
-        if not location_type.administrative
-    ]
-
-
 def can_receive_email(user, verified_number):
     return user.email and verified_number.backend_id and verified_number.backend_id == 'MOBILE_BACKEND_TWILIO'
 
 
+@quickcache(['domain'])
 def get_country_id(domain):
     return SQLLocation.objects.filter(domain=domain, location_type__name='country')[0].location_id
 
