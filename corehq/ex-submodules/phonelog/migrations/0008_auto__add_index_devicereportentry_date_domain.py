@@ -8,13 +8,15 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding index on 'DeviceReportEntry', fields ['date', 'domain']
-        db.create_index(u'phonelog_devicereportentry', ['domain', 'date'])
+        # Adding index on 'DeviceReportEntry', fields ['domain', 'date']
+        db.commit_transaction()
+        db.execute('CREATE INDEX CONCURRENTLY "phonelog_devicereportentry_domain_date" ON "phonelog_devicereportentry" ("domain","date")')
+        db.start_transaction()
 
 
     def backwards(self, orm):
-        # Removing index on 'DeviceReportEntry', fields ['date', 'domain']
-        db.delete_index(u'phonelog_devicereportentry', ['domain', 'date'])
+        # Removing index on 'DeviceReportEntry', fields ['domain', 'date']
+        db.execute('DROP INDEX "phonelog_devicereportentry_domain_date"')
 
 
     models = {
