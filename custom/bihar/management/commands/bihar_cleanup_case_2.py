@@ -4,10 +4,9 @@ import csv
 from couchdbkit.exceptions import ResourceNotFound
 from django.core.management import BaseCommand
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.hqcase.utils import get_case_by_identifier
 from dimagi.utils.couch.database import iter_docs
 
-logger = logging.getLogger('case_cleanup')
-logger.setLevel('DEBUG')
 
 
 MOTECH_ID = "fb6e0b19cbe3ef683a10c4c4766a1ef3"
@@ -19,62 +18,55 @@ class Command(BaseCommand):
     Takes one argument, the directory containing the three input files.
     """
 
+    cases_to_save = {}
+
+    def get_case(self, case_id):
+        return self.cases_to_save.get(case_id) or get_case_by_identifier("care-bihar", case_id)
+
     def handle(self, *args, **options):
         if len(args) != 1:
             print "Invalid arguments: %s" % str(args)
             return
         dir = args[0]
-        domain = "care-bihar"
-        domain = "project-commcarehq"
-
-        case_types = ["task", "", None]
-        cases = []
-        for case_type in case_types:
-            key = ["all type", domain, case_type]
-            cases += CommCareCase.view(
-                'case/all_cases',
-                startkey=key,
-                endkey=key + [{}],
-                reduce=False,
-                include_docs=False,
-            ).all()
-        cases_by_id = {case.id: case for case in cases}
-        cases_to_save = set()
 
         # sheet1: update user id for task cases
         with open(dir + '/update_userid.csv') as f:
             reader = csv.reader(f)
             reader.next()
             for row in reader:
-                case = cases_by_id[row[0]]
-                case.user_id == MOTECH_ID
-                cases_to_save.add(case.id)
+                case = self.get_case(row[0])
+                if case.user_id != MOTECH_ID:
+                    case.user_id = MOTECH_ID
+                    self.cases_to_save[case.case_id] = case
 
         # sheet2: check owner id for task cases
-        with open(dir + '/blank_case_type.csv') as f:
-            reader = csv.reader(f)
-            reader.next()
-            for row in reader:
-                case = cases_by_id[row[0]]
-                owner_id = row[1]
-                if case.owner_id != owner_id:
-                    case.owner_id = owner_id
-                    cases_to_save.add(case.id)
-                    logger.info("Updated case with id " + case.id + " to have owner with id " + case.owner_id)
-
-        # sheet3: update cases without types
         with open(dir + '/update_ownerid.csv') as f:#blank/None
             reader = csv.reader(f)
             reader.next()
             for row in reader:
-                case = cases_by_id[row[0]]
-                if case.last_submitter == MOTECH_ID:
+                case = self.get_case(row[0])
+                owner_id = row[1]
+                if case.owner_id != owner_id:
+                    case.owner_id = owner_id
+                    self.cases_to_save[case.case_id] = case
+                    print("Updated case with id " + case.case_id + " to have owner with id " + case.owner_id)
+
+        # sheet3: update cases without types
+        with open(dir + '/blank_case_type.csv') as f:
+            reader = csv.reader(f)
+            reader.next()
+            for row in reader:
+                case = self.get_case(row[0])
+                if case.user_id == MOTECH_ID:
                     case.type = "task"
-                    cases_to_save.add(case.id)
-                logger.info("Case with name " + case.name + " is now of type " + case.type)
+                    self.cases_to_save[case.case_id] = case
+                    print("Case with name " + case.name + " updated to type " + case.type)
+                else:
+                    print("Type not updated for case with name " + case.name)
 
-        logger.info(len(cases_to_save) + " cases to save")
-        if len(cases_to_save):
-            CommCareCase.get_db().bulk_save(cases_to_save)
+        print(str(len(self.cases_to_save)) + " cases to save")
+        if len(self.cases_to_save):
+            CommCareCase.get_db().bulk_save(self.cases_to_save.values())
 
-        logger.info("Complete.")
+        print("Complete.")
+
