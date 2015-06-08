@@ -101,7 +101,7 @@ class SmsGatewayFee(models.Model):
     criteria = models.ForeignKey(SmsGatewayFeeCriteria, on_delete=models.PROTECT)
     amount = models.DecimalField(default=0.0, max_digits=10, decimal_places=4)
     currency = models.ForeignKey(accounting.Currency, on_delete=models.PROTECT)
-    date_created = models.DateField(auto_now_add=True)
+    date_created = models.DateTimeField(auto_now_add=True)
 
     @classmethod
     def create_new(cls, backend_api_id, direction, amount,
@@ -205,7 +205,7 @@ class SmsUsageFee(models.Model):
     """
     criteria = models.ForeignKey(SmsUsageFeeCriteria, on_delete=models.PROTECT)
     amount = models.DecimalField(default=0.0, max_digits=10, decimal_places=4)
-    date_created = models.DateField(auto_now_add=True)
+    date_created = models.DateTimeField(auto_now_add=True)
 
     @classmethod
     def create_new(cls, direction, amount, domain=None, save=True):
