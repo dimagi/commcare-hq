@@ -73,6 +73,7 @@ class TestUsageFee(TestCase):
         SmsBillable.objects.all().delete()
         SmsUsageFee.objects.all().delete()
         SmsUsageFeeCriteria.objects.all().delete()
+        SmsGatewayFee.objects.all().delete()
         self.currency_usd.delete()
         for backend_instance in self.backend_ids.values():
             SMSBackend.get(backend_instance).delete()
