@@ -803,8 +803,8 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
             {'key': "action_1", 'value': "com.biometrac.core.IDENTIFY"},
         ]
         module.case_details.short.lookup_responses = [
-            {"key": "match_id_0", "value": "left_index"},
-            {"key": "match_id_1", "value": "right_index"},
+            {"key": "match_id_0"},
+            {"key": "match_id_1"},
         ]
 
         expected = """
@@ -812,8 +812,8 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
             <lookup action="callout.commcarehq.org.dummycallout.LAUNCH">
                 <extra key="action_0" value="com.biometrac.core.SCAN"/>
                 <extra key="action_1" value="com.biometrac.core.IDENTIFY"/>
-                <response key="match_id_0" value="left_index"/>
-                <response key="match_id_1" value="right_index"/>
+                <response key="match_id_0"/>
+                <response key="match_id_1"/>
             </lookup>
         </partial>
         """

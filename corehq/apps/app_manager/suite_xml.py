@@ -419,7 +419,6 @@ class Response(XmlObject):
     ROOT_NAME = 'response'
 
     key = StringField("@key")
-    value = StringField("@value")
 
 
 class Lookup(XmlObject):
@@ -1078,8 +1077,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                     action=detail.lookup_action,
                     image=detail.lookup_image or None,
                 )
-                d.lookup.extras = [Extra(key=e['key'], value=e['value']) for e in detail.lookup_extras]
-                d.lookup.responses = [Response(key=r['key'], value=r['value']) for r in detail.lookup_responses]
+                d.lookup.extras = [Extra(**e) for e in detail.lookup_extras]
+                d.lookup.responses = [Response(**r) for r in detail.lookup_responses]
 
             # Add variables
             variables = list(
