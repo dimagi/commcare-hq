@@ -9,17 +9,17 @@ class Migration(SchemaMigration):
 
     def forwards(self, orm):
         # Adding index on 'DeviceReportEntry', fields ['date', 'domain']
-        db.create_index(u'phonelog_devicereportentry', ['date', 'domain'])
+        db.create_index(u'phonelog_devicereportentry', ['domain', 'date'])
 
 
     def backwards(self, orm):
         # Removing index on 'DeviceReportEntry', fields ['date', 'domain']
-        db.delete_index(u'phonelog_devicereportentry', ['date', 'domain'])
+        db.delete_index(u'phonelog_devicereportentry', ['domain', 'date'])
 
 
     models = {
         u'phonelog.devicereportentry': {
-            'Meta': {'unique_together': "[('xform_id', 'i')]", 'object_name': 'DeviceReportEntry', 'index_together': "[('date', 'domain')]"},
+            'Meta': {'unique_together': "[('xform_id', 'i')]", 'object_name': 'DeviceReportEntry', 'index_together': "[('domain', 'date')]"},
             'app_version': ('django.db.models.fields.TextField', [], {'null': 'True'}),
             'date': ('django.db.models.fields.DateTimeField', [], {'db_index': 'True'}),
             'device_id': ('django.db.models.fields.CharField', [], {'max_length': '50', 'null': 'True', 'db_index': 'True'}),
