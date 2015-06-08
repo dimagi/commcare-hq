@@ -10,6 +10,9 @@ from corehq.apps.smsbillables import generator
 
 class TestGatewayFee(TestCase):
     def setUp(self):
+        SmsGatewayFee.objects.all().delete()
+        SmsGatewayFeeCriteria.objects.all().delete()
+
         self.currency_usd = init_default_currency()
         self.available_backends = get_available_backends().values()
 

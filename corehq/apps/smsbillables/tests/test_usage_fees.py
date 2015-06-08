@@ -8,6 +8,9 @@ from corehq.apps.smsbillables import generator
 
 class TestUsageFee(TestCase):
     def setUp(self):
+        SmsUsageFee.objects.all().delete()
+        SmsUsageFeeCriteria.objects.all().delete()
+
         self.currency_usd = init_default_currency()
 
         self.least_specific_fees = generator.arbitrary_fees_by_direction()
