@@ -3,7 +3,8 @@ from copy import copy
 
 import pytz
 import dateutil
-from casexml.apps.case.dbaccessors import get_cases_by_owner_type_status_date
+from casexml.apps.case.dbaccessors import get_number_of_cases_by_filters
+from corehq.apps.hqcase.dbaccessors import get_case_types_for_domain
 
 from dimagi.ext.couchdbkit import *
 from casexml.apps.case.models import CommCareCase
@@ -28,11 +29,20 @@ def standard_start_end_key(key, datespan=None):
 
 KEY_TYPE_OPTIONS = [('user_id', "User"), ("case_type", "Case Type")]
 REPORT_SECTION_OPTIONS = [("supervisor", "Supervisor Report")]
-CASE_FILTER_OPTIONS = [
-    ('', "Use all case types"),
-    ('in', 'Use only the case types specified below'),
-    ('ex', 'Use all case types except for those specified below')
-]
+
+
+class CaseFilter(object):
+    no_filter = ''
+    include = 'in'
+    exclude = 'ex'
+
+    options = [
+        (no_filter, "Use all case types"),
+        (include, 'Use only the case types specified below'),
+        (exclude, 'Use all case types except for those specified below')
+    ]
+
+CASE_FILTER_OPTIONS = CaseFilter.options
 CASE_STATUS_OPTIONS = [
     ('', 'All Cases'),
     ('open', 'Open Cases'),
@@ -579,58 +589,46 @@ class CompareADMColumn(ConfigurableADMColumn):
         return "Comparison"
 
 
-class CaseFilterADMColumnMixin(DocumentSchema):
+class CaseCountADMColumn(ConfigurableADMColumn, NumericalADMColumnMixin,
+                         IgnoreDatespanADMColumnMixin):
     """
-        Use this mixin when you want to filter the results by case_types.
-        Assumes that the result returned will be a list of CommCareCases.
+    Returns the count of the number of cases specified by
+    filter_option, case_types, case_status, and inactivity_milestone.
+
     """
+    inactivity_milestone = IntegerProperty(default=0)
     filter_option = StringProperty(default='', choices=[f[0] for f in CASE_FILTER_OPTIONS])
     case_types = ListProperty()
     case_status = StringProperty(default='', choices=[s[0] for s in CASE_STATUS_OPTIONS])
 
-    def get_filtered_cases(self, domain, user_id, status=None,
-                           date_range=None):
+    _admin_crud_class = CaseCountColumnCRUDManager
+
+    def get_number_of_cases_matching_filter(self, domain, user_id, status=None,
+                                            date_range=None):
 
         owner_ids = [user_id]
         groups = Group.by_user(user_id, wrap=False)
         owner_ids.extend(groups)
 
-        pass_filter_types = self.case_types if self.filter_option == CASE_FILTER_OPTIONS[1][0] else [None]
+        if self.filter_option == CaseFilter.include:
+            include_case_types = self.case_types
+        elif self.filter_option == CaseFilter.no_filter:
+            include_case_types = None
+        elif self.filter_option == CaseFilter.exclude:
+            all_case_types = get_case_types_for_domain(self.domain)
+            include_case_types = list(
+                set(all_case_types) - set(self.case_types))
+        else:
+            raise ValueError('filter_option must be one of {}'
+                             .format(CaseFilter.options))
 
-        all_cases = list()
-        for case_type in pass_filter_types:
+        number_of_cases = 0
+        for case_type in include_case_types or [None]:
             for owner in owner_ids:
-                data = get_cases_by_owner_type_status_date(
+                number_of_cases += get_number_of_cases_by_filters(
                     domain, owner, case_type, status=status,
                     date_range=date_range)
-                all_cases.extend(data)
-        if self.filter_option == CASE_FILTER_OPTIONS[2][0] and self.case_types:
-            filtered_cases = list()
-            for case in all_cases:
-                if isinstance(case, CommCareCase):
-                    case_type = case.type
-                else:
-                    try:
-                        case_type = case.get('value', {}).get('type')
-                    except Exception:
-                        case_type = None
-                if case_type not in self.case_types:
-                    filtered_cases.append(case)
-            all_cases = filtered_cases
-        return all_cases
-
-
-class CaseCountADMColumn(ConfigurableADMColumn, CaseFilterADMColumnMixin,
-                         NumericalADMColumnMixin,
-                         IgnoreDatespanADMColumnMixin):
-    """
-    Returns the count of the number of cases specified by the filters
-    in CaseFilterADMColumnMixin and inactivity_milestone.
-
-    """
-    inactivity_milestone = IntegerProperty(default=0)
-
-    _admin_crud_class = CaseCountColumnCRUDManager
+        return number_of_cases
 
     @property
     def configurable_properties(self):
@@ -644,15 +642,12 @@ class CaseCountADMColumn(ConfigurableADMColumn, CaseFilterADMColumnMixin,
             milestone_days_ago = UserTime(
                 self.report_datespan.enddate, self.report_datespan.timezone
             ).server_time().done() - datetime.timedelta(days=self.inactivity_milestone)
-            # in refactoring tz stuff,
-            # milestone_days_ago is now tz naive, so isoformat()
-            # no longer has +00:00 at the end. I think that's fine.
             date_range = (None, milestone_days_ago)
         elif not self.ignore_datespan:
             date_range = (self.report_datespan.startdate_utc, self.report_datespan.enddate_utc)
         status = self.case_status if self.case_status else None
-        cases = self.get_filtered_cases(self.report_domain, user_id, status=status, date_range=date_range)
-        return len(cases) if isinstance(cases, list) else None
+        return self.get_number_of_cases_matching_filter(
+            self.report_domain, user_id, status=status, date_range=date_range)
 
     def clean_value(self, value):
         return value if value is not None else 0
