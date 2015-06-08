@@ -193,6 +193,36 @@ var filterViewModel = function(filterText, saveButton){
     };
 };
 
+var caseListLookupViewModel = function($el, state, saveButton){
+    var self = this;
+
+    _fireChange = function(){
+        saveButton.fire('change');
+    };
+
+    _initSaveButtonListeners = function($el){
+        $el.find('*').change(_fireChange);
+        $el.find('input, textarea').bind('textchange', _fireChange);
+    };
+
+    self.serialize = function(){
+        var data = {
+            lookup_enabled: self.lookup_enabled(),
+        };
+        return data;
+    };
+
+    self.$el = $el;
+    self.$form = $el.find('form');
+
+    self.lookup_enabled = ko.observable(state.lookup_enabled);
+    self.lookup_action = ko.observable(state.lookup_action);
+    self.lookup_name = ko.observable(state.lookup_name);
+
+
+    _initSaveButtonListeners(self.$el);
+};
+
 // http://www.knockmeout.net/2011/05/dragging-dropping-and-sorting-with.html
 // connect items with observableArrays
 ko.bindingHandlers.sortableList = {
@@ -557,6 +587,7 @@ var DetailScreenConfig = (function () {
             this.containsSortConfiguration = options.containsSortConfiguration;
             this.containsParentConfiguration = options.containsParentConfiguration;
             this.containsFilterConfiguration = options.containsFilterConfiguration;
+            this.containsCaseListLookupConfiguration = options.containsCaseListLookupConfiguration;
             this.containsCustomXMLConfiguration = options.containsCustomXMLConfiguration;
             this.allowsTabs = options.allowsTabs;
             this.useCaseTiles = ko.observable(spec[this.columnKey].use_case_tiles ? "yes" : "no");
@@ -750,6 +781,9 @@ var DetailScreenConfig = (function () {
                 if (this.containsFilterConfiguration) {
                     data.filter = JSON.stringify(this.config.filter.serialize());
                 }
+                if (this.containsCaseListLookupConfiguration){
+                    data.case_list_lookup = JSON.stringify(this.config.caseListLookup.serialize());
+                }
                 if (this.containsCustomXMLConfiguration){
                     data.custom_xml = this.config.customXMLViewModel.xml();
                 }
@@ -831,6 +865,7 @@ var DetailScreenConfig = (function () {
                         containsSortConfiguration: columnType == "short",
                         containsParentConfiguration: columnType == "short",
                         containsFilterConfiguration: columnType == "short",
+                        containsCaseListLookupConfiguration: columnType == "short",
                         containsCustomXMLConfiguration: columnType == "short",
                         allowsTabs: columnType == 'long',
                         allowsEmptyColumns: columnType == 'long'
@@ -864,6 +899,8 @@ var DetailScreenConfig = (function () {
                 this.customXMLViewModel.xml.subscribe(function(v){
                     that.shortScreen.saveButton.fire("change");
                 });
+                var $case_list_lookup_el = $("#" + spec.state.type + "-list-callout-configuration");
+                this.caseListLookup = new caseListLookupViewModel($case_list_lookup_el, spec.state.short, this.shortScreen.saveButton);
             }
             if (spec.state.long !== undefined) {
                 this.longScreen = addScreen(spec.state, "long");

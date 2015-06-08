@@ -1669,6 +1669,11 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
     resp['case_list-show'] = module.requires_case_details()
     return HttpResponse(json.dumps(resp))
 
+
+def _save_case_list_lookup_params(short, case_list_lookup):
+    short.lookup_enabled = case_list_lookup.get("lookup_enabled")
+
+
 @no_conflict_require_POST
 @require_can_edit_apps
 def edit_module_detail_screens(request, domain, app_id, module_id):
@@ -1689,6 +1694,7 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
     use_case_tiles = params.get('useCaseTiles', None)
     persist_tile_on_forms = params.get("persistTileOnForms", None)
     pull_down_tile = params.get("enableTilePullDown", None)
+    case_list_lookup = params.get("case_list_lookup", None)
 
     app = get_app(domain, app_id)
     module = app.get_module(module_id)
@@ -1713,6 +1719,9 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
             detail.short.persist_tile_on_forms = persist_tile_on_forms
         if pull_down_tile is not None:
             detail.short.pull_down_tile = pull_down_tile
+        if case_list_lookup is not None:
+            _save_case_list_lookup_params(detail.short, case_list_lookup)
+
     if long is not None:
         detail.long.columns = map(DetailColumn.wrap, long)
         if tabs is not None:
