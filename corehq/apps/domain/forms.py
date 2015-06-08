@@ -1522,6 +1522,7 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
                 new_subscription.is_active = True
             new_subscription.do_not_invoice = False
             new_subscription.auto_generate_credits = True
+            new_subscription.service_type = SubscriptionType.CONTRACTED
             new_subscription.save()
         except:
             # If the entire transaction did not go through, rollback saved changes
