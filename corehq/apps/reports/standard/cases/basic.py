@@ -4,14 +4,11 @@ import json
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
-from couchdbkit import RequestFailed
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import PhoneTime
 from dimagi.utils.decorators.memoized import memoized
 
-from corehq.apps.api.es import CaseES
-from corehq.apps.es import filters
-from corehq.apps.es import users as user_es
+from corehq.apps.es import filters, users as user_es, cases as case_es
 from corehq.apps.es.es_query import HQESQuery
 from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
@@ -38,72 +35,37 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     ajax_pagination = True
     asynchronous = True
 
-    @property
-    @memoized
-    def case_es(self):
-        return CaseES(self.domain)
-
     def _build_query(self):
-        def _filter_gen(key, flist):
-            return {"terms": {
-                key: [item.lower() for item in flist if item]
-            }}
+        query = (case_es.CaseES()
+                 .domain(self.domain)
+                 .size(self.pagination.count)
+                 .start(self.pagination.start))
+        query.es_query['sort'] = self.get_sorting_block()
 
-        def _domain_term():
-            return {"term": {"domain.exact": self.domain}}
+        if self.case_filter:
+            query.filter(self.case_filter)
 
-        subterms = [_domain_term(), self.case_filter] if self.case_filter else [_domain_term()]
-        subterms.append({"not": {"term": {"type.exact": "user-owner-mapping-case"}}})
+        query = query.NOT(case_es.case_type("user-owner-mapping-case"))
+
         if self.case_type:
-            subterms.append({"term": {"type.exact": self.case_type}})
+            query = query.case_type(self.case_type)
 
         if self.case_status:
-            subterms.append({"term": {"closed": (self.case_status == 'closed')}})
+            query = query.is_closed(self.case_status == 'closed')
 
         if not EMWF.show_all_data(self.request):
-            subterms.append(_filter_gen('owner_id', self.case_owners))
+            query = query.owner(self.case_owners)
 
         search_string = SearchFilter.get_value(self.request, self.domain)
         if search_string:
-            query_block = {
-                "query_string": {"query": search_string}}  # todo, make sure this doesn't suck
-        else:
-            query_block = {"match_all": {}}
+            query = query.set_query({"query_string": {"query": search_string}})
 
-        and_block = {'and': subterms} if subterms else {}
-
-        es_query = {
-            'query': {
-                'filtered': {
-                    'query': query_block,
-                    'filter': and_block
-                }
-            },
-            'sort': self.get_sorting_block(),
-            'from': self.pagination.start,
-            'size': self.pagination.count,
-        }
-        return es_query
+        return query
 
     @property
     @memoized
     def es_results(self):
-        case_es = self.case_es
-        query = self._build_query()
-
-        query_results = case_es.run_query(query)
-
-        if 'hits' not in query_results:
-            logging.error("CaseListMixin query error: %s, urlpath: %s, params: %s, user: %s yielded a result indicating a query error: %s, results: %s" % (
-                self.__class__.__name__,
-                self.request.path,
-                self.request.GET.urlencode(),
-                self.request.couch_user.username,
-                json.dumps(query),
-                json.dumps(query_results)
-            ))
-            raise RequestFailed
-        return query_results
+        return self._build_query().run().raw
 
     @property
     @memoized
