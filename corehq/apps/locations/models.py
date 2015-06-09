@@ -113,11 +113,8 @@ class LocationType(models.Model):
 
 
 class LocationQueriesMixin(object):
-    def ids(self):
+    def location_ids(self):
         return self.values_list('location_id', flat=True)
-
-    def domain(self, domain):
-        return self.filter(domain=domain)
 
 
 class LocationQuerySet(LocationQueriesMixin, models.query.QuerySet):
@@ -532,7 +529,8 @@ class Location(CachedCouchDocumentMixin, Document):
             query = root_loc.sql_location.get_descendants(include_self=True)
         else:
             query = SQLLocation.objects
-        ids = query.filter(domain=domain, location_type__name=loc_type).ids()
+        ids = (query.filter(domain=domain, location_type__name=loc_type)
+                    .location_ids())
 
         return (
             cls.wrap(l) for l in iter_docs(cls.get_db(), list(ids))
@@ -541,7 +539,7 @@ class Location(CachedCouchDocumentMixin, Document):
 
     @classmethod
     def by_domain(cls, domain, include_docs=True):
-        relevant_ids = SQLLocation.objects.domain(domain).ids()
+        relevant_ids = SQLLocation.objects.filter(domain=domain).location_ids()
         if not include_docs:
             return relevant_ids
         else:

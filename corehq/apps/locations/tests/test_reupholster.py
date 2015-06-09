@@ -35,21 +35,21 @@ class TestReupholster(TestCase):
             reduce=False,
         ).all()])
 
-        new_result = set(SQLLocation.objects.ids())
+        new_result = set(SQLLocation.objects.location_ids())
 
         self.assertEqual(original_result, new_result)
 
     def test_all_for_domain_by_type(self):
-        original_result = set([r['id'] for r in Location.get_db().view(
+        original_result = [r['id'] for r in Location.get_db().view(
             'locations/by_type',
             reduce=False,
             startkey=[self.domain.name],
             endkey=[self.domain.name, {}],
-        ).all()])
+        ).all()]
 
-        new_result = set(SQLLocation.objects.domain(self.domain.name).ids())
+        new_result = SQLLocation.objects.filter(domain=self.domain.name).location_ids()
 
-        self.assertEqual(original_result, new_result)
+        self.assertEqual(set(original_result), set(new_result))
 
     def _blocks_by_type(self, loc_id, reduce=False):
         return Location.get_db().view('locations/by_type',
@@ -72,7 +72,7 @@ class TestReupholster(TestCase):
                       .get_descendants(include_self=True)
                       .filter(domain=self.domain.name,
                               location_type__name='block')
-                      .ids())
+                      .location_ids())
 
         self.assertEqual(original_result, list(new_result))
 
@@ -82,7 +82,7 @@ class TestReupholster(TestCase):
         new_result = (SQLLocation.objects
                       .filter(domain=self.domain.name,
                               location_type__name='block')
-                      .ids())
+                      .location_ids())
 
         self.assertEqual(original_result, list(new_result))
 
