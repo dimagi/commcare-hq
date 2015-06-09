@@ -50,7 +50,6 @@ branches:
   - locations-for-robber-barons  # Ethan 5/7
   - form-context-simple # Ben 5/13
   - langMedia # Sravan 5/20
-  - location-group-changes # tw 5/29
   - renew-plan # Farid 6/4
   - index-phonelog-reportentry # Ben 6/8
 submodules:
@@ -58,7 +57,6 @@ submodules:
     # let's leave this here even when empty
     # just so we always get latest master
     branches:
-    #  - tf-persistence  # wsp 3/10
       - tf-persistence  # wsp 5/7
       - use-classes # ben 5/7
       - 221-jars # wsp 5/20
