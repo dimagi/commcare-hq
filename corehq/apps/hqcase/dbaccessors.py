@@ -61,6 +61,19 @@ def get_case_types_for_domain(domain):
 
 def get_case_ids_in_domain_by_owner(domain, owner_id=None, owner_id__in=None,
                                     closed=None):
+    """
+    get case_ids for open, closed, or all cases in a domain
+    that belong to an owner_id or list of owner_ids
+
+    domain: required
+    owner_id: a single owner_id to filter on
+    owner_id__in: a list of owner ids to filter on.
+        A case matches if it belongs to any of them.
+        You cannot specify both this and owner_id
+    closed: True (only closed cases), False (only open cases), or None (all)
+    returns a list of case_ids
+
+    """
     assert not (owner_id__in and owner_id)
     assert closed in (True, False, None)
     if closed is None:
