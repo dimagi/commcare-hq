@@ -123,9 +123,6 @@
             line_chart.forceY({{ chart.forceY|JSON }});
         {% endif %}
 
-        {% if chart.y_tick_values %}
-            line_chart.yAxis.showMaxMin(false).tickValues({{ chart.y_tick_values|JSON }});
-        {% endif %}
 
         line_chart.margin(chart_config.margin);
         line_chart.tooltips(chart_config.tooltips);
@@ -137,7 +134,6 @@
         d3.select(line_chart_id + ' svg')
                 .datum(line_chart_data)
                 .transition().duration(500).call(line_chart);
-
         nv.utils.windowResize(line_chart.update);
 
         var updateLineBreaks = function() {
