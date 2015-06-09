@@ -336,7 +336,7 @@ class MessageLogReport(BaseCommConnectLogReport):
 class BaseMessagingEventReport(BaseCommConnectLogReport):
     def get_source_display(self, event):
         source = dict(MessagingEvent.SOURCE_CHOICES).get(event.source)
-        if event.content_type == MessagingEvent.CONTENT_NONE:
+        if event.source == MessagingEvent.SOURCE_OTHER:
             return self._fmt(_(source))
         else:
             content_type = dict(MessagingEvent.CONTENT_CHOICES).get(event.content_type)
@@ -421,8 +421,9 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
             return self.get_keyword_display(event.source_id, content_cache)
         elif event.source == MessagingEvent.SOURCE_REMINDER and event.source_id:
             return self.get_reminder_display(event.source_id, content_cache)
-        else:
-            return self._fmt('-')
+
+        content_choices = dict(MessagingEvent.CONTENT_CHOICES)
+        return self._fmt(_(content_choices.get(event.content_type, '-')))
 
     def get_event_detail_link(self, event):
         display_text = _('View Details')

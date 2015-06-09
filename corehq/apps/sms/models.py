@@ -708,26 +708,26 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     SOURCE_KEYWORD = 'KWD'
     SOURCE_REMINDER = 'RMD'
     SOURCE_OTHER = 'OTH'
-    SOURCE_PHONE_VERIFICATION = 'VER'
 
     SOURCE_CHOICES = (
         (SOURCE_BROADCAST, ugettext_noop('Broadcast')),
         (SOURCE_KEYWORD, ugettext_noop('Keyword')),
         (SOURCE_REMINDER, ugettext_noop('Reminder')),
         (SOURCE_OTHER, ugettext_noop('Other')),
-        (SOURCE_PHONE_VERIFICATION, ugettext_noop('Phone Verification')),
     )
 
     CONTENT_NONE = 'NOP'
     CONTENT_SMS = 'SMS'
     CONTENT_SMS_SURVEY = 'SVY'
     CONTENT_IVR_SURVEY = 'IVR'
+    CONTENT_PHONE_VERIFICATION = 'VER'
 
     CONTENT_CHOICES = (
         (CONTENT_NONE, ugettext_noop('None')),
         (CONTENT_SMS, ugettext_noop('SMS')),
         (CONTENT_SMS_SURVEY, ugettext_noop('SMS Survey')),
         (CONTENT_IVR_SURVEY, ugettext_noop('IVR Survey')),
+        (CONTENT_PHONE_VERIFICATION, ugettext_noop('Phone Verification')),
     )
 
     RECIPIENT_CASE = 'CAS'
@@ -950,8 +950,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         return cls.objects.create(
             domain=domain,
             date=datetime.utcnow(),
-            source=cls.SOURCE_PHONE_VERIFICATION,
-            content_type=cls.CONTENT_NONE,
+            source=cls.SOURCE_OTHER,
+            content_type=cls.CONTENT_PHONE_VERIFICATION,
             status=cls.STATUS_IN_PROGRESS,
             recipient_type=recipient_type,
             recipient_id=contact.get_id if recipient_type else None
@@ -967,7 +967,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             domain=domain,
             recipient_id=contact_id,
             messagingsubevent__sms__phone_number=smsutil.clean_phone_number(phone_number),
-            source=cls.SOURCE_PHONE_VERIFICATION,
+            content_type=cls.CONTENT_PHONE_VERIFICATION,
             status=cls.STATUS_IN_PROGRESS
         )
         return qs.order_by('-date')[0] if qs.count() > 0 else None
