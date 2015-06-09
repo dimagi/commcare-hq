@@ -4,10 +4,10 @@ from functools import partial
 from datetime import datetime
 from casexml.apps.case.dbaccessors import get_open_case_ids
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.phone import xml
 from casexml.apps.phone.cleanliness import get_case_footprint_info
 from casexml.apps.phone.data_providers.case.load_testing import append_update_to_response
-from casexml.apps.phone.data_providers.case.utils import get_case_sync_updates
+from casexml.apps.phone.data_providers.case.stock import get_stock_payload
+from casexml.apps.phone.data_providers.case.utils import get_case_sync_updates, CaseStub
 from casexml.apps.phone.models import OwnershipCleanlinessFlag, LOG_FORMAT_SIMPLIFIED, IndexTree, SimplifiedSyncLog
 from corehq.apps.users.cases import get_owner_id
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_owner_server_modified_on import \
@@ -81,7 +81,7 @@ class CleanOwnerCaseSyncOperation(object):
 
                 # update the indices in the new sync log
                 if case.indices:
-                    all_indices[case._id] = set([index.referenced_id for index in case.indices])
+                    all_indices[case._id] = {index.identifier: index.referenced_id for index in case.indices}
                     # and double check footprint for non-live cases
                     for index in case.indices:
                         if index.referenced_id not in all_syncing:
@@ -89,6 +89,13 @@ class CleanOwnerCaseSyncOperation(object):
 
                 if not _is_live(case, self.restore_state):
                     all_dependencies_syncing.add(case._id)
+
+            # commtrack ledger sections for this batch
+            commtrack_elements = get_stock_payload(
+                self.restore_state.project, self.restore_state.stock_settings,
+                [CaseStub(update.case._id, update.case.type) for update in updates]
+            )
+            response.extend(commtrack_elements)
 
             # add any new values to all_syncing
             all_syncing = all_syncing | case_ids_to_sync
@@ -108,12 +115,12 @@ class CleanOwnerCaseSyncOperation(object):
                 self.restore_state.last_sync_log.dependent_case_ids_on_phone -
                 primary_cases_syncing
             )
-            index_tree = index_tree | self.restore_state.last_sync_log.index_tree
+            index_tree = self.restore_state.last_sync_log.index_tree.apply_updates(index_tree)
 
         self.restore_state.current_sync_log.case_ids_on_phone = case_ids_on_phone
         self.restore_state.current_sync_log.dependent_case_ids_on_phone = all_dependencies_syncing
         self.restore_state.current_sync_log.index_tree = index_tree
-        # todo: update stock payload
+
         return response
 
     def get_case_ids_for_owner(self, owner_id):

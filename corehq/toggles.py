@@ -381,14 +381,6 @@ CUSTOM_PROPERTIES = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-FILE_RESTORE = PredictablyRandomToggle(
-    'file_restore',
-    'Use files to do phone restore',
-    TAG_PRODUCT_PATH,
-    randomness=.5,
-    namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
-)
-
 BULK_SMS_VERIFICATION = StaticToggle(
     'bulk_sms_verification',
     'Allow initiating the SMS phone verification workflow for all users in a group.',
@@ -408,14 +400,6 @@ USER_AS_A_CASE = StaticToggle(
     'Enable "User-As-A-Case" to store user properties in a case and use them in forms',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
-)
-
-STREAM_RESTORE_CACHE = PredictablyRandomToggle(
-    'stream_cached_restore',
-    'Stream cached restore from couchdb',
-    TAG_EXPERIMENTAL,
-    randomness=.5,
-    namespaces=[NAMESPACE_DOMAIN]
 )
 
 ENABLE_LOADTEST_USERS = StaticToggle(
@@ -470,4 +454,11 @@ INSTANCE_VIEWER = StaticToggle(
     'View curent instance when using Touchforms',
     TAG_EXPERIMENTAL,
     namespaces=[NAMESPACE_USER],
+)
+
+OPENLMIS = StaticToggle(
+    'openlmis',
+    'Offer OpenLMIS settings',
+    TAG_UNKNOWN,
+    namespaces=[NAMESPACE_DOMAIN],
 )

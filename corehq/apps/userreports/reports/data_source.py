@@ -7,6 +7,7 @@ from sqlalchemy.exc import ProgrammingError
 from corehq.apps.reports.sqlreport import SqlData
 from corehq.apps.userreports.exceptions import UserReportsError
 from corehq.apps.userreports.models import DataSourceConfiguration
+from corehq.apps.userreports.reports.specs import DESCENDING
 from corehq.apps.userreports.sql import get_table_name
 from corehq.apps.userreports.views import get_datasource_config_or_404
 from dimagi.utils.decorators.memoized import memoized
@@ -26,6 +27,7 @@ class ConfigurableReportDataSource(SqlData):
 
         self._filters = {f.slug: f for f in filters}
         self._filter_values = {}
+        self._order_by = []
         self.aggregation_columns = aggregation_columns
         self._column_configs = SortedDict()
         for column in columns:
@@ -57,6 +59,9 @@ class ConfigurableReportDataSource(SqlData):
     def set_filter_values(self, filter_values):
         for filter_slug, value in filter_values.items():
             self._filter_values[filter_slug] = self._filters[filter_slug].create_filter_value(value)
+
+    def set_order_by(self, columns):
+        self._order_by = columns
 
     @property
     def filter_values(self):
@@ -102,12 +107,25 @@ class ConfigurableReportDataSource(SqlData):
             ProgrammingError,
         ) as e:
             raise UserReportsError(e.message)
-        # arbitrarily sort by the first column in memory
-        # todo: should get pushed to the database but not currently supported in sqlagg
-        return sorted(ret, key=lambda x: x.get(
-            self.column_configs[0].column_id,
-            next(x.itervalues())
-        ))
+        # TODO: Should sort in the database instead of memory, but not currently supported by sqlagg.
+        try:
+            # If a sort order is specified, sort by it.
+            if self._order_by:
+                for col in reversed(self._order_by):
+                    ret.sort(
+                        key=lambda x: x.get(col[0], None),
+                        reverse=col[1] == DESCENDING
+                    )
+                return ret
+            # Otherwise sort by the first column
+            else:
+                return sorted(ret, key=lambda x: x.get(
+                    self.column_configs[0].column_id,
+                    next(x.itervalues())
+                ))
+        except TypeError:
+            # if the first column isn't sortable just return the data in the order we got it
+            return ret
 
     def get_total_records(self):
         return len(self.get_data())

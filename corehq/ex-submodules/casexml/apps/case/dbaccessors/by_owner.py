@@ -12,10 +12,6 @@ def get_total_case_count():
     return results['value'] if results else 0
 
 
-def get_all_case_ids(owner_id):
-    return _get_case_ids(owner_id, is_closed=None)
-
-
 def get_open_case_ids(owner_id):
     """
     Get all open case ids for a given owner

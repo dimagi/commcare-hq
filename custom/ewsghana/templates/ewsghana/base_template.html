@@ -5,5 +5,31 @@
     <link href="{% static 'hqwebapp/js/lib/nvd3/nv.d3.css' %}" rel="stylesheet">
     <script src="{% static 'hqwebapp/js/lib/nvd3/lib/d3.v3.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/nvd3/nv.d3.min.js' %}"></script>
+    <script>
+        var show_hide_line_chart_data = function() {
+            var data = JSON.parse(JSON.stringify(line_chart_data));
+            var productCodes = [];
+            $("#report_table_product_selection_pane input:not(:checked)").each(function() {
+                productCodes.push($(this).attr('value'));
+                productCodes.push($(this).attr('name'));
+            });
+
+            for(var i = 0; i < data.length; i++) {
+                data = jQuery.grep(data, function(value) {
+                    return !_.contains(productCodes, value.key)
+                });
+            }
+            d3.select(line_chart_id + ' svg')
+                    .datum(data)
+                    .transition().duration(500).call(line_chart);
+            $('.nv-legend').find('.nv-series').show();
+            $('.nv-legend').find('.nv-series').each(function(idx, element) {
+                var text = $(element).find('text').text();
+                if (text === 'Understock' || text === 'Overstock') {
+                    $(element).hide()
+                }
+            });
+        };
+    </script>
 {% endblock %}
 

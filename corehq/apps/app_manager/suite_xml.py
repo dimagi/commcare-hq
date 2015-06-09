@@ -1421,6 +1421,12 @@ class SuiteGenerator(SuiteGeneratorBase):
 
         entry.require_instance(*instances)
 
+    def get_userdata_autoselect(self, key, session_id, mode):
+        xpath = session_var(key, path='user/data')
+        datum = SessionDatum(id=session_id, function=xpath)
+        assertions = self.get_auto_select_assertions(xpath, mode, [key])
+        return datum, assertions
+
     @property
     def entries(self):
         # avoid circular dependency
@@ -1442,6 +1448,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                     'careplan_form': self.configure_entry_careplan_form,
                 }[form.form_type]
                 config_entry(module, e, form)
+
                 results.append(e)
 
             if hasattr(module, 'case_list') and module.case_list.show:
@@ -1688,12 +1695,11 @@ class SuiteGenerator(SuiteGeneratorBase):
         from corehq.apps.app_manager.models import AUTO_SELECT_USER, AUTO_SELECT_CASE, \
             AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW, AUTO_SELECT_USERCASE
         if auto_select.mode == AUTO_SELECT_USER:
-            xpath = session_var(auto_select.value_key, path='user/data')
-            assertions = self.get_auto_select_assertions(xpath, auto_select.mode, [auto_select.value_key])
-            return SessionDatum(
-                id=action.case_session_var,
-                function=xpath
-            ), assertions
+            return self.get_userdata_autoselect(
+                auto_select.value_key,
+                action.case_session_var,
+                auto_select.mode,
+            )
         elif auto_select.mode == AUTO_SELECT_CASE:
             try:
                 ref = form.actions.actions_meta_by_tag[auto_select.value_source]['action']
@@ -1720,10 +1726,17 @@ class SuiteGenerator(SuiteGeneratorBase):
                 function=xpath
             ), [fixture_assertion] + assertions
         elif auto_select.mode == AUTO_SELECT_RAW:
+            case_id_xpath = auto_select.value_key
+            case_count = CaseIDXPath(case_id_xpath).case().count()
             return SessionDatum(
                 id=action.case_session_var,
-                function=auto_select.value_key
-            ), []
+                function=case_id_xpath
+            ), [
+                self.get_assertion(
+                    "{0} = 1".format(case_count),
+                    'case_autoload.{0}.case_missing'.format(auto_select.mode)
+                )
+            ]
         elif auto_select.mode == AUTO_SELECT_USERCASE:
             case = UserCaseXPath().case()
             return SessionDatum(

@@ -32,7 +32,7 @@ class BlockLevelMonthReport(GenericTabularReport, DatespanMixin, CustomProjectRe
         if not self.needs_filters:
             year = int(self.request.GET.get('year'))
             month = int(self.request.GET.get('month'))
-            startdate = datetime.date(year, month, 1) - relativedelta(months=2)
+            startdate = datetime.datetime(year, month, 1) - relativedelta(months=2)
         return {
             'domain': self.domain,
             'startdate': startdate.replace(hour=0, minute=0, second=0),

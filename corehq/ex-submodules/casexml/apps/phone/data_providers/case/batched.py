@@ -5,7 +5,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.caselogic import get_footprint
 from casexml.apps.phone.data_providers.case.load_testing import append_update_to_response
 from casexml.apps.phone.data_providers.case.stock import get_stock_payload
-from casexml.apps.phone.data_providers.case.utils import get_case_sync_updates
+from casexml.apps.phone.data_providers.case.utils import get_case_sync_updates, CaseStub
 from casexml.apps.phone.models import CaseState
 from corehq.util.dates import iso_string_to_datetime
 from dimagi.utils.parsing import string_to_utc_datetime
@@ -106,7 +106,7 @@ class GlobalSyncState(object):
 
     def update_synced_cases(self, case_updates):
         self.all_synced_cases_dict.update(
-            {update.case.case_id: CaseState.from_case(update.case) for update in case_updates}
+            {update.case.case_id: CaseStub(update.case._id, update.case.type) for update in case_updates}
         )
 
 

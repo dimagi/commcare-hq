@@ -16,12 +16,12 @@ from corehq.apps.reports.graph_models import Axis
 from corehq.apps.users.models import CommCareUser
 from custom.common import ALL_OPTION
 from custom.ewsghana.filters import ProductByProgramFilter
-from custom.ewsghana.reports import EWSData, MultiReport, get_url_with_location, EWSLineChart, ProductSelectionPane
-from custom.ewsghana.utils import has_input_stock_permissions
+from custom.ewsghana.reports import EWSData, MultiReport, EWSLineChart, ProductSelectionPane, \
+    ews_date_format
+from custom.ewsghana.utils import has_input_stock_permissions, drange
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 from corehq.apps.locations.models import Location, SQLLocation
-from dimagi.utils.parsing import json_format_date
 
 
 class StockLevelsLegend(EWSData):
@@ -94,8 +94,13 @@ class FacilityReportData(EWSData):
         ).order_by('-report__date')
 
         for state in stock_states:
-            monthly_consumption = round(state.get_monthly_consumption()) if state.get_monthly_consumption() else 0
-            max_level = round(monthly_consumption * float(loc.location_type.overstock_threshold))
+            if state.daily_consumption:
+                monthly_consumption = round(state.get_monthly_consumption())
+                max_level = round(monthly_consumption * float(loc.location_type.overstock_threshold))
+            else:
+                monthly_consumption = None
+                max_level = 0
+
             if state.product_id not in state_grouping:
                 state_grouping[state.product_id] = {
                     'commodity': state.sql_product.name,
@@ -119,20 +124,23 @@ class FacilityReportData(EWSData):
                     state_grouping[state.product_id]['stockout_duration_helper'] = False
 
                 if not state_grouping[state.product_id]['last_report']:
-                    state_grouping[state.product_id]['last_report'] = json_format_date(state.report.date)
+                    state_grouping[state.product_id]['last_report'] = ews_date_format(state.report.date)
                 if state_grouping[state.product_id]['current_stock'] is None:
                     state_grouping[state.product_id]['current_stock'] = state.stock_on_hand
 
-
         for values in state_grouping.values():
+            if values['monthly_consumption'] is not None:
+                months_until_stockout = get_months_until_stockout_icon(
+                    values['months_until_stockout'] if values['months_until_stockout'] else 0.0, loc
+                )
+            else:
+                months_until_stockout = '-'
             yield {
                 'commodity': values['commodity'],
                 'current_stock': int(values['current_stock'] or 0),
                 'monthly_consumption': values['monthly_consumption'] if values['monthly_consumption'] != 0.00
                 else 'not enough data',
-                'months_until_stockout': get_months_until_stockout_icon(values['months_until_stockout']
-                                                                        if values['months_until_stockout']
-                                                                        else 0.0, loc),
+                'months_until_stockout': months_until_stockout,
                 'stockout_duration': values['stockout_duration'],
                 'last_report': values['last_report'],
                 'reorder_level': values['reorder_level'] if values['reorder_level'] != 0.00
@@ -229,8 +237,14 @@ class InventoryManagementData(EWSData):
             values = []
             for product, value in self.chart_data.iteritems():
                 values.extend([a['y'] for a in value])
-                chart.add_dataset(product, value, color='red' if product in ['Understock', 'Overstock'] else None)
+                chart.add_dataset(product, value,
+                                  color='black' if product in ['Understock', 'Overstock'] else None)
             chart.forceY = [0, loc.location_type.understock_threshold + loc.location_type.overstock_threshold]
+            y_max = loc.location_type.understock_threshold + loc.location_type.overstock_threshold
+            chart.y_tick_values = [
+                y
+                for y in drange(0, y_max, 0.5)
+            ] + [loc.location_type.understock_threshold, loc.location_type.overstock_threshold]
             return [chart]
         return []
 
@@ -270,6 +284,7 @@ class UsersData(EWSData):
 
     @property
     def rendered_content(self):
+        from corehq.apps.users.views.mobile.users import EditCommCareUserView
         users = CommCareUser.view(
             'locations/users_by_location_id',
             startkey=[self.config['location_id']],
@@ -281,7 +296,8 @@ class UsersData(EWSData):
             'id': sms_user.get_id,
             'full_name': sms_user.full_name,
             'phone_numbers': sms_user.phone_numbers,
-            'in_charge': user.user_data.get('role') == 'In Charge'
+            'in_charge': user.user_data.get('role') == 'In Charge',
+            'url': reverse(EditCommCareUserView.urlname, args=[self.config['domain'], sms_user.get_id])
         }
 
         web_users = UserES().web_users().domain(self.config['domain']).term(
@@ -335,7 +351,7 @@ class StockLevelsReport(MultiReport):
                         InputStock(config),
                         UsersData(config),
                         InventoryManagementData(config),
-                        ProductSelectionPane(config)]
+                        ProductSelectionPane(config, hide_columns=False)]
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):

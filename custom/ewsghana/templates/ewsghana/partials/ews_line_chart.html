@@ -123,6 +123,10 @@
             line_chart.forceY({{ chart.forceY|JSON }});
         {% endif %}
 
+        {% if chart.y_tick_values %}
+            line_chart.yAxis.showMaxMin(false).tickValues({{ chart.y_tick_values|JSON }});
+        {% endif %}
+
         line_chart.margin(chart_config.margin);
         line_chart.tooltips(chart_config.tooltips);
 
@@ -153,6 +157,7 @@
         {% endif %}
 
         show_hide_line_chart_data();
+        $('.nv-legend').find('.nv-series').slice(-2).hide();
         return line_chart;
     });
 </script>
