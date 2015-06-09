@@ -43,7 +43,7 @@
                                 <input class="fd-kv-val input-block-level" type="text" data-bind="value: value, addSaveButtonListener: true" placeholder="value" />
                             </div>
                             <div class="span1">
-                                <a href="#" class="btn fd-kv-remove-pair btn-small btn-danger" data-bind="visible: ($parent.extras().length > 1), click: $parent.remove_extra">
+                                <a href="#" class="btn fd-kv-remove-pair btn-small btn-danger" data-bind="visible: ($parent.extras().length > 1 || !(key() === '' && value() === '')), click: $parent.remove_extra">
                                     <i class="icon-remove"></i>
                                 </a>
                             </div>
@@ -65,7 +65,7 @@
                                 <input class="fd-kv-key input-block-level" type="text" data-bind="value: key, addSaveButtonListener: true" placeholder="key" />
                             </div>
                             <div class="span1">
-                                <a href="#" class="btn fd-kv-remove-pair btn-small btn-danger" data-bind="visible: ($parent.responses().length > 1), click: $parent.remove_response">
+                                <a href="#" class="btn fd-kv-remove-pair btn-small btn-danger" data-bind="visible: ($parent.responses().length > 1 || key() != ''), click: $parent.remove_response">
                                     <i class="icon-remove"></i>
                                 </a>
                             </div>

@@ -225,16 +225,29 @@ var caseListLookupViewModel = function($el, state, saveButton){
 
     self.remove_extra = function(extra){
         self.extras.remove(extra);
+        if (self.extras().length === 0){
+            self.add_extra();
+        }
         _fireChange();
     };
 
+    var _remove_empty_responses = function(){
+        self.responses.remove(function(response){
+            var is_blank = response.key() === "";
+            return is_blank;
+        });
+    };
+
     self.add_response = function(){
-        // _remove_empty_extras();
+        _remove_empty_responses();
         self.responses.push(new ObservableKeyValue({key:''}));
     };
 
     self.remove_response = function(response){
         self.responses.remove(response);
+        if (self.responses().length === 0){
+            self.add_response();
+        }
         _fireChange();
     };
 
@@ -283,14 +296,20 @@ var caseListLookupViewModel = function($el, state, saveButton){
     }
 
     self.show_add_extra = ko.computed(function(){
-        var last_key = self.extras()[self.extras().length - 1].key(),
-            last_value = self.extras()[self.extras().length - 1].value();
-        return !(last_key === "" && last_value === "");
+        if (self.extras().length){
+            var last_key = self.extras()[self.extras().length - 1].key(),
+                last_value = self.extras()[self.extras().length - 1].value();
+            return !(last_key === "" && last_value === "");
+        }
+        return true;
     });
 
     self.show_add_response = ko.computed(function(){
-        var last_key = self.responses()[self.responses().length - 1].key();
-        return last_key !== "";
+        if (self.responses().length){
+            var last_key = self.responses()[self.responses().length - 1].key();
+            return last_key !== "";
+        }
+        return true;
     });
 
     self.initSaveButtonListeners(self.$el);
