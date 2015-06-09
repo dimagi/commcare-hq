@@ -537,6 +537,14 @@ class HQMediaMixin(Document):
                 'app_lang': self.default_language,
             }
             _add_menu_media(module, **media_kwargs)
+
+            if (module.case_details.short.lookup_enabled and module.case_details.short.lookup_image):
+                media.append(ApplicationMediaReference(
+                    module.case_details.short.lookup_image,
+                    media_class=CommCareImage,
+                    **media_kwargs)
+                )
+
             if module.case_list_form.form_id:
                 media.append(ApplicationMediaReference(
                     module.case_list_form.media_audio,
@@ -609,6 +617,18 @@ class HQMediaMixin(Document):
             return {}
         media_kwargs = self.get_media_ref_kwargs(module, module_index)
         return self._get_item_media(module.case_list, media_kwargs)
+
+    def get_case_list_lookup_image(self, module, module_index):
+        if not module:
+            return {}
+        media_kwargs = self.get_media_ref_kwargs(module, module_index)
+        image = ApplicationMediaReference(
+                module.case_details.short.lookup_image,
+                media_class=CommCareImage,
+                **media_kwargs).as_dict()
+        return {
+            'image': image
+        }
 
     def _get_item_media(self, item, media_kwargs):
         menu_media = {}

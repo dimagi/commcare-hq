@@ -245,13 +245,17 @@ var caseListLookupViewModel = function($el, state, saveButton){
             }
         }));
 
+        var image_path = $el.find(".case-list-lookup-icon input[type=hidden]").val() || null;
+
         var data = {
             lookup_enabled: self.lookup_enabled(),
             lookup_action: self.lookup_action(),
             lookup_name: self.lookup_name(),
             lookup_extras: serialized_extras,
             lookup_responses: serialized_responses,
+            lookup_image: image_path,
         };
+
         return data;
     };
 
