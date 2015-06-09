@@ -77,7 +77,9 @@
             </div>
             <div class="case-list-lookup-icon">
                 <!-- ko stopBinding: true -->
-                {% include "app_manager/partials/nav_menu_media.html" with ICON_LABEL="Icon" qualifier='case-list-lookup-' EXCLUDE_AUDIO=True %}
+                {% with qualifier='case-list-lookup'|add:detail.type %}
+                    {% include "app_manager/partials/nav_menu_media.html" with ICON_LABEL="Icon" qualifier=qualifier EXCLUDE_AUDIO=True %}
+                {% endwith %}
                 <!-- /ko -->
             </div>
         </form>

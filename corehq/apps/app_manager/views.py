@@ -1080,6 +1080,13 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
                 'menu_refs': app.get_case_list_lookup_image(module, module_id),
                 'default_file_name': '{}_case_list_lookup'.format(default_file_name),
             }
+
+            if hasattr(module, 'product_details'):
+                specific_media['product_list_lookup'] = {
+                    'menu_refs': app.get_product_list_lookup_image(module, module_id),
+                    'default_file_name': '{}_product_list_lookup'.format(default_file_name),
+                }
+
         context.update({
             'multimedia': {
                 "references": app.get_references(),

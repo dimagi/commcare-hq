@@ -630,6 +630,18 @@ class HQMediaMixin(Document):
             'image': image
         }
 
+    def get_product_list_lookup_image(self, module, module_index):
+        if not module:
+            return {}
+        media_kwargs = self.get_media_ref_kwargs(module, module_index)
+        image = ApplicationMediaReference(
+                module.product_details.short.lookup_image,
+                media_class=CommCareImage,
+                **media_kwargs).as_dict()
+        return {
+            'image': image
+        }
+
     def _get_item_media(self, item, media_kwargs):
         menu_media = {}
         image_ref = ApplicationMediaReference(
