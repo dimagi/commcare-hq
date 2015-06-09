@@ -110,7 +110,9 @@ def raven(request):
 
 
 def accounting(request):
-    """"""
+    """
+    Adds a pop-up if the domain is missing billing contact emails.
+    """
     billing_notify_contact_missing = False
     update_contact_url = None
     if (hasattr(request, 'subscription')
