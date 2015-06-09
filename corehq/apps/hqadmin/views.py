@@ -32,6 +32,7 @@ from django.http import (
 )
 from restkit import Resource
 from restkit.errors import Unauthorized
+from casexml.apps.case.dbaccessors import get_total_case_count
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
@@ -467,7 +468,7 @@ def db_comparisons(request):
         },
         {
             'description': 'Cases (doc_type is "CommCareCase")',
-            'couch_docs': _simple_view_couch_query(CommCareCase.get_db(), 'case/by_owner'),
+            'couch_docs': get_total_case_count(),
             'es_query': CaseES().size(0),
             'sql_rows': CaseData.objects.count(),
         }
