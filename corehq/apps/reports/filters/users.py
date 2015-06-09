@@ -213,8 +213,6 @@ class BaseGroupedMobileWorkerFilter(BaseSingleOptionFilter):
 
 
 class EmwfMixin(object):
-    additional_options = None
-
     def user_tuple(self, u):
         user = util._report_user_dict(u)
         uid = "u__%s" % user['user_id']
@@ -237,9 +235,6 @@ class EmwfMixin(object):
     @memoized
     def static_options(self):
         static_options = [("t__0", _("[All mobile workers]"))]
-
-        if self.additional_options:
-            static_options.extend(self.additional_options)
 
         types = ['DEMO_USER', 'ADMIN', 'UNKNOWN']
         if Domain.get_by_name(self.domain).commtrack_enabled:

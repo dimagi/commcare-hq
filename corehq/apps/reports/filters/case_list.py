@@ -9,16 +9,22 @@ from .api import EmwfOptionsView
 
 
 class CaseListFilterMixin(object):
-    @property
-    def additional_options(self):
-        return [("all_data", _("[All Data]")),
-                ('project_data', _("[Project Data]"))]
-
     def sharing_group_tuple(self, g):
         return ("sg__%s" % g['_id'], '%s [case sharing]' % g['name'])
 
     def sharing_location_tuple(self, loc_group):
         return (loc_group._id, loc_group.name + ' [case sharing]')
+
+    @property
+    @memoized
+    def static_options(self):
+        options = super(CaseListFilterMixin, self).static_options
+        # replace [All mobile workers] with case-list-specific options
+        assert options[0][0] == "t__0"
+        return [
+            ("all_data", _("[All Data]")),
+            ('project_data', _("[Project Data]"))
+        ] + options[1:]
 
 
 class CaseListFilter(CaseListFilterMixin, ExpandedMobileWorkerFilter):

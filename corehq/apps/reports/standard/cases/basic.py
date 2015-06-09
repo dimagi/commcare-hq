@@ -70,7 +70,6 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     @property
     @memoized
     def case_owners(self):
-
         # Get user ids for each user that match the demo_user, admin, Unknown Users, or All Mobile Workers filters
         user_types = EMWF.selected_user_types(self.request)
         user_type_filters = []
@@ -81,8 +80,6 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
             user_type_filters.append(user_es.web_users())
         if HQUserType.DEMO_USER in user_types:
             user_type_filters.append(user_es.demo_users())
-        if HQUserType.REGISTERED in user_types:
-            user_type_filters.append(user_es.mobile_users())
 
         if len(user_type_filters) > 0:
             special_q = user_es.UserES().domain(self.domain).OR(*user_type_filters).show_inactive()
