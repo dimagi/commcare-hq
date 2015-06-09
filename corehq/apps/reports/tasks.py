@@ -12,7 +12,9 @@ from celery.schedules import crontab
 from celery.task import periodic_task
 from corehq.apps.indicators.utils import get_mvp_domains
 from corehq.apps.reports.scheduled import get_scheduled_reports
+from corehq.apps.users.models import WebUser
 from corehq.util.view_utils import absolute_reverse
+from corehq.util.translation import localize
 from couchexport.files import Temp
 from couchexport.groupexports import export_for_group, rebuild_export
 from dimagi.utils.couch.database import get_db
@@ -121,10 +123,14 @@ def get_report_queue(report):
 @task(ignore_result=True)
 def send_report(notification_id):
     notification = ReportNotification.get(notification_id)
+    owner = WebUser.get(notification.owner_id)
+    language = owner.get_language_code()
     try:
-        notification.send()
+        with localize(language):
+            notification.send()
     except UnsupportedScheduledReportError:
         pass
+
 
 @task
 def create_metadata_export(download_id, domain, format, filename, datespan=None, user_ids=None):
