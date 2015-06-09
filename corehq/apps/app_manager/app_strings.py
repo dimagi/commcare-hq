@@ -72,7 +72,7 @@ def _create_custom_app_strings(app, lang):
                 yield id_strings.report_name_header(), 'Report Name'
                 yield id_strings.report_description_header(), 'Report Description'
                 for column in config.report.report_columns:
-                    yield id_strings.report_column_header(config.report_id, column.column_id), column.display
+                    yield id_strings.report_column_header(config.report_id, column.column_id), column.get_header(lang)
 
         if hasattr(module, 'case_list'):
             if module.case_list.show:
