@@ -1008,7 +1008,11 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
 
         if (
             parent.recipient_id != self.recipient_id and
-            parent.recipient_type != MessagingEvent.RECIPIENT_VARIOUS
+            parent.recipient_type not in (
+                MessagingEvent.RECIPIENT_USER_GROUP,
+                MessagingEvent.RECIPIENT_CASE_GROUP,
+                MessagingEvent.RECIPIENT_VARIOUS,
+            )
         ):
             parent.recipient_type = MessagingEvent.RECIPIENT_VARIOUS
             parent.recipient_id = None
