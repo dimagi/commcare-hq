@@ -37,7 +37,7 @@
                         <div class="fd-kv-pair control-row clearfix" style="margin-bottom: 5px;">
                             <div class="span3">
                                 <input class="fd-kv-key input-block-level" type="text" data-bind="value: key, addSaveButtonListener: true" placeholder="key" />
-                                </div>
+                            </div>
                             <div class="span1" style="text-align:center;">&rarr;</div>
                             <div class="span7">
                                 <input class="fd-kv-val input-block-level" type="text" data-bind="value: value, addSaveButtonListener: true" placeholder="value" />
@@ -49,7 +49,29 @@
                             </div>
                         </div>
                         <!-- /ko -->
-                        <a href="#" class="btn fd-kv-add-pair" data-bind="visible: show_add_extra(), click: add_extra"><i class="icon-plus"></i> Add Key&rarr;Value Pair</a>
+                        <a href="#" class="btn fd-kv-add-pair" data-bind="visible: show_add_extra(), click: add_extra"><i class="icon-plus"></i> Add Key &rarr; Value Pair</a>
+                    </div>
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" for="lookup-action">
+                    {% trans "Response" %}
+                </label>
+                <div class="controls">
+                    <div class="well well-small form form-inline clearfix span6">
+                        <!-- ko foreach: responses() -->
+                        <div class="fd-kv-pair control-row clearfix" style="margin-bottom: 5px;">
+                            <div class="span3">
+                                <input class="fd-kv-key input-block-level" type="text" data-bind="value: key, addSaveButtonListener: true" placeholder="key" />
+                            </div>
+                            <div class="span1">
+                                <a href="#" class="btn fd-kv-remove-pair btn-small btn-danger" data-bind="visible: ($parent.responses().length > 1), click: $parent.remove_response">
+                                    <i class="icon-remove"></i>
+                                </a>
+                            </div>
+                        </div>
+                        <!-- /ko -->
+                    <a href="#" class="btn fd-kv-add-pair" data-bind="visible: show_add_response(), click: add_response"><i class="icon-plus"></i> Add Key</a>
                     </div>
                 </div>
             </div>

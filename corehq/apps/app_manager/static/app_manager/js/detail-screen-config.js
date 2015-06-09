@@ -194,6 +194,7 @@ var filterViewModel = function(filterText, saveButton){
 };
 
 var caseListLookupViewModel = function($el, state, saveButton){
+    'use strict';
     var self = this;
 
     var ObservableKeyValue = function(obs){
@@ -227,10 +228,26 @@ var caseListLookupViewModel = function($el, state, saveButton){
         _fireChange();
     };
 
+    self.add_response = function(){
+        // _remove_empty_extras();
+        self.responses.push(new ObservableKeyValue({key:''}));
+    };
+
+    self.remove_response = function(response){
+        self.responses.remove(response);
+        _fireChange();
+    };
+
     self.serialize = function(){
         var serialized_extras = _.compact(_.map(self.extras(), function(extra){
             if (!(extra.key() === "" && extra.value() ==="")){
                 return {key: extra.key(), value: extra.value()};
+            }
+        }));
+
+        var serialized_responses = _.compact(_.map(self.responses(), function(response){
+            if (response.key() !== ""){
+                return {key: response.key()};
             }
         }));
 
@@ -239,10 +256,10 @@ var caseListLookupViewModel = function($el, state, saveButton){
             lookup_action: self.lookup_action(),
             lookup_name: self.lookup_name(),
             lookup_extras: serialized_extras,
+            lookup_responses: serialized_responses,
         };
         return data;
     };
-
 
     self.$el = $el;
     self.$form = $el.find('form');
@@ -253,16 +270,27 @@ var caseListLookupViewModel = function($el, state, saveButton){
     self.extras = ko.observableArray(ko.utils.arrayMap(state.lookup_extras, function(extra){
         return new ObservableKeyValue(extra);
     }));
+    self.responses = ko.observableArray(ko.utils.arrayMap(state.lookup_responses, function(response){
+        return new ObservableKeyValue(response);
+    }));
 
     if (self.extras().length === 0){
         //Add empty extra to start if there are none
         self.add_extra();
+    }
+    if (self.responses().length === 0){
+        self.add_response();
     }
 
     self.show_add_extra = ko.computed(function(){
         var last_key = self.extras()[self.extras().length - 1].key(),
             last_value = self.extras()[self.extras().length - 1].value();
         return !(last_key === "" && last_value === "");
+    });
+
+    self.show_add_response = ko.computed(function(){
+        var last_key = self.responses()[self.responses().length - 1].key();
+        return last_key !== "";
     });
 
     self.initSaveButtonListeners(self.$el);

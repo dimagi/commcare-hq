@@ -1675,6 +1675,7 @@ def _save_case_list_lookup_params(short, case_list_lookup):
     short.lookup_action = case_list_lookup.get("lookup_action", short.lookup_action)
     short.lookup_name = case_list_lookup.get("lookup_name", short.lookup_name)
     short.lookup_extras = case_list_lookup.get("lookup_extras", short.lookup_extras)
+    short.lookup_responses = case_list_lookup.get("lookup_responses", short.lookup_responses)
 
 @no_conflict_require_POST
 @require_can_edit_apps
