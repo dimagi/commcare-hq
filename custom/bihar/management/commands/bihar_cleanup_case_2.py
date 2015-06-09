@@ -1,7 +1,6 @@
 import csv
 from django.core.management import BaseCommand
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.hqcase.utils import get_case_by_identifier
 
 
 MOTECH_ID = "fb6e0b19cbe3ef683a10c4c4766a1ef3"
@@ -16,7 +15,7 @@ class Command(BaseCommand):
     cases_to_save = {}
 
     def get_case(self, case_id):
-        case = self.cases_to_save.get(case_id) or get_case_by_identifier("care-bihar", case_id)
+        case = self.cases_to_save.get(case_id) or CommCareCase.get(case_id)
         if case is None:
             print "** Error: could not find case with id " + case_id
         return case
