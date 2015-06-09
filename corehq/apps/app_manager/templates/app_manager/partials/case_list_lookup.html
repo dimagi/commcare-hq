@@ -43,13 +43,13 @@
                                 <input class="fd-kv-val input-block-level" type="text" data-bind="value: value, addSaveButtonListener: true" placeholder="value" />
                             </div>
                             <div class="span1">
-                                <a href="#" class="btn fd-kv-remove-pair btn-small btn-danger" data-bind="visible: ($parent.extras().length > 1 || !(key() === '' && value() === '')), click: $parent.remove_extra">
+                                <a href="#" class="btn fd-kv-remove-pair btn-small btn-danger" data-bind="visible: ($parent.extras().length > 1 || !(key() === '' && value() === '')), click: function(item){ $parent.remove_item('extras', item) }">
                                     <i class="icon-remove"></i>
                                 </a>
                             </div>
                         </div>
                         <!-- /ko -->
-                        <a href="#" class="btn fd-kv-add-pair" data-bind="visible: show_add_extra(), click: add_extra"><i class="icon-plus"></i> Add Key &rarr; Value Pair</a>
+                        <a href="#" class="btn fd-kv-add-pair" data-bind="visible: show_add_extra(), click: function(){ add_item('extras') }"><i class="icon-plus"></i> Add Key &rarr; Value Pair</a>
                     </div>
                 </div>
             </div>
@@ -65,13 +65,13 @@
                                 <input class="fd-kv-key input-block-level" type="text" data-bind="value: key, addSaveButtonListener: true" placeholder="key" />
                             </div>
                             <div class="span1">
-                                <a href="#" class="btn fd-kv-remove-pair btn-small btn-danger" data-bind="visible: ($parent.responses().length > 1 || key() != ''), click: $parent.remove_response">
+                                <a href="#" class="btn fd-kv-remove-pair btn-small btn-danger" data-bind="visible: ($parent.responses().length > 1 || key() != ''), click: function(item){ $parent.remove_item('responses', item) }">
                                     <i class="icon-remove"></i>
                                 </a>
                             </div>
                         </div>
                         <!-- /ko -->
-                    <a href="#" class="btn fd-kv-add-pair" data-bind="visible: show_add_response(), click: add_response"><i class="icon-plus"></i> Add Key</a>
+                    <a href="#" class="btn fd-kv-add-pair" data-bind="visible: show_add_response(), click: function(){ add_item('responses') }"><i class="icon-plus"></i> Add Key</a>
                     </div>
                 </div>
             </div>

@@ -211,42 +211,23 @@ var caseListLookupViewModel = function($el, state, saveButton){
         $el.find('input[type=checkbox]').bind('change', _fireChange);
     };
 
-    var _remove_empty_extras = function(){
-        self.extras.remove(function(extra){
-            var is_blank = extra.key() === "" && extra.value() === "";
+    var _remove_empty = function(type){
+        self[type].remove(function(t){
+            var is_blank = (!t.key() && !t.value());
             return is_blank;
         });
     };
 
-    self.add_extra = function(){
-        _remove_empty_extras();
-        self.extras.push(new ObservableKeyValue({key:'', value:''}));
+    self.add_item = function(type){
+        _remove_empty(type);
+        var data = (type === 'extras') ? {key: '', value: ''} : {key: ''};
+        self[type].push(new ObservableKeyValue(data));
     };
 
-    self.remove_extra = function(extra){
-        self.extras.remove(extra);
-        if (self.extras().length === 0){
-            self.add_extra();
-        }
-        _fireChange();
-    };
-
-    var _remove_empty_responses = function(){
-        self.responses.remove(function(response){
-            var is_blank = response.key() === "";
-            return is_blank;
-        });
-    };
-
-    self.add_response = function(){
-        _remove_empty_responses();
-        self.responses.push(new ObservableKeyValue({key:''}));
-    };
-
-    self.remove_response = function(response){
-        self.responses.remove(response);
-        if (self.responses().length === 0){
-            self.add_response();
+    self.remove_item = function(type, item){
+        self[type].remove(item);
+        if (self[type]().length === 0){
+            self.add_item(type);
         }
         _fireChange();
     };
@@ -288,11 +269,10 @@ var caseListLookupViewModel = function($el, state, saveButton){
     }));
 
     if (self.extras().length === 0){
-        //Add empty extra to start if there are none
-        self.add_extra();
+        self.add_item('extras');
     }
     if (self.responses().length === 0){
-        self.add_response();
+        self.add_item('responses');
     }
 
     self.show_add_extra = ko.computed(function(){
