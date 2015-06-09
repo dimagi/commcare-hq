@@ -6,6 +6,7 @@ from corehq.apps.accounting.decorators import requires_privilege_for_commcare_us
 from corehq.apps.app_manager.exceptions import FormNotFoundException, ModuleNotFoundException
 from corehq.apps.app_manager.util import is_usercase_in_use, get_cloudcare_session_data
 from corehq.util.couch import get_document_or_404
+from corehq.util.quickcache import skippable_quickcache
 from couchforms.const import ATTACHMENT_NAME
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
@@ -220,7 +221,26 @@ def form_context(request, domain, app_id, module_id, form_id):
 cloudcare_api = login_or_digest_ex(allow_cc_users=True)
 
 
+def get_cases_vary_on(request, domain):
+    return [
+        request.couch_user.get_id
+        if request.couch_user.is_commcare_user() else request.REQUEST.get('user_id', ''),
+        request.REQUEST.get('ids_only', 'false'),
+        request.REQUEST.get('case_id', ''),
+        request.REQUEST.get('footprint', 'false'),
+        request.REQUEST.get('include_children', 'false'),
+        request.REQUEST.get('closed', 'false'),
+        json.dumps(get_filters_from_request(request)),
+        domain,
+    ]
+
+
+def get_cases_skip_arg(request, domain):
+    return string_to_boolean(request.REQUEST.get('cache_bust', 'true'))
+
+
 @cloudcare_api
+@skippable_quickcache(get_cases_vary_on, get_cases_skip_arg, timeout=50 * 60)
 def get_cases(request, domain):
     if request.couch_user.is_commcare_user():
         user_id = request.couch_user.get_id

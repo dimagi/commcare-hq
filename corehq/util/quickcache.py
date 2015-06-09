@@ -153,11 +153,12 @@ class SkippableQuickCache(QuickCache):
         self.skip_arg = skip_arg
 
         arg_spec = inspect.getargspec(self.fn)
-        if self.skip_arg not in arg_spec.args:
-            raise ValueError(
-                'We cannot use "{}" as the "skip" parameter because the function {} has '
-                'no such argument'.format(self.skip_arg, self.fn.__name__)
-            )
+        if not isfunction(skip_arg):
+            if self.skip_arg not in arg_spec.args:
+                raise ValueError(
+                    'We cannot use "{}" as the "skip" parameter because the function {} has '
+                    'no such argument'.format(self.skip_arg, self.fn.__name__)
+                )
 
         if not isfunction(self.vary_on):
             for arg, attrs in self.vary_on:
@@ -169,7 +170,11 @@ class SkippableQuickCache(QuickCache):
 
     def __call__(self, *args, **kwargs):
         callargs = inspect.getcallargs(self.fn, *args, **kwargs)
-        skip = callargs[self.skip_arg]
+        if not isfunction(self.skip_arg):
+            skip = callargs[self.skip_arg]
+        elif isfunction(self.skip_arg):
+            skip = self.skip_arg(*args, **kwargs)
+
         if not skip:
             return super(SkippableQuickCache, self).__call__(*args, **kwargs)
         else:
