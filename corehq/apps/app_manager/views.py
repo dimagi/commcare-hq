@@ -1689,6 +1689,7 @@ def _save_case_list_lookup_params(short, case_list_lookup):
     short.lookup_responses = case_list_lookup.get("lookup_responses", short.lookup_responses)
     short.lookup_image = case_list_lookup.get("lookup_image", short.lookup_image)
 
+
 @no_conflict_require_POST
 @require_can_edit_apps
 def edit_module_detail_screens(request, domain, app_id, module_id):
