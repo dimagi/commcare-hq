@@ -43,10 +43,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     def case_es(self):
         return CaseES(self.domain)
 
-    def build_query(self, case_type=None, afilter=None, status=None, owner_ids=None, user_ids=None, search_string=None):
-        owner_ids = owner_ids or []
-        user_ids = user_ids or []
-
+    def _build_query(self):
         def _filter_gen(key, flist):
             return {"terms": {
                 key: [item.lower() for item in flist if item]
@@ -55,22 +52,18 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         def _domain_term():
             return {"term": {"domain.exact": self.domain}}
 
-        subterms = [_domain_term(), afilter] if afilter else [_domain_term()]
+        subterms = [_domain_term(), self.case_filter] if self.case_filter else [_domain_term()]
         subterms.append({"not": {"term": {"type.exact": "user-owner-mapping-case"}}})
-        if case_type:
-            subterms.append({"term": {"type.exact": case_type}})
+        if self.case_type:
+            subterms.append({"term": {"type.exact": self.case_type}})
 
-        if status:
-            subterms.append({"term": {"closed": (status == 'closed')}})
-
+        if self.case_status:
+            subterms.append({"term": {"closed": (self.case_status == 'closed')}})
 
         if not EMWF.show_all_data(self.request):
-            owner_filters = _filter_gen('owner_id', owner_ids)
-            user_filters = _filter_gen('user_id', user_ids)
-            filters = filter(None, [owner_filters, user_filters])
-            if filters:
-                subterms.append({'or': filters})
+            subterms.append(_filter_gen('owner_id', self.case_owners))
 
+        search_string = SearchFilter.get_value(self.request, self.domain)
         if search_string:
             query_block = {
                 "query_string": {"query": search_string}}  # todo, make sure this doesn't suck
@@ -96,9 +89,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     @memoized
     def es_results(self):
         case_es = self.case_es
-        query = self.build_query(case_type=self.case_type, afilter=self.case_filter,
-                                 status=self.case_status, owner_ids=self.case_owners,
-                                 search_string=SearchFilter.get_value(self.request, self.domain))
+        query = self._build_query()
 
         query_results = case_es.run_query(query)
 
