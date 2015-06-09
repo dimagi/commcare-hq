@@ -474,7 +474,9 @@ class Detail(OrderedXmlObject, IdNode):
     """
     <detail id="">
         <title><text/></title>
-        <lookup action="", image="">
+        <lookup action="" image="" name="">
+            <extra key="" value = "" />
+            <response key ="" />
         </lookup>
         <variables>
             <__ function=""/>
@@ -1075,7 +1077,7 @@ class SuiteGenerator(SuiteGeneratorBase):
             # Add lookup
             if detail.lookup_enabled and detail.lookup_action:
                 d.lookup = Lookup(
-                    name = detail.lookup_name or None,
+                    name=detail.lookup_name or None,
                     action=detail.lookup_action,
                     image=detail.lookup_image or None,
                 )
