@@ -623,9 +623,10 @@ class HQMediaMixin(Document):
             return {}
         media_kwargs = self.get_media_ref_kwargs(module, module_index)
         image = ApplicationMediaReference(
-                module['{}_details'.format(type)].short.lookup_image,
-                media_class=CommCareImage,
-                **media_kwargs).as_dict()
+            module['{}_details'.format(type)].short.lookup_image,
+            media_class=CommCareImage,
+            **media_kwargs
+        ).as_dict()
         return {
             'image': image
         }
