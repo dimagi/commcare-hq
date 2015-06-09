@@ -156,7 +156,7 @@ def get_expanded_column_config(data_source_configuration, column_config, lang):
         column_warnings.append(
             'The "{}" column had too many values to expand! '
             'Expansion limited to {} distinct values.'.format(
-                column_config.display, MAXIMUM_EXPANSION
+                column_config.get_header(lang), MAXIMUM_EXPANSION
             )
         )
     return SqlColumnConfig(_expand_column(column_config, vals, lang), warnings=column_warnings)
