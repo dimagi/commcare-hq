@@ -1,5 +1,5 @@
 from dimagi.utils.chunked import chunked
-from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.couch.database import iter_docs, get_db
 from casexml.apps.case.models import CommCareCase
 
 
@@ -177,3 +177,22 @@ def get_lite_case_json(case_id):
         key=case_id,
         include_docs=False,
     ).one()
+
+
+def get_case_properties(domain, case_type=None):
+    """
+    For a given case type and domain, get all unique existing case properties,
+    known and unknown
+    """
+    key = [domain]
+    if case_type:
+        key.append(case_type)
+    rows = get_db().view(
+        'hqcase/all_case_properties',
+        startkey=key,
+        endkey=key + [{}],
+        reduce=True,
+        group=True,
+        group_level=3,
+    ).all()
+    return sorted(set([property_name for _, _, property_name in rows]))

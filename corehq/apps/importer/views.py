@@ -2,6 +2,7 @@ import os.path
 from django.http import HttpResponseRedirect, HttpResponseServerError
 from django.utils.datastructures import MultiValueDictKeyError
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.hqcase.dbaccessors import get_case_properties
 from corehq.apps.importer import base
 from corehq.apps.importer import util as importer_util
 from corehq.apps.importer.tasks import bulk_import_async
@@ -212,7 +213,7 @@ def excel_fields(request, domain):
     else:
         excel_fields = columns
 
-    case_fields = importer_util.get_case_properties(domain, case_type)
+    case_fields = get_case_properties(domain, case_type)
 
     # hide search column and matching case fields from the update list
     try:
