@@ -1,5 +1,5 @@
 {
-    "domains": ["abt"],
+    "domains": ["airs"],
     "config": {
         "base_item_expression": {
             "type": "abt_supervisor"
