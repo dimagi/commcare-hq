@@ -1083,7 +1083,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
 
             if hasattr(module, 'product_details'):
                 specific_media['product_list_lookup'] = {
-                    'menu_refs': app.get_product_list_lookup_image(module, module_id),
+                    'menu_refs': app.get_case_list_lookup_image(module, module_id, type='product'),
                     'default_file_name': '{}_product_list_lookup'.format(default_file_name),
                 }
 

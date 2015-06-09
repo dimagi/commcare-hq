@@ -618,24 +618,12 @@ class HQMediaMixin(Document):
         media_kwargs = self.get_media_ref_kwargs(module, module_index)
         return self._get_item_media(module.case_list, media_kwargs)
 
-    def get_case_list_lookup_image(self, module, module_index):
+    def get_case_list_lookup_image(self, module, module_index, type='case'):
         if not module:
             return {}
         media_kwargs = self.get_media_ref_kwargs(module, module_index)
         image = ApplicationMediaReference(
-                module.case_details.short.lookup_image,
-                media_class=CommCareImage,
-                **media_kwargs).as_dict()
-        return {
-            'image': image
-        }
-
-    def get_product_list_lookup_image(self, module, module_index):
-        if not module:
-            return {}
-        media_kwargs = self.get_media_ref_kwargs(module, module_index)
-        image = ApplicationMediaReference(
-                module.product_details.short.lookup_image,
+                module['{}_details'.format(type)].short.lookup_image,
                 media_class=CommCareImage,
                 **media_kwargs).as_dict()
         return {
