@@ -208,8 +208,7 @@
 
                             {% if request.couch_user.is_commcare_user %}
                             <div class="control-group">
-                                <label class="control-label" for="bug-report-email">{% trans "Email" %}
-                                </label>
+                                <label class="control-label" for="bug-report-email">{% trans "Email" %}</label>
                                 <div class="controls">
                                     <input type="text" class="input-xlarge" name="email" id="bug-report-email">
                                     <p class="help-block">{% trans "Please enter your email here so that we can follow up with you regarding this issue" %}
@@ -222,8 +221,7 @@
                             {% endif %}
 
                             <div class="control-group">
-                                <label class="control-label" for="bug-report-cc">{% trans "Other recipients (optional)" %}
-                                </label>
+                                <label class="control-label" for="bug-report-cc">{% trans "Other recipients (optional)" %}</label>
                                 <div class="controls">
                                     <input type="text" class="input-xlarge" name="cc" id="bug-report-cc" rows="1">
                                     <p class="help-block">{% trans "Comma-separated email addresses of others you want to notify about this issue" %}
