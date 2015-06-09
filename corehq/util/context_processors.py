@@ -131,8 +131,7 @@ def accounting(request):
             billing_notify_contact_missing = (
                 hasattr(request, 'couch_user')
                 and request.couch_user.is_domain_admin()
-                and request.subscription.subscriber.subscription_set.filter(
-                    is_trial=False).count() > 0
+                and not request.subscription.do_not_invoice
                 and not request.META['PATH_INFO'].startswith(update_contact_url)
             )
     return {
