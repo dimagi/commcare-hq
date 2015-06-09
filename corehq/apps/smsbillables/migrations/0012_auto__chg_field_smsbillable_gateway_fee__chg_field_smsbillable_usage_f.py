@@ -74,7 +74,7 @@ class Migration(SchemaMigration):
             'gateway_fee_conversion_rate': ('django.db.models.fields.DecimalField', [], {'default': "'1.0'", 'null': 'True', 'max_digits': '20', 'decimal_places': '9'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'is_valid': ('django.db.models.fields.BooleanField', [], {'default': 'True', 'db_index': 'True'}),
-            'log_id': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
+            'log_id': ('django.db.models.fields.CharField', [], {'max_length': '50', 'db_index': 'True'}),
             'phone_number': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
             'usage_fee': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['smsbillables.SmsUsageFee']", 'null': 'True', 'on_delete': 'models.PROTECT'})
         },
