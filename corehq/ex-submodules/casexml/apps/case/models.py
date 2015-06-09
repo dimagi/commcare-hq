@@ -12,6 +12,7 @@ from django.core.cache import cache
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
+from casexml.apps.case.dbaccessors import get_reverse_indices
 from dimagi.ext.couchdbkit import *
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict, BadValueError
 from PIL import Image
@@ -24,7 +25,6 @@ from casexml.apps.phone.xml import get_case_element
 from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.util import (
     get_case_xform_ids,
-    reverse_indices,
 )
 from casexml.apps.case import const
 from casexml.apps.case.exceptions import UsesReferrals
@@ -209,7 +209,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
     @property
     @memoized
     def reverse_indices(self):
-        return reverse_indices(self.get_db(), self)
+        return get_reverse_indices(self)
 
     @memoized
     def get_subcases(self):
