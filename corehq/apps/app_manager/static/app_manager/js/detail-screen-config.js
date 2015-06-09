@@ -233,31 +233,109 @@ var caseListLookupViewModel = function($el, state, saveButton){
         _fireChange();
     };
 
-    self.serialize = function(){
-        var serialized_extras = _.compact(_.map(self.extras(), function(extra){
+    var _trimmed_extras = function(){
+        return _.compact(_.map(self.extras(), function(extra){
             if (!(extra.key() === "" && extra.value() ==="")){
                 return {key: extra.key(), value: extra.value()};
             }
         }));
+    };
 
-        var serialized_responses = _.compact(_.map(self.responses(), function(response){
+    var _trimmed_responses = function(){
+        return _.compact(_.map(self.responses(), function(response){
             if (response.key() !== ""){
                 return {key: response.key()};
             }
         }));
+    };
 
+    self.serialize = function(){
         var image_path = $el.find(".case-list-lookup-icon input[type=hidden]").val() || null;
 
         var data = {
             lookup_enabled: self.lookup_enabled(),
             lookup_action: self.lookup_action(),
             lookup_name: self.lookup_name(),
-            lookup_extras: serialized_extras,
-            lookup_responses: serialized_responses,
+            lookup_extras: _trimmed_extras(),
+            lookup_responses: _trimmed_responses(),
             lookup_image: image_path,
         };
 
         return data;
+    };
+
+    var _validate_inputs = function(errors){
+        errors = errors || [];
+        $el.find('input[required]').each(function(){
+            var $this = $(this);
+            if ($this.val().trim().length === 0){
+                $this.closest('.control-group').addClass('error');
+                var $help = $this.siblings('.help-inline');
+                $help.show();
+                errors.push($help.text());
+            }
+            else {
+                $this.closest('.control-group').removeClass('error');
+                $this.siblings('.help-inline').hide();
+            }
+        });
+        return errors;
+    };
+
+    var _validate_extras = function(errors){
+        errors = errors || [];
+        var $extra = $el.find("#extras"),
+            $extra_help = $extra.find(".help-inline");
+
+        if (!_trimmed_extras().length){
+            $extra.addClass('error');
+            $extra_help.show();
+            errors.push($extra_help.text());
+        }
+        else {
+            $extra.removeClass('error');
+            $extra_help.hide();
+        }
+        return errors;
+    };
+
+    var _validate_responses = function(errors){
+        errors = errors || [];
+        var $response = $el.find("#responses"),
+            $response_help = $response.find(".help-inline");
+
+        if (!_trimmed_responses().length){
+            $response.addClass('error');
+            $response_help.show();
+            errors.push($response_help.text());
+        }
+        else {
+            $response.removeClass('error');
+            $response_help.hide();
+        }
+        return errors;
+    };
+
+    self.validate = function(){
+        var errors = [];
+
+        $("#message-alerts > div").each(function(){
+            $(this).alert('close');
+        });
+
+        if (self.lookup_enabled()){
+            _validate_inputs(errors);
+            _validate_extras(errors);
+            _validate_responses(errors);
+        }
+
+        if (errors.length){
+            _.each(errors, function(error){
+                alert_user(error, "error");
+            });
+            return false;
+        }
+        return true;
     };
 
     self.$el = $el;
@@ -798,16 +876,23 @@ var DetailScreenConfig = (function () {
                         }
                     }
                 }
-
-                this.saveButton.ajax({
-                    url: this.saveUrl,
-                    type: "POST",
-                    data: this.serialize(),
-                    dataType: 'json',
-                    success: function (data) {
-                        COMMCAREHQ.app_manager.updateDOM(data.update);
-                    }
-                });
+                if (this.validate()){
+                    this.saveButton.ajax({
+                        url: this.saveUrl,
+                        type: "POST",
+                        data: this.serialize(),
+                        dataType: 'json',
+                        success: function (data) {
+                            COMMCAREHQ.app_manager.updateDOM(data.update);
+                        }
+                    });
+                }
+            },
+            validate: function(){
+                if (this.containsCaseListLookupConfiguration){
+                    return this.config.caseListLookup.validate();
+                }
+                return true;
             },
             serialize: function () {
                 var columns = this.columns();

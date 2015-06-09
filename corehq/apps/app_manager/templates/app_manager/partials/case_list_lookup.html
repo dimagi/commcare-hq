@@ -16,7 +16,9 @@
                     {% trans "Action" %}
                 </label>
                 <div class="controls">
-                    <input type="text" id="lookup-action" data-bind="value: lookup_action" placeholder="{% trans 'ex: callout.commcarehq.org.dummycallout.LAUNCH' %}"/>
+                    <input type="text" id="lookup-action" data-bind="value: lookup_action" placeholder="{% trans 'ex: callout.commcarehq.org.dummycallout.LAUNCH' %}" required/>
+                    <span class="help-inline" style="display: none;">{% trans "Case list callout requires an action" %}</span>
+        </span>
                 </div>
             </div>
             <div class="control-group">
@@ -24,11 +26,12 @@
                     {% trans "Action Name" %}
                 </label>
                 <div class="controls">
-                    <input type="text" id="lookup-name" data-bind="value: lookup_name" placeholder="{% trans 'ex: Scan fingerprint'%}"/>
+                    <input type="text" id="lookup-name" data-bind="value: lookup_name" placeholder="{% trans 'ex: Scan fingerprint'%}" required/>
+                    <span class="help-inline" style="display: none;">{% trans "Case list callout requires a name" %}</span>
                 </div>
             </div>
-            <div class="control-group">
-                <label class="control-label" for="lookup-action">
+            <div class="control-group" id="extras">
+                <label class="control-label">
                     {% trans "Extra" %}
                 </label>
                 <div class="controls">
@@ -50,11 +53,12 @@
                         </div>
                         <!-- /ko -->
                         <a href="#" class="btn fd-kv-add-pair" data-bind="visible: show_add_extra(), click: function(){ add_item('extras') }"><i class="icon-plus"></i> Add Key &rarr; Value Pair</a>
+                        <span class="help-inline" style="display: none;">{% trans "At least one Extra required" %}</span>
                     </div>
                 </div>
             </div>
-            <div class="control-group">
-                <label class="control-label" for="lookup-action">
+            <div class="control-group" id="responses">
+                <label class="control-label">
                     {% trans "Response" %}
                 </label>
                 <div class="controls">
@@ -71,7 +75,8 @@
                             </div>
                         </div>
                         <!-- /ko -->
-                    <a href="#" class="btn fd-kv-add-pair" data-bind="visible: show_add_response(), click: function(){ add_item('responses') }"><i class="icon-plus"></i> Add Key</a>
+                        <a href="#" class="btn fd-kv-add-pair" data-bind="visible: show_add_response(), click: function(){ add_item('responses') }"><i class="icon-plus"></i> Add Key</a>
+                        <span class="help-inline" style="display: none;">{% trans "At least one Response required" %}</span>
                     </div>
                 </div>
             </div>
