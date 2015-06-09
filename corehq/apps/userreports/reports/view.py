@@ -45,7 +45,7 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
     @memoized
     def data_source(self):
         report = ReportFactory.from_spec(self.spec)
-        report.lang = self.request.LANGUAGE_CODE
+        report.lang = self.request.couch_user.language
         return report
 
     @property

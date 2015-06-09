@@ -701,7 +701,7 @@ The value displayed to the user is determined as follows:
 - If `"en"` is not present, show an arbitrary translation from the `display` object.
 - If `display` is a string, and not an object, the report shows the string.
 
-Valid `display` languages are any of the two letter language codes specified by [ISO 639-1](http://en.wikipedia.org/wiki/List_of_ISO_639-1_codes).
+Valid `display` languages are any of the two or three letter language codes available on the user settings page.
 
 
 ## Aggregation
