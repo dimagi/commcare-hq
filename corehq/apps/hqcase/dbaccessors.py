@@ -1,3 +1,4 @@
+from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.database import iter_docs
 from casexml.apps.case.models import CommCareCase
 
@@ -127,3 +128,31 @@ def get_number_of_cases_in_domain_by_owner(domain, owner_id):
         reduce=True,
     ).one()
     return res['value'] if res else 0
+
+
+def get_n_case_ids_in_domain_by_owner(domain, owner_id, n,
+                                      start_after_case_id=None):
+    view_kwargs = {}
+    if start_after_case_id:
+        view_kwargs['startkey_docid'] = start_after_case_id
+        view_kwargs['skip'] = 1
+
+    return [row['id'] for row in CommCareCase.get_db().view(
+        "hqcase/by_owner",
+        reduce=False,
+        startkey=[domain, owner_id, False],
+        endkey=[domain, owner_id, False],
+        limit=n,
+        **view_kwargs
+    )]
+
+
+def iter_lite_cases(case_ids, chunksize=100):
+    for case_id_chunk in chunked(case_ids, chunksize):
+        rows = CommCareCase.get_db().view(
+            'case/get_lite',
+            keys=case_id_chunk,
+            reduce=False,
+        )
+        for row in rows:
+            yield row['value']
