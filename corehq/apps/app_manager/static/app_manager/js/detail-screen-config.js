@@ -1033,7 +1033,7 @@ var DetailScreenConfig = (function () {
                         containsSortConfiguration: columnType == "short",
                         containsParentConfiguration: columnType == "short",
                         containsFilterConfiguration: columnType == "short",
-                        containsCaseListLookupConfiguration: columnType == "short",
+                        containsCaseListLookupConfiguration: (columnType == "short" && window.toggles.CASE_LIST_LOOKUP),
                         containsCustomXMLConfiguration: columnType == "short",
                         allowsTabs: columnType == 'long',
                         allowsEmptyColumns: columnType == 'long'
