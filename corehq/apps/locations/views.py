@@ -663,6 +663,10 @@ def location_importer_job_poll(request, domain, download_id, template="hqwebapp/
 
 @locations_access_required
 def location_export(request, domain):
+    if not LocationType.objects.filter(domain=domain).exists():
+        messages.error(request, _("You need to define location types before "
+                                  "you can do a bulk import or export."))
+        return HttpResponseRedirect(reverse(LocationsListView.urlname, args=[domain]))
     include_consumption = request.GET.get('include_consumption') == 'true'
     response = HttpResponse(mimetype=Format.from_format('xlsx').mimetype)
     response['Content-Disposition'] = 'attachment; filename="locations.xlsx"'

@@ -19,6 +19,7 @@ from custom.ilsgateway.tanzania import make_url
 from custom.ilsgateway.tanzania.reports.utils import link_format
 from django.utils.translation import ugettext as _
 from dimagi.utils.dates import DateSpan
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_date
 
 
@@ -53,16 +54,19 @@ class ReportingRates(ReportingRatesData):
         if data:
             reported_percent = float(data['reported']) * 100 / (data['total'] or 1)
             non_reported_percent = float(data['non_reported']) * 100 / (data['total'] or 1)
+            reported_formatted = ("%d" if reported_percent.is_integer() else "%.1f") % reported_percent
+            non_reported_formatted = ("%d" if non_reported_percent.is_integer() else "%.1f") % non_reported_percent
+
             chart_data = [
                 dict(value=reported_percent,
                      label=_('Reporting'),
-                     description=_("%.1f%% (%d) Reported (%s)" % (reported_percent, data['reported'],
-                                                                  self.datetext())),
+                     description=_("%s%% (%d) Reported (%s)" % (reported_formatted, data['reported'],
+                                                                self.datetext())),
                      color='green'),
                 dict(value=non_reported_percent,
                      label=_('Non-Reporting'),
-                     description=_("%.1f%% (%d) Non-Reported (%s)" %
-                                   (non_reported_percent, data['non_reported'], self.datetext())),
+                     description=_("%s%% (%d) Non-Reported (%s)" %
+                                   (non_reported_formatted, data['non_reported'], self.datetext())),
                      color='red'),
             ]
 
@@ -144,14 +148,14 @@ class SummaryReportingRates(ReportingRatesData):
     use_datatables = True
 
     @property
+    @memoized
     def get_locations(self):
-        location_types = [
-            location_type.name
-            for location_type in Domain.get_by_name(self.domain).location_types
-            if location_type.administrative
-        ]
-        return SQLLocation.objects.filter(parent__location_id=self.config['location_id'],
-                                          location_type__name__in=location_types, is_archived=False)
+        return SQLLocation.objects.filter(
+            domain=self.domain,
+            parent__location_id=self.config['location_id'],
+            location_type__administrative=True,
+            is_archived=False,
+        )
 
     @property
     def headers(self):

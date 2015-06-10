@@ -13,7 +13,7 @@ from corehq.apps.reports.graph_models import LineChart, MultiBarChart, PieChart
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 from custom.ewsghana.filters import ProductByProgramFilter
 from dimagi.utils.decorators.memoized import memoized
-from corehq.apps.locations.models import Location, SQLLocation, LocationType
+from corehq.apps.locations.models import SQLLocation, LocationType
 from custom.ewsghana.utils import get_supply_points, filter_slugs_by_role
 from casexml.apps.stock.models import StockTransaction
 
@@ -36,6 +36,10 @@ def get_url_with_location(view_name, text, location_id, domain):
 
 class EWSLineChart(LineChart):
     template_partial = 'ewsghana/partials/ews_line_chart.html'
+
+    def __init__(self, title, x_axis, y_axis, y_tick_values=None):
+        super(EWSLineChart, self).__init__(title, x_axis, y_axis)
+        self.y_tick_values = y_tick_values or []
 
 
 class EWSPieChart(PieChart):
@@ -73,6 +77,7 @@ class EWSData(object):
         return self.config.get('location_id')
 
     @property
+    @memoized
     def location(self):
         location_id = self.location_id
         if not location_id:
@@ -90,14 +95,6 @@ class EWSData(object):
     @memoized
     def reporting_types(self):
         return LocationType.objects.filter(domain=self.domain, administrative=False)
-
-    @property
-    def sublocations(self):
-        location = Location.get(self.config['location_id'])
-        if location.children:
-            return location.children
-        else:
-            return [location]
 
     def unique_products(self, locations, all=False):
         if self.config['products'] and not all:
@@ -155,11 +152,6 @@ class ReportingRatesData(EWSData):
         return "last %d days" % (today - self.config['startdate']).days if today == self.config['enddate'] else\
             "%s to %s" % (self.config['startdate'].strftime("%Y-%m-%d"),
                           self.config['enddate'].strftime("%Y-%m-%d"))
-
-    def all_reporting_locations(self):
-        return SQLLocation.objects.filter(
-            domain=self.domain, location_type__administrative=False, is_archived=False
-        ).values_list('supply_point_id', flat=True)
 
 
 class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParametersMixin, DatespanMixin):
@@ -371,5 +363,6 @@ class ProductSelectionPane(EWSData):
 
         return render_to_string('ewsghana/partials/product_selection_pane.html', {
             'products_by_program': result,
+            'is_rendered_as_email': self.config.get('is_rendered_as_email', False),
             'hide_columns': self.hide_columns
         })

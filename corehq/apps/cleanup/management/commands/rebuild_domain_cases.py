@@ -1,7 +1,7 @@
 import logging
 from django.core.management.base import BaseCommand, CommandError
 from casexml.apps.case.cleanup import rebuild_case
-from corehq.apps.hqcase.utils import get_case_ids_in_domain
+from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 
 
 class Command(BaseCommand):

@@ -718,6 +718,16 @@ Transforms can be used to transform the value returned by a column just before i
 }
 ```
 
+### Rounding decimals
+Rounds decimal and floating point numbers to two decimal places.
+
+```
+{
+    "type": "custom",
+    "custom_type": "short_decimal_display"
+}
+```
+
 ## Charts
 
 There are currently three types of charts supported. Pie charts, and two types of bar charts.
