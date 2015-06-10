@@ -132,11 +132,13 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         selected_reporting_group_users = list(set().union(*user_lists))
 
         # Get ids for each sharing group that contains a user from selected_reporting_group_users OR a user that was specifically selected
-        share_group_q = HQESQuery(index="groups").domain(self.domain)\
-                                                .doc_type("Group")\
-                                                .filter(filters.term("case_sharing", True))\
-                                                .filter(filters.term("users", selected_reporting_group_users+selected_user_ids))\
-                                                .fields([])
+        share_group_q = (HQESQuery(index="groups")
+                         .domain(self.domain)
+                         .doc_type("Group")
+                         .term("case_sharing", True)
+                         .term("users", (selected_reporting_group_users +
+                                         selected_user_ids))
+                         .fields([]))
         sharing_group_ids = share_group_q.run().doc_ids
 
         owner_ids = list(set().union(

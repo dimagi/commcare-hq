@@ -47,8 +47,8 @@ class CaseListFilter(CaseListFilterMixin, ExpandedMobileWorkerFilter):
 
     @classmethod
     def selected_group_ids(cls, request):
-        return super(CaseListFilter, cls).selected_group_ids(request) + \
-               cls.selected_sharing_group_ids(request)
+        return (super(CaseListFilter, cls).selected_group_ids(request) +
+                cls.selected_sharing_group_ids(request))
 
     @classmethod
     def selected_sharing_location_ids(cls, request):

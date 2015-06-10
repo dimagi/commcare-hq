@@ -4,7 +4,6 @@ API endpoints for filter options
 import logging
 from itertools import islice
 
-from django.utils.translation import ugettext as _
 from django.views.generic import View
 
 from braces.views import JSONResponseMixin
