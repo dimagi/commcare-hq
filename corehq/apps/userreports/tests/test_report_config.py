@@ -3,6 +3,7 @@ from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import ReportConfiguration, DataSourceConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
+from corehq.apps.userreports.reports.specs import FieldColumn
 from corehq.apps.userreports.tests.utils import get_sample_report_config
 
 
@@ -90,3 +91,67 @@ class ReportConfigurationDbTest(TestCase):
     def test_sample_config_is_valid(self):
         config = get_sample_report_config()
         config.validate()
+
+
+class ReportTranslationTest(TestCase):
+
+    DOMAIN = 'foo-domain'
+
+    @classmethod
+    def setUpClass(cls):
+        data_source = DataSourceConfiguration(
+            domain=cls.DOMAIN,
+            table_id="foo",
+            referenced_doc_type="CommCareCase",
+        )
+        data_source.save()
+        ReportConfiguration(
+            domain=cls.DOMAIN,
+            config_id=data_source._id,
+            columns=[
+                {
+                    "type": "field",
+                    "field": "foo",
+                    "column_id": "foo",
+                    "aggregation": "simple",
+                    "display": "My Column",
+                },
+                {
+                    "type": "field",
+                    "field": "bar",
+                    "column_id": "bar",
+                    "aggregation": "simple",
+                    "display": {"en": "Name", "fra": "Nom"},
+                },
+            ]
+        ).save()
+
+    @classmethod
+    def tearDownClass(cls):
+        for config in DataSourceConfiguration.all():
+            config.delete()
+        for config in ReportConfiguration.all():
+            config.delete()
+
+    def setUp(self):
+        report = ReportConfiguration.by_domain(self.DOMAIN)[0]
+        self.report_source = ReportFactory.from_spec(report)
+
+    def test_column_string_display_value(self):
+        self.assertEqual(self.report_source.columns[0].header, "My Column")
+        self.report_source.lang = "fra"
+        self.assertEqual(self.report_source.columns[0].header, "My Column")
+
+    def test_column_display_translation(self):
+        # Default to english translation if no language given.
+        self.assertEqual(self.report_source.columns[1].header, "Name")
+
+        self.report_source.lang = "en"
+        self.assertEqual(self.report_source.columns[1].header, "Name")
+
+        self.report_source.lang = "fra"
+        self.assertEqual(self.report_source.columns[1].header, "Nom")
+
+        # Default to english if missing language given
+        self.report_source.lang = "hin"
+        self.assertEqual(self.report_source.columns[1].header, "Name")
