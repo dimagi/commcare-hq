@@ -80,8 +80,8 @@ class LocationSyncTest(TestCase):
         self.assertEqual(supply_point.location, ewsghana_location)
         self.assertEqual(location.supply_points[0].id, int(supply_point.external_id))
         self.assertEqual(location.supply_points[0].name, supply_point.name)
-        self.assertListEqual(location.supply_points[0].products,
-                             [product.code for product in ewsghana_location.sql_location.products])
+        self.assertSetEqual(set(location.supply_points[0].products),
+                            {product.code for product in ewsghana_location.sql_location.products})
 
     def test_create_region_with_two_supply_points(self):
         with open(os.path.join(self.datapath, 'sample_locations.json')) as f:
