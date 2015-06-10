@@ -45,6 +45,15 @@ AREA_CHOICES = [a["name"] for a in DATA_DICT["area"]]
 SUB_AREA_CHOICES = reduce(list.__add__, [a["sub_areas"] for a in DATA_DICT["area"]], [])
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 
+BUSINESS_UNITS = [
+    "DSA",
+    "DSI",
+    "DLAC",
+    "DMOZ",
+    "DWA",
+    "INC",
+]
+
 
 for lang in all_langs:
     lang_lookup[lang['three']] = lang['names'][0]  # arbitrarily using the first name if there are multiple
@@ -155,6 +164,7 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
     goal_followup_rate = DecimalProperty()
     # intentionally different from and commtrack_enabled so that FMs can change
     commtrack_domain = BooleanProperty()
+    business_unit = StringProperty(choices=BUSINESS_UNITS + [""], default="")
 
 
 class CaseDisplaySettings(DocumentSchema):
