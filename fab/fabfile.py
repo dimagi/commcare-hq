@@ -651,7 +651,7 @@ def hotfix_deploy():
 
 
 def _confirm_translated():
-    if datetime.datetime.now().isoweekday() != 3:
+    if datetime.datetime.now().isoweekday() != 3 or env.environment != 'production':
         return True
     return console.confirm(
         "It's Wednesday, did you update the translations from transifex? "
