@@ -49,7 +49,7 @@ from corehq.apps.app_manager.models import (Application, RemoteApp,
                                             FormBase, get_apps_in_domain)
 
 from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
-    AREA_CHOICES, SUB_AREA_CHOICES, Domain, TransferDomainRequest)
+    AREA_CHOICES, SUB_AREA_CHOICES, BUSINESS_UNITS, Domain, TransferDomainRequest)
 from corehq.apps.reminders.models import CaseReminderHandler
 
 from corehq.apps.users.models import WebUser, CommCareUser
@@ -660,6 +660,11 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         required=False,
         help_text=_("Date that the project went live (usually right after training).")
     )
+    business_unit = forms.ChoiceField(
+        label=ugettext_noop('Business Unit'),
+        choices=tuple_of_copies(BUSINESS_UNITS),
+        required=False,
+    )
     countries = forms.MultipleChoiceField(
         label=ugettext_noop("Countries"),
         choices=COUNTRIES,
@@ -706,6 +711,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                 'notes',
                 'phone_model',
                 'deployment_date',
+                'business_unit',
                 'countries',
                 'commtrack_domain',
                 crispy.Div(*additional_fields),
@@ -748,6 +754,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             notes=self.cleaned_data['notes'],
             phone_model=self.cleaned_data['phone_model'],
             commtrack_domain=self.cleaned_data['commtrack_domain'] == 'true',
+            business_unit=self.cleaned_data['business_unit'],
             **kwargs
         )
 
