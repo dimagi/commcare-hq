@@ -18,10 +18,6 @@ from custom.ewsghana.utils import get_supply_points, filter_slugs_by_role
 from casexml.apps.stock.models import StockTransaction
 
 
-def ews_date_format(date):
-    return date.strftime("%b %d, %Y")
-
-
 def get_url(view_name, text, domain):
     return '<a href="%s">%s</a>' % (reverse(view_name, args=[domain]), text)
 
@@ -154,7 +150,7 @@ class ReportingRatesData(EWSData):
                           self.config['enddate'].strftime("%Y-%m-%d"))
 
 
-class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParametersMixin, DatespanMixin):
+class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParametersMixin):
     title = ''
     report_template_path = "ewsghana/multi_report.html"
     flush_layout = True
