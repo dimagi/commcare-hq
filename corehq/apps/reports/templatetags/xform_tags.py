@@ -8,6 +8,7 @@ from django.utils.html import escape
 from django.utils.translation import ugettext as _
 from couchdbkit.exceptions import ResourceNotFound
 from corehq import privileges
+from corehq.apps.cloudcare import CLOUDCARE_DEVICE_ID
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 
 from corehq.apps.receiverwrapper.auth import AuthContext
@@ -15,13 +16,14 @@ from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id, DocInfo
 from corehq.apps.reports.formdetails.readable import get_readable_data_for_submission
 from corehq import toggles
 from corehq.util.timezones.conversions import ServerTime
+from corehq.util.timezones.utils import get_timezone_for_request
 from couchforms.models import XFormInstance
 from casexml.apps.case.xform import extract_case_blocks
 from casexml.apps.case import const
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.templatetags.case_tags import case_inline_display
 from corehq.apps.hqwebapp.templatetags.proptable_tags import (
-    get_tables_as_columns, get_definition)
+    get_tables_as_columns, get_default_definition)
 from django_prbac.utils import has_privilege
 
 
@@ -83,12 +85,10 @@ def render_form(form, domain, options):
     """
     Uses options since Django 1.3 doesn't seem to support templatetag kwargs.
     Change to kwargs when we're on a version of Django that does.
-    
+
     """
-    # don't actually use the passed in timezone since we assume form submissions already come
-    # in in local time.
-    # todo: we should revisit this when we properly handle timezones in form processing.
-    timezone = pytz.utc
+
+    timezone = get_timezone_for_request()
     case_id = options.get('case_id')
     side_pane = options.get('side_pane', False)
     user = options.get('user', None)
@@ -120,7 +120,11 @@ def render_form(form, domain, options):
         else:
             url = "#"
 
-        definition = get_definition(sorted_case_update_keys(b.keys()))
+        definition = get_default_definition(
+            sorted_case_update_keys(b.keys()),
+            assume_phonetimes=(not form.metadata or
+                               (form.metadata.deviceID != CLOUDCARE_DEVICE_ID)),
+        )
         cases.append({
             "is_current_case": case_id and this_case_id == case_id,
             "name": case_inline_display(this_case),
@@ -131,7 +135,7 @@ def render_form(form, domain, options):
 
     # Form Metadata tab
     meta = form.top_level_tags().get('meta', None) or {}
-    definition = get_definition(sorted_form_metadata_keys(meta.keys()))
+    definition = get_default_definition(sorted_form_metadata_keys(meta.keys()))
     form_meta_data = _get_tables_as_columns(meta, definition)
     if 'auth_context' in form:
         auth_context = AuthContext(form.auth_context)

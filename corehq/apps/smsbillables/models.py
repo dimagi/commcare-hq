@@ -101,7 +101,7 @@ class SmsGatewayFee(models.Model):
     criteria = models.ForeignKey(SmsGatewayFeeCriteria, on_delete=models.PROTECT)
     amount = models.DecimalField(default=0.0, max_digits=10, decimal_places=4)
     currency = models.ForeignKey(accounting.Currency, on_delete=models.PROTECT)
-    date_created = models.DateField(auto_now_add=True)
+    date_created = models.DateTimeField(auto_now_add=True)
 
     @classmethod
     def create_new(cls, backend_api_id, direction, amount,
@@ -111,9 +111,11 @@ class SmsGatewayFee(models.Model):
         criteria_class = criteria_class or SmsGatewayFeeCriteria
         currency = currency or Currency.get_default()
 
-        # caller's responsibility to pass the right combination of criteria_class and prefix
-        # will error if bad combination is passed
-        if prefix:
+        if 'prefix' in [
+            field.name
+            for field, _ in criteria_class._meta.get_fields_with_model()
+        ]:
+            prefix = prefix or ''
             criteria, _ = criteria_class.objects.get_or_create(
                 backend_api_id=backend_api_id,
                 direction=direction,
@@ -203,7 +205,7 @@ class SmsUsageFee(models.Model):
     """
     criteria = models.ForeignKey(SmsUsageFeeCriteria, on_delete=models.PROTECT)
     amount = models.DecimalField(default=0.0, max_digits=10, decimal_places=4)
-    date_created = models.DateField(auto_now_add=True)
+    date_created = models.DateTimeField(auto_now_add=True)
 
     @classmethod
     def create_new(cls, direction, amount, domain=None, save=True):
@@ -244,7 +246,7 @@ class SmsBillable(models.Model):
     gateway_fee_conversion_rate = models.DecimalField(default=Decimal('1.0'), null=True, max_digits=20,
                                                       decimal_places=EXCHANGE_RATE_DECIMAL_PLACES)
     usage_fee = models.ForeignKey(SmsUsageFee, null=True, on_delete=models.PROTECT)
-    log_id = models.CharField(max_length=50)
+    log_id = models.CharField(max_length=50, db_index=True)
     phone_number = models.CharField(max_length=50)
     api_response = models.TextField(null=True, blank=True)
     is_valid = models.BooleanField(default=True, db_index=True)

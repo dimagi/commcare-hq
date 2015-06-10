@@ -8,10 +8,12 @@ from datetime import datetime, timedelta
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
+from casexml.apps.phone.tests import run_with_all_restore_configs
 from casexml.apps.phone.tests.utils import synclog_id_from_restore_payload
 from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.commtrack.models import ConsumptionConfig, StockRestoreConfig, RequisitionCase, StockState
 from corehq.apps.domain.models import Domain
+from corehq.apps.hqcase.dbaccessors import get_cases_in_domain
 from corehq.apps.products.models import Product
 from corehq.apps.consumption.shortcuts import set_default_monthly_consumption_for_domain
 from couchforms.models import XFormInstance
@@ -21,7 +23,6 @@ from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.tests.util import CommTrackTest, get_ota_balance_xml, FIXED_USER, extract_balance_xml
 from casexml.apps.case.tests.util import check_xml_line_by_line, check_user_has_case
-from corehq.apps.hqcase.utils import get_cases_in_domain
 from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.apps.commtrack.tests.util import make_loc, make_supply_point
 from corehq.apps.commtrack.const import DAYS_IN_MONTH
@@ -50,10 +51,12 @@ class CommTrackOTATest(CommTrackTest):
         super(CommTrackOTATest, self).setUp()
         self.user = self.users[0]
 
+    @run_with_all_restore_configs
     def test_ota_blank_balances(self):
         user = self.user
         self.assertFalse(get_ota_balance_xml(self.domain, user))
 
+    @run_with_all_restore_configs
     def test_ota_basic(self):
         user = self.user
         amounts = [(p._id, i*10) for i, p in enumerate(self.products)]
@@ -69,6 +72,7 @@ class CommTrackOTATest(CommTrackTest):
             get_ota_balance_xml(self.domain, user)[0],
         )
 
+    @run_with_all_restore_configs
     def test_ota_multiple_stocks(self):
         user = self.user
         date = datetime.utcnow()
@@ -94,6 +98,7 @@ class CommTrackOTATest(CommTrackTest):
                 balance_blocks[i],
             )
 
+    @run_with_all_restore_configs
     def test_ota_consumption(self):
         self.ct_settings.consumption_config = ConsumptionConfig(
             min_transactions=0,
@@ -132,6 +137,7 @@ class CommTrackOTATest(CommTrackTest):
              consumption_block,
         )
 
+    @run_with_all_restore_configs
     def test_force_consumption(self):
         self.ct_settings.consumption_config = ConsumptionConfig(
             min_transactions=0,

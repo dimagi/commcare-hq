@@ -302,6 +302,11 @@ def encode_if_needed(val):
     return val.encode("utf8") if isinstance(val, unicode) else val
 
 
+def _fetch_ending_numbers(s):
+    matcher = re.compile("\d*$")
+    return matcher.search(s).group()
+
+
 def generate_code(object_name, existing_codes):
     if not object_name:
         object_name = 'no name'
@@ -311,7 +316,8 @@ def generate_code(object_name, existing_codes):
         '_',
         unicode_slug(object_name.lower())
     ).strip('_')
-    postfix = ''
+
+    postfix = _fetch_ending_numbers(object_name)
 
     while name_slug + postfix in existing_codes:
         if postfix:

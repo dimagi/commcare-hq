@@ -13,7 +13,7 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
 from dimagi.ext.couchdbkit import *
-from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
+from couchdbkit.exceptions import ResourceNotFound, ResourceConflict, BadValueError
 from PIL import Image
 from casexml.apps.case.exceptions import MissingServerDate, ReconciliationError
 from corehq.util.couch_helpers import CouchAttachmentsBuilder
@@ -28,6 +28,7 @@ from casexml.apps.case.util import (
 )
 from casexml.apps.case import const
 from casexml.apps.case.exceptions import UsesReferrals
+from dimagi.utils.logging import notify_exception
 from dimagi.utils.modules import to_function
 from dimagi.utils import parsing, web
 from dimagi.utils.decorators.memoized import memoized
@@ -126,50 +127,8 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
         )
 
 
-class CaseQueryMixin(object):
-
-    @classmethod
-    def get_all_cases(cls, domain, case_type=None, owner_id=None, status=None,
-                      reduce=False, include_docs=False, **kwargs):
-        """
-        :param domain: The domain the cases belong to.
-        :param type: Restrict results to only cases of this type.
-        :param owner_id: Restrict results to only cases owned by this user / group.
-        :param status: Restrict results to cases with this status. Either 'open' or 'closed'.
-        """
-        key = cls.get_all_cases_key(domain, case_type=case_type, owner_id=owner_id, status=status)
-        return CommCareCase.view('case/all_cases',
-            startkey=key,
-            endkey=key + [{}],
-            reduce=reduce,
-            include_docs=include_docs,
-            **kwargs).all()
-
-    @classmethod
-    def get_all_cases_key(cls, domain, case_type=None, owner_id=None, status=None):
-        """
-        :param status: One of 'all', 'open' or 'closed'.
-        """
-        if status and status not in [CASE_STATUS_ALL, CASE_STATUS_OPEN, CASE_STATUS_CLOSED]:
-            raise ValueError("Invalid value for 'status': '%s'" % status)
-
-        key = [domain]
-        prefix = status or CASE_STATUS_ALL
-        if case_type:
-            prefix += ' type'
-            key += [case_type]
-            if owner_id:
-                prefix += ' owner'
-                key += [owner_id]
-        elif owner_id:
-            prefix += ' owner'
-            key += [owner_id]
-
-        return [prefix] + key
-
-
 class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
-                   CaseQueryMixin, CouchDocLockableMixIn):
+                   CouchDocLockableMixIn):
     """
     A case, taken from casexml.  This represents the latest
     representation of the case - the result of playing all
@@ -644,7 +603,13 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
                 value = update_action.updated_unknown_properties[item]
                 if isinstance(properties.get(item), StringProperty):
                     value = unicode(value)
-                self[item] = value
+                try:
+                    self[item] = value
+                except BadValueError:
+                    notify_exception(None, "Can't set property {} on case {} from form {}".format(
+                        item, self._id, update_action.xform_id
+                    ))
+                    raise
 
     def apply_attachments(self, attachment_action, xform=None):
         """

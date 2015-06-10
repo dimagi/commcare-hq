@@ -8,15 +8,15 @@ from corehq.apps.reports.graph_models import MultiBarChart, LineChart, Axis
 from corehq.apps.reports.sqlreport import DatabaseColumn, SummingSqlTabularReport, AggregateColumn, calculate_total_row
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.reports.standard.maps import GenericMapReport
-from corehq.apps.reports.util import format_datatables_data, make_ctable_table_name
+from corehq.apps.reports.util import format_datatables_data
+from corehq.apps.userreports.sql import get_table_name
 from corehq.const import USER_MONTH_FORMAT
 from corehq.util.dates import iso_string_to_date
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_date
 from util import get_unique_combinations,  capitalize_fn
-from django.conf import settings
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 
 class StaticColumn(AliasColumn):
@@ -37,12 +37,15 @@ class GSIDSQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin)
 
     exportable = True
     emailable = True
-    table_name = make_ctable_table_name("gsid_patient_summary")
     default_aggregation = "clinic"
 
     def __init__(self, request, base_context=None, domain=None, **kwargs):
         self.is_map = kwargs.pop('map', False)
         super(GSIDSQLReport, self).__init__(request, base_context=base_context, domain=domain, **kwargs)
+
+    @property
+    def table_name(self):
+        return get_table_name(self.domain, 'patient_summary')
 
     @property
     def daterange_display(self):
@@ -228,12 +231,12 @@ class GSIDSQLPatientReport(GSIDSQLReport):
             
             DatabaseColumn(
                 "Number of Males ", 
-                SumColumn('cases', alias="male-total", filters=self.filters + [male_filter]),
+                CountColumn('doc_id', alias="male-total", filters=self.filters + [male_filter]),
                 header_group=patient_number_group
             ),
             DatabaseColumn(
                 "Number of Females ", 
-                SumColumn('cases', alias="female-total", filters=self.filters + [female_filter]),
+                CountColumn('doc_id', alias="female-total", filters=self.filters + [female_filter]),
                 header_group=patient_number_group
             ),
             AggregateColumn(
@@ -245,8 +248,8 @@ class GSIDSQLPatientReport(GSIDSQLReport):
             AggregateColumn(
                 "Male +ve Percent", self.percent_agg_fn,
                 [
-                    SumColumn(
-                        'cases',
+                    CountColumn(
+                        'doc_id',
                         alias="male-positive", 
                         filters=self.filters + [AND([male_filter, EQ("diagnosis", "positive")])]
                     ), 
@@ -257,7 +260,7 @@ class GSIDSQLPatientReport(GSIDSQLReport):
             AggregateColumn(
                 "Female +ve Percent", self.percent_agg_fn,
                 [
-                    SumColumn('cases',
+                    CountColumn('doc_id',
                         alias="female-positive", 
                         filters=self.filters + [AND([female_filter, EQ("diagnosis", "positive")])]
                     ), 
@@ -369,7 +372,7 @@ class GSIDSQLByDayReport(GSIDSQLReport):
     def columns(self):
         return self.common_columns + \
             [
-                DatabaseColumn("Count", SumColumn("cases", alias="day_count")),
+                DatabaseColumn("Count", CountColumn("doc_id", alias="day_count")),
                 DatabaseColumn("disease", SimpleColumn("disease_name", alias="disease_name"))
             ]
 
@@ -471,7 +474,7 @@ class GSIDSQLTestLotsReport(GSIDSQLReport):
     @property
     def columns(self):
         return self.common_columns + [
-            DatabaseColumn("Test", SumColumn('cases', alias="lot_count"))
+            DatabaseColumn("Test", CountColumn('doc_id', alias="lot_count"))
         ]
 
     @property
@@ -591,8 +594,8 @@ class GSIDSQLByAgeReport(GSIDSQLReport):
                 AggregateColumn(
                     "0-10", self.percent_fn,
                     [   
-                        SumColumn(
-                            'cases',
+                        CountColumn(
+                            'doc_id',
                             alias="zero_ten_" + gender, 
                             filters=self.filters + age_range_filter(gender, "zero", "ten")
                         ),
@@ -603,8 +606,8 @@ class GSIDSQLByAgeReport(GSIDSQLReport):
                 AggregateColumn(
                     "10-20", self.percent_fn,
                     [
-                        SumColumn(
-                            'cases',
+                        CountColumn(
+                            'doc_id',
                             alias="ten_twenty_" + gender, 
                             filters=self.filters + age_range_filter(gender, "ten_plus", "twenty")
                         ),
@@ -615,8 +618,8 @@ class GSIDSQLByAgeReport(GSIDSQLReport):
                 AggregateColumn(
                     "20-50", self.percent_fn,
                     [
-                        SumColumn(
-                            'cases',
+                        CountColumn(
+                            'doc_id',
                             alias="twenty_fifty_" + gender, 
                             filters= self.filters + age_range_filter(gender, "twenty_plus", "fifty")
                         ),
@@ -627,8 +630,8 @@ class GSIDSQLByAgeReport(GSIDSQLReport):
                 AggregateColumn(
                     "50+", self.percent_fn,
                     [
-                        SumColumn(
-                            'cases',
+                        CountColumn(
+                            'doc_id',
                             alias="fifty_" + gender, 
                             filters=self.filters + [AND([EQ("gender", gender), EQ("diagnosis", "positive"), GT("age", "fifty")])]),
                         AliasColumn(gender + "_total")
@@ -638,12 +641,12 @@ class GSIDSQLByAgeReport(GSIDSQLReport):
                 AggregateColumn(
                     "Total", self.percent_fn,
                     [
-                        SumColumn(
-                            'cases',
+                        CountColumn(
+                            'doc_id',
                             alias="positive_total_" + gender,
                             filters=self.filters + [AND([EQ("gender", gender), EQ("diagnosis", "positive")])]),
-                        SumColumn(
-                            'cases',
+                        CountColumn(
+                            'doc_id',
                             alias=gender + "_total",
                             filters=self.filters + [EQ("gender", gender)]),
                     ],

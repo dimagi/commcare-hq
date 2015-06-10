@@ -1,5 +1,6 @@
 from collections import namedtuple
 from urllib import urlencode
+from corehq.toggles import OPENLMIS
 
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe, mark_for_escaping
@@ -31,7 +32,6 @@ from corehq.apps.indicators.utils import get_indicator_domains
 from corehq.apps.reminders.util import can_use_survey_reminders
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from django_prbac.utils import has_privilege
-from corehq.toggles import FM_FACING_SUBSCRIPTIONS
 from corehq.util.markup import mark_up_urls
 
 from dimagi.utils.couch.database import get_db
@@ -495,7 +495,7 @@ class SetupTab(UITab):
         from corehq.apps.locations.views import FacilitySyncView
 
         if self.project.commtrack_enabled:
-            return [[_('CommCare Supply Setup'), [
+            commcare_supply_setup = [
                 # products
                 {
                     'title': ProductListView.page_title,
@@ -545,17 +545,20 @@ class SetupTab(UITab):
                     'title': CommTrackSettingsView.page_title,
                     'url': reverse(CommTrackSettingsView.urlname, args=[self.domain]),
                 },
-                # external sync
-                {
-                    'title': FacilitySyncView.page_title,
-                    'url': reverse(FacilitySyncView.urlname, args=[self.domain]),
-                },
                 # stock levels
                 {
                     'title': StockLevelsView.page_title,
                     'url': reverse(StockLevelsView.urlname, args=[self.domain]),
                 },
-            ]]]
+            ]
+            if OPENLMIS.enabled(self.domain):
+                commcare_supply_setup.append(
+                    # external sync
+                    {
+                        'title': FacilitySyncView.page_title,
+                        'url': reverse(FacilitySyncView.urlname, args=[self.domain]),
+                    })
+            return [[_('CommCare Supply Setup'), commcare_supply_setup]]
 
 
 class ProjectDataTab(UITab):
@@ -1295,7 +1298,7 @@ class ProjectSettingsTab(UITab):
                                            args=[self.domain]),
                         }
                     )
-                if self.couch_user.is_superuser and FM_FACING_SUBSCRIPTIONS.enabled(self.couch_user.username):
+                if self.couch_user.is_superuser:
                     subscription.append({
                         'title': _('Internal Subscription Management (Dimagi Only)'),
                         'url': reverse(
@@ -1390,12 +1393,15 @@ class AdminReportsTab(UITab):
         admin_operations = []
 
         if self.couch_user and self.couch_user.is_staff:
+            from corehq.apps.hqadmin.views import AuthenticateAs
             admin_operations.extend([
                 {'title': _('Mass Email Users'),
                  'url': reverse('mass_email')},
                 {'title': _('PillowTop Errors'),
                  'url': reverse('admin_report_dispatcher',
                                 args=('pillow_errors',))},
+                {'title': _('Login as another user'),
+                 'url': reverse(AuthenticateAs.urlname)},
             ])
         return [
             (_('Administrative Reports'), [

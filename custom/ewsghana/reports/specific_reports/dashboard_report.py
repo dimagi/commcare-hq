@@ -1,27 +1,28 @@
-from corehq.apps.reports.filters.dates import DatespanFilter
+from datetime import datetime
 from custom.ewsghana.filters import EWSLocationFilter
 from custom.ewsghana.reports import MultiReport, ProductSelectionPane
 from custom.ewsghana.reports.specific_reports.reporting_rates import ReportingRates, ReportingDetails
 from custom.ewsghana.reports.specific_reports.stock_status_report import ProductAvailabilityData
 from custom.ewsghana.reports.stock_levels_report import FacilityReportData, StockLevelsLegend, InputStock, \
-    FacilitySMSUsers, FacilityUsers, FacilityInChargeUsers, InventoryManagementData
-from custom.ewsghana.utils import get_country_id
+    InventoryManagementData, UsersData
+from custom.ewsghana.utils import get_country_id, calculate_last_period
 
 
 class DashboardReport(MultiReport):
 
-    fields = [EWSLocationFilter, DatespanFilter]
-    name = "Dashboard report"
-    title = "Dashboard report"
+    fields = [EWSLocationFilter]
+    name = "Dashboard"
+    title = "Dashboard"
     slug = "dashboard_report"
     split = False
 
     @property
     def report_config(self):
+        startdate, enddate = calculate_last_period(datetime.utcnow())
         return dict(
             domain=self.domain,
-            startdate=self.datespan.startdate_utc,
-            enddate=self.datespan.enddate_utc,
+            startdate=startdate,
+            enddate=enddate,
             location_id=self.request.GET.get('location_id') or get_country_id(self.domain),
             user=self.request.couch_user,
             program=None,
@@ -40,11 +41,9 @@ class DashboardReport(MultiReport):
                     FacilityReportData(config),
                     StockLevelsLegend(config),
                     InputStock(config),
-                    FacilitySMSUsers(config),
-                    FacilityUsers(config),
-                    FacilityInChargeUsers(config),
+                    UsersData(config),
                     InventoryManagementData(config),
-                    ProductSelectionPane(config)
+                    ProductSelectionPane(config, hide_columns=False)
                 ]
         self.split = False
         return [

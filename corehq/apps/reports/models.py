@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 import logging
 from urllib import urlencode
-from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.utils import html
 from django.utils.safestring import mark_safe
@@ -28,15 +27,13 @@ from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
 from django.core.validators import validate_email
-from corehq.apps.reports.dispatcher import (ProjectReportDispatcher,
-    CustomProjectReportDispatcher)
+from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjectReportDispatcher
 from corehq.apps.adm.dispatcher import ADMSectionDispatcher
 import json
 import calendar
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import get_url_base
 from django_prbac.exceptions import PermissionDenied
 
 

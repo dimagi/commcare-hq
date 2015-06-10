@@ -1599,14 +1599,14 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         location_type = self.location.location_type_object
         if location_type.shares_cases:
             if location_type.view_descendants:
-                from corehq.apps.locations.models import SQLLocation
-                sql_loc = SQLLocation.objects.get(location_id=self.location._id)
                 return [
                     loc.case_sharing_group_object(self._id)._id
-                    for loc in sql_loc.get_descendants()
-                ]
+                    for loc in self.sql_location.get_descendants(include_self=True).filter(
+                        location_type__shares_cases=True,
+                    )]
+
             else:
-                return [self.location.sql_location.case_sharing_group_object(self._id)._id]
+                return [self.sql_location.case_sharing_group_object(self._id)._id]
 
         else:
             return []
@@ -1619,7 +1619,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         if self.project.locations_enabled and self.location:
             owner_ids.extend(self.location_group_ids())
-
         return owner_ids
 
     def retire(self):
@@ -1694,14 +1693,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         groups = []
         if self.location and self.location.location_type_object.shares_cases:
             if self.location.location_type_object.view_descendants:
-                from corehq.apps.locations.models import SQLLocation
-                sql_loc = SQLLocation.objects.get(location_id=self.location._id)
-                for loc in sql_loc.get_descendants():
+                for loc in self.sql_location.get_descendants():
                     groups.append(loc.case_sharing_group_object(
                         self._id,
                     ))
 
-            groups.append(self.location.sql_location.case_sharing_group_object(self._id))
+            groups.append(self.sql_location.case_sharing_group_object(self._id))
 
         groups += [group for group in Group.by_user(self) if group.case_sharing]
 
@@ -1783,7 +1780,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         the user.
         """
         from corehq.apps.commtrack.models import SupplyPointCase
-        from corehq.apps.locations.models import LOCATION_SHARING_PREFIX
 
         self.user_data['commcare_location_id'] = location._id
 
@@ -1809,7 +1805,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         self.user_data.update({
             'commcare_primary_case_sharing_id':
-            LOCATION_SHARING_PREFIX + location._id
+            location._id
         })
 
         self.location_id = location._id

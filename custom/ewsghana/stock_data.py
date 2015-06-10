@@ -30,8 +30,12 @@ class EWSStockDataSynchronization(StockDataSynchronization):
         supply_points_ids = SQLLocation.objects.filter(
             domain=self.domain,
             location_type__administrative=False
-        ).order_by('created_at').values_list('supply_point_id', flat=True)
-        return [doc['external_id'] for doc in iter_docs(SupplyPointCase.get_db(), supply_points_ids)]
+        ).exclude(external_id__isnull=True).order_by('created_at').values_list('supply_point_id', flat=True)
+        return [
+            doc['external_id']
+            for doc in iter_docs(SupplyPointCase.get_db(), supply_points_ids)
+            if doc['external_id']
+        ]
 
     @property
     def test_facilities(self):

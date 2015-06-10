@@ -49,4 +49,4 @@ docs/_build
 celerybeat-schedule
 
 # compiled translations
-/locale/**/*.mo
+/locale/*/*/*.mo

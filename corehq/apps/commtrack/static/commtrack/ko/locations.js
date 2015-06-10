@@ -10,6 +10,10 @@ $(function() {
     $("form#settings").on("change input", function() {
         $(this).find(":submit").enable();
     });
+
+    $("form#settings button").on("click", function() {
+        $("form#settings").find(":submit").enable();
+    });
 });
 
 

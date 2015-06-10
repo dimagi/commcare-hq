@@ -12,7 +12,7 @@ from custom.ewsghana.alerts import ONGOING_NON_REPORTING, ONGOING_STOCKOUT_AT_SD
     STOCKOUTS_MESSAGE, LOW_SUPPLY_MESSAGE, OVERSTOCKED_MESSAGE, RECEIPT_MESSAGE
 from django.core.mail import send_mail
 from custom.ewsghana.utils import ProductsReportHelper
-from custom.ewsghana.utils import send_test_message, get_reporting_types, can_receive_email
+from custom.ewsghana.utils import send_test_message, can_receive_email
 import settings
 from custom.ewsghana.models import EWSGhanaConfig
 from django.utils.translation import ugettext as _
@@ -38,7 +38,7 @@ def on_going_non_reporting():
 def on_going_process_user(user, test=False):
     now = datetime.datetime.utcnow()
     date = now - datetime.timedelta(days=21)
-    user_location = user.location.sql_location
+    user_location = user.sql_location
     if not user_location:
         return
 
@@ -85,7 +85,7 @@ def on_going_stockout():
 def on_going_stockout_process_user(user, test=False):
     now = datetime.datetime.utcnow()
     date = now - datetime.timedelta(days=21)
-    user_location = user.location.sql_location
+    user_location = user.sql_location
     if not user_location:
         return
 
@@ -142,7 +142,7 @@ def urgent_non_reporting():
 def urgent_non_reporting_process_user(user, test=False):
     now = datetime.datetime.utcnow()
     date = now - datetime.timedelta(days=30)
-    user_location = user.location.sql_location
+    user_location = user.sql_location
     if not user_location:
         return
     facilities = []
@@ -189,7 +189,7 @@ def urgent_stockout():
 
 
 def urgent_stockout_process_user(user, test=False):
-    user_location = user.location.sql_location
+    user_location = user.sql_location
     if not user_location:
         return
 
@@ -266,7 +266,7 @@ def report_reminder_process_user(user, test=False):
     now = datetime.datetime.utcnow()
     date = now - datetime.timedelta(days=7)
 
-    if not user.location or user.location.location_type not in get_reporting_types(user.domain):
+    if not user.location or user.location.location_type.administrative:
         return
     sp = SupplyPointCase.get_by_location(user.location)
     if not sp:
@@ -309,7 +309,7 @@ def report_completion_check(user):
 
 # sends overstock, understock, or SOH without receipts alerts
 def stock_alerts(transactions, user):
-    report_helper = ProductsReportHelper(user.location, transactions)
+    report_helper = ProductsReportHelper(user.sql_location, transactions)
     products_below = report_helper.low_supply()
     stockouts = report_helper.stockouts()
     overstocked = report_helper.overstocked()
