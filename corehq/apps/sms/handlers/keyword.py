@@ -445,6 +445,7 @@ def send_keyword_response(vn, message_id, logged_event):
     )
     message = get_message(message_id, vn)
     send_sms_to_verified_number(vn, message, metadata=metadata)
+    subevent.completed()
 
 
 def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
@@ -501,6 +502,7 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
         msg.couch_recipient,
         case
     )
+    subevent.completed()
     add_msg_tags(msg, MessageMetadata(messaging_subevent_id=subevent.pk))
 
     # Process structured sms actions first

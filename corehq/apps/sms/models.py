@@ -887,7 +887,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             recipient_id=recipient_id,
             content_type=MessagingEvent.CONTENT_SMS,
             case_id=case.get_id if case else None,
-            status=MessagingEvent.STATUS_COMPLETED,
+            status=MessagingEvent.STATUS_IN_PROGRESS,
         )
         return obj
 

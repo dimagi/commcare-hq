@@ -67,6 +67,7 @@ def send_verification(domain, user, phone_number, logged_event):
         }
         send_sms(domain, user, phone_number, message,
             metadata=MessageMetadata(messaging_subevent_id=subevent.pk))
+        subevent.completed()
 
 
 def process_verification(phone_number, msg, backend_id=None):
@@ -84,6 +85,7 @@ def process_verification(phone_number, msg, backend_id=None):
         v.owner_doc_type,
         v.owner_id
     )
+    subevent.completed()
 
     msg.domain = v.domain
     msg.couch_recipient_doc_type = v.owner_doc_type
@@ -117,6 +119,7 @@ def process_verification(phone_number, msg, backend_id=None):
     with localize(owner.language):
         send_sms_to_verified_number(v, _(CONFIRM),
             metadata=MessageMetadata(messaging_subevent_id=subevent.pk))
+        subevent.completed()
 
 
 def verification_response_ok(text):
