@@ -940,6 +940,15 @@ try:
         from settings_demo import *
     else:
         from localsettings import *
+        if globals().get("FIX_LOGGER_ERROR_OBFUSCATION"):
+            # this is here because the logging config cannot import
+            # corehq.util.log.HqAdminEmailHandler, for example, if there
+            # is a syntax error in any module imported by corehq/__init__.py
+            # Setting FIX_LOGGER_ERROR_OBFUSCATION = True in
+            # localsettings.py will reveal the real error.
+            for handler in LOGGING["handlers"].values():
+                if handler["class"].startswith("corehq."):
+                    handler["class"] = "logging.StreamHandler"
 except ImportError:
     pass
 
