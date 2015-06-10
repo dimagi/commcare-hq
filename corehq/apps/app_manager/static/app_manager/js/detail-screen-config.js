@@ -195,7 +195,8 @@ var filterViewModel = function(filterText, saveButton){
 
 var caseListLookupViewModel = function($el, state, saveButton){
     'use strict';
-    var self = this;
+    var self = this,
+        detail_type = $el.data('detail-type');
 
     var ObservableKeyValue = function(obs){
         this.key = ko.observable(obs.key);
@@ -284,7 +285,7 @@ var caseListLookupViewModel = function($el, state, saveButton){
 
     var _validate_extras = function(errors){
         errors = errors || [];
-        var $extra = $el.find("#extras"),
+        var $extra = $el.find("#" + detail_type + "-extras"),
             $extra_help = $extra.find(".help-inline");
 
         if (!_trimmed_extras().length){
@@ -301,7 +302,7 @@ var caseListLookupViewModel = function($el, state, saveButton){
 
     var _validate_responses = function(errors){
         errors = errors || [];
-        var $response = $el.find("#responses"),
+        var $response = $el.find("#" + detail_type + "-responses"),
             $response_help = $response.find(".help-inline");
 
         if (!_trimmed_responses().length){

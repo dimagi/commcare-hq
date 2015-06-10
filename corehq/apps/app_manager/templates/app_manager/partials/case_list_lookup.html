@@ -1,7 +1,7 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-<div id="{{ detail.type }}-list-callout-configuration" data-bind="with: caseListLookup">
+<div id="{{ detail.type }}-list-callout-configuration" data-bind="with: caseListLookup" data-detail-type="{{ detail.type }}">
     <legend>
         {% trans "Case List Search Callout" %}
     </legend>
@@ -12,24 +12,24 @@
     <div data-bind="visible: lookup_enabled">
         <form class="form-horizontal">
             <div class="control-group">
-                <label class="control-label" for="lookup-action">
+                <label class="control-label" for="{{ detail.type }}-lookup-action">
                     {% trans "Action" %}
                 </label>
                 <div class="controls">
-                    <input type="text" id="lookup-action" data-bind="value: lookup_action" placeholder="{% trans 'ex: callout.commcarehq.org.dummycallout.LAUNCH' %}" required/>
+                    <input type="text" id="{{ detail.type }}-lookup-action" data-bind="value: lookup_action" placeholder="{% trans 'ex: callout.commcarehq.org.dummycallout.LAUNCH' %}" required/>
                     <span class="help-inline" style="display: none;">{% trans "Case list callout requires an action" %}</span>
                 </div>
             </div>
             <div class="control-group">
-                <label class="control-label" for="lookup-name">
+                <label class="control-label" for="{{ detail.type }}-lookup-name">
                     {% trans "Action Name" %}
                 </label>
                 <div class="controls">
-                    <input type="text" id="lookup-name" data-bind="value: lookup_name" placeholder="{% trans 'ex: Scan fingerprint'%}" required/>
+                    <input type="text" id="{{ detail.type }}-lookup-name" data-bind="value: lookup_name" placeholder="{% trans 'ex: Scan fingerprint'%}" required/>
                     <span class="help-inline" style="display: none;">{% trans "Case list callout requires a name" %}</span>
                 </div>
             </div>
-            <div class="control-group" id="extras">
+            <div class="control-group" id="{{ detail.type }}-extras">
                 <label class="control-label">
                     {% trans "Extra" %}
                 </label>
@@ -56,7 +56,7 @@
                     </div>
                 </div>
             </div>
-            <div class="control-group" id="responses">
+            <div class="control-group" id="{{ detail.type }}-responses">
                 <label class="control-label">
                     {% trans "Response" %}
                 </label>
