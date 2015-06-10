@@ -21,6 +21,7 @@
                         "a user must belong to exactly one case sharing group."
             };
 
+            // TODO: use something more standard
             $('.help_popover').popover({
                 placement: $(this).data('placement') || 'left',
                 title: function () {
@@ -28,7 +29,7 @@
                 },
                 content: function () {
                     return help_text[$(this).attr('data-help-key')];
-                }
+                },
             });
             $('#commcare-users-list').asyncUsersList({
                 total: {{ data_list.total }},

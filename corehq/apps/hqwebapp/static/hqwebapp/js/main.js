@@ -193,15 +193,15 @@ var COMMCAREHQ = (function () {
         makeHqHelp: function (opts, wrap) {
             wrap = wrap === undefined ? true : wrap;
             var el = $(
-                '<a href="#" class="hq-help">' +
-                    '<i class="icon-question-sign"></i></a>'
+                '<div class="hq-help">' + 
+                    '<a href="#">' +
+                        '<i class="icon-question-sign"></i></a></div>'
                 ),
                 attrs = ['content', 'title', 'placement'];
 
             attrs.map(function (attr) {
-                $('i', el).data(attr, opts[attr]);
+                el.find('a').data(attr, opts[attr]);
             });
-            $('i', el).data("trigger", "focus");
             if (wrap) {
                 el.hqHelp();
             }

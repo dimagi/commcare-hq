@@ -6,8 +6,10 @@
     {% endif %}
     <span title="{% if col.sort_key != "" %}{{ col.sort_key }}{% else %}{{ col }}{% endif %}"></span>
     {% if col.tooltip != None and col.tooltip != '' %}
-        <span class="hq-help" style="color: #0000ff">
-            <i class="icon-question-sign" data-title="Info" data-content="{{ col.tooltip|safe }}" data-original-title=""></i>
-        </span>
+        <div class="hq-help">
+            <a href="#" style="color: #0000ff">
+                <i class="icon-question-sign" data-title="Info" data-content="{{ col.tooltip|safe }}" data-original-title=""></i>
+            </a>
+        </div>
     {% endif %}
 {% if not col.unwrap %}</td>{% endif %}

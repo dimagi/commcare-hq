@@ -58,13 +58,20 @@ $.fn.popover.Constructor.prototype.hide = function() {
 $.fn.hqHelp = function () {
     var self = this;
     self.each(function(i) {
-        var $helpElem = $($(self).get(i));
-        $helpElem.find('i').popover({
+        var $self = $(self),
+            $helpElem = $($self.get(i));
+
+        $helpElem.find('a').popover({
             html: true,
             trigger: 'focus',
             content: function() {
                 return $('#popover_content_wrapper').html();
             }
+        });
+
+        // Prevent jumping to the top of the page when link is clicked
+        $helpElem.find('a').click(function(event) {
+            event.preventDefault();
         });
     });
 };

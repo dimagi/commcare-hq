@@ -13,8 +13,9 @@ var COMMCAREHQ = (function () {
         makeHqHelp: function (opts, wrap) {
             wrap = wrap === undefined ? true : wrap;
             var el = $(
-                '<a href="#" class="hq-help">' +
-                    '<i class="icon-question-sign" data-trigger="focus"></i></a>'
+                '<div class="hq-help">' +
+                    '<a href="#">' +
+                        '<i class="icon-question-sign" data-trigger="focus"></i></a></div>'
                 ),
                 attrs = ['content', 'title', 'placement'];
 

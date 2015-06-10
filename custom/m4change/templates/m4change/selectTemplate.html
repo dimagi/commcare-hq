@@ -65,7 +65,7 @@
         {{ block.super }}
     </div>
     <script type="text/javascript">
-        $("i[data-toggle='popover']").popover({
+        $("i[data-toggle='popover']").popover({// standardize?
             template: '<div class="popover popover-medium"><div class="arrow"></div><div class="popover-inner"><h3 class="popover-title"></h3><div class="popover-content"><p></p></div></div></div>'
         });
     </script>
@@ -93,8 +93,8 @@
                         <option value="other">{% trans 'Other errors' %}</option>
                     </select>
                 {% endblock %}
-                <span>
-                    <a href="#" class="hq-help">
+                <span class="hq-help">
+                    <a href="#">
                         <i class="icon-question-sign" data-toggle="popover" data-placement="top" data-title="{% trans 'Help' %}" data-content="{% block help_content %}{% endblock %}" data-html="true"></i>
                     </a>
                 </span>

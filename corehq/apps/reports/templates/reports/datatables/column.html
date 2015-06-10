@@ -1,6 +1,6 @@
 <th{% if col.rowspan %} rowspan="{{ col.rowspan }}"{% endif %}{% if col.css %} class="{{ col.css }}"{% endif %}>
     <div {% if col.help_text %}
-        class="header-popover"
+        class="header-popover" <!-- TODO: standardize? (here and below) -->
         style="cursor:pointer;"
         data-title="{{ col.title }}"
         data-content="{{ col.help_text }}"

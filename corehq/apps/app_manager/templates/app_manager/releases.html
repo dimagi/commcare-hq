@@ -19,7 +19,7 @@
                    "set to Daily or Weekly, any application versions that are marked as released will update to the latest" +
                    "released version when checking for updates.",
        };
-       $('.help_popover').popover({
+       $('.help_popover').popover({// TODO: standardize
                 placement: $(this).data('placement') || 'left',
                 title: function () {
                     return $(this).attr('data-help-key');
