@@ -70,8 +70,9 @@ class ReportingRates(ReportingRatesData):
                                    (non_reported_formatted, data['non_reported'], self.datetext())),
                      color='red'),
             ]
-
-        return [EWSPieChart('', '', chart_data, ['green', 'red'])]
+        pie_chart = EWSPieChart('', '', chart_data, ['green', 'red'])
+        pie_chart.tooltips = False
+        return [pie_chart]
 
 
 class ReportingDetails(ReportingRatesData):
@@ -136,8 +137,9 @@ class ReportingDetails(ReportingRatesData):
                                    (incomplete_percent, data['incomplete'], self.datetext())),
                      color='purple'),
             ]
-
-        return [EWSPieChart('', '', chart_data, ['green', 'purple'])]
+        pie_chart = EWSPieChart('', '', chart_data, ['green', 'purple'])
+        pie_chart.tooltips = False
+        return [pie_chart]
 
 
 class SummaryReportingRates(ReportingRatesData):
