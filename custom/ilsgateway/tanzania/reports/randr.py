@@ -115,7 +115,7 @@ class RRReportingHistory(ILSData):
         for child in dg:
             total_responses = 0
             total_possible = 0
-            rr_value = randr_value(child.location_id, self.config['startdate'], self.config['enddate'])
+            submitted, rr_value = randr_value(child.location_id, self.config['startdate'], self.config['enddate'])
             if child.is_archived and not rr_value:
                 continue
 
@@ -157,7 +157,7 @@ class RRReportingHistory(ILSData):
                 [
                     child.site_code,
                     link_format(child.name, url),
-                    get_span(rr_value) % (rr_value.strftime("%d %b %Y") if rr_value else "Not reported"),
+                    get_span(submitted) % (rr_value.strftime("%d %b %Y") if rr_value else "Not reported"),
                     contact_string,
                     hist_resp_rate
                 ]
