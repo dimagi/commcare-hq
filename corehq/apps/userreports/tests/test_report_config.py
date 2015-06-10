@@ -3,7 +3,6 @@ from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import ReportConfiguration, DataSourceConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
-from corehq.apps.userreports.reports.specs import FieldColumn
 from corehq.apps.userreports.tests.utils import get_sample_report_config
 
 
