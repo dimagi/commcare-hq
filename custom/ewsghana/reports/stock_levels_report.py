@@ -240,11 +240,6 @@ class InventoryManagementData(EWSData):
                 chart.add_dataset(product, value,
                                   color='black' if product in ['Understock', 'Overstock'] else None)
             chart.forceY = [0, loc.location_type.understock_threshold + loc.location_type.overstock_threshold]
-            y_max = loc.location_type.understock_threshold + loc.location_type.overstock_threshold
-            chart.y_tick_values = [
-                y
-                for y in drange(0, y_max, 0.5)
-            ] + [loc.location_type.understock_threshold, loc.location_type.overstock_threshold]
             return [chart]
         return []
 
