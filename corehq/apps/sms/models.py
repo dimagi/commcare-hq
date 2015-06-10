@@ -721,6 +721,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     CONTENT_SMS_SURVEY = 'SVY'
     CONTENT_IVR_SURVEY = 'IVR'
     CONTENT_PHONE_VERIFICATION = 'VER'
+    CONTENT_ADHOC_SMS = 'ADH'
 
     CONTENT_CHOICES = (
         (CONTENT_NONE, ugettext_noop('None')),
@@ -728,6 +729,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         (CONTENT_SMS_SURVEY, ugettext_noop('SMS Survey')),
         (CONTENT_IVR_SURVEY, ugettext_noop('IVR Survey')),
         (CONTENT_PHONE_VERIFICATION, ugettext_noop('Phone Verification')),
+        (CONTENT_ADHOC_SMS, ugettext_noop('Manual SMS Message')),
     )
 
     RECIPIENT_CASE = 'CAS'
@@ -736,6 +738,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     RECIPIENT_USER_GROUP = 'UGP'
     RECIPIENT_CASE_GROUP = 'CGP'
     RECIPIENT_VARIOUS = 'MUL'
+    RECIPIENT_UNKNOWN = 'UNK'
 
     RECIPIENT_CHOICES = (
         (RECIPIENT_CASE, ugettext_noop('Case')),
@@ -744,6 +747,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         (RECIPIENT_USER_GROUP, ugettext_noop('User Group')),
         (RECIPIENT_CASE_GROUP, ugettext_noop('Case Group')),
         (RECIPIENT_VARIOUS, ugettext_noop('Multiple Recipients')),
+        (RECIPIENT_UNKNOWN, ugettext_noop('Unknown Contact')),
     )
 
     ERROR_NO_RECIPIENT = 'NO_RECIPIENT'
@@ -760,6 +764,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     ERROR_COULD_NOT_PROCESS_STRUCTURED_SMS = 'COULD_NOT_PROCESS_STRUCTURED_SMS'
     ERROR_SUBEVENT_ERROR = 'SUBEVENT_ERROR'
     ERROR_TOUCHFORMS_ERROR = 'TOUCHFORMS_ERROR'
+    ERROR_INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR'
 
     ERROR_MESSAGES = {
         ERROR_NO_RECIPIENT:
@@ -790,6 +795,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             ugettext_noop('View details for more information.'),
         ERROR_TOUCHFORMS_ERROR:
             ugettext_noop('An error occurred in the formplayer service.'),
+        ERROR_INTERNAL_SERVER_ERROR:
+            ugettext_noop('Internal Server Error'),
     }
 
     domain = models.CharField(max_length=255, null=False, db_index=True)
@@ -813,7 +820,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             'CommCareCase': cls.RECIPIENT_CASE,
             'Group': cls.RECIPIENT_USER_GROUP,
             'CommCareCaseGroup': cls.RECIPIENT_CASE_GROUP,
-        }.get(recipient_doc_type, None)
+        }.get(recipient_doc_type, cls.RECIPIENT_UNKNOWN)
 
     @classmethod
     def get_recipient_type(cls, recipient):
@@ -852,7 +859,27 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         )
         return obj
 
-    def create_subevent_for_single_sms(self, recipient_doc_type, recipient_id, case=None):
+    @classmethod
+    def create_event_for_adhoc_sms(cls, domain, recipient=None):
+        if recipient:
+            recipient_type = cls.get_recipient_type(recipient)
+            recipient_id = recipient.get_id
+        else:
+            recipient_type = cls.RECIPIENT_VARIOUS
+            recipient_id = None
+
+        obj = cls.objects.create(
+            domain=domain,
+            date=datetime.utcnow(),
+            source=cls.SOURCE_OTHER,
+            content_type=cls.CONTENT_ADHOC_SMS,
+            status=cls.STATUS_IN_PROGRESS,
+            recipient_type=recipient_type,
+            recipient_id=recipient_id,
+        )
+        return obj
+
+    def create_subevent_for_single_sms(self, recipient_doc_type=None, recipient_id=None, case=None):
         obj = MessagingSubEvent.objects.create(
             parent=self,
             date=datetime.utcnow(),

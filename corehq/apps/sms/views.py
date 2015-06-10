@@ -35,7 +35,7 @@ from corehq.apps.users import models as user_models
 from corehq.apps.users.views.mobile.users import EditCommCareUserView
 from corehq.apps.sms.models import (
     SMSLog, INCOMING, OUTGOING, ForwardingRule,
-    LastReadMessage,
+    LastReadMessage, MessagingEvent
 )
 from corehq.apps.sms.mixin import (SMSBackend, BackendMapping, VerifiedNumber,
     SMSLoadBalancingMixin)
@@ -268,16 +268,34 @@ def send_to_recipients(request, domain):
         failed_numbers = []
         no_numbers = []
         sent = []
+
+        if len(phone_numbers) == 1:
+            recipient = phone_numbers[0][0]
+        else:
+            recipient = None
+
+        logged_event = MessagingEvent.create_event_for_adhoc_sms(domain, recipient=recipient)
+
         for user, number in phone_numbers:
             if not number:
                 no_numbers.append(user.raw_username)
-            elif send_sms(domain, user, number, message):
-                sent.append("%s" % (user.raw_username if user else number))
             else:
-                failed_numbers.append("%s (%s)" % (
-                    number,
-                    user.raw_username if user else "<no username>"
-                ))
+                args = [user.doc_type, user.get_id] if user else []
+                logged_subevent = logged_event.create_subevent_for_single_sms(*args)
+                if send_sms(
+                    domain, user, number, message,
+                    metadata=MessageMetadata(messaging_subevent_id=logged_subevent.pk)
+                ):
+                    sent.append("%s" % (user.raw_username if user else number))
+                    logged_subevent.completed()
+                else:
+                    failed_numbers.append("%s (%s)" % (
+                        number,
+                        user.raw_username if user else "<no username>"
+                    ))
+                    logged_subevent.error(MessagingEvent.INTERNAL_SERVER_ERROR)
+
+        logged_event.completed()
 
         def comma_reminder():
             messages.error(request, _("Please remember to separate recipients"
