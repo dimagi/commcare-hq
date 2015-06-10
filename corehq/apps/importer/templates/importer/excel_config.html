@@ -135,8 +135,9 @@
                     <legend>                    
                         {% trans "Corresponding Key/Value fields from Excel" %}
                         <div style="display:inline; position:relative; top:-5px;">
+      <!-- TODO: use hq-help-template -->
                             <div class="hq-help">
-                                <a href="#" id="help_key_value_pairs">
+                                <a href="#">
                                     <i class="icon-question-sign" 
                                         data-title='{% trans "Key/Value Pairs" %}'
                                         data-content='{% trans "The Excel file must be formatted with three columns. The first, identified in the Identifying Cases section above, contains the case to update. The second contains names of case properties to update. The last column contains the values to change. " %}'
@@ -146,7 +147,7 @@
                         </div>
                         <script>
                             $(function () {
-                                $('#help_key_value_pairs').hqHelp();
+                                $('#.hq-help').hqHelp();
                             });
                         </script>                         
                     </legend>

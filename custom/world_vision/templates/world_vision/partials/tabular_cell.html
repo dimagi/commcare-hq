@@ -6,6 +6,7 @@
     {% endif %}
     <span title="{% if col.sort_key != "" %}{{ col.sort_key }}{% else %}{{ col }}{% endif %}"></span>
     {% if col.tooltip != None and col.tooltip != '' %}
+            <!-- TODO: use hq-help-template -->
         <div class="hq-help">
             <a href="#" style="color: #0000ff">
                 <i class="icon-question-sign" data-title="Info" data-content="{{ col.tooltip|safe }}" data-original-title=""></i>

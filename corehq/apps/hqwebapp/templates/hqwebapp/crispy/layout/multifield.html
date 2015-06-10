@@ -4,6 +4,7 @@
     <label class="control-label {% if multifield.label_class %} {{ multifield.label_class }}{% endif %}">
         {% if help_bubble_text and multifield.css_id %}
             <div class="pull-left" style="margin-top: -5px;">
+      <!-- TODO: use hq-help-template -->
                 <div class="hq-help">
                     <a href="#" id="help_{{ multifield.css_id }}">
                         <i class="icon-question-sign"

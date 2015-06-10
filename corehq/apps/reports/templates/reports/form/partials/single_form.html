@@ -46,6 +46,7 @@ requires imports/proptable.html to be included in the main template
         });
     });
     $(function () {
+            <!-- TODO: use hq-help-template -->
         $('.hq-help').hqHelp();
         function showReadable() {
             $('.form-data-raw').hide();
@@ -289,6 +290,7 @@ requires imports/proptable.html to be included in the main template
         <label class="checkbox">
             <input type="checkbox" class="showSkippedToggle"/>
             {% trans "Show questions in form that were not shown to the user" %}
+            <!-- TODO: use hq-help-template -->
             <div class="hq-help">
                 <a href="#">
                     <i class="icon-question-sign"
