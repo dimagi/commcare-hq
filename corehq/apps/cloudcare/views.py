@@ -236,7 +236,13 @@ def get_cases_vary_on(request, domain):
 
 
 def get_cases_skip_arg(request, domain):
-    return string_to_boolean(request.REQUEST.get('cache_bust', 'true'))
+    """
+    When this function returns True, skippable_quickcache will not go to the cache for the result. By default,
+    if neither of these params are passed into the function, nothing will be cached. Cache will always be
+    skipped if ids_only is false.
+    """
+    return (not string_to_boolean(request.REQUEST.get('use_cache', 'false')) or
+        not string_to_boolean(request.REQUEST.get('ids_only', 'false')))
 
 
 @cloudcare_api

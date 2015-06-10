@@ -1,4 +1,8 @@
+import json
+import uuid
+
 from django.test import TestCase
+from django.core.urlresolvers import reverse
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests import delete_all_cases
@@ -10,9 +14,8 @@ from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
 from corehq.apps.cloudcare.api import get_filtered_cases, CaseAPIResult, CASE_STATUS_OPEN, CASE_STATUS_ALL,\
     CASE_STATUS_CLOSED
-import uuid
 
-TEST_DOMAIN = "test-domain-uCSArw4SkbM6F04"
+TEST_DOMAIN = "test-cloudcare-domain"
 
 
 class CaseAPITest(TestCase):
@@ -25,12 +28,12 @@ class CaseAPITest(TestCase):
 
     def setUp(self):
         create_domain(self.domain)
-        password = "****"
+        self.password = "****"
 
         def create_user(username):
             return CommCareUser.create(self.domain,
                                        format_username(username, self.domain),
-                                       password)
+                                       self.password)
 
         self.users = [create_user(id) for id in self.user_ids]
 
@@ -227,6 +230,55 @@ class CaseAPITest(TestCase):
             self.assertEqual(json['properties']['case_type'], None)
         finally:
             case.delete()
+
+    def testGetCasesCaching(self):
+        user = self.users[0]
+
+        self.client.login(username=user.username, password=self.password)
+        result = self.client.get(reverse('cloudcare_get_cases', args=[self.domain]), {
+            'ids_only': 'true',
+            'use_cache': 'true',
+        })
+        cases = json.loads(result.content)
+        self.assertEqual(result.status_code, 200)
+
+        _create_case(user, self.case_types[0], close=False)
+
+        result = self.client.get(reverse('cloudcare_get_cases', args=[self.domain]), {
+            'ids_only': 'true',
+            'use_cache': 'true',
+        })
+        cases_cached = json.loads(result.content)
+        self.assertEqual(len(cases), len(cases_cached))
+
+        result = self.client.get(reverse('cloudcare_get_cases', args=[self.domain]), {
+            'ids_only': 'true',
+            'use_cache': 'false',
+        })
+        cases_not_cached = json.loads(result.content)
+        self.assertEqual(len(cases) + 1, len(cases_not_cached))
+
+    def testGetCasesNoCaching(self):
+        """
+        Tests get_cases when it shouldn't cache. E.g. when ids_only is false or cache is false
+        """
+        user = self.users[0]
+
+        self.client.login(username=user.username, password=self.password)
+        result = self.client.get(reverse('cloudcare_get_cases', args=[self.domain]), {
+            'ids_only': 'false',
+            'use_cache': 'true',
+        })
+        cases = json.loads(result.content)
+        self.assertEqual(result.status_code, 200)
+        _create_case(user, self.case_types[0], close=False)
+
+        result = self.client.get(reverse('cloudcare_get_cases', args=[self.domain]), {
+            'ids_only': 'false',
+            'use_cache': 'true',
+        })
+        cases_not_cached = json.loads(result.content)
+        self.assertEqual(len(cases) + 1, len(cases_not_cached))
 
 
 def _child_case_type(type):
