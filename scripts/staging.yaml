@@ -53,6 +53,7 @@ branches:
   - renew-plan # Farid 6/4
   - index-phonelog-reportentry # Ben 6/8
   - add-proxy4 # ts 6/9
+  - debug-sync # Nick P 6/9
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
