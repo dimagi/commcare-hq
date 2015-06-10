@@ -100,6 +100,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
             owner_ids.append("commtrack-system")
         if demo:
             owner_ids.append("demo_user_group_id")
+            owner_ids.append("demo_user")
         return owner_ids
 
 
