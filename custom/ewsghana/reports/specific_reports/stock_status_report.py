@@ -237,19 +237,7 @@ class StockoutsProduct(EWSData):
     show_table = False
     chart_x_label = 'Months'
     chart_y_label = 'Facility count'
-
-    @property
-    def title(self):
-        if not self.location:
-            return ""
-
-        location_type = self.location.location_type.name.lower()
-        if location_type == 'country':
-            return "Stockouts - CMS, RMS, and Teaching Hospitals"
-        elif location_type == 'region':
-            return "Stockouts - RMS and Teaching Hospitals"
-        elif location_type == 'district':
-            return "Stockouts"
+    title = 'Stockout by Product'
 
     @property
     def headers(self):
@@ -297,9 +285,21 @@ class StockoutsProduct(EWSData):
 class StockoutTable(EWSData):
 
     slug = 'stockouts_product_table'
-    title = 'Stockouts'
     show_chart = False
     show_table = True
+
+    @property
+    def title(self):
+        if not self.location:
+            return ""
+
+        location_type = self.location.location_type.name.lower()
+        if location_type == 'country':
+            return "Stockouts - CMS, RMS, and Teaching Hospitals"
+        elif location_type == 'region':
+            return "Stockouts - RMS and Teaching Hospitals"
+        elif location_type == 'district':
+            return "Stockouts"
 
     @property
     def headers(self):
