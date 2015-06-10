@@ -109,7 +109,6 @@ class SohPercentageTableData(ILSData):
             prd_id = self.config['products']
 
         if self.config['location_id']:
-
             locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'])
             for loc in locations:
                 org_summary = OrganizationSummary.objects.filter(
@@ -117,26 +116,37 @@ class SohPercentageTableData(ILSData):
                     location_id=loc.location_id
                 )
                 self.config['org_summary'] = org_summary
-                soh_data = SohSubmissionData(config=self.config).rows[0]
 
+                soh_rows = SohSubmissionData(config=self.config).rows
+                soh_data = soh_rows[0] if soh_rows else None
                 facs = get_facilities(loc, self.config['domain'])
                 facs_count = facs.count()
-                soh_on_time = soh_data.on_time * 100 / facs_count
-                soh_late = soh_data.late * 100 / facs_count
-                soh_not_responding = soh_data.not_responding * 100 / facs_count
-                fac_ids = facs.exclude(supply_point_id__isnull=True).values_list('supply_point_id', flat=True)
-                enddate = self.config['enddate']
-                month = enddate.month - 1 if enddate.month != 1 else 12
-                year = enddate.year - 1 if enddate.month == 1 else enddate.year
-                stockouts = StockTransaction.objects.filter(
-                    case_id__in=fac_ids,
-                    stock_on_hand__lte=0,
-                    report__date__range=[
-                        datetime(year, month, 1),
-                        datetime(enddate.year, enddate.month, 1)
-                    ]
-                ).order_by('case_id').distinct('case_id').count()
-                percent_stockouts = (stockouts or 0) * 100 / float(facs_count)
+
+                if soh_data:
+                    soh_on_time = soh_data.on_time * 100 / facs_count if soh_data else 0
+                    soh_late = soh_data.late * 100 / facs_count if soh_data else 0
+                    soh_not_responding = soh_data.not_responding * 100 / facs_count if soh_data else 0
+                else:
+                    soh_on_time = None
+                    soh_late = None
+                    soh_not_responding = None
+
+                if facs_count > 0:
+                    fac_ids = facs.exclude(supply_point_id__isnull=True).values_list('supply_point_id', flat=True)
+                    enddate = self.config['enddate']
+                    month = enddate.month - 1 if enddate.month != 1 else 12
+                    year = enddate.year - 1 if enddate.month == 1 else enddate.year
+                    stockouts = StockTransaction.objects.filter(
+                        case_id__in=fac_ids,
+                        stock_on_hand__lte=0,
+                        report__date__range=[
+                            datetime(year, month, 1),
+                            datetime(enddate.year, enddate.month, 1)
+                        ]
+                    ).order_by('case_id').distinct('case_id').count()
+                    percent_stockouts = (stockouts or 0) * 100 / float(facs_count)
+                else:
+                    percent_stockouts = 0
 
                 url = make_url(StockOnHandReport, self.config['domain'],
                                '?location_id=%s&filter_by_program=%s&'
@@ -152,7 +162,6 @@ class SohPercentageTableData(ILSData):
                     format_percent(soh_not_responding),
                     format_percent(percent_stockouts)
                 ]
-
                 for product in prd_id:
                     ps = ProductAvailabilityData.objects.filter(
                         location_id=org_summary[0].location_id,
