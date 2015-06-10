@@ -9,7 +9,7 @@ from couchforms.tests.testutils import post_xform_to_couch
 from casexml.apps.case.tests.util import check_xml_line_by_line, delete_all_cases, delete_all_sync_logs
 from casexml.apps.case.xform import process_cases
 from casexml.apps.phone.models import SyncLog
-from casexml.apps.phone.restore import StringRestoreResponse
+from casexml.apps.phone.restore import FileRestoreResponse
 from casexml.apps.phone.tests.dummy import dummy_restore_xml, dummy_user
 
 
@@ -77,7 +77,7 @@ class TestRestoreResponse(SimpleTestCase):
         user = 'user1'
         body = '<elem>data0</elem>'
         expected = self._expected(user, body, items=None)
-        with StringRestoreResponse(user, False) as response:
+        with FileRestoreResponse(user, False) as response:
             response.append(body)
             response.finalize()
             self.assertEqual(expected, str(response))
@@ -86,7 +86,7 @@ class TestRestoreResponse(SimpleTestCase):
         user = 'user1'
         body = '<elem>data0</elem>'
         expected = self._expected(user, body, items=2)
-        response = StringRestoreResponse(user, True)
+        response = FileRestoreResponse(user, True)
         response.append(body)
         response.finalize()
         self.assertEqual(expected, str(response))
@@ -96,10 +96,10 @@ class TestRestoreResponse(SimpleTestCase):
         body1 = '<elem>data0</elem>'
         body2 = '<elem>data1</elem>'
         expected = self._expected(user, body1 + body2, items=3)
-        response1 = StringRestoreResponse(user, True)
+        response1 = FileRestoreResponse(user, True)
         response1.append(body1)
 
-        response2 = StringRestoreResponse(user, True)
+        response2 = FileRestoreResponse(user, True)
         response2.append(body2)
 
         added = response1 + response2

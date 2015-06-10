@@ -12,7 +12,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
-from corehq.apps.locations.models import SQLLocation, LOCATION_SHARING_PREFIX
+from corehq.apps.locations.models import SQLLocation
 
 
 def get_case_properties(domain, case_type=None):
@@ -389,6 +389,7 @@ def populate_updated_fields(config, columns, row, datemode):
 
     return fields_to_update
 
+
 def get_spreadsheet(download_ref, column_headers=True):
     if not download_ref:
         return None
@@ -400,12 +401,9 @@ def is_location_group(owner_id, domain):
     Return yes if the specified owner_id is one of the
     faked location groups.
     """
-    if not owner_id.startswith(LOCATION_SHARING_PREFIX):
-        return False
-
     results = SQLLocation.objects.filter(
         domain=domain,
-        location_id=owner_id.replace(LOCATION_SHARING_PREFIX, '')
+        location_id=owner_id
     )
     return results.exists()
 

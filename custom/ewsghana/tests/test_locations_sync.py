@@ -80,8 +80,8 @@ class LocationSyncTest(TestCase):
         self.assertEqual(supply_point.location, ewsghana_location)
         self.assertEqual(location.supply_points[0].id, int(supply_point.external_id))
         self.assertEqual(location.supply_points[0].name, supply_point.name)
-        self.assertListEqual(location.supply_points[0].products,
-                             [product.code for product in ewsghana_location.sql_location.products])
+        self.assertSetEqual(set(location.supply_points[0].products),
+                            {product.code for product in ewsghana_location.sql_location.products})
 
     def test_create_region_with_two_supply_points(self):
         with open(os.path.join(self.datapath, 'sample_locations.json')) as f:
@@ -107,8 +107,12 @@ class LocationSyncTest(TestCase):
             domain=TEST_DOMAIN,
             location_type__administrative=False).count()
         )
-        self.assertIsNotNone(ewsghana_location.linked_supply_point())
+
+        supply_point = ewsghana_location.linked_supply_point()
+        self.assertIsNotNone(supply_point)
         self.assertIsNotNone(ewsghana_location.sql_location.supply_point_id)
+
+        self.assertEqual(supply_point.external_id, '')
         self.assertEqual(ewsghana_location.name, location.name)
         self.assertEqual(ewsghana_location.site_code, location.code)
         self.assertTrue(ewsghana_location.is_archived)

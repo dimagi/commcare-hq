@@ -149,6 +149,14 @@ class ILSGatewayEndpoint(LogisticsEndpoint):
             Groups(obj) for obj in groups_list
         ]
 
+    def get_stocktransactions(self, start_date=None, end_date=None, **kwargs):
+        kwargs.get('filters', {}).update({
+            'date__gte': start_date,
+        })
+        meta, stock_transactions = self.get_objects(self.stocktransactions_url, **kwargs)
+        return meta, [(self.models_map['stock_transaction'])(stock_transaction)
+                      for stock_transaction in stock_transactions]
+
 
 class ILSGatewayAPI(APISynchronization):
 

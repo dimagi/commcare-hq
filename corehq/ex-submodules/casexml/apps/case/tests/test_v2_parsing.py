@@ -23,6 +23,10 @@ class Version2CaseParsingTest(TestCase):
     def setUp(self):
         delete_all_cases()
 
+    @classmethod
+    def tearDownClass(cls):
+        delete_all_cases()
+
     def testParseCreate(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "v2", "basic_create.xml")
         with open(file_path, "rb") as f:

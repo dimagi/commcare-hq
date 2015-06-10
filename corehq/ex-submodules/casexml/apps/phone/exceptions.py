@@ -42,3 +42,7 @@ class MissingSyncLog(InvalidSyncLogException):
 
 class SyncLogUserMismatch(InvalidSyncLogException):
     pass
+
+
+class IncompatibleSyncLogType(InvalidSyncLogException):
+    pass

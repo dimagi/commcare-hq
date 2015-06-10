@@ -1,8 +1,7 @@
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.products.models import Product
-from corehq.apps.locations.models import (Location, SQLLocation,
-                                          LOCATION_SHARING_PREFIX)
+from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.locations.permissions import (user_can_edit_location,
                                                user_can_view_location)
 from corehq.apps.domain.models import Domain
@@ -67,6 +66,7 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False,
             this_loc['children'] = [
                 loc_to_json(loc, project) for loc in
                 loc.child_locations(include_archive_ancestors=include_archived)
+                if user is None or user_can_view_location(user, loc, project)
             ]
             parent = this_loc
 
@@ -135,6 +135,7 @@ class LocationExporter(object):
         self.domain_obj = Domain.get_by_name(domain)
         self.include_consumption_flag = include_consumption
         self.data_model = get_location_data_model(domain)
+        self.administrative_types = {}
 
     @property
     @memoized
@@ -289,8 +290,3 @@ def purge_locations(domain):
     domain_json.pop('obsolete_location_types', None)
     domain_json.pop('location_types', None)
     db.save_doc(domain_json)
-
-
-def loc_group_id_or_none(group_id):
-    if group_id.startswith(LOCATION_SHARING_PREFIX):
-        return group_id.split(LOCATION_SHARING_PREFIX, 1)[1]

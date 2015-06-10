@@ -1,14 +1,11 @@
 from collections import defaultdict
-from copy import deepcopy
 import itertools
 import logging
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.caselogic import get_footprint
+from casexml.apps.phone.data_providers.case.load_testing import append_update_to_response
 from casexml.apps.phone.data_providers.case.stock import get_stock_payload
-from casexml.apps.phone.data_providers.case.utils import CaseSyncUpdate, get_case_sync_updates
-from corehq.toggles import ENABLE_LOADTEST_USERS
-from dimagi.utils.couch.database import get_safe_write_kwargs
-from casexml.apps.phone import xml
+from casexml.apps.phone.data_providers.case.utils import get_case_sync_updates, CaseStub
 from casexml.apps.phone.models import CaseState
 from corehq.util.dates import iso_string_to_datetime
 from dimagi.utils.parsing import string_to_utc_datetime
@@ -21,16 +18,8 @@ def get_case_payload_batched(restore_state):
     response = restore_state.restore_class()
 
     sync_operation = BatchedCaseSyncOperation(restore_state)
-    factor = _get_loadtest_factor(restore_state.domain, restore_state.user)
     for update in sync_operation.get_all_case_updates():
-        current_count = 0
-        original_update = update
-        while current_count < factor:
-            element = xml.get_case_element(update.case, update.required_updates, restore_state.version)
-            response.append(element)
-            current_count += 1
-            if current_count < factor:
-                update = _transform_loadtest_update(original_update, current_count)
+        append_update_to_response(response, update, restore_state)
 
     sync_state = sync_operation.global_state
     restore_state.current_sync_log.cases_on_phone = sync_state.actual_owned_cases
@@ -43,32 +32,6 @@ def get_case_payload_batched(restore_state):
     response.extend(commtrack_elements)
 
     return response, sync_operation.batch_count
-
-
-def _get_loadtest_factor(domain, user):
-    """
-    Gets the loadtest factor for a domain and user. Is always 1 unless
-    both the toggle is enabled for the domain, and the user has a non-zero,
-    non-null factor set.
-    """
-    if domain and ENABLE_LOADTEST_USERS.enabled(domain):
-        return getattr(user, 'loadtest_factor', 1) or 1
-    return 1
-
-
-def _transform_loadtest_update(update, factor):
-    """
-    Returns a new CaseSyncUpdate object (from an existing one) with all the
-    case IDs and names mapped to have the factor appended.
-    """
-    def _map_id(id, count):
-        return '{}-{}'.format(id, count)
-    case = CommCareCase.wrap(deepcopy(update.case._doc))
-    case._id = _map_id(case._id, factor)
-    for index in case.indices:
-        index.referenced_id = _map_id(index.referenced_id, factor)
-    case.name = '{} ({})'.format(case.name, factor)
-    return CaseSyncUpdate(case, update.sync_token, required_updates=update.required_updates)
 
 
 class GlobalSyncState(object):
@@ -143,7 +106,7 @@ class GlobalSyncState(object):
 
     def update_synced_cases(self, case_updates):
         self.all_synced_cases_dict.update(
-            {update.case.case_id: CaseState.from_case(update.case) for update in case_updates}
+            {update.case.case_id: CaseStub(update.case._id, update.case.type) for update in case_updates}
         )
 
 

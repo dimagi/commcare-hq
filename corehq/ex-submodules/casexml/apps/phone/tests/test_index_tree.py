@@ -7,8 +7,8 @@ class TestExtendedFootprint(SimpleTestCase):
     def test_simple_linear_structure(self):
         [grandparent_id, parent_id, child_id] = all_cases = ['grandparent', 'parent', 'child']
         tree = IndexTree(indices={
-            child_id: [parent_id],
-            parent_id: [grandparent_id],
+            child_id: convert_list_to_dict([parent_id]),
+            parent_id: convert_list_to_dict([grandparent_id]),
         })
         cases = tree.get_all_cases_that_depend_on_case(grandparent_id)
         self.assertEqual(cases, set(all_cases))
@@ -16,9 +16,9 @@ class TestExtendedFootprint(SimpleTestCase):
     def test_multiple_children(self):
         [grandparent_id, parent_id, child_id_1, child_id_2] = all_cases = ['rickard', 'ned', 'bran', 'arya']
         tree = IndexTree(indices={
-            child_id_1: [parent_id],
-            child_id_2: [parent_id],
-            parent_id: [grandparent_id],
+            child_id_1: convert_list_to_dict([parent_id]),
+            child_id_2: convert_list_to_dict([parent_id]),
+            parent_id: convert_list_to_dict([grandparent_id]),
         })
         cases = tree.get_all_cases_that_depend_on_case(grandparent_id)
         self.assertEqual(cases, set(all_cases))
@@ -29,7 +29,7 @@ class PruningTest(SimpleTestCase):
     def test_prune_parent_then_child(self):
         [parent_id, child_id] = all_ids = ['parent', 'child']
         tree = IndexTree(indices={
-            child_id: [parent_id],
+            child_id: convert_list_to_dict([parent_id]),
         })
         sync_log = SimplifiedSyncLog(index_tree=tree, case_ids_on_phone=set(all_ids))
         # this has no effect
@@ -47,7 +47,7 @@ class PruningTest(SimpleTestCase):
     def test_prune_child_then_parent(self):
         [parent_id, child_id] = all_ids = ['parent', 'child']
         tree = IndexTree(indices={
-            child_id: [parent_id],
+            child_id: convert_list_to_dict([parent_id]),
         })
         sync_log = SimplifiedSyncLog(index_tree=tree, case_ids_on_phone=set(all_ids))
 
@@ -66,8 +66,8 @@ class PruningTest(SimpleTestCase):
     def test_prune_tiered_top_down(self):
         [grandparent_id, parent_id, child_id] = all_ids = ['grandparent', 'parent', 'child']
         tree = IndexTree(indices={
-            child_id: [parent_id],
-            parent_id: [grandparent_id],
+            child_id: convert_list_to_dict([parent_id]),
+            parent_id: convert_list_to_dict([grandparent_id]),
         })
         sync_log = SimplifiedSyncLog(index_tree=tree, case_ids_on_phone=set(all_ids))
 
@@ -98,8 +98,8 @@ class PruningTest(SimpleTestCase):
     def test_prune_tiered_bottom_up(self):
         [grandparent_id, parent_id, child_id] = all_ids = ['grandparent', 'parent', 'child']
         tree = IndexTree(indices={
-            child_id: [parent_id],
-            parent_id: [grandparent_id],
+            child_id: convert_list_to_dict([parent_id]),
+            parent_id: convert_list_to_dict([grandparent_id]),
         })
         sync_log = SimplifiedSyncLog(index_tree=tree, case_ids_on_phone=set(all_ids))
 
@@ -121,9 +121,9 @@ class PruningTest(SimpleTestCase):
     def test_prune_multiple_children(self):
         [grandparent_id, parent_id, child_id_1, child_id_2] = all_ids = ['rickard', 'ned', 'bran', 'arya']
         tree = IndexTree(indices={
-            child_id_1: [parent_id],
-            child_id_2: [parent_id],
-            parent_id: [grandparent_id],
+            child_id_1: convert_list_to_dict([parent_id]),
+            child_id_2: convert_list_to_dict([parent_id]),
+            parent_id: convert_list_to_dict([grandparent_id]),
         })
         sync_log = SimplifiedSyncLog(index_tree=tree, case_ids_on_phone=set(all_ids))
 
@@ -152,9 +152,9 @@ class PruningTest(SimpleTestCase):
     def test_prune_multiple_parents(self):
         [grandparent_id, mother_id, father_id, child_id] = all_ids = ['heart-tree', 'catelyn', 'ned', 'arya']
         tree = IndexTree(indices={
-            child_id: [mother_id, father_id],
-            mother_id: [grandparent_id],
-            father_id: [grandparent_id],
+            child_id: convert_list_to_dict([mother_id, father_id]),
+            mother_id: convert_list_to_dict([grandparent_id]),
+            father_id: convert_list_to_dict([grandparent_id]),
         })
         sync_log = SimplifiedSyncLog(index_tree=tree, case_ids_on_phone=set(all_ids))
 
@@ -176,8 +176,8 @@ class PruningTest(SimpleTestCase):
     def test_prune_circular_loops(self):
         [peer_id_1, peer_id_2] = all_ids = ['jaime', 'cersei']
         tree = IndexTree(indices={
-            peer_id_1: [peer_id_2],
-            peer_id_2: [peer_id_1],
+            peer_id_1: convert_list_to_dict([peer_id_2]),
+            peer_id_2: convert_list_to_dict([peer_id_1]),
         })
         sync_log = SimplifiedSyncLog(index_tree=tree, case_ids_on_phone=set(all_ids))
 
@@ -194,9 +194,9 @@ class PruningTest(SimpleTestCase):
     def test_prune_very_circular_loops(self):
         [peer_id_1, peer_id_2, peer_id_3] = all_ids = ['drogon', 'rhaegal', 'viserion']
         tree = IndexTree(indices={
-            peer_id_1: [peer_id_2],
-            peer_id_2: [peer_id_3],
-            peer_id_3: [peer_id_1],
+            peer_id_1: convert_list_to_dict([peer_id_2]),
+            peer_id_2: convert_list_to_dict([peer_id_3]),
+            peer_id_3: convert_list_to_dict([peer_id_1]),
         })
         sync_log = SimplifiedSyncLog(index_tree=tree, case_ids_on_phone=set(all_ids))
 
@@ -213,9 +213,13 @@ class PruningTest(SimpleTestCase):
     def test_prune_self_indexing(self):
         [id] = ['recursive']
         tree = IndexTree(indices={
-            id: [id],
+            id: convert_list_to_dict([id]),
         })
         sync_log = SimplifiedSyncLog(index_tree=tree, case_ids_on_phone=set([id]))
         sync_log.prune_case(id)
         self.assertFalse(id in sync_log.case_ids_on_phone)
         self.assertFalse(id in sync_log.dependent_case_ids_on_phone)
+
+
+def convert_list_to_dict(a_list):
+    return {str(i): item for i, item in enumerate(a_list)}

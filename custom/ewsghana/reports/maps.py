@@ -1,14 +1,13 @@
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop
-from corehq import Domain
 from corehq.apps.commtrack.models import StockState, CommtrackConfig
-from corehq.apps.locations.models import Location, SQLLocation
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.commtrack.data_sources import StockStatusBySupplyPointDataSource
 from corehq.apps.reports.commtrack.maps import StockStatusMapReport
 from corehq.apps.reports.standard import CustomProjectReport
-from custom.ewsghana.utils import get_country_id
+from custom.ewsghana.utils import get_country_id, filter_slugs_by_role
 
 
 class EWSStockStatusBySupplyPointDataSource(StockStatusBySupplyPointDataSource):
@@ -121,6 +120,12 @@ class EWSMapReport(CustomProjectReport, StockStatusMapReport):
         'custom.ewsghana.filters.ProductFilter',
     ]
 
+    @property
+    def report_context(self):
+        context = super(StockStatusMapReport, self).report_context
+        context['context']['slugs'] = filter_slugs_by_role(self.request.couch_user, self.domain)
+        return context
+
     @classmethod
     def get_url(cls, domain=None, render_as=None, **kwargs):
         url = super(EWSMapReport, cls).get_url(domain=domain, render_as=None, kwargs=kwargs)
@@ -150,7 +155,7 @@ class EWSMapReport(CustomProjectReport, StockStatusMapReport):
                 'product': self.product,
                 'columns': [
                     {'id': 'quantity', 'title': 'Quantity'},
-                    {'id': 'months_until_stockout', 'title': 'Months Until Stockout'},
+                    {'id': 'months_until_stockout', 'title': 'Months of Stock'},
                     {'id': 'category', 'name': 'Stock status'}
                 ],
             }),

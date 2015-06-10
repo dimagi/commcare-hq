@@ -60,7 +60,7 @@ from corehq.apps.hqmedia.models import HQMediaMixin
 from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import cc_user_domain
-from corehq.apps.domain.models import cached_property
+from corehq.apps.domain.models import cached_property, Domain
 from corehq.apps.app_manager import current_builds, app_strings, remote_app
 from corehq.apps.app_manager import suite_xml, commcare_settings
 from corehq.apps.app_manager.util import (
@@ -68,7 +68,7 @@ from corehq.apps.app_manager.util import (
     save_xform,
     get_correct_app_class,
     ParentCasePropertyBuilder,
-    is_usercase_enabled)
+    is_usercase_in_use)
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
@@ -99,7 +99,9 @@ WORKFLOW_FORM = 'form'
 AUTO_SELECT_USER = 'user'
 AUTO_SELECT_FIXTURE = 'fixture'
 AUTO_SELECT_CASE = 'case'
+AUTO_SELECT_LOCATION = 'location'
 AUTO_SELECT_RAW = 'raw'
+AUTO_SELECT_USERCASE = 'usercase'
 
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 
@@ -315,6 +317,9 @@ class FormActions(DocumentSchema):
     case_preload = SchemaProperty(PreloadAction)
     referral_preload = SchemaProperty(PreloadAction)
 
+    usercase_update = SchemaProperty(UpdateCaseAction)
+    usercase_preload = SchemaProperty(PreloadAction)
+
     subcases = SchemaListProperty(OpenSubCaseAction)
 
     def all_property_names(self):
@@ -365,7 +370,11 @@ class AutoSelectCase(DocumentSchema):
                         xpath expression.
 
     """
-    mode = StringProperty(choices=[AUTO_SELECT_USER, AUTO_SELECT_FIXTURE, AUTO_SELECT_CASE, AUTO_SELECT_RAW])
+    mode = StringProperty(choices=[AUTO_SELECT_USER,
+                                   AUTO_SELECT_FIXTURE,
+                                   AUTO_SELECT_CASE,
+                                   AUTO_SELECT_USERCASE,
+                                   AUTO_SELECT_RAW])
     value_source = StringProperty()
     value_key = StringProperty(required=True)
 
@@ -485,6 +494,7 @@ class AdvancedFormActions(DocumentSchema):
                 AUTO_SELECT_USER: [],
                 AUTO_SELECT_CASE: [],
                 AUTO_SELECT_FIXTURE: [],
+                AUTO_SELECT_USERCASE: [],
                 AUTO_SELECT_RAW: [],
             }
         }
@@ -1112,16 +1122,19 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
             if self.requires == 'none':
                 action_types = (
                     'open_case', 'update_case', 'close_case', 'subcases',
+                    'usercase_update', 'usercase_preload',
                 )
             elif self.requires == 'case':
                 action_types = (
                     'update_case', 'close_case', 'case_preload', 'subcases',
+                    'usercase_update', 'usercase_preload',
                 )
             else:
                 # this is left around for legacy migrated apps
                 action_types = (
                     'open_case', 'update_case', 'close_case',
                     'case_preload', 'subcases',
+                    'usercase_update', 'usercase_preload',
                 )
         return self._get_active_actions(action_types)
 
@@ -1207,11 +1220,14 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         return errors
 
     def get_case_updates(self, case_type):
-        if self.get_module().case_type == case_type:
+        # This method is used by both get_all_case_properties and
+        # get_usercase_properties. In the case of usercase properties, use
+        # the usercase_update action, and for normal cases, use the
+        # update_case action
+        if case_type == self.get_module().case_type or case_type == USERCASE_TYPE:
             format_key = self.get_case_property_name_formatter()
-            return [format_key(*item)
-                    for item in self.actions.update_case.update.items()]
-
+            action = self.actions.usercase_update if case_type == USERCASE_TYPE else self.actions.update_case
+            return [format_key(*item) for item in action.update.items()]
         return []
 
     @memoized
@@ -1340,7 +1356,6 @@ class GraphSeries(DocumentSchema):
     data_path = StringProperty()
     x_function = StringProperty()
     y_function = StringProperty()
-    radius_function = StringProperty()
 
 
 class GraphConfiguration(DocumentSchema):
@@ -1512,7 +1527,7 @@ class Detail(IndexedSchema):
             column.rename_lang(old_lang, new_lang)
 
 
-class CaseList(IndexedSchema):
+class CaseList(IndexedSchema, NavMenuItemMediaMixin):
 
     label = DictProperty()
     show = BooleanProperty(default=False)
@@ -2036,13 +2051,14 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             if isinstance(action, LoadUpdateAction) and action.auto_select:
                 mode = action.auto_select.mode
                 if not action.auto_select.value_key:
-                    key_name = {
+                    key_names = {
                         AUTO_SELECT_CASE: _('Case property'),
                         AUTO_SELECT_FIXTURE: _('Lookup Table field'),
                         AUTO_SELECT_USER: _('custom user property'),
                         AUTO_SELECT_RAW: _('custom XPath expression'),
-                    }[mode]
-                    errors.append({'type': 'auto select key', 'key_name': key_name})
+                    }
+                    if mode in key_names:
+                        errors.append({'type': 'auto select key', 'key_name': key_names[mode]})
 
                 if not action.auto_select.value_source:
                     source_names = {
@@ -2275,7 +2291,7 @@ class AdvancedModule(ModuleBase):
 
                 if from_module.parent_select.active:
                     app = self.get_app()
-                    gen = suite_xml.SuiteGenerator(app, is_usercase_enabled(app.domain))
+                    gen = suite_xml.SuiteGenerator(app, is_usercase_in_use(app.domain))
                     select_chain = gen.get_select_chain(from_module, include_self=False)
                     for n, link in enumerate(reversed(list(enumerate(select_chain)))):
                         i, module = link
@@ -2420,7 +2436,7 @@ class AdvancedModule(ModuleBase):
                         'expected_tag': case_tag
                     })
 
-                if case_action and case_action.details_module != self.unique_id:
+                if case_action and case_action.details_module and case_action.details_module != self.unique_id:
                     errors.append({
                         'type': 'forms in case list module must use modules details',
                         'module': info,
@@ -2807,29 +2823,16 @@ class ReportAppConfig(DocumentSchema):
                     def _column_to_series(column):
                         return suite_xml.Series(
                             nodeset="instance('reports')/reports/report[@id='{}']/rows/row".format(self.report_id),
-                            x_function='@index',
+                            x_function="column[@id='{}']".format(chart_config.x_axis_column),
                             y_function="column[@id='{}']".format(column),
-                            radius_function='5',
                         )
-                    _xlabels_xpath = (
-                        "instance('reports')/reports/report[@id='{}']/xlabels[@column='{}']"
-                        .format(self.report_id, chart_config.x_axis_column)
-                    )
                     yield suite_xml.Field(
                         header=suite_xml.Header(text=suite_xml.Text()),
                         template=suite_xml.GraphTemplate(
                             form='graph',
                             graph=suite_xml.Graph(
-                                type='xy',
+                                type='bar',
                                 series=[_column_to_series(c) for c in chart_config.y_axis_columns],
-                                configuration=suite_xml.ConfigurationGroup(
-                                    configs=[suite_xml.ConfigurationItem(
-                                        id='x-labels',
-                                        xpath=suite_xml.Xpath(
-                                            function=_xlabels_xpath
-                                        )
-                                    )]
-                                )
                             )
                         )
                     )
@@ -3659,8 +3662,18 @@ def validate_lang(lang):
 
 
 def validate_property(property):
+    """
+    Validate a case property name
+
+    >>> validate_property('parent/maternal-grandmother_fullName')
+    >>> validate_property('foo+bar')
+    Traceback (most recent call last):
+      ...
+    ValueError: Invalid Property
+
+    """
     # this regex is also copied in propertyList.ejs
-    if not re.match(r'^[a-zA-Z][\w_-]*([/:][a-zA-Z][\w_-]*)*$', property):
+    if not re.match(r'^[a-zA-Z][\w_-]*(/[a-zA-Z][\w_-]*)*$', property):
         raise ValueError("Invalid Property")
 
 
@@ -3718,9 +3731,16 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     cloudcare_enabled = BooleanProperty(default=False)
     translation_strategy = StringProperty(default='select-known',
                                           choices=app_strings.CHOICES.keys())
-    commtrack_enabled = BooleanProperty(default=False)
     commtrack_requisition_mode = StringProperty(choices=CT_REQUISITION_MODES)
     auto_gps_capture = BooleanProperty(default=False)
+
+    @property
+    @memoized
+    def commtrack_enabled(self):
+        if settings.UNIT_TESTING:
+            return False  # override with .tests.util.commtrack_enabled
+        domain_obj = Domain.get_by_name(self.domain) if self.domain else None
+        return domain_obj.commtrack_enabled if domain_obj else False
 
     @classmethod
     def wrap(cls, data):
@@ -3735,6 +3755,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     module['referral_label'][lang] = commcare_translations.load_translations(lang).get('cchq.referral', 'Referrals')
         if not data.get('build_langs'):
             data['build_langs'] = data['langs']
+        data.pop('commtrack_enabled', None)  # Remove me after migrating apps
         self = super(Application, cls).wrap(data)
 
         # make sure all form versions are None on working copies
@@ -3850,9 +3871,13 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         prev_multimedia_map = previous_version.multimedia_map if previous_version else {}
 
         for path, map_item in self.multimedia_map.iteritems():
-            pre_map_item = prev_multimedia_map.get(path, None)
-            if pre_map_item and pre_map_item.version and pre_map_item.multimedia_id == map_item.multimedia_id:
-                map_item.version = pre_map_item.version
+            prev_map_item = prev_multimedia_map.get(path, None)
+            if prev_map_item and prev_map_item.unique_id:
+                # Re-use the id so CommCare knows it's the same resource
+                map_item.unique_id = prev_map_item.unique_id
+            if (prev_map_item and prev_map_item.version
+                    and prev_map_item.multimedia_id == map_item.multimedia_id):
+                map_item.version = prev_map_item.version
             else:
                 map_item.version = self.version
 
@@ -3967,7 +3992,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 'langs': ["default"] + self.build_langs
             })
         else:
-            return suite_xml.SuiteGenerator(self, is_usercase_enabled(self.domain)).generate_suite()
+            return suite_xml.SuiteGenerator(self, is_usercase_in_use(self.domain)).generate_suite()
 
     def create_media_suite(self):
         return suite_xml.MediaSuiteGenerator(self).generate_suite()
@@ -4244,7 +4269,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @memoized
     def get_case_types(self):
-        return set(chain(*[m.get_case_types() for m in self.get_modules()]))
+        extra_types = set()
+        if is_usercase_in_use(self.domain):
+            extra_types.add(USERCASE_TYPE)
+        return set(chain(*[m.get_case_types() for m in self.get_modules()])) | extra_types
 
     def has_media(self):
         return len(self.multimedia_map) > 0

@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 import logging
 from urllib import urlencode
-from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.utils import html
 from django.utils.safestring import mark_safe
@@ -28,15 +27,13 @@ from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
 from django.core.validators import validate_email
-from corehq.apps.reports.dispatcher import (ProjectReportDispatcher,
-    CustomProjectReportDispatcher)
+from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjectReportDispatcher
 from corehq.apps.adm.dispatcher import ADMSectionDispatcher
 import json
 import calendar
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import get_url_base
 from django_prbac.exceptions import PermissionDenied
 
 
@@ -166,7 +163,13 @@ DATE_RANGE_CHOICES = ['last7', 'last30', 'lastn', 'lastmonth', 'since', 'range',
 
 
 class ReportConfig(CachedCouchDocumentMixin, Document):
-    _extra_json_properties = ['url', 'report_name', 'date_description']
+    _extra_json_properties = [
+        'url',
+        'report_name',
+        'date_description',
+        'datespan_filters',
+        'has_ucr_datespan',
+    ]
 
     domain = StringProperty()
 
@@ -499,6 +502,17 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     def is_configurable_report(self):
         from corehq.apps.userreports.reports.view import ConfigurableReport
         return isinstance(self._dispatcher, ConfigurableReport)
+
+    @property
+    def datespan_filters(self):
+        from corehq.apps.userreports.reports.view import ConfigurableReport
+        return ConfigurableReport.get_report(
+            self.domain, self.report_slug, self.subreport_slug
+        ).datespan_filters if self.is_configurable_report else []
+
+    @property
+    def has_ucr_datespan(self):
+        return self.is_configurable_report and self.datespan_filters
 
 
 class UnsupportedScheduledReportError(Exception):

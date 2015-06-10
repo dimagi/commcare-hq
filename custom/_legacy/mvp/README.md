@@ -1,9 +1,12 @@
 # Millennium Villages Project Reports
 
-## Updating the `INDICATOR_CONFIGURATION` Document
+## Overview
 
-The way CommCare HQ knows that a domain is using the Indicators accessed by this
-framework is through the `INDICATOR_CONFIGURATION` document in Couch DB.
+MVP reports are build off of a very complicated indicator framework. The configuration for the indicators lives in a combination of the code and couch. The indicators themselves live on copies of the form and case documents that are saved to a second database (commcarehq__mvp-indicators). The indicators live in a property called `computed_`  which is added to the documents by two pillows (the `MVPFormIndicatorPillow` and `MVPCaseIndicatorPillow`). The pillows are also responsible for copying the document from the primary database to the secondary one, which happens at the same time.
+
+## The `INDICATOR_CONFIGURATION` Document
+
+The `INDICATOR_CONFIGURATION` document (which lives in Couch DB) maps domains to indicator namespaces. On prod there is only one namespace (`"mvp_indicators"`). This document is how CommCare HQ knows that a domain is using the indicators in this framework.
 
 ### Initializing the `INDICATOR_CONFIGURATION` Document
 
@@ -29,6 +32,37 @@ If your project has the slug `mvp-sauri` (this is what comes after
     ]
  }
  ```
+
+## The `IndicatorDefinition` documents
+
+The `IndicatorDefinition` documents also live in the Couch Database. Each `IndicatorDefinition` has a number of attributes (namespace, domain, etc.) that describe how it should be applied to data.
+
+Indicators get computed whenever a form or case is submitted. They can depend on the form/case itself as well as the forms/cases referenced in that form/case. They do not depend on any other indicators and only on primary data.
+
+Here is a quick summary of some supported types.
+
+
+Type                              | Purpose
+----------------------------------|-----------------------
+FormLabelIndicatorDefinition      | Map an xmlns to a label and save it on the document
+FormDataAliasIndicatorDefinition  | Get a specific value from a form (based on a question ID)
+CaseDataInFormIndicatorDefinition | Lookup a case property from the case that was submitted with the form
+FormDataInCaseIndicatorDefinition | A _case_ indicator, that updates forms whenever they are submitted against a case
+
+
+## Form processing
+
+This walks through what happens when a form is processed by the pillow. An analogous set of steps happen for cases (although cases are actually more complicated).
+
+1. The `change_transform` function handles deletions and then calls `process_indicators`
+2. All `FormIndicatorDefinition` objects for the form's `(domain, xmlns)` combination are pulled out
+3. Those `FormIndicatorDefinition`s are applied to the form in bulk
+4. The form is saved back to the new database.
+
+## Case processing
+
+Case processing is very similar to form processing except there is a final step. All form-dependent indicators are applied to all the case's forms each time the case is processed. This means that the case processing can update indicators in forms!
+
 
 ## Debugging Tips
 

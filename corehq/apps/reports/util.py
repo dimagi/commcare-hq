@@ -276,12 +276,17 @@ def datespan_export_filter(doc, datespan):
         return True
     return False
 
-def case_users_filter(doc, users):
-    for id in (doc.get('owner_id'), doc.get('user_id')):
-        if id and id in users:
-            return True
+
+def case_users_filter(doc, users, groups=None):
+    for id_ in (doc.get('owner_id'), doc.get('user_id')):
+        if id_:
+            if id_ in users:
+                return True
+            if groups and id_ in groups:
+                return True
     else:
         return False
+
 
 def case_group_filter(doc, group):
     if group:
@@ -290,11 +295,13 @@ def case_group_filter(doc, group):
     else:
         return False
 
+
 def users_filter(doc, users):
     try:
         return doc['form']['meta']['userID'] in users
     except KeyError:
         return False
+
 
 def group_filter(doc, group):
     if group:
@@ -327,9 +334,11 @@ def create_export_filter(request, domain, export_type='form'):
 
     if export_type == 'case':
         if use_user_filters:
+            groups = [g.get_id for g in Group.get_case_sharing_groups(domain)]
             filtered_users = users_matching_filter(domain, user_filters)
             filter = SerializableFunction(case_users_filter,
-                                          users=filtered_users)
+                                          users=filtered_users,
+                                          groups=groups)
         else:
             filter = SerializableFunction(case_group_filter, group=group)
     else:
@@ -339,8 +348,10 @@ def create_export_filter(request, domain, export_type='form'):
             datespan.set_timezone(get_timezone_for_user(request.couch_user, domain))
             filter &= SerializableFunction(datespan_export_filter, datespan=datespan)
         if use_user_filters:
+            groups = [g.get_id for g in Group.get_case_sharing_groups(domain)]
             filtered_users = users_matching_filter(domain, user_filters)
-            filter &= SerializableFunction(users_filter, users=filtered_users)
+            filter &= SerializableFunction(users_filter,
+                                           users=filtered_users)
         else:
             filter &= SerializableFunction(group_filter, group=group)
     return filter

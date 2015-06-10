@@ -8,9 +8,10 @@ from casexml.apps.case.sharedmodels import CommCareCaseAttachment
 from casexml.apps.case.tests import delete_all_cases
 from casexml.apps.case.xml import V2
 from corehq.apps.app_manager.tests import TestFileMixin
+from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain, \
+    get_cases_in_domain
 from corehq.apps.hqcase.tasks import explode_cases
-from corehq.apps.hqcase.utils import make_creating_casexml, submit_case_blocks, \
-    get_case_ids_in_domain, get_cases_in_domain
+from corehq.apps.hqcase.utils import make_creating_casexml, submit_case_blocks
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.domain.models import Domain
 

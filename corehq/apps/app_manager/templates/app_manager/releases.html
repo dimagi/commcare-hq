@@ -58,7 +58,7 @@
         el.show();
     });
 
-    analytics.track('Visited the Release Manager');
+    analytics.workflow('Visited the Release Manager');
 </script>
 <script>
     function track_deploy_type(type) {
@@ -138,7 +138,7 @@
         </div>
         <button class="btn btn-primary" data-bind="
             click: function() {
-                analytics.track('Clicked Make New Version');
+                analytics.workflow('Clicked Make New Version');
                 return makeNewBuild();
             },
             attr: {disabled: !buildButtonEnabled() ? 'disabled' : undefined},
@@ -216,7 +216,7 @@
                                 click: function() {
                                     generate_short_url('short_odk_url');
                                     ga_track_event('App Manager', 'Deploy Button', '{{ app.id }}');
-                                    analytics.track('Clicked Deploy');
+                                    analytics.workflow('Clicked Deploy');
                                 }
                             ">
                                 <span class="icon icon-exclamation-sign" data-bind="visible: build_broken"></span>
@@ -405,7 +405,7 @@
                                                     </ol>
                                                     <div>
                                                         {% trans "Note: Offline install automatically installs all multimedia included in your form. All subsequent remote updates will also include multimedia which could require a lot of data." %}
-                                                        {% trans "See the <a href='https://confluence.dimagi.com/display/commcarepublic/Installing+CommCareODK+Android#InstallingCommCareODKAndroid-C.OfflineInstall'>Help Site</a> for more info." %}
+                                                        {% trans "See the <a href='https://confluence.dimagi.com/display/commcarepublic/Install+CommCareODK+for+Android+Smartphones'>Help Site</a> for more info." %}
                                                     </div>
                                                 </div>
                                             </div>

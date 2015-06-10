@@ -14,7 +14,7 @@ import json
 import re
 from dateutil import parser
 
-from django.http import HttpResponse, HttpRequest, QueryDict
+from django.http import HttpResponse
 from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop, ugettext as _
@@ -24,7 +24,7 @@ from couchexport.models import Format
 from custom.common import ALL_OPTION
 
 from dimagi.utils.couch.database import iter_docs, get_db
-from dimagi.utils.dates import DateSpan
+from dimagi.utils.dates import add_months_to_date
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_request
 from sqlagg.base import AliasColumn
@@ -102,7 +102,10 @@ class OpmCaseSqlData(SqlData):
             domain=self.domain,
             user_id=self.user_id,
             startdate=str(self.datespan.startdate_utc.date()),
-            enddate=str(self.datespan.enddate_utc.date())
+            enddate=str(self.datespan.enddate_utc.date()),
+            edd_startdate=self.datespan.startdate.date().isoformat(),
+            edd_enddate=add_months_to_date(self.datespan.enddate_utc.date(), 5).isoformat(),
+            test_account='111%'
         )
 
     @property
@@ -114,6 +117,9 @@ class OpmCaseSqlData(SqlData):
         filters = [
             "domain = :domain",
             "user_id = :user_id",
+            "edd < :edd_enddate",
+            "edd > :edd_startdate",
+            "account_number not like :test_account",
             DATE_FILTER_EXTENDED_OPENED,
         ]
 
@@ -1456,6 +1462,25 @@ class HealthMapReport(BaseMixin, ElasticSearchMapReport, GetParamsMixin, CustomP
         'geo_column': 'gps',
         'report': 'custom.opm.reports.HealthMapSource',
     }
+
+    @property
+    def report_subtitles(self):
+        subtitles = ["For filters:"]
+        awcs = self.request.GET.getlist('hierarchy_awc', [])
+        gps = self.request.GET.getlist('hierarchy_gp', [])
+        blocks = self.request.GET.getlist('hierarchy_block', [])
+        if awcs:
+            subtitles.append("Awc's - %s" % ", ".join(awcs))
+        if gps:
+            subtitles.append("Gram Panchayat - %s" % ", ".join(gps))
+        if blocks:
+            subtitles.append("Blocks - %s" % ", ".join(blocks))
+        startdate = self.request_params.get('startdate', '')
+        enddate = self.request_params.get('enddate', '')
+        subtitles.append(" From %s to %s" % (startdate, enddate))
+        subtitles.append("Generated {}".format(
+            datetime.datetime.utcnow().strftime(SERVER_DATETIME_FORMAT)))
+        return subtitles
 
     @property
     def display_config(self):

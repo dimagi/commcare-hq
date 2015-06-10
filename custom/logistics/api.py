@@ -89,9 +89,7 @@ class LogisticsEndpoint(EndpointMixin):
         return meta, [(self.models_map['product_stock'])(product_stock) for product_stock in product_stocks]
 
     def get_stocktransactions(self, **kwargs):
-        meta, stock_transactions = self.get_objects(self.stocktransactions_url, **kwargs)
-        return meta, [(self.models_map['stock_transaction'])(stock_transaction)
-                      for stock_transaction in stock_transactions]
+        raise NotImplemented()
 
 
 class ApiSyncObject(object):
