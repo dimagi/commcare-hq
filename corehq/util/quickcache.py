@@ -191,6 +191,15 @@ def skippable_quickcache(vary_on, skip_arg, timeout=None, memoize_timeout=None, 
     @skippable_quickcache(['name'], skip_arg='force')
     def get_by_name(name, force=False):
         ...
+
+    The skip_arg can also be a function and will receive the save arguments as the function:
+    def skip_fn(name, address):
+        return name == 'Ben' and 'Chicago' not in address
+
+    @skippable_quickcache(['name'], skip_arg=skip_fn)
+    def get_by_name_and_address(name, address):
+        ...
+
     """
     skippable_cache = functools.partial(SkippableQuickCache, skip_arg=skip_arg)
 
