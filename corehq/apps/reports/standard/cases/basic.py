@@ -53,7 +53,19 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         if self.case_status:
             query = query.is_closed(self.case_status == 'closed')
 
-        if not EMWF.show_all_data(self.request):
+        if EMWF.show_all_data(self.request):
+            pass
+        elif EMWF.show_project_data(self.request):
+            # Show everything but stuff we know for sure to exclude
+            user_types = EMWF.selected_user_types(self.request)
+            ids_to_exclude = self.get_special_owner_ids(
+                admin=HQUserType.ADMIN not in user_types,
+                unknown=HQUserType.UNKNOWN not in user_types,
+                demo=HQUserType.DEMO_USER not in user_types,
+                commtrack=HQUserType.COMMTRACK not in user_types,
+            )
+            query = query.NOT(case_es.owner(ids_to_exclude))
+        else:  # Only show explicit matches
             query = query.owner(self.case_owners)
 
         search_string = SearchFilter.get_value(self.request, self.domain)
@@ -67,25 +79,42 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     def es_results(self):
         return self._build_query().run().raw
 
+    def get_special_owner_ids(self, admin, unknown, demo, commtrack):
+        if not any([admin, unknown, demo]):
+            return []
+
+        user_filters = [filter_ for include, filter_ in [
+            (admin, user_es.admin_users()),
+            (unknown, filters.OR(user_es.unknown_users(), user_es.web_users())),
+            (demo, user_es.demo_users()),
+        ] if include]
+
+        query = (user_es.UserES()
+                 .domain(self.domain)
+                 .OR(*user_filters)
+                 .show_inactive()
+                 .fields([]))
+        owner_ids = query.run().doc_ids
+
+        if commtrack:
+            owner_ids.append("commtrack-system")
+        if demo:
+            owner_ids.append("demo_user_group_id")
+        return owner_ids
+
+
     @property
     @memoized
     def case_owners(self):
-        # Get user ids for each user that match the demo_user, admin, Unknown Users, or All Mobile Workers filters
+        # Get user ids for each user that match the demo_user, admin,
+        # Unknown Users, or All Mobile Workers filters
         user_types = EMWF.selected_user_types(self.request)
-        user_type_filters = []
-        if HQUserType.ADMIN in user_types:
-            user_type_filters.append(user_es.admin_users())
-        if HQUserType.UNKNOWN in user_types:
-            user_type_filters.append(user_es.unknown_users())
-            user_type_filters.append(user_es.web_users())
-        if HQUserType.DEMO_USER in user_types:
-            user_type_filters.append(user_es.demo_users())
-
-        if len(user_type_filters) > 0:
-            special_q = user_es.UserES().domain(self.domain).OR(*user_type_filters).show_inactive()
-            special_user_ids = special_q.run().doc_ids
-        else:
-            special_user_ids = []
+        special_owner_ids = self.get_special_owner_ids(
+            admin=HQUserType.ADMIN in user_types,
+            unknown=HQUserType.UNKNOWN in user_types,
+            demo=HQUserType.DEMO_USER in user_types,
+            commtrack=HQUserType.COMMTRACK in user_types,
+        )
 
         # Get user ids for each user that was specifically selected
         selected_user_ids = EMWF.selected_user_ids(self.request)
@@ -106,22 +135,17 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         share_group_q = HQESQuery(index="groups").domain(self.domain)\
                                                 .doc_type("Group")\
                                                 .filter(filters.term("case_sharing", True))\
-                                                .filter(filters.term("users", selected_reporting_group_users+selected_user_ids+special_user_ids))\
+                                                .filter(filters.term("users", selected_reporting_group_users+selected_user_ids))\
                                                 .fields([])
         sharing_group_ids = share_group_q.run().doc_ids
 
         owner_ids = list(set().union(
-            special_user_ids,
+            special_owner_ids,
             selected_user_ids,
             selected_sharing_group_ids,
             selected_reporting_group_users,
             sharing_group_ids
         ))
-        if HQUserType.COMMTRACK in user_types:
-            owner_ids.append("commtrack-system")
-        if HQUserType.DEMO_USER in user_types:
-            owner_ids.append("demo_user_group_id")
-
         owner_ids += self.location_sharing_owner_ids()
         owner_ids += self.location_reporting_owner_ids()
         return owner_ids
