@@ -680,7 +680,7 @@ TODO: finish aggregation docs
 
 ## Transforms
 
-Transforms can be used to transform the value returned by a column just before it reaches the user. Currently there are four supported transform types. These are shown below:
+Transforms can be used to transform the value returned by a column just before it reaches the user. The currently supported transform types are shown below:
 
 ### Displaying username instead of user ID
 
