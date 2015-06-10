@@ -62,7 +62,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
                 admin=HQUserType.ADMIN not in user_types,
                 unknown=HQUserType.UNKNOWN not in user_types,
                 demo=HQUserType.DEMO_USER not in user_types,
-                commtrack=HQUserType.COMMTRACK not in user_types,
+                commtrack=False,
             )
             query = query.NOT(case_es.owner(ids_to_exclude))
         else:  # Only show explicit matches
