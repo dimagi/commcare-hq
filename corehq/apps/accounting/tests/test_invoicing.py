@@ -1,6 +1,7 @@
 from decimal import Decimal
 import random
 import datetime
+import mock
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management import call_command
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
@@ -14,7 +15,7 @@ from corehq.apps.accounting import generator, tasks, utils
 from corehq.apps.accounting.models import (
     Invoice, FeatureType, LineItem, Subscriber, DefaultProductPlan,
     CreditAdjustment, CreditLine, SubscriptionAdjustment, SoftwareProductType,
-    SoftwarePlanEdition, BillingRecord, BillingAccount,
+    SoftwarePlanEdition, BillingRecord, BillingAccount, SubscriptionType,
 )
 
 
@@ -128,6 +129,52 @@ class TestInvoice(BaseInvoiceTestCase):
             invoice.date_end
         )
         domain.delete()
+
+
+class TestContractedInvoices(BaseInvoiceTestCase):
+    def setUp(self):
+        super(TestContractedInvoices, self).setUp()
+        generator.delete_all_subscriptions()
+
+        self.subscription, self.subscription_length = generator.generate_domain_subscription_from_date(
+            generator.get_start_date(),
+            self.account,
+            self.domain.name,
+            min_num_months=self.min_subscription_length,
+            service_type=SubscriptionType.CONTRACTED,
+        )
+
+        self.invoice_date = utils.months_from_date(
+            self.subscription.date_start,
+            random.randint(2, self.subscription_length)
+        )
+
+    @mock.patch("corehq.apps.accounting.models.send_HTML_email")
+    def test_contracted_invoice_email_recipient(self, send_HTML_email):
+        """
+        For contracted invoices, emails should be sent to finance@dimagi.com
+        """
+
+        expected_recipient = "finance@dimagi.com"
+
+        tasks.generate_invoices(self.invoice_date)
+
+        self.assertEqual(send_HTML_email.call_count, 1)
+
+        actual_recipient = send_HTML_email.call_args[0][1]
+        self.assertEqual(actual_recipient, expected_recipient)
+
+    @mock.patch("corehq.apps.accounting.models.send_HTML_email")
+    def test_contracted_invoice_email_template(self, send_HTML_email):
+        """
+        Emails for contracted invoices should use the contracted invoices template
+        """
+        expected_text = str(self.subscription.account.id)
+
+        tasks.generate_invoices(self.invoice_date)
+        sent_html = send_HTML_email.call_args[0][2]
+
+        self.assertTrue(expected_text in sent_html)
 
 
 class TestProductLineItem(BaseInvoiceTestCase):
