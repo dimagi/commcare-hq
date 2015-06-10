@@ -3,7 +3,8 @@ from casexml.apps.case.dbaccessors import get_open_case_docs_in_domain, \
     get_open_case_ids_in_domain, get_number_of_cases_by_filters
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqcase.dbaccessors import get_number_of_cases_in_domain, \
-    get_case_ids_in_domain, get_case_types_for_domain, get_cases_in_domain
+    get_case_ids_in_domain, get_case_types_for_domain, get_cases_in_domain, \
+    get_case_ids_in_domain_by_owner
 
 
 class DBAccessorsTest(TestCase):
@@ -87,6 +88,12 @@ class DBAccessorsTest(TestCase):
              if case.domain == self.domain and case.type == 'type1'
                 and not case.closed and case.user_id == 'XXX'},
         )
+        self.assertEqual(
+            set(get_open_case_ids_in_domain(self.domain, owner_id='XXX')),
+            {case.get_id for case in self.cases
+             if case.domain == self.domain
+                and not case.closed and case.user_id == 'XXX'},
+        )
 
     def test_get_open_case_docs_by_type(self):
         # this is actually in the 'case' app, but testing here
@@ -124,4 +131,31 @@ class DBAccessorsTest(TestCase):
             result,
             len([case for case in self.cases
                  if case.domain == self.domain and case.user_id == 'XXX'])
+        )
+
+    def test_get_case_ids_in_domain_by_owner(self):
+        self.assertEqual(
+            set(get_case_ids_in_domain_by_owner(self.domain, owner_id='XXX')),
+            {case.get_id for case in self.cases
+             if case.domain == self.domain and case.user_id == 'XXX'}
+        )
+        self.assertEqual(
+            set(get_case_ids_in_domain_by_owner(
+                self.domain, owner_id__in=['XXX'])),
+            {case.get_id for case in self.cases
+             if case.domain == self.domain and case.user_id == 'XXX'}
+        )
+        self.assertEqual(
+            set(get_case_ids_in_domain_by_owner(self.domain, owner_id='XXX',
+                                                closed=False)),
+            {case.get_id for case in self.cases
+             if case.domain == self.domain and case.user_id == 'XXX'
+                and case.closed is False}
+        )
+        self.assertEqual(
+            set(get_case_ids_in_domain_by_owner(self.domain, owner_id='XXX',
+                                                closed=True)),
+            {case.get_id for case in self.cases
+             if case.domain == self.domain and case.user_id == 'XXX'
+                and case.closed is True}
         )

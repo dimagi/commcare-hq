@@ -57,3 +57,36 @@ def get_case_types_for_domain(domain):
         if case_type:
             case_types.append(case_type)
     return case_types
+
+
+def get_case_ids_in_domain_by_owner(domain, owner_id=None, owner_id__in=None,
+                                    closed=None):
+    """
+    get case_ids for open, closed, or all cases in a domain
+    that belong to an owner_id or list of owner_ids
+
+    domain: required
+    owner_id: a single owner_id to filter on
+    owner_id__in: a list of owner ids to filter on.
+        A case matches if it belongs to any of them.
+        You cannot specify both this and owner_id
+    closed: True (only closed cases), False (only open cases), or None (all)
+    returns a list of case_ids
+
+    """
+    assert not (owner_id__in and owner_id)
+    assert closed in (True, False, None)
+    if closed is None:
+        closed_flags = [True, False]
+    else:
+        closed_flags = [closed]
+    if owner_id:
+        owner_id__in = [owner_id]
+    return [res["id"] for res in CommCareCase.view(
+        'hqcase/by_owner',
+        keys=[[domain, owner_id, closed_flag]
+              for owner_id in owner_id__in
+              for closed_flag in closed_flags],
+        include_docs=False,
+        reduce=False,
+    )]

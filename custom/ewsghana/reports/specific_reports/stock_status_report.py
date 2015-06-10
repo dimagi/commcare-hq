@@ -237,19 +237,7 @@ class StockoutsProduct(EWSData):
     show_table = False
     chart_x_label = 'Months'
     chart_y_label = 'Facility count'
-
-    @property
-    def title(self):
-        if not self.location:
-            return ""
-
-        location_type = self.location.location_type.name.lower()
-        if location_type == 'country':
-            return "Stockouts - CMS, RMS, and Teaching Hospitals"
-        elif location_type == 'region':
-            return "Stockouts - RMS and Teaching Hospitals"
-        elif location_type == 'district':
-            return "Stockouts"
+    title = 'Stockout by Product'
 
     @property
     def headers(self):
@@ -297,9 +285,21 @@ class StockoutsProduct(EWSData):
 class StockoutTable(EWSData):
 
     slug = 'stockouts_product_table'
-    title = 'Stockouts'
     show_chart = False
     show_table = True
+
+    @property
+    def title(self):
+        if not self.location:
+            return ""
+
+        location_type = self.location.location_type.name.lower()
+        if location_type == 'country':
+            return "Stockouts - CMS, RMS, and Teaching Hospitals"
+        elif location_type == 'region':
+            return "Stockouts - RMS and Teaching Hospitals"
+        elif location_type == 'district':
+            return "Stockouts"
 
     @property
     def headers(self):
@@ -333,8 +333,7 @@ class StockoutTable(EWSData):
                     type='stockonhand',
                     product_id__in=product_map.keys(),
                     case_id=supply_point.supply_point_id,
-                    report__date__lte=self.config['enddate'],
-                    report__date__gte=self.config['startdate'],
+                    report__date__range=[self.config['startdate'], self.config['enddate']],
                     stock_on_hand=0
                 ).order_by('product_id', '-report__date').distinct('product_id').values_list('product_id',
                                                                                              flat=True)

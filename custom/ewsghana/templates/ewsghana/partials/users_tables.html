@@ -26,7 +26,7 @@
         </tbody>
 
         <tr>
-            <td><a href="{% url 'add_commcare_account' domain %}?location_id={{ location_id }}">Create new Mobile Worker</a></td>
+            <td><h4><strong><a href="{% url 'add_commcare_account' domain %}?location_id={{ location_id }}">Create new Mobile Worker</a></strong></h4></td>
         </tr>
     </table>
     <br />
@@ -57,7 +57,7 @@
             {% endif %}
         {% endfor %}
         <tr>
-            <td><a href="{% url 'invite_web_user' domain %}?location_id={{ location_id }}">Invite Web User</a></td>
+            <td><h4><strong><a href="{% url 'invite_web_user' domain %}?location_id={{ location_id }}">Invite Web User</a></strong></h4></td>
         </tr>
     </table>
 
@@ -74,11 +74,11 @@
         </thead>
         <tbody data-bind="foreach: inCharges" class="users">
         <tr data-bind="if: full_name">
-            <td><div data-bind="text: full_name"></div></td>
+            <td><a data-bind="attr: { href: url }, text: full_name"></a></td>
         </tr>
         </tbody>
         <tr>
-            <td><button id="in-charge-button" class="btn" data-target="#configureInCharge" data-toggle="modal">Configure In Charge</button></td>
+            <td><button id="in-charge-button" class="btn btn-small" data-target="#configureInCharge" data-toggle="modal">Configure In Charge</button></td>
         </tr>
     </table>
     {% if rendered_as != 'email' %}

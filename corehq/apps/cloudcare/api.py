@@ -4,7 +4,8 @@ from django.contrib.humanize.templatetags.humanize import naturaltime
 from casexml.apps.case.dbaccessors import get_open_case_ids_in_domain
 from casexml.apps.case.util import iter_cases
 from corehq.apps.cloudcare.exceptions import RemoteAppError
-from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
+from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain, \
+    get_case_ids_in_domain_by_owner
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase, CASE_STATUS_ALL, CASE_STATUS_CLOSED, CASE_STATUS_OPEN
 from corehq.apps.app_manager.models import (
@@ -192,15 +193,15 @@ class CaseAPIHelper(object):
         except AttributeError:
             owner_ids = [user_id]
 
-        view_results = CommCareCase.view(
-            'hqcase/by_owner',
-            keys=[[self.domain, owner_id, closed_flag]
-                  for owner_id in owner_ids
-                  for closed_flag in status_to_closed_flags(self.status)],
-            include_docs=False,
-            reduce=False,
-        )
-        ids = [res["id"] for res in view_results]
+        closed = {
+            CASE_STATUS_OPEN: False,
+            CASE_STATUS_CLOSED: True,
+            CASE_STATUS_ALL: None,
+        }[self.status]
+
+        ids = get_case_ids_in_domain_by_owner(
+            self.domain, owner_id__in=owner_ids, closed=closed)
+
         return self._case_results(ids)
 
 

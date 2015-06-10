@@ -33,3 +33,16 @@
     </script>
 {% endblock %}
 
+{% block stylesheets %}
+    {{ block.super }}
+    <style>
+        #report_table_mos_product_wrapper .dataTables_scrollBody {
+            width: 100% !important;
+        }
+
+        #report_table_mos_product_wrapper .dataTables_scrollHead {
+            width: 100% !important;
+        }
+    </style>
+{% endblock %}
+

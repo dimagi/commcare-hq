@@ -275,7 +275,7 @@ class RestoreState(object):
     def validate_state(self):
         check_version(self.params.version)
         if self.last_sync_log:
-            if type(self.last_sync_log) != self.sync_log_class:
+            if not isinstance(self.last_sync_log, self.sync_log_class):
                 raise IncompatibleSyncLogType('Unable to convert from {} to {}'.format(
                     type(self.last_sync_log), self.sync_log_class,
                 ))

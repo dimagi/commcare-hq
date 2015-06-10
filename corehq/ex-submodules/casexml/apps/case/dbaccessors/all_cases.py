@@ -18,13 +18,14 @@ def get_all_case_owner_ids(domain):
 
 def get_open_case_ids_in_domain(domain, type=None, owner_id=None):
     from casexml.apps.case.models import CommCareCase
-    key = ["open type owner", domain]
-    if type is not None:
-        key += [type]
-    if owner_id is not None:
-        assert type is not None, \
-            'can only filter by owner_id if filtering by type'
-        key += [owner_id]
+    if owner_id is not None and type is None:
+        key = ["open owner", domain, owner_id]
+    else:
+        key = ["open type owner", domain]
+        if type is not None:
+            key += [type]
+        if owner_id is not None:
+            key += [owner_id]
 
     case_ids = [row['id'] for row in CommCareCase.get_db().view(
         'case/all_cases',
