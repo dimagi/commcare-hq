@@ -1406,6 +1406,10 @@ class InvoiceBase(models.Model):
 
     @property
     def email_recipients(self):
+        return self.contact_emails
+
+    @property
+    def contact_emails(self):
         contact_emails = self.account.billingcontactinfo.emails
         contact_emails = (contact_emails.split(',')
                           if contact_emails is not None else [])
@@ -1455,6 +1459,13 @@ class Invoice(InvoiceBase):
     to CreditAdjustments.
     """
     subscription = models.ForeignKey(Subscription, on_delete=models.PROTECT)
+
+    @property
+    def email_recipients(self):
+        if self.subscription.service_type == SubscriptionType.CONTRACTED:
+            return [settings.FINANCE_EMAIL]
+        else:
+            return self.contact_emails
 
     @property
     def subtotal(self):
@@ -1602,13 +1613,6 @@ class BillingRecordBase(models.Model):
         else:
             return self.INVOICE_TEXT_TEMPLATE
 
-    @property
-    def email_recipients(self):
-        if self.invoice.subscription.service_type == SubscriptionType.CONTRACTED:
-            return [settings.FINANCE_EMAIL]
-        else:
-            return self.invoice.email_recipients
-
     @classmethod
     def generate_record(cls, invoice):
         record = cls(invoice=invoice)
@@ -1666,7 +1670,7 @@ class BillingRecordBase(models.Model):
             context.update({
                 'salesforce_contract_id': self.invoice.subscription.salesforce_contract_id,
                 'billing_account_id': self.invoice.subscription.account.id,
-                'billing_contacts': self.invoice.email_recipients,
+                'billing_contacts': self.invoice.contact_emails,
                 'admin_invoices_url': "{url}?subscriber={domain}".format(
                     url=absolute_reverse(AccountingAdminInterfaceDispatcher.name(), args=['invoices']),
                     domain=domain
@@ -1690,7 +1694,7 @@ class BillingRecordBase(models.Model):
         context = self.email_context()
         email_from = self.email_from()
 
-        contact_emails = contact_emails or self.email_recipients
+        contact_emails = contact_emails or self.invoice.email_recipients
         if self.is_email_throttled():
             self.handle_throttled_email(contact_emails)
 
