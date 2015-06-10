@@ -535,6 +535,10 @@ Date filters allow you filter on a date. They will show a datepicker in the UI.
   "required": false
 }
 ```
+Date filters have an optional `compare_as_string` option that allows the date
+filter to be compared against an indicator of data type `string`. You shouldn't
+ever need to use this option (make your column a `date` or `datetime` type
+instead), but it exists because the report builder needs it. 
 
 ### Dynamic choice lists
 
