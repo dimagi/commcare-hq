@@ -20,7 +20,7 @@ var COMMCAREHQ = (function () {
                 attrs = ['content', 'title', 'placement'];
 
             attrs.map(function (attr) {
-                $('i', el).data(attr, opts[attr]);
+                $('a', el).data(attr, opts[attr]);
             });
             if (wrap) {
                 el.hqHelp();

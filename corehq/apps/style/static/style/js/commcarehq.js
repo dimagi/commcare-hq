@@ -39,7 +39,7 @@ COMMCAREHQ.makeHqHelp = function (opts, wrap) {
                 '<i class="icon-question-sign"></i></a></div>'
     );
     for (var attr in {content: 0, title: 0, html: 0}) {
-        $('i', el).data(attr, opts[attr]);
+        $('a', el).data(attr, opts[attr]);
     }
     if (wrap) {
         el.hqHelp();
