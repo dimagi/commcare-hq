@@ -80,6 +80,11 @@ class GroupFilter(GroupFilterMixin, BaseSingleOptionFilter):
 
 class MultiGroupFilter(GroupFilterMixin, BaseMultipleOptionFilter):
     placeholder = ugettext_noop('Click to select groups')
+    default_options = ['_all']
+
+    @property
+    def options(self):
+        return [('_all', _("All"))] + super(MultiGroupFilter, self).options
 
 
 class YearFilter(BaseSingleOptionFilter):
