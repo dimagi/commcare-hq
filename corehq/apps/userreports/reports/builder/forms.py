@@ -725,12 +725,24 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
 
     @property
     def _report_columns(self):
-        agg_col_id = self.data_source_properties[self.aggregation_field]['column_id']
+        agg_field_id = self.data_source_properties[self.aggregation_field]['column_id']
 
         columns = super(ConfigureTableReportForm, self)._report_columns
+
+        # Add the aggregation indicator to the columns if it's not already present.
+        displaying_agg_column = bool([c for c in columns if c['field'] == agg_field_id])
+        if not displaying_agg_column:
+            columns = [{
+                'format': 'default',
+                'aggregation': 'simple',
+                "type": "field",
+                'field': agg_field_id,
+                'display': self.aggregation_field
+            }] + columns
+
         # Expand all columns except for the column being used for aggregation.
         for c in columns:
-            if c['field'] != agg_col_id:
+            if c['field'] != agg_field_id:
                 c['aggregation'] = "expand"
         return columns
 
