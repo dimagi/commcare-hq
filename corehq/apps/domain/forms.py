@@ -1228,11 +1228,6 @@ class InternalSubscriptionManagementForm(forms.Form):
 
     @property
     @memoized
-    def current_account(self):
-        return BillingAccount.get_account_by_domain(self.domain)
-
-    @property
-    @memoized
     def current_subscription(self):
         return Subscription.get_subscribed_plan_by_domain(self.domain)[1]
 
