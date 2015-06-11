@@ -1238,7 +1238,6 @@ class InternalSubscriptionManagementForm(forms.Form):
     def current_subscription(self):
         return Subscription.get_subscribed_plan_by_domain(self.domain)[1]
 
-
     @property
     @memoized
     def autocomplete_account_name(self):
@@ -1256,7 +1255,8 @@ class InternalSubscriptionManagementForm(forms.Form):
             return None
         try:
             return BillingContactInfo.objects.get(
-                account=self.current_subscription.account
+                account=self.current_subscription.account,
+                account__account_type__in=self.autocomplete_account_types,
             ).emails
         except BillingContactInfo.DoesNotExist:
             return None
