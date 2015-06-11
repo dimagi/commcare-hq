@@ -135,19 +135,20 @@
                     <legend>                    
                         {% trans "Corresponding Key/Value fields from Excel" %}
                         <div style="display:inline; position:relative; top:-5px;">
-      <!-- TODO: use hq-help-template -->
+                            <!-- TODO: are styles above necessary? -->
+                            <!-- TODO: use hq-help-template -->
                             <div class="hq-help">
-                                <a href="#">
-                                    <i class="icon-question-sign" 
-                                        data-title='{% trans "Key/Value Pairs" %}'
-                                        data-content='{% trans "The Excel file must be formatted with three columns. The first, identified in the Identifying Cases section above, contains the case to update. The second contains names of case properties to update. The last column contains the values to change. " %}'
-                                        data-original-title=""></i>
+                                <a href="#"
+                                    data-title='{% trans "Key/Value Pairs" %}'
+                                    data-content='{% trans "The Excel file must be formatted with three columns. The first, identified in the Identifying Cases section above, contains the case to update. The second contains names of case properties to update. The last column contains the values to change. " %}'
+                                >
+                                    <i class="icon-question-sign"></i>
                                 </a>
                             </div>
                         </div>
                         <script>
                             $(function () {
-                                $('#.hq-help').hqHelp();
+                                $('.hq-help').hqHelp();
                             });
                         </script>                         
                     </legend>
