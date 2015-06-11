@@ -300,7 +300,10 @@ def delete_report(request, domain, report_id):
 
     config.delete()
     messages.success(request, _(u'Report "{}" deleted!').format(config.title))
-    return HttpResponseRedirect(reverse('configurable_reports_home', args=[domain]))
+    redirect = request.GET.get("redirect", None)
+    if not redirect:
+        redirect = reverse('configurable_reports_home', args=[domain])
+    return HttpResponseRedirect(redirect)
 
 
 @login_and_domain_required

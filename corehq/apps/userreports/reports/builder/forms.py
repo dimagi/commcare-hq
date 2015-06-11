@@ -1,4 +1,5 @@
 from collections import namedtuple
+from urllib import urlencode
 import uuid
 from django import forms
 from django.core.urlresolvers import reverse
@@ -367,7 +368,12 @@ class ConfigureNewReportBase(forms.Form):
                 0,
                 crispy.HTML(
                     '<a class="btn btn-danger pull-right" href="{}">{}</a>'.format(
-                        reverse('delete_configurable_report', args=(self.domain, self.existing_report._id)),
+                        reverse(
+                            'delete_configurable_report',
+                            args=(self.domain, self.existing_report._id),
+                        ) + "?{}".format(urlencode(
+                            {'redirect': reverse('reports_home', args=[self.domain])}
+                        )),
                         _('Delete Report')
                     )
                 )
