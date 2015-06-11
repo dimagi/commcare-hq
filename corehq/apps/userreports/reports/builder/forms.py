@@ -366,7 +366,7 @@ class ConfigureNewReportBase(forms.Form):
             buttons.insert(
                 0,
                 crispy.HTML(
-                    '<a class="btn btn-danger" href="{}" style="margin-right: 4px">{}</a>'.format(
+                    '<a class="btn btn-danger pull-right" href="{}">{}</a>'.format(
                         reverse('delete_configurable_report', args=(self.domain, self.existing_report._id)),
                         _('Delete Report')
                     )
