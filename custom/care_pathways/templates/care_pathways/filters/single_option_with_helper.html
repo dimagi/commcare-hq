@@ -7,18 +7,14 @@
     $(function () {
         $("fieldset .helptext").each( function (index, data) {
             console.log(data.textContent);
-        $(this).parent().prev("label").append(
-            <!-- TODO: use hq-help-template -->
-                '<div class="hq-help"><a href="#"><i class="icon-question-sign" data-toggle="popover" data-content="'
-                        + data.textContent + '"></i></a></div>');
+        // TODO: test, and remove the title bar if there's no data-title
+        $(this).parent().prev("label").append('
+            <span class="hq-help-template" data-placement="top" data-content="' + data.textContent + '"></span>'
+        );
         $(this).remove();
-    });
-
-    $("i[data-toggle='popover']").popover({
-        template: '<div class="popover popover-medium"><div class="arrow"></div><div class="popover-inner"><div class="popover-content"><p></p></div></div></div>',
-        placement: 'top'
-    });
-
+        $('.hq-help-template').each(function () {
+            COMMCAREHQ.transformHelpTemplate($(this), false);
+        });
     });
 </script>
 {% endblock %}

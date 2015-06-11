@@ -65,8 +65,11 @@
         {{ block.super }}
     </div>
     <script type="text/javascript">
-        $("i[data-toggle='popover']").popover({// standardize?
-            template: '<div class="popover popover-medium"><div class="arrow"></div><div class="popover-inner"><h3 class="popover-title"></h3><div class="popover-content"><p></p></div></div></div>'
+        $(function () {
+            // TODO: on show, add .popover-medium to .popover (is that possible? might need to undo this change)
+            $('.hq-help-template').each(function () {
+                COMMCAREHQ.transformHelpTemplate($(this), true);
+            });
         });
     </script>
 {% endblock %}
@@ -93,12 +96,12 @@
                         <option value="other">{% trans 'Other errors' %}</option>
                     </select>
                 {% endblock %}
-            <!-- TODO: use hq-help-template -->
-                <span class="hq-help">
-                    <a href="#">
-                        <i class="icon-question-sign" data-toggle="popover" data-placement="top" data-title="{% trans 'Help' %}" data-content="{% block help_content %}{% endblock %}" data-html="true"></i>
-                    </a>
-                </span>
+                <!-- TODO: test -->
+                <span class="hq-help-template"
+                    data-placement="top"
+                    data-title="{% trans 'Help' %}"
+                    data-conent="{% block help_content %}{% endblock %}"
+                ></span>
             </form>
         </div>
         <div class="span3" id="logo-top-right">
