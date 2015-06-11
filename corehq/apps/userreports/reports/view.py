@@ -169,11 +169,15 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
             })
         except TableNotFoundWarning:
             if self.spec.report_meta.created_by_builder:
-                msg = "The database table backing your report does not exist yet. " \
-                      "Please wait while the report is populated."
+                msg = _(
+                    "The database table backing your report does not exist yet. "
+                    "Please wait while the report is populated."
+                )
             else:
-                msg = "The database table backing your report does not exist yet. " \
-                      "You must rebuild the data source before viewing the report."
+                msg = _(
+                    "The database table backing your report does not exist yet. "
+                    "You must rebuild the data source before viewing the report."
+                )
             return self.render_json_response({
                 'warning': msg
             })
