@@ -176,7 +176,12 @@ var ReportConfigsViewModel = function (options) {
         var filters = config.filters;
         update_filters = function() {
             for (var filter_name in filters) {
-                $('[name="' + filter_name + '"]').val(filters[filter_name]);
+                var val = filters[filter_name];
+                $('[name="' + filter_name + '"]').val(val);
+                var select2 = $('#' + filter_name).find('.select2-chosen')[0];
+                if (select2) {
+                    select2.textContent = val;
+                }
             }
         };
 

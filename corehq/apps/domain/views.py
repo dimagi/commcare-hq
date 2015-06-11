@@ -103,9 +103,6 @@ from toggle.models import Toggle
 
 accounting_logger = logging.getLogger('accounting')
 
-# Domain not required here - we could be selecting it for the first time. See notes domain.decorators
-# about why we need this custom login_required decorator
-
 PAYMENT_ERROR_MESSAGES = {
     400: _('Your request was not formatted properly.'),
     403: _('Forbidden.'),
@@ -115,6 +112,8 @@ PAYMENT_ERROR_MESSAGES = {
 }
 
 
+# Domain not required here - we could be selecting it for the first time. See notes domain.decorators
+# about why we need this custom login_required decorator
 @login_required
 def select(request, domain_select_template='domain/select.html', do_not_redirect=False):
     domains_for_user = Domain.active_for_user(request.user)
@@ -936,8 +935,11 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                 else:
                     payment_status = _("Not Paid")
                     payment_class = "label label-important"
-                date_due = (invoice.date_due.strftime(USER_DATE_FORMAT)
-                            if not invoice.is_paid else _("Already Paid"))
+                date_due = (
+                    (invoice.date_due.strftime(USER_DATE_FORMAT)
+                     if not invoice.is_paid else _("Already Paid"))
+                    if invoice.date_due else _("None")
+                )
                 yield {
                     'itemData': {
                         'id': invoice.id,
@@ -1187,12 +1189,10 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
     form_classes = INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS
 
     @method_decorator(require_superuser)
-    @method_decorator(toggles.FM_FACING_SUBSCRIPTIONS.required_decorator())
     def get(self, request, *args, **kwargs):
         return super(InternalSubscriptionManagementView, self).get(request, *args, **kwargs)
 
     @method_decorator(require_superuser)
-    @method_decorator(toggles.FM_FACING_SUBSCRIPTIONS.required_decorator())
     def post(self, request, *args, **kwargs):
         form = self.get_post_form
         if form.is_valid():
@@ -1545,7 +1545,7 @@ class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin
             self.domain, current_privs, return_plan=True,
         )
         if plan_version is None:
-            logging.error("[BILLING] Could not find a matching renwabled plan "
+            logging.error("[BILLING] Could not find a matching renewable plan "
                           "for %(domain)s, subscription number %(sub_pk)s." % {
                 'domain': self.domain,
                 'sub_pk': self.subscription.pk
@@ -1727,7 +1727,10 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
     @memoized
     def snapshot_settings_form(self):
         if self.request.method == 'POST':
-            form = SnapshotSettingsForm(self.request.POST, self.request.FILES, domain=self.domain_object)
+            form = SnapshotSettingsForm(self.request.POST,
+                                        self.request.FILES,
+                                        domain=self.domain_object,
+                                        is_superuser=self.request.user.is_superuser)
             return form
 
         proj = self.published_snapshot if self.published_snapshot else self.domain_object
@@ -1744,7 +1747,9 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
         for attr in init_attribs:
             initial[attr] = getattr(proj, attr)
 
-        return SnapshotSettingsForm(initial=initial, domain=self.domain_object)
+        return SnapshotSettingsForm(initial=initial,
+                                    domain=self.domain_object,
+                                    is_superuser=self.request.user.is_superuser)
 
     @property
     @memoized
@@ -1786,7 +1791,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
 
                     m_file.save()
 
-            ignore = []
+            ignore = ['UserRole']
             if not request.POST.get('share_reminders', False):
                 ignore.append('CaseReminderHandler')
 
@@ -1811,6 +1816,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
             new_domain.author = request.POST.get('author', None)
 
             new_domain.is_approved = False
+            new_domain.is_starter_app = request.POST.get('is_starter_app', '') == 'on'
             publish_on_submit = request.POST.get('publish_on_submit', "no") == "yes"
 
             image = self.snapshot_settings_form.cleaned_data['image']
@@ -2470,7 +2476,6 @@ class TransferDomainView(BaseAdminProjectSettingsView):
             return {'form': self.transfer_domain_form}
 
     @method_decorator(domain_admin_required)
-    @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         if not TRANSFER_DOMAIN.enabled(request.domain):
             raise Http404()

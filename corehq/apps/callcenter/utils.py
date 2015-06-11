@@ -2,17 +2,20 @@ from __future__ import absolute_import
 from collections import namedtuple
 from datetime import datetime, timedelta
 import pytz
+from casexml.apps.case.dbaccessors import get_open_case_docs_in_domain
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2
 import uuid
 from xml.etree import ElementTree
 from corehq.apps.app_manager.const import USERCASE_TYPE
+from corehq.apps.domain.models import Domain
 from corehq.apps.es.domains import DomainES
 from corehq.apps.es import filters
 from corehq.apps.hqcase.utils import submit_case_blocks, get_case_by_domain_hq_user_id
-from couchdbkit.exceptions import MultipleResultsFound
+from corehq.feature_previews import CALLCENTER
 from corehq.util.couch_helpers import paginate_view
+from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import UserTime
 from dimagi.utils.couch import CriticalSection
 
@@ -59,16 +62,10 @@ def sync_user_case(commcare_user, case_type, owner_id, copy_user_data=True):
             'phone_number': commcare_user.phone_number or ''
         })
 
-        try:
-            case = get_case_by_domain_hq_user_id(domain.name, commcare_user._id, include_docs=True)
-            found = bool(case)
-        except MultipleResultsFound:
-            return
-
+        case = get_case_by_domain_hq_user_id(domain.name, commcare_user._id, case_type)
         close = commcare_user.to_be_deleted() or not commcare_user.is_active
-
         caseblock = None
-        if found:
+        if case:
             props = dict(case.dynamic_case_properties())
 
             changed = close != case.closed
@@ -154,32 +151,26 @@ def get_call_center_domains():
 
 
 def get_call_center_cases(domain_name, case_type, user=None):
-    base_key = ["open type owner", domain_name, case_type]
-    if user:
-        keys = [
-            base_key + [owner_id]
-            for owner_id in user.get_owner_ids()
-        ]
-    else:
-        keys = [base_key]
-
     all_cases = []
-    for key in keys:
-        rows = paginate_view(
-            CommCareCase.get_db(),
-            'case/all_cases',
-            chunk_size=10,
-            startkey=key,
-            endkey=key + [{}],
-            reduce=False,
-            include_docs=True
-        )
-        for row in rows:
-            hq_user_id = row['doc'].get('hq_user_id', None)
-            if hq_user_id:
-                all_cases.append(CallCenterCase(
-                    case_id=row['id'],
-                    hq_user_id=hq_user_id
-                ))
 
+    if user:
+        docs = (doc for owner_id in user.get_owner_ids()
+                for doc in get_open_case_docs_in_domain(domain_name, case_type,
+                                                        owner_id=owner_id))
+    else:
+        docs = get_open_case_docs_in_domain(domain_name, case_type)
+
+    for case_doc in docs:
+        hq_user_id = case_doc.get('hq_user_id', None)
+        if hq_user_id:
+            all_cases.append(CallCenterCase(
+                case_id=case_doc['_id'],
+                hq_user_id=hq_user_id
+            ))
     return all_cases
+
+
+@quickcache(['domain'])
+def get_call_center_case_type_if_enabled(domain):
+    if CALLCENTER.enabled(domain):
+        return Domain.get_by_name(domain).call_center_config.case_type

@@ -41,9 +41,11 @@
                     class="btn btn-default pull-right"
                     data-bind="
                         visible: showDefaultPath,
-                        event: {
-                            click: setCustomPath
-                        }">
+                        click: function () {
+                            setCustomPath();
+                            analytics.usage('App Builder', 'Click Show Path for a Form or Module', 'image');
+                        }
+            ">
                 <i class="icon icon-cog"></i>
                 {% trans 'Set Icon Path...' %}
             </button>
@@ -119,8 +121,9 @@
                     class="btn btn-default pull-right"
                     data-bind="
                         visible: showDefaultPath,
-                        event: {
-                            click: setCustomPath
+                        click: function () {
+                            setCustomPath();
+                            analytics.usage('App Builder', 'Click Show Path for a Form or Module', 'audio');
                         }">
                 <i class="icon icon-cog"></i>
                 {% trans 'Set Audio Path...' %}

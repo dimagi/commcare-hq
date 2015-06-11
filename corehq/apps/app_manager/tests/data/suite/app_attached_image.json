@@ -293,7 +293,6 @@
   "name": "Attached Picture", 
   "use_custom_suite": false, 
   "secure_submissions": false, 
-  "commtrack_enabled": false, 
   "platform": "nokia/s40", 
   "text_input": "roman", 
   "build_broken": false, 

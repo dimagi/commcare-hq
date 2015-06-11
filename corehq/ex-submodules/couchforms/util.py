@@ -2,6 +2,7 @@ from __future__ import absolute_import
 import hashlib
 import datetime
 import logging
+import pytz
 
 from StringIO import StringIO
 from django.test.client import Client
@@ -15,6 +16,7 @@ from django.http import (
 )
 import iso8601
 from redis import ConnectionError
+from corehq.apps.tzmigration import phone_timezones_should_be_processed
 from dimagi.ext.jsonobject import re_loose_datetime
 
 from dimagi.utils.mixins import UnicodeMixIn
@@ -121,8 +123,15 @@ def adjust_datetimes(data, parent=None, key=None):
     # todo: in the future this will convert to UTC
     if isinstance(data, basestring):
         if re_loose_datetime.match(data):
-            parent[key] = json_format_datetime(
-                iso8601.parse_date(data).replace(tzinfo=None))
+            if phone_timezones_should_be_processed():
+                parent[key] = json_format_datetime(
+                    iso8601.parse_date(data).astimezone(pytz.utc)
+                    .replace(tzinfo=None)
+                )
+            else:
+                parent[key] = json_format_datetime(
+                    iso8601.parse_date(data).replace(tzinfo=None))
+
     elif isinstance(data, dict):
         for key, value in data.items():
             adjust_datetimes(value, parent=data, key=key)
@@ -397,10 +406,10 @@ class SubmissionPost(object):
         assert domain, domain
         assert instance, instance
         assert not isinstance(instance, HttpRequest), instance
-        # get_location has good default
         self.domain = domain
         self.app_id = app_id
         self.build_id = build_id
+        # get_location has good default
         self.location = location or couchforms.get_location()
         self.received_on = received_on
         self.date_header = date_header
@@ -525,6 +534,7 @@ class SubmissionPost(object):
                                     )
                                 )
                         try:
+                            # save both the forms and cases
                             XFormInstance.get_db().bulk_save(docs)
                         except BulkSaveError as e:
                             logging.error('BulkSaveError saving forms', exc_info=1,
@@ -536,11 +546,12 @@ class SubmissionPost(object):
                             case_post_save.send(CommCareCase, case=case)
 
                         case_result.commit_dirtiness_flags()
-                        responses, errors = self.process_signals(instance)
-                        if errors:
-                            # .problems was added to instance
-                            instance.save()
-                        unfinished_submission_stub.delete()
+
+                    responses, errors = self.process_signals(instance)
+                    if errors:
+                        # .problems was added to instance
+                        instance.save()
+                    unfinished_submission_stub.delete()
                 elif instance.doc_type == 'XFormDuplicate':
                     assert len(xforms) == 1
                     instance.save()

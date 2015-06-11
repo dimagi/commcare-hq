@@ -33,7 +33,8 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
     def report_context(self):
         context = {
             'reports': [self.get_report_context(dp) for dp in self.data_providers],
-            'title': self.title
+            'title': "%s (%s-%s)" % (self.title, self.report_config.get('strsd', '-'),
+                                     self.report_config.get('stred', '-'))
         }
 
         return context
@@ -149,7 +150,7 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
             return "%s [%d: %s%%]" % (row[0]['html'], int(row[-2]['html']), str(int(row[-1]['html'][:-1])))
 
         if isinstance(data_provider, NutritionBirthWeightDetails):
-            chart = PieChart('BirthWeight', '',
+            chart = PieChart(data_provider.chart_title, '',
                              [{'label': _get_label_with_percentage(row),
                                'value': int(row[-1]['html'][:-1])} for row in rows[2:]], ['red', 'green'])
             chart.showLabels = False
@@ -157,11 +158,12 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
             chart.marginRight = 0
             chart.marginBottom = 20
         elif isinstance(data_provider, DeliveryPlaceDetailsExtended):
-            chart = PieChart('', '', [{'label': _get_label_with_percentage(row),
-                                       'value': int(row[-1]['html'][:-1])} for row in rows[1:]])
+            chart = PieChart(data_provider.chart_title, '',
+                             [{'label': _get_label_with_percentage(row),
+                               'value': int(row[-1]['html'][:-1])} for row in rows[1:]])
             chart.showLabels = False
         elif isinstance(data_provider, (PostnatalCareOverview, ImmunizationOverview)):
-            chart = MultiBarChart('', x_axis=Axis(x_label), y_axis=Axis(y_label, '.2%'))
+            chart = MultiBarChart(data_provider.chart_title, x_axis=Axis(x_label), y_axis=Axis(y_label, '.2%'))
             chart.rotateLabels = -45
             chart.marginBottom = 150
             chart.marginLeft = 45
@@ -181,8 +183,8 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
                 chart.add_dataset('Percentage',
                                   [{'x': row[0]['html'], 'y':int(row[-1]['html'][:-1]) / 100.0} for row in rows])
         elif isinstance(data_provider, AnteNatalCareServiceOverviewExtended):
-            chart1 = MultiBarChart('', x_axis=Axis(x_label), y_axis=Axis(y_label, '.2%'))
-            chart2 = MultiBarChart('', x_axis=Axis(x_label), y_axis=Axis(y_label, '.2%'))
+            chart1 = MultiBarChart('ANC Visits', x_axis=Axis(x_label), y_axis=Axis(y_label, '.2%'))
+            chart2 = MultiBarChart('Maternal TT & IFA', x_axis=Axis(x_label), y_axis=Axis(y_label, '.2%'))
             chart1.rotateLabels = -45
             chart2.rotateLabels = -45
             chart1.marginBottom = 150
@@ -198,7 +200,7 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
                                                'y': int(row[-1]['html'][:-1]) / 100.0} for row in rows[6:12]])
             return [chart1, chart2]
         elif isinstance(data_provider, ChildrenDeathsByMonth):
-            chart = MultiBarChart('Seasonal Variation of Child Deaths', x_axis=Axis(x_label, dateFormat="%B"),
+            chart = MultiBarChart(data_provider.chart_title, x_axis=Axis(x_label, dateFormat="%B"),
                                   y_axis=Axis(y_label, '.2%'))
             chart.rotateLabels = -45
             chart.marginBottom = 50
@@ -206,8 +208,8 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
             chart.add_dataset('Percentage', [{'x': row[0],
                                               'y': int(row[-1]['html'][:-1]) / 100.0} for row in rows])
         else:
-            chart = PieChart('', '', [{'label': _get_label_with_percentage(row),
-                                       'value': int(row[-1]['html'][:-1])} for row in rows])
+            chart = PieChart(data_provider.chart_title, '', [{'label': _get_label_with_percentage(row),
+                                                              'value': int(row[-1]['html'][:-1])} for row in rows])
             chart.showLabels = False
             chart.marginLeft = 20
             chart.marginRight = 0

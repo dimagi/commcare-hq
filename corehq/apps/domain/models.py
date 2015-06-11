@@ -7,6 +7,9 @@ from couchdbkit.exceptions import ResourceConflict
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.template.loader import render_to_string
+from corehq.apps.tzmigration import set_migration_complete
+from corehq.util.timezones.conversions import \
+    USE_NEW_TZ_BEHAVIOR_ON_NEW_DOMAINS
 from dimagi.ext.couchdbkit import (
     Document, StringProperty, BooleanProperty, DateTimeProperty, IntegerProperty,
     DocumentSchema, SchemaProperty, DictProperty,
@@ -41,6 +44,15 @@ DATA_DICT = settings.INTERNAL_DATA
 AREA_CHOICES = [a["name"] for a in DATA_DICT["area"]]
 SUB_AREA_CHOICES = reduce(list.__add__, [a["sub_areas"] for a in DATA_DICT["area"]], [])
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
+
+BUSINESS_UNITS = [
+    "DSA",
+    "DSI",
+    "DLAC",
+    "DMOZ",
+    "DWA",
+    "INC",
+]
 
 
 for lang in all_langs:
@@ -152,6 +164,7 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
     goal_followup_rate = DecimalProperty()
     # intentionally different from and commtrack_enabled so that FMs can change
     commtrack_domain = BooleanProperty()
+    business_unit = StringProperty(choices=BUSINESS_UNITS + [""], default="")
 
 
 class CaseDisplaySettings(DocumentSchema):
@@ -221,7 +234,7 @@ class Domain(Document, SnapshotMixin):
     call_center_config = SchemaProperty(CallCenterProperties)
     has_careplan = BooleanProperty(default=False)
     restrict_superusers = BooleanProperty(default=False)
-    location_restriction_for_users = BooleanProperty(default=True)
+    location_restriction_for_users = BooleanProperty(default=False)
     usercase_enabled = BooleanProperty(default=False)
 
     case_display = SchemaProperty(CaseDisplaySettings)
@@ -628,6 +641,8 @@ class Domain(Document, SnapshotMixin):
 
     def save(self, **params):
         self.last_modified = datetime.utcnow()
+        if not self._rev and USE_NEW_TZ_BEHAVIOR_ON_NEW_DOMAINS:
+            set_migration_complete(self.name)
         super(Domain, self).save(**params)
         Domain.get_by_name.clear(Domain, self.name)  # clear the domain cache
 
@@ -659,6 +674,7 @@ class Domain(Document, SnapshotMixin):
             new_domain_name = new_id
         new_domain = Domain.get(new_id)
         new_domain.name = new_domain_name
+        new_domain.hr_name = None
         new_domain.copy_history = self.get_updated_history()
         new_domain.is_snapshot = False
         new_domain.snapshot_time = None

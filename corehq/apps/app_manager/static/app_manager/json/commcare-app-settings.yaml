@@ -75,23 +75,11 @@
   since: "2.0"
   permission: "cloudcare"
 
-- id: commtrack_enabled
-  name: "CommCare Supply"
-  description: 'Enable CommCare Supply'
-  description_format: html
-  widget: bool
-  default: false
-#  contingent_default: [{"condition": "{$parent.commtrack_enabled}=true", "value": "true"}]
-  requires: "{$parent.commtrack_enabled}=true"
-  hide_if_not_enabled: true
-  since: "2.0"
-  preview: true
-
 - id: commtrack_requisition_mode
   name: "CommCare Supply Requisition Mode"
   description: "CommCare Supply Requisition Mode"
   description_format: html
-  requires: "{hq.commtrack_enabled}=true"
+  requires: "{$parent.commtrack_enabled}=true"
   values: ['disabled', '3-step', '4-step']
   value_names:
    - "Disable Requisitions"

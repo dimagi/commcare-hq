@@ -32,10 +32,10 @@ class BlockLevelMonthReport(GenericTabularReport, DatespanMixin, CustomProjectRe
         if not self.needs_filters:
             year = int(self.request.GET.get('year'))
             month = int(self.request.GET.get('month'))
-            startdate = datetime.date(year, month, 1) - relativedelta(months=2)
+            startdate = datetime.datetime(year, month, 1) - relativedelta(months=2)
         return {
             'domain': self.domain,
-            'startdate': startdate,
+            'startdate': startdate.replace(hour=0, minute=0, second=0),
             'af': self.request.GET.get('hierarchy_af'),
         }
 
@@ -58,9 +58,9 @@ class BlockLevelMonthReport(GenericTabularReport, DatespanMixin, CustomProjectRe
         data = []
         config = self.report_config
         for i in range(0, 3):
-            config['enddate'] = datetime.date(
+            config['enddate'] = datetime.datetime(
                 config['startdate'].year, config['startdate'].month,
-                calendar.monthrange(config['startdate'].year, config['startdate'].month)[1])
+                calendar.monthrange(config['startdate'].year, config['startdate'].month)[1], 23, 59, 59)
             data.append(ASHAFacilitatorsData(config).data)
             config['startdate'] += relativedelta(months=1)
 

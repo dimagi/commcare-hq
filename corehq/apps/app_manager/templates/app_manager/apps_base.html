@@ -10,7 +10,7 @@
 {% block page-title %}
     <ul class="breadcrumb">
         <li>
-            <a href="{% if app %}{% url "view_app" domain app.id %}{% else %}#{% endif %}"><strong>{% trans "Applications" %}</strong></a>
+            <strong>{% trans "Applications" %}</strong>
         </li>
         {% block breadcrumbs %}
         {% endblock %}

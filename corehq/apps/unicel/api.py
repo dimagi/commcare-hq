@@ -19,9 +19,16 @@ class InboundParams(object):
     """
     SENDER = "send"
     MESSAGE = "msg"
-    TIMESTAMP = "stime"
-    UDHI = "udhi"
-    DCS = "dcs"
+
+    # 1 if message is multipart message, 0 otherwise
+    UDHI = "UDHI"
+
+    # gateway message id
+    MID = "MID"
+
+    # 8 if message is a unicode hex string, 0 if ascii
+    DCS = "DCS"
+
 
 class OutboundParams(object):
     """
@@ -85,50 +92,26 @@ class UnicelBackend(SMSBackend):
 
         return data
 
-DATE_FORMAT = "%m/%d/%y %I:%M:%S %p"
-DATE_FORMAT2 = "%Y-%m-%d %H:%M:%S"
-DATE_FORMAT3 = "%Y-%m-%d%%20%H:%M:%S"
 
-
-def convert_timestamp(timestamp):
-    for format in [DATE_FORMAT, DATE_FORMAT2, DATE_FORMAT3]:
-        try:
-            actual_timestamp = datetime.strptime(timestamp, format)
-        except ValueError:
-            pass
-        else:
-            return (UserTime(actual_timestamp, pytz.timezone('Asia/Kolkata'))
-                    .server_time().done())
-    raise ValueError('could not parse unicel inbound timestamp [%s]' % timestamp)
-
-
-def create_from_request(request, delay=True):
+def create_from_request(request):
     """
     From an inbound request (representing an incoming message),
     create a message (log) object with the right fields populated.
     """
     sender = request.REQUEST[InboundParams.SENDER]
     message = request.REQUEST[InboundParams.MESSAGE]
-    timestamp = request.REQUEST.get(InboundParams.TIMESTAMP, "")
 
     if len(sender) == 10:
         # add india country code
         sender = '91' + sender
 
-    # parse date or default to current utc time
-    if timestamp:
-        try:
-            actual_timestamp = convert_timestamp(timestamp)
-        except ValueError:
-            logging.warning('could not parse unicel inbound timestamp [%s]' % timestamp)
-            actual_timestamp = None
-
-    # not sure yet if this check is valid
-    is_unicode = request.REQUEST.get(InboundParams.UDHI, "") == "1"
+    is_unicode = request.REQUEST.get(InboundParams.DCS, "") == "8"
     if is_unicode:
         message = message.decode("hex").decode("utf_16_be")
 
-    log = incoming(sender, message, UnicelBackend.get_api_id(), timestamp=actual_timestamp, delay=delay)
+    backend_message_id = request.REQUEST.get(InboundParams.MID, None)
+
+    log = incoming(sender, message, UnicelBackend.get_api_id(), backend_message_id=backend_message_id)
 
     return log
 

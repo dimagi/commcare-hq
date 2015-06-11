@@ -1,0 +1,14 @@
+{% extends "reports/async/basic.html" %}
+{% load hq_shared_tags %}
+{% load report_tags %}
+{% load i18n %}
+
+{% block js %} {{ block.super }}
+    <script src="{% static 'ewsghana/report_links.js' %}"></script>
+{% endblock %}
+{% block js-inline %}
+    {{ block.super }}
+    <script>
+        add_report_links({{ context.slugs|JSON }});
+    </script>
+{% endblock %}

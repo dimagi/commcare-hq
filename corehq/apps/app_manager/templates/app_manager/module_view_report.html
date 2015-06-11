@@ -79,3 +79,8 @@
         {% include "app_manager/partials/module_filter.html" %}
     </div>
 {% endblock %}
+
+{% block breadcrumbs %}
+    {{ block.super }}
+    {% include 'app_manager/partials/module_view_breadcrumbs.html' %}
+{% endblock %}

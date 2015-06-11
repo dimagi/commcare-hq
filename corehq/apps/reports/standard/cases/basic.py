@@ -56,6 +56,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
             return {"term": {"domain.exact": self.domain}}
 
         subterms = [_domain_term(), afilter] if afilter else [_domain_term()]
+        subterms.append({"not": {"term": {"type.exact": "user-owner-mapping-case"}}})
         if case_type:
             subterms.append({"term": {"type.exact": case_type}})
 

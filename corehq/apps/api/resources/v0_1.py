@@ -1,10 +1,12 @@
 
 # Standard library imports
 from functools import wraps
+from itertools import imap
 import json
 
 # Django imports
 import datetime
+from dimagi.utils.couch.database import iter_docs
 from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpResponse, HttpResponseForbidden
 from django.conf import settings
@@ -17,10 +19,12 @@ from tastypie.exceptions import BadRequest
 from tastypie.throttle import CacheThrottle
 
 # External imports
+from casexml.apps.case.dbaccessors import get_open_case_ids_in_domain
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.es import FormES
+from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.users.decorators import require_permission, require_permission_raw
-from corehq.toggles import IS_DEVELOPER
+from corehq.toggles import IS_DEVELOPER, API_THROTTLE_WHITELIST
 from couchforms.models import XFormInstance
 
 # CCHQ imports
@@ -149,12 +153,20 @@ class AdminAuthentication(LoginAndDomainAuthentication):
         return self._auth_test(request, wrappers=wrappers, domain='dimagi', **kwargs)
 
 
+class HQThrottle(CacheThrottle):
+    def should_be_throttled(self, identifier, **kwargs):
+        if API_THROTTLE_WHITELIST.enabled(identifier):
+            return False
+
+        return super(HQThrottle, self).should_be_throttled(identifier, **kwargs)
+
+
 class CustomResourceMeta(object):
     authorization = ReadOnlyAuthorization()
     authentication = LoginAndDomainAuthentication()
     serializer = CustomXMLSerializer()
     default_format='application/json'
-    throttle = CacheThrottle(throttle_at=getattr(settings, 'CCHQ_API_THROTTLE_REQUESTS', 25),
+    throttle = HQThrottle(throttle_at=getattr(settings, 'CCHQ_API_THROTTLE_REQUESTS', 25),
                              timeframe=getattr(settings, 'CCHQ_API_THROTTLE_TIMEFRAME', 15))
 
 
@@ -294,7 +306,7 @@ class CommCareCaseResource(HqBaseResource, DomainSpecificResourceMixin):
 
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
-        closed_only = {
+        include_closed = {
             'true': True,
             'false': False,
             'any': True
@@ -304,10 +316,15 @@ class CommCareCaseResource(HqBaseResource, DomainSpecificResourceMixin):
         key = [domain]
         if case_type:
             key.append(case_type)
-        status = 'all' if closed_only else 'open'
-        cases = CommCareCase.get_all_cases(domain, case_type=case_type, status=status, include_docs=True)
-        return list(cases)
 
+        if include_closed:
+            case_ids = get_case_ids_in_domain(domain, type=case_type)
+        else:
+            case_ids = get_open_case_ids_in_domain(domain, type=case_type)
+
+        cases = imap(CommCareCase.wrap,
+                     iter_docs(CommCareCase.get_db(), case_ids))
+        return list(cases)
 
     class Meta(CustomResourceMeta):
         authentication = RequirePermissionAuthentication(Permissions.edit_data)

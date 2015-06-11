@@ -1,6 +1,6 @@
 from collections import defaultdict
 from casexml.apps.stock.models import StockTransaction
-from corehq.apps.commtrack.models import StockState, CommtrackConfig
+from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
@@ -9,7 +9,7 @@ from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.dates import DatespanFilter
 from custom.ewsghana.reports import EWSData, MultiReport
 from django.utils.translation import ugettext as _
-from custom.ewsghana.utils import get_supply_points, get_country_id
+from custom.ewsghana.utils import get_supply_points, get_country_id, ews_date_format
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -153,7 +153,7 @@ class CMSRMSSummaryReportingData(EmailReportingData):
 
 class StockSummaryReport(MultiReport):
     fields = [AsyncLocationFilter, DatespanFilter]
-    name = "Stock Summary Report"
+    name = "Stock Summary"
     slug = 'stock_summary_report'
     exportable = False
     is_exportable = False
@@ -161,8 +161,11 @@ class StockSummaryReport(MultiReport):
 
     @property
     def title(self):
-        return 'Weekly Stock Summary Report - ' + SQLLocation.objects.get(
-            location_id=self.report_config['location_id']).name
+        return 'Weekly Stock Summary Report - {0} - {1} {2}'.format(
+            SQLLocation.objects.get(location_id=self.report_config['location_id']).name,
+            ews_date_format(self.datespan.startdate_utc),
+            ews_date_format(self.datespan.enddate_utc)
+        )
 
     @property
     def report_config(self):
@@ -188,13 +191,19 @@ class StockSummaryReport(MultiReport):
 
 
 class CMSRMSReport(MultiReport):
-    title = "Weekly Stock Summary Report - CMS and RMS"
     fields = [DatespanFilter]
-    name = "CMS and RMS Summary Report"
+    name = "CMS and RMS Summary"
     slug = 'cms_rms_summary_report'
     exportable = True
     is_exportable = True
     split = False
+
+    @property
+    def title(self):
+        return 'Weekly Stock Summary Report - CMS and RMS - {0} {1}'.format(
+            ews_date_format(self.datespan.startdate_utc),
+            ews_date_format(self.datespan.enddate_utc)
+        )
 
     @property
     def report_config(self):

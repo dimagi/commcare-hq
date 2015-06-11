@@ -11,7 +11,8 @@ from corehq.apps.userreports.reports.filters import(
 )
 from corehq.apps.userreports.reports.specs import FilterSpec, ChoiceListFilterSpec, PieChartSpec, \
     MultibarAggregateChartSpec, MultibarChartSpec, ReportFilter, DynamicChoiceListFilterSpec, \
-    NumericFilterSpec, FieldColumn, PercentageColumn, ExpandedColumn, AggregateDateColumn
+    NumericFilterSpec, FieldColumn, PercentageColumn, ExpandedColumn, AggregateDateColumn, \
+    OrderBySpec
 
 
 def _build_date_filter(spec):
@@ -147,3 +148,10 @@ class ChartFactory(object):
                 json.dumps(spec, indent=2),
                 str(e),
             ))
+
+
+class ReportOrderByFactory(object):
+
+    @classmethod
+    def from_spec(cls, spec):
+        return OrderBySpec.wrap(spec)

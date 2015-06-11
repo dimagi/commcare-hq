@@ -59,7 +59,7 @@ def deterministic_random(input_string):
     return float.fromhex(hashlib.md5(input_string).hexdigest()) / math.pow(2, 128)
 
 
-class PredicatablyRandomToggle(StaticToggle):
+class PredictablyRandomToggle(StaticToggle):
     """
     A toggle that is predictably random based off some axis. Useful for for doing
     a randomized rollout of a feature. E.g. "turn this on for 5% of domains", or
@@ -68,11 +68,10 @@ class PredicatablyRandomToggle(StaticToggle):
     It extends StaticToggle, so individual domains/users can also be explicitly added.
     """
 
-    def __init__(self, slug, label, tag, namespace, randomness, help_link=None, description=None):
-        super(PredicatablyRandomToggle, self).__init__(slug, label, tag, list(namespace),
-                                                       help_link=help_link, description=description)
-        assert namespace, 'namespace must be defined!'
-        self.namespace = namespace
+    def __init__(self, slug, label, tag, namespaces, randomness, help_link=None, description=None):
+        super(PredictablyRandomToggle, self).__init__(slug, label, tag, list(namespaces),
+                                                      help_link=help_link, description=description)
+        assert namespaces, 'namespaces must be defined!'
         assert 0 <= randomness <= 1, 'randomness must be between 0 and 1!'
         self.randomness = randomness
 
@@ -81,12 +80,12 @@ class PredicatablyRandomToggle(StaticToggle):
         return "{:.0f}".format(self.randomness * 100)
 
     def _get_identifier(self, item):
-        return '{}:{}:{}'.format(self.namespace, self.slug, item)
+        return '{}:{}:{}'.format(self.namespaces, self.slug, item)
 
     def enabled(self, item, **kwargs):
         return (
             (item and deterministic_random(self._get_identifier(item)) < self.randomness)
-            or super(PredicatablyRandomToggle, self).enabled(item, **kwargs)
+            or super(PredictablyRandomToggle, self).enabled(item, **kwargs)
         )
 
 # if no namespaces are specified the user namespace is assumed
@@ -191,12 +190,6 @@ IS_DEVELOPER = StaticToggle(
     TAG_EXPERIMENTAL
 )
 
-PATHWAYS_PREVIEW = StaticToggle(
-    'pathways_preview',
-    'Is Pathways preview',
-    TAG_ONE_OFF
-)
-
 MM_CASE_PROPERTIES = StaticToggle(
     'mm_case_properties',
     'Multimedia Case Properties',
@@ -263,7 +256,8 @@ STOCK_AND_RECEIPT_SMS_HANDLER = StaticToggle(
 PAGINATE_WEB_USERS = StaticToggle(
     'paginate_web_users',
     'Paginate Web Users',
-    TAG_PRODUCT_PATH
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
 )
 
 LOOSE_SYNC_TOKEN_VALIDATION = StaticToggle(
@@ -345,14 +339,6 @@ VELLUM_TRANSACTION_QUESTION_TYPES = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-VELLUM_ITEMSETS = StaticToggle(
-    'itemsets',
-    "Adds dynamic (itemset) select and multi-select question types to the "
-    "form builder",
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
-
 VELLUM_HELP_MARKDOWN = StaticToggle(
     'help_markdown',
     "Use markdown for the help text in the form builder",
@@ -365,6 +351,19 @@ VELLUM_SAVE_TO_CASE = StaticToggle(
     "Adds save to case as a question to the form builder",
     TAG_UNKNOWN,
     [NAMESPACE_DOMAIN]
+)
+
+VELLUM_ADVANCED_ITEMSETS = StaticToggle(
+    'advanced_itemsets',
+    "Allows a user to configure itemsets for more than lookup tables",
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
+
+VELLUM_EXPERIMENTAL_UI = StaticToggle(
+    'experimental_ui',
+    "Enables some experimental UI enhancements for the form builder",
+    TAG_EXPERIMENTAL,
 )
 
 CACHE_AND_INDEX = StaticToggle(
@@ -382,14 +381,6 @@ CUSTOM_PROPERTIES = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-FILE_RESTORE = PredicatablyRandomToggle(
-    'file_restore',
-    'Use files to do phone restore',
-    TAG_PRODUCT_PATH,
-    randomness=.5,
-    namespace=[NAMESPACE_DOMAIN, NAMESPACE_USER],
-)
-
 BULK_SMS_VERIFICATION = StaticToggle(
     'bulk_sms_verification',
     'Allow initiating the SMS phone verification workflow for all users in a group.',
@@ -403,29 +394,12 @@ BULK_PAYMENTS = StaticToggle(
     TAG_PRODUCT_CORE
 )
 
-USE_NEW_TIMEZONE_BEHAVIOR = StaticToggle(
-    'use_new_timezone_behavior',
-    ("Enable properly dealing with timezones in phone timestamps "
-     "during submission and in reports. "
-     "(Please do not set manually, "
-     "because it has to be accompanied by a migration.)"),
-    TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN],
-)
 
 USER_AS_A_CASE = StaticToggle(
     'user_as_a_case',
     'Enable "User-As-A-Case" to store user properties in a case and use them in forms',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
-)
-
-STREAM_RESTORE_CACHE = PredicatablyRandomToggle(
-    'stream_cached_restore',
-    'Stream cached restore from couchdb',
-    TAG_EXPERIMENTAL,
-    randomness=.5,
-    namespace=[NAMESPACE_DOMAIN]
 )
 
 ENABLE_LOADTEST_USERS = StaticToggle(
@@ -436,12 +410,20 @@ ENABLE_LOADTEST_USERS = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Loadtest+Users',
 )
 
-OWNERSHIP_CLEANLINESS = PredicatablyRandomToggle(
+OWNERSHIP_CLEANLINESS = PredictablyRandomToggle(
     'enable_owner_cleanliness_flags',
     'Enable tracking ownership cleanliness on submission',
     TAG_EXPERIMENTAL,
     randomness=.05,
-    namespace=NAMESPACE_DOMAIN,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link='https://docs.google.com/a/dimagi.com/document/d/12WfZLerFL832LZbMwqRAvXt82scdjDL51WZVNa31f28/edit#heading=h.gu9sjekp0u2p',
+)
+
+OWNERSHIP_CLEANLINESS_RESTORE = StaticToggle(
+    'enable_owner_cleanliness_restore',
+    'Enable restoring with updated owner cleanliness logic.',
+    TAG_EXPERIMENTAL,
+    namespaces=[NAMESPACE_DOMAIN],
     help_link='https://docs.google.com/a/dimagi.com/document/d/12WfZLerFL832LZbMwqRAvXt82scdjDL51WZVNa31f28/edit#heading=h.gu9sjekp0u2p',
 )
 
@@ -453,8 +435,30 @@ MOBILE_UCR = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-FM_FACING_SUBSCRIPTIONS = StaticToggle(
-    'fm_facing_subscriptions',
-    'FM Facing Subscription Management Interface',
+RESTRICT_WEB_USERS_BY_LOCATION = StaticToggle(
+    'restrict_web_users_by_location',
+    "Allow project to restrict web user permissions by location",
     TAG_PRODUCT_CORE,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+API_THROTTLE_WHITELIST = StaticToggle(
+    'api_throttle_whitelist',
+    ('API throttle whitelist'),
+    TAG_EXPERIMENTAL,
+    namespaces=[NAMESPACE_USER],
+)
+
+INSTANCE_VIEWER = StaticToggle(
+    'instance_viewer',
+    'View curent instance when using Touchforms',
+    TAG_EXPERIMENTAL,
+    namespaces=[NAMESPACE_USER],
+)
+
+OPENLMIS = StaticToggle(
+    'openlmis',
+    'Offer OpenLMIS settings',
+    TAG_UNKNOWN,
+    namespaces=[NAMESPACE_DOMAIN],
 )

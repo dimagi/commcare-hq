@@ -1,8 +1,10 @@
 from alembic.autogenerate.api import compare_metadata
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.userreports.exceptions import TableRebuildError
 from corehq.apps.userreports.models import DataSourceConfiguration, CustomDataSourceConfiguration
 from corehq.apps.userreports.sql import get_engine, IndicatorSqlAdapter, metadata
 from corehq.apps.userreports.tasks import rebuild_indicators
+from dimagi.utils.logging import notify_error
 from fluff.signals import get_migration_context, get_tables_to_rebuild
 from pillowtop.couchdb import CachedCouchDB
 from pillowtop.listener import PythonPillow
@@ -51,7 +53,10 @@ class ConfigurableIndicatorPillow(PythonPillow):
         tables_to_rebuild = get_tables_to_rebuild(diffs, table_map.keys())
         for table_name in tables_to_rebuild:
             table = table_map[table_name]
-            self.rebuild_table(table)
+            try:
+                self.rebuild_table(table)
+            except TableRebuildError, e:
+                notify_error(unicode(e))
 
     def rebuild_table(self, table):
         table.rebuild_table()
@@ -64,13 +69,10 @@ class ConfigurableIndicatorPillow(PythonPillow):
         if not self.bootstrapped:
             self.bootstrap()
         if changes_dict.get('deleted', False):
-            # the changes_dict doesn't contain any info that would allow us to determine
-            # which tables this doc might be relevant to so just remove it from all
-            # tables
-            doc = changes_dict.get('doc', None)
-            if doc:
-                for table in self.tables:
-                    table.delete(doc)
+            # we don't currently support hard-deletions at all.
+            # we may want to change this at some later date but seem ok for now.
+            # see https://github.com/dimagi/commcare-hq/pull/6944 for rationale
+            pass
         return super(ConfigurableIndicatorPillow, self).change_trigger(changes_dict)
 
     def change_transport(self, doc):

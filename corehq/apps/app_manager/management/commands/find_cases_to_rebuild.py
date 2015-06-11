@@ -1,7 +1,9 @@
 from optparse import make_option
+
 from django.core.management import BaseCommand
-from casexml.apps.case.models import CommCareCase
+
 from corehq.apps.app_manager.models import Application
+from corehq.apps.hqcase.dbaccessors import get_number_of_cases_in_domain
 from dimagi.utils.couch.database import iter_docs
 
 
@@ -67,7 +69,7 @@ class Command(BaseCommand):
             all_form_xmlns |= form_xmlns
             domain_case_counts = case_types_by_domain.setdefault(domain, {})
             case_counts = {
-                case_type: get_case_count(domain, case_type)
+                case_type: get_number_of_cases_in_domain(domain, case_type)
                 for case_type in case_types
                 if case_type not in domain_case_counts
             }
@@ -79,19 +81,6 @@ class Command(BaseCommand):
         print
 
         print all_form_xmlns
-
-
-def get_case_count(domain, case_type):
-    key = CommCareCase.get_all_cases_key(domain, case_type=case_type)
-    try:
-        return CommCareCase.view(
-            'case/all_cases',
-            startkey=key,
-            endkey=key + [{}],
-            reduce=True
-        ).one()['value']
-    except TypeError:
-        return 0
 
 
 def get_build_ids(start, end):

@@ -87,14 +87,14 @@ def sync_supply_point_status(domain, endpoint, facility, checkpoint, date, limit
                                    'supply_point_status',
                                    meta.get('limit') or limit,
                                    meta.get('offset') or offset, date, location_id, True)
-        for sps in supply_point_statuses:
+        for supply_point_status in supply_point_statuses:
             try:
                 SupplyPointStatus.objects.get(
-                    external_id=int(sps.external_id),
-                    supply_point=location_id
+                    external_id=int(supply_point_status.external_id),
+                    location_id=location_id
                 )
             except SupplyPointStatus.DoesNotExist:
-                sps.save()
+                supply_point_status.save()
 
         if not meta.get('next', False):
             has_next = False
@@ -106,11 +106,14 @@ def sync_delivery_group_report(domain, endpoint, facility, checkpoint, date, lim
     has_next = True
     next_url = ""
     while has_next:
-        meta, delivery_group_reports = endpoint.get_deliverygroupreports(domain, limit=limit, offset=offset,
-                                                                         next_url_params=next_url,
-                                                                         filters=dict(supply_point=facility,
-                                                                                      report_date__gte=date),
-                                                                         facility=facility)
+        meta, delivery_group_reports = endpoint.get_deliverygroupreports(
+            domain,
+            limit=limit,
+            offset=offset,
+            next_url_params=next_url,
+            filters=dict(supply_point=facility, report_date__gte=date),
+            facility=facility
+        )
         location_id = SQLLocation.objects.get(domain=domain, external_id=facility).location_id
         # set the checkpoint right before the data we are about to process
         save_stock_data_checkpoint(checkpoint,
@@ -120,7 +123,7 @@ def sync_delivery_group_report(domain, endpoint, facility, checkpoint, date, lim
                                    date, location_id, True)
         for dgr in delivery_group_reports:
             try:
-                DeliveryGroupReport.objects.get(external_id=dgr.external_id, supply_point=location_id)
+                DeliveryGroupReport.objects.get(external_id=dgr.external_id, location_id=location_id)
             except DeliveryGroupReport.DoesNotExist:
                 dgr.save()
 
@@ -134,8 +137,8 @@ def sync_delivery_group_report(domain, endpoint, facility, checkpoint, date, lim
 def ils_clear_stock_data_task(domain):
     assert ILSGatewayConfig.for_domain(domain)
     locations = SQLLocation.objects.filter(domain=domain)
-    SupplyPointStatus.objects.filter(supply_point__in=locations.values_list('location_id', flat=True)).delete()
-    DeliveryGroupReport.objects.filter(supply_point__in=locations.values_list('location_id', flat=True)).delete()
+    SupplyPointStatus.objects.filter(location_id__in=locations.values_list('location_id', flat=True)).delete()
+    DeliveryGroupReport.objects.filter(location_id__in=locations.values_list('location_id', flat=True)).delete()
     products = Product.ids_by_domain(domain)
     StockState.objects.filter(product_id__in=products).delete()
     StockTransaction.objects.filter(
@@ -148,10 +151,10 @@ def ils_clear_stock_data_task(domain):
 @task(queue='background_queue', ignore_result=True)
 def clear_report_data(domain):
     locations_ids = SQLLocation.objects.filter(domain=domain).values_list('location_id', flat=True)
-    GroupSummary.objects.filter(org_summary__supply_point__in=locations_ids).delete()
-    OrganizationSummary.objects.filter(supply_point__in=locations_ids).delete()
-    ProductAvailabilityData.objects.filter(supply_point__in=locations_ids).delete()
-    Alert.objects.filter(supply_point__in=locations_ids).delete()
+    GroupSummary.objects.filter(org_summary__location_id__in=locations_ids).delete()
+    OrganizationSummary.objects.filter(location_id__in=locations_ids).delete()
+    ProductAvailabilityData.objects.filter(location_id__in=locations_ids).delete()
+    Alert.objects.filter(location_id__in=locations_ids).delete()
     SupplyPointWarehouseRecord.objects.filter(supply_point__in=locations_ids).delete()
     ReportRun.objects.filter(domain=domain).delete()
 

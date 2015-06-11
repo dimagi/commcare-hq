@@ -1,4 +1,4 @@
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 
 
 class TransformedGetter(object):
@@ -92,7 +92,7 @@ def transform_int(item):
 def transform_decimal(item):
     try:
         return Decimal(item)
-    except (ValueError, TypeError):
+    except (ValueError, TypeError, InvalidOperation):
         return None
 
 

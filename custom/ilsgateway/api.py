@@ -22,7 +22,8 @@ MSDZONE_MAP = {
     'Mwanza Zone': ['MZ', 'geita', 'shinyanga', 'simiyu', 'mwanza', 'kagera', 'mara'],
     'Tabora Zone': ['TB', 'kigoma', 'tabora'],
     'Tanga Zone': ['TG', 'tanga'],
-    'Zanzibar Zone': ["pemba north", "pemba south", "zanzibar central/south", "zanzibar north", "zanzibar west"],
+    'Zanzibar Zone': ['D', "pemba north", "pemba south", "zanzibar central/south", "zanzibar north",
+                      "zanzibar west"],
     'UNKNOWN': ['UN']
 }
 
@@ -147,6 +148,14 @@ class ILSGatewayEndpoint(LogisticsEndpoint):
         return meta, [
             Groups(obj) for obj in groups_list
         ]
+
+    def get_stocktransactions(self, start_date=None, end_date=None, **kwargs):
+        kwargs.get('filters', {}).update({
+            'date__gte': start_date,
+        })
+        meta, stock_transactions = self.get_objects(self.stocktransactions_url, **kwargs)
+        return meta, [(self.models_map['stock_transaction'])(stock_transaction)
+                      for stock_transaction in stock_transactions]
 
 
 class ILSGatewayAPI(APISynchronization):

@@ -14,9 +14,7 @@ xforms/
 submissions/
 /export/
 bad/
-rapidsms-django.log*
-rapidsms.log*
-*.log
+*.log*
 CommCare.ja*
 startover.sh
 celery.db
@@ -51,4 +49,4 @@ docs/_build
 celerybeat-schedule
 
 # compiled translations
-/locale/**/*.mo
+/locale/*/*/*.mo

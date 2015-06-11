@@ -2,7 +2,8 @@ import json
 import os
 from django.test import TestCase
 from corehq.apps.commtrack.models import SupplyPointCase
-from corehq.apps.commtrack.tests.util import bootstrap_domain as initial_bootstrap
+from corehq.apps.commtrack.tests.util import (bootstrap_products,
+                                              bootstrap_domain as initial_bootstrap)
 from corehq.apps.locations.models import Location as CouchLocation, SQLLocation
 from corehq.apps.products.models import SQLProduct
 from custom.ewsghana.api import Location, EWSApi, Product
@@ -19,6 +20,7 @@ class LocationSyncTest(TestCase):
         cls.api_object = EWSApi(TEST_DOMAIN, cls.endpoint)
         cls.datapath = os.path.join(os.path.dirname(__file__), 'data')
         initial_bootstrap(TEST_DOMAIN)
+        bootstrap_products(TEST_DOMAIN)
         cls.api_object.prepare_commtrack_config()
         with open(os.path.join(cls.datapath, 'sample_products.json')) as f:
             for p in json.loads(f.read()):
@@ -78,8 +80,8 @@ class LocationSyncTest(TestCase):
         self.assertEqual(supply_point.location, ewsghana_location)
         self.assertEqual(location.supply_points[0].id, int(supply_point.external_id))
         self.assertEqual(location.supply_points[0].name, supply_point.name)
-        self.assertListEqual(location.supply_points[0].products,
-                             [product.code for product in ewsghana_location.sql_location.products])
+        self.assertSetEqual(set(location.supply_points[0].products),
+                            {product.code for product in ewsghana_location.sql_location.products})
 
     def test_create_region_with_two_supply_points(self):
         with open(os.path.join(self.datapath, 'sample_locations.json')) as f:
@@ -105,8 +107,12 @@ class LocationSyncTest(TestCase):
             domain=TEST_DOMAIN,
             location_type__administrative=False).count()
         )
-        self.assertIsNotNone(ewsghana_location.linked_supply_point())
+
+        supply_point = ewsghana_location.linked_supply_point()
+        self.assertIsNotNone(supply_point)
         self.assertIsNotNone(ewsghana_location.sql_location.supply_point_id)
+
+        self.assertEqual(supply_point.external_id, '')
         self.assertEqual(ewsghana_location.name, location.name)
         self.assertEqual(ewsghana_location.site_code, location.code)
         self.assertTrue(ewsghana_location.is_archived)

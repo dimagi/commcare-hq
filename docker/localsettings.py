@@ -12,9 +12,6 @@ DATABASES = {
     }
 }
 
-### Reporting database
-SQL_REPORTING_DATABASE_URL = "postgresql://%(USER)s:%(PASSWORD)s@%(HOST)s:%(PORT)s/commcarehq_reporting" % DATABASES['default']
-
 ####### Couch Config ######
 COUCH_HTTPS = False # recommended production value is True if enabling https
 COUCH_SERVER_ROOT = 'couchdb:{}'.format(os.environ['COUCHDB_PORT_5984_TCP_PORT']) #6984 for https couch
@@ -132,6 +129,11 @@ ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_ID': '*******',
     'PINGDOM_ID': '*****',
     'ANALYTICS_ID_PUBLIC_COMMCARE': '*****',
+    'KISSMETRICS_KEY': '*****',
+}
+
+ANALYTICS_CONFIG = {
+    "HQ_INSTANCE": '',  # e.g. "www" or "staging"
 }
 
 AXES_LOCK_OUT_AT_FAILURE = False
