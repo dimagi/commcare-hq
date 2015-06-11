@@ -15,7 +15,7 @@ def couch_to_excel_datetime(val, doc):
         dt_val = None
         for fmt in COUCH_FORMATS:
             try:
-                val = datetime.datetime.strptime(val, fmt)
+                dt_val = datetime.datetime.strptime(val, fmt)
             except ValueError:
                 pass
             else:
