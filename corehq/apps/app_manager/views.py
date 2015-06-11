@@ -1615,7 +1615,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
             resp,
             request.POST.get('case_list_form_media_audio')
         )
-        module.case_list_form.set_audio(lang, new_path, default_lang=app.default_language)
+        module.case_list_form.set_audio(lang, new_path)
 
     if should_edit('case_list-menu_item_media_image'):
         val = _process_media_attribute(
