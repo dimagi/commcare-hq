@@ -8,7 +8,7 @@ from dimagi.ext.couchdbkit import Document, DocumentSchema, DictProperty, String
 from corehq.apps.groups.models import Group
 from dimagi.utils.couch.bulk import CouchTransaction
 from dimagi.utils.decorators.memoized import memoized
-from corehq.apps.locations.models import SQLLocation, LOCATION_SHARING_PREFIX, LOCATION_REPORTING_PREFIX
+from corehq.apps.locations.models import SQLLocation, LOCATION_REPORTING_PREFIX
 
 
 class FixtureTypeField(DocumentSchema):
@@ -289,6 +289,38 @@ class FixtureDataItem(Document):
 
         return xData
 
+    def _get_reporting_groups(self, group_ids):
+        groups = []
+
+        reporting_group_ids = set([
+            gid for gid in group_ids
+            if gid.startswith(LOCATION_REPORTING_PREFIX)
+        ])
+        reporting_location_ids = [
+            group_id[group_id.index('-') + 1:]
+            for group_id in reporting_group_ids
+        ]
+        reporting_locations = SQLLocation.objects.filter(
+            location_id__in=reporting_location_ids
+        )
+
+        for reporting_location in reporting_locations:
+            groups.append(reporting_location.reporting_group_object())
+
+        return groups
+
+    def _get_case_sharing_groups(self, group_ids):
+        groups = []
+
+        case_sharing_locations = SQLLocation.objects.filter(
+            location_id__in=group_ids
+        ).values_list('location_id', flat=True).distinct()
+
+        for case_sharing_location in case_sharing_locations:
+            groups.append(case_sharing_location.case_sharing_group_object())
+
+        return groups
+
     def get_groups(self, wrap=True):
         group_ids = set(
             FixtureOwnership.get_db().view(
@@ -303,24 +335,15 @@ class FixtureDataItem(Document):
             # if any fixtures are referencing location group IDs,
             # make sure that those get wrapped properly as group-looking
             # things
-            location_group_ids = set([
-                gid for gid in group_ids
-                if gid.startswith(LOCATION_SHARING_PREFIX) or gid.startswith(LOCATION_REPORTING_PREFIX)
-            ])
+
             groups = []
-            for group_id in location_group_ids:
-                loc = SQLLocation.objects.get(
-                    location_id=group_id[group_id.index('-') + 1:]
-                )
-                if group_id.startswith(LOCATION_SHARING_PREFIX):
-                    groups.append(loc.case_sharing_group_object())
-                elif group_id.startswith(LOCATION_REPORTING_PREFIX):
-                    groups.append(loc.reporting_group_object())
+            groups += self._get_reporting_groups(group_ids)
+            groups += self._get_case_sharing_groups(group_ids)
 
             return set(
                 list(Group.view(
                     '_all_docs',
-                    keys=list(group_ids.difference(location_group_ids)),
+                    keys=list(group_ids),
                     include_docs=True
                 )) +
                 groups

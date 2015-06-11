@@ -165,6 +165,9 @@ class CaseData(BaseDataIndex):
     name = models.CharField(max_length=CASE_NAME_LEN, null=True)
     external_id = models.CharField(max_length=128, null=True)
 
+    # owner_id || user_id
+    case_owner = models.CharField(max_length=128, null=True, db_index=True)
+
     @classmethod
     def get_instance_id(cls, instance):
         return instance.case_id
@@ -204,12 +207,13 @@ class CaseData(BaseDataIndex):
         self.server_modified_on = case.server_modified_on
         self.name = name
         self.external_id = case.external_id
+        self.case_owner = case.owner_id or case.user_id
 
         if not is_new:
             CaseActionData.objects.filter(case_id=case_id).delete()
             CaseIndexData.objects.filter(case_id=case_id).delete()
 
-        self.actions = [CaseActionData.from_instance(action, i) for i, action in enumerate(case.actions)]
+        self.actions = [CaseActionData.from_instance(case, action, i) for i, action in enumerate(case.actions)]
         self.indices = [CaseIndexData.from_instance(index) for index in case.indices]
 
     def matches_exact(self, case):
@@ -262,6 +266,11 @@ class CaseActionData(models.Model):
     xform_xmlns = models.CharField(max_length=128, null=True)
     sync_log_id = models.CharField(max_length=128, null=True)
 
+    # de-normalized fields
+    domain = models.CharField(max_length=128, null=True, db_index=True)
+    case_owner = models.CharField(max_length=128, null=True, db_index=True)
+    case_type = models.CharField(max_length=128, null=True, db_index=True)
+
     def __unicode__(self):
         return "CaseAction: {xform}: {type} - {date} ({server_date})".format(
             xform=self.xform_id, type=self.action_type,
@@ -269,8 +278,13 @@ class CaseActionData(models.Model):
         )
 
     @classmethod
-    def from_instance(cls, action, index):
+    def from_instance(cls, case, action, index):
         ret = cls()
+
+        ret.domain = case.domain
+        ret.case_type = case.type
+        ret.case_owner = case.owner_id or case.user_id
+
         ret.index = index
         ret.action_type = action.action_type
         ret.user_id = action.user_id

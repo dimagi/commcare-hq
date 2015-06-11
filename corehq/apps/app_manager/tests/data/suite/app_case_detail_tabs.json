@@ -444,7 +444,6 @@
    "multimedia_map":{
 
    },
-   "commtrack_enabled":false,
    "admin_password_charset":"n",
    "case_sharing":false,
    "show_user_registration":false

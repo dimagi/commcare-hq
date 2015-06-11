@@ -2,8 +2,24 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% block pretable %}
+{% block js %}
     {{ block.super }}
+    <style>
+        @media print {
+            .table th, .table td {
+                border-right: 1px solid #dddddd;
+            }
+        }
+    </style>
+{% endblock js %}
+
+{% block pretable %}
+
+    <h4 class="media-heading">{{ report.report_title }}
+        {% for subtitle in report.report_subtitles %}
+        <br/><small>{{ subtitle }}</small>
+        {% endfor %}
+    </h4>
     {% if sf == "sf2" %}
     <div class="row hq-flush-content">
         <div class="span6">

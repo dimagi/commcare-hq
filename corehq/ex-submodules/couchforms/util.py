@@ -406,10 +406,10 @@ class SubmissionPost(object):
         assert domain, domain
         assert instance, instance
         assert not isinstance(instance, HttpRequest), instance
-        # get_location has good default
         self.domain = domain
         self.app_id = app_id
         self.build_id = build_id
+        # get_location has good default
         self.location = location or couchforms.get_location()
         self.received_on = received_on
         self.date_header = date_header
@@ -534,6 +534,7 @@ class SubmissionPost(object):
                                     )
                                 )
                         try:
+                            # save both the forms and cases
                             XFormInstance.get_db().bulk_save(docs)
                         except BulkSaveError as e:
                             logging.error('BulkSaveError saving forms', exc_info=1,

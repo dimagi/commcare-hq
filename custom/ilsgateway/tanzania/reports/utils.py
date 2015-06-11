@@ -73,8 +73,8 @@ def get_default_contact_for_location(domain, location_id):
     return None
 
 
-def get_span(rr_value):
-    if rr_value:
+def get_span(submitted):
+    if submitted:
         return '<span class="icon-ok" style="color:green"/>%s'
     else:
         return '<span class="icon-warning-sign" style="color:orange"/>%s'
@@ -165,6 +165,6 @@ def randr_value(location_id, start_date, end_date):
     latest_not_submit = latest_status_or_none(location_id, SupplyPointStatusTypes.R_AND_R_FACILITY,
                                               start_date, end_date, value=SupplyPointStatusValues.NOT_SUBMITTED)
     if latest_submit:
-        return latest_submit.status_date
+        return True, latest_submit.status_date
     else:
-        return latest_not_submit.status_date if latest_not_submit else None
+        return False, latest_not_submit.status_date if latest_not_submit else None

@@ -4,6 +4,8 @@ from dimagi.ext.jsonobject import JsonObject
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
 
+from .dbaccessors import *
+
 
 CUSTOM_DATA_FIELD_PREFIX = "data-field"
 # This list is used to grandfather in existing data, any new fields should use
@@ -54,24 +56,10 @@ class CustomDataFieldsDefinition(Document):
         return filter(_is_match, self.fields)
 
     @classmethod
-    def get_by_domain_and_type(cls, domain, field_type):
-        return cls.view(
-            'custom_data_fields/by_field_type',
-            key=[domain, field_type],
-            include_docs=True,
-            reduce=False,
-            # if there's more than one,
-            # it's probably because a few were created at the same time
-            # due to a race condition
-            # todo: a better solution might be to use locking in this code
-            limit=1,
-        ).one()
-
-    @classmethod
     def get_or_create(cls, domain, field_type):
         # todo: this overrides get_or_create from DocumentBase but with a completely different signature.
         # This method should probably be renamed.
-        existing = cls.get_by_domain_and_type(domain, field_type)
+        existing = get_by_domain_and_type(domain, field_type)
 
         if existing:
             return existing

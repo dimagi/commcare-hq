@@ -360,6 +360,12 @@ VELLUM_ADVANCED_ITEMSETS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+VELLUM_EXPERIMENTAL_UI = StaticToggle(
+    'experimental_ui',
+    "Enables some experimental UI enhancements for the form builder",
+    TAG_EXPERIMENTAL,
+)
+
 CACHE_AND_INDEX = StaticToggle(
     'cache_and_index',
     'Enable the "Cache and Index" format option when choosing sort properties '
@@ -373,14 +379,6 @@ CUSTOM_PROPERTIES = StaticToggle(
     'Allow users to add arbitrary custom properties to their application',
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
-)
-
-FILE_RESTORE = PredictablyRandomToggle(
-    'file_restore',
-    'Use files to do phone restore',
-    TAG_PRODUCT_PATH,
-    randomness=.5,
-    namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
 
 BULK_SMS_VERIFICATION = StaticToggle(
@@ -404,14 +402,6 @@ USER_AS_A_CASE = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-STREAM_RESTORE_CACHE = PredictablyRandomToggle(
-    'stream_cached_restore',
-    'Stream cached restore from couchdb',
-    TAG_EXPERIMENTAL,
-    randomness=.5,
-    namespaces=[NAMESPACE_DOMAIN]
-)
-
 ENABLE_LOADTEST_USERS = StaticToggle(
     'enable_loadtest_users',
     'Enable creating loadtest users on HQ',
@@ -425,6 +415,14 @@ OWNERSHIP_CLEANLINESS = PredictablyRandomToggle(
     'Enable tracking ownership cleanliness on submission',
     TAG_EXPERIMENTAL,
     randomness=.05,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link='https://docs.google.com/a/dimagi.com/document/d/12WfZLerFL832LZbMwqRAvXt82scdjDL51WZVNa31f28/edit#heading=h.gu9sjekp0u2p',
+)
+
+OWNERSHIP_CLEANLINESS_RESTORE = StaticToggle(
+    'enable_owner_cleanliness_restore',
+    'Enable restoring with updated owner cleanliness logic.',
+    TAG_EXPERIMENTAL,
     namespaces=[NAMESPACE_DOMAIN],
     help_link='https://docs.google.com/a/dimagi.com/document/d/12WfZLerFL832LZbMwqRAvXt82scdjDL51WZVNa31f28/edit#heading=h.gu9sjekp0u2p',
 )
@@ -444,12 +442,6 @@ RESTRICT_WEB_USERS_BY_LOCATION = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-FM_FACING_SUBSCRIPTIONS = StaticToggle(
-    'fm_facing_subscriptions',
-    'FM Facing Subscription Management Interface',
-    TAG_PRODUCT_CORE,
-)
-
 API_THROTTLE_WHITELIST = StaticToggle(
     'api_throttle_whitelist',
     ('API throttle whitelist'),
@@ -462,4 +454,11 @@ INSTANCE_VIEWER = StaticToggle(
     'View curent instance when using Touchforms',
     TAG_EXPERIMENTAL,
     namespaces=[NAMESPACE_USER],
+)
+
+OPENLMIS = StaticToggle(
+    'openlmis',
+    'Offer OpenLMIS settings',
+    TAG_UNKNOWN,
+    namespaces=[NAMESPACE_DOMAIN],
 )

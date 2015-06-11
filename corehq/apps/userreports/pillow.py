@@ -69,13 +69,10 @@ class ConfigurableIndicatorPillow(PythonPillow):
         if not self.bootstrapped:
             self.bootstrap()
         if changes_dict.get('deleted', False):
-            # the changes_dict doesn't contain any info that would allow us to determine
-            # which tables this doc might be relevant to so just remove it from all
-            # tables
-            doc = changes_dict.get('doc', None)
-            if doc:
-                for table in self.tables:
-                    table.delete(doc)
+            # we don't currently support hard-deletions at all.
+            # we may want to change this at some later date but seem ok for now.
+            # see https://github.com/dimagi/commcare-hq/pull/6944 for rationale
+            pass
         return super(ConfigurableIndicatorPillow, self).change_trigger(changes_dict)
 
     def change_transport(self, doc):

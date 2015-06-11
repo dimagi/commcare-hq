@@ -6,6 +6,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
+from corehq.apps.commtrack.const import SUPPLY_POINT_CASE_TYPE
 
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
@@ -89,7 +90,7 @@ class CommTrackSettingsView(BaseCommTrackManageView):
                     'stock': 'consumption'
                 },
                 force_consumption_case_types=[
-                    'supply-point'
+                    SUPPLY_POINT_CASE_TYPE
                 ],
                 use_dynamic_product_list=True,
             )
