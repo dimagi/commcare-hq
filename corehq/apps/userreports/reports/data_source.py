@@ -5,7 +5,8 @@ from sqlagg import (
 )
 from sqlalchemy.exc import ProgrammingError
 from corehq.apps.reports.sqlreport import SqlData
-from corehq.apps.userreports.exceptions import UserReportsError
+from corehq.apps.userreports.exceptions import UserReportsError, \
+    UserReportsWarning, TableNotFoundWarning
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.reports.specs import DESCENDING
 from corehq.apps.userreports.sql import get_table_name
@@ -103,10 +104,11 @@ class ConfigurableReportDataSource(SqlData):
                 report_column.format_data(ret)
         except (
             ColumnNotFoundException,
-            TableNotFoundException,
             ProgrammingError,
         ) as e:
             raise UserReportsError(e.message)
+        except TableNotFoundException as e:
+            raise TableNotFoundWarning
         # TODO: Should sort in the database instead of memory, but not currently supported by sqlagg.
         try:
             # If a sort order is specified, sort by it.

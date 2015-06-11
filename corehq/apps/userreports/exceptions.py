@@ -4,6 +4,14 @@ class UserReportsError(Exception):
     pass
 
 
+class UserReportsWarning(Warning):
+    pass
+
+
+class TableNotFoundWarning(UserReportsWarning):
+    pass
+
+
 class BadSpecError(UserReportsError):
     pass
 

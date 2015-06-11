@@ -11,7 +11,9 @@ from django.views.generic.base import TemplateView
 from braces.views import JSONResponseMixin
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq.apps.reports.models import ReportConfig
-from corehq.apps.userreports.exceptions import UserReportsError
+from corehq.apps.userreports.exceptions import (
+    UserReportsError, TableNotFoundWarning
+)
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.util.couch import get_document_or_404
@@ -164,6 +166,16 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
                 raise
             return self.render_json_response({
                 'error': e.message,
+            })
+        except TableNotFoundWarning as w:
+            if self.spec.report_meta.created_by_builder:
+                msg = "The database table backing your report does not exist yet. " \
+                      "Please wait while the report is populated."
+            else:
+                msg = "The database table backing your report does not exist yet. " \
+                      "You must rebuild the data source before viewing the report."
+            return self.render_json_response({
+                'warning': msg
             })
 
         # todo: this is ghetto pagination - still doing a lot of work in the database
