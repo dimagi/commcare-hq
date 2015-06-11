@@ -43,7 +43,6 @@
 trunk: master
 name: autostaging
 branches:
-  - subscription-no-contact-info # bb 8/4
   - vellum-staging # J$ 11/13
   - fixtures-spike  # cz 1/29
   - update-submodules # TS 5/6
