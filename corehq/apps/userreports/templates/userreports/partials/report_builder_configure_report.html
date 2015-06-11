@@ -116,16 +116,5 @@
         var formViewModel = new configForm();
         ko.applyBindings(formViewModel, $("#report-config-form").get(0));
 
-        // Give feedback to user while form is submitting.
-        // Clicking the save button isn't an ajax request, but it can be slow to save.
-        $("#report-config-form [name='submit']").click(function() {
-            $(this).hide();
-            $(this).after(
-                "<a class='btn disabled'>" +
-                    "<span class='icon-refresh icon-spin'></span> Saving" +
-                "</a>"
-            );
-        });
-    
     </script>
 {% endblock %}
