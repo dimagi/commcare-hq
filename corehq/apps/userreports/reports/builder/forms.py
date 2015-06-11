@@ -347,7 +347,11 @@ class ConfigureNewReportBase(forms.Form):
         self.helper.form_id = "report-config-form"
 
         buttons = [
-            crispy.HTML("<button type='submit' class='btn btn-primary disable-on-submit'>{}</a>".format(self.button_text))
+            crispy.HTML(
+                "<button type='submit' "
+                    "class='btn btn-primary disable-on-submit'"
+                ">{}</a>".format(self.button_text)
+            )
         ]
         # Add a back button if we aren't editing an existing report
         if not self.existing_report:
