@@ -1,6 +1,6 @@
 from corehq.apps.sms.mixin import SMSBackend
 
-from django_countries.countries import COUNTRIES
+from django_countries.data import COUNTRIES
 from django.utils.encoding import force_unicode
 from phonenumbers import COUNTRY_CODE_TO_REGION_CODE
 

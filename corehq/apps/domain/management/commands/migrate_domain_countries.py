@@ -1,5 +1,5 @@
 from django.core.management.base import LabelCommand
-from django_countries.countries import COUNTRIES
+from django_countries.data import COUNTRIES
 from corehq.apps.domain.models import Domain
 
 class Command(LabelCommand):

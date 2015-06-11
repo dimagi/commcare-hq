@@ -1,7 +1,7 @@
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from django import forms
-from django_countries.countries import COUNTRIES
+from django_countries.data import COUNTRIES
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.sms.mixin import SMSBackend
 from corehq.apps.sms.models import INCOMING, OUTGOING

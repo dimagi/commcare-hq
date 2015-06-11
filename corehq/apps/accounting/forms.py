@@ -19,7 +19,7 @@ from django.utils.translation import ugettext_noop, ugettext as _, ugettext
 from crispy_forms.bootstrap import FormActions, StrictButton, InlineField
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
-from django_countries.countries import COUNTRIES
+from django_countries.data import COUNTRIES
 from corehq import privileges, toggles
 from corehq.apps.accounting.exceptions import CreateAccountingAdminError
 from corehq.apps.accounting.invoicing import DomainInvoiceFactory

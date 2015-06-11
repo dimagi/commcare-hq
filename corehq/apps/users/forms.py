@@ -11,7 +11,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from django.template.loader import get_template
 from django.template import Context
-from django_countries.countries import COUNTRIES
+from django_countries.data import COUNTRIES
 
 from corehq import toggles
 from corehq.apps.domain.forms import EditBillingAccountInfoForm

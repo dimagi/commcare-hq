@@ -30,7 +30,7 @@ from django.forms.widgets import  Select
 from django.utils.encoding import smart_str
 from django.contrib.auth.forms import PasswordResetForm
 from django.utils.safestring import mark_safe
-from django_countries.countries import COUNTRIES
+from django_countries.data import COUNTRIES
 from corehq.apps.accounting.models import (
     BillingAccount,
     BillingAccountType,
