@@ -986,8 +986,8 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
     is_cacheable = True
 
     fields = [
-        'corehq.apps.reports.dont_use.fields.MultiSelectGroupField',
-        'corehq.apps.reports.dont_use.fields.UserOrGroupField',
+        'corehq.apps.reports.filters.select.MultiGroupFilter',
+        'corehq.apps.reports.filters.select.SelectUserOrGroupFilter',
         'corehq.apps.reports.filters.select.MultiCaseTypeFilter',
         'corehq.apps.reports.filters.dates.DatespanFilter',
     ]
@@ -1011,7 +1011,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
 
     @property
     def view_by(self):
-        return self.request.GET.get('view_by', None)
+        return self.request.GET.get('users_or_groups', 'users')
 
     @property
     def headers(self):
