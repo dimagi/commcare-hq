@@ -1585,8 +1585,6 @@ class BillingRecordBase(models.Model):
 
     INVOICE_HTML_TEMPLATE = 'accounting/invoice_email.html'
     INVOICE_TEXT_TEMPLATE = 'accounting/invoice_email_plaintext.html'
-    INVOICE_CONTRACTED_HTML_TEMPLATE = 'accounting/invoice_email_contracted.html'
-    INVOICE_CONTRACTED_TEXT_TEMPLATE = 'accounting/invoice_email_contracted_plaintext.html'
 
     class Meta:
         abstract = True
@@ -1601,17 +1599,11 @@ class BillingRecordBase(models.Model):
 
     @property
     def html_template(self):
-        if self.invoice.subscription.service_type == SubscriptionType.CONTRACTED:
-            return self.INVOICE_CONTRACTED_HTML_TEMPLATE
-        else:
-            return self.INVOICE_HTML_TEMPLATE
+        return self.INVOICE_HTML_TEMPLATE
 
     @property
     def text_template(self):
-        if self.invoice.subscription.service_type == SubscriptionType.CONTRACTED:
-            return self.INVOICE_CONTRACTED_TEXT_TEMPLATE
-        else:
-            return self.INVOICE_TEXT_TEMPLATE
+        return self.INVOICE_TEXT_TEMPLATE
 
     @classmethod
     def generate_record(cls, invoice):
@@ -1665,17 +1657,6 @@ class BillingRecordBase(models.Model):
             'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
             'accounts_email': settings.ACCOUNTS_EMAIL,
         }
-        if self.invoice.subscription.service_type == SubscriptionType.CONTRACTED:
-            from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
-            context.update({
-                'salesforce_contract_id': self.invoice.subscription.salesforce_contract_id,
-                'billing_account_id': self.invoice.subscription.account.id,
-                'billing_contacts': self.invoice.contact_emails,
-                'admin_invoices_url': "{url}?subscriber={domain}".format(
-                    url=absolute_reverse(AccountingAdminInterfaceDispatcher.name(), args=['invoices']),
-                    domain=domain
-                )
-            })
         return context
 
     def email_subject(self):
@@ -1751,6 +1732,22 @@ class WireBillingRecord(BillingRecordBase):
 
 class BillingRecord(BillingRecordBase):
     invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT)
+    INVOICE_CONTRACTED_HTML_TEMPLATE = 'accounting/invoice_email_contracted.html'
+    INVOICE_CONTRACTED_TEXT_TEMPLATE = 'accounting/invoice_email_contracted_plaintext.html'
+
+    @property
+    def html_template(self):
+        if self.invoice.subscription.service_type == SubscriptionType.CONTRACTED:
+            return self.INVOICE_CONTRACTED_HTML_TEMPLATE
+        else:
+            return self.INVOICE_HTML_TEMPLATE
+
+    @property
+    def text_template(self):
+        if self.invoice.subscription.service_type == SubscriptionType.CONTRACTED:
+            return self.INVOICE_CONTRACTED_TEXT_TEMPLATE
+        else:
+            return self.INVOICE_TEXT_TEMPLATE
 
     def is_email_throttled(self):
         month = self.invoice.date_start.month
@@ -1778,6 +1775,17 @@ class BillingRecord(BillingRecordBase):
             'total_balance': total_balance,
             'is_total_balance_due': total_balance > SMALL_INVOICE_THRESHOLD,
         })
+        if self.invoice.subscription.service_type == SubscriptionType.CONTRACTED:
+            from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
+            context.update({
+                'salesforce_contract_id': self.invoice.subscription.salesforce_contract_id,
+                'billing_account_id': self.invoice.subscription.account.id,
+                'billing_contacts': self.invoice.contact_emails,
+                'admin_invoices_url': "{url}?subscriber={domain}".format(
+                    url=absolute_reverse(AccountingAdminInterfaceDispatcher.name(), args=['invoices']),
+                    domain=self.invoice.get_domain()
+                )
+            })
         return context
 
     def email_subject(self):
