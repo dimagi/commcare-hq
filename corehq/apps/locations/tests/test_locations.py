@@ -198,16 +198,6 @@ class LocationsTest(LocationTestBase):
             Location.filter_by_type(self.domain.name, 'village', test_state1)
         )
 
-        # Location.filter_by_type_count
-        self.assertEqual(
-            2,
-            Location.filter_by_type_count(self.domain.name, 'village')
-        )
-        self.assertEqual(
-            1,
-            Location.filter_by_type_count(self.domain.name, 'village', test_state1)
-        )
-
         # Location.get_in_domain
         test_village2.domain = 'rejected'
         bootstrap_location_types('rejected')
