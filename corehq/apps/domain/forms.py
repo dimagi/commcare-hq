@@ -1212,7 +1212,10 @@ class InternalSubscriptionManagementForm(forms.Form):
     @property
     @memoized
     def next_account(self):
-        matching_accounts = BillingAccount.objects.filter(name=self.account_name).order_by('date_created')
+        matching_accounts = BillingAccount.objects.filter(
+            name=self.account_name,
+            account_type=BillingAccountType.GLOBAL_SERVICES,
+        ).order_by('date_created')
         if matching_accounts:
             account = matching_accounts[0]
         else:
@@ -1222,6 +1225,7 @@ class InternalSubscriptionManagementForm(forms.Form):
                 created_by_domain=self.domain,
                 currency=Currency.get_default(),
                 dimagi_contact=self.web_user,
+                account_type=BillingAccountType.GLOBAL_SERVICES,
             )
             account.save()
         contact_info, _ = BillingContactInfo.objects.get_or_create(account=account)
