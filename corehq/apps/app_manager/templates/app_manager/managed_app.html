@@ -44,10 +44,7 @@
     <script>
         $(function () {
             $('.hq-help-template').each(function () {
-                COMMCAREHQ.makeHqHelp({
-                    content: $(this).data('content'),
-                    title: $(this).data('title'),
-                }, false).insertAfter(this);
+                COMMCAREHQ.makeHqHelp($(this).data(), false).insertAfter(this);
                 $(this).remove();
             });
             $('.hq-help').hqHelp();

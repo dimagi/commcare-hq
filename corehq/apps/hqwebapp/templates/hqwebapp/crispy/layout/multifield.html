@@ -3,16 +3,14 @@
      {{ multifield.flat_attrs|safe }}>
     <label class="control-label {% if multifield.label_class %} {{ multifield.label_class }}{% endif %}">
         {% if help_bubble_text and multifield.css_id %}
-            <div class="pull-left" style="margin-top: -5px;">
       <!-- TODO: use hq-help-template -->
-                <div class="hq-help">
-                    <a href="#" id="help_{{ multifield.css_id }}">
-                        <i class="icon-question-sign"
-                           data-title="{{ multifield.label_html }}"
-                           data-content="{{ help_bubble_text }}">
-                        </i>
-                    </a>
-                </div>
+            <div class="hq-help pull-right">
+                <a href="#" id="help_{{ multifield.css_id }}">
+                    <i class="icon-question-sign"
+                       data-title="{{ multifield.label_html }}"
+                       data-content="{{ help_bubble_text }}">
+                    </i>
+                </a>
             </div>
             <script>
                 $(function () {
