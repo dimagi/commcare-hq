@@ -8,9 +8,8 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.graph_models import Axis
-from corehq.apps.reports.filters.dates import DatespanFilter
 from custom.common import ALL_OPTION
-from custom.ewsghana.filters import ProductByProgramFilter, ViewReportFilter
+from custom.ewsghana.filters import ProductByProgramFilter, ViewReportFilter, EWSDateFilter
 from custom.ewsghana.reports.stock_levels_report import StockLevelsReport, InventoryManagementData, \
     StockLevelsLegend, FacilityReportData, InputStock, UsersData
 from custom.ewsghana.reports import MultiReport, EWSData, EWSMultiBarChart, ProductSelectionPane, EWSLineChart
@@ -346,7 +345,7 @@ class StockStatus(MultiReport):
     name = 'Stock status'
     title = 'Stock Status'
     slug = 'stock_status'
-    fields = [AsyncLocationFilter, ProductByProgramFilter, DatespanFilter, ViewReportFilter]
+    fields = [AsyncLocationFilter, ProductByProgramFilter, EWSDateFilter, ViewReportFilter]
     split = False
     exportable = True
     is_exportable = True
