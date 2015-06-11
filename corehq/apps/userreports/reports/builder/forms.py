@@ -533,12 +533,15 @@ class ConfigureNewReportBase(forms.Form):
 
         def _make_report_filter(conf):
             col_id = self.data_source_properties[conf["property"]]['column_id']
-            return {
+            ret = {
                 "field": col_id,
                 "slug": col_id,
                 "display": conf["display_text"],
                 "type": filter_type_map[conf['format']]
             }
+            if conf['format'] == 'Date':
+                ret.update({'compare_as_string': True})
+            return ret
 
         filter_configs = self.cleaned_data['filters']
         filters = [_make_report_filter(f) for f in filter_configs]
