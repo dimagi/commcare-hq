@@ -127,12 +127,11 @@ var mk_translation_ui = function (spec) {
                     }
                 }
             });
-        }).after($('<a style="padding-left: 6px;"><i class="icon-question-sign"></i></a>')).popover({   // TODO: standardize
-            placement: 'right',
-            title: 'Auto Fill translations',
-            content: 'This will pick the most common translations for your selected language.  You can then edit them as needed.',
-            trigger: 'focus',
-        });
+        }).after("<span class='hq-help-template' data-placement='right' " + 
+            "data-title='Auto Fill translations' " + 
+            "data-content='This will pick the most common translations for your selected language.  You can then edit them as needed.'" +
+            "></span>"
+        );
 
     for (key in spec.translations) {
         if (spec.translations.hasOwnProperty(key)) {
@@ -237,6 +236,7 @@ var mk_translation_ui = function (spec) {
         }
         if (translation_ui.allow_autofill) {
             $home.append($bootstrap);
+            COMMCAREHQ.transformHelpTemplate($bootstrap.siblings(".hq-help-template"), true);
         }
         translation_ui.appendAdder();
         $home.append($table);
