@@ -719,12 +719,12 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
 
     @property
     def _report_columns(self):
-        agg_col_id = self.data_source_properties[self.aggregation_field]['column_id']
+        agg_field_id = self.data_source_properties[self.aggregation_field]['column_id']
 
         columns = super(ConfigureTableReportForm, self)._report_columns
         # Expand all columns except for the column being used for aggregation.
         for c in columns:
-            if c['field'] != agg_col_id:
+            if c['field'] != agg_field_id:
                 c['aggregation'] = "expand"
         return columns
 
