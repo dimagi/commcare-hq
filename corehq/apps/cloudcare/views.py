@@ -240,7 +240,7 @@ def get_cases_skip_arg(request, domain):
     When this function returns True, skippable_quickcache will not go to the cache for the result. By default,
     if neither of these params are passed into the function, nothing will be cached. Cache will always be
     skipped if ids_only is false.
-    
+
     The caching is mainly a hack for touchforms to respond more quickly. Touchforms makes repeated requests to
     get the list of case_ids associated with a user.
     """
