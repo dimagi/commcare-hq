@@ -724,11 +724,7 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
         columns = super(ConfigureTableReportForm, self)._report_columns
 
         # Add the aggregation indicator to the columns if it's not already present.
-        displaying_agg_column = False
-        for c in columns:
-            if c['field'] == agg_field_id:
-                displaying_agg_column = True
-                break
+        displaying_agg_column = bool([c for c in columns if c['field'] == agg_field_id])
         if not displaying_agg_column:
             columns = [{
                 'format': 'default',
