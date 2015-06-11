@@ -140,6 +140,17 @@ class SelectOpenCloseFilter(BaseSingleOptionFilter):
         ]
 
 
+class SelectUserOrGroupFilter(BaseSingleOptionFilter):
+    slug = "users_or_groups"
+    label = ugettext_noop("View by Users or Groups")
+    css_class = "span2"
+    default_text = ugettext_noop("Users")
+
+    @property
+    def options(self):
+        return [('groups', _("Groups"))]
+
+
 class SelectApplicationFilter(BaseSingleOptionFilter):
     slug = "app"
     label = ugettext_lazy("Application")
