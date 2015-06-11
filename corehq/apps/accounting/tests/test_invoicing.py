@@ -1,6 +1,7 @@
 from decimal import Decimal
 import random
 import datetime
+
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management import call_command
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
@@ -14,7 +15,7 @@ from corehq.apps.accounting import generator, tasks, utils
 from corehq.apps.accounting.models import (
     Invoice, FeatureType, LineItem, Subscriber, DefaultProductPlan,
     CreditAdjustment, CreditLine, SubscriptionAdjustment, SoftwareProductType,
-    SoftwarePlanEdition, BillingRecord, BillingAccount,
+    SoftwarePlanEdition, BillingRecord, BillingAccount, SubscriptionType,
 )
 
 
@@ -128,6 +129,51 @@ class TestInvoice(BaseInvoiceTestCase):
             invoice.date_end
         )
         domain.delete()
+
+
+class TestContractedInvoices(BaseInvoiceTestCase):
+    def setUp(self):
+        super(TestContractedInvoices, self).setUp()
+        generator.delete_all_subscriptions()
+
+        self.subscription, self.subscription_length = generator.generate_domain_subscription_from_date(
+            generator.get_start_date(),
+            self.account,
+            self.domain.name,
+            min_num_months=self.min_subscription_length,
+            service_type=SubscriptionType.CONTRACTED,
+        )
+
+        self.invoice_date = utils.months_from_date(
+            self.subscription.date_start,
+            random.randint(2, self.subscription_length)
+        )
+
+    def test_contracted_invoice_email_recipient(self):
+        """
+        For contracted invoices, emails should be sent to finance@dimagi.com
+        """
+
+        expected_recipient = ["finance@dimagi.com"]
+
+        tasks.generate_invoices(self.invoice_date)
+
+        self.assertEqual(Invoice.objects.count(), 1)
+        actual_recipient = Invoice.objects.first().email_recipients
+        self.assertEqual(actual_recipient, expected_recipient)
+
+    def test_contracted_invoice_email_template(self):
+        """
+        Emails for contracted invoices should use the contracted invoices template
+        """
+        expected_template = BillingRecord.INVOICE_CONTRACTED_HTML_TEMPLATE
+
+        tasks.generate_invoices(self.invoice_date)
+
+        self.assertEqual(BillingRecord.objects.count(), 1)
+        actual_template = BillingRecord.objects.first().html_template
+
+        self.assertTrue(actual_template, expected_template)
 
 
 class TestProductLineItem(BaseInvoiceTestCase):

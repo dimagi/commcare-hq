@@ -1410,6 +1410,10 @@ class InvoiceBase(models.Model):
 
     @property
     def email_recipients(self):
+        return self.contact_emails
+
+    @property
+    def contact_emails(self):
         contact_emails = self.account.billingcontactinfo.emails
         contact_emails = (contact_emails.split(',')
                           if contact_emails is not None else [])
@@ -1459,6 +1463,13 @@ class Invoice(InvoiceBase):
     to CreditAdjustments.
     """
     subscription = models.ForeignKey(Subscription, on_delete=models.PROTECT)
+
+    @property
+    def email_recipients(self):
+        if self.subscription.service_type == SubscriptionType.CONTRACTED:
+            return [settings.FINANCE_EMAIL]
+        else:
+            return self.contact_emails
 
     @property
     def subtotal(self):
@@ -1590,6 +1601,14 @@ class BillingRecordBase(models.Model):
             return InvoicePdf.get(self.pdf_data_id)
         return self._pdf
 
+    @property
+    def html_template(self):
+        return self.INVOICE_HTML_TEMPLATE
+
+    @property
+    def text_template(self):
+        return self.INVOICE_TEXT_TEMPLATE
+
     @classmethod
     def generate_record(cls, invoice):
         record = cls(invoice=invoice)
@@ -1676,8 +1695,8 @@ class BillingRecordBase(models.Model):
                 pass
             context['greeting'] = greeting
             context['can_view_statement'] = can_view_statement
-            email_html = render_to_string(self.INVOICE_HTML_TEMPLATE, context)
-            email_plaintext = render_to_string(self.INVOICE_TEXT_TEMPLATE, context)
+            email_html = render_to_string(self.html_template, context)
+            email_plaintext = render_to_string(self.text_template, context)
             send_HTML_email(
                 subject, email, email_html,
                 text_content=email_plaintext,
@@ -1717,6 +1736,22 @@ class WireBillingRecord(BillingRecordBase):
 
 class BillingRecord(BillingRecordBase):
     invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT)
+    INVOICE_CONTRACTED_HTML_TEMPLATE = 'accounting/invoice_email_contracted.html'
+    INVOICE_CONTRACTED_TEXT_TEMPLATE = 'accounting/invoice_email_contracted_plaintext.html'
+
+    @property
+    def html_template(self):
+        if self.invoice.subscription.service_type == SubscriptionType.CONTRACTED:
+            return self.INVOICE_CONTRACTED_HTML_TEMPLATE
+        else:
+            return self.INVOICE_HTML_TEMPLATE
+
+    @property
+    def text_template(self):
+        if self.invoice.subscription.service_type == SubscriptionType.CONTRACTED:
+            return self.INVOICE_CONTRACTED_TEXT_TEMPLATE
+        else:
+            return self.INVOICE_TEXT_TEMPLATE
 
     def is_email_throttled(self):
         month = self.invoice.date_start.month
@@ -1744,6 +1779,17 @@ class BillingRecord(BillingRecordBase):
             'total_balance': total_balance,
             'is_total_balance_due': total_balance > SMALL_INVOICE_THRESHOLD,
         })
+        if self.invoice.subscription.service_type == SubscriptionType.CONTRACTED:
+            from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
+            context.update({
+                'salesforce_contract_id': self.invoice.subscription.salesforce_contract_id,
+                'billing_account_id': self.invoice.subscription.account.id,
+                'billing_contacts': self.invoice.contact_emails,
+                'admin_invoices_url': "{url}?subscriber={domain}".format(
+                    url=absolute_reverse(AccountingAdminInterfaceDispatcher.name(), args=['invoices']),
+                    domain=self.invoice.get_domain()
+                )
+            })
         return context
 
     def email_subject(self):
