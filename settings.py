@@ -190,6 +190,7 @@ DEFAULT_APPS = (
     'raven.contrib.django.raven_compat',
     'compressor',
     'mptt',
+    'tastypie',
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap'
