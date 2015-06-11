@@ -5,8 +5,9 @@ from sqlagg import (
 )
 from sqlalchemy.exc import ProgrammingError
 from corehq.apps.reports.sqlreport import SqlData
-from corehq.apps.userreports.exceptions import UserReportsError, \
-    UserReportsWarning, TableNotFoundWarning
+from corehq.apps.userreports.exceptions import (
+    UserReportsError, TableNotFoundWarning,
+)
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.reports.specs import DESCENDING
 from corehq.apps.userreports.sql import get_table_name

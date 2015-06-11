@@ -167,7 +167,7 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
             return self.render_json_response({
                 'error': e.message,
             })
-        except TableNotFoundWarning as w:
+        except TableNotFoundWarning:
             if self.spec.report_meta.created_by_builder:
                 msg = "The database table backing your report does not exist yet. " \
                       "Please wait while the report is populated."
