@@ -15,11 +15,11 @@
 ├── jsdiff#1.4.0
 ├─┬ jstree#110b6681ff
 │ └── jquery#1.11.3 (2.1.4 available)
-├── langcodes#1168def14e
+├── langcodes#27dcfc401e
 ├── markdown-it#4.2.1 extraneous (4.2.2 available)
 ├── require-css#0.1.8
 ├── require-less#0.1.5
-├── requirejs#2.1.17 (2.1.18 available)
+├── requirejs#2.1.18
 ├── requirejs-plugins#1.0.3
 ├── requirejs-text#2.0.14
 ├── requirejs-tpl#a3ca1e0e7f
