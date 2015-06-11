@@ -47,6 +47,13 @@ COMMCAREHQ.makeHqHelp = function (opts, wrap) {
     return el;
 };
 
+COMMCAREHQ.transformHelpTemplate = function ($template, wrap) {
+    'use strict';
+    var $help = COMMCAREHQ.makeHqHelp($template.data(), wrap);
+    $help.insertAfter($template);
+    $template.remove();
+}
+
 COMMCAREHQ.initBlock = function ($elem) {
     'use strict';
     $('.submit_on_click', $elem).on("click", function (e) {
