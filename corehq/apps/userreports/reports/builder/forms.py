@@ -1,4 +1,4 @@
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
 import uuid
 from django import forms
 from django.core.urlresolvers import reverse
@@ -169,37 +169,37 @@ class DataSourceBuilder(object):
         """
 
         if self.source_type == 'case':
-            return {
-                cp: {
+            return OrderedDict(
+                (cp, {
                     'type': 'case_property',
                     'id': cp,
                     'column_id': get_column_name(cp),
                     'text': cp,
                     'source': cp
-                } for cp in self.case_properties
-            }
+                }) for cp in self.case_properties
+            )
 
         if self.source_type == 'form':
-            ret = {}
+            ret = OrderedDict()
             questions = self.source_xform.get_questions([])
-            ret.update({
-                q['value']: {
+            ret.update(
+                (q['value'], {
                     "type": "question",
                     "id": q['value'],
                     "column_id": get_column_name(q['value'].strip("/")),
                     'text': q['label'],
                     "source": q,
-                } for q in questions
-            })
-            ret.update({
-                p[0]: {
+                }) for q in questions
+            )
+            ret.update(
+                (p[0], {
                     "type": "meta",
                     "id": p[0],
                     "column_id": get_column_name(p[0].strip("/")),
                     'text': p[0],
                     "source": p,
-                } for p in FORM_METADATA_PROPERTIES
-            })
+                }) for p in FORM_METADATA_PROPERTIES
+            )
             return ret
 
     @property
