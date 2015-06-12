@@ -11,14 +11,14 @@
     var line_chart_id;
     var line_chart;
     var single_line_chart_data;
-
+    {% if chart.data_needs_formatting %}
+        line_chart_data = formatDataForLineGraph({{ chart.data|JSON }});
+    {% else %}
+        line_chart_data = {{ chart.data|JSON }};
+    {% endif %}
     var graphGenerator = function() {
         var chart_config = {{ chart.config_dict|JSON }};
-        {% if chart.data_needs_formatting %}
-            line_chart_data = formatDataForLineGraph({{ chart.data|JSON }});
-        {% else %}
-            line_chart_data = {{ chart.data|JSON }};
-        {% endif %}
+
         line_chart_id = '#{{ chart_id }}';
 
         $(line_chart_id).show();
@@ -182,10 +182,7 @@
                 $('#stockouts_filter_btn').removeAttr('disabled');
                 $('.hq-loading').fadeOut();
 
-                d3.select(line_chart_id + ' svg')
-                        .datum(response)
-                        .transition().duration(500).call(line_chart);
-                show_hide_line_chart_data();
+                addGraph();
 
             },
             error: function() {
