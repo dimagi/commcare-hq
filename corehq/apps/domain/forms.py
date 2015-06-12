@@ -1543,7 +1543,9 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
                     new_plan_version,
                     date_end=self.cleaned_data['end_date'],
                     web_user=self.web_user,
+                    transfer_credits=self.current_subscription.account == self.next_account,
                 )
+                new_subscription.account = self.next_account
             if new_subscription.date_start <= datetime.date.today() and datetime.date.today() < new_subscription.date_end:
                 new_subscription.is_active = True
             new_subscription.do_not_invoice = False

@@ -971,7 +971,8 @@ class Subscription(models.Model):
 
     def change_plan(self, new_plan_version, date_end=None,
                     note=None, web_user=None, adjustment_method=None,
-                    service_type=None, pro_bono_status=None):
+                    service_type=None, pro_bono_status=None,
+                    transfer_credits=True):
         """
         Changing a plan TERMINATES the current subscription and
         creates a NEW SUBSCRIPTION where the old plan left off.
@@ -1019,7 +1020,8 @@ class Subscription(models.Model):
         )
 
         # transfer existing credit lines to the new subscription
-        self.transfer_credits(new_subscription)
+        if transfer_credits:
+            self.transfer_credits(new_subscription)
 
         # record transfer from old subscription
         SubscriptionAdjustment.record_adjustment(
