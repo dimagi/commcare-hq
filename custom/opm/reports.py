@@ -12,6 +12,7 @@ import logging
 import pickle
 import json
 import re
+import urllib
 from dateutil import parser
 
 from django.http import HttpResponse
@@ -1468,6 +1469,7 @@ class HealthMapReport(BaseMixin, ElasticSearchMapReport, GetParamsMixin, CustomP
     name = "Health Status (Map)"
     slug = "health_status_map"
     fields = [HierarchyFilter, OpenCloseFilter, DatespanFilter]
+    base_template = 'opm/map_base_template.html'
     report_partial_path = 'opm/map_template.html'
     printable = True
 
@@ -1550,7 +1552,7 @@ class HealthMapReport(BaseMixin, ElasticSearchMapReport, GetParamsMixin, CustomP
             '# of Children Whose Nutritional Status is "MAM"',
             '# of Children Whose Nutritional Status is Normal'
         ]
-        return {
+        config = {
             "detail_columns": columns[0:5],
             "display_columns": columns[4:],
             "table_columns": columns,
@@ -1566,6 +1568,14 @@ class HealthMapReport(BaseMixin, ElasticSearchMapReport, GetParamsMixin, CustomP
                 title: "return x + ' \%'" for title in additional_columns + columns[4:]
             }
         }
+        default_metric = self.request.GET.get('metric', None)
+        if default_metric:
+            for metric in config['metrics']:
+                unquote = urllib.unquote(default_metric)
+                if metric['color']['column'] == unquote:
+                    metric['default'] = True
+                    break
+        return config
 
     @property
     def rows(self):
