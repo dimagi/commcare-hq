@@ -50,7 +50,7 @@
             {% if user.first_name or user.last_name %}
                 {% if user.email %}
                     <tr>
-                        <td><a href="{% url 'user_account' domain user.get_id %}">{{ user.first_name }} {{ user.last_name }}</a></td>
+                        <td><a href="{% url 'user_account' domain user.id %}">{{ user.first_name }} {{ user.last_name }}</a></td>
                         <td>{{ user.email }}</td>
                     </tr>
                 {% endif %}

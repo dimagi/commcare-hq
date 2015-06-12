@@ -293,10 +293,17 @@ class UsersData(EWSData):
             'url': reverse(EditCommCareUserView.urlname, args=[self.config['domain'], sms_user.get_id])
         }
 
-        web_users = UserES().web_users().domain(self.config['domain']).term(
-            "domain_memberships.location_id", self.config['location_id']
-        ).run().hits
-
+        web_users = [
+            {
+                'id': web_user['_id'],
+                'first_name': web_user['first_name'],
+                'last_name': web_user['last_name'],
+                'email': web_user['email']
+            }
+            for web_user in UserES().web_users().domain(self.config['domain']).term(
+                "domain_memberships.location_id", self.config['location_id']
+            ).run().hits
+        ]
         return render_to_string('ewsghana/partials/users_tables.html', {
             'users': [user_to_dict(user) for user in users],
             'domain': self.domain,
