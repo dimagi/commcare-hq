@@ -46,7 +46,9 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
     @property
     @memoized
     def data_source(self):
-        return ReportFactory.from_spec(self.spec)
+        report = ReportFactory.from_spec(self.spec)
+        report.lang = self.request.couch_user.language
+        return report
 
     @property
     @memoized
@@ -242,7 +244,7 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
 
         report_config = ReportConfiguration.get(self.report_config_id)
         raw_rows = list(data.get_data())
-        headers = [column['display'] for column in report_config.columns]
+        headers = [column.header for column in self.data_source.columns]
         columns = [column['field'] for column in report_config.columns]
         rows = [[raw_row[column] for column in columns] for raw_row in raw_rows]
         return [

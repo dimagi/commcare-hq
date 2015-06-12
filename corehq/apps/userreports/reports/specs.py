@@ -46,7 +46,7 @@ class ReportFilter(JsonObject):
 class ReportColumn(JsonObject):
     type = StringProperty(required=True)
     column_id = StringProperty(required=True)
-    display = StringProperty()
+    display = DefaultProperty()
     description = StringProperty()
     transform = DictProperty()
 
@@ -56,7 +56,7 @@ class ReportColumn(JsonObject):
         """
         pass
 
-    def get_sql_column_config(self, data_source_config):
+    def get_sql_column_config(self, data_source_config, lang):
         raise NotImplementedError('subclasses must override this')
 
     def get_format_fn(self):
@@ -69,6 +69,13 @@ class ReportColumn(JsonObject):
 
     def get_group_by_columns(self):
         raise NotImplementedError(_("You can't group by columns of type {}".format(self.type)))
+
+    def get_header(self, lang):
+        if isinstance(self.display, basestring) or self.display is None:
+            return self.display
+        return self.display.get(
+            lang, self.display.get("en", self.display.values()[0])
+        )
 
 
 class FieldColumn(ReportColumn):
@@ -106,10 +113,10 @@ class FieldColumn(ReportColumn):
                     float(row[column_name]) / total
                 )
 
-    def get_sql_column_config(self, data_source_config):
+    def get_sql_column_config(self, data_source_config, lang):
         return SqlColumnConfig(columns=[
             DatabaseColumn(
-                header=self.display,
+                header=self.get_header(lang),
                 agg_column=SQLAGG_COLUMN_MAP[self.aggregation](self.field, alias=self.column_id),
                 sortable=False,
                 data_slug=self.column_id,
@@ -133,8 +140,8 @@ class ExpandedColumn(ReportColumn):
         _add_column_id_if_missing(obj)
         return super(ExpandedColumn, cls).wrap(obj)
 
-    def get_sql_column_config(self, data_source_config):
-        return get_expanded_column_config(data_source_config, self)
+    def get_sql_column_config(self, data_source_config, lang):
+        return get_expanded_column_config(data_source_config, self, lang)
 
 
 class AggregateDateColumn(ReportColumn):
@@ -144,10 +151,10 @@ class AggregateDateColumn(ReportColumn):
     type = TypeProperty('aggregate_date')
     field = StringProperty(required=True)
 
-    def get_sql_column_config(self, data_source_config):
+    def get_sql_column_config(self, data_source_config, lang):
         return SqlColumnConfig(columns=[
             AggregateColumn(
-                header=self.display,
+                header=self.get_header(lang),
                 aggregate_fn=lambda year, month: {'year': year, 'month': month},
                 format_fn=self.get_format_fn(),
                 columns=[
@@ -179,13 +186,13 @@ class PercentageColumn(ReportColumn):
     denominator = ObjectProperty(FieldColumn, required=True)
     format = StringProperty(choices=['percent', 'fraction', 'both'], default='percent')
 
-    def get_sql_column_config(self, data_source_config):
+    def get_sql_column_config(self, data_source_config, lang):
         # todo: better checks that fields are not expand
-        num_config = self.numerator.get_sql_column_config(data_source_config)
-        denom_config = self.denominator.get_sql_column_config(data_source_config)
+        num_config = self.numerator.get_sql_column_config(data_source_config, lang)
+        denom_config = self.denominator.get_sql_column_config(data_source_config, lang)
         return SqlColumnConfig(columns=[
             AggregateColumn(
-                header=self.display,
+                header=self.get_header(lang),
                 aggregate_fn=lambda n, d: {'num': n, 'denom': d},
                 format_fn=self.get_format_fn(),
                 columns=[c.view for c in num_config.columns + denom_config.columns],
