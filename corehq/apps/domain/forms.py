@@ -478,6 +478,18 @@ class DomainGlobalSettingsForm(forms.Form):
         timezone_field.run_validators(data)
         return smart_str(data)
 
+    def clean(self):
+        cleaned_data = super(DomainGlobalSettingsForm, self).clean()
+        if (cleaned_data.get('call_center_enabled') and
+                (not cleaned_data.get('call_center_case_type') or
+                 not cleaned_data.get('call_center_case_owner'))):
+            raise forms.ValidationError(_(
+                'You must choose an Owner and Case Type to use the call center application. '
+                'Please uncheck the "Call Center Application" setting or enter values for the other fields.'
+            ))
+
+        return cleaned_data
+
     def save(self, request, domain):
         domain.hr_name = self.cleaned_data['hr_name']
 
