@@ -122,10 +122,10 @@ class SohPercentageTableData(ILSData):
                 facs = get_facilities(loc, self.config['domain'])
                 facs_count = facs.count()
 
-                if soh_data:
-                    soh_on_time = soh_data.on_time * 100 / facs_count if soh_data else 0
-                    soh_late = soh_data.late * 100 / facs_count if soh_data else 0
-                    soh_not_responding = soh_data.not_responding * 100 / facs_count if soh_data else 0
+                if soh_data and facs_count > 0:
+                    soh_on_time = soh_data.on_time * 100 / facs_count
+                    soh_late = soh_data.late * 100 / facs_count
+                    soh_not_responding = soh_data.not_responding * 100 / facs_count
                 else:
                     soh_on_time = None
                     soh_late = None
