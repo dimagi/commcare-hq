@@ -13,5 +13,3 @@ class MissingParamException(FilterException):
 
 class FilterValueException(FilterException):
     pass
-
-
