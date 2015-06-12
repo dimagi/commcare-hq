@@ -278,7 +278,7 @@ class AWCHealthStatus(object):
         ('nutritional_bonus',
          _("Eligilble for Nutritional status bonus"),
          _("Registered beneficiaries eligible for nutritonal status bonus for the month"),
-         'beneficiaries'),
+         'children'),
         ('closed_pregnants',
          _("Pregnant women cases closed"),
          _("Registered pregnant women cases closed for the month"),
