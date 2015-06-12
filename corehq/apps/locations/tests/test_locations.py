@@ -1,4 +1,4 @@
-from corehq.apps.groups.tests import WrapGroupTestMixin
+from corehq.apps.groups.tests import WrapGroupTest
 from corehq.apps.locations.models import Location, LocationType, SQLLocation, \
     LOCATION_REPORTING_PREFIX
 from corehq.apps.locations.tests.util import make_loc
@@ -6,8 +6,10 @@ from corehq.apps.locations.fixtures import location_fixture_generator
 from corehq.apps.commtrack.helpers import make_supply_point, make_product
 from corehq.apps.commtrack.tests.util import bootstrap_location_types
 from corehq.apps.users.models import CommCareUser
-from django.test import TestCase, SimpleTestCase
+from django.test import TestCase
+from couchdbkit import ResourceNotFound
 from corehq import toggles
+from corehq.apps.groups.models import Group
 from corehq.apps.groups.exceptions import CantSaveException
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.domain.shortcuts import create_domain
@@ -431,5 +433,5 @@ class LocationGroupTest(LocationTestBase):
         self.assertEquals(len(fixture[0].findall('.//outlet')), 3)
 
 
-class WrapLocationTest(WrapGroupTestMixin, SimpleTestCase):
+class WrapLocationTest(WrapGroupTest):
     document_class = Location
