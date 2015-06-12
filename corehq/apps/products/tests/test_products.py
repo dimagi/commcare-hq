@@ -1,7 +1,6 @@
-from django.test import SimpleTestCase
-from corehq.apps.groups.tests import WrapGroupTestMixin
+from corehq.apps.groups.tests import WrapGroupTest
 from corehq.apps.products.models import Product
 
 
-class WrapProductTest(WrapGroupTestMixin, SimpleTestCase):
+class WrapProductTest(WrapGroupTest):
     document_class = Product
