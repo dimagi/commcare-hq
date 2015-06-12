@@ -1017,7 +1017,8 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 subscription = Subscription.new_domain_subscription(
                     self.account, self.domain, self.plan_version,
                     web_user=self.creating_user,
-                    adjustment_method=SubscriptionAdjustmentMethod.USER)
+                    adjustment_method=SubscriptionAdjustmentMethod.USER,
+                    service_type=SubscriptionType.SELF_SERVICE)
                 subscription.is_active = True
                 if subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE:
                     # this point can only be reached if the initiating user was a superuser
