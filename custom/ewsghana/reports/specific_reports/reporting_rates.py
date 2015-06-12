@@ -366,74 +366,7 @@ class AlertsData(ReportingRatesData):
         return rows
 
 
-class EWSDateSpan(DateSpan):
-
-    @classmethod
-    def get_date(cls, type=None, month_or_week=None, year=None, format=ISO_DATE_FORMAT,
-                 inclusive=True, timezone=pytz.utc):
-        if month_or_week is None:
-            month_or_week = datetime.datetime.date.today().month
-        if year is None:
-            year = datetime.datetime.date.today().year
-        if type == 2:
-            days = month_or_week.split('|')
-            start = force_to_date(days[0])
-            end = force_to_date(days[1])
-        else:
-            start = datetime(year, month_or_week, 1)
-            end = start + relativedelta(months=1) - relativedelta(days=1)
-        return DateSpan(start, end, format, inclusive, timezone)
-
-
-class MonthWeekMixin(object):
-    _datespan = None
-
-    @property
-    def datespan(self):
-        if self._datespan is None:
-            datespan = EWSDateSpan.get_date(self.type, self.first, self.second)
-            self.request.datespan = datespan
-            self.context.update(dict(datespan=datespan))
-            self._datespan = datespan
-        return self._datespan
-
-    @property
-    def type(self):
-        """
-            We have a 3 possible type:
-            1 - month
-            2 - quarter
-            3 - year
-        """
-        if 'datespan_type' in self.request_params:
-            return int(self.request_params['datespan_type'])
-        else:
-            return 1
-
-    @property
-    def first(self):
-        """
-            If we choose type 1 in this we get a month [00-12]
-            If we choose type 2 we get quarter [1-4]
-            This property is unused when we choose type 3
-        """
-        if 'datespan_first' in self.request_params:
-            try:
-                return int(self.request_params['datespan_first'])
-            except ValueError:
-                return self.request_params['datespan_first']
-        else:
-            return datetime.utcnow().month
-
-    @property
-    def second(self):
-        if 'datespan_second' in self.request_params:
-            return int(self.request_params['datespan_second'])
-        else:
-            return datetime.utcnow().year
-
-
-class ReportingRatesReport(MonthWeekMixin, MultiReport):
+class ReportingRatesReport(MultiReport):
 
     name = 'Reporting'
     title = 'Reporting'
