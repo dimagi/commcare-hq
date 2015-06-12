@@ -13,7 +13,6 @@ TODO:
 {% endcomment%}
 
 
-{# Is it bad to inline this style? #}
 <table class="table table-condensed" style="display: inline-block">
 
     <thead data-bind="visible: columns().length > 0">
@@ -43,7 +42,27 @@ TODO:
         </td>
 
         <td class="control-group" data-bind="css:{'error': $parent.showWarnings() && !isValid()}">
+
+            <!-- ko ifnot: $parent.optionsContainQuestions -->
             <input type="text" data-bind="select2: $parent.propertyOptions, value: property">
+            <!-- /ko -->
+            <!-- ko if: $parent.optionsContainQuestions -->
+            <input class="input-large" type="hidden" data-bind="
+                questionsSelect: _.compact(_.map($parent.propertyOptions(), function (o) {
+                    if (o.type === 'question'){
+                        return o.source;
+                    } else if (o.type == 'meta'){
+                        return {
+                            value: o.source[0],
+                            label: '',
+                        }
+                    }
+                })),
+                value: property,
+                optionsCaption: ' '
+            "/>
+            <!-- /ko -->
+
             <label class="help-block" data-bind="if: $parent.showWarnings() && !isValid()">Property may not be blank!</label>
         </td>
         <td class="control-group">
