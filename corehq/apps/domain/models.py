@@ -121,10 +121,15 @@ class Deployment(DocumentSchema, UpdatableSchema):
     description = StringProperty()
     public = BooleanProperty(default=False)
 
+
 class CallCenterProperties(DocumentSchema):
     enabled = BooleanProperty(default=False)
     case_owner_id = StringProperty()
     case_type = StringProperty()
+
+    def is_active_and_valid(self):
+        return self.enabled and self.case_owner_id and self.case_type
+
 
 class LicenseAgreement(DocumentSchema):
     signed = BooleanProperty(default=False)
