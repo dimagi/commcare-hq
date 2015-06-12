@@ -54,7 +54,6 @@
                   setTimeout(function() {
                       $(element).select2(options);
                   }, 0);
-               //$(element).select2(valueAccessor());
 
                 ko.utils.domNodeDisposal.addDisposeCallback(element, function() {
                     $(element).select2('destroy');
@@ -68,15 +67,15 @@
     var dateSpanModel = {
         select_params: {{ select_options|JSON }},
         selectedType: ko.observable({{ selected_type }}),
-        first_selected: ko.observable({{ selected_first }}),
-        second_selected: ko.observable({{ selected_second }})
+        first_selected: ko.observable('{{ selected_first }}'),
+        second_selected: ko.observable('{{ selected_second }}')
     };
 
     dateSpanModel.firstOptions =  ko.computed(function() {
         if(dateSpanModel.selectedType()){
             var type = ko.utils.arrayFirst(dateSpanModel.select_params, function(item) {
                 return item.val === dateSpanModel.selectedType()
-            })
+            });
 
             return type.firstOptions;
         }
@@ -86,7 +85,7 @@
         if(dateSpanModel.selectedType()){
             var type = ko.utils.arrayFirst(dateSpanModel.select_params, function(item) {
                 return item.val === dateSpanModel.selectedType()
-            })
+            });
 
             return type.secondOptions;
         }
