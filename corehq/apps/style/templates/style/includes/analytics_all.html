@@ -64,7 +64,9 @@
          *
          * @param {string} event - Event name
          * @param {object} [properties] - Dictionary of properties to set along with the event.
-         * @param {function} [callback] - A Callback to be executed after the event has been successfully tracked.
+         * @param {function} [callback] - A Callback to be executed after the
+         *      event has been successfully tracked or after a short timeout
+         *      (whichever happens first) callback will only be called once.
          */
         workflow: function(event, properties, callback) {
             if (properties === undefined){
@@ -72,9 +74,11 @@
             }
             var args = ["record", event, properties];
             if (callback !== undefined){
-                args.push(callback);
+                var oneTimeCallback = _.once(callback);
+                args.push(oneTimeCallback);
             }
             _kmq.push(args);
+            setTimeout(oneTimeCallback, 2000)
         },
 
         /**
