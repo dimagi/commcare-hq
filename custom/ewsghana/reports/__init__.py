@@ -13,7 +13,7 @@ from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.graph_models import LineChart, MultiBarChart, PieChart
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
 from custom.ewsghana.filters import ProductByProgramFilter, EWSDateFilter
-from dimagi.utils.dates import DateSpan, force_to_date, force_to_datetime
+from dimagi.utils.dates import DateSpan, force_to_datetime
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import SQLLocation, LocationType
 from custom.ewsghana.utils import get_supply_points, filter_slugs_by_role
