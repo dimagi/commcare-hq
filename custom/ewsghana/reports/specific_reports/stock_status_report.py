@@ -2,15 +2,15 @@ from datetime import timedelta
 from django.db.models.aggregates import Count
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.generic import GenericTabularReport
 from custom.ilsgateway.tanzania.reports.utils import link_format
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.graph_models import Axis
-from corehq.apps.reports.filters.dates import DatespanFilter
 from custom.common import ALL_OPTION
-from custom.ewsghana.filters import ProductByProgramFilter, ViewReportFilter
+from custom.ewsghana.filters import ProductByProgramFilter, ViewReportFilter, EWSDateFilter
 from custom.ewsghana.reports.stock_levels_report import StockLevelsReport, InventoryManagementData, \
     StockLevelsLegend, FacilityReportData, InputStock, UsersData
 from custom.ewsghana.reports import MultiReport, EWSData, EWSMultiBarChart, ProductSelectionPane, EWSLineChart
@@ -125,6 +125,10 @@ class ProductAvailabilityData(EWSData):
             chart.stacked = False
             chart.tooltipFormat = " on "
             chart.forceY = [0, 1]
+            chart.product_code_map = {
+                sql_product.code: sql_product.name
+                for sql_product in SQLProduct.objects.filter(domain=self.domain)
+            }
             for row in convert_product_data_to_stack_chart(product_availability, self.chart_config):
                 chart.add_dataset(row['label'], [
                     {'x': r[0], 'y': r[1], 'name': r[2]}
@@ -346,7 +350,7 @@ class StockStatus(MultiReport):
     name = 'Stock status'
     title = 'Stock Status'
     slug = 'stock_status'
-    fields = [AsyncLocationFilter, ProductByProgramFilter, DatespanFilter, ViewReportFilter]
+    fields = [AsyncLocationFilter, ProductByProgramFilter, EWSDateFilter, ViewReportFilter]
     split = False
     exportable = True
     is_exportable = True

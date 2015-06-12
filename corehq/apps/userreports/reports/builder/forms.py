@@ -1,4 +1,5 @@
 from collections import namedtuple, OrderedDict
+from urllib import urlencode
 import uuid
 from django import forms
 from django.core.urlresolvers import reverse
@@ -346,7 +347,13 @@ class ConfigureNewReportBase(forms.Form):
         self.helper.attrs['data_bind'] = "submit: submitHandler"
         self.helper.form_id = "report-config-form"
 
-        buttons = [crispy.Submit('submit', self.button_text)]
+        buttons = [
+            crispy.HTML(
+                "<button type='submit' "
+                    "class='btn btn-primary disable-on-submit'"
+                ">{}</a>".format(self.button_text)
+            )
+        ]
         # Add a back button if we aren't editing an existing report
         if not self.existing_report:
             buttons.insert(
@@ -366,8 +373,13 @@ class ConfigureNewReportBase(forms.Form):
             buttons.insert(
                 0,
                 crispy.HTML(
-                    '<a class="btn btn-danger" href="{}" style="margin-right: 4px">{}</a>'.format(
-                        reverse('delete_configurable_report', args=(self.domain, self.existing_report._id)),
+                    '<a class="btn btn-danger pull-right" href="{}">{}</a>'.format(
+                        reverse(
+                            'delete_configurable_report',
+                            args=(self.domain, self.existing_report._id),
+                        ) + "?{}".format(urlencode(
+                            {'redirect': reverse('reports_home', args=[self.domain])}
+                        )),
                         _('Delete Report')
                     )
                 )
@@ -533,12 +545,15 @@ class ConfigureNewReportBase(forms.Form):
 
         def _make_report_filter(conf):
             col_id = self.data_source_properties[conf["property"]]['column_id']
-            return {
+            ret = {
                 "field": col_id,
                 "slug": col_id,
                 "display": conf["display_text"],
                 "type": filter_type_map[conf['format']]
             }
+            if conf['format'] == 'Date':
+                ret.update({'compare_as_string': True})
+            return ret
 
         filter_configs = self.cleaned_data['filters']
         filters = [_make_report_filter(f) for f in filter_configs]
@@ -719,12 +734,24 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
 
     @property
     def _report_columns(self):
-        agg_col_id = self.data_source_properties[self.aggregation_field]['column_id']
+        agg_field_id = self.data_source_properties[self.aggregation_field]['column_id']
 
         columns = super(ConfigureTableReportForm, self)._report_columns
+
+        # Add the aggregation indicator to the columns if it's not already present.
+        displaying_agg_column = bool([c for c in columns if c['field'] == agg_field_id])
+        if not displaying_agg_column:
+            columns = [{
+                'format': 'default',
+                'aggregation': 'simple',
+                "type": "field",
+                'field': agg_field_id,
+                'display': self.aggregation_field
+            }] + columns
+
         # Expand all columns except for the column being used for aggregation.
         for c in columns:
-            if c['field'] != agg_col_id:
+            if c['field'] != agg_field_id:
                 c['aggregation'] = "expand"
         return columns
 

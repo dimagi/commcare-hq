@@ -451,7 +451,7 @@ class ReportingRatesReport(MonthWeekMixin, MultiReport):
         return dict(
             domain=self.domain,
             startdate=self.datespan.startdate,
-            enddate=self.datespan.end_of_end_day,
+            enddate=self.datespan.enddate,
             location_id=self.request.GET.get('location_id') or get_country_id(self.domain),
             products=None,
             program=program if program != ALL_OPTION else None,
