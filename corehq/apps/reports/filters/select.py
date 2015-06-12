@@ -11,6 +11,7 @@ from corehq.apps.hqcase.dbaccessors import get_case_types_for_domain
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.groups.models import Group
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.orgs.models import Organization
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter, BaseMultipleOptionFilter
 
@@ -79,11 +80,19 @@ class GroupFilter(GroupFilterMixin, BaseSingleOptionFilter):
 
 class MultiGroupFilter(GroupFilterMixin, BaseMultipleOptionFilter):
     placeholder = ugettext_noop('Click to select groups')
+
+
+class GroupAndLocationFilter(MultiGroupFilter):
     default_options = ['_all']
 
     @property
     def options(self):
-        return [('_all', _("All"))] + super(MultiGroupFilter, self).options
+        groups = Group.get_reporting_groups(self.domain)
+        locations = [loc.reporting_group_object()
+                     for loc in SQLLocation.objects.filter(domain=self.domain,
+                                                           is_archived=False)]
+        return [('_all', _("All"))] + [(group.get_id, group.name)
+                                       for group in groups + locations]
 
 
 class YearFilter(BaseSingleOptionFilter):
