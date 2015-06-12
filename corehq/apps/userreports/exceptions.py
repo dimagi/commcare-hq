@@ -22,3 +22,7 @@ class UserQueryError(UserReportsError):
 
 class TableRebuildError(UserReportsError):
     pass
+
+
+class UserReportsFilterError(UserReportsError):
+    pass
