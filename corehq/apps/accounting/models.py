@@ -741,7 +741,8 @@ class Subscriber(models.Model):
                                       verbose=False,
                                       web_user=None,
                                       old_subscription=None,
-                                      new_subscription=None):
+                                      new_subscription=None,
+                                      internal_change=False):
 
         if self.organization is not None:
             raise SubscriptionChangeError("Only domain upgrades and downgrades are possible.")
@@ -803,9 +804,11 @@ class Subscriber(models.Model):
                 'request': request,
                 'referer': request.META.get('HTTP_REFERER') if request else None,
             }
+            sub_change_email_address = (settings.INTERNAL_SUBSCRIPTION_CHANGE_EMAIL
+                                        if internal_change else settings.SUBSCRIPTION_CHANGE_EMAIL)
             send_HTML_email(
                 "Subscription Change Alert: %(domain)s from %(old_plan)s to %(new_plan)s" % email_context,
-                settings.SUBSCRIPTION_CHANGE_EMAIL,
+                sub_change_email_address,
                 render_to_string('accounting/subscription_change_email.html', email_context),
                 text_content=render_to_string('accounting/subscription_change_email.txt', email_context),
             )
@@ -972,7 +975,7 @@ class Subscription(models.Model):
     def change_plan(self, new_plan_version, date_end=None,
                     note=None, web_user=None, adjustment_method=None,
                     service_type=None, pro_bono_status=None,
-                    transfer_credits=True):
+                    transfer_credits=True, internal_change=False):
         """
         Changing a plan TERMINATES the current subscription and
         creates a NEW SUBSCRIPTION where the old plan left off.
@@ -1017,6 +1020,7 @@ class Subscription(models.Model):
             web_user=web_user,
             old_subscription=self,
             new_subscription=new_subscription,
+            internal_change=internal_change,
         )
 
         # transfer existing credit lines to the new subscription
@@ -1288,7 +1292,7 @@ class Subscription(models.Model):
     @classmethod
     def new_domain_subscription(cls, account, domain, plan_version,
                                 date_start=None, date_end=None, note=None,
-                                web_user=None, adjustment_method=None,
+                                web_user=None, adjustment_method=None, internal_change=False,
                                 **kwargs):
         subscriber = Subscriber.objects.get_or_create(domain=domain, organization=None)[0]
         today = datetime.date.today()
@@ -1352,6 +1356,7 @@ class Subscription(models.Model):
             new_plan_version=plan_version,
             web_user=web_user,
             new_subscription=subscription,
+            internal_change=internal_change,
         )
         SubscriptionAdjustment.record_adjustment(
             subscription, method=adjustment_method, note=note,
