@@ -58,20 +58,21 @@ def _link_account_with_cookie(webuser, cookies):
     HUBSPOT_SIGNUP_FORM_ID = "e86f8bea-6f71-48fc-a43b-5620a212b2a4"
     hubspot_id = ANALYTICS_IDS.get('HUBSPOT_ID')
     hubspot_cookie = cookies.get('hubspotutk')
-
     if hubspot_id:
+        url = u"https://forms.hubspot.com/uploads/form/v2/{hubspot_id}/{form_id}".format(
+            hubspot_id=hubspot_id,
+            form_id=HUBSPOT_SIGNUP_FORM_ID
+        )
+        data = {
+            'email': webuser.username,
+            'firstname': webuser.first_name,
+            'lastname': webuser.last_name,
+            'hs_context': json.dumps({"hutk": hubspot_cookie})
+        }
         req = requests.post(
-            u"https://forms.hubspot.com/uploads/form/v2/{hubspot_id}/{form_id}".format(
-                hubspot_id=hubspot_id,
-                form_id=HUBSPOT_SIGNUP_FORM_ID
-            ),
-            data={
-                 'email': webuser.username,
-                 'firstname': webuser.first_name,
-                 'lastname': webuser.last_name,
-                 'hs_context': json.dumps({"hutk": hubspot_cookie})
-                },
-            )
+            url,
+            data=data
+        )
         req.raise_for_status()
 
 
