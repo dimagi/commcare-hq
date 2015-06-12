@@ -110,9 +110,9 @@ def new_update_case_properties():
 
             # get cati_owner_username from current owner-group
             assigned_owner_group = get_none_or_value(case, "owner_id")
-            if not GROUPS_BY_ID[assigned_owner_group]:
+            if assigned_owner_group not in GROUPS_BY_ID[domain]:
                 continue
-            cati_owner_username = GROUPS_BY_ID[assigned_owner_group].metadata.get('main_user', None)
+            cati_owner_username = GROUPS_BY_ID[domain][assigned_owner_group].metadata.get('main_user', None)
 
             # Assignment Directly from Registration ##
             # Assign Cases to Call Center
