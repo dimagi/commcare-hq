@@ -371,9 +371,10 @@ class MultiReport(MonthWeekMixin, CustomProjectReport, CommtrackReportMixin, Pro
     def _report_info(self):
         program_id = self.request.GET.get('filter_by_program')
         return [
-            ['Title of report', 'Date range', 'Program'],
+            ['Title of report', 'Location', 'Date range', 'Program'],
             [
                 self.title,
+                self.active_location.name,
                 '{} - {}'.format(self.datespan.startdate_display, self.datespan.enddate_display),
                 'all' if not program_id or program_id == 'all' else Program.get(docid=program_id).name
             ],
