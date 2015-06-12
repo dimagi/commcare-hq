@@ -1,5 +1,11 @@
 {% load hq_shared_tags %}
+<link rel="stylesheet" type="text/css" href="{% static "reports/css/daterangepicker-bs2.css" %}">
+
 <script src='{% static 'hqadmin/js/nvd3_charts_helper.js' %}' type='text/javascript'></script>
+
+<script type="text/javascript" src="{% static 'reports/javascripts/bootstrap-daterangepicker/moment.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'reports/javascripts/bootstrap-daterangepicker/daterangepicker.min.js' %}"></script>
+<script type="text/javascript" src='{% static 'reports/javascripts/daterangepicker.js' %}'></script>
 <script type="text/javascript">
     var line_chart_data;
     var line_chart_id;
