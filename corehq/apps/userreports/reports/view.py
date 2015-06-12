@@ -11,9 +11,10 @@ from django.views.generic.base import TemplateView
 from braces.views import JSONResponseMixin
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq.apps.reports.models import ReportConfig
+from corehq.apps.reports_core.exceptions import FilterException
 from corehq.apps.userreports.exceptions import (
-    UserReportsError, TableNotFoundWarning
-)
+    UserReportsError, TableNotFoundWarning,
+    UserReportsFilterError)
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.util.couch import get_document_or_404
@@ -60,10 +61,13 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
     @property
     @memoized
     def filter_values(self):
-        return {
-            filter.css_id: filter.get_value(self.request_dict)
-            for filter in self.filters
-        }
+        try:
+            return {
+                filter.css_id: filter.get_value(self.request_dict)
+                for filter in self.filters
+            }
+        except FilterException, e:
+            raise UserReportsFilterError(unicode(e))
 
     @property
     @memoized
