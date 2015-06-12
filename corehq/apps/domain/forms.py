@@ -10,7 +10,7 @@ from PIL import Image
 import uuid
 from dimagi.utils.decorators.memoized import memoized
 from django.contrib.auth import get_user_model
-from corehq import privileges, toggles
+from corehq import privileges
 from corehq.apps.accounting.exceptions import SubscriptionRenewalError
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
@@ -24,7 +24,7 @@ from crispy_forms import layout as crispy
 from django.core.urlresolvers import reverse
 
 from django.forms.fields import (ChoiceField, CharField, BooleanField,
-    ImageField, DecimalField, IntegerField)
+    ImageField)
 from django.forms.widgets import  Select
 from django.utils.encoding import smart_str
 from django.contrib.auth.forms import PasswordResetForm
@@ -406,6 +406,7 @@ class SubAreaMixin():
             raise forms.ValidationError(_('This is not a valid sub-area for the area %s') % area)
         return sub_area
 
+
 class DomainGlobalSettingsForm(forms.Form):
     hr_name = forms.CharField(label=_("Project Name"))
     default_timezone = TimeZoneChoiceField(label=ugettext_noop("Default Timezone"), initial="UTC")
@@ -477,6 +478,18 @@ class DomainGlobalSettingsForm(forms.Form):
         timezone_field = TimeZoneField()
         timezone_field.run_validators(data)
         return smart_str(data)
+
+    def clean(self):
+        cleaned_data = super(DomainGlobalSettingsForm, self).clean()
+        if (cleaned_data.get('call_center_enabled') and
+                (not cleaned_data.get('call_center_case_type') or
+                 not cleaned_data.get('call_center_case_owner'))):
+            raise forms.ValidationError(_(
+                'You must choose an Owner and Case Type to use the call center application. '
+                'Please uncheck the "Call Center Application" setting or enter values for the other fields.'
+            ))
+
+        return cleaned_data
 
     def save(self, request, domain):
         domain.hr_name = self.cleaned_data['hr_name']
