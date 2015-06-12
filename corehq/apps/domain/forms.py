@@ -33,6 +33,7 @@ from django_countries.countries import COUNTRIES
 from corehq.apps.accounting.models import (
     BillingAccount,
     BillingAccountAdmin,
+    BillingAccountType,
     BillingContactInfo,
     CreditAdjustmentReason,
     CreditLine,
@@ -1183,6 +1184,12 @@ class ProBonoForm(forms.Form):
 
 
 class InternalSubscriptionManagementForm(forms.Form):
+    autocomplete_account_types = [
+        BillingAccountType.CONTRACT,
+        BillingAccountType.GLOBAL_SERVICES,
+        BillingAccountType.USER_CREATED,
+    ]
+
     @property
     def slug(self):
         raise NotImplementedError
@@ -1205,7 +1212,10 @@ class InternalSubscriptionManagementForm(forms.Form):
     @property
     @memoized
     def next_account(self):
-        matching_accounts = BillingAccount.objects.filter(name=self.account_name).order_by('date_created')
+        matching_accounts = BillingAccount.objects.filter(
+            name=self.account_name,
+            account_type=BillingAccountType.GLOBAL_SERVICES,
+        ).order_by('date_created')
         if matching_accounts:
             account = matching_accounts[0]
         else:
@@ -1215,6 +1225,7 @@ class InternalSubscriptionManagementForm(forms.Form):
                 created_by_domain=self.domain,
                 currency=Currency.get_default(),
                 dimagi_contact=self.web_user,
+                account_type=BillingAccountType.GLOBAL_SERVICES,
             )
             account.save()
         contact_info, _ = BillingContactInfo.objects.get_or_create(account=account)
@@ -1228,13 +1239,18 @@ class InternalSubscriptionManagementForm(forms.Form):
 
     @property
     @memoized
-    def current_account(self):
-        return BillingAccount.get_account_by_domain(self.domain)
+    def current_subscription(self):
+        return Subscription.get_subscribed_plan_by_domain(self.domain)[1]
 
     @property
     @memoized
-    def current_subscription(self):
-        return Subscription.get_subscribed_plan_by_domain(self.domain)[1]
+    def autocomplete_account_name(self):
+        if (
+            self.current_subscription
+            and self.current_subscription.account.account_type in self.autocomplete_account_types
+        ):
+            return self.current_subscription.account.name
+        return None
 
     @property
     @memoized
@@ -1243,7 +1259,8 @@ class InternalSubscriptionManagementForm(forms.Form):
             return None
         try:
             return BillingContactInfo.objects.get(
-                account=self.current_subscription.account
+                account=self.current_subscription.account,
+                account__account_type__in=self.autocomplete_account_types,
             ).emails
         except BillingContactInfo.DoesNotExist:
             return None
@@ -1336,6 +1353,7 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
 
         super(AdvancedExtendedTrialForm, self).__init__(domain, web_user, *args, **kwargs)
 
+        self.fields['organization_name'].initial = self.autocomplete_account_name
         self.fields['emails'].initial = self.current_contact_emails
 
         self.helper = FormHelper()
@@ -1448,6 +1466,7 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
 
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
+        self.fields['fogbugz_client_name'].initial = self.autocomplete_account_name
         self.fields['emails'].initial = self.current_contact_emails
 
         plan_edition = self.current_subscription.plan_version.plan.edition if self.current_subscription else None
@@ -1475,7 +1494,6 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
                 self.form_actions
             )
         else:
-            self.fields['fogbugz_client_name'].initial = self.current_subscription.account.name
             self.fields['end_date'].initial = self.current_subscription.date_end
             self.helper.layout = crispy.Layout(
                 TextField('software_plan_edition', plan_edition),
@@ -1525,7 +1543,9 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
                     new_plan_version,
                     date_end=self.cleaned_data['end_date'],
                     web_user=self.web_user,
+                    transfer_credits=self.current_subscription.account == self.next_account,
                 )
+                new_subscription.account = self.next_account
             if new_subscription.date_start <= datetime.date.today() and datetime.date.today() < new_subscription.date_end:
                 new_subscription.is_active = True
             new_subscription.do_not_invoice = False
