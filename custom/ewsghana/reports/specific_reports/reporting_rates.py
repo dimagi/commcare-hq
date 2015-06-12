@@ -125,16 +125,18 @@ class ReportingDetails(ReportingRatesData):
         if data:
             complete_percent = float(data['complete']) * 100 / (data['total'] or 1)
             incomplete_percent = float(data['incomplete']) * 100 / (data['total'] or 1)
+            complete_formatted = ("%d" if complete_percent.is_integer() else "%.1f") % complete_percent
+            incomplete_formatted = ("%d" if incomplete_percent.is_integer() else "%.1f") % incomplete_percent
             chart_data = [
                 dict(value=complete_percent,
                      label=_('Complete'),
-                     description=_("%.1f%% (%d) Complete Reports in %s" %
-                                   (complete_percent, data['complete'], self.datetext())),
+                     description=_("%s%% (%d) Complete Reports in %s" %
+                                   (complete_formatted, data['complete'], self.datetext())),
                      color='green'),
                 dict(value=incomplete_percent,
                      label=_('Incomplete'),
-                     description=_("%.1f%% (%d) Incomplete Reports in %s" %
-                                   (incomplete_percent, data['incomplete'], self.datetext())),
+                     description=_("%s%% (%d) Incomplete Reports in %s" %
+                                   (incomplete_formatted, data['incomplete'], self.datetext())),
                      color='purple'),
             ]
         pie_chart = EWSPieChart('', '', chart_data, ['green', 'purple'])
