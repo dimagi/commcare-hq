@@ -1353,7 +1353,7 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
 
         super(AdvancedExtendedTrialForm, self).__init__(domain, web_user, *args, **kwargs)
 
-        self.fields['organization_name'] = self.autocomplete_account_name
+        self.fields['organization_name'].initial = self.autocomplete_account_name
         self.fields['emails'].initial = self.current_contact_emails
 
         self.helper = FormHelper()
