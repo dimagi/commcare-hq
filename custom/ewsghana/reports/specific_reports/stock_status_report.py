@@ -2,6 +2,7 @@ from datetime import timedelta
 from django.db.models.aggregates import Count
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.generic import GenericTabularReport
 from custom.ilsgateway.tanzania.reports.utils import link_format
 from dimagi.utils.decorators.memoized import memoized
@@ -124,6 +125,10 @@ class ProductAvailabilityData(EWSData):
             chart.stacked = False
             chart.tooltipFormat = " on "
             chart.forceY = [0, 1]
+            chart.product_code_map = {
+                sql_product.code: sql_product.name
+                for sql_product in SQLProduct.objects.filter(domain=self.domain)
+            }
             for row in convert_product_data_to_stack_chart(product_availability, self.chart_config):
                 chart.add_dataset(row['label'], [
                     {'x': r[0], 'y': r[1], 'name': r[2]}
