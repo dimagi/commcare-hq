@@ -253,8 +253,10 @@ class StockoutsProduct(EWSData):
         if self.config['location_id']:
             supply_points = get_supply_points(self.config['location_id'], self.config['domain'])
             products = self.unique_products(supply_points, all=True)
+            code_name_map = {}
             for product in products:
                 rows[product.code] = []
+                code_name_map[product.code] = product.name
 
             enddate = self.config['enddate']
             startdate = self.config['startdate'] if 'custom_date' in self.config else enddate - timedelta(days=90)
@@ -270,7 +272,13 @@ class StockoutsProduct(EWSData):
                     if not any([product.code == tx['sql_product__code'] for tx in txs]):
                         rows[product.code].append({'x': d['start_date'], 'y': 0})
                 for tx in txs:
-                    rows[tx['sql_product__code']].append({'x': d['start_date'], 'y': tx['count']})
+                    rows[tx['sql_product__code']].append(
+                        {
+                            'x': d['start_date'],
+                            'y': tx['count'],
+                            'name': code_name_map[tx['sql_product__code']]
+                        }
+                    )
         return rows
 
     @property
@@ -280,6 +288,7 @@ class StockoutsProduct(EWSData):
             chart = EWSLineChart("Stockout by Product", x_axis=Axis(self.chart_x_label, dateFormat='%b %Y'),
                                  y_axis=Axis(self.chart_y_label, 'd'))
             chart.x_axis_uses_dates = True
+            chart.tooltipFormat = True
             for key, value in rows.iteritems():
                 chart.add_dataset(key, value)
             return [chart]
