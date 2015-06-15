@@ -448,7 +448,7 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
 
 
 class MessagingEventsReport(BaseMessagingEventReport):
-    name = ugettext_noop('Messaging Events')
+    name = ugettext_noop('Past Events')
     slug = 'messaging_events'
     fields = [
         'corehq.apps.reports.filters.dates.DatespanFilter',
@@ -550,19 +550,34 @@ class MessageEventDetailReport(BaseMessagingEventReport):
                 messaging_subevent.recipient_id, contact_cache)
 
             if messaging_subevent.content_type == MessagingEvent.CONTENT_SMS:
-                for sms in SMS.objects.filter(messaging_subevent_id=messaging_subevent.pk):
-                    timestamp = ServerTime(sms.date).user_time(self.timezone).done()
-                    status, error_message = self.get_status_display(messaging_subevent, sms)
+                messages = SMS.objects.filter(messaging_subevent_id=messaging_subevent.pk)
+                if len(messages) == 0:
+                    timestamp = ServerTime(messaging_subevent.date).user_time(self.timezone).done()
+                    status, error_message = self.get_status_display(messaging_subevent)
                     result.append([
                         self._fmt_timestamp(timestamp),
                         self._fmt_contact_link(messaging_subevent.recipient_id, doc_info),
-                        self._fmt(sms.text),
-                        self._fmt(sms.phone_number),
-                        self._fmt_direction(sms.direction),
-                        self._fmt(sms.backend_api),
+                        self._fmt('-'),
+                        self._fmt('-'),
+                        self._fmt_direction('-'),
+                        self._fmt('-'),
                         self._fmt(status),
                         self._fmt(error_message),
                     ])
+                else:
+                    for sms in messages:
+                        timestamp = ServerTime(sms.date).user_time(self.timezone).done()
+                        status, error_message = self.get_status_display(messaging_subevent, sms)
+                        result.append([
+                            self._fmt_timestamp(timestamp),
+                            self._fmt_contact_link(messaging_subevent.recipient_id, doc_info),
+                            self._fmt(sms.text),
+                            self._fmt(sms.phone_number),
+                            self._fmt_direction(sms.direction),
+                            self._fmt(sms.backend_api),
+                            self._fmt(status),
+                            self._fmt(error_message),
+                        ])
             elif messaging_subevent.content_type == MessagingEvent.CONTENT_SMS_SURVEY:
                 status, error_message = self.get_status_display(messaging_subevent)
                 xforms_session = messaging_subevent.xforms_session
