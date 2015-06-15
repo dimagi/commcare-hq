@@ -342,7 +342,15 @@ class StockoutTable(EWSData):
                 ).order_by('product_id', '-report__date').distinct('product_id').values_list('product_id',
                                                                                              flat=True)
                 if stockout:
-                    rows.append([supply_point.name, ', '.join(product_map[id] for id in stockout)])
+                    url = make_url(
+                        StockLevelsReport,
+                        self.config['domain'],
+                        '?location_id=%s&startdate=%s&enddate=%s',
+                        (supply_point.location_id, self.config['startdate'], self.config['enddate'])
+                    )
+                    rows.append(
+                        [link_format(supply_point.name, url), ', '.join(product_map[id] for id in stockout)]
+                    )
         return rows
 
 
