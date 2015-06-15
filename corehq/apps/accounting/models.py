@@ -1000,6 +1000,8 @@ class Subscription(models.Model):
         )
         new_subscription.save()
 
+        new_subscription.set_billing_account_entry_point()
+
         if self.date_start > today:
             self.date_start = today
         if self.date_end is None or self.date_end > today:
@@ -1234,6 +1236,13 @@ class Subscription(models.Model):
                     'email': email,
                 })
 
+    def set_billing_account_entry_point(self):
+        no_current_entry_point = self.account.entry_point == EntryPoint.NOT_SET
+        self_serve = self.service_type == SubscriptionType.SELF_SERVICE
+        if (no_current_entry_point and self_serve and not self.is_trial):
+            self.account.entry_point = EntryPoint.SELF_STARTED
+            self.account.save()
+
     @classmethod
     def _get_plan_by_subscriber(cls, subscriber):
         active_subscriptions = cls.objects\
@@ -1358,6 +1367,8 @@ class Subscription(models.Model):
             web_user=web_user
         )
         subscription.save()
+
+        subscription.set_billing_account_entry_point()
 
         return subscription
 
