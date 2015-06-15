@@ -56,7 +56,7 @@ from couchexport.exceptions import (
 from couchexport.models import FakeSavedExportSchema, SavedBasicExport
 from couchexport.shortcuts import (export_data_shared, export_raw_data,
     export_response)
-from couchexport.tasks import rebuild_schemas, rebuild_export_task
+from couchexport.tasks import rebuild_schemas
 from couchexport.util import SerializableFunction
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import wrapped_docs
@@ -103,7 +103,7 @@ from corehq.apps.reports.tasks import (
     rebuild_export_async,
     send_delayed_report,
     build_form_multimedia_zip,
-)
+    rebuild_export_task)
 from corehq.apps.reports import util
 from corehq.apps.reports.util import (
     get_all_users_by_domain,
