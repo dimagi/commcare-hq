@@ -305,9 +305,10 @@ class DataSourceForm(forms.Form):
 
         return cleaned_data
 
-FilterViewModel = namedtuple("FilterViewModel",
-                             ['property', 'display_text', 'format'])
-
+FilterViewModel = namedtuple(
+    "FilterViewModel",
+    ['exists_in_current_version', 'display_text', 'format', 'property', 'data_source_field']
+)
 
 class ConfigureNewReportBase(forms.Form):
     filters = FilterField(required=False)
@@ -490,15 +491,30 @@ class ConfigureNewReportBase(forms.Form):
             return [self._get_view_model(f) for f in self.existing_report.filters]
         if self.source_type == 'case':
             return [
-                FilterViewModel('closed', 'closed', 'Choice'),
+                FilterViewModel(
+                    exists_in_current_version=True,
+                    property='closed',
+                    display_text='closed',
+                    format='Choice',
+                ),
                 # TODO: Allow users to filter by owner name, not just id.
                 # This will likely require implementing data source filters.
-                FilterViewModel('owner_id', "owner id", "Choice"),
+                FilterViewModel(
+                    exists_in_current_version=True,
+                    property='owner_id',
+                    display_text='owner_id',
+                    format='Choice',
+                ),
             ]
         else:
             # self.source_type == 'form'
             return [
-                FilterViewModel('timeEnd', "Form completion time", "Date"),
+                FilterViewModel(
+                    exists_in_curent_version=True,
+                    property='timeEnd',
+                    display_text='Form completion time',
+                    format='Date',
+                ),
             ]
 
     def _get_view_model(self, filter):
@@ -514,14 +530,29 @@ class ConfigureNewReportBase(forms.Form):
             'date': 'Date',
             'numeric': 'Numeric'
         }
+        exists = self._column_exists(filter['field'])
         return FilterViewModel(
-            property=self._get_property_from_column(filter['field']),
+            exists_in_current_version=exists,
             display_text=filter['display'],
             format=filter_type_map[filter['type']],
+            property=self._get_property_from_column(filter['field']) if exists else None,
+            data_source_field=filter['field'] if not exists else None
         )
 
     def _get_property_from_column(self, col):
         return self._properties_by_column[col]['id']
+
+    def _column_exists(self, column_id):
+        """
+        Return True if this column corresponds to a question/case property in
+        the current version of this form/case configuration.
+
+        This could be true if a user makes a report, modifies the app, then
+        edits the report.
+
+        column_id is a string like "data_date_q_d1b3693e"
+        """
+        return column_id in self._properties_by_column
 
     @property
     def _report_aggregation_cols(self):
@@ -688,10 +719,20 @@ class ConfigureListReportForm(ConfigureNewReportBase):
         if self.existing_report:
             cols = []
             for c in self.existing_report.columns:
-                cols.append({
-                    'property': self._get_property_from_column(c['field']),
-                    'display_text': c['display']
-                })
+                column_view_model = {
+                    'display_text': c['display'],
+                }
+                if self._column_exists(c['field']):
+                    column_view_model.update({
+                        'property': self._get_property_from_column(c['field']),
+                        'exists_in_current_version': True,
+                    })
+                else:
+                    column_view_model.update({
+                        'data_source_field': c['field'],
+                        'exists_in_current_version': False,
+                    })
+                cols.append(column_view_model)
             return cols
         return []
 
