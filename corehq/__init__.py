@@ -65,7 +65,6 @@ def REPORTS(project):
             commtrack_maps.StockStatusMapReport,
             commtrack_reports.ReportingRatesReport,
             commtrack_maps.ReportingStatusMapReport,
-            # commtrack_reports.RequisitionReport,
         )))
 
     if project.has_careplan:
