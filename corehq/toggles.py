@@ -459,7 +459,7 @@ API_THROTTLE_WHITELIST = StaticToggle(
 INSTANCE_VIEWER = StaticToggle(
     'instance_viewer',
     'CloudCare Form Debugging Tool',
-    TAG_EXPERIMENTAL,
+    TAG_PRODUCT_PATH,
     namespaces=[NAMESPACE_USER],
 )
 
