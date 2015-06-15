@@ -458,7 +458,7 @@ API_THROTTLE_WHITELIST = StaticToggle(
 
 INSTANCE_VIEWER = StaticToggle(
     'instance_viewer',
-    'View curent instance when using Touchforms',
+    'CloudCare Form Debugging Tool',
     TAG_EXPERIMENTAL,
     namespaces=[NAMESPACE_USER],
 )
