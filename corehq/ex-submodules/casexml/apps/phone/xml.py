@@ -32,16 +32,16 @@ def get_sync_element(restore_id):
 
 
 def get_case_element(case, updates, version=V1):
-    
+
     check_version(version)
-    
-    if case is None: 
+
+    if case is None:
         logging.error("Can't generate case xml for empty case!")
         return ""
 
     generator = get_generator(version, case)
     root = generator.get_root_element()
-    
+
     # if creating, the base data goes there, otherwise it goes in the
     # update block
     do_create = const.CASE_ACTION_CREATE in updates
@@ -55,35 +55,35 @@ def get_case_element(case, updates, version=V1):
         create_block = generator.get_create_element()
         generator.add_base_properties(create_block)
         root.append(create_block)
-    
+
     if do_update:
         update_block = generator.get_update_element()
         # if we don't have a create block, also put the base properties
         # in the update block, in case they changed
         if not do_create:
             generator.add_base_properties(update_block)
-        
+
         # custom properties
         generator.add_custom_properties(update_block)
         if list(update_block):
             root.append(update_block)
-        
+
     if do_index:
         generator.add_indices(root)
     if do_attach:
         generator.add_attachments(root)
-    
+
     if do_purge:
         purge_block = generator.get_close_element()
         root.append(purge_block)
-        
+
     return root
 
 
 def get_case_xml(case, updates, version=V1):
     check_version(version)
     return tostring(get_case_element(case, updates, version))
-    
+
 
 def get_registration_element(user):
     from corehq.apps.custom_data_fields.models import SYSTEM_PREFIX
@@ -102,7 +102,7 @@ def get_registration_element(user):
 
 def get_registration_xml(user):
     return tostring(get_registration_element(user))
-    
+
 
 def get_data_element(name, dict):
     elem = safe_element(name)
