@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from itertools import imap
 import json
 import logging
+import re
 import uuid
 from couchdbkit.exceptions import ResourceConflict
 from django.conf import settings
@@ -21,6 +22,7 @@ from django.utils.translation import ugettext_lazy as _
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.util.quickcache import skippable_quickcache
 from corehq.util.dates import iso_string_to_datetime
+from corehq.apps.es.domains import DomainES
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import (
     iter_docs, get_db, get_safe_write_kwargs, apply_update, iter_bulk_delete
@@ -621,6 +623,47 @@ class Domain(Document, SnapshotMixin):
             new_domain.migrations = DomainMigrations(has_migrated_permissions=True)
             new_domain.save(**get_safe_write_kwargs())
             return new_domain
+
+    @classmethod
+    def generate_name(cls, hr_name, max_length=25):
+        '''
+        Generate a URL-friendly name based on a given human-readable name.
+        Normalizes given name, then looks for conflicting domains, addressing
+        conflicts by adding "-1", "-2", etc. May return None if it fails to
+        generate a new, unique name.
+        '''
+
+        original_name = hr_name.strip().lower()
+        original_name = re.sub(r'[^0-9a-z]+', '-', original_name)
+
+        def has_conflict(name):
+            return Domain.get_by_name(name) or Domain.get_by_name(name.replace('-', '.'))
+
+        name = original_name
+        shorten = -1
+        while has_conflict(name) and shorten + 2 < max_length:
+            shorten = shorten + 1
+            name_prefix = original_name
+            if shorten > 0:
+                name_prefix = name_prefix[:-shorten]
+            hits = DomainES().prefix(name_prefix + "-").fields(["name"]).run().hits
+            if re.search(r'\.', name_prefix):
+                hits = hits + DomainES().prefix(name_prefix.replace('-', '.') + "-").fields(["name"]).run().hits
+
+            max_counter = 0
+            pattern = re.compile("^" + name_prefix + "-(\d+)$")
+            for hit in hits:
+                match = re.search(pattern, hit['name'])
+                if match is not None:
+                    max_counter = max(max_counter, int(match.group(1)))
+            suffix = "-" + str(max_counter + 1)
+            name = name[:max_length - len(suffix)] + suffix
+
+        if has_conflict(name):
+            return None
+
+        return name
+
 
     def password_format(self):
         """

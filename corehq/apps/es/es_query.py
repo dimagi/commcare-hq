@@ -127,6 +127,7 @@ class ESQuery(object):
             filters.exists,
             filters.empty,
             filters.doc_id,
+            filters.prefix,
         ]
 
     def __getattr__(self, attr):

@@ -142,20 +142,14 @@ class DomainRegistrationForm(forms.Form):
     def clean_domain_name(self):
         data = self.cleaned_data.get('hr_name', None)
         if data is None:
+            # Do nothing; hr_name is required so page will error out
             return data
 
-        data = data.strip().lower()
-        data = re.sub(r'[^0-9a-z]+', '-', data)
-        conflict = Domain.get_by_name(data) or Domain.get_by_name(data.replace('-', '.'))
-        if conflict:
-            counter = 0
-            test_name = data
-            while conflict:
-                counter = counter + 1
-                suffix = "-" + str(counter)
-                test_name = data[:self.max_name_length - len(suffix)] + suffix
-                conflict = Domain.get_by_name(test_name) or Domain.get_by_name(test_name.replace('-', '.'))
-            data = test_name
+        data = Domain.generate_name(data, self.max_name_length)
+        if data is None:
+            # Shouldn't happen, but worst case, force user to pick something new
+            raise forms.ValidationError("Project name already taken---please try another")
+
         return data
 
     def clean_domain_type(self):
