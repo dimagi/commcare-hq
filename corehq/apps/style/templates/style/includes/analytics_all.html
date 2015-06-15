@@ -48,10 +48,10 @@
             }
             // Record identity
             if (userId !== null) {
-                _kmq.push(['identify', userId]);
+                kmqPushSafe(['identify', userId]);
             }
             if (traits !== undefined){
-                _kmq.push(['set', traits]);
+                kmqPushSafe(['set', traits]);
             }
         },
 
@@ -72,13 +72,12 @@
             if (properties === undefined){
                 properties = {};
             }
+
             var args = ["record", event, properties];
             if (callback !== undefined){
-                var oneTimeCallback = _.once(callback);
-                args.push(oneTimeCallback);
+                args.push(callback);
             }
-            _kmq.push(args);
-            setTimeout(oneTimeCallback, 2000)
+            kmqPushSafe(args);
         },
 
         /**
