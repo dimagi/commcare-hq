@@ -305,10 +305,10 @@ class DataSourceForm(forms.Form):
 
         return cleaned_data
 
-FilterViewModel = namedtuple(
-    "FilterViewModel",
-    ['exists_in_current_version', 'display_text', 'format', 'property', 'data_source_field']
-)
+_shared_properties = ['exists_in_current_version', 'display_text', 'property', 'data_source_field']
+FilterViewModel = namedtuple("FilterViewModel", _shared_properties + ['format'])
+ColumnViewModel = namedtuple("ColumnViewModel", _shared_properties)
+
 
 class ConfigureNewReportBase(forms.Form):
     filters = FilterField(required=False)
@@ -494,6 +494,7 @@ class ConfigureNewReportBase(forms.Form):
                 FilterViewModel(
                     exists_in_current_version=True,
                     property='closed',
+                    data_source_field=None,
                     display_text='closed',
                     format='Choice',
                 ),
@@ -502,6 +503,7 @@ class ConfigureNewReportBase(forms.Form):
                 FilterViewModel(
                     exists_in_current_version=True,
                     property='owner_id',
+                    data_source_field=None,
                     display_text='owner_id',
                     format='Choice',
                 ),
@@ -510,8 +512,9 @@ class ConfigureNewReportBase(forms.Form):
             # self.source_type == 'form'
             return [
                 FilterViewModel(
-                    exists_in_curent_version=True,
+                    exists_in_current_version=True,
                     property='timeEnd',
+                    data_source_field=None,
                     display_text='Form completion time',
                     format='Date',
                 ),
@@ -719,20 +722,15 @@ class ConfigureListReportForm(ConfigureNewReportBase):
         if self.existing_report:
             cols = []
             for c in self.existing_report.columns:
-                column_view_model = {
-                    'display_text': c['display'],
-                }
-                if self._column_exists(c['field']):
-                    column_view_model.update({
-                        'property': self._get_property_from_column(c['field']),
-                        'exists_in_current_version': True,
-                    })
-                else:
-                    column_view_model.update({
-                        'data_source_field': c['field'],
-                        'exists_in_current_version': False,
-                    })
-                cols.append(column_view_model)
+                exists = self._column_exists(c['field'])
+                cols.append(
+                    ColumnViewModel(
+                        display_text=c['display'],
+                        exists_in_current_version=exists,
+                        property=self._get_property_from_column(c['field']) if exists else None,
+                        data_source_field=c['field'] if not exists else None,
+                    )
+                )
             return cols
         return []
 
