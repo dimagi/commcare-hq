@@ -1673,6 +1673,12 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
         """
         return []
 
+    def uses_media(self):
+        """
+        Whether the module uses media. If this returns false then media will not be generated
+        for the module.
+        """
+        return True
 
 class Module(ModuleBase):
     """
@@ -2922,6 +2928,10 @@ class ReportModule(ModuleBase):
                 for config in self.report_configs
             ]
         )
+
+    def uses_media(self):
+        # for now no media support for ReportModules
+        return False
 
 
 class VersionedDoc(LazyAttachmentDoc):
