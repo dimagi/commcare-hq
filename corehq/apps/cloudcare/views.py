@@ -244,6 +244,8 @@ def get_cases_skip_arg(request, domain):
     The caching is mainly a hack for touchforms to respond more quickly. Touchforms makes repeated requests to
     get the list of case_ids associated with a user.
     """
+    if not toggles.CLOUDCARE_CACHE.enabled(domain):
+        return True
     return (not string_to_boolean(request.REQUEST.get('use_cache', 'false')) or
         not string_to_boolean(request.REQUEST.get('ids_only', 'false')))
 

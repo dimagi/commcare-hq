@@ -9,6 +9,8 @@ from casexml.apps.case.tests import delete_all_cases
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.xml import date_to_xml_string
+from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
+from corehq import toggles
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
@@ -53,6 +55,7 @@ class CaseAPITest(TestCase):
 
         self.test_type = self.case_types[0]
         self.test_user_id = self.users[0]._id
+        update_toggle_cache(toggles.CLOUDCARE_CACHE.slug, TEST_DOMAIN, True, toggles.NAMESPACE_DOMAIN)
 
     def tearDown(self):
         for user in self.users:
@@ -60,6 +63,7 @@ class CaseAPITest(TestCase):
             django_user.delete()
             user.delete()
         delete_all_cases()
+        clear_toggle_cache(toggles.CLOUDCARE_CACHE.slug, TEST_DOMAIN, toggles.NAMESPACE_DOMAIN)
 
     def assertListMatches(self, list, function):
         for item in list:
