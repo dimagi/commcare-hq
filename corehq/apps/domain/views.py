@@ -2276,7 +2276,7 @@ def _publish_snapshot(request, domain, published_snapshot=None):
                 snapshot.save()
     if published_snapshot:
         if published_snapshot.copied_from.name != domain.name:
-            messages.error(request, "Invalid snapshot, " + published_snapshot.copied_from.name + " != " + domain.name)
+            messages.error(request, "Invalid snapshot")
             return False
 
         # cda stuff. In order to publish a snapshot, a user must have agreed to this
