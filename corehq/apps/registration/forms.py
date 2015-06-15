@@ -140,7 +140,11 @@ class DomainRegistrationForm(forms.Form):
                                   initial='commcare')
 
     def clean_domain_name(self):
-        data = self.cleaned_data['hr_name'].strip().lower()
+        data = self.cleaned_data.get('hr_name', None)
+        if data is None:
+            return data
+
+        data = data.strip().lower()
         data = re.sub(r'[^0-9a-z]+', '-', data)
         conflict = Domain.get_by_name(data) or Domain.get_by_name(data.replace('-', '.'))
         if conflict:
