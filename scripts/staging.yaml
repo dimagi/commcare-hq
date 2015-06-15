@@ -54,6 +54,7 @@ branches:
   - debug-sync # Nick P 6/9
   - case-list-filter  # Ethan 6/10
   - cache-case-list # Ben 6/11
+  - autoload-supplypoint  # Ethan 6/15
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
