@@ -70,4 +70,3 @@ def is_snapshot(is_snapshot=True):
 
 def prefix(prefix):
     return filters.prefix('name', prefix)
-
