@@ -31,6 +31,16 @@ class ReportingRates(ReportingRatesData):
     title = _('Reporting Rates')
 
     @property
+    def title(self):
+        if self.config.get('datespan_type') == '2':
+            return _('Reporting Rates (Weekly Reporting Period)')
+        elif self.config.get('datespan_type') == '1':
+            return _('Reporting Rates({}, {})'.format(
+                self.config['startdate'].strftime('%B'), self.config['startdate'].year
+            ))
+        return ""
+
+    @property
     def rows(self):
         rows = {}
         if self.location_id:
@@ -390,7 +400,8 @@ class ReportingRatesReport(MultiReport):
             location_id=self.request.GET.get('location_id') or get_country_id(self.domain),
             products=None,
             program=program if program != ALL_OPTION else None,
-            user=self.request.couch_user
+            user=self.request.couch_user,
+            datespan_type=self.request.GET.get('datespan_type')
         )
 
     @property
