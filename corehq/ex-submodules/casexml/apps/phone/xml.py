@@ -86,16 +86,17 @@ def get_case_xml(case, updates, version=V1):
     
 
 def get_registration_element(user):
+    from corehq.apps.custom_data_fields.models import SYSTEM_PREFIX
     root = safe_element("Registration")
     root.attrib = {"xmlns": USER_REGISTRATION_XMLNS}
     root.append(safe_element("username", user.username))
-    root.append(safe_element("full_name", user.full_name))
-    root.append(safe_element("phone_number", user.phone_number))
     root.append(safe_element("password", user.password))
     root.append(safe_element("uuid", user.user_id))
     root.append(safe_element("date", date_to_xml_string(user.date_joined)))
-    if user.user_data:
-        root.append(get_data_element('user_data', user.user_data))
+    user_data = user.user_data
+    user_data["{}_full_name".format(SYSTEM_PREFIX)] = user.full_name
+    user_data["{}_phone_number".format(SYSTEM_PREFIX)] = user.phone_number
+    root.append(get_data_element('user_data', user.user_data))
     return root
 
 
