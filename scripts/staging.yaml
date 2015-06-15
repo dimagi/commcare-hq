@@ -55,7 +55,6 @@ branches:
   - case-list-filter  # Ethan 6/10
   - cache-case-list # Ben 6/11
   - autoload-supplypoint  # Ethan 6/15
-  - correct-links # Nick P 6/15
   - full-name  # Ethan 6/15
   - war-filter  # Ethan 6/15
 submodules:
