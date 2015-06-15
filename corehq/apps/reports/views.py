@@ -911,7 +911,6 @@ def case_details(request, domain, case_id):
         messages.info(request, "Sorry, we couldn't find that case. If you think this is a mistake please report an issue.")
         return HttpResponseRedirect(CaseListReport.get_url(domain=domain))
 
-
     create_actions = filter(lambda a: a.action_type == CASE_ACTION_CREATE, case.actions)
     if not create_actions:
         messages.error(request, _(
