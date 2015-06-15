@@ -1,5 +1,7 @@
 from pillowtop.listener import BasicPillow
 from couchforms.models import XFormInstanceDevicelog, XFormInstance
+from corehq.apps.domainsync.config import DocumentTransform, save
+
 from .utils import get_deleted_doc_types
 
 
@@ -21,6 +23,9 @@ class MigrationPillow(BasicPillow):
     # Override this function to get the db instance you'd like to migrate to
     dest_db = lambda: None
 
+    # Override this function to get the db instance you'd like to migrate to
+    source_db = lambda: None
+
     def change_trigger(self, changes_dict):
         if changes_dict.get('deleted', False):
             self.dest_db().delete_doc(changes_dict['id'])
@@ -29,10 +34,12 @@ class MigrationPillow(BasicPillow):
         super(MigrationPillow, self).change_trigger(changes_dict)
 
     def change_transport(self, doc):
-        self.dest_db().save(doc)
+        dt = DocumentTransform(doc, XFormInstance.get_db())
+        save(dt, self.dest_db())
 
 
-class DeviceLogMigrationPillow(MigrationPillow):
+class DevicelogMigrationPillow(MigrationPillow):
     couch_filter = 'couchforms/devicelogs'  # string for filter if needed
     document_class = XFormInstance
     dest_db = XFormInstanceDevicelog.get_db
+    source_db = XFormInstance.get_db
