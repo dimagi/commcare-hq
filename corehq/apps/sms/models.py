@@ -739,7 +739,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         (CONTENT_SMS_SURVEY, ugettext_noop('SMS Survey')),
         (CONTENT_IVR_SURVEY, ugettext_noop('IVR Survey')),
         (CONTENT_PHONE_VERIFICATION, ugettext_noop('Phone Verification')),
-        (CONTENT_ADHOC_SMS, ugettext_noop('Manual SMS Message')),
+        (CONTENT_ADHOC_SMS, ugettext_noop('Manually Sent Message')),
     )
 
     RECIPIENT_CASE = 'CAS'
