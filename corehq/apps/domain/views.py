@@ -1810,7 +1810,6 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
         return is_valid
 
     def post(self, request, *args, **kwargs):
-        import pdb; pdb.set_trace()
         if self.has_published_apps and self.has_signed_eula and self.has_valid_form:
             new_license = request.POST['license']
             if request.POST.get('share_multimedia', False):

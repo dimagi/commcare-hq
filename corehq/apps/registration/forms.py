@@ -140,7 +140,6 @@ class DomainRegistrationForm(forms.Form):
                                   initial='commcare')
 
     def clean_domain_name(self):
-        #import pdb; pdb.set_trace()
         data = self.cleaned_data['hr_name'].strip().lower()
         data = re.sub(r'[^0-9a-z]+', '-', data)
         conflict = Domain.get_by_name(data) or Domain.get_by_name(data.replace('-', '.'))

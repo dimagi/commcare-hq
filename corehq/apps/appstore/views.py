@@ -243,7 +243,6 @@ def copy_snapshot(request, domain):
 
         from corehq.apps.registration.forms import DomainRegistrationForm
 
-        import pdb; pdb.set_trace()
         args = {
             'domain_name': request.POST['new_project_name'],
             'hr_name': request.POST['new_project_name'],
