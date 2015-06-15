@@ -243,7 +243,12 @@ def copy_snapshot(request, domain):
 
         from corehq.apps.registration.forms import DomainRegistrationForm
 
-        args = {'domain_name': request.POST['new_project_name'], 'eula_confirmed': True}
+        import pdb; pdb.set_trace()
+        args = {
+            'domain_name': request.POST['new_project_name'],
+            'hr_name': request.POST['new_project_name'],
+            'eula_confirmed': True,
+        }
         form = DomainRegistrationForm(args)
 
         if request.POST.get('new_project_name', ""):
@@ -252,7 +257,7 @@ def copy_snapshot(request, domain):
                 return project_info(request, domain)
 
             if form.is_valid():
-                new_domain = dom.save_copy(form.cleaned_data['domain_name'], user=user)
+                new_domain = dom.save_copy(form.cleaned_data['domain_name'], new_hr_name=form.cleaned_data['hr_name'], user=user)
             else:
                 messages.error(request, form.errors)
                 return project_info(request, domain)

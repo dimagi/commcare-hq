@@ -180,6 +180,7 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
     now = datetime.utcnow()
     current_user = CouchUser.from_django_user(request.user)
 
+    #import pdb; pdb.set_trace()
     commtrack_enabled = domain_type == 'commtrack'
 
     dom_req = RegistrationRequest()
@@ -190,6 +191,7 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
 
     new_domain = Domain(
         name=form.cleaned_data['domain_name'],
+        hr_name=form.cleaned_data['hr_name'],
         is_active=False,
         date_created=datetime.utcnow(),
         commtrack_enabled=commtrack_enabled,
