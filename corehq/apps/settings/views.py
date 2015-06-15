@@ -17,6 +17,7 @@ from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
+from dimagi.utils.couch import CriticalSection
 
 import corehq.apps.style.utils as style_utils
 
@@ -99,7 +100,8 @@ class MyAccountSettingsView(BaseMyAccountView):
 
     def get_or_create_api_key(self):
         if not self.api_key:
-            api_key, _ = ApiKey.objects.get_or_create(user=self.request.user)
+            with CriticalSection(['get-or-create-api-key-for-%d' % self.request.user.id]):
+                api_key, _ = ApiKey.objects.get_or_create(user=self.request.user)
             self.api_key = api_key.key
         return self.api_key
 
