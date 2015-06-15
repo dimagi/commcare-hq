@@ -7,7 +7,6 @@ from corehq.apps.domain.models import Domain
 
 
 class DomainNameGenerationTestBase(TestCase):
-
     def setUp(self):
         self.client = Client()
         self.domains = []
@@ -20,6 +19,7 @@ class DomainNameGenerationTestBase(TestCase):
     def tearDown(self):
         for domain in self.domains:
             domain.delete()
+
 
 class DomainNameGenerationBasicTest(DomainNameGenerationTestBase):
     def test_generation(self):
