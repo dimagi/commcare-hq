@@ -346,32 +346,36 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
         """
         event can be a MessagingEvent or MessagingSubEvent
         """
-        if event.status != MessagingEvent.STATUS_ERROR and sms and sms.error:
-            status = MessagingEvent.STATUS_ERROR
-            error_code = sms.system_error_message
-        else:
-            status = event.status
-            error_code = event.error_code
-            if status == MessagingEvent.STATUS_ERROR and not error_code:
-                error_code = MessagingEvent.ERROR_SUBEVENT_ERROR
-        status_display = dict(MessagingEvent.STATUS_CHOICES).get(status)
-        error_message = error_code or ''
+        if event.status != MessagingEvent.STATUS_ERROR and sms:
+            return self.get_sms_status_display(sms)
+
+        status = event.status
+        error_code = event.error_code
+        if status == MessagingEvent.STATUS_ERROR and not error_code:
+            error_code = MessagingEvent.ERROR_SUBEVENT_ERROR
+
+        status = dict(MessagingEvent.STATUS_CHOICES).get(status, '-')
+        error_message = (MessagingEvent.ERROR_MESSAGES.get(error_code, None)
+            if error_code else None)
+        error_message = _(error_message) if error_message else ''
         if event.additional_error_text:
             error_message += ' %s' % event.additional_error_text
+
         if error_message:
-            return '%s - %s' % (_(status_display), error_message)
+            return '%s - %s' % (_(status), error_message)
         else:
-            return _(status_display)
+            return _(status)
 
     def get_sms_status_display(self, sms):
         if sms.error:
             status = MessagingEvent.STATUS_ERROR
         else:
             status = MessagingEvent.STATUS_COMPLETED
-        status = dict(MessagingEvent.STATUS_CHOICES).get(status)
-        error_code = sms.system_error_message
-        if error_code:
-            return '%s - %s' % (_(status), error_code)
+        status = dict(MessagingEvent.STATUS_CHOICES).get(status, '-')
+        error_message = (SMS.ERROR_MESSAGES.get(sms.system_error_message, None)
+            if sms.system_error_message else None)
+        if error_message:
+            return '%s - %s' % (_(status), _(error_message))
         else:
             return _(status)
 

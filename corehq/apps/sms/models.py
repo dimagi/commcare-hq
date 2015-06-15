@@ -33,12 +33,6 @@ DIRECTION_CHOICES = (
     (OUTGOING, "Outgoing"))
 
 
-ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS = "TOO_MANY_UNSUCCESSFUL_ATTEMPTS"
-ERROR_MESSAGE_IS_STALE = "MESSAGE_IS_STALE"
-ERROR_INVALID_DIRECTION = "INVALID_DIRECTION"
-ERROR_PHONE_NUMBER_OPTED_OUT = "PHONE_NUMBER_OPTED_OUT"
-
-
 class MessageLog(SafeSaveDocument, UnicodeMixIn):
     base_doc                    = "MessageLog"
     couch_recipient_doc_type    = StringProperty() # "CommCareCase", "CommCareUser", "WebUser"
@@ -254,6 +248,22 @@ class SMSLog(SyncCouchToSQLMixin, MessageLog):
 
 
 class SMS(SyncSQLToCouchMixin, models.Model):
+    ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS = 'TOO_MANY_UNSUCCESSFUL_ATTEMPTS'
+    ERROR_MESSAGE_IS_STALE = 'MESSAGE_IS_STALE'
+    ERROR_INVALID_DIRECTION = 'INVALID_DIRECTION'
+    ERROR_PHONE_NUMBER_OPTED_OUT = 'PHONE_NUMBER_OPTED_OUT'
+
+    ERROR_MESSAGES = {
+        ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS:
+            ugettext_noop('Gateway error.'),
+        ERROR_MESSAGE_IS_STALE:
+            ugettext_noop('Message is stale and will not be processed.'),
+        ERROR_INVALID_DIRECTION:
+            ugettext_noop('Unknown message direction.'),
+        ERROR_PHONE_NUMBER_OPTED_OUT:
+            ugettext_noop('Phone number has opted out of receiving SMS.'),
+    }
+
     couch_id = models.CharField(max_length=126, null=True, db_index=True)
     domain = models.CharField(max_length=126, null=True, db_index=True)
     date = models.DateTimeField(null=True, db_index=True)
