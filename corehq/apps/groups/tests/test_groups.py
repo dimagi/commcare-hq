@@ -44,9 +44,9 @@ class GroupTest(TestCase):
         _check_all_users(group.get_static_user_ids(is_active=False))
 
 
-class WrapGroupTest(SimpleTestCase):
-
-    document_class = Group
+# This is a mixin so importing it doesn't re-run the tests
+class WrapGroupTestMixin(object):
+    document_class = None
 
     def test_yes_Z(self):
         date_string = '2014-08-26T15:20:20.062732Z'
@@ -73,3 +73,7 @@ class WrapGroupTest(SimpleTestCase):
         bad_date_string = '2014-08-26T15:20'
         with self.assertRaises(BadValueError):
             self.document_class.wrap({'last_modified': bad_date_string})
+
+
+class WrapGroupTest(WrapGroupTestMixin, SimpleTestCase):
+    document_class = Group

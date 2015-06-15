@@ -1,19 +1,29 @@
-<span class="report">
+<span class="product-selection-pane">
     <table id="report_table_product_selection_pane" class="table table-nonfluid datatable">
         {% for program, product_dict in products_by_program.iteritems %}
             <tbody data-program="{{ program }}">
                 <tr>
                     <td>
-                        <div class="program">{{ program }} <span>
-                            <input class="program-checkbox" type="checkbox" {% if product_dict.all %}checked{% endif %}/></span></div>
+                        <div class="program">{{ program }}
+                            <span>
+                                <input class="program-checkbox"
+                                       type="checkbox"
+                                       {% if product_dict.all %}checked{% endif %}
+                                       {% if is_rendered_as_email %}disabled{% endif %}/>
+                            </span>
+                        </div>
                     </td>
                 </tr>
                 {% for product in product_dict.product_list %}
                     <tr>
                         <td>
-                            <input data-column="{{ product.idx }}" class="toggle-column"
-                                   type="checkbox" name="{{ product.name }} ({{ product.code }})"
-                                   value="{{ product.code }}" {% if product.checked %}checked{% endif %}>
+                            <input data-column="{{ product.idx }}"
+                                   class="toggle-column product-checkbox"
+                                   type="checkbox"
+                                   name="{{ product.name }} ({{ product.code }})"
+                                   value="{{ product.code }}"
+                                   {% if product.checked %}checked{% endif %}
+                                   {% if is_rendered_as_email %}disabled{% endif %}>
                             {{ product.name }} ({{ product.code }})
                         </td>
                     </tr>
@@ -28,15 +38,17 @@
 <script>
     $('.program-checkbox').click(function() {
         var self = this;
-        var $tbody = $(this).parents('tbody');
-        $tbody.find('input.toggle-column').each(function(idx, element) {
-            if (element.checked !== self.checked) {
-                element.checked = self.checked;
-                if (datatable.fnSettings().aoColumns.length > 1) {
-                    show_hide_table_columns(element);
+            var $tbody = $(this).parents('tbody');
+            $tbody.find('input.toggle-column').each(function(idx, element) {
+                if (element.checked !== self.checked) {
+                    element.checked = self.checked;
+                    {% if hide_columns %}
+                        if (datatable.fnSettings().aoColumns.length > 1) {
+                            show_hide_table_columns(element);
+                        }
+                    {% endif %}
                 }
-            }
-        });
+            });
         if (typeof multibar_chart_data !== 'undefined') {
             show_hide_multibar_chart_data();
         }

@@ -408,6 +408,29 @@ class Style(XmlObject):
     grid_y = StringField("grid/@grid-y")
 
 
+class Extra(XmlObject):
+    ROOT_NAME = 'extra'
+
+    key = StringField("@key")
+    value = StringField("@value")
+
+
+class Response(XmlObject):
+    ROOT_NAME = 'response'
+
+    key = StringField("@key")
+
+
+class Lookup(XmlObject):
+    ROOT_NAME = 'lookup'
+
+    name = StringField("@name")
+    action = StringField("@action", required=True)
+    image = StringField("@image")
+    extras = NodeListField('extra', Extra)
+    responses = NodeListField('response', Response)
+
+
 class Field(OrderedXmlObject):
     ROOT_NAME = 'field'
     ORDER = ('header', 'template', 'sort_node')
@@ -451,6 +474,10 @@ class Detail(OrderedXmlObject, IdNode):
     """
     <detail id="">
         <title><text/></title>
+        <lookup action="" image="" name="">
+            <extra key="" value = "" />
+            <response key ="" />
+        </lookup>
         <variables>
             <__ function=""/>
         </variables>
@@ -462,9 +489,10 @@ class Detail(OrderedXmlObject, IdNode):
     """
 
     ROOT_NAME = 'detail'
-    ORDER = ('title', 'fields')
+    ORDER = ('title', 'lookup', 'fields')
 
     title = NodeField('title/text', Text)
+    lookup = NodeField('lookup', Lookup)
     fields = NodeListField('field', Field)
     action = NodeField('action', Action)
     details = NodeListField('detail', "self")
@@ -1044,13 +1072,26 @@ class SuiteGenerator(SuiteGeneratorBase):
             else:
                 return None
 
+        # Base case (has no tabs)
         else:
-            # Base case (has no tabs)
+            # Add lookup
+            if detail.lookup_enabled and detail.lookup_action:
+                d.lookup = Lookup(
+                    name=detail.lookup_name or None,
+                    action=detail.lookup_action,
+                    image=detail.lookup_image or None,
+                )
+                d.lookup.extras = [Extra(**e) for e in detail.lookup_extras]
+                d.lookup.responses = [Response(**r) for r in detail.lookup_responses]
+
+            # Add variables
             variables = list(
                 self.detail_variables(module, detail, detail_column_infos[start:end])
             )
             if variables:
                 d.variables.extend(variables)
+
+            # Add fields
             for column_info in detail_column_infos[start:end]:
                 fields = get_column_generator(
                     self.app, module, detail,
@@ -1058,6 +1099,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 ).fields
                 d.fields.extend(fields)
 
+            # Add actions
             if module.case_list_form.form_id and detail_type.endswith('short') and \
                     not (hasattr(module, 'parent_select') and module.parent_select.active):
                 # add form action to detail
@@ -1449,16 +1491,6 @@ class SuiteGenerator(SuiteGeneratorBase):
                 }[form.form_type]
                 config_entry(module, e, form)
 
-                if self.app.commtrack_enabled:
-                    from .models import AUTO_SELECT_LOCATION
-                    datum, assertions = self.get_userdata_autoselect(
-                        'commtrack-supply-point',
-                        'supply_point_id',
-                        AUTO_SELECT_LOCATION,
-                    )
-                    e.datums.append(datum)
-                    e.assertions.extend(assertions)
-
                 results.append(e)
 
             if hasattr(module, 'case_list') and module.case_list.show:
@@ -1736,10 +1768,17 @@ class SuiteGenerator(SuiteGeneratorBase):
                 function=xpath
             ), [fixture_assertion] + assertions
         elif auto_select.mode == AUTO_SELECT_RAW:
+            case_id_xpath = auto_select.value_key
+            case_count = CaseIDXPath(case_id_xpath).case().count()
             return SessionDatum(
                 id=action.case_session_var,
-                function=auto_select.value_key
-            ), []
+                function=case_id_xpath
+            ), [
+                self.get_assertion(
+                    "{0} = 1".format(case_count),
+                    'case_autoload.{0}.case_missing'.format(auto_select.mode)
+                )
+            ]
         elif auto_select.mode == AUTO_SELECT_USERCASE:
             case = UserCaseXPath().case()
             return SessionDatum(

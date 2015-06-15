@@ -149,6 +149,20 @@ class EWSMapReport(CustomProjectReport, StockStatusMapReport):
 
     @property
     def display_config(self):
+        categories = {
+            'Central Medical Store': 'rgba(80, 0, 0, .8)',
+            'Teaching Hospital': 'rgba(80, 120, 0, .8)',
+            'Regional Medical Store': 'rgba(80, 240, 0, .8)',
+            'Regional Hospital': 'rgba(150, 0, 0, .8)',
+            'Clinic': 'rgba(150, 120, 0, .8)',
+            'District Hospital': 'rgba(190, 240, 255, .8)',
+            'CHPS Facility': 'rgba(220, 120, 150, .8)',
+            'Hospital': 'rgba(220, 120, 0, .8)',
+            'Psychiatric Hospital': 'rgba(220, 180, 50, .8)',
+            'Polyclinic': 'rgba(200, 255, 0, .8)',
+            'Health Centre': 'rgba(255, 0, 255, .8)'
+        }
+
         conf = {
             'name_column': 'name',
             'detail_template': render_to_string('ewsghana/partials/map_report_table.html', {
@@ -163,6 +177,7 @@ class EWSMapReport(CustomProjectReport, StockStatusMapReport):
                 {
                     'color': {
                         'column': 'type',
+                        'categories': categories
                     },
                 },
                 {

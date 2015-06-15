@@ -54,7 +54,8 @@ var ExportManager = function (o) {
                         self.setUpEventTracking({
                             xmlns: params.xmlns,
                             isBulkDownload: params.isBulkDownload,
-                            exportName: params.exportName
+                            exportName: params.exportName,
+                            isMultimedia: params.isMultimedia
                         });
                         if (autoRefresh) {
                             setTimeout(pollDownloader, 2000);
@@ -97,6 +98,12 @@ var ExportManager = function (o) {
         params = params || {};
         var downloadButton = self.$modal.find(self.exportModalLoadedData).find("a.btn.btn-primary").first();
         if (downloadButton.length) {
+
+            if (params.isMultimedia) {
+                var action = self.is_custom ? "Download Custom Form Multimedia" : "Download Form Multimedia";
+                gaTrackLink(downloadButton, "Form Exports", action, params.exportName);
+                return;
+            }
 
             // Device reports event
             // (This is a bit of a special case due to its unique "action" and "label"
@@ -160,6 +167,7 @@ var ExportManager = function (o) {
                     data: data,
                     xmlns: params.xmlns,
                     isBulkDownload: params.isBulkDownload,
+                    isMultimedia: params.isMultimedia,
                     exportName: params.exportName
                 });
             },
@@ -316,6 +324,23 @@ var ExportManager = function (o) {
                 include_closed: $('#include-closed-select').val()
             },
             isBulkDownload: true
+        });
+    };
+
+    self.requestMultimediaDownload = function(data, event){
+        var $button = $(event.srcElement || event.currentTarget),
+            xmlns = $button.data('xmlns'),
+            downloadUrl = $button.data('downloadurl') + '&xmlns=' + xmlns,
+            title = $button.data('modulename');
+
+        title = $button.data('formname').length ? title + " > " + $button.data('formname') : title;
+
+        resetModal("'" + title + "' (multimedia)", true);
+        self.downloadExport({
+            downloadUrl: downloadUrl,
+            xmlns: xmlns,
+            isMultimedia: true,
+            exportName: xmlns
         });
     };
 

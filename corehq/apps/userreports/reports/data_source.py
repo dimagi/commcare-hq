@@ -5,7 +5,9 @@ from sqlagg import (
 )
 from sqlalchemy.exc import ProgrammingError
 from corehq.apps.reports.sqlreport import SqlData
-from corehq.apps.userreports.exceptions import UserReportsError
+from corehq.apps.userreports.exceptions import (
+    UserReportsError, TableNotFoundWarning,
+)
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.reports.specs import DESCENDING
 from corehq.apps.userreports.sql import get_table_name
@@ -16,6 +18,7 @@ from dimagi.utils.decorators.memoized import memoized
 class ConfigurableReportDataSource(SqlData):
 
     def __init__(self, domain, config_or_config_id, filters, aggregation_columns, columns):
+        self.lang = None
         self.domain = domain
         if isinstance(config_or_config_id, DataSourceConfiguration):
             self._config = config_or_config_id
@@ -87,9 +90,8 @@ class ConfigurableReportDataSource(SqlData):
         return [c for sql_conf in self.sql_column_configs for c in sql_conf.columns]
 
     @property
-    @memoized
     def sql_column_configs(self):
-        return [col.get_sql_column_config(self.config) for col in self.column_configs]
+        return [col.get_sql_column_config(self.config, self.lang) for col in self.column_configs]
 
     @property
     def column_warnings(self):
@@ -103,10 +105,11 @@ class ConfigurableReportDataSource(SqlData):
                 report_column.format_data(ret)
         except (
             ColumnNotFoundException,
-            TableNotFoundException,
             ProgrammingError,
         ) as e:
             raise UserReportsError(e.message)
+        except TableNotFoundException as e:
+            raise TableNotFoundWarning
         # TODO: Should sort in the database instead of memory, but not currently supported by sqlagg.
         try:
             # If a sort order is specified, sort by it.

@@ -287,6 +287,7 @@ def case_users_filter(doc, users, groups=None):
     else:
         return False
 
+
 def case_group_filter(doc, group):
     if group:
         user_ids = set(group.get_static_user_ids())
@@ -294,11 +295,13 @@ def case_group_filter(doc, group):
     else:
         return False
 
+
 def users_filter(doc, users):
     try:
         return doc['form']['meta']['userID'] in users
     except KeyError:
         return False
+
 
 def group_filter(doc, group):
     if group:
@@ -348,8 +351,7 @@ def create_export_filter(request, domain, export_type='form'):
             groups = [g.get_id for g in Group.get_case_sharing_groups(domain)]
             filtered_users = users_matching_filter(domain, user_filters)
             filter &= SerializableFunction(users_filter,
-                                           users=filtered_users,
-                                           groups=groups)
+                                           users=filtered_users)
         else:
             filter &= SerializableFunction(group_filter, group=group)
     return filter

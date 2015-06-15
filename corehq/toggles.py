@@ -158,6 +158,13 @@ CASE_LIST_TILE = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+CASE_LIST_LOOKUP = StaticToggle(
+    'case_list_lookup',
+    'Allow external android callouts to search the caselist',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
 DETAIL_LIST_TABS = StaticToggle(
     'detail-list-tabs',
     'Tabs in the case detail list',
@@ -379,14 +386,6 @@ CUSTOM_PROPERTIES = StaticToggle(
     'Allow users to add arbitrary custom properties to their application',
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
-)
-
-FILE_RESTORE = PredictablyRandomToggle(
-    'file_restore',
-    'Use files to do phone restore',
-    TAG_PRODUCT_PATH,
-    randomness=1,
-    namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
 
 BULK_SMS_VERIFICATION = StaticToggle(

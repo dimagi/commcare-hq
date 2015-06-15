@@ -36,13 +36,19 @@ class DateFilterValue(FilterValue):
     def to_sql_values(self):
         if self.value is None:
             return {}
+
+        startdate = self.value.startdate
+        enddate = self.value.enddate
+        if self.value.inclusive:
+            enddate = self.value.enddate + timedelta(days=1) - timedelta.resolution
+
+        if self.filter.compare_as_string:
+            startdate = str(startdate)
+            enddate = str(enddate)
+
         return {
-            'startdate': self.value.startdate,
-            'enddate': (
-                self.value.enddate
-                if not self.value.inclusive
-                else self.value.enddate + timedelta(days=1) - timedelta.resolution
-            ),
+            'startdate': startdate,
+            'enddate': enddate,
         }
 
 

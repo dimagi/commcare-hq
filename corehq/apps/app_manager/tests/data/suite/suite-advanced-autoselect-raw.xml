@@ -11,5 +11,12 @@
     <session>
       <datum id="case_id_case_clinic" function="some xpath expression containing instance('casedb') and instance('commcaresession')"/>
     </session>
+    <assertions>
+      <assert test="count(instance('casedb')/casedb/case[@case_id=some xpath expression containing instance('casedb') and instance('commcaresession')]) = 1">
+        <text>
+          <locale id="case_autoload.raw.case_missing"/>
+        </text>
+      </assert>
+    </assertions>
   </entry>
 </partial>
