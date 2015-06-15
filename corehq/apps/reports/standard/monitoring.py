@@ -326,6 +326,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         )
         return qs.count()
 
+
 class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
                               MultiFormDrilldownMixin, DatespanMixin):
     name = ugettext_noop("Submissions By Form")
@@ -629,6 +630,7 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
         from corehq.apps.reports.standard.inspect import SubmitHistory
         return SubmitHistory.get_url(domain=self.domain)
 
+
 class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixin,
                                CompletionOrSubmissionTimeMixin):
     name = ugettext_noop("Form Completion Time")
@@ -753,7 +755,8 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
         return rows
 
 
-class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase, MultiFormDrilldownMixin, DatespanMixin):
+class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase,
+                                             MultiFormDrilldownMixin, DatespanMixin):
     name = ugettext_noop("Form Completion vs. Submission Trends")
     slug = "completion_vs_submission"
     is_cacheable = True
