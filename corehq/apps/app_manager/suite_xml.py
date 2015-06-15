@@ -1491,6 +1491,16 @@ class SuiteGenerator(SuiteGeneratorBase):
                 }[form.form_type]
                 config_entry(module, e, form)
 
+                if self.app.commtrack_enabled:
+                    from .models import AUTO_SELECT_LOCATION
+                    datum, assertions = self.get_userdata_autoselect(
+                        'commtrack-supply-point',
+                        'supply_point_id',
+                        AUTO_SELECT_LOCATION,
+                    )
+                    e.datums.append(datum)
+                    e.assertions.extend(assertions)
+
                 results.append(e)
 
             if hasattr(module, 'case_list') and module.case_list.show:

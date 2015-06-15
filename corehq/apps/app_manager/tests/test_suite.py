@@ -140,6 +140,16 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         app = Application.wrap(self.get_json('suite-advanced'))
         self.assertXmlEqual(self.get_xml('suite-advanced-commtrack'), app.create_suite())
 
+    @commtrack_enabled(True)
+    def test_autoload_supplypoint(self):
+        app = Application.wrap(self.get_json('app'))
+        app_xml = app.create_suite()
+        self.assertXmlPartialEqual(
+            self.get_xml('autoload_supplypoint'),
+            app_xml,
+            './entry[1]'
+        )
+
     def test_advanced_suite_auto_select_user(self):
         app = Application.wrap(self.get_json('suite-advanced'))
         app.get_module(1).get_form(0).actions.load_update_cases[0].auto_select = AutoSelectCase(
