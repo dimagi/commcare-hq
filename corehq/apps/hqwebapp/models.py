@@ -1256,10 +1256,10 @@ class ProjectSettingsTab(UITab):
 
         from corehq.apps.users.models import WebUser
         if isinstance(self.couch_user, WebUser):
-            user_is_billing_admin, billing_account =\
+            __, billing_account =\
                 BillingAccountAdmin.get_admin_status_and_account(
                     self.couch_user, self.domain)
-            if user_is_billing_admin or self.couch_user.is_superuser:
+            if user_is_admin or self.couch_user.is_superuser:
                 from corehq.apps.domain.views import (
                     DomainSubscriptionView, EditExistingBillingAccountView,
                     DomainBillingStatementsView, ConfirmSubscriptionRenewalView,

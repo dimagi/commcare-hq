@@ -141,7 +141,7 @@ def select(request, domain_select_template='domain/select.html', do_not_redirect
                 return dashboard_default(request, last_visited_domain)
             except Http404:
                 pass
-            
+
         del request.session['last_visited_domain']
         return render(request, domain_select_template, additional_context)
 
@@ -552,7 +552,6 @@ def logo(request, domain):
 class DomainAccountingSettings(BaseAdminProjectSettingsView):
 
     @method_decorator(login_and_domain_required)
-    @method_decorator(require_billing_admin())
     def dispatch(self, request, *args, **kwargs):
         return super(DomainAccountingSettings, self).dispatch(request, *args, **kwargs)
 
