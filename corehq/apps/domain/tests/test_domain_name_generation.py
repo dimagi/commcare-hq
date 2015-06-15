@@ -7,6 +7,7 @@ from corehq.apps.domain.models import Domain
 
 
 class DomainNameGenerationTestBase(TestCase):
+
     def setUp(self):
         self.client = Client()
         self.domains = []
