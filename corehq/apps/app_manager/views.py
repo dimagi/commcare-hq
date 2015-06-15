@@ -1067,7 +1067,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
                 'default_file_name': default_file_name,
             }
         }
-        if module:
+        if module and module.uses_media():
             specific_media['case_list_form'] = {
                 'menu_refs': app.get_case_list_form_media(module, module_id),
                 'default_file_name': '{}_case_list_form'.format(default_file_name),
