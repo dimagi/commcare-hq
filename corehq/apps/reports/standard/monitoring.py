@@ -33,6 +33,17 @@ from django.utils.translation import ugettext_noop
 class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
     exportable = True
 
+    def get_user_link(self, user):
+        user_link = self.get_raw_user_link(user)
+        return self.table_cell(user.raw_username, user_link)
+
+    def get_raw_user_link(self, user):
+        raise NotImplementedError
+
+
+class WorkerMonitoringCaseReportTableBase(WorkerMonitoringReportTableBase):
+    exportable = True
+
     def get_raw_user_link(self, user):
         user_link_template = '<a href="%(link)s?%(params)s">%(username)s</a>'
         user_link = user_link_template % {
@@ -47,9 +58,31 @@ class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, Proje
         from corehq.apps.reports.standard.cases.basic import CaseListReport
         return CaseListReport.get_url(domain=self.domain)
 
-    def get_user_link(self, user):
-        user_link = self.get_raw_user_link(user)
-        return self.table_cell(user.raw_username, user_link)
+
+class WorkerMonitoringFormReportTableBase(WorkerMonitoringReportTableBase):
+    def get_raw_user_link(self, user):
+        params = {
+            "form_unknown": self.request.GET.get("form_unknown", ''),
+            "form_unknown_xmlns": self.request.GET.get("form_unknown_xmlns", ''),
+            "form_status": self.request.GET.get("form_status", ''),
+            "form_app_id": self.request.GET.get("form_app_id", ''),
+            "form_module": self.request.GET.get("form_module", ''),
+            "form_xmlns": self.request.GET.get("form_xmlns", ''),
+            "startdate": self.request.GET.get("startdate", ''),
+            "enddate": self.request.GET.get("enddate", '')
+        }
+
+        params.update(EMWF.for_user(user.user_id))
+
+        from corehq.apps.reports.standard.inspect import SubmitHistory
+
+        user_link_template = '<a href="%(link)s">%(username)s</a>'
+        base_link = SubmitHistory.get_url(domain=self.domain)
+        link = "{baselink}?{params}".format(baselink=base_link, params=urlencode(params))
+        return user_link_template % {
+            'link': link,
+            'username': user.username_in_report,
+        }
 
 
 class MultiFormDrilldownMixin(object):
@@ -73,7 +106,7 @@ class CompletionOrSubmissionTimeMixin(object):
         return value == 'submission'
 
 
-class CaseActivityReport(WorkerMonitoringReportTableBase):
+class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     """
     todo move this to the cached version when ready
     User    Last 30 Days    Last 60 Days    Last 90 Days   Active Clients              Inactive Clients
@@ -293,7 +326,7 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
         )
         return qs.count()
 
-class SubmissionsByFormReport(WorkerMonitoringReportTableBase,
+class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
                               MultiFormDrilldownMixin, DatespanMixin):
     name = ugettext_noop("Submissions By Form")
     slug = "submissions_by_form"
@@ -402,7 +435,7 @@ class SubmissionsByFormReport(WorkerMonitoringReportTableBase,
         return res.facets.user.counts_by_term()
 
 
-class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissionTimeMixin, DatespanMixin):
+class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubmissionTimeMixin, DatespanMixin):
     slug = "daily_form_stats"
     name = ugettext_noop("Daily Form Activity")
     bad_request_error_text = ugettext_noop("Your search query was invalid. If you're using a large date range, try using a smaller one.")
@@ -596,7 +629,7 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
         from corehq.apps.reports.standard.inspect import SubmitHistory
         return SubmitHistory.get_url(domain=self.domain)
 
-class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin,
+class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixin,
                                CompletionOrSubmissionTimeMixin):
     name = ugettext_noop("Form Completion Time")
     slug = "completion_times"
@@ -607,32 +640,6 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin,
 
     description = ugettext_noop("Statistics on time spent on a particular form.")
     is_cacheable = True
-
-    def get_user_link(self, user):
-
-        params = {
-            "form_unknown": self.request.GET.get("form_unknown", ''),
-            "form_unknown_xmlns": self.request.GET.get("form_unknown_xmlns", ''),
-            "form_status": self.request.GET.get("form_status", ''),
-            "form_app_id": self.request.GET.get("form_app_id", ''),
-            "form_module": self.request.GET.get("form_module", ''),
-            "form_xmlns": self.request.GET.get("form_xmlns", ''),
-            "startdate": self.request.GET.get("startdate", ''),
-            "enddate": self.request.GET.get("enddate", '')
-        }
-
-        params.update(EMWF.for_user(user.user_id))
-
-        from corehq.apps.reports.standard.inspect import SubmitHistory
-
-        user_link_template = '<a href="%(link)s">%(username)s</a>'
-        base_link = SubmitHistory.get_url(domain=self.domain)
-        link = "{baselink}?{params}".format(baselink=base_link, params=urlencode(params))
-        user_link = user_link_template % {
-            'link': link,
-            'username': user.username_in_report,
-        }
-        return self.table_cell(user.raw_username, user_link)
 
     @property
     @memoized
@@ -746,7 +753,7 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin,
         return rows
 
 
-class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, MultiFormDrilldownMixin, DatespanMixin):
+class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase, MultiFormDrilldownMixin, DatespanMixin):
     name = ugettext_noop("Form Completion vs. Submission Trends")
     slug = "completion_vs_submission"
     is_cacheable = True
@@ -977,7 +984,7 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
         return chart.get_url() + '&chds=-1,24,-1,7,0,20'
 
 
-class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
+class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     slug = 'worker_activity'
     name = ugettext_noop("Worker Activity")
     description = ugettext_noop("Summary of form and case activity by user or group.")
