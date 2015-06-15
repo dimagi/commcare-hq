@@ -358,7 +358,10 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
         error_message = error_code or ''
         if event.additional_error_text:
             error_message += ' %s' % event.additional_error_text
-        return (_(status_display), error_message)
+        if error_message:
+            return '%s - %s' % (_(status_display), error_message)
+        else:
+            return _(status_display)
 
     def get_sms_status_display(self, sms):
         if sms.error:
@@ -367,7 +370,10 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
             status = MessagingEvent.STATUS_COMPLETED
         status = dict(MessagingEvent.STATUS_CHOICES).get(status)
         error_code = sms.system_error_message
-        return (_(status), error_code)
+        if error_code:
+            return '%s - %s' % (_(status), error_code)
+        else:
+            return _(status)
 
     def get_keyword_display(self, keyword_id, content_cache):
         if keyword_id in content_cache:
@@ -462,7 +468,6 @@ class MessagingEventsReport(BaseMessagingEventReport):
             DataTablesColumn(_('Type')),
             DataTablesColumn(_('Recipient')),
             DataTablesColumn(_('Status')),
-            DataTablesColumn(_('Error Message')),
             DataTablesColumn(_('Detail')),
         )
         header.custom_sort = [[0, 'desc']]
@@ -485,7 +490,7 @@ class MessagingEventsReport(BaseMessagingEventReport):
                 event.recipient_id, contact_cache)
 
             timestamp = ServerTime(event.date).user_time(self.timezone).done()
-            status, error_message = self.get_status_display(event)
+            status = self.get_status_display(event)
             result.append([
                 self._fmt_timestamp(timestamp),
                 self.get_content_display(event, content_cache),
@@ -494,7 +499,6 @@ class MessagingEventsReport(BaseMessagingEventReport):
                     if event.recipient_type == MessagingEvent.RECIPIENT_VARIOUS
                     else self._fmt_contact_link(event.recipient_id, doc_info)),
                 self._fmt(status),
-                self._fmt(error_message),
                 self.get_event_detail_link(event),
             ])
 
@@ -523,7 +527,6 @@ class MessageEventDetailReport(BaseMessagingEventReport):
             DataTablesColumn(_('Direction')),
             DataTablesColumn(_('Gateway')),
             DataTablesColumn(_('Status')),
-            DataTablesColumn(_('Error Message')),
         )
 
     def get_messaging_event(self):
@@ -553,7 +556,7 @@ class MessageEventDetailReport(BaseMessagingEventReport):
                 messages = SMS.objects.filter(messaging_subevent_id=messaging_subevent.pk)
                 if len(messages) == 0:
                     timestamp = ServerTime(messaging_subevent.date).user_time(self.timezone).done()
-                    status, error_message = self.get_status_display(messaging_subevent)
+                    status = self.get_status_display(messaging_subevent)
                     result.append([
                         self._fmt_timestamp(timestamp),
                         self._fmt_contact_link(messaging_subevent.recipient_id, doc_info),
@@ -562,12 +565,11 @@ class MessageEventDetailReport(BaseMessagingEventReport):
                         self._fmt_direction('-'),
                         self._fmt('-'),
                         self._fmt(status),
-                        self._fmt(error_message),
                     ])
                 else:
                     for sms in messages:
                         timestamp = ServerTime(sms.date).user_time(self.timezone).done()
-                        status, error_message = self.get_status_display(messaging_subevent, sms)
+                        status = self.get_status_display(messaging_subevent, sms)
                         result.append([
                             self._fmt_timestamp(timestamp),
                             self._fmt_contact_link(messaging_subevent.recipient_id, doc_info),
@@ -576,10 +578,9 @@ class MessageEventDetailReport(BaseMessagingEventReport):
                             self._fmt_direction(sms.direction),
                             self._fmt(sms.backend_api),
                             self._fmt(status),
-                            self._fmt(error_message),
                         ])
             elif messaging_subevent.content_type == MessagingEvent.CONTENT_SMS_SURVEY:
-                status, error_message = self.get_status_display(messaging_subevent)
+                status = self.get_status_display(messaging_subevent)
                 xforms_session = messaging_subevent.xforms_session
                 timestamp = xforms_session.start_time if xforms_session else messaging_subevent.date
                 timestamp = ServerTime(timestamp).user_time(self.timezone).done()
@@ -591,7 +592,6 @@ class MessageEventDetailReport(BaseMessagingEventReport):
                     self._fmt('-'),
                     self._fmt('-'),
                     self._fmt(status),
-                    self._fmt(error_message),
                 ])
         return result
 
@@ -629,7 +629,6 @@ class SurveyDetailReport(BaseMessagingEventReport):
             DataTablesColumn(_('Direction')),
             DataTablesColumn(_('Gateway')),
             DataTablesColumn(_('Status')),
-            DataTablesColumn(_('Error Message')),
         )
 
     @property
@@ -654,7 +653,7 @@ class SurveyDetailReport(BaseMessagingEventReport):
         xforms_session = self.xforms_session
         for sms in SMS.objects.filter(xforms_session_couch_id=xforms_session.couch_id):
             timestamp = ServerTime(sms.date).user_time(self.timezone).done()
-            status, error_message = self.get_sms_status_display(sms)
+            status = self.get_sms_status_display(sms)
             result.append([
                 self._fmt_timestamp(timestamp),
                 self._fmt(sms.text),
@@ -662,6 +661,5 @@ class SurveyDetailReport(BaseMessagingEventReport):
                 self._fmt_direction(sms.direction),
                 self._fmt(sms.backend_api),
                 self._fmt(status),
-                self._fmt(error_message),
             ])
         return result
