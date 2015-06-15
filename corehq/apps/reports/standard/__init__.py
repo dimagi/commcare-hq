@@ -8,7 +8,7 @@ import operator
 from casexml.apps.case.models import CommCareCaseGroup
 from corehq.apps.es import UserES
 from corehq.apps.groups.models import Group
-from corehq.apps.locations.models import LOCATION_REPORTING_PREFIX
+from corehq.apps.locations.models import LOCATION_REPORTING_PREFIX, SQLLocation
 from corehq.apps.reports import util
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjectReportDispatcher
 from corehq.apps.reports.exceptions import BadRequestError
@@ -201,6 +201,19 @@ class ProjectReportParametersMixin(object):
     @property
     @memoized
     def users_by_location(self):
+        if not self.location_ids:
+            return {}
+
+        locations = dict(SQLLocation.objects
+                         .filter(domain=self.domain,
+                                 is_archived=False,
+                                 location_id__in=self.location_ids)
+                         .values_list('location_id', 'name'))
+
+        def make_loc_key(user):
+            loc_id = user['location_id']
+            return "{}|{}".format(locations[loc_id], loc_id)
+
         query = (UserES()
                  .domain(self.domain)
                  .location(self.location_ids)
@@ -208,7 +221,7 @@ class ProjectReportParametersMixin(object):
                           'last_name', 'doc_type', 'is_active']))
         user_dict = defaultdict(list)
         for user in query.run().hits:
-            user_dict[user['location_id']].append(util._report_user_dict(user))
+            user_dict[make_loc_key(user)].append(util._report_user_dict(user))
         return user_dict
 
     @property

@@ -1263,7 +1263,10 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
         rows = []
         NO_FORMS_TEXT = _('None')
         if self.view_by == 'groups':
-            for group, users in self.users_by_group.iteritems():
+            users_by_group = {}
+            users_by_group.update(self.users_by_group)
+            users_by_group.update(self.users_by_location)
+            for group, users in users_by_group.iteritems():
                 group_name, group_id = tuple(group.split('|'))
                 if group_name == 'no_group':
                     continue
