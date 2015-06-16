@@ -784,11 +784,11 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
     context['weekly_day_options'] = ReportNotification.day_choices()
     context['monthly_day_options'] = [(i, i) for i in range(1, 32)]
     if is_new:
-        context['form_action'] = "Create a new"
-        context['report']['title'] = "New Scheduled Report"
+        context['form_action'] = _("Create a new")
+        context['report']['title'] = _("New Scheduled Report")
     else:
-        context['form_action'] = "Edit"
-        context['report']['title'] = "Edit Scheduled Report"
+        context['form_action'] = _("Edit")
+        context['report']['title'] = _("Edit Scheduled Report")
 
     return render(request, template, context)
 
