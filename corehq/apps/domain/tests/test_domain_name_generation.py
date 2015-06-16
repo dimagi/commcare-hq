@@ -25,6 +25,9 @@ class DomainNameGenerationBasicTest(DomainNameGenerationTestBase):
     def test_generation(self):
         self.assertEquals(Domain.generate_name("I have  spaces"), "i-have-spaces")
 
+'''
+    # All following tests depend on ElasticSearch, only run locally
+
     def test_conflict(self):
         name = "fandango"
         self.add_domain(name)
@@ -40,7 +43,6 @@ class DomainNameGenerationBasicTest(DomainNameGenerationTestBase):
         self.add_domain(name)
         self.assertFalse(Domain.generate_name(name, 1))
 
-'''
     def test_long_names(self):
         # These depend on ElasticSearch
         name = "abcd"
