@@ -4,8 +4,6 @@ import os
 import json
 import tempfile
 import re
-import zipfile
-import cStringIO
 import itertools
 from datetime import datetime, timedelta, date
 from urllib2 import URLError
@@ -14,8 +12,6 @@ from casexml.apps.case.dbaccessors import get_open_case_ids_in_domain
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.util.timezones.utils import get_timezone_for_user
 from dimagi.utils.decorators.memoized import memoized
-from unidecode import unidecode
-from dateutil.parser import parse
 
 from django.conf import settings
 from django.contrib import messages
@@ -94,7 +90,6 @@ from corehq.apps.reports.models import (
     ReportConfig,
     ReportNotification,
     FakeFormExportSchema,
-    FormExportSchema,
     HQGroupExportConfiguration
 )
 from corehq.apps.reports.standard.cases.basic import CaseListReport
@@ -114,7 +109,7 @@ from corehq.apps.reports.export import (ApplicationBulkExportHelper,
     CustomBulkExportHelper, save_metadata_export_to_tempfile)
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.export import export_users
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, CouchUser, WebUser
 from corehq.apps.users.models import Permissions
 from corehq.apps.domain.decorators import login_and_domain_required
 
@@ -811,7 +806,6 @@ def delete_scheduled_report(request, domain, scheduled_report_id):
 
 @login_and_domain_required
 def send_test_scheduled_report(request, domain, scheduled_report_id):
-    from corehq.apps.users.models import CouchUser, CommCareUser, WebUser
 
     user_id = request.couch_user._id
 
