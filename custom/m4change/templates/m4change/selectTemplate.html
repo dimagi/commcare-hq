@@ -66,7 +66,6 @@
     </div>
     <script type="text/javascript">
         $(function () {
-            // TODO: on show, add .popover-medium to .popover (is that possible? might need to undo this change)
             $('.hq-help-template').each(function () {
                 COMMCAREHQ.transformHelpTemplate($(this), true);
             });
@@ -96,11 +95,10 @@
                         <option value="other">{% trans 'Other errors' %}</option>
                     </select>
                 {% endblock %}
-                <!-- TODO: test -->
                 <span class="hq-help-template"
                     data-placement="top"
                     data-title="{% trans 'Help' %}"
-                    data-conent="{% block help_content %}{% endblock %}"
+                    data-content="{% block help_content %}{% endblock %}"
                 ></span>
             </form>
         </div>
