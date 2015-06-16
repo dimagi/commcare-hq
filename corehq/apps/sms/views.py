@@ -377,6 +377,7 @@ def api_send_sms(request, domain):
         text = request.POST.get("text", None)
         backend_id = request.POST.get("backend_id", None)
         chat = request.POST.get("chat", None)
+        contact = None
 
         if (phone_number is None and contact_id is None) or (text is None):
             return HttpResponseBadRequest("Not enough arguments.")
@@ -406,8 +407,17 @@ def api_send_sms(request, domain):
         else:
             chat_user_id = None
 
+        logged_event = MessagingEvent.create_event_for_adhoc_sms(
+            domain, recipient=contact,
+            content_type=(MessagingEvent.CONTENT_CHAT_SMS if chat_workflow
+                else MessagingEvent.CONTENT_API_SMS))
+
+        args = [contact.doc_type, contact.get_id] if contact else []
+        logged_subevent = logged_event.create_subevent_for_single_sms(*args)
+
         metadata = MessageMetadata(
-            chat_user_id=chat_user_id
+            chat_user_id=chat_user_id,
+            messaging_subevent_id=logged_subevent.pk,
         )
         if backend_id is not None:
             success = send_sms_with_backend_name(domain, phone_number, text, backend_id, metadata)
@@ -417,8 +427,11 @@ def api_send_sms(request, domain):
             success = send_sms(domain, None, phone_number, text, metadata)
 
         if success:
+            logged_subevent.completed()
+            logged_event.completed()
             return HttpResponse("OK")
         else:
+            logged_subevent.error(MessagingEvent.ERROR_INTERNAL_SERVER_ERROR)
             return HttpResponse("ERROR")
     else:
         return HttpResponseBadRequest("POST Expected.")

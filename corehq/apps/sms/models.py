@@ -732,6 +732,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     CONTENT_IVR_SURVEY = 'IVR'
     CONTENT_PHONE_VERIFICATION = 'VER'
     CONTENT_ADHOC_SMS = 'ADH'
+    CONTENT_API_SMS = 'API'
+    CONTENT_CHAT_SMS = 'CHT'
 
     CONTENT_CHOICES = (
         (CONTENT_NONE, ugettext_noop('None')),
@@ -740,6 +742,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         (CONTENT_IVR_SURVEY, ugettext_noop('IVR Survey')),
         (CONTENT_PHONE_VERIFICATION, ugettext_noop('Phone Verification')),
         (CONTENT_ADHOC_SMS, ugettext_noop('Manually Sent Message')),
+        (CONTENT_API_SMS, ugettext_noop('Message Sent Via API')),
+        (CONTENT_CHAT_SMS, ugettext_noop('Message Sent Via Chat')),
     )
 
     RECIPIENT_CASE = 'CAS'
@@ -870,7 +874,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         return obj
 
     @classmethod
-    def create_event_for_adhoc_sms(cls, domain, recipient=None):
+    def create_event_for_adhoc_sms(cls, domain, recipient=None, content_type=CONTENT_ADHOC_SMS):
         if recipient:
             recipient_type = cls.get_recipient_type(recipient)
             recipient_id = recipient.get_id
@@ -882,7 +886,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             domain=domain,
             date=datetime.utcnow(),
             source=cls.SOURCE_OTHER,
-            content_type=cls.CONTENT_ADHOC_SMS,
+            content_type=content_type,
             status=cls.STATUS_IN_PROGRESS,
             recipient_type=recipient_type,
             recipient_id=recipient_id,
