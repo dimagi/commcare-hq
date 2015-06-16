@@ -462,10 +462,7 @@ class ConfigureNewReportBase(forms.Form):
                 # If no one else is using the current data source, delete it.
                 data_source = DataSourceConfiguration.get(self.existing_report.config_id)
                 if data_source.get_report_count() <= 1:
-                    try:
-                        delete_data_source_shared(self.domain, data_source._id)
-                    except Exception as e:
-                        import ipdb; ipdb.set_trace()
+                    delete_data_source_shared(self.domain, data_source._id)
 
                 self.existing_report.config_id = matching_data_source['id']
 
