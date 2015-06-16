@@ -141,20 +141,22 @@ class DomainRegistrationForm(forms.Form):
 
     def clean_domain_name(self):
         data = self.cleaned_data.get('hr_name', None)
-        if data is None:
-            # Do nothing; hr_name is required so page will error out
-            return data
-
-        data = Domain.generate_name(data, self.max_name_length)
-        if data is None:
-            # Shouldn't happen, but worst case, force user to pick something new
-            raise forms.ValidationError("Project name already taken---please try another")
-
+        if data is not None:
+            data = Domain.generate_name(data, self.max_name_length)
         return data
 
     def clean_domain_type(self):
         data = self.cleaned_data.get('domain_type', '').strip().lower()
         return data if data else 'commcare'
+
+    def clean_hr_name(self):
+        data = self.cleaned_data.get('hr_name', None)
+        name = Domain.generate_name(data, self.max_name_length)
+        if name is None:
+            # Worst case, force user to pick something new
+            raise forms.ValidationError("Project name already taken---please try another")
+
+        return data
 
     def clean(self):
         for field in self.cleaned_data:
