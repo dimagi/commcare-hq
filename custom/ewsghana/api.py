@@ -466,7 +466,7 @@ class EWSApi(APISynchronization):
                         'name': supply_point.name,
                         'latitude': float(ews_location.latitude) if ews_location.latitude else None,
                         'longitude': float(ews_location.longitude) if ews_location.longitude else None,
-                        'site_code': supply_point.code.lower(),
+                        'site_code': supply_point.code,
                     }
 
             if location_dict and apply_updates(location, location_dict):
