@@ -631,9 +631,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
 
     @property
     def can_purchase_credits(self):
-        return BillingAccountAdmin.objects.filter(
-            web_user=self.request.user.username, domain=self.domain
-        ).exists()
+        return self.request.couch_user.is_domain_admin(self.domain)
 
     @property
     def plan(self):
@@ -988,30 +986,17 @@ class BaseStripePaymentView(DomainAccountingSettings):
 
     @property
     @memoized
-    def billing_admin(self):
-        try:
-            admin = BillingAccountAdmin.objects.get(
-                web_user=self.request.user.username, domain=self.domain
-            )
-            # verify that this admin is still tied to the account for
-            # the invoice
-            if not self.account.billing_admins.filter(
-                    pk=admin.pk).exists():
-                raise PaymentRequestError(
-                    "The billing admin provided is not an account admin for "
-                    "the account this invoice is tied to."
-                )
-            return admin
-        except BillingAccountAdmin.DoesNotExist:
+    def domain_admin(self):
+        if self.request.couch_user.is_domain_admin(self.domain):
+            return self.request.couch_user.username
+        else:
             raise PaymentRequestError(
-                "Could not find an appropriate billing admin for the "
-                "logged in user."
+                "The logged in user was not a domain admin."
             )
 
     def get_or_create_payment_method(self):
         return PaymentMethod.objects.get_or_create(
-            account=self.account,
-            billing_admin=self.billing_admin,
+            web_user=self.domain_admin,
             method_type=PaymentMethodType.STRIPE,
         )[0]
 
@@ -1063,6 +1048,7 @@ class CreditsStripePaymentView(BaseStripePaymentView):
     def get_payment_handler(self):
         return CreditStripePaymentHandler(
             self.get_or_create_payment_method(),
+            self.domain,
             self.account,
             subscription=Subscription.get_subscribed_plan_by_domain(self.domain_object)[1],
             product_type=self.request.POST.get('product'),
@@ -1094,7 +1080,7 @@ class InvoiceStripePaymentView(BaseStripePaymentView):
 
     def get_payment_handler(self):
         return InvoiceStripePaymentHandler(
-            self.get_or_create_payment_method(), self.invoice
+            self.get_or_create_payment_method(), self.domain, self.invoice
         )
 
 

@@ -28,13 +28,8 @@ def get_or_create_stripe_customer(payment_method):
             pass
     if customer is None:
         customer = stripe.Customer.create(
-            description="Account Admin %(web_user)s for %(domain)s, "
-                        "Account %(account_name)s" % {
-                'web_user': payment_method.billing_admin.web_user,
-                'domain': payment_method.billing_admin.domain,
-                'account_name': payment_method.account.name,
-            },
-            email=payment_method.billing_admin.web_user,
+            description = "{}'s cards".format(payment_method.web_user),
+            email=payment_method.web_user,
         )
     payment_method.customer_id = customer.id
     payment_method.save()
@@ -47,8 +42,9 @@ class BaseStripePaymentHandler(object):
     receipt_email_template = None
     receipt_email_template_plaintext = None
 
-    def __init__(self, payment_method):
+    def __init__(self, payment_method, domain):
         self.payment_method = payment_method
+        self.domain = domain
 
     @property
     def cost_item_name(self):
@@ -59,7 +55,7 @@ class BaseStripePaymentHandler(object):
     @property
     @memoized
     def core_product(self):
-        domain = Domain.get_by_name(self.payment_method.billing_admin.domain)
+        domain = Domain.get_by_name(self.domain)
         return SoftwareProductType.get_type_by_domain(domain)
 
     def create_charge(self, amount, card=None, customer=None):
@@ -178,8 +174,8 @@ class InvoiceStripePaymentHandler(BaseStripePaymentHandler):
     receipt_email_template = 'accounting/invoice_receipt_email.html'
     receipt_email_template_plaintext = 'accounting/invoice_receipt_email_plaintext.txt'
 
-    def __init__(self, payment_method, invoice):
-        super(InvoiceStripePaymentHandler, self).__init__(payment_method)
+    def __init__(self, payment_method, domain, invoice):
+        super(InvoiceStripePaymentHandler, self).__init__(payment_method, domain)
         self.invoice = invoice
 
     @property
@@ -232,8 +228,7 @@ class BulkStripePaymentHandler(BaseStripePaymentHandler):
     receipt_email_template_plaintext = 'accounting/bulk_payment_receipt_email_plaintext.txt'
 
     def __init__(self, payment_method, domain):
-        super(BulkStripePaymentHandler, self).__init__(payment_method)
-        self.domain = domain
+        super(BulkStripePaymentHandler, self).__init__(payment_method, domain)
 
     @property
     def cost_item_name(self):
@@ -303,9 +298,9 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
     receipt_email_template = 'accounting/credit_receipt_email.html'
     receipt_email_template_plaintext = 'accounting/credit_receipt_email_plaintext.txt'
 
-    def __init__(self, payment_method, account, subscription=None,
+    def __init__(self, payment_method, domain, account, subscription=None,
                  product_type=None, feature_type=None):
-        super(CreditStripePaymentHandler, self).__init__(payment_method)
+        super(CreditStripePaymentHandler, self).__init__(payment_method, domain)
         self.product_type = product_type
         self.feature_type = feature_type
         self.account = account

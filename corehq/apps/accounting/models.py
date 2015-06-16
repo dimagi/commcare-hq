@@ -2139,10 +2139,7 @@ class PaymentMethod(models.Model):
     :customer_id: is used by the API of the payment method we're using that
     uniquely identifies the payer on their end.
     """
-    account = models.ForeignKey(BillingAccount, on_delete=models.PROTECT,
-                                db_index=True)
-    billing_admin = models.ForeignKey(BillingAccountAdmin,
-                                      on_delete=models.PROTECT, db_index=True)
+    web_user = models.CharField(max_length=80, null=True, db_index=True)
     method_type = models.CharField(max_length=50,
                                    default=PaymentMethodType.STRIPE,
                                    choices=PaymentMethodType.CHOICES,
