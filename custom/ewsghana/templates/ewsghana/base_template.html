@@ -33,8 +33,13 @@
     </script>
 {% endblock %}
 
-{% block stylesheets %}
+{% block uncompressed-stylesheets %}
     {{ block.super }}
+    <link href="{% static 'hqwebapp/js/lib/nvd3/nv.d3.css' %}" rel="stylesheet">
+    <link href="{% static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet"/>
+{% endblock %}
+
+{% block reports-css %}
     <style>
         #report_table_mos_product_wrapper .dataTables_scrollBody {
             width: 100% !important;
@@ -53,7 +58,5 @@
             width: 30%;
         }
     </style>
-    <link href="{% static 'hqwebapp/js/lib/nvd3/nv.d3.css' %}" rel="stylesheet">
-    <link href="{% static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet"/>
 {% endblock %}
 
