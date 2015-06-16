@@ -32,7 +32,7 @@ class RegisterHandler(KeywordHandler):
             domain=domain,
             location_type__name="DISTRICT",
             name=sp,
-        )[0]
+        )[0].couch_location
 
     def handle(self):
         text = ' '.join(self.msg.text.split()[1:])
