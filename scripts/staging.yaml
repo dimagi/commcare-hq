@@ -50,7 +50,6 @@ branches:
   - form-context-simple # Ben 5/13
   - languageMedia # Sravan 6/10
   - index-phonelog-reportentry # Ben 6/8
-  - add-proxy4 # ts 6/9
   - case-list-filter  # Ethan 6/10
   - autoload-supplypoint  # Ethan 6/15
   - full-name  # Ethan 6/15
@@ -63,7 +62,6 @@ submodules:
       - tf-persistence  # wsp 5/7
       - use-classes # ben 5/7
       - 221-jars # wsp 5/20
-      - cached-case-list # Ben 6/11
   submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master
