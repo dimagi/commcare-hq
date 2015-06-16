@@ -1394,6 +1394,11 @@ class Subscription(models.Model):
                ), last_subscription
 
 
+class InvoiceBaseManager(models.Manager):
+    def get_queryset(self):
+        return super(InvoiceBaseManager, self).get_queryset().filter(is_hidden_to_ops=False)
+
+
 class InvoiceBase(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
     date_received = models.DateField(blank=True, db_index=True, null=True)
@@ -1408,6 +1413,8 @@ class InvoiceBase(models.Model):
     # control this filter
     is_hidden_to_ops = models.BooleanField(default=False)
     last_modified = models.DateTimeField(auto_now=True)
+
+    objects = InvoiceBaseManager()
 
     class Meta:
         abstract = True
