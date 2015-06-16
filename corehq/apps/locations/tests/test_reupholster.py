@@ -39,53 +39,6 @@ class TestReupholster(TestCase):
 
         self.assertEqual(original_result, new_result)
 
-    def test_all_for_domain_by_type(self):
-        original_result = [r['id'] for r in Location.get_db().view(
-            'locations/by_type',
-            reduce=False,
-            startkey=[self.domain.name],
-            endkey=[self.domain.name, {}],
-        ).all()]
-
-        new_result = SQLLocation.objects.filter(domain=self.domain.name).location_ids()
-
-        self.assertEqual(set(original_result), set(new_result))
-
-    def _blocks_by_type(self, loc_id, reduce=False):
-        return Location.get_db().view('locations/by_type',
-            reduce=reduce,
-            startkey=[self.domain.name, 'block', loc_id],
-            endkey=[self.domain.name, 'block', loc_id, {}],
-        )
-
-    def test_count_by_type(self):
-        from custom.intrahealth.report_calcs import _locations_per_type
-        original_result = (self._blocks_by_type(self.state._id, reduce=True)
-                           .one()['value'])
-        new_result = _locations_per_type(self.domain.name, 'block', self.state)
-        self.assertEqual(original_result, new_result)
-
-    def test_filter_by_type(self):
-        original_result = [r['id'] for r in self._blocks_by_type(self.state._id)]
-
-        new_result = (self.state.sql_location
-                      .get_descendants(include_self=True)
-                      .filter(domain=self.domain.name,
-                              location_type__name='block')
-                      .location_ids())
-
-        self.assertEqual(original_result, list(new_result))
-
-    def test_filter_by_type_no_root(self):
-        original_result = [r['id'] for r in self._blocks_by_type(None)]
-
-        new_result = (SQLLocation.objects
-                      .filter(domain=self.domain.name,
-                              location_type__name='block')
-                      .location_ids())
-
-        self.assertEqual(original_result, list(new_result))
-
 
 class TestPath(LocationTestBase):
     def test_path(self):
