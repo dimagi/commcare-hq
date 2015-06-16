@@ -8,6 +8,7 @@ import itertools
 from datetime import datetime, timedelta, date
 from urllib2 import URLError
 from casexml.apps.case import const
+from casexml.apps.case.const import CASE_ACTION_CREATE
 from casexml.apps.case.dbaccessors import get_open_case_ids_in_domain
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -903,6 +904,15 @@ def case_details(request, domain, case_id):
     except Http404:
         messages.info(request, "Sorry, we couldn't find that case. If you think this is a mistake please report an issue.")
         return HttpResponseRedirect(CaseListReport.get_url(domain=domain))
+
+    create_actions = filter(lambda a: a.action_type == CASE_ACTION_CREATE, case.actions)
+    if not create_actions:
+        messages.error(request, _(
+            "The case creation form could not be found. "
+            "Usually this happens if the form that created the case is archived "
+            "but there are other forms that updated the case. "
+            "To fix this you can archive the other forms listed here."
+        ))
 
     return render(request, "reports/reportdata/case_details.html", {
         "domain": domain,
