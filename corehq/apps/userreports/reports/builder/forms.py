@@ -432,6 +432,26 @@ class ConfigureNewReportBase(forms.Form):
             crispy.Hidden('filters', None, data_bind="value: filtersList.serializedProperties")
         )
 
+    def _build_data_source(self):
+        data_source_config = DataSourceConfiguration(
+            domain=self.domain,
+            display_name=self.ds_builder.data_source_name,
+            referenced_doc_type=self.ds_builder.source_doc_type,
+            # The uuid gets truncated, so it's not really universally unique.
+            table_id=_clean_table_name(self.domain, str(uuid.uuid4().hex)),
+            configured_filter=self.ds_builder.filter,
+            configured_indicators=self.ds_builder.indicators,
+            meta=DataSourceMeta(build=DataSourceBuildInformation(
+                source_id=self.report_source_id,
+                app_id=self.app._id,
+                app_version=self.app.version,
+            ))
+        )
+        data_source_config.validate()
+        data_source_config.save()
+        tasks.rebuild_indicators.delay(data_source_config._id)
+        return data_source_config._id
+
     def update_report(self):
         self.existing_report.aggregation_columns = self._report_aggregation_cols
         self.existing_report.columns = self._report_columns
@@ -449,24 +469,7 @@ class ConfigureNewReportBase(forms.Form):
         if matching_data_source:
             data_source_config_id = matching_data_source['id']
         else:
-            data_source_config = DataSourceConfiguration(
-                domain=self.domain,
-                display_name=self.ds_builder.data_source_name,
-                referenced_doc_type=self.ds_builder.source_doc_type,
-                # The uuid gets truncated, so it's not really universally unique.
-                table_id=_clean_table_name(self.domain, str(uuid.uuid4().hex)),
-                configured_filter=self.ds_builder.filter,
-                configured_indicators=self.ds_builder.indicators,
-                meta=DataSourceMeta(build=DataSourceBuildInformation(
-                    source_id=self.report_source_id,
-                    app_id=self.app._id,
-                    app_version=self.app.version,
-                ))
-            )
-            data_source_config.validate()
-            data_source_config.save()
-            tasks.rebuild_indicators.delay(data_source_config._id)
-            data_source_config_id = data_source_config._id
+            data_source_config_id = self._build_data_source()
 
         report = ReportConfiguration(
             domain=self.domain,
