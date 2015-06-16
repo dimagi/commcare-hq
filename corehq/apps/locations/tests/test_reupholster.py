@@ -127,6 +127,7 @@ def _couch_by_site_code(domain, site_code):
     ).first()
     return Location.get(result['id']) if result else None
 
+
 def _sql_by_site_code(domain, site_code):
     try:
         return (SQLLocation.objects.get(domain=domain, site_code=site_code)
