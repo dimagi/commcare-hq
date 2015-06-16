@@ -88,6 +88,7 @@ class OpmUserFluff(fluff.IndicatorDocument):
     block = user_data('block')
     gp = user_data('gp')
     village = user_data('village')
+    gps = user_data('gps')
 
 
 def _get_user_id(form):

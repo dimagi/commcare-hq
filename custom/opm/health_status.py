@@ -106,7 +106,7 @@ class AWCHealthStatus(object):
          _("Mothers registered with BCSP"),
          'beneficiaries'),
         ('children',
-         _("Registered children "),
+         _("Registered children"),
          _("Children below 3 years of age registered with BCSP"),
          'beneficiaries'),
         ('eligible_by_fulfillment',
