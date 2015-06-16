@@ -13,10 +13,9 @@ from corehq.apps.commtrack.const import COMMTRACK_USERNAME
 from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import SQLProduct
 from corehq.toggles import LOCATION_TYPE_STOCK_RATES
-from mptt.models import MPTTModel, TreeForeignKey
+from mptt.models import MPTTModel, TreeForeignKey, TreeManager
 
 
-LOCATION_SHARING_PREFIX = 'locationgroup-'
 LOCATION_REPORTING_PREFIX = 'locationreportinggroup-'
 
 
@@ -113,6 +112,24 @@ class LocationType(models.Model):
         return LocationType.objects.filter(parent_type=self).exists()
 
 
+class LocationQueriesMixin(object):
+    def location_ids(self):
+        return self.values_list('location_id', flat=True)
+
+
+class LocationQuerySet(LocationQueriesMixin, models.query.QuerySet):
+    pass
+
+
+class LocationManager(LocationQueriesMixin, TreeManager):
+    def _get_base_queryset(self):
+        return LocationQuerySet(self.model, using=self._db)
+
+    def get_queryset(self):
+        return (self._get_base_queryset()
+                .order_by(self.tree_id_attr, self.left_attr))  # mptt default
+
+
 class SQLLocation(MPTTModel):
     domain = models.CharField(max_length=255, db_index=True)
     name = models.CharField(max_length=100, null=True)
@@ -136,6 +153,8 @@ class SQLLocation(MPTTModel):
     stocks_all_products = models.BooleanField(default=True)
 
     supply_point_id = models.CharField(max_length=255, db_index=True, unique=True, null=True)
+
+    objects = LocationManager()
 
     @property
     def products(self):
@@ -207,7 +226,7 @@ class SQLLocation(MPTTModel):
 
         if case_sharing:
             g.name = group_name() + '-Cases'
-            g._id = LOCATION_SHARING_PREFIX + self.location_id
+            g._id = self.location_id
             g.case_sharing = True
             g.reporting = False
         else:
@@ -237,7 +256,7 @@ class SQLLocation(MPTTModel):
 
         return self._make_group_object(
             user_id,
-            True,
+            case_sharing=True,
         )
 
     def reporting_group_object(self, user_id=None):
@@ -250,7 +269,7 @@ class SQLLocation(MPTTModel):
 
         return self._make_group_object(
             user_id,
-            False,
+            case_sharing=False,
         )
 
     @property
@@ -271,6 +290,7 @@ class SQLLocation(MPTTModel):
         # This exists for backwards compatability with couch locations
         return list(self.get_ancestors(include_self=True)
                     .values_list('location_id', flat=True))
+
 
 
 def _filter_for_archived(locations, include_archive_ancestors):
@@ -505,35 +525,21 @@ class Location(CachedCouchDocumentMixin, Document):
 
     @classmethod
     def filter_by_type(cls, domain, loc_type, root_loc=None):
-        loc_id = root_loc._id if root_loc else None
-        relevant_ids = [r['id'] for r in cls.get_db().view('locations/by_type',
-            reduce=False,
-            startkey=[domain, loc_type, loc_id],
-            endkey=[domain, loc_type, loc_id, {}],
-        ).all()]
+        if root_loc:
+            query = root_loc.sql_location.get_descendants(include_self=True)
+        else:
+            query = SQLLocation.objects
+        ids = (query.filter(domain=domain, location_type__name=loc_type)
+                    .location_ids())
+
         return (
-            cls.wrap(l) for l in iter_docs(cls.get_db(), list(relevant_ids))
+            cls.wrap(l) for l in iter_docs(cls.get_db(), list(ids))
             if not l.get('is_archived', False)
         )
 
     @classmethod
-    def filter_by_type_count(cls, domain, loc_type, root_loc=None):
-        loc_id = root_loc._id if root_loc else None
-        return cls.get_db().view('locations/by_type',
-            reduce=True,
-            startkey=[domain, loc_type, loc_id],
-            endkey=[domain, loc_type, loc_id, {}],
-        ).one()['value']
-
-    @classmethod
     def by_domain(cls, domain, include_docs=True):
-        relevant_ids = set([r['id'] for r in cls.get_db().view(
-            'locations/by_type',
-            reduce=False,
-            startkey=[domain],
-            endkey=[domain, {}],
-        ).all()])
-
+        relevant_ids = SQLLocation.objects.filter(domain=domain).location_ids()
         if not include_docs:
             return relevant_ids
         else:
@@ -641,13 +647,10 @@ class Location(CachedCouchDocumentMixin, Document):
     @property
     def group_id(self):
         """
-        Returns the id with a prefix because this is
-        the magic id we are force setting the locations
-        case sharing group to be.
-
-        This is also the id that owns supply point cases.
+        This just returns the location's id. It used to add
+        a prefix.
         """
-        return LOCATION_SHARING_PREFIX + self._id
+        return self._id
 
     @property
     def location_type_object(self):

@@ -1449,16 +1449,6 @@ class SuiteGenerator(SuiteGeneratorBase):
                 }[form.form_type]
                 config_entry(module, e, form)
 
-                if self.app.commtrack_enabled:
-                    from .models import AUTO_SELECT_LOCATION
-                    datum, assertions = self.get_userdata_autoselect(
-                        'commtrack-supply-point',
-                        'supply_point_id',
-                        AUTO_SELECT_LOCATION,
-                    )
-                    e.datums.append(datum)
-                    e.assertions.extend(assertions)
-
                 results.append(e)
 
             if hasattr(module, 'case_list') and module.case_list.show:
@@ -1736,10 +1726,17 @@ class SuiteGenerator(SuiteGeneratorBase):
                 function=xpath
             ), [fixture_assertion] + assertions
         elif auto_select.mode == AUTO_SELECT_RAW:
+            case_id_xpath = auto_select.value_key
+            case_count = CaseIDXPath(case_id_xpath).case().count()
             return SessionDatum(
                 id=action.case_session_var,
-                function=auto_select.value_key
-            ), []
+                function=case_id_xpath
+            ), [
+                self.get_assertion(
+                    "{0} = 1".format(case_count),
+                    'case_autoload.{0}.case_missing'.format(auto_select.mode)
+                )
+            ]
         elif auto_select.mode == AUTO_SELECT_USERCASE:
             case = UserCaseXPath().case()
             return SessionDatum(

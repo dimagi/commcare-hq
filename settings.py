@@ -460,6 +460,7 @@ DEFAULT_FROM_EMAIL = 'commcarehq-noreply@dimagi.com'
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@dimagi.com'
 ACCOUNTS_EMAIL = 'accounts@dimagi.com'
+FINANCE_EMAIL = 'finance@dimagi.com'
 SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange@dimagi.com'
 BILLING_EMAIL = 'billing-comm@dimagi.com'
 INVOICING_CONTACT_EMAIL = SUPPORT_EMAIL
@@ -679,6 +680,7 @@ AUDIT_MODEL_SAVE = [
 
 AUDIT_VIEWS = [
     'corehq.apps.settings.views.ChangeMyPasswordView',
+    'corehq.apps.hqadmin.views.AuthenticateAs',
 ]
 
 AUDIT_MODULES = [
@@ -939,6 +941,15 @@ try:
         from settings_demo import *
     else:
         from localsettings import *
+        if globals().get("FIX_LOGGER_ERROR_OBFUSCATION"):
+            # this is here because the logging config cannot import
+            # corehq.util.log.HqAdminEmailHandler, for example, if there
+            # is a syntax error in any module imported by corehq/__init__.py
+            # Setting FIX_LOGGER_ERROR_OBFUSCATION = True in
+            # localsettings.py will reveal the real error.
+            for handler in LOGGING["handlers"].values():
+                if handler["class"].startswith("corehq."):
+                    handler["class"] = "logging.StreamHandler"
 except ImportError:
     pass
 
@@ -1284,6 +1295,8 @@ CUSTOM_DATA_SOURCES = [
     os.path.join('custom', 'up_nrhm', 'data_sources', 'asha_facilitators.json'),
     os.path.join('custom', 'succeed', 'data_sources', 'submissions.json'),
     os.path.join('custom', 'apps', 'gsid', 'data_sources', 'patient_summary.json'),
+    os.path.join('custom', 'abt', 'reports', 'data_sources', 'sms.json'),
+    os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory.json'),
 ]
 
 

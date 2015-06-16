@@ -10,15 +10,13 @@ from corehq import Domain
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.graph_models import Axis
 from corehq.apps.users.models import CommCareUser
 from custom.common import ALL_OPTION
-from custom.ewsghana.filters import ProductByProgramFilter
-from custom.ewsghana.reports import EWSData, MultiReport, EWSLineChart, ProductSelectionPane, \
-    ews_date_format
-from custom.ewsghana.utils import has_input_stock_permissions
+from custom.ewsghana.filters import ProductByProgramFilter, EWSDateFilter
+from custom.ewsghana.reports import EWSData, MultiReport, EWSLineChart, ProductSelectionPane
+from custom.ewsghana.utils import has_input_stock_permissions, drange, ews_date_format
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 from corehq.apps.locations.models import Location, SQLLocation
@@ -137,7 +135,7 @@ class FacilityReportData(EWSData):
                 months_until_stockout = '-'
             yield {
                 'commodity': values['commodity'],
-                'current_stock': int(values['current_stock'] or 0),
+                'current_stock': values['current_stock'],
                 'monthly_consumption': values['monthly_consumption'] if values['monthly_consumption'] != 0.00
                 else 'not enough data',
                 'months_until_stockout': months_until_stockout,
@@ -295,10 +293,17 @@ class UsersData(EWSData):
             'url': reverse(EditCommCareUserView.urlname, args=[self.config['domain'], sms_user.get_id])
         }
 
-        web_users = UserES().web_users().domain(self.config['domain']).term(
-            "domain_memberships.location_id", self.config['location_id']
-        ).run().hits
-
+        web_users = [
+            {
+                'id': web_user['_id'],
+                'first_name': web_user['first_name'],
+                'last_name': web_user['last_name'],
+                'email': web_user['email']
+            }
+            for web_user in UserES().web_users().domain(self.config['domain']).term(
+                "domain_memberships.location_id", self.config['location_id']
+            ).run().hits
+        ]
         return render_to_string('ewsghana/partials/users_tables.html', {
             'users': [user_to_dict(user) for user in users],
             'domain': self.domain,
@@ -309,7 +314,7 @@ class UsersData(EWSData):
 
 class StockLevelsReport(MultiReport):
     title = "Aggregate Stock Report"
-    fields = [AsyncLocationFilter, ProductByProgramFilter, DatespanFilter]
+    fields = [AsyncLocationFilter, ProductByProgramFilter, EWSDateFilter]
     name = "Stock Levels Report"
     slug = 'ews_stock_levels_report'
     exportable = True
@@ -346,7 +351,7 @@ class StockLevelsReport(MultiReport):
                         InputStock(config),
                         UsersData(config),
                         InventoryManagementData(config),
-                        ProductSelectionPane(config)]
+                        ProductSelectionPane(config, hide_columns=False)]
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):

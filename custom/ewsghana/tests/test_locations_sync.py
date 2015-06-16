@@ -4,7 +4,8 @@ from django.test import TestCase
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.commtrack.tests.util import (bootstrap_products,
                                               bootstrap_domain as initial_bootstrap)
-from corehq.apps.locations.models import Location as CouchLocation, SQLLocation
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.tests.util import delete_all_locations
 from corehq.apps.products.models import SQLProduct
 from custom.ewsghana.api import Location, EWSApi, Product
 from custom.ewsghana.tests import MockEndpoint
@@ -27,14 +28,7 @@ class LocationSyncTest(TestCase):
                 cls.api_object.product_sync(Product(p))
 
     def setUp(self):
-        for location in CouchLocation.by_domain(TEST_DOMAIN):
-            supply_point = location.linked_supply_point()
-            if supply_point:
-                supply_point.delete()
-            location.delete()
-
-        for sql_location in SQLLocation.objects.all():
-            sql_location.delete()
+        delete_all_locations()
 
     def test_create_non_facility_location(self):
         with open(os.path.join(self.datapath, 'sample_locations.json')) as f:
@@ -80,8 +74,8 @@ class LocationSyncTest(TestCase):
         self.assertEqual(supply_point.location, ewsghana_location)
         self.assertEqual(location.supply_points[0].id, int(supply_point.external_id))
         self.assertEqual(location.supply_points[0].name, supply_point.name)
-        self.assertListEqual(location.supply_points[0].products,
-                             [product.code for product in ewsghana_location.sql_location.products])
+        self.assertSetEqual(set(location.supply_points[0].products),
+                            {product.code for product in ewsghana_location.sql_location.products})
 
     def test_create_region_with_two_supply_points(self):
         with open(os.path.join(self.datapath, 'sample_locations.json')) as f:

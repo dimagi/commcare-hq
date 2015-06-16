@@ -4,7 +4,6 @@ from functools import partial
 from datetime import datetime
 from casexml.apps.case.dbaccessors import get_open_case_ids
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.phone import xml
 from casexml.apps.phone.cleanliness import get_case_footprint_info
 from casexml.apps.phone.data_providers.case.load_testing import append_update_to_response
 from casexml.apps.phone.data_providers.case.stock import get_stock_payload

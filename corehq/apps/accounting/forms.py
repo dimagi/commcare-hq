@@ -538,12 +538,12 @@ class SubscriptionForm(forms.Form):
                 from corehq.apps.accounting.views import ManageBillingAccountView
                 raise forms.ValidationError(mark_safe(_(
                     "Please update 'Client Contact Emails' "
-                    '<strong><a href=%s target="_blank">here</a></strong> '
-                    "before using Billing Account <strong>%s</strong>."
-                ) % (
-                    reverse(ManageBillingAccountView.urlname, args=[account.id]),
-                    account.name,
-                )))
+                    '<strong><a href=%(link)s target="_blank">here</a></strong> '
+                    "before using Billing Account <strong>%(account)s</strong>."
+                ) % {
+                    'link': reverse(ManageBillingAccountView.urlname, args=[account.id]),
+                    'account': account.name,
+                }))
 
         start_date = self.cleaned_data.get('start_date') or self.subscription.date_start
         if (self.cleaned_data['end_date'] is not None

@@ -13,7 +13,7 @@
 
 {% block js-inline %}{{ block.super }}
     <script>
-        var pricingTable = new PricingTable({{ pricing_table|JSON }}, '{{ current_edition }}', {{ is_non_ops_superuser|BOOL }});
+        var pricingTable = new PricingTable({{ pricing_table|JSON }}, '{{ current_edition }}', {{ is_non_ops_superuser|BOOL }}, {{ is_renewal|BOOL }});
         ko.applyBindings(pricingTable, $('#pricing-table').get(0));
         pricingTable.init();
     </script>
@@ -21,9 +21,7 @@
 
 {% block form_content %}
 <p class="lead">
-{% blocktrans %}
-    Please select a plan below that fits your organization's needs.
-{% endblocktrans %}
+    {{ lead_text|safe }}
 </p>
 <p>
 {% blocktrans %}
@@ -35,7 +33,18 @@
 <div class="row" style="margin-top: 20px;">
     <div class="span12">
         <article id="pricing-table">
-            <form action="{% url 'confirm_selected_plan' domain %}" method="post" class="form">
+            <form
+                {% if is_renewal %}
+                    action="{% url 'domain_subscription_renewal_confirmation' domain %}"
+                {% else %}
+                    action="{% url 'confirm_selected_plan' domain %}"
+                {% endif %}
+                method="post"
+                class="form"
+            >
+                {% if is_renewal %}
+                <input type="hidden" name="from_plan_page" value="true">
+                {% endif %}
                 <input type="hidden" name="plan_edition" data-bind="value: selected_edition">
                 <div class="form-actions" data-bind="visible: isSubmitVisible">
                     <button type="submit" class="btn btn-primary btn-large">{% trans 'Next' %}</button>
@@ -141,9 +150,9 @@
         <!-- ko foreach: pt.editions -->
         <td data-bind="attr: {class: col_css, 'data-edition': slug}">
             <input type="radio" data-bind="
-                checked: $parent.pt.selected_edition,
                 attr: {value: slug, name: $parent.radio_group_name},
-                visible: notCurrentEdition
+                checked: $parent.pt.selected_edition,
+                visible: $parent.pt.isRenewal||notCurrentEdition
             " >
             <strong data-bind="visible: currentEdition">
                 {% trans 'Current Plan' %}
