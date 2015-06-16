@@ -25,6 +25,7 @@ OUTGOING = "O"
 WORKFLOW_CALLBACK = "CALLBACK"
 WORKFLOW_REMINDER = "REMINDER"
 WORKFLOW_KEYWORD = "KEYWORD"
+WORKFLOW_FORWARD = "FORWARD"
 WORKFLOW_BROADCAST = "BROADCAST"
 WORKFLOW_DEFAULT = 'default'
 
@@ -718,6 +719,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     SOURCE_KEYWORD = 'KWD'
     SOURCE_REMINDER = 'RMD'
     SOURCE_UNRECOGNIZED = 'UNR'
+    SOURCE_FORWARDED = 'FWD'
     SOURCE_OTHER = 'OTH'
 
     SOURCE_CHOICES = (
@@ -725,6 +727,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         (SOURCE_KEYWORD, ugettext_noop('Keyword')),
         (SOURCE_REMINDER, ugettext_noop('Reminder')),
         (SOURCE_UNRECOGNIZED, ugettext_noop('Unrecognized')),
+        (SOURCE_FORWARDED, ugettext_noop('Forwarded Message')),
         (SOURCE_OTHER, ugettext_noop('Other')),
     )
 
