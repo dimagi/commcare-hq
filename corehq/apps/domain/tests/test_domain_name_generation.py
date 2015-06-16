@@ -38,7 +38,7 @@ class DomainNameGenerationBasicTest(DomainNameGenerationTestBase):
     def test_failure(self):
         name = "ab"
         self.add_domain(name)
-        self.assertFalse(Domain.generate_name(name, 2))
+        self.assertFalse(Domain.generate_name(name, 1))
 
 '''
     def test_long_names(self):
