@@ -453,6 +453,42 @@ class ConfigureNewReportBase(forms.Form):
         return data_source_config._id
 
     def update_report(self):
+        from corehq.apps.userreports.views import delete_data_source_shared
+
+        matching_data_source = self.ds_builder.get_existing_match()
+        if matching_data_source:
+            if matching_data_source['id'] != self.existing_report.config_id:
+
+                # If no one else is using the current data source, delete it.
+                data_source = DataSourceConfiguration.get(self.existing_report.config_id)
+                if data_source.get_report_count() <= 1:
+                    try:
+                        delete_data_source_shared(self.domain, data_source._id)
+                    except Exception as e:
+                        import ipdb; ipdb.set_trace()
+
+                self.existing_report.config_id = matching_data_source['id']
+
+        else:
+            # We need to create a new data source
+            existing_sources = DataSourceConfiguration.by_domain(self.domain)
+
+            # Delete the old one if no other reports use it
+            old_data_source = DataSourceConfiguration.get(self.existing_report.config_id)
+            if old_data_source.get_report_count() <= 1:
+                delete_data_source_shared(self.domain, old_data_source._id)
+
+            # Make sure the user can create more data sources
+            elif len(existing_sources) >= 5:
+                raise forms.ValidationError(_(
+                    "Editing this report would require a new data source. The limit is 5. "
+                    "To continue, first delete all of the reports using a particular "
+                    "data source (or the data source itself) and try again. "
+                ))
+
+            data_source_config_id = self._build_data_source()
+            self.existing_report.config_id = data_source_config_id
+
         self.existing_report.aggregation_columns = self._report_aggregation_cols
         self.existing_report.columns = self._report_columns
         self.existing_report.filters = self._report_filters

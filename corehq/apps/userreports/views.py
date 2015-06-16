@@ -5,6 +5,7 @@ import os
 import tempfile
 
 from django.contrib import messages
+from django.core.exceptions import ValidationError
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse
 from django.http.response import Http404
@@ -225,7 +226,11 @@ class ConfigureChartReport(ReportBuilderView):
     def post(self, *args, **kwargs):
         if self.report_form.is_valid():
             if self.report_form.existing_report:
-                report_configuration = self.report_form.update_report()
+                try:
+                    report_configuration = self.report_form.update_report()
+                except ValidationError as e:
+                    messages.error(self.request, e.message)
+                    return self.get(*args, **kwargs)
             else:
                 report_configuration = self.report_form.create_report()
             return HttpResponseRedirect(
