@@ -7,15 +7,10 @@
     <div class="control-label">
         <label for="{{ select.cssId }}" class="inner-control-label">{% trans select.label %}</label>
         {% if help_text %}
-            <!-- TODO: use hq-help-template -->
-            <div class="hq-help">
-                <a href="#"
-                   data-title="{% trans "Help" %}"
-                   data-content="{{ help_text }}"
-                >
-                    <i class="icon-question-sign"></i>
-                </a>
-            </div>
+            <span class="hq-help-template"
+              data-title="{% trans "Help" %}"
+              data-content="{{ help_text }}"
+            ></span>
         {% endif %}
     </div>
 {% endif %}
@@ -30,7 +25,9 @@
         ko.applyBindings({select_params: {{ select.options|JSON }}, current_selection: ko.observableArray({{ select.selected|JSON }})}, $('#{{ select.cssId }}').parent().get(0));
         $('#{{ select.cssId }}').select2();
 
-        $('.hq-help').hqHelp();
+        $('.hq-help-template').each(function () {
+          COMMCAREHQ.transformHelpTemplate($(this), true);
+        });
     });
 </script>
 {% endif %}
