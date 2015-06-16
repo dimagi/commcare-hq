@@ -7,13 +7,11 @@
     $(function () {
         $("fieldset .helptext").each( function (index, data) {
             console.log(data.textContent);
-        // TODO: test, and remove the title bar if there's no data-title
-        $(this).parent().prev("label").append('
-            <span class="hq-help-template" data-placement="top" data-content="' + data.textContent + '"></span>'
-        );
-        $(this).remove();
-        $('.hq-help-template').each(function () {
-            COMMCAREHQ.transformHelpTemplate($(this), false);
+            $(this).parent().prev("label").append('<span class="hq-help-template" data-placement="top" data-content="' + data.textContent + '"></span>');
+            $(this).remove();
+        });
+        $('fieldset .hq-help-template').each(function () {
+            COMMCAREHQ.transformHelpTemplate($(this), true);
         });
     });
 </script>

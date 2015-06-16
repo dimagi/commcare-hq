@@ -59,15 +59,20 @@ $.fn.hqHelp = function () {
     var self = this;
     self.each(function(i) {
         var $self = $(self),
-            $helpElem = $($self.get(i));
+            $helpElem = $($self.get(i)),
+            $link = $helpElem.find('a');
 
-        $helpElem.find('a').popover({
+        var options = {
             html: true,
             trigger: 'focus',
             content: function() {
                 return $('#popover_content_wrapper').html();
             }
-        });
+        };
+        if (!$link.data("title")) {
+            options.template = '<div class="popover"><div class="arrow"></div><div class="popover-inner"><div class="popover-content"><p></p></div></div></div>';
+        }
+        $link.popover(options);
 
         // Prevent jumping to the top of the page when link is clicked
         $helpElem.find('a').click(function(event) {
