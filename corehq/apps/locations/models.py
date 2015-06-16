@@ -556,13 +556,11 @@ class Location(CachedCouchDocumentMixin, Document):
         This method directly looks up a single location
         and can return archived locations.
         """
-        result = cls.get_db().view(
-            'locations/prop_index_site_code',
-            reduce=False,
-            startkey=[domain, site_code],
-            endkey=[domain, site_code, {}],
-        ).first()
-        return Location.get(result['id']) if result else None
+        try:
+            return (SQLLocation.objects.get(domain=domain, site_code=site_code)
+                    .couch_location)
+        except SQLLocation.DoesNotExist:
+            return None
 
     @classmethod
     def root_locations(cls, domain):
