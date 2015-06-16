@@ -54,4 +54,3 @@ def update_subscription_properties_by_domain(domain):
 
     for web_user in affected_users:
         update_subscription_properties_by_user(web_user)
-
