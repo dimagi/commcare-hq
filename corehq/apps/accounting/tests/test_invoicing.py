@@ -461,9 +461,11 @@ class TestManagementCmdInvoice(BaseInvoiceTestCase):
         # Basic hide invoices
         call_command('hide_invoices_by_id', *[i.pk for i in invoices])
         for i in invoices:
-            self.assertTrue(super(InvoiceBaseManager, Invoice.objects).get_queryset().get(pk=i.pk).is_hidden_to_ops)
+            self.assertTrue(super(
+                InvoiceBaseManager, Invoice.objects).get_queryset().get(pk=i.pk).is_hidden_to_ops)
 
         # Basic unhide invoices
         call_command('hide_invoices_by_id', *[i.pk for i in invoices], unhide=True)
         for i in invoices:
-            self.assertFalse(super(InvoiceBaseManager, Invoice.objects).get_queryset().get(pk=i.pk).is_hidden_to_ops)
+            self.assertFalse(super(
+                InvoiceBaseManager, Invoice.objects).get_queryset().get(pk=i.pk).is_hidden_to_ops)
