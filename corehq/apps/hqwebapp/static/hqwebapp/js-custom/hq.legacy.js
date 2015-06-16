@@ -28,7 +28,6 @@ var COMMCAREHQ = (function () {
             return el;
         },
         transformHelpTemplate: function ($template, wrap) {
-            'use strict';
             var $help = COMMCAREHQ.makeHqHelp($template.data(), wrap);
             $help.insertAfter($template);
             $template.remove();

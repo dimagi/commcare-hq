@@ -52,7 +52,7 @@ COMMCAREHQ.transformHelpTemplate = function ($template, wrap) {
     var $help = COMMCAREHQ.makeHqHelp($template.data(), wrap);
     $help.insertAfter($template);
     $template.remove();
-}
+};
 
 COMMCAREHQ.initBlock = function ($elem) {
     'use strict';
