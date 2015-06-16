@@ -9,14 +9,15 @@ from django.utils.translation import ugettext_noop as _
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import FormActions
 from crispy_forms.helper import FormHelper
-from corehq.apps.app_manager.fields import ApplicationDataSourceUIHelper
 
+from corehq.apps.app_manager.fields import ApplicationDataSourceUIHelper
 from corehq.apps.app_manager.models import (
     Application,
     Form,
 )
 from corehq.apps.app_manager.util import get_case_properties
 from corehq.apps.app_manager.xform import XForm
+
 from corehq.apps.userreports import tasks
 from corehq.apps.userreports.app_manager import _clean_table_name
 from corehq.apps.userreports.models import (

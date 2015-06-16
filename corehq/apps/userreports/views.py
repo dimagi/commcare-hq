@@ -283,18 +283,11 @@ def delete_report(request, domain, report_id):
     config = get_document_or_404(ReportConfiguration, domain, report_id)
 
     # Delete the data source too if it's not being used by any other reports.
-    data_source_id = config.config_id
-
-    report_count = ReportConfiguration.view(
-        'userreports/report_configs_by_data_source',
-        reduce=True,
-        key=[domain, data_source_id]
-    ).one()['value']
-
-    if report_count <= 1:
+    data_source, __ = get_datasource_config_or_404(config.config_id, domain)
+    if data_source.get_report_count() <= 1:
         # No other reports reference this data source.
         try:
-            _delete_data_source_shared(request, domain, data_source_id)
+            delete_data_source_shared(domain, data_source._id, request)
         except Http404:
             # It's possible the data source has already been deleted, but
             # that's fine with us.
@@ -403,17 +396,20 @@ def _edit_data_source_shared(request, domain, config, read_only=False):
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 @require_POST
 def delete_data_source(request, domain, config_id):
-    _delete_data_source_shared(request, domain, config_id)
+    delete_data_source_shared(domain, config_id, request)
     return HttpResponseRedirect(reverse('configurable_reports_home', args=[domain]))
 
 
-def _delete_data_source_shared(request, domain, config_id):
+def delete_data_source_shared(domain, config_id, request=None):
     config = get_document_or_404(DataSourceConfiguration, domain, config_id)
     adapter = IndicatorSqlAdapter(get_engine(), config)
     adapter.drop_table()
     config.delete()
-    messages.success(request,
-                     _(u'Data source "{}" has been deleted.'.format(config.display_name)))
+    if request:
+        messages.success(
+            request,
+            _(u'Data source "{}" has been deleted.'.format(config.display_name))
+        )
 
 
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
