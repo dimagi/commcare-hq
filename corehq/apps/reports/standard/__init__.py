@@ -1,10 +1,14 @@
+from collections import defaultdict
 from datetime import datetime
 import dateutil
+from itertools import chain
 from django.core.cache import cache
 from django.core.urlresolvers import reverse
 import operator
 from casexml.apps.case.models import CommCareCaseGroup
+from corehq.apps.es import UserES
 from corehq.apps.groups.models import Group
+from corehq.apps.locations.models import LOCATION_REPORTING_PREFIX, SQLLocation
 from corehq.apps.reports import util
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjectReportDispatcher
 from corehq.apps.reports.exceptions import BadRequestError
@@ -109,7 +113,9 @@ class ProjectReportParametersMixin(object):
 
     @property
     def group_ids(self):
-        return filter(None, self.request.GET.getlist('group'))
+        def is_valid(group_id):
+            return group_id and not group_id.startswith(LOCATION_REPORTING_PREFIX)
+        return filter(is_valid, self.request.GET.getlist('group'))
 
     @property
     @memoized
@@ -185,12 +191,45 @@ class ProjectReportParametersMixin(object):
         return user_dict
 
     @property
+    def location_ids(self):
+        return [
+            group_id.replace(LOCATION_REPORTING_PREFIX, '')
+            for group_id in self.request.GET.getlist('group')
+            if group_id and group_id.startswith(LOCATION_REPORTING_PREFIX)
+        ]
+
+    @property
+    @memoized
+    def users_by_location(self):
+        if not self.location_ids:
+            return {}
+
+        locations = dict(SQLLocation.objects
+                         .filter(domain=self.domain,
+                                 is_archived=False,
+                                 location_id__in=self.location_ids)
+                         .values_list('location_id', 'name'))
+
+        def make_loc_key(user):
+            loc_id = user['location_id']
+            return "{}|{}".format(locations[loc_id], loc_id)
+
+        query = (UserES()
+                 .domain(self.domain)
+                 .location(self.location_ids)
+                 .fields(['_id', 'location_id', 'username', 'first_name',
+                          'last_name', 'doc_type', 'is_active']))
+        user_dict = defaultdict(list)
+        for user in query.run().hits:
+            user_dict[make_loc_key(user)].append(util._report_user_dict(user))
+        return user_dict
+
+    @property
     @memoized
     def users_by_mobile_workers(self):
-        from corehq.apps.reports.util import _report_user_dict
         user_dict = {}
         for mw in self.mobile_worker_ids:
-            user_dict[mw] = _report_user_dict(CommCareUser.get_by_user_id(mw))
+            user_dict[mw] = util._report_user_dict(CommCareUser.get_by_user_id(mw))
 
         return user_dict
 
@@ -215,15 +254,16 @@ class ProjectReportParametersMixin(object):
     def admins_and_demo_user_ids(self):
         return [user.user_id for user in self.admins_and_demo_users]
 
-
     @property
     @memoized
     def combined_users(self):
-        #todo: replace users with this and make sure it doesn't break existing reports
-        all_users = [user for sublist in self.users_by_group.values() for user in sublist]
-        all_users.extend([user for user in self.users_by_mobile_workers.values()])
-        all_users.extend([user for user in self.admins_and_demo_users])
-        return dict([(user['user_id'], user) for user in all_users]).values()
+        all_users = chain(
+            chain.from_iterable(self.users_by_group.values()),
+            chain.from_iterable(self.users_by_location.values()),
+            self.users_by_mobile_workers.values(),
+            self.admins_and_demo_users,
+        )
+        return {user['user_id']: user for user in all_users}.values()
 
     @property
     @memoized

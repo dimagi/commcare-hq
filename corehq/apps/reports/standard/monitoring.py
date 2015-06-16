@@ -996,8 +996,8 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     is_cacheable = True
 
     fields = [
-        'corehq.apps.reports.dont_use.fields.MultiSelectGroupField',
-        'corehq.apps.reports.dont_use.fields.UserOrGroupField',
+        'corehq.apps.reports.filters.select.GroupAndLocationFilter',
+        'corehq.apps.reports.filters.select.SelectUserOrGroupFilter',
         'corehq.apps.reports.filters.select.MultiCaseTypeFilter',
         'corehq.apps.reports.filters.dates.DatespanFilter',
     ]
@@ -1021,7 +1021,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     @property
     def view_by(self):
-        return self.request.GET.get('view_by', None)
+        return self.request.GET.get('users_or_groups', 'users')
 
     @property
     def headers(self):
@@ -1273,7 +1273,10 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         rows = []
         NO_FORMS_TEXT = _('None')
         if self.view_by == 'groups':
-            for group, users in self.users_by_group.iteritems():
+            users_by_group = {}
+            users_by_group.update(self.users_by_group)
+            users_by_group.update(self.users_by_location)
+            for group, users in users_by_group.iteritems():
                 group_name, group_id = tuple(group.split('|'))
                 if group_name == 'no_group':
                     continue

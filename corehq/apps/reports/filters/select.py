@@ -5,13 +5,13 @@ from django.conf import settings
 from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.utils.translation import ugettext as _
 
-from casexml.apps.case.models import CommCareCase, CommCareCaseGroup
+from casexml.apps.case.models import CommCareCaseGroup
 from corehq.apps.hqcase.dbaccessors import get_case_types_for_domain
-from dimagi.utils.couch.database import get_db
 
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.groups.models import Group
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.orgs.models import Organization
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter, BaseMultipleOptionFilter
 
@@ -82,6 +82,19 @@ class MultiGroupFilter(GroupFilterMixin, BaseMultipleOptionFilter):
     placeholder = ugettext_noop('Click to select groups')
 
 
+class GroupAndLocationFilter(MultiGroupFilter):
+    default_options = ['_all']
+
+    @property
+    def options(self):
+        groups = Group.get_reporting_groups(self.domain)
+        locations = [loc.reporting_group_object()
+                     for loc in SQLLocation.objects.filter(domain=self.domain,
+                                                           is_archived=False)]
+        return [('_all', _("All"))] + [(group.get_id, group.name)
+                                       for group in groups + locations]
+
+
 class YearFilter(BaseSingleOptionFilter):
     slug = "year"
     label = ugettext_noop("Year")
@@ -133,6 +146,17 @@ class SelectOpenCloseFilter(BaseSingleOptionFilter):
             ('open', _("Only Open")),
             ('closed', _("Only Closed")),
         ]
+
+
+class SelectUserOrGroupFilter(BaseSingleOptionFilter):
+    slug = "users_or_groups"
+    label = ugettext_noop("View by Users or Groups")
+    css_class = "span2"
+    default_text = ugettext_noop("Users")
+
+    @property
+    def options(self):
+        return [('groups', _("Groups"))]
 
 
 class SelectApplicationFilter(BaseSingleOptionFilter):

@@ -211,21 +211,6 @@ class StrongFilterUsersField(FilterUsersField):
     can_be_empty = True
 
 
-class UserOrGroupField(ReportSelectField):
-    """
-        To Use: Subclass and specify what the field options should be
-    """
-    slug = "view_by"
-    name = ugettext_noop("View by Users or Groups")
-    cssId = "view_by_select"
-    cssClasses = "span2"
-    default_option = "Users"
-
-    def update_params(self):
-        self.selected = self.request.GET.get(self.slug, '')
-        self.options = [{'val': 'groups', 'text': 'Groups'}]
-
-
 class SelectProgramField(ReportSelectField):
     slug = "program"
     name = ugettext_noop("Program")
@@ -244,12 +229,6 @@ class SelectProgramField(ReportSelectField):
         self.options = opts
 
 
-class GroupFieldMixin():
-    slug = "group"
-    name = ugettext_noop("Group")
-    cssId = "group_select"
-
-
 class ReportMultiSelectField(ReportSelectField):
     template = "reports/dont_use_fields/multiselect_generic.html"
     selected = []
@@ -260,16 +239,3 @@ class ReportMultiSelectField(ReportSelectField):
 
     def update_params(self):
         self.selected = self.request.GET.getlist(self.slug) or self.default_option
-
-
-class MultiSelectGroupField(GroupFieldMixin, ReportMultiSelectField):
-    default_option = ['_all']
-    placeholder = 'Click to select groups'
-    help_text = "Start typing to select one or more groups"
-
-    @property
-    def options(self):
-        self.groups = Group.get_reporting_groups(self.domain)
-        opts = [dict(val=group.get_id, text=group.name) for group in self.groups]
-        opts.insert(0, {'text': 'All', 'val': '_all'})
-        return opts
