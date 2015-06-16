@@ -717,12 +717,14 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     SOURCE_BROADCAST = 'BRD'
     SOURCE_KEYWORD = 'KWD'
     SOURCE_REMINDER = 'RMD'
+    SOURCE_UNRECOGNIZED = 'UNR'
     SOURCE_OTHER = 'OTH'
 
     SOURCE_CHOICES = (
         (SOURCE_BROADCAST, ugettext_noop('Broadcast')),
         (SOURCE_KEYWORD, ugettext_noop('Keyword')),
         (SOURCE_REMINDER, ugettext_noop('Reminder')),
+        (SOURCE_UNRECOGNIZED, ugettext_noop('Unrecognized')),
         (SOURCE_OTHER, ugettext_noop('Other')),
     )
 
@@ -874,7 +876,9 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         return obj
 
     @classmethod
-    def create_event_for_adhoc_sms(cls, domain, recipient=None, content_type=CONTENT_ADHOC_SMS):
+    def create_event_for_adhoc_sms(cls, domain, recipient=None,
+        content_type=CONTENT_ADHOC_SMS, source=SOURCE_OTHER
+    ):
         if recipient:
             recipient_type = cls.get_recipient_type(recipient)
             recipient_id = recipient.get_id
@@ -885,7 +889,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         obj = cls.objects.create(
             domain=domain,
             date=datetime.utcnow(),
-            source=cls.SOURCE_OTHER,
+            source=source,
             content_type=content_type,
             status=cls.STATUS_IN_PROGRESS,
             recipient_type=recipient_type,

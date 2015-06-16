@@ -336,7 +336,7 @@ class MessageLogReport(BaseCommConnectLogReport):
 class BaseMessagingEventReport(BaseCommConnectLogReport):
     def get_source_display(self, event):
         source = dict(MessagingEvent.SOURCE_CHOICES).get(event.source)
-        if event.source == MessagingEvent.SOURCE_OTHER:
+        if event.source in (MessagingEvent.SOURCE_OTHER, MessagingEvent.SOURCE_UNRECOGNIZED):
             return self._fmt(_(source))
         else:
             content_type = dict(MessagingEvent.CONTENT_CHOICES).get(event.content_type)
