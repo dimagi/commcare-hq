@@ -148,15 +148,6 @@ class DomainInvoiceFactory(object):
                         "%s because it's a trial." % subscription.pk)
             return
 
-        if subscription.auto_generate_credits:
-            for product_rate in subscription.plan_version.product_rates.all():
-                CreditLine.add_credit(
-                    product_rate.monthly_fee,
-                    subscription=subscription,
-                    product_type=product_rate.product.product_type,
-                    permit_inactive=True,
-                )
-
         if subscription.date_start > self.date_start:
             invoice_start = subscription.date_start
         else:
@@ -374,6 +365,10 @@ class ProductLineItemFactory(LineItemFactory):
         if not self.is_prorated:
             line_item.base_cost = self.rate.monthly_fee
         line_item.save()
+
+        if self.subscription.auto_generate_credits:
+            self._auto_generate_credits()
+
         return line_item
 
     @property
@@ -413,6 +408,14 @@ class ProductLineItemFactory(LineItemFactory):
         if self.is_prorated:
             return self.num_prorated_days
         return 1
+
+    def _auto_generate_credits(self):
+        CreditLine.add_credit(
+            self.unit_cost if self.is_prorated else self.rate.monthly_fee,
+            subscription=self.subscription,
+            product_type=self.rate.product.product_type,
+            permit_inactive=True,
+        )
 
 
 class FeatureLineItemFactory(LineItemFactory):
