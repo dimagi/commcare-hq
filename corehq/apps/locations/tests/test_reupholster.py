@@ -86,6 +86,22 @@ class TestReupholster(TestCase):
 
         self.assertEqual(original_result, list(new_result))
 
+    def test_site_codes_for_domain(self):
+        original_result = set([r['key'][1] for r in Location.get_db().view(
+            'locations/prop_index_site_code',
+            reduce=False,
+            startkey=[self.domain.name],
+            endkey=[self.domain.name, {}],
+        ).all()])
+
+        new_result = {
+            code.lower() for code in
+            (SQLLocation.objects.filter(domain=self.domain)
+                                .values_list('site_code', flat=True))
+        }
+
+        self.assertEqual(original_result, new_result)
+
 
 class TestPath(LocationTestBase):
     def test_path(self):

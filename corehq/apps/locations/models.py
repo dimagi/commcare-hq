@@ -501,10 +501,12 @@ class Location(CachedCouchDocumentMixin, Document):
         # lazy migration for site_code
         if not self.site_code:
             from corehq.apps.commtrack.util import generate_code
-            self.site_code = generate_code(
-                self.name,
-                Location.site_codes_for_domain(self.domain)
-            )
+            all_codes = [
+                code.lower() for code in
+                (SQLLocation.objects.filter(domain=self.domain)
+                                    .values_list('site_code', flat=True))
+            ]
+            self.site_code = generate_code(self.name, all_codes)
 
         sql_location = None
         result = super(Location, self).save(*args, **kwargs)
@@ -547,19 +549,6 @@ class Location(CachedCouchDocumentMixin, Document):
                 cls.wrap(l) for l in iter_docs(cls.get_db(), list(relevant_ids))
                 if not l.get('is_archived', False)
             )
-
-    @classmethod
-    def site_codes_for_domain(cls, domain):
-        """
-        This method is only used in management commands and lazy
-        migrations so DOES NOT exclude archived locations.
-        """
-        return set([r['key'][1] for r in cls.get_db().view(
-            'locations/prop_index_site_code',
-            reduce=False,
-            startkey=[domain],
-            endkey=[domain, {}],
-        ).all()])
 
     @classmethod
     def by_site_code(cls, domain, site_code):
