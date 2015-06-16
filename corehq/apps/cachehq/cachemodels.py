@@ -103,7 +103,6 @@ class LocationGenerationCache(GenerationCache):
     doc_types = ['Location']
     views = [
         'locations/hierarchy',
-        'locations/by_name',
         'commtrack/locations_by_code',
         '_all_docs',
     ]
