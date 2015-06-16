@@ -463,6 +463,13 @@ INSTANCE_VIEWER = StaticToggle(
     namespaces=[NAMESPACE_USER],
 )
 
+CLOUDCARE_CACHE = StaticToggle(
+    'cloudcare_cache',
+    'Aggresively cache case list, can result in stale data',
+    TAG_EXPERIMENTAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 OPENLMIS = StaticToggle(
     'openlmis',
     'Offer OpenLMIS settings',
