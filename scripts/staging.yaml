@@ -52,7 +52,6 @@ branches:
   - index-phonelog-reportentry # Ben 6/8
   - add-proxy4 # ts 6/9
   - case-list-filter  # Ethan 6/10
-  - cache-case-list # Ben 6/11
   - autoload-supplypoint  # Ethan 6/15
   - full-name  # Ethan 6/15
   - war-filter  # Ethan 6/15
