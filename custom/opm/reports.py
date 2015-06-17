@@ -38,7 +38,7 @@ from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from corehq.apps.reports.generic import ElasticTabularReport, GetParamsMixin
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn, DataFormatter, DictDataFormat
 from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin, DatespanMixin
-from corehq.apps.reports.standard.maps import ElasticSearchMapReport, GenericMapReport
+from corehq.apps.reports.standard.maps import GenericMapReport
 from corehq.apps.reports.util import make_form_couch_key
 from corehq.apps.users.models import CommCareCase, CouchUser
 from corehq.elastic import es_query
