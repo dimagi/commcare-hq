@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
+import math
 import pytz
 from corehq.apps.es import UserES
 from corehq.apps.locations.models import SQLLocation
@@ -63,8 +64,8 @@ class ReportingRates(ReportingRatesData):
         data = self.rows
         chart_data = []
         if data:
-            reported_percent = float(data['reported']) * 100 / (data['total'] or 1)
-            non_reported_percent = float(data['non_reported']) * 100 / (data['total'] or 1)
+            reported_percent = round((data['reported']) * 100 / (data['total'] or 1))
+            non_reported_percent = round((data['non_reported']) * 100 / (data['total'] or 1))
             reported_formatted = ("%d" if reported_percent.is_integer() else "%.1f") % reported_percent
             non_reported_formatted = ("%d" if non_reported_percent.is_integer() else "%.1f") % non_reported_percent
 
@@ -90,6 +91,16 @@ class ReportingDetails(ReportingRatesData):
     show_chart = True
     slug = 'reporting_details'
     title = _('Reporting Details')
+
+    @property
+    def title(self):
+        if self.config.get('datespan_type') == '2':
+            return _('Reporting Details (Weekly Reporting Period)')
+        elif self.config.get('datespan_type') == '1':
+            return _('Reporting Details({}, {})'.format(
+                self.config['startdate'].strftime('%B'), self.config['startdate'].year
+            ))
+        return ""
 
     @property
     def rows(self):
@@ -133,17 +144,17 @@ class ReportingDetails(ReportingRatesData):
         data = self.rows
         chart_data = []
         if data:
-            complete_percent = float(data['complete']) * 100 / (data['total'] or 1)
-            incomplete_percent = float(data['incomplete']) * 100 / (data['total'] or 1)
+            complete_percent = round((data['complete']) * 100 / (data['total'] or 1))
+            incomplete_percent = round((data['incomplete']) * 100 / (data['total'] or 1))
             complete_formatted = ("%d" if complete_percent.is_integer() else "%.1f") % complete_percent
             incomplete_formatted = ("%d" if incomplete_percent.is_integer() else "%.1f") % incomplete_percent
             chart_data = [
-                dict(value=complete_percent,
+                dict(value=complete_formatted,
                      label=_('Complete'),
                      description=_("%s%% (%d) Complete Reports in %s" %
                                    (complete_formatted, data['complete'], self.datetext())),
                      color='green'),
-                dict(value=incomplete_percent,
+                dict(value=incomplete_formatted,
                      label=_('Incomplete'),
                      description=_("%s%% (%d) Incomplete Reports in %s" %
                                    (incomplete_formatted, data['incomplete'], self.datetext())),
