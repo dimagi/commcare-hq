@@ -230,8 +230,8 @@ def send_subscription_reminder_emails(num_days, exclude_trials=True):
 @task(ignore_result=True)
 def send_purchase_receipt(payment_record, core_product,
                           template_html, template_plaintext,
-                          additional_context):
-    email = payment_record.payment_method.billing_admin.web_user
+                          additional_context, domain):
+    email = payment_record.payment_method.web_user
 
     try:
         web_user = WebUser.get_by_username(email)

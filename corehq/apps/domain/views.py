@@ -1452,7 +1452,7 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
     @property
     @memoized
     def is_form_post(self):
-        return 'billing_admins' in self.request.POST
+        return len(self.request.POST)
 
     @property
     @memoized

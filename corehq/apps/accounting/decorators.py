@@ -14,29 +14,6 @@ from django_prbac.decorators import requires_privilege
 from django_prbac.exceptions import PermissionDenied
 
 
-def require_billing_admin():
-    def decorate(fn):
-        """
-        Decorator to require the current logged in user to be a billing
-        admin to access the decorated view.
-        """
-        @wraps(fn)
-        def wrapped(request, *args, **kwargs):
-            if (not hasattr(request, 'couch_user')
-                    or not hasattr(request, 'domain')):
-                raise Http404()
-            is_billing_admin = BillingAccountAdmin.get_admin_status_and_account(
-                request.couch_user, request.domain)[0]
-            request.is_billing_admin = is_billing_admin
-            if not (is_billing_admin or request.couch_user.is_superuser):
-                raise Http404()
-            return fn(request, *args, **kwargs)
-
-        return wrapped
-
-    return decorate
-
-
 def requires_privilege_with_fallback(slug, **assignment):
     """
     A version of the requires_privilege decorator which falls back
@@ -64,10 +41,6 @@ def requires_privilege_with_fallback(slug, **assignment):
                         'required_plan': edition_req,
                         'date_end': request.subscription.date_end.strftime(USER_DATE_FORMAT)
                     }
-                    request.is_billing_admin = (hasattr(request, 'couch_user')
-                                                and BillingAccountAdmin.get_admin_status_and_account(
-                                                    request.couch_user, request.domain
-                                                )[0])
 
                 return requires_privilege(slug, **assignment)(fn)(
                     request, *args, **kwargs

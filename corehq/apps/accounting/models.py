@@ -333,12 +333,6 @@ class BillingAccount(models.Model):
                 entry_point=entry_point,
             )
             account.save()
-            if not created_by_invoicing:
-                billing_admin = BillingAccountAdmin.objects.get_or_create(
-                    domain=domain, web_user=created_by,
-                )[0]
-                account.billing_admins.add(billing_admin)
-                account.save()
         return account, is_new
 
     @classmethod
@@ -1202,10 +1196,9 @@ class Subscription(models.Model):
                             'ending_on': ending_on,
                         }
 
-            billing_admins = self.account.billing_admins.filter(
-                domain=self.subscriber.domain
-            )
-            emails |= {admin.web_user for admin in billing_admins}
+            billing_contact_emails = BillingContactInfo.objects.get(account=self.account).emails.split(',')
+            emails |= { billing_contact_email for billing_contact_email in billing_contact_emails }
+            
             template = 'accounting/subscription_ending_reminder_email.html'
             template_plaintext = 'accounting/subscription_ending_reminder_email_plaintext.html'
 
