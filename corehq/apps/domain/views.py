@@ -17,7 +17,7 @@ from casexml.apps.case.xml import V2
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
 from corehq.apps.accounting.decorators import (
-    require_billing_admin, requires_privilege_with_fallback,
+    requires_privilege_with_fallback,
 )
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError,
@@ -206,12 +206,10 @@ class SubscriptionUpgradeRequiredView(LoginAndDomainMixin, BasePageView,
         }
 
     @property
-    def is_billing_admin(self):
+    def is_domain_admin(self):
         if not hasattr(self.request, 'couch_user'):
             return False
-        return BillingAccountAdmin.get_admin_status_and_account(
-            self.request.couch_user, self.domain
-        )[0]
+        return self.request.couch_user.is_domain_admin(self.domain)
 
     @property
     def page_context(self):
@@ -221,7 +219,7 @@ class SubscriptionUpgradeRequiredView(LoginAndDomainMixin, BasePageView,
             'plan_name': self.required_plan_name,
             'change_subscription_url': reverse(SelectPlanView.urlname,
                                                args=[self.domain]),
-            'is_billing_admin': self.is_billing_admin,
+            'is_domain_admin': self.is_domain_admin,
         }
 
     @property
@@ -1102,7 +1100,7 @@ class WireInvoiceView(View):
     urlname = 'domain_wire_invoice'
 
     @method_decorator(login_and_domain_required)
-    @method_decorator(require_billing_admin())
+    @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
         return super(WireInvoiceView, self).dispatch(request, *args, **kwargs)
 
@@ -1122,7 +1120,7 @@ class BillingStatementPdfView(View):
     urlname = 'domain_billing_statement_download'
 
     @method_decorator(login_and_domain_required)
-    @method_decorator(require_billing_admin())
+    @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
         return super(BillingStatementPdfView, self).dispatch(request, *args, **kwargs)
 

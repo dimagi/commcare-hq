@@ -195,7 +195,7 @@ def fmt_dollar_amount(decimal_value):
 
 def get_customer_cards(account, username, domain):
     from corehq.apps.accounting.models import (
-        PaymentMethod, BillingAccountAdmin, PaymentMethodType,
+        PaymentMethod, PaymentMethodType,
     )
     from corehq.apps.accounting.payment_handlers import get_or_create_stripe_customer
     try:
