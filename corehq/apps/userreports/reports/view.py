@@ -67,7 +67,7 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
     @memoized
     def filter_context(self):
         return {
-            filter.css_id: filter.context(self.filter_values[filter.css_id])
+            filter.css_id: filter.context(self.filter_values[filter.css_id], self.lang)
             for filter in self.filters
         }
 

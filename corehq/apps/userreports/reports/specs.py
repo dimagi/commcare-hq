@@ -32,7 +32,7 @@ class ReportFilter(JsonObject):
     type = StringProperty(required=True)
     slug = StringProperty(required=True)
     field = StringProperty(required=True)
-    display = StringProperty()
+    display = DefaultProperty()
 
     def create_filter_value(self, value):
         return {
@@ -236,7 +236,7 @@ class FilterSpec(JsonObject):
     type = StringProperty(required=True, choices=['date', 'numeric', 'choice_list', 'dynamic_choice_list'])
     slug = StringProperty(required=True)  # this shows up as the ID in the filter HTML
     field = StringProperty(required=True)  # this is the actual column that is queried
-    display = StringProperty()
+    display = DefaultProperty()
     required = BooleanProperty(default=False)
 
     def get_display(self):
