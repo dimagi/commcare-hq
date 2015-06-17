@@ -376,7 +376,7 @@ class MultiReport(MonthWeekMixin, CustomProjectReport, CommtrackReportMixin, Pro
             ['Title of report', 'Location', 'Date range', 'Program'],
             [
                 self.title,
-                self.active_location.name,
+                self.active_location.name if self.active_location else 'NATIONAL',
                 '{} - {}'.format(self.datespan.startdate_display, self.datespan.enddate_display),
                 'all' if not program_id or program_id == 'all' else Program.get(docid=program_id).name
             ],
