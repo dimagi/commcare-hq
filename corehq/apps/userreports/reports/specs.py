@@ -14,6 +14,7 @@ from corehq.apps.userreports.reports.filters import DateFilterValue, ChoiceListF
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.userreports.sql import get_expanded_column_config, SqlColumnConfig
 from corehq.apps.userreports.transforms.factory import TransformFactory
+from corehq.apps.userreports.util import localize
 
 
 SQLAGG_COLUMN_MAP = {
@@ -70,11 +71,7 @@ class ReportColumn(JsonObject):
         raise NotImplementedError(_("You can't group by columns of type {}".format(self.type)))
 
     def get_header(self, lang):
-        if isinstance(self.display, basestring) or self.display is None:
-            return self.display
-        return self.display.get(
-            lang, self.display.get("en", self.display.values()[0])
-        )
+        return localize(self.display, lang)
 
 
 class FieldColumn(ReportColumn):
