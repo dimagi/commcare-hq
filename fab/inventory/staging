@@ -1,6 +1,7 @@
 [proxy]
 hqproxy0.internal.commcarehq.org
 hqproxy3.internal.commcarehq.org
+hqproxy4.internal.commcarehq.org
 
 [webworkers]
 hqdjango0-staging.internal.commcarehq.org

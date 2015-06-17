@@ -10,7 +10,7 @@ from PIL import Image
 import uuid
 from dimagi.utils.decorators.memoized import memoized
 from django.contrib.auth import get_user_model
-from corehq import privileges, toggles
+from corehq import privileges
 from corehq.apps.accounting.exceptions import SubscriptionRenewalError
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
@@ -24,7 +24,7 @@ from crispy_forms import layout as crispy
 from django.core.urlresolvers import reverse
 
 from django.forms.fields import (ChoiceField, CharField, BooleanField,
-    ImageField, DecimalField, IntegerField)
+    ImageField)
 from django.forms.widgets import  Select
 from django.utils.encoding import smart_str
 from django.contrib.auth.forms import PasswordResetForm
@@ -33,6 +33,7 @@ from django_countries.countries import COUNTRIES
 from corehq.apps.accounting.models import (
     BillingAccount,
     BillingAccountAdmin,
+    BillingAccountType,
     BillingContactInfo,
     CreditAdjustmentReason,
     CreditLine,
@@ -405,6 +406,7 @@ class SubAreaMixin():
             raise forms.ValidationError(_('This is not a valid sub-area for the area %s') % area)
         return sub_area
 
+
 class DomainGlobalSettingsForm(forms.Form):
     hr_name = forms.CharField(label=_("Project Name"))
     default_timezone = TimeZoneChoiceField(label=ugettext_noop("Default Timezone"), initial="UTC")
@@ -476,6 +478,18 @@ class DomainGlobalSettingsForm(forms.Form):
         timezone_field = TimeZoneField()
         timezone_field.run_validators(data)
         return smart_str(data)
+
+    def clean(self):
+        cleaned_data = super(DomainGlobalSettingsForm, self).clean()
+        if (cleaned_data.get('call_center_enabled') and
+                (not cleaned_data.get('call_center_case_type') or
+                 not cleaned_data.get('call_center_case_owner'))):
+            raise forms.ValidationError(_(
+                'You must choose an Owner and Case Type to use the call center application. '
+                'Please uncheck the "Call Center Application" setting or enter values for the other fields.'
+            ))
+
+        return cleaned_data
 
     def save(self, request, domain):
         domain.hr_name = self.cleaned_data['hr_name']
@@ -1017,7 +1031,8 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 subscription = Subscription.new_domain_subscription(
                     self.account, self.domain, self.plan_version,
                     web_user=self.creating_user,
-                    adjustment_method=SubscriptionAdjustmentMethod.USER)
+                    adjustment_method=SubscriptionAdjustmentMethod.USER,
+                    service_type=SubscriptionType.SELF_SERVICE)
                 subscription.is_active = True
                 if subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE:
                     # this point can only be reached if the initiating user was a superuser
@@ -1044,7 +1059,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
         super(ConfirmSubscriptionRenewalForm, self).__init__(
             account, domain, creating_user, data=data, *args, **kwargs
         )
-
+        self.renewed_version = renewed_version
         self.fields['plan_edition'].initial = renewed_version.plan.edition
         self.fields['confirm_legal'].label = mark_safe(ugettext_noop(
             'I have read and agree to the <a href="%(pa_url)s" '
@@ -1106,6 +1121,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 adjustment_method=SubscriptionAdjustmentMethod.USER,
                 service_type=SubscriptionType.SELF_SERVICE,
                 pro_bono_status=ProBonoStatus.NO,
+                new_version=self.renewed_version,
             )
         except SubscriptionRenewalError as e:
             logger.error("[BILLING] Subscription for %(domain)s failed to "
@@ -1182,6 +1198,12 @@ class ProBonoForm(forms.Form):
 
 
 class InternalSubscriptionManagementForm(forms.Form):
+    autocomplete_account_types = [
+        BillingAccountType.CONTRACT,
+        BillingAccountType.GLOBAL_SERVICES,
+        BillingAccountType.USER_CREATED,
+    ]
+
     @property
     def slug(self):
         raise NotImplementedError
@@ -1204,7 +1226,10 @@ class InternalSubscriptionManagementForm(forms.Form):
     @property
     @memoized
     def next_account(self):
-        matching_accounts = BillingAccount.objects.filter(name=self.account_name).order_by('date_created')
+        matching_accounts = BillingAccount.objects.filter(
+            name=self.account_name,
+            account_type=BillingAccountType.GLOBAL_SERVICES,
+        ).order_by('date_created')
         if matching_accounts:
             account = matching_accounts[0]
         else:
@@ -1214,6 +1239,7 @@ class InternalSubscriptionManagementForm(forms.Form):
                 created_by_domain=self.domain,
                 currency=Currency.get_default(),
                 dimagi_contact=self.web_user,
+                account_type=BillingAccountType.GLOBAL_SERVICES,
             )
             account.save()
         contact_info, _ = BillingContactInfo.objects.get_or_create(account=account)
@@ -1227,13 +1253,18 @@ class InternalSubscriptionManagementForm(forms.Form):
 
     @property
     @memoized
-    def current_account(self):
-        return BillingAccount.get_account_by_domain(self.domain)
+    def current_subscription(self):
+        return Subscription.get_subscribed_plan_by_domain(self.domain)[1]
 
     @property
     @memoized
-    def current_subscription(self):
-        return Subscription.get_subscribed_plan_by_domain(self.domain)[1]
+    def autocomplete_account_name(self):
+        if (
+            self.current_subscription
+            and self.current_subscription.account.account_type in self.autocomplete_account_types
+        ):
+            return self.current_subscription.account.name
+        return None
 
     @property
     @memoized
@@ -1242,7 +1273,8 @@ class InternalSubscriptionManagementForm(forms.Form):
             return None
         try:
             return BillingContactInfo.objects.get(
-                account=self.current_subscription.account
+                account=self.current_subscription.account,
+                account__account_type__in=self.autocomplete_account_types,
             ).emails
         except BillingContactInfo.DoesNotExist:
             return None
@@ -1335,6 +1367,7 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
 
         super(AdvancedExtendedTrialForm, self).__init__(domain, web_user, *args, **kwargs)
 
+        self.fields['organization_name'].initial = self.autocomplete_account_name
         self.fields['emails'].initial = self.current_contact_emails
 
         self.helper = FormHelper()
@@ -1447,6 +1480,7 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
 
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
+        self.fields['fogbugz_client_name'].initial = self.autocomplete_account_name
         self.fields['emails'].initial = self.current_contact_emails
 
         plan_edition = self.current_subscription.plan_version.plan.edition if self.current_subscription else None
@@ -1474,7 +1508,6 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
                 self.form_actions
             )
         else:
-            self.fields['fogbugz_client_name'].initial = self.current_subscription.account.name
             self.fields['end_date'].initial = self.current_subscription.date_end
             self.helper.layout = crispy.Layout(
                 TextField('software_plan_edition', plan_edition),
@@ -1524,7 +1557,9 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
                     new_plan_version,
                     date_end=self.cleaned_data['end_date'],
                     web_user=self.web_user,
+                    transfer_credits=self.current_subscription.account == self.next_account,
                 )
+                new_subscription.account = self.next_account
             if new_subscription.date_start <= datetime.date.today() and datetime.date.today() < new_subscription.date_end:
                 new_subscription.is_active = True
             new_subscription.do_not_invoice = False

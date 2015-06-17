@@ -31,6 +31,16 @@ class ReportingRates(ReportingRatesData):
     title = _('Reporting Rates')
 
     @property
+    def title(self):
+        if self.config.get('datespan_type') == '2':
+            return _('Reporting Rates (Weekly Reporting Period)')
+        elif self.config.get('datespan_type') == '1':
+            return _('Reporting Rates({}, {})'.format(
+                self.config['startdate'].strftime('%B'), self.config['startdate'].year
+            ))
+        return ""
+
+    @property
     def rows(self):
         rows = {}
         if self.location_id:
@@ -125,16 +135,18 @@ class ReportingDetails(ReportingRatesData):
         if data:
             complete_percent = float(data['complete']) * 100 / (data['total'] or 1)
             incomplete_percent = float(data['incomplete']) * 100 / (data['total'] or 1)
+            complete_formatted = ("%d" if complete_percent.is_integer() else "%.1f") % complete_percent
+            incomplete_formatted = ("%d" if incomplete_percent.is_integer() else "%.1f") % incomplete_percent
             chart_data = [
                 dict(value=complete_percent,
                      label=_('Complete'),
-                     description=_("%.1f%% (%d) Complete Reports in %s" %
-                                   (complete_percent, data['complete'], self.datetext())),
+                     description=_("%s%% (%d) Complete Reports in %s" %
+                                   (complete_formatted, data['complete'], self.datetext())),
                      color='green'),
                 dict(value=incomplete_percent,
                      label=_('Incomplete'),
-                     description=_("%.1f%% (%d) Incomplete Reports in %s" %
-                                   (incomplete_percent, data['incomplete'], self.datetext())),
+                     description=_("%s%% (%d) Incomplete Reports in %s" %
+                                   (incomplete_formatted, data['incomplete'], self.datetext())),
                      color='purple'),
             ]
         pie_chart = EWSPieChart('', '', chart_data, ['green', 'purple'])
@@ -216,9 +228,9 @@ class NonReporting(ReportingRatesData):
         if self.location_id:
             location_type = self.location.location_type.name.lower()
             if location_type == 'country':
-                return _('Non Report RMS and THs')
+                return _('Non-reporting CMS, RMS, and Teaching Hospitals')
             else:
-                return _('Non Report Facilities')
+                return _('Non-Reporting Facilities')
         return ''
 
     @property
@@ -366,74 +378,7 @@ class AlertsData(ReportingRatesData):
         return rows
 
 
-class EWSDateSpan(DateSpan):
-
-    @classmethod
-    def get_date(cls, type=None, month_or_week=None, year=None, format=ISO_DATE_FORMAT,
-                 inclusive=True, timezone=pytz.utc):
-        if month_or_week is None:
-            month_or_week = datetime.datetime.date.today().month
-        if year is None:
-            year = datetime.datetime.date.today().year
-        if type == 2:
-            days = month_or_week.split('|')
-            start = force_to_date(days[0])
-            end = force_to_date(days[1])
-        else:
-            start = datetime(year, month_or_week, 1)
-            end = start + relativedelta(months=1) - relativedelta(days=1)
-        return DateSpan(start, end, format, inclusive, timezone)
-
-
-class MonthWeekMixin(object):
-    _datespan = None
-
-    @property
-    def datespan(self):
-        if self._datespan is None:
-            datespan = EWSDateSpan.get_date(self.type, self.first, self.second)
-            self.request.datespan = datespan
-            self.context.update(dict(datespan=datespan))
-            self._datespan = datespan
-        return self._datespan
-
-    @property
-    def type(self):
-        """
-            We have a 3 possible type:
-            1 - month
-            2 - quarter
-            3 - year
-        """
-        if 'datespan_type' in self.request_params:
-            return int(self.request_params['datespan_type'])
-        else:
-            return 1
-
-    @property
-    def first(self):
-        """
-            If we choose type 1 in this we get a month [00-12]
-            If we choose type 2 we get quarter [1-4]
-            This property is unused when we choose type 3
-        """
-        if 'datespan_first' in self.request_params:
-            try:
-                return int(self.request_params['datespan_first'])
-            except ValueError:
-                return self.request_params['datespan_first']
-        else:
-            return datetime.utcnow().month
-
-    @property
-    def second(self):
-        if 'datespan_second' in self.request_params:
-            return int(self.request_params['datespan_second'])
-        else:
-            return datetime.utcnow().year
-
-
-class ReportingRatesReport(MonthWeekMixin, MultiReport):
+class ReportingRatesReport(MultiReport):
 
     name = 'Reporting'
     title = 'Reporting'
@@ -451,11 +396,12 @@ class ReportingRatesReport(MonthWeekMixin, MultiReport):
         return dict(
             domain=self.domain,
             startdate=self.datespan.startdate,
-            enddate=self.datespan.end_of_end_day,
+            enddate=self.datespan.enddate,
             location_id=self.request.GET.get('location_id') or get_country_id(self.domain),
             products=None,
             program=program if program != ALL_OPTION else None,
-            user=self.request.couch_user
+            user=self.request.couch_user,
+            datespan_type=self.request.GET.get('datespan_type')
         )
 
     @property

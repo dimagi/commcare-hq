@@ -2,15 +2,15 @@ from datetime import timedelta
 from django.db.models.aggregates import Count
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.generic import GenericTabularReport
 from custom.ilsgateway.tanzania.reports.utils import link_format
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.graph_models import Axis
-from corehq.apps.reports.filters.dates import DatespanFilter
 from custom.common import ALL_OPTION
-from custom.ewsghana.filters import ProductByProgramFilter, ViewReportFilter
+from custom.ewsghana.filters import ProductByProgramFilter, ViewReportFilter, EWSDateFilter
 from custom.ewsghana.reports.stock_levels_report import StockLevelsReport, InventoryManagementData, \
     StockLevelsLegend, FacilityReportData, InputStock, UsersData
 from custom.ewsghana.reports import MultiReport, EWSData, EWSMultiBarChart, ProductSelectionPane, EWSLineChart
@@ -125,6 +125,10 @@ class ProductAvailabilityData(EWSData):
             chart.stacked = False
             chart.tooltipFormat = " on "
             chart.forceY = [0, 1]
+            chart.product_code_map = {
+                sql_product.code: sql_product.name
+                for sql_product in SQLProduct.objects.filter(domain=self.domain)
+            }
             for row in convert_product_data_to_stack_chart(product_availability, self.chart_config):
                 chart.add_dataset(row['label'], [
                     {'x': r[0], 'y': r[1], 'name': r[2]}
@@ -249,8 +253,10 @@ class StockoutsProduct(EWSData):
         if self.config['location_id']:
             supply_points = get_supply_points(self.config['location_id'], self.config['domain'])
             products = self.unique_products(supply_points, all=True)
+            code_name_map = {}
             for product in products:
                 rows[product.code] = []
+                code_name_map[product.code] = product.name
 
             enddate = self.config['enddate']
             startdate = self.config['startdate'] if 'custom_date' in self.config else enddate - timedelta(days=90)
@@ -266,7 +272,13 @@ class StockoutsProduct(EWSData):
                     if not any([product.code == tx['sql_product__code'] for tx in txs]):
                         rows[product.code].append({'x': d['start_date'], 'y': 0})
                 for tx in txs:
-                    rows[tx['sql_product__code']].append({'x': d['start_date'], 'y': tx['count']})
+                    rows[tx['sql_product__code']].append(
+                        {
+                            'x': d['start_date'],
+                            'y': tx['count'],
+                            'name': code_name_map[tx['sql_product__code']]
+                        }
+                    )
         return rows
 
     @property
@@ -276,6 +288,7 @@ class StockoutsProduct(EWSData):
             chart = EWSLineChart("Stockout by Product", x_axis=Axis(self.chart_x_label, dateFormat='%b %Y'),
                                  y_axis=Axis(self.chart_y_label, 'd'))
             chart.x_axis_uses_dates = True
+            chart.tooltipFormat = True
             for key, value in rows.iteritems():
                 chart.add_dataset(key, value)
             return [chart]
@@ -338,7 +351,15 @@ class StockoutTable(EWSData):
                 ).order_by('product_id', '-report__date').distinct('product_id').values_list('product_id',
                                                                                              flat=True)
                 if stockout:
-                    rows.append([supply_point.name, ', '.join(product_map[id] for id in stockout)])
+                    url = make_url(
+                        StockLevelsReport,
+                        self.config['domain'],
+                        '?location_id=%s&startdate=%s&enddate=%s',
+                        (supply_point.location_id, self.config['startdate'], self.config['enddate'])
+                    )
+                    rows.append(
+                        [link_format(supply_point.name, url), ', '.join(product_map[id] for id in stockout)]
+                    )
         return rows
 
 
@@ -346,7 +367,7 @@ class StockStatus(MultiReport):
     name = 'Stock status'
     title = 'Stock Status'
     slug = 'stock_status'
-    fields = [AsyncLocationFilter, ProductByProgramFilter, DatespanFilter, ViewReportFilter]
+    fields = [AsyncLocationFilter, ProductByProgramFilter, EWSDateFilter, ViewReportFilter]
     split = False
     exportable = True
     is_exportable = True

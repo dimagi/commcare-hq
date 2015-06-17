@@ -1,0 +1,24 @@
+{% extends "reports/standard/base_template.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block reports-js-inline %}
+    <script type="text/javascript">
+        var report_url = '/a/opm/reports/custom/';
+        $("#print-report").click(function (e) {
+            e.stopImmediatePropagation();
+
+            var metrics = $('#metrics').find('.selected');
+            var params = window.location.search
+            if (metrics.length === 2) {
+                var met = $(metrics[1]).text();
+                params = params + '&metric=' + encodeURIComponent(met)
+            }
+
+            var base_url = window.location.pathname.replace(report_url, report_url+"print/") + params;
+            window.open(base_url);
+        });
+    </script>
+
+    {{ block.super }}
+{% endblock %}

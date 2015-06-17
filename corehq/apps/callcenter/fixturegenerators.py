@@ -48,10 +48,7 @@ def indicators_fixture_generator(user, version, last_sync=None):
     domain = user.project
     fixtures = []
 
-    if not domain or not (hasattr(domain, 'call_center_config') and domain.call_center_config.enabled):
-        return fixtures
-
-    if not should_sync(domain, last_sync):
+    if not domain or not domain.call_center_config.is_active_and_valid() or not should_sync(domain, last_sync):
         return fixtures
 
     try:
