@@ -56,6 +56,7 @@ class EWSData(object):
     slug = ''
     use_datatables = False
     custom_table = False
+    default_rows = 10
 
     def __init__(self, config=None):
         self.config = config or {}
@@ -309,6 +310,7 @@ class MultiReport(MonthWeekMixin, CustomProjectReport, CommtrackReportMixin, Pro
                     rows=rows,
                     total_row=total_row,
                     start_at_row=0,
+                    default_rows=data_provider.default_rows,
                     use_datatables=data_provider.use_datatables,
                 ),
                 show_table=data_provider.show_table,

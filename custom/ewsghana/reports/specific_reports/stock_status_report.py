@@ -144,6 +144,7 @@ class MonthOfStockProduct(EWSData):
     show_chart = False
     show_table = True
     use_datatables = True
+    default_rows = 25
 
     @property
     def title(self):
