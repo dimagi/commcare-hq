@@ -646,14 +646,14 @@ class Domain(Document, SnapshotMixin):
             name_prefix = original_name
             if shorten > 0:
                 name_prefix = name_prefix[:-shorten]
-            hits = DomainES().prefix(name_prefix + "-").fields(["name"]).run().hits
+            hits = Domain.get_names_by_prefix(name_prefix + "-")
             if re.search(r'\.', name_prefix):
-                hits = hits + DomainES().prefix(name_prefix.replace('-', '.') + "-").fields(["name"]).run().hits
+                hits += Domain.get_names_by_prefix(name_prefix.replace('-', '.') + "-")
 
             max_counter = 0
             pattern = re.compile("^" + name_prefix + "-(\d+)$")
             for hit in hits:
-                match = re.search(pattern, hit['name'])
+                match = re.search(pattern, hit)
                 if match is not None:
                     max_counter = max(max_counter, int(match.group(1)))
             suffix = "-" + str(max_counter + 1)
@@ -683,6 +683,16 @@ class Domain(Document, SnapshotMixin):
     @classmethod
     def get_all_names(cls):
         return [d['key'] for d in Domain.get_all(include_docs=False)]
+
+    @classmethod
+    def get_names_by_prefix(cls, prefix):
+        return [d['key'] for d in Domain.view(
+            "domain/domains",
+            startkey=prefix,
+            endkey=prefix + u"zzz",
+            reduce=False,
+            include_docs=False
+        ).all()]
 
     def case_sharing_included(self):
         return self.case_sharing or reduce(lambda x, y: x or y, [getattr(app, 'case_sharing', False) for app in self.applications()], False)

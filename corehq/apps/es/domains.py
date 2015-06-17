@@ -18,7 +18,6 @@ class DomainES(HQESQuery):
             in_domains,
             is_active,
             is_snapshot,
-            prefix,
         ] + super(DomainES, self).builtin_filters
 
 
@@ -66,7 +65,3 @@ def is_active(is_active=True):
 
 def is_snapshot(is_snapshot=True):
     return filters.term('is_snapshot', is_snapshot)
-
-
-def prefix(prefix):
-    return filters.prefix('name', prefix)

@@ -13,10 +13,6 @@ def term(field, value):
         return {"term": {field: value}}
 
 
-def prefix(field, query):
-    return {"prefix": {field: query}}
-
-
 def OR(*filters):
     """
     Filter docs to match any of the filters passed in
