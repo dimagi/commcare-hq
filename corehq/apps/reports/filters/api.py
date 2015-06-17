@@ -14,15 +14,19 @@ from corehq.elastic import es_wrapper, ESError
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
 
-from corehq.apps.reports.filters.users import EmwfMixin
+from corehq.apps.reports.filters.users import EmwfUtils
 
 logger = logging.getLogger(__name__)
 
 
-class EmwfOptionsView(LoginAndDomainMixin, EmwfMixin, JSONResponseMixin, View):
+class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
     """
     Paginated options for the ExpandedMobileWorkerFilter
     """
+    @property
+    @memoized
+    def utils(self):
+        return EmwfUtils(self.domain)
 
     def get(self, request, domain):
         self.domain = domain
@@ -121,7 +125,7 @@ class EmwfOptionsView(LoginAndDomainMixin, EmwfMixin, JSONResponseMixin, View):
     def static_options(self):
         return filter(
             lambda user_type: self.q.lower() in user_type[1].lower(),
-            super(EmwfOptionsView, self).static_options
+            self.utils.static_options
         )
 
     def user_es_call(self, **kwargs):
@@ -131,7 +135,7 @@ class EmwfOptionsView(LoginAndDomainMixin, EmwfMixin, JSONResponseMixin, View):
         fields = ['_id', 'username', 'first_name', 'last_name', 'doc_type']
         users = self.user_es_call(fields=fields, start_at=start, size=size,
             sort_by='username.exact', order='asc')
-        return [self.user_tuple(u) for u in users]
+        return [self.utils.user_tuple(u) for u in users]
 
     def group_es_call(self, **kwargs):
         reporting_filter = {"term": {'reporting': "true"}}
@@ -148,4 +152,4 @@ class EmwfOptionsView(LoginAndDomainMixin, EmwfMixin, JSONResponseMixin, View):
             start_at=start,
             size=size,
         )
-        return [self.reporting_group_tuple(g) for g in groups]
+        return [self.utils.reporting_group_tuple(g) for g in groups]

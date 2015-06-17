@@ -4,11 +4,11 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import SQLLocation
 from corehq.elastic import es_wrapper
 
-from .users import ExpandedMobileWorkerFilter
+from .users import ExpandedMobileWorkerFilter, EmwfUtils
 from .api import EmwfOptionsView
 
 
-class CaseListFilterMixin(object):
+class CaseListFilterUtils(EmwfUtils):
     def sharing_group_tuple(self, g):
         return ("sg__%s" % g['_id'], '%s [case sharing]' % g['name'])
 
@@ -18,7 +18,7 @@ class CaseListFilterMixin(object):
     @property
     @memoized
     def static_options(self):
-        options = super(CaseListFilterMixin, self).static_options
+        options = super(CaseListFilterUtils, self).static_options
         # replace [All mobile workers] with case-list-specific options
         assert options[0][0] == "t__0"
         return [
@@ -27,8 +27,13 @@ class CaseListFilterMixin(object):
         ] + options[1:]
 
 
-class CaseListFilter(CaseListFilterMixin, ExpandedMobileWorkerFilter):
+class CaseListFilter(ExpandedMobileWorkerFilter):
     options_url = 'case_list_options'
+
+    @property
+    @memoized
+    def utils(self):
+        return CaseListFilterUtils(self.domain)
 
     @classmethod
     def show_all_data(cls, request):
@@ -72,7 +77,7 @@ class CaseListFilter(CaseListFilterMixin, ExpandedMobileWorkerFilter):
 
     def selected_group_entries(self, request):
         query_results = self.selected_groups_query(request)
-        reporting = [self.reporting_group_tuple(group['fields'])
+        reporting = [self.utils.reporting_group_tuple(group['fields'])
                      for group in query_results
                      if group['fields'].get("reporting", False)]
         sharing = [self.sharing_group_tuple(group['fields'])
@@ -84,7 +89,12 @@ class CaseListFilter(CaseListFilterMixin, ExpandedMobileWorkerFilter):
         return [('project_data', _("[Project Data]"))]
 
 
-class CaseListFilterOptions(CaseListFilterMixin, EmwfOptionsView):
+class CaseListFilterOptions(EmwfOptionsView):
+    @property
+    @memoized
+    def utils(self):
+        return CaseListFilterUtils(self.domain)
+
     def group_es_call(self, group_type=None, **kwargs):
         # Valid group_types are "reporting" and "case_sharing"
         if group_type is None:
@@ -101,7 +111,7 @@ class CaseListFilterOptions(CaseListFilterMixin, EmwfOptionsView):
         def wrap_group(group):
             if group.get('case_sharing', None):
                 return self.sharing_group_tuple(group)
-            return self.reporting_group_tuple(group)
+            return self.utils.reporting_group_tuple(group)
 
         fields = ['_id', 'name']
         groups = self.group_es_call(

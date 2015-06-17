@@ -212,7 +212,10 @@ class BaseGroupedMobileWorkerFilter(BaseSingleOptionFilter):
         return options
 
 
-class EmwfMixin(object):
+class EmwfUtils(object):
+    def __init__(self, domain):
+        self.domain = domain
+
     def user_tuple(self, u):
         user = util._report_user_dict(u)
         uid = "u__%s" % user['user_id']
@@ -255,7 +258,7 @@ _UserData = namedtupledict('_UserData', (
 ))
 
 
-class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
+class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     """
     To get raw filter results:
 
@@ -271,6 +274,11 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
         " You can select multiple users and groups.")
     is_cacheable = False
     options_url = 'emwf_options'
+
+    @property
+    @memoized
+    def utils(self):
+        return EmwfUtils(self.domain)
 
     @classmethod
     def selected_user_ids(cls, request):
@@ -305,7 +313,7 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
     def get_default_selections(self):
         defaults = [('t__0', _("[All mobile workers]"))]
         if self.request.project.commtrack_enabled:
-            defaults.append(self.user_type_tuple(HQUserType.COMMTRACK))
+            defaults.append(self.utils.user_type_tuple(HQUserType.COMMTRACK))
         return defaults
 
     @property
@@ -329,7 +337,7 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
 
     def selected_static_options(self, request):
         selected_ids = self.request.GET.getlist(self.slug)
-        return [option for option in self.static_options
+        return [option for option in self.utils.static_options
                 if option[0] in selected_ids]
 
     def selected_user_entries(self, request):
@@ -344,7 +352,7 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
             q=q,
             fields=['_id', 'username', 'first_name', 'last_name', 'doc_type'],
         )
-        return [self.user_tuple(hit['fields']) for hit in res['hits']['hits']]
+        return [self.utils.user_tuple(hit['fields']) for hit in res['hits']['hits']]
 
     def selected_groups_query(self, request):
         group_ids = self.selected_group_ids(request)
@@ -360,7 +368,7 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
         )['hits']['hits']
 
     def selected_group_entries(self, request):
-        return [self.reporting_group_tuple(group['fields'])
+        return [self.utils.reporting_group_tuple(group['fields'])
                 for group in self.selected_groups_query(request)
                 if group['fields'].get("reporting", False)]
 
@@ -375,7 +383,7 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
                 location_id=loc_group_id.replace(LOCATION_REPORTING_PREFIX, '')
             )
             loc_group = loc.reporting_group_object()
-            selected.append(self.location_group_tuple(loc_group))
+            selected.append(self.utils.location_group_tuple(loc_group))
         return selected
 
     @property
