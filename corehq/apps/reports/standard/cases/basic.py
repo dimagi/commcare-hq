@@ -43,7 +43,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         query.es_query['sort'] = self.get_sorting_block()
 
         if self.case_filter:
-            query.filter(self.case_filter)
+            query = query.filter(self.case_filter)
 
         query = query.NOT(case_es.case_type("user-owner-mapping-case"))
 
