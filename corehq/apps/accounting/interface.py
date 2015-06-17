@@ -4,7 +4,7 @@ from corehq.apps.accounting.dispatcher import (
 from corehq.apps.accounting.filters import *
 from corehq.apps.accounting.forms import AdjustBalanceForm
 from corehq.apps.accounting.models import (
-    BillingAccount, Subscription, SoftwarePlan
+    BillingAccount, Subscription, SoftwarePlan, CreditAdjustment
 )
 from corehq.apps.accounting.utils import get_money_str, quantize_accounting_decimal, make_anchor_tag
 from corehq.apps.reports.cache import request_cache
@@ -920,6 +920,10 @@ class PaymentRecordInterface(GenericTabularReport):
     @property
     def payment_records(self):
         return PaymentRecord.objects.filter(**self.filters)
+ 
+    def account(self, payment_record):
+        credit_line = CreditAdjustment.objects.filter(payment_record_id=payment_record.id).latest('last_modified').credit_line
+        return credit_line.account
 
     @property
     def rows(self):
@@ -930,9 +934,9 @@ class PaymentRecordInterface(GenericTabularReport):
                     text=record.date_created.strftime(USER_DATE_FORMAT),
                     sort_key=record.date_created.isoformat(),
                 ),
-                record.payment_method.account.name,
-                record.payment_method.billing_admin.domain,
-                record.payment_method.billing_admin.web_user,
+                self.account(record).name,
+                self.account(record).created_by_domain,
+                record.payment_method.web_user,
                 format_datatables_data(
                     text=mark_safe(
                         '<a href="https://dashboard.stripe.com/payments/%s"'
