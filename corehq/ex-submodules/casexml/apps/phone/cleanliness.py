@@ -1,10 +1,12 @@
 from collections import namedtuple
 from datetime import datetime
-from casexml.apps.case.dbaccessors import get_all_case_owner_ids, get_open_case_ids, get_closed_case_ids, \
+from casexml.apps.case.dbaccessors import get_all_case_owner_ids, \
     get_reverse_indexed_case_ids, get_indexed_case_ids
 from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.util import get_indexed_cases
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
+from corehq.apps.hqcase.dbaccessors import get_open_case_ids, \
+    get_closed_case_ids
 from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.toggles import OWNERSHIP_CLEANLINESS
 from django.conf import settings
@@ -96,7 +98,7 @@ def get_cleanliness_flag_from_scratch(domain, owner_id):
     footprint_info = get_case_footprint_info(domain, owner_id)
     cases_to_check = footprint_info.all_ids - footprint_info.base_ids
     if cases_to_check:
-        closed_owned_case_ids = set(get_closed_case_ids(owner_id))
+        closed_owned_case_ids = set(get_closed_case_ids(domain, owner_id))
         cases_to_check = cases_to_check - closed_owned_case_ids
         if cases_to_check:
             # it wasn't in any of the open or closed IDs - it must be dirty
@@ -125,7 +127,7 @@ def get_case_footprint_info(domain, owner_id):
     """
     all_case_ids = set()
     # get base set of cases (anything open with this owner id)
-    open_case_ids = get_open_case_ids(owner_id)
+    open_case_ids = get_open_case_ids(domain, owner_id)
     new_case_ids = set(open_case_ids)
     while new_case_ids:
         all_case_ids = all_case_ids | new_case_ids

@@ -58,7 +58,7 @@ class SupervisionData(ILSData):
         if self.config['location_id'] and self.config['org_summary']:
             locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'])
             for loc in locations:
-                facilities = SQLLocation.objects.filter(parent=loc).count()
+                facilities = loc.get_descendants().filter(location_type__administrative=False).count()
                 org_summary = OrganizationSummary.objects.filter(
                     date__range=(self.config['startdate'], self.config['enddate']),
                     location_id=loc.location_id
@@ -91,9 +91,9 @@ class SupervisionData(ILSData):
 
                 rows.append([
                     link_format(loc.name, url),
-                    format_percent(float(soh_data.received) * 100 / float(facilities)),
-                    format_percent(float(soh_data.not_received) * 100 / float(facilities)),
-                    format_percent(float(soh_data.not_responding) * 100 / float(facilities)),
+                    format_percent(float(soh_data.received) * 100 / float(facilities or 1)),
+                    format_percent(float(soh_data.not_received) * 100 / float(facilities or 1)),
+                    format_percent(float(soh_data.not_responding) * 100 / float(facilities or 1)),
                     response_rate
                 ])
         return rows
