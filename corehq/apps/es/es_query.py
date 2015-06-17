@@ -122,6 +122,7 @@ class ESQuery(object):
             filters.term,
             filters.OR,
             filters.AND,
+            filters.NOT,
             filters.range_filter,
             filters.date_range,
             filters.exists,
