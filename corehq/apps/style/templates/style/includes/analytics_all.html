@@ -3,13 +3,10 @@
 {% load compress %}
 {% load hq_shared_tags %}
 
-<!DOCTYPE html>
-    {% include 'style/includes/analytics_google.html' %}
-    {% include 'style/includes/analytics_pingdom.html' %}
-    {% include 'style/includes/analytics_kissmetrics.html' %}
-    {% include 'style/includes/analytics_hubspot.html' %}
-</html>
-
+{% include 'style/includes/analytics_google.html' %}
+{% include 'style/includes/analytics_pingdom.html' %}
+{% include 'style/includes/analytics_kissmetrics.html' %}
+{% include 'style/includes/analytics_hubspot.html' %}
 <script>
 
     /**
@@ -48,10 +45,10 @@
             }
             // Record identity
             if (userId !== null) {
-                _kmq.push(['identify', userId]);
+                kmqPushSafe(['identify', userId]);
             }
             if (traits !== undefined){
-                _kmq.push(['set', traits]);
+                kmqPushSafe(['set', traits]);
             }
         },
 
@@ -64,17 +61,20 @@
          *
          * @param {string} event - Event name
          * @param {object} [properties] - Dictionary of properties to set along with the event.
-         * @param {function} [callback] - A Callback to be executed after the event has been successfully tracked.
+         * @param {function} [callback] - A Callback to be executed after the
+         *      event has been successfully tracked or after a short timeout
+         *      (whichever happens first) callback will only be called once.
          */
         workflow: function(event, properties, callback) {
             if (properties === undefined){
                 properties = {};
             }
+
             var args = ["record", event, properties];
             if (callback !== undefined){
                 args.push(callback);
             }
-            _kmq.push(args);
+            kmqPushSafe(args);
         },
 
         /**

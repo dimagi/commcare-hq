@@ -775,3 +775,28 @@ ko.bindingHandlers.paste = {
         $(element).data('pasteCallback', valueAccessor());
     }
 };
+
+/**
+ * Normally, bindings can't overlap, this binding allows them to. For example:
+ *
+ * <div id="a">
+ *     <div data-bind="stopBinding: true">
+ *          <div id="b">
+ *              <p>foo</p>
+ *          </div>
+ *     </div>
+ * </div>
+ *
+ * ko.applyBindings({}, $("#a"));
+ * ko.applyBindings({}, $("#b"));
+ *
+ *
+ * Taken straight from:
+ * http://www.knockmeout.net/2012/05/quick-tip-skip-binding.html
+ */
+ko.bindingHandlers.stopBinding = {
+    init: function() {
+        return { controlsDescendantBindings: true };
+    }
+};
+ko.virtualElements.allowedBindings.stopBinding = true;

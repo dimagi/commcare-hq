@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
-from corehq import Domain
+from dateutil.relativedelta import relativedelta
+import pytz
 from corehq.apps.es import UserES
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
@@ -7,17 +8,17 @@ from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.generic import GenericTabularReport
 from custom.common import ALL_OPTION
 from custom.ewsghana import StockLevelsReport
-from custom.ewsghana.filters import ProductByProgramFilter
-from custom.ewsghana.reports import MultiReport, ReportingRatesData, ProductSelectionPane, EWSPieChart, \
-    ews_date_format
+from custom.ewsghana.filters import ProductByProgramFilter, EWSDateFilter
+from custom.ewsghana.reports import MultiReport, ReportingRatesData, ProductSelectionPane, EWSPieChart
 from casexml.apps.stock.models import StockTransaction
 from custom.ewsghana.reports.stock_levels_report import FacilityReportData, StockLevelsLegend, \
     InventoryManagementData, InputStock, UsersData
-from custom.ewsghana.utils import calculate_last_period, get_country_id
-from corehq.apps.reports.filters.dates import DatespanFilter
+from custom.ewsghana.utils import get_country_id, ews_date_format
 from custom.ilsgateway.tanzania import make_url
 from custom.ilsgateway.tanzania.reports.utils import link_format
 from django.utils.translation import ugettext as _
+from dimagi.utils.dates import force_to_date
+from dimagi.utils.parsing import ISO_DATE_FORMAT
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_date
@@ -28,6 +29,16 @@ class ReportingRates(ReportingRatesData):
     show_chart = True
     slug = 'reporting_rates'
     title = _('Reporting Rates')
+
+    @property
+    def title(self):
+        if self.config.get('datespan_type') == '2':
+            return _('Reporting Rates (Weekly Reporting Period)')
+        elif self.config.get('datespan_type') == '1':
+            return _('Reporting Rates({}, {})'.format(
+                self.config['startdate'].strftime('%B'), self.config['startdate'].year
+            ))
+        return ""
 
     @property
     def rows(self):
@@ -69,8 +80,9 @@ class ReportingRates(ReportingRatesData):
                                    (non_reported_formatted, data['non_reported'], self.datetext())),
                      color='red'),
             ]
-
-        return [EWSPieChart('', '', chart_data, ['green', 'red'])]
+        pie_chart = EWSPieChart('', '', chart_data, ['green', 'red'])
+        pie_chart.tooltips = False
+        return [pie_chart]
 
 
 class ReportingDetails(ReportingRatesData):
@@ -123,20 +135,23 @@ class ReportingDetails(ReportingRatesData):
         if data:
             complete_percent = float(data['complete']) * 100 / (data['total'] or 1)
             incomplete_percent = float(data['incomplete']) * 100 / (data['total'] or 1)
+            complete_formatted = ("%d" if complete_percent.is_integer() else "%.1f") % complete_percent
+            incomplete_formatted = ("%d" if incomplete_percent.is_integer() else "%.1f") % incomplete_percent
             chart_data = [
                 dict(value=complete_percent,
                      label=_('Complete'),
-                     description=_("%.1f%% (%d) Complete Reports in %s" %
-                                   (complete_percent, data['complete'], self.datetext())),
+                     description=_("%s%% (%d) Complete Reports in %s" %
+                                   (complete_formatted, data['complete'], self.datetext())),
                      color='green'),
                 dict(value=incomplete_percent,
                      label=_('Incomplete'),
-                     description=_("%.1f%% (%d) Incomplete Reports in %s" %
-                                   (incomplete_percent, data['incomplete'], self.datetext())),
+                     description=_("%s%% (%d) Incomplete Reports in %s" %
+                                   (incomplete_formatted, data['incomplete'], self.datetext())),
                      color='purple'),
             ]
-
-        return [EWSPieChart('', '', chart_data, ['green', 'purple'])]
+        pie_chart = EWSPieChart('', '', chart_data, ['green', 'purple'])
+        pie_chart.tooltips = False
+        return [pie_chart]
 
 
 class SummaryReportingRates(ReportingRatesData):
@@ -164,7 +179,8 @@ class SummaryReportingRates(ReportingRatesData):
                 DataTablesColumn(_(self.get_locations[0].location_type.name.title())),
                 DataTablesColumn(_('# Sites')),
                 DataTablesColumn(_('# Reporting')),
-                DataTablesColumn(_('Reporting Rate'))
+                DataTablesColumn(_('Reporting Rate')),
+                DataTablesColumn(_('Completed Report Rates'))
             )
         else:
             return []
@@ -182,13 +198,22 @@ class SummaryReportingRates(ReportingRatesData):
                 ).distinct('case_id').count()
                 reporting_rates = '%.2f%%' % (reported * 100 / (float(sites) or 1.0))
 
+                completed = 0
+                for supply_point in supply_points:
+                    reported_products = StockTransaction.objects.filter(
+                        case_id=supply_point.supply_point_id,
+                        report__date__range=[self.config['startdate'], self.config['enddate']]
+                    ).distinct('product_id').values_list('product_id', flat=True)
+                    if not (set(supply_point.products) - set(reported_products)):
+                        completed += 1
+                completed_rates = '%.2f%%' % (completed * 100 / (float(sites) or 1.0))
                 url = make_url(
                     ReportingRatesReport,
                     self.config['domain'],
                     '?location_id=%s&startdate=%s&enddate=%s',
                     (location.location_id, self.config['startdate'], self.config['enddate']))
 
-                rows.append([link_format(location.name, url), sites, reported, reporting_rates])
+                rows.append([link_format(location.name, url), sites, reported, reporting_rates, completed_rates])
         return rows
 
 
@@ -203,9 +228,9 @@ class NonReporting(ReportingRatesData):
         if self.location_id:
             location_type = self.location.location_type.name.lower()
             if location_type == 'country':
-                return _('Non Report RMS and THs')
+                return _('Non-reporting CMS, RMS, and Teaching Hospitals')
             else:
-                return _('Non Report Facilities')
+                return _('Non-Reporting Facilities')
         return ''
 
     @property
@@ -358,12 +383,12 @@ class ReportingRatesReport(MultiReport):
     name = 'Reporting'
     title = 'Reporting'
     slug = 'reporting_page'
-    fields = [AsyncLocationFilter, ProductByProgramFilter, DatespanFilter]
+    fields = [AsyncLocationFilter, ProductByProgramFilter, EWSDateFilter]
     split = False
     is_exportable = True
 
     def report_filters(self):
-        return [f.slug for f in [AsyncLocationFilter, DatespanFilter]]
+        return [f.slug for f in [AsyncLocationFilter, EWSDateFilter]]
 
     @property
     def report_config(self):
@@ -375,7 +400,8 @@ class ReportingRatesReport(MultiReport):
             location_id=self.request.GET.get('location_id') or get_country_id(self.domain),
             products=None,
             program=program if program != ALL_OPTION else None,
-            user=self.request.couch_user
+            user=self.request.couch_user,
+            datespan_type=self.request.GET.get('datespan_type')
         )
 
     @property
@@ -411,22 +437,6 @@ class ReportingRatesReport(MultiReport):
             data_providers.extend([NonReporting(config=config), InCompleteReports(config=config)])
 
         return data_providers
-
-    @property
-    def default_datespan(self):
-        last_period_st, last_period_end = calculate_last_period(datetime.utcnow())
-        datespan = DateSpan(startdate=last_period_st, enddate=last_period_end)
-        datespan.is_default = True
-        return datespan
-
-    @property
-    def datespan(self):
-        url = self.request.META.get('HTTP_REFERER')
-        if not url or 'startdate' in url:
-            return self.request.datespan
-
-        self.request.datespan = self.default_datespan
-        return self.default_datespan
 
     @property
     def export_table(self):

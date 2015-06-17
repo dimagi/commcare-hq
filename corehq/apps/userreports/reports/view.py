@@ -11,7 +11,10 @@ from django.views.generic.base import TemplateView
 from braces.views import JSONResponseMixin
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq.apps.reports.models import ReportConfig
-from corehq.apps.userreports.exceptions import UserReportsError
+from corehq.apps.reports_core.exceptions import FilterException
+from corehq.apps.userreports.exceptions import (
+    UserReportsError, TableNotFoundWarning,
+    UserReportsFilterError)
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.util.couch import get_document_or_404
@@ -58,10 +61,13 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
     @property
     @memoized
     def filter_values(self):
-        return {
-            filter.css_id: filter.get_value(self.request_dict)
-            for filter in self.filters
-        }
+        try:
+            return {
+                filter.css_id: filter.get_value(self.request_dict)
+                for filter in self.filters
+            }
+        except FilterException, e:
+            raise UserReportsFilterError(unicode(e))
 
     @property
     @memoized
@@ -167,6 +173,20 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
                 raise
             return self.render_json_response({
                 'error': e.message,
+            })
+        except TableNotFoundWarning:
+            if self.spec.report_meta.created_by_builder:
+                msg = _(
+                    "The database table backing your report does not exist yet. "
+                    "Please wait while the report is populated."
+                )
+            else:
+                msg = _(
+                    "The database table backing your report does not exist yet. "
+                    "You must rebuild the data source before viewing the report."
+                )
+            return self.render_json_response({
+                'warning': msg
             })
 
         # todo: this is ghetto pagination - still doing a lot of work in the database

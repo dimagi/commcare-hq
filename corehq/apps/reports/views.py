@@ -10,6 +10,8 @@ import itertools
 from datetime import datetime, timedelta, date
 from urllib2 import URLError
 from casexml.apps.case import const
+from casexml.apps.case.dbaccessors import get_open_case_ids_in_domain
+from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.util.timezones.utils import get_timezone_for_user
 from dimagi.utils.decorators.memoized import memoized
 from unidecode import unidecode
@@ -782,11 +784,11 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
     context['weekly_day_options'] = ReportNotification.day_choices()
     context['monthly_day_options'] = [(i, i) for i in range(1, 32)]
     if is_new:
-        context['form_action'] = "Create a new"
-        context['report']['title'] = "New Scheduled Report"
+        context['form_action'] = _("Create a new")
+        context['report']['title'] = _("New Scheduled Report")
     else:
-        context['form_action'] = "Edit"
-        context['report']['title'] = "Edit Scheduled Report"
+        context['form_action'] = _("Edit")
+        context['report']['title'] = _("Edit Scheduled Report")
 
     return render(request, template, context)
 
@@ -1091,7 +1093,10 @@ def generate_case_export_payload(domain, include_closed, format, group, user_fil
 
     """
     status = 'all' if include_closed else 'open'
-    case_ids = CommCareCase.get_all_cases(domain, status=status, wrapper=lambda r: r['id'])
+    if include_closed:
+        case_ids = get_case_ids_in_domain(domain)
+    else:
+        case_ids = get_open_case_ids_in_domain(domain)
 
     class stream_cases(object):
         def __init__(self, all_case_ids):

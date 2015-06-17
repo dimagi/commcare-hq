@@ -144,7 +144,7 @@ var PaymentMethodHandler = function (formId, opts) {
             },
             success: function (response) {
                 self.handleProcessingErrors(response);
-                for (var i = 0; i < handlers.length; i++) {
+                for (var i = 0; i < self.handlers.length; i++) {
                     var handler = self.handlers[i];
                     handler.savedCards(_.filter(handler.savedCards(), function (card) {
                         return card.token() !== response.removedCard;
@@ -185,7 +185,7 @@ var PaymentMethodHandler = function (formId, opts) {
           if (response.success) {
               self.costItem().reset(response);
               if (response.wasSaved) {
-                  for (var i = 0; i < handlers.length; i++) {
+                  for (var i = 0; i < self.handlers.length; i++) {
                       var handler = self.handlers[i];
                       var stripe_card = new StripeCard();
                       stripe_card.loadSavedData(response.card);

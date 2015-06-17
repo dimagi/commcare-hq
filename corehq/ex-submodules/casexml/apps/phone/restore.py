@@ -1,6 +1,4 @@
-from StringIO import StringIO
 from io import FileIO
-from os import path
 import os
 from uuid import uuid4
 import shutil
@@ -12,7 +10,7 @@ from casexml.apps.phone.exceptions import (
     MissingSyncLog, InvalidSyncLogException, SyncLogUserMismatch,
     BadStateException, RestoreException,
     IncompatibleSyncLogType)
-from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, FILE_RESTORE, OWNERSHIP_CLEANLINESS_RESTORE
+from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, OWNERSHIP_CLEANLINESS_RESTORE
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.phone.models import SyncLog, get_properly_wrapped_sync_log, LOG_FORMAT_SIMPLIFIED, \
@@ -43,14 +41,13 @@ INITIAL_SYNC_CACHE_TIMEOUT = 60 * 60  # 1 hour
 INITIAL_SYNC_CACHE_THRESHOLD = 60  # 1 minute
 
 
-def stream_response(payload, is_file=True):
+def stream_response(payload, headers=None):
     try:
-        if is_file:
-            response = StreamingHttpResponse(FileWrapper(open(payload, 'r')), mimetype="text/xml")
-            response['Content-Length'] = os.path.getsize(payload)
-            return response
-        else:
-            return StreamingHttpResponse(FileWrapper(payload), mimetype="text/xml")
+        response = StreamingHttpResponse(FileWrapper(payload), mimetype="text/xml")
+        if headers:
+            for header, value in headers.items():
+                response[header] = value
+        return response
     except IOError as e:
         return HttpResponse(e, status=500)
 
@@ -127,7 +124,7 @@ class FileRestoreResponse(RestoreResponse):
 
     def __init__(self, username=None, items=False):
         super(FileRestoreResponse, self).__init__(username, items)
-        self.filename = path.join(settings.SHARED_DRIVE_CONF.restore_dir, uuid4().hex)
+        self.filename = os.path.join(settings.SHARED_DRIVE_CONF.restore_dir, uuid4().hex)
 
         self.response_body = FileIO(self.get_filename(self.BODY_TAG_SUFFIX), 'w+')
 
@@ -176,7 +173,6 @@ class FileRestoreResponse(RestoreResponse):
 
     def get_cache_payload(self, full=False):
         return {
-            'is_file': True,
             'data': self.get_filename() if not full else open(self.get_filename(), 'r')
         }
 
@@ -185,92 +181,37 @@ class FileRestoreResponse(RestoreResponse):
             return f.read()
 
     def get_http_response(self):
-        return stream_response(self.get_filename())
-
-
-class StringRestoreResponse(RestoreResponse):
-
-    def __init__(self, username=None, items=False):
-        super(StringRestoreResponse, self).__init__(username, items)
-        self.response_body = StringIO()
-        self.response = None
-
-    def __add__(self, other):
-        if not isinstance(other, StringRestoreResponse):
-            raise NotImplemented()
-
-        response = StringRestoreResponse(self.username, self.items)
-        response.num_items = self.num_items + other.num_items
-        response.response_body.write(self.response_body.getvalue())
-        response.response_body.write(other.response_body.getvalue())
-
-        return response
-
-    def finalize(self):
-        # Add 1 to num_items to account for message element
-        items = self.items_template.format(self.num_items + 1) if self.items else ''
-        self.response = '{start}{body}{end}'.format(
-            start=self.start_tag_template.format(
-                items=items,
-                username=self.username,
-                nature=ResponseNature.OTA_RESTORE_SUCCESS),
-            body=self.response_body.getvalue(),
-            end=self.closing_tag
-        )
-        self.finalized = True
-        self.close()
-
-    def get_cache_payload(self, full=False):
-        return {
-            'is_file': False,
-            'data': self.response
-        }
-
-    def as_string(self):
-        return self.response
-
-    def get_http_response(self):
-        return HttpResponse(self.response, mimetype="text/xml")
+        headers = {'Content-Length': os.path.getsize(self.get_filename())}
+        return stream_response(open(self.get_filename(), 'r'), headers)
 
 
 class CachedResponse(object):
     def __init__(self, payload):
-        self.is_file = False
-        self.is_stream = False
         self.payload = payload
+        self.payload_path = None
         if isinstance(payload, dict):
-            self.payload = payload['data']
-            self.is_file = payload['is_file']
-        elif hasattr(payload, 'read'):
-            self.is_stream = True
+            self.payload_path = payload['data']
+            if os.path.exists(self.payload_path):
+                self.payload = open(self.payload_path, 'r')
+            else:
+                self.payload = None
+        elif payload:
+            assert hasattr(payload, 'read'), 'expected file like object'
 
     def exists(self):
-        return self.payload and (not self.is_file or path.exists(self.payload))
+        return bool(self.payload)
 
     def as_string(self):
-        if self.is_stream:
+        try:
             return self.payload.read()
-        if self.is_file:
-            with open(self.payload, 'r') as f:
-                return f.read()
-        else:
-            return self.payload
+        finally:
+            self.payload.close()
 
     def get_http_response(self):
-        if self.is_stream:
-            return stream_response(self.payload, is_file=False)
-        if self.is_file:
-            return stream_response(self.payload, is_file=True)
-        else:
-            return HttpResponse(self.payload, mimetype="text/xml")
-
-
-def get_restore_class(domain, user):
-    restore_class = StringRestoreResponse
-    if FILE_RESTORE.enabled(domain) or FILE_RESTORE.enabled(user.username):
-        restore_class = FileRestoreResponse
-
-    return restore_class
+        headers = {}
+        if self.payload_path:
+            headers['Content-Length'] = os.path.getsize(self.payload_path)
+        return stream_response(self.payload, headers)
 
 
 class RestoreParams(object):
@@ -315,6 +256,8 @@ class RestoreState(object):
     This allows the providers to set values on the state, for either logging or performance
     reasons.
     """
+    restore_class = FileRestoreResponse
+
     def __init__(self, project, user, params):
         self.project = project
         self.domain = project.name if project else ''
@@ -332,7 +275,7 @@ class RestoreState(object):
     def validate_state(self):
         check_version(self.params.version)
         if self.last_sync_log:
-            if type(self.last_sync_log) != self.sync_log_class:
+            if not isinstance(self.last_sync_log, self.sync_log_class):
                 raise IncompatibleSyncLogType('Unable to convert from {} to {}'.format(
                     type(self.last_sync_log), self.sync_log_class,
                 ))
@@ -427,10 +370,6 @@ class RestoreState(object):
         return get_sync_log_class_by_format(format)
 
     @property
-    def restore_class(self):
-        return get_restore_class(self.domain, self.user)
-
-    @property
     @memoized
     def loadtest_factor(self):
         return get_loadtest_factor(self.domain, self.user)
@@ -480,9 +419,7 @@ class RestoreConfig(object):
 
     def get_payload(self):
         """
-        This function currently returns either a full string payload or a string name of a file
-        that contains the contents of the payload. If FILE_RESTORE toggle is enabled, then this will return
-        the filename, otherwise it will return the full string payload
+        This function returns a RestoreResponse class that encapsulates the response.
         """
         self.validate()
 

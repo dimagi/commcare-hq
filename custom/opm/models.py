@@ -44,6 +44,7 @@ class OpmCaseFluff(fluff.IndicatorDocument):
     block = case_property('block_name')
     village = case_property('village_name')
     edd = case_property('edd')
+    dod = case_property('dod')
 
     opened_on = flat_field(lambda case: case.opened_on)
     closed_on = flat_field(lambda case: case.closed_on)

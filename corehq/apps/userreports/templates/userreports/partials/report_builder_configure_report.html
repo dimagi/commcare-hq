@@ -25,6 +25,7 @@
 {% block js %}{{ block.super }}
     {# needed for the sortable and typeahead knockout of binding #}
     <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
+    <script src="{% static 'app_manager/js/case-knockout-bindings.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -72,6 +73,12 @@
             this.hasFormatCol = ko.observable(options.hasFormatCol !== undefined ? options.hasFormatCol : true);
             this.formatOptions = ko.observableArray(["Choice", "Date", "Numeric"]);
             this.propertyOptions = ko.observableArray({{ property_options|JSON }});
+            this.optionsContainQuestions = ko.computed(function(){
+                return _.any(that.propertyOptions(),
+                    function (o) {return o.type == 'question';}
+                )
+            });
+
             this.columns = ko.observableArray(options.initialCols !== undefined ? options.initialCols : []);
             this.serializedProperties = ko.computed(function(){
                 return JSON.stringify(
@@ -115,5 +122,6 @@
         };
         var formViewModel = new configForm();
         ko.applyBindings(formViewModel, $("#report-config-form").get(0));
+
     </script>
 {% endblock %}

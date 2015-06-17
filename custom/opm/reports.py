@@ -12,6 +12,7 @@ import logging
 import pickle
 import json
 import re
+import urllib
 from dateutil import parser
 
 from django.http import HttpResponse
@@ -26,7 +27,6 @@ from custom.common import ALL_OPTION
 from dimagi.utils.couch.database import iter_docs, get_db
 from dimagi.utils.dates import add_months_to_date
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.web import json_request
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SimpleColumn, SumColumn, CountUniqueColumn
 
@@ -52,7 +52,7 @@ from .beneficiary import Beneficiary, ConditionsMet, OPMCaseRow
 from .health_status import HealthStatus, AWCHealthStatus
 from .incentive import Worker
 from .filters import (HierarchyFilter, MetHierarchyFilter,
-                      OPMSelectOpenCloseFilter as OpenCloseFilter)
+                      OPMSelectOpenCloseFilter as OpenCloseFilter, HSRHierarchyFilter)
 from .constants import *
 
 
@@ -83,6 +83,14 @@ DATE_FILTER_EXTENDED_CLOSED = """(
     )
 """
 
+EDD_DOD_FILTER = """
+    (
+       (edd >= :edd_startdate AND edd <= :edd_enddate)
+       OR
+       (dod <= :enddate and dod != '')
+    )
+"""
+
 def ret_val(value):
     return value
 
@@ -105,7 +113,7 @@ class OpmCaseSqlData(SqlData):
             enddate=str(self.datespan.enddate_utc.date()),
             edd_startdate=self.datespan.startdate.date().isoformat(),
             edd_enddate=add_months_to_date(self.datespan.enddate_utc.date(), 5).isoformat(),
-            test_account='111%'
+            test_account='111%',
         )
 
     @property
@@ -117,12 +125,10 @@ class OpmCaseSqlData(SqlData):
         filters = [
             "domain = :domain",
             "user_id = :user_id",
-            "edd < :edd_enddate",
-            "edd > :edd_startdate",
             "account_number not like :test_account",
             DATE_FILTER_EXTENDED_OPENED,
+            EDD_DOD_FILTER
         ]
-
         return filters
 
     @property
@@ -1027,6 +1033,15 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
         return OPMCaseRow(row, self)
 
     @property
+    def fields(self):
+        return [
+            HSRHierarchyFilter,
+            MonthFilter,
+            YearFilter,
+            OpenCloseFilter,
+        ]
+
+    @property
     def fixed_cols_spec(self):
         return dict(num=7, width=600)
 
@@ -1240,7 +1255,7 @@ class HealthStatusReport(DatespanMixin, BaseReport):
 
     @property
     def fields(self):
-        return [HierarchyFilter, OpenCloseFilter, DatespanFilter]
+        return [HSRHierarchyFilter, OpenCloseFilter, DatespanFilter]
 
     @property
     def case_status(self):
@@ -1454,6 +1469,7 @@ class HealthMapReport(BaseMixin, ElasticSearchMapReport, GetParamsMixin, CustomP
     name = "Health Status (Map)"
     slug = "health_status_map"
     fields = [HierarchyFilter, OpenCloseFilter, DatespanFilter]
+    base_template = 'opm/map_base_template.html'
     report_partial_path = 'opm/map_template.html'
     printable = True
 
@@ -1536,7 +1552,7 @@ class HealthMapReport(BaseMixin, ElasticSearchMapReport, GetParamsMixin, CustomP
             '# of Children Whose Nutritional Status is "MAM"',
             '# of Children Whose Nutritional Status is Normal'
         ]
-        return {
+        config = {
             "detail_columns": columns[0:5],
             "display_columns": columns[4:],
             "table_columns": columns,
@@ -1552,6 +1568,14 @@ class HealthMapReport(BaseMixin, ElasticSearchMapReport, GetParamsMixin, CustomP
                 title: "return x + ' \%'" for title in additional_columns + columns[4:]
             }
         }
+        default_metric = self.request.GET.get('metric', None)
+        if default_metric:
+            for metric in config['metrics']:
+                unquote = urllib.unquote(default_metric)
+                if metric['color']['column'] == unquote:
+                    metric['default'] = True
+                    break
+        return config
 
     @property
     def rows(self):

@@ -145,26 +145,31 @@ class Command(BaseCommand):
                             software_plan_version.feature_rates.add(feature_rate)
                         software_plan_version.save()
 
-                default_product_plan = DefaultProductPlan(product_type=product.product_type, edition=edition)
-                if dry_run:
-                    logger.info("[DRY RUN] Setting plan as default for product '%s' and edition '%s'." %
-                                 (product.product_type, default_product_plan.edition))
+                if edition == SoftwarePlanEdition.ADVANCED:
+                    trials = [True, False]
                 else:
-                    try:
-                        default_product_plan = DefaultProductPlan.objects.get(product_type=product.product_type,
-                                                                              edition=edition)
-                        if self.verbose:
-                            logger.info("Default for product '%s' and edition "
-                                        "'%s' already exists." % (
-                                product.product_type, default_product_plan.edition
-                            ))
-                    except ObjectDoesNotExist:
-                        default_product_plan.plan = software_plan
-                        default_product_plan.save()
-                        if self.verbose:
-                            logger.info("Setting plan as default for product '%s' and edition '%s'." %
-                                        (product.product_type,
-                                         default_product_plan.edition))
+                    trials = [False]
+                for is_trial in trials:
+                    default_product_plan = DefaultProductPlan(product_type=product.product_type, edition=edition, is_trial=is_trial)
+                    if dry_run:
+                        logger.info("[DRY RUN] Setting plan as default for product '%s' and edition '%s'." %
+                                (product.product_type, default_product_plan.edition))
+                    else:
+                        try:
+                            default_product_plan = DefaultProductPlan.objects.get(product_type=product.product_type,
+                                                                                  edition=edition, is_trial=is_trial)
+                            if self.verbose:
+                                logger.info("Default for product '%s' and edition "
+                                            "'%s' already exists." % (
+                                                product.product_type, default_product_plan.edition
+                                            ))
+                        except ObjectDoesNotExist:
+                            default_product_plan.plan = software_plan
+                            default_product_plan.save()
+                            if self.verbose:
+                                logger.info("Setting plan as default for product '%s' and edition '%s'." %
+                                            (product.product_type,
+                                             default_product_plan.edition))
 
     def ensure_product_and_rate(self, product_type, edition, dry_run=False):
         """

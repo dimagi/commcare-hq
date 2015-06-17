@@ -1,0 +1,450 @@
+{
+    "domains": ["airs"],
+    "config": {
+        "base_item_expression": {},
+        "configured_filter": {
+            "expression": {
+                "datatype": null,
+                "property_name": "xmlns",
+                "type": "property_name"
+            },
+            "operator": "eq",
+            "property_value": "http://openrosa.org/formdesigner/00CEB41B-2967-4370-9EA3-BFD9BD7AF785",
+            "type": "boolean_expression"
+        },
+        "configured_indicators": [
+            {
+                "column_id": "country",
+                "datatype": "string",
+                "display_name": "country",
+                "expression": {
+                    "doc_id_expression": {
+                        "datatype": null,
+                        "property_path": [
+                            "form",
+                            "case",
+                            "@case_id"
+                        ],
+                        "type": "property_path"
+                    },
+                    "related_doc_type": "CommCareCase",
+                    "type": "related_doc",
+                    "value_expression": {
+                        "datatype": null,
+                        "property_name": "country",
+                        "type": "property_name"
+                    }
+                },
+                "is_nullable": true,
+                "is_primary_key": false,
+                "transform": {},
+                "type": "expression"
+            },
+            {
+                "column_id": "level_1",
+                "datatype": "string",
+                "display_name": "level_1",
+                "expression": {
+                    "doc_id_expression": {
+                        "datatype": "string",
+                        "property_path": [
+                            "form",
+                            "case",
+                            "@case_id"
+                        ],
+                        "type": "property_path"
+                    },
+                    "related_doc_type": "CommCareCase",
+                    "type": "related_doc",
+                    "value_expression": {
+                        "datatype": null,
+                        "property_name": "level_1_name",
+                        "type": "property_name"
+                    }
+                },
+                "is_nullable": true,
+                "is_primary_key": false,
+                "transform": {},
+                "type": "expression"
+            },
+            {
+                "column_id": "level_2",
+                "datatype": "string",
+                "display_name": "level_2",
+                "expression": {
+                    "doc_id_expression": {
+                        "datatype": "string",
+                        "property_path": [
+                            "form",
+                            "case",
+                            "@case_id"
+                        ],
+                        "type": "property_path"
+                    },
+                    "related_doc_type": "CommCareCase",
+                    "type": "related_doc",
+                    "value_expression": {
+                        "datatype": null,
+                        "property_name": "level_2_name",
+                        "type": "property_name"
+                    }
+                },
+                "is_nullable": true,
+                "is_primary_key": false,
+                "transform": {},
+                "type": "expression"
+            },
+            {
+                "column_id": "level_3",
+                "datatype": "string",
+                "display_name": "level_3",
+                "expression": {
+                    "doc_id_expression": {
+                        "datatype": "string",
+                        "property_path": [
+                            "form",
+                            "case",
+                            "@case_id"
+                        ],
+                        "type": "property_path"
+                    },
+                    "related_doc_type": "CommCareCase",
+                    "type": "related_doc",
+                    "value_expression": {
+                        "datatype": null,
+                        "property_name": "level_3_name",
+                        "type": "property_name"
+                    }
+                },
+                "is_nullable": true,
+                "is_primary_key": false,
+                "transform": {},
+                "type": "expression"
+            },
+            {
+                "column_id": "level_4",
+                "datatype": "string",
+                "display_name": "level_4",
+                "expression": {
+                    "doc_id_expression": {
+                        "datatype": "string",
+                        "property_path": [
+                            "form",
+                            "case",
+                            "@case_id"
+                        ],
+                        "type": "property_path"
+                    },
+                    "related_doc_type": "CommCareCase",
+                    "type": "related_doc",
+                    "value_expression": {
+                        "datatype": null,
+                        "property_name": "level_4_name",
+                        "type": "property_name"
+                    }
+                },
+                "is_nullable": true,
+                "is_primary_key": false,
+                "transform": {},
+                "type": "expression"
+            },
+            {
+                "column_id": "worker_code",
+                "datatype": "string",
+                "display_name": "worker_code",
+                "expression": {
+                    "doc_id_expression": {
+                        "datatype": "string",
+                        "property_path": [
+                            "form",
+                            "case",
+                            "@case_id"
+                        ],
+                        "type": "property_path"
+                    },
+                    "related_doc_type": "CommCareCase",
+                    "type": "related_doc",
+                    "value_expression": {
+                        "datatype": null,
+                        "property_name": "external_id",
+                        "type": "property_name"
+                    }
+                },
+                "is_nullable": true,
+                "is_primary_key": false,
+                "transform": {},
+                "type": "expression"
+            },
+            {
+                "column_id": "structures_found",
+                "datatype": "integer",
+                "display_name": "structures_found",
+                "is_nullable": true,
+                "is_primary_key": false,
+                "property_name": null,
+                "property_path": [
+                    "form",
+                    "structures_found"
+                ],
+                "type": "raw"
+            },
+            {
+                "column_id": "structures_sprayed",
+                "datatype": "integer",
+                "display_name": "structures_sprayed",
+                "is_nullable": true,
+                "is_primary_key": false,
+                "property_name": null,
+                "property_path": [
+                    "form",
+                    "structures_sprayed"
+                ],
+                "type": "raw"
+            },
+            {
+                "column_id": "total_sprayers",
+                "datatype": "integer",
+                "display_name": "total_sprayers",
+                "is_nullable": true,
+                "is_primary_key": false,
+                "property_name": null,
+                "property_path": [
+                    "form",
+                    "total_sprayers"
+                ],
+                "type": "raw"
+            },
+            {
+                "column_id": "insecticide_used",
+                "datatype": "integer",
+                "display_name": "insecticide_used",
+                "is_nullable": true,
+                "is_primary_key": false,
+                "property_name": null,
+                "property_path": [
+                    "form",
+                    "insecticide_used"
+                ],
+                "type": "raw"
+            },
+            {
+                "column_id": "date_of_data_collection",
+                "datatype": "date",
+                "display_name": "date_of_data_collection",
+                "is_nullable": true,
+                "is_primary_key": false,
+                "property_name": null,
+                "property_path": [
+                    "form",
+                    "date_of_data_collection"
+                ],
+                "type": "raw"
+            },
+            {
+                "column_id": "structures_per_sprayer",
+                "datatype": "decimal",
+                "display_name": "structures_per_sprayer",
+                "is_nullable": true,
+                "is_primary_key": false,
+                "property_name": null,
+                "property_path": [
+                    "form",
+                    "structures_per_sprayer"
+                ],
+                "type": "raw"
+            },
+            {
+                "column_id": "structures_per_IU",
+                "datatype": "decimal",
+                "display_name": "structures_per_IU",
+                "is_nullable": true,
+                "is_primary_key": false,
+                "property_name": null,
+                "property_path": [
+                    "form",
+                    "structures_per_IU"
+                ],
+                "type": "raw"
+            },
+            {
+                "column_id": "spray_coverage",
+                "datatype": "decimal",
+                "display_name": "spray_coverage",
+                "is_nullable": true,
+                "is_primary_key": false,
+                "property_name": null,
+                "property_path": [
+                    "form",
+                    "spray_coverage"
+                ],
+                "type": "raw"
+            },
+            {
+                "column_id": "username",
+                "datatype": "string",
+                "display_name": "username",
+                "is_nullable": true,
+                "is_primary_key": false,
+                "property_name": null,
+                "property_path": [
+                    "form",
+                    "meta",
+                    "username"
+                ],
+                "type": "raw"
+            },
+            {
+                "column_id": "timeEnd",
+                "datatype": "datetime",
+                "display_name": "timeEnd",
+                "is_nullable": true,
+                "is_primary_key": false,
+                "property_name": null,
+                "property_path": [
+                    "form",
+                    "meta",
+                    "timeEnd"
+                ],
+                "type": "raw"
+            },
+            {
+                "column_id": "target_number",
+                "datatype": "integer",
+                "display_name": "target_number",
+                "expression": {
+                    "expression_if_false": {
+                        "expression_if_false": {
+                            "expression_if_false": {
+                                "expression_if_false": {
+                                    "constant": 0,
+                                    "type": "constant"
+                                },
+                                "expression_if_true": {
+                                    "constant": 85891,
+                                    "type": "constant"
+                                },
+                                "test": {
+                                    "expression": {
+                                        "doc_id_expression": {
+                                            "datatype": null,
+                                            "property_path": [
+                                                "form",
+                                                "case",
+                                                "@case_id"
+                                            ],
+                                            "type": "property_path"
+                                        },
+                                        "related_doc_type": "CommCareCase",
+                                        "type": "related_doc",
+                                        "value_expression": {
+                                            "datatype": null,
+                                            "property_name": "level_2_data",
+                                            "type": "property_name"
+                                        }
+                                    },
+                                    "operator": "eq",
+                                    "property_value": "nioro",
+                                    "type": "boolean_expression"
+                                },
+                                "type": "conditional"
+                            },
+                            "expression_if_true": {
+                                "constant": 45733,
+                                "type": "constant"
+                            },
+                            "test": {
+                                "expression": {
+                                    "doc_id_expression": {
+                                        "datatype": null,
+                                        "property_path": [
+                                            "form",
+                                            "case",
+                                            "@case_id"
+                                        ],
+                                        "type": "property_path"
+                                    },
+                                    "related_doc_type": "CommCareCase",
+                                    "type": "related_doc",
+                                    "value_expression": {
+                                        "datatype": null,
+                                        "property_name": "level_2_data",
+                                        "type": "property_name"
+                                    }
+                                },
+                                "operator": "eq",
+                                "property_value": "koungheul",
+                                "type": "boolean_expression"
+                            },
+                            "type": "conditional"
+                        },
+                        "expression_if_true": {
+                            "constant": 5304,
+                            "type": "constant"
+                        },
+                        "test": {
+                            "expression": {
+                                "doc_id_expression": {
+                                    "datatype": null,
+                                    "property_path": [
+                                        "form",
+                                        "case",
+                                        "@case_id"
+                                    ],
+                                    "type": "property_path"
+                                },
+                                "related_doc_type": "CommCareCase",
+                                "type": "related_doc",
+                                "value_expression": {
+                                    "datatype": null,
+                                    "property_name": "level_2_data",
+                                    "type": "property_name"
+                                }
+                            },
+                            "operator": "eq",
+                            "property_value": "malem_hodar",
+                            "type": "boolean_expression"
+                        },
+                        "type": "conditional"
+                    },
+                    "expression_if_true": {
+                        "constant": 45118,
+                        "type": "constant"
+                    },
+                    "test": {
+                        "expression": {
+                            "doc_id_expression": {
+                                "datatype": null,
+                                "property_path": [
+                                    "form",
+                                    "case",
+                                    "@case_id"
+                                ],
+                                "type": "property_path"
+                            },
+                            "related_doc_type": "CommCareCase",
+                            "type": "related_doc",
+                            "value_expression": {
+                                "datatype": null,
+                                "property_name": "level_2_data",
+                                "type": "property_name"
+                            }
+                        },
+                        "operator": "eq",
+                        "property_value": "koumpentoum",
+                        "type": "boolean_expression"
+                    },
+                    "type": "conditional"
+                },
+                "is_nullable": true,
+                "is_primary_key": false,
+                "transform": {},
+                "type": "expression"
+            }
+        ],
+        "description": "",
+        "display_name": "SMS Indicators",
+        "named_filters": {},
+        "referenced_doc_type": "XFormInstance",
+        "table_id": "static-sms-indicators"
+    }
+}

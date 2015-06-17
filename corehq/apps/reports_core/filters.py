@@ -1,5 +1,6 @@
 from collections import namedtuple
 from datetime import datetime, time
+from corehq.apps.reports_core.exceptions import MissingParamException, FilterValueException
 from corehq.apps.userreports.expressions.getters import transform_from_datatype
 from corehq.apps.userreports.reports.filters import SHOW_ALL_CHOICE
 from corehq.apps.userreports.util import localize
@@ -8,18 +9,6 @@ from corehq.util.dates import iso_string_to_date
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext_lazy as _
-
-
-class FilterException(Exception):
-    pass
-
-
-class MissingParamException(FilterException):
-    pass
-
-
-class FilterValueException(FilterException):
-    pass
 
 
 FilterParam = namedtuple('FilterParam', ['name', 'required'])

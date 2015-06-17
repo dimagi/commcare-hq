@@ -33,6 +33,7 @@ class ReportFilter(JsonObject):
     slug = StringProperty(required=True)
     field = StringProperty(required=True)
     display = DefaultProperty()
+    compare_as_string = BooleanProperty(default=False)
 
     def create_filter_value(self, value):
         return {
@@ -241,6 +242,10 @@ class FilterSpec(JsonObject):
 
     def get_display(self):
         return self.display or self.slug
+
+
+class DateFilterSpec(FilterSpec):
+    compare_as_string = BooleanProperty(default=False)
 
 
 class ChoiceListFilterSpec(FilterSpec):
