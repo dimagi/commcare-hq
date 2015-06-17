@@ -289,20 +289,16 @@ def get_cases(request, domain):
 def filter_cases(request, domain, app_id, module_id, parent_id=None):
     app = Application.get(app_id)
     module = app.get_module(module_id)
-    delegation = request.GET.get('task-list') == 'true'
     auth_cookie = request.COOKIES.get('sessionid')
 
     suite_gen = SuiteGenerator(app, is_usercase_in_use(domain))
-    xpath = suite_gen.get_filter_xpath(module, delegation=delegation)
+    xpath = suite_gen.get_filter_xpath(module)
     extra_instances = [{'id': inst.id, 'src': inst.src}
                        for inst in suite_gen.get_instances_for_module(module, additional_xpaths=[xpath])]
 
     # touchforms doesn't like this to be escaped
     xpath = HTMLParser.HTMLParser().unescape(xpath)
-    if delegation:
-        case_type = DELEGATION_STUB_CASE_TYPE
-    else:
-        case_type = module.case_type
+    case_type = module.case_type
 
     if xpath:
         # if we need to do a custom filter, send it to touchforms for processing
@@ -343,17 +339,8 @@ def filter_cases(request, domain, app_id, module_id, parent_id=None):
     # (quick) workaround. should be revisted when we optimize the case list.
     cases = filter(lambda c: c.type == case_type, cases)
     cases = [c.get_json(lite=True) for c in cases if c]
-    parents = []
-    if delegation:
-        for case in cases:
-            parent_id = case['indices']['parent']['case_id']
-            parents.append(CommCareCase.get(parent_id))
-        return json_response({
-            'cases': cases,
-            'parents': parents
-        })
-    else:
-        return json_response(cases)
+
+    return json_response(cases)
 
 @cloudcare_api
 def get_apps_api(request, domain):

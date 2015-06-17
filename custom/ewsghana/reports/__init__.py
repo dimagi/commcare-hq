@@ -16,7 +16,7 @@ from custom.ewsghana.filters import ProductByProgramFilter, EWSDateFilter
 from dimagi.utils.dates import DateSpan, force_to_datetime
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import SQLLocation, LocationType
-from custom.ewsghana.utils import get_supply_points, filter_slugs_by_role
+from custom.ewsghana.utils import get_supply_points, filter_slugs_by_role, ews_date_format
 from casexml.apps.stock.models import StockTransaction
 from dimagi.utils.parsing import ISO_DATE_FORMAT
 
@@ -31,7 +31,6 @@ def get_url_with_location(view_name, text, location_id, domain):
         location_id,
         text
     )
-
 
 class EWSLineChart(LineChart):
     template_partial = 'ewsghana/partials/ews_line_chart.html'
@@ -56,6 +55,7 @@ class EWSData(object):
     slug = ''
     use_datatables = False
     custom_table = False
+    default_rows = 10
 
     def __init__(self, config=None):
         self.config = config or {}
@@ -309,6 +309,7 @@ class MultiReport(MonthWeekMixin, CustomProjectReport, CommtrackReportMixin, Pro
                     rows=rows,
                     total_row=total_row,
                     start_at_row=0,
+                    default_rows=data_provider.default_rows,
                     use_datatables=data_provider.use_datatables,
                 ),
                 show_table=data_provider.show_table,
@@ -374,8 +375,11 @@ class MultiReport(MonthWeekMixin, CustomProjectReport, CommtrackReportMixin, Pro
             ['Title of report', 'Location', 'Date range', 'Program'],
             [
                 self.title,
-                self.active_location.name,
-                '{} - {}'.format(self.datespan.startdate_display, self.datespan.enddate_display),
+                self.active_location.name if self.active_location else 'NATIONAL',
+                '{} - {}'.format(
+                    ews_date_format(self.datespan.startdate),
+                    ews_date_format(self.datespan.enddate)
+                ),
                 'all' if not program_id or program_id == 'all' else Program.get(docid=program_id).name
             ],
             []
