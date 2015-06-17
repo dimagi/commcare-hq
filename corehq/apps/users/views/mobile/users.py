@@ -20,7 +20,8 @@ from django.views.decorators.http import require_POST
 from django.contrib import messages
 from corehq import privileges
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
-from corehq.apps.accounting.decorators import requires_privilege_with_fallback, require_billing_admin
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.accounting.models import (
     BillingAccount,
     BillingAccountAdmin,
@@ -491,7 +492,7 @@ class ConfirmBillingAccountForExtraUsersView(BaseUserSettingsView, AsyncHandlerM
             'billing_info_form': self.billing_info_form,
         }
 
-    @method_decorator(require_billing_admin())
+    @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
         if self.account.date_confirmed_extra_charges is not None:
             return HttpResponseRedirect(reverse(CreateCommCareUserView.urlname, args=[self.domain]))

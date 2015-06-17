@@ -466,10 +466,6 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
         from corehq.apps.users.views.mobile import ListCommCareUsersView
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-                _("Billing Administrators"),
-                crispy.Field('billing_admins', css_class='input-xxlarge'),
-            ),
-            crispy.Fieldset(
                 _("Basic Information"),
                 'company_name',
                 'first_name',
