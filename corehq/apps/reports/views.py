@@ -1,6 +1,5 @@
 from StringIO import StringIO
 from copy import copy
-from corehq.apps.app_manager.const import USERCASE_TYPE
 import os
 import json
 import tempfile
@@ -931,7 +930,6 @@ def case_details(request, domain, case_id):
             "show_transaction_export": toggles.STOCK_TRANSACTION_EXPORT.enabled(request.user.username),
         },
         "show_case_rebuild": toggles.CASE_REBUILD.enabled(request.user.username),
-        'is_usercase': case.type == USERCASE_TYPE,
     })
 
 
