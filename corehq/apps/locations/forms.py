@@ -188,8 +188,10 @@ class LocationForm(forms.Form):
         if site_code:
             site_code = site_code.lower()
 
-        if SQLLocation.objects.filter(domain=self.location.domain,
-                                      site_code=site_code).exists():
+        if (SQLLocation.objects.filter(domain=self.location.domain,
+                                       site_code__iexact=site_code)
+                               .exclude(location_id=self.location._id)
+                               .exists()):
             raise forms.ValidationError(
                 'another location already uses this site code'
             )
