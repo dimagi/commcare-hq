@@ -79,6 +79,7 @@
         </div>
     </div>
 </div>
+{% if not EXCLUDE_AUDIO %}
 <div id="{{ qualifier|default_if_none:"" }}media_audio">
     <div class="control-group">
         <label class="control-label" for="menu_audio_path">{% trans AUDIO_LABEL %}</label>
@@ -166,3 +167,4 @@
         </div>
     </div>
 </div>
+{% endif %}

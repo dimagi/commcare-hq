@@ -4,9 +4,7 @@ These are used in the Incentive Payment Report
 """
 import fluff
 from couchforms.models import XFormInstance
-from corehq.apps.users.models import CommCareUser, CommCareCase
 from dimagi.utils.parsing import json_format_date
-
 from .constants import *
 
 

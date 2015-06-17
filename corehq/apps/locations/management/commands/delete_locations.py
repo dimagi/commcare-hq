@@ -58,5 +58,4 @@ class Command(BaseCommand):
 
         print "Archiving SQLLocations"
         SQLLocation.objects.filter(domain=domain).update(is_archived=True)
-
         print "Finished"

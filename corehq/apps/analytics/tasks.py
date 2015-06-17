@@ -50,12 +50,39 @@ def _get_user_hubspot_id(webuser):
     return None
 
 
+def _link_account_with_cookie(webuser, cookies):
+    """
+    This sends hubspot the user's first and last names and tracks everything they did
+    up until the point they signed up.
+    """
+    HUBSPOT_SIGNUP_FORM_ID = "e86f8bea-6f71-48fc-a43b-5620a212b2a4"
+    hubspot_id = ANALYTICS_IDS.get('HUBSPOT_ID')
+    hubspot_cookie = cookies.get('hubspotutk')
+    if hubspot_id:
+        url = u"https://forms.hubspot.com/uploads/form/v2/{hubspot_id}/{form_id}".format(
+            hubspot_id=hubspot_id,
+            form_id=HUBSPOT_SIGNUP_FORM_ID
+        )
+        data = {
+            'email': webuser.username,
+            'firstname': webuser.first_name,
+            'lastname': webuser.last_name,
+            'hs_context': json.dumps({"hutk": hubspot_cookie})
+        }
+        req = requests.post(
+            url,
+            data=data
+        )
+        req.raise_for_status()
+
+
 @task(queue='background_queue', acks_late=True, ignore_result=True)
-def track_created_hq_account_on_hubspot(webuser):
+def track_created_hq_account_on_hubspot(webuser, cookies):
     _track_on_hubspot(webuser, {
         'created_account_in_hq': True,
-        'commcare_user': True,
+        'is_a_commcare_user': True,
     })
+    _link_account_with_cookie(webuser, cookies)
 
 
 @task(queue='background_queue', acks_late=True, ignore_result=True)
@@ -64,6 +91,22 @@ def track_built_app_on_hubspot(webuser):
     if vid:
         # Only track the property if the contact already exists.
         _track_on_hubspot(webuser, {'built_app': True})
+
+
+@task(queue='background_queue', acks_late=True, ignore_result=True)
+def track_confirmed_account_on_hubspot(webuser):
+    vid = _get_user_hubspot_id(webuser)
+    if vid:
+        # Only track the property if the contact already exists.
+        try:
+            domain = webuser.domain_memberships[0].domain
+        except (IndexError, AttributeError):
+            domain = ''
+
+        _track_on_hubspot(webuser, {
+            'confirmed_account': True,
+            'domain': domain
+        })
 
 
 @task(queue='background_queue', acks_late=True, ignore_result=True)

@@ -532,13 +532,22 @@ class HQMediaMixin(Document):
                           for audio in item.all_audio_paths()
                           if audio])
 
-        for m, module in enumerate(self.get_modules()):
+        for m, module in enumerate(filter(lambda m: m.uses_media(), self.get_modules())):
             media_kwargs = {
                 'module_name': module.name,
                 'module_id': m,
                 'app_lang': self.default_language,
             }
             _add_menu_media(module, **media_kwargs)
+
+
+            if (module.case_details.short.lookup_enabled and module.case_details.short.lookup_image):
+                media.append(ApplicationMediaReference(
+                    module.case_details.short.lookup_image,
+                    media_class=CommCareImage,
+                    **media_kwargs)
+                )
+
             if module.case_list_form.form_id:
                 media.extend([ApplicationMediaReference(audio_path,
                                                         media_class=CommCareAudio,
@@ -552,8 +561,7 @@ class HQMediaMixin(Document):
                               for image_path in module.case_list_form.all_image_paths()
                               if image_path])
 
-            # Not all modules use case lists (e.g., reporting modules)
-            if hasattr(module, 'case_list') and module.case_list.show:
+            if module.case_list.show:
                 media.append(ApplicationMediaReference(
                     module.case_list.media_audio,
                     media_class=CommCareAudio,
@@ -608,12 +616,25 @@ class HQMediaMixin(Document):
         return self._get_item_media(module.case_list_form, media_kwargs)
 
     def get_case_list_menu_item_media(self, module, module_index, to_language=None):
-        if not module:
+        if not module or not module.uses_media():
             # user_registration isn't a real module, for instance
             return {}
         media_kwargs = self.get_media_ref_kwargs(module, module_index)
         media_kwargs.update(to_language=to_language or self.default_language)
         return self._get_item_media(module.case_list, media_kwargs)
+
+    def get_case_list_lookup_image(self, module, module_index, type='case'):
+        if not module:
+            return {}
+        media_kwargs = self.get_media_ref_kwargs(module, module_index)
+        image = ApplicationMediaReference(
+            module['{}_details'.format(type)].short.lookup_image,
+            media_class=CommCareImage,
+            **media_kwargs
+        ).as_dict()
+        return {
+            'image': image
+        }
 
     def _get_item_media(self, item, media_kwargs):
         menu_media = {}
