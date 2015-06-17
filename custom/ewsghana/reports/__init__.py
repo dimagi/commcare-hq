@@ -16,7 +16,7 @@ from custom.ewsghana.filters import ProductByProgramFilter, EWSDateFilter
 from dimagi.utils.dates import DateSpan, force_to_datetime
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import SQLLocation, LocationType
-from custom.ewsghana.utils import get_supply_points, filter_slugs_by_role
+from custom.ewsghana.utils import get_supply_points, filter_slugs_by_role, ews_date_format
 from casexml.apps.stock.models import StockTransaction
 from dimagi.utils.parsing import ISO_DATE_FORMAT
 
@@ -31,7 +31,6 @@ def get_url_with_location(view_name, text, location_id, domain):
         location_id,
         text
     )
-
 
 class EWSLineChart(LineChart):
     template_partial = 'ewsghana/partials/ews_line_chart.html'
@@ -377,7 +376,10 @@ class MultiReport(MonthWeekMixin, CustomProjectReport, CommtrackReportMixin, Pro
             [
                 self.title,
                 self.active_location.name if self.active_location else 'NATIONAL',
-                '{} - {}'.format(self.datespan.startdate_display, self.datespan.enddate_display),
+                '{} - {}'.format(
+                    ews_date_format(self.datespan.startdate),
+                    ews_date_format(self.datespan.enddate)
+                ),
                 'all' if not program_id or program_id == 'all' else Program.get(docid=program_id).name
             ],
             []
