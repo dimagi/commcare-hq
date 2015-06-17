@@ -182,10 +182,12 @@ class MonthOfStockProduct(EWSData):
 
     @property
     def headers(self):
-        headers = DataTablesHeader(*[DataTablesColumn('Location')])
+        headers = DataTablesHeader(DataTablesColumn('Location'))
         for product in self.unique_products(self.get_supply_points, all=(not self.config['export'])):
-            headers.add_column(DataTablesColumn(product.code))
-
+            if not self.config['export']:
+                headers.add_column(DataTablesColumn(product.code))
+            else:
+                headers.add_column(DataTablesColumn(u'{} ({})'.format(product.name, product.code)))
         return headers
 
     @property
