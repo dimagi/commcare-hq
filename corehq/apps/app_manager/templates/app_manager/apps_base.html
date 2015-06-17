@@ -1,4 +1,5 @@
 {% extends 'hqwebapp/two_column.html' %}
+{% comment %}{% extends 'dashboard/base.html' %}<!-- for Bootstrap3 styling -->{% endcomment %}
 {% load xforms_extras %}
 {% load url_extras %}
 {% load hq_shared_tags %}
@@ -19,6 +20,69 @@
 
 {% block stylesheets %}{{ block.super }}
     <link type="text/less" rel="stylesheet" media="all" href="{% static 'style/less/legacy/app_manager.less' %}"/>
+    <style type="text/css">
+a:hover {
+    text-decoration: none;
+}
+.fcc {
+    display: inline-block;
+    font-family: "CommCareHQFontRegular",sans-serif;
+    font-style: normal;
+    font-weight: normal;
+    line-height: 1;
+}
+.panel-dashboard {
+    border-color: #E6E6E4;
+}
+.panel {
+    margin-bottom: 17px;
+    background-color: #FFF;
+    border: 1px solid lightgray;
+    border-radius: 4px;
+    box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.05);
+}
+.panel-heading {
+    padding: 10px 15px;
+    border-bottom: 1px solid transparent;
+    border-top-right-radius: 3px;
+    border-top-left-radius: 3px;
+}
+.panel-dashboard > .panel-heading {
+
+    color: #777;
+    background-color: #F2F2F1;
+    border-color: #E6E6E4;
+
+}
+.panel-dashboard .panel-heading {
+
+    font-weight: bold;
+    font-size: 15px;
+    text-align: center;
+
+}
+.panel-body {
+    padding: 15px;
+}
+.dashboard-icon-large {
+    margin: 0px auto;
+    width: 220px;
+    height: 220px;
+    font-size: 200px;
+}
+.dashboard-icon {
+    display: block;
+    text-align: center;
+}
+.lead {
+    display: block;
+    text-align: center;
+    font-size: 18px;
+    margin-bottom: 17px;
+    font-weight: 300;
+    line-height: 1.4;
+}
+    </style>
 {% endblock %}
 
 {% block head %}{{ block.super }}
@@ -93,7 +157,7 @@
 {% endblock %}
 
 {% block main_column %}
-<div class="app-manager-content hide">
+<div>
     {% if app %}
         {% if error %}
         <div id="error">
@@ -106,15 +170,29 @@
         {% block app-content %}{% endblock %}
 
     {% else %}
-        <div style="padding: 1em; text-align: center">
-            <p style="font-size: 1.5em">
-                {% blocktrans %}
-                Welcome to the CommCare Application Builder.
-                Before you begin, check out the
-                <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Beginner+Tutorial">Beginner Tutorial</a>.
-                {% endblocktrans %}
-            </p>
-            <br>
+        <div class="page-header">
+            <h1>
+                {% trans 'Welcome to the CommCare HQ Application Builder' %}<br/>
+                <small>{% trans 'What would you like to do?' %}</small>
+            </h1>
+        </div>
+        <div class="row-fluid">
+            <div class="span4">
+                <div class="panel panel-dashboard">
+                    <div class="panel-heading">{% trans 'Help Site' %}</div>
+                    <div class="panel-body">
+                        <p class="text-center"><a href="http://help.commcarehq.org/"
+                              class="dashboard-link"
+                              id="help-link"
+                              target="_blank"><!-- or href="https://confluence.dimagi.com/display/commcarepublic/Beginner+Tutorial" -->
+                            <i class="fcc fcc-help dashboard-icon dashboard-icon-large"></i>
+                            <span class="lead">{% blocktrans %}
+                                Learn how to build<br>an application
+                            {% endblocktrans %}</span>
+                        </a></p>
+                    </div>
+                </div>
+            </div>
             {% include 'app_manager/partials/new_app_buttons.html' %}
         </div>
     {% endif %}

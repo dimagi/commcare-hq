@@ -1,26 +1,51 @@
 {% load i18n %}
 
-<div class="row-fluid">
     <form action="{% url "new_app" domain %}" method="post">
         <input type="hidden" name="type" value="Application">
         <input type="hidden" name="application_version" value="2.0" />
-        {% if request.couch_user.can_edit_apps %}
-        <div class="span4 offset1">
-            <a href="#" class="submit">
-                <button type="submit" class="btn btn-primary btn-new-app">
-                    {% trans 'Create a Blank Application' %}
-                </button>
-            </a>
+        <div class="span4">
+            <div class="panel panel-dashboard">
+                <div class="panel-heading">
+                    {% trans 'Applications' %}
+                </div>
+                <div class="panel-body">
+                    <p class="text-center">
+                        {% if request.couch_user.can_edit_apps %}
+                        <a href="{% url 'default_new_app' domain %}"
+                           class="dashboard-link"
+                           id="new-app-link">
+                            <i class="fcc dashboard-icon dashboard-icon-large fcc-applications"></i>
+                            <span class="lead">
+                                {% trans 'Build a new application' %}<br><br>
+                            </span>
+                       </a>
+                        {% else %}
+                        <span href="{% url 'default_new_app' domain %}"
+                           class="dashboard-link"
+                           id="new-app-link">
+                            <i class="fcc dashboard-icon dashboard-icon-large fcc-applications"></i>
+                            <span class="lead">
+                                {% trans 'There are no applications at this time' %}
+                            </span>
+                        </span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
         </div>
-        {% else %}
-        {% trans 'There are no applications at this time' %}
-        {% endif %}
-        <div class="span4 offset2">
-            <a href="{% url "appstore" %}">
-                <button type="button" class="btn btn-primary btn-new-app">
-                    {% trans 'Copy an existing app from the CommCare Exchange' %}
-                </button>
-            </a>
+        <div class="span4">
+            <div class="panel panel-dashboard">
+                <div class="panel-heading">
+                    {% trans 'Exchange' %}
+                </div>
+                <div class="panel-body">
+                    <p class="text-center"><a href="{% url 'appstore' %}" class="dashboard-link" id="appstore-link">
+                        <i class="fcc fcc-exchange dashboard-icon dashboard-icon-large"></i>
+                        <span class="lead">{% blocktrans %}
+                            Start with an<br>existing application
+                        {% endblocktrans %}</span>
+                    </a></p>
+                </div>
+            </div>
         </div>
     </form>
-</div>
