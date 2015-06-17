@@ -305,7 +305,8 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
 
     @classmethod
     def get_lite(cls, id, wrap=True):
-        results = cls.get_db().view("case/get_lite", key=id, include_docs=False).one()
+        from corehq.apps.hqcase.dbaccessors import get_lite_case_json
+        results = get_lite_case_json(id)
         if results is None:
             raise ResourceNotFound('no case with id %s exists' % id)
         if wrap:
@@ -328,10 +329,10 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
 
     @classmethod
     def bulk_get_lite(cls, ids, wrap=True, chunksize=100):
+        from corehq.apps.hqcase.dbaccessors import iter_lite_cases_json
         wrapper = lambda doc: cls.get_wrap_class(doc).wrap(doc) if wrap else doc
-        for ids in chunked(ids, chunksize):
-            for row in cls.get_db().view("case/get_lite", keys=ids, include_docs=False):
-                yield wrapper(row['value'])
+        for lite_case_json in iter_lite_cases_json(ids, chunksize=chunksize):
+            yield wrapper(lite_case_json)
 
     def get_server_modified_date(self):
         # gets (or adds) the server modified timestamp

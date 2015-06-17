@@ -7,7 +7,7 @@ from casexml.apps.phone.data_providers.case.load_testing import append_update_to
 from casexml.apps.phone.data_providers.case.stock import get_stock_payload
 from casexml.apps.phone.data_providers.case.utils import get_case_sync_updates, CaseStub
 from casexml.apps.phone.models import CaseState
-from corehq.apps.hqcase.dbaccessors import iter_lite_cases, \
+from corehq.apps.hqcase.dbaccessors import iter_lite_cases_json, \
     get_n_case_ids_in_domain_by_owner
 from corehq.util.dates import iso_string_to_datetime
 from dimagi.utils.parsing import string_to_utc_datetime
@@ -361,7 +361,7 @@ class CaseSyncCouchBatch(CaseSyncBatch):
                 )
             return minimal_cases
         else:
-            lite_cases = list(iter_lite_cases(case_ids, self.chunksize))
+            lite_cases = list(iter_lite_cases_json(case_ids, self.chunksize))
             logger.debug("No previous SyncLog. Fetched %s cases", len(lite_cases))
             return lite_cases
 
