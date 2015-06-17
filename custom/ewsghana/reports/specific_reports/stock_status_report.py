@@ -316,10 +316,10 @@ class StockoutTable(EWSData):
 
     @property
     def headers(self):
-        return DataTablesHeader(*[
-            DataTablesColumn('Medical Store'),
+        return DataTablesHeader(
+            DataTablesColumn('Location'),
             DataTablesColumn('Stockouts')
-        ])
+        )
 
     @property
     def rows(self):
