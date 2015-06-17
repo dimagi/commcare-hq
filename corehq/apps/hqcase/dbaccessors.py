@@ -196,3 +196,35 @@ def get_case_properties(domain, case_type=None):
         group_level=3,
     ).all()
     return sorted(set([property_name for _, _, property_name in rows]))
+
+
+def get_cases_in_domain_by_external_id(domain, external_id):
+    return CommCareCase.view(
+        'hqcase/by_domain_external_id',
+        key=[domain, external_id],
+        reduce=False,
+        include_docs=True,
+    ).all()
+
+
+def get_one_case_in_domain_by_external_id(domain, external_id):
+    return CommCareCase.view(
+        'hqcase/by_domain_external_id',
+        key=[domain, external_id],
+        reduce=False,
+        include_docs=True,
+        # limit for efficiency, 2 instead of 1 so it raises if multiple found
+        limit=2,
+    ).one()
+
+
+def get_supply_point_case_in_domain_by_id(
+        domain, supply_point_integer_id):
+    from corehq.apps.commtrack.models import SupplyPointCase
+    return SupplyPointCase.view(
+        'hqcase/by_domain_external_id',
+        key=[domain, str(supply_point_integer_id)],
+        reduce=False,
+        include_docs=True,
+        limit=1,
+    ).first()

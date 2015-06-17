@@ -6,6 +6,7 @@ import xlrd
 from django.utils.translation import ugettext_lazy as _
 from couchdbkit import NoResultFound
 from xlrd import xldate_as_tuple
+from corehq.apps.hqcase.dbaccessors import get_cases_in_domain_by_external_id
 
 from corehq.apps.importer.const import LookupErrors, ImportErrors
 from casexml.apps.case.models import CommCareCase
@@ -314,11 +315,7 @@ def lookup_case(search_field, search_id, domain, case_type):
         except Exception:
             pass
     elif search_field == 'external_id':
-        results = CommCareCase.view(
-            'hqcase/by_domain_external_id',
-            key=[domain, search_id],
-            reduce=False,
-            include_docs=True)
+        results = get_cases_in_domain_by_external_id(domain, search_id)
         if results:
             cases_by_type = [case for case in results
                              if case.type == case_type]
