@@ -22,7 +22,6 @@ from django.utils.translation import ugettext_lazy as _
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.util.quickcache import skippable_quickcache
 from corehq.util.dates import iso_string_to_datetime
-from corehq.apps.es.domains import DomainES
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import (
     iter_docs, get_db, get_safe_write_kwargs, apply_update, iter_bulk_delete

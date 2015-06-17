@@ -1,7 +1,6 @@
 from __future__ import print_function, unicode_literals
 
 from django.test import TestCase
-from django.test.client import Client
 
 from corehq.apps.domain.models import Domain
 
