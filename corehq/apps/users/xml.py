@@ -43,6 +43,7 @@ def group_fixture(groups, user):
         </groups>
     </fixture>
     """
+    groups = sorted(groups, key=lambda g: g.get_id)
     xFixture = ElementTree.Element('fixture', attrib={'id': 'user-groups', 'user_id': user.user_id})
     xGroups = ElementTree.SubElement(xFixture, 'groups')
 
