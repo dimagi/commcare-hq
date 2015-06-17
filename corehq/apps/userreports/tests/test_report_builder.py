@@ -6,7 +6,6 @@ from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfig
 from corehq.apps.userreports.reports.builder.forms import ConfigureListReportForm
 
 
-
 def read(rel_path):
     path = os.path.join(os.path.dirname(__file__), *rel_path)
     with open(path) as f:
