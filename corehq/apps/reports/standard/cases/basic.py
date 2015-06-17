@@ -4,17 +4,20 @@ import json
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
+from couchdbkit import RequestFailed
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import PhoneTime
 from dimagi.utils.decorators.memoized import memoized
 
-from corehq.apps.es import filters, users as user_es, cases as case_es
+from corehq.apps.api.es import CaseES
+from corehq.apps.es import filters
+from corehq.apps.es import users as user_es
 from corehq.apps.es.es_query import HQESQuery
 from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.search import SearchFilter
 from corehq.apps.reports.filters.select import SelectOpenCloseFilter
-from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilterWithAllData as EMWF
 from corehq.apps.reports.generic import ElasticProjectInspectionReport
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReportParametersMixin
@@ -25,7 +28,7 @@ from .data_sources import CaseInfo, CaseDisplay
 
 class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin):
     fields = [
-        'corehq.apps.reports.filters.case_list.CaseListFilter',
+        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilterWithAllData',
         'corehq.apps.reports.filters.select.CaseTypeFilter',
         'corehq.apps.reports.filters.select.SelectOpenCloseFilter',
         'corehq.apps.reports.standard.cases.filters.CaseSearchFilter',
@@ -35,87 +38,104 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     ajax_pagination = True
     asynchronous = True
 
-    def _build_query(self):
-        query = (case_es.CaseES()
-                 .domain(self.domain)
-                 .size(self.pagination.count)
-                 .start(self.pagination.start))
-        query.es_query['sort'] = self.get_sorting_block()
+    @property
+    @memoized
+    def case_es(self):
+        return CaseES(self.domain)
 
-        if self.case_filter:
-            query.filter(self.case_filter)
+    def build_query(self, case_type=None, afilter=None, status=None, owner_ids=None, user_ids=None, search_string=None):
+        owner_ids = owner_ids or []
+        user_ids = user_ids or []
 
-        query = query.NOT(case_es.case_type("user-owner-mapping-case"))
+        def _filter_gen(key, flist):
+            return {"terms": {
+                key: [item.lower() for item in flist if item]
+            }}
 
-        if self.case_type:
-            query = query.case_type(self.case_type)
+        def _domain_term():
+            return {"term": {"domain.exact": self.domain}}
 
-        if self.case_status:
-            query = query.is_closed(self.case_status == 'closed')
+        subterms = [_domain_term(), afilter] if afilter else [_domain_term()]
+        subterms.append({"not": {"term": {"type.exact": "user-owner-mapping-case"}}})
+        if case_type:
+            subterms.append({"term": {"type.exact": case_type}})
 
-        if EMWF.show_all_data(self.request):
-            pass
-        elif EMWF.show_project_data(self.request):
-            # Show everything but stuff we know for sure to exclude
-            user_types = EMWF.selected_user_types(self.request)
-            ids_to_exclude = self.get_special_owner_ids(
-                admin=HQUserType.ADMIN not in user_types,
-                unknown=HQUserType.UNKNOWN not in user_types,
-                demo=HQUserType.DEMO_USER not in user_types,
-                commtrack=False,
-            )
-            query = query.NOT(case_es.owner(ids_to_exclude))
-        else:  # Only show explicit matches
-            query = query.owner(self.case_owners)
+        if status:
+            subterms.append({"term": {"closed": (status == 'closed')}})
 
-        search_string = SearchFilter.get_value(self.request, self.domain)
+
+        if not EMWF.show_all_data(self.request):
+            owner_filters = _filter_gen('owner_id', owner_ids)
+            user_filters = _filter_gen('user_id', user_ids)
+            filters = filter(None, [owner_filters, user_filters])
+            if filters:
+                subterms.append({'or': filters})
+
         if search_string:
-            query = query.set_query({"query_string": {"query": search_string}})
+            query_block = {
+                "query_string": {"query": search_string}}  # todo, make sure this doesn't suck
+        else:
+            query_block = {"match_all": {}}
 
-        return query
+        and_block = {'and': subterms} if subterms else {}
+
+        es_query = {
+            'query': {
+                'filtered': {
+                    'query': query_block,
+                    'filter': and_block
+                }
+            },
+            'sort': self.get_sorting_block(),
+            'from': self.pagination.start,
+            'size': self.pagination.count,
+        }
+        return es_query
 
     @property
     @memoized
     def es_results(self):
-        return self._build_query().run().raw
+        case_es = self.case_es
+        query = self.build_query(case_type=self.case_type, afilter=self.case_filter,
+                                 status=self.case_status, owner_ids=self.case_owners,
+                                 search_string=SearchFilter.get_value(self.request, self.domain))
 
-    def get_special_owner_ids(self, admin, unknown, demo, commtrack):
-        if not any([admin, unknown, demo]):
-            return []
+        query_results = case_es.run_query(query)
 
-        user_filters = [filter_ for include, filter_ in [
-            (admin, user_es.admin_users()),
-            (unknown, filters.OR(user_es.unknown_users(), user_es.web_users())),
-            (demo, user_es.demo_users()),
-        ] if include]
-
-        query = (user_es.UserES()
-                 .domain(self.domain)
-                 .OR(*user_filters)
-                 .show_inactive()
-                 .fields([]))
-        owner_ids = query.run().doc_ids
-
-        if commtrack:
-            owner_ids.append("commtrack-system")
-        if demo:
-            owner_ids.append("demo_user_group_id")
-            owner_ids.append("demo_user")
-        return owner_ids
-
+        if 'hits' not in query_results:
+            logging.error("CaseListMixin query error: %s, urlpath: %s, params: %s, user: %s yielded a result indicating a query error: %s, results: %s" % (
+                self.__class__.__name__,
+                self.request.path,
+                self.request.GET.urlencode(),
+                self.request.couch_user.username,
+                json.dumps(query),
+                json.dumps(query_results)
+            ))
+            raise RequestFailed
+        return query_results
 
     @property
     @memoized
     def case_owners(self):
-        # Get user ids for each user that match the demo_user, admin,
-        # Unknown Users, or All Mobile Workers filters
+
+        # Get user ids for each user that match the demo_user, admin, Unknown Users, or All Mobile Workers filters
         user_types = EMWF.selected_user_types(self.request)
-        special_owner_ids = self.get_special_owner_ids(
-            admin=HQUserType.ADMIN in user_types,
-            unknown=HQUserType.UNKNOWN in user_types,
-            demo=HQUserType.DEMO_USER in user_types,
-            commtrack=HQUserType.COMMTRACK in user_types,
-        )
+        user_type_filters = []
+        if HQUserType.ADMIN in user_types:
+            user_type_filters.append(user_es.admin_users())
+        if HQUserType.UNKNOWN in user_types:
+            user_type_filters.append(user_es.unknown_users())
+            user_type_filters.append(user_es.web_users())
+        if HQUserType.DEMO_USER in user_types:
+            user_type_filters.append(user_es.demo_users())
+        if HQUserType.REGISTERED in user_types:
+            user_type_filters.append(user_es.mobile_users())
+
+        if len(user_type_filters) > 0:
+            special_q = user_es.UserES().domain(self.domain).OR(*user_type_filters).show_inactive()
+            special_user_ids = special_q.run().doc_ids
+        else:
+            special_user_ids = []
 
         # Get user ids for each user that was specifically selected
         selected_user_ids = EMWF.selected_user_ids(self.request)
@@ -133,22 +153,25 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         selected_reporting_group_users = list(set().union(*user_lists))
 
         # Get ids for each sharing group that contains a user from selected_reporting_group_users OR a user that was specifically selected
-        share_group_q = (HQESQuery(index="groups")
-                         .domain(self.domain)
-                         .doc_type("Group")
-                         .term("case_sharing", True)
-                         .term("users", (selected_reporting_group_users +
-                                         selected_user_ids))
-                         .fields([]))
+        share_group_q = HQESQuery(index="groups").domain(self.domain)\
+                                                .doc_type("Group")\
+                                                .filter(filters.term("case_sharing", True))\
+                                                .filter(filters.term("users", selected_reporting_group_users+selected_user_ids+special_user_ids))\
+                                                .fields([])
         sharing_group_ids = share_group_q.run().doc_ids
 
         owner_ids = list(set().union(
-            special_owner_ids,
+            special_user_ids,
             selected_user_ids,
             selected_sharing_group_ids,
             selected_reporting_group_users,
             sharing_group_ids
         ))
+        if HQUserType.COMMTRACK in user_types:
+            owner_ids.append("commtrack-system")
+        if HQUserType.DEMO_USER in user_types:
+            owner_ids.append("demo_user_group_id")
+
         owner_ids += self.location_sharing_owner_ids()
         owner_ids += self.location_reporting_owner_ids()
         return owner_ids
@@ -159,7 +182,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         id that is important for case sharing group selection
         is that actual group id.
         """
-        return EMWF.selected_sharing_location_ids(self.request)
+        return EMWF.selected_location_sharing_group_ids(self.request)
 
     def location_reporting_owner_ids(self):
         """
