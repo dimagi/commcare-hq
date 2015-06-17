@@ -19,7 +19,7 @@ class GroupTest(TestCase):
         deleted_user.retire()
 
         group = Group(domain=domain, name='group',
-                      users=[active_user._id, inactive_user._id, deleted_user._id])
+                      users={active_user._id, inactive_user._id, deleted_user._id})
         group.save()
 
         def _check_active_users(userlist):
