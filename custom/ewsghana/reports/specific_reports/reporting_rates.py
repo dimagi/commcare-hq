@@ -23,7 +23,6 @@ class ReportingRates(ReportingRatesData):
     show_table = False
     show_chart = True
     slug = 'reporting_rates'
-    title = _('Reporting Rates')
 
     @property
     def title(self):
@@ -33,7 +32,7 @@ class ReportingRates(ReportingRatesData):
             return _('Reporting Rates({}, {})'.format(
                 self.config['startdate'].strftime('%B'), self.config['startdate'].year
             ))
-        return ""
+        return _('Reporting Rates')
 
     @property
     def rows(self):
@@ -84,7 +83,6 @@ class ReportingDetails(ReportingRatesData):
     show_table = False
     show_chart = True
     slug = 'reporting_details'
-    title = _('Reporting Details')
 
     @property
     def title(self):
@@ -94,7 +92,7 @@ class ReportingDetails(ReportingRatesData):
             return _('Reporting Details({}, {})'.format(
                 self.config['startdate'].strftime('%B'), self.config['startdate'].year
             ))
-        return ""
+        return _('Reporting Details')
 
     @property
     def rows(self):
