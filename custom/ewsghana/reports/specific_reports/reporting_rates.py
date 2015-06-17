@@ -1,7 +1,4 @@
 from datetime import datetime, timedelta
-from dateutil.relativedelta import relativedelta
-import math
-import pytz
 from corehq.apps.es import UserES
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
@@ -18,9 +15,6 @@ from custom.ewsghana.utils import get_country_id, ews_date_format
 from custom.ilsgateway.tanzania import make_url
 from custom.ilsgateway.tanzania.reports.utils import link_format
 from django.utils.translation import ugettext as _
-from dimagi.utils.dates import force_to_date
-from dimagi.utils.parsing import ISO_DATE_FORMAT
-from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_date
 
