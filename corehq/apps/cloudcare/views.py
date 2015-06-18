@@ -263,6 +263,7 @@ def get_cases(request, domain):
 
     ids_only = string_to_boolean(request.REQUEST.get("ids_only", "false"))
     case_id = request.REQUEST.get("case_id", "")
+    case_ids = request.REQUEST.get("case_ids", None)
     footprint = string_to_boolean(request.REQUEST.get("footprint", "false"))
     include_children = string_to_boolean(request.REQUEST.get("include_children", "false"))
     if case_id and not footprint and not include_children:
@@ -275,6 +276,8 @@ def get_cases(request, domain):
         case = CommCareCase.get(case_id)
         assert case.domain == domain
         cases = [CaseAPIResult(id=case_id, couch_doc=case, id_only=ids_only)]
+    elif case_ids is not None:
+        cases = [CaseAPIResult(couch_doc=doc) for doc in iter_docs(CommCareCase.get_db(), case_ids)]
     else:
         filters = get_filters_from_request(request)
         status = api_closed_to_status(request.REQUEST.get('closed', 'false'))
