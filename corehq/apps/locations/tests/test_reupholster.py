@@ -198,3 +198,39 @@ class TestPath(LocationTestBase):
             parent = make_loc(name, type=type_, parent=parent)
         boston = parent
         self.assertEqual(boston.path, boston.sql_location.path)
+
+
+class TestNoCouchLocationTypes(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        location_type = LocationType(domain='test-domain', name='test-type')
+        location_type.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        delete_all_locations()
+        LocationType.objects.all().delete()
+
+    def test_no_location_type(self):
+        with self.assertRaises(LocationType.DoesNotExist):
+            loc = Location(name="Something")
+            loc.save()
+
+    def test_pass_in_loc_type(self):
+        location = Location(
+            domain='test-domain',
+            name='test-type',
+            location_type='test-type',
+        )
+        location.save()
+
+    def test_get_and_save(self):
+        location = Location(
+            domain='test-domain',
+            name='test-type',
+            location_type='test-type',
+        )
+        location.save()
+        sql_loc = SQLLocation.objects.get(location_id=location._id)
+        loc = sql_loc.couch_location
+        loc.save()

@@ -1,3 +1,4 @@
+from mock import patch, MagicMock
 from corehq.apps.groups.tests import WrapGroupTestMixin
 from corehq.apps.locations.models import Location, LocationType, SQLLocation, \
     LOCATION_REPORTING_PREFIX
@@ -424,5 +425,6 @@ class LocationGroupTest(LocationTestBase):
         self.assertEquals(len(fixture[0].findall('.//outlet')), 3)
 
 
+@patch('corehq.apps.locations.models.Location.location_type', new=MagicMock())
 class WrapLocationTest(WrapGroupTestMixin, SimpleTestCase):
     document_class = Location
