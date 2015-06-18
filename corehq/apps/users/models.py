@@ -10,6 +10,7 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
+from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain_by_owner
 from corehq.apps.sofabed.models import CaseData
 from dimagi.ext.couchdbkit import *
 from couchdbkit.resource import ResourceNotFound
@@ -1566,20 +1567,20 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         else:
             return 0
 
-    def _get_cases(self, deleted=False, wrap=True):
-        if deleted:
-            view_name = 'users/deleted_cases_by_user'
-        else:
-            view_name = 'case/by_owner'
-
-        db = CommCareCase.get_db()
-        case_ids = [r["id"] for r in db.view(view_name,
+    def _get_deleted_cases(self):
+        case_ids = [r["id"] for r in CommCareCase.get_db().view(
+            'users/deleted_cases_by_user',
             startkey=[self.user_id],
             endkey=[self.user_id, {}],
             reduce=False,
         )]
-        for doc in iter_docs(db, case_ids):
-            yield CommCareCase.wrap(doc) if wrap else doc
+        for doc in iter_docs(CommCareCase.get_db(), case_ids):
+            yield CommCareCase.wrap(doc)
+
+    def _get_case_docs(self):
+        case_ids = get_case_ids_in_domain_by_owner(
+            self.domain, owner_id=self.user_id)
+        return iter_docs(CommCareCase.get_db(), case_ids)
 
     @property
     def analytics_only_case_count(self):
@@ -1630,7 +1631,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self.base_doc += suffix
             self['-deletion_id'] = deletion_id
 
-        for caselist in chunked(self._get_cases(wrap=False), 50):
+        for caselist in chunked(self._get_case_docs(), 50):
             tag_docs_as_deleted.delay(CommCareCase, caselist, deletion_id)
             for case in caselist:
                 deleted_cases.add(case['_id'])
@@ -1659,7 +1660,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         for form in self.get_forms(deleted=True):
             form.doc_type = chop_suffix(form.doc_type)
             form.save()
-        for case in self._get_cases(deleted=True):
+        for case in self._get_deleted_cases():
             case.doc_type = chop_suffix(case.doc_type)
             case.save()
         self.save()

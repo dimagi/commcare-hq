@@ -2,7 +2,8 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 {% block js %}{{ block.super }}
-<script src="{% static 'reports/ko/saved_reports.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/main.js' %}"></script>
+    <script src="{% static 'reports/ko/saved_reports.js' %}"></script>
 {% endblock %}
 
 {% block reports-js-inline %}{{ block.super }}

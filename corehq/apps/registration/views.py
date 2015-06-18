@@ -71,7 +71,11 @@ def register_user(request, domain_type=None):
                                         password=form.cleaned_data['password'])
                 login(request, new_user)
                 track_workflow.delay(new_user.email, "Requested new account")
-                track_created_hq_account_on_hubspot.delay(new_user, request.COOKIES)
+                meta = {
+                    'HTTP_X_FORWARDED_FOR': request.META.get('HTTP_X_FORWARDED_FOR'),
+                    'REMOTE_ADDR': request.META.get('REMOTE_ADDR')
+                }
+                track_created_hq_account_on_hubspot.delay(new_user, request.COOKIES, meta)
                 return redirect(
                     'registration_domain', domain_type=domain_type)
         else:

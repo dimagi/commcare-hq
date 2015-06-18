@@ -7,5 +7,5 @@ class Command(ElasticReindexer):
     help = "Fast reindex of case elastic index by using the case view and reindexing cases"
 
     doc_class = CommCareCase
-    view_name = 'case/by_owner'
+    view_name = 'hqcase/by_owner'
     pillow_class = CasePillow

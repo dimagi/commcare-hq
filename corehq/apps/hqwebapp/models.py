@@ -369,8 +369,11 @@ class DashboardTab(UITab):
 
     @property
     def is_viewable(self):
-        return (self.domain and self.project and not self.project.is_snapshot
-                and self.couch_user)
+        return (self.domain and self.project and
+                not self.project.is_snapshot and
+                self.couch_user and
+                # domain hides Dashboard tab if user is non-admin
+                not (toggles.CUSTOM_MENU_BAR.enabled(self.domain) and not self.couch_user.is_superuser))
 
 
 class ReportsTab(UITab):
@@ -712,7 +715,9 @@ class ApplicationsTab(UITab):
         couch_user = self.couch_user
         return (self.domain and couch_user and
                 (couch_user.is_web_user() or couch_user.can_edit_apps()) and
-                (couch_user.is_member_of(self.domain) or couch_user.is_superuser))
+                (couch_user.is_member_of(self.domain) or couch_user.is_superuser) and
+                # domain hides Applications tab if user is non-admin
+                not (toggles.CUSTOM_MENU_BAR.enabled(self.domain) and not couch_user.is_superuser))
 
 
 class CloudcareTab(UITab):

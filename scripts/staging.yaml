@@ -6,9 +6,11 @@
 # From your commcare-hq directory with the virtualenv turned on
 # to safely push your changes to scripts/staging.yaml
 #     $ scripts/commit-staging --push
+# to check if your branch causes any conflicts before rebuilding
+#     $ scripts/rebuildstaging --no-push
 # to rebuild from your new spec and deploy
 #     $ scripts/rebuildstaging --deploy
-# Both commands commands can be run without the flag as well.
+# Above commands commands can be run without the flag as well.
 
 # CONFLICT RESOLUTION
 # First, determine where the conflict lies.
@@ -50,11 +52,11 @@ branches:
   - form-context-simple # Ben 5/13
   - languageMedia # Sravan 6/10
   - index-phonelog-reportentry # Ben 6/8
-  - add-proxy4 # ts 6/9
-  - debug-sync # Nick P 6/9
-  - case-list-filter  # Ethan 6/10
-  - cache-case-list # Ben 6/11
   - autoload-supplypoint  # Ethan 6/15
+  - full-name  # Ethan 6/15
+  - war-filter  # Ethan 6/15
+  - autogenerate-credits-prorated # Nick P 6/16
+  - case-list  # Ethan 6/17
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
@@ -63,7 +65,6 @@ submodules:
       - tf-persistence  # wsp 5/7
       - use-classes # ben 5/7
       - 221-jars # wsp 5/20
-      - cached-case-list # Ben 6/11
   submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master
