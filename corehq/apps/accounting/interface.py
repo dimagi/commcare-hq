@@ -549,8 +549,6 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
                 is_hidden=(is_hidden == IsHiddenFilter.IS_HIDDEN),
             )
 
-        filters.update(is_hidden_to_ops=False)
-
         return filters
 
     @property
@@ -811,8 +809,6 @@ class InvoiceInterface(InvoiceInterfaceBase):
             filters.update(
                 is_hidden=(is_hidden == IsHiddenFilter.IS_HIDDEN),
             )
-
-        filters.update(is_hidden_to_ops=False)
 
         return filters
 

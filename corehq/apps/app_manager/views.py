@@ -1046,10 +1046,11 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
     elif module:
         template, module_context = get_module_view_context_and_template(app, module)
         context.update(module_context)
-    else:
+    elif app:
         template = "app_manager/app_view.html"
-        if app:
-            context.update(get_app_view_context(request, app))
+        context.update(get_app_view_context(request, app))
+    else:
+        template = "dashboard/dashboard_new_user.html"
 
     # update multimedia context for forms and modules.
     menu_host = form or module
@@ -1067,7 +1068,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
                 'default_file_name': default_file_name,
             }
         }
-        if module:
+        if module and module.uses_media():
             specific_media['case_list_form'] = {
                 'menu_refs': app.get_case_list_form_media(module, module_id),
                 'default_file_name': '{}_case_list_form'.format(default_file_name),

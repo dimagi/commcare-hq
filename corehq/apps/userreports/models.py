@@ -198,6 +198,16 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             for i, item in enumerate(self.get_items(doc))
         ]
 
+    def get_report_count(self):
+        """
+        Return the number of ReportConfigurations that reference this data source.
+        """
+        return DataSourceConfiguration.view(
+            'userreports/report_configs_by_data_source',
+            reduce=True,
+            key=[self.domain, self._id]
+        ).one()['value']
+
     def validate(self, required=True):
         super(DataSourceConfiguration, self).validate(required)
         # these two properties implicitly call other validation
