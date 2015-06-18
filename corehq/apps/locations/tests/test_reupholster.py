@@ -8,6 +8,17 @@ from .test_locations import LocationTestBase
 from .util import make_loc, delete_all_locations
 
 
+def _couch_root_locations(domain):
+    results = Location.get_db().view('locations/hierarchy',
+                                     startkey=[domain], endkey=[domain, {}],
+                                     reduce=True, group_level=2)
+    ids = [res['key'][-1] for res in results]
+    locs = [Location.get(id) for id in ids]
+    return [loc for loc in locs if not loc.is_archived]
+
+
+
+
 class TestReupholster(TestCase):
     """
     These tests were written to drive removal of sepecific queries. It
@@ -28,6 +39,12 @@ class TestReupholster(TestCase):
     @classmethod
     def tearDownClass(cls):
         delete_all_locations()
+
+    def test_root_locations(self):
+        self.assertEqual(
+            set(_couch_root_locations(self.domain.name)),
+            set(Location.root_locations(self.domain.name)),
+        )
 
     def test_replace_all_ids(self):
         original_result = set([r['id'] for r in Location.get_db().view(

@@ -116,6 +116,18 @@ class LocationQueriesMixin(object):
     def location_ids(self):
         return self.values_list('location_id', flat=True)
 
+    def couch_locations(self, wrapped=True):
+        """
+        Returns the couch locations corresponding to this queryset.
+        If you're calling this, take a long hard look at yourself and ask why.
+        Do you really need couch locations here?
+        """
+        ids = self.location_ids()
+        locations = iter_docs(Location.get_db(), ids)
+        if wrapped:
+            return map(Location.wrap, locations)
+        return locations
+
 
 class LocationQuerySet(LocationQueriesMixin, models.query.QuerySet):
     pass
@@ -568,7 +580,7 @@ class Location(CachedCouchDocumentMixin, Document):
         """
         Return all active top level locations for this domain
         """
-        return root_locations(domain)
+        return SQLLocation.root_locations(domain).couch_locations()
 
     @classmethod
     def get_in_domain(cls, domain, id):
@@ -599,7 +611,8 @@ class Location(CachedCouchDocumentMixin, Document):
     def siblings(self, parent=None):
         if not parent:
             parent = self.parent
-        return [loc for loc in (parent.children if parent else root_locations(self.domain)) if loc._id != self._id]
+        locs = (parent.children if parent else self.root_locations(self.domain))
+        return [loc for loc in locs if loc._id != self._id]
 
     @property
     def path(self):
@@ -643,13 +656,3 @@ class Location(CachedCouchDocumentMixin, Document):
     @property
     def location_type_object(self):
         return self.sql_location.location_type
-
-
-def root_locations(domain):
-    results = Location.get_db().view('locations/hierarchy',
-                                     startkey=[domain], endkey=[domain, {}],
-                                     reduce=True, group_level=2)
-
-    ids = [res['key'][-1] for res in results]
-    locs = [Location.get(id) for id in ids]
-    return [loc for loc in locs if not loc.is_archived]
