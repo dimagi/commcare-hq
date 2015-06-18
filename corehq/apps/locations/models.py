@@ -634,11 +634,8 @@ class Location(CachedCouchDocumentMixin, Document):
     @property
     def children(self):
         """return list of immediate children of this location"""
-        startkey, endkey = self._key_bounds
-        depth = len(self.path) + 2  # 1 for domain, 1 for next location level
-        q = self.view('locations/hierarchy', startkey=startkey, endkey=endkey, group_level=depth)
-        keys = [e['key'] for e in q if len(e['key']) == depth]
-        return self.view('locations/hierarchy', keys=keys, reduce=False, include_docs=True).all()
+        return (SQLLocation.objects.filter(parent=self.sql_location)
+                                   .couch_locations())
 
     def linked_supply_point(self):
         from corehq.apps.commtrack.models import SupplyPointCase

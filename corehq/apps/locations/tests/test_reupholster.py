@@ -1,3 +1,4 @@
+import itertools
 from django.test import TestCase
 
 from corehq.apps.commtrack.tests.util import bootstrap_location_types
@@ -28,6 +29,15 @@ def _couch_descendants(location):
     startkey, endkey = _key_bounds(location)
     return location.view('locations/hierarchy', startkey=startkey,
                          endkey=endkey, reduce=False, include_docs=True).all()
+
+
+def _couch_children(location):
+    """return list of immediate children of this location"""
+    startkey, endkey = _key_bounds(location)
+    depth = len(location.path) + 2  # 1 for domain, 1 for next location level
+    q = location.view('locations/hierarchy', startkey=startkey, endkey=endkey, group_level=depth)
+    keys = [e['key'] for e in q if len(e['key']) == depth]
+    return location.view('locations/hierarchy', keys=keys, reduce=False, include_docs=True).all()
 
 
 class TestReupholster(TestCase):
@@ -61,6 +71,12 @@ class TestReupholster(TestCase):
         self.assertEqual(
             _couch_descendants(self.state),
             self.state.descendants,
+        )
+
+    def test_children(self):
+        self.assertEqual(
+            _couch_children(self.state),
+            self.state.children,
         )
 
     def test_replace_all_ids(self):
