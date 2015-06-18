@@ -316,8 +316,9 @@ class UserRemoval(models.Model):
             self.save()
 
     def __repr__(self):
-        return ("UserRemoval(group_id={self.group_id}, user_id={self.user_id}, "
-                "removed_on={self.removed_on})"
+        return (
+            "UserRemoval(group_id={self.group_id}, user_id={self.user_id}, "
+            "removed_on={self.removed_on})"
         ).format(self=self)
 
     class Meta:

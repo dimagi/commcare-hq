@@ -4,7 +4,8 @@ from corehq.apps.groups.models import UserRemoval
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
 
-DOMAIN= 'test-domain'
+DOMAIN = 'test-domain'
+
 
 class GroupTest(TestCase):
     @classmethod
@@ -66,7 +67,6 @@ class GroupTest(TestCase):
         self.assertNotEqual(removal_record.removed_on, removal_record_updated.removed_on)
 
     def test_remove_multiple_users(self):
-        print UserRemoval.objects.all()
         group = Group(domain=DOMAIN, name='group',
                       users={self.active_user._id, self.inactive_user._id, self.deleted_user._id})
         group.save()
