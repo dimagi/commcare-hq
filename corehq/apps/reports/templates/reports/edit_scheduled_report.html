@@ -17,7 +17,25 @@
 
 {% block reports-js-inline %}
 <script>
-    $("#id_config_ids").width(600).height(200).multiselect();
+    var isConfigurableMap = {{ is_configurable_map|JSON }};
+
+    var updateUcrElements = function(selectedConfigs){
+        showUcrElements = _.any(
+            selectedConfigs, function(i){return isConfigurableMap[i] === true;}
+        );
+        if (showUcrElements){
+            $("#div_id_language").show();
+            $("#ucr-privacy-warning").show();
+        } else {
+            $("#div_id_language").hide();
+            $("#ucr-privacy-warning").hide();
+        }
+    };
+
+    $("#id_config_ids").width(600).height(200).multiselect().change(function(){
+        updateUcrElements($(this).val());
+    });
+
 </script>
 <script type="text/javascript">
     var scheduled_report_form_helper = new ScheduledReportFormHelper({

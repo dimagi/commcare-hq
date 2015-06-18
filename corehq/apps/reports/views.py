@@ -713,7 +713,7 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
     if not configs:
         return render(request, template, context)
 
-    display_privacy_disclaimer = any(c.is_configurable_report for c in configs)
+    is_configurable_map = {c._id: c.is_configurable_report for c in configs}
 
     config_choices = [(c._id, c.full_name) for c in configs]
 
@@ -748,11 +748,7 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
     initial['recipient_emails'] = ', '.join(initial['recipient_emails'])
 
     kwargs = {'initial': initial}
-    args = (
-        (display_privacy_disclaimer, request.POST)
-        if request.method == "POST"
-        else (display_privacy_disclaimer,)
-    )
+    args = ((request.POST, ) if request.method == "POST" else ())
     form = ScheduledReportForm(*args, **kwargs)
 
     form.fields['config_ids'].choices = config_choices
@@ -793,6 +789,7 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
     else:
         context['form_action'] = _("Edit")
         context['report']['title'] = _("Edit Scheduled Report")
+    context['is_configurable_map'] = is_configurable_map
 
     return render(request, template, context)
 

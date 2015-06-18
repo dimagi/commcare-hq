@@ -131,7 +131,7 @@ class ScheduledReportForm(forms.Form):
         widget=LanguageSelect()
     )
 
-    def __init__(self, display_privacy_disclaimer, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
         self.helper.form_id = 'id-scheduledReportForm'
@@ -147,7 +147,7 @@ class ScheduledReportForm(forms.Form):
                 'language',
                 crispy.HTML(
                     render_to_string('reports/partials/privacy_disclaimer.html')
-                ) if display_privacy_disclaimer else None
+                )
             )
         )
         self.helper.add_input(crispy.Submit('submit_btn', 'Submit'))
