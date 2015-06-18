@@ -2,6 +2,12 @@
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
+{% block head %}{{ block.super }}
+    {% if form %}
+        {{ form.media }}
+    {% endif %}
+{% endblock %}
+
 {% block reports-js %}
 <script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.9.2.multiselect-deps.custom.min.js' %}"></script>
 <script src="{% static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.js' %}"></script>

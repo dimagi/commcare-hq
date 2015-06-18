@@ -1,3 +1,5 @@
+import langcodes
+
 from django import forms
 from django.core.validators import MinLengthValidator
 from django.template.loader import render_to_string
@@ -9,6 +11,11 @@ from .models import (
     ReportConfig,
     ReportNotification,
 )
+
+
+class LanguageSelect(forms.Select):
+    class Media:
+        js = ('reports/javascripts/language_field.js',)
 
 
 class SavedReportConfigForm(forms.Form):
@@ -117,8 +124,11 @@ class ScheduledReportForm(forms.Form):
         label='Other recipients',
         required=False)
 
-    language = forms.CharField(
-        label='Language', required=False
+    language = forms.ChoiceField(
+        label='Language',
+        required=False,
+        choices=[('', '')] + langcodes.get_all_langs_for_select(),
+        widget=LanguageSelect()
     )
 
     def __init__(self, display_privacy_disclaimer, *args, **kwargs):

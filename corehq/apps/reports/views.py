@@ -617,6 +617,7 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
                                   domain,
                                   user_id, request.couch_user,
                                   True,
+                                  lang=request.couch_user.language,
                                   notes=form.cleaned_data['notes'],
                                   once=once)[0].content
 
