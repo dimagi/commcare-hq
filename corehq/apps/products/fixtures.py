@@ -30,15 +30,20 @@ def product_fixture_generator_json(domain):
             fields.append(CUSTOM_DATA_SLUG + '/' + f.slug)
 
     return {
-        'sourceUri': 'jr://fixture/commtrack:products',
-        'defaultId': 'products',
-        'initialQuery': "instance('products')/products/product",
+        'id': 'products',
+        'uri': 'jr://fixture/commtrack:products',
+        'path': '/products/product',
         'name': 'Products',
         'structure': {
             f: {
                 'name': f,
                 'no_option': True
             } for f in fields},
+
+        # DEPRECATED PROPERTIES
+        'sourceUri': 'jr://fixture/commtrack:products',
+        'defaultId': 'products',
+        'initialQuery': "instance('products')/products/product",
     }
 
 

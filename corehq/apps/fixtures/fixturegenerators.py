@@ -22,11 +22,16 @@ def item_lists_by_domain(domain):
             }
 
         ret.append({
+            'id': data_type.tag,
+            'uri': 'jr://fixture/item-list:%s' % data_type.tag,
+            'path': "/{tag}_list/{tag}".format(tag=data_type.tag),
+            'name': data_type.tag,
+            'structure': structure,
+
+            # DEPRECATED PROPERTIES
             'sourceUri': 'jr://fixture/item-list:%s' % data_type.tag,
             'defaultId': data_type.tag,
             'initialQuery': "instance('{tag}')/{tag}_list/{tag}".format(tag=data_type.tag),
-            'name': data_type.tag,
-            'structure': structure,
         })
 
     products = product_fixture_generator_json(domain)

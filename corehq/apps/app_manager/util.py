@@ -279,14 +279,14 @@ def get_casedb_schema(app, form=None):
     related = builder.get_parent_type_map(case_types)
     map = builder.get_case_property_map(case_types, include_parent_properties=False)
     return {
-        "sourceUri": "jr://instance/casedb",
-        "defaultId": "casedb",
-        "initialQuery": "instance('casedb')/cases/case",
+        "id": "casedb",
+        "uri": "jr://instance/casedb",
         "name": "case",
+        "path": "/cases/case",
         "structure": {},
         "subsets": [{
-            "name": ctype,
-            "filter": "[@case_type={}]".format(ctype),
+            "id": ctype,
+            "key": "@case_type",
             "structure": {p: {} for p in props},
             "session_property": session_cases.get(ctype),
             "related": related.get(ctype),  # {<relationship>: <parent_type>, ...}

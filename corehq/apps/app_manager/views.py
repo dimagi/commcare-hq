@@ -1299,9 +1299,9 @@ def get_data_schema(request, domain, app_id=None, form_unique_id=None):
     definition is a dictionary with the following format:
     ```
     {
-        "sourceUri": string (instance src)
-        "defaultId": string (default instance id)
-        "intialQuery": string (XPath query to select root nodeset)
+        "id": string (default instance id)
+        "uri": string (instance src)
+        "path": string (path of root nodeset, not including `instance(...)`)
         "name": string (human readable name)
         "structure": {
             element: {
@@ -1315,10 +1315,13 @@ def get_data_schema(request, domain, app_id=None, form_unique_id=None):
         },
         "subsets": [
             {
-                "name": string (human readable name)
-                "filter": string (nodeset filter like "[@attribute=value]"),
-                "structure": {
-                    ... structure of the filtered subset
+                "id": string (unique identifier for this subset)
+                "key": string (unique identifier property name)
+                "name": string (optional human readable name)
+                "structure": { ... }
+                "related": {
+                    string (relationship): string (related subset name),
+                    ...
                 }
             },
             ...
