@@ -55,10 +55,12 @@ class Group(UndoableDocument):
 
     @classmethod
     def save_docs(cls, docs, use_uuids=True, all_or_nothing=False):
+        utcnow = datetime.utcnow()
+        for doc in docs:
+            doc['last_modified'] = utcnow
         super(Group, cls).save_docs(docs, use_uuids, all_or_nothing)
-        removed_on = datetime.utcnow()
         UserRemoval.bulk_update_or_create([
-            UserRemoval(group_id=doc.get_id, user_id=user_id, removed_on=removed_on)
+            UserRemoval(group_id=doc.get_id, user_id=user_id, removed_on=utcnow)
             for doc in docs if isinstance(doc, Group) and doc._get_removed_users()
             for user_id in doc._get_removed_users()
         ])

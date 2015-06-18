@@ -90,7 +90,15 @@ class GroupTest(TestCase):
 
         self.assertEqual(len(list(UserRemoval.objects.filter(group_id=group1.get_id))), 0)
         self.assertEqual(len(list(UserRemoval.objects.filter(group_id=group2.get_id))), 0)
+        g1_old_modified = group1.last_modified
+        g2_old_modified = group2.last_modified
+
         Group.bulk_save([group1, group2])
+
+        group1_updated = Group.get(group1.get_id)
+        group2_updated = Group.get(group2.get_id)
+        self.assertNotEqual(g1_old_modified, group1_updated.last_modified)
+        self.assertNotEqual(g2_old_modified, group2_updated.last_modified)
         for group_id, user_id in [
             (group1.get_id, self.active_user._id),
             (group2.get_id, self.deleted_user._id),
