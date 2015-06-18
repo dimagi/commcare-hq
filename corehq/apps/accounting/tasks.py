@@ -246,7 +246,7 @@ def send_purchase_receipt(payment_record, core_product,
     context = {
         'name': name,
         'amount': fmt_dollar_amount(payment_record.amount),
-        'project': payment_record.payment_method.billing_admin.domain,
+        'project': payment_record.creditadjustment_set.last().credit_line.account.created_by_domain,
         'date_paid': payment_record.date_created.strftime(USER_DATE_FORMAT),
         'product': core_product,
         'transaction_id': payment_record.public_transaction_id,
