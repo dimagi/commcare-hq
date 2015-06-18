@@ -1,4 +1,4 @@
-from tastypie.fields import ToManyField, ToOneField
+from tastypie.fields import ToManyField
 from tastypie.resources import ModelResource
 from corehq.apps.accounting.models import Feature, FeatureRate, SoftwarePlanVersion, LineItem, PaymentMethod, \
     BillingAccount, BillingContactInfo, Currency, PaymentRecord, SoftwareProductRate, \
@@ -141,7 +141,10 @@ class BillingContactInfoResource(ModelResource):
 
 class BillingAccountResource(ModelResource):
     currency = fields.IntegerField('currency_id', null=True)
-    billing_contact_info = ToOneField(BillingContactInfoResource, 'billingcontactinfo', full=True, null=True)
+    billing_contact_info = fields.ToOneField(BillingContactInfoResource,
+                                             'billingcontactinfo',
+                                             full=True,
+                                             null=True)
 
     class Meta(AccountingResourceMeta):
         queryset = BillingAccount.objects.all()
@@ -192,7 +195,7 @@ class LineItemResource(ModelResource):
 
 class PaymentMethodResource(ModelResource):
     account = fields.IntegerField('account_id', null=True)
-    billing_admin = fields.IntegerField('billing_admin_id', null=True)
+    web_user = fields.CharField('web_user', null=True)
 
     class Meta(AccountingResourceMeta):
         queryset = PaymentMethod.objects.all()
