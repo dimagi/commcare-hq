@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
+from south.utils import datetime_utils as datetime
 from south.db import db
-from south.v2 import DataMigration
-from django.db import connection
+from south.v2 import SchemaMigration
+from django.db import models
 
 
-class Migration(DataMigration):
+class Migration(SchemaMigration):
 
     def forwards(self, orm):
         """
             Adds web_user to accounting_paymentmethod.
+            This is a combination of 3 migrations: Schema(add new columns)->Data(Populate new columns)->Schema(delete old columns)
 
             Since web_users can have multiple Stripe accounts on different accounts / domains,
             this appends '-duplicate' to duplicate payment methods. Going forward each web_user will only
@@ -22,35 +24,17 @@ class Migration(DataMigration):
 
         db.create_index(u'accounting_paymentmethod', ['web_user'])
 
-        sql = """
-            UPDATE accounting_paymentmethod
-            SET web_user = accounting_billingaccountadmin.web_user
-            FROM accounting_billingaccountadmin
-            WHERE accounting_paymentmethod.billing_admin_id = accounting_billingaccountadmin.id;
-
-            UPDATE accounting_paymentmethod
-            SET method_type = method_type || '-duplicate'
-            WHERE id IN (SELECT id
-                          FROM (SELECT id, row_number() over (partition BY web_user ORDER BY id) AS rnum
-                                 FROM accounting_paymentmethod) t
-                          WHERE t.rnum > 1);
-        """
-
-        cursor = connection.cursor()
-        cursor.execute(sql)
-
-        db.delete_column(u'accounting_paymentmethod', 'billing_admin_id')
-        db.delete_column(u'accounting_paymentmethod', 'account_id')
 
     def backwards(self, orm):
+        """
+            Can't really reverse these migrations as we are removing the concept of billing admin
+        """
         raise RuntimeError("Cannot reverse this migration <(-'.'-)>")
-
 
     models = {
         u'accounting.billingaccount': {
             'Meta': {'object_name': 'BillingAccount'},
             'account_type': ('django.db.models.fields.CharField', [], {'default': "'CONTRACT'", 'max_length': '25'}),
-            'billing_admins': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['accounting.BillingAccountAdmin']", 'null': 'True', 'symmetrical': 'False'}),
             'created_by': ('django.db.models.fields.CharField', [], {'max_length': '80'}),
             'created_by_domain': ('django.db.models.fields.CharField', [], {'max_length': '256', 'null': 'True', 'blank': 'True'}),
             'currency': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['accounting.Currency']", 'on_delete': 'models.PROTECT'}),
@@ -64,13 +48,6 @@ class Migration(DataMigration):
             'last_modified': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '200', 'db_index': 'True'}),
             'salesforce_account_id': ('django.db.models.fields.CharField', [], {'db_index': 'True', 'max_length': '80', 'null': 'True', 'blank': 'True'})
-        },
-        u'accounting.billingaccountadmin': {
-            'Meta': {'object_name': 'BillingAccountAdmin'},
-            'domain': ('django.db.models.fields.CharField', [], {'db_index': 'True', 'max_length': '256', 'null': 'True', 'blank': 'True'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'last_modified': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
-            'web_user': ('django.db.models.fields.CharField', [], {'max_length': '80', 'db_index': 'True'})
         },
         u'accounting.billingcontactinfo': {
             'Meta': {'object_name': 'BillingContactInfo'},
@@ -192,14 +169,12 @@ class Migration(DataMigration):
         },
         u'accounting.paymentmethod': {
             'Meta': {'object_name': 'PaymentMethod'},
-            'account': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['accounting.BillingAccount']", 'on_delete': 'models.PROTECT'}),
-            'billing_admin': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['accounting.BillingAccountAdmin']", 'on_delete': 'models.PROTECT'}),
             'customer_id': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True', 'blank': 'True'}),
             'date_created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'last_modified': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'method_type': ('django.db.models.fields.CharField', [], {'default': "'Stripe'", 'max_length': '50', 'db_index': 'True'}),
-            'web_user': ('django.db.models.fields.CharField', [], {'max_length': '80', 'null': 'True'})
+            'web_user': ('django.db.models.fields.CharField', [], {'max_length': '80', 'null': 'True', 'db_index': 'True'})
         },
         u'accounting.paymentrecord': {
             'Meta': {'object_name': 'PaymentRecord'},
@@ -326,4 +301,3 @@ class Migration(DataMigration):
     }
 
     complete_apps = ['accounting']
-    symmetrical = True
