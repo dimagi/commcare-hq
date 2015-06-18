@@ -404,7 +404,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         except CouchUser.AccountTypeError:
             return CommCareUser.get_by_user_id(self.owner_id)
 
-    def get_report_content(self, attach_excel=False):
+    def get_report_content(self, lang, attach_excel=False):
         """
         Get the report's HTML content as rendered by the static view format.
 
@@ -424,6 +424,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         request.user = self.owner.get_django_user()
         request.domain = self.domain
         request.couch_user.current_domain = self.domain
+        request.couch_user.language = lang
 
         request.GET = QueryDict(
             self.query_string
@@ -527,6 +528,8 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     config_ids = StringListProperty()
     send_to_owner = BooleanProperty()
     attach_excel = BooleanProperty()
+    # language is only used if some of the config_ids refer to UCRs.
+    language = StringProperty()
 
     hour = IntegerProperty(default=8)
     minute = IntegerProperty(default=0)

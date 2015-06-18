@@ -117,6 +117,10 @@ class ScheduledReportForm(forms.Form):
         label='Other recipients',
         required=False)
 
+    language = forms.CharField(
+        label='Language', required=False
+    )
+
     def __init__(self, display_privacy_disclaimer, *args, **kwargs):
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
@@ -130,6 +134,7 @@ class ScheduledReportForm(forms.Form):
                 'send_to_owner',
                 'attach_excel',
                 'recipient_emails',
+                'language',
                 crispy.HTML(
                     render_to_string('reports/partials/privacy_disclaimer.html')
                 ) if display_privacy_disclaimer else None
