@@ -91,6 +91,7 @@ from corehq.apps.app_manager.util import (
     is_valid_case_type,
     get_all_case_properties,
     get_casedb_schema,
+    get_session_schema,
     add_odk_profile_after_build,
     ParentCasePropertyBuilder,
     commtrack_ledger_sections,
@@ -1307,8 +1308,15 @@ def get_data_schema(request, domain, app_id=None, form_unique_id=None):
             element: {
                 "name": string (optional human readable name)
                 "structure": {
-                    inner-element: { }
+                    nested-element: { ... }
                 },
+            },
+            ref-element: {
+                "reference": {
+                    "source": string (optional data source id, defaults to this data source)
+                    "subset": string (optional subset id)
+                    "key": string (referenced property)
+                }
             },
             @attribute: { },
             ...
@@ -1328,7 +1336,12 @@ def get_data_schema(request, domain, app_id=None, form_unique_id=None):
         ]
     }
     ```
+    A structure may contain nested structure elements. A nested element
+    may contain one of "structure" (a concrete structure definition) or
+    "reference" (a link to some other structure definition). Any
+    structure item may have a human readable "name".
     """
+    data = []
     if form_unique_id is None:
         app = get_app(domain, app_id)
         form = None
@@ -1337,9 +1350,10 @@ def get_data_schema(request, domain, app_id=None, form_unique_id=None):
             form, app = Form.get_form(form_unique_id, and_app=True)
         except ResourceConflict:
             raise Http404()
+        data.append(get_session_schema(form))
     if app.domain != domain:
         raise Http404()
-    data = [get_casedb_schema(app, form)]
+    data.append(get_casedb_schema(app))  # TODO use domain instead of app
     data.extend(item_lists_by_domain(domain))
     kw = {}
     if "pretty" in request.GET:

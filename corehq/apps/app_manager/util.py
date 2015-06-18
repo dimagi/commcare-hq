@@ -251,28 +251,11 @@ def get_all_case_properties(app):
     return get_case_properties(app, app.get_case_types(), defaults=('name',))
 
 
-def get_casedb_schema(app, form=None):
-    """Get case database schema
+def get_casedb_schema(app):
+    """Get case database schema definition
 
     This lists all case types and their properties for the given app.
     """
-    session_cases = {}
-    if form is None:
-        case_type = None
-    else:
-        # TODO detect advanced module with more than one case in session
-        case_type = form.get_module().case_type
-        if case_type is not None:
-            session_cases[case_type] = "case_id"
-    def key(item):
-        """Sort form's module's case type first"""
-        ctype = item[0]
-        if ctype == case_type:
-            return 0, ctype
-        rel = related.get(case_type)
-        if rel and ctype in rel.values():
-            return 1, ctype
-        return 2, ctype
     case_types = app.get_case_types()
     per_type_defaults = get_per_type_defaults(app.domain, case_types)
     builder = ParentCasePropertyBuilder(app, ['name'], per_type_defaults)
@@ -288,10 +271,33 @@ def get_casedb_schema(app, form=None):
             "id": ctype,
             "key": "@case_type",
             "structure": {p: {} for p in props},
-            "session_property": session_cases.get(ctype),
             "related": related.get(ctype),  # {<relationship>: <parent_type>, ...}
-        } for ctype, props in sorted(map.iteritems(), key=key)],
+        } for ctype, props in sorted(map.iteritems())],
     }
+
+
+def get_session_schema(form):
+    """Get form session schema definition
+    """
+    structure = {}
+    # TODO handle advanced modules with more than one case
+    case_type = form.get_module().case_type
+    if case_type is not None:
+        structure["case_id"] = {
+            "reference": {
+                "source": "casedb",
+                "subset": case_type,
+                "key": "@case_id",
+            },
+        }
+    return {
+        "id": "commcaresession",
+        "uri": "jr://instance/session",
+        "name": "Session",
+        "path": "/session/data",
+        "structure": structure,
+    }
+
 
 def get_usercase_properties(app):
     # No need to check toggles.USER_AS_A_CASE. This function is only called
