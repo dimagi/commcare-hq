@@ -500,7 +500,7 @@ Here are some sample configurations that can be used as a reference until we hav
 - [GSID form report](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/gsid/gsid-form-report.json)
 
 
-## Report filters
+## Report Filters
 
 The documentation for report filters is still in progress. Apologies for brevity below.
 
@@ -566,6 +566,18 @@ Choice lists allow manual configuration of a fixed, specified number of choices 
     {"value": "doctor", display:"Doctor"},
     {"value": "nurse"}
   ]
+}
+```
+
+### Internationalization
+
+Report builders may specify translations for the filter display value. See the section on internationalization in the Report Column section for more information.
+```json
+{
+    "type": "choice_list",
+    "slug": "state",
+    "display": {"en": "State", "fr": "État"},
+    ...
 }
 ```
 
