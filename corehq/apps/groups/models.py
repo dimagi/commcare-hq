@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from itertools import imap
+from django.db.utils import IntegrityError
 from dimagi.ext.couchdbkit import *
 import re
 from dimagi.utils.couch.database import iter_docs
@@ -9,6 +10,7 @@ from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord, DELETED_S
 from datetime import datetime
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.groups.exceptions import CantSaveException
+from django.db import models, transaction
 
 dt_no_Z_re = re.compile('^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d\d\d\d\d\d)?$')
 
@@ -23,7 +25,7 @@ class Group(UndoableDocument):
     domain = StringProperty()
     name = StringProperty()
     # a list of user ids for users
-    users = ListProperty()
+    users = SetProperty()
     path = ListProperty()
     case_sharing = BooleanProperty()
     reporting = BooleanProperty(default=True)
@@ -43,26 +45,52 @@ class Group(UndoableDocument):
 
     def save(self, *args, **kwargs):
         self.last_modified = datetime.utcnow()
-        return super(Group, self).save(*args, **kwargs)
+        super(Group, self).save(*args, **kwargs)
+        if self._get_removed_users():
+            removed_on = datetime.utcnow()
+            UserRemoval.bulk_update_or_create([
+                UserRemoval(group_id=self._id, user_id=user_id, removed_on=removed_on)
+                for user_id in self._get_removed_users()
+            ])
+
+    @classmethod
+    def save_docs(cls, docs, use_uuids=True, all_or_nothing=False):
+        utcnow = datetime.utcnow()
+        for doc in docs:
+            doc['last_modified'] = utcnow
+        super(Group, cls).save_docs(docs, use_uuids, all_or_nothing)
+        UserRemoval.bulk_update_or_create([
+            UserRemoval(group_id=doc.get_id, user_id=user_id, removed_on=utcnow)
+            for doc in docs if isinstance(doc, Group) and doc._get_removed_users()
+            for user_id in doc._get_removed_users()
+        ])
+
+    bulk_save = save_docs
+
+    def _track_removed_user(self, user_id):
+        self._removed_users = self._get_removed_users() | {user_id}
+
+    def _get_removed_users(self):
+        return getattr(self, '_removed_users', set())
 
     def add_user(self, couch_user_id, save=True):
         if not isinstance(couch_user_id, basestring):
             couch_user_id = couch_user_id.user_id
-        if couch_user_id not in self.users:
-            self.users.append(couch_user_id)
+        self.users.add(couch_user_id)
         if save:
             self.save()
 
     def remove_user(self, couch_user_id, save=True):
         if not isinstance(couch_user_id, basestring):
             couch_user_id = couch_user_id.user_id
-        if couch_user_id in self.users:
-            for i in range(0,len(self.users)):
-                if self.users[i] == couch_user_id:
-                    del self.users[i]
-                    if save:
-                        self.save()
-                    return
+        try:
+            self.users.remove(couch_user_id)
+        except KeyError:
+            pass
+        else:
+            self._track_removed_user(couch_user_id)
+            if save:
+                self.save()
 
     def add_group(self, group):
         group.add_to_group(self)
@@ -260,3 +288,41 @@ class UnsavableGroup(Group):
 class DeleteGroupRecord(DeleteDocRecord):
     def get_doc(self):
         return Group.get(self.doc_id)
+
+
+class UserRemoval(models.Model):
+    group_id = models.TextField(null=False)
+    user_id = models.TextField(null=False)
+    removed_on = models.DateTimeField(null=False)
+
+    @classmethod
+    def bulk_update_or_create(cls, removals):
+        if not removals:
+            return
+
+        try:
+            with transaction.atomic():
+                UserRemoval.objects.bulk_create(removals)
+        except IntegrityError:
+            for removal in removals:
+                removal.update_or_create()
+
+    def update_or_create(self):
+        try:
+            removal = UserRemoval.objects.get(group_id=self.group_id, user_id=self.user_id)
+            removal.removed_on = self.removed_on
+            removal.save()
+        except UserRemoval.DoesNotExist:
+            self.save()
+
+    def __repr__(self):
+        return (
+            "UserRemoval(group_id={self.group_id}, user_id={self.user_id}, "
+            "removed_on={self.removed_on})"
+        ).format(self=self)
+
+    class Meta:
+        unique_together = ('user_id', 'group_id')
+        index_together = [
+            ('user_id', 'removed_on')
+        ]
