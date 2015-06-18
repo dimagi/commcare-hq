@@ -1,3 +1,4 @@
+from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.database import iter_docs
 from casexml.apps.case.models import CommCareCase
 
@@ -90,3 +91,81 @@ def get_case_ids_in_domain_by_owner(domain, owner_id=None, owner_id__in=None,
         include_docs=False,
         reduce=False,
     )]
+
+
+def get_open_case_ids(domain, owner_id):
+    """
+    Get all open case ids for a given owner
+    """
+    return _get_case_ids(domain, owner_id, is_closed=False)
+
+
+def get_closed_case_ids(domain, owner_id):
+    """
+    Get all closed case ids for a given owner
+    """
+    return _get_case_ids(domain, owner_id, is_closed=True)
+
+
+def _get_case_ids(domain, owner_id, is_closed):
+    from casexml.apps.case.models import CommCareCase
+    if is_closed is None:
+        key = [domain, owner_id]
+    else:
+        key = [domain, owner_id, is_closed]
+
+    return [row['id'] for row in CommCareCase.get_db().view(
+        'hqcase/by_owner',
+        reduce=False,
+        key=key,
+    )]
+
+
+def get_total_case_count():
+    """
+    Total count of all cases in the database.
+    """
+    from casexml.apps.case.models import CommCareCase
+    results = CommCareCase.get_db().view(
+        'hqcase/by_owner',
+        reduce=True,
+    ).one()
+    return results['value'] if results else 0
+
+
+def get_number_of_cases_in_domain_by_owner(domain, owner_id):
+    res = CommCareCase.get_db().view(
+        'hqcase/by_owner',
+        startkey=[domain, owner_id],
+        endkey=[domain, owner_id, {}],
+        reduce=True,
+    ).one()
+    return res['value'] if res else 0
+
+
+def get_n_case_ids_in_domain_by_owner(domain, owner_id, n,
+                                      start_after_case_id=None):
+    view_kwargs = {}
+    if start_after_case_id:
+        view_kwargs['startkey_docid'] = start_after_case_id
+        view_kwargs['skip'] = 1
+
+    return [row['id'] for row in CommCareCase.get_db().view(
+        "hqcase/by_owner",
+        reduce=False,
+        startkey=[domain, owner_id, False],
+        endkey=[domain, owner_id, False],
+        limit=n,
+        **view_kwargs
+    )]
+
+
+def iter_lite_cases(case_ids, chunksize=100):
+    for case_id_chunk in chunked(case_ids, chunksize):
+        rows = CommCareCase.get_db().view(
+            'case/get_lite',
+            keys=case_id_chunk,
+            reduce=False,
+        )
+        for row in rows:
+            yield row['value']

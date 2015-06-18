@@ -463,9 +463,24 @@ INSTANCE_VIEWER = StaticToggle(
     namespaces=[NAMESPACE_USER],
 )
 
+CLOUDCARE_CACHE = StaticToggle(
+    'cloudcare_cache',
+    'Aggresively cache case list, can result in stale data',
+    TAG_EXPERIMENTAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 OPENLMIS = StaticToggle(
     'openlmis',
     'Offer OpenLMIS settings',
     TAG_UNKNOWN,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+CUSTOM_MENU_BAR = StaticToggle(
+    'custom_menu_bar',
+    "Hide Dashboard and Applications from top menu bar "
+    "for non-admin users",
+    TAG_ONE_OFF,
     namespaces=[NAMESPACE_DOMAIN],
 )

@@ -16,6 +16,7 @@ from corehq.apps.accounting.models import (
     Invoice, FeatureType, LineItem, Subscriber, DefaultProductPlan,
     CreditAdjustment, CreditLine, SubscriptionAdjustment, SoftwareProductType,
     SoftwarePlanEdition, BillingRecord, BillingAccount, SubscriptionType,
+    InvoiceBaseManager,
 )
 
 
@@ -460,9 +461,11 @@ class TestManagementCmdInvoice(BaseInvoiceTestCase):
         # Basic hide invoices
         call_command('hide_invoices_by_id', *[i.pk for i in invoices])
         for i in invoices:
-            self.assertTrue(Invoice.objects.get(pk=i.pk).is_hidden_to_ops)
+            self.assertTrue(super(
+                InvoiceBaseManager, Invoice.objects).get_queryset().get(pk=i.pk).is_hidden_to_ops)
 
         # Basic unhide invoices
         call_command('hide_invoices_by_id', *[i.pk for i in invoices], unhide=True)
         for i in invoices:
-            self.assertFalse(Invoice.objects.get(pk=i.pk).is_hidden_to_ops)
+            self.assertFalse(super(
+                InvoiceBaseManager, Invoice.objects).get_queryset().get(pk=i.pk).is_hidden_to_ops)

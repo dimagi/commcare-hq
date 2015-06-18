@@ -175,6 +175,14 @@ def saved_exports():
         export_for_group_async.delay(group_config, 'couch')
 
 
+@task(queue='background_queue', ignore_result=True)
+def rebuild_export_task(groupexport_id, index, output_dir='couch', last_access_cutoff=None, filter=None):
+    from couchexport.groupexports import rebuild_export
+    group_config = HQGroupExportConfiguration.get(groupexport_id)
+    config, schema = group_config.all_exports[index]
+    rebuild_export(config, schema, output_dir, last_access_cutoff, filter=filter)
+
+
 @task(queue='saved_exports_queue', ignore_result=True)
 def export_for_group_async(group_config, output_dir):
     # exclude exports not accessed within the last 7 days
