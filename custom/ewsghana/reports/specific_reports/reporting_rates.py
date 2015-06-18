@@ -1,6 +1,4 @@
 from datetime import datetime, timedelta
-from dateutil.relativedelta import relativedelta
-import pytz
 from corehq.apps.es import UserES
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
@@ -17,9 +15,6 @@ from custom.ewsghana.utils import get_country_id, ews_date_format
 from custom.ilsgateway.tanzania import make_url
 from custom.ilsgateway.tanzania.reports.utils import link_format
 from django.utils.translation import ugettext as _
-from dimagi.utils.dates import force_to_date
-from dimagi.utils.parsing import ISO_DATE_FORMAT
-from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_date
 
@@ -28,7 +23,6 @@ class ReportingRates(ReportingRatesData):
     show_table = False
     show_chart = True
     slug = 'reporting_rates'
-    title = _('Reporting Rates')
 
     @property
     def title(self):
@@ -38,7 +32,7 @@ class ReportingRates(ReportingRatesData):
             return _('Reporting Rates({}, {})'.format(
                 self.config['startdate'].strftime('%B'), self.config['startdate'].year
             ))
-        return ""
+        return _('Reporting Rates')
 
     @property
     def rows(self):
@@ -63,8 +57,8 @@ class ReportingRates(ReportingRatesData):
         data = self.rows
         chart_data = []
         if data:
-            reported_percent = float(data['reported']) * 100 / (data['total'] or 1)
-            non_reported_percent = float(data['non_reported']) * 100 / (data['total'] or 1)
+            reported_percent = round((data['reported']) * 100 / (data['total'] or 1))
+            non_reported_percent = round((data['non_reported']) * 100 / (data['total'] or 1))
             reported_formatted = ("%d" if reported_percent.is_integer() else "%.1f") % reported_percent
             non_reported_formatted = ("%d" if non_reported_percent.is_integer() else "%.1f") % non_reported_percent
 
@@ -89,7 +83,16 @@ class ReportingDetails(ReportingRatesData):
     show_table = False
     show_chart = True
     slug = 'reporting_details'
-    title = _('Reporting Details')
+
+    @property
+    def title(self):
+        if self.config.get('datespan_type') == '2':
+            return _('Reporting Details (Weekly Reporting Period)')
+        elif self.config.get('datespan_type') == '1':
+            return _('Reporting Details({}, {})'.format(
+                self.config['startdate'].strftime('%B'), self.config['startdate'].year
+            ))
+        return _('Reporting Details')
 
     @property
     def rows(self):
@@ -133,17 +136,17 @@ class ReportingDetails(ReportingRatesData):
         data = self.rows
         chart_data = []
         if data:
-            complete_percent = float(data['complete']) * 100 / (data['total'] or 1)
-            incomplete_percent = float(data['incomplete']) * 100 / (data['total'] or 1)
+            complete_percent = round((data['complete']) * 100 / (data['total'] or 1))
+            incomplete_percent = round((data['incomplete']) * 100 / (data['total'] or 1))
             complete_formatted = ("%d" if complete_percent.is_integer() else "%.1f") % complete_percent
             incomplete_formatted = ("%d" if incomplete_percent.is_integer() else "%.1f") % incomplete_percent
             chart_data = [
-                dict(value=complete_percent,
+                dict(value=complete_formatted,
                      label=_('Complete'),
                      description=_("%s%% (%d) Complete Reports in %s" %
                                    (complete_formatted, data['complete'], self.datetext())),
                      color='green'),
-                dict(value=incomplete_percent,
+                dict(value=incomplete_formatted,
                      label=_('Incomplete'),
                      description=_("%s%% (%d) Incomplete Reports in %s" %
                                    (incomplete_formatted, data['incomplete'], self.datetext())),
