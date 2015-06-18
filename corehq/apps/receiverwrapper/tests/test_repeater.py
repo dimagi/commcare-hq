@@ -71,11 +71,12 @@ update_xform_xml = xform_xml_template % (update_instance_id, update_block)
 class BaseRepeaterTest(TestCase):
     client = Client()
 
-    def post_xml(self, xml):
+    @classmethod
+    def post_xml(cls, xml, domain):
         f = StringIO(xml)
         f.name = 'form.xml'
-        self.client.post(
-            reverse('receiver_post', args=[self.domain]), {
+        cls.client.post(
+            reverse('receiver_post', args=[domain]), {
                 'xml_submission_file': f
             }
         )
@@ -101,7 +102,7 @@ class RepeaterTest(BaseRepeaterTest):
         )
         self.form_repeater.save()
         self.log = []
-        self.post_xml(xform_xml)
+        self.post_xml(xform_xml, self.domain)
 
     def clear_log(self):
         for i in range(len(self.log)):
@@ -202,7 +203,7 @@ class RepeaterTest(BaseRepeaterTest):
 
         self.assertEqual(len(self.repeat_records()), 0)
 
-        self.post_xml(update_xform_xml)
+        self.post_xml(update_xform_xml, self.domain)
         self.assertEqual(len(self.repeat_records()), 2)
 
         CaseFactory().close_case(case_id)
@@ -254,7 +255,7 @@ class TestRepeaterFormat(BaseRepeaterTest):
     def setUp(self):
         self.domain = "test-domain"
         create_domain(self.domain)
-        self.post_xml(xform_xml)
+        self.post_xml(xform_xml, self.domain)
 
         self.repeater = CaseRepeater(
             domain=self.domain,
