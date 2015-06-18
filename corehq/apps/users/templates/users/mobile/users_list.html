@@ -130,7 +130,7 @@
                     </p>
                     {% endif %}
                     <p>
-                    {% if is_billing_admin %}
+                    {% if can_edit_billing_info %}
                         <a href="{% url 'extra_users_confirm_billing' domain %}" class="btn btn-primary">{% trans 'Confirm Billing Information' %}</a>
                     {% else %}
                         {% blocktrans %}

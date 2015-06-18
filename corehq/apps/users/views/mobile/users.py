@@ -249,9 +249,8 @@ class ListCommCareUsersView(BaseUserSettingsView):
             (self.show_inactive and self.can_add_extra_users) or not self.show_inactive)
 
     @property
-    def is_billing_admin(self):
-        return (BillingAccountAdmin.get_admin_status_and_account(self.couch_user, self.domain)[0]
-                or self.couch_user.is_superuser)
+    def can_edit_billing_info(self):
+        return self.couch_user.is_domain_admin(self.domain) or self.couch_user.is_superuser
 
     def _escape_val_error(self, expression, default):
         try:
@@ -334,7 +333,7 @@ class ListCommCareUsersView(BaseUserSettingsView):
             'can_bulk_edit_users': self.can_bulk_edit_users,
             'can_add_extra_users': self.can_add_extra_users,
             'can_edit_user_archive': self.can_edit_user_archive,
-            'is_billing_admin': self.is_billing_admin,
+            'can_edit_billing_info': self.can_edit_billing_info,
         }
 
 
