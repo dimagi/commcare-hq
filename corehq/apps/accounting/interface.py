@@ -898,7 +898,7 @@ class PaymentRecordInterface(GenericTabularReport):
         account_name = NameFilter.get_value(self.request, self.domain)
         if account_name is not None:
             filters.update(
-                payment_method__account__name=account_name,
+                creditadjustment__credit_line__account__name=account_name,
             )
         if DateCreatedFilter.use_filter(self.request):
             filters.update(
@@ -908,7 +908,7 @@ class PaymentRecordInterface(GenericTabularReport):
         subscriber = SubscriberFilter.get_value(self.request, self.domain)
         if subscriber is not None:
             filters.update(
-                payment_method__billing_admin__domain=subscriber,
+                creditadjustment__credit_line__account__created_by_domain=subscriber,
             )
         transaction_id = PaymentTransactionIdFilter.get_value(self.request, self.domain)
         if transaction_id:
@@ -920,10 +920,13 @@ class PaymentRecordInterface(GenericTabularReport):
     @property
     def payment_records(self):
         return PaymentRecord.objects.filter(**self.filters)
- 
+
     def account(self, payment_record):
-        credit_line = CreditAdjustment.objects.filter(payment_record_id=payment_record.id).latest('last_modified').credit_line
-        return credit_line.account
+        return (CreditAdjustment.objects
+                .filter(payment_record_id=payment_record.id)
+                .latest('last_modified')
+                .credit_line
+                .account)
 
     @property
     def rows(self):
