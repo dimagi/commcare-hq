@@ -41,6 +41,8 @@ def requires_privilege_with_fallback(slug, **assignment):
                         'required_plan': edition_req,
                         'date_end': request.subscription.date_end.strftime(USER_DATE_FORMAT)
                     }
+                    request.is_domain_admin = (hasattr(request, 'couch_user') and
+                                               request.couch_user.is_domain_admin(request.domain))
 
                 return requires_privilege(slug, **assignment)(fn)(
                     request, *args, **kwargs
