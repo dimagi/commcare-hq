@@ -1678,10 +1678,14 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 if not group.last_modified or group.last_modified >= last_sync.date:
                     return True
 
+            from corehq.apps.groups.models import UserRemoval
+            removal_records = UserRemoval.objects.filter(user_id=self._id, removed_on__gte=last_sync.date)
+            if removal_records.exists():
+                return True
+
             return False
 
         groups = self.get_case_sharing_groups()
-
         if _should_sync_groups(groups, last_sync):
             return group_fixture(groups, self)
         else:
