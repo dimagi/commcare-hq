@@ -19,7 +19,7 @@ from corehq.apps.domain.views import (
     BillingStatementPdfView, OrgSettingsView,
     FeaturePreviewsView, ConfirmSubscriptionRenewalView,
     InvoiceStripePaymentView, CreditsStripePaymentView, SMSRatesView,
-    AddFormRepeaterView, AddOpsUserAsDomainAdminView,
+    AddFormRepeaterView,
     FeatureFlagsView, EditDhis2SettingsView, TransferDomainView,
     ActivateTransferDomainView, DeactivateTransferDomainView,
     BulkStripePaymentView, InternalSubscriptionManagementView,
