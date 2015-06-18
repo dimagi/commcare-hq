@@ -16,6 +16,9 @@ from django.contrib import messages
 from django.utils.translation import ugettext as _
 
 
+SAFE_TAGS = ('output',)  # Tags we expect to find inside nodes to be translated
+
+
 def process_bulk_app_translation_upload(app, f):
     """
     Process the bulk upload file for the given app.
@@ -335,7 +338,10 @@ def expected_bulk_app_sheet_rows(app):
 
                         for value_node in text_node.findall("./{f}value"):
                             value_form = value_node.attrib.get("form", "default")
-                            value = value_node.text
+                            value_children = [etree.tostring(e)
+                                              for e in value_node.iterchildren()
+                                              if e.tag in SAFE_TAGS]
+                            value = ''.join([value_node.text] + value_children)
                             itext_items[text_id][(lang, value_form)] = value
 
                 for text_id, values in itext_items.iteritems():
