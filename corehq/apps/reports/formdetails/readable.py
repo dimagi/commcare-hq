@@ -287,7 +287,12 @@ def strip_form_data(data):
     data = data.copy()
     # remove all case, meta, attribute nodes from the top level
     for key in data.keys():
-        if not form_key_filter(key) or key in ('meta', 'case'):
+        if (
+            not form_key_filter(key) or
+            key in ('meta', 'case', 'commcare_usercase') or
+            key.startswith('case_autoload_') or
+            key.startswith('case_load_')
+        ):
             data.pop(key)
     return data
 
