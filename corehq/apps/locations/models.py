@@ -629,8 +629,7 @@ class Location(CachedCouchDocumentMixin, Document):
     @property
     def descendants(self):
         """return list of all locations that have this location as an ancestor"""
-        startkey, endkey = self._key_bounds
-        return self.view('locations/hierarchy', startkey=startkey, endkey=endkey, reduce=False, include_docs=True).all()
+        return self.sql_location.get_descendants().couch_locations()
 
     @property
     def children(self):
