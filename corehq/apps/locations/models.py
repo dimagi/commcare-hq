@@ -557,7 +557,8 @@ class Location(CachedCouchDocumentMixin, Document):
         and can return archived locations.
         """
         try:
-            return (SQLLocation.objects.get(domain=domain, site_code=site_code)
+            return (SQLLocation.objects.get(domain=domain,
+                                            site_code__iexact=site_code)
                     .couch_location)
         except SQLLocation.DoesNotExist:
             return None
