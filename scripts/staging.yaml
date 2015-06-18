@@ -65,7 +65,7 @@ submodules:
     # just so we always get latest master
     branches:
       - tf-persistence  # wsp 5/7
-      # - use-classes # ben 5/7
+      - use-classes # ben 5/7
       - 221-jars # wsp 5/20
   submodules/formtranslate-src:
     # let's leave this here even when empty
