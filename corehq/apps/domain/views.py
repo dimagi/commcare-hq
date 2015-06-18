@@ -54,7 +54,7 @@ from django_prbac.utils import has_privilege
 from corehq.apps.accounting.models import (
     Subscription, CreditLine, SoftwareProductType,
     DefaultProductPlan, SoftwarePlanEdition, BillingAccount,
-    BillingAccountType, BillingAccountAdmin,
+    BillingAccountType,
     Invoice, BillingRecord, InvoicePdf, PaymentMethodType,
     PaymentMethod, EntryPoint, WireInvoice
 )
@@ -858,9 +858,7 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
 
     @property
     def can_pay_invoices(self):
-        return BillingAccountAdmin.objects.filter(
-            web_user=self.request.user.username, domain=self.domain
-        ).exists()
+        return self.request.couch_user.is_domain_admin(self.domain)
 
     @property
     def paginated_list(self):

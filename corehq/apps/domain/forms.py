@@ -32,7 +32,6 @@ from django.utils.safestring import mark_safe
 from django_countries.countries import COUNTRIES
 from corehq.apps.accounting.models import (
     BillingAccount,
-    BillingAccountAdmin,
     BillingAccountType,
     BillingContactInfo,
     CreditAdjustmentReason,

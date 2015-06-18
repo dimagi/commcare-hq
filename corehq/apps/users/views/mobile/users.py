@@ -24,7 +24,6 @@ from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.accounting.models import (
     BillingAccount,
-    BillingAccountAdmin,
     BillingAccountType,
     EntryPoint,
 )

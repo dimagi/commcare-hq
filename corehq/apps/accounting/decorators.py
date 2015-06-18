@@ -5,9 +5,7 @@ from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext
 from corehq import privileges
-from corehq.apps.accounting.models import (
-    BillingAccountAdmin, DefaultProductPlan,
-)
+from corehq.apps.accounting.models import DefaultProductPlan
 from django.http import Http404, HttpResponse
 from corehq.const import USER_DATE_FORMAT
 from django_prbac.decorators import requires_privilege
