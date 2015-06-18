@@ -28,8 +28,9 @@ class Migration(SchemaMigration):
     def backwards(self, orm):
         """
             Can't really reverse these migrations as we are removing the concept of billing admin
+            But if 0044 and 0045 haven't been run yet, these will still work
         """
-        raise RuntimeError("Cannot reverse this migration <(-'.'-)>")
+        db.delete_column(u'accounting_paymentmethod', 'web_user')
 
     models = {
         u'accounting.billingaccount': {

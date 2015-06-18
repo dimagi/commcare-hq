@@ -25,7 +25,13 @@ class Migration(DataMigration):
         cursor.execute(sql)
 
     def backwards(self, orm):
-        raise RuntimeError("Cannot reverse this migration <(-'.'-)>")
+        sql = """
+            UPDATE accounting_paymentmethod
+            SET method_type = 'Stripe'
+            WHERE method_type = 'Stripe-duplicate'
+        """
+        cursor = connection.cursor()
+        cursor.execute(sql)
 
 
     models = {
