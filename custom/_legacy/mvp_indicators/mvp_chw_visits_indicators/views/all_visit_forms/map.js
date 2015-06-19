@@ -181,9 +181,10 @@ function(doc) {
 
         if (isHomeVisitForm(doc)) {
             indicator_entries['household'] = case_id;
-            if (indicators.num_bednets_observed && indicators.num_bednets_observed.value) {
+            if (indicators.num_bednets_observed && indicators.num_bednets_observed.value &&
+                indicators.num_sleeping_site && indicators.num_sleeping_site.value) {
                 indicator_entries['household bednet'] = case_id;
-                if (indicators.num_bednets_observed.value > 0) {
+                if (indicators.num_bednets_observed.value >= indicators.num_sleeping_site.value) {
                     indicator_entries['household atleastonebednet'] = case_id;
                 }
             }
