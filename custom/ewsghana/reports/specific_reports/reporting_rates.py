@@ -160,8 +160,8 @@ class SummaryReportingRates(ReportingRatesData):
                         link_format(location_name, url),
                         values['all'],
                         values['complete'] + values['incomplete'],
-                        '%.2f%%' % (100 * (values['complete'] + values['incomplete']) / values['all']),
-                        '%.2f%%' % (100 * values['complete'] / values['all'])
+                        '%.2f%%' % (100 * (values['complete'] + values['incomplete']) / (values['all'] or 1)),
+                        '%.2f%%' % (100 * values['complete'] / (values['all'] or 1))
                     ]
                 )
         return rows
@@ -311,14 +311,6 @@ class ReportingRatesReport(MultiReport):
     fields = [AsyncLocationFilter, ProductByProgramFilter, EWSDateFilter]
     split = False
     is_exportable = True
-
-    def get_stock_transactions(self):
-        return StockTransaction.objects.filter(
-            case_id__in=list(SQLLocation.objects.get(
-                location_id=self.report_config['location_id']
-            ).get_descendants().exclude(supply_point_id__isnull=True).values_list('supply_point_id', flat=True)),
-            report__date__range=[self.datespan.startdate, self.datespan.enddate]
-        ).order_by('report__date', 'pk')
 
     def get_supply_points(self, location_id):
         sql_location = SQLLocation.objects.get(location_id=location_id)
