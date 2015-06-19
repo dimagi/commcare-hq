@@ -629,36 +629,36 @@ class Domain(Document, SnapshotMixin):
         Generate a URL-friendly name based on a given human-readable name.
         Normalizes given name, then looks for conflicting domains, addressing
         conflicts by adding "-1", "-2", etc. May return None if it fails to
-        generate a new, unique name.
+        generate a new, unique name. Throws exception if it can't figure out
+        a name, which shouldn't happen unless max_length is absurdly short.
         '''
 
-        original_name = hr_name.strip().lower()
-        original_name = re.sub(r'[^0-9a-z]+', '-', original_name)
-
-        name = original_name
-        shorten = -1
-        while Domain.get_by_name(name) and shorten + 2 < max_length:
-            shorten = shorten + 1
-            name_prefix = original_name
-            if shorten > 0:
-                name_prefix = name_prefix[:-shorten]
-            hits = Domain.get_names_by_prefix(name_prefix + "-")
-            if re.search(r'\.', name_prefix):
-                hits += Domain.get_names_by_prefix(name_prefix.replace('-', '.') + "-")
-
-            max_counter = 0
-            pattern = re.compile("^" + name_prefix + "-(\d+)$")
-            for hit in hits:
-                match = re.search(pattern, hit)
-                if match is not None:
-                    max_counter = max(max_counter, int(match.group(1)))
-            suffix = "-" + str(max_counter + 1)
-            name = name[:max_length - len(suffix)] + suffix
+        name = hr_name.strip().lower()
+        name = re.sub(r'[^0-9a-z]+', '-', name)
 
         if Domain.get_by_name(name):
-            return None
+            prefix = name
+            while len(prefix):
+                name = Domain._get_next_available_name(prefix, Domain.get_names_by_prefix(prefix + '-'))
+                if Domain.get_by_name(name):
+                    # should never happen
+                    raise Exception
+                if len(name) <= max_length:
+                    return name
+                prefix = prefix[:-1]
+            raise Exception
 
         return name
+
+
+    @classmethod
+    def _get_next_available_name(cls, prefix, existing_names):
+        max_suffix = 0
+        for name in existing_names:
+            match = re.search(r'-([0-9]+)$', name)
+            if match:
+                max_suffix = max(max_suffix, int(match.group(1)))
+        return prefix + '-' + str(max_suffix + 1)
 
 
     def password_format(self):

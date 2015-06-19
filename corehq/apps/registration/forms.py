@@ -146,8 +146,9 @@ class DomainRegistrationForm(forms.Form):
     def clean(self):
         name = self.cleaned_data.get('hr_name', None)
         if name is not None:
-            name = Domain.generate_name(name, self.max_name_length)
-            if name is None:
+            try:
+                name = Domain.generate_name(name, self.max_name_length)
+            except Exception:
                 raise forms.ValidationError("Project name already taken---please try another")
         self.cleaned_data['domain_name'] = name
 
