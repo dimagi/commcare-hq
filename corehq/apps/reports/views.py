@@ -5,6 +5,7 @@ import json
 import tempfile
 import re
 import itertools
+import langcodes
 from datetime import datetime, timedelta, date
 from urllib2 import URLError
 from casexml.apps.case import const
@@ -714,6 +715,8 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
         return render(request, template, context)
 
     is_configurable_map = {c._id: c.is_configurable_report for c in configs}
+    languages_map = {c._id: list(c.languages | set(['en'])) for c in configs}
+    languages_for_select = {tup[0]: tup for tup in langcodes.get_all_langs_for_select()}
 
     config_choices = [(c._id, c.full_name) for c in configs]
 
@@ -790,6 +793,8 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
         context['form_action'] = _("Edit")
         context['report']['title'] = _("Edit Scheduled Report")
     context['is_configurable_map'] = is_configurable_map
+    context['languages_map'] = languages_map
+    context['languages_for_select'] = languages_for_select
 
     return render(request, template, context)
 

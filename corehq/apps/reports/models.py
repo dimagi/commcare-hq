@@ -505,6 +505,13 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         return isinstance(self._dispatcher, ConfigurableReport)
 
     @property
+    @memoized
+    def languages(self):
+        if self.is_configurable_report:
+            return self.report.spec.get_languages()
+        return set()
+
+    @property
     def datespan_filters(self):
         from corehq.apps.userreports.reports.view import ConfigurableReport
         return ConfigurableReport.get_report(

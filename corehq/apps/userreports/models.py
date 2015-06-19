@@ -301,6 +301,18 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
                 return filter
         return None
 
+    def get_languages(self):
+        """
+        Return the languages used in this report's column and filter display properties.
+        Note that only explicitly identified languages are returned. So, if the
+        display properties are all strings, "en" would not be returned.
+        """
+        langs = set()
+        for item in self.columns + self.filters:
+            if isinstance(item['display'], dict):
+                langs |= set(item['display'].keys())
+        return langs
+
     def validate(self, required=True):
         def _check_for_duplicates(supposedly_unique_list, error_msg):
             # http://stackoverflow.com/questions/9835762/find-and-list-duplicates-in-python-list
