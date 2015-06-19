@@ -3,7 +3,7 @@ from corehq.apps.commtrack.tests.util import bootstrap_location_types
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
 from ..dbaccessors import (get_users_by_location_id, get_user_ids_by_location,
-                           get_one_user_at_location)
+                           get_one_user_at_location, get_user_docs_by_location)
 from .util import make_loc, delete_all_locations
 
 
@@ -43,3 +43,9 @@ class TestUsersByLocation(TestCase):
     def test_get_one_user_at_location(self):
         user = get_one_user_at_location(self.meereen._id)
         self.assertIn(user._id, [self.tyrion._id, self.daenerys._id])
+
+    def test_get_user_docs_by_location(self):
+        users = get_user_docs_by_location(self.meereen._id)
+        import ipdb; ipdb.set_trace()
+        self.assertItemsEqual([u['doc'] for u in users],
+                              [self.tyrion.to_json(), self.daenerys.to_json()])
