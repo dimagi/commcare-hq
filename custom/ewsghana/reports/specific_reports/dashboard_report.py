@@ -1,5 +1,5 @@
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime
 from corehq.apps.locations.models import SQLLocation
 from custom.ewsghana.filters import EWSLocationFilter
 from custom.ewsghana.reports import MultiReport, ProductSelectionPane
