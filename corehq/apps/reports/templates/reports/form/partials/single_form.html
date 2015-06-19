@@ -26,27 +26,16 @@ requires imports/proptable.html to be included in the main template
     overflow: scroll;
     width: 800px;
 }
+.hq-help {
+    /* TODO: does .hq-help really need to be width 0 by default? */
+    width: auto;
+}
 </style>
 <script>
     $(function () {
-        var help_text = {
-            "{% trans "Archiving Forms" %}": "{% trans "Archived forms will no longer show up in reports and they will be removed from any relevant case histories. " %}",
-            "{% trans "Restoring Forms" %}": "{% trans "Restoring this form will cause it to show up in reports again." %}",
-            "{% trans "Resaving Forms" %}": "{% trans "Resaving a form can manually cause it to be reincluded in reports if something went wrong during initial processing." %}"
-        };
-        $('.help_popover').popover({
-            placement: 'left',
-            trigger: 'hover',
-            title: function () {
-                return $(this).attr('data-help-key');
-            },
-            content: function () {
-                return help_text[$(this).attr('data-help-key')];
-            }
+        $('.hq-help-template').each(function () {
+            COMMCAREHQ.transformHelpTemplate($(this), true);
         });
-    });
-    $(function () {
-        $('.hq-help').hqHelp();
 
         $("#archive-form").submit(function() {
             document.getElementById('archive-form-btn').disabled=true;
@@ -188,9 +177,11 @@ requires imports/proptable.html to be included in the main template
                 {% if not is_archived %}
                 <form action="{% url "archive_form" domain instance.get_id %}" method="POST"
                       id="archive-form">
-                    <span class="help_popover" data-help-key="{% trans "Archiving Forms" %}">
-                        <i class="icon icon-question-sign"></i>
-                    </span>
+                    <span class="hq-help-template"
+                        data-title="{% trans "Archiving Forms" %}"
+                        data-content="{% trans "Archived forms will no longer show up in reports and they will be removed from any relevant case histories. " %}"
+                        data-placement="left"
+                    ></span>
                     <button type="submit" class="btn btn-danger" id="archive-form-btn">
                         {% trans "Archive this form" %}
                         <i class="icon-refresh icon-spin" id="archive-spinner" style="display:none"></i>
@@ -199,9 +190,11 @@ requires imports/proptable.html to be included in the main template
                 {% else %}
                 <form action="{% url "unarchive_form" domain instance.get_id %}" method="POST"
                       id="unarchive-form">
-                    <span class="help_popover" data-help-key="{% trans "Restoring Forms" %}">
-                        <i class="icon icon-question-sign"></i>
-                    </span>
+                    <span class="hq-help-template"
+                        data-title="{% trans "Restoring Forms" %}"
+                        data-content="{% trans "Restoring this form will cause it to show up in reports again." %}"
+                        data-placement="left"
+                    ></span>
                     <button type="submit" class="btn btn-primary" id="unarchive-form-btn">
                         {% trans "Restore this form" %}
                         <i class="icon-refresh icon-spin" id="unarchive-spinner" style="display:none"></i>
@@ -211,9 +204,11 @@ requires imports/proptable.html to be included in the main template
                 {% if show_resave %}
                 <form action="{% url "resave_form" domain instance.get_id %}" method="POST"
                       id="resave-form">
-                    <span class="help_popover" data-help-key="{% trans "Resaving Forms" %}">
-                        <i class="icon icon-question-sign"></i>
-                    </span>
+                    <span class="hq-help-template"
+                        data-title="{% trans "Resaving Forms" %}"
+                        data-content="{% trans "Resaving a form can manually cause it to be reincluded in reports if something went wrong during initial processing." %}"
+                        data-placement="left"
+                    ></span>
                     <button type="submit" class="btn" id="resave-form-btn">
                         {% trans "Resave this form" %}
                         <i class="icon-refresh icon-spin" id="resave-spinner" style="display:none"></i>

@@ -1,33 +1,21 @@
 import json
-import xlrd
 from collections import defaultdict
 from datetime import date
+
+import xlrd
 from django.utils.translation import ugettext_lazy as _
 from couchdbkit import NoResultFound
-from dimagi.utils.couch.database import get_db
+from xlrd import xldate_as_tuple
+from corehq.apps.hqcase.dbaccessors import get_cases_in_domain_by_external_id
+
 from corehq.apps.importer.const import LookupErrors, ImportErrors
 from casexml.apps.case.models import CommCareCase
-from xlrd import xldate_as_tuple
 from corehq.apps.groups.models import Group
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.locations.models import SQLLocation
 
-
-def get_case_properties(domain, case_type=None):
-    """
-    For a given case type and domain, get all unique existing case properties,
-    known and unknown
-    """
-    key = [domain]
-    if case_type:
-        key.append(case_type)
-    rows = get_db().view('hqcase/all_case_properties',
-                         startkey=key,
-                         endkey=key + [{}],
-                         reduce=True, group=True, group_level=3).all()
-    return sorted(set([r['key'][2] for r in rows]))
 
 class ImporterConfig(object):
     """
@@ -327,11 +315,7 @@ def lookup_case(search_field, search_id, domain, case_type):
         except Exception:
             pass
     elif search_field == 'external_id':
-        results = CommCareCase.view(
-            'hqcase/by_domain_external_id',
-            key=[domain, search_id],
-            reduce=False,
-            include_docs=True)
+        results = get_cases_in_domain_by_external_id(domain, search_id)
         if results:
             cases_by_type = [case for case in results
                              if case.type == case_type]

@@ -2,6 +2,7 @@ import pytz
 from pytz import timezone
 from datetime import timedelta, datetime, date, time
 import re
+from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from dimagi.ext.couchdbkit import *
 from casexml.apps.case.models import CommCareCase, CommCareCaseGroup
 from corehq.apps.sms.models import CommConnectCase
@@ -311,13 +312,7 @@ def get_case_ids(domain):
     max_tries = 5
     for i in range(max_tries):
         try:
-            result = CommCareCase.view('hqcase/types_by_domain',
-                reduce=False,
-                startkey=[domain],
-                endkey=[domain, {}],
-                include_docs=False,
-            ).all()
-            return [entry["id"] for entry in result]
+            return get_case_ids_in_domain(domain)
         except Exception:
             if i == (max_tries - 1):
                 raise

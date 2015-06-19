@@ -1806,10 +1806,7 @@ class BillingRecord(BillingRecordBase):
         ))
         is_small_invoice = self.invoice.balance <= SMALL_INVOICE_THRESHOLD
         context.update({
-            'plan_name': "%(product)s %(name)s" % {
-                'product': self.invoice.subscription.plan_version.core_product,
-                'name': self.invoice.subscription.plan_version.plan.edition,
-            },
+            'plan_name': self.invoice.subscription.plan_version.plan.name,
             'date_due': self.invoice.date_due,
             'is_small_invoice': is_small_invoice,
             'total_balance': total_balance,

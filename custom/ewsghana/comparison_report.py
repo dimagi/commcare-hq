@@ -1,5 +1,7 @@
 from django.contrib.auth.models import User
 from corehq.apps.commtrack.models import SupplyPointCase
+from corehq.apps.hqcase.dbaccessors import \
+    get_supply_point_case_in_domain_by_id
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
@@ -189,10 +191,8 @@ class SupplyPointsCompareReport(BaseComparisonReport):
             supply_points.extend(chunk)
 
         for supply_point in supply_points:
-            couch_sp = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                            key=[self.domain, str(supply_point.id)],
-                                            reduce=False,
-                                            include_docs=True).first()
+            couch_sp = get_supply_point_case_in_domain_by_id(
+                self.domain, supply_point.id)
             if not couch_sp:
                 rows.append([supply_point.name, supply_point.type,
                             supply_point.code, supply_point.active, supply_point.last_reported, False])

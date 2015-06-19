@@ -15,8 +15,8 @@ from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.products.models import Product
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.util import clean_phone_number
+from corehq.apps.locations.dbaccessors import get_users_by_location_id
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.models import CommCareUser
 from custom.common import ALL_OPTION
 from custom.ewsghana.alerts.alerts import on_going_process_user, on_going_stockout_process_user, \
     urgent_non_reporting_process_user, urgent_stockout_process_user, report_reminder_process_user
@@ -304,12 +304,7 @@ def stockouts_product(request, domain):
 def configure_in_charge(request, domain):
     in_charge_ids = request.POST.getlist('users[]')
     location_id = request.POST.get('location_id')
-    all_users = CommCareUser.view(
-        'locations/users_by_location_id',
-        startkey=[location_id],
-        endkey=[location_id, {}],
-        include_docs=True
-    ).all()
+    all_users = get_users_by_location_id(location_id)
 
     for u in all_users:
         if (u.user_data.get('role') == 'In Charge') != (u._id in in_charge_ids):

@@ -1,7 +1,7 @@
 import itertools
 import logging
+from casexml.apps.case.dbaccessors import get_reverse_indices_json
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.util import reverse_indices
 from casexml.apps.case.xform import CaseDbCache
 
 
@@ -27,7 +27,7 @@ def get_related_cases(initial_cases, domain, strip_history=False, search_up=True
                           initial=initial_cases)
 
     def indices(case):
-        return case['indices'] if search_up else reverse_indices(CommCareCase.get_db(), case, wrap=False)
+        return case['indices'] if search_up else get_reverse_indices_json(case)
 
     relevant_cases = {}
     relevant_deleted_case_ids = []

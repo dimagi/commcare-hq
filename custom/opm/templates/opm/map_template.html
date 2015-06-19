@@ -1,4 +1,4 @@
-{% extends "reports/async/partials/maps.html" %}
+{% extends "reports/partials/maps.html" %}
 {% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
@@ -9,33 +9,15 @@
         <script src="{% static 'hqwebapp/js/lib/knockout-2.3.0.js' %}"></script>
         <script src="{% static 'hqwebapp/js/lib/underscore-1.4.4.js' %}"></script>
         <script src="{% static 'hqwebapp/js/lib/datatables-1.9/js/jquery.dataTables.min.js' %}"></script>
+        {% include "imports/datatables.html" %}
         <script src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
 
         <script>
             setTimeout(function() {
-                var reportTables = new HQReportDataTables({
-                    dataTableElem: '#report_table_{{ report.slug }}',
-                    autoWidth: false,
-                    show_pagination: false,
-                    defaultRows: 100000,
-                    ajaxSource: '{{ report_table.pagination.source }}',
-                    ajaxParams: {{ report_table.pagination.params|JSON }},
-                    badRequestErrorText: "<span class='label label-important'>Sorry!</span> {{ report_table.bad_request_error_text }}"
-                });
-                reportTables.render();
-                $('.media-heading').append('<br/><small>Selected indicator: -</small>');
-                $('#map').on('click', '.choice', function() {
-                    var text = $(this).text().trim();
-                    if (text !== 'Auto') {
-                        $('small:last-child').remove();
-                        $('.media-heading').append('<small>Selected indicator: ' + text + '</small>');
-
-                        var canvas = document.getElementsByTagName('canvas');
-                        var img    = canvas[0].toDataURL("image/png");
-                        $('#scalebar').innerHTML = "<img src='" + img + "'>";
-                    }
-                });
-           }, 500);
+                $('#tabular_filter').remove();
+                $(".dataTables_control").remove()
+                window.print();
+           }, 1000);
 
         </script>
 
@@ -70,3 +52,14 @@
 
     {{ block.super }}
 {% endblock js-libs %}
+
+{% block content %}
+    <h2 class="media-heading">{{ report.report_title }}</h2>
+    <h4 class="media-heading">
+        {% for subtitle in report.report_subtitles %}
+        <br/><small>{{ subtitle }}</small>
+        {% endfor %}
+    </h4>
+    <table class="table table-striped datatable dataTable" id="tabular"></table>
+    <div class="row-fluid dataTables_control" style="height: 20px"></div>
+{% endblock content %}
