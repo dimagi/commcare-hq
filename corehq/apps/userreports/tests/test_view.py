@@ -156,13 +156,13 @@ class ConfigurableReportViewTest(TestCase):
 
         self.assertEqual(
             view.export_table,
-            [[
-                 u'foo',
-                 [
-                     [u'report_column_display_fruit', u'report_column_display_percent'],
-                     [u'apple', '150%']
-                 ]
-            ]]
+            [
+                [
+                    u'foo',
+                    [
+                        [u'report_column_display_fruit', u'report_column_display_percent'],
+                        [u'apple', '150%']
+                    ]
+                ]
+            ]
         )
-
-
