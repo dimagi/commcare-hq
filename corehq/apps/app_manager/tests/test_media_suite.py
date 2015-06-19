@@ -81,5 +81,10 @@ class MediaSuiteTest(SimpleTestCase, TestFileMixin):
         report_module.report_configs = [report_app_config]
         report_module._loaded = True
 
+        image_path = 'jr://file/commcare/case_list_image.jpg'
+        audo_path = 'jr://file/commcare/case_list_audo.mp3'
+        app.get_module(0).case_list_form.media_image = image_path
+        app.get_module(0).case_list_form.media_audio = audo_path
+
         self.assertFalse(app.get_module(0).uses_media())
         self.assertEqual(len(app.all_media), 0)
