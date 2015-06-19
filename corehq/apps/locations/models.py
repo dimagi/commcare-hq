@@ -1,3 +1,4 @@
+import warnings
 from functools import partial
 from couchdbkit import ResourceNotFound
 from dimagi.ext.couchdbkit import *
@@ -119,13 +120,16 @@ class LocationQueriesMixin(object):
     def couch_locations(self, wrapped=True):
         """
         Returns the couch locations corresponding to this queryset.
-        If you're calling this, take a long hard look at yourself and ask why.
-        Do you really need couch locations here?
         """
+        warnings.warn(
+            "Converting SQLLocations to couch locations.  This should be "
+            "used for backwards compatability only - not new features.",
+            DeprecationWarning,
+        )
         ids = self.location_ids()
         locations = iter_docs(Location.get_db(), ids)
         if wrapped:
-            return map(Location.wrap, locations)
+            return itertools.imap(Location.wrap, locations)
         return locations
 
 
@@ -619,12 +623,6 @@ class Location(CachedCouchDocumentMixin, Document):
         _path = list(reversed(self.lineage))
         _path.append(self._id)
         return _path
-
-    @property
-    def _key_bounds(self):
-        startkey = list(itertools.chain([self.domain], self.path, ['']))
-        endkey = list(itertools.chain(startkey[:-1], [{}]))
-        return startkey, endkey
 
     @property
     def descendants(self):
