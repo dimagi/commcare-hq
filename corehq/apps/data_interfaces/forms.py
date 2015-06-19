@@ -5,7 +5,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Field, HTML, Div, Fieldset
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop
-from casexml.apps.case.models import CommCareCaseGroup
+from corehq.apps.casegroups.models import CommCareCaseGroup
 
 
 class AddCaseGroupForm(forms.Form):

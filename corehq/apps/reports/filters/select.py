@@ -5,9 +5,8 @@ from django.conf import settings
 from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.utils.translation import ugettext as _
 
-from casexml.apps.case.models import CommCareCase, CommCareCaseGroup
+from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqcase.dbaccessors import get_case_types_for_domain
-from dimagi.utils.couch.database import get_db
 
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain, LICENSES

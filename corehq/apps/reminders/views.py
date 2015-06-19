@@ -7,6 +7,7 @@ import pytz
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponse
 from django.shortcuts import render
+from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
@@ -73,7 +74,7 @@ from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.util import register_sms_contact, update_contact
 from corehq.apps.domain.models import Domain, DomainCounter
 from corehq.apps.groups.models import Group
-from casexml.apps.case.models import CommCareCase, CommCareCaseGroup
+from casexml.apps.case.models import CommCareCase
 from dateutil.parser import parse
 from corehq.apps.sms.util import close_task
 from corehq.util.timezones.utils import get_timezone_for_user

@@ -3,9 +3,10 @@ from corehq import privileges
 from corehq.apps.app_manager.models import get_app, ApplicationBase, Form
 from couchdbkit.resource import ResourceNotFound
 from django.utils.translation import ugettext as _
+from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
-from casexml.apps.case.models import CommCareCase, CommCareCaseGroup
+from casexml.apps.case.models import CommCareCase
 from django_prbac.utils import has_privilege
 
 
