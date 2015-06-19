@@ -297,6 +297,7 @@ def weekly_digest():
             date_end__gte=today,
             is_active=True,
             is_trial=False,
+            account__dimagi_contact__isnull=True,
         ))
 
     if not ending_in_forty_days:
