@@ -696,6 +696,7 @@ class MessagingStatusMixin(object):
             obj.save()
         return obj
 
+
 class MessagingEvent(models.Model, MessagingStatusMixin):
     """
     Used to track the status of high-level events in the messaging

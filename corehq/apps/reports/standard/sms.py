@@ -1,3 +1,4 @@
+from django.db.models import Q
 from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.utils.translation import ugettext_noop
@@ -12,7 +13,7 @@ from corehq.apps.reports.standard import DatespanMixin, ProjectReport,\
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader,\
     DTSortType
-from corehq.apps.sms.filters import MessageTypeFilter
+from corehq.apps.sms.filters import MessageTypeFilter, EventTypeFilter
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.view_utils import absolute_reverse
@@ -465,7 +466,8 @@ class MessagingEventsReport(BaseMessagingEventReport):
     name = ugettext_noop('Past Events')
     slug = 'messaging_events'
     fields = [
-        'corehq.apps.reports.filters.dates.DatespanFilter',
+        DatespanFilter,
+        EventTypeFilter,
     ]
 
     @property
@@ -481,13 +483,48 @@ class MessagingEventsReport(BaseMessagingEventReport):
         header.custom_sort = [[0, 'desc']]
         return header
 
+    def get_filters(self):
+        source_filter = []
+        content_type_filter = []
+        event_type_filter = EventTypeFilter.get_value(self.request, self.domain)
+
+        for source_type, x in MessagingEvent.SOURCE_CHOICES:
+            if source_type in event_type_filter:
+                if source_type == MessagingEvent.SOURCE_OTHER:
+                    source_filter.extend([
+                        MessagingEvent.SOURCE_OTHER,
+                        MessagingEvent.SOURCE_FORWARDED,
+                    ])
+                else:
+                    source_filter.append(source_type)
+
+        for content_type, x in MessagingEvent.CONTENT_CHOICES:
+            if content_type in event_type_filter:
+                if content_type == MessagingEvent.CONTENT_SMS_SURVEY:
+                    content_type_filter.extend([
+                        MessagingEvent.CONTENT_SMS_SURVEY,
+                        MessagingEvent.CONTENT_IVR_SURVEY,
+                    ])
+                else:
+                    content_type_filter.append(content_type)
+
+        return (source_filter, content_type_filter)
+
     @property
     def rows(self):
+        source_filter, content_type_filter = self.get_filters()
+
+        # We need to call distinct() on this because it's doing an
+        # outer join to sms_messagingsubevent in order to filter on
+        # subevent content types.
         data = MessagingEvent.objects.filter(
-            domain=self.domain,
-            date__gte=self.datespan.startdate_utc,
-            date__lte=self.datespan.enddate_utc,
-        )
+            Q(domain=self.domain),
+            Q(date__gte=self.datespan.startdate_utc),
+            Q(date__lte=self.datespan.enddate_utc),
+            (Q(source__in=source_filter) |
+                Q(content_type__in=content_type_filter) |
+                Q(messagingsubevent__content_type__in=content_type_filter)),
+        ).distinct()
 
         result = []
         contact_cache = {}
