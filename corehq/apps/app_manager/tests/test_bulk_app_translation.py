@@ -99,8 +99,8 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
         )
 
         # Test special characters and output refs
-        self.assert_question_label("one < two", 0, 0, "en", "/data/question2")
-        self.assert_question_label("un < deux", 0, 0, "fra", "/data/question2")
+        self.assert_question_label("one &lt; two", 0, 0, "en", "/data/question2")
+        self.assert_question_label("un &lt; deux", 0, 0, "fra", "/data/question2")
         self.assert_question_label("question6: ____", 0, 0, "en", "/data/question3/question4")
 
     def test_missing_itext(self):
