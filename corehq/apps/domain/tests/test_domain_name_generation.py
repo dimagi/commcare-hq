@@ -19,7 +19,7 @@ class DomainNameGenerationTestBase(TestCase):
             domain.delete()
 
 
-class DomainNameGenerationBasicTest(DomainNameGenerationTestBase):
+class DomainNameGenerationTest(DomainNameGenerationTestBase):
     def test_generation(self):
         self.assertEquals(Domain.generate_name("I have  spaces"), "i-have-spaces")
 
@@ -27,11 +27,6 @@ class DomainNameGenerationBasicTest(DomainNameGenerationTestBase):
         name = "fandango"
         self.add_domain(name)
         self.assertEquals(Domain.generate_name(name), name + "-1")
-
-    def test_periods(self):
-        name = "two.words"
-        self.add_domain(name)
-        self.assertEquals(Domain.generate_name(name), "two-words-1")
 
     def test_failure(self):
         name = "ab"

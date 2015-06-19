@@ -635,12 +635,9 @@ class Domain(Document, SnapshotMixin):
         original_name = hr_name.strip().lower()
         original_name = re.sub(r'[^0-9a-z]+', '-', original_name)
 
-        def has_conflict(name):
-            return Domain.get_by_name(name) or Domain.get_by_name(name.replace('-', '.'))
-
         name = original_name
         shorten = -1
-        while has_conflict(name) and shorten + 2 < max_length:
+        while Domain.get_by_name(name) and shorten + 2 < max_length:
             shorten = shorten + 1
             name_prefix = original_name
             if shorten > 0:
@@ -658,7 +655,7 @@ class Domain(Document, SnapshotMixin):
             suffix = "-" + str(max_counter + 1)
             name = name[:max_length - len(suffix)] + suffix
 
-        if has_conflict(name):
+        if Domain.get_by_name(name):
             return None
 
         return name
