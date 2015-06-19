@@ -4,7 +4,7 @@ import calendar
 from django.conf import settings
 from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.utils.translation import ugettext as _
-from corehq.apps.casegroups.dbaccessors import get_case_groups_in_domain
+from corehq.apps.casegroups.dbaccessors import get_case_group_meta_in_domain
 
 from corehq.apps.hqcase.dbaccessors import get_case_types_for_domain
 
@@ -160,4 +160,4 @@ class MultiCaseGroupFilter(BaseMultipleOptionFilter):
 
     @property
     def options(self):
-        return [(g["id"], g["key"][1]) for g in get_case_groups_in_domain(self.domain, include_docs=False)]
+        return get_case_group_meta_in_domain(self.domain)

@@ -1,7 +1,7 @@
 from django.test import TestCase
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.casegroups.dbaccessors import get_case_groups_in_domain, \
-    get_number_of_case_groups_in_domain
+    get_number_of_case_groups_in_domain, get_case_group_meta_in_domain
 from corehq.apps.casegroups.models import CommCareCaseGroup
 
 
@@ -46,4 +46,11 @@ class DBAccessorsTest(TestCase):
         self.assertEqual(
             get_number_of_case_groups_in_domain(self.domain),
             len(self.case_groups)
+        )
+
+    def test_get_case_group_meta_in_domain(self):
+        self.assertEqual(
+            get_case_group_meta_in_domain(self.domain),
+            sorted([(g._id, g.name) for g in self.case_groups],
+                   key=lambda (_, name): name)
         )
