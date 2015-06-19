@@ -653,6 +653,11 @@ class Domain(Document, SnapshotMixin):
 
     @classmethod
     def _get_next_available_name(cls, prefix, existing_names):
+        '''
+        Given a set of names like ['foo-1', 'foo-2'],
+        figure out the largest suffix in use and return a name
+        that's one larger.
+        '''
         max_suffix = 0
         for name in existing_names:
             match = re.search(r'-([0-9]+)$', name)
