@@ -96,13 +96,6 @@ WORKFLOW_MODULE = 'module'
 WORKFLOW_PREVIOUS = 'previous_screen'
 WORKFLOW_FORM = 'form'
 
-AUTO_SELECT_USER = 'user'
-AUTO_SELECT_FIXTURE = 'fixture'
-AUTO_SELECT_CASE = 'case'
-AUTO_SELECT_LOCATION = 'location'
-AUTO_SELECT_RAW = 'raw'
-AUTO_SELECT_USERCASE = 'usercase'
-
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 
 FIELD_SEPARATOR = ':'
