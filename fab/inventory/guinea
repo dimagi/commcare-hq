@@ -1,0 +1,47 @@
+[proxy]
+guineact.commcarehq.org
+
+[webworkers]
+guineact.commcarehq.org
+
+[webworkers:vars]
+newrelic_app_name=django
+
+[couchdb]
+guineact.commcarehq.org
+
+[postgresql]
+guineact.commcarehq.org
+
+[rabbitmq]
+guineact.commcarehq.org
+
+[celery]
+# ansible makes the first thing in this list the flower url
+# a little bit redundant with with more explicit settings in environments.yml
+# but ansible doesn't currently have access to that
+guineact.commcarehq.org
+
+[celery:vars]
+newrelic_app_name=celery
+
+[pillowtop]
+guineact.commcarehq.org
+
+[touchforms]
+guineact.commcarehq.org
+
+[redis]
+guineact.commcarehq.org
+
+[memcached]
+guineact.commcarehq.org
+
+[elasticsearch]
+guineact.commcarehq.org
+
+[shared_dir_host]
+guineact.commcarehq.org
+
+[sentry]
+guineact.commcarehq.org
