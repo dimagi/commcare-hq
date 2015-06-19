@@ -8,11 +8,12 @@ from django.db import transaction
 from casexml.apps.stock.const import TRANSACTION_TYPE_LA
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack.models import SupplyPointCase, update_stock_state_for_transaction
+from corehq.apps.hqcase.dbaccessors import \
+    get_supply_point_case_in_domain_by_id
 from corehq.apps.locations.models import SQLLocation, Location
 from corehq.apps.products.models import SQLProduct
 from custom.logistics.commtrack import save_stock_data_checkpoint, synchronization
 from custom.logistics.models import StockDataCheckpoint
-from custom.logistics.utils import get_supply_point_by_external_id
 from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import force_to_datetime
 
@@ -141,7 +142,7 @@ def sync_stock_transactions_for_facility(domain, endpoint, facility, checkpoint,
     next_url = ""
     section_id = 'stock'
     supply_point = facility
-    case = get_supply_point_by_external_id(domain, supply_point)
+    case = get_supply_point_case_in_domain_by_id(domain, supply_point)
     if not case:
         return
 

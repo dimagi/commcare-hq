@@ -5,6 +5,7 @@
 {% block head %}{{ block.super }}
     {% include "imports/datatables.html" %}
     <script type="text/javascript" src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/main.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -26,20 +27,8 @@
                 $(".selected_reminders").prop("checked", false);
             });
             
-            var help_text = {
-                "{% trans 'Reinstate Selected Reminders' %}": 
-                "{% trans 'Only reminders selected on the current page will be processed. When a reminder is reinstated, the system will fast-forward it to its next scheduled time, without sending any of the missed reminders.' %}"
-            };
-            
-            $('.help_popover').popover({
-                placement: 'top',
-                trigger: 'hover',
-                title: function () {
-                    return $(this).attr('data-help-key');
-                },
-                content: function () {
-                    return help_text[$(this).attr('data-help-key')];
-                }
+            $('.hq-help-template').each(function () {
+                COMMCAREHQ.transformHelpTemplate($(this), true);
             });
         });
     </script>
@@ -100,7 +89,11 @@
         </table>
         <div style="padding-top:25px;">
             <input type="submit" class="btn btn-primary" value="{% trans 'Reinstate Selected Reminders' %}" />
-            <span class="help_popover" data-help-key="{% trans 'Reinstate Selected Reminders' %}"><i class="icon icon-question-sign"></i></span>
+            <span class="hq-help-template"
+                data-title="{% trans 'Reinstate Selected Reminders' %}"
+                data-content="{% trans 'Only reminders selected on the current page will be processed. When a reminder is reinstated, the system will fast-forward it to its next scheduled time, without sending any of the missed reminders.' %}"
+                data-placement="top"
+            ></span>
         </div>
     </form>
 {% endblock %}

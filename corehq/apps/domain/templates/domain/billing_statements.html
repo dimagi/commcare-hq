@@ -275,17 +275,29 @@
             {% trans 'Bulk Payment' %}
         </h3>
     </script>
+
+    <script type="text/html" id="payment_complete_template_simple">
+        {% trans "Thank you for your payment!" %}
+    </script>
+
+    <script type="text/html" id="payment_complete_template_wire">
+        {% blocktrans %}
+            Thank you for your upcoming wire payment.
+            An invoice with your total balance and the instructions to do the wire payment
+            has just been sent to your email address.
+        {% endblocktrans %}
+    </script>
 {% endblock %}
 
 {% block modals %}{{ block.super }}
     {% with process_invoice_payment_url as process_payment_url %}
-        {% include 'domain/partials/payment_modal.html' with payment_modal_id="paymentModal" title_template="payment-method-modal-title" cost_item_template="cost-item-template" %}
+        {% include 'domain/partials/payment_modal.html' with payment_modal_id="paymentModal" title_template="payment-method-modal-title" cost_item_template="cost-item-template" payment_complete_template="payment_complete_template_simple" %}
     {% endwith %}
     {% with process_bulk_payment_url as process_payment_url %}
-        {% include 'domain/partials/payment_modal.html' with payment_modal_id="bulkPaymentModal" title_template="bulk-payment-method-modal-title" cost_item_template="cost-item-template" %}
+        {% include 'domain/partials/payment_modal.html' with payment_modal_id="bulkPaymentModal" title_template="bulk-payment-method-modal-title" cost_item_template="cost-item-template" payment_complete_template="payment_complete_template_simple" %}
     {% endwith %}
     {% with process_wire_invoice_url as process_payment_url %}
-        {% include 'domain/partials/payment_modal.html' with payment_modal_id="bulkWirePaymentModal" title_template="bulk-wire-payment-method-modal-title" cost_item_template="cost-item-template" %}
+        {% include 'domain/partials/payment_modal.html' with payment_modal_id="bulkWirePaymentModal" title_template="bulk-wire-payment-method-modal-title" cost_item_template="cost-item-template" payment_complete_template="payment_complete_template_wire" %}
     {% endwith %}
 
 {% endblock %}

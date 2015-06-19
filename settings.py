@@ -302,7 +302,6 @@ HQ_APPS = (
     'a5288',
     'custom.bihar',
     'custom.penn_state',
-    'dca',
     'custom.apps.gsid',
     'hsph',
     'mvp',
@@ -338,7 +337,6 @@ HQ_APPS = (
     'bootstrap3_crispy',
 
     'custom.dhis2',
-    'custom.evin',
 )
 
 TEST_APPS = ()
@@ -462,6 +460,7 @@ CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@dimagi.com'
 ACCOUNTS_EMAIL = 'accounts@dimagi.com'
 FINANCE_EMAIL = 'finance@dimagi.com'
 SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange@dimagi.com'
+INTERNAL_SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange+internal@dimagi.com'
 BILLING_EMAIL = 'billing-comm@dimagi.com'
 INVOICING_CONTACT_EMAIL = SUPPORT_EMAIL
 MASTER_LIST_EMAIL = 'master-list@dimagi.com'
@@ -1076,7 +1075,6 @@ COUCHDB_APPS = [
     # custom reports
     'penn_state',
     'care_benin',
-    'dca',
     'gsid',
     'hsph',
     'mvp',
@@ -1370,8 +1368,6 @@ DOMAIN_MODULE_MAP = {
     'care-bihar': 'custom.bihar',
     'bihar': 'custom.bihar',
     'cvsulive': 'custom.apps.cvsu',
-    'dca-malawi': 'dca',
-    'eagles-fahu': 'dca',
     'fri': 'custom.fri.reports',
     'fri-testing': 'custom.fri.reports',
     'gsid': 'custom.apps.gsid',
@@ -1423,7 +1419,7 @@ TRAVIS_TEST_GROUPS = (
         'accounting', 'adm', 'announcements', 'api', 'app_manager', 'appstore',
         'auditcare', 'bihar', 'builds', 'cachehq', 'callcenter', 'care_benin',
         'case', 'cleanup', 'cloudcare', 'commtrack', 'consumption',
-        'couchapps', 'couchlog', 'crud', 'cvsu', 'dca', 'django_digest',
+        'couchapps', 'couchlog', 'crud', 'cvsu', 'django_digest',
         'domain', 'domainsync', 'export',
         'facilities', 'fixtures', 'fluff_filter', 'formplayer',
         'formtranslate', 'fri', 'grapevine', 'groups', 'gsid', 'hope',

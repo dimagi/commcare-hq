@@ -165,10 +165,10 @@ todo fix
                         visible: visible,
                         css: {error: hasError()}
                     ">
-                        <label class="control-label" data-bind="attr: {for: inputId}">
-                            <span data-bind="text: name"></span>
-                            <span data-bind="makeHqHelp: {name: name, description: $data.description, format: $data.description_format}, visible: $data.description"></span>
-                        </label>
+                        <div class="control-label">
+                            <label data-bind="text: name, attr: {for: inputId}" class="inner-control-label"></label>
+                            <span data-bind="makeHqHelp: { name: name, description: $data.description, format: $data.description_format}, visible: $data.description"></span>
+                        </div>
                         <div class="controls">
                             <span data-bind="template: $data.widget_template || 'CommcareSettings.widgets.' + widget"></span>
                             <span data-bind="visible: disabledMessage(), css: {'text-warning': !optionOK(), 'text-success': optionOK}">

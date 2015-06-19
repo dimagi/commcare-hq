@@ -492,9 +492,9 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
                 contact_info.state_province_region,
                 contact_info.postal_code,
                 contact_info.country,
-                invoice.date_start.strftime(USER_DATE_FORMAT),
-                invoice.date_end.strftime(USER_DATE_FORMAT),
-                invoice.date_due.strftime(USER_DATE_FORMAT),
+                invoice.date_start,
+                invoice.date_end,
+                invoice.date_due,
                 get_exportable_column(invoice.subtotal),
                 get_exportable_column(invoice.balance),
                 "Paid" if invoice.is_paid else "Not paid",
@@ -548,8 +548,6 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
             filters.update(
                 is_hidden=(is_hidden == IsHiddenFilter.IS_HIDDEN),
             )
-
-        filters.update(is_hidden_to_ops=False)
 
         return filters
 
@@ -681,9 +679,9 @@ class InvoiceInterface(InvoiceInterfaceBase):
                 contact_info.country,
                 invoice.subscription.account.salesforce_account_id or "--",
                 invoice.subscription.salesforce_contract_id or "--",
-                invoice.date_start.strftime(USER_DATE_FORMAT),
-                invoice.date_end.strftime(USER_DATE_FORMAT),
-                invoice.date_due.strftime(USER_DATE_FORMAT) if invoice.date_due else "None",
+                invoice.date_start,
+                invoice.date_end,
+                invoice.date_due if invoice.date_due else "None",
             ]
 
             plan_subtotal, plan_deduction = get_subtotal_and_deduction(
@@ -811,8 +809,6 @@ class InvoiceInterface(InvoiceInterfaceBase):
             filters.update(
                 is_hidden=(is_hidden == IsHiddenFilter.IS_HIDDEN),
             )
-
-        filters.update(is_hidden_to_ops=False)
 
         return filters
 

@@ -93,32 +93,6 @@ def allowed_child_types(domain, parent):
     return parent_child(domain).get(parent_type, [])
 
 
-def lookup_by_property(domain, prop_name, val, scope, root=None):
-    if root and not isinstance(root, basestring):
-        root = root._id
-
-    if prop_name == 'site_code':
-        index_view = 'locations/prop_index_site_code'
-    else:
-        # this was to be backwards compatible with the api
-        # if this ever comes up, please take a moment to decide whether it's
-        # worth changing the API to raise a less nonsensical error
-        # (or change this function to not sound so general!)
-        raise ResourceNotFound('missing prop_index_%s' % prop_name)
-
-    startkey = [domain, val]
-    if scope == 'global':
-        startkey.append(None)
-    elif scope == 'descendant':
-        startkey.append(root)
-    elif scope == 'child':
-        startkey.extend([root, 1])
-    else:
-        raise ValueError('invalid scope type')
-
-    return set(row['id'] for row in Location.get_db().view(index_view, startkey=startkey, endkey=startkey + [{}]))
-
-
 @quickcache(['domain'], timeout=60)
 def get_location_data_model(domain):
     from .views import LocationFieldsView

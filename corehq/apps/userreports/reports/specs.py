@@ -14,6 +14,7 @@ from corehq.apps.userreports.reports.filters import DateFilterValue, ChoiceListF
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.userreports.sql import get_expanded_column_config, SqlColumnConfig
 from corehq.apps.userreports.transforms.factory import TransformFactory
+from corehq.apps.userreports.util import localize
 
 
 SQLAGG_COLUMN_MAP = {
@@ -31,7 +32,7 @@ class ReportFilter(JsonObject):
     type = StringProperty(required=True)
     slug = StringProperty(required=True)
     field = StringProperty(required=True)
-    display = StringProperty()
+    display = DefaultProperty()
     compare_as_string = BooleanProperty(default=False)
 
     def create_filter_value(self, value):
@@ -71,11 +72,7 @@ class ReportColumn(JsonObject):
         raise NotImplementedError(_("You can't group by columns of type {}".format(self.type)))
 
     def get_header(self, lang):
-        if isinstance(self.display, basestring) or self.display is None:
-            return self.display
-        return self.display.get(
-            lang, self.display.get("en", self.display.values()[0])
-        )
+        return localize(self.display, lang)
 
 
 class FieldColumn(ReportColumn):
@@ -240,7 +237,7 @@ class FilterSpec(JsonObject):
     type = StringProperty(required=True, choices=['date', 'numeric', 'choice_list', 'dynamic_choice_list'])
     slug = StringProperty(required=True)  # this shows up as the ID in the filter HTML
     field = StringProperty(required=True)  # this is the actual column that is queried
-    display = StringProperty()
+    display = DefaultProperty()
     required = BooleanProperty(default=False)
 
     def get_display(self):

@@ -1,8 +1,63 @@
-{% extends "reports/standard/base_template.html" %}
+{% extends "reports/base_template.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block reports-js-inline %}
+{% block js-inline %}
+    {{ block.super }}
+    <script>
+        $('#apply-filters').popover({
+            template: '<div class="popover" role="tooltip"><div class="arrow"></div><div class="popover-content"></div></div>',
+            content: 'You must specify minimum one GP',
+            placement: 'left',
+            trigger: 'manual'
+        });
+
+        $('#report_filter_hierarchy_gp').on('change', function() {
+            if ($('#report_filter_hierarchy_gp').val() !== null) {
+                $('#apply-filters').popover('hide')
+            } else {
+                $('#apply-filters').popover('show')
+            }
+        })
+
+        $('#apply-filters').on('click', function(e) {
+            if ($('#report_filter_hierarchy_gp').val() === null) {
+                e.preventDefault();
+                $(this).popover('show')
+            } else {
+                $(this).popover('hide')
+            }
+        });
+    </script>
+    {% if "print" in report.url_root %}
+        <style>
+            body {
+                width: 297mm;
+            }
+            #map {
+                height: 15cm !important;
+                page-break-after: always;
+            }
+            tr {
+                page-break-inside: avoid;
+            }
+            small {
+                font-size: 1em !important;
+            }
+
+            @page {
+                size: A4 landscape;
+            }
+            @media print {
+                #report_table_health_status_map_processing {
+                    display: none;
+                }
+                .leaflet-top {
+                    display: none;
+                }
+            }
+        </style>
+    {% endif %}
     <script type="text/javascript">
         var report_url = '/a/opm/reports/custom/';
         $("#print-report").click(function (e) {
@@ -19,6 +74,4 @@
             window.open(base_url);
         });
     </script>
-
-    {{ block.super }}
 {% endblock %}

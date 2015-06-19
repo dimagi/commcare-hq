@@ -3,13 +3,10 @@
 {% load compress %}
 {% load hq_shared_tags %}
 
-<!DOCTYPE html>
-    {% include 'style/includes/analytics_google.html' %}
-    {% include 'style/includes/analytics_pingdom.html' %}
-    {% include 'style/includes/analytics_kissmetrics.html' %}
-    {% include 'style/includes/analytics_hubspot.html' %}
-</html>
-
+{% include 'style/includes/analytics_google.html' %}
+{% include 'style/includes/analytics_pingdom.html' %}
+{% include 'style/includes/analytics_kissmetrics.html' %}
+{% include 'style/includes/analytics_hubspot.html' %}
 <script>
 
     /**
@@ -48,10 +45,10 @@
             }
             // Record identity
             if (userId !== null) {
-                _kmq.push(['identify', userId]);
+                kmqPushSafe(['identify', userId]);
             }
             if (traits !== undefined){
-                _kmq.push(['set', traits]);
+                kmqPushSafe(['set', traits]);
             }
         },
 
@@ -72,13 +69,12 @@
             if (properties === undefined){
                 properties = {};
             }
+
             var args = ["record", event, properties];
             if (callback !== undefined){
-                var oneTimeCallback = _.once(callback);
-                args.push(oneTimeCallback);
+                args.push(callback);
             }
-            _kmq.push(args);
-            setTimeout(oneTimeCallback, 2000)
+            kmqPushSafe(args);
         },
 
         /**

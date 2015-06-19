@@ -4,16 +4,15 @@
 <link href="{% static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet"/>
 <script src="{% static 'hqwebapp/js/lib/select2/select2.js' %}"></script>
 {% if not hide_label %}
-    <label for="{{ select.cssId }}" class="control-label">{% trans select.label %}
+    <div class="control-label">
+        <label for="{{ select.cssId }}" class="inner-control-label">{% trans select.label %}</label>
         {% if help_text %}
-            <a href="#" class="hq-help no-click">
-                <i class="icon-question-sign"
-                   data-title="{% trans "Help" %}"
-                   data-content="{{ help_text }}"
-                   data-trigger="hover"></i>
-            </a>
+            <span class="hq-help-template"
+              data-title="{% trans "Help" %}"
+              data-content="{{ help_text }}"
+            ></span>
         {% endif %}
-    </label>
+    </div>
 {% endif %}
 <div class="controls">
     <select id="{{ select.cssId }}" multiple="true" class="{{ select.cssClasses }}"
@@ -26,7 +25,9 @@
         ko.applyBindings({select_params: {{ select.options|JSON }}, current_selection: ko.observableArray({{ select.selected|JSON }})}, $('#{{ select.cssId }}').parent().get(0));
         $('#{{ select.cssId }}').select2();
 
-        $('.hq-help').hqHelp();
+        $('.hq-help-template').each(function () {
+          COMMCAREHQ.transformHelpTemplate($(this), true);
+        });
     });
 </script>
 {% endif %}

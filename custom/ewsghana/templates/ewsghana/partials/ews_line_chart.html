@@ -26,6 +26,11 @@
         line_chart = nv.models.lineChart();
 
         line_chart.xAxis.axisLabel({{ chart.x_axis.label|JSON }});
+        {% if chart.tooltipFormat %}
+            line_chart.tooltipContent(function(key, y, e, graph) {
+                return '<h3>' + graph.point.name + '</h3><p>' + e + ' at ' + y + '</p>';
+            });
+        {% endif %}
         {% if chart.x_axis.format %}
             line_chart.xAxis.tickFormat(d3.format({{ chart.x_axis.format|JSON }}));
         {% else %}
