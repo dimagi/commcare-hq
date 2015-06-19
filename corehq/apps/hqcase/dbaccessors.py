@@ -239,3 +239,18 @@ def get_supply_point_case_in_domain_by_id(
         include_docs=True,
         limit=1,
     ).first()
+
+
+def get_all_case_owner_ids(domain):
+    """
+    Get all owner ids that are assigned to cases in a domain.
+    """
+    from casexml.apps.case.models import CommCareCase
+    key = [domain]
+    submitted = CommCareCase.get_db().view(
+        'hqcase/by_owner',
+        group_level=2,
+        startkey=key,
+        endkey=key + [{}],
+    ).all()
+    return set([row['key'][1] for row in submitted])
