@@ -12,6 +12,7 @@ from django.core.cache import cache
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
+from casexml.apps.case.dbaccessors import get_reverse_indices
 from dimagi.ext.couchdbkit import *
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict, BadValueError
 from PIL import Image
@@ -24,7 +25,6 @@ from casexml.apps.phone.xml import get_case_element
 from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.util import (
     get_case_xform_ids,
-    reverse_indices,
 )
 from casexml.apps.case import const
 from casexml.apps.case.exceptions import UsesReferrals
@@ -209,7 +209,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
     @property
     @memoized
     def reverse_indices(self):
-        return reverse_indices(self.get_db(), self)
+        return get_reverse_indices(self)
 
     @memoized
     def get_subcases(self):
@@ -305,7 +305,8 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
 
     @classmethod
     def get_lite(cls, id, wrap=True):
-        results = cls.get_db().view("case/get_lite", key=id, include_docs=False).one()
+        from corehq.apps.hqcase.dbaccessors import get_lite_case_json
+        results = get_lite_case_json(id)
         if results is None:
             raise ResourceNotFound('no case with id %s exists' % id)
         if wrap:
@@ -328,10 +329,10 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
 
     @classmethod
     def bulk_get_lite(cls, ids, wrap=True, chunksize=100):
+        from corehq.apps.hqcase.dbaccessors import iter_lite_cases_json
         wrapper = lambda doc: cls.get_wrap_class(doc).wrap(doc) if wrap else doc
-        for ids in chunked(ids, chunksize):
-            for row in cls.get_db().view("case/get_lite", keys=ids, include_docs=False):
-                yield wrapper(row['value'])
+        for lite_case_json in iter_lite_cases_json(ids, chunksize=chunksize):
+            yield wrapper(lite_case_json)
 
     def get_server_modified_date(self):
         # gets (or adds) the server modified timestamp

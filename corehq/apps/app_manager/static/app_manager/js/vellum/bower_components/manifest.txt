@@ -1,4 +1,4 @@
-├─┬ At.js#1.2.0 (latest is 1.3.0)
+├─┬ At.js#1.3.0 (latest is 1.3.1)
 │ ├─┬ Caret.js#0.2.2
 │ │ └── jquery#1.11.3
 │ └── jquery#1.11.3 (2.1.4 available)
@@ -8,7 +8,6 @@
 ├── almond#0.2.9 (latest is 0.3.1)
 ├── bootstrap-better-typeahead#26036ce250
 ├── chai#3.0.0
-├── classy#1.4 incompatible with 1.4
 ├── equivalent-xml-js#7de21be295
 ├── jquery#1.11.3 (latest is 2.1.4)
 ├─┬ jquery-ui#1.11.4
@@ -17,14 +16,14 @@
 ├─┬ jstree#110b6681ff
 │ └── jquery#1.11.3 (2.1.4 available)
 ├── langcodes#27dcfc401e
+├── markdown-it#4.2.2 extraneous
+├── quill#0.19.12 extraneous (0.19.14 available)
 ├── require-css#0.1.8
 ├── require-less#0.1.5
 ├── requirejs#2.1.18
 ├── requirejs-plugins#1.0.3
-├── requirejs-promise#1.2.0 extraneous
 ├── requirejs-text#2.0.14
 ├── requirejs-tpl#a3ca1e0e7f
-├── sinonjs#1.14.1 extraneous
 ├── underscore#1.5.2 (latest is 1.8.3)
 ├── when#2.8.0 (latest is 3.7.3)
 ├── xpath#1926d1ebd2
