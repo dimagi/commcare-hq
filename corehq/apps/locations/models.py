@@ -1,6 +1,7 @@
 import warnings
 from functools import partial
 from couchdbkit import ResourceNotFound
+from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
 from dimagi.ext.couchdbkit import *
 import itertools
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
@@ -636,8 +637,7 @@ class Location(CachedCouchDocumentMixin, Document):
                                        .couch_locations())
 
     def linked_supply_point(self):
-        from corehq.apps.commtrack.models import SupplyPointCase
-        return SupplyPointCase.get_by_location(self)
+        return get_supply_point_case_by_location(self)
 
     @property
     def group_id(self):

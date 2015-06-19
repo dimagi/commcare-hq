@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.commtrack.const import RequisitionActions
+from corehq.apps.commtrack.dbaccessors import \
+    get_open_requisition_cases_for_location
 from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack import const
 from corehq.apps.sms.api import send_sms_to_verified_number, MessageMetadata
@@ -99,7 +101,7 @@ class StockReportParser(object):
         self.C = domain.commtrack_settings
 
     def get_req_id(self):
-        reqs = RequisitionCase.open_for_location(
+        reqs = get_open_requisition_cases_for_location(
             self.location['location'].domain,
             self.location['location']._id
         )

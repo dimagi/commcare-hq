@@ -1,6 +1,7 @@
 from xml.etree import ElementTree
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack import const
+from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
 from corehq.apps.commtrack.models import (
     CommtrackConfig, CommtrackActionConfig, RequisitionActions,
     CommtrackRequisitionConfig, SupplyPointCase, RequisitionCase
@@ -44,7 +45,7 @@ def get_supply_point(domain, site_code=None, loc=None):
                             key=[domain, site_code.lower()],
                             include_docs=True).first()
     if loc:
-        case = SupplyPointCase.get_by_location(loc)
+        case = get_supply_point_case_by_location(loc)
     else:
         case = None
 
