@@ -57,6 +57,7 @@ branches:
   - war-filter  # Ethan 6/15
   - autogenerate-credits-prorated # Nick P 6/16
   - case-list  # Ethan 6/17
+  - remove-billing-admin-forwards # Farid 19/6 
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
