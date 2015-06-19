@@ -1,6 +1,7 @@
 from django.test import TestCase
 from casexml.apps.case.dbaccessors import get_open_case_docs_in_domain, \
-    get_open_case_ids_in_domain, get_number_of_cases_by_filters
+    get_open_case_ids_in_domain, get_number_of_cases_by_filters, \
+    get_all_case_owner_ids
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqcase.dbaccessors import get_number_of_cases_in_domain, \
     get_case_ids_in_domain, get_case_types_for_domain, get_cases_in_domain, \
@@ -165,4 +166,16 @@ class DBAccessorsTest(TestCase):
             get_number_of_cases_in_domain_by_owner(self.domain, owner_id='XXX'),
             len([case for case in self.cases
                  if case.domain == self.domain and case.user_id == 'XXX'])
+        )
+
+    def test_get_all_case_owner_ids(self):
+        self.assertEqual(
+            get_all_case_owner_ids(self.domain),
+            set(case.user_id for case in self.cases
+                if case.domain == self.domain)
+        )
+        # sanity check!
+        self.assertEqual(
+            get_all_case_owner_ids(self.domain),
+            {'XXX', 'ZZZ'},
         )
