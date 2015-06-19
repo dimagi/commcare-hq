@@ -584,7 +584,7 @@ class Location(CachedCouchDocumentMixin, Document):
         """
         Return all active top level locations for this domain
         """
-        return SQLLocation.root_locations(domain).couch_locations()
+        return list(SQLLocation.root_locations(domain).couch_locations())
 
     @classmethod
     def get_in_domain(cls, domain, id):
@@ -627,13 +627,13 @@ class Location(CachedCouchDocumentMixin, Document):
     @property
     def descendants(self):
         """return list of all locations that have this location as an ancestor"""
-        return self.sql_location.get_descendants().couch_locations()
+        return list(self.sql_location.get_descendants().couch_locations())
 
     @property
     def children(self):
         """return list of immediate children of this location"""
-        return (SQLLocation.objects.filter(parent=self.sql_location)
-                                   .couch_locations())
+        return list(SQLLocation.objects.filter(parent=self.sql_location)
+                                       .couch_locations())
 
     def linked_supply_point(self):
         from corehq.apps.commtrack.models import SupplyPointCase
