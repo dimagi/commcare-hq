@@ -52,7 +52,7 @@ from .beneficiary import Beneficiary, ConditionsMet, OPMCaseRow
 from .health_status import HealthStatus, AWCHealthStatus
 from .incentive import Worker
 from .filters import (HierarchyFilter, MetHierarchyFilter,
-                      OPMSelectOpenCloseFilter as OpenCloseFilter, HSRHierarchyFilter)
+                      OPMSelectOpenCloseFilter as OpenCloseFilter)
 from .constants import *
 
 
@@ -1033,15 +1033,6 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
         return OPMCaseRow(row, self)
 
     @property
-    def fields(self):
-        return [
-            HSRHierarchyFilter,
-            MonthFilter,
-            YearFilter,
-            OpenCloseFilter,
-        ]
-
-    @property
     def fixed_cols_spec(self):
         return dict(num=7, width=600)
 
@@ -1256,7 +1247,7 @@ class HealthStatusReport(DatespanMixin, BaseReport):
 
     @property
     def fields(self):
-        return [HSRHierarchyFilter, OpenCloseFilter, DatespanFilter]
+        return [HierarchyFilter, OpenCloseFilter, DatespanFilter]
 
     @property
     def case_status(self):
@@ -1477,7 +1468,7 @@ class HealthMapReport(BaseMixin, GenericMapReport, GetParamsMixin, CustomProject
     name = "Health Status (Map)"
     title = "Health Status (Map)"
     slug = "health_status_map"
-    fields = [HSRHierarchyFilter, MonthFilter, YearFilter, OpenCloseFilter]
+    fields = [HierarchyFilter, MonthFilter, YearFilter, OpenCloseFilter]
     report_partial_path = "opm/map_template.html"
     base_template = 'opm/map_base_template.html'
     printable = True
