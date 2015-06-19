@@ -8,7 +8,7 @@ def get_case_groups_in_domain(domain, limit=None, skip=None):
     if skip is not None:
         extra_kwargs['skip'] = skip
     return CommCareCaseGroup.view(
-        'case/groups_by_domain',
+        'casegroups/groups_by_domain',
         startkey=[domain],
         endkey=[domain, {}],
         include_docs=True,
@@ -24,7 +24,7 @@ def get_case_group_meta_in_domain(domain):
     ideal for creating a user-facing dropdown menu, etc.
     """
     return [(r['id'], r['key'][1]) for r in CommCareCaseGroup.view(
-        'case/groups_by_domain',
+        'casegroups/groups_by_domain',
         startkey=[domain],
         endkey=[domain, {}],
         include_docs=False,
@@ -34,7 +34,7 @@ def get_case_group_meta_in_domain(domain):
 
 def get_number_of_case_groups_in_domain(domain):
     data = CommCareCaseGroup.get_db().view(
-        'case/groups_by_domain',
+        'casegroups/groups_by_domain',
         startkey=[domain],
         endkey=[domain, {}],
         reduce=True
