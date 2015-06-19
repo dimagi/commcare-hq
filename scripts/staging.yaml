@@ -55,7 +55,6 @@ branches:
   - index-phonelog-reportentry # Ben 6/8
   - autoload-supplypoint  # Ethan 6/15
   - full-name  # Ethan 6/15
-  - war-filter  # Ethan 6/15
   - autogenerate-credits-prorated # Nick P 6/16
   - case-list  # Ethan 6/17
 submodules:
