@@ -22,6 +22,10 @@ class DBAccessorsTest(TestCase):
                               cases=[cls.cases[0]._id, cls.cases[1]._id]),
             CommCareCaseGroup(name='beta', domain=cls.domain,
                               cases=[cls.cases[2]._id, cls.cases[3]._id]),
+            CommCareCaseGroup(name='gamma', domain=cls.domain,
+                              cases=[cls.cases[0]._id, cls.cases[3]._id]),
+            CommCareCaseGroup(name='delta', domain=cls.domain,
+                              cases=[cls.cases[1]._id, cls.cases[2]._id]),
         ]
         CommCareCaseGroup.get_db().bulk_save(cls.case_groups)
 
@@ -32,8 +36,8 @@ class DBAccessorsTest(TestCase):
 
     def assert_doc_lists_equal(self, docs1, docs2):
         self.assertEqual(
-            [(doc._id, doc.to_json()) for doc in docs1],
-            [(doc._id, doc.to_json()) for doc in docs2],
+            sorted([(doc._id, doc.to_json()) for doc in docs1]),
+            sorted([(doc._id, doc.to_json()) for doc in docs2]),
         )
 
     def test_get_case_groups_in_domain(self):
