@@ -46,6 +46,5 @@ class TestUsersByLocation(TestCase):
 
     def test_get_user_docs_by_location(self):
         users = get_user_docs_by_location(self.meereen._id)
-        import ipdb; ipdb.set_trace()
         self.assertItemsEqual([u['doc'] for u in users],
                               [self.tyrion.to_json(), self.daenerys.to_json()])
