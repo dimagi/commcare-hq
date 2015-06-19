@@ -7,6 +7,7 @@ import pytz
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponse
 from django.shortcuts import render
+from corehq.apps.casegroups.dbaccessors import get_case_groups_in_domain
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.const import SERVER_DATETIME_FORMAT
@@ -1235,7 +1236,7 @@ def add_sample(request, domain, sample_id=None):
 def sample_list(request, domain):
     context = {
         "domain" : domain,
-        "samples": CommCareCaseGroup.get_by_domain(domain)
+        "samples": get_case_groups_in_domain(domain)
     }
     return render(request, "reminders/partial/sample_list.html", context)
 

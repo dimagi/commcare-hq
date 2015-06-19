@@ -45,22 +45,6 @@ class CommCareCaseGroup(Document):
             self.save()
 
     @classmethod
-    def get_by_domain(cls, domain, limit=None, skip=None, include_docs=True):
-        extra_kwargs = {}
-        if limit is not None:
-            extra_kwargs['limit'] = limit
-        if skip is not None:
-            extra_kwargs['skip'] = skip
-        return cls.view(
-            'case/groups_by_domain',
-            startkey=[domain],
-            endkey=[domain, {}],
-            include_docs=include_docs,
-            reduce=False,
-            **extra_kwargs
-        ).all()
-
-    @classmethod
     def get_total(cls, domain):
         data = cls.get_db().view(
             'case/groups_by_domain',

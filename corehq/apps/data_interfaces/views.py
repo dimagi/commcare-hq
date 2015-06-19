@@ -6,6 +6,7 @@ from django.contrib import messages
 from django.core.cache import cache
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.casegroups.dbaccessors import get_case_groups_in_domain
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqwebapp.forms import BulkUploadForm
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
@@ -102,7 +103,7 @@ class CaseGroupListView(DataInterfaceSection, CRUDPaginatedViewMixin):
 
     @property
     def paginated_list(self):
-        for group in CommCareCaseGroup.get_by_domain(
+        for group in get_case_groups_in_domain(
                 self.domain,
                 limit=self.limit,
                 skip=self.skip
