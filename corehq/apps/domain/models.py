@@ -650,7 +650,6 @@ class Domain(Document, SnapshotMixin):
 
         return name
 
-
     @classmethod
     def _get_next_available_name(cls, prefix, existing_names):
         '''

@@ -262,7 +262,7 @@ def copy_snapshot(request, domain):
 
             new_domain_name = form.cleaned_data['domain_name']
             with CriticalSection(['copy_domain_snapshot_{}_to_{}'.format(dom.name, new_domain_name)]):
-                new_domain = dom.save_copy(new_domain_name, 
+                new_domain = dom.save_copy(new_domain_name,
                                            new_hr_name=form.cleaned_data['hr_name'],
                                            user=user)
 
