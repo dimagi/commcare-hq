@@ -1,4 +1,5 @@
 from couchdbkit.ext.django.schema import StringProperty, ListProperty
+
 from casexml.apps.case.models import CommCareCase
 from dimagi.ext.couchdbkit import Document
 from dimagi.utils.couch.database import iter_docs
@@ -43,13 +44,3 @@ class CommCareCaseGroup(Document):
         if len(self.cases) != len(cleaned_list):
             self.cases = cleaned_list
             self.save()
-
-    @classmethod
-    def get_total(cls, domain):
-        data = cls.get_db().view(
-            'case/groups_by_domain',
-            startkey=[domain],
-            endkey=[domain, {}],
-            reduce=True
-        ).first()
-        return data['value'] if data else 0

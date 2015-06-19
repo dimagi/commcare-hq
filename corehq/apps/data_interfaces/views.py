@@ -6,7 +6,8 @@ from django.contrib import messages
 from django.core.cache import cache
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
-from corehq.apps.casegroups.dbaccessors import get_case_groups_in_domain
+from corehq.apps.casegroups.dbaccessors import get_case_groups_in_domain, \
+    get_number_of_case_groups_in_domain
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqwebapp.forms import BulkUploadForm
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
@@ -87,7 +88,7 @@ class CaseGroupListView(DataInterfaceSection, CRUDPaginatedViewMixin):
     @property
     @memoized
     def total(self):
-        return CommCareCaseGroup.get_total(self.domain)
+        return get_number_of_case_groups_in_domain(self.domain)
 
     @property
     def column_names(self):

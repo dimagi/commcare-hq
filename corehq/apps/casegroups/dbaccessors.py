@@ -15,3 +15,13 @@ def get_case_groups_in_domain(domain, limit=None, skip=None, include_docs=True):
         reduce=False,
         **extra_kwargs
     ).all()
+
+
+def get_number_of_case_groups_in_domain(domain):
+    data = CommCareCaseGroup.get_db().view(
+        'case/groups_by_domain',
+        startkey=[domain],
+        endkey=[domain, {}],
+        reduce=True
+    ).first()
+    return data['value'] if data else 0
