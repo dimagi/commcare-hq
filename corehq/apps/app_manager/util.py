@@ -230,7 +230,7 @@ def get_per_type_defaults(domain, case_types=None):
     from corehq.apps.callcenter.utils import get_call_center_case_type_if_enabled
 
     per_type_defaults = {}
-    if not case_types or USERCASE_TYPE in case_types:
+    if (not case_types and is_usercase_in_use(domain)) or USERCASE_TYPE in case_types:
         per_type_defaults = {
             USERCASE_TYPE: get_usercase_default_properties(domain)
         }
@@ -282,7 +282,7 @@ def get_session_schema(form):
     structure = {}
     # TODO handle advanced modules with more than one case
     case_type = form.get_module().case_type
-    if case_type is not None:
+    if case_type:
         structure["case_id"] = {
             "reference": {
                 "source": "casedb",
