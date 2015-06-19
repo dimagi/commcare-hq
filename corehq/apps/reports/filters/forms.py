@@ -45,7 +45,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         """
             This should return the lang code of the language being used to view this form.
         """
-        return self.request.couch_user.language or 'en'
+        return hasattr(self.request, 'couch_user') and self.request.couch_user.language or 'en'
 
     @property
     def rendered_labels(self):
