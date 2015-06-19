@@ -96,7 +96,7 @@ class Group(UndoableDocument):
             for i in range(0,len(self.users)):
                 if self.users[i] == couch_user_id:
                     del self.users[i]
-                    self._track_rmoved_user(couch_user_id)
+                    self._track_removed_user(couch_user_id)
                     if save:
                         self.save()
                     return
