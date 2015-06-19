@@ -259,7 +259,9 @@ var ManageRemindersViewModel = function (
     };
 
     self.refreshEventsListUI = function () {
-        $('.event-help-text').hqHelp();
+        $('.hq-help-template').each(function () {
+            COMMCAREHQ.transformHelpTemplate($(this), true);
+        });
         $('[data-timeset="true"]').each(function () {
             $(this).timepicker({
                 showMeridian: false,

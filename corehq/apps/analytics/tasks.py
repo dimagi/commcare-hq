@@ -50,7 +50,16 @@ def _get_user_hubspot_id(webuser):
     return None
 
 
-def _link_account_with_cookie(webuser, cookies):
+def _get_client_ip(meta):
+    x_forwarded_for = meta.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = meta.get('REMOTE_ADDR')
+    return ip
+
+
+def _link_account_with_cookie(webuser, cookies, meta):
     """
     This sends hubspot the user's first and last names and tracks everything they did
     up until the point they signed up.
@@ -67,7 +76,7 @@ def _link_account_with_cookie(webuser, cookies):
             'email': webuser.username,
             'firstname': webuser.first_name,
             'lastname': webuser.last_name,
-            'hs_context': json.dumps({"hutk": hubspot_cookie})
+            'hs_context': json.dumps({"hutk": hubspot_cookie, "ipAddress": _get_client_ip(meta)})
         }
         req = requests.post(
             url,
@@ -77,12 +86,12 @@ def _link_account_with_cookie(webuser, cookies):
 
 
 @task(queue='background_queue', acks_late=True, ignore_result=True)
-def track_created_hq_account_on_hubspot(webuser, cookies):
+def track_created_hq_account_on_hubspot(webuser, cookies, meta):
     _track_on_hubspot(webuser, {
         'created_account_in_hq': True,
         'is_a_commcare_user': True,
     })
-    _link_account_with_cookie(webuser, cookies)
+    _link_account_with_cookie(webuser, cookies, meta)
 
 
 @task(queue='background_queue', acks_late=True, ignore_result=True)

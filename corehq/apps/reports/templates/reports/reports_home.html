@@ -31,7 +31,11 @@ $(function() {
         <div style="display: none" data-bind="visible: !reportConfigs().length" class="alert">
             <p>{% trans "You don't have any saved reports.  You can store your favorite filters in a saved report and then easily navigate to that report with the filters already applied.  Saved reports can also be sent by email on a recurring basis." %}</p>
             
-            <p>{% trans "To create a new saved report, navigate to a report, select the filters you want to save, and click \"Save\"." %}</p>
+            <p>
+                {% blocktrans %}
+                    To create a new saved report, navigate to a report, select the filters you want to save, and click "Save".
+                {% endblocktrans %}
+            </p>
         </div>
         <table data-bind="visible: reportConfigs().length" class="table table-striped table-bordered">
             <thead>
