@@ -58,9 +58,9 @@ class Command(BaseCommand):
                     if case.user_id == MOTECH_ID:
                         case.type = "task"
                         self.cases_to_save[case.case_id] = case
-                        print("Case with name " + case.name + " updated to type " + case.type)
+                        print("Case with name " + case.name.encode('ascii', 'xmlcharrefreplace') + " updated to type " + case.type)
                     else:
-                        print("Type not updated for case with name " + case.name)
+                        print("Type not updated for case with name " + case.name.encode('ascii', 'xmlcharrefreplace'))
 
         print(str(len(self.cases_to_save)) + " cases to save")
         if len(self.cases_to_save):

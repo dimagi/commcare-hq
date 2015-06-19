@@ -386,7 +386,7 @@ class ProductLineItemFactory(LineItemFactory):
     def base_description(self):
         if not self.is_prorated:
             return _("One month of %(plan_name)s Software Plan." % {
-                'plan_name': self.rate.product.name,
+                'plan_name': self.plan_name,
             })
 
     @property
@@ -395,7 +395,7 @@ class ProductLineItemFactory(LineItemFactory):
             return _("%(num_days)s day%(pluralize)s of %(plan_name)s Software Plan." % {
                 'num_days': self.num_prorated_days,
                 'pluralize': "" if self.num_prorated_days == 1 else "s",
-                'plan_name': self.rate.product.name,
+                'plan_name': self.plan_name,
             })
 
     @property
@@ -413,6 +413,10 @@ class ProductLineItemFactory(LineItemFactory):
         if self.is_prorated:
             return self.num_prorated_days
         return 1
+
+    @property
+    def plan_name(self):
+        return self.subscription.plan_version.plan.name
 
 
 class FeatureLineItemFactory(LineItemFactory):

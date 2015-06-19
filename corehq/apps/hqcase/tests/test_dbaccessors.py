@@ -88,6 +88,12 @@ class DBAccessorsTest(TestCase):
              if case.domain == self.domain and case.type == 'type1'
                 and not case.closed and case.user_id == 'XXX'},
         )
+        self.assertEqual(
+            set(get_open_case_ids_in_domain(self.domain, owner_id='XXX')),
+            {case.get_id for case in self.cases
+             if case.domain == self.domain
+                and not case.closed and case.user_id == 'XXX'},
+        )
 
     def test_get_open_case_docs_by_type(self):
         # this is actually in the 'case' app, but testing here

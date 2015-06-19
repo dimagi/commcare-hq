@@ -3,7 +3,7 @@ import dateutil
 from django.core.cache import cache
 from django.core.urlresolvers import reverse
 import operator
-from casexml.apps.case.models import CommCareCaseGroup
+from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.groups.models import Group
 from corehq.apps.reports import util
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjectReportDispatcher

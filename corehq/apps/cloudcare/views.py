@@ -6,6 +6,7 @@ from corehq.apps.accounting.decorators import requires_privilege_for_commcare_us
 from corehq.apps.app_manager.exceptions import FormNotFoundException, ModuleNotFoundException
 from corehq.apps.app_manager.util import is_usercase_in_use, get_cloudcare_session_data
 from corehq.util.couch import get_document_or_404
+from corehq.util.quickcache import skippable_quickcache
 from couchforms.const import ATTACHMENT_NAME
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
@@ -220,7 +221,37 @@ def form_context(request, domain, app_id, module_id, form_id):
 cloudcare_api = login_or_digest_ex(allow_cc_users=True)
 
 
+def get_cases_vary_on(request, domain):
+    return [
+        request.couch_user.get_id
+        if request.couch_user.is_commcare_user() else request.REQUEST.get('user_id', ''),
+        request.REQUEST.get('ids_only', 'false'),
+        request.REQUEST.get('case_id', ''),
+        request.REQUEST.get('footprint', 'false'),
+        request.REQUEST.get('include_children', 'false'),
+        request.REQUEST.get('closed', 'false'),
+        json.dumps(get_filters_from_request(request)),
+        domain,
+    ]
+
+
+def get_cases_skip_arg(request, domain):
+    """
+    When this function returns True, skippable_quickcache will not go to the cache for the result. By default,
+    if neither of these params are passed into the function, nothing will be cached. Cache will always be
+    skipped if ids_only is false.
+
+    The caching is mainly a hack for touchforms to respond more quickly. Touchforms makes repeated requests to
+    get the list of case_ids associated with a user.
+    """
+    if not toggles.CLOUDCARE_CACHE.enabled(domain):
+        return True
+    return (not string_to_boolean(request.REQUEST.get('use_cache', 'false')) or
+        not string_to_boolean(request.REQUEST.get('ids_only', 'false')))
+
+
 @cloudcare_api
+@skippable_quickcache(get_cases_vary_on, get_cases_skip_arg, timeout=50 * 60)
 def get_cases(request, domain):
     if request.couch_user.is_commcare_user():
         user_id = request.couch_user.get_id
@@ -258,20 +289,16 @@ def get_cases(request, domain):
 def filter_cases(request, domain, app_id, module_id, parent_id=None):
     app = Application.get(app_id)
     module = app.get_module(module_id)
-    delegation = request.GET.get('task-list') == 'true'
     auth_cookie = request.COOKIES.get('sessionid')
 
     suite_gen = SuiteGenerator(app, is_usercase_in_use(domain))
-    xpath = suite_gen.get_filter_xpath(module, delegation=delegation)
+    xpath = suite_gen.get_filter_xpath(module)
     extra_instances = [{'id': inst.id, 'src': inst.src}
                        for inst in suite_gen.get_instances_for_module(module, additional_xpaths=[xpath])]
 
     # touchforms doesn't like this to be escaped
     xpath = HTMLParser.HTMLParser().unescape(xpath)
-    if delegation:
-        case_type = DELEGATION_STUB_CASE_TYPE
-    else:
-        case_type = module.case_type
+    case_type = module.case_type
 
     if xpath:
         # if we need to do a custom filter, send it to touchforms for processing
@@ -312,17 +339,8 @@ def filter_cases(request, domain, app_id, module_id, parent_id=None):
     # (quick) workaround. should be revisted when we optimize the case list.
     cases = filter(lambda c: c.type == case_type, cases)
     cases = [c.get_json(lite=True) for c in cases if c]
-    parents = []
-    if delegation:
-        for case in cases:
-            parent_id = case['indices']['parent']['case_id']
-            parents.append(CommCareCase.get(parent_id))
-        return json_response({
-            'cases': cases,
-            'parents': parents
-        })
-    else:
-        return json_response(cases)
+
+    return json_response(cases)
 
 @cloudcare_api
 def get_apps_api(request, domain):

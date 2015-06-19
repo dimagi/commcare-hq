@@ -341,8 +341,11 @@ def weekly_digest():
         'file_obj': file_to_attach,
     }
     from_email = "Dimagi Accounting <%s>" % settings.DEFAULT_FROM_EMAIL
+    env = ("[{}] ".format(settings.SERVER_ENVIRONMENT.upper())
+           if settings.SERVER_ENVIRONMENT != "production" else "")
+    email_subject = "{}Subscriptions ending in 40 Days from {}".format(env, today.isoformat())
     send_HTML_email(
-        "Subscriptions ending in 40 Days from %s" % today.isoformat(),
+        email_subject,
         settings.ACCOUNTS_EMAIL,
         email_content,
         email_from=from_email,
