@@ -1,5 +1,4 @@
 import uuid
-from mock import MagicMock
 
 from django.test import TestCase
 
@@ -144,14 +143,10 @@ class ConfigurableReportViewTest(TestCase):
         """
         Test the output of ConfigurableReport.export_table()
         """
-
         # Create a configurable report
         view = ConfigurableReport()
         view.domain = self.domain
-
-        view.request = MagicMock()
-        view.request.couch_user.language = "en"
-
+        view.lang = "en"
         view.report_config_id = self.report._id
 
         self.assertEqual(
