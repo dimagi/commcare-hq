@@ -1272,9 +1272,9 @@ class SelectPlanView(DomainAccountingSettings):
         edition_name = u" (%s)" % self.edition_name if self.edition_name else ""
         return [
             {
-                'title': _(u"1. Select a Plan%(edition_name)s" % ({
+                'title': _(u"1. Select a Plan%(edition_name)s") % {
                     "edition_name": edition_name
-                })),
+                },
                 'url': reverse(SelectPlanView.urlname, args=[self.domain]),
             }
         ]
