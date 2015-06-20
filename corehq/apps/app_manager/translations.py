@@ -542,7 +542,7 @@ def update_form_translations(sheet, rows, missing_cols, app):
                     # Create the node if it does not already exist
                     complex_node = re.search('<.*>', new_translation)
 
-                    if not value_node.exists() or complex_node:
+                    if not value_node.exists():
                         e = etree.Element(
                             "{f}value".format(**namespaces), attributes
                         )
@@ -555,7 +555,6 @@ def update_form_translations(sheet, rows, missing_cols, app):
                     if not complex_node:
                         value_node.xml.text = new_translation
                     else:
-                        value_node.xml.clear()
                         escaped_trans = _escape_output_value(new_translation)
                         value_node.xml.text = escaped_trans.text
                         for n in escaped_trans.getchildren():
