@@ -476,3 +476,11 @@ OPENLMIS = StaticToggle(
     TAG_UNKNOWN,
     namespaces=[NAMESPACE_DOMAIN],
 )
+
+CUSTOM_MENU_BAR = StaticToggle(
+    'custom_menu_bar',
+    "Hide Dashboard and Applications from top menu bar "
+    "for non-admin users",
+    TAG_ONE_OFF,
+    namespaces=[NAMESPACE_DOMAIN],
+)

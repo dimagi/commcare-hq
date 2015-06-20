@@ -2531,6 +2531,7 @@ def download_index(request, domain, app_id, template="app_manager/download_index
     all the resource files that will end up zipped into the jar.
 
     """
+    files = None
     try:
         files = _download_index_files(request.app)
     except Exception:

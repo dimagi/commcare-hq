@@ -1,15 +1,20 @@
 {% load crispy_forms_field %}
 
 {% if field.is_hidden %}
-	{{ field }}
+    {{ field }}
 {% else %}
-	<{% if tag %}{{ tag }}{% else %}div{% endif %} id="div_{{ field.auto_id }}" class="control-group{% if wrapper_class %} {{ wrapper_class }}{% endif %}{% if form_show_errors%}{% if field.errors %} error{% endif %}{% endif %}{% if field.css_classes %} {{ field.css_classes }}{% endif %}">
-		{% if field.label and not field|is_checkbox and form_show_labels %}
-			<label for="{{ field.id_for_label }}" class="control-label {% if field.field.required %}requiredField{% endif %}">
+    <{% if tag %}{{ tag }}{% else %}div{% endif %}
+        id="div_{{ field.auto_id }}" 
+        class="control-group{% if wrapper_class %} {{ wrapper_class }}{% endif %}{% if form_show_errors%}{% if field.errors %} error{% endif %}{% endif %}{% if field.css_classes %} {{ field.css_classes }}{% endif %}"
+    >
+        {% if field.label and not field|is_checkbox and form_show_labels %}
+            <div class="control-label {% if field.field.required %}requiredField{% endif %}">
+                <label for="{{ field.id_for_label }}" class="inner-control-label">
+                    {{ field.label|safe }}{% if field.field.required %}<span class="asteriskField">*</span>{% endif %}
+                </label>
                 {% include 'hqwebapp/crispy/layout/help_bubble.html' %}
-				{{ field.label|safe }}{% if field.field.required %}<span class="asteriskField">*</span>{% endif %}
-			</label>
-		{% endif %}
+            </div>
+        {% endif %}
 
         {% if field|is_checkboxselectmultiple %}
             {% include 'bootstrap/layout/checkboxselectmultiple.html' %}
@@ -17,9 +22,7 @@
 
         {% if field|is_checkbox and help_bubble_text %}
             <label class="control-label">
-                <div class="pull-right" style="width: 20px;">
-                    {% include 'hqwebapp/crispy/layout/help_bubble.html' %}
-                </div>
+                {% include 'hqwebapp/crispy/layout/help_bubble.html' %}
             </label>
         {% endif %}
 
@@ -41,5 +44,5 @@
                 {% endif %}
             </div>
         {% endif %}
-	</{% if tag %}{{ tag }}{% else %}div{% endif %}>
+    </{% if tag %}{{ tag }}{% else %}div{% endif %}>
 {% endif %}

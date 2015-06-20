@@ -1,6 +1,7 @@
 import json
 from urllib import urlencode
 from corehq.apps.registration.utils import create_30_day_trial
+from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.resource_conflict import retry_resource
 
 from django.contrib.auth.decorators import login_required
@@ -251,18 +252,20 @@ def copy_snapshot(request, domain):
                 messages.error(request, _("This project is not published and can't be downloaded"))
                 return project_info(request, domain)
 
-            if form.is_valid():
-                new_domain = dom.save_copy(form.cleaned_data['domain_name'], user=user)
-            else:
+            if not form.is_valid():
                 messages.error(request, form.errors)
                 return project_info(request, domain)
 
-            if new_domain is None:
-                messages.error(request, _("A project by that name already exists"))
-                return project_info(request, domain)
+            new_domain_name = form.cleaned_data['domain_name']
+            with CriticalSection(['copy_domain_snapshot_{}_to_{}'.format(dom.name, new_domain_name)]):
+                new_domain = dom.save_copy(new_domain_name, user=user)
 
-            # sign new project up for trial
-            create_30_day_trial(new_domain)
+                if new_domain is None:
+                    messages.error(request, _("A project by that name already exists"))
+                    return project_info(request, domain)
+
+                # sign new project up for trial
+                create_30_day_trial(new_domain)
 
             def inc_downloads(d):
                 d.downloads += 1

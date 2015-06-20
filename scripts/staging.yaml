@@ -52,13 +52,11 @@ branches:
   - form-context-simple # Ben 5/13
   - languageMedia # Sravan 6/10
   - index-phonelog-reportentry # Ben 6/8
-  - case-list-filter  # Ethan 6/10
   - autoload-supplypoint  # Ethan 6/15
   - full-name  # Ethan 6/15
   - war-filter  # Ethan 6/15
-  - invoice-plan-name+autogenerate # Nick P 6/17
   - autogenerate-credits-prorated # Nick P 6/16
-  - invoice-plan-name # Nick P 6/17
+  - case-list  # Ethan 6/17
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

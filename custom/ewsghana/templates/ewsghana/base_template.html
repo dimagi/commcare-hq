@@ -5,6 +5,9 @@
     <script src="{% static 'hqwebapp/js/lib/nvd3/lib/d3.v3.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/nvd3/nv.d3.min.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/select2/select2.js' %}"></script>
+    <script src="{% static 'ewsghana/js/lib/canvg/canvg.min.js' %}"></script>
+    <script src="{% static 'ewsghana/js/lib/canvg/rgbcolor.min.js' %}"></script>
+    <script src="{% static 'ewsghana/js/lib/canvg/StackBlur.min.js' %}"></script>
     <script>
         var show_hide_line_chart_data = function() {
             var data = JSON.parse(JSON.stringify(line_chart_data));
@@ -30,7 +33,35 @@
                 }
             });
         };
-    </script>
+
+        $('body').on('click', '.imageDownload', function(e) {
+            var chart_id = $(this).attr('data-chart-id');
+            var $chartContainer = $(chart_id);
+
+            var canvas = document.createElement('canvas');
+            canvas.height = $chartContainer.height();
+            canvas.width = $chartContainer.width();
+
+            var ctx = canvas.getContext("2d");
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            d3.selectAll('.nv-line').style('fill', 'none').style('stroke-width', '2.5px');
+            d3.selectAll('.nv-point-paths path').style('fill-opacity', 0).style('stroke-opacity', 0);
+            d3.selectAll('.nv-label rect').style('fill-opacity', 0).style('stroke-opacity', 0);
+            d3.selectAll('.nv-pie .nv-slice text').style('stroke', '#000').style('stroke-width', 0);
+
+            canvg(canvas, $(chart_id +' svg').html().trim(), {
+                ignoreClear: true
+            });
+            var data = canvas.toDataURL("image/jpeg", 1);
+            var a = document.createElement('a');
+            a.href = data;
+            a.download = 'chart.jpg';
+            a.click();
+        });
+
+     </script>
 {% endblock %}
 
 {% block uncompressed-stylesheets %}
@@ -56,6 +87,11 @@
         .product-selection-pane {
             float: left;
             width: 30%;
+        }
+
+        .imageDownload {
+            margin-left: 50px;
+            margin-bottom: 20px;
         }
     </style>
 {% endblock %}
