@@ -1,6 +1,5 @@
 from collections import OrderedDict
 from django.utils.html import escape
-import HTMLParser
 from lxml import etree
 import copy
 import re
