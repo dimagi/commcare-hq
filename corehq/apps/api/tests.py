@@ -1262,3 +1262,32 @@ class TestApiKey(APIResourceTest):
                               }))
         response = self.client.get(endpoint)
         self.assertEqual(response.status_code, 200)
+
+    def test_wrong_api_key(self):
+        endpoint = "%s?%s" % (self.single_endpoint(self.user._id),
+                              urlencode({
+                                  "username": self.user.username,
+                                  "api_key": 'blah'
+                              }))
+        response = self.client.get(endpoint)
+        self.assertEqual(response.status_code, 401)
+
+    def test_wrong_user_api_key(self):
+        username = 'blah@qwerty.commcarehq.org'
+        password = '***'
+        other_user = WebUser.create(self.domain.name, username, password)
+        other_user.set_role(self.domain.name, 'admin')
+        other_user.save()
+        django_user = WebUser.get_django_user(other_user)
+        other_api_key, _ = ApiKey.objects.get_or_create(user=django_user)
+
+        endpoint = "%s?%s" % (self.single_endpoint(self.user._id),
+                              urlencode({
+                                  "username": self.user.username,
+                                  "api_key": other_api_key.key
+                              }))
+        response = self.client.get(endpoint)
+        self.assertEqual(response.status_code, 401)
+
+        other_api_key.delete()
+        other_user.delete()
