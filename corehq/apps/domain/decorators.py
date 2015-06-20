@@ -101,7 +101,7 @@ class LoginAndDomainMixin(object):
         return super(LoginAndDomainMixin, self).dispatch(*args, **kwargs)
 
 
-def api_key(realm=''):
+def api_key():
     api_auth_class = ApiKeyAuthentication()
 
     def real_decorator(view):
