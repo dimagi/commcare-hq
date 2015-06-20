@@ -1,8 +1,9 @@
 from corehq.apps.tzmigration import set_migration_started, \
-    set_migration_complete
+    set_migration_complete, get_migration_status
 
 
 def run_timezone_migration_for_domain(domain):
+    print get_migration_status(domain, strict=True)
     set_migration_started(domain)
     _run_timezone_migration_for_domain(domain)
     set_migration_complete(domain)

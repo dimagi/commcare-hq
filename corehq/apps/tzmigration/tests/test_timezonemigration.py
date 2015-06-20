@@ -5,9 +5,10 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests import delete_all_xforms, delete_all_cases
 from corehq.apps.app_manager.tests import TestFileMixin
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.hqcase.dbaccessors import get_cases_in_domain
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from corehq.apps.tzmigration import set_migration_complete, \
-    set_migration_started
+    set_migration_started, TimezoneMigrationProgress, MigrationStatus
 from corehq.apps.tzmigration.timezonemigration import \
     run_timezone_migration_for_domain, _run_timezone_migration_for_domain
 from corehq.apps.receiverwrapper import submit_form_locally
@@ -35,15 +36,18 @@ class TimeZoneMigrationTest(TestCase, TestFileMixin):
                 '{}[{!r}]'.format(msg + ': ' if msg else '', key)
             ))
 
-    @classmethod
-    def setUpClass(cls):
-        cls.domain = 'foo'
-        cls.domain_object = create_domain(cls.domain)
+    def setUp(self):
+        self.domain = 'foo'
+        self.domain_object = create_domain(self.domain)
+        tzp, _ = TimezoneMigrationProgress.objects.get_or_create(pk=self.domain)
+        tzp.migration_status = MigrationStatus.NOT_STARTED
+        tzp.save()
 
-    @classmethod
-    def tearDown(cls):
+    def tearDown(self):
         delete_all_xforms()
         delete_all_cases()
+        self.domain_object.delete()
+        TimezoneMigrationProgress.objects.all().delete()
 
     def _compare_forms(self, actual_json, expected_json, msg):
         expected_json.update({
@@ -88,10 +92,9 @@ class TimeZoneMigrationTest(TestCase, TestFileMixin):
                             "Form before migration does not match")
 
         # Case before
-        case, = CommCareCase.get_all_cases(self.domain, include_docs=True)
+        case, = get_cases_in_domain(self.domain)
         self._compare_cases(case.to_json(), case_bad_tz,
                             "Case before migration does not match")
-
         run_timezone_migration_for_domain(self.domain)
 
         # Form after
@@ -101,8 +104,7 @@ class TimeZoneMigrationTest(TestCase, TestFileMixin):
                             "Form after migration does not match")
 
         # Case after
-
-        case, = CommCareCase.get_all_cases(self.domain, include_docs=True)
+        case, = get_cases_in_domain(self.domain)
         self._compare_cases(case.to_json(), case_good_tz,
                             "Case after migration does not match")
 
