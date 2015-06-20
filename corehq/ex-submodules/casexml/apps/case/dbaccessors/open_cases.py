@@ -13,7 +13,7 @@ def get_open_case_ids_in_domain(domain, type=None, owner_id=None):
             key += [owner_id]
 
     case_ids = [row['id'] for row in CommCareCase.get_db().view(
-        'case/all_cases',
+        'case/open_cases',
         startkey=key,
         endkey=key + [{}],
         reduce=False,

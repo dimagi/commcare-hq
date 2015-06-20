@@ -1,4 +1,4 @@
-from .all_cases import *
+from .open_cases import *
 from .related import *
 
 
