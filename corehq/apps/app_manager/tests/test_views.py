@@ -4,11 +4,12 @@ import json
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 from corehq.apps.app_manager.tests import add_build
+from corehq.apps.app_manager.views import AppSummaryView
 
 from corehq import toggles
 from corehq.apps.users.models import WebUser
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.app_manager.models import Application, APP_V1, APP_V2, Module
+from corehq.apps.app_manager.models import Application, APP_V1, APP_V2, import_app, Module
 
 
 class TestViews(TestCase):
@@ -42,7 +43,7 @@ class TestViews(TestCase):
 
         add_build(**build1)
         add_build(**build2)
-    
+
         with open(os.path.join(os.path.dirname(__file__), "data", "invalid_form.xml")) as f:
             xform_str = f.read()
         app.new_form(module.id, name="Form0-0", attachment=xform_str, lang="en")
@@ -88,3 +89,44 @@ class TestViews(TestCase):
         custom_properties = content["changed"]["custom_properties"]
 
         self.assertEqual(custom_properties["random"], "changed")
+
+    def _get_json(self, name):
+        with open(os.path.join(os.path.dirname(__file__), 'data', name)) as f:
+            return json.loads(f.read())
+
+    def _test_urls(self, names, kwargs):
+        for name in names:
+            response = self.client.get(reverse(name, kwargs=kwargs))
+            self.assertEqual(response.status_code, 200)
+
+    def test_app_urls(self):
+        self.client.login(username=self.username, password=self.password)
+        app = import_app(self._get_json('basic_app.json'), self.domain)
+        kwargs = { 'domain': self.domain, 'app_id': app.id }
+
+        self._test_urls([
+            'view_app',
+            'release_manager',
+            'current_app_version',
+            AppSummaryView.urlname,
+            'view_user_registration',
+            'user_registration_source',
+        ], kwargs)
+
+        kwargs['module_id'] = 0
+        self._test_urls(['view_module'], kwargs)
+
+        kwargs['form_id'] = 0
+        self._test_urls(['view_form', 'form_source'], kwargs)
+
+        '''
+    # GET: pass limit, get back list of builds (should have 1 item)
+    url(r'^releases/json/$', 'paginate_releases', name='paginate_releases'), 
+
+    # POST: pass ajax=1, check for json that has is_released set
+    url(r'^releases/release/(?P<saved_app_id>[\w-]+)/$', 'release_build', name='release_build'),
+    url(r'^releases/unrelease/(?P<saved_app_id>[\w-]+)/$', 'release_build', name='unrelease_build', kwargs={'is_released': False}),
+
+    # POST: pass build_id, comment, check status='success' (and build comment is updated?)
+    url(r'^update_build_comment/$', 'update_build_comment', name='update_build_comment'),
+        '''
