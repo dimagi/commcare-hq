@@ -5,6 +5,7 @@ from django.core.urlresolvers import reverse
 from django.test import TestCase
 from corehq.apps.app_manager.tests import add_build
 from corehq.apps.app_manager.views import AppSummaryView
+from corehq.apps.builds.models import BuildSpec
 
 from corehq import toggles
 from corehq.apps.users.models import WebUser
@@ -82,7 +83,7 @@ class TestViews(TestCase):
         }
 
         response = self.client.post(reverse('edit_commcare_profile', args=[self.domain, app._id]),
-                                    jreversedson.dumps(data),
+                                    json.dumps(data),
                                     content_type='application/json')
 
         content = json.loads(response.content)
@@ -90,24 +91,38 @@ class TestViews(TestCase):
 
         self.assertEqual(custom_properties["random"], "changed")
 
-    def _get_json(self, name):
-        with open(os.path.join(os.path.dirname(__file__), 'data', name)) as f:
-            return json.loads(f.read())
 
-    def _test_urls(self, names, kwargs):
+class TestURLs(TestViews):
+    app = None
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestURLs, cls).setUpClass()
+        add_build(version='2.7.0', build_number=20655)
+        with open(os.path.join(os.path.dirname(__file__), 'data', 'urls_app.json')) as f:
+            cls.app = import_app(json.loads(f.read()), cls.domain)
+            cls.app.build_spec = BuildSpec.from_string('2.7.0/latest')
+            cls.build = cls.app.make_build()
+            cls.build.save()
+
+
+    @classmethod
+    def tearDownClass(cls):
+        super(TestViews, cls).tearDownClass()
+        cls.app.delete()
+        cls.build.delete()
+
+    def _test_status_codes(self, names, kwargs):
         for name in names:
             response = self.client.get(reverse(name, kwargs=kwargs))
             self.assertEqual(response.status_code, 200)
 
-    def test_app_urls(self):
+    def test_status_codes(self):
+        kwargs = { 'domain': self.domain, 'app_id': self.app.id }
         self.client.login(username=self.username, password=self.password)
-        app = import_app(self._get_json('urls_app.json'), self.domain)
-        kwargs = { 'domain': self.domain, 'app_id': app.id }
-
-        self._test_urls([
+        self._test_status_codes([
             'view_app',
             'release_manager',
-            'current_app_version',
             AppSummaryView.urlname,
             'view_user_registration',
             'user_registration_source',
@@ -115,19 +130,29 @@ class TestViews(TestCase):
 
         for id in reversed(range(0, 3)):
             kwargs['module_id'] = id
-            self._test_urls(['view_module'], kwargs)
+            self._test_status_codes(['view_module'], kwargs)
 
         kwargs['form_id'] = 0
-        self._test_urls(['view_form', 'form_source'], kwargs)
+        self._test_status_codes(['view_form', 'form_source'], kwargs)
 
-        '''
-    # GET: pass limit, get back list of builds (should have 1 item)
-    url(r'^releases/json/$', 'paginate_releases', name='paginate_releases'), 
+    def _json_content_from_get(self, name, kwargs, data={}):
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.get(reverse(name, kwargs=kwargs), data)
+        self.assertEqual(response.status_code, 200)
+        return json.loads(response.content)
 
-    # POST: pass ajax=1, check for json that has is_released set
-    url(r'^releases/release/(?P<saved_app_id>[\w-]+)/$', 'release_build', name='release_build'),
-    url(r'^releases/unrelease/(?P<saved_app_id>[\w-]+)/$', 'release_build', name='unrelease_build', kwargs={'is_released': False}),
+    def test_current_build(self):
+        content = self._json_content_from_get('current_app_version', {
+            'domain': self.domain,
+            'app_id': self.app.id,
+        })
+        self.assertEqual(content['currentVersion'], 1)
 
-    # POST: pass build_id, comment, check status='success' (and build comment is updated?)
-    url(r'^update_build_comment/$', 'update_build_comment', name='update_build_comment'),
-        '''
+    def test_pagination(self):
+        content = self._json_content_from_get('paginate_releases', {
+            'domain': self.domain,
+            'app_id': self.app.id,
+        }, { 'limit': 5 })
+        self.assertEqual(len(content), 1)
+        content = content[0]
+        self.assertEqual(content['copy_of'], self.app.id)
