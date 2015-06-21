@@ -18,6 +18,12 @@
         }).on("input", null, null, function() {
             $(":submit").prop("disabled", false);
         })
+        
+        $('#generate-api-key').click(function() {
+            $.post('{% url 'new_api_key' %}', '', function(data) {
+                $('#api-key').text(data);
+            });
+        });
     </script>
 {% endblock %}
 
@@ -32,6 +38,15 @@
                 </div>
             </div>
             {% crispy form %}
+            <div class="control-group">
+                <label class="control-label">{% trans 'API Key' %}</label>
+                <div class="controls">
+                    <span id='api-key'>{{ api_key }}</span>
+                    <button type="button" class='btn' id="generate-api-key">
+                        {% trans 'Generate New API Key' %}
+                    </button>
+                </div>
+            </div>
             <div class="form-actions">
                 <button type="submit" class="btn btn-primary" disabled>{% trans 'Update Information' %}</button>
             </div>
