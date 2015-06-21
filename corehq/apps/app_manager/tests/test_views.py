@@ -94,6 +94,7 @@ class TestViews(TestCase):
 
 class TestURLs(TestViews):
     app = None
+    build = None
 
     @classmethod
     def setUpClass(cls):
@@ -114,7 +115,7 @@ class TestURLs(TestViews):
 
     def _test_status_codes(self, names, kwargs):
         for name in names:
-            response = self.client.get(reverse(name, kwargs=kwargs))
+            response = self.client.get(reverse(name, kwargs=kwargs), follow=False)
             self.assertEqual(response.status_code, 200)
 
     def test_status_codes(self):
