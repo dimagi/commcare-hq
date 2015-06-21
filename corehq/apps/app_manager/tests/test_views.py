@@ -82,7 +82,7 @@ class TestViews(TestCase):
         }
 
         response = self.client.post(reverse('edit_commcare_profile', args=[self.domain, app._id]),
-                                    json.dumps(data),
+                                    jreversedson.dumps(data),
                                     content_type='application/json')
 
         content = json.loads(response.content)
@@ -101,7 +101,7 @@ class TestViews(TestCase):
 
     def test_app_urls(self):
         self.client.login(username=self.username, password=self.password)
-        app = import_app(self._get_json('basic_app.json'), self.domain)
+        app = import_app(self._get_json('urls_app.json'), self.domain)
         kwargs = { 'domain': self.domain, 'app_id': app.id }
 
         self._test_urls([
@@ -113,8 +113,9 @@ class TestViews(TestCase):
             'user_registration_source',
         ], kwargs)
 
-        kwargs['module_id'] = 0
-        self._test_urls(['view_module'], kwargs)
+        for id in reversed(range(0, 3)):
+            kwargs['module_id'] = id
+            self._test_urls(['view_module'], kwargs)
 
         kwargs['form_id'] = 0
         self._test_urls(['view_form', 'form_source'], kwargs)
