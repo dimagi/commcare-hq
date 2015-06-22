@@ -304,11 +304,12 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
     receipt_email_template = 'accounting/credit_receipt_email.html'
     receipt_email_template_plaintext = 'accounting/credit_receipt_email_plaintext.txt'
 
-    def __init__(self, payment_method, account, subscription=None,
-                 product_type=None, feature_type=None):
+    def __init__(self, payment_method, account, subscription=None, post_data=None):
         super(CreditStripePaymentHandler, self).__init__(payment_method)
-        self.product_type = product_type
-        self.feature_type = feature_type
+        self.feature_types = [feature_type[0]
+                              for feature_type in FeatureType.CHOICES if post_data.get(feature_type[0])]
+        self.product_types = [product_type[0]
+                              for product_type in SoftwareProductType.CHOICES if post_data.get(product_type[0])]
         self.account = account
         self.subscription = subscription
         self.credit_lines = []
@@ -337,27 +338,27 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
         )
 
     def update_credits(self, payment_record):
-        for feature_type in FeatureType.CHOICES:
-            feature_amount = Decimal(self.request.POST[feature_type[0]])
+        for feature_type in self.feature_types:
+            feature_amount = Decimal(self.request.POST.get(feature_type))
             if feature_amount >= 0.5:
                 self.credit_lines.append(CreditLine.add_credit(
                     feature_amount,
                     account=self.account,
                     subscription=self.subscription,
-                    feature_type=feature_type[0],
+                    feature_type=feature_type,
                     payment_record=payment_record,
                 ))
-
-        product_type = self.request.POST.get('product_type')
-        plan_amount = Decimal(self.request.POST.get('product_credits'))
-        if plan_amount >= 0.5:
-            self.credit_lines.append(CreditLine.add_credit(
-                plan_amount,
-                account=self.account,
-                subscription=self.subscription,
-                product_type=product_type,
-                payment_record=payment_record,
-            ))
+        for product_type in self.product_types:
+            plan_amount = Decimal(self.request.POST.get(product_type))
+            print plan_amount
+            if plan_amount >= 0.5:
+                self.credit_lines.append(CreditLine.add_credit(
+                    plan_amount,
+                    account=self.account,
+                    subscription=self.subscription,
+                    product_type=product_type,
+                    payment_record=payment_record,
+                ))
 
     def process_request(self, request):
         self.request = request
