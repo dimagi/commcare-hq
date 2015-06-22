@@ -1,12 +1,17 @@
 from __future__ import absolute_import
+from collections import defaultdict
+import uuid
 
 from xml.etree import ElementTree
+import datetime
 
 from django.conf import settings
 
 from casexml.apps.case import const
+from casexml.apps.case.const import CASE_ACTION_UPDATE, CASE_ACTION_CREATE
 from casexml.apps.case.dbaccessors import get_indexed_case_ids
 from casexml.apps.phone.models import SyncLogAssertionError, get_properly_wrapped_sync_log
+from casexml.apps.phone.xml import get_case_element
 from casexml.apps.stock.models import StockReport
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
@@ -44,6 +49,33 @@ def post_case_blocks(case_blocks, form_extras=None, domain=None):
     )
     response, xform, cases = sp.run()
     return xform, cases
+
+
+def create_real_cases_from_dummy_cases(cases):
+    """
+    Takes as input a list of unsaved CommCareCase objects
+
+    that don't have any case actions, etc.
+    and creates them through the official channel of submitting forms, etc.
+
+    returns a tuple of two lists: forms posted and cases created
+
+    """
+    posted_cases = []
+    posted_forms = []
+    case_blocks_by_domain = defaultdict(list)
+    for case in cases:
+        if not case.modified_on:
+            case.modified_on = datetime.datetime.utcnow()
+        if not case._id:
+            case._id = uuid.uuid4().hex
+        case_blocks_by_domain[case.domain].append(get_case_element(
+            case, (CASE_ACTION_CREATE, CASE_ACTION_UPDATE), version='2.0'))
+    for domain, case_blocks in case_blocks_by_domain.items():
+        form, cases = post_case_blocks(case_blocks, domain=domain)
+        posted_forms.append(form)
+        posted_cases.extend(cases)
+    return posted_forms, posted_cases
 
 
 def reprocess_form_cases(form, config=None, case_db=None):
