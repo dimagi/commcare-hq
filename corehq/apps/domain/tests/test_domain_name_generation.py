@@ -6,7 +6,6 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.exceptions import NameUnavailableException
 
 
-
 class DomainNameAvailabilityTest(SimpleTestCase):
     def test_conflict(self):
         self.assertEquals(Domain._get_next_available_name("fandango", []), "fandango-1")
