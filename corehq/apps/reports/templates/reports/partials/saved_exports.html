@@ -4,14 +4,8 @@
     <thead>
     <tr>
         <th>{% trans "Name" %}</th>
-        <th>{% trans "Preview" %}</th>
-        {% if allow_edit %}
-            <th>{% trans "Edit" %}</th>
-        {% endif %}
-        <th>{% trans "Download" %}</th>
-        {% if not deid and saved_exports_has_media %}
-            <th>{% trans "Download Multimedia" %}</th>
-        {% endif %}
+        <th>{% trans "Export" %}</th>
+        <th>{% trans "Edit" %}</th>
         <th>
             {% trans "Add to Custom Bulk Export" %} <i class="icon-white icon-info-sign custom-bulk-export-info"></i>
             <small style="display: block;">
@@ -20,9 +14,6 @@
                 <a href="#" class="btn btn-mini btn-inverse" data-bind="click: toggleSelectAllExports">{% trans "none" %}</a>
             </small>
         </th>
-        {% if allow_edit %}
-            <th>{% trans "Delete" %}</th>
-        {% endif %}
     </tr>
     </thead>
     <tbody>
@@ -43,53 +34,15 @@
                 <div><p class="help-inline">{{ export.formname }}</p></div>
             </td>
             <td class="cell-vertical-centered">
-                <a class="btn" href='{% url "export_custom_data" domain export.get_id %}?format=html&limit=50&{{ get_filter_params.urlencode|safe }}'>
-                    {% trans "Web Preview" %}
+                <a class="btn btn-info" href=''>
+                    {% trans "Export" %}
                 </a>
             </td>
-            {% if allow_edit %}
-                <td class="cell-vertical-centered">
-                    <a class="btn btn-info" href='{% url "edit_custom_export_form" domain export.get_id %}'>
-                        <i class="icon-pencil icon-white"></i> {% trans "Edit" %}
-                    </a>
-                </td>
-            {% endif %}
             <td class="cell-vertical-centered">
-                <a data-toggle="modal" href="#export-download-status"
-                   data-backdrop="static"
-                   data-formname="{{ export.name }}"
-                   data-xmlns="{{ export.xmlns }}"
-                   data-exportid="{{ export.get_id }}"
-                   data-exporttype="form"
-                   data-dlocation='{% url "export_custom_data" domain export.get_id %}'
-                   data-format="{{ export.default_format }}"
-                   data-bind="click: requestDownload"
-                   class="dl-export btn btn-primary"><i class="icon-download-alt icon-white"></i> {% trans "Download" %}</a>
+                <a class="btn btn-info" href='{% url "edit_custom_export_form" domain export.get_id %}'>
+                    <i class="icon-pencil icon-white"></i> {% trans "Edit" %}
+                </a>
             </td>
-            {% if not deid and saved_exports_has_media %}
-                <td class="cell-vertical-centered">
-                    {% with property_hash|dict_lookup:export.name as properties %}
-                      {% if properties.size %}
-                        <a  data-toggle='modal' href="#export-download-status"
-                            {% if export.app.id %}
-                                data-downloadurl='{% url "form_multimedia_export" domain %}?app_id={{export.app_id}}&amp;export_id={{properties.export_id}}&amp;{{ get_filter_params.urlencode|safe }}&amp;name={{export.name}}'
-                            {% else %}
-                                data-downloadurl='{% url "form_multimedia_export" domain %}?export_id={{properties.export_id}}&amp;{{ get_filter_params.urlencode|safe }}&amp;name={{export.name}}'
-                            {% endif %}
-                            data-xmlns="{{export.xmlns}}"
-                            data-modulename="{{ export.name|default:"[blank]" }}"
-                            data-formname=""
-                            data-bind='click: requestMultimediaDownload'
-                            class="btn btn-primary dl-export" >
-                                <i class="icon-download-alt icon-white"></i>
-                                {% trans "Download " %} <br> ({{properties.size}})
-                        </a>
-                      {% else %}
-                          <span class="label">{% trans "No Multimedia" %}</span>
-                      {% endif %}
-                    {% endwith %}
-                </td>
-            {% endif %}
             <td class="form-inline">
                 {% ifequal export.default_format custom_bulk_export_format %}
                     <label>
@@ -100,12 +53,6 @@
                     <span class="label custom-bulk-format-na">{{ export.default_format }} {% trans "Not Available" %}</span>
                 {% endifequal %}
             </td>
-            {% if allow_edit %}
-                <td class="cell-vertical-centered">
-                    <a class="btn btn-danger" data-toggle="modal" class="delete_link" href="#delete-export-modal-{{ export.get_id }}"><i class="icon-remove icon-white"></i> {% trans "Delete" %}</a>
-                    {% include "export/dialogs/delete_custom_export_dialog.html" %}
-                </td>
-            {% endif %}
         </tr>
     {% endfor %}
     </tbody>
