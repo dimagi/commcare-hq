@@ -822,10 +822,13 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
             self._doc["_rev"] = conflict._rev
             self.force_save()
 
-    def to_xml(self, version):
+    def to_xml(self, version, include_case_on_closed=False):
         from xml.etree import ElementTree
         if self.closed:
-            elem = get_case_element(self, ('close'), version)
+            if include_case_on_closed:
+                elem = get_case_element(self, ('close', 'create', 'update'), version)
+            else:
+                elem = get_case_element(self, ('close'), version)
         else:
             elem = get_case_element(self, ('create', 'update'), version)
         return ElementTree.tostring(elem)
