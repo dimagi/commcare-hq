@@ -242,9 +242,9 @@
                             <span class="add-on">$</span>
                             <input type="text"
                                    class="input-small"
-                                   data-bind="
-                                   attr:{name: creditType},
-                                   numericValue: addAmount" />
+                                   name="product_credits"
+                                   data-bind="numericValue: addAmount" />
+                            <input type="hidden" name="product_type" data-bind="value: creditType" />
                         </div>
                     </div>
                 </div>
@@ -279,6 +279,7 @@
                     </div>
                 </div>
             </div>
+            <input type="hidden" name="amount" data-bind="value: amount" />
         </fieldset>
     </script>
 

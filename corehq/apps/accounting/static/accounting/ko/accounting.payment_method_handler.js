@@ -351,8 +351,15 @@ var PrepaymentItems = function(data){
     });
 
     self.reset = function (response) {
-        console.log("TODO: handle response");
-        // self.creditItem.amount(response.balance);
+        var items = self.products().concat(self.features());
+        _.each(response.balances, function(balance){
+            var update_balance = _.find(items, function(item){
+                return item.creditType() === balance.type;
+            });
+            if (update_balance){
+                update_balance.amount(balance.balance);
+            }
+        })
     };
 
     self.isValid = function () {

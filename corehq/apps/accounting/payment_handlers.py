@@ -10,6 +10,7 @@ from corehq.apps.accounting.models import (
     Invoice,
     PaymentRecord,
     SoftwareProductType,
+    FeatureType,
 )
 from corehq.apps.accounting.user_text import get_feature_name
 from corehq.apps.accounting.utils import fmt_dollar_amount
@@ -310,6 +311,7 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
         self.feature_type = feature_type
         self.account = account
         self.subscription = subscription
+        self.credit_lines = []
 
     @property
     def cost_item_name(self):
@@ -335,17 +337,36 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
         )
 
     def update_credits(self, payment_record):
-        self.credit_line = CreditLine.add_credit(
-            payment_record.amount, account=self.account, subscription=self.subscription,
-            product_type=self.product_type, feature_type=self.feature_type,
-            payment_record=payment_record,
-        )
+        for feature_type in FeatureType.CHOICES:
+            feature_amount = Decimal(self.request.POST[feature_type[0]])
+            if feature_amount >= 0.5:
+                self.credit_lines.append(CreditLine.add_credit(
+                    feature_amount,
+                    account=self.account,
+                    subscription=self.subscription,
+                    feature_type=feature_type[0],
+                    payment_record=payment_record,
+                ))
+
+        product_type = self.request.POST.get('product_type')
+        plan_amount = Decimal(self.request.POST.get('product_credits'))
+        if plan_amount >= 0.5:
+            self.credit_lines.append(CreditLine.add_credit(
+                plan_amount,
+                account=self.account,
+                subscription=self.subscription,
+                product_type=product_type,
+                payment_record=payment_record,
+            ))
 
     def process_request(self, request):
+        self.request = request
         response = super(CreditStripePaymentHandler, self).process_request(request)
-        if hasattr(self, 'credit_line'):
+        if hasattr(self, 'credit_lines'):
             response.update({
-                'balance': fmt_dollar_amount(self.credit_line.balance),
+                'balances': [{'type': cline.product_type if cline.product_type else cline.feature_type,
+                              'balance': fmt_dollar_amount(cline.balance)}
+                             for cline in self.credit_lines]
             })
         return response
 
