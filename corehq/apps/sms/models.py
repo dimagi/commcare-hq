@@ -825,6 +825,12 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     source_id = models.CharField(max_length=126, null=True)
     content_type = models.CharField(max_length=3, choices=CONTENT_CHOICES, null=False)
 
+    # Only used when content_type is CONTENT_SMS_SURVEY or CONTENT_IVR_SURVEY
+    # This is redundantly stored here (as well as the subevent) so that it
+    # doesn't have to be looked up for reporting.
+    form_unique_id = models.CharField(max_length=126, null=True)
+    form_name = models.TextField(null=True)
+
     # If any of the MessagingSubEvent status's are STATUS_ERROR, this is STATUS_ERROR
     status = models.CharField(max_length=3, choices=STATUS_CHOICES, null=False)
     error_code = models.CharField(max_length=126, null=True)
@@ -1040,6 +1046,7 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
 
     # Only used when content_type is CONTENT_SMS_SURVEY or CONTENT_IVR_SURVEY
     form_unique_id = models.CharField(max_length=126, null=True)
+    form_name = models.TextField(null=True)
     xforms_session = models.ForeignKey('smsforms.SQLXFormsSession', null=True, on_delete=models.PROTECT)
 
     # If this was a reminder that spawned off of a case, this is the case's id
