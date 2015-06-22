@@ -1,7 +1,8 @@
 {% load reports_core_tags %}
 var filter_id = "#{{ filter.css_id }}-input";
+var pageSize = 20;
 $(filter_id).select2({
-    minimumInputLength: 1,
+    minimumInputLength: 0,
     allowClear: true,
     // allowClear only respected if there is a non empty placeholder
     placeholder: " ",
@@ -11,13 +12,18 @@ $(filter_id).select2({
         quietMillis: 250,
         data: function (term, page) {
             return {
-                q: term // search term
+                q: term, // search term
+                page: page,
+                limit: pageSize
             };
         },
         results: function (data, page) {
             // parse the results into the format expected by Select2.
             var formattedData = _.map(data, function (val) { return {'id': val, 'text': val}});
-            return { results: formattedData };
+            return {
+                results: formattedData,
+                more: data.length === pageSize
+            };
         },
         cache: true
     }

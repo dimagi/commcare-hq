@@ -94,7 +94,20 @@ class PatientInteractionsReport(PatientDetailsReport):
 
             medication = []
             for med_prop in MEDICATION_DETAILS:
-                medication.append(getattr(ret['patient'], med_prop, EMPTY_FIELD))
+                if med_prop == 'MEDS_diabetes_prescribed':
+                    oral = getattr(ret['patient'], 'MEDS_diabetes-oral_prescribed', None)
+                    insulin = getattr(ret['patient'], 'MEDS_diabetes-insulin_prescribed', None)
+
+                    if oral == 'yes':
+                        to_append = oral
+                    elif insulin == 'yes':
+                        to_append == insulin
+                    else:
+                        to_append = EMPTY_FIELD
+
+                    medication.append(to_append)
+                else:
+                    medication.append(getattr(ret['patient'], med_prop, EMPTY_FIELD))
             ret['medication_table'] = medication
 
         user = self.request.couch_user

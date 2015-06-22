@@ -5,6 +5,7 @@ from numpy import random
 from django.core.urlresolvers import reverse
 from django.views.generic.base import TemplateView
 from braces.views import JSONResponseMixin
+from corehq.apps.reports_core.exceptions import FilterException
 
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_request
@@ -12,7 +13,7 @@ from no_exceptions.exceptions import Http403
 
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.api import ReportDataSource
-from corehq.apps.reports_core.filters import DatespanFilter, FilterException
+from corehq.apps.reports_core.filters import DatespanFilter
 
 
 Column = namedtuple("Column", ["slug", "display_name", "sortable"])

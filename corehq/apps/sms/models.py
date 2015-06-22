@@ -7,7 +7,7 @@ from datetime import datetime
 from django.db import models
 from corehq.apps.users.models import CouchUser, CommCareUser, WebUser
 from corehq.apps.groups.models import Group
-from casexml.apps.case.models import CommCareCase, CommCareCaseGroup
+from casexml.apps.case.models import CommCareCase
 from dimagi.utils.couch.migration import (SyncCouchToSQLMixin,
     SyncSQLToCouchMixin)
 from dimagi.utils.mixins import UnicodeMixIn

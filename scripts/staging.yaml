@@ -6,9 +6,11 @@
 # From your commcare-hq directory with the virtualenv turned on
 # to safely push your changes to scripts/staging.yaml
 #     $ scripts/commit-staging --push
+# to check if your branch causes any conflicts before rebuilding
+#     $ scripts/rebuildstaging --no-push
 # to rebuild from your new spec and deploy
 #     $ scripts/rebuildstaging --deploy
-# Both commands commands can be run without the flag as well.
+# Above commands commands can be run without the flag as well.
 
 # CONFLICT RESOLUTION
 # First, determine where the conflict lies.
@@ -43,17 +45,18 @@
 trunk: master
 name: autostaging
 branches:
-  - subscription-no-contact-info # bb 8/4
+  - tz-in-readable-forms  # Danny 6/19
   - vellum-staging # J$ 11/13
   - fixtures-spike  # cz 1/29
   - update-submodules # TS 5/6
   - locations-for-robber-barons  # Ethan 5/7
   - form-context-simple # Ben 5/13
   - languageMedia # Sravan 6/10
-  - renew-plan # Farid 6/4
   - index-phonelog-reportentry # Ben 6/8
-  - add-proxy4 # ts 6/9
-  - debug-sync # Nick P 6/9
+  - autoload-supplypoint  # Ethan 6/15
+  - full-name  # Ethan 6/15
+  - autogenerate-credits-prorated # Nick P 6/16
+  - case-list  # Ethan 6/17
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

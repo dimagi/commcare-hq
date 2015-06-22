@@ -6,7 +6,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.utils.decorators import method_decorator
 import json
-from corehq.apps.export.custom_export_helpers import CustomExportHelper
+from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.export.exceptions import ExportNotFound, ExportAppException
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.standard.export import ExcelExportReport, CaseExportReport
@@ -101,7 +101,7 @@ class BaseCreateCustomExportView(BaseExportView):
     @property
     @memoized
     def export_helper(self):
-        return CustomExportHelper.make(self.request, self.export_type, domain=self.domain)
+        return make_custom_export_helper(self.request, self.export_type, domain=self.domain)
 
     def commit(self, request):
         self.export_helper.update_custom_export()
@@ -176,7 +176,7 @@ class BaseModifyCustomExportView(BaseExportView):
     @memoized
     def export_helper(self):
         try:
-            return CustomExportHelper.make(self.request, self.export_type, self.domain, self.export_id)
+            return make_custom_export_helper(self.request, self.export_type, self.domain, self.export_id)
         except ResourceNotFound:
             raise Http404()
 

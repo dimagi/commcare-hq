@@ -3,9 +3,11 @@ from corehq import privileges
 from corehq.apps.app_manager.models import get_app, ApplicationBase, Form
 from couchdbkit.resource import ResourceNotFound
 from django.utils.translation import ugettext as _
+from corehq.apps.casegroups.dbaccessors import get_case_groups_in_domain
+from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
-from casexml.apps.case.models import CommCareCase, CommCareCaseGroup
+from casexml.apps.case.models import CommCareCase
 from django_prbac.utils import has_privilege
 
 
@@ -65,14 +67,14 @@ def get_form_list(domain):
                     form_list.append({"code" :  f.unique_id, "name" : app.name + "/" + module_name + "/" + form_name})
     return form_list
 
+
 def get_sample_list(domain):
-    #Circular import
-    from casexml.apps.case.models import CommCareCaseGroup
     
     sample_list = []
-    for sample in CommCareCaseGroup.get_by_domain(domain):
+    for sample in get_case_groups_in_domain(domain):
         sample_list.append({"code" : sample._id, "name" : sample.name})
     return sample_list
+
 
 def get_form_name(form_unique_id):
     try:

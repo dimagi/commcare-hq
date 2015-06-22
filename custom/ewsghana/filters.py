@@ -157,24 +157,35 @@ class EWSDateFilter(BaseReportFilter):
                 weeks.append(dict(val=value, text=text))
         return [
             {
+                'text': 'Week (Friday - Thursday)',
+                'val': 2,
+                'firstOptions': weeks[:-1],
+                'secondOptions': []
+            },
+            {
                 'text': 'Month',
                 'val': 1,
                 'firstOptions': months,
                 'secondOptions': years
-            },
-            {
-                'text': 'Week Friday - Thursday',
-                'val': 2,
-                'firstOptions': weeks,
-                'secondOptions': []
             }
+
         ]
+
+    @property
+    def default_week(self):
+        now = datetime.now()
+        if now.weekday() == 4:
+            return '{0}|{1}'.format(now.strftime("%Y-%m-%d"), now.strftime("%Y-%m-%d"))
+        else:
+            week_ago = (now - relativedelta(weeks=1))
+            days = relativedelta(days=(4 - week_ago.weekday()) % 7)
+            return '{0}|{1}'.format((week_ago + days).strftime("%Y-%m-%d"), now.strftime("%Y-%m-%d"))
 
     @property
     def filter_context(self):
         return dict(
             select_options=self.select_options,
-            selected_type=self.selected('type') if self.selected('type') else 1,
-            selected_first=self.selected('first') if self.selected('first') else datetime.utcnow().month,
-            selected_second=self.selected('second') if self.selected('second') else datetime.utcnow().year
+            selected_type=self.selected('type') if self.selected('type') else 2,
+            selected_first=self.selected('first') if self.selected('first') else self.default_week,
+            selected_second=self.selected('second') if self.selected('second') else ''
         )

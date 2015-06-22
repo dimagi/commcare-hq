@@ -16,9 +16,9 @@ from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import raw_username, user_display_string
 
-from .models import Location
+from .models import Location, SQLLocation
 from .signals import location_created, location_edited
-from .util import load_locs_json, allowed_child_types, lookup_by_property
+from .util import allowed_child_types
 
 
 class ParentLocWidget(forms.Widget):
@@ -188,13 +188,10 @@ class LocationForm(forms.Form):
         if site_code:
             site_code = site_code.lower()
 
-        lookup = lookup_by_property(
-            self.location.domain,
-            'site_code',
-            site_code,
-            'global'
-        )
-        if lookup and lookup != set([self.location._id]):
+        if (SQLLocation.objects.filter(domain=self.location.domain,
+                                       site_code__iexact=site_code)
+                               .exclude(location_id=self.location._id)
+                               .exists()):
             raise forms.ValidationError(
                 'another location already uses this site code'
             )

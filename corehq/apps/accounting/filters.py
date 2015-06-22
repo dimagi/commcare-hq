@@ -130,8 +130,8 @@ class TrialStatusFilter(BaseSingleOptionFilter):
     TRIAL = "trial"
     NON_TRIAL = "non_trial"
     options = [
-        (TRIAL, _("Show Non-Trial Subscriptions")),
-        (NON_TRIAL, _("Show Only Trial Subscriptions")),
+        (NON_TRIAL, _("Show Non-Trial Subscriptions")),
+        (TRIAL, _("Show Only Trial Subscriptions")),
     ]
 
 

@@ -71,6 +71,12 @@
                         updateCharts(data);
                         $('#report-error').addClass('hide');
                     }
+                    if (data.warning) {
+                        $('#warning-message').html(data.warning);
+                        $('#report-warning').removeClass('hide');
+                    } else {
+                        $('#report-warning').addClass('hide');
+                    }
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
                     console.log("wah waaaah");
@@ -120,6 +126,12 @@
     There was an error rendering your report.
     {% endblocktrans %}
     <div id="error-message"></div>
+</div>
+<div id="report-warning" class="alert alert-warn hide">
+    {% blocktrans %}
+    Warning:
+    {% endblocktrans %}
+    <div id="warning-message"></div>
 </div>
 
 <div class="report-controls">

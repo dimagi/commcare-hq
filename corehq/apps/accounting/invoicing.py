@@ -385,18 +385,18 @@ class ProductLineItemFactory(LineItemFactory):
     @property
     def base_description(self):
         if not self.is_prorated:
-            return _("One month of %(plan_name)s Software Plan." % {
-                'plan_name': self.rate.product.name,
-            })
+            return _("One month of %(plan_name)s Software Plan.") % {
+                'plan_name': self.plan_name,
+            }
 
     @property
     def unit_description(self):
         if self.is_prorated:
-            return _("%(num_days)s day%(pluralize)s of %(plan_name)s Software Plan." % {
+            return _("%(num_days)s day%(pluralize)s of %(plan_name)s Software Plan.") % {
                 'num_days': self.num_prorated_days,
                 'pluralize': "" if self.num_prorated_days == 1 else "s",
-                'plan_name': self.rate.product.name,
-            })
+                'plan_name': self.plan_name,
+            }
 
     @property
     def num_prorated_days(self):
@@ -413,6 +413,10 @@ class ProductLineItemFactory(LineItemFactory):
         if self.is_prorated:
             return self.num_prorated_days
         return 1
+
+    @property
+    def plan_name(self):
+        return self.subscription.plan_version.plan.name
 
 
 class FeatureLineItemFactory(LineItemFactory):
@@ -453,9 +457,9 @@ class UserLineItemFactory(FeatureLineItemFactory):
     def unit_description(self):
         if self.num_excess_users > 0:
             return _("Per User fee exceeding monthly limit of "
-                     "%(monthly_limit)s users." % {
+                     "%(monthly_limit)s users.") % {
                          'monthly_limit': self.rate.monthly_limit,
-                     })
+                     }
 
 
 class SmsLineItemFactory(FeatureLineItemFactory):

@@ -107,9 +107,14 @@ def new_update_case_properties():
             next_assignment = get_none_or_value(case, "next_assignment")
             facility_id = get_none_or_value(case, "facility_id")
             fida_group = get_group_id(domain, "fida", facility_id)
-            cati_owner_username = get_owner_username(domain, "cati", facility_id)
 
-            ## Assignment Directly from Registration ##
+            # get cati_owner_username from current owner-group
+            assigned_owner_group = get_none_or_value(case, "owner_id")
+            if assigned_owner_group not in GROUPS_BY_ID[domain]:
+                continue
+            cati_owner_username = GROUPS_BY_ID[domain][assigned_owner_group].metadata.get('main_user', None)
+
+            # Assignment Directly from Registration ##
             # Assign Cases to Call Center
             if case.date_admission >= past_21_date and (not curr_assignment) and (not next_assignment):
                 owner_id = get_group_id(domain, "cati", facility_id)

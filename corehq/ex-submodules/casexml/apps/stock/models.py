@@ -84,6 +84,11 @@ class StockTransaction(models.Model):
         return StockTransaction.objects.filter(
             case_id=case_id, product_id=product_id, section_id=section_id).order_by('-report__date', '-pk')
 
+    class Meta:
+        index_together = [
+            ['case_id', 'product_id', 'section_id']
+        ]
+
 
 class DocDomainMapping(models.Model):
     """

@@ -19,10 +19,11 @@ from corehq.util.timezones.conversions import ServerTime
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
+from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.models import CouchUser
-from casexml.apps.case.models import CommCareCase, CommCareCaseGroup
+from casexml.apps.case.models import CommCareCase
 from django.conf import settings
 # This import is not used, but there's some sort circular dependency
 # that is exposed if you remove this. That's not something I've seen before

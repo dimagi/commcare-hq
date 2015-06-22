@@ -12,11 +12,11 @@ from corehq.apps.userreports.reports.filters import(
 from corehq.apps.userreports.reports.specs import FilterSpec, ChoiceListFilterSpec, PieChartSpec, \
     MultibarAggregateChartSpec, MultibarChartSpec, ReportFilter, DynamicChoiceListFilterSpec, \
     NumericFilterSpec, FieldColumn, PercentageColumn, ExpandedColumn, AggregateDateColumn, \
-    OrderBySpec
+    OrderBySpec, DateFilterSpec
 
 
 def _build_date_filter(spec):
-    wrapped = FilterSpec.wrap(spec)
+    wrapped = DateFilterSpec.wrap(spec)
     return DatespanFilter(
         name=wrapped.slug,
         label=wrapped.get_display(),

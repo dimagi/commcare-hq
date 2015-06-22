@@ -31,8 +31,14 @@ from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.util import reverse, get_document_or_404
 from custom.openlmis.tasks import bootstrap_domain_task
 
-from .permissions import (locations_access_required, is_locations_admin,
-                          can_edit_location, can_edit_location_types)
+from .permissions import (
+    locations_access_required,
+    is_locations_admin,
+    can_edit_location,
+    can_edit_location_types,
+    user_can_edit_any_location,
+    can_edit_any_location,
+)
 from .models import Location, LocationType, SQLLocation
 from .forms import LocationForm, UsersAtLocationForm
 from .util import load_locs_json, location_hierarchy_config, dump_locations
@@ -87,6 +93,7 @@ class LocationsListView(BaseLocationView):
             'has_location_types': has_location_types,
             'can_edit_root': (not loc_restricted or
                 (loc_restricted and not self.request.couch_user.get_location(self.domain))),
+            'can_edit_any_location': user_can_edit_any_location(self.request.couch_user, self.request.project),
         }
 
 
@@ -596,6 +603,10 @@ class LocationImportView(BaseLocationView):
     urlname = 'location_import'
     page_title = ugettext_noop('Upload Locations from Excel')
     template_name = 'locations/manage/import.html'
+
+    @method_decorator(can_edit_any_location)
+    def dispatch(self, request, *args, **kwargs):
+        return super(LocationImportView, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_context(self):
