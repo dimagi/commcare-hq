@@ -12,13 +12,13 @@ from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.graph_models import Axis
-from corehq.apps.users.models import CommCareUser
 from custom.common import ALL_OPTION
 from custom.ewsghana.filters import ProductByProgramFilter, EWSDateFilter
 from custom.ewsghana.reports import EWSData, MultiReport, EWSLineChart, ProductSelectionPane
 from custom.ewsghana.utils import has_input_stock_permissions, drange, ews_date_format
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
+from corehq.apps.locations.dbaccessors import get_users_by_location_id
 from corehq.apps.locations.models import Location, SQLLocation
 
 
@@ -278,12 +278,7 @@ class UsersData(EWSData):
     @property
     def rendered_content(self):
         from corehq.apps.users.views.mobile.users import EditCommCareUserView
-        users = CommCareUser.view(
-            'locations/users_by_location_id',
-            startkey=[self.config['location_id']],
-            endkey=[self.config['location_id'], {}],
-            include_docs=True
-        ).all()
+        users = get_users_by_location_id(self.config['location_id'])
 
         user_to_dict = lambda sms_user: {
             'id': sms_user.get_id,

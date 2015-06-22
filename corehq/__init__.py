@@ -166,7 +166,7 @@ def _get_configurable_reports(project):
                 'show_in_navigation': show_in_navigation,
             })
 
-        yield (_('Project Reports'), [_make_report_class(config) for config in configs])
+        yield (_('Reports'), [_make_report_class(config) for config in configs])
 
 from corehq.apps.data_interfaces.interfaces import CaseReassignmentInterface
 from corehq.apps.importer.base import ImportCases
@@ -190,6 +190,13 @@ FIXTURE_INTERFACES = (
     (_('Lookup Tables'), (
         FixtureEditInterface,
         FixtureViewInterface,
+    )),
+)
+
+from corehq.apps.reports.standard.export import DataExportInterface
+EXPORT_DATA_INTERFACES = (
+    (_('Export Data'), (
+        DataExportInterface,
     )),
 )
 

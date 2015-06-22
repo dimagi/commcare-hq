@@ -12,6 +12,7 @@ from dimagi.ext.couchdbkit import (
 from dimagi.ext.couchdbkit import StringProperty, DictProperty, ListProperty, IntegerProperty
 from dimagi.ext.jsonobject import JsonObject
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
+from corehq.apps.userreports.dbaccessors import get_report_configs_by_data_source
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
@@ -202,11 +203,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         """
         Return the number of ReportConfigurations that reference this data source.
         """
-        return DataSourceConfiguration.view(
-            'userreports/report_configs_by_data_source',
-            reduce=True,
-            key=[self.domain, self._id]
-        ).one()['value']
+        return get_report_configs_by_data_source(self.domain, self._id)
 
     def validate(self, required=True):
         super(DataSourceConfiguration, self).validate(required)
@@ -300,6 +297,18 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             if filter.name == filter_slug:
                 return filter
         return None
+
+    def get_languages(self):
+        """
+        Return the languages used in this report's column and filter display properties.
+        Note that only explicitly identified languages are returned. So, if the
+        display properties are all strings, "en" would not be returned.
+        """
+        langs = set()
+        for item in self.columns + self.filters:
+            if isinstance(item['display'], dict):
+                langs |= set(item['display'].keys())
+        return langs
 
     def validate(self, required=True):
         def _check_for_duplicates(supposedly_unique_list, error_msg):

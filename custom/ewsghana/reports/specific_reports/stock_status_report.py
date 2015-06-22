@@ -151,6 +151,9 @@ class MonthOfStockProduct(EWSData):
         if not self.location:
             return ""
 
+        if self.config['export']:
+            return "Current MOS by Product"
+
         location_type = self.location.location_type.name.lower()
         if location_type == 'country':
             return "Current MOS by Product - CMS, RMS, and Teaching Hospitals"
@@ -308,6 +311,8 @@ class StockoutTable(EWSData):
     def title(self):
         if not self.location:
             return ""
+        if self.config['export']:
+            return 'Stockouts'
 
         location_type = self.location.location_type.name.lower()
         if location_type == 'country':

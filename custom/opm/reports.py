@@ -52,7 +52,7 @@ from .beneficiary import Beneficiary, ConditionsMet, OPMCaseRow
 from .health_status import HealthStatus, AWCHealthStatus
 from .incentive import Worker
 from .filters import (HierarchyFilter, MetHierarchyFilter,
-                      OPMSelectOpenCloseFilter as OpenCloseFilter, HSRHierarchyFilter)
+                      OPMSelectOpenCloseFilter as OpenCloseFilter)
 from .constants import *
 
 
@@ -1033,15 +1033,6 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
         return OPMCaseRow(row, self)
 
     @property
-    def fields(self):
-        return [
-            HSRHierarchyFilter,
-            MonthFilter,
-            YearFilter,
-            OpenCloseFilter,
-        ]
-
-    @property
     def fixed_cols_spec(self):
         return dict(num=7, width=600)
 
@@ -1188,7 +1179,7 @@ class UsersIdsData(SqlData):
         ]
 
 
-class IncentivePaymentReport(BaseReport):
+class IncentivePaymentReport(BaseReport, CaseReportMixin):
     name = "AWW Payment Report"
     slug = 'incentive_payment_report'
     model = Worker
@@ -1207,7 +1198,9 @@ class IncentivePaymentReport(BaseReport):
     def get_model_kwargs(self):
         return {'last_month_totals': self.last_month_totals}
 
-    def get_rows(self, datespan):
+    @property
+    @memoized
+    def users_matching_filter(self):
         config = {}
         for lvl in ['awc', 'gp', 'block']:
             req_prop = 'hierarchy_%s' % lvl
@@ -1217,10 +1210,31 @@ class IncentivePaymentReport(BaseReport):
                 break
         return UsersIdsData(config=config).get_data()
 
+    @property
+    @memoized
+    def awc_data(self):
+        case_objects = self.row_objects + self.extra_row_objects
+        cases_by_owner = {}
+        for case_object in case_objects:
+            owner_id = case_object.owner_id
+            cases_by_owner[owner_id] = cases_by_owner.get(owner_id, []) + [case_object]
+        return cases_by_owner
+
+    @property
+    def rows(self):
+        rows = []
+        for user in self.users_matching_filter:
+            case_sql_data = self.awc_data.get(user['doc_id'], None)
+            form_sql_data = OpmFormSqlData(DOMAIN, user['doc_id'], self.datespan)
+            row = self.model(user, self, case_sql_data, form_sql_data.data)
+            data = []
+            for t in self.model.method_map:
+                data.append(getattr(row, t[0]))
+            rows.append(data)
+        return rows
+
     def get_row_data(self, row, **kwargs):
-        case_sql_data = OpmCaseSqlData(DOMAIN, row['doc_id'], self.datespan)
-        form_sql_data = OpmFormSqlData(DOMAIN, row['doc_id'], self.datespan)
-        return self.model(row, self, case_sql_data.data, form_sql_data.data)
+        return OPMCaseRow(row, self)
 
 
 def this_month_if_none(month, year):
@@ -1256,7 +1270,7 @@ class HealthStatusReport(DatespanMixin, BaseReport):
 
     @property
     def fields(self):
-        return [HSRHierarchyFilter, OpenCloseFilter, DatespanFilter]
+        return [HierarchyFilter, OpenCloseFilter, DatespanFilter]
 
     @property
     def case_status(self):
@@ -1477,7 +1491,7 @@ class HealthMapReport(BaseMixin, GenericMapReport, GetParamsMixin, CustomProject
     name = "Health Status (Map)"
     title = "Health Status (Map)"
     slug = "health_status_map"
-    fields = [HSRHierarchyFilter, MonthFilter, YearFilter, OpenCloseFilter]
+    fields = [HierarchyFilter, MonthFilter, YearFilter, OpenCloseFilter]
     report_partial_path = "opm/map_template.html"
     base_template = 'opm/map_base_template.html'
     printable = True
