@@ -108,6 +108,9 @@ class TestURLs(TestViews):
         if cls.app:
             cls.app.delete()
 
+    def setUp(self):
+        self.client.login(username=self.username, password=self.password)
+
     def _load_app(self, filename):
         with open(os.path.join(os.path.dirname(__file__), 'data', filename)) as f:
             self.app = import_app(json.loads(f.read()), self.domain)
@@ -122,44 +125,51 @@ class TestURLs(TestViews):
 
     def test_basic_app(self):
         self._load_app('basic_app.json')
-        kwargs = {'domain': self.domain, 'app_id': self.app.id}
-        self.client.login(username=self.username, password=self.password)
         self._test_status_codes([
             'view_app',
             'release_manager',
             AppSummaryView.urlname,
-        ], kwargs)
+        ], {
+            'domain': self.domain,
+            'app_id': self.app.id,
+        })
 
     def test_user_registration(self):
         self._load_app('user_registration.json')
-        kwargs = {'domain': self.domain, 'app_id': self.app.id}
-        self.client.login(username=self.username, password=self.password)
         self._test_status_codes([
             'view_user_registration',
             'user_registration_source',
-        ], kwargs)
+        ], {
+            'domain': self.domain,
+            'app_id': self.app.id,
+        })
 
     def test_module(self):
         self._load_app('basic_app.json')
-        kwargs = {'domain': self.domain, 'app_id': self.app.id, 'module_id': 0}
-        self.client.login(username=self.username, password=self.password)
-        self._test_status_codes(['view_module'], kwargs)
+        self._test_status_codes(['view_module'], {
+            'domain': self.domain,
+            'app_id': self.app.id,
+            'module_id': 0,
+        })
 
     def test_advanced_module(self):
         self._load_app('advanced_module.json')
-        kwargs = {'domain': self.domain, 'app_id': self.app.id, 'module_id': 0}
-        self.client.login(username=self.username, password=self.password)
-        self._test_status_codes(['view_module'], kwargs)
+        self._test_status_codes(['view_module'], {
+            'domain': self.domain,
+            'app_id': self.app.id,
+            'module_id': 0,
+        })
 
     def test_reporting_module(self):
         self._load_app('reporting_module.json')
-        kwargs = {'domain': self.domain, 'app_id': self.app.id, 'module_id': 0}
-        self.client.login(username=self.username, password=self.password)
-        self._test_status_codes(['view_module'], kwargs)
+        self._test_status_codes(['view_module'], {
+            'domain': self.domain,
+            'app_id': self.app.id,
+            'module_id': 0,
+        })
 
     def test_view_form(self):
         self._load_app('basic_app.json')
-        self.client.login(username=self.username, password=self.password)
         self._test_status_codes(['view_form', 'form_source'], {
             'domain': self.domain,
             'app_id': self.app.id,
@@ -168,7 +178,6 @@ class TestURLs(TestViews):
         })
 
     def _json_content_from_get(self, name, kwargs, data={}):
-        self.client.login(username=self.username, password=self.password)
         response = self.client.get(reverse(name, kwargs=kwargs), data)
         self.assertEqual(response.status_code, 200)
         return json.loads(response.content)
