@@ -30,31 +30,6 @@
                 if (id in totalValues) $(this).text(total[id]);
             });
         };
-
-        $('#apply-filters').popover({
-            template: '<div class="popover" role="tooltip"><div class="arrow"></div><div class="popover-content"></div></div>',
-            content: 'You must specify minimum one GP',
-            placement: 'left',
-            trigger: 'manual'
-        });
-
-        $('#report_filter_hierarchy_gp').on('change', function() {
-            if ($('#report_filter_hierarchy_gp').val() !== null) {
-                $('#apply-filters').popover('hide')
-            } else {
-                $('#apply-filters').popover('show')
-            }
-        })
-
-        $('#apply-filters').on('click', function(e) {
-            if ($('#report_filter_hierarchy_gp').val() === null) {
-                e.preventDefault();
-                $(this).popover('show')
-            } else {
-                $(this).popover('hide')
-            }
-        });
-
         var updateTotalRow = function () {
             var fixedTotal = {};
             var fixedTotalValues = {};

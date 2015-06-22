@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand, CommandError
 from optparse import make_option
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.hqcase.dbaccessors import get_cases_in_domain
 from corehq.apps.sms.models import CommConnectCase
 from corehq.apps.sms.mixin import InvalidFormatException, PhoneNumberInUseException
 
@@ -18,17 +19,12 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         if len(args) == 0:
             raise CommandError("Usage: python manage.py check_case_verified_numbers <domain1 domain2 ...>")
-        
+
         make_fixes = options["fix"]
-        
+
         for domain in args:
             print "*** Processing Domain %s ***" % domain
-            cases = CommCareCase.view("hqcase/types_by_domain",
-                                      startkey=[domain],
-                                      endkey=[domain, {}],
-                                      include_docs=True,
-                                      reduce=False).all()
-            for case in cases:
+            for case in get_cases_in_domain(domain):
                 contact_phone_number = case.get_case_property("contact_phone_number")
                 contact_phone_number_is_verified = case.get_case_property("contact_phone_number_is_verified")
                 contact_backend_id = case.get_case_property("contact_backend_id")

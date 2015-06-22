@@ -7,17 +7,12 @@
     $(function () {
         $("fieldset .helptext").each( function (index, data) {
             console.log(data.textContent);
-        $(this).parent().prev("label").append(
-                '<a href="#" class="hq-help no-click"><i class="icon-question-sign" data-toggle="popover" data-content="'
-                        + data.textContent + '"data-trigger="hover"></i></a>');
-        $(this).remove();
-    });
-
-    $("i[data-toggle='popover']").popover({
-        template: '<div class="popover popover-medium"><div class="arrow"></div><div class="popover-inner"><div class="popover-content"><p></p></div></div></div>',
-        placement: 'top'
-    });
-
+            $(this).parent().prev("label").append('<span class="hq-help-template" data-placement="top" data-content="' + data.textContent + '"></span>');
+            $(this).remove();
+        });
+        $('fieldset .hq-help-template').each(function () {
+            COMMCAREHQ.transformHelpTemplate($(this), true);
+        });
     });
 </script>
 {% endblock %}

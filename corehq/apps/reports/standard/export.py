@@ -7,6 +7,7 @@ from django.conf import settings
 from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.http import Http404
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.hqcase.dbaccessors import get_case_types_for_domain
 from dimagi.utils.decorators.memoized import memoized
 from django_prbac.utils import has_privilege
 from corehq import privileges
@@ -323,17 +324,12 @@ class CaseExportReport(ExportReport):
     @property
     def report_context(self):
         context = super(CaseExportReport, self).report_context
-        cases = CommCareCase.get_db().view("hqcase/types_by_domain",
-            startkey=[self.domain],
-            endkey=[self.domain, {}],
-            reduce=True,
-            group=True,
-            group_level=2).all()
+        case_types = get_case_types_for_domain(self.domain)
         groups = HQGroupExportConfiguration.by_domain(self.domain)
         context.update(
-            case_types=[case['key'][1] for case in cases],
+            case_types=case_types,
             group_exports=[group.case_exports for group in groups
-                if group.case_exports],
+                           if group.case_exports],
             report_slug=self.slug,
         )
         context['case_format'] = self.request.GET.get('case_format') or 'csv'

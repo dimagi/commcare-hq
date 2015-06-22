@@ -18,6 +18,7 @@ class OtaV3RestoreTest(TestCase):
     """Tests OTA Restore v3"""
 
     def setUp(self):
+        self.domain = 'dummy-project'
         delete_all_cases()
         delete_all_sync_logs()
 
@@ -25,7 +26,7 @@ class OtaV3RestoreTest(TestCase):
         file_path = os.path.join(os.path.dirname(__file__), "data", "create_short.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
-        form = post_xform_to_couch(xml_data)
+        form = post_xform_to_couch(xml_data, domain=self.domain)
         process_cases(form)
 
         expected_case_block = """
@@ -42,7 +43,7 @@ class OtaV3RestoreTest(TestCase):
         </case>"""
 
         restore_payload = generate_restore_payload(
-            project=Domain(name='dummy-project'),
+            project=Domain(name=self.domain),
             user=dummy_user(),
             items=True,
             version=V3

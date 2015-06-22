@@ -580,6 +580,7 @@ class SubscriptionForm(forms.Form):
             web_user=self.web_user,
             service_type=service_type,
             pro_bono_status=pro_bono_status,
+            internal_change=True,
         )
         return sub
 
@@ -679,6 +680,7 @@ class ChangeSubscriptionForm(forms.Form):
             web_user=self.web_user,
             service_type=self.cleaned_data['service_type'],
             pro_bono_status=self.cleaned_data['pro_bono_status'],
+            internal_change=True,
         )
 
 
