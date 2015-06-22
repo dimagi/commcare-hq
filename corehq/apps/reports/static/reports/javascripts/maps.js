@@ -121,7 +121,7 @@ function initTable(data, config) {
             if (data.features[i] != void(0)) {
                 return data.features[i].visible;
             }
-            return true
+            return true;
         }
     );
     var table = new HQReportDataTables({
