@@ -6,16 +6,13 @@ require.config({
     bundles: {
         "global-deps": [
             "jquery", 
-            "jquery-ui", 
-            "jquery.bootstrap", 
-            "css/css!../bower_components/jquery-ui/themes/redmond/jquery-ui"
+            "jquery.bootstrap"
         ], 
         "local-deps": [
             "underscore", 
             "jquery.jstree", 
             "jquery.fancybox", 
             "jquery.bootstrap-popout", 
-            "jquery.bootstrap-better-typeahead", 
             "save-button", 
             "css/css!../lib/codemirror/codemirror", 
             "css/css!../bower_components/jstree/dist/themes/default/style", 

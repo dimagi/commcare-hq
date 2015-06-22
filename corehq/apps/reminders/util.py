@@ -6,7 +6,7 @@ from django.utils.translation import ugettext as _
 from corehq.apps.casegroups.dbaccessors import get_case_groups_in_domain
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.groups.models import Group
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, CouchUser
 from casexml.apps.case.models import CommCareCase
 from django_prbac.utils import has_privilege
 
@@ -95,12 +95,6 @@ def get_form_name(form_unique_id):
     return app.name + "/" + module_name + "/" + form_name
 
 def get_recipient_name(recipient, include_desc=True):
-    # Circular imports
-    from corehq.apps.users.models import CouchUser
-    from corehq.apps.groups.models import Group
-    from casexml.apps.case.models import CommCareCase
-    from casexml.apps.case.models import CommCareCaseGroup
-    
     if recipient == None:
         return "(no recipient)"
     elif isinstance(recipient, list):

@@ -196,6 +196,13 @@ FIXTURE_INTERFACES = (
     )),
 )
 
+from corehq.apps.reports.standard.export import DataExportInterface
+EXPORT_DATA_INTERFACES = (
+    (_('Export Data'), (
+        DataExportInterface,
+    )),
+)
+
 
 from corehq.apps.adm.reports.supervisor import SupervisorReportsADMSection
 
