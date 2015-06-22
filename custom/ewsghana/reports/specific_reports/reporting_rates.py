@@ -231,7 +231,7 @@ class NonReporting(ReportingRatesData):
         if self.location_id:
             location_type = self.location.location_type.name.lower()
             if location_type == 'country':
-                return _('Non-reporting CMS, RMS, and Teaching Hospitals')
+                return _('Non-Reporting Medical Stores and Teaching Hospitals')
             else:
                 return _('Non-Reporting Facilities')
         return ''
