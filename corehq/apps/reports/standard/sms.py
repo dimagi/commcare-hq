@@ -437,6 +437,12 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
             return self.get_keyword_display(event.source_id, content_cache)
         elif event.source == MessagingEvent.SOURCE_REMINDER and event.source_id:
             return self.get_reminder_display(event.source_id, content_cache)
+        elif event.content_type in (
+            MessagingEvent.CONTENT_SMS_SURVEY,
+            MessagingEvent.CONTENT_IVR_SURVEY,
+        ):
+            return ('%s (%s)' % (_(dict(MessagingEvent.CONTENT_CHOICES).get(event.content_type)),
+                event.form_name or _('Unknown')))
 
         content_choices = dict(MessagingEvent.CONTENT_CHOICES)
         return self._fmt(_(content_choices.get(event.content_type, '-')))
@@ -451,16 +457,16 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
         return self.table_cell(display_text, display)
 
     def get_survey_detail_link(self, subevent):
+        form_name = subevent.form_name or _('Unknown')
         if not subevent.xforms_session_id:
-            return self._fmt('(No survey was initiated)')
+            return self._fmt(form_name)
         else:
-            display_text = _('View Survey Details')
             display = '<a target="_blank" href="/a/%s/reports/survey_detail/?id=%s">%s</a>' % (
                 self.domain,
                 subevent.xforms_session_id,
-                _('View Survey Details'),
+                form_name,
             )
-            return self.table_cell(display_text, display)
+            return self.table_cell(form_name, display)
 
 
 class MessagingEventsReport(BaseMessagingEventReport):
