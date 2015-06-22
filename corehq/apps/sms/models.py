@@ -819,18 +819,18 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             ugettext_noop('Internal Server Error'),
     }
 
-    domain = models.CharField(max_length=255, null=False, db_index=True)
+    domain = models.CharField(max_length=126, null=False, db_index=True)
     date = models.DateTimeField(null=False, db_index=True)
     source = models.CharField(max_length=3, choices=SOURCE_CHOICES, null=False)
-    source_id = models.CharField(max_length=255, null=True)
+    source_id = models.CharField(max_length=126, null=True)
     content_type = models.CharField(max_length=3, choices=CONTENT_CHOICES, null=False)
 
     # If any of the MessagingSubEvent status's are STATUS_ERROR, this is STATUS_ERROR
     status = models.CharField(max_length=3, choices=STATUS_CHOICES, null=False)
-    error_code = models.CharField(max_length=255, null=True)
+    error_code = models.CharField(max_length=126, null=True)
     additional_error_text = models.TextField(null=True)
     recipient_type = models.CharField(max_length=3, choices=RECIPIENT_CHOICES, null=True, db_index=True)
-    recipient_id = models.CharField(max_length=255, null=True, db_index=True)
+    recipient_id = models.CharField(max_length=126, null=True, db_index=True)
 
     @classmethod
     def get_recipient_type_from_doc_type(cls, recipient_doc_type):
@@ -1035,17 +1035,17 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
     parent = models.ForeignKey('MessagingEvent')
     date = models.DateTimeField(null=False, db_index=True)
     recipient_type = models.CharField(max_length=3, choices=RECIPIENT_CHOICES, null=False)
-    recipient_id = models.CharField(max_length=255, null=True)
+    recipient_id = models.CharField(max_length=126, null=True)
     content_type = models.CharField(max_length=3, choices=MessagingEvent.CONTENT_CHOICES, null=False)
 
     # Only used when content_type is CONTENT_SMS_SURVEY or CONTENT_IVR_SURVEY
-    form_unique_id = models.CharField(max_length=255, null=True)
+    form_unique_id = models.CharField(max_length=126, null=True)
     xforms_session = models.ForeignKey('smsforms.SQLXFormsSession', null=True, on_delete=models.PROTECT)
 
     # If this was a reminder that spawned off of a case, this is the case's id
-    case_id = models.CharField(max_length=255, null=True)
+    case_id = models.CharField(max_length=126, null=True)
     status = models.CharField(max_length=3, choices=MessagingEvent.STATUS_CHOICES, null=False)
-    error_code = models.CharField(max_length=255, null=True)
+    error_code = models.CharField(max_length=126, null=True)
     additional_error_text = models.TextField(null=True)
 
     def save(self, *args, **kwargs):
