@@ -102,9 +102,7 @@ class StockReportParser(object):
 
     def get_req_id(self):
         reqs = get_open_requisition_case_ids_for_location(
-            self.location['location'].domain,
-            self.location['location']._id
-        )
+            self.location['location'])
         if reqs:
             # only support one open requisition per location
             assert(len(reqs) == 1)
