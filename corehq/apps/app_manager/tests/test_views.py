@@ -106,7 +106,6 @@ class TestURLs(TestViews):
             cls.build = cls.app.make_build()
             cls.build.save()
 
-
     @classmethod
     def tearDownClass(cls):
         super(TestViews, cls).tearDownClass()
@@ -119,7 +118,7 @@ class TestURLs(TestViews):
             self.assertEqual(response.status_code, 200)
 
     def test_status_codes(self):
-        kwargs = { 'domain': self.domain, 'app_id': self.app.id }
+        kwargs = {'domain': self.domain, 'app_id': self.app.id}
         self.client.login(username=self.username, password=self.password)
         self._test_status_codes([
             'view_app',
@@ -153,7 +152,7 @@ class TestURLs(TestViews):
         content = self._json_content_from_get('paginate_releases', {
             'domain': self.domain,
             'app_id': self.app.id,
-        }, { 'limit': 5 })
+        }, {'limit': 5})
         self.assertEqual(len(content), 1)
         content = content[0]
         self.assertEqual(content['copy_of'], self.app.id)
