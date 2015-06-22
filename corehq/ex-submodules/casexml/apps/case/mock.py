@@ -369,14 +369,8 @@ class CaseFactory(object):
                 ]
             return blocks
 
-        self.post_case_blocks(
+        _, cases = self.post_case_blocks(
             [block for structure in case_structures for block in _get_case_blocks(structure)],
             form_extras,
         )
-
-        return [
-            CommCareCase.wrap(doc) for doc in iter_docs(
-                CommCareCase.get_db(),
-                [id for structure in case_structures for id in structure.walk_ids()]
-            )
-        ]
+        return cases
