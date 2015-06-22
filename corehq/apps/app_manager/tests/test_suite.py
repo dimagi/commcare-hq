@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import copy
+import re
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import (
@@ -9,7 +10,8 @@ from corehq.apps.app_manager.models import (
     OpenSubCaseAction, FormActionCondition, UpdateCaseAction, WORKFLOW_FORM, FormLink, AUTO_SELECT_USERCASE,
     ReportModule, ReportAppConfig)
 from corehq.apps.app_manager.tests.util import TestFileMixin, commtrack_enabled
-from corehq.apps.app_manager.xpath import dot_interpolate, UserCaseXPath, interpolate_xpath
+from corehq.apps.app_manager.xpath import (dot_interpolate, UserCaseXPath,
+                                           interpolate_xpath, session_var)
 from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.feature_previews import MODULE_FILTER
 from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
@@ -143,6 +145,9 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
     @commtrack_enabled(True)
     def test_autoload_supplypoint(self):
         app = Application.wrap(self.get_json('app'))
+        app.modules[0].forms[0].source = re.sub('/data/plain',
+                                                session_var('supply_point_id'),
+                                                app.modules[0].forms[0].source)
         app_xml = app.create_suite()
         self.assertXmlPartialEqual(
             self.get_xml('autoload_supplypoint'),

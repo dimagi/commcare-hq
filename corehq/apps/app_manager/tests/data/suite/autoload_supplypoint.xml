@@ -14,7 +14,7 @@
              function="instance('commcaresession')/session/user/data/commtrack-supply-point"/>
     </session>
     <assertions>
-      <assert test="count(instance('commcaresession')/session/user/data/commtrack-supply-point) = 1">
+      <assert test="count(instance('commcaresession')/session/user/data) = 1 and count(instance('commcaresession')/session/user/data/commtrack-supply-point) = 1">
         <text>
           <locale id="case_autoload.location.property_missing">
             <argument>commtrack-supply-point</argument>
