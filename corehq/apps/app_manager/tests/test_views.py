@@ -14,6 +14,9 @@ from corehq.apps.app_manager.models import Application, APP_V1, APP_V2, import_a
 
 
 class TestViews(TestCase):
+    app = None
+    build = None
+
     @classmethod
     def setUpClass(cls):
         cls.domain = 'app-manager-testviews-domain'
@@ -22,11 +25,18 @@ class TestViews(TestCase):
         cls.user = WebUser.create(cls.domain, cls.username, cls.password, is_active=True)
         cls.user.is_superuser = True
         cls.user.save()
+        cls.build = add_build(version='2.7.0', build_number=20655)
         toggles.CUSTOM_PROPERTIES.set("domain:{domain}".format(domain=cls.domain), True)
+
+    def setUp(self):
+        self.client.login(username=self.username, password=self.password)
 
     @classmethod
     def tearDownClass(cls):
         cls.user.delete()
+        cls.build.delete()
+        if cls.app:
+            cls.app.delete()
 
     def test_download_file_bad_xform_404(self):
         '''
@@ -64,7 +74,6 @@ class TestViews(TestCase):
                 "another": "value"
             }
         }
-        self.client.login(username=self.username, password=self.password)
 
         response = self.client.post(reverse('edit_commcare_profile', args=[self.domain, app._id]),
                                     json.dumps(data),
@@ -90,26 +99,6 @@ class TestViews(TestCase):
         custom_properties = content["changed"]["custom_properties"]
 
         self.assertEqual(custom_properties["random"], "changed")
-
-
-class TestURLs(TestViews):
-    app = None
-    build = None
-
-    @classmethod
-    def setUpClass(cls):
-        super(TestURLs, cls).setUpClass()
-        cls.build = add_build(version='2.7.0', build_number=20655)
-
-    @classmethod
-    def tearDownClass(cls):
-        super(TestViews, cls).tearDownClass()
-        cls.build.delete()
-        if cls.app:
-            cls.app.delete()
-
-    def setUp(self):
-        self.client.login(username=self.username, password=self.password)
 
     def _load_app(self, filename):
         with open(os.path.join(os.path.dirname(__file__), 'data', filename)) as f:
