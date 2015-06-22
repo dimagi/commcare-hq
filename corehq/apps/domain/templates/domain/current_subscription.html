@@ -4,6 +4,7 @@
 {% load i18n %}
 
 {% block js %}{{ block.super }}
+    <script type="text/javascript" src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
     <script type="text/javascript" src="{% static 'accounting/ko/accounting.payment_method_handler.js' %}"></script>
     <script type="text/javascript" src="{% static 'accounting/ko/accounting.credits.js' %}"></script>
     <script type="text/javascript" src="https://js.stripe.com/v2/"></script>
@@ -120,25 +121,6 @@
                                       data-bind="text: amount"></span>
                             </div>
                         </div>
-                        <div class="control-group">
-                            <div class="controls">
-                                {% if can_purchase_credits and not plan.is_trial %}
-                                <button type="button"
-                                        class="btn btn-success"
-                                        data-toggle="modal"
-                                        data-target="#paymentModal"
-                                        data-bind="click: triggerPayment"
-                                >
-                                    {% trans 'Prepay by Credit Card' %}
-                                </button>
-                                {% else %}
-                                <span class="label">
-                                    <i class="icon-info-sign"></i>
-                                    {% trans "Not Billing Admin, Can't Add Credit" %}
-                                </span>
-                                {% endif %}
-                            </div>
-                        </div>
                     </div>
                     {% if plan.general_credit and plan.general_credit.is_visible %}
                         <div class="control-group">
@@ -188,6 +170,27 @@
                             </div>
                         </div>
                     {% endif %}
+                    <div data-bind="with: prepayments">
+                        <div class="control-group">
+                            <div class="controls">
+                                {% if can_purchase_credits and not plan.is_trial %}
+                                <button type="button"
+                                class="btn btn-success"
+                                data-toggle="modal"
+                                data-target="#paymentModal"
+                                data-bind="click: triggerPayment"
+                                >
+                                {% trans 'Prepay by Credit Card' %}
+                                </button>
+                                {% else %}
+                                <span class="label">
+                                    <i class="icon-info-sign"></i>
+                                    {% trans "Not Billing Admin, Can't Add Credit" %}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
                 {% endif %}
             </div>
             <h2>{% trans 'Usage Summary' %}</h2>
@@ -228,48 +231,39 @@
             <div class="control-group">
                 One credit is equivalent to one USD.
             </div>
-
-            <div class="control-group">
-                <label class="control-label">
-                    {% trans 'Plan Credits' %}
-                </label>
-                <div class="controls">
-                    <div class="input-prepend">
-                        <span class="add-on">$</span>
-                        <input type="text"
-                               class="input-small"
-                               name="plan_credit"
-                               data-bind="value: plan_credit" />
+            <div data-bind="foreach: products">
+                <div class="control-group">
+                    <label class="control-label">
+                        {% trans 'Plan Credits for ' %}
+                        <strong><span data-bind="text: name"></span></strong>
+                    </label>
+                    <div class="controls">
+                        <div class="input-prepend">
+                            <span class="add-on">$</span>
+                            <input type="text"
+                                   class="input-small"
+                                   data-bind="
+                                   attr:{name: creditType},
+                                   numericValue: addAmount" />
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="control-group">
-                <label class="control-label">
-                    {% trans 'SMS Credits' %}
-                </label>
-                <div class="controls">
-                    <div class="input-prepend">
-                        <span class="add-on">$</span>
-                        <input type="text"
-                               class="input-small"
-                               name="sms_credit"
-                               data-bind="value: sms_credit" />
-                    </div>
-                </div>
-            </div>
-
-            <div class="control-group">
-                <label class="control-label">
-                    {% trans 'Mobile Worker Credits' %}
-                </label>
-                <div class="controls">
-                    <div class="input-prepend">
-                        <span class="add-on">$</span>
-                        <input type="text"
-                               class="input-small"
-                               name="user_credit"
-                               data-bind="value: user_credit" />
+            <div data-bind="foreach: features">
+                <div class="control-group">
+                    <label class="control-label">
+                        <span data-bind="text: name"></span>
+                    </label>
+                    <div class="controls">
+                        <div class="input-prepend">
+                            <span class="add-on">$</span>
+                            <input type="text"
+                                   class="input-small"
+                                   data-bind="
+                                   attr:{name: creditType},
+                                   numericValue: addAmount" />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -281,17 +275,9 @@
                 <div class="controls">
                     <div>
                         <span class="add-on">$</span>
-                        <span>9</span>
+                        <span data-bind="text: amount()"></span>
                     </div>
                 </div>
-{#                <div class="controls">#}
-{#                    <div class="input-prepend">#}
-{#                        <span class="add-on">$</span>#}
-{#                        <input type="text"#}
-{#                               class="input-small"#}
-{#                               data-bind="value: total_credit" />#}
-{#                    </div>#}
-{#                </div>#}
             </div>
         </fieldset>
     </script>
