@@ -37,7 +37,7 @@ from collections import defaultdict
 from django.utils.importlib import import_module
 from corehq import toggles
 
-from .exceptions import InactiveTransferDomainException
+from .exceptions import InactiveTransferDomainException, NameUnavailableException
 
 lang_lookup = defaultdict(str)
 
@@ -642,11 +642,11 @@ class Domain(Document, SnapshotMixin):
                 name = Domain._get_next_available_name(prefix, Domain.get_names_by_prefix(prefix + '-'))
                 if Domain.get_by_name(name):
                     # should never happen
-                    raise Exception
+                    raise NameUnavailableException
                 if len(name) <= max_length:
                     return name
                 prefix = prefix[:-1]
-            raise Exception
+            raise NameUnavailableException
 
         return name
 

@@ -3,6 +3,8 @@ from __future__ import print_function, unicode_literals
 from django.test import SimpleTestCase, TestCase
 
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain.exceptions import NameUnavailableException
+
 
 
 class DomainNameAvailabilityTest(SimpleTestCase):
@@ -47,7 +49,7 @@ class DomainNameGenerationTest(TestCase):
     def test_failure(self):
         name = "ab"
         self.add_domain(name)
-        with self.assertRaises(Exception):
+        with self.assertRaises(NameUnavailableException):
             Domain.generate_name(name, 1)
 
     def test_long_names(self):

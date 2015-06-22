@@ -4,6 +4,7 @@ from django import forms
 from django.contrib.auth.models import User
 from corehq.apps.users.forms import RoleForm, SupplyPointSelectWidget
 import re
+from corehq.apps.domain.exceptions import NameUnavailableException
 from corehq.apps.domain.forms import clean_password, max_pwd
 from django.core.validators import validate_email
 from corehq.apps.domain.models import Domain
@@ -148,7 +149,7 @@ class DomainRegistrationForm(forms.Form):
         if name is not None:
             try:
                 name = Domain.generate_name(name, self.max_name_length)
-            except Exception:
+            except NameUnavailableException:
                 raise forms.ValidationError("Project name already taken---please try another")
         self.cleaned_data['domain_name'] = name
 
