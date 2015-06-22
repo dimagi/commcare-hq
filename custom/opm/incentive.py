@@ -39,8 +39,8 @@ class Worker(object):
         self.owner_id = worker.get('doc_id')
 
         if case_sql_data:
-            self.women_registered = str(case_sql_data.get('women_registered_total', None))
-            self.children_registered = str(case_sql_data.get('children_registered_total', None))
+            self.women_registered = len(case_sql_data)
+            self.children_registered = sum([c.num_children for c in case_sql_data if not c.is_secondary])
         else:
             self.women_registered = None
             self.children_registered = None
