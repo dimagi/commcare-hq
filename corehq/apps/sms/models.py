@@ -5,6 +5,7 @@ from dimagi.ext.couchdbkit import *
 
 from datetime import datetime
 from django.db import models
+from corehq.apps.app_manager.models import Form
 from corehq.apps.users.models import CouchUser, CommCareUser, WebUser
 from corehq.apps.groups.models import Group
 from casexml.apps.case.models import CommCareCase
@@ -743,7 +744,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
 
     CONTENT_CHOICES = (
         (CONTENT_NONE, ugettext_noop('None')),
-        (CONTENT_SMS, ugettext_noop('SMS')),
+        (CONTENT_SMS, ugettext_noop('SMS Message')),
         (CONTENT_SMS_SURVEY, ugettext_noop('SMS Survey')),
         (CONTENT_IVR_SURVEY, ugettext_noop('IVR Survey')),
         (CONTENT_PHONE_VERIFICATION, ugettext_noop('Phone Verification')),
@@ -873,13 +874,17 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             if reminder_definition.start_condition_type == CASE_CRITERIA
             else None)
 
+        content_type, form_unique_id, form_name = self.get_content_info_from_reminder(
+            reminder_definition, reminder, parent=self)
+
         obj = MessagingSubEvent.objects.create(
             parent=self,
             date=datetime.utcnow(),
             recipient_type=recipient_type,
             recipient_id=recipient.get_id if recipient_type else None,
-            content_type=self.get_content_type_from_reminder(reminder_definition),
-            form_unique_id=reminder.current_event.form_unique_id,
+            content_type=content_type,
+            form_unique_id=form_unique_id,
+            form_name=form_name,
             case_id=case_id,
             status=MessagingEvent.STATUS_IN_PROGRESS,
         )
@@ -933,29 +938,52 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         }.get(reminder_definition.reminder_type, default)
 
     @classmethod
-    def get_content_type_from_reminder(cls, reminder_definition):
+    def get_form_name_or_none(cls, form_unique_id):
+        try:
+            form = Form.get_form(form_unique_id)
+            return form.full_path_name
+        except:
+            return None
+
+    @classmethod
+    def get_content_info_from_reminder(cls, reminder_definition, reminder, parent=None):
         from corehq.apps.reminders.models import (METHOD_SMS, METHOD_SMS_CALLBACK,
             METHOD_SMS_SURVEY, METHOD_IVR_SURVEY)
-        return {
+        content_type = {
             METHOD_SMS: cls.CONTENT_SMS,
             METHOD_SMS_CALLBACK: cls.CONTENT_SMS,
             METHOD_SMS_SURVEY: cls.CONTENT_SMS_SURVEY,
             METHOD_IVR_SURVEY: cls.CONTENT_IVR_SURVEY,
         }.get(reminder_definition.method, cls.CONTENT_SMS)
 
-    @classmethod
-    def get_content_type_from_keyword(cls, keyword):
-        from corehq.apps.reminders.models import (METHOD_SMS, METHOD_SMS_SURVEY,
-            METHOD_STRUCTURED_SMS)
+        form_unique_id = reminder.current_event.form_unique_id
+        if parent and parent.form_unique_id == form_unique_id:
+            form_name = parent.form_name
+        else:
+            form_name = (cls.get_form_name_or_none(form_unique_id)
+                if form_unique_id else None)
 
-        if len(keyword.actions) == 0:
-            return cls.CONTENT_NONE
+        return (content_type, form_unique_id, form_name)
+
+    @classmethod
+    def get_content_info_from_keyword(cls, keyword):
+        from corehq.apps.reminders.models import (METHOD_SMS, METHOD_SMS_SURVEY,
+            METHOD_STRUCTURED_SMS, RECIPIENT_SENDER)
+
+        content_type = cls.CONTENT_NONE
+        form_unique_id = None
+        form_name = None
 
         for action in keyword.actions:
-            if action.action in (METHOD_SMS_SURVEY, METHOD_STRUCTURED_SMS):
-                return cls.CONTENT_SMS_SURVEY
+            if action.recipient == RECIPIENT_SENDER:
+                if action.action in (METHOD_SMS_SURVEY, METHOD_STRUCTURED_SMS):
+                    content_type = cls.CONTENT_SMS_SURVEY
+                    form_unique_id = action.form_unique_id
+                    form_name = cls.get_form_name_or_none(action.form_unique_id)
+                elif action.action == METHOD_SMS:
+                    content_type = cls.CONTENT_SMS
 
-        return cls.CONTENT_SMS
+        return (content_type, form_unique_id, form_name)
 
     @classmethod
     def create_from_reminder(cls, reminder_definition, reminder, recipient):
@@ -965,7 +993,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             return cls.objects.get(pk=reminder_definition.messaging_event_id)
 
         source, source_id = cls.get_source_from_reminder(reminder_definition)
-        content_type = cls.get_content_type_from_reminder(reminder_definition)
+        content_type, form_unique_id, form_name = cls.get_content_info_from_reminder(
+            reminder_definition, reminder)
         recipient_type = cls.get_recipient_type(recipient)
 
         return cls.objects.create(
@@ -974,6 +1003,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             source=source,
             source_id=source_id,
             content_type=content_type,
+            form_unique_id=form_unique_id,
+            form_name=form_name,
             status=cls.STATUS_IN_PROGRESS,
             recipient_type=recipient_type,
             recipient_id=recipient.get_id if recipient_type else None
@@ -985,7 +1016,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         keyword - the keyword object
         contact - the person who initiated the keyword
         """
-        content_type = cls.get_content_type_from_keyword(keyword)
+        content_type, form_unique_id, form_name = cls.get_content_info_from_keyword(
+            keyword)
         recipient_type = cls.get_recipient_type(contact)
 
         return cls.objects.create(
@@ -994,6 +1026,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             source=cls.SOURCE_KEYWORD,
             source_id=keyword.get_id,
             content_type=content_type,
+            form_unique_id=form_unique_id,
+            form_name=form_name,
             status=cls.STATUS_IN_PROGRESS,
             recipient_type=recipient_type,
             recipient_id=contact.get_id if recipient_type else None
