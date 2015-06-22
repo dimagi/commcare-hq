@@ -15,6 +15,8 @@ from corehq import privileges
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 
 from corehq.apps.data_interfaces.interfaces import DataInterface
+from corehq.apps.reports.dispatcher import DataExportInterfaceDispatcher
+from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.reports.standard import ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.reports.models import FormExportSchema, HQGroupExportConfiguration
 from corehq.apps.reports.util import datespan_from_beginning
@@ -386,3 +388,11 @@ class DeidExportReport(FormExportReportBase):
     @classmethod
     def get_subpages(self):
         return []
+
+
+class DataExportInterface(GenericReportView):
+    base_template = 'reports/reportdata/data_export.html'
+    dispatcher = DataExportInterfaceDispatcher
+    name = ugettext_noop('Export Forms')
+    section_name = "Export Data"
+    slug = 'export_forms'

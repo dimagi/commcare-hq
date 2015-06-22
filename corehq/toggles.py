@@ -492,3 +492,9 @@ LINK_SUPPLY_POINT = StaticToggle(
     TAG_EXPERIMENTAL,
     namespaces=[NAMESPACE_DOMAIN],
 )
+
+REVAMPED_EXPORTS = StaticToggle(
+    'revamped_exports',
+    'Revamped Form and Case exports',
+    TAG_PRODUCT_PATH,
+)
