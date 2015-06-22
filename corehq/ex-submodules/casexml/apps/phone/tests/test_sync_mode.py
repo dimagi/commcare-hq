@@ -434,7 +434,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
             version=V2,
             update={"greeting": "hello"}
         ).as_xml()
-        form = self._postFakeWithSyncToken(update_block, self.sync_log.get_id)
+        form, _ = self._postFakeWithSyncToken(update_block, self.sync_log.get_id)
         assert_user_doesnt_have_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
 
         form.archive()

@@ -43,7 +43,7 @@ def post_case_blocks(case_blocks, form_extras=None, domain=None):
         **form_extras
     )
     response, xform, cases = sp.run()
-    return xform
+    return xform, cases
 
 
 def reprocess_form_cases(form, config=None, case_db=None):
