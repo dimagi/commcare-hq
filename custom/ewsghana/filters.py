@@ -159,7 +159,7 @@ class EWSDateFilter(BaseReportFilter):
             {
                 'text': 'Week (Friday - Thursday)',
                 'val': 2,
-                'firstOptions': weeks,
+                'firstOptions': weeks[:-1],
                 'secondOptions': []
             },
             {

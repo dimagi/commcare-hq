@@ -10,6 +10,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.es import filters, users as user_es, cases as case_es
 from corehq.apps.es.es_query import HQESQuery
+from corehq.apps.locations.dbaccessors import get_user_ids_by_location
 from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.search import SearchFilter
@@ -167,7 +168,6 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         locations or those locations descendants.
         """
         from corehq.apps.locations.models import SQLLocation, LOCATION_REPORTING_PREFIX
-        from corehq.apps.users.models import CommCareUser
         results = []
         selected_location_group_ids = EMWF.selected_location_reporting_group_ids(self.request)
 
@@ -176,14 +176,8 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
                 location_id=group_id.replace(LOCATION_REPORTING_PREFIX, '')
             )
 
-            for l in [loc] + list(loc.get_descendants()):
-                users = CommCareUser.get_db().view(
-                    'locations/users_by_location_id',
-                    startkey=[l.location_id],
-                    endkey=[l.location_id, {}],
-                    include_docs=True
-                ).all()
-                results += [u['id'] for u in users]
+            for l in loc.get_descendants(include_self=True):
+                results += get_user_ids_by_location(l.location_id)
 
         return results
 

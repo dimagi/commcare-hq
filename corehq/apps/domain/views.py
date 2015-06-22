@@ -1250,7 +1250,7 @@ class SelectPlanView(DomainAccountingSettings):
     @property
     def edition_name(self):
         if self.edition:
-            return DESC_BY_EDITION[self.edition]['name'].encode('utf-8')
+            return DESC_BY_EDITION[self.edition]['name']
 
     @property
     def is_non_ops_superuser(self):
@@ -1269,9 +1269,12 @@ class SelectPlanView(DomainAccountingSettings):
 
     @property
     def steps(self):
+        edition_name = u" (%s)" % self.edition_name if self.edition_name else ""
         return [
             {
-                'title': _("1. Select a Plan%s") % (" (%s)" % self.edition_name if self.edition_name else ""),
+                'title': _(u"1. Select a Plan%(edition_name)s") % {
+                    "edition_name": edition_name
+                },
                 'url': reverse(SelectPlanView.urlname, args=[self.domain]),
             }
         ]

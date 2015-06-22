@@ -8,6 +8,12 @@
         $(function() {
             $('form[name="user_information"]').activateSubmitOnlyOnChange();
             $('#id_language').select2();
+            $('#generate-api-key').click(function() {
+                var apiDiv = $(this).parent().parent().parent();
+                $.post('{% url 'new_api_key' %}', '', function(data) {
+                    apiDiv.find('.form-control-static').text(data);
+                });
+            })
         });
     </script>
 {% endblock %}

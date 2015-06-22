@@ -1,3 +1,4 @@
+from corehq.apps.hqcase.dbaccessors import get_cases_in_domain_by_external_id
 from corehq.apps.sms.api import (
     MessageMetadata,
     add_msg_tags,
@@ -394,11 +395,7 @@ def keyword_uses_form_that_requires_case(survey_keyword):
 
 
 def get_case_by_external_id(domain, external_id, user):
-    cases = CommCareCase.view("hqcase/by_domain_external_id",
-        key=[domain, external_id],
-        include_docs=True,
-        reduce=False,
-    ).all()
+    cases = get_cases_in_domain_by_external_id(domain, external_id)
 
     def filter_fcn(case):
         return not case.closed and user_can_access_case(user, case)
