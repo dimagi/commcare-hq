@@ -99,41 +99,73 @@ class TestURLs(TestViews):
     @classmethod
     def setUpClass(cls):
         super(TestURLs, cls).setUpClass()
-        add_build(version='2.7.0', build_number=20655)
-        with open(os.path.join(os.path.dirname(__file__), 'data', 'urls_app.json')) as f:
-            cls.app = import_app(json.loads(f.read()), cls.domain)
-            cls.app.build_spec = BuildSpec.from_string('2.7.0/latest')
-            cls.build = cls.app.make_build()
-            cls.build.save()
+        cls.build = add_build(version='2.7.0', build_number=20655)
 
     @classmethod
     def tearDownClass(cls):
         super(TestViews, cls).tearDownClass()
-        cls.app.delete()
         cls.build.delete()
+        if cls.app:
+            cls.app.delete()
+
+    def _load_app(self, filename):
+        with open(os.path.join(os.path.dirname(__file__), 'data', filename)) as f:
+            self.app = import_app(json.loads(f.read()), self.domain)
+            self.app.build_spec = BuildSpec.from_string('2.7.0/latest')
+            self.build = self.app.make_build()
+            self.build.save()
 
     def _test_status_codes(self, names, kwargs):
         for name in names:
             response = self.client.get(reverse(name, kwargs=kwargs), follow=False)
             self.assertEqual(response.status_code, 200)
 
-    def test_status_codes(self):
+    def test_basic_app(self):
+        self._load_app('basic_app.json')
         kwargs = {'domain': self.domain, 'app_id': self.app.id}
         self.client.login(username=self.username, password=self.password)
         self._test_status_codes([
             'view_app',
             'release_manager',
             AppSummaryView.urlname,
+        ], kwargs)
+
+    def test_user_registration(self):
+        self._load_app('user_registration.json')
+        kwargs = {'domain': self.domain, 'app_id': self.app.id}
+        self.client.login(username=self.username, password=self.password)
+        self._test_status_codes([
             'view_user_registration',
             'user_registration_source',
         ], kwargs)
 
-        for id in reversed(range(0, 3)):
-            kwargs['module_id'] = id
-            self._test_status_codes(['view_module'], kwargs)
+    def test_module(self):
+        self._load_app('basic_app.json')
+        kwargs = {'domain': self.domain, 'app_id': self.app.id, 'module_id': 0}
+        self.client.login(username=self.username, password=self.password)
+        self._test_status_codes(['view_module'], kwargs)
 
-        kwargs['form_id'] = 0
-        self._test_status_codes(['view_form', 'form_source'], kwargs)
+    def test_advanced_module(self):
+        self._load_app('advanced_module.json')
+        kwargs = {'domain': self.domain, 'app_id': self.app.id, 'module_id': 0}
+        self.client.login(username=self.username, password=self.password)
+        self._test_status_codes(['view_module'], kwargs)
+
+    def test_reporting_module(self):
+        self._load_app('reporting_module.json')
+        kwargs = {'domain': self.domain, 'app_id': self.app.id, 'module_id': 0}
+        self.client.login(username=self.username, password=self.password)
+        self._test_status_codes(['view_module'], kwargs)
+
+    def test_view_form(self):
+        self._load_app('basic_app.json')
+        self.client.login(username=self.username, password=self.password)
+        self._test_status_codes(['view_form', 'form_source'], {
+            'domain': self.domain,
+            'app_id': self.app.id,
+            'module_id': 0,
+            'form_id': 0,
+        })
 
     def _json_content_from_get(self, name, kwargs, data={}):
         self.client.login(username=self.username, password=self.password)
@@ -142,6 +174,7 @@ class TestURLs(TestViews):
         return json.loads(response.content)
 
     def test_current_build(self):
+        self._load_app('basic_app.json')
         content = self._json_content_from_get('current_app_version', {
             'domain': self.domain,
             'app_id': self.app.id,
@@ -149,6 +182,7 @@ class TestURLs(TestViews):
         self.assertEqual(content['currentVersion'], 1)
 
     def test_pagination(self):
+        self._load_app('basic_app.json')
         content = self._json_content_from_get('paginate_releases', {
             'domain': self.domain,
             'app_id': self.app.id,
