@@ -1,0 +1,35 @@
+[proxy]
+guineact.commcarehq.org
+
+[webworkers]
+guineact.commcarehq.org
+
+[couchdb]
+guineact.commcarehq.org
+
+[postgresql]
+guineact.commcarehq.org
+
+[rabbitmq]
+guineact.commcarehq.org
+
+[celery]
+# ansible makes the first thing in this list the flower url
+# a little bit redundant with with more explicit settings in environments.yml
+# but ansible doesn't currently have access to that
+guineact.commcarehq.org
+
+[pillowtop]
+guineact.commcarehq.org
+
+[touchforms]
+guineact.commcarehq.org
+
+[redis]
+guineact.commcarehq.org
+
+[elasticsearch]
+guineact.commcarehq.org
+
+[shared_dir_host]
+guineact.commcarehq.org
