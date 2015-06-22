@@ -208,10 +208,6 @@ class RepeaterTest(BaseRepeaterTest):
         self.post_xml(update_xform_xml, self.domain)
         self.assertEqual(len(self.repeat_records(self.domain)), 2)
 
-        CaseFactory().close_case(case_id)
-        #  closed case should be forwarded too
-        self.assertEqual(len(self.repeat_records(self.domain)), 4)
-
 
 class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
     @classmethod
