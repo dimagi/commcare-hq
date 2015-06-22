@@ -396,3 +396,30 @@ class DataExportInterface(GenericReportView):
     name = ugettext_noop('Export Forms')
     section_name = "Export Data"
     slug = 'export_forms'
+
+    @property
+    def template_context(self):
+        context = super(DataExportInterface, self).template_context
+        context.update({
+            'saved_exports': self.saved_exports,
+        })
+        return context
+
+    @property
+    @memoized
+    def saved_exports(self):
+        # add saved exports. because of the way in which the key is stored
+        # (serialized json) this is a little bit hacky, but works.
+        startkey = json.dumps([self.domain, ""])[:-3]
+        endkey = "%s{" % startkey
+        exports = FormExportSchema.view(
+            "couchexport/saved_export_schemas",
+            startkey=startkey,
+            endkey=endkey,
+            include_docs=True,
+        )
+        exports = filter(lambda x: x.type == "form", exports)
+        # TODO - implement or remove
+        # if not self.can_view_deid:
+        #     exports = filter(lambda x: not x.is_safe, exports)
+        return sorted(exports, key=lambda x: x.name)
