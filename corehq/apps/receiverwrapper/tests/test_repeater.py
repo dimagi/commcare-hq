@@ -11,6 +11,7 @@ from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.test.client import Client
 
+from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException, IgnoreDocument
 from corehq.apps.receiverwrapper.models import (
@@ -72,17 +73,18 @@ class BaseRepeaterTest(TestCase):
     client = Client()
 
     @classmethod
-    def post_xml(cls, xml, domain):
+    def post_xml(cls, xml, domain_name):
         f = StringIO(xml)
         f.name = 'form.xml'
         cls.client.post(
-            reverse('receiver_post', args=[domain]), {
+            reverse('receiver_post', args=[domain_name]), {
                 'xml_submission_file': f
             }
         )
 
-    def repeat_records(self):
-        return RepeatRecord.all(domain=self.domain, due_before=datetime.utcnow())
+    @classmethod
+    def repeat_records(cls, domain_name):
+        return RepeatRecord.all(domain=domain_name, due_before=datetime.utcnow())
 
 
 class RepeaterTest(BaseRepeaterTest):
@@ -201,14 +203,48 @@ class RepeaterTest(BaseRepeaterTest):
             self.assertEqual(repeat_record.succeeded, True)
             self.assertEqual(repeat_record.next_check, None)
 
-        self.assertEqual(len(self.repeat_records()), 0)
+        self.assertEqual(len(self.repeat_records(self.domain)), 0)
 
         self.post_xml(update_xform_xml, self.domain)
-        self.assertEqual(len(self.repeat_records()), 2)
+        self.assertEqual(len(self.repeat_records(self.domain)), 2)
 
         CaseFactory().close_case(case_id)
         #  closed case should be forwarded too
-        self.assertEqual(len(self.repeat_records()), 4)
+        self.assertEqual(len(self.repeat_records(self.domain)), 4)
+
+
+class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
+    @classmethod
+    def setUpClass(cls):
+        cls.domain_name = "test-domain"
+        cls.domain = create_domain(cls.domain_name)
+
+        cls.repeater = CaseRepeater(
+            domain=cls.domain_name,
+            url="case-repeater-url",
+        )
+        cls.repeater.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain.delete()
+        cls.repeater.delete()
+        for repeat_record in cls.repeat_records(cls.domain_name):
+            repeat_record.delete()
+
+    def test_case_close_format(self):
+        # create a case
+        self.post_xml(xform_xml, self.domain_name)
+        payload = self.repeat_records(self.domain_name).all()[0].get_payload()
+        self.assertXmlHasXpath(payload, '//*[local-name()="case"]')
+        self.assertXmlHasXpath(payload, '//*[local-name()="create"]')
+
+        # close the case
+        CaseFactory().close_case(case_id)
+        close_payload = self.repeat_records(self.domain_name).all()[1].get_payload()
+        self.assertXmlHasXpath(close_payload, '//*[local-name()="case"]')
+        self.assertXmlHasXpath(close_payload, '//*[local-name()="close"]')
+        self.assertXmlHasXpath(close_payload, '//*[local-name()="update"]')
 
 
 class IgnoreDocumentTest(BaseRepeaterTest):
