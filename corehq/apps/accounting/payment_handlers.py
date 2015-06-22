@@ -306,24 +306,30 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
 
     def __init__(self, payment_method, account, subscription=None, post_data=None):
         super(CreditStripePaymentHandler, self).__init__(payment_method)
-        self.feature_types = [feature_type[0]
-                              for feature_type in FeatureType.CHOICES if post_data.get(feature_type[0])]
-        self.product_types = [product_type[0]
-                              for product_type in SoftwareProductType.CHOICES if post_data.get(product_type[0])]
+        self.features = [{'type': feature_type[0],
+                          'amount': Decimal(post_data.get(feature_type[0], 0))}
+                         for feature_type in FeatureType.CHOICES
+                         if Decimal(post_data.get(feature_type[0], 0)) > 0]
+        self.products = [{'type': product_type[0],
+                          'amount': Decimal(post_data.get(product_type[0], 0))}
+                         for product_type in SoftwareProductType.CHOICES
+                         if Decimal(post_data.get(product_type[0], 0)) > 0]
+        self.post_data = post_data
         self.account = account
         self.subscription = subscription
         self.credit_lines = []
 
     @property
     def cost_item_name(self):
-        return "%(credit_type)s Credit %(sub_or_account)s" % {
-            'credit_type': ("%s Product" % self.product_type
-                            if self.product_type is not None
-                            else "%s Feature" % self.feature_type),
-            'sub_or_account': ("Subscription %s" % self.subscription
-                               if self.subscription is None
-                               else "Account %s" % self.account.id),
-        }
+        # return "%(credit_type)s Credit %(sub_or_account)s" % {
+        #     'credit_type': ("%s Product" % self.product_type
+        #                     if self.product_type is not None
+        #                     else "%s Feature" % self.feature_type),
+        #     'sub_or_account': ("Subscription %s" % self.subscription
+        #                        if self.subscription is None
+        #                        else "Account %s" % self.account.id),
+        # }
+        return "TODO"
 
     def get_charge_amount(self, request):
         return Decimal(request.POST['amount'])
@@ -338,30 +344,28 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
         )
 
     def update_credits(self, payment_record):
-        for feature_type in self.feature_types:
-            feature_amount = Decimal(self.request.POST.get(feature_type))
+        for feature in self.features:
+            feature_amount = feature['amount']
             if feature_amount >= 0.5:
                 self.credit_lines.append(CreditLine.add_credit(
                     feature_amount,
                     account=self.account,
                     subscription=self.subscription,
-                    feature_type=feature_type,
+                    feature_type=feature['type'],
                     payment_record=payment_record,
                 ))
-        for product_type in self.product_types:
-            plan_amount = Decimal(self.request.POST.get(product_type))
-            print plan_amount
+        for product in self.products:
+            plan_amount = product['amount']
             if plan_amount >= 0.5:
                 self.credit_lines.append(CreditLine.add_credit(
                     plan_amount,
                     account=self.account,
                     subscription=self.subscription,
-                    product_type=product_type,
+                    product_type=product['type'],
                     payment_record=payment_record,
                 ))
 
     def process_request(self, request):
-        self.request = request
         response = super(CreditStripePaymentHandler, self).process_request(request)
         if hasattr(self, 'credit_lines'):
             response.update({
@@ -373,12 +377,14 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
 
     def get_email_context(self):
         context = super(CreditStripePaymentHandler, self).get_email_context()
-        if self.product_type:
-            credit_name = _("%s Software Plan" % self.product_type)
-        else:
-            credit_name = get_feature_name(self.feature_type, self.core_product)
+        features = [{'type': get_feature_name(feature['type'], self.core_product),
+                     'amount': fmt_dollar_amount(feature['amount'])}
+                    for feature in self.features]
+        products = [{'type': product['type'],
+                     'amount': fmt_dollar_amount(product['amount'])}
+                    for product in self.products]
         context.update({
-            'credit_name': credit_name,
+            'items': products + features
         })
         return context
 

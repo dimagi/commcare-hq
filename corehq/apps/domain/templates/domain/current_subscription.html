@@ -243,8 +243,9 @@
                             <input type="text"
                                    class="input-small"
                                    name="product_credits"
-                                   data-bind="numericValue: addAmount" />
-                            <input type="hidden" name="product_type" data-bind="value: creditType" />
+                                   data-bind="
+                                   attr:{name: creditType},
+                                   numericValue: addAmount" />
                         </div>
                     </div>
                 </div>
