@@ -631,6 +631,9 @@ class ProjectDataTab(UITab):
             from corehq.apps.fixtures.dispatcher import FixtureInterfaceDispatcher
             items.extend(FixtureInterfaceDispatcher.navigation_sections(context))
 
+        from corehq.apps.reports.dispatcher import DataExportInterfaceDispatcher
+        items.extend(DataExportInterfaceDispatcher.navigation_sections(context))
+
         return items
 
 
