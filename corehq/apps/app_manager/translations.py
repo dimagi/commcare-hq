@@ -452,6 +452,10 @@ def update_form_translations(sheet, rows, missing_cols, app):
     :return:  Returns a list of message tuples. The first item in each tuple is
     a function like django.contrib.messages.error, and the second is a string.
     """
+    def value_is_safe(value_element):
+        is_safe = lambda el: isinstance(el, etree.Entity) or isinstance(el, etree.Element) and el.tag in SAFE_TAGS
+        return all(is_safe(el) for el in value_element.iterdescendants())
+
     msgs = []
     mod_text, form_text = sheet.worksheet.title.split("_")
     module_index = int(mod_text.replace("module", "")) - 1
@@ -537,6 +541,15 @@ def update_form_translations(sheet, rows, missing_cols, app):
                             break
 
                 if new_translation:
+                    try:
+                        node = etree.XML('<node>%s</node>' % new_translation)
+                    except etree.XMLSyntaxError:
+                        node = etree.Element('node')
+                        node.text = new_translation
+                    if not value_is_safe(node):
+                        node = etree.Element('node')
+                        node.text = new_translation
+
                     # Create the node if it does not already exist
                     if not value_node.exists():
                         e = etree.Element(
@@ -545,7 +558,10 @@ def update_form_translations(sheet, rows, missing_cols, app):
                         text_node.xml.append(e)
                         value_node = WrappedNode(e)
                     # Update the translation
-                    value_node.xml.text = new_translation
+                    value_node.xml.text = node.text
+                    for elem in node.iterchildren():
+                        value_node.xml.append(elem)
+
                 else:
                     # Remove the node if it already exists
                     if value_node.exists():
