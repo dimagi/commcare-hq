@@ -101,6 +101,15 @@
       </a>
     </li>
     {% endif %}
+
+    {% if request|toggle_enabled:'LINK_SUPPLY_POINT' and location.sql_location.supply_point_id %}
+    <li>
+      <a href="{% url "case_details" domain location.sql_location.supply_point_id %}">
+        {% trans "View Location Case" %}
+      </a>
+    </li>
+    {% endif %}
+
   </ul>
   {% endif %}
 

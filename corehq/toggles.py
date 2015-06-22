@@ -484,3 +484,11 @@ CUSTOM_MENU_BAR = StaticToggle(
     TAG_ONE_OFF,
     namespaces=[NAMESPACE_DOMAIN],
 )
+
+LINK_SUPPLY_POINT = StaticToggle(
+    'link_supply_point',
+    'Add a "Supply Point" tab to location pages.  This is feature flagged '
+    'because this is not a great way to display additional information.',
+    TAG_EXPERIMENTAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)
