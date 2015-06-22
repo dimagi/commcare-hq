@@ -198,15 +198,15 @@ def get_case_properties(domain, case_type=None):
     key = [domain]
     if case_type:
         key.append(case_type)
-    rows = get_db().view(
+    keys = [row['key'] for row in get_db().view(
         'hqcase/all_case_properties',
         startkey=key,
         endkey=key + [{}],
         reduce=True,
         group=True,
         group_level=3,
-    ).all()
-    return sorted(set([property_name for _, _, property_name in rows]))
+    )]
+    return sorted(set([property_name for _, _, property_name in keys]))
 
 
 def get_cases_in_domain_by_external_id(domain, external_id):
