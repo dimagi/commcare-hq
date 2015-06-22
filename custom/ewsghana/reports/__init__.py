@@ -231,11 +231,17 @@ class MultiReport(MonthWeekMixin, CustomProjectReport, CommtrackReportMixin, Pro
     is_exportable = False
     base_template = 'ewsghana/base_template.html'
 
+    @property
+    @memoized
+    def report_location(self):
+        return SQLLocation.objects.get(location_id=self.report_config['location_id'])
+
     def get_stock_transactions(self):
         return StockTransaction.objects.filter(
-            case_id__in=list(SQLLocation.objects.get(
-                location_id=self.report_config['location_id']
-            ).get_descendants().exclude(supply_point_id__isnull=True).values_list('supply_point_id', flat=True)),
+            case_id__in=list(
+                self.report_location.get_descendants().exclude(
+                    supply_point_id__isnull=True
+                ).values_list('supply_point_id', flat=True)),
             report__date__range=[self.report_config['startdate'], self.report_config['enddate']]
         ).order_by('report__date', 'pk')
 

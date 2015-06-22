@@ -346,9 +346,7 @@ class ReportingRatesReport(MultiReport):
     def reporting_rates(self):
         complete = 0
         incomplete = 0
-        all_locations_count = SQLLocation.objects.get(
-            location_id=self.report_config['location_id']
-        ).get_descendants().count()
+        all_locations_count = self.report_location.get_descendants().count()
         transactions = self.get_stock_transactions().values_list('case_id', 'product_id', 'report__date')
         grouped_by_case = {}
         parent_sum_rates = {}
