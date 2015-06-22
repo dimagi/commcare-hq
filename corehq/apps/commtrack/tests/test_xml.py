@@ -11,7 +11,7 @@ from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 from casexml.apps.phone.tests import run_with_all_restore_configs
 from casexml.apps.phone.tests.utils import synclog_id_from_restore_payload
 from corehq.apps.commtrack.dbaccessors import \
-    get_open_requisition_cases_for_location
+    get_open_requisition_case_ids_for_location
 from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.commtrack.models import ConsumptionConfig, StockRestoreConfig, RequisitionCase, StockState
 from corehq.apps.domain.models import Domain
@@ -433,7 +433,7 @@ class CommTrackRequisitionTest(CommTrackSubmissionTest):
         # TODO: these types of tests probably belong elsewhere
         self.assertEqual(req.get_next_action().keyword, 'fulfill')
         self.assertEqual(req.get_location()._id, self.sp.location._id)
-        self.assertEqual(len(get_open_requisition_cases_for_location(
+        self.assertEqual(len(get_open_requisition_case_ids_for_location(
             self.domain.name,
             self.sp.location._id
         )), 1)
@@ -482,7 +482,7 @@ class CommTrackRequisitionTest(CommTrackSubmissionTest):
 
         self.assertEqual(req.requisition_status, 'received')
         self.assertIsNone(req.get_next_action())
-        self.assertEqual(len(get_open_requisition_cases_for_location(
+        self.assertEqual(len(get_open_requisition_case_ids_for_location(
             self.domain.name,
             self.sp.location._id
         )), 0)

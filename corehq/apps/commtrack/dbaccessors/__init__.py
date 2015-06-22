@@ -1,7 +1,7 @@
 from couchdbkit import ResourceNotFound
 
 
-def get_open_requisition_cases_for_supply_point_id(domain, supply_point_id):
+def get_open_requisition_case_ids_for_supply_point_id(domain, supply_point_id):
     from corehq.apps.commtrack.models import RequisitionCase
     return [r['id'] for r in RequisitionCase.get_db().view(
         'commtrack/requisitions',
@@ -12,7 +12,7 @@ def get_open_requisition_cases_for_supply_point_id(domain, supply_point_id):
     )]
 
 
-def get_open_requisition_cases_for_location(domain, location_id):
+def get_open_requisition_case_ids_for_location(domain, location_id):
     """
     For a given location, return the IDs of all open requisitions
     at that location.
@@ -24,7 +24,7 @@ def get_open_requisition_cases_for_location(domain, location_id):
     except ResourceNotFound:
         return []
 
-    return get_open_requisition_cases_for_supply_point_id(domain, sp_id)
+    return get_open_requisition_case_ids_for_supply_point_id(domain, sp_id)
 
 
 def get_supply_point_ids_in_domain_by_location(domain):

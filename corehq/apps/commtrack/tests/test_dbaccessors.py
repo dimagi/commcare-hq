@@ -2,7 +2,7 @@ from django.test import TestCase
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from corehq.apps.commtrack.dbaccessors import \
-    get_open_requisition_cases_for_supply_point_id
+    get_open_requisition_case_ids_for_supply_point_id
 
 
 class RequisitionDBAccessorsTest(TestCase):
@@ -38,12 +38,12 @@ class RequisitionDBAccessorsTest(TestCase):
 
     def test_get_open_requisition_cases_for_supply_point_id(self):
         self.assertItemsEqual(
-            get_open_requisition_cases_for_supply_point_id(
+            get_open_requisition_case_ids_for_supply_point_id(
                 self.domain, self.supply_point_id),
             {case._id for case in self.cases if case.domain == self.domain}
         )
 
-    def test_get_open_requisition_cases_for_location(self):
+    def test_get_open_requisition_case_ids_for_location(self):
         self.fail()
 
 

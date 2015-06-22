@@ -3,7 +3,7 @@ from decimal import Decimal
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.dbaccessors import \
-    get_open_requisition_cases_for_location
+    get_open_requisition_case_ids_for_location
 from corehq.apps.commtrack.models import RequisitionCase, StockState
 from corehq.apps.commtrack.tests.util import CommTrackTest, FIXED_USER, ROAMING_USER
 from corehq.apps.commtrack.sms import handle, SMSError
@@ -210,7 +210,7 @@ class StockRequisitionTest(SMSTests):
 
     def testRequisition(self):
         # confirm we have a clean start
-        self.assertEqual(0, len(get_open_requisition_cases_for_location(self.domain.name, self.loc._id)))
+        self.assertEqual(0, len(get_open_requisition_case_ids_for_location(self.domain.name, self.loc._id)))
         self.assertEqual(0, len(self.get_commtrack_forms(self.domain.name)))
 
         amounts = {
@@ -227,7 +227,7 @@ class StockRequisitionTest(SMSTests):
         self.assertTrue(handled)
 
         # make sure we got the updated requisitions
-        reqs = get_open_requisition_cases_for_location(self.domain.name, self.loc._id)
+        reqs = get_open_requisition_case_ids_for_location(self.domain.name, self.loc._id)
         self.assertEqual(1, len(reqs))
 
         req = RequisitionCase.get(reqs[0])
@@ -266,7 +266,7 @@ class StockRequisitionTest(SMSTests):
             loc='loc1',
             ))
         self.assertTrue(handled)
-        reqs = get_open_requisition_cases_for_location(self.domain.name, self.loc._id)
+        reqs = get_open_requisition_case_ids_for_location(self.domain.name, self.loc._id)
         self.assertEqual(3, len(reqs))
 
         for req_id in reqs:
@@ -303,7 +303,7 @@ class StockRequisitionTest(SMSTests):
         )
         self.assertTrue(handled)
 
-        reqs = get_open_requisition_cases_for_location(self.domain.name, self.loc._id)
+        reqs = get_open_requisition_case_ids_for_location(self.domain.name, self.loc._id)
 
         # should not have created a new req
         self.assertEqual(1, len(reqs))
@@ -343,7 +343,7 @@ class StockRequisitionTest(SMSTests):
         )
 
         # grab this first because we are about to close it
-        req_id = get_open_requisition_cases_for_location(self.domain.name, self.loc._id)[0]
+        req_id = get_open_requisition_case_ids_for_location(self.domain.name, self.loc._id)[0]
 
         # mark it received
         handle(
@@ -354,7 +354,7 @@ class StockRequisitionTest(SMSTests):
             )
         )
 
-        reqs = get_open_requisition_cases_for_location(self.domain.name, self.loc._id)
+        reqs = get_open_requisition_case_ids_for_location(self.domain.name, self.loc._id)
 
         # receiving by sms closes the req
         self.assertEqual(0, len(reqs))
@@ -375,7 +375,7 @@ class StockRequisitionTest(SMSTests):
         # TODO what should actually happen in this case?
 
         # make sure we don't have any open requisitions
-        self.assertEqual(0, len(get_open_requisition_cases_for_location(self.domain.name, self.loc._id)))
+        self.assertEqual(0, len(get_open_requisition_case_ids_for_location(self.domain.name, self.loc._id)))
 
         rec_amounts = {
             'pp': 30,
@@ -390,7 +390,7 @@ class StockRequisitionTest(SMSTests):
         self.assertTrue(handled)
 
         # should still be no open requisitions
-        self.assertEqual(0, len(get_open_requisition_cases_for_location(self.domain.name, self.loc._id)))
+        self.assertEqual(0, len(get_open_requisition_case_ids_for_location(self.domain.name, self.loc._id)))
 
 
 class StockAndReceiptTest(SMSTests):
