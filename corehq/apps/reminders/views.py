@@ -1433,7 +1433,7 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
     @property
     @memoized
     def total(self):
-        data = CommCareCaseGroup.get_db().view(
+        data = SurveyKeyword.get_db().view(
             'reminders/survey_keywords',
             reduce=True,
             startkey=[self.domain],
