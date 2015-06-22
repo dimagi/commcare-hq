@@ -321,15 +321,24 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
 
     @property
     def cost_item_name(self):
-        # return "%(credit_type)s Credit %(sub_or_account)s" % {
-        #     'credit_type': ("%s Product" % self.product_type
-        #                     if self.product_type is not None
-        #                     else "%s Feature" % self.feature_type),
-        #     'sub_or_account': ("Subscription %s" % self.subscription
-        #                        if self.subscription is None
-        #                        else "Account %s" % self.account.id),
-        # }
-        return "TODO"
+        credit_types = [unicode(product['type']) for product in self._humanized_products()]
+        credit_types += [unicode(feature['type']) for feature in self._humanized_features()]
+        return _("Credits: {credit_types} for {sub_or_account}".format(
+            credit_types=", ".join(credit_types),
+            sub_or_account=("Subscription %s" % self.subscription
+                            if self.subscription is None
+                            else "Account %s" % self.account.id)
+        ))
+
+    def _humanized_features(self):
+        return [{'type': get_feature_name(feature['type'], self.core_product),
+                 'amount': fmt_dollar_amount(feature['amount'])}
+                for feature in self.features]
+
+    def _humanized_products(self):
+        return [{'type': product['type'],
+                 'amount': fmt_dollar_amount(product['amount'])}
+                for product in self.products]
 
     def get_charge_amount(self, request):
         return Decimal(request.POST['amount'])
@@ -377,14 +386,7 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
 
     def get_email_context(self):
         context = super(CreditStripePaymentHandler, self).get_email_context()
-        features = [{'type': get_feature_name(feature['type'], self.core_product),
-                     'amount': fmt_dollar_amount(feature['amount'])}
-                    for feature in self.features]
-        products = [{'type': product['type'],
-                     'amount': fmt_dollar_amount(product['amount'])}
-                    for product in self.products]
         context.update({
-            'items': products + features
+            'items': self._humanized_products() + self._humanized_features()
         })
         return context
-
