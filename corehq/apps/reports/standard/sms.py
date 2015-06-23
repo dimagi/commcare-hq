@@ -382,16 +382,21 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
 
     def get_sms_status_display(self, sms):
         if sms.error:
-            status = MessagingEvent.STATUS_ERROR
+            error_message = (SMS.ERROR_MESSAGES.get(sms.system_error_message, None)
+                if sms.system_error_message else None)
+            if error_message:
+                return '%s - %s' % (_('Error'), _(error_message))
+            else:
+                return _('Error')
+        elif not sms.processed:
+            return _('Queued')
         else:
-            status = MessagingEvent.STATUS_COMPLETED
-        status = dict(MessagingEvent.STATUS_CHOICES).get(status, '-')
-        error_message = (SMS.ERROR_MESSAGES.get(sms.system_error_message, None)
-            if sms.system_error_message else None)
-        if error_message:
-            return '%s - %s' % (_(status), _(error_message))
-        else:
-            return _(status)
+            if sms.direction == INCOMING:
+                return _('Received')
+            elif sms.direction == OUTGOING:
+                return _('Sent')
+            else:
+                return _('Unknown')
 
     def get_keyword_display(self, keyword_id, content_cache):
         if keyword_id in content_cache:
