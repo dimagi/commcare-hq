@@ -1916,6 +1916,8 @@ class SuiteGenerator(SuiteGeneratorBase):
         root_module = module.root_module
         root_datums = []
         if root_module and root_module.module_type == 'basic':
+            # For advanced modules the onus is on the user to make things work by loading the correct cases and
+            # using the correct case tags.
             try:
                 # assume that all forms in the root module have the same case management
                 root_module_form = root_module.get_form(0)
