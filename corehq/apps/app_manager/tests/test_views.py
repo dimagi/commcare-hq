@@ -3,14 +3,15 @@ import json
 
 from django.core.urlresolvers import reverse
 from django.test import TestCase
-from corehq.apps.app_manager.tests import add_build, TestFileMixin
+from corehq.apps.app_manager.tests import add_build
 from corehq.apps.app_manager.views import AppSummaryView
 from corehq.apps.builds.models import BuildSpec
 
 from corehq import toggles
 from corehq.apps.users.models import WebUser
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.app_manager.models import AdvancedModule, Application, APP_V1, APP_V2, import_app, Module, ReportModule
+from corehq.apps.app_manager.models import AdvancedModule, Application, APP_V1, APP_V2, Module, \
+    ReportModule
 from .test_form_versioning import BLANK_TEMPLATE
 
 
@@ -149,7 +150,6 @@ class TestViews(TestCase):
         kwargs['form_id'] = form.id
         self._test_status_codes(['view_form', 'form_source'], kwargs)
 
-
     def test_user_registration(self):
         self.app.show_user_registration = True
         self.app.save()
@@ -176,5 +176,5 @@ class TestViews(TestCase):
         self._test_status_codes(['view_module'], {
             'domain': self.domain,
             'app_id': self.app.id,
-            'module_id': 0,
+            'module_id': module.id,
         })
