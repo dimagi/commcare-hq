@@ -1,6 +1,8 @@
 from collections import OrderedDict
+from django.utils.html import escape
 from lxml import etree
 import copy
+import re
 from openpyxl.shared.exc import InvalidFileException
 
 from corehq.apps.app_manager.exceptions import (
@@ -9,7 +11,7 @@ from corehq.apps.app_manager.exceptions import (
     XFormException)
 from corehq.apps.app_manager.models import ReportModule
 from corehq.apps.app_manager.util import save_xform
-from corehq.apps.app_manager.xform import namespaces, WrappedNode
+from corehq.apps.app_manager.xform import namespaces, WrappedNode, ItextValue, ItextOutput
 from dimagi.utils.excel import WorkbookJSONReader, HeaderValueError
 
 from django.contrib import messages
@@ -335,7 +337,12 @@ def expected_bulk_app_sheet_rows(app):
 
                         for value_node in text_node.findall("./{f}value"):
                             value_form = value_node.attrib.get("form", "default")
-                            value = value_node.text
+                            value = ''
+                            for part in ItextValue.from_node(value_node).parts:
+                                if isinstance(part, ItextOutput):
+                                    value += "<output value=\"" + part.ref + "\"/>"
+                                else:
+                                    value += escape(part)
                             itext_items[text_id][(lang, value_form)] = value
 
                 for text_id, values in itext_items.iteritems():
@@ -532,6 +539,8 @@ def update_form_translations(sheet, rows, missing_cols, app):
 
                 if new_translation:
                     # Create the node if it does not already exist
+                    complex_node = re.search('<.*>', new_translation)
+
                     if not value_node.exists():
                         e = etree.Element(
                             "{f}value".format(**namespaces), attributes
@@ -539,7 +548,16 @@ def update_form_translations(sheet, rows, missing_cols, app):
                         text_node.xml.append(e)
                         value_node = WrappedNode(e)
                     # Update the translation
-                    value_node.xml.text = new_translation
+                    value_node.xml.tail = ''
+                    for node in value_node.findall("./*"):
+                        node.xml.getparent().remove(node.xml)
+                    if not complex_node:
+                        value_node.xml.text = new_translation
+                    else:
+                        escaped_trans = _escape_output_value(new_translation)
+                        value_node.xml.text = escaped_trans.text
+                        for n in escaped_trans.getchildren():
+                            value_node.xml.append(n)
                 else:
                     # Remove the node if it already exists
                     if value_node.exists():
@@ -547,6 +565,13 @@ def update_form_translations(sheet, rows, missing_cols, app):
 
     save_xform(app, form, etree.tostring(xform.xml, encoding="unicode"))
     return msgs
+
+
+def _escape_output_value(value):
+    return etree.fromstring("<value>" +
+        re.sub("(?<!/)>", "&gt;", re.sub("<\s*(?!output)", "&lt;", value)) +
+        "</value>")
+
 
 
 def update_case_list_translations(sheet, rows, app):
