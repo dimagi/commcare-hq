@@ -759,10 +759,12 @@ def sync_openlmis(request, domain):
     bootstrap_domain_task.delay(domain)
     return HttpResponse('OK')
 
+
 @locations_access_required
-def child_locations_for_select2(request, domain): 
+def child_locations_for_select2(request, domain):
     id = request.GET.get('id')
     query = request.GET.get('name', '').lower()
+    user = request.couch_user
 
     def loc_to_payload(loc):
         return {'id': loc.location_id, 'name': loc.display_name}
@@ -781,4 +783,11 @@ def child_locations_for_select2(request, domain):
         locs = SQLLocation.objects.filter(domain=domain)
         if query:
             locs = locs.filter(name__icontains=query)
+
+        user_loc = user.get_location(domain)
+        if user_loc and not user_can_edit_any_location(user, request.project):
+            user_loc = user_loc.sql_location
+            child_locs = [loc.id for loc in user_loc.get_descendants(True)]
+            locs = locs.filter(pk__in=child_locs)
+
         return json_response(map(loc_to_payload, locs[:10]))
