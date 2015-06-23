@@ -654,7 +654,7 @@ def _confirm_translated():
     if datetime.datetime.now().isoweekday() != 2 or env.environment != 'production':
         return True
     return console.confirm(
-        "It's Wednesday, did you update the translations from transifex? "
+        "It's Tuesday, did you update the translations from transifex? "
         "\n(https://confluence.dimagi.com/display/commcarehq/"
         "Internationalization+and+Localization+-+Transifex+Translations)"
     )
