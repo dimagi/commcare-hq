@@ -9,7 +9,7 @@ from decimal import Decimal
 from django.core.urlresolvers import reverse
 from django.template.defaultfilters import yesno
 from custom.opm.constants import InvalidRow, BIRTH_PREP_XMLNS, CHILDREN_FORMS, CFU1_XMLNS, DOMAIN, CFU2_XMLNS, \
-    MONTH_AMT, TWO_YEAR_AMT, THREE_YEAR_AMT
+    MONTH_AMT, TWO_YEAR_AMT, THREE_YEAR_AMT, CaseOutOfRange
 from dimagi.utils.dates import months_between, first_of_next_month, add_months_to_date
 
 from dimagi.utils.dates import add_months
@@ -158,7 +158,7 @@ class OPMCaseRow(object):
             try:
                 non_adjusted_month = len(months_between(base_window_start, self.reporting_window_start)) - 1
             except AssertionError:
-                raise InvalidRow('Mother LMP ({}) was after the reporting window date ({})'.format(
+                raise CaseOutOfRange('Mother LMP ({}) was after the reporting window date ({})'.format(
                     base_window_start, self.reporting_window_start
                 ))
 
@@ -168,7 +168,7 @@ class OPMCaseRow(object):
 
             month = self._adjust_for_vhnd_presence(non_adjusted_month, vhnd_date_to_check)
             if month < 4 or month > 9:
-                raise InvalidRow('pregnancy month %s not valid' % month)
+                raise CaseOutOfRange('pregnancy month %s not valid' % month)
             return month
 
     @property
@@ -185,7 +185,7 @@ class OPMCaseRow(object):
 
             month = self._adjust_for_vhnd_presence(non_adjusted_month, anchor_date)
             if month < 1:
-                raise InvalidRow('child month %s not valid' % month)
+                raise CaseOutOfRange('child month %s not valid' % month)
 
             return month
 
@@ -242,7 +242,7 @@ class OPMCaseRow(object):
             raise InvalidRow("Window not found")
 
         if self.window > 14:
-            raise InvalidRow(_('Child is past window 14 (was {}'.format(self.window)))
+            raise CaseOutOfRange(_('Child is past window 14 (was {}'.format(self.window)))
 
         name = self.case_property('name', EMPTY_FIELD)
         if getattr(self.report,  'show_html', True):
