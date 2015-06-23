@@ -28,7 +28,6 @@ from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
 from django.core.validators import validate_email
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjectReportDispatcher
-from corehq.apps.adm.dispatcher import ADMSectionDispatcher
 import json
 import calendar
 from django.utils.translation import ugettext as _
@@ -249,7 +248,6 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         dispatchers = [
             ProjectReportDispatcher,
             CustomProjectReportDispatcher,
-            ADMSectionDispatcher,
             ConfigurableReport,
         ]
 
