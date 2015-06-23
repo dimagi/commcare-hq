@@ -826,7 +826,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         from xml.etree import ElementTree
         if self.closed:
             if include_case_on_closed:
-                elem = get_case_element(self, ('close', 'create', 'update'), version)
+                elem = get_case_element(self, ('create', 'update', 'close'), version)
             else:
                 elem = get_case_element(self, ('close'), version)
         else:
