@@ -560,18 +560,8 @@ class HQMediaMixin(Document):
                                                         **media_kwargs)
                               for image_path in module.case_list_form.all_image_paths()
                               if image_path])
-
             if module.case_list.show:
-                media.append(ApplicationMediaReference(
-                    module.case_list.media_audio,
-                    media_class=CommCareAudio,
-                    **media_kwargs)
-                )
-                media.append(ApplicationMediaReference(
-                    module.case_list.media_image,
-                    media_class=CommCareImage,
-                    **media_kwargs)
-                )
+                _add_menu_media(module.case_list, **media_kwargs)
 
             for f_order, f in enumerate(module.get_forms()):
                 media_kwargs['form_name'] = f.name
