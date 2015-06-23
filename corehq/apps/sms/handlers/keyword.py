@@ -269,7 +269,11 @@ def split_args(text, survey_keyword):
 
 def handle_structured_sms(survey_keyword, survey_keyword_action, contact,
     verified_number, text, send_response=False, msg=None, case=None,
-    text_args=None):
+    text_args=None, logged_event=None):
+
+    logged_subevent = None
+    if logged_event:
+        logged_subevent = logged_event.create_structured_sms_subevent()
 
     domain = contact.domain
     contact_doc_type = contact.doc_type
@@ -302,6 +306,11 @@ def handle_structured_sms(survey_keyword, survey_keyword_action, contact,
             form, case_id=case_id, yield_responses=True)
         session.workflow = WORKFLOW_KEYWORD
         session.save()
+
+        if logged_subevent:
+            logged_subevent.xforms_session_id = session.pk
+            logged_subevent.save()
+
         assert len(responses) > 0, "There should be at least one response."
 
         first_question = responses[-1]
@@ -351,7 +360,17 @@ def handle_structured_sms(survey_keyword, survey_keyword_action, contact,
         add_msg_tags(msg, metadata)
 
     if error_occurred and verified_number is not None and send_response:
+        response_subevent = None
+        if logged_event:
+            response_subevent = logged_event.create_subevent_for_single_sms(
+                contact_doc_type, contact_id)
+            metadata.messaging_subevent_id = response_subevent.pk
         send_sms_to_verified_number(verified_number, error_msg, metadata=metadata)
+        if response_subevent:
+            response_subevent.completed()
+
+    if logged_subevent:
+        logged_subevent.completed()
 
     return not error_occurred
 
@@ -538,7 +557,7 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
         elif survey_keyword_action.action == METHOD_STRUCTURED_SMS:
             res = handle_structured_sms(survey_keyword, survey_keyword_action,
                 sender, verified_number, text, send_response=True, msg=msg,
-                case=case, text_args=args)
+                case=case, text_args=args, logged_event=logged_event)
             if not res:
                 # If the structured sms processing wasn't successful, don't
                 # process any of the other actions

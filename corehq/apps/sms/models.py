@@ -912,6 +912,19 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         )
         return obj
 
+    def create_structured_sms_subevent(self):
+        obj = MessagingSubEvent.objects.create(
+            parent=self,
+            date=datetime.utcnow(),
+            recipient_type=self.recipient_type,
+            recipient_id=self.recipient_id,
+            content_type=MessagingEvent.CONTENT_SMS_SURVEY,
+            form_unique_id=self.form_unique_id,
+            form_name=self.form_name,
+            status=MessagingEvent.STATUS_IN_PROGRESS,
+        )
+        return obj
+
     def create_subevent_for_single_sms(self, recipient_doc_type=None, recipient_id=None, case=None):
         obj = MessagingSubEvent.objects.create(
             parent=self,
