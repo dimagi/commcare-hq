@@ -758,3 +758,27 @@ def sync_openlmis(request, domain):
     # todo: error handling, if we care.
     bootstrap_domain_task.delay(domain)
     return HttpResponse('OK')
+
+@locations_access_required
+def child_locations_for_select2(request, domain): 
+    id = request.GET.get('id')
+    query = request.GET.get('name', '').lower()
+
+    def loc_to_payload(loc):
+        return {'id': loc.location_id, 'name': loc.display_name}
+
+    if id:
+        try:
+            loc = SQLLocation.objects.get(location_id=id)
+        except SQLLocation.DoesNotExist:
+            return json_response(
+                {'message': 'no location with id %s found' % id},
+                status_code=404,
+            )
+        else:
+            return json_response(loc_to_payload(loc))
+    else:
+        locs = SQLLocation.objects.filter(domain=domain)
+        if query:
+            locs = locs.filter(name__icontains=query)
+        return json_response(map(loc_to_payload, locs[:10]))
