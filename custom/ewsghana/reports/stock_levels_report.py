@@ -133,18 +133,31 @@ class FacilityReportData(EWSData):
                 )
             else:
                 months_until_stockout = '-'
+
+            if values['monthly_consumption'] and values['monthly_consumption'] != 0.00:
+                monthly_consumption = int(values['monthly_consumption'])
+            else:
+                monthly_consumption = 'not enough data'
+
+            if values['reorder_level'] and values['reorder_level'] != 0.00:
+                maximum_level = int(values['reorder_level'])
+            else:
+                maximum_level = 'unknown'
+
+            if values['maximum_level'] and values['maximum_level'] != 0.00:
+                reorder_level = int(values['maximum_level'])
+            else:
+                reorder_level = 'unknown'
+
             yield {
                 'commodity': values['commodity'],
-                'current_stock': values['current_stock'],
-                'monthly_consumption': values['monthly_consumption'] if values['monthly_consumption'] != 0.00
-                else 'not enough data',
+                'current_stock': int(values['current_stock']),
+                'monthly_consumption': monthly_consumption,
                 'months_until_stockout': months_until_stockout,
                 'stockout_duration': values['stockout_duration'],
                 'last_report': values['last_report'],
-                'reorder_level': values['reorder_level'] if values['reorder_level'] != 0.00
-                else 'unknown',
-                'maximum_level': values['maximum_level'] if values['maximum_level'] != 0.00
-                else 'unknown'}
+                'reorder_level': reorder_level,
+                'maximum_level': maximum_level}
 
     @property
     def rows(self):

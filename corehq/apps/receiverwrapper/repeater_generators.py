@@ -34,7 +34,7 @@ class FormRepeaterXMLPayloadGenerator(BasePayloadGenerator):
 @RegisterGenerator(CaseRepeater, 'case_xml', 'XML', is_default=True)
 class CaseRepeaterXMLPayloadGenerator(BasePayloadGenerator):
     def get_payload(self, repeat_record, payload_doc):
-        return payload_doc.to_xml(self.repeater.version or V2)
+        return payload_doc.to_xml(self.repeater.version or V2, include_case_on_closed=True)
 
 
 @RegisterGenerator(AppStructureRepeater, "app_structure_xml", "XML", is_default=True)

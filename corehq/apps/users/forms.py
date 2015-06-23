@@ -174,7 +174,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
     def __init__(self, *args, **kwargs):
         self.username = kwargs.pop('username') if 'username' in kwargs else None
         self.user = kwargs.pop('user') if 'user' in kwargs else None
-        api_key = kwargs.pop('api_key')
+        api_key = kwargs.pop('api_key') if 'api_key' in kwargs else None
 
         super(UpdateMyAccountInfoForm, self).__init__(*args, **kwargs)
 

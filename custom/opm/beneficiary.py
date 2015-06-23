@@ -9,7 +9,7 @@ from decimal import Decimal
 from django.core.urlresolvers import reverse
 from django.template.defaultfilters import yesno
 from custom.opm.constants import InvalidRow, BIRTH_PREP_XMLNS, CHILDREN_FORMS, CFU1_XMLNS, DOMAIN, CFU2_XMLNS, \
-    MONTH_AMT, TWO_YEAR_AMT, THREE_YEAR_AMT
+    MONTH_AMT, TWO_YEAR_AMT, THREE_YEAR_AMT, CaseOutOfRange
 from dimagi.utils.dates import months_between, first_of_next_month, add_months_to_date
 
 from dimagi.utils.dates import add_months
@@ -158,7 +158,7 @@ class OPMCaseRow(object):
             try:
                 non_adjusted_month = len(months_between(base_window_start, self.reporting_window_start)) - 1
             except AssertionError:
-                raise InvalidRow('Mother LMP ({}) was after the reporting window date ({})'.format(
+                raise CaseOutOfRange('Mother LMP ({}) was after the reporting window date ({})'.format(
                     base_window_start, self.reporting_window_start
                 ))
 
@@ -168,7 +168,7 @@ class OPMCaseRow(object):
 
             month = self._adjust_for_vhnd_presence(non_adjusted_month, vhnd_date_to_check)
             if month < 4 or month > 9:
-                raise InvalidRow('pregnancy month %s not valid' % month)
+                raise CaseOutOfRange('pregnancy month %s not valid' % month)
             return month
 
     @property
@@ -185,7 +185,7 @@ class OPMCaseRow(object):
 
             month = self._adjust_for_vhnd_presence(non_adjusted_month, anchor_date)
             if month < 1:
-                raise InvalidRow('child month %s not valid' % month)
+                raise CaseOutOfRange('child month %s not valid' % month)
 
             return month
 
@@ -242,7 +242,7 @@ class OPMCaseRow(object):
             raise InvalidRow("Window not found")
 
         if self.window > 14:
-            raise InvalidRow(_('Child is past window 14 (was {}'.format(self.window)))
+            raise CaseOutOfRange(_('Child is past window 14 (was {}'.format(self.window)))
 
         name = self.case_property('name', EMPTY_FIELD)
         if getattr(self.report,  'show_html', True):
@@ -799,11 +799,12 @@ class ConditionsMet(OPMCaseRow):
         ('three', _("Condition 3"), True),
         ('four', _("Condition 4"), True),
         ('five', _("Condition 5"), True),
-        ('cash', _("Payment amount this month (Rs.)"), True),
+        ('cash_pay', _("Payment amount this month (Rs.)"), True),
         ('payment_last_month', _("Payment amount last month (Rs.)"), True),
         ('cash_received_last_month', _("Cash received last month"), True),
         ('case_id', _('Case ID'), True),
-        ('closed_date', _("Closed On"), True)
+        ('closed_date', _("Closed On"), True),
+        ('issue', _('Issues'), True)
     ]
 
     def __init__(self, case, report, child_index=1, awc_codes={}, **kwargs):
@@ -812,7 +813,8 @@ class ConditionsMet(OPMCaseRow):
         self.payment_last_month = "Rs.%d" % (self.last_month_row.cash_amt if self.last_month_row else 0)
         self.cash_received_last_month = self.last_month_row.vhnd_available_display if self.last_month_row else 'no'
         self.awc_code = awc_codes.get(self.awc_name, EMPTY_FIELD)
-
+        self.issue = ''
+        self.cash_pay = self.cash
         if self.status == 'mother':
             self.child_name = self.case_property(self.child_xpath("child{num}_name"), EMPTY_FIELD)
             self.one = self.condition_image(C_ATTENDANCE_Y, C_ATTENDANCE_N, "पोषण दिवस में उपस्थित",
