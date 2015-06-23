@@ -15,7 +15,8 @@ def to_function(function_path, failhard=False):
     try:
         # TODO: make this less brittle if imports or args don't line up
         module, func = function_path.rsplit(".", 1)
-        module = __import__(module, globals(), locals(), [func])
+        fromlist = [str(func)] if func else []
+        module = __import__(module, globals(), locals(), fromlist)
         actual_func = getattr(module, func)
         return actual_func
     except ImportError:
