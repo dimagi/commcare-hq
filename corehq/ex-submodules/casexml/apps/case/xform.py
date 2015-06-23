@@ -1,4 +1,4 @@
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
 import copy
 import logging
 import warnings
@@ -235,7 +235,7 @@ class CaseDbCache(object):
         if self.lock and not self.wrap:
             raise ValueError('Currently locking only supports explicitly wrapping cases!')
         self.locks = []
-        self._changed = set()
+        self._changed = OrderedDict()  # going to use this as an ordered set
 
     def __enter__(self):
         return self
@@ -310,10 +310,10 @@ class CaseDbCache(object):
 
     def mark_changed(self, case):
         assert self.cache.get(case.case_id) is case
-        self._changed.add(case['_id'])
+        self._changed[case['_id']] = None
 
     def get_changed(self):
-        return [self.cache[case_id] for case_id in self._changed]
+        return [self.cache[case_id] for case_id in self._changed.keys()]
 
     def clear_changed(self):
         self._changed = set()
