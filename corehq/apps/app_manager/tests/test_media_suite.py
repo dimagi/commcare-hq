@@ -77,21 +77,6 @@ class MediaSuiteTest(SimpleTestCase, TestFileMixin):
         self.assertEqual(old_image.unique_id, new_image.unique_id)
         self.assertNotEqual(old_image.version, new_image.version)
 
-    def test_all_media_basic_module(self):
-        app = Application.wrap(self.get_json('app'))
-        app.get_module(0).case_list_form.form_id = app.get_module(0).get_form(0).unique_id
-
-        image_path = 'jr://file/commcare/case_list_image.jpg'
-        audo_path = 'jr://file/commcare/case_list_audo.mp3'
-        app.get_module(0).case_list_form.media_image = image_path
-        app.get_module(0).case_list_form.media_audio = audo_path
-
-        app.create_mapping(CommCareImage(_id='123'), image_path, save=False)
-        app.create_mapping(CommCareImage(_id='456'), audo_path, save=False)
-
-        self.assertTrue(app.get_module(0).uses_media())
-        self.assertEqual(len(app.all_media), 2)
-
     def test_all_media_report_module(self):
         """
         Report Modules don't support media
@@ -112,12 +97,13 @@ class MediaSuiteTest(SimpleTestCase, TestFileMixin):
         report_module._loaded = True
 
         image_path = 'jr://file/commcare/case_list_image.jpg'
-        audo_path = 'jr://file/commcare/case_list_audo.mp3'
-        app.get_module(0).case_list_form.media_image = image_path
-        app.get_module(0).case_list_form.media_audio = audo_path
+        audio_path = 'jr://file/commcare/case_list_audo.mp3'
+        app.get_module(0).case_list_form.set_icon('en', image_path)
+        app.get_module(0).case_list_form.set_audio('en', audio_path)
 
         self.assertFalse(app.get_module(0).uses_media())
         self.assertEqual(len(app.all_media), 0)
+
 
 class LocalizedMediaSuiteTest(TestCase, TestFileMixin):
     """
