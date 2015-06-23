@@ -332,7 +332,7 @@ TotalCostItem.protoptye = Object.create( ChargedCostItem.prototype );
 TotalCostItem.prototype.constructor = TotalCostItem;
 
 var PrepaymentItems = function(data){
-    'use strict'
+    'use strict';
     BaseCostItem.call(this, data);
     var self = this;
     self.products = data.products;
@@ -340,14 +340,14 @@ var PrepaymentItems = function(data){
 
     self.amount = ko.computed(function(){
         var product_sum = _.reduce(self.products(), function(memo, product){
-            return memo + product.addAmount();
+            return memo + parseFloat(product.addAmount());
         }, 0);
 
         var feature_sum =_.reduce(self.features(), function(memo, feature){
-            return memo + feature.addAmount();
+            return memo + parseFloat(feature.addAmount());
         }, 0);
-
-        return product_sum + feature_sum;
+        var sum = product_sum + feature_sum;
+        return isNaN(sum) ? 0.0 : sum;
     });
 
     self.reset = function (response) {
@@ -359,13 +359,13 @@ var PrepaymentItems = function(data){
             if (update_balance){
                 update_balance.amount(balance.balance);
             }
-        })
+        });
     };
 
     self.isValid = function () {
         return self.amount() >= 0.5;
     };
-}
+};
 
 var CreditCostItem = function (initData) {
    'use strict';

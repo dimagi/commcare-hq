@@ -245,7 +245,16 @@
                                    name="product_credits"
                                    data-bind="
                                    attr:{name: creditType},
-                                   numericValue: addAmount" />
+                                   value: addAmount" />
+                        </div>
+                        <div class="alert alert-error"
+                        data-bind="visible: !addAmountValid()">
+                           <i class="icon-warning-sign"></i>
+                           <span>
+                               {% blocktrans %}
+                               Please enter an amount that's either $0 or  greater than $0.5
+                              {% endblocktrans %}
+                          </span>
                         </div>
                     </div>
                 </div>
@@ -263,7 +272,16 @@
                                    class="input-small"
                                    data-bind="
                                    attr:{name: creditType},
-                                   numericValue: addAmount" />
+                                   value: addAmount" />
+                        </div>
+                        <div class="alert alert-error"
+                        data-bind="visible: !addAmountValid()">
+                           <i class="icon-warning-sign"></i>
+                           <span>
+                               {% blocktrans %}
+                               Please enter an amount that's either $0 or  greater than $0.5
+                              {% endblocktrans %}
+                          </span>
                         </div>
                     </div>
                 </div>

@@ -51,6 +51,13 @@ var CreditItem = function (category, data, paymentHandler, can_purchase_credits)
     self.paymentHandler = paymentHandler;
     self.addAmount = ko.observable(0.5);
 
+    self.addAmountValid = ko.computed(function(){
+        var is_number = !isNaN(self.addAmount());
+        var valid_amount = parseFloat(self.addAmount()) === 0 || (parseFloat(self.addAmount()) >= 0.5);
+        console.log(self.addAmount(), is_number, valid_amount);
+        return is_number && valid_amount;
+    });
+
     self.isVisible = ko.computed(function () {
         return self.hasAmount() && self.canPurchaseCredits();
     });
