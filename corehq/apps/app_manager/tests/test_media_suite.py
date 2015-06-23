@@ -18,20 +18,27 @@ class MediaSuiteTest(SimpleTestCase, TestFileMixin):
 
     def test_all_media_paths(self):
         image_path = 'jr://file/commcare/image{}.jpg'
+        audio_path = 'jr://file/commcare/audio{}.mp3'
         app = Application.wrap(self.get_json('app'))
 
         app.get_module(0).case_list.show = True
         app.get_module(0).case_list.set_icon('en', image_path.format('4'))
+        app.get_module(0).case_list.set_audio('en', audio_path.format('4'))
 
         app.get_module(0).set_icon('en', image_path.format('1'))
+        app.get_module(0).set_audio('en', audio_path.format('1'))
 
         app.get_module(0).case_list_form.form_id = app.get_module(0).get_form(0).unique_id
         app.get_module(0).case_list_form.set_icon('en', image_path.format('2'))
+        app.get_module(0).case_list_form.set_audio('en', audio_path.format('2'))
 
         app.get_module(0).get_form(0).set_icon('en', image_path.format('3'))
+        app.get_module(0).get_form(0).set_audio('en', audio_path.format('3'))
 
-        should_contain_images = [image_path.format(num) for num in [1, 2, 3, 4]]
-        self.assertEqual(app.all_media_paths, set(should_contain_images))
+        should_contain_media = [image_path.format(num) for num in [1, 2, 3, 4]] + \
+                               [audio_path.format(num) for num in [1, 2, 3, 4]]
+        self.assertTrue(app.get_module(0).uses_media())
+        self.assertEqual(app.all_media_paths, set(should_contain_media))
 
     @override_settings(BASE_ADDRESS='192.cc.hq.1')
     def test_case_list_media(self):
