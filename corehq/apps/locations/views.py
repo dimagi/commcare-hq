@@ -11,6 +11,7 @@ from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.http import require_POST
 
 from couchdbkit import ResourceNotFound, MultipleResultsFound
+from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
 from couchexport.models import Format
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
@@ -423,7 +424,7 @@ class EditLocationView(NewLocationView):
     @memoized
     def supply_point(self):
         try:
-            return SupplyPointCase.get_by_location(self.location)
+            return get_supply_point_case_by_location(self.location)
         except MultipleResultsFound:
             raise MultipleSupplyPointException
 
