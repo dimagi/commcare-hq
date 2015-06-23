@@ -31,21 +31,7 @@
         </tr>
         <tr>
             <th>{% trans 'Status' %}</th>
-            <td>
-                {% if xform_instance %}
-                    {% if xform_instance.partial_submission %}
-                        {% trans 'Completed (Partially Completed Submission)' %}
-                    {% else %}
-                        {% trans 'Completed' %}
-                    {% endif %}
-                {% else %}
-                    {% if xforms_session.is_open and xforms_session.session_type == 'SMS' %}
-                        {% trans 'In Progress' %}
-                    {% else %}
-                        {% trans 'Not Finished' %}
-                    {% endif %}
-                {% endif %}
-            </td>
+            <td>{% trans xforms_session.status %}</td>
         </tr>
         <tr>
             <th>{% trans 'Form Submission' %}</th>

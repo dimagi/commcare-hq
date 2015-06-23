@@ -352,8 +352,16 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
         """
         event can be a MessagingEvent or MessagingSubEvent
         """
+        # If sms without error, short circuit to the sms status display
         if event.status != MessagingEvent.STATUS_ERROR and sms:
             return self.get_sms_status_display(sms)
+
+        # If survey without error, short circuit to the survey status display
+        if (isinstance(event, MessagingSubEvent) and
+            event.status == MessagingEvent.STATUS_COMPLETED and
+            event.xforms_session_id
+        ):
+            return _(event.xforms_session.status)
 
         status = event.status
         error_code = event.error_code
