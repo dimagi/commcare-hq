@@ -238,6 +238,16 @@ def case_list_form_audio_locale(module):
     return u"case_list_form.m{module.id}.audio".format(module=module)
 
 
+@pattern('case_lists.m%d.icon')
+def case_list_icon_locale(module):
+    return u"case_lists.m{module.id}.icon".format(module=module)
+
+
+@pattern('case_lists.m%d.audio')
+def case_list_audio_locale(module):
+    return u"case_lists.m{module.id}.audio".format(module=module)
+
+
 def detail(module, detail_type):
     return u"m{module.id}_{detail_type}".format(module=module, detail_type=detail_type)
 

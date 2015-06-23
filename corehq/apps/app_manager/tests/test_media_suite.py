@@ -182,16 +182,39 @@ class LocalizedMediaSuiteTest(TestCase, TestFileMixin):
 
         XML = self.makeXML("case_list_form.m0", "case_list_form.m0.icon", "case_list_form.m0.audio")
         self.assertXmlPartialEqual(XML, app.create_suite(), "./detail[@id='m0_case_short']/action/display")
+        self._assert_app_strings_available(app)
+
+    def test_case_list_menu_media(self):
+        self.module.case_list.show = True
+        self.module.case_list.set_icon('en', self.image_path)
+        self.module.case_list.set_audio('en', self.audio_path)
+
+        XML = self.makeXML(
+            "case_lists.m0",
+            "case_lists.m0.icon",
+            "case_lists.m0.audio",
+        )
+        self.assertXmlPartialEqual(
+            XML,
+            self.app.create_suite(),
+            "./entry/command[@id='m0-case-list']/"
+        )
 
     def test_media_app_strings(self):
         self.form.set_icon('en', self.image_path)
         self.form.set_audio('en', self.audio_path)
 
-        et = etree.XML(self.app.create_suite())
+        self.module.case_list.show = True
+        self.module.case_list.set_icon('en', self.image_path)
+        self.module.case_list.set_audio('en', self.audio_path)
+        self._assert_app_strings_available(self.app)
+
+    def _assert_app_strings_available(self, app):
+        et = etree.XML(app.create_suite())
         locale_elems = et.findall(".//locale/[@id]")
         locale_strings = [elem.attrib['id'] for elem in locale_elems]
 
-        app_strings = commcare_translations.loads(self.app.create_app_strings('en'))
+        app_strings = commcare_translations.loads(app.create_app_strings('en'))
         for string in locale_strings:
             if string not in app_strings:
                 raise AssertionError("App strings did not contain %s" % string)

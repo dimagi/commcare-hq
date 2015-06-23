@@ -84,6 +84,12 @@ def _create_custom_app_strings(app, lang):
         if hasattr(module, 'case_list'):
             if module.case_list.show:
                 yield id_strings.case_list_locale(module), trans(module.case_list.label) or "Case List"
+                icon = module.case_list.icon_by_language(lang)
+                audio = module.case_list.audio_by_language(lang)
+                if icon:
+                    yield id_strings.case_list_icon_locale(module), icon
+                if audio:
+                    yield id_strings.case_list_audio_locale(module), audio
         if hasattr(module, 'referral_list'):
             if module.referral_list.show:
                 yield id_strings.referral_list_locale(module), trans(module.referral_list.label)
@@ -100,6 +106,12 @@ def _create_custom_app_strings(app, lang):
                 id_strings.case_list_form_locale(module),
                 trans(module.case_list_form.label) or "Create a new Case"
             )
+            icon = module.case_list_form.icon_by_language(lang)
+            audio = module.case_list_form.audio_by_language(lang)
+            if icon:
+                yield id_strings.case_list_form_icon_locale(module), icon
+            if audio:
+                yield id_strings.case_list_form_audio_locale(module), audio
 
 
 class AppStringsBase(object):

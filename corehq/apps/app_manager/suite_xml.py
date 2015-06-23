@@ -1601,14 +1601,23 @@ class SuiteGenerator(SuiteGeneratorBase):
                 results.append(e)
 
             if hasattr(module, 'case_list') and module.case_list.show:
-                e = Entry(
-                    command=Command(
+                e = Entry()
+                if self.app.enable_localized_menu_media:
+                    e.command = LocalizedCommand(
+                        id=self.id_strings.case_list_command(module),
+                        menu_locale_id=self.id_strings.case_list_locale(module),
+                        media_image=bool(len(module.case_list.all_image_paths())),
+                        media_audio=bool(len(module.case_list.all_audio_paths())),
+                        image_locale_id=self.id_strings.case_list_icon_locale(form),
+                        audio_locale_id=self.id_strings.case_list_audio_locale(form),
+                    )
+                else:
+                    e.command = Command(
                         id=self.id_strings.case_list_command(module),
                         locale_id=self.id_strings.case_list_locale(module),
-                        media_image=module.case_list.media_image,
-                        media_audio=module.case_list.media_audio,
+                        media_image=module.case_list.default_media_image,
+                        media_audio=module.case_list.default_media_audio,
                     )
-                )
                 if isinstance(module, Module):
                     for datum_meta in self.get_datum_meta_module(module, use_filter=False):
                         e.datums.append(datum_meta['datum'])
