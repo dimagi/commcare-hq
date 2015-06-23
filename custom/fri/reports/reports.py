@@ -4,6 +4,7 @@ from datetime import datetime, time, timedelta
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 from corehq.apps.domain.models import Domain
+from corehq.apps.hqcase.dbaccessors import get_cases_in_domain
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import (
@@ -396,10 +397,7 @@ class SurveyResponsesReport(FRIReport):
         return dt
 
     def get_participants(self):
-        result = CommCareCase.view("hqcase/types_by_domain",
-                                   key=[self.domain, "participant"],
-                                   include_docs=True,
-                                   reduce=False).all()
+        result = get_cases_in_domain(self.domain, 'participant')
         survey_report_date = parse(self.survey_report_date).date()
 
         def filter_function(case):
@@ -408,8 +406,7 @@ class SurveyResponsesReport(FRIReport):
                 return False
             first_tuesday = self.get_first_tuesday(registration_date)
             last_tuesday = first_tuesday + timedelta(days=49)
-            return (survey_report_date >= first_tuesday and
-                survey_report_date <= last_tuesday)
+            return first_tuesday <= survey_report_date <= last_tuesday
 
         result = filter(filter_function, result)
         return result
