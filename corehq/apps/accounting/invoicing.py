@@ -415,7 +415,7 @@ class ProductLineItemFactory(LineItemFactory):
 
     def _auto_generate_credits(self):
         CreditLine.add_credit(
-            self.unit_cost if self.is_prorated else self.rate.monthly_fee,
+            self.unit_cost * self.quantity if self.is_prorated else self.rate.monthly_fee,
             subscription=self.subscription,
             product_type=self.rate.product.product_type,
             permit_inactive=True,
