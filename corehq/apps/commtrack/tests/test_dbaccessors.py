@@ -5,7 +5,9 @@ from corehq.apps.commtrack.dbaccessors import \
     get_open_requisition_case_ids_for_supply_point_id, \
     get_open_requisition_case_ids_for_location, \
     get_supply_point_ids_in_domain_by_location, \
-    get_supply_points_json_in_domain_by_location
+    get_supply_points_json_in_domain_by_location, \
+    get_supply_point_case_by_location_id
+from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.locations.models import Location
 
 
@@ -108,7 +110,11 @@ class SupplyPointDBAccessorsTest(TestCase):
         )
 
     def test_get_supply_point_case_by_location_id(self):
-        self.fail()
+        actual = get_supply_point_case_by_location_id(
+            self.domain, self.locations[0]._id)
+        expected = SupplyPointCase.wrap(self.supply_points[0].to_json())
+        self.assertEqual(type(actual), type(expected))
+        self.assertEqual(actual.to_json(), expected.to_json())
 
     def test_get_supply_point_case_by_location(self):
         self.fail()
