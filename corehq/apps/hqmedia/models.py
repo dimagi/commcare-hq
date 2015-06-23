@@ -549,17 +549,8 @@ class HQMediaMixin(Document):
                 )
 
             if module.case_list_form.form_id:
-                media.extend([ApplicationMediaReference(audio_path,
-                                                        media_class=CommCareAudio,
-                                                        **media_kwargs)
-                              for audio_path in module.case_list_form.all_audio_paths()
-                              if audio_path])
+                _add_menu_media(module.case_list_form, **media_kwargs)
 
-                media.extend([ApplicationMediaReference(image_path,
-                                                        media_class=CommCareImage,
-                                                        **media_kwargs)
-                              for image_path in module.case_list_form.all_image_paths()
-                              if image_path])
             if module.case_list.show:
                 _add_menu_media(module.case_list, **media_kwargs)
 
