@@ -216,7 +216,7 @@ def remind_subscription_ending_30_days(based_on_date=None):
 
 
 @periodic_task(run_every=crontab(minute=0, hour=0))
-def remind_dimagi_contact_subscription_ending_40_days(based_on_date=None):
+def remind_dimagi_contact_subscription_ending_40_days():
     """
     Sends reminder emails to Dimagi contacts that subscriptions are ending in 40 days
     """
