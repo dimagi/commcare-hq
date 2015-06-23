@@ -45,7 +45,6 @@
 trunk: master
 name: autostaging
 branches:
-  - tz-in-readable-forms  # Danny 6/19
   - vellum-staging # J$ 11/13
   - fixtures-spike  # cz 1/29
   - update-submodules # TS 5/6
