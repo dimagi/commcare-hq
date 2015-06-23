@@ -780,14 +780,14 @@ def child_locations_for_select2(request, domain):
         else:
             return json_response(loc_to_payload(loc))
     else:
-        locs = SQLLocation.objects.filter(domain=domain)
+        user_loc = user.get_sql_location(domain)
+
+        if user_can_edit_any_location(user, request.project):
+            locs = SQLLocation.objects.filter(domain=domain)
+        elif user_loc:
+            locs = user_loc.get_descendants(include_self=True)
+
         if query:
             locs = locs.filter(name__icontains=query)
-
-        user_loc = user.get_location(domain)
-        if user_loc and not user_can_edit_any_location(user, request.project):
-            user_loc = user_loc.sql_location
-            child_locs = [loc.id for loc in user_loc.get_descendants(True)]
-            locs = locs.filter(pk__in=child_locs)
 
         return json_response(map(loc_to_payload, locs[:10]))
