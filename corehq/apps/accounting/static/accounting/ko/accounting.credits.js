@@ -4,7 +4,7 @@ var CreditsManager = function (products, features, paymentHandler, can_purchase_
 
     self.products = ko.observableArray();
     self.features = ko.observableArray();
-    self.prepayments = ko.observable()
+    self.prepayments = ko.observable();
 
     can_purchase_credits = can_purchase_credits && !is_plan_trial;
 
