@@ -1249,6 +1249,38 @@ class Subscription(models.Model):
                     'email': email,
                 })
 
+    def send_dimagi_ending_reminder_email(self):
+        if self.date_end is None:
+            raise SubscriptionReminderError(
+                "This subscription has no end date."
+            )
+        if self.account.dimagi_contact is None:
+            raise SubscriptionReminderError(
+                "This subscription has no Dimagi contact."
+            )
+
+        domain = self.subscriber.domain
+        end_date = self.date_end.strftime(USER_DATE_FORMAT)
+        email = self.account.dimagi_contact
+        subject = "Alert: {domain}'s subscription is ending on {end_date}".format(
+                  domain=domain,
+                  end_date=end_date)
+        template = 'accounting/subscription_ending_reminder_dimagi.html'
+        template_plaintext = 'accounting/subscription_ending_reminder_dimagi_plaintext.html'
+        context = {
+            'domain': domain,
+            'end_date': end_date,
+            'contacts': self.account.billingcontactinfo.emails,
+            'dimagi_contact': email,
+        }
+        email_html = render_to_string(template, context)
+        email_plaintext = render_to_string(template_plaintext, context)
+        send_HTML_email(
+            subject, email, email_html,
+            text_content=email_plaintext,
+            email_from=settings.DEFAULT_FROM_EMAIL,
+        )
+
     def set_billing_account_entry_point(self):
         no_current_entry_point = self.account.entry_point == EntryPoint.NOT_SET
         self_serve = self.service_type == SubscriptionType.SELF_SERVICE
