@@ -1567,8 +1567,10 @@ class AdminTab(UITab):
     def dropdown_items(self):
         if (self.couch_user and not self.couch_user.is_superuser
                 and (toggles.IS_DEVELOPER.enabled(self.couch_user.username))):
-            return [dropdown_dict(_("System Info"),
-                    url=reverse("system_info"))]
+            return [
+                dropdown_dict(_("System Info"), url=reverse("system_info")),
+                dropdown_dict(_("Feature Flags"), url=reverse("toggle_list")),
+            ]
 
         submenu_context = [
             dropdown_dict(_("Reports"), is_header=True),
