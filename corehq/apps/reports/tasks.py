@@ -1,3 +1,4 @@
+import hashlib
 from django.utils.translation import ugettext as _
 from datetime import datetime, timedelta
 import uuid
@@ -384,12 +385,9 @@ def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id, export_
 
     use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
     if use_transfer:
-        root_dir = settings.SHARED_DRIVE_CONF.transfer_dir
-        fpath = os.path.join(root_dir, "{}{}{}".format(
-            app_id,
-            zip_name,
-            num_forms,  # if there are more forms than last time this file was downloaded, regenerate
-        ))
+        params = '_'.join(map(str, [xmlns, startdate, enddate, export_id, num_forms]))
+        fname = '{}-{}'.format(app_id, hashlib.md5(params).hexdigest())
+        fpath = os.path.join(settings.SHARED_DRIVE_CONF.transfer_dir, fname)
     else:
         _, fpath = tempfile.mkstemp()
 

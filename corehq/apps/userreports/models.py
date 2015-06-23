@@ -12,6 +12,7 @@ from dimagi.ext.couchdbkit import (
 from dimagi.ext.couchdbkit import StringProperty, DictProperty, ListProperty, IntegerProperty
 from dimagi.ext.jsonobject import JsonObject
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
+from corehq.apps.userreports.dbaccessors import get_report_configs_by_data_source
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
@@ -197,6 +198,12 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             self.indicators.get_values(item, EvaluationContext(doc, i))
             for i, item in enumerate(self.get_items(doc))
         ]
+
+    def get_report_count(self):
+        """
+        Return the number of ReportConfigurations that reference this data source.
+        """
+        return get_report_configs_by_data_source(self.domain, self._id)
 
     def validate(self, required=True):
         super(DataSourceConfiguration, self).validate(required)
