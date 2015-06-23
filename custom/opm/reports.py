@@ -1081,6 +1081,7 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
                 awc=user['awc'],
                 awc_code=user['awc_code'],
                 gp=user['gp'],
+                block=user['block'],
             )
 
     @property
