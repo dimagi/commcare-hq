@@ -799,11 +799,12 @@ class ConditionsMet(OPMCaseRow):
         ('three', _("Condition 3"), True),
         ('four', _("Condition 4"), True),
         ('five', _("Condition 5"), True),
-        ('cash', _("Payment amount this month (Rs.)"), True),
+        ('cash_pay', _("Payment amount this month (Rs.)"), True),
         ('payment_last_month', _("Payment amount last month (Rs.)"), True),
         ('cash_received_last_month', _("Cash received last month"), True),
         ('case_id', _('Case ID'), True),
-        ('closed_date', _("Closed On"), True)
+        ('closed_date', _("Closed On"), True),
+        ('issue', _('Issues'), True)
     ]
 
     def __init__(self, case, report, child_index=1, awc_codes={}, **kwargs):
@@ -812,7 +813,8 @@ class ConditionsMet(OPMCaseRow):
         self.payment_last_month = "Rs.%d" % (self.last_month_row.cash_amt if self.last_month_row else 0)
         self.cash_received_last_month = self.last_month_row.vhnd_available_display if self.last_month_row else 'no'
         self.awc_code = awc_codes.get(self.awc_name, EMPTY_FIELD)
-
+        self.issue = ''
+        self.cash_pay = self.cash
         if self.status == 'mother':
             self.child_name = self.case_property(self.child_xpath("child{num}_name"), EMPTY_FIELD)
             self.one = self.condition_image(C_ATTENDANCE_Y, C_ATTENDANCE_N, "पोषण दिवस में उपस्थित",

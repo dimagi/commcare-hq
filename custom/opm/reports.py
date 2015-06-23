@@ -893,6 +893,16 @@ class MetReport(CaseReportMixin, BaseReport):
                 case_row = self.get_row_data(row, index=1, awc_codes=awc_codes)
                 total_payment += case_row.cash_amt
                 rows.append(case_row)
+            except CaseOutOfRange as e:
+                case_row.one = ''
+                case_row.two = ''
+                case_row.three = ''
+                case_row.four = ''
+                case_row.five = ''
+                case_row.cash_pay = '--'
+                case_row.payment_last_month = '--'
+                case_row.issue = _('Reporting period incomplete')
+                rows.append(case_row)
             except InvalidRow as e:
                 if self.debug:
                     import sys
@@ -905,7 +915,7 @@ class MetReport(CaseReportMixin, BaseReport):
                     })
         self.total_row = ["" for __ in self.model.method_map]
         self.total_row[0] = _("Total Payment")
-        self.total_row[self.column_index('cash')] = "Rs. {}".format(total_payment)
+        self.total_row[self.column_index('cash_pay')] = "Rs. {}".format(total_payment)
         return rows
 
     def get_row_data(self, row, **kwargs):
