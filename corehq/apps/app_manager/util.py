@@ -17,6 +17,7 @@ from corehq.apps.app_manager.const import (
     CT_REQUISITION_MODE_4,
     CT_LEDGER_APPROVED,
     CT_LEDGER_PREFIX,
+    AUTO_SELECT_USERCASE,
     USERCASE_TYPE,
     USERCASE_ID,
     USERCASE_PREFIX)
@@ -411,6 +412,10 @@ def get_commcare_versions(request_user):
 def actions_use_usercase(actions):
     return (('usercase_update' in actions and actions['usercase_update'].update) or
             ('usercase_preload' in actions and actions['usercase_preload'].preload))
+
+
+def advanced_actions_use_usercase(actions):
+    return any(c.auto_select and c.auto_select.mode == AUTO_SELECT_USERCASE for c in actions.load_update_cases)
 
 
 def enable_usercase(domain_name):
