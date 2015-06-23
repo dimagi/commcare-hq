@@ -112,6 +112,10 @@
             enableOffline();
         }
 
+        $.subscribe('formplayer.dirty', function() {
+            window.mainView.router.view.dirty = true
+        });
+
     }());
 
 </script>
