@@ -1092,11 +1092,17 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
     def save(self, *args, **kwargs):
         super(MessagingSubEvent, self).save(*args, **kwargs)
         parent = self.parent
+
+        # If this event is in an errored state, also set the parent
+        # event to an errored state.
         if self.status == MessagingEvent.STATUS_ERROR:
             parent.status = MessagingEvent.STATUS_ERROR
             parent.save()
 
-        if (
+        # If the parent event had various recipients, mark it as such,
+        # unless the source was a keyword in which case the recipient
+        # listed should always be the keyword initiator.
+        if (parent.source != MessagingEvent.SOURCE_KEYWORD and
             parent.recipient_id != self.recipient_id and
             parent.recipient_type not in (
                 MessagingEvent.RECIPIENT_USER_GROUP,
