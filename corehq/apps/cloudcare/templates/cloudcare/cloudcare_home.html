@@ -200,18 +200,6 @@
         <section id="case-crumbs" style="width: 800px"></section>
         <section id="cases"></section>
         <section id="webforms" data-bind="template: { name: 'form-fullform-ko-template' }" style="min-width: 800px;"></section>
-        {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
-            <hr/>
-            <div id="instance-xml-home" name="instance-xml-home">
-                <div id="question-viewer-pretty"></div>
-                <div id="xml-viewer-pretty"></div>
-                <input id="evaluate-result" style="display: block;"/>
-                <section>
-                    <input id="xpath" name="xpath" value="/data/[your path here]" style="min-width: 300px;"/>
-                    <input id="evaluate-button" type="submit" value="Evaluate" />
-                </section>
-            </div>
-        {% endif %}
     </div>
 
     {% include 'cloudcare/includes/case_details.html' %}
