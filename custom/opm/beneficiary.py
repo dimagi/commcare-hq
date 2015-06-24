@@ -799,7 +799,7 @@ class ConditionsMet(OPMCaseRow):
         ('three', _("Condition 3"), True),
         ('four', _("Condition 4"), True),
         ('five', _("Condition 5"), True),
-        ('cash_pay', _("Payment amount this month (Rs.)"), True),
+        ('cash', _("Payment amount this month (Rs.)"), True),
         ('payment_last_month', _("Payment amount last month (Rs.)"), True),
         ('cash_received_last_month', _("Cash received last month"), True),
         ('case_id', _('Case ID'), True),
@@ -814,7 +814,6 @@ class ConditionsMet(OPMCaseRow):
         self.cash_received_last_month = self.last_month_row.vhnd_available_display if self.last_month_row else 'no'
         self.awc_code = awc_codes.get(self.awc_name, EMPTY_FIELD)
         self.issue = ''
-        self.cash_pay = self.cash
         if self.status == 'mother':
             self.child_name = self.case_property(self.child_xpath("child{num}_name"), EMPTY_FIELD)
             self.one = self.condition_image(C_ATTENDANCE_Y, C_ATTENDANCE_N, "पोषण दिवस में उपस्थित",
@@ -856,6 +855,71 @@ class ConditionsMet(OPMCaseRow):
 
         if not self.vhnd_available:
             self.one = self.img_elem % (VHND_NO, "पोषण दिवस का आयोजन नहीं हुआ")
+
+
+class FakeConditionsMet(ConditionsMet):
+
+    def __init__(self, case, report, child_index=1, awc_codes={}, **kwargs):
+        super(ConditionsMet, self).__init__(case, report, child_index=child_index, **kwargs)
+        self.serial_number = child_index
+        self.payment_last_month = "Rs.%d" % (self.last_month_row.cash_amt if self.last_month_row else 0)
+        self.cash_received_last_month = self.last_month_row.vhnd_available_display if self.last_month_row else 'no'
+        self.awc_code = awc_codes.get(self.awc_name, EMPTY_FIELD)
+        self.issue = ''
+        self.one = ''
+        self.two = ''
+        self.three = ''
+        self.four = ''
+        self.five = ''
+        self.payment_last_month = ''
+        self.issue = _('Reporting period incomplete')
+        if self.status == 'mother':
+            self.child_name = self.case_property(self.child_xpath("child{num}_name"), EMPTY_FIELD)
+        elif self.status == 'pregnant':
+            self.child_name = EMPTY_FIELD
+
+    @property
+    def readable_status(self):
+        if self.report.is_rendered_as_email:
+            with localize('hin'):
+                return _(self.status)
+        return self.status
+
+    @property
+    @memoized
+    def preg_month(self):
+        if self.status == 'pregnant':
+            base_window_start = add_months_to_date(self.edd, -9)
+            try:
+                non_adjusted_month = len(months_between(base_window_start, self.reporting_window_start)) - 1
+            except AssertionError:
+                return EMPTY_FIELD
+
+            # the date to check one month after they first become eligible,
+            # aka the end of their fourth month of pregnancy
+            vhnd_date_to_check = add_months_to_date(self.preg_first_eligible_date, 1)
+
+            month = self._adjust_for_vhnd_presence(non_adjusted_month, vhnd_date_to_check)
+            return month
+
+    @property
+    def preg_month_display(self):
+        return self.preg_month if self.preg_month is not None else EMPTY_FIELD
+
+    @property
+    @memoized
+    def child_age(self):
+        if self.status == 'mother':
+            non_adjusted_month = len(months_between(self.dod, self.reporting_window_start)) - 1
+            # anchor date should be their one month birthday
+            anchor_date = add_months_to_date(self.dod, 1)
+
+            month = self._adjust_for_vhnd_presence(non_adjusted_month, anchor_date)
+            return month
+
+    @property
+    def cash(self):
+        return ''
 
 
 class Beneficiary(OPMCaseRow):
