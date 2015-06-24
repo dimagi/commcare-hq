@@ -6,9 +6,6 @@ from dimagi.utils.modules import to_function
 import itertools
 
 
-FixtureProvider = namedtuple('FixtureProvider', 'id func')
-
-
 class FixtureGenerator(object):
     """
     The generator object, which gets fixtures from your config file that should
@@ -36,15 +33,11 @@ class FixtureGenerator(object):
     """
 
     def __init__(self):
-        def to_provider(provider_id, func_path):
-            func = to_function(func_path)
-            return FixtureProvider(id=provider_id, func=func) if func else None
-
         self._generator_providers = {}
         if hasattr(settings, "FIXTURE_GENERATORS"):
-            for group, func_tuple in settings.FIXTURE_GENERATORS.items():
+            for group, func_paths in settings.FIXTURE_GENERATORS.items():
                 self._generator_providers[group] = filter(None, [
-                    to_provider(provider_id, func_path) for provider_id, func_path in func_tuple
+                    to_function(func_path, True) for func_path in func_paths
                 ])
 
     def _get_fixtures(self, group, fixture_id, user, version, last_sync):
@@ -73,7 +66,7 @@ class FixtureGenerator(object):
 
             providers = [provider for provider in providers if provider_matches(provider)]
 
-        return itertools.chain(*[provider.func(user, version, last_sync)
+        return itertools.chain(*[provider(user, version, last_sync)
                                  for provider in providers])
 
     def get_fixture_by_id(self, fixture_id, user, version, last_sync=None):
