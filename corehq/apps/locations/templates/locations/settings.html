@@ -82,17 +82,6 @@
                             <th>{% trans "Tracks Stock" %}</th>
                             {% endif %}
                             <th>
-                                {% trans "Owns Cases" %}
-                                <span class="hq-help-template"
-                                      data-title="{% trans "Owns Cases" %}"
-                                      data-content="{% blocktrans %}
-                                          This allows locations of this type to own and
-                                          manage cases. A case sharing group will be
-                                          created for each location.
-                                      {% endblocktrans %}">
-                                </span>
-                            </th>
-                            <th>
                                 {% trans "View Child Location Data" %}
                                 <span class="hq-help-template"
                                       data-title="{% trans "View Child Location Data" %}"
@@ -127,9 +116,6 @@
                             <input data-bind="checked: tracks_stock" type="checkbox" />
                         </td>
                         {% endif %}
-                        <td>
-                            <input data-bind="checked: shares_cases" type="checkbox" />
-                        </td>
                         <td>
                             <input data-bind="checked: view_descendants" type="checkbox" />
                         </td>

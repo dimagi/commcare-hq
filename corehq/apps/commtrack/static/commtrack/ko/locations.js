@@ -139,7 +139,6 @@ function LocationTypeModel(data, root) {
 
     this.parent_type = ko.observable(data.parent_type);
     this.tracks_stock = ko.observable(!data.administrative);
-    this.shares_cases = ko.observable(data.shares_cases);
     this.view_descendants = ko.observable(data.view_descendants);
 
     this.name_error = ko.observable(false);
@@ -159,7 +158,6 @@ function LocationTypeModel(data, root) {
             name: this.name(),
             parent_type: this.parent_type() || null,
             administrative: !this.tracks_stock(),
-            shares_cases: this.shares_cases() === true,
             view_descendants: this.view_descendants() === true
         };
     };

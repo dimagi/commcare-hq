@@ -20,7 +20,6 @@ from soil.util import expose_cached_download, get_download_context
 
 from corehq import toggles
 from corehq.apps.commtrack.exceptions import MultipleSupplyPointException
-from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.commtrack.tasks import import_locations_async
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.custom_data_fields import CustomDataModelMixin
@@ -140,7 +139,6 @@ class LocationTypesView(BaseLocationView):
             'parent_type': (loctype.parent_type.pk
                             if loctype.parent_type else None),
             'administrative': loctype.administrative,
-            'shares_cases': loctype.shares_cases,
             'view_descendants': loctype.view_descendants
         }
 
@@ -151,8 +149,7 @@ class LocationTypesView(BaseLocationView):
         def _is_fake_pk(pk):
             return isinstance(pk, basestring) and pk.startswith("fake-pk-")
 
-        def mk_loctype(name, parent_type, administrative,
-                       shares_cases, view_descendants, pk):
+        def mk_loctype(name, parent_type, administrative, view_descendants, pk):
             parent = sql_loc_types[parent_type] if parent_type else None
 
             loc_type = None
@@ -166,7 +163,6 @@ class LocationTypesView(BaseLocationView):
             loc_type.name = name
             loc_type.administrative = administrative
             loc_type.parent_type = parent
-            loc_type.shares_cases = shares_cases
             loc_type.view_descendants = view_descendants
             loc_type.save()
             sql_loc_types[pk] = loc_type
@@ -175,7 +171,7 @@ class LocationTypesView(BaseLocationView):
         pks = []
         for loc_type in loc_types:
             for prop in ['name', 'parent_type', 'administrative',
-                         'shares_cases', 'view_descendants', 'pk']:
+                         'view_descendants', 'pk']:
                 assert prop in loc_type, "Missing a location type property!"
             pk = loc_type['pk']
             if not _is_fake_pk(pk):
