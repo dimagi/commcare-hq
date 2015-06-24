@@ -42,55 +42,61 @@ def should_sync_locations(last_sync, location_db):
     return False
 
 
-def location_fixture_generator(user, version, last_sync=None):
-    """
-    By default this will generate a fixture for the users
-    location and it's "footprint", meaning the path
-    to a root location through parent hierarchies.
+class LocationFixtureProvider(object):
+    id = 'commtrack:locations'
 
-    There is an admin feature flag that will make this generate
-    a fixture with ALL locations for the domain.
-    """
-    if not user.project.uses_locations:
-        return []
+    def __call__(self, user, version, last_sync=None):
+        """
+        By default this will generate a fixture for the users
+        location and it's "footprint", meaning the path
+        to a root location through parent hierarchies.
 
-    if toggles.SYNC_ALL_LOCATIONS.enabled(user.domain):
-        locations = SQLLocation.objects.filter(domain=user.domain)
-    else:
-        locations = []
-        user_location = user.sql_location
-        if user_location:
-            # add users location (and ancestors) to fixture
-            locations.append(user_location)
+        There is an admin feature flag that will make this generate
+        a fixture with ALL locations for the domain.
+        """
+        if not user.project.uses_locations:
+            return []
 
-            # add all descendants as well
-            locations += user_location.get_descendants()
+        if toggles.SYNC_ALL_LOCATIONS.enabled(user.domain):
+            locations = SQLLocation.objects.filter(domain=user.domain)
+        else:
+            locations = []
+            user_location = user.sql_location
+            if user_location:
+                # add users location (and ancestors) to fixture
+                locations.append(user_location)
 
-        if user.project.supports_multiple_locations_per_user:
-            # this might add duplicate locations but we filter that out later
-            location_ids = [loc._id for loc in user.locations]
-            locations += SQLLocation.objects.filter(
-                location_id__in=location_ids
-            )
+                # add all descendants as well
+                locations += user_location.get_descendants()
 
-    location_db = _location_footprint(locations)
+            if user.project.supports_multiple_locations_per_user:
+                # this might add duplicate locations but we filter that out later
+                location_ids = [loc._id for loc in user.locations]
+                locations += SQLLocation.objects.filter(
+                    location_id__in=location_ids
+                )
 
-    if not should_sync_locations(last_sync, location_db):
-        return []
+        location_db = _location_footprint(locations)
 
-    root = Element('fixture',
-                   {'id': 'commtrack:locations',
-                    'user_id': user.user_id})
+        if not should_sync_locations(last_sync, location_db):
+            return []
 
-    root_locations = filter(
-        lambda loc: loc.parent is None, location_db.by_id.values()
-    )
+        root = Element('fixture',
+                       {'id': self.id,
+                        'user_id': user.user_id})
 
-    if not root_locations:
-        return []
-    else:
-        _append_children(root, location_db, root_locations)
-        return [root]
+        root_locations = filter(
+            lambda loc: loc.parent is None, location_db.by_id.values()
+        )
+
+        if not root_locations:
+            return []
+        else:
+            _append_children(root, location_db, root_locations)
+            return [root]
+
+
+location_fixture_generator = LocationFixtureProvider()
 
 
 def _valid_parent_type(location):
