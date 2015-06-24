@@ -1,4 +1,4 @@
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.generic import GenericTabularReport
@@ -19,7 +19,20 @@ class FicheConsommationReport(IntraHealtMixin, DatespanMixin, GenericTabularRepo
 
     @property
     def model(self):
-        return FicheData(config=self.report_config)
+        config = self.report_config
+        locations = []
+        if 'region_id' in config:
+            locations = tuple(SQLLocation.objects.get(
+                location_id=config['region_id']
+            ).archived_descendants().values_list('location_id', flat=True))
+        elif 'district_id' in config:
+            locations = tuple(SQLLocation.objects.get(
+                location_id=config['district_id']
+            ).archived_descendants().values_list('location_id', flat=True))
+
+        if locations:
+            config.update({'archived_locations': locations})
+        return FicheData(config=config)
 
     @property
     def export_table(self):
