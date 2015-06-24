@@ -80,7 +80,7 @@ class CaseListFilter(ExpandedMobileWorkerFilter):
         reporting = [self.utils.reporting_group_tuple(group['fields'])
                      for group in query_results
                      if group['fields'].get("reporting", False)]
-        sharing = [self.sharing_group_tuple(group['fields'])
+        sharing = [self.utils.sharing_group_tuple(group['fields'])
                    for group in query_results
                    if group['fields'].get("case_sharing", False)]
         return reporting + sharing
@@ -110,7 +110,7 @@ class CaseListFilterOptions(EmwfOptionsView):
     def get_groups(self, start, size):
         def wrap_group(group):
             if group.get('case_sharing', None):
-                return self.sharing_group_tuple(group)
+                return self.utils.sharing_group_tuple(group)
             return self.utils.reporting_group_tuple(group)
 
         fields = ['_id', 'name']
