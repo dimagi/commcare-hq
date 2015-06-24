@@ -254,5 +254,5 @@ class DynamicChoiceListFilterTestCase(SimpleTestCase):
             Choice('carrot', 'carrot')
         ]
         for i, s in enumerate(test_strings):
-            self.assertListEqual(choices[0:i+1], filter.value(dynoslug=s))
+            self.assertListEqual(choices[0:i + 1], filter.value(dynoslug=s))
 
