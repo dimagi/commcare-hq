@@ -72,6 +72,7 @@ def register_user(request, domain_type=None):
                 login(request, new_user)
                 track_workflow.delay(new_user.email, "Requested new account")
                 track_created_hq_account_on_hubspot.delay(new_user, request.COOKIES)
+                # jls: also create domain, and redirect...somewhere else
                 return redirect(
                     'registration_domain', domain_type=domain_type)
         else:

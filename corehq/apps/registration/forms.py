@@ -18,6 +18,7 @@ class NewWebUserRegistrationForm(forms.Form):
     """
     Form for a brand new user, before they've created a domain or done anything on CommCare HQ.
     """
+    # jls: mix in DomainRegistrationForm, which may have a value for domain already, and if it does, don't display that field
     full_name = forms.CharField(label=_('Full Name'),
                                 max_length=User._meta.get_field('first_name').max_length +
                                            User._meta.get_field('last_name').max_length + 1)
