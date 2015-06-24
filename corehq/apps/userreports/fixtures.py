@@ -6,23 +6,28 @@ from corehq.apps.userreports.reports.specs import MultibarChartSpec
 from .models import ReportConfiguration
 
 
-def report_fixture_generator(user, version, last_sync=None):
-    """
-    Generates a report fixture for mobile that can be used by a report module
-    """
-    if not toggles.MOBILE_UCR.enabled(user.domain):
-        return []
+class ReportFixturesProvider(object):
+    id = 'commcare:reports'
 
-    reports = ReportConfiguration.by_domain(user.domain)
-    if not reports:
-        return []
+    def __call__(self, user, version, last_sync=None):
+        """
+        Generates a report fixture for mobile that can be used by a report module
+        """
+        if not toggles.MOBILE_UCR.enabled(user.domain):
+            return []
 
-    root = ElementTree.Element('fixture', attrib={'id': 'commcare:reports'})
-    reports_elem = ElementTree.Element('reports')
-    for report in reports:
-        reports_elem.append(_report_to_fixture(report))
-    root.append(reports_elem)
-    return [root]
+        reports = ReportConfiguration.by_domain(user.domain)
+        if not reports:
+            return []
+
+        root = ElementTree.Element('fixture', attrib={'id': self.id})
+        reports_elem = ElementTree.Element('reports')
+        for report in reports:
+            reports_elem.append(_report_to_fixture(report))
+        root.append(reports_elem)
+        return [root]
+
+report_fixture_generator = ReportFixturesProvider()
 
 
 def _report_to_fixture(report):
