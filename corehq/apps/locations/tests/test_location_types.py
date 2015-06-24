@@ -76,21 +76,15 @@ class TestLocationTypeOwnership(TestCase):
     def tearDown(self):
         self.user.delete()
 
-    def test_no_case_sharing(self):
-        no_case_sharing_type = make_loc_type('no-case-sharing', domain=self.domain)
-        location = make_loc('loc', type=no_case_sharing_type.name, domain=self.domain)
-        self.user.set_location(location)
-        self.assertEqual([], self.user.location_group_ids())
-
     def test_sharing_no_descendants(self):
-        case_sharing_type = make_loc_type('case-sharing', domain=self.domain, shares_cases=True)
+        case_sharing_type = make_loc_type('case-sharing', domain=self.domain)
         location = make_loc('loc', type=case_sharing_type.name, domain=self.domain)
         self.user.set_location(location)
         self.assertEqual([_group_id(location._id)], self.user.location_group_ids())
 
     def test_assigned_loc_included_with_descendants(self):
-        parent_type = make_loc_type('parent', domain=self.domain, shares_cases=True, view_descendants=True)
-        child_type = make_loc_type('child', domain=self.domain, shares_cases=True)
+        parent_type = make_loc_type('parent', domain=self.domain, view_descendants=True)
+        child_type = make_loc_type('child', domain=self.domain)
         parent_loc = make_loc('parent', type=parent_type.name, domain=self.domain)
         child_loc = make_loc('child', type=child_type.name, domain=self.domain, parent=parent_loc)
         self.user.set_location(parent_loc)
@@ -99,28 +93,27 @@ class TestLocationTypeOwnership(TestCase):
             set(self.user.location_group_ids())
         )
 
-    def test_only_case_sharing_descendents_included(self):
-        parent_type = make_loc_type('parent', domain=self.domain, shares_cases=True, view_descendants=True)
-        child_type = make_loc_type('child', domain=self.domain, shares_cases=False)
-        grandchild_type = make_loc_type('grandchild', domain=self.domain, shares_cases=True)
+    def test_all_descendents_included(self):
+        parent_type = make_loc_type('parent', domain=self.domain, view_descendants=True)
+        child_type = make_loc_type('child', domain=self.domain)
+        grandchild_type = make_loc_type('grandchild', domain=self.domain)
         parent_loc = make_loc('parent', type=parent_type.name, domain=self.domain)
         child_loc = make_loc('child', type=child_type.name, domain=self.domain, parent=parent_loc)
         grandchild_loc = make_loc('grandchild', type=grandchild_type.name, domain=self.domain, parent=child_loc)
         self.user.set_location(parent_loc)
         self.assertEqual(
-            set(map(_group_id, [parent_loc._id, grandchild_loc._id])),
+            set(map(_group_id, [parent_loc._id, child_loc._id, grandchild_loc._id])),
             set(self.user.location_group_ids())
         )
 
 
 def make_loc_type(name, parent_type=None, domain='locations-test',
-                  shares_cases=False, view_descendants=False):
+                  view_descendants=False):
     return LocationType.objects.create(
         domain=domain,
         name=name,
         code=name,
         parent_type=parent_type,
-        shares_cases=shares_cases,
         view_descendants=view_descendants
     )
 
