@@ -150,31 +150,20 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
             selected_reporting_group_users,
             sharing_group_ids
         ))
-        owner_ids += self.location_sharing_owner_ids()
-        owner_ids += self.location_reporting_owner_ids()
+        owner_ids += self.location_owner_ids()
         return owner_ids
 
-    def location_sharing_owner_ids(self):
-        """
-        For now (and hopefully for always) the only owner
-        id that is important for case sharing group selection
-        is that actual group id.
-        """
-        return EMWF.selected_sharing_location_ids(self.request)
-
-    def location_reporting_owner_ids(self):
+    def location_owner_ids(self):
         """
         Include all users that are assigned to the selected
         locations or those locations descendants.
         """
         from corehq.apps.locations.models import SQLLocation, LOCATION_REPORTING_PREFIX
         results = []
-        selected_location_group_ids = EMWF.selected_location_reporting_group_ids(self.request)
-
-        for group_id in selected_location_group_ids:
-            loc = SQLLocation.objects.get(
-                location_id=group_id.replace(LOCATION_REPORTING_PREFIX, '')
-            )
+        for group_id in EMWF.selected_location_reporting_group_ids(self.request):
+            location_id = group_id.replace(LOCATION_REPORTING_PREFIX, '')
+            results.append(location_id)  # The location itself can also own cases
+            loc = SQLLocation.objects.get(location_id=location_id)
 
             for l in loc.get_descendants(include_self=True):
                 results += get_user_ids_by_location(l.location_id)
