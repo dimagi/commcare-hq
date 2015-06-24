@@ -479,14 +479,6 @@ PAGINATOR_MAX_PAGE_LINKS = 5
 OPENROSA_VERSION = "1.0"
 
 # OTA restore fixture generators
-# Fixture ID's used by cloudcare API
-# {
-#     'group': [
-#          ('fixture_id (can be just prefix)', 'fixture generator fn'),
-#          ...
-#      ],
-#      ...
-# }
 FIXTURE_GENERATORS = {
     # fixtures that may be sent to the phone independent of cases
     'standalone': [

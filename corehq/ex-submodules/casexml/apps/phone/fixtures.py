@@ -17,17 +17,22 @@ class FixtureGenerator(object):
     
     FIXTURE_GENERATORS = {
         'group1': [
-           ('fixture_id', "myapp.fixturegenerators.gen1"),
-           ('fixture_id_prefix', "myapp.fixturegenerators.gen2"),
+           "myapp.fixturegenerators.gen1",
+           "myapp.fixturegenerators.gen2",
             ...
         ],
         ...
     }
     
-    The values in the file should be paths to functions that 
+    The values in the file should be paths to objects that
     implement the following API:
     
-    func(user, version, last_sync) --> [list of fixture objects]
+    provider(user, version, last_sync) --> [list of fixture objects]
+    provider.id --> the ID of the fixture
+
+    If the provider generates multiple fixtures it should use an ID format as follows:
+        "prefix:dynamic"
+    In this case 'provider.id' should just be the ID prefix.
     
     The function should return an empty list if there are no fixtures
     """
