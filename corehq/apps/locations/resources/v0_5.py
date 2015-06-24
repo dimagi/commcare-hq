@@ -41,7 +41,6 @@ class LocationTypeResource(SQLResourceURIMixin, ModelResource, HqBaseResource):
             'code',
             'parent_type',
             'administrative',
-            'shares_cases',
             'view_descendants',
         ]
         filtering = {
