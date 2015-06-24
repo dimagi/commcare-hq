@@ -92,7 +92,7 @@ class OtaFixtureTest(TestCase):
         fixture_xml = generator.get_fixture_by_id('user-groups', self.casexml_user, version=V2)
         self._check_fixture(fixture_xml, has_item_lists=False)
 
-        fixture_xml = generator.get_fixture_by_id('item-list', self.casexml_user, version=V2)
+        fixture_xml = generator.get_fixture_by_id('item-list:district', self.casexml_user, version=V2)
         self._check_fixture(fixture_xml, has_groups=False)
 
         fixture_xml = generator.get_fixture_by_id('user-locations', self.casexml_user, version=V2)

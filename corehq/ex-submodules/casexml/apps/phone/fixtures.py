@@ -47,7 +47,7 @@ class FixtureGenerator(object):
                     to_provider(provider_id, func_path) for provider_id, func_path in func_tuple
                 ])
 
-    def _get_fixtures(self, group, fixture_id_or_prefix, user, version, last_sync):
+    def _get_fixtures(self, group, fixture_id, user, version, last_sync):
         if version == V1:
             return []  # V1 phones will never use or want fixtures
 
@@ -62,17 +62,25 @@ class FixtureGenerator(object):
         else:
             providers = itertools.chain(*self._generator_providers.values())
 
-        if fixture_id_or_prefix:
-            providers = [provider for provider in providers if provider.id.startswith(fixture_id_or_prefix)]
+        if fixture_id:
+            full_id = fixture_id
+            prefix = fixture_id.split(':', 1)[0]
+
+            def provider_matches(provider):
+                # some providers generate fixtures with dynamic ID's e.g. item-list:my-item-list
+                # in which case provider.id is just the prefix.
+                return provider.id == full_id or provider.id == prefix
+
+            providers = [provider for provider in providers if provider_matches(provider)]
 
         return itertools.chain(*[provider.func(user, version, last_sync)
                                  for provider in providers])
 
-    def get_fixture_by_id(self, fixture_id_or_prefix, user, version, last_sync=None):
+    def get_fixture_by_id(self, fixture_id, user, version, last_sync=None):
         """
         Only get fixtures with the specified ID.
         """
-        return self._get_fixtures(None, fixture_id_or_prefix, user, version, last_sync)
+        return self._get_fixtures(None, fixture_id, user, version, last_sync)
 
     def get_fixtures(self, user, version, last_sync=None, group=None):
         """
