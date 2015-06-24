@@ -1,8 +1,6 @@
-import json
 from xml.etree import ElementTree
 from corehq import toggles
 from corehq.apps.userreports.reports.factory import ReportFactory
-from corehq.apps.userreports.reports.specs import MultibarChartSpec
 from .models import ReportConfiguration
 
 
