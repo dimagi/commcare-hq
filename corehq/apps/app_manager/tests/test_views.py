@@ -4,6 +4,7 @@ import json
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 from corehq.apps.app_manager.tests import add_build
+from corehq.apps.app_manager.util import new_careplan_module
 from corehq.apps.app_manager.views import AppSummaryView
 from corehq.apps.builds.models import BuildSpec
 
@@ -11,7 +12,7 @@ from corehq import toggles
 from corehq.apps.users.models import WebUser
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.app_manager.models import AdvancedModule, Application, APP_V1, APP_V2, Module, \
-    ReportModule
+    ReportModule, CareplanModule
 from .test_form_versioning import BLANK_TEMPLATE
 
 
@@ -172,6 +173,19 @@ class TestViews(TestCase):
 
     def test_report_module(self):
         module = self.app.add_module(ReportModule.new_module("Module0", "en"))
+        self.app.save()
+        self._test_status_codes(['view_module'], {
+            'domain': self.domain,
+            'app_id': self.app.id,
+            'module_id': module.id,
+        })
+
+    def test_careplan_module(self):
+        target_module = self.app.add_module(Module.new_module("Module0", "en"))
+        target_module.case_type = 'person'
+
+        module = new_careplan_module(self.app, 'Module1', 'en', target_module)
+
         self.app.save()
         self._test_status_codes(['view_module'], {
             'domain': self.domain,

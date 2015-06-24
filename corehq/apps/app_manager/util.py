@@ -337,12 +337,11 @@ def all_apps_by_domain(domain):
 def new_careplan_module(app, name, lang, target_module):
     from corehq.apps.app_manager.models import CareplanModule, CareplanGoalForm, CareplanTaskForm
     module = app.add_module(CareplanModule.new_module(
-        app,
         name,
         lang,
         target_module.unique_id,
-        target_module.case_type)
-    )
+        target_module.case_type
+    ))
 
     forms = [form_class.new_form(lang, name, mode)
                 for form_class in [CareplanGoalForm, CareplanTaskForm]
