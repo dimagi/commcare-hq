@@ -4,7 +4,7 @@ var pageSize = 20;
 // TODO: Ideally the separator would be defined in one place. Right now it is
 //       also defined corehq.apps.userreports.reports.filters.CHOICE_DELIMITER
 var separator = "\u001F";
-var initialValues = $(filter_id).val().split(separator);
+var initialValues = $(filter_id).val() !== "" ? $(filter_id).val().split(separator) : [];
 $(filter_id).select2({
     minimumInputLength: 0,
     multiple: true,
