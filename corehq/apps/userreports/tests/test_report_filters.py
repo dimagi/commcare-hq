@@ -1,10 +1,11 @@
 from datetime import datetime
 from django.test import SimpleTestCase
 from corehq.apps.reports_core.filters import DatespanFilter, ChoiceListFilter, \
-    NumericFilter, DynamicChoiceListFilter
+    NumericFilter, DynamicChoiceListFilter, Choice
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.reports.factory import ReportFilterFactory
-from corehq.apps.userreports.reports.filters import SHOW_ALL_CHOICE
+from corehq.apps.userreports.reports.filters import SHOW_ALL_CHOICE, \
+    CHOICE_DELIMITER
 from corehq.apps.userreports.reports.specs import ReportFilter
 
 
@@ -238,3 +239,20 @@ class DynamicChoiceListFilterTestCase(SimpleTestCase):
             self.assertEqual(len(choices), 1)
             self.assertEqual(expected, choices[0].value)
             self.assertEqual(input, choices[0].display)
+
+    def test_multiple_selections(self):
+        self.filter_spec["datatype"] = "string"
+        filter = ReportFilterFactory.from_spec(self.filter_spec)
+        test_strings = (
+            u'apple',
+            u'apple{s}banana'.format(s=CHOICE_DELIMITER),
+            u'apple{s}banana{s}carrot'.format(s=CHOICE_DELIMITER)
+        )
+        choices = [
+            Choice('apple', 'apple'),
+            Choice('banana', 'banana'),
+            Choice('carrot', 'carrot')
+        ]
+        for i, s in enumerate(test_strings):
+            self.assertListEqual(choices[0:i+1], filter.value(dynoslug=s))
+
