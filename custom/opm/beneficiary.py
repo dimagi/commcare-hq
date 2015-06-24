@@ -919,7 +919,7 @@ class FakeConditionsMet(ConditionsMet):
 
     @property
     def cash(self):
-        return ''
+        return '--'
 
 
 class Beneficiary(OPMCaseRow):
