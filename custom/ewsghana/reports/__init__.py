@@ -242,7 +242,8 @@ class MultiReport(MonthWeekMixin, CustomProjectReport, CommtrackReportMixin, Pro
                 self.report_location.get_descendants().exclude(
                     supply_point_id__isnull=True
                 ).values_list('supply_point_id', flat=True)),
-            report__date__range=[self.report_config['startdate'], self.report_config['enddate']]
+            report__date__range=[self.report_config['startdate'], self.report_config['enddate']],
+            report__domain=self.domain
         ).order_by('report__date', 'pk')
 
     @classmethod
