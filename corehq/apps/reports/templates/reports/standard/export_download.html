@@ -1,0 +1,9 @@
+{% extends 'reports/standard/base_template.html' %}
+
+{% block reports-js-inline %}
+    {{ block.super }}
+    <script type="text/javascript">
+        asyncHQReport.additionalParams = '{{ additional_params }}';
+        asyncHQReport.additionalWindowParams = '{{ additional_params }}';
+    </script>
+{% endblock %}

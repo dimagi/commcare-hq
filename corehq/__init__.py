@@ -200,6 +200,12 @@ EXPORT_DATA_INTERFACES = (
     )),
 )
 
+DATA_DOWNLOAD_INTERFACES = (
+    ('', (
+        export.FormExportReport,
+    )),
+)
+
 
 from corehq.apps.adm.reports.supervisor import SupervisorReportsADMSection
 

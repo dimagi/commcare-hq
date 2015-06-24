@@ -16,7 +16,10 @@ from corehq import privileges
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 
 from corehq.apps.data_interfaces.interfaces import DataInterface
-from corehq.apps.reports.dispatcher import DataExportInterfaceDispatcher
+from corehq.apps.reports.dispatcher import (
+    DataDownloadInterfaceDispatcher,
+    DataExportInterfaceDispatcher,
+)
 from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.reports.standard import ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.reports.models import HQGroupExportConfiguration
@@ -408,4 +411,31 @@ class DataExportInterface(GenericReportView):
         # TODO - implement or remove
         # if not self.can_view_deid:
         #     exports = filter(lambda x: not x.is_safe, exports)
+        for export in exports:
+            export.download_url = (
+                FormExportReport.get_url(domain=self.domain)
+                + '?export_id=' + export._id
+            )
         return sorted(exports, key=lambda x: x.name)
+
+
+class FormExportReport(FormExportReportBase):
+    base_template = 'reports/standard/export_download.html'
+    report_template_path = 'reports/partials/download_export.html'
+    name = ugettext_noop('Download Forms')
+    section_name = "Export Data"
+    slug = 'form_export'
+
+    dispatcher = DataDownloadInterfaceDispatcher
+
+    @property
+    def template_context(self):
+        context = super(FormExportReport, self).template_context
+        export_id = self.request.GET.get('export_id')
+        context.update({
+            'export': SavedExportSchema.get(export_id),
+            'additional_params': 'export_id=%(export_id)s' % {
+                'export_id': export_id,
+            },
+        })
+        return context
