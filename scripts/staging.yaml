@@ -45,6 +45,7 @@
 trunk: master
 name: autostaging
 branches:
+  - kill-announcements  # Danny 6/24
   - kill-adm  # Danny 6/23
   - vellum-staging # J$ 11/13
   - fixtures-spike  # cz 1/29
