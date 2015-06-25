@@ -9,13 +9,12 @@
             if: hasCostItem
         }"></div>
     </div>
-    <form action="{{ process_payment_url }}"
-          method="POST"
+    <form method="POST"
           class="form form-horizontal"
           data-bind="attr: {
-              id: formId
+              id: formId,
+              action: submitURL,
           }">
-        <input type="hidden" name="paymentMethod" data-bind="value: paymentMethod()" />
         <div class="modal-body">
             <div data-bind="template: {
                 data: costItem,

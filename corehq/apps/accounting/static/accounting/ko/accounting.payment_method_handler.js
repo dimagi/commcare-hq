@@ -21,6 +21,7 @@ var BillingHandler = function (formId, opts) {
     self.showServerErrorMsg = ko.computed(function () {
         return !! self.serverErrorMsg();
     });
+    self.submitURL = opts.submitURL;
 
     self.submitForm = function () {
         $('#' + self.formId).ajaxSubmit({
@@ -69,6 +70,14 @@ var PaymentMethodHandler = function (formId, opts) {
     BillingHandler.apply(this, arguments);
 
     self.paymentMethod = ko.observable(self.CREDIT_CARD);
+
+    self.submitURL = ko.computed(function(){
+        var url = opts.credit_card_url;
+        if (self.paymentMethod() === self.WIRE){
+            url = opts.wire_url;
+        }
+        return url;
+    });
 
     self.savedCards = ko.observableArray();
 

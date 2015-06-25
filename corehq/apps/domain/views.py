@@ -141,7 +141,7 @@ def select(request, domain_select_template='domain/select.html', do_not_redirect
                 return dashboard_default(request, last_visited_domain)
             except Http404:
                 pass
-            
+
         del request.session['last_visited_domain']
         return render(request, domain_select_template, additional_context)
 
@@ -779,8 +779,8 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'plan': self.plan,
             'change_plan_url': reverse(SelectPlanView.urlname, args=[self.domain]),
             'can_purchase_credits': self.can_purchase_credits,
-            'process_payment_url': reverse(CreditsStripePaymentView.urlname,
-                                           args=[self.domain]),
+            'credit_card_url': reverse(CreditsStripePaymentView.urlname, args=[self.domain]),
+            'wire_url': reverse(CreditsWireInvoiceView.urlname, args=[self.domain]),
             'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
             'payment_error_messages': PAYMENT_ERROR_MESSAGES,
             'sms_rate_calc_url': reverse(SMSRatesView.urlname,
@@ -1068,6 +1068,27 @@ class CreditsStripePaymentView(BaseStripePaymentView):
             subscription=Subscription.get_subscribed_plan_by_domain(self.domain_object)[1],
             post_data=self.request.POST.copy(),
         )
+
+class CreditsWireInvoiceView(View):
+    http_method_names = ['post']
+    urlname = 'domain_wire_payment'
+
+    @method_decorator(login_and_domain_required)
+    @method_decorator(require_billing_admin())
+    def dispatch(self, request, *args, **kwargs):
+        return super(CreditsWireInvoiceView, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        emails = request.POST.get('emails', []).split()
+        print request.POST
+        # balance = Decimal(request.POST.get('customPaymentAmount', 0))
+        # wire_invoice_factory = DomainWireInvoiceFactory(request.domain, contact_emails=emails)
+        # try:
+        #     wire_invoice_factory.create_wire_invoice(balance)
+        # except Exception, e:
+        #     return json_response({'error': {'message', e}})
+
+        return json_response({'success': True})
 
 
 class InvoiceStripePaymentView(BaseStripePaymentView):

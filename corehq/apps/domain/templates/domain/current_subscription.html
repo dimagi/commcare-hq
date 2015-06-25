@@ -17,7 +17,9 @@
             "add-credit-form",
             {
                 submitBtnText: "{% trans "Buy Credits" %}",
-                errorMessages: {{ payment_error_messages|JSON }}
+                errorMessages: {{ payment_error_messages|JSON }},
+                credit_card_url: "{{ credit_card_url }}",
+                wire_url: "{{ wire_url }}",
             }
         );
         {% if plan.cards %}
