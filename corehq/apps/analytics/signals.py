@@ -4,7 +4,11 @@ from .tasks import track_workflow
 from django.dispatch import receiver
 
 from corehq.apps.users.models import WebUser
-from corehq.apps.accounting.models import Subscription, ProBonoStatus
+from corehq.apps.accounting.models import (
+    ProBonoStatus,
+    SoftwarePlanEdition,
+    Subscription,
+)
 from corehq.apps.accounting.signals import subscription_upgrade_or_downgrade
 from corehq.apps.domain.signals import commcare_domain_post_save
 from corehq.apps.users.signals import couch_user_post_save
@@ -31,11 +35,11 @@ def update_subscription_properties_by_user(couch_user):
     # Note: using "yes" and "no" instead of True and False because spec calls
     # for using these values. (True is just converted to "True" in KISSmetrics)
     properties = {
-        "Community": "no",
-        "Standard": "no",
-        "Pro": "no",
-        "Advanced": "no",
-        "Enterprise": "no",
+        SoftwarePlanEdition.COMMUNITY: "no",
+        SoftwarePlanEdition.STANDARD: "no",
+        SoftwarePlanEdition.PRO: "no",
+        SoftwarePlanEdition.ADVANCED: "no",
+        SoftwarePlanEdition.ENTERPRISE: "no",
         "Pro Bono": "no",
     }
 
