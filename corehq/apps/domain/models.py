@@ -714,64 +714,64 @@ class Domain(Document, SnapshotMixin):
             new_domain_name = new_id
 
         with CriticalSection(['request_domain_name_{}'.format(new_domain_name)]):
-		    new_domain_name = Domain.generate_name(new_domain_name)
+            new_domain_name = Domain.generate_name(new_domain_name)
 
-		    db = Domain.get_db()
+            db = Domain.get_db()
 
-		    new_id = db.copy_doc(self.get_id)['id']
-		    new_domain = Domain.get(new_id)
-		    new_domain.name = new_domain_name
-		    new_domain.hr_name = new_hr_name
-		    new_domain.copy_history = self.get_updated_history()
-		    new_domain.is_snapshot = False
-		    new_domain.snapshot_time = None
-		    new_domain.organization = None  # TODO: use current user's organization (?)
+            new_id = db.copy_doc(self.get_id)['id']
+            new_domain = Domain.get(new_id)
+            new_domain.name = new_domain_name
+            new_domain.hr_name = new_hr_name
+            new_domain.copy_history = self.get_updated_history()
+            new_domain.is_snapshot = False
+            new_domain.snapshot_time = None
+            new_domain.organization = None  # TODO: use current user's organization (?)
 
-		    # reset stuff
-		    new_domain.cda.signed = False
-		    new_domain.cda.date = None
-		    new_domain.cda.type = None
-		    new_domain.cda.user_id = None
-		    new_domain.cda.user_ip = None
-		    new_domain.is_test = "none"
-		    new_domain.internal = InternalProperties()
-		    new_domain.creating_user = user.username if user else None
+            # reset stuff
+            new_domain.cda.signed = False
+            new_domain.cda.date = None
+            new_domain.cda.type = None
+            new_domain.cda.user_id = None
+            new_domain.cda.user_ip = None
+            new_domain.is_test = "none"
+            new_domain.internal = InternalProperties()
+            new_domain.creating_user = user.username if user else None
 
-		    for field in self._dirty_fields:
-		        if hasattr(new_domain, field):
-		            delattr(new_domain, field)
+            for field in self._dirty_fields:
+                if hasattr(new_domain, field):
+                    delattr(new_domain, field)
 
-		    new_comps = {}  # a mapping of component's id to it's copy
+            new_comps = {}  # a mapping of component's id to it's copy
 
-		    def copy_data_items(old_type_id, new_type_id):
-		        for item in FixtureDataItem.by_data_type(self.name, old_type_id):
-		            comp = self.copy_component(item.doc_type, item._id,
-		                                       new_domain_name, user=user)
-		            comp.data_type_id = new_type_id
-		            comp.save()
+            def copy_data_items(old_type_id, new_type_id):
+                for item in FixtureDataItem.by_data_type(self.name, old_type_id):
+                    comp = self.copy_component(item.doc_type, item._id,
+                                               new_domain_name, user=user)
+                    comp.data_type_id = new_type_id
+                    comp.save()
 
-		    for res in db.view('domain/related_to_domain', key=[self.name, True]):
-		        if (copy_by_id and res['value']['_id'] not in copy_by_id and
-		            res['value']['doc_type'] in ('Application', 'RemoteApp',
-		                                         'FixtureDataType')):
-		            continue
-		        if not self.is_snapshot and res['value']['doc_type'] in ('Application', 'RemoteApp'):
-		            app = get_app(self.name, res['value']['_id']).get_latest_saved()
-		            if app:
-		                comp = self.copy_component(app.doc_type, app._id, new_domain_name, user=user)
-		            else:
-		                comp = self.copy_component(res['value']['doc_type'], res['value']['_id'], new_domain_name, user=user)
-		        elif res['value']['doc_type'] not in ignore:
-		            comp = self.copy_component(res['value']['doc_type'], res['value']['_id'], new_domain_name, user=user)
-		            if res['value']['doc_type'] == 'FixtureDataType':
-		                copy_data_items(res['value']['_id'], comp._id)
-		        else:
-		            comp = None
+            for res in db.view('domain/related_to_domain', key=[self.name, True]):
+                if (copy_by_id and res['value']['_id'] not in copy_by_id and
+                    res['value']['doc_type'] in ('Application', 'RemoteApp',
+                                                 'FixtureDataType')):
+                    continue
+                if not self.is_snapshot and res['value']['doc_type'] in ('Application', 'RemoteApp'):
+                    app = get_app(self.name, res['value']['_id']).get_latest_saved()
+                    if app:
+                        comp = self.copy_component(app.doc_type, app._id, new_domain_name, user=user)
+                    else:
+                        comp = self.copy_component(res['value']['doc_type'], res['value']['_id'], new_domain_name, user=user)
+                elif res['value']['doc_type'] not in ignore:
+                    comp = self.copy_component(res['value']['doc_type'], res['value']['_id'], new_domain_name, user=user)
+                    if res['value']['doc_type'] == 'FixtureDataType':
+                        copy_data_items(res['value']['_id'], comp._id)
+                else:
+                    comp = None
 
-		        if comp:
-		            new_comps[res['value']['_id']] = comp
+                if comp:
+                    new_comps[res['value']['_id']] = comp
 
-		    new_domain.save()
+            new_domain.save()
 
         if user:
             def add_dom_to_user(user):
