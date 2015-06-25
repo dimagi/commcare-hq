@@ -42,7 +42,7 @@ class FixtureGenerator(object):
         if hasattr(settings, "FIXTURE_GENERATORS"):
             for group, func_paths in settings.FIXTURE_GENERATORS.items():
                 self._generator_providers[group] = filter(None, [
-                    to_function(func_path, True) for func_path in func_paths
+                    to_function(func_path) for func_path in func_paths
                 ])
 
     def _get_fixtures(self, group, fixture_id, user, version, last_sync):
