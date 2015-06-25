@@ -633,9 +633,7 @@ class Domain(Document, SnapshotMixin):
         a name, which shouldn't happen unless max_length is absurdly short.
         '''
 
-        name = hr_name.strip().lower()
-        name = re.sub(r'[^0-9a-z]+', '-', name)
-
+        name = Domain._normalize_domain_name_for_url(hr_name)
         if Domain.get_by_name(name):
             prefix = name
             while len(prefix):
@@ -649,6 +647,10 @@ class Domain(Document, SnapshotMixin):
             raise NameUnavailableException
 
         return name
+
+    @classmethod
+    def _normalize_domain_name_for_url(cls, name):
+        return re.sub(r'[^0-9a-z]+', '-', name.strip().lower())
 
     @classmethod
     def _get_next_available_name(cls, prefix, existing_names):

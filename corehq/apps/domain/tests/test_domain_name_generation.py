@@ -37,8 +37,8 @@ class DomainNameGenerationTest(TestCase):
         for domain in self.domains:
             domain.delete()
 
-    def test_generation(self):
-        self.assertEquals(Domain.generate_name("I have  spaces"), "i-have-spaces")
+    def test_normalization(self):
+        self.assertEquals(Domain._normalize_domain_name_for_url("I have  spaces"), "i-have-spaces")
 
     def test_conflict(self):
         name = "fandango"
