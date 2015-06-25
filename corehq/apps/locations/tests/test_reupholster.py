@@ -156,34 +156,50 @@ class TestPath(LocationTestBase):
 class TestNoCouchLocationTypes(TestCase):
     @classmethod
     def setUpClass(cls):
-        location_type = LocationType(domain='test-domain', name='test-type')
-        location_type.save()
+        LocationType.objects.create(domain='test-domain', name='test-type')
 
     @classmethod
     def tearDownClass(cls):
-        delete_all_locations()
         LocationType.objects.all().delete()
+
+    def setUp(self):
+        self.loc = Location(
+            domain='test-domain',
+            name='test-type',
+            location_type='test-type',
+        )
+        self.loc.save()
+
+    def tearDown(self):
+        delete_all_locations()
 
     def test_no_location_type(self):
         with self.assertRaises(LocationType.DoesNotExist):
             loc = Location(name="Something")
             loc.save()
 
-    def test_pass_in_loc_type(self):
-        location = Location(
-            domain='test-domain',
-            name='test-type',
-            location_type='test-type',
-        )
-        location.save()
+    def test_type_set_correctly(self):
+        self.assertEqual(self.loc.location_type, 'test-type')
+        self.assertEqual(self.loc.sql_location.location_type.name, 'test-type')
 
     def test_get_and_save(self):
-        location = Location(
-            domain='test-domain',
-            name='test-type',
-            location_type='test-type',
-        )
-        location.save()
-        sql_loc = SQLLocation.objects.get(location_id=location._id)
-        loc = sql_loc.couch_location
+        # Get a location from the db, wrap it, access location_type, and save
+        loc = Location.get(self.loc._id)
+        self.assertEqual(loc.location_type, 'test-type')
         loc.save()
+
+    def test_change_type_later(self):
+        new_type = LocationType.objects.create(domain='test-domain',
+                                               name='new-type')
+        self.loc.location_type = 'new-type'
+        self.loc.save()
+        self.assertEqual(self.loc.location_type, 'new-type')
+        self.assertEqual(self.loc.sql_location.location_type, new_type)
+        new_type.delete()
+
+    def test_change_to_nonexistent_type(self):
+        with self.assertRaises(LocationType.DoesNotExist):
+            self.loc.location_type = 'nonexistent-type'
+            self.loc.save()
+        self.assertEqual(self.loc.location_type, 'test-type')
+        self.assertEqual(self.loc.sql_location.location_type.name, 'test-type')

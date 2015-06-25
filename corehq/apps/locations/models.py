@@ -350,7 +350,7 @@ class Location(CachedCouchDocumentMixin, Document):
     @classmethod
     def wrap(cls, data):
         last_modified = data.get('last_modified')
-        data.pop('location_type', None)
+        data.pop('location_type', None)  # Only store location type in SQL
         # if it's missing a Z because of the Aug. 2014 migration
         # that added this in iso_format() without Z, then add a Z
         # (See also Group class)
