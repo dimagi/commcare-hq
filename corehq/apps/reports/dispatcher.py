@@ -284,6 +284,7 @@ class DataExportInterfaceDispatcher(ProjectReportDispatcher):
     def dispatch(self, request, *args, **kwargs):
         return super(DataExportInterfaceDispatcher, self).dispatch(request, *args, **kwargs)
 
+
 class DataDownloadInterfaceDispatcher(ProjectReportDispatcher):
     prefix = 'data_download_interface'
     map_name = 'DATA_DOWNLOAD_INTERFACES'
