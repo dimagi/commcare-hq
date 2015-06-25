@@ -29,6 +29,24 @@ def normalize_domain_name(domain):
     return domain
 
 
+def normalize_name_for_url(cls, name):
+    return re.sub(r'[^0-9a-z]+', '-', name.strip().lower())
+
+
+def get_next_available_name(cls, prefix, existing_names):
+    '''
+    Given a set of names like ['foo-1', 'foo-2'],
+    figure out the largest suffix in use and return a name
+    that's one larger.
+    '''
+    max_suffix = 0
+    for name in existing_names:
+        match = re.search(r'-([0-9]+)$', name)
+        if match:
+            max_suffix = max(max_suffix, int(match.group(1)))
+    return prefix + '-' + str(max_suffix + 1)
+
+
 def get_domained_url(domain, path):
     return '/a/%s/%s' % (domain, path)
 
