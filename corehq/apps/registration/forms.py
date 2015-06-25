@@ -14,7 +14,38 @@ from django.utils.encoding import smart_str
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 
-class NewWebUserRegistrationForm(forms.Form):
+class DomainRegistrationForm(forms.Form):
+    """
+    Form for creating a domain for the first time
+    """
+    org = forms.CharField(widget=forms.HiddenInput(), required=False)
+    domain_name = forms.CharField(label=_('Project Name:'), max_length=25,
+                                  help_text=_("Project name cannot contain spaces."))
+    domain_type = forms.CharField(widget=forms.HiddenInput(), required=False,
+                                  initial='commcare')
+
+    def clean_domain_name(self):
+        data = self.cleaned_data['domain_name'].strip().lower()
+        if not re.match("^%s$" % new_domain_re, data):
+            raise forms.ValidationError('Only lowercase letters and numbers allowed. Single hyphens may be used to separate words.')
+
+        conflict = Domain.get_by_name(data) or Domain.get_by_name(data.replace('-', '.'))
+        if conflict:
+            raise forms.ValidationError('Project name already taken---please try another')
+        return data
+
+    def clean_domain_type(self):
+        data = self.cleaned_data.get('domain_type', '').strip().lower()
+        return data if data else 'commcare'
+
+    def clean(self):
+        for field in self.cleaned_data:
+            if isinstance(self.cleaned_data[field], basestring):
+                self.cleaned_data[field] = self.cleaned_data[field].strip()
+        return self.cleaned_data
+
+
+class NewWebUserRegistrationForm(DomainRegistrationForm):
     """
     Form for a brand new user, before they've created a domain or done anything on CommCare HQ.
     """
@@ -43,8 +74,8 @@ class NewWebUserRegistrationForm(forms.Form):
                                                   CommCare HQ End User License Agreement
                                                </a>.""")))
     # not required for when a user accepts an invitation
-    domain_type = forms.CharField(
-        required=False, widget=forms.HiddenInput(), initial='commcare')
+    #domain_type = forms.CharField(
+    #    required=False, widget=forms.HiddenInput(), initial='commcare')
 
     def clean_full_name(self):
         data = self.cleaned_data['full_name'].split()
@@ -121,36 +152,6 @@ class OrganizationRegistrationForm(forms.Form):
     #     data = self.cleaned_data['logo']
     #     #resize image to fit in website nicely
     #     return data
-
-    def clean(self):
-        for field in self.cleaned_data:
-            if isinstance(self.cleaned_data[field], basestring):
-                self.cleaned_data[field] = self.cleaned_data[field].strip()
-        return self.cleaned_data
-
-class DomainRegistrationForm(forms.Form):
-    """
-    Form for creating a domain for the first time
-    """
-    org = forms.CharField(widget=forms.HiddenInput(), required=False)
-    domain_name = forms.CharField(label=_('Project Name:'), max_length=25,
-                                  help_text=_("Project name cannot contain spaces."))
-    domain_type = forms.CharField(widget=forms.HiddenInput(), required=False,
-                                  initial='commcare')
-
-    def clean_domain_name(self):
-        data = self.cleaned_data['domain_name'].strip().lower()
-        if not re.match("^%s$" % new_domain_re, data):
-            raise forms.ValidationError('Only lowercase letters and numbers allowed. Single hyphens may be used to separate words.')
-
-        conflict = Domain.get_by_name(data) or Domain.get_by_name(data.replace('-', '.'))
-        if conflict:
-            raise forms.ValidationError('Project name already taken---please try another')
-        return data
-
-    def clean_domain_type(self):
-        data = self.cleaned_data.get('domain_type', '').strip().lower()
-        return data if data else 'commcare'
 
     def clean(self):
         for field in self.cleaned_data:
