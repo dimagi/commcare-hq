@@ -1,11 +1,9 @@
 from __future__ import print_function, unicode_literals
 
-from django.test import SimpleTestCase, TestCase
+from django.test import TestCase
 
 from corehq.apps.domain.exceptions import NameUnavailableException
 from corehq.apps.domain.models import Domain
-from dimagi.utils.name_to_url import name_to_url
-from dimagi.utils.next_available_name import next_available_name
 
 
 class DomainNameGenerationTest(TestCase):
