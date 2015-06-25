@@ -34,9 +34,16 @@ class ASHAReports(GenericTabularReport, NRHMDatespanMixin, CustomProjectReport):
 
     @property
     def report_subtitles(self):
-        if self.report_config.get('sf') == 'sf2':
-            selected_af = self.request.GET.get('hierarchy_af')
-            user = CommCareUser.get(selected_af)
+        sf = self.report_config.get('sf')
+        selected_af = self.request.GET.get('hierarchy_af')
+        user = CommCareUser.get(selected_af)
+        if sf in ['sf5', 'sf4', 'sf3']:
+            return [
+                "Selected AF: {0} {1}".format(user.first_name, user.last_name),
+                "Last Month ff the Quarter: {0} {1}".format(calendar.month_name[int(self.request.GET.get('month'))],
+                                                            self.request.GET.get('year'))
+            ]
+        else:
             return [
                 "Selected AF: {0} {1}".format(user.first_name, user.last_name),
                 "For Date: {0} to {1}".format(self.datespan.startdate.strftime("%Y-%m-%d"),
