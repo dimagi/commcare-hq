@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 from itertools import imap
 import json
 import logging
-import re
 import uuid
 from couchdbkit.exceptions import ResourceConflict
 from django.conf import settings
