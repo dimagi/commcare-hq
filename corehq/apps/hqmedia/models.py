@@ -537,7 +537,7 @@ class HQMediaMixin(Document):
             }
             _add_menu_media(module, **media_kwargs)
 
-            for _, details, display in module.get_details():
+            for name, details, display in module.get_details():
                 if display and details.display == 'short' and details.lookup_enabled and details.lookup_image:
                     media.append(ApplicationMediaReference(
                         details.lookup_image,
