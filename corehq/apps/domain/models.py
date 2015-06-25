@@ -38,6 +38,8 @@ from collections import defaultdict
 from django.utils.importlib import import_module
 from corehq import toggles
 
+from .utils import normalize_name_for_url, get_next_available_name
+
 from .exceptions import InactiveTransferDomainException, NameUnavailableException
 
 lang_lookup = defaultdict(str)
@@ -634,11 +636,11 @@ class Domain(Document, SnapshotMixin):
         a name, which shouldn't happen unless max_length is absurdly short.
         '''
 
-        name = Domain._normalize_domain_name_for_url(hr_name)
+        name = normalize_name_for_url(hr_name)
         if Domain.get_by_name(name):
             prefix = name
             while len(prefix):
-                name = Domain._get_next_available_name(prefix, Domain.get_names_by_prefix(prefix + '-'))
+                name = get_next_available_name(prefix, Domain.get_names_by_prefix(prefix + '-'))
                 if Domain.get_by_name(name):
                     # should never happen
                     raise NameUnavailableException
@@ -648,24 +650,6 @@ class Domain(Document, SnapshotMixin):
             raise NameUnavailableException
 
         return name
-
-    @classmethod
-    def _normalize_domain_name_for_url(cls, name):
-        return re.sub(r'[^0-9a-z]+', '-', name.strip().lower())
-
-    @classmethod
-    def _get_next_available_name(cls, prefix, existing_names):
-        '''
-        Given a set of names like ['foo-1', 'foo-2'],
-        figure out the largest suffix in use and return a name
-        that's one larger.
-        '''
-        max_suffix = 0
-        for name in existing_names:
-            match = re.search(r'-([0-9]+)$', name)
-            if match:
-                max_suffix = max(max_suffix, int(match.group(1)))
-        return prefix + '-' + str(max_suffix + 1)
 
 
     def password_format(self):
