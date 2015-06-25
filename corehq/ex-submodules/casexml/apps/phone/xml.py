@@ -95,7 +95,9 @@ def get_registration_element(user):
     root.append(safe_element("date", date_to_xml_string(user.date_joined)))
     user_data = user.user_data
     user_data["{}_full_name".format(SYSTEM_PREFIX)] = user.full_name
-    user_data["{}_phone_number".format(SYSTEM_PREFIX)] = user.phone_number
+    for i, phone_number in enumerate(user.phone_numbers):
+        data_key = "{}_phone_number_{}".format(SYSTEM_PREFIX, i+1)
+        user_data[data_key] = phone_number
     root.append(get_data_element('user_data', user.user_data))
     return root
 
