@@ -1,3 +1,4 @@
+import calendar
 from corehq.apps.reports.filters.select import YearFilter
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport
@@ -22,7 +23,7 @@ def total_rows(report):
 
 class ASHAReports(GenericTabularReport, NRHMDatespanMixin, CustomProjectReport):
     fields = [SampleFormatFilter, NRHMDatespanFilter, DrillDownOptionFilter, ASHAMonthFilter, YearFilter]
-    name = "ASHA Reports"
+    name = "ASHA Sangini Reports"
     slug = "asha_reports"
     show_all_rows = True
     default_rows = 20
