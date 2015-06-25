@@ -45,6 +45,8 @@
 trunk: master
 name: autostaging
 branches:
+  - kill-announcements+kill-adm  # Danny 6/24
+  - kill-announcements  # Danny 6/24
   - kill-adm  # Danny 6/23
   - vellum-staging # J$ 11/13
   - fixtures-spike  # cz 1/29
@@ -56,6 +58,8 @@ branches:
   - autoload-supplypoint  # Ethan 6/15
   - full-name  # Ethan 6/15
   - autogenerate-credits-prorated # Nick P 6/16
+  - download-form-export # Nick P 6/24
+  - owns-cases-flag  # Ethan 6/24
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

@@ -2584,7 +2584,7 @@ class CareplanModule(ModuleBase):
     task_details = SchemaProperty(DetailPair)
 
     @classmethod
-    def new_module(cls, app, name, lang, target_module_id, target_case_type):
+    def new_module(cls, name, lang, target_module_id, target_case_type):
         lang = lang or 'en'
         module = CareplanModule(
             name={lang: name or ugettext("Care Plan")},

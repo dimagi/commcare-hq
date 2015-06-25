@@ -32,7 +32,6 @@ from django.template.context import RequestContext
 from restkit import Resource
 
 from corehq.apps.accounting.models import Subscription
-from corehq.apps.announcements.models import Notification
 from corehq.apps.domain.decorators import require_superuser, login_and_domain_required
 from corehq.apps.domain.utils import normalize_domain_name, get_domain_from_url
 from corehq.apps.hqwebapp.encoders import LazyEncoder
@@ -528,21 +527,6 @@ def bug_report(req):
         return HttpResponseRedirect(reverse('homepage'))
 
     return HttpResponse()
-
-
-@login_required()
-@require_POST
-def dismiss_notification(request):
-    note_id = request.POST.get('note_id', None)
-    note = Notification.get(note_id)
-    if note:
-        if note.user != request.couch_user.username:
-            return json_response({"status": "failure: Not the same user"})
-
-        note.dismissed = True
-        note.save()
-        return json_response({"status": "success"})
-    return json_response({"status": "failure: No note by that name"})
 
 
 def render_static(request, template):
