@@ -31,14 +31,14 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.html import format_html
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.name_to_url import name_to_url
+from dimagi.utils.next_available_name import next_available_name
 from dimagi.utils.web import get_url_base
 from itertools import chain
 from langcodes import langs as all_langs
 from collections import defaultdict
 from django.utils.importlib import import_module
 from corehq import toggles
-
-from .utils import normalize_name_for_url, get_next_available_name
 
 from .exceptions import InactiveTransferDomainException, NameUnavailableException
 
@@ -636,11 +636,11 @@ class Domain(Document, SnapshotMixin):
         a name, which shouldn't happen unless max_length is absurdly short.
         '''
 
-        name = normalize_name_for_url(hr_name)
+        name = name_to_url(hr_name)
         if Domain.get_by_name(name):
             prefix = name
             while len(prefix):
-                name = get_next_available_name(prefix, Domain.get_names_by_prefix(prefix + '-'))
+                name = next_available_name(prefix, Domain.get_names_by_prefix(prefix + '-'))
                 if Domain.get_by_name(name):
                     # should never happen
                     raise NameUnavailableException
@@ -760,7 +760,10 @@ class Domain(Document, SnapshotMixin):
                     if app:
                         comp = self.copy_component(app.doc_type, app._id, new_domain_name, user=user)
                     else:
-                        comp = self.copy_component(res['value']['doc_type'], res['value']['_id'], new_domain_name, user=user)
+                        comp = self.copy_component(res['value']['doc_type'],
+                                                   res['value']['_id'],
+                                                   new_domain_name,
+                                                   user=user)
                 elif res['value']['doc_type'] not in ignore:
                     comp = self.copy_component(res['value']['doc_type'], res['value']['_id'], new_domain_name, user=user)
                     if res['value']['doc_type'] == 'FixtureDataType':

@@ -4,25 +4,8 @@ from django.test import SimpleTestCase, TestCase
 
 from corehq.apps.domain.exceptions import NameUnavailableException
 from corehq.apps.domain.models import Domain
-from corehq.apps.domain.utils import get_next_available_name, normalize_name_for_url
-
-
-class DomainNameAvailabilityTest(SimpleTestCase):
-    def test_conflict(self):
-        self.assertEquals(get_next_available_name("fandango", []), "fandango-1")
-
-    def test_availability(self):
-        name = "abc"
-        similar = []
-
-        self.assertEquals(get_next_available_name(name, similar), "abc-1")
-
-        similar.append("abc-1")
-        self.assertEquals(get_next_available_name(name, similar), "abc-2")
-
-        # Don't bother filling in gaps
-        similar.append("abc-9")
-        self.assertEquals(get_next_available_name(name, similar), "abc-10")
+from dimagi.utils.name_to_url import name_to_url
+from dimagi.utils.next_available_name import next_available_name
 
 
 class DomainNameGenerationTest(TestCase):
@@ -37,9 +20,6 @@ class DomainNameGenerationTest(TestCase):
     def tearDown(self):
         for domain in self.domains:
             domain.delete()
-
-    def test_normalization(self):
-        self.assertEquals(normalize_name_for_url("I have  spaces"), "i-have-spaces")
 
     def test_conflict(self):
         name = "fandango"
