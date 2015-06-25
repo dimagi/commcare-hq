@@ -55,7 +55,6 @@ branches:
   - index-phonelog-reportentry # Ben 6/8
   - autoload-supplypoint  # Ethan 6/15
   - full-name  # Ethan 6/15
-  - download-form-export # Nick P 6/24
   - owns-cases-flag  # Ethan 6/24
   - remove-billing-admin-forwards # Farid 25/6
 submodules:
