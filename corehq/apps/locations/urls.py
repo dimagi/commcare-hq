@@ -13,6 +13,7 @@ from .views import (
 
 settings_urls = patterns('corehq.apps.locations.views',
     url(r'^$', 'default', name='default_locations_view'),
+    url(r'^child_locations/$', 'child_locations_for_select2'),
     url(r'^list/$', LocationsListView.as_view(), name=LocationsListView.urlname),
     url(r'^location_types/$', LocationTypesView.as_view(), name=LocationTypesView.urlname),
     url(r'^sync_facilities/$', FacilitySyncView.as_view(), name=FacilitySyncView.urlname),
