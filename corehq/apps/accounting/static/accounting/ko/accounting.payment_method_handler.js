@@ -10,6 +10,7 @@ var BillingHandler = function (formId, opts) {
     });
 
     self.isWire = ko.observable(opts.isWire || false);
+    self.wireEmails = ko.observable('');
 
     self.paymentIsComplete = ko.observable(false);
     self.paymentIsNotComplete = ko.computed(function () {
@@ -36,7 +37,6 @@ var WireInvoiceHandler = function(formId, opts) {
 
     BillingHandler.apply(this, arguments);
 
-    self.wireEmails = ko.observable('');
 
     self.handleGeneralError = function (response, textStatus, errorThrown) {
         errorThrown = errorThrown || 500;
@@ -63,8 +63,12 @@ var PaymentMethodHandler = function (formId, opts) {
     'use strict';
     var self = this;
     opts = opts ? opts : {};
+    self.CREDIT_CARD = 'cc';
+    self.WIRE = 'wire';
 
     BillingHandler.apply(this, arguments);
+
+    self.paymentMethod = ko.observable(self.CREDIT_CARD);
 
     self.savedCards = ko.observableArray();
 

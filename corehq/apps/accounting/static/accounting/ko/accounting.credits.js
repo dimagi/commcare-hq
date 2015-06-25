@@ -24,11 +24,11 @@ var Prepayments = function(products, features, paymentHandler, can_purchase_cred
     var self = this;
     self.products = products;
     self.features = features;
-
     self.paymentHandler = paymentHandler;
 
-    self.triggerPayment = function () {
+    self.triggerPayment = function(paymentMethod) {
         self.paymentHandler.reset();
+        self.paymentHandler.paymentMethod(paymentMethod);
         self.paymentHandler.costItem(new PrepaymentItems({
             products: self.products,
             features: self.features,

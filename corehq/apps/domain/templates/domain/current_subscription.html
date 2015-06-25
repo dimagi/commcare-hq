@@ -177,9 +177,17 @@
                                 class="btn btn-success"
                                 data-toggle="modal"
                                 data-target="#paymentModal"
-                                data-bind="click: triggerPayment"
+                                data-bind="click: function(){triggerPayment(paymentHandler.CREDIT_CARD)}"
                                 >
                                 {% trans 'Prepay by Credit Card' %}
+                                </button>
+                                <button type="button"
+                                class="btn btn-success"
+                                data-toggle="modal"
+                                data-target="#paymentModal"
+                                data-bind="click: function(){triggerPayment(paymentHandler.WIRE)}"
+                                >
+                                {% trans 'Prepay by Wire' %}
                                 </button>
                                 {% else %}
                                 <span class="label">
@@ -304,7 +312,12 @@
     <script type="text/html" id="payment-method-modal-title">
         <h3>
             <span>
+                <!-- ko if: paymentHandler.paymentMethod() === paymentHandler.CREDIT_CARD -->
                 {% trans 'Prepay by Credit Card' %}
+                <!-- /ko -->
+                <!-- ko if: paymentHandler.paymentMethod() === paymentHandler.WIRE -->
+                {% trans 'Prepay by Wire' %}
+                <!-- /ko -->
             </span>
         </h3>
     </script>
