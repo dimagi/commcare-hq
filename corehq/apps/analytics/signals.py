@@ -4,6 +4,7 @@ from django.dispatch import receiver
 
 from corehq.apps.users.models import WebUser
 from corehq.apps.accounting.models import Subscription, ProBonoStatus
+from corehq.apps.accounting.signals import subscription_upgrade_or_downgrade
 from corehq.apps.domain.signals import commcare_domain_post_save
 from corehq.apps.users.signals import couch_user_post_save
 
@@ -16,6 +17,7 @@ def user_save_callback(sender, **kwargs):
 
 
 @receiver(commcare_domain_post_save)
+@receiver(subscription_upgrade_or_downgrade)
 def domain_save_callback(sender, **kwargs):
     domain = kwargs.get("domain", None)
     if domain:
