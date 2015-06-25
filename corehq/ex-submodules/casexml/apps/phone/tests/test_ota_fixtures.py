@@ -86,13 +86,13 @@ class OtaFixtureTest(TestCase):
 
     def test_fixtures_by_id(self):
         fixture_xml = generator.get_fixture_by_id('user-groups', self.casexml_user, version=V2)
-        self._check_fixture(fixture_xml)
+        self._check_fixture([fixture_xml])
 
         fixture_xml = generator.get_fixture_by_id('item-list:sa_provinces', self.casexml_user, version=V2)
-        self._check_fixture(fixture_xml, has_groups=False, item_lists=[SA_PROVINCES])
+        self._check_fixture([fixture_xml], has_groups=False, item_lists=[SA_PROVINCES])
 
         fixture_xml = generator.get_fixture_by_id('item-list:fr_provinces', self.casexml_user, version=V2)
-        self._check_fixture(fixture_xml, has_groups=False, item_lists=[FR_PROVINCES])
+        self._check_fixture([fixture_xml], has_groups=False, item_lists=[FR_PROVINCES])
 
         fixture_xml = generator.get_fixture_by_id('user-locations', self.casexml_user, version=V2)
         self.assertIsNone(fixture_xml)
