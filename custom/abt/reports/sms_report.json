@@ -300,7 +300,8 @@
             "field":"structures_per_sprayer",
             "format":"default",
             "transform":{
-
+                "type":"custom",
+                "custom_type":"short_decimal_display"
             },
             "column_id":"structures_per_sprayer",
             "alias":null,
@@ -316,7 +317,8 @@
             "field":"structures_per_IU",
             "format":"default",
             "transform":{
-
+                "type":"custom",
+                "custom_type":"short_decimal_display"
             },
             "column_id":"structures_per_IU",
             "alias":null,

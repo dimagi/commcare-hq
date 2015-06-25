@@ -8,6 +8,7 @@ from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.http import Http404
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqcase.dbaccessors import get_case_types_for_domain
+from corehq.apps.reports.dbaccessors import get_form_exports
 from dimagi.utils.decorators.memoized import memoized
 from django_prbac.utils import has_privilege
 from corehq import privileges
@@ -18,7 +19,7 @@ from corehq.apps.data_interfaces.interfaces import DataInterface
 from corehq.apps.reports.dispatcher import DataExportInterfaceDispatcher
 from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.reports.standard import ProjectReportParametersMixin, DatespanMixin
-from corehq.apps.reports.models import FormExportSchema, HQGroupExportConfiguration
+from corehq.apps.reports.models import HQGroupExportConfiguration
 from corehq.apps.reports.util import datespan_from_beginning
 from couchexport.models import SavedExportSchema, Format
 from corehq.apps.app_manager.models import get_app, Application
@@ -56,13 +57,7 @@ class FormExportReportBase(ExportReport, DatespanMixin):
 
     @memoized
     def get_saved_exports(self):
-        # add saved exports. because of the way in which the key is stored
-        # (serialized json) this is a little bit hacky, but works.
-        startkey = json.dumps([self.domain, ""])[:-3]
-        endkey = "%s{" % startkey
-        exports = FormExportSchema.view("couchexport/saved_export_schemas",
-            startkey=startkey, endkey=endkey,
-            include_docs=True)
+        exports = get_form_exports(self.domain)
         exports = filter(lambda x: x.type == "form", exports)
         if not self.can_view_deid:
             exports = filter(lambda x: not x.is_safe, exports)
@@ -396,3 +391,21 @@ class DataExportInterface(GenericReportView):
     name = ugettext_noop('Export Forms')
     section_name = "Export Data"
     slug = 'export_forms'
+
+    @property
+    def template_context(self):
+        context = super(DataExportInterface, self).template_context
+        context.update({
+            'saved_exports': self.saved_exports,
+        })
+        return context
+
+    @property
+    @memoized
+    def saved_exports(self):
+        exports = get_form_exports(self.domain)
+        exports = filter(lambda x: x.type == "form", exports)
+        # TODO - implement or remove
+        # if not self.can_view_deid:
+        #     exports = filter(lambda x: not x.is_safe, exports)
+        return sorted(exports, key=lambda x: x.name)

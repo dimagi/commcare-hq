@@ -2269,6 +2269,12 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
         return getattr(self.get_domain_membership(domain), 'location_id', None)
 
     @memoized
+    def get_sql_location(self, domain):
+        from corehq.apps.locations.models import SQLLocation
+        loc_id = self.get_location_id(domain)
+        return SQLLocation.objects.get(location_id=loc_id) if loc_id else None
+
+    @memoized
     def get_location(self, domain):
         from corehq.apps.locations.models import Location
         loc_id = self.get_location_id(domain)
