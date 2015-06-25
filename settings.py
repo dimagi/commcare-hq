@@ -238,7 +238,6 @@ HQ_APPS = (
     'langcodes',
     'corehq.apps.adm',
     'corehq.apps.analytics',
-    'corehq.apps.announcements',
     'corehq.apps.callcenter',
     'corehq.apps.crud',
     'corehq.apps.custom_data_fields',
