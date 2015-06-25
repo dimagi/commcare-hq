@@ -315,6 +315,7 @@ def import_report(request, domain):
             json_spec = json.loads(spec)
             if '_id' in json_spec:
                 del json_spec['_id']
+            json_spec['domain'] = domain
             report = ReportConfiguration.wrap(json_spec)
             report.validate()
             report.save()

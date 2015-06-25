@@ -41,9 +41,6 @@ from dimagi.utils.django.cache import make_template_fragment_key
 from corehq.apps.reports.dispatcher import (ProjectReportDispatcher,
                                             CustomProjectReportDispatcher)
 from corehq.apps.reports.models import ReportConfig
-
-from corehq.apps.announcements.dispatcher import (
-    HQAnnouncementAdminInterfaceDispatcher)
 from django.db import models
 
 
@@ -1512,23 +1509,12 @@ class FeatureFlagsTab(UITab):
         return self.couch_user and self.couch_user.is_superuser
 
 
-class AnnouncementsTab(UITab):
-    title = ugettext_noop("Announcements")
-    view = "corehq.apps.announcements.views.default_announcement"
-    dispatcher = HQAnnouncementAdminInterfaceDispatcher
-
-    @property
-    def is_viewable(self):
-        return self.couch_user and self.couch_user.is_superuser
-
-
 class AdminTab(UITab):
     title = ugettext_noop("Admin")
     view = "corehq.apps.hqadmin.views.default"
     subtab_classes = (
         AdminReportsTab,
         SMSAdminTab,
-        AnnouncementsTab,
         AccountingTab,
         FeatureFlagsTab
     )

@@ -168,8 +168,8 @@ class SummaryReportingRates(ReportingRatesData):
                         link_format(location_name, url),
                         values['all'],
                         values['complete'] + values['incomplete'],
-                        '%.2f%%' % (100 * (values['complete'] + values['incomplete']) / (values['all'] or 1)),
-                        '%.2f%%' % (100 * values['complete'] / (values['all'] or 1))
+                        '%d%%' % (100 * (values['complete'] + values['incomplete']) / (values['all'] or 1)),
+                        '%d%%' % (100 * values['complete'] / (values['all'] or 1))
                     ]
                 )
         return rows
