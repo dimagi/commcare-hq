@@ -1,3 +1,4 @@
+from corehq.apps.accounting.utils import ensure_domain_instance
 from .tasks import track_workflow
 
 from django.dispatch import receiver
@@ -20,6 +21,7 @@ def user_save_callback(sender, **kwargs):
 @receiver(subscription_upgrade_or_downgrade)
 def domain_save_callback(sender, **kwargs):
     domain = kwargs.get("domain", None)
+    domain = ensure_domain_instance(domain)
     if domain:
         update_subscription_properties_by_domain(domain)
 
