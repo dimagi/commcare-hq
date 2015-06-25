@@ -11,11 +11,15 @@ def _users_by_location(location_id, include_docs=True, wrap=True):
     )
 
 
-def get_users_by_location_id(location_id, wrap=True):
+def get_users_by_location_id(location_id):
     """
     Get all users for a given location
     """
-    return _users_by_location(location_id, wrap=wrap).all()
+    return _users_by_location(location_id).all()
+
+
+def get_user_docs_by_location(location_id):
+    return _users_by_location(location_id, wrap=False).all()
 
 
 def get_user_ids_by_location(location_id):

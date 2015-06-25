@@ -11,6 +11,7 @@ from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.http import require_POST
 
 from couchdbkit import ResourceNotFound, MultipleResultsFound
+from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
 from couchexport.models import Format
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
@@ -31,8 +32,14 @@ from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.util import reverse, get_document_or_404
 from custom.openlmis.tasks import bootstrap_domain_task
 
-from .permissions import (locations_access_required, is_locations_admin,
-                          can_edit_location, can_edit_location_types)
+from .permissions import (
+    locations_access_required,
+    is_locations_admin,
+    can_edit_location,
+    can_edit_location_types,
+    user_can_edit_any_location,
+    can_edit_any_location,
+)
 from .models import Location, LocationType, SQLLocation
 from .forms import LocationForm, UsersAtLocationForm
 from .util import load_locs_json, location_hierarchy_config, dump_locations
@@ -87,6 +94,7 @@ class LocationsListView(BaseLocationView):
             'has_location_types': has_location_types,
             'can_edit_root': (not loc_restricted or
                 (loc_restricted and not self.request.couch_user.get_location(self.domain))),
+            'can_edit_any_location': user_can_edit_any_location(self.request.couch_user, self.request.project),
         }
 
 
@@ -416,7 +424,7 @@ class EditLocationView(NewLocationView):
     @memoized
     def supply_point(self):
         try:
-            return SupplyPointCase.get_by_location(self.location)
+            return get_supply_point_case_by_location(self.location)
         except MultipleResultsFound:
             raise MultipleSupplyPointException
 
@@ -596,6 +604,10 @@ class LocationImportView(BaseLocationView):
     urlname = 'location_import'
     page_title = ugettext_noop('Upload Locations from Excel')
     template_name = 'locations/manage/import.html'
+
+    @method_decorator(can_edit_any_location)
+    def dispatch(self, request, *args, **kwargs):
+        return super(LocationImportView, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_context(self):

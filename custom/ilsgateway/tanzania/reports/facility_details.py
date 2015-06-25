@@ -1,5 +1,5 @@
 from corehq.apps.commtrack.models import StockState
-from corehq.apps.locations.dbaccessors import get_users_by_location_id
+from corehq.apps.locations.dbaccessors import get_user_docs_by_location
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.sms.models import SMSLog
@@ -81,7 +81,7 @@ class RegistrationData(ILSData):
         elif self.config['loc_type'] == 'REGION':
             location = location.parent.parent
 
-        users = get_users_by_location_id(location.location_id, wrap=False)
+        users = get_user_docs_by_location(location.location_id)
         if users:
             for user in users:
                 u = user['doc']

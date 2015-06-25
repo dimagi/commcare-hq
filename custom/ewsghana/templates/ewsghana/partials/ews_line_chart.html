@@ -117,6 +117,9 @@
                     .style('text-anchor', 'end')
                     .style('stroke', 'none')
                     .style('fill-opacity', 1);
+
+            d3.selectAll('.nv-groups .nv-series-' + series +' path')
+                    .style("stroke-dasharray", ("3, 10"));
         });
     }
 

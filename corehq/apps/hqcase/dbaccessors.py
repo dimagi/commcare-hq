@@ -198,15 +198,15 @@ def get_case_properties(domain, case_type=None):
     key = [domain]
     if case_type:
         key.append(case_type)
-    rows = get_db().view(
+    keys = [row['key'] for row in get_db().view(
         'hqcase/all_case_properties',
         startkey=key,
         endkey=key + [{}],
         reduce=True,
         group=True,
         group_level=3,
-    ).all()
-    return sorted(set([property_name for _, _, property_name in rows]))
+    )]
+    return sorted(set([property_name for _, _, property_name in keys]))
 
 
 def get_cases_in_domain_by_external_id(domain, external_id):
@@ -239,3 +239,18 @@ def get_supply_point_case_in_domain_by_id(
         include_docs=True,
         limit=1,
     ).first()
+
+
+def get_all_case_owner_ids(domain):
+    """
+    Get all owner ids that are assigned to cases in a domain.
+    """
+    from casexml.apps.case.models import CommCareCase
+    key = [domain]
+    submitted = CommCareCase.get_db().view(
+        'hqcase/by_owner',
+        group_level=2,
+        startkey=key,
+        endkey=key + [{}],
+    ).all()
+    return set([row['key'][1] for row in submitted])

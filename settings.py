@@ -190,6 +190,7 @@ DEFAULT_APPS = (
     'raven.contrib.django.raven_compat',
     'compressor',
     'mptt',
+    'tastypie',
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap'
@@ -205,6 +206,7 @@ HQ_APPS = (
     'auditcare',
     'hqscripts',
     'casexml.apps.case',
+    'corehq.apps.casegroups',
     'casexml.apps.phone',
     'casexml.apps.stock',
     'corehq.apps.cleanup',
@@ -965,6 +967,7 @@ if DEBUG:
 
     import warnings
     warnings.simplefilter('default')
+    os.environ['PYTHONWARNINGS'] = 'd'  # Show DeprecationWarning
 else:
     TEMPLATE_LOADERS = [
         ('django.template.loaders.cached.Loader', TEMPLATE_LOADERS),
@@ -1020,6 +1023,7 @@ COUCHDB_APPS = [
     'orgs',
     'builds',
     'case',
+    'casegroups',
     'callcenter',
     'cleanup',
     'cloudcare',
@@ -1418,7 +1422,7 @@ TRAVIS_TEST_GROUPS = (
     (
         'accounting', 'adm', 'announcements', 'api', 'app_manager', 'appstore',
         'auditcare', 'bihar', 'builds', 'cachehq', 'callcenter', 'care_benin',
-        'case', 'cleanup', 'cloudcare', 'commtrack', 'consumption',
+        'case', 'casegroups', 'cleanup', 'cloudcare', 'commtrack', 'consumption',
         'couchapps', 'couchlog', 'crud', 'cvsu', 'django_digest',
         'domain', 'domainsync', 'export',
         'facilities', 'fixtures', 'fluff_filter', 'formplayer',
