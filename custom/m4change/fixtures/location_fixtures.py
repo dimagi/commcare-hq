@@ -49,4 +49,3 @@ class LocationFixtureProvider(object):
         return root
 
 generator = LocationFixtureProvider()
-

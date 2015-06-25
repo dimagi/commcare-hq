@@ -62,7 +62,7 @@ class ItemListsProvider(object):
         for item in other_items:
             if item.data_type_id in global_types:
                 continue  # was part of the global type so no need to add here
-            if not data_types.has_key(item.data_type_id):
+            if item.data_type_id not in data_types:
                 try:
                     data_types[item.data_type_id] = all_types[item.data_type_id]
                 except (AttributeError, KeyError):
