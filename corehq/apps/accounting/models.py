@@ -1405,17 +1405,18 @@ class Subscription(models.Model):
             date_end=date_end,
             **kwargs
         )
+        SubscriptionAdjustment.record_adjustment(
+            subscription, method=adjustment_method, note=note,
+            web_user=web_user
+        )
+        subscription.save()
+
         subscriber.apply_upgrades_and_downgrades(
             new_plan_version=plan_version,
             web_user=web_user,
             new_subscription=subscription,
             internal_change=internal_change,
         )
-        SubscriptionAdjustment.record_adjustment(
-            subscription, method=adjustment_method, note=note,
-            web_user=web_user
-        )
-        subscription.save()
 
         subscription.set_billing_account_entry_point()
 
