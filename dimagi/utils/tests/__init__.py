@@ -13,6 +13,8 @@ __test__ = {
 }
 
 from .lazy_attachment_doc import *
+from .next_available_name import *
+from .name_to_url import *
 from .dates import *
 from .test_json_handler import *
 from .test_modules import *
