@@ -26,7 +26,7 @@ from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE
 from corehq.apps.app_manager.exceptions import UnknownInstanceError, ScheduleError, FormNotFoundException
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.util import split_path, create_temp_sort_column, languages_mapping, \
-    actions_use_usercase
+    actions_use_usercase, is_usercaseonly_module
 from corehq.apps.app_manager.xform import SESSION_CASE_ID, autoset_owner_id_for_open_case, \
     autoset_owner_id_for_subcase
 from corehq.apps.app_manager.xpath import interpolate_xpath, CaseIDXPath, session_var, \
@@ -1586,15 +1586,16 @@ class SuiteGenerator(SuiteGeneratorBase):
             )
         ]
 
-    def get_extra_case_id_datums(self, form):
+    def get_extra_case_id_datums(self, module, form):
         datums = []
         actions = form.active_actions()
         if form.form_type == 'module_form' and actions_use_usercase(actions):
             if not self.is_usercase_enabled:
                 raise SuiteError('Form uses usercase, but usercase not enabled')
             case = UserCaseXPath().case()
+            dc = self.get_detail_id_safe(module, 'case_long') if is_usercaseonly_module(module) else None
             datums.append({
-                'datum': SessionDatum(id=USERCASE_ID, function=('%s/@case_id' % case)),
+                'datum': SessionDatum(id=USERCASE_ID, function='%s/@case_id' % case, detail_confirm=dc),
                 'case_type': USERCASE_TYPE,
                 'requires_selection': False,
                 'action': None  # Unused (and could be actions['usercase_update'] or actions['usercase_preload'])
@@ -1687,7 +1688,7 @@ class SuiteGenerator(SuiteGeneratorBase):
             datums.extend(self.get_datum_meta_module(module, use_filter=True))
 
         datums.extend(self.get_new_case_id_datums_meta(form))
-        datums.extend(self.get_extra_case_id_datums(form))
+        datums.extend(self.get_extra_case_id_datums(module, form))
         self.add_parent_datums(datums, module)
         for datum in datums:
             e.datums.append(datum['datum'])

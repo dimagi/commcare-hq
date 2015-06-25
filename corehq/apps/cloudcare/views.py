@@ -179,7 +179,8 @@ def form_context(request, domain, app_id, module_id, form_id):
     case_id = request.GET.get('case_id')
     instance_id = request.GET.get('instance_id')
     try:
-        form = app.get_module(module_id).get_form(form_id)
+        module = app.get_module(module_id)
+        form = module.get_form(form_id)
     except (FormNotFoundException, ModuleNotFoundException):
         raise Http404()
 
@@ -207,7 +208,7 @@ def form_context(request, domain, app_id, module_id, form_id):
 
     session_extras = {'session_name': session_name, 'app_id': app._id}
     suite_gen = SuiteGenerator(app, is_usercase_in_use(domain))
-    session_extras.update(get_cloudcare_session_data(suite_gen, domain, form, request.couch_user))
+    session_extras.update(get_cloudcare_session_data(suite_gen, domain, module, form, request.couch_user))
 
     delegation = request.GET.get('task-list') == 'true'
     offline = request.GET.get('offline') == 'true'

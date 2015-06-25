@@ -58,7 +58,7 @@ def start_session(domain, contact, app, module, form, case_id=None, yield_respon
     
     if app and form:
         suite_gen = SuiteGenerator(app, is_usercase_in_use(domain))
-        session_data.update(get_cloudcare_session_data(suite_gen, domain, form, contact))
+        session_data.update(get_cloudcare_session_data(suite_gen, domain, module, form, contact))
 
     language = contact.get_language_code()
     config = XFormsConfig(form_content=form.render_xform(),
