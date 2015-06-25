@@ -10,6 +10,7 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
+from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain_by_owner
 from corehq.apps.sofabed.models import CaseData
 from dimagi.ext.couchdbkit import *
@@ -1918,9 +1919,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         """
         Remove a single location from the case delagate access.
         """
-        from corehq.apps.commtrack.models import SupplyPointCase
 
-        sp = SupplyPointCase.get_by_location(location)
+        sp = get_supply_point_case_by_location(location)
 
         mapping = self.get_location_map_case()
 
@@ -1969,7 +1969,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         index = {}
         for location in locations:
             if not location.location_type_object.administrative:
-                sp = SupplyPointCase.get_by_location(location)
+                sp = get_supply_point_case_by_location(location)
                 index.update(self.supply_point_index_mapping(sp))
 
         from corehq.apps.commtrack.util import location_map_case_id
@@ -2267,6 +2267,12 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
 
     def get_location_id(self, domain):
         return getattr(self.get_domain_membership(domain), 'location_id', None)
+
+    @memoized
+    def get_sql_location(self, domain):
+        from corehq.apps.locations.models import SQLLocation
+        loc_id = self.get_location_id(domain)
+        return SQLLocation.objects.get(location_id=loc_id) if loc_id else None
 
     @memoized
     def get_location(self, domain):

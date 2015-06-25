@@ -120,27 +120,6 @@ class HierarchyFilter(OpmBaseDrilldownOptionFilter):
         return [[ALL_OPTION]]
 
 
-class HSRHierarchyFilter(OpmBaseDrilldownOptionFilter):
-    single_option_select = 0
-    label = ugettext_noop("Hierarchy")
-    slug = "hierarchy"
-
-    @property
-    def drilldown_map(self):
-        def make_drilldown(hierarchy):
-            list = []
-            for current, next_level in hierarchy.items():
-                if not next_level and not list:
-                    list.append({"val": ALL_OPTION, "text": "All", "next": []})
-                list.append({
-                "val": current,
-                "text": current,
-                "next": make_drilldown(next_level) if next_level else []
-            })
-            return list
-        return make_drilldown(get_hierarchy())
-
-
 class MetHierarchyFilter(OpmBaseDrilldownOptionFilter):
     single_option_select = 0
     label = ugettext_noop("Hierarchy")

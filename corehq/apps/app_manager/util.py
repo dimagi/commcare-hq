@@ -17,6 +17,7 @@ from corehq.apps.app_manager.const import (
     CT_REQUISITION_MODE_4,
     CT_LEDGER_APPROVED,
     CT_LEDGER_PREFIX,
+    AUTO_SELECT_USERCASE,
     USERCASE_TYPE,
     USERCASE_ID,
     USERCASE_PREFIX)
@@ -336,12 +337,11 @@ def all_apps_by_domain(domain):
 def new_careplan_module(app, name, lang, target_module):
     from corehq.apps.app_manager.models import CareplanModule, CareplanGoalForm, CareplanTaskForm
     module = app.add_module(CareplanModule.new_module(
-        app,
         name,
         lang,
         target_module.unique_id,
-        target_module.case_type)
-    )
+        target_module.case_type
+    ))
 
     forms = [form_class.new_form(lang, name, mode)
                 for form_class in [CareplanGoalForm, CareplanTaskForm]
@@ -411,6 +411,10 @@ def get_commcare_versions(request_user):
 def actions_use_usercase(actions):
     return (('usercase_update' in actions and actions['usercase_update'].update) or
             ('usercase_preload' in actions and actions['usercase_preload'].preload))
+
+
+def advanced_actions_use_usercase(actions):
+    return any(c.auto_select and c.auto_select.mode == AUTO_SELECT_USERCASE for c in actions.load_update_cases)
 
 
 def enable_usercase(domain_name):

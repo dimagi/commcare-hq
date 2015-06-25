@@ -148,15 +148,6 @@ class DomainInvoiceFactory(object):
                         "%s because it's a trial." % subscription.pk)
             return
 
-        if subscription.auto_generate_credits:
-            for product_rate in subscription.plan_version.product_rates.all():
-                CreditLine.add_credit(
-                    product_rate.monthly_fee,
-                    subscription=subscription,
-                    product_type=product_rate.product.product_type,
-                    permit_inactive=True,
-                )
-
         if subscription.date_start > self.date_start:
             invoice_start = subscription.date_start
         else:
@@ -374,6 +365,10 @@ class ProductLineItemFactory(LineItemFactory):
         if not self.is_prorated:
             line_item.base_cost = self.rate.monthly_fee
         line_item.save()
+
+        if self.subscription.auto_generate_credits:
+            self._auto_generate_credits(line_item)
+
         return line_item
 
     @property
@@ -385,18 +380,18 @@ class ProductLineItemFactory(LineItemFactory):
     @property
     def base_description(self):
         if not self.is_prorated:
-            return _("One month of %(plan_name)s Software Plan." % {
+            return _("One month of %(plan_name)s Software Plan.") % {
                 'plan_name': self.plan_name,
-            })
+            }
 
     @property
     def unit_description(self):
         if self.is_prorated:
-            return _("%(num_days)s day%(pluralize)s of %(plan_name)s Software Plan." % {
+            return _("%(num_days)s day%(pluralize)s of %(plan_name)s Software Plan.") % {
                 'num_days': self.num_prorated_days,
                 'pluralize': "" if self.num_prorated_days == 1 else "s",
                 'plan_name': self.plan_name,
-            })
+            }
 
     @property
     def num_prorated_days(self):
@@ -417,6 +412,14 @@ class ProductLineItemFactory(LineItemFactory):
     @property
     def plan_name(self):
         return self.subscription.plan_version.plan.name
+
+    def _auto_generate_credits(self, line_item):
+        CreditLine.add_credit(
+            line_item.subtotal,
+            subscription=self.subscription,
+            product_type=self.rate.product.product_type,
+            permit_inactive=True,
+        )
 
 
 class FeatureLineItemFactory(LineItemFactory):
@@ -457,9 +460,9 @@ class UserLineItemFactory(FeatureLineItemFactory):
     def unit_description(self):
         if self.num_excess_users > 0:
             return _("Per User fee exceeding monthly limit of "
-                     "%(monthly_limit)s users." % {
+                     "%(monthly_limit)s users.") % {
                          'monthly_limit': self.rate.monthly_limit,
-                     })
+                     }
 
 
 class SmsLineItemFactory(FeatureLineItemFactory):

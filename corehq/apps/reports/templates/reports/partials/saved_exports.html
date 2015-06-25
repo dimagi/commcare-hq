@@ -1,0 +1,59 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+<table class="export_data table table-striped">
+    <thead>
+    <tr>
+        <th>{% trans "Name" %}</th>
+        <th>{% trans "Export" %}</th>
+        <th>{% trans "Edit" %}</th>
+        <th>
+            {% trans "Add to Custom Bulk Export" %} <i class="icon-white icon-info-sign custom-bulk-export-info"></i>
+            <small style="display: block;">
+                {% trans "Select" %}:
+                <a href="#" class="btn btn-mini" data-all="true" data-bind="click: toggleSelectAllExports">{% trans "all" %}</a>
+                <a href="#" class="btn btn-mini btn-inverse" data-bind="click: toggleSelectAllExports">{% trans "none" %}</a>
+            </small>
+        </th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for export in saved_exports %}
+        <tr class="{% cycle "odd" "even" %}">
+            <td class="control-group form-inline">
+                {{ export.name|default:"[blank]" }}
+                {% if not deid and export.is_safe %}<span class="label">{% trans "de-identified" %}</span>{% endif %}
+                <p style="display:none; margin-top:1em;" class="controls">
+                    <label>{% trans "Sheet Name" %} <i class="icon icon-info-sign sheet-name-info"></i>:</label>
+                    <input data-bind="updateCustomSheetName: selected_exports, checkForUniqueSheetName: sheet_names, event: {keydown: checkCustomSheetNameLength, keyup: updateCustomSheetNameCharacterCount}"
+                           class="sheetname"
+                           data-exportid="{{ export.get_id }}"
+                           value="{{ export.name|default:"[blank]" }}" />
+                    <span class="label label-info sheetname-count">31</span>
+                    <span class="label label-important sheetname-duplicate hide">{% trans "duplicate" %} <i class="icon-white icon-info-sign"></i></span>
+                </p>
+                <div><p class="help-inline">{{ export.formname }}</p></div>
+            </td>
+            <td class="cell-vertical-centered">
+                <a class="btn btn-info" href=''>
+                    {% trans "Export" %}
+                </a>
+            </td>
+            <td class="cell-vertical-centered">
+                <a class="btn btn-info" href='{% url "edit_custom_export_form" domain export.get_id %}'>
+                    <i class="icon-pencil icon-white"></i> {% trans "Edit" %}
+                </a>
+            </td>
+            <td class="form-inline">
+                {% ifequal export.default_format custom_bulk_export_format %}
+                    <label>
+                        <input type="checkbox" class="select-custom" data-bind="event: {change: updateSelectedExports}" />
+                        <span class="label label-info">+ {% trans "Bulk Export" %}</span>
+                    </label>
+                {% else %}
+                    <span class="label custom-bulk-format-na">{{ export.default_format }} {% trans "Not Available" %}</span>
+                {% endifequal %}
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
