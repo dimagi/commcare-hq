@@ -43,8 +43,6 @@ from corehq.apps.reports.dispatcher import (ProjectReportDispatcher,
 from corehq.apps.reports.models import ReportConfig
 from corehq.apps.adm.dispatcher import (ADMAdminInterfaceDispatcher,
                                         ADMSectionDispatcher)
-from corehq.apps.announcements.dispatcher import (
-    HQAnnouncementAdminInterfaceDispatcher)
 from django.db import models
 
 
@@ -1541,16 +1539,6 @@ class FeatureFlagsTab(UITab):
         return self.couch_user and self.couch_user.is_superuser
 
 
-class AnnouncementsTab(UITab):
-    title = ugettext_noop("Announcements")
-    view = "corehq.apps.announcements.views.default_announcement"
-    dispatcher = HQAnnouncementAdminInterfaceDispatcher
-
-    @property
-    def is_viewable(self):
-        return self.couch_user and self.couch_user.is_superuser
-
-
 class AdminTab(UITab):
     title = ugettext_noop("Admin")
     view = "corehq.apps.hqadmin.views.default"
@@ -1558,7 +1546,6 @@ class AdminTab(UITab):
         AdminReportsTab,
         GlobalADMConfigTab,
         SMSAdminTab,
-        AnnouncementsTab,
         AccountingTab,
         FeatureFlagsTab
     )

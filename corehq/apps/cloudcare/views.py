@@ -375,13 +375,17 @@ def get_fixtures(request, domain, user_id, fixture_id=None):
             ret.append(fixture)
         return HttpResponse(ElementTree.tostring(ret), content_type="text/xml")
     else:
-        for fixture in generator.get_fixtures(casexml_user, version=V2):
-            if fixture.attrib.get("id") == fixture_id:
-                assert len(fixture.getchildren()) == 1, 'fixture {} expected 1 child but found {}'.format(
-                    fixture_id, len(fixture.getchildren())
-                )
-                return HttpResponse(ElementTree.tostring(fixture.getchildren()[0]), content_type="text/xml")
-        raise Http404
+        fixtures = generator.get_fixture_by_id(fixture_id, casexml_user, version=V2)
+        try:
+            fixture = next(fixtures)
+        except StopIteration:
+            raise Http404
+
+        assert len(fixture.getchildren()) == 1, 'fixture {} expected 1 child but found {}'.format(
+            fixture_id, len(fixture.getchildren())
+        )
+        return HttpResponse(ElementTree.tostring(fixture.getchildren()[0]), content_type="text/xml")
+
 
 @cloudcare_api
 def get_sessions(request, domain):

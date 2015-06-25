@@ -29,10 +29,6 @@ class ProjectReport(GenericReportView):
     def default_report_url(self):
         return reverse('reports_home', args=[self.request.project])
 
-    def set_announcements(self):
-        if self.request.couch_user:
-            util.set_report_announcements_for_user(self.request, self.request.couch_user)
-
 
 class CustomProjectReport(ProjectReport):
     dispatcher = CustomProjectReportDispatcher
