@@ -136,7 +136,6 @@ class DomainRegistrationForm(forms.Form):
 
     org = forms.CharField(widget=forms.HiddenInput(), required=False)
     hr_name = forms.CharField(label=_('Project Name:'), max_length=max_name_length)
-    domain_name = forms.CharField(widget=forms.HiddenInput(), required=False)
     domain_type = forms.CharField(widget=forms.HiddenInput(), required=False,
                                   initial='commcare')
 
@@ -145,14 +144,6 @@ class DomainRegistrationForm(forms.Form):
         return data if data else 'commcare'
 
     def clean(self):
-        name = self.cleaned_data.get('hr_name', None)
-        if name is not None:
-            try:
-                name = Domain.generate_name(name, self.max_name_length)
-            except NameUnavailableException:
-                raise forms.ValidationError("Project name already taken---please try another")
-        self.cleaned_data['domain_name'] = name
-
         for field in self.cleaned_data:
             if isinstance(self.cleaned_data[field], basestring):
                 self.cleaned_data[field] = self.cleaned_data[field].strip()

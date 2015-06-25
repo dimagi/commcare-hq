@@ -14,6 +14,7 @@ from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq.apps.app_manager.views import _clear_app_cache
 
 from corehq.apps.domain.decorators import require_superuser
+from corehq.apps.domain.exceptions import NameUnavailableException
 from corehq.elastic import es_query, parse_args_for_es, fill_mapping_with_facets
 from corehq.apps.domain.models import Domain
 from dimagi.utils.couch.database import apply_update
@@ -260,13 +261,13 @@ def copy_snapshot(request, domain):
                 messages.error(request, form.errors)
                 return project_info(request, domain)
 
-            new_domain_name = form.cleaned_data['domain_name']
+            new_domain_name = form.cleaned_data['hr_name']
             with CriticalSection(['copy_domain_snapshot_{}_to_{}'.format(dom.name, new_domain_name)]):
-                new_domain = dom.save_copy(new_domain_name,
-                                           new_hr_name=form.cleaned_data['hr_name'],
-                                           user=user)
-
-                if new_domain is None:
+                try:
+                    new_domain = dom.save_copy(new_domain_name,
+                                               new_hr_name=form.cleaned_data['hr_name'],
+                                               user=user)
+                except NameUnavailableException:
                     messages.error(request, _("A project by that name already exists"))
                     return project_info(request, domain)
 
