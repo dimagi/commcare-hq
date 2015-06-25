@@ -323,12 +323,12 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
     def cost_item_name(self):
         credit_types = [unicode(product['type']) for product in self._humanized_products()]
         credit_types += [unicode(feature['type']) for feature in self._humanized_features()]
-        return _("Credits: {credit_types} for {sub_or_account}".format(
+        return _("Credits: {credit_types} for {sub_or_account}").format(
             credit_types=", ".join(credit_types),
             sub_or_account=("Subscription %s" % self.subscription
                             if self.subscription is None
                             else "Account %s" % self.account.id)
-        ))
+        )
 
     def _humanized_features(self):
         return [{'type': get_feature_name(feature['type'], self.core_product),
@@ -363,6 +363,10 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
                     feature_type=feature['type'],
                     payment_record=payment_record,
                 ))
+            else:
+                logger.error("[BILLING] {account} tried to make a payment for {feature} for less than $0.5."
+                             "You should follow up with them.".format(account=self.account,
+                                                                      feature=feature['type']))
         for product in self.products:
             plan_amount = product['amount']
             if plan_amount >= 0.5:
@@ -373,10 +377,14 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
                     product_type=product['type'],
                     payment_record=payment_record,
                 ))
+            else:
+                logger.error("[BILLING] {account} tried to make a payment for {product} for less than $0.5."
+                             "You should follow up with them.".format(account=self.account,
+                                                                      product=product['type']))
 
     def process_request(self, request):
         response = super(CreditStripePaymentHandler, self).process_request(request)
-        if hasattr(self, 'credit_lines'):
+        if self.credit_lines:
             response.update({
                 'balances': [{'type': cline.product_type if cline.product_type else cline.feature_type,
                               'balance': fmt_dollar_amount(cline.balance)}
