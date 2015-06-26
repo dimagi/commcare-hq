@@ -62,6 +62,8 @@ class HqAdminEmailHandler(AdminEmailHandler):
         context = {
             'details': details,
             'tb_list': tb_list,
+            'get': request.GET,
+            'post': request.POST,
             'request_repr': request_repr
         }
         html_message = render_to_string('hqadmin/email/error_email.html', context)
