@@ -190,6 +190,7 @@ DEFAULT_APPS = (
     'raven.contrib.django.raven_compat',
     'compressor',
     'mptt',
+    'tastypie',
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap'
@@ -205,6 +206,7 @@ HQ_APPS = (
     'auditcare',
     'hqscripts',
     'casexml.apps.case',
+    'corehq.apps.casegroups',
     'casexml.apps.phone',
     'casexml.apps.stock',
     'corehq.apps.cleanup',
@@ -234,9 +236,7 @@ HQ_APPS = (
     'dimagi.utils',
     'formtranslate',
     'langcodes',
-    'corehq.apps.adm',
     'corehq.apps.analytics',
-    'corehq.apps.announcements',
     'corehq.apps.callcenter',
     'corehq.apps.crud',
     'corehq.apps.custom_data_fields',
@@ -303,7 +303,6 @@ HQ_APPS = (
     'custom.bihar',
     'custom.penn_state',
     'custom.apps.gsid',
-    'hsph',
     'mvp',
     'mvp_docs',
     'mvp_indicators',
@@ -965,6 +964,7 @@ if DEBUG:
 
     import warnings
     warnings.simplefilter('default')
+    os.environ['PYTHONWARNINGS'] = 'd'  # Show DeprecationWarning
 else:
     TEMPLATE_LOADERS = [
         ('django.template.loaders.cached.Loader', TEMPLATE_LOADERS),
@@ -1020,6 +1020,7 @@ COUCHDB_APPS = [
     'orgs',
     'builds',
     'case',
+    'casegroups',
     'callcenter',
     'cleanup',
     'cloudcare',
@@ -1076,7 +1077,6 @@ COUCHDB_APPS = [
     'penn_state',
     'care_benin',
     'gsid',
-    'hsph',
     'mvp',
     ('mvp_docs', MVP_INDICATOR_DB),
     'pathindia',
@@ -1372,8 +1372,6 @@ DOMAIN_MODULE_MAP = {
     'fri-testing': 'custom.fri.reports',
     'gsid': 'custom.apps.gsid',
     'gsid-demo': 'custom.apps.gsid',
-    'hsph-dev': 'hsph',
-    'hsph-betterbirth-pilot-2': 'hsph',
     'mc-inscale': 'custom.reports.mc',
     'psu-legacy-together': 'custom.penn_state',
     'mvp-potou': 'mvp',
@@ -1418,7 +1416,7 @@ TRAVIS_TEST_GROUPS = (
     (
         'accounting', 'adm', 'announcements', 'api', 'app_manager', 'appstore',
         'auditcare', 'bihar', 'builds', 'cachehq', 'callcenter', 'care_benin',
-        'case', 'cleanup', 'cloudcare', 'commtrack', 'consumption',
+        'case', 'casegroups', 'cleanup', 'cloudcare', 'commtrack', 'consumption',
         'couchapps', 'couchlog', 'crud', 'cvsu', 'django_digest',
         'domain', 'domainsync', 'export',
         'facilities', 'fixtures', 'fluff_filter', 'formplayer',

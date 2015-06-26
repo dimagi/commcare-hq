@@ -1,12 +1,11 @@
 from collections import namedtuple
 from datetime import datetime
-from casexml.apps.case.dbaccessors import get_all_case_owner_ids, \
-    get_reverse_indexed_case_ids, get_indexed_case_ids
+from casexml.apps.case.dbaccessors import get_reverse_indexed_case_ids, get_indexed_case_ids
 from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.util import get_indexed_cases
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from corehq.apps.hqcase.dbaccessors import get_open_case_ids, \
-    get_closed_case_ids
+    get_closed_case_ids, get_all_case_owner_ids
 from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.toggles import OWNERSHIP_CLEANLINESS
 from django.conf import settings

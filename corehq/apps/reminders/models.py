@@ -2,9 +2,11 @@ import pytz
 from pytz import timezone
 from datetime import timedelta, datetime, date, time
 import re
+from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
+from corehq.apps.reminders.dbaccessors import get_surveys_in_domain
 from dimagi.ext.couchdbkit import *
-from casexml.apps.case.models import CommCareCase, CommCareCaseGroup
+from casexml.apps.case.models import CommCareCase
 from corehq.apps.sms.models import CommConnectCase
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CouchUser
@@ -1505,6 +1507,7 @@ class SurveyWave(DocumentSchema):
                 return True
         return False
 
+
 class Survey(Document):
     domain = StringProperty()
     name = StringProperty()
@@ -1513,24 +1516,20 @@ class Survey(Document):
     samples = ListProperty(DictProperty)
     send_automatically = BooleanProperty()
     send_followup = BooleanProperty()
-    
+
     @classmethod
     def get_all(cls, domain):
-        return cls.view('reminders/survey_by_domain',
-            startkey=[domain],
-            endkey=[domain, {}],
-            include_docs=True
-        ).all()
-    
+        return get_surveys_in_domain(domain)
+
     def has_started(self):
         for wave in self.waves:
             if wave.has_started(self):
                 return True
         return False
-    
+
     def update_delegation_tasks(self, submitting_user_id):
         utcnow = datetime.utcnow()
-        
+
         # Get info about each CATI sample and the instance of that sample used for this survey
         cati_sample_data = {}
         for sample_json in self.samples:
