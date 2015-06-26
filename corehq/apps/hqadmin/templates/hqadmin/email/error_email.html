@@ -1,0 +1,15 @@
+{{ details }}
+
+{% for line in tb_list %}
+{% if 'site-packages' in line %}
+<div>
+    <small>{{ line }}</small>
+</div>
+{% else %}
+<div>
+    <b>{{ line }}</b>
+</div>
+{% endif %}
+{% endfor %}
+
+{{ request_repr }}
