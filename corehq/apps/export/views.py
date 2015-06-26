@@ -6,8 +6,10 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.utils.decorators import method_decorator
 import json
+from corehq.apps.app_manager.models import Application
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.export.exceptions import ExportNotFound, ExportAppException
+from corehq.apps.export.forms import CreateFormExportForm
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.standard.export import ExcelExportReport, CaseExportReport
 from corehq.apps.settings.views import BaseProjectDataView
@@ -15,6 +17,7 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from couchexport.models import SavedExportSchema, ExportSchema
 from couchexport.schema import build_latest_schema
+from couchforms.models import XFormInstance
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from dimagi.utils.logging import notify_exception
@@ -270,3 +273,41 @@ def create_basic_form_checkpoint(index):
     )
     checkpoint.save()
     return checkpoint
+
+class CreateFormExportView(BaseProjectDataView):
+    urlname = 'create_export_form'
+    page_title = ugettext_noop("Create Form Export")
+    template_name = 'export/create_export.html'
+
+    @property
+    def main_context(self):
+        context = super(CreateFormExportView, self).main_context
+        context.update({
+            'create_export_form': self.create_export_form,
+        })
+        return context
+
+    def post(self, request, *args, **kwargs):
+        if self.create_export_form.is_valid():
+            app_id = self.create_export_form.cleaned_data['application']
+            form_unique_id = self.create_export_form.cleaned_data['form']
+            return HttpResponseRedirect(
+                reverse(
+                    CreateCustomFormExportView.urlname,
+                    args=[self.domain],
+                ) + ('?' + 'export_tag="%(export_tag)s"&app_id=%(app_id)s' % {
+                    'app_id': app_id,
+                    'export_tag': [
+                        form for form in Application.get(app_id).get_forms()
+                        if form.get_unique_id() == form_unique_id
+                    ][0].xmlns,
+                })
+            )
+        return self.get(self.request, *args, **kwargs)
+
+    @property
+    @memoized
+    def create_export_form(self):
+        if self.request.method == 'POST':
+            return CreateFormExportForm(self.domain, self.request.POST)
+        return CreateFormExportForm(self.domain)
