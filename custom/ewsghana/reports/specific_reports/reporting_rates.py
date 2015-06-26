@@ -26,13 +26,13 @@ class ReportingRates(ReportingRatesData):
 
     @property
     def title(self):
-        if self.config.get('datespan_type') == '2':
-            return _('Reporting Rates (Weekly Reporting Period)')
-        elif self.config.get('datespan_type') == '1':
+
+        if self.config.get('datespan_type') == '1':
             return _('Reporting Rates({}, {})'.format(
                 self.config['startdate'].strftime('%B'), self.config['startdate'].year
             ))
-        return _('Reporting Rates')
+        else:
+            return _('Reporting Rates (Weekly Reporting Period)')
 
     @property
     def rows(self):
@@ -76,13 +76,12 @@ class ReportingDetails(ReportingRatesData):
 
     @property
     def title(self):
-        if self.config.get('datespan_type') == '2':
-            return _('Reporting Details (Weekly Reporting Period)')
-        elif self.config.get('datespan_type') == '1':
+        if self.config.get('datespan_type') == '1':
             return _('Reporting Details({}, {})'.format(
                 self.config['startdate'].strftime('%B'), self.config['startdate'].year
             ))
-        return _('Reporting Details')
+        else:
+            return _('Reporting Details (Weekly Reporting Period)')
 
     @property
     def rows(self):
