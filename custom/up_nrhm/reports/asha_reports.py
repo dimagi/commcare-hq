@@ -41,7 +41,7 @@ class ASHAReports(GenericTabularReport, NRHMDatespanMixin, CustomProjectReport):
             if sf in ['sf5', 'sf4', 'sf3']:
                 return [
                     "Selected AF: {0} {1}".format(user.first_name, user.last_name),
-                    "Last Month ff the Quarter: {0} {1}".format(calendar.month_name[int(self.request.GET.get('month'))],
+                    "Last Reporting Month of the Quarter: {0} {1}".format(calendar.month_name[int(self.request.GET.get('month'))],
                                                                 self.request.GET.get('year'))
                 ]
             else:

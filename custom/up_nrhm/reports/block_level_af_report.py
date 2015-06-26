@@ -1,3 +1,4 @@
+import re
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import DatespanMixin, CustomProjectReport
@@ -21,7 +22,7 @@ class BlockLevelAFReport(GenericTabularReport, DatespanMixin, CustomProjectRepor
 
     @property
     def headers(self):
-        columns = [DataTablesColumn('Average Number of ASHAs functional on', sortable=False)]
+        columns = [DataTablesColumn('ASHA Sanginis', sortable=False)]
         columns.extend([DataTablesColumn(af[0], sortable=False) for af in self.get_afs_for_block()])
         columns.append(DataTablesColumn('Total of the block', sortable=False))
         return DataTablesHeader(*columns)
@@ -46,7 +47,8 @@ class BlockLevelAFReport(GenericTabularReport, DatespanMixin, CustomProjectRepor
         last_row = ["<b>Total Number of ASHAs under each Facilitator</b>"]
         sums = [0] * len(rows)
         total = 0
-
+        sum_row_10 = 0
+        denom_row_10 = 0
         for af in self.get_afs_for_block():
             self.request_params['hierarchy_af'] = af[1]
             q = self.request.GET.copy()
@@ -57,10 +59,19 @@ class BlockLevelAFReport(GenericTabularReport, DatespanMixin, CustomProjectRepor
             last_row.append(format_datatables_data(afs_count, afs_count))
             for index, row in enumerate(rs):
                 rows[index].append(row[-1])
-                sums[index] += float(row[-1]['sort_key'])
+                if index == 10:
+                    numbers = re.split('/|\s|%', row[-1]['html'])
+                    sum_row_10 += int(numbers[0])
+                    denom_row_10 += int(numbers[1])
+                else:
+                    sums[index] += float(row[-1]['sort_key'])
 
         for index, sum in enumerate(sums):
-            rows[index].append(format_datatables_data(sum, sum))
+            if index == 10:
+                html = "{0}/{1} {2}%".format(sum_row_10, denom_row_10, sum_row_10*100/denom_row_10)
+                rows[index].append(format_datatables_data(html, sum_row_10*100/denom_row_10))
+            else:
+                rows[index].append(format_datatables_data(sum, sum))
 
         last_row.append(format_datatables_data(total, total))
         rows.append(last_row)
