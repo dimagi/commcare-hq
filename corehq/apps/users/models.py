@@ -10,6 +10,7 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
+from django.utils.translation import ugettext as _
 from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain_by_owner
 from corehq.apps.sofabed.models import CaseData
@@ -38,7 +39,6 @@ from corehq.apps.users.util import (
     user_data_from_registration_form,
     user_display_string,
 )
-from corehq.apps.users.xml import group_fixture
 from corehq.apps.users.tasks import tag_docs_as_deleted, tag_forms_as_deleted_rebuild_associated_cases
 from corehq.apps.users.exceptions import InvalidLocationConfig
 from corehq.apps.sms.mixin import (
@@ -1666,29 +1666,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             case.save()
         self.save()
 
-    def get_group_fixture(self, last_sync=None):
-        def _should_sync_groups(groups, last_sync):
-            """
-            Determine if we need to sync the groups fixture by checking
-            the modified date on all groups compared to the
-            last sync.
-            """
-            if not last_sync or not last_sync.date:
-                return True
-
-            for group in groups:
-                if not group.last_modified or group.last_modified >= last_sync.date:
-                    return True
-
-            return False
-
-        groups = self.get_case_sharing_groups()
-
-        if _should_sync_groups(groups, last_sync):
-            return group_fixture(groups, self)
-        else:
-            return None
-
     def get_case_sharing_groups(self):
         from corehq.apps.groups.models import Group
         # get faked location group object
@@ -2364,7 +2341,7 @@ class DomainInvitation(CachedCouchDocumentMixin, Invitation):
                   "inviter": self.get_inviter().formatted_name}
         text_content = render_to_string("domain/email/domain_invite.txt", params)
         html_content = render_to_string("domain/email/domain_invite.html", params)
-        subject = 'Invitation from %s to join CommCareHQ' % self.get_inviter().formatted_name
+        subject = _('Invitation from %s to join CommCareHQ') % self.get_inviter().formatted_name
         send_HTML_email(subject, self.email, html_content, text_content=text_content,
                         cc=[self.get_inviter().get_email()],
                         email_from=settings.DEFAULT_FROM_EMAIL)
