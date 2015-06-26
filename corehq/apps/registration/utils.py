@@ -4,6 +4,7 @@ import uuid
 from datetime import datetime, date, timedelta
 from django.core.mail import send_mail
 from django.contrib.auth.models import User
+from django.utils.translation import ugettext as _
 from corehq.apps.accounting.models import (
     SoftwarePlanEdition, DefaultProductPlan, BillingAccount,
     BillingAccountType, Subscription, SubscriptionAdjustmentMethod, Currency,
@@ -242,7 +243,7 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
     send_new_request_update_email(request.user, get_ip(request), new_domain.name, is_new_user=new_user)
 
 
-REGISTRATION_EMAIL_BODY_HTML = u"""
+REGISTRATION_EMAIL_BODY_HTML = _(u"""
 <p><h2>30 Day Free Trial</h2></p>
 <p>Welcome to your 30 day free trial! Evaluate all of our features for the next 30 days to decide which plan is right for you. Unless you subscribe to a paid plan, at the end of the 30 day trial you will be subscribed to the free Community plan. Read more about our pricing plans <a href="{pricing_link}">here</a>.</p>
 <p><h2>Want to learn more?</h2></p>
@@ -256,9 +257,9 @@ REGISTRATION_EMAIL_BODY_HTML = u"""
 <p>If your email viewer won't permit you to click on the link above, cut and paste the following link into your web browser:
 {registration_link}
 </p>
-"""
+""")
 
-REGISTRATION_EMAIL_BODY_PLAINTEXT = u"""
+REGISTRATION_EMAIL_BODY_PLAINTEXT = _(u"""
 30 Day Free Trial
 
 Welcome to your 30 day free trial! Evaluate all of our features for the next 30 days to decide which plan is right for you. Unless you subscribe to a paid plan, at the end of the 30 day trial you will be subscribed to the free Community plan. Read more about our pricing plans:
@@ -280,7 +281,7 @@ We hope you enjoy your experience with CommCareHQ!
 
 The CommCareHQ Team
 
-"""
+""")
 
 
 WIKI_LINK = 'http://help.commcarehq.org'
@@ -292,7 +293,7 @@ def send_domain_registration_email(recipient, domain_name, guid):
     DNS_name = get_site_domain()
     registration_link = 'http://' + DNS_name + reverse('registration_confirm_domain') + guid + '/'
 
-    message_plaintext = u"""
+    message_plaintext = _(u"""
 Welcome to CommCareHQ!
 
 Please click this link:
@@ -303,14 +304,14 @@ Project name: "{domain}"
 
 Username:  "{username}"
 
-""" + REGISTRATION_EMAIL_BODY_PLAINTEXT
+""") + REGISTRATION_EMAIL_BODY_PLAINTEXT
 
-    message_html = u"""
+    message_html = _(u"""
 <h1>Welcome to CommCare HQ!</h1>
 <p>Please <a href="{registration_link}">go here to activate your new project</a>.  You will not be able to use your project until you have confirmed this email address.</p>
 <p><strong>Project name:</strong> {domain}</p>
 <p><strong>Username:</strong> {username}</p>
-""" + REGISTRATION_EMAIL_BODY_HTML
+""") + REGISTRATION_EMAIL_BODY_HTML
 
     params = {
         "domain": domain_name,
@@ -336,20 +337,20 @@ def send_global_domain_registration_email(requesting_user, domain_name):
     DNS_name = get_site_domain()
     registration_link = 'http://' + DNS_name + reverse("domain_homepage", args=[domain_name])
 
-    message_plaintext = u"""
+    message_plaintext = _(u"""
 Hello {name},
 
 You have successfully created and activated the project "{domain}" for the CommCare HQ user "{username}".
 
 You may access your project by following this link: {registration_link}
 
-""" + REGISTRATION_EMAIL_BODY_PLAINTEXT
+""") + REGISTRATION_EMAIL_BODY_PLAINTEXT
 
-    message_html = u"""
+    message_html = _(u"""
 <h1>New project "{domain}" created!</h1>
 <p>Hello {name},</p>
 <p>You may now <a href="{registration_link}">visit your newly created project</a> with the CommCare HQ User <strong>{username}</strong>.</p>
-""" + REGISTRATION_EMAIL_BODY_HTML
+""") + REGISTRATION_EMAIL_BODY_HTML
 
     params = {
         "name": requesting_user.first_name,
