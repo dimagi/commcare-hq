@@ -1,5 +1,6 @@
 from corehq.apps.products.models import Product
 from django.utils.translation import ugettext as _
+from corehq.apps.programs.models import Program
 
 
 def import_products(domain, importer):
@@ -8,6 +9,8 @@ def import_products(domain, importer):
     to_save = []
     product_count = 0
     seen_product_ids = set()
+
+    program_ids = [program._id for program in Program.by_domain(domain)]
 
     custom_data_validator = ProductFieldsView.get_validator(domain)
 
@@ -50,6 +53,15 @@ def import_products(domain, importer):
             continue
         elif p.code:
             seen_product_ids.add(p.code)
+
+        if p.program_id and p.program_id not in program_ids:
+            results['errors'].append(_(
+                u"Product {product_name} references a program that doesn't exist: {program_id}"
+            ).format(
+                product_name=p.name,
+                program_id=p.program_id
+            ))
+            continue
 
         product_count += 1
         to_save.append(p)
