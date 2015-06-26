@@ -8,6 +8,7 @@ from corehq.apps.domain.views import ProBonoStaticView
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.orgs.urls import organizations_urls
 from corehq.apps.reports.urls import report_urls
+from corehq.apps.registration.utils import PRICING_LINK
 
 try:
     from localsettings import LOCAL_APP_URLS
@@ -88,7 +89,6 @@ urlpatterns = patterns('',
     (r'', include('corehq.apps.hqwebapp.urls')),
     (r'', include('corehq.apps.domain.urls')),
     (r'^adm/', include(adm_admin_interface_urls)),
-    (r'^announcements/', include('corehq.apps.announcements.urls')),
     (r'^hq/accounting/', include('corehq.apps.accounting.urls')),
     (r'^hq/sms/', include(sms_admin_interface_urls)),
     (r'^hq/multimedia/', include('corehq.apps.hqmedia.urls')),
@@ -133,7 +133,7 @@ urlpatterns = patterns('',
         name=ProBonoStaticView.urlname),
     url(r'^loadtest/', include('corehq.apps.loadtestendpoints.urls')),
     url(r'^robots.txt$', TemplateView.as_view(template_name='robots.txt', content_type='text/plain')),
-    url(r'^commcare_supply_demo/$', TemplateView.as_view(template_name='commcare_supply_dashboard.html')),
+    url(r'^software-plans/$', RedirectView.as_view(url=PRICING_LINK), name='go_to_pricing'),
 ) + patterns('', *LOCAL_APP_URLS)
 
 if settings.ENABLE_PRELOGIN_SITE:

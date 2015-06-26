@@ -11,11 +11,7 @@
             var path = '{{ request.path }}';
             COMMCAREHQ.initBlock($('.hq-content'));
             $('.hq-help-template').each(function () {
-                COMMCAREHQ.makeHqHelp({
-                    content: $(this).data('content'),
-                    title: $(this).data('title')
-                }, false).insertAfter(this);
-                $(this).remove();
+                COMMCAREHQ.transformHelpTemplate($(this), false);
             });
             $('.hq-help').hqHelp();
         });

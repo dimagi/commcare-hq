@@ -148,9 +148,6 @@ class LivraisonFluff(fluff.IndicatorDocument):
     district_name = flat_field(lambda f: CommCareCase.get(f.form['case']['@case_id']).name)
 
 
-
-
-
 class RecouvrementFluff(fluff.IndicatorDocument):
     document_class = CommCareCase
 

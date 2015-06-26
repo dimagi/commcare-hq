@@ -11,18 +11,8 @@
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
         $(function(){
-            var help_text = {
-                "Archive Product": "{{ archive_help_text }}",
-            };
-
-            $('.help_popover').popover({
-                placement: $(this).data('placement') || 'left',
-                title: function () {
-                    return $(this).attr('data-help-key');
-                },
-                content: function () {
-                    return help_text[$(this).attr('data-help-key')];
-                }
+            $('.hq-help-template').each(function () {
+                COMMCAREHQ.transformHelpTemplate($(this), false);
             });
             $('#product-list').asyncProgramProductList({
                 total: {{ data_list.total }},
@@ -122,8 +112,13 @@
                             <th>{% trans "Program" %}</th>
                             <th>{% trans "Description" %}</th>
                             <th>{% trans "Units" %}</th>
-                            <th class="help_popover" data-help-key="Archive Product">
-                                <a href="#">{% trans "Archive" %} <i class="icon icon-question-sign"></i></a>
+                            <th>
+                                {% trans "Archive" %}
+                                <span class="hq-help-template"
+                                    data-title="{% trans "Archive Product" %}"
+                                    data-content="{{ archive_help_text }}"
+                                    data-placement="left"
+                                ></span>
                             </th>
                         </tr>
                     </thead>

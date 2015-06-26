@@ -1,3 +1,4 @@
+import hashlib
 from django.utils.translation import ugettext as _
 from datetime import datetime, timedelta
 import uuid
@@ -12,7 +13,9 @@ from celery.schedules import crontab
 from celery.task import periodic_task
 from corehq.apps.indicators.utils import get_mvp_domains
 from corehq.apps.reports.scheduled import get_scheduled_reports
+from corehq.apps.users.models import WebUser
 from corehq.util.view_utils import absolute_reverse
+from corehq.util.translation import localize
 from couchexport.files import Temp
 from couchexport.groupexports import export_for_group, rebuild_export
 from dimagi.utils.couch.database import get_db
@@ -121,10 +124,14 @@ def get_report_queue(report):
 @task(ignore_result=True)
 def send_report(notification_id):
     notification = ReportNotification.get(notification_id)
+    owner = WebUser.get(notification.owner_id)
+    language = owner.get_language_code()
     try:
-        notification.send()
+        with localize(language):
+            notification.send()
     except UnsupportedScheduledReportError:
         pass
+
 
 @task
 def create_metadata_export(download_id, domain, format, filename, datespan=None, user_ids=None):
@@ -167,6 +174,14 @@ def saved_exports():
     for group_config in HQGroupExportConfiguration.view("groupexport/by_domain", reduce=False,
                                                         include_docs=True).all():
         export_for_group_async.delay(group_config, 'couch')
+
+
+@task(queue='background_queue', ignore_result=True)
+def rebuild_export_task(groupexport_id, index, output_dir='couch', last_access_cutoff=None, filter=None):
+    from couchexport.groupexports import rebuild_export
+    group_config = HQGroupExportConfiguration.get(groupexport_id)
+    config, schema = group_config.all_exports[index]
+    rebuild_export(config, schema, output_dir, last_access_cutoff, filter=filter)
 
 
 @task(queue='saved_exports_queue', ignore_result=True)
@@ -370,12 +385,9 @@ def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id, export_
 
     use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
     if use_transfer:
-        root_dir = settings.SHARED_DRIVE_CONF.transfer_dir
-        fpath = os.path.join(root_dir, "{}{}{}".format(
-            app_id,
-            zip_name,
-            num_forms,  # if there are more forms than last time this file was downloaded, regenerate
-        ))
+        params = '_'.join(map(str, [xmlns, startdate, enddate, export_id, num_forms]))
+        fname = '{}-{}'.format(app_id, hashlib.md5(params).hexdigest())
+        fpath = os.path.join(settings.SHARED_DRIVE_CONF.transfer_dir, fname)
     else:
         _, fpath = tempfile.mkstemp()
 

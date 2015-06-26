@@ -23,7 +23,7 @@ from corehq.apps.domain.views import (
     FeatureFlagsView, EditDhis2SettingsView, TransferDomainView,
     ActivateTransferDomainView, DeactivateTransferDomainView,
     BulkStripePaymentView, InternalSubscriptionManagementView,
-    WireInvoiceView,
+    WireInvoiceView, SubscriptionRenewalView,
 )
 
 #
@@ -127,7 +127,9 @@ domain_settings = patterns(
     url(r'^billing/join_billing_admins/$', AddOpsUserAsDomainAdminView.as_view(),
         name=AddOpsUserAsDomainAdminView.urlname),
     url(r'^subscription/$', DomainSubscriptionView.as_view(), name=DomainSubscriptionView.urlname),
-    url(r'^subscription/renew/$', ConfirmSubscriptionRenewalView.as_view(),
+    url(r'^subscription/renew/$', SubscriptionRenewalView.as_view(),
+        name=SubscriptionRenewalView.urlname),
+    url(r'^subscription/renew/confirm/$', ConfirmSubscriptionRenewalView.as_view(),
         name=ConfirmSubscriptionRenewalView.urlname),
     url(r'^internal_subscription_management/$', InternalSubscriptionManagementView.as_view(),
         name=InternalSubscriptionManagementView.urlname),

@@ -5,12 +5,11 @@ from django.test import TestCase
 import os
 from casexml.apps.phone.exceptions import MissingSyncLog, RestoreException
 from casexml.apps.phone.tests.restore_test_utils import run_with_all_restore_configs
-from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
 from casexml.apps.phone.tests.utils import get_exactly_one_wrapped_sync_log, generate_restore_payload
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseRelationship
 from casexml.apps.phone.tests.utils import synclog_from_restore_payload
 from corehq.apps.domain.models import Domain
-from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, FILE_RESTORE
+from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
 from couchforms.tests.testutils import post_xform_to_couch
 from casexml.apps.case.tests.util import (check_user_has_case, delete_all_sync_logs,
     delete_all_xforms, delete_all_cases, assert_user_doesnt_have_case,
@@ -435,7 +434,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
             version=V2,
             update={"greeting": "hello"}
         ).as_xml()
-        form = self._postFakeWithSyncToken(update_block, self.sync_log.get_id)
+        form, _ = self._postFakeWithSyncToken(update_block, self.sync_log.get_id)
         assert_user_doesnt_have_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
 
         form.archive()
@@ -530,16 +529,6 @@ class SyncTokenUpdateTest(SyncBaseTest):
                                       referenced_id=parent_id)
         self._testUpdate(self.sync_log._id, {child_id: [index_ref]}, {parent_id: []})
         self.clean = False
-
-
-class FileRestoreSyncTokenUpdateTest(SyncTokenUpdateTest):
-    def setUp(self):
-        update_toggle_cache(FILE_RESTORE.slug, USERNAME, True)
-        super(FileRestoreSyncTokenUpdateTest, self).setUp()
-
-    def tearDown(self):
-        clear_toggle_cache(FILE_RESTORE.slug, USERNAME)
-        super(FileRestoreSyncTokenUpdateTest, self).tearDown()
 
 
 class SyncTokenCachingTest(SyncBaseTest):
@@ -672,17 +661,6 @@ class SyncTokenCachingTest(SyncBaseTest):
         ).get_payload().as_string()
         self.assertEqual(original_payload, next_payload)
         self.assertFalse(case_id in next_payload)
-
-
-class FileRestoreSyncTokenCachingTest(SyncTokenCachingTest):
-
-    def setUp(self):
-        update_toggle_cache(FILE_RESTORE.slug, USERNAME, True)
-        super(FileRestoreSyncTokenCachingTest, self).setUp()
-
-    def tearDown(self):
-        clear_toggle_cache(FILE_RESTORE.slug, USERNAME)
-        super(FileRestoreSyncTokenCachingTest, self).tearDown()
 
     @run_with_all_restore_configs
     def testCacheInvalidationAfterFileDelete(self):

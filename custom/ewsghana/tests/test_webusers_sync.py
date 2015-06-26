@@ -2,7 +2,8 @@ import json
 import os
 from django.test import TestCase
 from corehq.apps.commtrack.tests.util import bootstrap_domain as initial_bootstrap
-from corehq.apps.locations.models import SQLLocation, Location as CouchLocation
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.tests.util import delete_all_locations
 from corehq.apps.users.models import WebUser, UserRole, CommCareUser
 from custom.ewsghana.api import EWSUser, EWSApi, Product, Location
 
@@ -31,9 +32,7 @@ class WebUsersSyncTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        for location in CouchLocation.by_domain(TEST_DOMAIN):
-            location.delete()
-        SQLLocation.objects.filter(domain=TEST_DOMAIN).delete()
+        delete_all_locations()
 
     def tearDown(self):
         for user in WebUser.by_domain(TEST_DOMAIN):

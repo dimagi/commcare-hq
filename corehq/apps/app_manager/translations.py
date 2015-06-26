@@ -1,8 +1,8 @@
 from collections import OrderedDict
 from django.utils.html import escape
-import HTMLParser
 from lxml import etree
 import copy
+import re
 from openpyxl.shared.exc import InvalidFileException
 
 from corehq.apps.app_manager.exceptions import (
@@ -539,6 +539,8 @@ def update_form_translations(sheet, rows, missing_cols, app):
 
                 if new_translation:
                     # Create the node if it does not already exist
+                    complex_node = re.search('<.*>', new_translation)
+
                     if not value_node.exists():
                         e = etree.Element(
                             "{f}value".format(**namespaces), attributes
@@ -549,21 +551,27 @@ def update_form_translations(sheet, rows, missing_cols, app):
                     value_node.xml.tail = ''
                     for node in value_node.findall("./*"):
                         node.xml.getparent().remove(node.xml)
-                    value_node.xml.text = new_translation
+                    if not complex_node:
+                        value_node.xml.text = new_translation
+                    else:
+                        escaped_trans = _escape_output_value(new_translation)
+                        value_node.xml.text = escaped_trans.text
+                        for n in escaped_trans.getchildren():
+                            value_node.xml.append(n)
                 else:
                     # Remove the node if it already exists
                     if value_node.exists():
                         value_node.xml.getparent().remove(value_node.xml)
 
-    parser = HTMLParser.HTMLParser()
-
-    # Form sheets are escaped on download, but the modules_and_forms sheet,
-    # where form names are updated, is not. Escape form name here so it
-    # surives the subsequent form unescaping.
-    xform.set_name(escape(form.default_name()))
-
-    save_xform(app, form, parser.unescape(etree.tostring(xform.xml, encoding="unicode")))
+    save_xform(app, form, etree.tostring(xform.xml, encoding="unicode"))
     return msgs
+
+
+def _escape_output_value(value):
+    return etree.fromstring("<value>" +
+        re.sub("(?<!/)>", "&gt;", re.sub("<\s*(?!output)", "&lt;", value)) +
+        "</value>")
+
 
 
 def update_case_list_translations(sheet, rows, app):

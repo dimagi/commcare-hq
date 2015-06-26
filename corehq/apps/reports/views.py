@@ -1,19 +1,20 @@
 from StringIO import StringIO
 from copy import copy
+from corehq.apps.app_manager.const import USERCASE_TYPE
 import os
 import json
 import tempfile
 import re
-import zipfile
-import cStringIO
 import itertools
+import langcodes
 from datetime import datetime, timedelta, date
 from urllib2 import URLError
 from casexml.apps.case import const
+from casexml.apps.case.const import CASE_ACTION_CREATE
+from casexml.apps.case.dbaccessors import get_open_case_ids_in_domain
+from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.util.timezones.utils import get_timezone_for_user
 from dimagi.utils.decorators.memoized import memoized
-from unidecode import unidecode
-from dateutil.parser import parse
 
 from django.conf import settings
 from django.contrib import messages
@@ -54,7 +55,7 @@ from couchexport.exceptions import (
 from couchexport.models import FakeSavedExportSchema, SavedBasicExport
 from couchexport.shortcuts import (export_data_shared, export_raw_data,
     export_response)
-from couchexport.tasks import rebuild_schemas, rebuild_export_task
+from couchexport.tasks import rebuild_schemas
 from couchexport.util import SerializableFunction
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import wrapped_docs
@@ -84,7 +85,7 @@ from couchforms.models import XFormInstance, doc_types
 from corehq.apps.reports.templatetags.xform_tags import render_form
 from filters.users import UserTypeFilter
 from corehq.apps.domain.decorators import (login_or_digest)
-from corehq.apps.export.custom_export_helpers import CustomExportHelper
+from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.export import export_cases
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher
@@ -92,7 +93,6 @@ from corehq.apps.reports.models import (
     ReportConfig,
     ReportNotification,
     FakeFormExportSchema,
-    FormExportSchema,
     HQGroupExportConfiguration
 )
 from corehq.apps.reports.standard.cases.basic import CaseListReport
@@ -101,7 +101,7 @@ from corehq.apps.reports.tasks import (
     rebuild_export_async,
     send_delayed_report,
     build_form_multimedia_zip,
-)
+    rebuild_export_task)
 from corehq.apps.reports import util
 from corehq.apps.reports.util import (
     get_all_users_by_domain,
@@ -112,7 +112,7 @@ from corehq.apps.reports.export import (ApplicationBulkExportHelper,
     CustomBulkExportHelper, save_metadata_export_to_tempfile)
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.export import export_users
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, CouchUser, WebUser
 from corehq.apps.users.models import Permissions
 from corehq.apps.domain.decorators import login_and_domain_required
 
@@ -193,10 +193,8 @@ def saved_reports(request, domain, template="reports/reports_home.html"):
         ),
     )
 
-    if request.couch_user:
-        util.set_report_announcements_for_user(request, user)
-
     return render(request, template, context)
+
 
 @login_or_digest
 @require_form_export_permission
@@ -327,7 +325,7 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
     elif export_id:
         # this is a custom export
         try:
-            export_object = CustomExportHelper.make(request, export_type, domain, export_id).custom_export
+            export_object = make_custom_export_helper(request, export_type, domain, export_id).custom_export
             if safe_only and not export_object.is_safe:
                 return HttpResponseForbidden()
         except ResourceNotFound:
@@ -619,6 +617,7 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
                                   domain,
                                   user_id, request.couch_user,
                                   True,
+                                  lang=request.couch_user.language,
                                   notes=form.cleaned_data['notes'],
                                   once=once)[0].content
 
@@ -714,7 +713,9 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
     if not configs:
         return render(request, template, context)
 
-    display_privacy_disclaimer = any(c.is_configurable_report for c in configs)
+    is_configurable_map = {c._id: c.is_configurable_report for c in configs}
+    languages_map = {c._id: list(c.languages | set(['en'])) for c in configs}
+    languages_for_select = {tup[0]: tup for tup in langcodes.get_all_langs_for_select()}
 
     config_choices = [(c._id, c.full_name) for c in configs]
 
@@ -733,20 +734,23 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
         if instance.owner_id != user_id or instance.domain != domain:
             raise HttpResponseBadRequest()
     else:
-        instance = ReportNotification(owner_id=user_id, domain=domain,
-                                      config_ids=[], hour=8, minute=0,
-                                      send_to_owner=True, recipient_emails=[])
+        instance = ReportNotification(
+            owner_id=user_id,
+            domain=domain,
+            config_ids=[],
+            hour=8,
+            minute=0,
+            send_to_owner=True,
+            recipient_emails=[],
+            language=None,
+        )
 
     is_new = instance.new_document
     initial = instance.to_json()
     initial['recipient_emails'] = ', '.join(initial['recipient_emails'])
 
     kwargs = {'initial': initial}
-    args = (
-        (display_privacy_disclaimer, request.POST)
-        if request.method == "POST"
-        else (display_privacy_disclaimer,)
-    )
+    args = ((request.POST, ) if request.method == "POST" else ())
     form = ScheduledReportForm(*args, **kwargs)
 
     form.fields['config_ids'].choices = config_choices
@@ -782,11 +786,14 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
     context['weekly_day_options'] = ReportNotification.day_choices()
     context['monthly_day_options'] = [(i, i) for i in range(1, 32)]
     if is_new:
-        context['form_action'] = "Create a new"
-        context['report']['title'] = "New Scheduled Report"
+        context['form_action'] = _("Create a new")
+        context['report']['title'] = _("New Scheduled Report")
     else:
-        context['form_action'] = "Edit"
-        context['report']['title'] = "Edit Scheduled Report"
+        context['form_action'] = _("Edit")
+        context['report']['title'] = _("Edit Scheduled Report")
+    context['is_configurable_map'] = is_configurable_map
+    context['languages_map'] = languages_map
+    context['languages_for_select'] = languages_for_select
 
     return render(request, template, context)
 
@@ -809,7 +816,6 @@ def delete_scheduled_report(request, domain, scheduled_report_id):
 
 @login_and_domain_required
 def send_test_scheduled_report(request, domain, scheduled_report_id):
-    from corehq.apps.users.models import CouchUser, CommCareUser, WebUser
 
     user_id = request.couch_user._id
 
@@ -847,22 +853,27 @@ def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
     request.couch_user.current_domain = domain
 
     notification = ReportNotification.get(scheduled_report_id)
-    return _render_report_configs(request, notification.configs,
-                                  notification.domain,
-                                  notification.owner_id,
-                                  couch_user,
-                                  email, attach_excel=attach_excel)
+    return _render_report_configs(
+        request,
+        notification.configs,
+        notification.domain,
+        notification.owner_id,
+        couch_user,
+        email,
+        attach_excel=attach_excel,
+        lang=notification.language
+    )
 
 
 def _render_report_configs(request, configs, domain, owner_id, couch_user, email,
-                           notes=None, attach_excel=False, once=False):
+                           notes=None, attach_excel=False, once=False, lang=None):
     from dimagi.utils.web import get_url_base
 
     report_outputs = []
     excel_attachments = []
     format = Format.from_format(request.GET.get('format') or Format.XLS_2007)
     for config in configs:
-        content, excel_file = config.get_report_content(attach_excel=attach_excel)
+        content, excel_file = config.get_report_content(lang, attach_excel=attach_excel)
         if excel_file:
             excel_attachments.append({
                 'title': config.full_name + "." + format.extension,
@@ -908,6 +919,15 @@ def case_details(request, domain, case_id):
         messages.info(request, "Sorry, we couldn't find that case. If you think this is a mistake please report an issue.")
         return HttpResponseRedirect(CaseListReport.get_url(domain=domain))
 
+    create_actions = filter(lambda a: a.action_type == CASE_ACTION_CREATE, case.actions)
+    if not create_actions:
+        messages.error(request, _(
+            "The case creation form could not be found. "
+            "Usually this happens if the form that created the case is archived "
+            "but there are other forms that updated the case. "
+            "To fix this you can archive the other forms listed here."
+        ))
+
     return render(request, "reports/reportdata/case_details.html", {
         "domain": domain,
         "case_id": case_id,
@@ -924,6 +944,7 @@ def case_details(request, domain, case_id):
             "show_transaction_export": toggles.STOCK_TRANSACTION_EXPORT.enabled(request.user.username),
         },
         "show_case_rebuild": toggles.CASE_REBUILD.enabled(request.user.username),
+        'is_usercase': case.type == USERCASE_TYPE,
     })
 
 
@@ -1091,7 +1112,10 @@ def generate_case_export_payload(domain, include_closed, format, group, user_fil
 
     """
     status = 'all' if include_closed else 'open'
-    case_ids = CommCareCase.get_all_cases(domain, status=status, wrapper=lambda r: r['id'])
+    if include_closed:
+        case_ids = get_case_ids_in_domain(domain)
+    else:
+        case_ids = get_open_case_ids_in_domain(domain)
 
     class stream_cases(object):
         def __init__(self, all_case_ids):

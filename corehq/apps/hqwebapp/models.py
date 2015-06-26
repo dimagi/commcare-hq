@@ -16,7 +16,7 @@ from corehq.apps.accounting.utils import (
     domain_has_privilege,
     is_accounting_admin
 )
-from corehq.apps.domain.utils import get_adm_enabled_domains
+from corehq.apps.domain.utils import get_adm_enabled_domains, user_has_custom_top_menu
 from corehq.apps.hqadmin.reports import (
     RealProjectSpacesReport,
     CommConnectProjectSpacesReport,
@@ -43,8 +43,6 @@ from corehq.apps.reports.dispatcher import (ProjectReportDispatcher,
 from corehq.apps.reports.models import ReportConfig
 from corehq.apps.adm.dispatcher import (ADMAdminInterfaceDispatcher,
                                         ADMSectionDispatcher)
-from corehq.apps.announcements.dispatcher import (
-    HQAnnouncementAdminInterfaceDispatcher)
 from django.db import models
 
 
@@ -369,8 +367,11 @@ class DashboardTab(UITab):
 
     @property
     def is_viewable(self):
-        return (self.domain and self.project and not self.project.is_snapshot
-                and self.couch_user)
+        return (self.domain and self.project and
+                not self.project.is_snapshot and
+                self.couch_user and
+                # domain hides Dashboard tab if user is non-admin
+                not user_has_custom_top_menu(self.domain, self.couch_user))
 
 
 class ReportsTab(UITab):
@@ -628,6 +629,10 @@ class ProjectDataTab(UITab):
             from corehq.apps.fixtures.dispatcher import FixtureInterfaceDispatcher
             items.extend(FixtureInterfaceDispatcher.navigation_sections(context))
 
+        if toggle_enabled(self._request, toggles.REVAMPED_EXPORTS):
+            from corehq.apps.reports.dispatcher import DataExportInterfaceDispatcher
+            items.extend(DataExportInterfaceDispatcher.navigation_sections(context))
+
         return items
 
 
@@ -712,7 +717,9 @@ class ApplicationsTab(UITab):
         couch_user = self.couch_user
         return (self.domain and couch_user and
                 (couch_user.is_web_user() or couch_user.can_edit_apps()) and
-                (couch_user.is_member_of(self.domain) or couch_user.is_superuser))
+                (couch_user.is_member_of(self.domain) or couch_user.is_superuser) and
+                # domain hides Applications tab if user is non-admin
+                not user_has_custom_top_menu(self.domain, couch_user))
 
 
 class CloudcareTab(UITab):
@@ -1393,12 +1400,15 @@ class AdminReportsTab(UITab):
         admin_operations = []
 
         if self.couch_user and self.couch_user.is_staff:
+            from corehq.apps.hqadmin.views import AuthenticateAs
             admin_operations.extend([
                 {'title': _('Mass Email Users'),
                  'url': reverse('mass_email')},
                 {'title': _('PillowTop Errors'),
                  'url': reverse('admin_report_dispatcher',
                                 args=('pillow_errors',))},
+                {'title': _('Login as another user'),
+                 'url': reverse(AuthenticateAs.urlname)},
             ])
         return [
             (_('Administrative Reports'), [
@@ -1529,16 +1539,6 @@ class FeatureFlagsTab(UITab):
         return self.couch_user and self.couch_user.is_superuser
 
 
-class AnnouncementsTab(UITab):
-    title = ugettext_noop("Announcements")
-    view = "corehq.apps.announcements.views.default_announcement"
-    dispatcher = HQAnnouncementAdminInterfaceDispatcher
-
-    @property
-    def is_viewable(self):
-        return self.couch_user and self.couch_user.is_superuser
-
-
 class AdminTab(UITab):
     title = ugettext_noop("Admin")
     view = "corehq.apps.hqadmin.views.default"
@@ -1546,7 +1546,6 @@ class AdminTab(UITab):
         AdminReportsTab,
         GlobalADMConfigTab,
         SMSAdminTab,
-        AnnouncementsTab,
         AccountingTab,
         FeatureFlagsTab
     )
@@ -1555,8 +1554,10 @@ class AdminTab(UITab):
     def dropdown_items(self):
         if (self.couch_user and not self.couch_user.is_superuser
                 and (toggles.IS_DEVELOPER.enabled(self.couch_user.username))):
-            return [dropdown_dict(_("System Info"),
-                    url=reverse("system_info"))]
+            return [
+                dropdown_dict(_("System Info"), url=reverse("system_info")),
+                dropdown_dict(_("Feature Flags"), url=reverse("toggle_list")),
+            ]
 
         submenu_context = [
             dropdown_dict(_("Reports"), is_header=True),

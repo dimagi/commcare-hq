@@ -190,6 +190,7 @@ DEFAULT_APPS = (
     'raven.contrib.django.raven_compat',
     'compressor',
     'mptt',
+    'tastypie',
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap'
@@ -205,6 +206,7 @@ HQ_APPS = (
     'auditcare',
     'hqscripts',
     'casexml.apps.case',
+    'corehq.apps.casegroups',
     'casexml.apps.phone',
     'casexml.apps.stock',
     'corehq.apps.cleanup',
@@ -236,7 +238,6 @@ HQ_APPS = (
     'langcodes',
     'corehq.apps.adm',
     'corehq.apps.analytics',
-    'corehq.apps.announcements',
     'corehq.apps.callcenter',
     'corehq.apps.crud',
     'corehq.apps.custom_data_fields',
@@ -302,7 +303,6 @@ HQ_APPS = (
     'a5288',
     'custom.bihar',
     'custom.penn_state',
-    'dca',
     'custom.apps.gsid',
     'hsph',
     'mvp',
@@ -338,7 +338,6 @@ HQ_APPS = (
     'bootstrap3_crispy',
 
     'custom.dhis2',
-    'custom.evin',
 )
 
 TEST_APPS = ()
@@ -460,7 +459,9 @@ DEFAULT_FROM_EMAIL = 'commcarehq-noreply@dimagi.com'
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@dimagi.com'
 ACCOUNTS_EMAIL = 'accounts@dimagi.com'
+FINANCE_EMAIL = 'finance@dimagi.com'
 SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange@dimagi.com'
+INTERNAL_SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange+internal@dimagi.com'
 BILLING_EMAIL = 'billing-comm@dimagi.com'
 INVOICING_CONTACT_EMAIL = SUPPORT_EMAIL
 MASTER_LIST_EMAIL = 'master-list@dimagi.com'
@@ -478,24 +479,32 @@ PAGINATOR_MAX_PAGE_LINKS = 5
 OPENROSA_VERSION = "1.0"
 
 # OTA restore fixture generators
+# Fixture ID's used by cloudcare API
+# {
+#     'group': [
+#          ('fixture_id (can be just prefix)', 'fixture generator fn'),
+#          ...
+#      ],
+#      ...
+# }
 FIXTURE_GENERATORS = {
     # fixtures that may be sent to the phone independent of cases
     'standalone': [
         # core
-        "corehq.apps.users.fixturegenerators.user_groups",
-        "corehq.apps.fixtures.fixturegenerators.item_lists",
-        "corehq.apps.callcenter.fixturegenerators.indicators_fixture_generator",
-        "corehq.apps.products.fixtures.product_fixture_generator",
-        "corehq.apps.programs.fixtures.program_fixture_generator",
-        "corehq.apps.userreports.fixtures.report_fixture_generator",
+        ('user-groups', "corehq.apps.users.fixturegenerators.user_groups"),
+        ('item-list', "corehq.apps.fixtures.fixturegenerators.item_lists"),
+        ('indicators', "corehq.apps.callcenter.fixturegenerators.indicators_fixture_generator"),
+        ('commtrack:products', "corehq.apps.products.fixtures.product_fixture_generator"),
+        ('commtrack:programs', "corehq.apps.programs.fixtures.program_fixture_generator"),
+        ('commcare:reports', "corehq.apps.userreports.fixtures.report_fixture_generator"),
         # custom
-        "custom.bihar.reports.indicators.fixtures.generator",
-        "custom.m4change.fixtures.report_fixtures.generator",
-        "custom.m4change.fixtures.location_fixtures.generator",
+        ('indicators:bihar-supervisor', "custom.bihar.reports.indicators.fixtures.generator"),
+        ('reports:m4change-mobile', "custom.m4change.fixtures.report_fixtures.generator"),
+        ('user-locations', "custom.m4change.fixtures.location_fixtures.generator"),
     ],
     # fixtures that must be sent along with the phones cases
     'case': [
-        "corehq.apps.locations.fixtures.location_fixture_generator",
+        ('commtrack:locations', "corehq.apps.locations.fixtures.location_fixture_generator"),
     ]
 }
 
@@ -679,6 +688,7 @@ AUDIT_MODEL_SAVE = [
 
 AUDIT_VIEWS = [
     'corehq.apps.settings.views.ChangeMyPasswordView',
+    'corehq.apps.hqadmin.views.AuthenticateAs',
 ]
 
 AUDIT_MODULES = [
@@ -939,6 +949,15 @@ try:
         from settings_demo import *
     else:
         from localsettings import *
+        if globals().get("FIX_LOGGER_ERROR_OBFUSCATION"):
+            # this is here because the logging config cannot import
+            # corehq.util.log.HqAdminEmailHandler, for example, if there
+            # is a syntax error in any module imported by corehq/__init__.py
+            # Setting FIX_LOGGER_ERROR_OBFUSCATION = True in
+            # localsettings.py will reveal the real error.
+            for handler in LOGGING["handlers"].values():
+                if handler["class"].startswith("corehq."):
+                    handler["class"] = "logging.StreamHandler"
 except ImportError:
     pass
 
@@ -955,6 +974,7 @@ if DEBUG:
 
     import warnings
     warnings.simplefilter('default')
+    os.environ['PYTHONWARNINGS'] = 'd'  # Show DeprecationWarning
 else:
     TEMPLATE_LOADERS = [
         ('django.template.loaders.cached.Loader', TEMPLATE_LOADERS),
@@ -1010,6 +1030,7 @@ COUCHDB_APPS = [
     'orgs',
     'builds',
     'case',
+    'casegroups',
     'callcenter',
     'cleanup',
     'cloudcare',
@@ -1065,7 +1086,6 @@ COUCHDB_APPS = [
     # custom reports
     'penn_state',
     'care_benin',
-    'dca',
     'gsid',
     'hsph',
     'mvp',
@@ -1284,6 +1304,8 @@ CUSTOM_DATA_SOURCES = [
     os.path.join('custom', 'up_nrhm', 'data_sources', 'asha_facilitators.json'),
     os.path.join('custom', 'succeed', 'data_sources', 'submissions.json'),
     os.path.join('custom', 'apps', 'gsid', 'data_sources', 'patient_summary.json'),
+    os.path.join('custom', 'abt', 'reports', 'data_sources', 'sms.json'),
+    os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory.json'),
 ]
 
 
@@ -1357,8 +1379,6 @@ DOMAIN_MODULE_MAP = {
     'care-bihar': 'custom.bihar',
     'bihar': 'custom.bihar',
     'cvsulive': 'custom.apps.cvsu',
-    'dca-malawi': 'dca',
-    'eagles-fahu': 'dca',
     'fri': 'custom.fri.reports',
     'fri-testing': 'custom.fri.reports',
     'gsid': 'custom.apps.gsid',
@@ -1409,8 +1429,8 @@ TRAVIS_TEST_GROUPS = (
     (
         'accounting', 'adm', 'announcements', 'api', 'app_manager', 'appstore',
         'auditcare', 'bihar', 'builds', 'cachehq', 'callcenter', 'care_benin',
-        'case', 'cleanup', 'cloudcare', 'commtrack', 'consumption',
-        'couchapps', 'couchlog', 'crud', 'cvsu', 'dca', 'django_digest',
+        'case', 'casegroups', 'cleanup', 'cloudcare', 'commtrack', 'consumption',
+        'couchapps', 'couchlog', 'crud', 'cvsu', 'django_digest',
         'domain', 'domainsync', 'export',
         'facilities', 'fixtures', 'fluff_filter', 'formplayer',
         'formtranslate', 'fri', 'grapevine', 'groups', 'gsid', 'hope',

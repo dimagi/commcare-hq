@@ -24,7 +24,7 @@ class MainMenuNode(template.Node):
         except (ValueError, AttributeError):
             module = None
 
-        tabs = corehq.TABS + getattr(module, 'TABS', ())
+        tabs = getattr(module, 'TABS', corehq.TABS)
         visible_tabs = []
         all_tabs = []
 

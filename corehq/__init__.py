@@ -65,7 +65,6 @@ def REPORTS(project):
             commtrack_maps.StockStatusMapReport,
             commtrack_reports.ReportingRatesReport,
             commtrack_maps.ReportingStatusMapReport,
-            # commtrack_reports.RequisitionReport,
         )))
 
     if project.has_careplan:
@@ -167,7 +166,7 @@ def _get_configurable_reports(project):
                 'show_in_navigation': show_in_navigation,
             })
 
-        yield (_('Project Reports'), [_make_report_class(config) for config in configs])
+        yield (_('Reports'), [_make_report_class(config) for config in configs])
 
 from corehq.apps.data_interfaces.interfaces import CaseReassignmentInterface, BulkArchiveFormInterface
 from corehq.apps.importer.base import ImportCases
@@ -192,6 +191,13 @@ FIXTURE_INTERFACES = (
     (_('Lookup Tables'), (
         FixtureEditInterface,
         FixtureViewInterface,
+    )),
+)
+
+from corehq.apps.reports.standard.export import DataExportInterface
+EXPORT_DATA_INTERFACES = (
+    (_('Export Data'), (
+        DataExportInterface,
     )),
 )
 
@@ -239,17 +245,6 @@ INDICATOR_ADMIN_INTERFACES = (
     )),
 )
 
-from corehq.apps.announcements.interface import (
-    ManageGlobalHQAnnouncementsInterface,
-    ManageReportAnnouncementsInterface,
-)
-
-ANNOUNCEMENTS_ADMIN_INTERFACES = (
-    (_("Manage Announcements"), (
-        ManageGlobalHQAnnouncementsInterface,
-        ManageReportAnnouncementsInterface,
-    )),
-)
 
 from corehq.apps.accounting.interface import (
     AccountingInterface,

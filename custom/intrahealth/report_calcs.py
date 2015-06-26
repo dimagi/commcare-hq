@@ -4,7 +4,6 @@ from dimagi.utils.dates import force_to_date
 import fluff
 import re
 import logging
-from corehq.apps.locations.models import Location
 from custom.intrahealth import get_location_by_type, PRODUCT_MAPPING, get_domain, PRODUCT_NAMES, get_loc_from_case
 
 
@@ -35,11 +34,16 @@ def get_product_code(product_name, domain):
                                               domain=domain).code
 
 
+def _locations_per_type(domain, loc_type, location):
+    return (location.sql_location.get_descendants(include_self=True)
+            .filter(domain=domain, location_type__name=loc_type, is_archived=False).count())
+
+
 class PPSRegistered(fluff.Calculator):
     @fluff.date_emitter
     def total_for_region(self, form):
         loc = get_location_by_type(form=form, type=u'r\xe9gion')
-        count = Location.filter_by_type_count(form.domain, 'PPS', loc)
+        count = _locations_per_type(form.domain, 'PPS', loc)
         yield {
             'date': form_date(form),
             'value': count
@@ -48,7 +52,7 @@ class PPSRegistered(fluff.Calculator):
     @fluff.date_emitter
     def total_for_district(self, form):
         loc = get_location_by_type(form=form, type=u'district')
-        count = Location.filter_by_type_count(form.domain, 'PPS', loc)
+        count = _locations_per_type(form.domain, 'PPS', loc)
         yield {
             'date': form_date(form),
             'value': count

@@ -12,6 +12,7 @@ import logging
 import pickle
 import json
 import re
+import urllib
 from dateutil import parser
 
 from django.http import HttpResponse
@@ -26,7 +27,6 @@ from custom.common import ALL_OPTION
 from dimagi.utils.couch.database import iter_docs, get_db
 from dimagi.utils.dates import add_months_to_date
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.web import json_request
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SimpleColumn, SumColumn, CountUniqueColumn
 
@@ -38,7 +38,7 @@ from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from corehq.apps.reports.generic import ElasticTabularReport, GetParamsMixin
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn, DataFormatter, DictDataFormat
 from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin, DatespanMixin
-from corehq.apps.reports.standard.maps import ElasticSearchMapReport
+from corehq.apps.reports.standard.maps import GenericMapReport
 from corehq.apps.reports.util import make_form_couch_key
 from corehq.apps.users.models import CommCareCase, CouchUser
 from corehq.elastic import es_query
@@ -83,6 +83,14 @@ DATE_FILTER_EXTENDED_CLOSED = """(
     )
 """
 
+EDD_DOD_FILTER = """
+    (
+       (edd >= :edd_startdate AND edd <= :edd_enddate)
+       OR
+       (dod <= :enddate and dod != '')
+    )
+"""
+
 def ret_val(value):
     return value
 
@@ -105,7 +113,7 @@ class OpmCaseSqlData(SqlData):
             enddate=str(self.datespan.enddate_utc.date()),
             edd_startdate=self.datespan.startdate.date().isoformat(),
             edd_enddate=add_months_to_date(self.datespan.enddate_utc.date(), 5).isoformat(),
-            test_account='111%'
+            test_account='111%',
         )
 
     @property
@@ -117,12 +125,10 @@ class OpmCaseSqlData(SqlData):
         filters = [
             "domain = :domain",
             "user_id = :user_id",
-            "edd < :edd_enddate",
-            "edd > :edd_startdate",
             "account_number not like :test_account",
             DATE_FILTER_EXTENDED_OPENED,
+            EDD_DOD_FILTER
         ]
-
         return filters
 
     @property
@@ -887,6 +893,16 @@ class MetReport(CaseReportMixin, BaseReport):
                 case_row = self.get_row_data(row, index=1, awc_codes=awc_codes)
                 total_payment += case_row.cash_amt
                 rows.append(case_row)
+            except CaseOutOfRange as e:
+                case_row.one = ''
+                case_row.two = ''
+                case_row.three = ''
+                case_row.four = ''
+                case_row.five = ''
+                case_row.cash_pay = '--'
+                case_row.payment_last_month = '--'
+                case_row.issue = _('Reporting period incomplete')
+                rows.append(case_row)
             except InvalidRow as e:
                 if self.debug:
                     import sys
@@ -899,7 +915,7 @@ class MetReport(CaseReportMixin, BaseReport):
                     })
         self.total_row = ["" for __ in self.model.method_map]
         self.total_row[0] = _("Total Payment")
-        self.total_row[self.column_index('cash')] = "Rs. {}".format(total_payment)
+        self.total_row[self.column_index('cash_pay')] = "Rs. {}".format(total_payment)
         return rows
 
     def get_row_data(self, row, **kwargs):
@@ -1075,6 +1091,7 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
                 awc=user['awc'],
                 awc_code=user['awc_code'],
                 gp=user['gp'],
+                block=user['block'],
             )
 
     @property
@@ -1144,7 +1161,7 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
 class UsersIdsData(SqlData):
     table_name = "fluff_OpmUserFluff"
     group_by = ['doc_id', 'name', 'awc', 'awc_code', 'bank_name',
-                'ifs_code', 'account_number', 'gp', 'block', 'village']
+                'ifs_code', 'account_number', 'gp', 'block', 'village', 'gps']
 
     @property
     def filters(self):
@@ -1168,11 +1185,12 @@ class UsersIdsData(SqlData):
             DatabaseColumn('account_number', SimpleColumn('account_number')),
             DatabaseColumn('gp', SimpleColumn('gp')),
             DatabaseColumn('block', SimpleColumn('block')),
-            DatabaseColumn('village', SimpleColumn('village'))
+            DatabaseColumn('village', SimpleColumn('village')),
+            DatabaseColumn('gps', SimpleColumn('gps'))
         ]
 
 
-class IncentivePaymentReport(BaseReport):
+class IncentivePaymentReport(BaseReport, CaseReportMixin):
     name = "AWW Payment Report"
     slug = 'incentive_payment_report'
     model = Worker
@@ -1191,7 +1209,9 @@ class IncentivePaymentReport(BaseReport):
     def get_model_kwargs(self):
         return {'last_month_totals': self.last_month_totals}
 
-    def get_rows(self, datespan):
+    @property
+    @memoized
+    def users_matching_filter(self):
         config = {}
         for lvl in ['awc', 'gp', 'block']:
             req_prop = 'hierarchy_%s' % lvl
@@ -1201,10 +1221,31 @@ class IncentivePaymentReport(BaseReport):
                 break
         return UsersIdsData(config=config).get_data()
 
+    @property
+    @memoized
+    def awc_data(self):
+        case_objects = self.row_objects + self.extra_row_objects
+        cases_by_owner = {}
+        for case_object in case_objects:
+            owner_id = case_object.owner_id
+            cases_by_owner[owner_id] = cases_by_owner.get(owner_id, []) + [case_object]
+        return cases_by_owner
+
+    @property
+    def rows(self):
+        rows = []
+        for user in self.users_matching_filter:
+            case_sql_data = self.awc_data.get(user['doc_id'], None)
+            form_sql_data = OpmFormSqlData(DOMAIN, user['doc_id'], self.datespan)
+            row = self.model(user, self, case_sql_data, form_sql_data.data)
+            data = []
+            for t in self.model.method_map:
+                data.append(getattr(row, t[0]))
+            rows.append(data)
+        return rows
+
     def get_row_data(self, row, **kwargs):
-        case_sql_data = OpmCaseSqlData(DOMAIN, row['doc_id'], self.datespan)
-        form_sql_data = OpmFormSqlData(DOMAIN, row['doc_id'], self.datespan)
-        return self.model(row, self, case_sql_data.data, form_sql_data.data)
+        return OPMCaseRow(row, self)
 
 
 def this_month_if_none(month, year):
@@ -1391,25 +1432,30 @@ def _unformat_row(row):
     return formatted_row
 
 
-class HealthMapSource(HealthStatusReport):
+class HealthMapSource(NewHealthStatusReport):
+
+    total_rows = 0
 
     @property
     @memoized
     def get_users(self):
-        return super(HealthMapSource, self).es_results['hits'].get('hits', [])
+        config = {
+            'awc': tuple(self.awcs),
+            'gp': tuple(self.gp),
+            'block': tuple(self.blocks)
+        }
+        return UsersIdsData(config=config).get_data()
 
     @property
     def gps_mapping(self):
         users = self.get_users
         mapping = {}
         for user in users:
-            user_src = user.get('_source', {})
-            aww_name = user_src.get('first_name', "") + " " + user_src.get('last_name', "")
-            meta_data = user_src.get('user_data', {})
-            awc = meta_data.get("awc", "")
-            block = meta_data.get("block", "")
-            gp = meta_data.get("gp", "")
-            gps = meta_data.get("gps", "")
+            aww_name = user['name']
+            awc = user['awc']
+            block = user['block']
+            gp = user['gp']
+            gps = user['gps']
             mapping[awc] = {
                 "AWW": aww_name,
                 "Block": block,
@@ -1432,29 +1478,33 @@ class HealthMapSource(HealthStatusReport):
         ret = super(HealthMapSource, self).rows
         new_rows = []
         for row in ret:
-            awc = row[0]
+            awc = row[1]
             awc_map = gps_mapping.get(awc, None) or ""
-            gps = awc_map["gps"] if awc_map else "--"
             extra_columns = ["--"] * 4
             if awc_map:
                 extra_columns = []
                 for key in ["gps", "AWW", "Block", "GP"]:
                     extra_columns.append(awc_map.get(key, "--"))
-            escaped_row = [row[0]]
-            for cell in row[1:]:
+            escaped_row = ['', row[1]]
+            for cell in row[2:]:
                 # _unformat_row([<html>] => ["N - f%"])
-                percent = re.findall(pattern, _unformat_row([cell])[0])
-                html_cell = {"html": cell, "sort_key": int(percent[0] if percent else 0)}
+                try:
+                    percent = re.findall(pattern, _unformat_row([cell])[0])
+                    html_cell = {"html": cell, "sort_key": int(percent[0] if percent else 0)}
+                except TypeError:
+                    html_cell = {"html": cell, "sort_key": cell}
                 escaped_row.append(html_cell)
             new_rows.append(extra_columns + escaped_row)
         return new_rows
 
 
-class HealthMapReport(BaseMixin, ElasticSearchMapReport, GetParamsMixin, CustomProjectReport):
+class HealthMapReport(BaseMixin, GenericMapReport, GetParamsMixin, CustomProjectReport, MonthYearMixin):
     name = "Health Status (Map)"
+    title = "Health Status (Map)"
     slug = "health_status_map"
-    fields = [HierarchyFilter, OpenCloseFilter, DatespanFilter]
-    report_partial_path = 'opm/map_template.html'
+    fields = [HierarchyFilter, MonthFilter, YearFilter, OpenCloseFilter]
+    report_partial_path = "opm/map_template.html"
+    base_template = 'opm/map_base_template.html'
     printable = True
 
     data_source = {
@@ -1475,8 +1525,8 @@ class HealthMapReport(BaseMixin, ElasticSearchMapReport, GetParamsMixin, CustomP
             subtitles.append("Gram Panchayat - %s" % ", ".join(gps))
         if blocks:
             subtitles.append("Blocks - %s" % ", ".join(blocks))
-        startdate = self.request_params.get('startdate', '')
-        enddate = self.request_params.get('enddate', '')
+        startdate = self.datespan.startdate
+        enddate = self.datespan.enddate
         subtitles.append(" From %s to %s" % (startdate, enddate))
         subtitles.append("Generated {}".format(
             datetime.datetime.utcnow().strftime(SERVER_DATETIME_FORMAT)))
@@ -1504,40 +1554,36 @@ class HealthMapReport(BaseMixin, ElasticSearchMapReport, GetParamsMixin, CustomP
                 '# of Children Whose Nutritional Status is Normal': 'Children Whose Nutritional Status is Normal'
         }
         additional_columns = [
-            "Total # of Beneficiaries Registered",
-            "# of Mothers of Children Aged 3 Years and Below Registered",
-            "# of Children Between 0 and 3 Years of Age Registered",
-            "# of Pregnant Women Who Have Received at least 30 IFA Tablets",
-            "# of Pregnant Women Whose Weight Gain Was Monitored At Least Once",
-            "# of Pregnant Women Whose Weight Gain Was Monitored Twice",
-            "# of Children Whose Weight Was Monitored at Birth",
-            "# of Children Who Have Attended At Least 1 Growth Monitoring Session",
-            "# of Children Who Have Attended At Least 2 Growth Monitoring Sessions",
-            "# of Children Who Have Attended At Least 3 Growth Monitoring Sessions",
-            "# of Children Who Have Attended At Least 4 Growth Monitoring Sessions",
-            '# of Children Who Have Attended At Least 5 Growth Monitoring Sessions',
-            '# of Children Who Have Attended At Least 6 Growth Monitoring Sessions',
-            '# of Children Who Have Attended At Least 7 Growth Monitoring Sessions',
-            '# of Children Who Have Attended At Least 8 Growth Monitoring Sessions',
-            '# of Children Who Have Attended At Least 9 Growth Monitoring Sessions',
-            '# of Children Who Have Attended At Least 10 Growth Monitoring Sessions',
-            '# of Children Who Have Attended At Least 11 Growth Monitoring Sessions',
-            '# of Children Who Have Attended At Least 12 Growth Monitoring Sessions',
-            '# of Children Who Have Received ORS and Zinc Treatment if He/She Contracts Diarrhea',
-            '# of Mothers of Children Aged 3 Years and Below Who Reported to Have Exclusively Breastfed Their Children for First 6 Months',
-            '# of Children Who Received Measles Vaccine',
+            "Registered Beneficiaries",
+            "Registered children",
+            "Child birth registered",
+            "Received at least 30 IFA tablets",
+            "Weight monitored in second trimester",
+            "Weight monitored in third trimester",
+            "Weight monitored at birth",
+            "Growth monitoring when 0-3 months old",
+            "Growth Monitoring when 4-6 months old",
+            "Growth Monitoring when 7-9 months old",
+            "Growth Monitoring when 10-12 months old",
+            "Growth Monitoring when 13-15 months old",
+            "Growth Monitoring when 16-18 months old",
+            "Growth Monitoring when 19-21 months old",
+            "Growth Monitoring when 22-24 months old",
+            "Received ORS and Zinc treatment for diarrhoea",
+            "Exclusively breastfed for first 6 months",
+            "Received Measles vaccine",
         ]
         columns = ["AWW", "Block", "GP"] + [
-            "AWC",
-            "# of Pregnant Women Registered",
-            "# of Children Whose Birth Was Registered",
-            "# of Beneficiaries Attending VHND Monthly",
-            '# of Children Whose Nutritional Status is "SAM"',
-            '# of Children Whose Nutritional Status is "MAM"',
-            '# of Children Whose Nutritional Status is Normal'
+            "AWC Name",
+            "Registered pregnant women",
+            "Registered children",
+            "Pregnant women attended VHND",
+            'Severely underweight',
+            'Underweight',
+            'Normal weight for age'
         ]
-        return {
-            "detail_columns": columns[0:5],
+        config = {
+            "detail_columns": columns[:5],
             "display_columns": columns[4:],
             "table_columns": columns,
             "column_titles": title_mapping,
@@ -1552,6 +1598,14 @@ class HealthMapReport(BaseMixin, ElasticSearchMapReport, GetParamsMixin, CustomP
                 title: "return x + ' \%'" for title in additional_columns + columns[4:]
             }
         }
+        default_metric = self.request.GET.get('metric', None)
+        if default_metric:
+            for metric in config['metrics']:
+                unquote = urllib.unquote(default_metric)
+                if metric['color']['column'] == unquote:
+                    metric['default'] = True
+                    break
+        return config
 
     @property
     def rows(self):
@@ -1588,12 +1642,6 @@ class HealthMapReport(BaseMixin, ElasticSearchMapReport, GetParamsMixin, CustomP
         """
         self.is_rendered_as_email = True
         self.use_datatables = False
-        self.update_report_context()
-        self.pagination.count = 1000000
-        self.context['report_table'].update(
-            rows=self.rows
-        )
-        rendered_report = render_to_string(
-            self.template_report, self.context, context_instance=RequestContext(self.request)
-        )
-        return HttpResponse(rendered_report)
+        self.override_template = "opm/map_template.html"
+
+        return HttpResponse(self._async_context()['report'])
