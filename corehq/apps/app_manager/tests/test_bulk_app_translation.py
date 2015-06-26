@@ -120,6 +120,19 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
             "label", "default_en", "default_fra", "audio_en", "audio_fra", "image_en", "image_fra", "video_en", "video_fra",
         ))
     )
+
+    upload_headers_bad_column = (  # bad column is default-fra
+        ("Modules_and_forms", (
+            "Type", "sheet_name", "default_en", "default_fra", "label_for_cases_en", "label_for_cases_fra", "icon_filepath", "audio_filepath", "unique_id"
+        )),
+        ("module1", (
+            "case_property", "list_or_detail", "default_en", "default_fra"
+        )),
+        ("module1_form1", (
+            "label", "default_en", "default-fra", "audio_en", "audio_fra", "image_en", "image_fra", "video_en", "video_fra",
+        ))
+    )
+
     upload_data = (
         ("Modules_and_forms", (
           ("Module", "module1", "My & awesome module", "", "Cases", "Cases", "", "", "8f4f7085a93506cba4295eab9beae8723c0cee2a"),
@@ -214,6 +227,20 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
             self.upload_raw_excel_translations(self.upload_no_change_headers, self.upload_no_change_data)
         except Exception as e:
             self.fail(e)
+
+    def test_bad_column_name(self):
+        self.upload_raw_excel_translations(self.upload_headers_bad_column, 
+            self.upload_data,
+            expected_messages=[
+                u'Sheet "module1_form1" has less columns than expected. Sheet '
+                'will be processed but the following translations will be '
+                'unchanged: default_fra',
+                u'Sheet "module1_form1" has unrecognized columns. Sheet will '
+                'be processed but ignoring the following columns: default-fra',
+                u'App Translations Updated!'
+            ]
+        )
+
 
 
 class MismatchedItextReferenceTest(BulkAppTranslationTestBase):
