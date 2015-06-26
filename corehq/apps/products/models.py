@@ -201,7 +201,7 @@ class Product(Document):
             ('unit', unicode),
             'description',
             'category',
-            'program_id',
+            ('program_id', str),
             ('cost', lambda a: Decimal(a) if a else None),
         ]
 
