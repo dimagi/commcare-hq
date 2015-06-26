@@ -45,7 +45,7 @@
 trunk: master
 name: autostaging
 branches:
-  - rewrite-trivial-views  # Danny 6/25
+  - remove-unused-views  # Danny 6/25
   - vellum-staging # J$ 11/13
   - fixtures-spike  # cz 1/29
   - update-submodules # TS 5/6
