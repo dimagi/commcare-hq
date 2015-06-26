@@ -110,6 +110,9 @@ var PaymentMethodHandler = function (formId, opts) {
         return self.selectedCard() && self.selectedCard().cardFormIsValid();
     });
 
+    if (opts.wire_email){
+        self.wireEmails(opts.wire_email);
+    }
 
     self.mustCreateNewCard = ko.computed(function () {
         return self.paymentIsNotComplete() && self.savedCards().length == 0;

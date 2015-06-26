@@ -784,7 +784,8 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
             'payment_error_messages': PAYMENT_ERROR_MESSAGES,
             'sms_rate_calc_url': reverse(SMSRatesView.urlname,
-                                         args=[self.domain])
+                                         args=[self.domain]),
+            'user_email': self.request.couch_user.username,
         }
 
 

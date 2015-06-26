@@ -20,6 +20,7 @@
                 errorMessages: {{ payment_error_messages|JSON }},
                 credit_card_url: "{{ credit_card_url }}",
                 wire_url: "{{ wire_url }}",
+                wire_email: "{{ user_email }}",
             }
         );
         {% if plan.cards %}
