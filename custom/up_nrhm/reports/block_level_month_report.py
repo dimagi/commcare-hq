@@ -62,7 +62,7 @@ class BlockLevelMonthReport(GenericTabularReport, DatespanMixin, CustomProjectRe
                     sum += v['sort_key'] if v is not None else 0
             mean = (float(sum) / float(len(values)))
             if idx == 10:
-                percent = mean*100/denom
+                percent = mean * 100 / denom
                 html = "{0}/{1} {2}%".format(int(mean), int(denom), int(percent))
                 return format_datatables_data(html, percent)
             mean = "%.0f" % mean

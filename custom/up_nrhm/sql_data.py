@@ -188,13 +188,15 @@ class ASHAFacilitatorsData(SqlData):
             ),
             AggregateColumn(
                 "<b>Total number of ASHAs who are functional on at least 60% of the tasks</b>",
-                aggregate_fn=lambda x, y: {'sort_key': ((x or 0)*100/(y or 1)),
-                                           'html': '{0}/{1} {2}%'.format((x or 0), y, ((x or 0)*100/(y or 1)))},
+                aggregate_fn=lambda x, y: {
+                    'sort_key': ((x or 0) * 100 / (y or 1)),
+                    'html': '{0}/{1} {2}%'.format((x or 0), y, ((x or 0) * 100 / (y or 1)))
+                },
                 columns=[
-                FunctionalityChecklistColumn(
-                    whens={'hv_percent_functionality >= 60': 1},
-                    alias='percent_functionality'),
-                AliasColumn('total_ashas')
+                    FunctionalityChecklistColumn(
+                        whens={'hv_percent_functionality >= 60': 1},
+                        alias='percent_functionality'),
+                    AliasColumn('total_ashas')
                 ],
                 format_fn=lambda x: x
             ),
