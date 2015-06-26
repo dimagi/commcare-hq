@@ -21,6 +21,7 @@ import datetime
 import json
 import os
 import posixpath
+import sh
 import sys
 import time
 from collections import defaultdict
@@ -679,6 +680,7 @@ def deploy():
 
 def _deploy_without_asking():
     try:
+        _tag_commit()
         _execute_with_timing(update_code)
         _execute_with_timing(update_virtualenv)
         _execute_with_timing(install_npm_packages)
@@ -726,6 +728,17 @@ def force_update_static():
     execute(_do_compress)
     execute(update_manifest)
     execute(services_restart)
+
+
+def _tag_commit():
+    # TODO sh.git.fetch("origin", env.code_branch)
+    deploy_time = datetime.datetime.utcnow()
+    tag_name = "{:%Y-%m-%d_%H.%M}-{}".format(deploy_time, env.environment)
+    branch = "origin/{}".format(env.code_branch)
+    msg = getattr(env, "message", "")  # TODO make it easier than --set message
+    msg += "\n{} deploy at {}".format(env.environment, deploy_time.isoformat())
+    sh.git.tag(tag_name, "-m", msg, branch)
+    # TODO push tag back to origin, eventually deploy tag, not branch
 
 
 @task
