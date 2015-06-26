@@ -255,30 +255,35 @@ $(function () {
         };
 
         self.setupDownload = function (response) {
+            var keep_polling = true;
             function poll() {
-                $.ajax({
-                    url: response.download_url,
-                    dataType: 'text',
-                    success: function (resp) {
-                        var progress = $("#download-progress");
-                        if (resp.replace(/[ \t\n]/g,'')) {
-                            $("#downloading").hide();
-                            progress.show().html(resp);
-                            if (progress.find(".alert-success").length) {
-                                clearInterval(interval);
-                            };
+                if (keep_polling) {
+                    $.ajax({
+                        url: response.download_url,
+                        dataType: 'text',
+                        success: function (resp) {
+                            var progress = $("#download-progress");
+                            if (resp.replace(/[ \t\n]/g, '')) {
+                                $("#downloading").hide();
+                                progress.show().html(resp);
+                                if (progress.find(".alert-success").length) {
+                                    keep_polling = false;
+                                }
+                            }
+                            if (keep_polling) {
+                                setTimeout(poll, 2000);
+                            }
+                        },
+                        error: function () {
+                            self.downloadError();
+                            keep_polling = false;
                         }
-                    },
-                    error: function () {
-                        self.downloadError();
-                        clearInterval(interval);
-                    }
-                });
+                    });
+                }
             }
-            var interval = setInterval(poll, 2000);
             $("#fixture-download").one("hidden", function() {
                 // stop polling if dialog is closed
-                clearInterval(interval);
+                keep_polling = false;
             });
             $("#download-progress").hide();
             $("#downloading").show();

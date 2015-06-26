@@ -1,4 +1,5 @@
 from django.core.management.base import BaseCommand
+from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
 from corehq.util.couch_helpers import CouchAttachmentsBuilder
@@ -10,15 +11,7 @@ import re
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        startkey = ['ipm-senegal', 'by_type', 'XFormInstance']
-        endkey = startkey + [{}]
-
-        ids = [row['id'] for row in XFormInstance.get_db().view(
-            "couchforms/all_submissions_by_domain",
-            startkey=startkey,
-            endkey=endkey,
-            reduce=False
-        )]
+        ids = get_form_ids_by_type('ipm-senegal', 'XFormInstance')
 
         to_save = []
         for doc in iter_docs(XFormInstance.get_db(), ids):

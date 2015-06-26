@@ -44,8 +44,8 @@
         "meta": {
             "appVersion": "2.0",
             "clinic_id": "5020280",
-            "timeEnd": "2010-07-23T13:55:11Z",
-            "timeStart": "2010-07-22T13:54:27Z",
+            "timeEnd": "2010-07-23T13:55:11.648000Z",
+            "timeStart": "2010-07-22T13:54:27.971000Z",
             "userID": "f7f0c79e-8b79-11df-b7de-005056c00008",
             "username": "admin"
         },

@@ -6,19 +6,21 @@ from corehq.apps.domain.shortcuts import create_domain
 class BriefViewTest(TestCase):
     domain = 'application-brief-test'
 
-    def setUp(self):
-        self.project = create_domain(self.domain)
-        self.apps = [
-            Application(domain=self.domain),
-            RemoteApp(domain=self.domain),
+    @classmethod
+    def setUpClass(cls):
+        cls.project = create_domain(cls.domain)
+        cls.apps = [
+            Application(domain=cls.domain),
+            RemoteApp(domain=cls.domain),
         ]
-        for app in self.apps:
+        for app in cls.apps:
             app.save()
 
-    def tearDown(self):
-        for app in self.apps:
+    @classmethod
+    def tearDownClass(cls):
+        for app in cls.apps:
             app.delete()
-        self.project.delete()
+        cls.project.delete()
 
     def test_domain(self):
         apps = self.project.applications()

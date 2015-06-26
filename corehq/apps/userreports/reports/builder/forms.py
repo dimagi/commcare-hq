@@ -1,4 +1,5 @@
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
+from urllib import urlencode
 import uuid
 from django import forms
 from django.core.urlresolvers import reverse
@@ -8,14 +9,15 @@ from django.utils.translation import ugettext_noop as _
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import FormActions
 from crispy_forms.helper import FormHelper
-from corehq.apps.app_manager.fields import ApplicationDataSourceUIHelper
 
+from corehq.apps.app_manager.fields import ApplicationDataSourceUIHelper
 from corehq.apps.app_manager.models import (
     Application,
     Form,
 )
-from corehq.apps.app_manager.util import ParentCasePropertyBuilder
+from corehq.apps.app_manager.util import get_case_properties
 from corehq.apps.app_manager.xform import XForm
+
 from corehq.apps.userreports import tasks
 from corehq.apps.userreports.app_manager import _clean_table_name
 from corehq.apps.userreports.models import (
@@ -72,12 +74,10 @@ class DataSourceBuilder(object):
             self.source_form = Form.get_form(self.source_id)
             self.source_xform = XForm(self.source_form.source)
         if self.source_type == 'case':
-            property_builder = ParentCasePropertyBuilder(
-                self.app, DEFAULT_CASE_PROPERTY_DATATYPES.keys()
+            prop_map = get_case_properties(
+                self.app, [self.source_id], defaults=DEFAULT_CASE_PROPERTY_DATATYPES.keys()
             )
-            self.case_properties = list(
-                property_builder.get_properties(self.source_id) | {'closed'}
-            )
+            self.case_properties = sorted(set(prop_map[self.source_id]) | {'closed'})
 
     @property
     @memoized
@@ -171,37 +171,37 @@ class DataSourceBuilder(object):
         """
 
         if self.source_type == 'case':
-            return {
-                cp: {
+            return OrderedDict(
+                (cp, {
                     'type': 'case_property',
                     'id': cp,
                     'column_id': get_column_name(cp),
                     'text': cp,
                     'source': cp
-                } for cp in self.case_properties
-            }
+                }) for cp in self.case_properties
+            )
 
         if self.source_type == 'form':
-            ret = {}
+            ret = OrderedDict()
             questions = self.source_xform.get_questions([])
-            ret.update({
-                q['value']: {
+            ret.update(
+                (q['value'], {
                     "type": "question",
                     "id": q['value'],
                     "column_id": get_column_name(q['value'].strip("/")),
                     'text': q['label'],
                     "source": q,
-                } for q in questions
-            })
-            ret.update({
-                p[0]: {
+                }) for q in questions
+            )
+            ret.update(
+                (p[0], {
                     "type": "meta",
                     "id": p[0],
                     "column_id": get_column_name(p[0].strip("/")),
                     'text': p[0],
                     "source": p,
-                } for p in FORM_METADATA_PROPERTIES
-            })
+                }) for p in FORM_METADATA_PROPERTIES
+            )
             return ret
 
     @property
@@ -306,6 +306,10 @@ class DataSourceForm(forms.Form):
 
         return cleaned_data
 
+_shared_properties = ['exists_in_current_version', 'display_text', 'property', 'data_source_field']
+FilterViewModel = namedtuple("FilterViewModel", _shared_properties + ['format'])
+ColumnViewModel = namedtuple("ColumnViewModel", _shared_properties)
+
 
 class ConfigureNewReportBase(forms.Form):
     filters = FilterField(required=False)
@@ -345,7 +349,13 @@ class ConfigureNewReportBase(forms.Form):
         self.helper.attrs['data_bind'] = "submit: submitHandler"
         self.helper.form_id = "report-config-form"
 
-        buttons = [crispy.Submit('submit', self.button_text)]
+        buttons = [
+            crispy.HTML(
+                "<button type='submit' "
+                    "class='btn btn-primary disable-on-submit'"
+                ">{}</a>".format(self.button_text)
+            )
+        ]
         # Add a back button if we aren't editing an existing report
         if not self.existing_report:
             buttons.insert(
@@ -365,8 +375,13 @@ class ConfigureNewReportBase(forms.Form):
             buttons.insert(
                 0,
                 crispy.HTML(
-                    '<a class="btn btn-danger" href="{}" style="margin-right: 4px">{}</a>'.format(
-                        reverse('delete_configurable_report', args=(self.domain, self.existing_report._id)),
+                    '<a class="btn btn-danger pull-right" href="{}">{}</a>'.format(
+                        reverse(
+                            'delete_configurable_report',
+                            args=(self.domain, self.existing_report._id),
+                        ) + "?{}".format(urlencode(
+                            {'redirect': reverse('reports_home', args=[self.domain])}
+                        )),
                         _('Delete Report')
                     )
                 )
@@ -417,7 +432,60 @@ class ConfigureNewReportBase(forms.Form):
             crispy.Hidden('filters', None, data_bind="value: filtersList.serializedProperties")
         )
 
+    def _build_data_source(self):
+        data_source_config = DataSourceConfiguration(
+            domain=self.domain,
+            display_name=self.ds_builder.data_source_name,
+            referenced_doc_type=self.ds_builder.source_doc_type,
+            # The uuid gets truncated, so it's not really universally unique.
+            table_id=_clean_table_name(self.domain, str(uuid.uuid4().hex)),
+            configured_filter=self.ds_builder.filter,
+            configured_indicators=self.ds_builder.indicators,
+            meta=DataSourceMeta(build=DataSourceBuildInformation(
+                source_id=self.report_source_id,
+                app_id=self.app._id,
+                app_version=self.app.version,
+            ))
+        )
+        data_source_config.validate()
+        data_source_config.save()
+        tasks.rebuild_indicators.delay(data_source_config._id)
+        return data_source_config._id
+
     def update_report(self):
+        from corehq.apps.userreports.views import delete_data_source_shared
+
+        matching_data_source = self.ds_builder.get_existing_match()
+        if matching_data_source:
+            if matching_data_source['id'] != self.existing_report.config_id:
+
+                # If no one else is using the current data source, delete it.
+                data_source = DataSourceConfiguration.get(self.existing_report.config_id)
+                if data_source.get_report_count() <= 1:
+                    delete_data_source_shared(self.domain, data_source._id)
+
+                self.existing_report.config_id = matching_data_source['id']
+
+        else:
+            # We need to create a new data source
+            existing_sources = DataSourceConfiguration.by_domain(self.domain)
+
+            # Delete the old one if no other reports use it
+            old_data_source = DataSourceConfiguration.get(self.existing_report.config_id)
+            if old_data_source.get_report_count() <= 1:
+                delete_data_source_shared(self.domain, old_data_source._id)
+
+            # Make sure the user can create more data sources
+            elif len(existing_sources) >= 5:
+                raise forms.ValidationError(_(
+                    "Editing this report would require a new data source. The limit is 5. "
+                    "To continue, first delete all of the reports using a particular "
+                    "data source (or the data source itself) and try again. "
+                ))
+
+            data_source_config_id = self._build_data_source()
+            self.existing_report.config_id = data_source_config_id
+
         self.existing_report.aggregation_columns = self._report_aggregation_cols
         self.existing_report.columns = self._report_columns
         self.existing_report.filters = self._report_filters
@@ -434,24 +502,7 @@ class ConfigureNewReportBase(forms.Form):
         if matching_data_source:
             data_source_config_id = matching_data_source['id']
         else:
-            data_source_config = DataSourceConfiguration(
-                domain=self.domain,
-                display_name=self.ds_builder.data_source_name,
-                referenced_doc_type=self.ds_builder.source_doc_type,
-                # The uuid gets truncated, so it's not really universally unique.
-                table_id=_clean_table_name(self.domain, str(uuid.uuid4().hex)),
-                configured_filter=self.ds_builder.filter,
-                configured_indicators=self.ds_builder.indicators,
-                meta=DataSourceMeta(build=DataSourceBuildInformation(
-                    source_id=self.report_source_id,
-                    app_id=self.app._id,
-                    app_version=self.app.version,
-                ))
-            )
-            data_source_config.validate()
-            data_source_config.save()
-            tasks.rebuild_indicators.delay(data_source_config._id)
-            data_source_config_id = data_source_config._id
+            data_source_config_id = self._build_data_source()
 
         report = ReportConfiguration(
             domain=self.domain,
@@ -473,41 +524,75 @@ class ConfigureNewReportBase(forms.Form):
     @property
     @memoized
     def initial_filters(self):
-        FilterViewModel = namedtuple("FilterViewModel", ['property', 'display_text', 'format'])
         if self.existing_report:
             return [self._get_view_model(f) for f in self.existing_report.filters]
         if self.source_type == 'case':
             return [
-                FilterViewModel('closed', 'closed', 'Choice'),
+                FilterViewModel(
+                    exists_in_current_version=True,
+                    property='closed',
+                    data_source_field=None,
+                    display_text='closed',
+                    format='Choice',
+                ),
                 # TODO: Allow users to filter by owner name, not just id.
                 # This will likely require implementing data source filters.
-                FilterViewModel('owner_id', "owner id", "Choice"),
+                FilterViewModel(
+                    exists_in_current_version=True,
+                    property='owner_id',
+                    data_source_field=None,
+                    display_text='owner_id',
+                    format='Choice',
+                ),
             ]
         else:
             # self.source_type == 'form'
             return [
-                FilterViewModel('timeEnd', "Form completion time", "Date"),
+                FilterViewModel(
+                    exists_in_current_version=True,
+                    property='timeEnd',
+                    data_source_field=None,
+                    display_text='Form completion time',
+                    format='Date',
+                ),
             ]
 
     def _get_view_model(self, filter):
         """
-        Given a ReportFilter, return a dictionary representing the knockout view
-        model representing this filter in the report builder.
+        Given a ReportFilter, return a FilterViewModel representing
+        the knockout view model representing this filter in the report builder.
+
         """
         filter_type_map = {
             'dynamic_choice_list': 'Choice',
-            'choice_list': 'Choice',  # This exists to handle the `closed` filter that might exist
+            # This exists to handle the `closed` filter that might exist
+            'choice_list': 'Choice',
             'date': 'Date',
             'numeric': 'Numeric'
         }
-        return {
-            'property': self._get_property_from_column(filter['field']),
-            'display_text': filter['display'],
-            'format': filter_type_map[filter['type']]
-        }
+        exists = self._column_exists(filter['field'])
+        return FilterViewModel(
+            exists_in_current_version=exists,
+            display_text=filter['display'],
+            format=filter_type_map[filter['type']],
+            property=self._get_property_from_column(filter['field']) if exists else None,
+            data_source_field=filter['field'] if not exists else None
+        )
 
     def _get_property_from_column(self, col):
         return self._properties_by_column[col]['id']
+
+    def _column_exists(self, column_id):
+        """
+        Return True if this column corresponds to a question/case property in
+        the current version of this form/case configuration.
+
+        This could be true if a user makes a report, modifies the app, then
+        edits the report.
+
+        column_id is a string like "data_date_q_d1b3693e"
+        """
+        return column_id in self._properties_by_column
 
     @property
     def _report_aggregation_cols(self):
@@ -531,12 +616,15 @@ class ConfigureNewReportBase(forms.Form):
 
         def _make_report_filter(conf):
             col_id = self.data_source_properties[conf["property"]]['column_id']
-            return {
+            ret = {
                 "field": col_id,
                 "slug": col_id,
                 "display": conf["display_text"],
                 "type": filter_type_map[conf['format']]
             }
+            if conf['format'] == 'Date':
+                ret.update({'compare_as_string': True})
+            return ret
 
         filter_configs = self.cleaned_data['filters']
         filters = [_make_report_filter(f) for f in filter_configs]
@@ -671,10 +759,15 @@ class ConfigureListReportForm(ConfigureNewReportBase):
         if self.existing_report:
             cols = []
             for c in self.existing_report.columns:
-                cols.append({
-                    'property': self._get_property_from_column(c['field']),
-                    'display_text': c['display']
-                })
+                exists = self._column_exists(c['field'])
+                cols.append(
+                    ColumnViewModel(
+                        display_text=c['display'],
+                        exists_in_current_version=exists,
+                        property=self._get_property_from_column(c['field']) if exists else None,
+                        data_source_field=c['field'] if not exists else None,
+                    )
+                )
             return cols
         return []
 
@@ -717,12 +810,24 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
 
     @property
     def _report_columns(self):
-        agg_col_id = self.data_source_properties[self.aggregation_field]['column_id']
+        agg_field_id = self.data_source_properties[self.aggregation_field]['column_id']
 
         columns = super(ConfigureTableReportForm, self)._report_columns
+
+        # Add the aggregation indicator to the columns if it's not already present.
+        displaying_agg_column = bool([c for c in columns if c['field'] == agg_field_id])
+        if not displaying_agg_column:
+            columns = [{
+                'format': 'default',
+                'aggregation': 'simple',
+                "type": "field",
+                'field': agg_field_id,
+                'display': self.aggregation_field
+            }] + columns
+
         # Expand all columns except for the column being used for aggregation.
         for c in columns:
-            if c['field'] != agg_col_id:
+            if c['field'] != agg_field_id:
                 c['aggregation'] = "expand"
         return columns
 

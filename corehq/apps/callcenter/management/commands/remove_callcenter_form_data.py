@@ -48,7 +48,8 @@ class Command(BaseCommand):
         domains = get_call_center_domains()
         all_mappings = SqlExtractMapping.all()
         for mapping_name in mapping_names:
-            for domain in domains:
+            for domain_lite in domains:
+                domain = domain_lite.name
                 print("Processing domain", domain)
                 mapping = get_mapping(domain, mapping_name)
 

@@ -1,6 +1,6 @@
-USER_INDEX = "hqusers_20150403_1454"
+USER_INDEX = "hqusers_20150430_1821"
 USER_MAPPING={'_all': {'analyzer': 'standard'},
- '_meta': {'comment': 'Ethan modified on 2015-01-29',
+ '_meta': {'comment': 'Ethan modified on 2015-04-30',
            'created': None},
  'date_detection': False,
  'date_formats': ['yyyy-MM-dd',
@@ -28,6 +28,7 @@ USER_MAPPING={'_all': {'analyzer': 'standard'},
                                       'exact': {'index': 'not_analyzed',
                                                 'type': 'string'}},
                            'type': 'multi_field'},
+                'location_id': {'index': 'not_analyzed', 'type': 'string'},
                 'domain_membership': {'dynamic': False,
                                       'properties': {'doc_type': {'index': 'not_analyzed',
                                                                   'type': 'string'},

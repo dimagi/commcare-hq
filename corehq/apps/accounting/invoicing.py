@@ -2,7 +2,7 @@ import calendar
 from decimal import Decimal
 import datetime
 import logging
-from django.db.models import F, Q
+from django.db.models import F, Q, Min, Max
 from django.template.loader import render_to_string
 
 from django.utils.translation import ugettext as _
@@ -16,7 +16,8 @@ from corehq.apps.accounting.models import (
     Subscription, BillingAccount, SubscriptionAdjustment,
     SubscriptionAdjustmentMethod, BillingRecord,
     BillingContactInfo, SoftwarePlanEdition, CreditLine,
-    EntryPoint,
+    EntryPoint, WireInvoice, WireBillingRecord,
+    SMALL_INVOICE_THRESHOLD,
 )
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.users.models import CommCareUser
@@ -156,12 +157,6 @@ class DomainInvoiceFactory(object):
                     permit_inactive=True,
                 )
 
-        days_until_due = DEFAULT_DAYS_UNTIL_DUE
-        if subscription.date_delay_invoicing is not None:
-            td = subscription.date_delay_invoicing - self.date_end
-            days_until_due = max(days_until_due, td.days)
-        date_due = self.date_end + datetime.timedelta(days_until_due)
-
         if subscription.date_start > self.date_start:
             invoice_start = subscription.date_start
         else:
@@ -179,7 +174,6 @@ class DomainInvoiceFactory(object):
             subscription=subscription,
             date_start=invoice_start,
             date_end=invoice_end,
-            date_due=date_due,
             is_hidden=subscription.do_not_invoice,
         )
         invoice.save()
@@ -196,10 +190,25 @@ class DomainInvoiceFactory(object):
         invoice.calculate_credit_adjustments()
         invoice.update_balance()
         invoice.save()
+        total_balance = sum(invoice.balance for invoice in Invoice.objects.filter(
+            is_hidden=False,
+            subscription__subscriber__domain=invoice.get_domain(),
+        ))
+        if total_balance > SMALL_INVOICE_THRESHOLD:
+            days_until_due = DEFAULT_DAYS_UNTIL_DUE
+            if subscription.date_delay_invoicing is not None:
+                td = subscription.date_delay_invoicing - self.date_end
+                days_until_due = max(days_until_due, td.days)
+            invoice.date_due = self.date_end + datetime.timedelta(days_until_due)
+        invoice.save()
 
         record = BillingRecord.generate_record(invoice)
         try:
-            record.send_email()
+            if subscription.auto_generate_credits and not invoice.balance:
+                record.skipped_email = True
+                record.save()
+            else:
+                record.send_email()
         except InvoiceEmailThrottledError as e:
             if not self.logged_throttle_error:
                 logger.error("[BILLING] %s" % e)
@@ -218,6 +227,73 @@ class DomainInvoiceFactory(object):
             )
             feature_factory = feature_factory_class(subscription, feature_rate, invoice)
             feature_factory.create()
+
+
+class DomainWireInvoiceFactory(object):
+
+    def __init__(self, domain, date_start=None, date_end=None, contact_emails=None):
+        self.date_start = date_start
+        self.date_end = date_end
+        self.contact_emails = contact_emails
+        self.domain = ensure_domain_instance(domain)
+        self.logged_throttle_error = False
+        if self.domain is None:
+            raise InvoiceError("Domain '{}' is not a valid domain on HQ!".format(self.domain))
+
+    def create_wire_invoice(self, balance):
+
+        # Gather relevant invoices
+        invoices = Invoice.objects.filter(
+            subscription__subscriber__domain=self.domain,
+            is_hidden=False,
+            date_paid__exact=None,
+        ).order_by('-date_start')
+
+        account = BillingAccount.get_or_create_account_by_domain(
+            self.domain.name,
+            created_by=self.__class__.__name__,
+            created_by_invoicing=True,
+            entry_point=EntryPoint.SELF_STARTED,
+        )[0]
+
+        # If no start date supplied, default earliest start date of unpaid invoices
+        if self.date_start:
+            date_start = self.date_start
+        else:
+            date_start = invoices.aggregate(Min('date_start'))['date_start__min']
+
+        # If no end date supplied, default latest end date of unpaid invoices
+        if self.date_end:
+            date_end = self.date_end
+        else:
+            date_end = invoices.aggregate(Max('date_end'))['date_end__max']
+
+        if not date_end:
+            date_end = datetime.datetime.today()
+
+        date_due = date_end + datetime.timedelta(DEFAULT_DAYS_UNTIL_DUE)
+
+        # TODO: figure out how to handle line items
+        wire_invoice = WireInvoice.objects.create(
+            domain=self.domain.name,
+            date_start=date_start,
+            date_end=date_end,
+            date_due=date_due,
+            balance=balance,
+            account=account
+        )
+
+        record = WireBillingRecord.generate_record(wire_invoice)
+
+        try:
+            record.send_email(contact_emails=self.contact_emails)
+        except InvoiceEmailThrottledError as e:
+            # Currently wire invoices are never throttled
+            if not self.logged_throttle_error:
+                logger.error("[BILLING] %s" % e)
+                self.logged_throttle_error = True
+
+        return wire_invoice
 
 
 class LineItemFactory(object):
@@ -309,18 +385,18 @@ class ProductLineItemFactory(LineItemFactory):
     @property
     def base_description(self):
         if not self.is_prorated:
-            return _("One month of %(plan_name)s Software Plan." % {
-                'plan_name': self.rate.product.name,
-            })
+            return _("One month of %(plan_name)s Software Plan.") % {
+                'plan_name': self.plan_name,
+            }
 
     @property
     def unit_description(self):
         if self.is_prorated:
-            return _("%(num_days)s day%(pluralize)s of %(plan_name)s Software Plan." % {
+            return _("%(num_days)s day%(pluralize)s of %(plan_name)s Software Plan.") % {
                 'num_days': self.num_prorated_days,
                 'pluralize': "" if self.num_prorated_days == 1 else "s",
-                'plan_name': self.rate.product.name,
-            })
+                'plan_name': self.plan_name,
+            }
 
     @property
     def num_prorated_days(self):
@@ -337,6 +413,10 @@ class ProductLineItemFactory(LineItemFactory):
         if self.is_prorated:
             return self.num_prorated_days
         return 1
+
+    @property
+    def plan_name(self):
+        return self.subscription.plan_version.plan.name
 
 
 class FeatureLineItemFactory(LineItemFactory):
@@ -377,9 +457,9 @@ class UserLineItemFactory(FeatureLineItemFactory):
     def unit_description(self):
         if self.num_excess_users > 0:
             return _("Per User fee exceeding monthly limit of "
-                     "%(monthly_limit)s users." % {
+                     "%(monthly_limit)s users.") % {
                          'monthly_limit': self.rate.monthly_limit,
-                     })
+                     }
 
 
 class SmsLineItemFactory(FeatureLineItemFactory):

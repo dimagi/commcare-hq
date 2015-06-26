@@ -1,6 +1,7 @@
 from django.db import transaction
-from jsonobject import JsonObject
-from jsonobject.properties import StringProperty, BooleanProperty, DecimalProperty, ListProperty, IntegerProperty,\
+from corehq.apps.hqcase.dbaccessors import \
+    get_supply_point_case_in_domain_by_id
+from dimagi.ext.jsonobject import JsonObject, StringProperty, BooleanProperty, DecimalProperty, ListProperty, IntegerProperty,\
     FloatProperty, DictProperty
 from corehq.apps.commtrack.models import SupplyPointCase, CommtrackConfig, CommtrackActionConfig
 from corehq.apps.locations.models import SQLLocation, LocationType
@@ -8,11 +9,24 @@ from corehq.apps.programs.models import Program
 from corehq.apps.users.models import UserRole
 from custom.api.utils import apply_updates
 from custom.ilsgateway.models import SupplyPointStatus, DeliveryGroupReport, HistoricalLocationGroup
-from custom.logistics.utils import get_supply_point_by_external_id
 from custom.logistics.api import LogisticsEndpoint, APISynchronization, ApiSyncObject
 from corehq.apps.locations.models import Location as Loc
 
-LOCATION_TYPES = ["MOHSW", "REGION", "DISTRICT", "FACILITY"]
+LOCATION_TYPES = ["MOHSW", "MSDZONE", "REGION", "DISTRICT", "FACILITY"]
+MSDZONE_MAP = {
+    'Dar Es Salaam Zone': ['DR', 'morogoro', 'coast', 'dar es salaam', 'pwani'],
+    'Dodoma Zone': ['DM', 'singida', 'dodoma'],
+    'Iringa Zone': ['IR', 'njombe', 'iringa'],
+    'Mbeya Zone': ['MB', 'rukwa', 'mbeya', 'mbeya', 'katavi'],
+    'Moshi Zone': ['MS', 'arusha', 'manyara', 'kilimanjaro'],
+    'Mtwara Zone': ['MT', 'ruvuma', 'lindi', 'mtwara'],
+    'Mwanza Zone': ['MZ', 'geita', 'shinyanga', 'simiyu', 'mwanza', 'kagera', 'mara'],
+    'Tabora Zone': ['TB', 'kigoma', 'tabora'],
+    'Tanga Zone': ['TG', 'tanga'],
+    'Zanzibar Zone': ['D', "pemba north", "pemba south", "zanzibar central/south", "zanzibar north",
+                      "zanzibar west"],
+    'UNKNOWN': ['UN']
+}
 
 
 class Product(JsonObject):
@@ -87,8 +101,15 @@ class Groups(JsonObject):
 
 
 def _get_location_id(facility, domain):
-    supply_point = get_supply_point_by_external_id(domain, facility)
+    supply_point = get_supply_point_case_in_domain_by_id(domain, facility)
     return supply_point.location_id if supply_point else None
+
+
+def _get_msd_name(loc):
+    for k, v in MSDZONE_MAP.iteritems():
+        if loc.lower() in v:
+            return k
+    return 'UNKNOWN'
 
 
 class ILSGatewayEndpoint(LogisticsEndpoint):
@@ -128,6 +149,14 @@ class ILSGatewayEndpoint(LogisticsEndpoint):
         return meta, [
             Groups(obj) for obj in groups_list
         ]
+
+    def get_stocktransactions(self, start_date=None, end_date=None, **kwargs):
+        kwargs.get('filters', {}).update({
+            'date__gte': start_date,
+        })
+        meta, stock_transactions = self.get_objects(self.stocktransactions_url, **kwargs)
+        return meta, [(self.models_map['stock_transaction'])(stock_transaction)
+                      for stock_transaction in stock_transactions]
 
 
 class ILSGatewayAPI(APISynchronization):
@@ -275,6 +304,25 @@ class ILSGatewayAPI(APISynchronization):
         return sms_user
 
     def location_sync(self, ilsgateway_location):
+        def get_or_create_msd_zone(region):
+            msd_name = _get_msd_name(region.name)
+            msd_code = MSDZONE_MAP[msd_name][0]
+            try:
+                sql_msd_loc = SQLLocation.objects.get(
+                    domain=self.domain,
+                    site_code=msd_code
+                )
+                msd_location = Loc.get(sql_msd_loc.location_id)
+            except SQLLocation.DoesNotExist:
+                msd_location = Loc(parent=loc_parent)
+
+            msd_location.domain = self.domain
+            msd_location.name = msd_name
+            msd_location.location_type = 'MSDZONE'
+            msd_location.site_code = MSDZONE_MAP[msd_name][0]
+            msd_location.save()
+            return msd_location
+
         try:
             sql_loc = SQLLocation.objects.get(
                 domain=self.domain,
@@ -297,7 +345,11 @@ class ILSGatewayAPI(APISynchronization):
                 except SQLLocation.DoesNotExist:
                     parent = self.endpoint.get_location(ilsgateway_location.parent_id)
                     loc_parent = self.location_sync(Location(parent))
-                location = Loc(parent=loc_parent)
+
+                if ilsgateway_location.type == 'REGION':
+                    location = Loc(parent=get_or_create_msd_zone(ilsgateway_location))
+                else:
+                    location = Loc(parent=loc_parent)
             else:
                 location = Loc()
                 location.lineage = []

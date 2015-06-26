@@ -4,6 +4,7 @@ a feature preview, you shouldn't need to migrate the data, as long as the
 slug is kept intact.
 """
 from django.utils.translation import ugettext_lazy as _
+from corehq.toggles import TAG_PREVIEW
 from django_prbac.utils import has_privilege as prbac_has_privilege
 
 from .toggles import StaticToggle, NAMESPACE_DOMAIN
@@ -24,13 +25,11 @@ class FeaturePreview(StaticToggle):
         else:
             # do cool thing for BETA_FEATURE
     """
-    def __init__(self, slug, label, description, privilege=None,
-            help_link=None, save_fn=None):
-        self.description = description
-        self.help_link = help_link
+    def __init__(self, slug, label, description, help_link=None, privilege=None, save_fn=None):
         self.privilege = privilege
         self.save_fn = save_fn
-        super(FeaturePreview, self).__init__(slug, label, namespaces=[NAMESPACE_DOMAIN])
+        super(FeaturePreview, self).__init__(slug, label, TAG_PREVIEW, description=description, help_link=help_link,
+                                             namespaces=[NAMESPACE_DOMAIN])
 
     def has_privilege(self, request):
         if not self.privilege:
@@ -68,6 +67,15 @@ ENUM_IMAGE = FeaturePreview(
     help_link='https://help.commcarehq.org/display/commcarepublic/Adding+Icons+in+Case+List+and+Case+Detail+screen'
 )
 
+SPLIT_MULTISELECT_CASE_EXPORT = FeaturePreview(
+    slug='split_multiselect_case_export',
+    label=_('Split multi-selects in case export'),
+    description=_(
+        "This setting allows users to split multi-select questions into multiple "
+        "columns in case exports."
+    )
+)
+
 
 def enable_commtrack_previews(domain):
     for toggle_class in [COMMTRACK, LOCATIONS]:
@@ -87,13 +95,13 @@ def commtrackify(domain_name, checked):
 
 COMMTRACK = FeaturePreview(
     slug='commtrack',
-    label=_("CommTrack"),
+    label=_("CommCare Supply"),
     description=_(
-        '<a href="http://www.commtrack.org/home/">CommTrack</a> '
+        '<a href="http://www.commtrack.org/home/">CommCare Supply</a> '
         "is a logistics and supply chain management module. It is designed "
         "to improve the management, transport, and resupply of a variety of "
         "goods and materials, from medication to food to bednets. <br/>"
-        "Note: You must also enable CommTrack on any CommTrack "
+        "Note: You must also enable CommCare Supply on any CommCare Supply "
         "application's settings page."),
     help_link='https://help.commcarehq.org/display/commtrack/CommTrack+Home',
     save_fn=commtrackify,
@@ -133,8 +141,19 @@ LOCATIONS = FeaturePreview(
     slug='locations',
     label=_("Locations"),
     description=_(
-        'Enable locations for this project. This must be enabled for CommTrack to work properly'
+        'Enable locations for this project. This must be enabled for '
+        'CommCare Supply to work properly'
     ),
-    help_link='http://help.commcarehq.org/',
+    help_link='https://help.commcarehq.org/display/commtrack/Locations',
     save_fn=enable_locations,
+)
+
+MODULE_FILTER = FeaturePreview(
+    slug='module_filter',
+    label=_('Module Filtering'),
+    description=_(
+        'Similar to form display conditions, hide your module unless the condition is met. Most commonly used'
+        ' in conjunction with '
+        '<a href="https://help.commcarehq.org/display/commcarepublic/Custom+User+Data">custom user data</a>.'
+    ),
 )

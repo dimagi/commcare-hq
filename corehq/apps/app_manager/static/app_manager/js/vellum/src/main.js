@@ -6,21 +6,19 @@ require.config({
     bundles: {
         "global-deps": [
             "jquery", 
-            "jquery-ui", 
-            "jquery.bootstrap", 
-            "css/css!../bower_components/jquery-ui/themes/redmond/jquery-ui"
+            "jquery.bootstrap"
         ], 
         "local-deps": [
             "underscore", 
             "jquery.jstree", 
             "jquery.fancybox", 
             "jquery.bootstrap-popout", 
-            "jquery.bootstrap-better-typeahead", 
             "save-button", 
             "css/css!../lib/codemirror/codemirror", 
             "css/css!../bower_components/jstree/dist/themes/default/style", 
             "css/css!../lib/fancybox/jquery.fancybox-1.3.4", 
-            "css/css!yui-combo"
+            "css/css!yui-combo", 
+            "css/css!../bower_components/At.js/dist/css/jquery.atwho"
         ], 
         "main-components": [
             "vellum/core", 
@@ -31,9 +29,11 @@ require.config({
             "vellum/lock", 
             "vellum/commtrack", 
             "vellum/modeliteration", 
+            "vellum/saveToCase", 
             "vellum/uploader", 
             "vellum/window", 
-            "vellum/polyfills"
+            "vellum/polyfills", 
+            "vellum/copy-paste"
         ]
     }
 });
@@ -52,8 +52,10 @@ define([
     'vellum/lock',
     'vellum/commtrack',
     'vellum/modeliteration',
+    'vellum/saveToCase',
     'vellum/uploader',
     'vellum/window',
-    'vellum/polyfills'
+    'vellum/polyfills',
+    'vellum/copy-paste'
 ], function () {});
 

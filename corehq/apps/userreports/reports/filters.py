@@ -1,3 +1,4 @@
+from datetime import timedelta
 from django.core.urlresolvers import reverse
 from sqlagg.filters import BasicFilter, BetweenFilter, EQFilter, ISNULLFilter
 from dimagi.utils.dates import DateSpan
@@ -35,9 +36,19 @@ class DateFilterValue(FilterValue):
     def to_sql_values(self):
         if self.value is None:
             return {}
+
+        startdate = self.value.startdate
+        enddate = self.value.enddate
+        if self.value.inclusive:
+            enddate = self.value.enddate + timedelta(days=1) - timedelta.resolution
+
+        if self.filter.compare_as_string:
+            startdate = str(startdate)
+            enddate = str(enddate)
+
         return {
-            'startdate': self.value.startdate,
-            'enddate': self.value.enddate,
+            'startdate': startdate,
+            'enddate': enddate,
         }
 
 

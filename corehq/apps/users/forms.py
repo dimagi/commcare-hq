@@ -12,6 +12,8 @@ from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from django.template.loader import get_template
 from django.template import Context
 from django_countries.countries import COUNTRIES
+
+from corehq import toggles
 from corehq.apps.domain.forms import EditBillingAccountInfoForm
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import Location
@@ -80,20 +82,7 @@ class BaseUpdateUserForm(forms.Form):
             old_email = existing_user.email
             new_email = self.cleaned_data['email']
             if old_email != new_email:
-                if existing_user.subscribed_to_commcare_users:
-                    handle_changed_mailchimp_email(
-                        existing_user,
-                        old_email,
-                        new_email,
-                        settings.MAILCHIMP_COMMCARE_USERS_ID
-                    )
-                if not existing_user.email_opt_out:
-                    handle_changed_mailchimp_email(
-                        existing_user,
-                        old_email,
-                        new_email,
-                        settings.MAILCHIMP_MASS_EMAIL_ID
-                    )
+                handle_changed_mailchimp_email(existing_user, old_email, new_email)
 
         for prop in self.direct_properties:
             setattr(existing_user, prop, self.cleaned_data[prop])
@@ -103,7 +92,7 @@ class BaseUpdateUserForm(forms.Form):
             existing_user.save()
         return is_update_successful
 
-    def initialize_form(self, existing_user=None, **kwargs):
+    def initialize_form(self, domain, existing_user=None):
         if existing_user is None:
             return
 
@@ -184,6 +173,9 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
 
     def __init__(self, *args, **kwargs):
         self.username = kwargs.pop('username') if 'username' in kwargs else None
+        self.user = kwargs.pop('user') if 'user' in kwargs else None
+        api_key = kwargs.pop('api_key') if 'api_key' in kwargs else None
+
         super(UpdateMyAccountInfoForm, self).__init__(*args, **kwargs)
 
         username_controls = []
@@ -191,6 +183,18 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
             username_controls.append(hqcrispy.StaticField(
                 _('Username'), self.username)
             )
+
+        api_key_controls = [
+            hqcrispy.StaticField(_('API Key'), api_key),
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    _('Generate API Key'),
+                    type="button",
+                    id='generate-api-key',
+                ),
+                css_class="form-group"
+            ),
+        ]
 
         self.fields['language'].label = _("My Language")
 
@@ -214,6 +218,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
             cb3_layout.Fieldset(
                 _("Other Options"),
                 hqcrispy.Field('language'),
+                cb3_layout.Div(*api_key_controls),
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
@@ -230,6 +235,11 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
 
 
 class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
+    loadtest_factor = forms.IntegerField(
+        required=False, min_value=1, max_value=50000,
+        help_text=_(u"Multiply this user's case load by a number for load testing on phones. "
+                    u"Leave blank for normal users."),
+        widget=forms.HiddenInput())
 
     def __init__(self, *args, **kwargs):
         super(UpdateCommCareUserInfoForm, self).__init__(*args, **kwargs)
@@ -245,6 +255,11 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
         indirect_props = ['role']
         return [k for k in self.fields.keys() if k not in indirect_props]
 
+    def initialize_form(self, domain, existing_user=None):
+        if toggles.ENABLE_LOADTEST_USERS.enabled(domain):
+            self.fields['loadtest_factor'].widget = forms.TextInput()
+        super(UpdateCommCareUserInfoForm, self).initialize_form(domain, existing_user)
+
 
 class RoleForm(forms.Form):
 
@@ -255,10 +270,6 @@ class RoleForm(forms.Form):
             role_choices = ()
         super(RoleForm, self).__init__(*args, **kwargs)
         self.fields['role'].choices = role_choices
-
-
-class Meta:
-        app_label = 'users'
 
 
 class CommCareAccountForm(forms.Form):
@@ -276,9 +287,6 @@ class CommCareAccountForm(forms.Form):
     password_2 = forms.CharField(label='Password (reenter)', widget=PasswordInput(), required=True, min_length=1)
     domain = forms.CharField(widget=HiddenInput())
     phone_number = forms.CharField(max_length=80, required=False)
-
-    class Meta:
-        app_label = 'users'
 
     def __init__(self, *args, **kwargs):
         super(forms.Form, self).__init__(*args, **kwargs)
@@ -367,6 +375,39 @@ else:
 class MultipleSelectionForm(forms.Form):
     """
     Form for selecting groups (used by the group UI on the user page)
+    Usage::
+
+        # views.py
+        @property
+        @memoized
+        def users_form(self):
+            form = MultipleSelectionForm(
+                initial={'selected_ids': self.users_at_location},
+                submit_label=_("Update Users at this Location"),
+            )
+            form.fields['selected_ids'].choices = self.all_users
+            return form
+
+        # template.html
+        <script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.9.2.multiselect-deps.custom.min.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.js' %}"></script>
+
+        <script type="text/javascript">
+            $(function () {
+                $("#id_selected_ids").width(800).height(400).multiselect();
+            });
+        </script>
+
+        <form class="form disable-on-submit" id="edit_users" action="" method='post'>
+            <legend>{% trans 'Specify Users At This Location' %}</legend>
+            {% crispy users_per_location_form %}
+        </form>
+
+    To display multiple forms on the same page, you'll need to pass a prefix to
+    the MultipleSelectionForm constructor, like ``prefix="users"`` This will
+    change the css id to ``"#id_users-selected_ids"``, and the returned list of
+    ids to ``request.POST.getlist('users-selected_ids', [])``
     """
     selected_ids = forms.MultipleChoiceField(
         label="",

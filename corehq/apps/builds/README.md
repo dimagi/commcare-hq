@@ -1,4 +1,40 @@
-Adding CommCare Builds to CommCare HQ
+Syncing local HQ instance with an Android Phone
+===========================
+
+If you would like to use a url or barcode scanner to download the application
+to your phone here is what you need to setup.
+
+### Make sure your local django application is accessible over the network
+
+The django server will need to be running on an ip address instead of localhost.
+To do this, run the application using the following command, substituting your
+local IP address.
+
+`./manage.py runserver 192.168.1.5:8000`
+
+Try accessing this url from the browser on your phone to make sure it works.
+
+### Make CommCare use this IP address
+
+The url an application was created on gets stored for use by the app builder
+during site creation. This means if you created a site and application
+previously, while using a 'localhost:8000' url, you will have to make a code
+tweak to have the app builder behave properly.
+
+The easiest way to check this is to see what url is shown below the barcode on
+the deploy screen.
+
+If it is currently displaying a `localhost:8000/a/yourapp/...` url then open
+`localsettings.py` and set `BASE_ADDRESS = "192.168.1.5:8000"` substituting
+`192.168.1.5` with your local IP address.
+
+### Try it out
+
+With this set up, you should be able to scan the barcode from your phone to
+download and install your own locally built CommCare application!
+
+
+Adding CommCare (J2ME) Builds to CommCare HQ
 =====================================
 
 * First you need to get the CommCare build off the Dimagi build server:
@@ -52,39 +88,3 @@ acquire a code signing certificate (from e.g. Thawte).
     #)
 
 You're done!
-
-
-Sending to an Android Phone
-===========================
-
-If you would like to use a url or barcode scanner to download the application
-to your phone here is what you need to setup.
-
-### Make sure your local django application is accessible over the network
-
-The django server will need to be running on an ip address instead of localhost.
-To do this, run the application using the following command, substituting your
-local IP address.
-
-`./manage.py runserver 192.168.1.5:8000`
-
-Try accessing this url from the browser on your phone to make sure it works.
-
-### Make CommCare use this IP address
-
-The url an application was created on gets stored for use by the app builder
-during site creation. This means if you created a site and application
-previously, while using a 'localhost:8000' url, you will have to make a code
-tweak to have the app builder behave properly.
-
-The easiest way to check this is to see what url is shown below the barcode on
-the deploy screen.
-
-If it is currently displaying a `localhost:8000/a/yourapp/...` url then open
-`localsettings.py` and set `BASE_ADDRESS = "192.168.1.5:8000"` substituting
-`192.168.1.5` with your local IP address.
-
-### Try it out
-
-With this set up, you should be able to scan the barcode from your phone to
-download and install your own locally built CommCare application!

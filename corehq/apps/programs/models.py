@@ -1,4 +1,5 @@
-from couchdbkit.ext.django.schema import (
+from corehq.apps.groups.models import dt_no_Z_re
+from dimagi.ext.couchdbkit import (
     Document,
     StringProperty,
     BooleanProperty,
@@ -19,6 +20,15 @@ class Program(Document):
     last_modified = DateTimeProperty()
     default = BooleanProperty(default=False)
     is_archived = BooleanProperty(default=False)
+
+    @classmethod
+    def wrap(cls, data):
+        # If "Z" is missing because of the Aug 2014 migration, then add it.
+        # cf. Group class
+        last_modified = data.get('last_modified')
+        if last_modified and dt_no_Z_re.match(last_modified):
+            data['last_modified'] += 'Z'
+        return super(Program, cls).wrap(data)
 
     def save(self, *args, **kwargs):
         self.last_modified = datetime.utcnow()

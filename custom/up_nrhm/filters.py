@@ -5,6 +5,8 @@ from dimagi.utils.decorators.memoized import memoized
 from sqlagg.columns import SimpleColumn
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
+from corehq.apps.reports.filters.dates import DatespanFilter
+from corehq.apps.reports.standard import DatespanMixin
 
 
 class HierarchySqlData(SqlData):
@@ -104,16 +106,25 @@ class DrillDownOptionFilter(BaseDrilldownOptionFilter):
 class SampleFormatFilter(BaseSingleOptionFilter):
     slug = 'sf'
     label = 'Report type'
-    default_text = "ASHA Facilitators"
+    default_text = "Format-1 for ASHA Sanginis"
 
     @property
     def options(self):
         return [
-            ('sf3', 'Block Level-Month wise'),
-            ('sf4', 'Block Level-AF wise'),
-            ('sf5', 'District (Functionality of ASHAs)'),
+            ('sf2', 'Format-2 Consolidation of the Functionality numbers'),
+            ('sf3', 'Format-3 Block Consolidation of the functionality status'),
+            ('sf4', 'Format-4 Block Consolidation of the functionality status'),
+            ('sf5', 'Format-5 Functionality of ASHAs in blocks')
         ]
 
 
 class ASHAMonthFilter(MonthFilter):
     label = "Last month of the quarter"
+
+
+class NRHMDatespanFilter(DatespanFilter):
+    template = "up_nrhm/datespan.html"
+
+
+class NRHMDatespanMixin(DatespanMixin):
+    datespan_field = NRHMDatespanFilter

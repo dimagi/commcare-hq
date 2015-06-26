@@ -1,4 +1,4 @@
-from couchdbkit.ext.django.schema import Document, StringProperty, DateTimeProperty, StringListProperty, BooleanProperty
+from dimagi.ext.couchdbkit import Document, StringProperty, DateTimeProperty, StringListProperty, BooleanProperty
 from django.template.loader import render_to_string
 from corehq.apps.announcements.crud import HQAnnouncementCRUDManager
 from corehq.apps.crud.models import AdminCRUDDocumentMixin

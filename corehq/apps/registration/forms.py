@@ -12,8 +12,6 @@ from corehq.apps.orgs.models import Organization
 from corehq.apps.style.forms.widgets import Select2Widget
 from django.utils.encoding import smart_str
 from django.utils.safestring import mark_safe
-from corehq.util.timezones.fields import TimeZoneField
-from corehq.util.timezones.forms import TimeZoneChoiceField
 from django.utils.translation import ugettext_lazy as _
 
 class NewWebUserRegistrationForm(forms.Form):
@@ -138,11 +136,6 @@ class DomainRegistrationForm(forms.Form):
                                   help_text=_("Project name cannot contain spaces."))
     domain_type = forms.CharField(widget=forms.HiddenInput(), required=False,
                                   initial='commcare')
-    domain_timezone = TimeZoneChoiceField(
-        label=_("Time Zone:"), initial="UTC", required=False,
-        widget=Select2Widget(attrs={'class': 'input-xlarge',
-                                    'bindparent': 'visible: override_tz',
-                                    'data-bind': 'event: {change: updateForm}'}))
 
     def clean_domain_name(self):
         data = self.cleaned_data['domain_name'].strip().lower()
@@ -157,12 +150,6 @@ class DomainRegistrationForm(forms.Form):
     def clean_domain_type(self):
         data = self.cleaned_data.get('domain_type', '').strip().lower()
         return data if data else 'commcare'
-
-    def clean_domain_timezone(self):
-        data = self.cleaned_data['domain_timezone']
-        timezone_field = TimeZoneField()
-        timezone_field.run_validators(data)
-        return smart_str(data)
 
     def clean(self):
         for field in self.cleaned_data:
@@ -193,12 +180,18 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
 
     def __init__(self, data=None, excluded_emails=None, *args, **kwargs):
         domain = None
+        location = None
         if 'domain' in kwargs:
             domain = Domain.get_by_name(kwargs['domain'])
             del kwargs['domain']
+        if 'location' in kwargs:
+            location = kwargs['location']
+            del kwargs['location']
         super(AdminInvitesUserForm, self).__init__(data=data, *args, **kwargs)
         if domain and domain.commtrack_enabled:
-            self.fields['supply_point'] = forms.CharField(label='Supply Point:', required=False, widget=SupplyPointSelectWidget(domain=domain.name))
+            self.fields['supply_point'] = forms.CharField(label='Supply Point:', required=False,
+                                                          widget=SupplyPointSelectWidget(domain=domain.name),
+                                                          initial=location.location_id if location else '')
             self.fields['program'] = forms.ChoiceField(label="Program", choices=(), required=False)
             programs = Program.by_domain(domain.name, wrap=False)
             choices = list((prog['_id'], prog['name']) for prog in programs)

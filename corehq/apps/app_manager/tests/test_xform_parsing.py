@@ -1,11 +1,11 @@
 # coding=utf-8
-from unittest2.case import TestCase
+from django.test import SimpleTestCase
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.xform import XForm, XFormException, ItextValue, \
     WrappedNode
 
 
-class XFormParsingTest(TestCase, TestFileMixin):
+class XFormParsingTest(SimpleTestCase, TestFileMixin):
     file_path = ('data',)
 
     def setUp(self):
@@ -42,7 +42,7 @@ class XFormParsingTest(TestCase, TestFileMixin):
         self.assertXmlEqual(original.render(), self.get_xml('itext_form_normalized'))
 
 
-class ItextValueTest(TestCase):
+class ItextValueTest(SimpleTestCase):
     def _test(self, escaped_itext, expected):
         itext_value = ItextValue.from_node(
             WrappedNode(

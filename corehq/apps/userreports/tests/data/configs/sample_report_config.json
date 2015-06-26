@@ -23,7 +23,10 @@
         },
         {
             "type": "field",
-            "display": "Tickets",
+            "display": {
+                "en": "Tickets",
+                "fr": "Billets"
+            },
             "description": "Number of tickets",
             "field": "count",
             "aggregation": "sum"
@@ -35,5 +38,16 @@
             "aggregation": "sum",
             "format": "percent_of_total"
         }
+    ],
+    "configured_charts": [
+        {
+            "type": "multibar",
+            "title": "Tickets by owner",
+            "x_axis_column": "owner",
+            "y_axis_columns": [
+                "tickets"
+            ]
+        }
+
     ]
 }

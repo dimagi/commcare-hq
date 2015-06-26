@@ -16,6 +16,7 @@ class UserES(HQESQuery):
             mobile_users,
             web_users,
             user_ids,
+            location,
         ] + super(UserES, self).builtin_filters
 
     def show_inactive(self):
@@ -28,26 +29,38 @@ def domain(domain):
         filters.term("domain_memberships.domain.exact", domain)
     )
 
+
 def username(username):
     return filters.term("username.exact", username)
+
 
 def web_users():
     return filters.doc_type("WebUser")
 
+
 def mobile_users():
     return filters.doc_type("CommCareUser")
+
 
 def unknown_users():
     return filters.doc_type("UnknownUser")
 
+
 def admin_users():
     return filters.doc_type("AdminUser")
+
 
 def demo_users():
     return username("demo_user")
 
+
 def created(gt=None, gte=None, lt=None, lte=None):
     return filters.date_range('created_on', gt, gte, lt, lte)
 
+
 def user_ids(user_ids):
     return filters.term("_id", list(user_ids))
+
+
+def location(location_id):
+    return filters.term('location_id', location_id)

@@ -1,4 +1,4 @@
-from jsonobject import (
+from dimagi.ext.jsonobject import (
     JsonObject, IntegerProperty, DateTimeProperty, StringProperty)
 
 class ReportsForm(JsonObject):

@@ -12,7 +12,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop as _
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.hqwebapp.views import BasePageView
-from corehq.apps.hqpillow_retry.filters import DatePropFilter, AttemptsFilter, PillowErrorFilter
+from corehq.apps.hqpillow_retry.filters import PillowErrorFilter
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
@@ -46,10 +46,7 @@ class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
     needs_filters = False
 
     fields = (
-        'corehq.apps.reports.filters.dates.DatespanFilter',
-        'corehq.apps.hqpillow_retry.filters.DatePropFilter',
         'corehq.apps.hqpillow_retry.filters.PillowErrorFilter',
-        'corehq.apps.hqpillow_retry.filters.AttemptsFilter',
     )
 
     report_template_path = 'hqpillow_retry/pillow_errors.html'
@@ -106,21 +103,8 @@ class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
         return field if not self.sort_descending else '-{0}'.format(field)
 
     @property
-    def date_field_filter(self):
-        return DatePropFilter.get_value(self.request, None)
-
-    @property
-    def filter_attempts(self):
-        return AttemptsFilter.get_value(self.request, None)
-
-    @property
     def shared_pagination_GET_params(self):
-        return self.pillow_error_filter.shared_pagination_GET_params + [
-            dict(name='startdate', value=self.datespan.startdate_display),
-            dict(name='enddate', value=self.datespan.enddate_display),
-            dict(name=DatePropFilter.slug, value=self.date_field_filter),
-            dict(name=AttemptsFilter.slug, value=str(self.filter_attempts)),
-        ]
+        return self.pillow_error_filter.shared_pagination_GET_params
 
     @property
     def total_records(self):
@@ -133,15 +117,6 @@ class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
             query = query.filter(pillow=self.pillow)
         if self.error:
             query = query.filter(error_type=self.error)
-
-        if self.date_field_filter:
-            q = self.date_field_filter + '__gte'
-            query = query.filter(**{q: self.datespan.startdate})
-            q = self.date_field_filter + '__lte'
-            query = query.filter(**{q: self.datespan.enddate_adjusted})
-
-        if self.filter_attempts:
-            query = query.filter(current_attempt__gt=settings.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS)
 
         return query
 

@@ -19,11 +19,15 @@
         </key_record>
     </auth_keys>
 """
-from datetime import datetime
 from eulxml.xmlmap import XmlObject, StringField, DateTimeField, NodeListField, NodeField
 
+
 def CustomDateTimeField(*args, **kwargs):
+    # As of at least CommCare 2.20, the phone does not parse microseconds
+    # in this particular handler (though it does everywhere else).
+    # For now, we're going to continue sending down without microseconds
     return DateTimeField(format='%Y-%m-%dT%H:%M:%SZ', *args, **kwargs)
+
 
 class KeyRecord(XmlObject):
     ROOT_NAME = 'key_record'

@@ -1,10 +1,16 @@
 from collections import defaultdict
-from django.test import SimpleTestCase as TestCase
-from corehq.apps.app_manager.commcare_settings import parse_condition_string, check_condition, circular_dependencies, SETTINGS, SETTINGS_LOOKUP
+from django.test import SimpleTestCase
+from corehq.apps.app_manager.commcare_settings import (
+    SETTINGS,
+    SETTINGS_LOOKUP,
+    check_condition,
+    circular_dependencies,
+    parse_condition_string,
+)
 from corehq.apps.app_manager.models import Application
 
 
-class CommCareSettingsTest(TestCase):
+class CommCareSettingsTest(SimpleTestCase):
     def set_up_apps(self, how_many):
         apps = []
         for _ in range(how_many):

@@ -11,6 +11,8 @@ from corehq.apps.accounting.models import (
     SubscriptionAdjustment,
 )
 from corehq.apps.domain.models import Domain
+from corehq.apps.hqcase.dbaccessors import \
+    get_one_case_in_domain_by_external_id
 from corehq.apps.sms.test_backend import TestSMSBackend
 from corehq.apps.sms.mixin import BackendMapping
 from corehq.apps.sms.models import SMSLog, CallLog
@@ -22,7 +24,7 @@ from corehq.apps.app_manager.models import import_app
 from corehq.apps.users.models import CommCareUser, WebUser
 from django.contrib.sites.models import Site
 from casexml.apps.case.models import CommCareCase
-from couchforms.models import XFormInstance
+from couchforms.dbaccessors import get_forms_by_type
 from time import sleep
 from dateutil.parser import parse
 import uuid
@@ -226,24 +228,14 @@ class TouchformsTestCase(LiveServerTestCase):
         return site
 
     def get_case(self, external_id):
-        case = CommCareCase.view("hqcase/by_domain_external_id",
-            key=[self.domain, external_id],
-            include_docs=True,
-            reduce=False,
-        ).one()
-        return case
+        return get_one_case_in_domain_by_external_id(self.domain, external_id)
 
     def assertCasePropertyEquals(self, case, prop, value):
         self.assertEquals(case.get_case_property(prop), value)
 
     def get_last_form_submission(self):
-        form = XFormInstance.view("couchforms/all_submissions_by_domain",
-            startkey=[self.domain, "by_type", "XFormInstance", {}],
-            endkey=[self.domain, "by_type", "XFormInstance"],
-            descending=True,
-            include_docs=True,
-            reduce=False,
-        ).first()
+        [form] = get_forms_by_type(self.domain, 'XFormInstance',
+                                   recent_first=True, limit=1)
         return form
 
     def assertNoNewSubmission(self, last_submission):

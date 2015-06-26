@@ -1,9 +1,11 @@
+from datetime import datetime
 from django.test import SimpleTestCase
 from corehq.apps.reports_core.filters import DatespanFilter, ChoiceListFilter, \
     NumericFilter, DynamicChoiceListFilter
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.reports.factory import ReportFilterFactory
 from corehq.apps.userreports.reports.filters import SHOW_ALL_CHOICE
+from corehq.apps.userreports.reports.specs import ReportFilter
 
 
 class FilterTestCase(SimpleTestCase):
@@ -41,6 +43,29 @@ class FilterTestCase(SimpleTestCase):
                 "display": "Some display name"
             })
 
+    def test_translation(self):
+        shared_conf = {
+            "type": "date",
+            "field": "some_field",
+            "slug": "some_slug",
+        }
+
+        # Plain string
+        conf = {"display": "foo"}
+        conf.update(shared_conf)
+        filter = ReportFilterFactory.from_spec(conf)
+        self.assertEqual(filter.context(None, lang=None)['label'], "foo")
+        self.assertEqual(filter.context(None, lang="fr")['label'], "foo")
+
+        # Translation
+        conf = {"display": {"en": "english", "fr": "french"}}
+        conf.update(shared_conf)
+        filter = ReportFilterFactory.from_spec(conf)
+        self.assertEqual(filter.context(None, lang=None)['label'], "english")
+        self.assertEqual(filter.context(None, lang="fr")['label'], "french")
+        self.assertEqual(filter.context(None, lang="en")['label'], "english")
+        self.assertEqual(filter.context(None, lang="es")['label'], "english")
+
 
 class DateFilterTestCase(SimpleTestCase):
 
@@ -54,6 +79,32 @@ class DateFilterTestCase(SimpleTestCase):
         self.assertEqual(DatespanFilter, type(filter))
         self.assertEqual('modified_on_slug', filter.name)
         self.assertEqual('Date Modified', filter.label)
+
+    def test_compare_as_string_option(self):
+
+        def get_query_value(compare_as_string):
+
+            spec = {
+                "type": "date",
+                "field": "modified_on_field",
+                "slug": "my_slug",
+                "display": "date Modified",
+                "compare_as_string": compare_as_string,
+            }
+            reports_core_filter = ReportFilterFactory.from_spec(spec)
+            reports_core_value = reports_core_filter.get_value({
+                "my_slug-start": "2015-06-07",
+                "my_slug-end": "2015-06-08",
+            })
+
+            filter = ReportFilter.wrap(spec)
+            return filter.create_filter_value(reports_core_value).to_sql_values()
+
+        val = get_query_value(compare_as_string=False)
+        self.assertEqual(type(val['startdate']), datetime)
+
+        val = get_query_value(compare_as_string=True)
+        self.assertEqual(type(val['startdate']), str)
 
 
 class NumericFilterTestCase(SimpleTestCase):

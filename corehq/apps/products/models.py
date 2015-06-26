@@ -1,4 +1,4 @@
-from couchdbkit.ext.django.schema import (
+from dimagi.ext.couchdbkit import (
     Document,
     StringProperty,
     DecimalProperty,
@@ -31,6 +31,16 @@ class Product(Document):
     product_data = DictProperty()
     is_archived = BooleanProperty(default=False)
     last_modified = DateTimeProperty()
+
+    @classmethod
+    def wrap(cls, data):
+        from corehq.apps.groups.models import dt_no_Z_re
+        # If "Z" is missing because of the Aug 2014 migration, then add it.
+        # cf. Group class
+        last_modified = data.get('last_modified')
+        if last_modified and dt_no_Z_re.match(last_modified):
+            data['last_modified'] += 'Z'
+        return super(Product, cls).wrap(data)
 
     def sync_to_sql(self):
         properties_to_sync = [
@@ -287,7 +297,7 @@ class SQLProduct(models.Model):
     name = models.CharField(max_length=100, null=True)
     is_archived = models.BooleanField(default=False)
     code = models.CharField(max_length=100, default='', null=True)
-    description = models.CharField(max_length=100, null=True, default='')
+    description = models.TextField(null=True, default='')
     category = models.CharField(max_length=100, null=True, default='')
     program_id = models.CharField(max_length=100, null=True, default='')
     cost = models.DecimalField(max_digits=20, decimal_places=5, null=True)

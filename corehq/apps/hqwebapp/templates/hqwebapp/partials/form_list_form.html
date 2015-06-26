@@ -32,11 +32,12 @@
                          data-bind="css: { error: errors.{{ spec.key }} }">
                         {% if spec.type == "RAW" %}
                             <span data-bind="text: data.{{ spec.key }}"></span>
-                        {% elif spec.type == "TextInput" %}
-                        <input name="{{ spec.key }}"
-                               data-bind="value: data.{{ spec.key }}">
                         {% else %}
-                            <span class="error">{{ spec.type }} NOT FOUND</span>
+                        <input name="{{ spec.key }}"
+                               {% for k, v in spec.html_attrs.items %}
+                                 {{ k }}="{{ v }}"
+                               {% endfor %}
+                               data-bind="value: data.{{ spec.key }}">
                         {% endif %}
                         <span class="help-block"
                               data-bind="text: errors.{{ spec.key }},

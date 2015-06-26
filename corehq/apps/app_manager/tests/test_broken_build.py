@@ -7,23 +7,25 @@ from corehq.apps.app_manager.tests import add_build
 
 
 class BrokenBuildTest(TestCase):
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
         domain = 'apptest'
-        self.domain = Domain.get_or_create_with_name(domain, is_active=True)
-        self.cc_2_build = add_build(version='2.7.0', build_number=20655)
+        cls.domain = Domain.get_or_create_with_name(domain, is_active=True)
+        cls.cc_2_build = add_build(version='2.7.0', build_number=20655)
         with open(os.path.join(os.path.dirname(__file__), 'data', 'yesno.json')) as f:
             source = json.load(f)
-        self.app = Application.wrap(source)
-        self.app.domain = domain
-        self.app.save()
-        self.build = self.app.make_build()
-        self.build.save(increment_version=False)
+        cls.app = Application.wrap(source)
+        cls.app.domain = domain
+        cls.app.save()
+        cls.build = cls.app.make_build()
+        cls.build.save(increment_version=False)
 
-    def tearDown(self):
-        self.app.delete()
-        self.build.delete()
-        self.cc_2_build.delete()
-        self.domain.delete()
+    @classmethod
+    def tearDownClass(cls):
+        cls.app.delete()
+        cls.build.delete()
+        cls.cc_2_build.delete()
+        cls.domain.delete()
 
     def test_broken_build(self):
         client = Client()

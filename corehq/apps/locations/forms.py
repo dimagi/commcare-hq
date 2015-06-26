@@ -5,11 +5,20 @@ from django.template import Context
 from django.template.loader import get_template
 from django.utils.translation import ugettext as _
 
-from corehq.apps.custom_data_fields import CustomDataEditor
+from crispy_forms.helper import FormHelper
+from crispy_forms import layout as crispy
+from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.decorators.memoized import memoized
 
-from .models import Location
+from corehq.apps.custom_data_fields import CustomDataEditor
+from corehq.apps.es import UserES
+from corehq.apps.users.forms import MultipleSelectionForm
+from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.util import raw_username, user_display_string
+
+from .models import Location, SQLLocation
 from .signals import location_created, location_edited
-from .util import load_locs_json, allowed_child_types, lookup_by_property
+from .util import allowed_child_types
 
 
 class ParentLocWidget(forms.Widget):
@@ -19,7 +28,6 @@ class ParentLocWidget(forms.Widget):
         ).render(Context({
             'name': name,
             'value': value,
-            'locations': load_locs_json(self.domain, value),
         }))
 
 
@@ -40,7 +48,7 @@ class LocationForm(forms.Form):
         widget=ParentLocWidget(),
     )
     name = forms.CharField(max_length=100)
-    location_type = forms.CharField(widget=LocTypeWidget())
+    location_type = forms.CharField(widget=LocTypeWidget(), required=False)
     coordinates = forms.CharField(
         max_length=30,
         required=False,
@@ -62,13 +70,14 @@ class LocationForm(forms.Form):
 
     strict = True  # optimization hack: strict or loose validation
 
-    def __init__(self, location, bound_data=None, is_new=False,
+    def __init__(self, location, bound_data=None, is_new=False, user=None,
                  *args, **kwargs):
         self.location = location
+        self.is_new_location = is_new
 
         # seed form data from couch doc
         kwargs['initial'] = dict(self.location._doc)
-        kwargs['initial']['parent_id'] = self.cur_parent_id
+        kwargs['initial']['parent_id'] = self.location.parent_id
         lat, lon = (getattr(self.location, k, None)
                     for k in ('latitude', 'longitude'))
         kwargs['initial']['coordinates'] = ('%s, %s' % (lat, lon)
@@ -78,9 +87,37 @@ class LocationForm(forms.Form):
 
         super(LocationForm, self).__init__(bound_data, *args, **kwargs)
         self.fields['parent_id'].widget.domain = self.location.domain
+        self.fields['parent_id'].widget.user = user
 
         if not self.location.external_id:
             self.fields['external_id'].widget = forms.HiddenInput()
+
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(*self.get_fields(is_new))
+        )
+
+    def get_fields(self, is_new):
+        if is_new:
+            parent = (Location.get(self.location.parent_id)
+                      if self.location.parent_id else None)
+            child_types = allowed_child_types(self.location.domain, parent)
+            return filter(None, [
+                _("Location Information"),
+                'name',
+                'location_type' if len(child_types) > 1 else None,
+            ])
+        else:
+            return [
+                _("Location Information"),
+                'name',
+                'parent_id',
+                'location_type',
+                'coordinates',
+                'site_code',
+                'external_id',
+            ]
 
     def get_custom_data(self, bound_data, is_new):
         from .views import LocationFieldsView
@@ -100,13 +137,6 @@ class LocationForm(forms.Form):
             post_dict=bound_data,
         )
 
-    @property
-    def cur_parent_id(self):
-        try:
-            return self.location.lineage[0]
-        except Exception:
-            return None
-
     def is_valid(self):
         return all([
             super(LocationForm, self).is_valid(),
@@ -120,13 +150,11 @@ class LocationForm(forms.Form):
         return errors
 
     def clean_parent_id(self):
-        parent_id = self.cleaned_data['parent_id']
-        if not parent_id:
-            parent_id = None  # normalize ''
+        parent_id = self.cleaned_data['parent_id'] or self.location.parent_id
         parent = Location.get(parent_id) if parent_id else None
         self.cleaned_data['parent'] = parent
 
-        if self.location._id is not None and self.cur_parent_id != parent_id:
+        if self.location._id is not None and self.location.parent_id != parent_id:
             # location is being re-parented
 
             if parent and self.location._id in parent.path:
@@ -138,7 +166,7 @@ class LocationForm(forms.Form):
                     'moved to a different parent'
                 )
 
-            self.cleaned_data['orig_parent_id'] = self.cur_parent_id
+            self.cleaned_data['orig_parent_id'] = self.location.parent_id
 
         return parent_id
 
@@ -160,13 +188,10 @@ class LocationForm(forms.Form):
         if site_code:
             site_code = site_code.lower()
 
-        lookup = lookup_by_property(
-            self.location.domain,
-            'site_code',
-            site_code,
-            'global'
-        )
-        if lookup and lookup != set([self.location._id]):
+        if (SQLLocation.objects.filter(domain=self.location.domain,
+                                       site_code__iexact=site_code)
+                               .exclude(location_id=self.location._id)
+                               .exists()):
             raise forms.ValidationError(
                 'another location already uses this site code'
             )
@@ -178,6 +203,10 @@ class LocationForm(forms.Form):
 
         child_types = allowed_child_types(self.location.domain,
                                           self.cleaned_data.get('parent'))
+        if not loc_type:
+            if len(child_types) == 1:
+                return child_types[0]
+            assert False, 'You must select a location type'
 
         if not child_types:
             assert False, \
@@ -248,3 +277,75 @@ class LocationForm(forms.Form):
             pass
 
         return location
+
+
+class UsersAtLocationForm(MultipleSelectionForm):
+    def __init__(self, domain_object, location, *args, **kwargs):
+        self.domain_object = domain_object
+        self.location = location
+        super(UsersAtLocationForm, self).__init__(
+            initial={'selected_ids': self.users_at_location},
+            *args, **kwargs
+        )
+        self.fields['selected_ids'].choices = self.get_all_users()
+
+    def get_all_users(self):
+        user_query = (UserES()
+                      .domain(self.domain_object.name)
+                      .mobile_users()
+                      .fields(['_id', 'username', 'first_name', 'last_name']))
+        return [
+            (u['_id'], user_display_string(u['username'],
+                                           u.get('first_name', ''),
+                                           u.get('last_name', '')))
+            for u in user_query.run().hits
+        ]
+
+    @property
+    @memoized
+    def users_at_location(self):
+        user_query = (UserES()
+                      .domain(self.domain_object.name)
+                      .mobile_users()
+                      .location(self.location._id)
+                      .fields([]))
+        return user_query.run().doc_ids
+
+    def already_have_locations(self, users):
+        user_query = (UserES()
+                      .domain(self.domain_object.name)
+                      .mobile_users()
+                      .doc_id(list(users))
+                      .exists('location_id')
+                      .fields(['username']))
+        return [raw_username(u['username']) for u in user_query.run().hits]
+
+    def unassign_users(self, users):
+        for doc in iter_docs(CommCareUser.get_db(), users):
+            # This could probably be sped up by bulk saving, but there's a lot
+            # of stuff going on - seems tricky.
+            CommCareUser.wrap(doc).unset_location()
+
+    def assign_users(self, users):
+        for doc in iter_docs(CommCareUser.get_db(), users):
+            CommCareUser.wrap(doc).set_location(self.location)
+
+    def clean_selected_ids(self):
+        selected_users = set(self.cleaned_data['selected_ids'])
+        previous_users = set(self.users_at_location)
+        self.to_remove = previous_users - selected_users
+        self.to_add = selected_users - previous_users
+        conflicted = self.already_have_locations(self.to_add)
+        if (
+            conflicted
+            and not self.domain_object.supports_multiple_locations_per_user
+        ):
+            raise forms.ValidationError(_(
+                u"The following users already have locations assigned,  "
+                u"you must unassign them before they can be added here:  "
+            ) + u", ".join(conflicted))
+        return []
+
+    def save(self):
+        self.unassign_users(self.to_remove)
+        self.assign_users(self.to_add)

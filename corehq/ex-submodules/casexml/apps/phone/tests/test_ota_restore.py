@@ -2,12 +2,11 @@ from django.test import TestCase
 import os
 import time
 from django.test.utils import override_settings
-from casexml.apps.phone.caselogic import BatchedCaseSyncOperation
+from casexml.apps.phone.data_providers.case.batched import BatchedCaseSyncOperation
 from casexml.apps.phone.tests.utils import generate_restore_payload
 from couchforms.tests.testutils import post_xform_to_couch
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import check_xml_line_by_line, delete_all_cases, delete_all_sync_logs
-from casexml.apps.phone.restore import RestoreConfig
+from casexml.apps.phone.restore import RestoreConfig, RestoreState, RestoreParams
 from casexml.apps.case.xform import process_cases
 from datetime import datetime, date
 from casexml.apps.phone.models import User, SyncLog
@@ -16,9 +15,8 @@ from django.contrib.auth.models import User as DjangoUser
 from casexml.apps.phone.tests import const
 from casexml.apps.case import const as case_const
 from casexml.apps.phone.tests.dummy import dummy_restore_xml, dummy_user,\
-    dummy_user_xml, DUMMY_USERNAME
-from corehq import toggles
-from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
+    dummy_user_xml
+from corehq.apps.domain.models import Domain
 
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
@@ -29,11 +27,12 @@ class OtaRestoreTest(TestCase):
     def setUpClass(cls):
         delete_all_cases()
         delete_all_sync_logs()
+        cls.project = Domain(name='ota-restore-tests')
 
     def tearDown(self):
         delete_all_cases()
         delete_all_sync_logs()
-        restore_config = RestoreConfig(dummy_user())
+        restore_config = RestoreConfig(project=self.project, user=dummy_user())
         restore_config.cache.delete(restore_config._initial_cache_key())
 
     def testFromDjangoUser(self):
@@ -56,7 +55,7 @@ class OtaRestoreTest(TestCase):
             include_docs=True,
             reduce=False,
         ).count())
-        restore_payload = generate_restore_payload(dummy_user(), items=True)
+        restore_payload = generate_restore_payload(self.project, dummy_user(), items=True)
         sync_log = SyncLog.view(
             "phone/sync_logs_by_user",
             include_docs=True,
@@ -69,9 +68,15 @@ class OtaRestoreTest(TestCase):
         )
 
     def testOverwriteCache(self):
-        restore_payload = generate_restore_payload(dummy_user(), items=True, force_cache=True)
-        restore_payload_cached = generate_restore_payload(dummy_user(), items=True)
-        restore_payload_overwrite = generate_restore_payload(dummy_user(), items=True, overwrite_cache=True)
+        restore_payload = generate_restore_payload(
+            self.project, dummy_user(), items=True, force_cache=True
+        )
+        restore_payload_cached = generate_restore_payload(
+            self.project, dummy_user(), items=True
+        )
+        restore_payload_overwrite = generate_restore_payload(
+            self.project, dummy_user(), items=True, overwrite_cache=True
+        )
         self.assertEqual(restore_payload, restore_payload_cached)
         self.assertNotEqual(restore_payload, restore_payload_overwrite)
 
@@ -80,17 +85,18 @@ class OtaRestoreTest(TestCase):
                                  "data", "create_short.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
-        form = post_xform_to_couch(xml_data)
-        process_cases(form)
+        form = post_xform_to_couch(xml_data, domain=self.project.name)
+        # implicit length assertion
+        [newcase] = process_cases(form)
         user = dummy_user()
 
-        # implicit length assertion
-        [newcase] = CommCareCase.view("case/by_user", reduce=False, include_docs=True).all()
-        self.assertEqual(1, len(list(BatchedCaseSyncOperation(user, None).get_all_case_updates())))
+        self.assertEqual(1, len(list(
+            BatchedCaseSyncOperation(RestoreState(self.project, user, RestoreParams())).get_all_case_updates()
+        )))
         expected_case_block = """
         <case>
             <case_id>asdf</case_id>
-            <date_modified>2010-06-29T13:42:50Z</date_modified>
+            <date_modified>2010-06-29T13:42:50.000000Z</date_modified>
             <create>
                 <case_type_id>test_case_type</case_type_id>
                 <user_id>foo</user_id>
@@ -103,9 +109,9 @@ class OtaRestoreTest(TestCase):
 
         # check v2
         expected_v2_case_block = """
-        <case case_id="asdf" date_modified="2010-06-29T13:42:50Z" user_id="foo" xmlns="http://commcarehq.org/case/transaction/v2" >
+        <case case_id="asdf" date_modified="2010-06-29T13:42:50.000000Z" user_id="foo" xmlns="http://commcarehq.org/case/transaction/v2" >
             <create>
-                <case_type>test_case_type</case_type> 
+                <case_type>test_case_type</case_type>
                 <case_name>test case name</case_name>
                 <owner_id>foo</owner_id>
             </create>
@@ -124,6 +130,7 @@ class OtaRestoreTest(TestCase):
         )
 
         restore_payload = generate_restore_payload(
+            project=self.project,
             user=dummy_user(),
             items=True,
         )
@@ -152,11 +159,11 @@ class OtaRestoreTest(TestCase):
                                  "data", "create_short.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
-        form = post_xform_to_couch(xml_data)
+        form = post_xform_to_couch(xml_data, domain=self.project.name)
         process_cases(form)
 
         time.sleep(1)
-        restore_payload = generate_restore_payload(dummy_user(), items=items)
+        restore_payload = generate_restore_payload(self.project, dummy_user(), items=items)
 
         sync_log_id = SyncLog.view(
             "phone/sync_logs_by_user",
@@ -172,6 +179,7 @@ class OtaRestoreTest(TestCase):
 
         time.sleep(1)
         sync_restore_payload = generate_restore_payload(
+            project=self.project,
             user=dummy_user(),
             restore_id=sync_log_id,
             items=items,
@@ -197,11 +205,12 @@ class OtaRestoreTest(TestCase):
                                  "data", "update_short.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
-        form = post_xform_to_couch(xml_data)
+        form = post_xform_to_couch(xml_data, domain=self.project.name)
         process_cases(form)
 
         time.sleep(1)
         sync_restore_payload = generate_restore_payload(
+            self.project,
             user=dummy_user(),
             restore_id=latest_log.get_id,
             items=items,
@@ -229,10 +238,9 @@ class OtaRestoreTest(TestCase):
                                  "data", "attributes.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
-        form = post_xform_to_couch(xml_data)
-        process_cases(form)
+        form = post_xform_to_couch(xml_data, domain=self.project.name)
+        [newcase] = process_cases(form)
         
-        [newcase] = CommCareCase.view("case/by_user", reduce=False, include_docs=True).all()
         self.assertTrue(isinstance(newcase.adate, dict))
         self.assertEqual(date(2012,02,01), newcase.adate["#text"])
         self.assertEqual("i am an attribute", newcase.adate["@someattr"])
@@ -242,17 +250,7 @@ class OtaRestoreTest(TestCase):
         self.assertTrue(isinstance(newcase.stringattr, dict))
         self.assertEqual("neither should this", newcase.stringattr["#text"])
         self.assertEqual("i am a string", newcase.stringattr["@somestring"])
-        restore_payload = generate_restore_payload(dummy_user())
+        restore_payload = generate_restore_payload(self.project, dummy_user())
         # ghetto
         self.assertTrue('<dateattr somedate="2012-01-01">' in restore_payload)
         self.assertTrue('<stringattr somestring="i am a string">' in restore_payload)
-
-
-class FileRestoreOtaRestoreTest(OtaRestoreTest):
-    def setUp(self):
-        update_toggle_cache(toggles.FILE_RESTORE.slug, DUMMY_USERNAME, True)
-        super(FileRestoreOtaRestoreTest, self).setUp()
-
-    def tearDown(self):
-        clear_toggle_cache(toggles.FILE_RESTORE.slug, DUMMY_USERNAME)
-        super(FileRestoreOtaRestoreTest, self).tearDown()

@@ -1,9 +1,10 @@
-from django.test import SimpleTestCase as TestCase
+from django.test import SimpleTestCase
 from corehq.apps.app_manager.models import _parse_xml
 import os
 
-class XMLParsingTest(TestCase):
-    
+
+class XMLParsingTest(SimpleTestCase):
+
     def testUnicodeError(self):
         """Tests a bug found in Unicode processing of a form"""
         file_path = os.path.join(os.path.dirname(__file__), "data", "unicode_error_form.xhtml")

@@ -50,8 +50,6 @@ class AppManagerTest(TestCase):
 
     def tearDown(self):
         self.app.delete()
-        #for xform in XForm.view('app_manager/xforms', key=self.xform_xmlns, reduce=False).all():
-        #    xform.delete()
 
     def testSetUp(self):
         self.assertEqual(len(self.app.modules), 3)

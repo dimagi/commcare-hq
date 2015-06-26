@@ -1,12 +1,13 @@
 import logging
+from django.utils.translation import ugettext as _
 from casexml.apps.case.const import CASE_ACTION_COMMTRACK
 from casexml.apps.case.xform import is_device_report, CaseDbCache
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
+from corehq.apps.commtrack.exceptions import MissingProductId
 from dimagi.utils.decorators.log_exception import log_exception
 from corehq.apps.commtrack.models import CommtrackConfig, NewStockReport
 from dimagi.utils.couch.loosechange import map_reduce
-from corehq.apps.commtrack.util import wrap_commtrack_case
-from casexml.apps.case.models import CommCareCaseAction, CommCareCase
+from casexml.apps.case.models import CommCareCaseAction
 from casexml.apps.case.xml.parser import AbstractAction
 
 
@@ -37,6 +38,10 @@ def process_stock(xform, case_db=None):
     if not transactions:
         return []
 
+    # validate product ids
+    is_empty = lambda product_id: product_id is None or product_id == ''
+    if any([is_empty(tx.product_id) for tx in transactions]):
+        raise MissingProductId(_('Product IDs must be set for all ledger updates!'))
     # transactions grouped by case/product id
     grouped_tx = map_reduce(lambda tx: [((tx.case_id, tx.product_id),)],
                             lambda v: sorted(v, key=lambda tx: tx.timestamp),

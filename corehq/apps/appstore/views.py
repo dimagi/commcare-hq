@@ -1,6 +1,7 @@
 import json
 from urllib import urlencode
 from corehq.apps.registration.utils import create_30_day_trial
+from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.resource_conflict import retry_resource
 
 from django.contrib.auth.decorators import login_required
@@ -19,7 +20,7 @@ from dimagi.utils.couch.database import apply_update
 from corehq.apps.fixtures.models import FixtureDataType
 
 
-SNAPSHOT_FACETS = ['project_type', 'license', 'author.exact']
+SNAPSHOT_FACETS = ['project_type', 'license', 'author.exact', 'is_starter_app']
 DEPLOYMENT_FACETS = ['deployment.region']
 SNAPSHOT_MAPPING = [
     ("", True, [
@@ -108,6 +109,7 @@ def appstore(request, template="appstore/appstore_base.html"):
     hits = deduplicate(hits)
     d_results = [Domain.wrap(res['_source']) for res in hits]
 
+    starter_apps = request.GET.get('is_starter_app', None)
     sort_by = request.GET.get('sort_by', None)
     if sort_by == 'newest':
         pass
@@ -131,6 +133,7 @@ def appstore(request, template="appstore/appstore_base.html"):
         next_page=(page + 1),
         more_pages=more_pages,
         sort_by=sort_by,
+        show_starter_apps=starter_apps,
         include_unapproved=include_unapproved,
         facet_map=facet_map,
         facets=results.get("facets", []),
@@ -249,18 +252,20 @@ def copy_snapshot(request, domain):
                 messages.error(request, _("This project is not published and can't be downloaded"))
                 return project_info(request, domain)
 
-            if form.is_valid():
-                new_domain = dom.save_copy(form.cleaned_data['domain_name'], user=user)
-            else:
+            if not form.is_valid():
                 messages.error(request, form.errors)
                 return project_info(request, domain)
 
-            if new_domain is None:
-                messages.error(request, _("A project by that name already exists"))
-                return project_info(request, domain)
+            new_domain_name = form.cleaned_data['domain_name']
+            with CriticalSection(['copy_domain_snapshot_{}_to_{}'.format(dom.name, new_domain_name)]):
+                new_domain = dom.save_copy(new_domain_name, user=user)
 
-            # sign new project up for trial
-            create_30_day_trial(new_domain)
+                if new_domain is None:
+                    messages.error(request, _("A project by that name already exists"))
+                    return project_info(request, domain)
+
+                # sign new project up for trial
+                create_30_day_trial(new_domain)
 
             def inc_downloads(d):
                 d.downloads += 1

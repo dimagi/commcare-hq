@@ -23,8 +23,11 @@ class ILSTestScript(TestScript):
         domain = prepare_domain(TEST_DOMAIN)
         mohsw = make_loc(code="moh1", name="Test MOHSW 1", type="MOHSW", domain=domain.name)
 
-        region = make_loc(code="reg1", name="Test Region 1", type="REGION",
+        msdzone = make_loc(code="msd1", name="MSD Zone 1", type="MSDZONE",
                           domain=domain.name, parent=mohsw)
+
+        region = make_loc(code="reg1", name="Test Region 1", type="REGION",
+                          domain=domain.name, parent=msdzone)
 
         district = make_loc(code="dis1", name="Test District 1", type="DISTRICT",
                             domain=domain.name, parent=region)
@@ -85,6 +88,7 @@ def prepare_domain(domain_name):
     previous = None
     for name, administrative in [
         ("MOHSW", True),
+        ("MSDZONE", True),
         ("REGION", True),
         ("DISTRICT", True),
         ("FACILITY", False)

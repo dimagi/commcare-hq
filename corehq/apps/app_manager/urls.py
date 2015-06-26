@@ -2,6 +2,7 @@ from django.conf.urls import patterns, url, include
 from corehq.apps.app_manager.view_helpers import DynamicTemplateView
 from corehq.apps.app_manager.views import DownloadCCZ, AppSummaryView
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
+from corehq.apps.hqmedia.urls import download_urls as media_download_urls
 
 app_urls = patterns('corehq.apps.app_manager.views',
     url(r'^languages/$', 'view_app', name='app_languages'),
@@ -37,7 +38,7 @@ app_urls = patterns('corehq.apps.app_manager.views',
 )
 
 urlpatterns = patterns('corehq.apps.app_manager.views',
-    url(r'^$', 'default'),
+    url(r'^$', 'default', name='default_app'),
     url(r'^xform/(?P<form_unique_id>[\w-]+)/$', 'xform_display'),
     url(r'^browse/(?P<app_id>[\w-]+)/modules-(?P<module_id>[\w-]+)/forms-(?P<form_id>[\w-]+)/source/$',
         'get_xform_source', name='get_xform_source'),
@@ -93,6 +94,8 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
         'edit_module_detail_screens', name='edit_module_detail_screens'),
     url(r'^edit_module_attr/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<attr>[\w-]+)/$',
         'edit_module_attr'),
+    url(r'^edit_report_module/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/$',
+        'edit_report_module'),
     url(r'^validate_module_for_build/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/$',
         'validate_module_for_build', name='validate_module_for_build'),
 
@@ -115,13 +118,19 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
     url(r'^odk/(?P<app_id>[\w-]+)/install/$', 'odk_install', name="odk_install"),
     url(r'^odk/(?P<app_id>[\w-]+)/media_install/$', 'odk_install', {'with_media': True}, name="odk_media_install"),
 
+    url(r'^odk/(?P<app_id>[\w-]+)/short_url/$', 'short_url'),
+    url(r'^odk/(?P<app_id>[\w-]+)/short_odk_media_url/$', 'short_odk_url', {'with_media': True}),
+    url(r'^odk/(?P<app_id>[\w-]+)/short_odk_url/$', 'short_odk_url'),
+
     url(r'^save/(?P<app_id>[\w-]+)/$', 'save_copy'),
     url(r'^revert/(?P<app_id>[\w-]+)/$', 'revert_to_copy'),
     url(r'^delete_copy/(?P<app_id>[\w-]+)/$', 'delete_copy'),
 
     url(r'^download/(?P<app_id>[\w-]+)/$', 'download_index', name='download_index'),
+    # the order of these download urls is important
     url(r'^download/(?P<app_id>[\w-]+)/CommCare.ccz$', DownloadCCZ.as_view(),
         name=DownloadCCZ.name),
+    url(r'^download/(?P<app_id>[\w-]+)/multimedia/', include(media_download_urls)),
     url(r'^download/(?P<app_id>[\w-]+)/(?P<path>.*)$', 'download_file',
         name='app_download_file'),
     url(r'^download/(?P<app_id>[\w-]+)/',

@@ -1,4 +1,4 @@
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 from dimagi.utils.decorators.memoized import memoized
 
 

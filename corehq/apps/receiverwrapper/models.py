@@ -5,7 +5,7 @@ import logging
 import urllib
 import urlparse
 
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 from couchdbkit.exceptions import ResourceNotFound
 from django.core.cache import cache
 import socket
@@ -370,24 +370,11 @@ class RepeatRecord(Document, LockableMixIn):
     repeater_type = StringProperty()
     domain = StringProperty()
 
-    last_checked = DateTimeProperty(exact=True)
-    next_check = DateTimeProperty(exact=True)
+    last_checked = DateTimeProperty()
+    next_check = DateTimeProperty()
     succeeded = BooleanProperty(default=False)
 
     payload_id = StringProperty()
-
-    @classmethod
-    def wrap(cls, data):
-        for attr in ('last_checked', 'next_check'):
-            value = data.get(attr)
-            if not value:
-                continue
-            try:
-                dt = datetime.strptime(value, '%Y-%m-%dT%H:%M:%SZ')
-                data[attr] = dt.isoformat() + '.000000Z'
-            except ValueError:
-                pass
-        return super(RepeatRecord, cls).wrap(data)
 
     @property
     @memoized
@@ -427,8 +414,8 @@ class RepeatRecord(Document, LockableMixIn):
     def update_failure(self):
         # we use an exponential back-off to avoid submitting to bad urls
         # too frequently.
-        assert(self.succeeded == False)
-        assert(self.next_check is not None)
+        assert self.succeeded is False
+        assert self.next_check is not None
         now = datetime.utcnow()
         window = timedelta(minutes=0)
         if self.last_checked:

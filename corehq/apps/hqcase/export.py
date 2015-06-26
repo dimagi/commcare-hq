@@ -1,10 +1,9 @@
-from corehq.apps.importer.util import get_case_properties
+from corehq.apps.hqcase.dbaccessors import get_case_properties
 from corehq.apps.users.cases import get_owner_id
 from soil import DownloadBase
 
 
-def export_cases(domain, cases, workbook, filter_group=None, users=None, all_groups=None,
-                               process=None):
+def export_cases(domain, cases, workbook, filter_group=None, users=None, all_groups=None, process=None):
     by_user_id = dict([(user.user_id, user) for user in users]) if users else {}
     by_group_id = dict([(g.get_id, g) for g in all_groups]) if all_groups else {}
     if filter_group:
@@ -57,10 +56,7 @@ def export_cases(domain, cases, workbook, filter_group=None, users=None, all_gro
             return get_owner_id(case)
 
     def might_be_relevant(case):
-        if filter_group:
-            return get_owner_id(case) in owner_ids
-        else:
-            return not users or get_matching_owner(case)
+        return not filter_group or get_owner_id(case) in owner_ids
 
     for i, case in enumerate(cases):
         if process:

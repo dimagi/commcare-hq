@@ -85,3 +85,6 @@
 [submodule "corehq/apps/style/static/style/lib/jquery-cookie"]
 	path = corehq/apps/style/static/style/lib/jquery-cookie
 	url = https://github.com/carhartl/jquery-cookie.git
+[submodule "corehq/apps/prelogin"]
+	path = corehq/apps/prelogin
+	url = https://github.com/dimagi/commcarehq-prelogin.git

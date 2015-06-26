@@ -4,16 +4,16 @@ from django.core.urlresolvers import reverse
 from django.http.response import Http404, HttpResponse
 from django.utils.decorators import method_decorator
 from corehq import Domain
-from corehq.apps.domain.decorators import require_superuser
+from corehq.apps.domain.decorators import require_superuser_or_developer
 from corehq.apps.hqwebapp.views import BasePageView
-from corehq.toggles import all_toggles
+from corehq.toggles import all_toggles, ALL_TAGS, NAMESPACE_USER
 from toggle.models import Toggle
 from toggle.shortcuts import clear_toggle_cache
 
 
 class ToggleBaseView(BasePageView):
 
-    @method_decorator(require_superuser)
+    @method_decorator(require_superuser_or_developer)
     def dispatch(self, request, *args, **kwargs):
         return super(ToggleBaseView, self).dispatch(request, *args, **kwargs)
 
@@ -33,6 +33,7 @@ class ToggleListView(ToggleBaseView):
     def page_context(self):
         return {
             'toggles': all_toggles(),
+            'tags': ALL_TAGS
         }
 
 
@@ -77,6 +78,7 @@ class ToggleEditView(ToggleBaseView):
             'toggle_meta': toggle_meta,
             'toggle': self.get_toggle(),
             'expanded': self.expanded,
+            'namespaces': [NAMESPACE_USER if n is None else n for n in toggle_meta.namespaces],
         }
         if self.expanded:
             context['domain_toggle_list'] = sorted(

@@ -63,7 +63,7 @@ class SubmissionTest(TestCase):
             "build_id": None,
             "computed_": {},
             "computed_modified_on_": None,
-            "date_header": '2011-04-11T18:24:43Z',
+            "date_header": '2011-04-11T18:24:43.000000Z',
             "doc_type": "XFormInstance",
             "domain": "submit",
             "history": [],
@@ -75,7 +75,7 @@ class SubmissionTest(TestCase):
             "partial_submission": False,
             "path": "/a/submit/receiver",
             "submit_ip": "127.0.0.1",
-            "xmlns": xmlns
+            "xmlns": xmlns,
         })
         self.assertIn(response_contains, str(response), msg)
 

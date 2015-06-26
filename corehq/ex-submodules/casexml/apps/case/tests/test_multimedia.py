@@ -9,11 +9,12 @@ import lxml
 from django.core.files.uploadedfile import UploadedFile
 
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
+from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms, TEST_DOMAIN_NAME
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.models import SyncLog
 import couchforms
-from couchforms.models import XFormInstance, XFormDeprecated
+from couchforms.models import XFormInstance
+from dimagi.utils.parsing import json_format_datetime
 
 
 TEST_CASE_ID = "EOL9FIAKIQWOFXFOH0QAMWU64"
@@ -28,7 +29,6 @@ MEDIA_FILES = {
     "house_file": os.path.join(media_path, "house.jpg"),
 }
 
-TEST_DOMAIN = "test-domain"
 
 
 class BaseCaseMultimediaTest(TestCase):
@@ -44,15 +44,13 @@ class BaseCaseMultimediaTest(TestCase):
 
     def _formatXForm(self, doc_id, raw_xml, attachment_block):
         final_xml = raw_xml % ({
-                                   "attachments": attachment_block,
-                                   "time_start": (
-                                       datetime.utcnow() - timedelta(minutes=4)).strftime(
-                                       '%Y-%m-%dT%H:%M:%SZ'),
-                                   "time_end": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
-                                   "date_modified": datetime.utcnow().strftime(
-                                       '%Y-%m-%dT%H:%M:%SZ'),
-                                   "doc_id": doc_id
-                               })
+            "attachments": attachment_block,
+            "time_start": json_format_datetime(datetime.utcnow()
+                                               - timedelta(minutes=4)),
+            "time_end": json_format_datetime(datetime.utcnow()),
+            "date_modified": json_format_datetime(datetime.utcnow()),
+            "doc_id": doc_id
+        })
         return final_xml
 
     def _prepAttachments(self, new_attachments, removes=[]):
@@ -82,7 +80,7 @@ class BaseCaseMultimediaTest(TestCase):
         """
         sp = couchforms.SubmissionPost(
             instance=xml_data,
-            domain=TEST_DOMAIN,
+            domain=TEST_DOMAIN_NAME,
             attachments=dict_attachments,
             last_sync_token=sync_token,
         )
@@ -133,8 +131,6 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
         delete_all_xforms()
 
     def testAttachInCreate(self):
-        self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))
-
         single_attach = 'fruity_file'
         self._doCreateCaseWithMultimedia(attachments=[single_attach])
 
@@ -145,8 +141,6 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
         self.assertEqual(self._calc_file_hash(single_attach), hashlib.md5(case.get_attachment(single_attach)).hexdigest())
 
     def testArchiveAfterAttach(self):
-        self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))
-
         single_attach = 'fruity_file'
         self._doCreateCaseWithMultimedia(attachments=[single_attach])
 

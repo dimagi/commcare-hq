@@ -1,5 +1,17 @@
-from couchdbkit import StringProperty, BooleanProperty, IntegerProperty, FloatProperty, DecimalProperty, DictProperty, StringListProperty, SchemaListProperty, SchemaDictProperty, DateProperty, DateTimeProperty, SchemaProperty
-from casexml.apps.case.models import CommCareCase
+from dimagi.ext.couchdbkit import (
+    BooleanProperty,
+    DateProperty,
+    DateTimeProperty,
+    DecimalProperty,
+    DictProperty,
+    FloatProperty,
+    IntegerProperty,
+    SchemaDictProperty,
+    SchemaListProperty,
+    SchemaProperty,
+    StringListProperty,
+    StringProperty,
+)
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
 
 def type_full_date(formats=DATE_FORMATS_STRING):

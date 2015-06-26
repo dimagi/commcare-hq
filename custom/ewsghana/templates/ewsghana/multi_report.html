@@ -3,6 +3,10 @@
 {% load report_tags %}
 {% load i18n %}
 
+{% block js %}{{ block.super }}
+    <script src="{% static 'ewsghana/report_links.js' %}"></script>
+{% endblock %}
+
 {% block reportcontent %}
     {% if report.slug|safe == 'stock_summary_report' or report.slug|safe == 'cms_rms_summary_report' %}
         <h2 style="background-color: black; color: white">{{ title }}</h2>
@@ -31,12 +35,16 @@
         </div>
     {% endif %}
 {% endblock %}
-
 {% block reporttable %}
 {% if report.needs_filters %}
     {% include 'reports/standard/partials/description.html' %}
 {% else %}
     <style>
+        .nvd3.nv-pie path {
+            stroke-width: 0px !important;
+            stroke-opacity: 0 !important;
+        }
+
         {% if rendered_as == "email" %}
             td {
                 border: 1px solid black;
@@ -80,16 +88,16 @@
                 width: 100%;
                 display: inline-table;
             }
-        {% elif  report.slug == "stock_status"%}
-            .report:first-of-type {
-                float: right;
+        {% elif report.slug == "stock_status"%}
+            .product-selection-pane {
+                float: right !important;
                 width: 30%;
             }
             .report:nth-of-type(n+2) {
-                float: left;
+                float: left !important;
                 width: 68%;
             }
-        {% elif  report.slug == "dashboard_report"%}
+        {% elif report.slug == "dashboard_report"%}
             .report:nth-of-type(n+2) {
                 float: left;
                 width: 50%;
@@ -121,7 +129,9 @@
         }
     </style>
     {% for thisreport in reports %}
-        {% if split %}
+        {% if thisreport.rendered_content %}
+            {{ thisreport.rendered_content }}
+        {% elif split %}
             {% if forloop.counter == 1 %}
                 <div class="fpr_tables">
                     <div class="firstreport">
@@ -176,31 +186,6 @@
         {% endif %}
     {% endfor %}
 
-    {% if split and rendered_as != 'email' %}
-        <div class="modal hide fade" id="configureInCharge">
-            <div class="modal-header">
-                <a class="close" data-dismiss="modal">&times;</a>
-                <h3>
-                    {% trans "Configure In Charge users" %}
-                </h3>
-            </div>
-            <div class="modal-body">
-                <input type="hidden" name="users" value="in_charge" />
-                <div class="control-group">
-                    <label class="control-label" for="in_charge_select">{% trans "Select In Charge users" %}</label>
-                    <div class="controls">
-                        <select id="in_charge_select" class="input span6" multiple="multiple">
-                        </select>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button id='in_charge_button' class="btn btn-success" type="submit">{% trans "Save" %}</button>
-                <a href="#" class="btn" data-dismiss="modal">{% trans "Cancel" %}</a>
-            </div>
-        </div>
-    {% endif %}
-
 {% endif %}
 {% endblock %}
 {% block posttable %}{% endblock %}
@@ -250,53 +235,38 @@
 
         show_hide_filters();
         $('tr:has(div.program)').addClass('program').attr('align', 'center');
-
-        {% if split %}
-            function refreshInChargeTable() {
-                var rows = $.makeArray($('#report_table_in_charge tbody tr'));
-                rows.pop();
-                $.each(rows, function() {
-                    $(this).remove();
-                });
-                $.each($("#in_charge_select").select2("data"), function() {
-                    $('<tr><td>' + this.text + '</td></tr>').prependTo('#report_table_in_charge tbody');
-                });
-
-            }
-
-            $.each($('#report_table_facility_sms_users tbody td:first-child div'), function() {
-                if ($(this).attr('sel') === 'true') {
-                    $('#in_charge_select').append($('<option>', { val: $(this).attr('val'), text: $(this).text(),
-                            selected: 'selected'}));
-                } else {
-                    $('#in_charge_select').append($('<option>', { val: $(this).attr('val'), text: $(this).text()}));
-                }
-            });
-            $('#in_charge_select').select2();
-
-            $('#in_charge_button').click(function() {
-                $('#in_charge_button').attr("disabled", true);
-                $.ajax({
-                    type: 'POST',
-                    datatype: 'json',
-                    url: '{% url 'configure_in_charge' domain %}',
-                    data: {
-                        users: $("#in_charge_select").select2("val"),
-                        location_id: '{{ location_id }}'
-                    },
-                    success: function(response) {
-                        refreshInChargeTable();
-                        $('#in_charge_button').attr("disabled", false);
-                    }
-                });
-                $('#configureInCharge').modal('toggle');
-            });
-        {% endif %}
     </script>
     <script>
         var report_slug = "{{ report.slug | safe }}";
         if ( report_slug === 'stock_summary_report' || report_slug === 'cms_rms_summary_report') {
             $('.dataTables_filter').remove();
         }
+    </script>
+    <script>
+        function updateExportButton() {
+            var button = $("#export-report-excel");
+            if ({{ split|yesno:"true,false" }}) {
+                button.text("Export Table to Excel");
+                button.css('display', 'inline-block');
+            } else if ({{ exportable|yesno:"true,false" }}){
+                button.text("Export Table(s) to Excel");
+                button.css('display', 'inline-block');
+            } else {
+                button.css('display', 'None');
+            }
+        }
+        $("#apply-filters").on('click', function(){
+            updateExportButton();
+        });
+        updateExportButton();
+        $(".dataTables_filter").css('display', 'none');
+
+        $('.row div').append(
+            '<div class="desc" style="width: 100%; text-align: center; margin-top: -1cm; margin-bottom: 1cm"></div>'
+        );
+    </script>
+    <script>
+        var slugs = {{ slugs | JSON }};
+        add_report_links(slugs);
     </script>
 {% endblock %}

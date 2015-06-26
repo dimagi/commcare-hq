@@ -1,5 +1,5 @@
 from collections import defaultdict
-from couchdbkit.ext.django.schema import (Document, DictProperty,
+from dimagi.ext.couchdbkit import (Document, DictProperty,
     StringProperty, ListProperty)
 import commcare_translations
 from dimagi.utils.couch.database import get_db

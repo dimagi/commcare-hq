@@ -2,11 +2,11 @@ import datetime
 import calendar
 
 from django.conf import settings
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.utils.translation import ugettext as _
+from corehq.apps.casegroups.dbaccessors import get_case_group_meta_in_domain
 
-from casexml.apps.case.models import CommCareCase, CommCareCaseGroup
-from dimagi.utils.couch.database import get_db
+from corehq.apps.hqcase.dbaccessors import get_case_types_for_domain
 
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain, LICENSES
@@ -65,7 +65,7 @@ class SelectOrganizationFilter(BaseSingleOptionFilter):
 
 class GroupFilterMixin(object):
     slug = "group"
-    label = ugettext_noop("Group")
+    label = ugettext_lazy("Group")
     default_text = ugettext_noop("Everybody")
 
     @property
@@ -106,52 +106,14 @@ class MonthFilter(BaseSingleOptionFilter):
 
 class CaseTypeMixin(object):
     slug = "case_type"
-    label = ugettext_noop("Case Type")
-    default_text = ugettext_noop("All Case Types")
+    label = ugettext_lazy("Case Type")
+    default_text = ugettext_lazy("All Case Types")
 
     @property
     def options(self):
-        case_types = self.get_case_types(self.domain)
+        case_types = get_case_types_for_domain(self.domain)
         return [(case, "%s" % case) for case in case_types]
 
-    @classmethod
-    def get_case_types(cls, domain):
-        key = ['all type', domain]
-        for r in get_db().view(
-            'case/all_cases',
-            startkey=key,
-            endkey=key + [{}],
-            group_level=3,
-        ).all():
-            _, _, case_type = r['key']
-            if case_type:
-                yield case_type
-
-    @classmethod
-    def get_case_counts(cls, domain, case_type=None, user_ids=None):
-        """
-        Returns open count, all count
-        """
-        user_ids = user_ids or [{}]
-        for status in ('all', 'open'):
-            def individual_counts():
-                for user_id in user_ids:
-                    key = CommCareCase.get_all_cases_key(
-                        domain,
-                        case_type=case_type,
-                        owner_id=user_id,
-                        status=status,
-                    )
-                    try:
-                        yield get_db().view(
-                            'case/all_cases',
-                            startkey=key,
-                            endkey=key + [{}],
-                            reduce=True,
-                        ).one()['value']
-                    except TypeError:
-                        yield 0
-            yield sum(individual_counts())
 
 class CaseTypeFilter(CaseTypeMixin, BaseSingleOptionFilter):
     placeholder = ugettext_noop('Click to select a case type')
@@ -174,8 +136,8 @@ class SelectOpenCloseFilter(BaseSingleOptionFilter):
 
 class SelectApplicationFilter(BaseSingleOptionFilter):
     slug = "app"
-    label = ugettext_noop("Application")
-    default_text = ugettext_noop("Select Application [Latest Build Version]")
+    label = ugettext_lazy("Application")
+    default_text = ugettext_lazy("Select Application [Latest Build Version]")
 
     @property
     def options(self):
@@ -198,4 +160,4 @@ class MultiCaseGroupFilter(BaseMultipleOptionFilter):
 
     @property
     def options(self):
-        return [(g["id"], g["key"][1]) for g in CommCareCaseGroup.get_by_domain(self.domain, include_docs=False)]
+        return get_case_group_meta_in_domain(self.domain)

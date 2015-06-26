@@ -1,0 +1,33 @@
+{% extends "reports/base_template.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block head %}{{ block.super }}
+    {% include 'cloudcare/includes/touchforms-inline.html' %}
+    <script src="{% static 'cloudcare/js/util.js' %}"></script>
+    <script>
+    $(function () {
+        GMAPS_API_KEY = '{{ maps_api_key|safe }}'; // maps api is a global variable depended on by touchforms
+        var edit_context = {{ edit_context|JSON }};
+        $('#edit-container').inlineTouchform({
+            formUrl: edit_context.formUrl,
+            submitUrl: edit_context.submitUrl,
+            sessionData: edit_context.sessionData,
+            onsubmit: function () {
+                window.location.href = edit_context.returnUrl;
+            },
+            onload: function () {
+            }
+        });
+    });
+    </script>
+{% endblock %}
+
+{% block title %}{% trans 'Edit Submission' %}{% endblock %}
+{% block page-title %}
+    {% include 'reports/form/partials/form_breadcrumbs.html' %}
+{% endblock %}
+
+{% block main_column %}
+    <div class="inline-touchforms" id="edit-container"></div>
+{% endblock %}

@@ -47,8 +47,8 @@ def get_domain_type(project, request):
 def get_per_domain_context(project, request=None):
     domain_type = get_domain_type(project, request)
     if domain_type == COMMTRACK:
-        logo_url = static('hqstyle/img/commtrack-logo.png')
-        site_name = "CommTrack"
+        logo_url = static('hqstyle/img/commcaresupply-logo.png')
+        site_name = "CommCare Supply"
         public_site = "http://www.commtrack.org"
         can_be_your = _("mobile logistics solution")
     else:
@@ -96,7 +96,10 @@ def current_url_name(request):
 
 
 def analytics_js(request):
-    return settings.ANALYTICS_IDS
+    d = {}
+    d.update(settings.ANALYTICS_IDS)
+    d.update({"ANALYTICS_CONFIG": settings.ANALYTICS_CONFIG})
+    return d
 
 def raven(request):
     """lets you know whether raven is being used"""

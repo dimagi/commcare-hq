@@ -1,12 +1,21 @@
+import hashlib
 from django.utils.translation import ugettext as _
 from datetime import datetime, timedelta
 import uuid
+import os
+from unidecode import unidecode
+from dateutil.parser import parse
+import zipfile
+import tempfile
+from wsgiref.util import FileWrapper
 
 from celery.schedules import crontab
 from celery.task import periodic_task
 from corehq.apps.indicators.utils import get_mvp_domains
 from corehq.apps.reports.scheduled import get_scheduled_reports
+from corehq.apps.users.models import WebUser
 from corehq.util.view_utils import absolute_reverse
+from corehq.util.translation import localize
 from couchexport.files import Temp
 from couchexport.groupexports import export_for_group, rebuild_export
 from dimagi.utils.couch.database import get_db
@@ -32,10 +41,23 @@ from corehq.apps.reports.models import (
     ReportNotification,
     UnsupportedScheduledReportError,
 )
-from corehq.elastic import get_es, ES_URLS, stream_es_query
+from corehq.apps.es.domains import DomainES
+from corehq.elastic import (
+    get_es,
+    ES_URLS,
+    stream_es_query,
+    send_to_elasticsearch,
+)
 from corehq.pillows.mappings.app_mapping import APP_INDEX
-from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
+from dimagi.utils.parsing import json_format_datetime
 import settings
+from couchforms.models import XFormInstance
+from corehq.apps.reports.models import FormExportSchema
+from dimagi.utils.couch.database import iter_docs
+from casexml.apps.case.xform import extract_case_blocks
+from casexml.apps.case.models import CommCareCase
+from soil import DownloadBase
+from soil.util import expose_file_download, expose_cached_download
 
 
 logging = get_task_logger(__name__)
@@ -102,10 +124,14 @@ def get_report_queue(report):
 @task(ignore_result=True)
 def send_report(notification_id):
     notification = ReportNotification.get(notification_id)
+    owner = WebUser.get(notification.owner_id)
+    language = owner.get_language_code()
     try:
-        notification.send()
+        with localize(language):
+            notification.send()
     except UnsupportedScheduledReportError:
         pass
+
 
 @task
 def create_metadata_export(download_id, domain, format, filename, datespan=None, user_ids=None):
@@ -150,6 +176,14 @@ def saved_exports():
         export_for_group_async.delay(group_config, 'couch')
 
 
+@task(queue='background_queue', ignore_result=True)
+def rebuild_export_task(groupexport_id, index, output_dir='couch', last_access_cutoff=None, filter=None):
+    from couchexport.groupexports import rebuild_export
+    group_config = HQGroupExportConfiguration.get(groupexport_id)
+    config, schema = group_config.all_exports[index]
+    rebuild_export(config, schema, output_dir, last_access_cutoff, filter=filter)
+
+
 @task(queue='saved_exports_queue', ignore_result=True)
 def export_for_group_async(group_config, output_dir):
     # exclude exports not accessed within the last 7 days
@@ -164,17 +198,12 @@ def rebuild_export_async(config, schema, output_dir):
 
 @periodic_task(run_every=crontab(hour="12, 22", minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def update_calculated_properties():
-    es = get_es()
-
-    q = {"filter": {"and": [
-        {"term": {"doc_type": "Domain"}},
-        {"term": {"is_snapshot": False}}
-    ]}}
-    results = stream_es_query(q=q, es_url=ES_URLS["domains"], size=999999, chunksize=500, fields=["name"])
+    results = DomainES().is_snapshot(False).fields(["name", "_id"]).run().hits
     all_stats = _all_domain_stats()
     for r in results:
-        dom = r["fields"]["name"]
+        dom = r["name"]
         calced_props = {
+            "_id": r["_id"],
             "cp_n_web_users": int(all_stats["web_users"][dom]),
             "cp_n_active_cc_users": int(CALC_FNS["mobile_users"](dom)),
             "cp_n_cc_users": int(all_stats["commcare_users"][dom]),
@@ -188,7 +217,7 @@ def update_calculated_properties():
             "cp_last_form": CALC_FNS["last_form_submission"](dom, False),
             "cp_is_active": CALC_FNS["active"](dom),
             "cp_has_app": CALC_FNS["has_app"](dom),
-            "cp_last_updated": datetime.utcnow().strftime(DATE_FORMAT),
+            "cp_last_updated": json_format_datetime(datetime.utcnow()),
             "cp_n_in_sms": int(CALC_FNS["sms"](dom, "I")),
             "cp_n_out_sms": int(CALC_FNS["sms"](dom, "O")),
             "cp_n_sms_ever": int(CALC_FNS["sms_in_last"](dom)),
@@ -199,13 +228,13 @@ def update_calculated_properties():
         if calced_props['cp_first_form'] == 'No forms':
             del calced_props['cp_first_form']
             del calced_props['cp_last_form']
-        es.post("%s/hqdomain/%s/_update" % (DOMAIN_INDEX, r["_id"]), data={"doc": calced_props})
+        send_to_elasticsearch("domains", calced_props)
 
-DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
+
 def is_app_active(app_id, domain):
     now = datetime.utcnow()
-    then = (now - timedelta(days=30)).strftime(DATE_FORMAT)
-    now = now.strftime(DATE_FORMAT)
+    then = json_format_datetime(now - timedelta(days=30))
+    now = json_format_datetime(now)
 
     key = ['submission app', domain, app_id]
     row = get_db().view("reports_forms/all_forms", startkey=key+[then], endkey=key+[now]).all()
@@ -259,3 +288,138 @@ def _store_excel_in_redis(file):
     r.expire(hash_id, EXPIRE_TIME)
 
     return hash_id
+
+
+@task
+def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id, export_id, zip_name, download_id):
+
+    def find_question_id(form, value):
+        for k, v in form.iteritems():
+            if isinstance(v, dict):
+                ret = find_question_id(v, value)
+                if ret:
+                    return [k] + ret
+            else:
+                if v == value:
+                    return [k]
+
+        return None
+
+    def filename(form_info, question_id, extension):
+        fname = u"%s-%s-%s-%s%s"
+        if form_info['cases']:
+            fname = u'-'.join(form_info['cases']) + u'-' + fname
+        return fname % (form_info['name'],
+                        unidecode(question_id),
+                        form_info['user'],
+                        form_info['id'], extension)
+
+    case_ids = set()
+
+    def extract_form_info(form, properties=None, case_ids=case_ids):
+        unknown_number = 0
+        meta = form['form'].get('meta', dict())
+        # get case ids
+        case_blocks = extract_case_blocks(form)
+        cases = {c['@case_id'] for c in case_blocks}
+        case_ids |= cases
+
+        form_info = {
+            'form': form,
+            'attachments': list(),
+            'name': form['form'].get('@name', 'unknown form'),
+            'user': meta.get('username', 'unknown_user'),
+            'cases': cases,
+            'id': form['_id']
+        }
+        for k, v in form['_attachments'].iteritems():
+            if v['content_type'] == 'text/xml':
+                continue
+            try:
+                question_id = unicode(u'-'.join(find_question_id(form['form'], k)))
+            except TypeError:
+                question_id = unicode(u'unknown' + unicode(unknown_number))
+                unknown_number += 1
+
+            if not properties or question_id in properties:
+                extension = unicode(os.path.splitext(k)[1])
+                form_info['attachments'].append({
+                    'size': v['length'],
+                    'name': k,
+                    'question_id': question_id,
+                    'extension': extension,
+                    'timestamp': parse(form['received_on']).timetuple(),
+                })
+
+        return form_info
+
+    key = [domain, app_id, xmlns]
+    form_ids = {f['id'] for f in XFormInstance.get_db().view("attachments/attachments",
+                                                             start_key=key + [startdate],
+                                                             end_key=key + [enddate, {}],
+                                                             reduce=False)}
+
+    properties = set()
+    if export_id:
+        schema = FormExportSchema.get(export_id)
+        for table in schema.tables:
+            # - in question id is replaced by . in excel exports
+            properties |= {c.display.replace('.', '-') for c in table.columns}
+
+    if not app_id:
+        zip_name = 'Unrelated Form'
+    forms_info = list()
+    for form in iter_docs(XFormInstance.get_db(), form_ids):
+        if not zip_name:
+            zip_name = unidecode(form['form'].get('@name', 'unknown form'))
+        forms_info.append(extract_form_info(form, properties))
+
+    num_forms = len(forms_info)
+    DownloadBase.set_progress(build_form_multimedia_zip, 0, num_forms)
+
+    # get case names
+    case_id_to_name = {c: c for c in case_ids}
+    for case in iter_docs(CommCareCase.get_db(), case_ids):
+        if case['name']:
+            case_id_to_name[case['_id']] = case['name']
+
+    use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
+    if use_transfer:
+        params = '_'.join(map(str, [xmlns, startdate, enddate, export_id, num_forms]))
+        fname = '{}-{}'.format(app_id, hashlib.md5(params).hexdigest())
+        fpath = os.path.join(settings.SHARED_DRIVE_CONF.transfer_dir, fname)
+    else:
+        _, fpath = tempfile.mkstemp()
+
+    if not (os.path.isfile(fpath) and use_transfer):  # Don't rebuild the file if it is already there
+        with open(fpath, 'wb') as zfile:
+            with zipfile.ZipFile(zfile, 'w') as z:
+                for form_number, form_info in enumerate(forms_info):
+                    f = XFormInstance.wrap(form_info['form'])
+                    form_info['cases'] = {case_id_to_name[case_id] for case_id in form_info['cases']}
+                    for a in form_info['attachments']:
+                        fname = filename(form_info, a['question_id'], a['extension'])
+                        zi = zipfile.ZipInfo(fname, a['timestamp'])
+                        z.writestr(zi, f.fetch_attachment(a['name'], stream=True).read(), zipfile.ZIP_STORED)
+                    DownloadBase.set_progress(build_form_multimedia_zip, form_number + 1, num_forms)
+
+    common_kwargs = dict(
+        mimetype='application/zip',
+        content_disposition='attachment; filename="{fname}.zip"'.format(fname=zip_name),
+        download_id=download_id,
+    )
+
+    if use_transfer:
+        expose_file_download(
+            fpath,
+            use_transfer=use_transfer,
+            **common_kwargs
+        )
+    else:
+        expose_cached_download(
+            FileWrapper(open(fpath)),
+            expiry=(1 * 60 * 60),
+            **common_kwargs
+        )
+
+    DownloadBase.set_progress(build_form_multimedia_zip, num_forms, num_forms)

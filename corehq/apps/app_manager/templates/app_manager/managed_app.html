@@ -44,11 +44,7 @@
     <script>
         $(function () {
             $('.hq-help-template').each(function () {
-                COMMCAREHQ.makeHqHelp({
-                    content: $(this).data('content'),
-                    title: $(this).data('title'),
-                    trigger: 'hover'
-                }, false).insertAfter(this);
+                COMMCAREHQ.makeHqHelp($(this).data(), false).insertAfter(this);
                 $(this).remove();
             });
             $('.hq-help').hqHelp();
@@ -107,10 +103,12 @@
     {% endif %}
     <script>
         $(function () {
-            // this has to be done after bootstrap does it's magic
             setTimeout(function () {
                 // https://github.com/twitter/bootstrap/issues/6122
-                $('.collapse, .tab-content').hover(
+                // this is necessary to get popovers to be able to extend
+                // outside the borders of their containing div
+                $('.tab-content').css('overflow', 'visible');
+                $('.collapse').hover(
                         function () {
                             $(this).css('overflow','visible');
                         },
@@ -126,6 +124,7 @@
             gaTrackLink($('#edit_label'), 'App Builder', 'Open Form', 'Edit Label');
             {% for module in app.get_modules %}
                 {% for form in module.get_forms %}
+                    gaTrackLink($('#view_form_{{ module.id }}_{{ form.id }}_sidebar'), 'App Builder', 'View Form', 'Sidebar');
                     gaTrackLink($('#edit_pen_{{ module.id }}_{{ form.id }}'), 'App Builder', 'Open Form', 'Edit Pen');
                 {% endfor %}
             {% endfor %}
@@ -137,7 +136,9 @@
     {% if app %}
     <li>
         <span class="divider">&gt;</span>
-        <span class="app-manager-title variable-app_name">{{ app.name|html_name }}</span>
+        <a href="{% url "view_app" domain app.id %}">
+            <span class="app-manager-title variable-app_name">{{ app.name|html_name }}</span>
+        </a>
     </li>
     {% endif %}
 {% endblock %}
@@ -239,7 +240,7 @@
                                 {% for form in module.get_forms %}
                                     <li class="edit-form-li{% ifequal form selected_form %} active{% endifequal %}" data-moduleid="{{ module.id }}" data-index="{{ form.id }}">
                                         <!--[F]-->
-                                        <a href="{% url "view_form" domain app.id module.id form.id %}">
+                                        <a id="view_form_{{ module.id }}_{{ form.id }}_sidebar" href="{% url "view_form" domain app.id module.id form.id %}">
                                             <i class="drag_handle"></i>
                                             <span {% if form == selected_form %}class="variable-form_name"{% endif %}>
                                             {{ form.name|html_trans:langs }}
@@ -259,7 +260,7 @@
                                 <form action="{% url "corehq.apps.app_manager.views.new_form" domain app.id module.id %}"
                                       method="post" style="display: none">
                                 </form>
-                                {% if module.doc_type != 'CareplanModule' %}
+                                {% if module.doc_type != 'CareplanModule' and module.doc_type != 'ReportModule'%}
                                 <a class="submit_on_click" href="#">
                                     <i class="icon-plus icon-blue"></i>
                                     <span class="muted">{% trans "Form" %}</span>
@@ -289,13 +290,12 @@
                             {% if show_advanced %}
                             <li>
                                 <a href="#" class="new-module" data-type="advanced">
-                                    {% if app.commtrack_enabled %}
-                                        {% trans "New CommTrack Module" %}
-                                    {% else %}
-                                        {% trans "New Advanced Module" %}
-                                    {% endif %}
+                                    {% trans "New Advanced Module" %}
                                 </a>
                             </li>
+                            {% endif %}
+                            {% if request|toggle_enabled:'MOBILE_UCR' %}
+                                <li><a href="#" class="new-module" data-type="report">{% trans "New Report Module" %}</a></li>
                             {% endif %}
                         </ul>
                     </li>

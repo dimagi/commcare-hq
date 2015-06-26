@@ -1,9 +1,11 @@
+from datetime import datetime
 from corehq.apps.products.models import SQLProduct
+from dimagi.utils.dates import force_to_date
 import fluff
 import re
 import logging
-from corehq.apps.locations.models import Location
-from custom.intrahealth import get_location_by_type, PRODUCT_MAPPING, get_domain, PRODUCT_NAMES
+from custom.intrahealth import get_location_by_type, PRODUCT_MAPPING, get_domain, PRODUCT_NAMES, get_loc_from_case
+
 
 def form_date(form):
     return form.received_on
@@ -32,11 +34,16 @@ def get_product_code(product_name, domain):
                                               domain=domain).code
 
 
+def _locations_per_type(domain, loc_type, location):
+    return (location.sql_location.get_descendants(include_self=True)
+            .filter(domain=domain, location_type__name=loc_type).count())
+
+
 class PPSRegistered(fluff.Calculator):
     @fluff.date_emitter
     def total_for_region(self, form):
         loc = get_location_by_type(form=form, type=u'r\xe9gion')
-        count = Location.filter_by_type_count(form.domain, 'PPS', loc)
+        count = _locations_per_type(form.domain, 'PPS', loc)
         yield {
             'date': form_date(form),
             'value': count
@@ -45,7 +52,7 @@ class PPSRegistered(fluff.Calculator):
     @fluff.date_emitter
     def total_for_district(self, form):
         loc = get_location_by_type(form=form, type=u'district')
-        count = Location.filter_by_type_count(form.domain, 'PPS', loc)
+        count = _locations_per_type(form.domain, 'PPS', loc)
         yield {
             'date': form_date(form),
             'value': count
@@ -163,7 +170,7 @@ class RecapPassage(fluff.Calculator):
 
     @fluff.date_emitter
     def old_stock_total(self, form):
-        if 'num_products' in form.form and form.form['num_products'] > 1:
+        if 'num_products' in form.form and int(form.form['num_products']) > 1:
             for product in form.form['products']:
                 if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
                     val = numeric_value(product['old_stock_total'])
@@ -183,7 +190,7 @@ class RecapPassage(fluff.Calculator):
 
     @fluff.date_emitter
     def total_stock(self, form):
-        if 'num_products' in form.form and form.form['num_products'] > 1:
+        if 'num_products' in form.form and int(form.form['num_products']) > 1:
             for product in form.form['products']:
                 if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
                     val = numeric_value(product['total_stock'])
@@ -203,7 +210,7 @@ class RecapPassage(fluff.Calculator):
 
     @fluff.date_emitter
     def livraison(self, form):
-        if 'num_products' in form.form and form.form['num_products'] > 1:
+        if 'num_products' in form.form and int(form.form['num_products']) > 1:
             for product in form.form['products']:
                 if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
                     val = numeric_value(product['top_up']['transfer']['entry']['value']['@quantity'])
@@ -224,7 +231,7 @@ class RecapPassage(fluff.Calculator):
 
     @fluff.date_emitter
     def display_total_stock(self, form):
-        if 'num_products' in form.form and form.form['num_products'] > 1:
+        if 'num_products' in form.form and int(form.form['num_products']) > 1:
             for product in form.form['products']:
                 if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
                     val = numeric_value(product['display_total_stock'])
@@ -244,7 +251,7 @@ class RecapPassage(fluff.Calculator):
 
     @fluff.date_emitter
     def old_stock_pps(self, form):
-        if 'num_products' in form.form and form.form['num_products'] > 1:
+        if 'num_products' in form.form and int(form.form['num_products']) > 1:
             for product in form.form['products']:
                 if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
                     val = numeric_value(product['old_stock_pps'])
@@ -264,7 +271,7 @@ class RecapPassage(fluff.Calculator):
 
     @fluff.date_emitter
     def outside_receipts_amount(self, form):
-        if 'num_products' in form.form and form.form['num_products'] > 1:
+        if 'num_products' in form.form and int(form.form['num_products']) > 1:
             for product in form.form['products']:
                 if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
                     val = numeric_value(product['outside_receipts_amt'])
@@ -284,7 +291,7 @@ class RecapPassage(fluff.Calculator):
 
     @fluff.date_emitter
     def actual_consumption(self, form):
-        if 'num_products' in form.form and form.form['num_products'] > 1:
+        if 'num_products' in form.form and int(form.form['num_products']) > 1:
             for product in form.form['products']:
                 if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
                     val = numeric_value(product['actual_consumption'])
@@ -304,7 +311,7 @@ class RecapPassage(fluff.Calculator):
 
     @fluff.date_emitter
     def billed_consumption(self, form):
-        if 'num_products' in form.form and form.form['num_products'] > 1:
+        if 'num_products' in form.form and int(form.form['num_products']) > 1:
             for product in form.form['products']:
                 if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
                     val = numeric_value(product['billed_consumption'])
@@ -324,7 +331,7 @@ class RecapPassage(fluff.Calculator):
 
     @fluff.date_emitter
     def pps_restant(self, form):
-        if 'num_products' in form.form and form.form['num_products'] > 1:
+        if 'num_products' in form.form and int(form.form['num_products']) > 1:
             for product in form.form['products']:
                 if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
                     val = numeric_value(product['pps_stock'])
@@ -344,7 +351,7 @@ class RecapPassage(fluff.Calculator):
 
     @fluff.date_emitter
     def loss_amt(self, form):
-        if 'num_products' in form.form and form.form['num_products'] > 1:
+        if 'num_products' in form.form and int(form.form['num_products']) > 1:
             for product in form.form['products']:
                 if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product\
                         and product['loss_amt']:
@@ -362,6 +369,7 @@ class RecapPassage(fluff.Calculator):
                              get_product_code(form.form['products']['product_name'], get_domain(form))]
             }
 
+
 class DureeMoyenneLivraison(fluff.Calculator):
 
     @fluff.date_emitter
@@ -373,64 +381,79 @@ class DureeMoyenneLivraison(fluff.Calculator):
         }
 
 
+def check_prop(prop, case):
+    return case.get_case_property(prop) and case.get_case_property('date_du')
+
+
+def get_district_name(case):
+    return get_loc_from_case(case).name
+
+
+def get_date_du(case):
+    date = case.get_case_property('date_du')
+    if type(date) is not datetime:
+        return force_to_date(date)
+    return date
+
+
 class Recouvrement(fluff.Calculator):
 
     @fluff.date_emitter
-    def amount_to_pay(self, form):
-        if 'quantite_reale_a_payer' in form.form:
-            value = form.form['quantite_reale_a_payer']
+    def amount_to_pay(self, case):
+        if check_prop('quantite_reale_a_payer', case):
+            value = case.get_case_property('quantite_reale_a_payer')
 
             yield {
-                'date': form.form['date_du'],
-                'value': value,
-                'group_by': [form.form['district'],
-                             get_domain(form)]
+                'date': get_date_du(case),
+                'value': int(value),
+                'group_by': [get_district_name(case),
+                             case.get_case_property('domain')]
             }
 
     @fluff.date_emitter
-    def amount_paid(self, form):
-        if 'montant_payer' in form.form:
-            value = form.form['montant_paye']
+    def amount_paid(self, case):
+        if check_prop('montant_paye', case):
+            value = case.get_case_property('montant_paye')
 
             yield {
-                'date': form.form['date_du'],
-                'value': value,
-                'group_by': [form.form['district'],
-                             get_domain(form)]
+                'date': get_date_du(case),
+                'value': int(value),
+                'group_by': [get_district_name(case),
+                             case.get_case_property('domain')]
             }
 
     @fluff.date_emitter
-    def in_30_days(self, form):
-        if 'payee_trent_jour' in form.form:
-            value = form.form['payee_trent_jour']
+    def in_30_days(self, case):
+        if check_prop('payee_trent_jour', case):
+            value = case.get_case_property('payee_trent_jour')
 
             yield {
-                'date': form.form['date_du'],
-                'value': value,
-                'group_by': [form.form['district'],
-                             get_domain(form)]
+                'date': get_date_du(case),
+                'value': int(value),
+                'group_by': [get_district_name(case),
+                             case.get_case_property('domain')]
             }
 
     @fluff.date_emitter
-    def in_3_months(self, form):
-        if 'payee_trois_mois' in form.form:
-            value = form.form['payee_trois_mois']
+    def in_3_months(self, case):
+        if check_prop('payee_trois_mois', case):
+            value = case.get_case_property('payee_trois_mois')
 
             yield {
-                'date': form.form['date_du'],
-                'value': value,
-                'group_by': [form.form['district'],
-                             get_domain(form)]
+                'date': get_date_du(case),
+                'value': int(value),
+                'group_by': [get_district_name(case),
+                             case.get_case_property('domain')]
             }
 
     @fluff.date_emitter
-    def in_year(self, form):
-        if 'payee_un_an' in form.form:
-            value = form.form['payee_un_an']
+    def in_year(self, case):
+        if check_prop('payee_un_an', case):
+            value = case.get_case_property('payee_un_an')
 
             yield {
-                'date': form.form['date_du'],
-                'value': value,
-                'group_by': [form.form['district'],
-                             get_domain(form)]
+                'date': get_date_du(case),
+                'value': int(value),
+                'group_by': [get_district_name(case),
+                             case.get_case_property('domain')]
             }

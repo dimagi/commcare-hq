@@ -1,4 +1,4 @@
-from couchdbkit.ext.django.schema import Document, StringProperty, DecimalProperty
+from dimagi.ext.couchdbkit import Document, StringProperty, DecimalProperty
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 
 

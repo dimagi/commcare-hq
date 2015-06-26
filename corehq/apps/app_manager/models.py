@@ -24,7 +24,7 @@ from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
 from django.utils.translation import override, ugettext as _, ugettext
 from couchdbkit.exceptions import BadValueError, DocTypeError
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.http import Http404
@@ -36,6 +36,7 @@ from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import ServerTime
+from dimagi.utils.couch.bulk import get_docs
 from django_prbac.exceptions import PermissionDenied
 from corehq.apps.accounting.utils import domain_has_privilege
 
@@ -59,7 +60,7 @@ from corehq.apps.hqmedia.models import HQMediaMixin
 from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import cc_user_domain
-from corehq.apps.domain.models import cached_property
+from corehq.apps.domain.models import cached_property, Domain
 from corehq.apps.app_manager import current_builds, app_strings, remote_app
 from corehq.apps.app_manager import suite_xml, commcare_settings
 from corehq.apps.app_manager.util import (
@@ -67,7 +68,7 @@ from corehq.apps.app_manager.util import (
     save_xform,
     get_correct_app_class,
     ParentCasePropertyBuilder,
-    is_usercase_enabled)
+    is_usercase_in_use)
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
@@ -94,11 +95,6 @@ WORKFLOW_ROOT = 'root'
 WORKFLOW_MODULE = 'module'
 WORKFLOW_PREVIOUS = 'previous_screen'
 WORKFLOW_FORM = 'form'
-
-AUTO_SELECT_USER = 'user'
-AUTO_SELECT_FIXTURE = 'fixture'
-AUTO_SELECT_CASE = 'case'
-AUTO_SELECT_RAW = 'raw'
 
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 
@@ -314,6 +310,9 @@ class FormActions(DocumentSchema):
     case_preload = SchemaProperty(PreloadAction)
     referral_preload = SchemaProperty(PreloadAction)
 
+    usercase_update = SchemaProperty(UpdateCaseAction)
+    usercase_preload = SchemaProperty(PreloadAction)
+
     subcases = SchemaListProperty(OpenSubCaseAction)
 
     def all_property_names(self):
@@ -364,7 +363,11 @@ class AutoSelectCase(DocumentSchema):
                         xpath expression.
 
     """
-    mode = StringProperty(choices=[AUTO_SELECT_USER, AUTO_SELECT_FIXTURE, AUTO_SELECT_CASE, AUTO_SELECT_RAW])
+    mode = StringProperty(choices=[AUTO_SELECT_USER,
+                                   AUTO_SELECT_FIXTURE,
+                                   AUTO_SELECT_CASE,
+                                   AUTO_SELECT_USERCASE,
+                                   AUTO_SELECT_RAW])
     value_source = StringProperty()
     value_key = StringProperty(required=True)
 
@@ -375,7 +378,7 @@ class LoadUpdateAction(AdvancedAction):
     preload:            Value from the case to load into the form. Keys are question paths, values are case properties.
     auto_select:        Configuration for auto-selecting the case
     show_product_stock: If True list the product stock using the module's Product List configuration.
-    product_program:    Only show products for this CommTrack program.
+    product_program:    Only show products for this CommCare Supply program.
     """
     details_module = StringProperty()
     preload = DictProperty()
@@ -484,6 +487,7 @@ class AdvancedFormActions(DocumentSchema):
                 AUTO_SELECT_USER: [],
                 AUTO_SELECT_CASE: [],
                 AUTO_SELECT_FIXTURE: [],
+                AUTO_SELECT_USERCASE: [],
                 AUTO_SELECT_RAW: [],
             }
         }
@@ -831,9 +835,10 @@ class FormBase(DocumentSchema):
 
     def rename_xform_language(self, old_code, new_code):
         source = XForm(self.source)
-        source.rename_language(old_code, new_code)
-        source = source.render()
-        self.source = source
+        if source.exists():
+            source.rename_language(old_code, new_code)
+            source = source.render()
+            self.source = source
 
     def default_name(self):
         app = self.get_app()
@@ -1037,16 +1042,19 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
             if self.requires == 'none':
                 action_types = (
                     'open_case', 'update_case', 'close_case', 'subcases',
+                    'usercase_update', 'usercase_preload',
                 )
             elif self.requires == 'case':
                 action_types = (
                     'update_case', 'close_case', 'case_preload', 'subcases',
+                    'usercase_update', 'usercase_preload',
                 )
             else:
                 # this is left around for legacy migrated apps
                 action_types = (
                     'open_case', 'update_case', 'close_case',
                     'case_preload', 'subcases',
+                    'usercase_update', 'usercase_preload',
                 )
         return self._get_active_actions(action_types)
 
@@ -1132,11 +1140,14 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         return errors
 
     def get_case_updates(self, case_type):
-        if self.get_module().case_type == case_type:
+        # This method is used by both get_all_case_properties and
+        # get_usercase_properties. In the case of usercase properties, use
+        # the usercase_update action, and for normal cases, use the
+        # update_case action
+        if case_type == self.get_module().case_type or case_type == USERCASE_TYPE:
             format_key = self.get_case_property_name_formatter()
-            return [format_key(*item)
-                    for item in self.actions.update_case.update.items()]
-
+            action = self.actions.usercase_update if case_type == USERCASE_TYPE else self.actions.update_case
+            return [format_key(*item) for item in action.update.items()]
         return []
 
     @memoized
@@ -1392,7 +1403,24 @@ class SortOnlyDetailColumn(DetailColumn):
         raise NotImplementedError()
 
 
-class Detail(IndexedSchema):
+class CaseListLookupMixin(DocumentSchema):
+    """
+        Allows for the addition of Android Callouts to do lookups from the CaseList
+        <lookup action="" image="" name="">
+            <extra key="" value = "" />
+            <response key ="" />
+        </lookup>
+    """
+    lookup_enabled = BooleanProperty(default=False)
+    lookup_action = StringProperty()
+    lookup_name = StringProperty()
+    lookup_image = JRResourceProperty(required=False)
+
+    lookup_extras = SchemaListProperty()
+    lookup_responses = SchemaListProperty()
+
+
+class Detail(IndexedSchema, CaseListLookupMixin):
     """
     Full configuration for a case selection screen
 
@@ -1437,7 +1465,7 @@ class Detail(IndexedSchema):
             column.rename_lang(old_lang, new_lang)
 
 
-class CaseList(IndexedSchema):
+class CaseList(IndexedSchema, NavMenuItemMediaMixin):
 
     label = DictProperty()
     show = BooleanProperty(default=False)
@@ -1490,6 +1518,8 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
                 return CareplanModule.wrap(data)
             elif doc_type == 'AdvancedModule':
                 return AdvancedModule.wrap(data)
+            elif doc_type == 'ReportModule':
+                return ReportModule.wrap(data)
             else:
                 raise ValueError('Unexpected doc_type for Module', doc_type)
         else:
@@ -1628,6 +1658,21 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
                 child_case_types.update(form.get_child_case_types())
         return child_case_types
 
+    def get_custom_entries(self):
+        """
+        By default, suite entries are configured by forms, but you can also provide custom
+        entries by overriding this function.
+
+        See ReportModule for an example
+        """
+        return []
+
+    def uses_media(self):
+        """
+        Whether the module uses media. If this returns false then media will not be generated
+        for the module.
+        """
+        return True
 
 class Module(ModuleBase):
     """
@@ -1949,13 +1994,14 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             if isinstance(action, LoadUpdateAction) and action.auto_select:
                 mode = action.auto_select.mode
                 if not action.auto_select.value_key:
-                    key_name = {
+                    key_names = {
                         AUTO_SELECT_CASE: _('Case property'),
                         AUTO_SELECT_FIXTURE: _('Lookup Table field'),
                         AUTO_SELECT_USER: _('custom user property'),
                         AUTO_SELECT_RAW: _('custom XPath expression'),
-                    }[mode]
-                    errors.append({'type': 'auto select key', 'key_name': key_name})
+                    }
+                    if mode in key_names:
+                        errors.append({'type': 'auto select key', 'key_name': key_names[mode]})
 
                 if not action.auto_select.value_source:
                     source_names = {
@@ -2188,7 +2234,7 @@ class AdvancedModule(ModuleBase):
 
                 if from_module.parent_select.active:
                     app = self.get_app()
-                    gen = suite_xml.SuiteGenerator(app, is_usercase_enabled(app.domain))
+                    gen = suite_xml.SuiteGenerator(app, is_usercase_in_use(app.domain))
                     select_chain = gen.get_select_chain(from_module, include_self=False)
                     for n, link in enumerate(reversed(list(enumerate(select_chain)))):
                         i, module = link
@@ -2333,7 +2379,7 @@ class AdvancedModule(ModuleBase):
                         'expected_tag': case_tag
                     })
 
-                if case_action and case_action.details_module != self.unique_id:
+                if case_action and case_action.details_module and case_action.details_module != self.unique_id:
                     errors.append({
                         'type': 'forms in case list module must use modules details',
                         'module': info,
@@ -2538,7 +2584,7 @@ class CareplanModule(ModuleBase):
     task_details = SchemaProperty(DetailPair)
 
     @classmethod
-    def new_module(cls, app, name, lang, target_module_id, target_case_type):
+    def new_module(cls, name, lang, target_module_id, target_case_type):
         lang = lang or 'en'
         module = CareplanModule(
             name={lang: name or ugettext("Care Plan")},
@@ -2655,6 +2701,231 @@ class CareplanModule(ModuleBase):
                 'module': self.get_module_info(),
             })
         return errors
+
+
+class ReportAppConfig(DocumentSchema):
+    """
+    Class for configuring how a user configurable report shows up in an app
+    """
+    report_id = StringProperty(required=True)
+    header = DictProperty()
+
+    _report = None
+
+    @property
+    def report(self):
+        from corehq.apps.userreports.models import ReportConfiguration
+        if self._report is None:
+            self._report = ReportConfiguration.get(self.report_id)
+        return self._report
+
+    @property
+    def select_detail_id(self):
+        return 'reports.{}.select'.format(self.report_id)
+
+    @property
+    def summary_detail_id(self):
+        return 'reports.{}.summary'.format(self.report_id)
+
+    @property
+    def data_detail_id(self):
+        return 'reports.{}.data'.format(self.report_id)
+
+    def get_details(self):
+        yield (self.select_detail_id, self.select_details(), True)
+        yield (self.summary_detail_id, self.summary_details(), True)
+        yield (self.data_detail_id, self.data_details(), True)
+
+    def select_details(self):
+        return Detail(custom_xml=suite_xml.Detail(
+            id='reports.{}.select'.format(self.report_id),
+            title=suite_xml.Text(
+                locale=suite_xml.Locale(id=id_strings.report_menu()),
+            ),
+            fields=[
+                suite_xml.Field(
+                    header=suite_xml.Header(
+                        text=suite_xml.Text(
+                            locale=suite_xml.Locale(id=id_strings.report_name_header()),
+                        )
+                    ),
+                    template=suite_xml.Template(
+                        text=suite_xml.Text(
+                            xpath=suite_xml.Xpath(function='name'))
+                    ),
+                )
+            ]
+        ).serialize())
+
+    def summary_details(self):
+        def _get_graph_fields():
+            from corehq.apps.userreports.reports.specs import MultibarChartSpec
+            # todo: make this less hard-coded
+            for chart_config in self.report.charts:
+                if isinstance(chart_config, MultibarChartSpec):
+                    def _column_to_series(column):
+                        return suite_xml.Series(
+                            nodeset="instance('reports')/reports/report[@id='{}']/rows/row".format(self.report_id),
+                            x_function="column[@id='{}']".format(chart_config.x_axis_column),
+                            y_function="column[@id='{}']".format(column),
+                        )
+                    yield suite_xml.Field(
+                        header=suite_xml.Header(text=suite_xml.Text()),
+                        template=suite_xml.GraphTemplate(
+                            form='graph',
+                            graph=suite_xml.Graph(
+                                type='bar',
+                                series=[_column_to_series(c) for c in chart_config.y_axis_columns],
+                            )
+                        )
+                    )
+
+        return Detail(custom_xml=suite_xml.Detail(
+            id='reports.{}.summary'.format(self.report_id),
+            title=suite_xml.Text(
+                locale=suite_xml.Locale(id=id_strings.report_menu()),
+            ),
+            fields=[
+                suite_xml.Field(
+                    header=suite_xml.Header(
+                        text=suite_xml.Text(
+                            locale=suite_xml.Locale(id=id_strings.report_name_header()),
+                        )
+                    ),
+                    template=suite_xml.Template(
+                        text=suite_xml.Text(
+                            xpath=suite_xml.Xpath(function='name'))
+                    ),
+                ),
+                suite_xml.Field(
+                    header=suite_xml.Header(
+                        text=suite_xml.Text(
+                            locale=suite_xml.Locale(id=id_strings.report_description_header()),
+                        )
+                    ),
+                    template=suite_xml.Template(
+                        text=suite_xml.Text(
+                            xpath=suite_xml.Xpath(function='description'))
+                    ),
+                ),
+            ] + list(_get_graph_fields())
+        ).serialize())
+
+    def data_details(self):
+        def _column_to_field(column):
+            return suite_xml.Field(
+                header=suite_xml.Header(
+                    text=suite_xml.Text(
+                        locale=suite_xml.Locale(
+                            id=id_strings.report_column_header(self.report_id, column.column_id)
+                        ),
+                    )
+                ),
+                template=suite_xml.Template(
+                    text=suite_xml.Text(
+                        xpath=suite_xml.Xpath(function="column[@id='{}']".format(column.column_id)))
+                ),
+            )
+
+        return Detail(custom_xml=suite_xml.Detail(
+            id='reports.{}.data'.format(self.report_id),
+            title=suite_xml.Text(
+                locale=suite_xml.Locale(id=id_strings.report_name(self.report_id)),
+            ),
+            fields=[_column_to_field(c) for c in self.report.report_columns]
+        ).serialize())
+
+    def get_entry(self):
+        return suite_xml.Entry(
+            form='fixmeclayton',
+            command=suite_xml.Command(
+                id='reports.{}'.format(self.report_id),
+                text=suite_xml.Text(
+                    locale=suite_xml.Locale(id=id_strings.report_name(self.report_id)),
+                ),
+            ),
+            datums=[
+                suite_xml.SessionDatum(
+                    detail_confirm=self.summary_detail_id,
+                    detail_select=self.select_detail_id,
+                    id='report_id_{}'.format(self.report_id),
+                    nodeset="instance('reports')/reports/report[@id='{}']".format(self.report_id),
+                    value='./@id',
+                ),
+                # you are required to select something - even if you don't use it
+                suite_xml.SessionDatum(
+                    detail_select=self.data_detail_id,
+                    id='throwaway_{}'.format(self.report_id),
+                    nodeset="instance('reports')/reports/report[@id='{}']/rows/row".format(self.report_id),
+                    value="''",
+                )
+
+            ]
+        )
+
+
+class ReportModule(ModuleBase):
+    """
+    Module for user configurable reports
+    """
+
+    module_type = 'report'
+
+    report_configs = SchemaListProperty(ReportAppConfig)
+    forms = []
+    _loaded = False
+
+    @property
+    @memoized
+    def reports(self):
+        from corehq.apps.userreports.models import ReportConfiguration
+        return [
+            ReportConfiguration.wrap(doc) for doc in
+            get_docs(ReportConfiguration.get_db(), [r.report_id for r in self.report_configs])
+        ]
+
+    @classmethod
+    def new_module(cls, name, lang):
+        module = ReportModule(
+            name={(lang or 'en'): name or ugettext("Reports")},
+            case_type='',
+        )
+        module.get_or_create_unique_id()
+        return module
+
+    def _load_reports(self):
+        if not self._loaded:
+            # load reports in bulk to avoid hitting the database for each one
+            for i, report in enumerate(self.reports):
+                self.report_configs[i]._report = report
+        self._loaded = True
+
+    def get_details(self):
+        self._load_reports()
+        for config in self.report_configs:
+            for details in config.get_details():
+                yield details
+
+    def get_custom_entries(self):
+        self._load_reports()
+        for config in self.report_configs:
+            yield config.get_entry()
+
+    def get_menus(self):
+        yield suite_xml.Menu(
+            id=id_strings.menu_id(self),
+            text=suite_xml.Text(
+                locale=suite_xml.Locale(id=id_strings.module_locale(self))
+            ),
+            commands=[
+                suite_xml.Command(id=id_strings.report_command(config.report_id))
+                for config in self.report_configs
+            ]
+        )
+
+    def uses_media(self):
+        # for now no media support for ReportModules
+        return False
 
 
 class VersionedDoc(LazyAttachmentDoc):
@@ -3250,6 +3521,37 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                                          content_type="image/png")
             return png_data
 
+    def generate_shortened_url(self, url_type):
+        try:
+            if settings.BITLY_LOGIN:
+                view_name = 'corehq.apps.app_manager.views.{}'.format(url_type)
+                long_url = "{}{}".format(get_url_base(), reverse(view_name, args=[self.domain, self._id]))
+                shortened_url = bitly.shorten(long_url)
+            else:
+                shortened_url = None
+        except Exception:
+            logging.exception("Problem creating bitly url for app %s. Do you have network?" % self.get_id)
+        else:
+            return shortened_url
+
+    def get_short_url(self):
+        if not self.short_url:
+            self.short_url = self.generate_shortened_url('download_jad')
+            self.save()
+        return self.short_url
+
+    def get_short_odk_url(self, with_media=False):
+        if with_media:
+            if not self.short_odk_media_url:
+                self.short_odk_media_url = self.generate_shortened_url('download_odk_media_profile')
+                self.save()
+            return self.short_odk_media_url
+        else:
+            if not self.short_odk_url:
+                self.short_odk_url = self.generate_shortened_url('download_odk_profile')
+                self.save()
+            return self.short_odk_url
+
     def fetch_jar(self):
         return self.get_jadjar().fetch_jar()
 
@@ -3269,24 +3571,8 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             # I'm putting this assert here if copy._id is ever None
             # which makes tests error
             assert copy._id
-            if settings.BITLY_LOGIN:
-                copy.short_url = bitly.shorten(
-                    get_url_base() + reverse('corehq.apps.app_manager.views.download_jad', args=[copy.domain, copy._id])
-                )
-                copy.short_odk_url = bitly.shorten(
-                    get_url_base() + reverse('corehq.apps.app_manager.views.download_odk_profile', args=[copy.domain, copy._id])
-                )
-                copy.short_odk_media_url = bitly.shorten(
-                    get_url_base() + reverse('corehq.apps.app_manager.views.download_odk_media_profile', args=[copy.domain, copy._id])
-                )
         except AssertionError:
             raise
-        except Exception:  # URLError, BitlyError
-            # for offline only
-            logging.exception("Problem creating bitly url for app %s. Do you have network?" % self.get_id)
-            copy.short_url = None
-            copy.short_odk_url = None
-            copy.short_odk_media_url = None
 
         copy.build_comment = comment
         copy.comment_from = user_id
@@ -3323,8 +3609,18 @@ def validate_lang(lang):
 
 
 def validate_property(property):
+    """
+    Validate a case property name
+
+    >>> validate_property('parent/maternal-grandmother_fullName')
+    >>> validate_property('foo+bar')
+    Traceback (most recent call last):
+      ...
+    ValueError: Invalid Property
+
+    """
     # this regex is also copied in propertyList.ejs
-    if not re.match(r'^[a-zA-Z][\w_-]*([/:][a-zA-Z][\w_-]*)*$', property):
+    if not re.match(r'^[a-zA-Z][\w_-]*(/[a-zA-Z][\w_-]*)*$', property):
         raise ValueError("Invalid Property")
 
 
@@ -3382,9 +3678,16 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     cloudcare_enabled = BooleanProperty(default=False)
     translation_strategy = StringProperty(default='select-known',
                                           choices=app_strings.CHOICES.keys())
-    commtrack_enabled = BooleanProperty(default=False)
     commtrack_requisition_mode = StringProperty(choices=CT_REQUISITION_MODES)
     auto_gps_capture = BooleanProperty(default=False)
+
+    @property
+    @memoized
+    def commtrack_enabled(self):
+        if settings.UNIT_TESTING:
+            return False  # override with .tests.util.commtrack_enabled
+        domain_obj = Domain.get_by_name(self.domain) if self.domain else None
+        return domain_obj.commtrack_enabled if domain_obj else False
 
     @classmethod
     def wrap(cls, data):
@@ -3399,6 +3702,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     module['referral_label'][lang] = commcare_translations.load_translations(lang).get('cchq.referral', 'Referrals')
         if not data.get('build_langs'):
             data['build_langs'] = data['langs']
+        data.pop('commtrack_enabled', None)  # Remove me after migrating apps
         self = super(Application, cls).wrap(data)
 
         # make sure all form versions are None on working copies
@@ -3514,9 +3818,13 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         prev_multimedia_map = previous_version.multimedia_map if previous_version else {}
 
         for path, map_item in self.multimedia_map.iteritems():
-            pre_map_item = prev_multimedia_map.get(path, None)
-            if pre_map_item and pre_map_item.version and pre_map_item.multimedia_id == map_item.multimedia_id:
-                map_item.version = pre_map_item.version
+            prev_map_item = prev_multimedia_map.get(path, None)
+            if prev_map_item and prev_map_item.unique_id:
+                # Re-use the id so CommCare knows it's the same resource
+                map_item.unique_id = prev_map_item.unique_id
+            if (prev_map_item and prev_map_item.version
+                    and prev_map_item.multimedia_id == map_item.multimedia_id):
+                map_item.version = prev_map_item.version
             else:
                 map_item.version = self.version
 
@@ -3631,7 +3939,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 'langs': ["default"] + self.build_langs
             })
         else:
-            return suite_xml.SuiteGenerator(self, is_usercase_enabled(self.domain)).generate_suite()
+            return suite_xml.SuiteGenerator(self, is_usercase_in_use(self.domain)).generate_suite()
 
     def create_media_suite(self):
         return suite_xml.MediaSuiteGenerator(self).generate_suite()
@@ -3908,7 +4216,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @memoized
     def get_case_types(self):
-        return set(chain(*[m.get_case_types() for m in self.get_modules()]))
+        extra_types = set()
+        if is_usercase_in_use(self.domain):
+            extra_types.add(USERCASE_TYPE)
+        return set(chain(*[m.get_case_types() for m in self.get_modules()])) | extra_types
 
     def has_media(self):
         return len(self.multimedia_map) > 0
@@ -4147,7 +4458,7 @@ class RemoteApp(ApplicationBase):
         }
         tree = _parse_xml(files['profile.xml'])
 
-        def add_file_from_path(path, strict=False):
+        def add_file_from_path(path, strict=False, transform=None):
             added_files = []
             # must find at least one
             try:
@@ -4159,13 +4470,20 @@ class RemoteApp(ApplicationBase):
                     return
             for loc_node in tree.findall(path):
                 loc, file = self.fetch_file(loc_node.text)
+                if transform:
+                    file = transform(file)
                 files[loc] = file
                 added_files.append(file)
             return added_files
 
         add_file_from_path('features/users/logo')
         try:
-            suites = add_file_from_path(self.SUITE_XPATH, strict=True)
+            suites = add_file_from_path(
+                self.SUITE_XPATH,
+                strict=True,
+                transform=(lambda suite:
+                           remote_app.make_remote_suite(self, suite))
+            )
         except AppEditingError:
             raise AppEditingError(ugettext('Problem loading suite file from profile file. Is your profile file correct?'))
 

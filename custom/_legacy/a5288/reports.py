@@ -1,6 +1,7 @@
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 import pytz
+from corehq.apps.hqcase.dbaccessors import get_cases_in_domain
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
@@ -8,7 +9,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.sms.models import ExpectedCallbackEventLog, CALLBACK_PENDING, CALLBACK_RECEIVED, CALLBACK_MISSED
 from datetime import datetime, timedelta
 from corehq.util.timezones.conversions import ServerTime
-from dimagi.utils.parsing import json_format_datetime, json_format_date
+from dimagi.utils.parsing import json_format_date
 
 
 class MissedCallbackReport(CustomProjectReport, GenericTabularReport):
@@ -40,15 +41,10 @@ class MissedCallbackReport(CustomProjectReport, GenericTabularReport):
             group_ids = self.request.couch_user.get_group_ids()
             if len(group_ids) > 0:
                 group_id = group_ids[0]
-        
-        cases = CommCareCase.view("hqcase/types_by_domain",
-                                  key=[self.domain, "participant"],
-                                  reduce=False,
-                                  include_docs=True).all()
-        
+
         data = {}
-        
-        for case in cases:
+
+        for case in get_cases_in_domain(self.domain, type='participant'):
             if case.closed:
                 continue
 
@@ -67,8 +63,8 @@ class MissedCallbackReport(CustomProjectReport, GenericTabularReport):
         start_date = dates[0] - timedelta(days=1)
         end_date = dates[-1] + timedelta(days=2)
 
-        start_utc_timestamp = json_format_datetime(start_date)
-        end_utc_timestamp = json_format_datetime(end_date)
+        start_utc_timestamp = json_format_date(start_date)
+        end_utc_timestamp = json_format_date(end_date)
 
         expected_callback_events = ExpectedCallbackEventLog.view("sms/expected_callback_event",
                                                                  startkey=[self.domain, start_utc_timestamp],

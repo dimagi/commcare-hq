@@ -1,0 +1,65 @@
+{% extends "reports/partials/maps.html" %}
+{% load hq_shared_tags %}
+{% load report_tags %}
+{% load i18n %}
+
+{% block js-libs %}
+    {% if "print" in report.url_root %}
+        <script src="{% static 'hqstyle/js/jquery/jquery-1.7.1.min.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/lib/knockout-2.3.0.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/lib/underscore-1.4.4.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/lib/datatables-1.9/js/jquery.dataTables.min.js' %}"></script>
+        {% include "imports/datatables.html" %}
+        <script src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
+
+        <script>
+            setTimeout(function() {
+                $('#tabular_filter').remove();
+                $(".dataTables_control").remove()
+                window.print();
+           }, 1000);
+
+        </script>
+
+        <style>
+            body {
+                width: 297mm;
+            }
+            #map {
+                height: 15cm !important;
+                page-break-after: always;
+            }
+            tr {
+                page-break-inside: avoid;
+            }
+            small {
+                font-size: 1em !important;
+            }
+
+            @page {
+                size: A4 landscape;
+            }
+            @media print {
+                #report_table_health_status_map_processing {
+                    display: none;
+                }
+                .leaflet-top {
+                    display: none;
+                }
+            }
+        </style>
+    {% endif %}
+
+    {{ block.super }}
+{% endblock js-libs %}
+
+{% block content %}
+    <h2 class="media-heading">{{ report.report_title }}</h2>
+    <h4 class="media-heading">
+        {% for subtitle in report.report_subtitles %}
+        <br/><small>{{ subtitle }}</small>
+        {% endfor %}
+    </h4>
+    <table class="table table-striped datatable dataTable" id="tabular"></table>
+    <div class="row-fluid dataTables_control" style="height: 20px"></div>
+{% endblock content %}

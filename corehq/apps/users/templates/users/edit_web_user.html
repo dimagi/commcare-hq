@@ -60,11 +60,15 @@
         <form id="commtrack_form" class="form form-horizontal" name="" method="post">
             <input type="hidden" name="form_type" value="commtrack" />
             <fieldset>
-                <legend>{% trans 'CommTrack Settings' %}</legend>
+                {% if commtrack_enabled %}
+                    <legend>{% trans 'CommCare Supply Settings' %}</legend>
+                {% else %}
+                    <legend>{% trans 'Location Settings' %}</legend>
+                {% endif %}
                 {% include 'hqstyle/forms/basic_fieldset.html' with form=update_form %}
             </fieldset>
             <div class="form-actions">
-              <button type="submit" class="btn btn-primary">{% trans 'Update CommTrack Settings' %}</button>
+              <button type="submit" class="btn btn-primary">{% trans 'Update CommCare Supply Settings' %}</button>
             </div>
         </form>
     {% endif %}

@@ -7,9 +7,15 @@ import uuid
 from datetime import datetime, timedelta
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
-from casexml.apps.phone.restore import RestoreConfig
+from casexml.apps.phone.restore import RestoreConfig, RestoreParams
+from casexml.apps.phone.tests import run_with_all_restore_configs
 from casexml.apps.phone.tests.utils import synclog_id_from_restore_payload
+from corehq.apps.commtrack.dbaccessors import \
+    get_open_requisition_case_ids_for_location
+from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.commtrack.models import ConsumptionConfig, StockRestoreConfig, RequisitionCase, StockState
+from corehq.apps.domain.models import Domain
+from corehq.apps.hqcase.dbaccessors import get_cases_in_domain
 from corehq.apps.products.models import Product
 from corehq.apps.consumption.shortcuts import set_default_monthly_consumption_for_domain
 from couchforms.models import XFormInstance
@@ -19,7 +25,6 @@ from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.tests.util import CommTrackTest, get_ota_balance_xml, FIXED_USER, extract_balance_xml
 from casexml.apps.case.tests.util import check_xml_line_by_line, check_user_has_case
-from corehq.apps.hqcase.utils import get_cases_in_domain
 from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.apps.commtrack.tests.util import make_loc, make_supply_point
 from corehq.apps.commtrack.const import DAYS_IN_MONTH
@@ -48,10 +53,12 @@ class CommTrackOTATest(CommTrackTest):
         super(CommTrackOTATest, self).setUp()
         self.user = self.users[0]
 
+    @run_with_all_restore_configs
     def test_ota_blank_balances(self):
         user = self.user
-        self.assertFalse(get_ota_balance_xml(user))
+        self.assertFalse(get_ota_balance_xml(self.domain, user))
 
+    @run_with_all_restore_configs
     def test_ota_basic(self):
         user = self.user
         amounts = [(p._id, i*10) for i, p in enumerate(self.products)]
@@ -64,9 +71,10 @@ class CommTrackOTATest(CommTrackTest):
                 amounts,
                 datestring=json_format_datetime(report.date),
             ),
-            get_ota_balance_xml(user)[0],
+            get_ota_balance_xml(self.domain, user)[0],
         )
 
+    @run_with_all_restore_configs
     def test_ota_multiple_stocks(self):
         user = self.user
         date = datetime.utcnow()
@@ -78,7 +86,7 @@ class CommTrackOTATest(CommTrackTest):
         for section_id in section_ids:
             _report_soh(amounts, self.sp._id, section_id, report=report)
 
-        balance_blocks = get_ota_balance_xml(user)
+        balance_blocks = get_ota_balance_xml(self.domain, user)
         self.assertEqual(3, len(balance_blocks))
         for i, section_id in enumerate(section_ids):
             check_xml_line_by_line(
@@ -92,6 +100,7 @@ class CommTrackOTATest(CommTrackTest):
                 balance_blocks[i],
             )
 
+    @run_with_all_restore_configs
     def test_ota_consumption(self):
         self.ct_settings.consumption_config = ConsumptionConfig(
             min_transactions=0,
@@ -102,10 +111,11 @@ class CommTrackOTATest(CommTrackTest):
             section_to_consumption_types={'stock': 'consumption'}
         )
         set_default_monthly_consumption_for_domain(self.domain.name, 5 * DAYS_IN_MONTH)
+        self._save_settings_and_clear_cache()
 
         amounts = [(p._id, i*10) for i, p in enumerate(self.products)]
         report = _report_soh(amounts, self.sp._id, 'stock')
-        balance_blocks = _get_ota_balance_blocks(self.ct_settings, self.user)
+        balance_blocks = _get_ota_balance_blocks(self.domain, self.user)
         self.assertEqual(2, len(balance_blocks))
         stock_block, consumption_block = balance_blocks
         check_xml_line_by_line(
@@ -129,6 +139,7 @@ class CommTrackOTATest(CommTrackTest):
              consumption_block,
         )
 
+    @run_with_all_restore_configs
     def test_force_consumption(self):
         self.ct_settings.consumption_config = ConsumptionConfig(
             min_transactions=0,
@@ -139,22 +150,32 @@ class CommTrackOTATest(CommTrackTest):
             section_to_consumption_types={'stock': 'consumption'},
         )
         set_default_monthly_consumption_for_domain(self.domain.name, 5)
+        self._save_settings_and_clear_cache()
 
-        balance_blocks = _get_ota_balance_blocks(self.ct_settings, self.user)
+        balance_blocks = _get_ota_balance_blocks(self.domain, self.user)
         self.assertEqual(0, len(balance_blocks))
 
-        # self.ct_settings.ota_restore_config.use_dynamic_product_list = True
         self.ct_settings.ota_restore_config.force_consumption_case_types = [const.SUPPLY_POINT_CASE_TYPE]
-        balance_blocks = _get_ota_balance_blocks(self.ct_settings, self.user)
+        self._save_settings_and_clear_cache()
+
+        balance_blocks = _get_ota_balance_blocks(self.domain, self.user)
         # with no data, there should be no consumption block
         self.assertEqual(0, len(balance_blocks))
 
         self.ct_settings.ota_restore_config.use_dynamic_product_list = True
-        balance_blocks = _get_ota_balance_blocks(self.ct_settings, self.user)
+        self._save_settings_and_clear_cache()
+
+        balance_blocks = _get_ota_balance_blocks(self.domain, self.user)
         self.assertEqual(1, len(balance_blocks))
         [balance_block] = balance_blocks
         element = etree.fromstring(balance_block)
         self.assertEqual(3, len([child for child in element]))
+
+    def _save_settings_and_clear_cache(self):
+        # since the commtrack settings object is stored as a memoized property on the domain
+        # we need to refresh that as well
+        self.ct_settings.save()
+        self.domain = Domain.get(self.domain._id)
 
 
 class CommTrackSubmissionTest(CommTrackTest):
@@ -339,9 +360,16 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         for product in self.products:
             self.check_product_stock(self.sp, product._id, 100, 0)
 
+    def test_blank_product_id(self):
+        initial = float(100)
+        balances = [('', initial)]
+        with self.assertRaises(MissingProductId):
+            # todo: if we ever want to fail more gracefully we can catch this exception and change this test
+            self.submit_xml_form(balance_submission(balances))
 
 
 class BugSubmissionsTest(CommTrackSubmissionTest):
+
     def test_device_report_submissions_ignored(self):
         """
         submit a device report with a stock block and make sure it doesn't
@@ -405,10 +433,8 @@ class CommTrackRequisitionTest(CommTrackSubmissionTest):
         # TODO: these types of tests probably belong elsewhere
         self.assertEqual(req.get_next_action().keyword, 'fulfill')
         self.assertEqual(req.get_location()._id, self.sp.location._id)
-        self.assertEqual(len(RequisitionCase.open_for_location(
-            self.domain.name,
-            self.sp.location._id
-        )), 1)
+        self.assertEqual(len(get_open_requisition_case_ids_for_location(
+            self.sp.location)), 1)
         self.assertEqual(
             get_notification_message(
                 req.get_next_action(),
@@ -454,10 +480,8 @@ class CommTrackRequisitionTest(CommTrackSubmissionTest):
 
         self.assertEqual(req.requisition_status, 'received')
         self.assertIsNone(req.get_next_action())
-        self.assertEqual(len(RequisitionCase.open_for_location(
-            self.domain.name,
-            self.sp.location._id
-        )), 0)
+        self.assertEqual(len(get_open_requisition_case_ids_for_location(
+            self.sp.location)), 0)
 
         for product, amt in amounts:
             self.check_stock_models(req, product, 0, -amt, 'stock')
@@ -489,9 +513,9 @@ class CommTrackSyncTest(CommTrackSubmissionTest):
 
         # get initial restore token
         restore_config = RestoreConfig(
-            self.casexml_user,
-            version=V2,
-            stock_settings=self.ota_settings,
+            project=self.domain,
+            user=self.casexml_user,
+            params=RestoreParams(version=V2),
         )
         self.sync_log_id = synclog_id_from_restore_payload(restore_config.get_payload().as_string())
 
@@ -598,11 +622,11 @@ def _report_soh(amounts, case_id, section_id='stock', report=None):
         )
     return report
 
-def _get_ota_balance_blocks(ct_settings, user):
-    ota_settings = ct_settings.get_ota_restore_settings()
+
+def _get_ota_balance_blocks(project, user):
     restore_config = RestoreConfig(
-        user.to_casexml_user(),
-        version=V2,
-        stock_settings=ota_settings,
+        project=project,
+        user=user.to_casexml_user(),
+        params=RestoreParams(version=V2),
     )
     return extract_balance_xml(restore_config.get_payload().as_string())

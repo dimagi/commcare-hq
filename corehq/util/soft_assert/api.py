@@ -1,30 +1,18 @@
 from django.core.mail import mail_admins, send_mail
-from django.core.cache import cache
+from corehq.util.global_request import get_request
 from corehq.util.soft_assert.core import SoftAssert
 import settings
-
-
-def _number_is_power_of_two(x):
-    # it turns out that x & (x - 1) == 0 if and only if x is a power of two
-    # http://stackoverflow.com/a/600306/240553
-    return x > 0 and (x & (x - 1) == 0)
-
-
-def _django_caching_counter(key):
-    cache_key = 'django-soft-assert.{}'.format(key)
-    try:
-        return cache.incr(cache_key)
-    except ValueError:
-        cache.set(cache_key, 1)
-        return 1
 
 
 def _send_message(info, backend):
     backend(
         subject='Soft Assert: [{}] {}'.format(info.key[:8], info.msg),
         message=('Message: {info.msg}\n'
+                 'Value: {info.obj!r}\n'
                  'Traceback:\n{info.traceback}\n'
-                 'Occurrences to date: {info.count}\n').format(info=info)
+                 'Request:\n{request}\n'
+                 'Occurrences to date: {info.count}\n').format(
+                info=info, request=get_request())
     )
 
 
@@ -34,7 +22,7 @@ def soft_assert(to, notify_admins=False,
     send an email with stack trace if assertion is not True
 
     Parameters:
-    - to: List of email addresses that should receive the email
+    - to: Email address or list of email addresses that should receive the email
     - notify_admins: Send to all admins (using mail_admins) as well
     - fail_if_debug: if True, will fail hard (like a normal assert)
       if called in a developer environment (settings.DEBUG = True).
@@ -96,15 +84,9 @@ def soft_assert(to, notify_admins=False,
     else:
         debug = False
 
-    if exponential_backoff:
-        should_send = _number_is_power_of_two
-    else:
-        should_send = lambda count: True
-
     return SoftAssert(
         debug=debug,
         send=send,
-        incrementing_counter=_django_caching_counter,
-        should_send=should_send,
+        use_exponential_backoff=exponential_backoff,
         skip_frames=skip_frames,
     )

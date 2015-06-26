@@ -138,7 +138,8 @@ def get_transactions(case_id, product_id, section_id, window_start, window_end):
     SimpleTransaction = collections.namedtuple('SimpleTransaction', ['action', 'value', 'received_on'])
 
     def _to_consumption_tx(txn):
-        if txn.type in (const.TRANSACTION_TYPE_STOCKONHAND, const.TRANSACTION_TYPE_STOCKOUT):
+        if txn.type in (const.TRANSACTION_TYPE_STOCKONHAND, const.TRANSACTION_TYPE_STOCKOUT,
+                        const.TRANSACTION_TYPE_LA):
             value = txn.stock_on_hand
         else:
             assert txn.type in (const.TRANSACTION_TYPE_RECEIPTS, const.TRANSACTION_TYPE_CONSUMPTION)

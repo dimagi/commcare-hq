@@ -107,6 +107,40 @@
             });
 
             $('#autofill').click(autofillProperties);
+
+            function validateSubmitButton() {
+                var invalidFields = $('.excel_field option:selected')
+                                      .filter(function(k, v) { 
+                                          return /\s+/.test(v.value.trim());
+                                      }).length;
+                $('.form-actions [type=submit]').prop('disabled', invalidFields > 0);
+            }
+
+            function populateRowErrors(tr) {
+                var field = tr.find('.excel_field'), selected;
+
+                if (field.length === 0) { return; }
+
+                selected = field.val().trim();
+                if (/\s+/.test(selected)) {
+                    tr.addClass('error');
+                    tr.find('.errorMsg')
+                      .text('{% trans "This column contains a whitespace character" %}')
+                } else {
+                    tr.removeClass('error');
+                    tr.find('.errorMsg').text('');
+                }
+            }
+
+            $('.excel_field').change(function(e) {
+                populateRowErrors($(this).closest('tr'));
+                validateSubmitButton();
+            });
+
+            $('tr').each(function(k, tr) {
+                populateRowErrors($(tr));
+            });
+            validateSubmitButton();
         });
     </script>
 {% endblock %}
@@ -134,6 +168,7 @@
                     <th>{% trans "Data Type" %}</th>
                     <th></th>
                     <th>{% trans "Case Property" %}<button type="button" class="btn btn-primary pull-right" id="autofill">{% trans "Auto Fill" %}</button></th>
+                    <th></th>
                     <th></th>
                 </thead>
                 <tbody>

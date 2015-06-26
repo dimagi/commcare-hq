@@ -15,8 +15,8 @@ from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.products.models import Product
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.util import clean_phone_number
+from corehq.apps.locations.dbaccessors import get_users_by_location_id
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.models import CommCareUser
 from custom.common import ALL_OPTION
 from custom.ewsghana.alerts.alerts import on_going_process_user, on_going_stockout_process_user, \
     urgent_non_reporting_process_user, urgent_stockout_process_user, report_reminder_process_user
@@ -27,11 +27,12 @@ from custom.ewsghana.reminders.reminders import first_soh_process_user, second_s
     third_soh_process_users_and_facilities, stockout_process_user, rrirv_process_user, visit_website_process_user
 from custom.ewsghana.reports.specific_reports.stock_status_report import StockoutsProduct
 from custom.ewsghana.reports.stock_levels_report import InventoryManagementData, StockLevelsReport
+from custom.ewsghana.stock_data import EWSStockDataSynchronization
 from custom.ewsghana.tasks import ews_bootstrap_domain_task, ews_clear_stock_data_task, \
-    EWS_FACILITIES
+    delete_last_migrated_stock_data
 from custom.ewsghana.utils import make_url, has_input_stock_permissions
 from custom.ilsgateway.views import GlobalStats
-from custom.logistics.tasks import sms_users_fix, add_products_to_loc, locations_fix, sync_stock_transactions
+from custom.logistics.tasks import add_products_to_loc, locations_fix, resync_web_users
 from custom.logistics.tasks import stock_data_task
 from custom.logistics.views import BaseConfigView, BaseRemindersTester
 from dimagi.utils.dates import force_to_datetime
@@ -88,7 +89,7 @@ class RemindersTester(BaseRemindersTester):
                 reminder_function = self.reminders.get(reminder)
                 if reminder_function:
                     if reminder == 'third_soh':
-                        reminder_function([user], [user.location.sql_location], test=True)
+                        reminder_function([user], [user.sql_location], test=True)
                     else:
                         reminder_function(user, test=True)
         messages.success(request, "Reminder was sent successfully")
@@ -209,29 +210,26 @@ def sync_ewsghana(request, domain):
 @domain_admin_required
 @require_POST
 def ews_sync_stock_data(request, domain):
-    apis = (
-        ('stock_transaction', sync_stock_transactions),
-    )
     config = EWSGhanaConfig.for_domain(domain)
     domain = config.domain
     endpoint = GhanaEndpoint.from_config(config)
-    stock_data_task.delay(domain, endpoint, apis, config, EWS_FACILITIES)
+    stock_data_task.delay(EWSStockDataSynchronization(domain, endpoint))
     return HttpResponse('OK')
 
 
 @domain_admin_required
 @require_POST
 def ews_clear_stock_data(request, domain):
-    ews_clear_stock_data_task.delay()
+    ews_clear_stock_data_task.delay(domain)
     return HttpResponse('OK')
 
 
 @domain_admin_required
 @require_POST
-def ews_fix_sms_users(request, domain):
+def ews_resync_web_users(request, domain):
     config = EWSGhanaConfig.for_domain(domain)
     endpoint = GhanaEndpoint.from_config(config)
-    sms_users_fix.delay(EWSApi(domain=domain, endpoint=endpoint))
+    resync_web_users.delay(EWSApi(domain=domain, endpoint=endpoint))
     return HttpResponse('OK')
 
 
@@ -258,6 +256,13 @@ def clear_products(request, domain):
     for loc in locations:
         loc.products = []
         loc.save()
+    return HttpResponse('OK')
+
+
+@domain_admin_required
+@require_POST
+def delete_last_stock_data(request, domain):
+    delete_last_migrated_stock_data.delay(domain)
     return HttpResponse('OK')
 
 
@@ -299,12 +304,7 @@ def stockouts_product(request, domain):
 def configure_in_charge(request, domain):
     in_charge_ids = request.POST.getlist('users[]')
     location_id = request.POST.get('location_id')
-    all_users = CommCareUser.view(
-        'locations/users_by_location_id',
-        startkey=[location_id],
-        endkey=[location_id, {}],
-        include_docs=True
-    ).all()
+    all_users = get_users_by_location_id(location_id)
 
     for u in all_users:
         if (u.user_data.get('role') == 'In Charge') != (u._id in in_charge_ids):

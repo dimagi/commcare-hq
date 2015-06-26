@@ -415,3 +415,28 @@ class SoftwarePlanAsyncHandler(BaseSingleOptionFilterAsyncHandler):
     def name_response(self):
         return [self._fmt_select2_data(p.name, p.name)
                 for p in self.paginated_data]
+
+
+class DomainFilterAsyncHandler(BaseSingleOptionFilterAsyncHandler):
+    slug = 'domain_filter'
+    allowed_actions = [
+        'domain_name',
+    ]
+
+    @property
+    def query(self):
+        db = Domain.get_db()
+        startkey = self.search_string
+        endkey = "{}Z".format(self.search_string) if startkey else ''
+        query = db.view(
+            'domain/domains',
+            reduce=False,
+            startkey=startkey,
+            endkey=endkey,
+            limit=20,
+        )
+        return query
+
+    @property
+    def domain_name_response(self):
+        return [self._fmt_select2_data(p['key'], p['key']) for p in self.paginated_data]

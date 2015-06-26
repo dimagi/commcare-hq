@@ -2,7 +2,7 @@ from dateutil import rrule
 from django.db.models.aggregates import Avg
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from custom.ilsgateway.filters import MSDZoneFilter, MonthAndQuarterFilter, ProgramFilter
+from custom.ilsgateway.filters import ProgramFilter, ILSDateFilter
 from custom.ilsgateway.tanzania import ILSData, DetailsReport
 from custom.ilsgateway.tanzania.reports.facility_details import FacilityDetailsReport, InventoryHistoryData, \
     RegistrationData, RandRHistory, Notes, RecentMessages
@@ -12,7 +12,6 @@ from custom.ilsgateway.tanzania.reports.utils import make_url, link_format, late
     get_this_lead_time, get_avg_lead_time
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
-from corehq.apps.reports.filters.select import YearFilter
 from django.utils.translation import ugettext as _
 
 
@@ -31,15 +30,14 @@ class LeadTimeHistory(ILSData):
 
     @property
     def rows(self):
-        locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'],
-                                               site_code__icontains=self.config['msd_code'])
+        locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'])
         rows = []
         for loc in locations:
             try:
-                org_summary = OrganizationSummary.objects.filter(supply_point=loc.location_id,
-                                                                 date__range=(self.config['startdate'],
-                                                                              self.config['enddate']))\
-                    .aggregate(average_lead_time_in_days=Avg('average_lead_time_in_days'))
+                org_summary = OrganizationSummary.objects.filter(
+                    location_id=loc.location_id,
+                    date__range=(self.config['startdate'], self.config['enddate'])
+                ).aggregate(average_lead_time_in_days=Avg('average_lead_time_in_days'))
             except OrganizationSummary.DoesNotExist:
                 continue
 
@@ -51,9 +49,11 @@ class LeadTimeHistory(ILSData):
                 avg_lead_time = "None"
 
             url = make_url(DeliveryReport, self.config['domain'],
-                           '?location_id=%s&month=%s&year=%s&filter_by_program=%s&msd=%s',
-                           (loc.location_id, self.config['month'], self.config['year'],
-                           self.config['program'], self.config['msd_code']))
+                           '?location_id=%s&filter_by_program=%s&'
+                           'datespan_type=%s&datespan_first=%s&datespan_second=%s',
+                           (loc.location_id,
+                            self.config['program'], self.config['datespan_type'],
+                            self.config['datespan_first'], self.config['datespan_second']))
 
             rows.append([link_format(loc.name, url), avg_lead_time])
         return rows
@@ -68,9 +68,10 @@ class DeliveryStatus(ILSData):
         super(DeliveryStatus, self).__init__(config, css_class)
         self.config = config or {}
         self.css_class = css_class
-        month = self.config.get('month')
-        if month:
-            self.title = "Delivery Status: Group " + DeliveryGroups(int(month)).current_delivering_group()
+        datespan_type = self.config.get('datespan_type')
+        if datespan_type == 1:
+            self.title = "Delivery Status: Group %s" %\
+                         DeliveryGroups(int(self.config['datespan_first'])).current_delivering_group()
         else:
             self.title = "Delivery Status"
 
@@ -88,8 +89,7 @@ class DeliveryStatus(ILSData):
     @property
     def rows(self):
         rows = []
-        locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'],
-                                               site_code__icontains=self.config['msd_code'])
+        locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'])
         dg = []
         for date in list(rrule.rrule(rrule.MONTHLY, dtstart=self.config['startdate'],
                                      until=self.config['enddate'])):
@@ -106,9 +106,11 @@ class DeliveryStatus(ILSData):
             status_date = latest.status_date.strftime("%d-%m-%Y") if latest else "None"
 
             url = make_url(FacilityDetailsReport, self.config['domain'],
-                           '?location_id=%s&month=%s&year=%s&filter_by_program=%s&msd=%s',
-                           (self.config['location_id'], self.config['month'], self.config['year'],
-                           self.config['program'], self.config['msd_code']))
+                           '?location_id=%s&filter_by_program=%s&'
+                           'datespan_type=%s&datespan_first=%s&datespan_second=%s',
+                           (self.config['location_id'],
+                            self.config['program'], self.config['datespan_type'],
+                            self.config['datespan_first'], self.config['datespan_second']))
 
             cycle_lead_time = get_this_lead_time(
                 child.location_id,
@@ -176,7 +178,7 @@ class DeliveryReport(DetailsReport):
 
     @property
     def fields(self):
-        fields = [AsyncLocationFilter, MonthAndQuarterFilter, YearFilter, ProgramFilter, MSDZoneFilter]
+        fields = [AsyncLocationFilter, ILSDateFilter, ProgramFilter]
         if self.location and self.location.location_type.name.upper() == 'FACILITY':
             fields = []
         return fields
@@ -190,7 +192,7 @@ class DeliveryReport(DetailsReport):
         config = self.report_config
         if config['location_id']:
             location = SQLLocation.objects.get(location_id=config['location_id'])
-            if location.location_type.name.upper() in ['REGION', 'MOHSW']:
+            if location.location_type.name.upper() in ['REGION', 'MSDZONE', 'MOHSW']:
                 data_providers.append(DeliveryData(config=config, css_class='row_chart_all'))
                 data_providers.append(LeadTimeHistory(config=config, css_class='row_chart_all'))
             elif location.location_type.name.upper() == 'FACILITY':

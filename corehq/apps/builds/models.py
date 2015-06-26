@@ -2,7 +2,7 @@ from datetime import datetime
 from zipfile import ZipFile
 from corehq.apps.app_manager.const import APP_V1, APP_V2
 from couchdbkit.exceptions import ResourceNotFound, BadValueError
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 from corehq.apps.builds.fixtures import commcare_build_config
 from corehq.apps.builds.jadjar import JadJar
 from corehq.util.quickcache import quickcache

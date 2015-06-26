@@ -28,6 +28,8 @@ LESS_WATCH = False
 # "dev-min" - use built/minified vellum (submodules/formdesigner/_build/src)
 VELLUM_DEBUG = None
 
+# gets set to False for unit tests that run without the database
+DB_ENABLED = True
 try:
     UNIT_TESTING = 'test' == sys.argv[1]
 except IndexError:
@@ -127,6 +129,7 @@ MIDDLEWARE_CLASSES = [
     'corehq.util.global_request.middleware.GlobalRequestMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
     'corehq.apps.domain.middleware.CCHQPRBACMiddleware',
+    'corehq.apps.domain.middleware.DomainHistoryMiddleware',
     'casexml.apps.phone.middleware.SyncTokenMiddleware',
     'auditcare.middleware.AuditMiddleware',
     'no_exceptions.middleware.NoExceptionsMiddleware',
@@ -187,6 +190,7 @@ DEFAULT_APPS = (
     'raven.contrib.django.raven_compat',
     'compressor',
     'mptt',
+    'tastypie',
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap'
@@ -202,6 +206,7 @@ HQ_APPS = (
     'auditcare',
     'hqscripts',
     'casexml.apps.case',
+    'corehq.apps.casegroups',
     'casexml.apps.phone',
     'casexml.apps.stock',
     'corehq.apps.cleanup',
@@ -222,6 +227,7 @@ HQ_APPS = (
     'corehq.apps.programs',
     'corehq.apps.commtrack',
     'corehq.apps.consumption',
+    'corehq.apps.tzmigration',
     'couchforms',
     'couchexport',
     'couchlog',
@@ -231,6 +237,7 @@ HQ_APPS = (
     'formtranslate',
     'langcodes',
     'corehq.apps.adm',
+    'corehq.apps.analytics',
     'corehq.apps.announcements',
     'corehq.apps.callcenter',
     'corehq.apps.crud',
@@ -290,27 +297,23 @@ HQ_APPS = (
     'corehq.apps.styleguide',
     'corehq.apps.grapevine',
     'corehq.apps.dashboard',
-    'corehq.apps.public',
     'corehq.util',
+    'dimagi.ext',
 
     # custom reports
     'a5288',
     'custom.bihar',
     'custom.penn_state',
-    'dca',
     'custom.apps.gsid',
     'hsph',
     'mvp',
     'mvp_docs',
     'mvp_indicators',
     'custom.opm',
-    'pathfinder',
     'pathindia',
     'pact',
-    'psi',
 
     'custom.apps.care_benin',
-    'custom.reports.care_sa',
     'custom.apps.cvsu',
     'custom.reports.mc',
     'custom.apps.crs_reports',
@@ -369,10 +372,9 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'south',
     'custom.apps.crs_reports',
     'custom.m4change',
-    'custom.succeed'
 
     # submodules with tests that run on travis
-    'couchexport',
+    # 'couchexport',
     'ctable',
     'ctable_view',
     'dimagi.utils',
@@ -400,7 +402,7 @@ DOMAIN_SELECT_URL = "/domain/select/"
 # This is not used by anything in CommCare HQ, leaving it here in case anything
 # in Django unexpectedly breaks without it.  When you need the login url, you
 # should use reverse('login', kwargs={'domain_type': domain_type}) in order to
-# maintain CommCare HQ/CommTrack distinction.
+# maintain CommCare HQ/CommCare Supply distinction.
 LOGIN_URL = "/accounts/login/"
 # If a user tries to access domain admin pages but isn't a domain
 # administrator, here's where he/she is redirected
@@ -448,7 +450,6 @@ EMAIL_SMTP_PORT = 587
 EMAIL_USE_TLS = True
 SEND_BROKEN_LINK_EMAILS = True
 
-
 # put email addresses here to have them receive bug reports
 BUG_REPORT_RECIPIENTS = ()
 EXCHANGE_NOTIFICATION_RECIPIENTS = []
@@ -459,7 +460,9 @@ DEFAULT_FROM_EMAIL = 'commcarehq-noreply@dimagi.com'
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@dimagi.com'
 ACCOUNTS_EMAIL = 'accounts@dimagi.com'
+FINANCE_EMAIL = 'finance@dimagi.com'
 SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange@dimagi.com'
+INTERNAL_SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange+internal@dimagi.com'
 BILLING_EMAIL = 'billing-comm@dimagi.com'
 INVOICING_CONTACT_EMAIL = SUPPORT_EMAIL
 MASTER_LIST_EMAIL = 'master-list@dimagi.com'
@@ -486,6 +489,7 @@ FIXTURE_GENERATORS = {
         "corehq.apps.callcenter.fixturegenerators.indicators_fixture_generator",
         "corehq.apps.products.fixtures.product_fixture_generator",
         "corehq.apps.programs.fixtures.program_fixture_generator",
+        "corehq.apps.userreports.fixtures.report_fixture_generator",
         # custom
         "custom.bihar.reports.indicators.fixtures.generator",
         "custom.m4change.fixtures.report_fixtures.generator",
@@ -497,7 +501,21 @@ FIXTURE_GENERATORS = {
     ]
 }
 
-RESTORE_PAYLOAD_DIR = None  # Defaults to tempfile.gettempdir()
+### Shared drive settings ###
+# Also see section after localsettings import
+SHARED_DRIVE_ROOT = None
+
+# name of the directory within SHARED_DRIVE_ROOT
+RESTORE_PAYLOAD_DIR_NAME = None
+
+# name of the directory within SHARED_DRIVE_ROOT
+SHARED_TEMP_DIR_NAME = None
+
+## django-transfer settings
+# These settings must match the apache / nginx config
+TRANSFER_SERVER = None  # 'apache' or 'nginx'
+# name of the directory within SHARED_DRIVE_ROOT
+TRANSFER_FILE_DIR_NAME = None
 
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
 
@@ -663,6 +681,7 @@ AUDIT_MODEL_SAVE = [
 
 AUDIT_VIEWS = [
     'corehq.apps.settings.views.ChangeMyPasswordView',
+    'corehq.apps.hqadmin.views.AuthenticateAs',
 ]
 
 AUDIT_MODULES = [
@@ -677,7 +696,13 @@ ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_ID': '',
     'PINGDOM_ID': '',
     'ANALYTICS_ID_PUBLIC_COMMCARE': '',
-    'SEGMENT_ANALYTICS_KEY': '',
+    'KISSMETRICS_KEY': '',
+    'HUBSPOT_API_KEY': '',
+    'HUBSPOT_ID': '',
+}
+
+ANALYTICS_CONFIG = {
+    "HQ_INSTANCE": '',  # e.g. "www" or "staging"
 }
 
 OPEN_EXCHANGE_RATES_ID = ''
@@ -694,6 +719,12 @@ LOCAL_APPS = ()
 LOCAL_COUCHDB_APPS = ()
 LOCAL_MIDDLEWARE_CLASSES = ()
 LOCAL_PILLOWTOPS = {}
+
+# Prelogin site
+ENABLE_PRELOGIN_SITE = False
+PRELOGIN_APPS = (
+    'corehq.apps.prelogin',
+)
 
 # If there are existing doc_ids and case_ids you want to check directly,
 # they are referenced in your localsettings for more accurate direct checks,
@@ -805,6 +836,9 @@ LOGGING = {
             'level': 'ERROR',
             'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
         },
+        'null': {
+            'class': 'django.utils.log.NullHandler',
+        },
     },
     'loggers': {
         '': {
@@ -816,6 +850,10 @@ LOGGING = {
             'handlers': ['mail_admins'],
             'level': 'ERROR',
             'propagate': True,
+        },
+        'django.security.DisallowedHost': {
+            'handlers': ['null'],
+            'propagate': False,
         },
         'notify': {
             'handlers': ['mail_admins'],
@@ -904,6 +942,15 @@ try:
         from settings_demo import *
     else:
         from localsettings import *
+        if globals().get("FIX_LOGGER_ERROR_OBFUSCATION"):
+            # this is here because the logging config cannot import
+            # corehq.util.log.HqAdminEmailHandler, for example, if there
+            # is a syntax error in any module imported by corehq/__init__.py
+            # Setting FIX_LOGGER_ERROR_OBFUSCATION = True in
+            # localsettings.py will reveal the real error.
+            for handler in LOGGING["handlers"].values():
+                if handler["class"].startswith("corehq."):
+                    handler["class"] = "logging.StreamHandler"
 except ImportError:
     pass
 
@@ -920,6 +967,7 @@ if DEBUG:
 
     import warnings
     warnings.simplefilter('default')
+    os.environ['PYTHONWARNINGS'] = 'd'  # Show DeprecationWarning
 else:
     TEMPLATE_LOADERS = [
         ('django.template.loaders.cached.Loader', TEMPLATE_LOADERS),
@@ -947,7 +995,12 @@ INDICATOR_CONFIG = {
 }
 
 ####### Couch Forms & Couch DB Kit Settings #######
-from settingshelper import get_dynamic_db_settings, make_couchdb_tuples, get_extra_couchdbs
+from settingshelper import (
+    get_dynamic_db_settings,
+    make_couchdb_tuples,
+    get_extra_couchdbs,
+    SharedDriveConfiguration
+)
 
 _dynamic_db_settings = get_dynamic_db_settings(
     COUCH_SERVER_ROOT,
@@ -970,6 +1023,7 @@ COUCHDB_APPS = [
     'orgs',
     'builds',
     'case',
+    'casegroups',
     'callcenter',
     'cleanup',
     'cloudcare',
@@ -985,6 +1039,7 @@ COUCHDB_APPS = [
     'custom_data_fields',
     'hqadmin',
     'domain',
+    'ext',
     'facilities',
     'fluff_filter',
     'groups',
@@ -1023,15 +1078,12 @@ COUCHDB_APPS = [
     # custom reports
     'penn_state',
     'care_benin',
-    'dca',
     'gsid',
     'hsph',
     'mvp',
     ('mvp_docs', MVP_INDICATOR_DB),
-    'pathfinder',
     'pathindia',
     'pact',
-    'psi',
     'accounting',
     'succeed',
     'ilsgateway',
@@ -1047,7 +1099,6 @@ COUCHDB_APPS = [
     ('bihar', 'fluff-bihar'),
     ('opm', 'fluff-opm'),
     ('fluff', 'fluff-opm'),
-    ('care_sa', 'fluff-care_sa'),
     ('cvsu', 'fluff-cvsu'),
     ('mc', 'fluff-mc'),
     ('m4change', 'm4change'),
@@ -1062,7 +1113,21 @@ EXTRA_COUCHDB_DATABASES = get_extra_couchdbs(COUCHDB_APPS, COUCH_DATABASE)
 
 INSTALLED_APPS += LOCAL_APPS
 
+if ENABLE_PRELOGIN_SITE:
+    INSTALLED_APPS += PRELOGIN_APPS
+
 MIDDLEWARE_CLASSES += LOCAL_MIDDLEWARE_CLASSES
+
+### Shared drive settings ###
+SHARED_DRIVE_CONF = SharedDriveConfiguration(
+    SHARED_DRIVE_ROOT,
+    RESTORE_PAYLOAD_DIR_NAME,
+    TRANSFER_FILE_DIR_NAME,
+    SHARED_TEMP_DIR_NAME
+)
+TRANSFER_MAPPINGS = {
+    SHARED_DRIVE_CONF.transfer_dir: '/{}'.format(TRANSFER_FILE_DIR_NAME),  # e.g. '/mnt/shared/downloads': '/downloads',
+}
 
 # these are the official django settings
 # which really we should be using over the custom ones
@@ -1192,7 +1257,6 @@ PILLOWTOPS = {
         'custom.opm.models.OPMHierarchyFluffPillow',
         'custom.opm.models.VhndAvailabilityFluffPillow',
         'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
-        'custom.reports.care_sa.models.CareSAFluffPillow',
         'custom.reports.mc.models.MalariaConsortiumFluffPillow',
         'custom.m4change.models.AncHmisCaseFluffPillow',
         'custom.m4change.models.LdHmisCaseFluffPillow',
@@ -1232,6 +1296,9 @@ CUSTOM_DATA_SOURCES = [
     os.path.join('custom', 'up_nrhm', 'data_sources', 'location_hierarchy.json'),
     os.path.join('custom', 'up_nrhm', 'data_sources', 'asha_facilitators.json'),
     os.path.join('custom', 'succeed', 'data_sources', 'submissions.json'),
+    os.path.join('custom', 'apps', 'gsid', 'data_sources', 'patient_summary.json'),
+    os.path.join('custom', 'abt', 'reports', 'data_sources', 'sms.json'),
+    os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory.json'),
 ]
 
 
@@ -1304,10 +1371,7 @@ DOMAIN_MODULE_MAP = {
     'a5288-study': 'a5288',
     'care-bihar': 'custom.bihar',
     'bihar': 'custom.bihar',
-    'care-ihapc-live': 'custom.reports.care_sa',
     'cvsulive': 'custom.apps.cvsu',
-    'dca-malawi': 'dca',
-    'eagles-fahu': 'dca',
     'fri': 'custom.fri.reports',
     'fri-testing': 'custom.fri.reports',
     'gsid': 'custom.apps.gsid',
@@ -1327,7 +1391,6 @@ DOMAIN_MODULE_MAP = {
     'mvp-koraro': 'mvp',
     'mvp-pampaida': 'mvp',
     'opm': 'custom.opm',
-    'psi-unicef': 'psi',
     'project': 'custom.apps.care_benin',
 
     'ipm-senegal': 'custom.intrahealth',
@@ -1359,12 +1422,13 @@ TRAVIS_TEST_GROUPS = (
     (
         'accounting', 'adm', 'announcements', 'api', 'app_manager', 'appstore',
         'auditcare', 'bihar', 'builds', 'cachehq', 'callcenter', 'care_benin',
-        'care_sa', 'case', 'cleanup', 'cloudcare', 'commtrack', 'consumption',
-        'couchapps', 'couchlog', 'crud', 'cvsu', 'dca', 'django_digest',
+        'case', 'casegroups', 'cleanup', 'cloudcare', 'commtrack', 'consumption',
+        'couchapps', 'couchlog', 'crud', 'cvsu', 'django_digest',
         'domain', 'domainsync', 'export',
         'facilities', 'fixtures', 'fluff_filter', 'formplayer',
         'formtranslate', 'fri', 'grapevine', 'groups', 'gsid', 'hope',
         'hqadmin', 'hqcase', 'hqcouchlog', 'hqmedia',
+        'care_pathways', 'colalife', 'common', 'compressor',
     ),
 )
 

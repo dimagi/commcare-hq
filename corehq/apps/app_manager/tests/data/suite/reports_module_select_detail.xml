@@ -1,0 +1,21 @@
+<partial>
+  <detail id="reports.d3ff18cd83adf4550b35db8d391f6008.select">
+    <title>
+      <text>
+        <locale id="cchq.report_menu"/>
+      </text>
+    </title>
+    <field>
+      <header>
+        <text>
+          <locale id="cchq.report_name_header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="name"/>
+        </text>
+      </template>
+    </field>
+  </detail>
+</partial>

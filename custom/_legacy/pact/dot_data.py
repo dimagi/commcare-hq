@@ -163,8 +163,7 @@ def query_observations(case_id, start_date, end_date):
     startkey = [case_id, 'anchor_date', start_date.year, start_date.month, start_date.day]
     endkey = [case_id, 'anchor_date', end_date.year, end_date.month, end_date.day]
     observations = CObservation.view('pact/dots_observations',
-                                     startkey=startkey, endkey=endkey,
-                                     classes={None: CObservation}).all()
+                                     startkey=startkey, endkey=endkey).all()
     return observations
 
 

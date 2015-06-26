@@ -1,6 +1,8 @@
-from jsonobject import JsonObject, StringProperty
+from dimagi.ext.jsonobject import JsonObject, StringProperty
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.userreports.transforms.custom.date import get_month_display
+from corehq.apps.userreports.transforms.custom.numeric import \
+    get_short_decimal_display
 from corehq.apps.userreports.transforms.custom.users import (
     get_user_display,
     get_owner_display,
@@ -21,6 +23,7 @@ _CUSTOM_TRANSFORM_MAP = {
     'user_display': get_user_display,
     'owner_display': get_owner_display,
     'user_without_domain_display': get_user_without_domain_display,
+    'short_decimal_display': get_short_decimal_display,
 }
 
 

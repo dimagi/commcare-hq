@@ -7,6 +7,7 @@ from django.conf import settings
 from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.http import Http404
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.hqcase.dbaccessors import get_case_types_for_domain
 from dimagi.utils.decorators.memoized import memoized
 from django_prbac.utils import has_privilege
 from corehq import privileges
@@ -14,6 +15,8 @@ from corehq import privileges
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 
 from corehq.apps.data_interfaces.interfaces import DataInterface
+from corehq.apps.reports.dispatcher import DataExportInterfaceDispatcher
+from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.reports.standard import ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.reports.models import FormExportSchema, HQGroupExportConfiguration
 from corehq.apps.reports.util import datespan_from_beginning
@@ -63,7 +66,7 @@ class FormExportReportBase(ExportReport, DatespanMixin):
         exports = filter(lambda x: x.type == "form", exports)
         if not self.can_view_deid:
             exports = filter(lambda x: not x.is_safe, exports)
-        return exports
+        return sorted(exports, key=lambda x: x.name)
 
     @property
     def default_datespan(self):
@@ -318,22 +321,17 @@ class CaseExportReport(ExportReport):
             startkey=startkey, endkey=endkey,
             include_docs=True).all()
         exports = filter(lambda x: x.type == "case", exports)
-        return exports
+        return sorted(exports, key=lambda x: x.name)
 
     @property
     def report_context(self):
         context = super(CaseExportReport, self).report_context
-        cases = CommCareCase.get_db().view("hqcase/types_by_domain",
-            startkey=[self.domain],
-            endkey=[self.domain, {}],
-            reduce=True,
-            group=True,
-            group_level=2).all()
+        case_types = get_case_types_for_domain(self.domain)
         groups = HQGroupExportConfiguration.by_domain(self.domain)
         context.update(
-            case_types=[case['key'][1] for case in cases],
+            case_types=case_types,
             group_exports=[group.case_exports for group in groups
-                if group.case_exports],
+                           if group.case_exports],
             report_slug=self.slug,
         )
         context['case_format'] = self.request.GET.get('case_format') or 'csv'
@@ -390,3 +388,11 @@ class DeidExportReport(FormExportReportBase):
     @classmethod
     def get_subpages(self):
         return []
+
+
+class DataExportInterface(GenericReportView):
+    base_template = 'reports/reportdata/data_export.html'
+    dispatcher = DataExportInterfaceDispatcher
+    name = ugettext_noop('Export Forms')
+    section_name = "Export Data"
+    slug = 'export_forms'

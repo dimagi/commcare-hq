@@ -17,7 +17,6 @@ Welcome to CommCareHQ's documentation!
 .. toctree::
    :maxdepth: 2
 
-   deploy
    reporting
    api
    maps
@@ -33,6 +32,7 @@ Welcome to CommCareHQ's documentation!
    dhis2_integration
    test_coverage
    advanced_app_features
+   nfs
 
 Tips for documenting
 --------------------

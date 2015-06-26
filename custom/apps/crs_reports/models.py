@@ -1,4 +1,4 @@
 # Stub models file
-from couchdbkit.ext.django.schema import Document
+from dimagi.ext.couchdbkit import Document
 
 class _(Document): pass

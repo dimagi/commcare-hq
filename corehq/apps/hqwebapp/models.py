@@ -1,5 +1,6 @@
 from collections import namedtuple
 from urllib import urlencode
+from corehq.toggles import OPENLMIS
 
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe, mark_for_escaping
@@ -11,8 +12,11 @@ from django.core.cache import cache
 from corehq import toggles, privileges, Domain
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.accounting.models import BillingAccountAdmin, Invoice
-from corehq.apps.accounting.utils import is_accounting_admin
-from corehq.apps.domain.utils import get_adm_enabled_domains
+from corehq.apps.accounting.utils import (
+    domain_has_privilege,
+    is_accounting_admin
+)
+from corehq.apps.domain.utils import get_adm_enabled_domains, user_has_custom_top_menu
 from corehq.apps.hqadmin.reports import (
     RealProjectSpacesReport,
     CommConnectProjectSpacesReport,
@@ -365,8 +369,11 @@ class DashboardTab(UITab):
 
     @property
     def is_viewable(self):
-        return (self.domain and self.project and not self.project.is_snapshot
-                and self.couch_user)
+        return (self.domain and self.project and
+                not self.project.is_snapshot and
+                self.couch_user and
+                # domain hides Dashboard tab if user is non-admin
+                not user_has_custom_top_menu(self.domain, self.couch_user))
 
 
 class ReportsTab(UITab):
@@ -491,7 +498,7 @@ class SetupTab(UITab):
         from corehq.apps.locations.views import FacilitySyncView
 
         if self.project.commtrack_enabled:
-            return [[_('CommTrack Setup'), [
+            commcare_supply_setup = [
                 # products
                 {
                     'title': ProductListView.page_title,
@@ -541,17 +548,20 @@ class SetupTab(UITab):
                     'title': CommTrackSettingsView.page_title,
                     'url': reverse(CommTrackSettingsView.urlname, args=[self.domain]),
                 },
-                # external sync
-                {
-                    'title': FacilitySyncView.page_title,
-                    'url': reverse(FacilitySyncView.urlname, args=[self.domain]),
-                },
                 # stock levels
                 {
                     'title': StockLevelsView.page_title,
                     'url': reverse(StockLevelsView.urlname, args=[self.domain]),
                 },
-            ]]]
+            ]
+            if OPENLMIS.enabled(self.domain):
+                commcare_supply_setup.append(
+                    # external sync
+                    {
+                        'title': FacilitySyncView.page_title,
+                        'url': reverse(FacilitySyncView.urlname, args=[self.domain]),
+                    })
+            return [[_('CommCare Supply Setup'), commcare_supply_setup]]
 
 
 class ProjectDataTab(UITab):
@@ -568,6 +578,11 @@ class ProjectDataTab(UITab):
     def can_export_data(self):
         return (self.project and not self.project.is_snapshot
                 and self.couch_user.can_export_data())
+
+    @property
+    @memoized
+    def can_use_lookup_tables(self):
+        return domain_has_privilege(self.domain, privileges.LOOKUP_TABLES)
 
     @property
     def is_viewable(self):
@@ -611,6 +626,14 @@ class ProjectDataTab(UITab):
                     'url': reverse(ArchiveFormView.urlname, args=[self.domain]),
                 })
             items.extend(edit_section)
+
+        if self.can_use_lookup_tables:
+            from corehq.apps.fixtures.dispatcher import FixtureInterfaceDispatcher
+            items.extend(FixtureInterfaceDispatcher.navigation_sections(context))
+
+        if toggle_enabled(self._request, toggles.REVAMPED_EXPORTS):
+            from corehq.apps.reports.dispatcher import DataExportInterfaceDispatcher
+            items.extend(DataExportInterfaceDispatcher.navigation_sections(context))
 
         return items
 
@@ -696,7 +719,9 @@ class ApplicationsTab(UITab):
         couch_user = self.couch_user
         return (self.domain and couch_user and
                 (couch_user.is_web_user() or couch_user.can_edit_apps()) and
-                (couch_user.is_member_of(self.domain) or couch_user.is_superuser))
+                (couch_user.is_member_of(self.domain) or couch_user.is_superuser) and
+                # domain hides Applications tab if user is non-admin
+                not user_has_custom_top_menu(self.domain, couch_user))
 
 
 class CloudcareTab(UITab):
@@ -866,7 +891,7 @@ class MessagingTab(UITab):
         if self.project.commtrack_enabled:
             from corehq.apps.sms.views import SubscribeSMSView
             items.append(
-                (_("CommTrack"), [
+                (_("CommCare Supply"), [
                     {'title': ugettext_lazy("Subscribe to SMS Reports"),
                      'url': reverse(SubscribeSMSView.urlname, args=[self.domain])},
                 ])
@@ -1078,54 +1103,55 @@ class ProjectUsersTab(UITab):
                 }
             ]))
 
-            if self.project.locations_enabled:
-                from corehq.apps.locations.views import (
-                    LocationsListView,
-                    NewLocationView,
-                    EditLocationView,
-                    LocationImportView,
-                    LocationImportStatusView,
-                    LocationFieldsView,
-                    LocationTypesView,
-                )
+        if self.project.locations_enabled:
+            from corehq.apps.locations.views import (
+                LocationsListView,
+                NewLocationView,
+                EditLocationView,
+                LocationImportView,
+                LocationImportStatusView,
+                LocationFieldsView,
+                LocationTypesView,
+            )
+            from corehq.apps.locations.permissions import (
+                user_can_edit_location_types
+            )
 
-                locations_config = {
-                    'title': LocationsListView.page_title,
-                    'url': reverse(LocationsListView.urlname, args=[self.domain]),
-                    'show_in_dropdown': True,
-                    'subpages': [
-                        {
-                            'title': NewLocationView.page_title,
-                            'urlname': NewLocationView.urlname,
-                        },
-                        {
-                            'title': EditLocationView.page_title,
-                            'urlname': EditLocationView.urlname,
-                        },
-                        {
-                            'title': LocationImportView.page_title,
-                            'urlname': LocationImportView.urlname,
-                        },
-                        {
-                            'title': LocationImportStatusView.page_title,
-                            'urlname': LocationImportStatusView.urlname,
-                        },
-                        {
-                            'title': LocationFieldsView.page_name(),
-                            'urlname': LocationFieldsView.urlname,
-                        },
-                    ]
-                }
-                advanced_locations_config = {
+            locations_config = [{
+                'title': LocationsListView.page_title,
+                'url': reverse(LocationsListView.urlname, args=[self.domain]),
+                'show_in_dropdown': True,
+                'subpages': [
+                    {
+                        'title': NewLocationView.page_title,
+                        'urlname': NewLocationView.urlname,
+                    },
+                    {
+                        'title': EditLocationView.page_title,
+                        'urlname': EditLocationView.urlname,
+                    },
+                    {
+                        'title': LocationImportView.page_title,
+                        'urlname': LocationImportView.urlname,
+                    },
+                    {
+                        'title': LocationImportStatusView.page_title,
+                        'urlname': LocationImportStatusView.urlname,
+                    },
+                    {
+                        'title': LocationFieldsView.page_name(),
+                        'urlname': LocationFieldsView.urlname,
+                    },
+                ]
+            }]
+
+            if user_can_edit_location_types(self.couch_user, self.project):
+                locations_config.append({
                     'title': LocationTypesView.page_title,
                     'url': reverse(LocationTypesView.urlname, args=[self.domain]),
                     'show_in_dropdown': True,
-                }
-
-                items.append((_('Locations'), [
-                    locations_config,
-                    advanced_locations_config,
-                ]))
+                })
+            items.append((_('Locations'), locations_config))
 
         return items
 
@@ -1246,6 +1272,7 @@ class ProjectSettingsTab(UITab):
                 from corehq.apps.domain.views import (
                     DomainSubscriptionView, EditExistingBillingAccountView,
                     DomainBillingStatementsView, ConfirmSubscriptionRenewalView,
+                    InternalSubscriptionManagementView,
                 )
                 subscription = [
                     {
@@ -1280,6 +1307,14 @@ class ProjectSettingsTab(UITab):
                                            args=[self.domain]),
                         }
                     )
+                if self.couch_user.is_superuser:
+                    subscription.append({
+                        'title': _('Internal Subscription Management (Dimagi Only)'),
+                        'url': reverse(
+                            InternalSubscriptionManagementView.urlname,
+                            args=[self.domain],
+                        )
+                    })
                 items.append((_('Subscription'), subscription))
 
         if any(toggles.PRIME_RESTORE.enabled(item) for item in [self.couch_user.username, self.domain]):
@@ -1367,12 +1402,15 @@ class AdminReportsTab(UITab):
         admin_operations = []
 
         if self.couch_user and self.couch_user.is_staff:
+            from corehq.apps.hqadmin.views import AuthenticateAs
             admin_operations.extend([
                 {'title': _('Mass Email Users'),
                  'url': reverse('mass_email')},
                 {'title': _('PillowTop Errors'),
                  'url': reverse('admin_report_dispatcher',
                                 args=('pillow_errors',))},
+                {'title': _('Login as another user'),
+                 'url': reverse(AuthenticateAs.urlname)},
             ])
         return [
             (_('Administrative Reports'), [
@@ -1529,8 +1567,10 @@ class AdminTab(UITab):
     def dropdown_items(self):
         if (self.couch_user and not self.couch_user.is_superuser
                 and (toggles.IS_DEVELOPER.enabled(self.couch_user.username))):
-            return [dropdown_dict(_("System Info"),
-                    url=reverse("system_info"))]
+            return [
+                dropdown_dict(_("System Info"), url=reverse("system_info")),
+                dropdown_dict(_("Feature Flags"), url=reverse("toggle_list")),
+            ]
 
         submenu_context = [
             dropdown_dict(_("Reports"), is_header=True),
@@ -1641,7 +1681,7 @@ class OrgSettingsTab(OrgTab):
                 url=reverse("orgs_teams", args=(self.org.name,))),
             dropdown_dict(
                 _("Members"),
-                url=reverse("orgs_stats", args=(self.org.name,))),
+                url=reverse("orgs_members", args=(self.org.name,))),
         ]
 
 

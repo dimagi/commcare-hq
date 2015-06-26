@@ -40,9 +40,12 @@ def _create_custom_app_strings(app, lang):
         for detail_type, detail, _ in module.get_details():
             if detail_type.startswith('case'):
                 label = trans(module.case_label)
-            else:
+            elif detail_type.startswith('referral'):
                 label = trans(module.referral_label)
-            yield id_strings.detail_title_locale(module, detail_type), label
+            else:
+                label = None
+            if label:
+                yield id_strings.detail_title_locale(module, detail_type), label
 
             for column in detail.get_columns():
                 if not is_sort_only_column(column):
@@ -61,6 +64,19 @@ def _create_custom_app_strings(app, lang):
                 yield id_strings.detail_tab_title_locale(module, detail_type, tab), trans(tab.header)
 
         yield id_strings.module_locale(module), maybe_add_index(trans(module.name))
+        if hasattr(module, 'report_configs'):
+            for config in module.report_configs:
+                yield id_strings.report_command(config.report_id), trans(config.header)
+                yield id_strings.report_name(config.report_id), config.report.title
+                yield id_strings.report_menu(), 'Reports'
+                yield id_strings.report_name_header(), 'Report Name'
+                yield id_strings.report_description_header(), 'Report Description'
+                for column in config.report.report_columns:
+                    yield (
+                        id_strings.report_column_header(config.report_id, column.column_id),
+                        column.get_header(lang)
+                    )
+
         if hasattr(module, 'case_list'):
             if module.case_list.show:
                 yield id_strings.case_list_locale(module), trans(module.case_list.label) or "Case List"
@@ -127,21 +143,25 @@ class AppStringsBase(object):
                 (u'The lookup table settings for your user are incorrect. '
                     u'This user must have access to exactly one lookup table row for the table: ${0}')
 
-        from corehq.apps.app_manager.models import AUTO_SELECT_CASE, AUTO_SELECT_FIXTURE, AUTO_SELECT_USER
+        from corehq.apps.app_manager.models import (
+            AUTO_SELECT_CASE, AUTO_SELECT_FIXTURE, AUTO_SELECT_USER,
+            AUTO_SELECT_LOCATION, AUTO_SELECT_USERCASE, AUTO_SELECT_RAW
+        )
 
         mode_text = {
             AUTO_SELECT_FIXTURE: u'lookup table field',
             AUTO_SELECT_USER: u'user data key',
-            AUTO_SELECT_CASE: u'case index'
+            AUTO_SELECT_CASE: u'case index',
+            AUTO_SELECT_LOCATION: u'location',
+            AUTO_SELECT_USERCASE: u'user case',
+            AUTO_SELECT_RAW: u'custom xpath expression',
         }
 
-        for mode in [AUTO_SELECT_FIXTURE, AUTO_SELECT_CASE, AUTO_SELECT_USER]:
+        for mode, text in mode_text.items():
             key = 'case_autoload.{0}.property_missing'.format(mode)
             if key not in messages:
                 messages[key] = (u'The {} specified for case auto-selecting '
-                                 u'could not be found: ${{0}}').format(mode_text[mode])
-
-        for mode in [AUTO_SELECT_FIXTURE, AUTO_SELECT_CASE, AUTO_SELECT_USER]:
+                                 u'could not be found: ${{0}}').format(text)
             key = 'case_autoload.{0}.case_missing'.format(mode)
             if key not in messages:
                 messages[key] = u'Unable to find case referenced by auto-select case ID.'

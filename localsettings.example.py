@@ -12,9 +12,6 @@ DATABASES = {
     }
 }
 
-### Reporting database
-SQL_REPORTING_DATABASE_URL = "postgresql://%(USER)s:%(PASSWORD)s@%(HOST)s:%(PORT)s/commcarehq_reporting" % DATABASES['default']
-
 ####### Couch Config ######
 COUCH_HTTPS = False # recommended production value is True if enabling https
 COUCH_SERVER_ROOT = '127.0.0.1:5984' #6984 for https couch
@@ -26,6 +23,9 @@ COUCH_DATABASE_NAME = 'commcarehq'
 
 #Staging domains you want to replicate
 STAGING_DOMAINS = []
+
+### Public / Pre-login Site information
+ENABLE_PRELOGIN_SITE = False
 
 #COUCHDB URI {http|https}://username:password@host:optionalport/dbname
 PRODUCTION_COUCHDB_URI = ""
@@ -133,6 +133,12 @@ ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_ID': '*******',
     'PINGDOM_ID': '*****',
     'ANALYTICS_ID_PUBLIC_COMMCARE': '*****',
+    'KISSMETRICS_KEY': '*****',
+    'HUBSPOT_API_KEY': '*****',
+}
+
+ANALYTICS_CONFIG = {
+    "HQ_INSTANCE": ''  # e.g. "www", or "india", or "staging"
 }
 
 AXES_LOCK_OUT_AT_FAILURE = False

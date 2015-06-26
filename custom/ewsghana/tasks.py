@@ -9,9 +9,11 @@ from custom.ewsghana.api import GhanaEndpoint
 from custom.ewsghana.extensions import ews_location_extension, ews_smsuser_extension, ews_webuser_extension, \
     ews_product_extension
 from custom.ewsghana.models import EWSGhanaConfig
+from custom.ewsghana.stock_data import EWSStockDataSynchronization
 from custom.logistics.commtrack import bootstrap_domain as ews_bootstrap_domain, \
     bootstrap_domain
-from custom.logistics.tasks import stock_data_task, sync_stock_transactions
+from custom.logistics.models import StockDataCheckpoint
+from custom.logistics.tasks import stock_data_task
 import settings
 
 
@@ -43,10 +45,7 @@ def migration_task():
         if config.enabled:
             endpoint = GhanaEndpoint.from_config(config)
             ews_bootstrap_domain(EWSApi(config.domain, endpoint))
-            apis = (
-                ('stock_transaction', sync_stock_transactions),
-            )
-            stock_data_task.delay(config.domain, endpoint, apis, config, EWS_FACILITIES)
+            stock_data_task.delay(EWSStockDataSynchronization(config.domain, endpoint))
 
 
 @task(queue='background_queue')
@@ -56,8 +55,19 @@ def ews_bootstrap_domain_task(domain):
 
 
 @task(queue='background_queue', ignore_result=True)
-def ews_clear_stock_data_task():
-    StockTransaction.objects.filter(report__domain='ewsghana-test-1').delete()
-    StockReport.objects.filter(domain='ewsghana-test-1').delete()
-    products = Product.ids_by_domain('ewsghana-test-1')
+def ews_clear_stock_data_task(domain):
+    StockTransaction.objects.filter(report__domain=domain).delete()
+    StockReport.objects.filter(domain=domain).delete()
+    products = Product.ids_by_domain(domain)
     StockState.objects.filter(product_id__in=products).delete()
+
+
+@task(queue='background_queue', ignore_result=True)
+def delete_last_migrated_stock_data(domain):
+    checkpoint = StockDataCheckpoint.objects.get(domain=domain)
+    StockReport.objects.filter(domain=domain, date__gte=checkpoint.date).delete()
+    checkpoint.location = None
+    checkpoint.offset = 0
+    checkpoint.api = 'stock_transaction'
+    checkpoint.start_date = None
+    checkpoint.save()

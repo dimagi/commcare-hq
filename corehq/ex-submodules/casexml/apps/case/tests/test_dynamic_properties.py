@@ -1,5 +1,5 @@
 from django.test import SimpleTestCase
-from jsonobject import StringProperty
+from dimagi.ext.jsonobject import StringProperty
 from casexml.apps.case.models import CommCareCase
 
 

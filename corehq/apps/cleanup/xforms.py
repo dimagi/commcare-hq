@@ -1,25 +1,15 @@
 from corehq.apps.users.models import CouchUser
 from corehq.elastic import get_es
+from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import XFormError
 from dimagi.utils.couch.database import iter_docs
 
 
-def get_problem_ids(domain, since=None):
-    startkey = [domain, "by_type", "XFormError"]
-    endkey = startkey + [{}]
-    if since:
-        startkey.append(since.isoformat())
-
-    return [row['id'] for row in XFormError.get_db().view(
-        "couchforms/all_submissions_by_domain",
-        startkey=startkey,
-        endkey=endkey,
-        reduce=False
-    )]
-
 def iter_problem_forms(domain, since=None):
-    for doc in iter_docs(XFormError.get_db(), get_problem_ids(domain, since)):
+    problem_ids = get_form_ids_by_type(domain, 'XFormError', start=since)
+    for doc in iter_docs(XFormError.get_db(), problem_ids):
         yield XFormError.wrap(doc)
+
 
 def guess_domain(form):
     """

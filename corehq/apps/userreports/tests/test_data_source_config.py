@@ -1,6 +1,7 @@
 import json
 import os
 import datetime
+from mock import patch
 from decimal import Decimal
 from django.test import SimpleTestCase, TestCase
 from jsonobject.exceptions import BadValueError
@@ -38,6 +39,7 @@ class DataSourceConfigurationTest(SimpleTestCase):
         # columns
         expected_columns = [
             'doc_id',
+            'inserted_at',
             'date',
             'owner',
             'count',
@@ -53,9 +55,12 @@ class DataSourceConfigurationTest(SimpleTestCase):
             col_back = cols[i]
             self.assertEqual(col, col_back.id)
 
-    def test_indicators(self):
+    @patch('corehq.apps.userreports.specs.datetime')
+    def test_indicators(self, datetime_mock):
+        fake_time_now = datetime.datetime(2015, 4, 24, 12, 30, 8, 24886)
+        datetime_mock.utcnow.return_value = fake_time_now
         # indicators
-        sample_doc, expected_indicators = get_sample_doc_and_indicators()
+        sample_doc, expected_indicators = get_sample_doc_and_indicators(fake_time_now)
         [results] = self.config.get_all_values(sample_doc)
         for result in results:
             try:
@@ -74,7 +79,7 @@ def get_sample_data_source():
         return DataSourceConfiguration.wrap(structure)
 
 
-def get_sample_doc_and_indicators():
+def get_sample_doc_and_indicators(fake_time_now):
     date_opened = "2014-06-21"
     sample_doc = dict(
         _id='some-doc-id',
@@ -100,6 +105,7 @@ def get_sample_doc_and_indicators():
         'is_starred': 1,
         'estimate': Decimal(2.3),
         'priority': 4,
+        'inserted_at': fake_time_now,
     }
     return sample_doc, expected_indicators
 
@@ -234,8 +240,8 @@ class IndicatorNamedFilterTest(SimpleTestCase):
             'mother_state': 'pregnant',
             'evil': 'yes'
         })
-        # Confirm that 1 is the right values index:
-        i = 1
+        # Confirm that 2 is the right values index:
+        i = 2
         self.assertEqual('is_evil', values[i].column.id)
         self.assertEqual(1, values[i].value)
 
@@ -247,8 +253,8 @@ class IndicatorNamedFilterTest(SimpleTestCase):
             'mother_state': 'pregnant',
             'evil': 'no'
         })
-        # Confirm that 1 is the right values index:
-        i = 1
+        # Confirm that 2 is the right values index:
+        i = 2
         self.assertEqual('is_evil', values[i].column.id)
         self.assertEqual(0, values[i].value)
 
@@ -260,8 +266,8 @@ class IndicatorNamedFilterTest(SimpleTestCase):
             'mother_state': 'pregnant',
             'evil': 'yes'
         })
-        # Confirm that 2 is the right values index:
-        i = 2
+        # Confirm that 3 is the right values index:
+        i = 3
         self.assertEqual('laugh_sound', values[i].column.id)
         self.assertEqual('mwa-ha-ha', values[i].value)
 
@@ -273,7 +279,7 @@ class IndicatorNamedFilterTest(SimpleTestCase):
             'mother_state': 'pregnant',
             'evil': 'no'
         })
-        # Confirm that 2 is the right values index:
-        i = 2
+        # Confirm that 3 is the right values index:
+        i = 3
         self.assertEqual('laugh_sound', values[i].column.id)
         self.assertEqual('hehe', values[i].value)

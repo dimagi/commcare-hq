@@ -86,7 +86,7 @@ def second_soh_process_user(user, test=False):
         case_id=supply_point._id,
         last_modified_date__gte=date
     )
-    products = user.location.sql_location.products
+    products = user.sql_location.products
     location_products_ids = [product.product_id for product in products]
     reported_products_ids = [stock_state.product_id for stock_state in stock_states]
     missing_products_ids = set(location_products_ids) - set(reported_products_ids)
@@ -198,11 +198,15 @@ def stockout_notification_to_web_supers():
 
 def stockout_process_user(user, test=False):
     if user_has_reporting_location(user):
-        supply_point = SupplyPointCase.get_by_location(user.location)
+        location = user.location
+        supply_point = SupplyPointCase.get_by_location(location)
         if supply_point and user.get_verified_number():
             products = [
-                SQLProduct.objects.get(product_id=transaction.product_id).name
-                for transaction in StockState.objects.filter(case_id=supply_point._id, stock_on_hand=0)
+                SQLProduct.objects.get(product_id=state.product_id).name
+                for state in StockState.objects.filter(
+                    case_id=supply_point._id, stock_on_hand=0,
+                    product_id__in=[product.product_id for product in location.sql_location.products]
+                )
             ]
             if products:
                 if not test:

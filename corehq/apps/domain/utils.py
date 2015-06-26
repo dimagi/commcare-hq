@@ -1,9 +1,13 @@
 import re
 from couchdbkit import ResourceNotFound
 from django.conf import settings
-from corehq.util.quickcache import quickcache
+
+from corehq import toggles
 from corehq.apps.domain.models import Domain
+from corehq.util.quickcache import quickcache
+
 from dimagi.utils.couch.database import get_db
+
 
 DOMAIN_MODULE_KEY = 'DOMAIN_MODULE_CONFIG'
 ADM_DOMAIN_KEY = 'ADM_ENABLED_DOMAINS'
@@ -17,10 +21,12 @@ website_re = '(http(s?)\:\/\/|~/|/)?([a-zA-Z]{1}([\w\-]+\.)+([\w]{2,5}))(:[\d]{1
 
 
 def normalize_domain_name(domain):
-    normalized = domain.replace('_', '-').lower()
-    if settings.DEBUG:
-        assert(re.match('^%s$' % grandfathered_domain_re, normalized))
-    return normalized
+    if domain:
+        normalized = domain.replace('_', '-').lower()
+        if settings.DEBUG:
+            assert(re.match('^%s$' % grandfathered_domain_re, normalized))
+        return normalized
+    return domain
 
 
 def get_domained_url(domain, path):
@@ -82,3 +88,12 @@ def get_doc_ids(domain, doc_type, database=None):
         reduce=False,
         include_docs=False,
     )]
+
+
+def user_has_custom_top_menu(domain_name, couch_user):
+    """
+    This is currently used for a one-off custom case (ewsghana, ilsgateway)
+    that required to be a toggle instead of a custom domain module setting
+    """
+    return (toggles.CUSTOM_MENU_BAR.enabled(domain_name) and
+            not couch_user.is_superuser)

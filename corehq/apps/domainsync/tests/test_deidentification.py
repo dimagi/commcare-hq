@@ -1,4 +1,5 @@
 from django.test import TestCase
+from corehq.apps.hqadmin.dbaccessors import get_all_forms_in_all_domains
 from couchforms.models import XFormInstance
 from couchforms.tests.testutils import post_xform_to_couch
 import os
@@ -7,14 +8,14 @@ from dimagi.utils.couch.database import get_db
 from ..config import DocumentTransform
 from ..deidentification.forms import deidentify_form
 
+
 class FormDeidentificationTestCase(TestCase):
-    
+
     def setUp(self):
-        
-        for item in XFormInstance.view("hqadmin/forms_over_time", include_docs=True, reduce=False).all():
+
+        for item in get_all_forms_in_all_domains():
             item.delete()
-        
-        
+
     def testCRSReg(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "crs_reg.xml")
         with open(file_path, "rb") as f:
@@ -48,4 +49,3 @@ class FormDeidentificationTestCase(TestCase):
         self.assertTrue("IDENTIFIER" not in deidentified.attachments["form.xml"])
         self.assertTrue("YESNO" not in json.dumps(deidentified.doc))
         self.assertTrue("YESNO" not in deidentified.attachments["form.xml"])
-        

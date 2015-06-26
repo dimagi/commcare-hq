@@ -32,6 +32,7 @@ from django.template.loader import render_to_string
 from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django_digest.decorators import httpdigest
+from no_exceptions.exceptions import Http403
 
 from dimagi.utils.web import json_response
 
@@ -169,7 +170,7 @@ class BaseEditUserView(BaseUserSettingsView):
             return self.user_update_form_class(data=self.request.POST)
 
         form = self.user_update_form_class()
-        form.initialize_form(existing_user=self.editable_user)
+        form.initialize_form(domain=self.request.domain, existing_user=self.editable_user)
         return form
 
     @property
@@ -258,7 +259,8 @@ class EditWebUserView(BaseEditUserView):
         ctx = {
             'form_uneditable': BaseUserInfoForm(),
         }
-        if self.request.project.commtrack_enabled:
+        if (self.request.project.commtrack_enabled or
+                self.request.project.locations_enabled):
             ctx.update({'update_form': self.commtrack_form})
         if self.request.couch_user.is_superuser:
             ctx.update({'update_permissions': True})
@@ -356,8 +358,11 @@ class EditMyAccountDomainView(BaseFullEditUserView):
 
     @property
     def page_context(self):
-        context = {}
-        if self.request.project.commtrack_enabled:
+        context = {
+            'can_use_inbound_sms': domain_has_privilege(self.domain, privileges.INBOUND_SMS),
+        }
+        if (self.request.project.commtrack_enabled or
+                self.request.project.locations_enabled):
             context.update({
                 'update_form': self.commtrack_form,
             })
@@ -595,7 +600,7 @@ class ListWebUsersView(BaseUserSettingsView):
 
 
 def get_web_user_list_view(request):
-    if toggles.PAGINATE_WEB_USERS.enabled(request.couch_user.username):
+    if toggles.PAGINATE_WEB_USERS.enabled(request.domain):
         return NewListWebUsersView
     return ListWebUsersView
 
@@ -674,7 +679,10 @@ class UserInvitationView(InvitationView):
     need = ["domain"]
 
     def added_context(self):
-        return {'domain': self.domain}
+        return {
+            'domain': self.domain,
+            'invite_type': _('Project'),
+        }
 
     def validate_invitation(self, invitation):
         assert invitation.domain == self.domain
@@ -756,6 +764,10 @@ class InviteWebUserView(BaseManageWebUserView):
     @memoized
     def invite_web_user_form(self):
         role_choices = UserRole.role_choices(self.domain)
+        loc = None
+        if 'location_id' in self.request.GET:
+            from corehq.apps.locations.models import SQLLocation
+            loc = SQLLocation.objects.get(location_id=self.request.GET.get('location_id'))
         if self.request.method == 'POST':
             current_users = [user.username for user in WebUser.by_domain(self.domain)]
             pending_invites = [di.email for di in DomainInvitation.by_domain(self.domain)]
@@ -765,7 +777,7 @@ class InviteWebUserView(BaseManageWebUserView):
                 role_choices=role_choices,
                 domain=self.domain
             )
-        return AdminInvitesUserForm(role_choices=role_choices, domain=self.domain)
+        return AdminInvitesUserForm(role_choices=role_choices, domain=self.domain, location=loc)
 
     @property
     def page_context(self):
@@ -939,6 +951,8 @@ def audit_logs(request, domain):
 @domain_admin_required
 @require_POST
 def location_restriction_for_users(request, domain):
+    if not toggles.RESTRICT_WEB_USERS_BY_LOCATION.enabled(request.domain):
+        raise Http403()
     project = Domain.get_by_name(domain)
     if "restrict_users" in request.POST:
         project.location_restriction_for_users = json.loads(request.POST["restrict_users"])

@@ -57,6 +57,7 @@ urlpatterns = patterns('corehq.apps.reports.views',
     # Download and view form data
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/$', 'form_data', name='render_form_data'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/download/$', 'download_form', name='download_form'),
+    url(r'^form_data/(?P<instance_id>[\w\-:]+)/edit/$', 'edit_form_instance', name='edit_form_instance'),
     url(r'^form_data/download/media/$',
         'form_multimedia_export', name='form_multimedia_export'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/download-attachment/$',
@@ -84,9 +85,9 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^full_excel_export/(?P<export_hash>[\w\-]+)/(?P<format>[\w\-]+)$', "export_report", name="export_report"),
 
     # once off email
-    url(r"^email_onceoff/(?P<report_slug>[\w_]+)/$", 'email_report'),
+    url(r"^email_onceoff/(?P<report_slug>[\w_]+)/$", 'email_report', kwargs=dict(once=True)),
     url(r"^custom/email_onceoff/(?P<report_slug>[\w_]+)/$", 'email_report',
-        kwargs=dict(report_type=CustomProjectReportDispatcher.prefix)),
+        kwargs=dict(report_type=CustomProjectReportDispatcher.prefix, once=True)),
 
     # Saved reports
     url(r"^configs$", AddSavedReportConfigView.as_view(), name=AddSavedReportConfigView.name),

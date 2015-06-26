@@ -48,6 +48,7 @@
                     {% endifequal %}
                 </label>
                 <div class="controls">
+                    {% if can_use_inbound_sms and user_type == "mobile" %}
                     {% ifequal phone.status "unverified" %}
                         <form method="post"
                               action="{% url "verify_phone_number" domain couch_user.couch_id %}?phone_number={{phone.number|urlencode}}"
@@ -74,6 +75,7 @@
                             <i class="icon icon-signal icon-white"></i> {% trans 'Verify (retry)' %}
                         </button>
                     {% endifequal %}
+                    {% endif %}
 
                     <a class="btn btn-danger"
                        data-toggle="modal"
@@ -128,11 +130,15 @@
 <form id="commtrack_form" class="form form-horizontal" name="" method="post">
     <input type="hidden" name="form_type" value="commtrack" />
     <fieldset>
-        <legend>{% trans 'CommTrack Settings' %}</legend>
+        {% if commtrack_enabled %}
+        <legend>{% trans 'CommCare Supply Settings' %}</legend>
+        {% else %}
+        <legend>{% trans 'Location Settings' %}</legend>
+        {% endif %}
         {% include 'hqstyle/forms/basic_fieldset.html' with form=update_form %}
     </fieldset>
     <div class="form-actions">
-      <button type="submit" class="btn btn-primary disable-on-submit">{% trans 'Update CommTrack Settings' %}</button>
+      <button type="submit" class="btn btn-primary disable-on-submit">{% trans 'Update CommCare Supply Settings' %}</button>
     </div>
 </form>
 {% endif %}

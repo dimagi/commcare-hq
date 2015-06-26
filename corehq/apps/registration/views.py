@@ -10,6 +10,11 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 import sys
 
+from corehq.apps.analytics.tasks import (
+    track_created_hq_account_on_hubspot,
+    track_workflow,
+    track_confirmed_account_on_hubspot,
+)
 from corehq.apps.domain.decorators import login_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.orgs.views import orgs_landing
@@ -46,6 +51,8 @@ def register_user(request, domain_type=None):
     if domain_type not in DOMAIN_TYPES:
         raise Http404()
 
+    prefilled_email = request.GET.get('e', '')
+
     context = get_domain_context(domain_type)
 
     if request.user.is_authenticated():
@@ -63,11 +70,17 @@ def register_user(request, domain_type=None):
                 new_user = authenticate(username=form.cleaned_data['email'],
                                         password=form.cleaned_data['password'])
                 login(request, new_user)
+                track_workflow.delay(new_user.email, "Requested new account")
+                meta = {
+                    'HTTP_X_FORWARDED_FOR': request.META.get('HTTP_X_FORWARDED_FOR'),
+                    'REMOTE_ADDR': request.META.get('REMOTE_ADDR')
+                }
+                track_created_hq_account_on_hubspot.delay(new_user, request.COOKIES, meta)
                 return redirect(
                     'registration_domain', domain_type=domain_type)
         else:
             form = NewWebUserRegistrationForm(
-                    initial={'domain_type': domain_type})
+                initial={'domain_type': domain_type, 'email': prefilled_email})
 
         context.update({
             'form': form,
@@ -282,6 +295,7 @@ def confirm_domain(request, guid=None):
     ) % requesting_user.username
     context['is_error'] = False
     context['valid_confirmation'] = True
+    track_confirmed_account_on_hubspot.delay(requesting_user)
     return render(request, 'registration/confirmation_complete.html', context)
 
 

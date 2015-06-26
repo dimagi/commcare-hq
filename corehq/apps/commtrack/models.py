@@ -2,10 +2,17 @@ from decimal import Decimal
 import uuid
 import logging
 from xml.etree import ElementTree
+from copy import copy
+
 from couchdbkit.exceptions import ResourceNotFound
-from couchdbkit.ext.django.schema import *
 from django.db import transaction
 from django.utils.translation import ugettext as _
+from django.dispatch import receiver
+from django.db import models
+from django.db.models.signals import post_save, post_delete
+
+from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
+from dimagi.ext.couchdbkit import *
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.stock import const as stockconst
@@ -21,8 +28,6 @@ from casexml.apps.stock.utils import months_of_stock_remaining, state_stock_cate
 from corehq.apps.domain.models import Domain
 from couchforms.signals import xform_archived, xform_unarchived
 from dimagi.utils import parsing as dateparse
-from copy import copy
-from django.dispatch import receiver
 from corehq.apps.locations.signals import location_created, location_edited
 from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.products.models import Product, SQLProduct
@@ -30,10 +35,8 @@ from corehq.apps.commtrack.const import StockActions, RequisitionActions, Requis
 from corehq.apps.commtrack.xmlutil import XML
 from couchexport.models import register_column_type, ComplexExportColumn
 from dimagi.utils.dates import force_to_datetime
-from django.db import models
-from django.db.models.signals import post_save, post_delete
-
 from dimagi.utils.decorators.memoized import memoized
+
 
 STOCK_ACTION_ORDER = [
     StockActions.RECEIPTS,
@@ -270,7 +273,7 @@ class CommtrackConfig(CachedCouchDocumentMixin, Document):
         from casexml.apps.phone.restore import StockSettings
         default_product_ids = Product.ids_by_domain(self.domain) \
             if self.ota_restore_config.use_dynamic_product_list else []
-        case_filter = lambda case: case.type in set(self.ota_restore_config.force_consumption_case_types)
+        case_filter = lambda stub: stub.type in set(self.ota_restore_config.force_consumption_case_types)
         return StockSettings(
             section_to_consumption_types=self.ota_restore_config.section_to_consumption_types,
             consumption_config=self.get_consumption_config(),
@@ -360,7 +363,7 @@ class NewStockReport(object):
 
         return cls(form, timestamp, tag, transactions)
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def create_models(self, domain=None):
         # todo: this function should probably move to somewhere in casexml.apps.stock
         if self.tag not in stockconst.VALID_REPORT_TYPES:
@@ -597,9 +600,6 @@ class SupplyPointCase(CommCareCase):
         # This is necessary otherwise syncdb will confuse this app with casexml
         app_label = "commtrack"
 
-    def open_requisitions(self):
-        return RequisitionCase.open_for_location(self.domain, self.location_id)
-
     @property
     @memoized
     def location(self):
@@ -609,6 +609,10 @@ class SupplyPointCase(CommCareCase):
             return Location.get(self.location_id)
         except ResourceNotFound:
             return None
+
+    @property
+    def sql_location(self):
+        return SQLLocation.objects.get(location_id=self.location_id)
 
     @classmethod
     def _from_caseblock(cls, domain, caseblock):
@@ -683,38 +687,12 @@ class SupplyPointCase(CommCareCase):
         return data
 
     @classmethod
-    def get_location_map_by_domain(cls, domain):
-        """
-        Returns a dict that maps from associated location id's
-        to supply point id's for all supply point cases in the passed
-        domain.
-        """
-        kwargs = dict(
-            view_name='commtrack/supply_point_by_loc',
-            startkey=[domain],
-            endkey=[domain, {}],
-        )
-
-        return dict(
-            (row['key'][1], row['id']) for row in cls.get_db().view(**kwargs)
-        )
-
-    @classmethod
-    def get_by_location_id(cls, domain, location_id):
-        return cls.view(
-            'commtrack/supply_point_by_loc',
-            key=[domain, location_id],
-            include_docs=True,
-            classes={'CommCareCase': SupplyPointCase},
-        ).one()
-
-    @classmethod
     def get_by_location(cls, location):
-        return cls.get_by_location_id(location.domain, location._id)
+        return get_supply_point_case_by_location(location)
 
     @classmethod
     def get_or_create_by_location(cls, location):
-        sp = cls.get_by_location(location)
+        sp = get_supply_point_case_by_location(location)
         if not sp:
             sp = SupplyPointCase.create_from_location(
                 location.domain,
@@ -757,12 +735,12 @@ class SupplyPointCase(CommCareCase):
                     [
                         {
                             "expr": "location_parent_name",
-                            "name": _("Location"),
+                            "name": _("Parent Location"),
                         },
                         {
                             "expr": "owner_id",
-                            "name": _("Group"),
-                            "format": '<span data-field="owner_id">{0}</span>',
+                            "name": _("Location"),
+                            "process": "doc_info",
                         },
                     ],
                 ],
@@ -839,25 +817,6 @@ class RequisitionCase(CommCareCase):
         )
 
     @classmethod
-    def open_for_location(cls, domain, location_id):
-        """
-        For a given location, return the IDs of all open requisitions at that location.
-        """
-        try:
-            sp_id = Location.get(location_id).linked_supply_point()._id
-        except ResourceNotFound:
-            return []
-
-        results = cls.get_db().view(
-            'commtrack/requisitions',
-            endkey=[domain, sp_id, 'open'],
-            startkey=[domain, sp_id, 'open', {}],
-            reduce=False,
-            descending=True,
-        )
-        return [r['id'] for r in results]
-
-    @classmethod
     def get_by_external_id(cls, domain, external_id):
         # only used by openlmis
         raise NotImplementedError()
@@ -932,7 +891,7 @@ class ActiveManager(models.Manager):
     Filter any object that is associated to an archived product.
     """
 
-    def get_query_set(self):
+    def get_queryset(self):
         return super(ActiveManager, self).get_query_set() \
             .exclude(sql_product__is_archived=True) \
             .exclude(sql_location__is_archived=True)
@@ -1078,7 +1037,7 @@ def sync_location_supply_point(loc):
         return loc.location_type in [loc_type.name for loc_type in domain.location_types if not loc_type.administrative]
 
     if _needs_supply_point(loc, domain):
-        supply_point = SupplyPointCase.get_by_location(loc)
+        supply_point = get_supply_point_case_by_location(loc)
         if supply_point:
             supply_point.update_from_location(loc)
             updated_supply_point = supply_point

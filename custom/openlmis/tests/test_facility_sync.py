@@ -2,7 +2,7 @@ import os
 from django.test import TestCase
 from casexml.apps.case.tests import delete_all_cases
 from corehq.apps.commtrack.tests import bootstrap_domain
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import Location, LocationType
 from custom.openlmis.api import get_facilities
 from custom.openlmis.commtrack import sync_facility_to_supply_point, get_supply_point
 
@@ -17,6 +17,10 @@ class FacilitySyncTest(TestCase):
         delete_all_cases()
         for loc in Location.by_domain(TEST_DOMAIN):
             loc.delete()
+        LocationType.objects.get_or_create(
+            domain=TEST_DOMAIN,
+            name="Lvl3 Hospital",
+        )
 
     def _get_facilities(self):
         with open(os.path.join(self.datapath, 'recent_facilities.rss')) as f:

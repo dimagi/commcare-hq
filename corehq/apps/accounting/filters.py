@@ -4,6 +4,7 @@ from corehq.apps.accounting.async_handlers import (
     SubscriberFilterAsyncHandler,
     SubscriptionFilterAsyncHandler,
     AccountFilterAsyncHandler,
+    DomainFilterAsyncHandler,
     BillingContactInfoAsyncHandler,
     SoftwarePlanAsyncHandler,
 )
@@ -39,6 +40,14 @@ class NameFilter(BaseAccountingSingleOptionFilter):
     default_text = _("All")
     async_handler = AccountFilterAsyncHandler
     async_action = 'account_name'
+
+
+class DomainFilter(BaseAccountingSingleOptionFilter):
+    slug = 'domain_name'
+    label = _("Project Space")
+    default_text = _("All")
+    async_handler = DomainFilterAsyncHandler
+    async_action = 'domain_name'
 
 
 def clean_options(options):
@@ -121,8 +130,8 @@ class TrialStatusFilter(BaseSingleOptionFilter):
     TRIAL = "trial"
     NON_TRIAL = "non_trial"
     options = [
-        (TRIAL, _("Show Non-Trial Subscriptions")),
-        (NON_TRIAL, _("Show Only Trial Subscriptions")),
+        (NON_TRIAL, _("Show Non-Trial Subscriptions")),
+        (TRIAL, _("Show Only Trial Subscriptions")),
     ]
 
 

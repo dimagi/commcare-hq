@@ -4,7 +4,7 @@ from urllib2 import urlopen
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.sms.mixin import SMSBackend
 from corehq.apps.sms.models import SMSLog
-from couchdbkit.ext.django.schema import *
+from dimagi.ext.couchdbkit import *
 from corehq.apps.megamobile.forms import MegamobileBackendForm
 from django.conf import settings
 

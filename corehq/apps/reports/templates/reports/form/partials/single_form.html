@@ -6,7 +6,6 @@
 requires imports/proptable.html to be included in the main template
 {% endcomment %}
 {% include "imports/fancy-code.html" %}
-{% include 'cloudcare/includes/touchforms-inline.html' %}
 <style media="print">
     header {
         display: none !important;
@@ -27,100 +26,30 @@ requires imports/proptable.html to be included in the main template
     overflow: scroll;
     width: 800px;
 }
+.hq-help {
+    /* TODO: does .hq-help really need to be width 0 by default? */
+    width: auto;
+}
 </style>
-<script src="{% static 'cloudcare/js/util.js' %}"></script>
 <script>
     $(function () {
-        var help_text = {
-            "{% trans "Archiving Forms" %}": "{% trans "Archived forms will no longer show up in reports and they will be removed from any relevant case histories. " %}",
-            "{% trans "Restoring Forms" %}": "{% trans "Restoring this form will cause it to show up in reports again." %}",
-            "{% trans "Resaving Forms" %}": "{% trans "Resaving a form can manually cause it to be reincluded in reports if something went wrong during initial processing." %}"
-        };
-        $('.help_popover').popover({
-            placement: 'left',
-            trigger: 'hover',
-            title: function () {
-                return $(this).attr('data-help-key');
-            },
-            content: function () {
-                return help_text[$(this).attr('data-help-key')];
-            }
+        $('.hq-help-template').each(function () {
+            COMMCAREHQ.transformHelpTemplate($(this), true);
         });
-    });
-    $(function () {
-        $('.hq-help').hqHelp();
-        function showReadable() {
-            $('.form-data-raw').hide();
-            $('.form-data-readable').show();
-        }
-        function showRaw() {
-            $('.form-data-readable').hide();
-            $('.form-data-raw').show();
-        }
-        $('.showReadable').click(showReadable);
-        $('.showRaw').click(showRaw);
-        $('.formDisplayToggle a').click(function () {
-            $(this).tab('show');
-            return false;
-        });
-
-        // On page load, initially set show readable
-        showReadable();
-
-        function showSkipped(show) {
-            if (show) {
-                $('.form-data-skipped').show();
-                $('.form-data-skipped-spacer').hide();
-                $('.form-data-hidden-values').each(function () {
-                    $(this).show();
-                });
-            } else {
-                $('.form-data-skipped').hide();
-                $('.form-data-skipped-spacer').show();
-                $('.form-data-hidden-values').each(function () {
-                    var current = $(this).next();
-                    while (current.is('.form-data-question')) {
-                        console.log(current);
-                        if (!current.is('.form-data-skipped')) {
-                            return;
-                        }
-                        current = current.next();
-                    }
-                    $(this).hide();
-                });
-            }
-        }
-        $('.showSkippedToggle').change(function () {
-            showSkipped($(this).is(':checked'));
-        }).each(function () {
-            if ($('.form-data-skipped').length == 0) {
-                $(this).parent('label').hide();
-            }
-        });
-        showSkipped(false);
-
-        {% if form_meta %}
-        GMAPS_API_KEY = '{{ maps_api_key|safe }}'; // maps api is a global variable depended on by touchforms
-
-        // unfortunately since cloudcare doesn't have reversible urls, this has to be done in javascript
-        // todo: this probably needs better error handling
-        var cloudCareUrl = getCloudCareUrl(
-            "{% url "cloudcare_main" domain '' %}",
-            "{{ form_meta.app.id }}",
-            "{{ form_meta.module.id }}",
-            "{{ form_meta.form.id }}"
-        ) + "?preview=true&instance={{ instance.get_id }}";
-        $("#edit-form").attr("href", cloudCareUrl);
-        {% endif %}
 
         $("#archive-form").submit(function() {
             document.getElementById('archive-form-btn').disabled=true;
             document.getElementById('archive-spinner').style.display='inline-block';
-            ga_track_event('Reports', 'Case History', 'Archive this form', {
-                'hitCallback': function () {
+
+            // _.after(2,...) means the callback will only be called after *both* analytics
+            // functions have finished.
+            var analyticsCallback = _.after(2, function() {
                     document.getElementById('archive-form').submit();
                 }
-            });
+            );
+            analytics.usage('Reports', 'Case History', 'Archive this form', {'hitCallback': analyticsCallback});
+            analytics.workflow("Clicked on Archive Form", {}, analyticsCallback);
+
             return false;
         });
         $("#unarchive-form").submit(function() {
@@ -230,13 +159,6 @@ requires imports/proptable.html to be included in the main template
             {% trans "Raw XML" %}
         </a>
     </li>
-{% if show_edit_submission %}
-    <li>
-        <a href="#edit-submission" data-toggle="tab">
-            {% trans "Edit Submission" %}
-        </a>
-    </li>
-{% endif %}
 </ul>
 
 <div class="tab-content form-details" style="overflow:visible">
@@ -255,9 +177,11 @@ requires imports/proptable.html to be included in the main template
                 {% if not is_archived %}
                 <form action="{% url "archive_form" domain instance.get_id %}" method="POST"
                       id="archive-form">
-                    <span class="help_popover" data-help-key="{% trans "Archiving Forms" %}">
-                        <i class="icon icon-question-sign"></i>
-                    </span>
+                    <span class="hq-help-template"
+                        data-title="{% trans "Archiving Forms" %}"
+                        data-content="{% trans "Archived forms will no longer show up in reports and they will be removed from any relevant case histories. " %}"
+                        data-placement="left"
+                    ></span>
                     <button type="submit" class="btn btn-danger" id="archive-form-btn">
                         {% trans "Archive this form" %}
                         <i class="icon-refresh icon-spin" id="archive-spinner" style="display:none"></i>
@@ -266,9 +190,11 @@ requires imports/proptable.html to be included in the main template
                 {% else %}
                 <form action="{% url "unarchive_form" domain instance.get_id %}" method="POST"
                       id="unarchive-form">
-                    <span class="help_popover" data-help-key="{% trans "Restoring Forms" %}">
-                        <i class="icon icon-question-sign"></i>
-                    </span>
+                    <span class="hq-help-template"
+                        data-title="{% trans "Restoring Forms" %}"
+                        data-content="{% trans "Restoring this form will cause it to show up in reports again." %}"
+                        data-placement="left"
+                    ></span>
                     <button type="submit" class="btn btn-primary" id="unarchive-form-btn">
                         {% trans "Restore this form" %}
                         <i class="icon-refresh icon-spin" id="unarchive-spinner" style="display:none"></i>
@@ -278,53 +204,26 @@ requires imports/proptable.html to be included in the main template
                 {% if show_resave %}
                 <form action="{% url "resave_form" domain instance.get_id %}" method="POST"
                       id="resave-form">
-                    <span class="help_popover" data-help-key="{% trans "Resaving Forms" %}">
-                        <i class="icon icon-question-sign"></i>
-                    </span>
+                    <span class="hq-help-template"
+                        data-title="{% trans "Resaving Forms" %}"
+                        data-content="{% trans "Resaving a form can manually cause it to be reincluded in reports if something went wrong during initial processing." %}"
+                        data-placement="left"
+                    ></span>
                     <button type="submit" class="btn" id="resave-form-btn">
                         {% trans "Resave this form" %}
                         <i class="icon-refresh icon-spin" id="resave-spinner" style="display:none"></i>
                     </button>
                 </form>
                 {% endif %}
+                {% if show_edit_submission %}
+                        <a href="{% url 'edit_form_instance' domain instance.get_id %}" target="_blank" class="btn btn-primary">
+                            <i class="icon-edit"></i> {% trans "Edit submission" %}
+                        </a>
+                {% endif %}
             </p>
             {% endif %}
         </div>
-
-        {% if question_list_not_found %}
-        <div class="row-fluid">
-            <div class="alert alert-warning clear-fix span6">
-                <strong>{{ question_list_not_found.message }}</strong>
-                <br/>
-                {% trans "All data is listed as Unrecognized Data." %}
-            </div>
-        </div>
-        {% else %}
-        <ul class="nav nav-pills formDisplayToggle">
-            <li class="active"><a href="#" class="showReadable">{% trans "Labels" %}</a></li>
-            <li><a href="#" class="showRaw">{% trans "Question IDs" %}</a></li>
-        </ul>
-        <label class="checkbox">
-            <input type="checkbox" class="showSkippedToggle"/>
-            {% trans "Show questions in form that were not shown to the user" %}
-            <a href="#" class="hq-help no-click">
-                <i class="icon-question-sign"
-                   data-title="{% trans "Questions not shown to the user" %}"
-                   data-content="{% trans "These questions were not shown to the user because their display conditions were not met." %}"
-                   data-trigger="hover"></i>
-            </a>
-        </label>
-        {% endif %}
-        <table class="table table-bordered form-data-table">
-            <tr>
-                <th class="span6">
-                    <span class="form-data-readable">{% trans "Question" %}</span>
-                    <span class="form-data-raw">{% trans "Question ID" %}</span>
-                </th>
-                <th class="span6">{% trans "Response" %}</th>
-            </tr>
-            {% include 'reports/form/partials/single_form_tree.html' with questions=form_data %}
-        </table>
+        {% include 'reports/form/partials/readable_form.html' with questions=form_data %}
     </div>
 
     {% if cases %}
@@ -398,22 +297,4 @@ requires imports/proptable.html to be included in the main template
         <p>{% trans "Double-click code below to select all:" %}</p>
         {% render_form_xml instance %}
     </div>
-{% if show_edit_submission %}
-    <div class="tab-pane" id="edit-submission">
-        <p>
-            <a href="#" class="btn btn-primary touchforms-link"
-                data-target="#form_editor_container"
-                data-app-id="{{ form_meta.app.id }}"
-                data-module-id="{{ form_meta.module.id }}"
-                data-form-id="{{ form_meta.form.id  }}"
-                data-instance-id='{{ instance.get_id }}'
-                data-session-data='{{ edit_session_data|JSON }}'
-                data-submit-url-root='{% url "receiver_post" domain %}'
-                data-form-url-root='{% url "cloudcare_main" domain "" %}'>
-                <i class="icon-edit"></i> {% trans "Edit submission" %}
-            </a>
-        </p>
-        <div class="touchforms-inline" id="form_editor_container"></div>
-    </div>
-{% endif %}
 </div>

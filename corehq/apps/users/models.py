@@ -5,13 +5,15 @@ from __future__ import absolute_import
 from datetime import datetime
 import re
 
-from django.utils import html, safestring
 from restkit.errors import NoMoreData
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
-from couchdbkit.ext.django.schema import *
+from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
+from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain_by_owner
+from corehq.apps.sofabed.models import CaseData
+from dimagi.ext.couchdbkit import *
 from couchdbkit.resource import ResourceNotFound
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.chunked import chunked
@@ -31,9 +33,13 @@ from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.domain.utils import normalize_domain_name, domain_restricts_superusers
 from corehq.apps.domain.models import LicenseAgreement
-from corehq.apps.users.util import normalize_username, user_data_from_registration_form
+from corehq.apps.users.util import (
+    normalize_username,
+    user_data_from_registration_form,
+    user_display_string,
+)
 from corehq.apps.users.xml import group_fixture
-from corehq.apps.users.tasks import tag_docs_as_deleted
+from corehq.apps.users.tasks import tag_docs_as_deleted, tag_forms_as_deleted_rebuild_associated_cases
 from corehq.apps.users.exceptions import InvalidLocationConfig
 from corehq.apps.sms.mixin import (
     CommCareMobileContactMixin,
@@ -554,6 +560,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
         to_user.add_domain_membership(domain, is_admin=is_admin)
         self.delete_domain_membership(domain, create_record=create_record)
 
+    @memoized
     def is_domain_admin(self, domain=None):
         if not domain:
             # hack for template
@@ -1324,6 +1331,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     domain = StringProperty()
     registering_device_id = StringProperty()
+    # used by loadtesting framework - should typically be empty
+    loadtest_factor = IntegerProperty()
 
     @classmethod
     def wrap(cls, data):
@@ -1410,12 +1419,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     @property
     def username_in_report(self):
-        def parts():
-            yield u'%s' % html.escape(self.raw_username)
-            if self.full_name:
-                yield u' "%s"' % html.escape(self.full_name)
-
-        return safestring.mark_safe(''.join(parts()))
+        return user_display_string(self.username, self.first_name, self.last_name)
 
     @classmethod
     def create_or_update_from_xform(cls, xform):
@@ -1520,6 +1524,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             date_joined=self.date_joined,
             user_data=self.user_data,
             domain=self.domain,
+            loadtest_factor=self.loadtest_factor,
         )
 
         def get_owner_ids():
@@ -1563,33 +1568,29 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         else:
             return 0
 
-    def get_cases(self, deleted=False, last_submitter=False, wrap=True):
-        if deleted:
-            view_name = 'users/deleted_cases_by_user'
-        elif last_submitter:
-            view_name = 'case/by_user'
-        else:
-            view_name = 'case/by_owner'
-
-        db = CommCareCase.get_db()
-        case_ids = [r["id"] for r in db.view(view_name,
+    def _get_deleted_cases(self):
+        case_ids = [r["id"] for r in CommCareCase.get_db().view(
+            'users/deleted_cases_by_user',
             startkey=[self.user_id],
             endkey=[self.user_id, {}],
             reduce=False,
         )]
-        for doc in iter_docs(db, case_ids):
-            yield CommCareCase.wrap(doc) if wrap else doc
+        for doc in iter_docs(CommCareCase.get_db(), case_ids):
+            yield CommCareCase.wrap(doc)
+
+    def _get_case_docs(self):
+        case_ids = get_case_ids_in_domain_by_owner(
+            self.domain, owner_id=self.user_id)
+        return iter_docs(CommCareCase.get_db(), case_ids)
 
     @property
-    def case_count(self):
-        result = CommCareCase.view('case/by_user',
-            startkey=[self.user_id],
-            endkey=[self.user_id, {}], group_level=0
-        ).one()
-        if result:
-            return result['value']
-        else:
-            return 0
+    def analytics_only_case_count(self):
+        """
+        Get an approximate count of cases which were last submitted to by this user.
+
+        This number is not guaranteed to be 100% accurate since it depends on a secondary index (sofabed)
+        """
+        return CaseData.objects.filter(user_id=self._id).count()
 
     def location_group_ids(self):
         """
@@ -1600,14 +1601,14 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         location_type = self.location.location_type_object
         if location_type.shares_cases:
             if location_type.view_descendants:
-                from corehq.apps.locations.models import SQLLocation
-                sql_loc = SQLLocation.objects.get(location_id=self.location._id)
                 return [
                     loc.case_sharing_group_object(self._id)._id
-                    for loc in sql_loc.get_descendants()
-                ]
+                    for loc in self.sql_location.get_descendants(include_self=True).filter(
+                        location_type__shares_cases=True,
+                    )]
+
             else:
-                return [self.location.sql_location.case_sharing_group_object(self._id)._id]
+                return [self.sql_location.case_sharing_group_object(self._id)._id]
 
         else:
             return []
@@ -1620,20 +1621,24 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         if self.project.locations_enabled and self.location:
             owner_ids.extend(self.location_group_ids())
-
         return owner_ids
 
     def retire(self):
         suffix = DELETED_SUFFIX
         deletion_id = random_hex()
+        deleted_cases = set()
         # doc_type remains the same, since the views use base_doc instead
         if not self.base_doc.endswith(suffix):
             self.base_doc += suffix
             self['-deletion_id'] = deletion_id
-        for formlist in chunked(self.get_forms(wrap=False, include_docs=True), 50):
-            tag_docs_as_deleted.delay(XFormInstance, formlist, deletion_id)
-        for caselist in chunked(self.get_cases(wrap=False), 50):
+
+        for caselist in chunked(self._get_case_docs(), 50):
             tag_docs_as_deleted.delay(CommCareCase, caselist, deletion_id)
+            for case in caselist:
+                deleted_cases.add(case['_id'])
+
+        for formlist in chunked(self.get_forms(wrap=False, include_docs=True), 50):
+            tag_forms_as_deleted_rebuild_associated_cases.delay(formlist, deletion_id, deleted_cases=deleted_cases)
 
         for phone_number in self.get_verified_numbers(True).values():
             phone_number.retire(deletion_id)
@@ -1656,7 +1661,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         for form in self.get_forms(deleted=True):
             form.doc_type = chop_suffix(form.doc_type)
             form.save()
-        for case in self.get_cases(deleted=True):
+        for case in self._get_deleted_cases():
             case.doc_type = chop_suffix(case.doc_type)
             case.save()
         self.save()
@@ -1690,14 +1695,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         groups = []
         if self.location and self.location.location_type_object.shares_cases:
             if self.location.location_type_object.view_descendants:
-                from corehq.apps.locations.models import SQLLocation
-                sql_loc = SQLLocation.objects.get(location_id=self.location._id)
-                for loc in sql_loc.get_descendants():
+                for loc in self.sql_location.get_descendants():
                     groups.append(loc.case_sharing_group_object(
                         self._id,
                     ))
 
-            groups.append(self.location.sql_location.case_sharing_group_object(self._id))
+            groups.append(self.sql_location.case_sharing_group_object(self._id))
 
         groups += [group for group in Group.by_user(self) if group.case_sharing]
 
@@ -1757,10 +1760,19 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             return self.language
 
     @property
+    @memoized
     def location(self):
         from corehq.apps.locations.models import Location
         if self.location_id:
             return Location.get(self.location_id)
+        else:
+            return None
+
+    @property
+    def sql_location(self):
+        from corehq.apps.locations.models import SQLLocation
+        if self.location_id:
+            return SQLLocation.objects.get(location_id=self.location_id)
         else:
             return None
 
@@ -1770,7 +1782,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         the user.
         """
         from corehq.apps.commtrack.models import SupplyPointCase
-        from corehq.apps.locations.models import LOCATION_SHARING_PREFIX
 
         self.user_data['commcare_location_id'] = location._id
 
@@ -1796,7 +1807,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         self.user_data.update({
             'commcare_primary_case_sharing_id':
-            LOCATION_SHARING_PREFIX + location._id
+            location._id
         })
 
         self.location_id = location._id
@@ -1908,9 +1919,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         """
         Remove a single location from the case delagate access.
         """
-        from corehq.apps.commtrack.models import SupplyPointCase
 
-        sp = SupplyPointCase.get_by_location(location)
+        sp = get_supply_point_case_by_location(location)
 
         mapping = self.get_location_map_case()
 
@@ -1959,7 +1969,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         index = {}
         for location in locations:
             if not location.location_type_object.administrative:
-                sp = SupplyPointCase.get_by_location(location)
+                sp = get_supply_point_case_by_location(location)
                 index.update(self.supply_point_index_mapping(sp))
 
         from corehq.apps.commtrack.util import location_map_case_id
@@ -2254,6 +2264,15 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
         for user_doc in iter_docs(cls.get_db(), user_ids):
             if user_doc['email'].endswith('@dimagi.com'):
                 yield user_doc['email']
+
+    def get_location_id(self, domain):
+        return getattr(self.get_domain_membership(domain), 'location_id', None)
+
+    @memoized
+    def get_location(self, domain):
+        from corehq.apps.locations.models import Location
+        loc_id = self.get_location_id(domain)
+        return Location.get(loc_id) if loc_id else None
 
 
 class FakeUser(WebUser):

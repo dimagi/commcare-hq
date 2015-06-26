@@ -27,6 +27,7 @@ from corehq.apps.accounting.models import (
     BillingAccountType,
     EntryPoint,
 )
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.models import Location
@@ -55,7 +56,7 @@ from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound, JSONReader
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
 from soil.exceptions import TaskFailedError
-from soil.util import get_download_context, expose_download
+from soil.util import get_download_context, expose_cached_download
 from .custom_data_fields import UserFieldsView
 
 BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
@@ -155,6 +156,7 @@ class EditCommCareUserView(BaseFullEditUserView):
             'reset_password_form': self.reset_password_form,
             'is_currently_logged_in_user': self.is_currently_logged_in_user,
             'data_fields_form': self.custom_data.form,
+            'can_use_inbound_sms': domain_has_privilege(self.domain, privileges.INBOUND_SMS),
         }
         if self.request.project.commtrack_enabled or self.request.project.locations_enabled:
             context.update({
@@ -205,7 +207,7 @@ class EditCommCareUserView(BaseFullEditUserView):
         if request.POST['form_type'] == "commtrack":
             if self.update_commtrack_form.is_valid():
                 self.update_commtrack_form.save(self.editable_user)
-                messages.success(request, _("CommTrack information updated!"))
+                messages.success(request, _("CommCare Supply information updated!"))
         return super(EditCommCareUserView, self).post(request, *args, **kwargs)
 
     def custom_user_is_valid(self):
@@ -437,7 +439,7 @@ class AsyncListCommCareUsersView(ListCommCareUsersView):
             if self.more_columns:
                 u_data.update({
                     'form_count': user.form_count,
-                    'case_count': user.case_count,
+                    'case_count': user.analytics_only_case_count,
                 })
                 if self.show_case_sharing:
                     u_data.update({
@@ -758,7 +760,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
         except UserUploadError as e:
             return HttpResponseBadRequest(e)
 
-        task_ref = expose_download(None, expiry=1*60*60)
+        task_ref = expose_cached_download(None, expiry=1*60*60)
         task = bulk_upload_async.delay(
             self.domain,
             list(self.user_specs),

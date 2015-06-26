@@ -6,7 +6,6 @@
     # Application
     - hq.case_sharing  # Case Sharing
     - hq.cloudcare_enabled  # CloudCare
-    - hq.commtrack_enabled
     - hq.commtrack_requisition_mode
     - hq.use_custom_suite
     - hq.custom_suite
@@ -63,6 +62,7 @@
     - properties.logo_android_home
     - properties.logo_android_login
     - hq.auto_gps_capture
+    - properties.cc-login-duration-seconds
 
 - title: 'Advanced'
   id: app-settings-advanced

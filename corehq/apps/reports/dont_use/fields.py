@@ -216,7 +216,7 @@ class UserOrGroupField(ReportSelectField):
         To Use: Subclass and specify what the field options should be
     """
     slug = "view_by"
-    name = "View by Users or Groups"
+    name = ugettext_noop("View by Users or Groups")
     cssId = "view_by_select"
     cssClasses = "span2"
     default_option = "Users"

@@ -52,19 +52,11 @@ class CustomExportHelper(object):
     allow_deid = False
     allow_repeats = True
 
-    subclasses_map = {}  # filled in below
-
     export_type = 'form'
 
     @property
     def default_order(self):
         return {}
-
-    @classmethod
-    def make(cls, request, export_type, domain=None, export_id=None):
-        export_type = export_type or request.GET.get('request_type', 'form')
-        minimal = bool(request.GET.get('minimal', False))
-        return cls.subclasses_map[export_type](request, domain, export_id=export_id, minimal=minimal)
 
     def update_custom_params(self):
         if len(self.custom_export.tables) > 0:
@@ -291,8 +283,7 @@ class FormCustomExportHelper(CustomExportHelper):
             if self.creating_new_export and (question in self.default_questions or question in current_questions):
                 col["selected"] = True
 
-            if toggle_enabled(self.request, 'SPLIT_MULTISELECT_EXPORT'):
-                update_multi_select_column(question, col)
+            update_multi_select_column(question, col)
 
         requires_case = self.custom_export.uses_cases()
 
@@ -348,8 +339,7 @@ class FormCustomExportHelper(CustomExportHelper):
                 show=True,
             ).to_config_format(selected=self.creating_new_export)
 
-            if toggle_enabled(self.request, 'SPLIT_MULTISELECT_EXPORT'):
-                update_multi_select_column(question, col)
+            update_multi_select_column(question, col)
 
             return col
 
@@ -525,7 +515,10 @@ class CaseCustomExportHelper(CustomExportHelper):
         return ctxt
 
 
-CustomExportHelper.subclasses_map.update({
-    'form': FormCustomExportHelper,
-    'case': CaseCustomExportHelper,
-})
+def make_custom_export_helper(request, export_type, domain=None, export_id=None):
+    export_type = export_type or request.GET.get('request_type', 'form')
+    minimal = bool(request.GET.get('minimal', False))
+    return {
+        'form': FormCustomExportHelper,
+        'case': CaseCustomExportHelper,
+    }[export_type](request, domain, export_id=export_id, minimal=minimal)

@@ -2,7 +2,7 @@ from django.test import TestCase
 from corehq.apps.commtrack.tests.util import bootstrap_domain
 from corehq.apps.products.models import SQLProduct
 
-from ..models import Location
+from ..models import Location, LocationType
 
 
 class ProductsAtLocationTest(TestCase):
@@ -16,6 +16,7 @@ class ProductsAtLocationTest(TestCase):
     def setUp(self):
         self.domain = bootstrap_domain()
         self.products = SQLProduct.objects.filter(domain=self.domain)
+        LocationType(domain=self.domain.name, name='type').save()
 
     def test_add_products(self):
         couch_location = Location(

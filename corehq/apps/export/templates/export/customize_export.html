@@ -462,7 +462,7 @@
             Each item that is selected in the select list will appear as a column in the exported data.
             Any options not selected will be in an "extra" column.
         {% endblocktrans %}
-        <a href='https://help.commcarehq.org/display/commcarepublic/Splitting+multi-select+data+in+exports' target="_blank" class="allow-click">
+        <a href='https://help.commcarehq.org/display/commcarepublic/Splitting+multi-select+data+in+exports' target="_blank">
             {% trans "More info" %}
         </a>
     </div>
@@ -520,12 +520,10 @@
                         <input type="checkbox" id="include-errors-checkbox" data-bind="checked: custom_export.include_errors" />
                         {% trans "Include duplicates and other unprocessed forms" %}
                     </label>
-                    {% if request|toggle_enabled:'SPLIT_MULTISELECT_EXPORT' %}
                     <label class="checkbox">
                         <input type="checkbox" id="split-multiselects-checkbox" data-bind="checked: custom_export.split_multiselects" />
                         {% trans "Expand Multiple Answer Questions" %}
                     </label>
-                    {% endif %}
                 {% endif %}
                 </div>
             </div>
@@ -546,8 +544,20 @@
                             <button type="button" class="btn" data-bind="
                                 click: function() {show_deleted(!show_deleted());},
                                 css: {active: show_deleted}">
-                                <span data-bind="visible: !show_deleted()">{% trans "Show Deleted Questions and Advanced Properties" %}</span>
-                                <span data-bind="visible: show_deleted">{% trans "Hide Deleted Questions and Advanced Properties" %}</span>
+                                <span data-bind="visible: !show_deleted()">
+                                {% if custom_export.type == 'form' %}
+                                    {% trans "Show Deleted Questions and Advanced Properties" %}
+                                {% else %}
+                                    {% trans "Show Deleted Properties and Advanced Properties" %}
+                                {% endif %}
+                                </span>
+                                <span data-bind="visible: show_deleted">
+                                {% if custom_export.type == 'form' %}
+                                    {% trans "Hide Deleted Questions and Advanced Properties" %}
+                                {% else %}
+                                    {% trans "Hide Deleted Properties and Advanced Properties" %}
+                                {% endif %}
+                                </span>
                             </button>
                         </div>
                     </div>
@@ -572,10 +582,14 @@
                                         <a href="#" class="btn btn-mini" data-bind="click: $root.selectAll">{% trans "Select All" %}</a>
                                         <a href="#" class="btn btn-mini btn-inverse" data-bind="click: $root.selectNone">{% trans "Select None" %}</a></th>
                                     <th>
+                                    {% if custom_export.type == 'form' %}
                                         {% trans "Question" %}
+                                    {% else %}
+                                        {% trans "Property" %}
+                                    {% endif %}
                                     </th>
                                     <th>{% trans "Display" %}</th>
-                                    {% if custom_export.type == 'case' and request|toggle_enabled:'SPLIT_MULTISELECT_EXPORT' %}
+                                    {% if custom_export.type == 'case' and request|feature_preview_enabled:"SPLIT_MULTISELECT_CASE_EXPORT"%}
                                     <th>{% trans "Type" %}</th>
                                     {% endif %}
                                     {% if helper.allow_deid %}
@@ -604,7 +618,7 @@
 
                                         </td>
                                         <td><input class="input-xlarge" type="text" data-bind="value: display" /></td>
-                                        {% if custom_export.type == 'case' and request|toggle_enabled:'SPLIT_MULTISELECT_EXPORT' %}
+                                        {% if custom_export.type == 'case' and request|feature_preview_enabled:"SPLIT_MULTISELECT_CASE_EXPORT"%}
                                         <td class="input">
                                             <div data-bind="if: !allOptions()">
                                                 <select disabled>
@@ -618,7 +632,7 @@
                                                 "/>
                                                     <option data-bind="value: value, text: label"></option>
                                                 </select>
-                                                <span data-bind="makeHqHelp: {name: '{% trans "Split multi-select data" %}', placement: 'left', trigger: 'click'}"></span>
+                                                <span data-bind="makeHqHelp: {name: '{% trans "Split multi-select data" %}', placement: 'left'}"></span>
                                                 <div data-bind="if: doc_type() === 'SplitColumn'">
                                                     <a href="#" data-bind="visible: !showOptions(), click: function() {showOptions(true);}">{% trans "Show Options" %}</a>
                                                     <div data-bind="visible: showOptions">

@@ -9,4 +9,5 @@ _("Monitor Workers")
 _("Inspect Data")
 _("Raw Data")
 _("Manage Deployments")
-_("Commtrack")
+_("CommTrack")  # To mark this string for translation to CommCare Supply
+_("CommCare Supply")

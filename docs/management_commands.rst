@@ -20,6 +20,11 @@ For more information on a specific command, run
     Usage::
     $ ./manage.py bootstrap [options] <domain> <email> <password>
 
+**bootstrap_app**
+    Bootstrap an app in an existing domain.
+    Usage::
+    $ ./manage.py bootstrap_app [options] <domain_name> <app_name>
+
 **clean_pyc**
     Removes all python bytecode (.pyc) compiled files from the project.
 
@@ -61,6 +66,7 @@ Complete list of available subcommands:
     | bihar_print_groups
     | bihar_run_calcs
     | bootstrap
+    | bootstrap_app
     | bootstrap_psi
     | build_apps
     | camqadm

@@ -14,20 +14,9 @@
 {% block js-inline %}{{ block.super }}
 <script>
     $(function () {
-       var help_text = {
-           "Released": "This is used for automatically updating CommCare applications. If the \"Auto-update\" setting is " +
-                   "set to Daily or Weekly, any application versions that are marked as released will update to the latest" +
-                   "released version when checking for updates.",
-       };
-       $('.help_popover').popover({
-                placement: $(this).data('placement') || 'left',
-                title: function () {
-                    return $(this).attr('data-help-key');
-                },
-                content: function () {
-                    return help_text[$(this).attr('data-help-key')];
-                }
-            });
+       $('.hq-help-template').each(function () {
+            COMMCAREHQ.transformHelpTemplate($(this), true);
+       });
     });
     $(function () {
         // init releases
@@ -58,7 +47,7 @@
         el.show();
     });
 
-    analytics.track("Visited Releases-page");
+    analytics.workflow('Visited the Release Manager');
 </script>
 <script>
     function track_deploy_type(type) {
@@ -137,7 +126,10 @@
             </small></p>
         </div>
         <button class="btn btn-primary" data-bind="
-            click: function() {analytics.track('Clicked Make-New-Version'); return makeNewBuild();},
+            click: function() {
+                analytics.workflow('Clicked Make New Version');
+                return makeNewBuild();
+            },
             attr: {disabled: !buildButtonEnabled() ? 'disabled' : undefined},
             css: {disabled: !buildButtonEnabled()}
         ">{% trans 'Make New Version' %}</button>
@@ -151,10 +143,14 @@
                 <th></th>
                 <th></th>
                 <th>{% trans "Comment" %}</th>
-                <th class="help_popover" data-help-key="Released">
-                    <a href="#">{% trans "Released" %} <i class="icon icon-question-sign"></i></a>
+                <th>
+                    {% trans "Released" %}
+                    <span class="hq-help-template"
+                        data-title="Released"
+                        data-content="This is used for automatically updating CommCare applications. If the &quot;Auto-update&quot; setting is set to Daily or Weekly, any application versions that are marked as released will update to the latest released version when checking for updates."
+                        data-placement="left"
+                    ></span>
                 </th>
-
             </tr>
             <tbody data-bind="visible: buildState, css: {hide: false}" class="hide">
                 <tr data-bind="visible: buildState() == 'pending'">
@@ -210,7 +206,11 @@
                             <a class="btn" data-bind="
                                 openModal: 'deploy-build-modal-template',
                                 css: {'btn-primary': !build_broken(), 'btn-danger': build_broken},
-                                click: function() { ga_track_event('App Manager', 'Deploy Button', '{{ app.id }}'); analytics.track('Clicked Deploy-Button');}
+                                click: function() {
+                                    generate_short_url('short_odk_url');
+                                    ga_track_event('App Manager', 'Deploy Button', '{{ app.id }}');
+                                    analytics.workflow('Clicked Deploy');
+                                }
                             ">
                                 <span class="icon icon-exclamation-sign" data-bind="visible: build_broken"></span>
                                 {% trans "Deploy" %}
@@ -317,41 +317,11 @@
                 <div class="accordion" data-bind="bootstrapCollapse: true">
                     <div class="accordion-group">
                         <div class="accordion-heading">
-                            <a class="accordion-toggle" data-bind="
-                                click: function() { track_deploy_type('Download to Java Phone'); },
-                            ">
-                                {% trans "Download to Java Phone" %}
-                            </a>
-                        </div>
-                        <div class="accordion-body collapse">
-                            <div class="accordion-inner">
-                                <ol>
-                                    <li>
-                                        {% trans "Download <strong>both</strong> of the following files:" %}
-                                        <p><a data-bind="attr: {href: $root.url('jad', id)}">{% trans "Download" %} CommCare.jad</a></p>
-                                        <p><a data-bind="attr: {href: $root.url('jar', id)}">{% trans "Download" %} CommCare.jar</a></p>
-                                    </li>
-                                    <li>
-                                        {% trans "For help on how to install, see" %}
-                                        <a target="_blank" href="https://help.commcarehq.org/display/commcarepublic/CommCare+for+Feature+Phones">{% trans "Set Up Feature Phones" %}</a>.
-                                    </li>
-                                    <li>
-                                        {% trans "If you have any issues with the installation, please refer to" %}
-                                        <a target="_blank" href="https://help.commcarehq.org/display/commcarepublic/Troubleshooting">{% trans "Troubleshooting Phone Problems" %}</a>.
-                                    </li>
-                                </ol>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="accordion-group">
-                        <div class="accordion-heading">
-                            <a class="accordion-toggle" data-bind="
-                                click: function() { track_deploy_type('Download to Android'); },
-                            ">
+                            <a class="accordion-toggle">
                                 {% trans "Download to Android" %}
                             </a>
                         </div>
-                        <div class="accordion-body collapse">
+                        <div class="accordion-body in collapse">
                             <div class="accordion-inner">
                                 <div data-bind="bootstrapTabs: true">
                                     <div class="tabbable">
@@ -386,7 +356,9 @@
                                                             text: get_short_odk_url()
                                                         "></a></code>
                                                     </span>
-                                                    <span class="text-warning" data-bind="visible: !get_short_odk_url()">
+                                                    <img data-bind="visible: generating_url()"
+                                                        src="{% static 'hqwebapp/img/ajax-loader.gif' %}"/>
+                                                    <span class="text-warning" data-bind="visible: !get_short_odk_url() && !generating_url()">
                                                         {% trans "No short code available; try making another version." %}
                                                     </span>
                                                 </p>
@@ -408,7 +380,11 @@
                                                     <ol>
                                                         <li>
                                                             {% trans "Download" %}
-                                                            <a data-bind="attr: {href: $root.url('ccz', id)}">CommCare.ccz</a>
+                                                            <a href="#" data-bind="click: function () {
+                                                                download_application_zip('{% url "download_ccz" app.domain '_____' %}');
+                                                            }">
+                                                                CommCare.ccz
+                                                            </a>
                                                         </li>
                                                         <li>
                                                             {% trans "Transfer it to your Android phone's file system" %}
@@ -422,7 +398,7 @@
                                                     </ol>
                                                     <div>
                                                         {% trans "Note: Offline install automatically installs all multimedia included in your form. All subsequent remote updates will also include multimedia which could require a lot of data." %}
-                                                        {% trans "See the <a href='https://confluence.dimagi.com/display/commcarepublic/Installing+CommCareODK+Android#InstallingCommCareODKAndroid-C.OfflineInstall'>Help Site</a> for more info." %}
+                                                        {% trans "See the <a href='https://confluence.dimagi.com/display/commcarepublic/Install+CommCareODK+for+Android+Smartphones'>Help Site</a> for more info." %}
                                                     </div>
                                                 </div>
                                             </div>
@@ -432,11 +408,40 @@
                             </div>
                         </div>
                     </div>
+                    <div class="accordion-group">
+                        <div class="accordion-heading">
+                            <a class="accordion-toggle" data-bind="
+                                click: function() { track_deploy_type('Download to Java Phone'); },
+                            ">
+                                {% trans "Download to Java Phone" %}
+                            </a>
+                        </div>
+                        <div class="accordion-body collapse">
+                            <div class="accordion-inner">
+                                <ol>
+                                    <li>
+                                        {% trans "Download <strong>both</strong> of the following files:" %}
+                                        <p><a data-bind="attr: {href: $root.url('jad', id)}">{% trans "Download" %} CommCare.jad</a></p>
+                                        <p><a data-bind="attr: {href: $root.url('jar', id)}">{% trans "Download" %} CommCare.jar</a></p>
+                                    </li>
+                                    <li>
+                                        {% trans "For help on how to install, see" %}
+                                        <a target="_blank" href="https://help.commcarehq.org/display/commcarepublic/CommCare+for+Feature+Phones">{% trans "Set Up Feature Phones" %}</a>.
+                                    </li>
+                                    <li>
+                                        {% trans "If you have any issues with the installation, please refer to" %}
+                                        <a target="_blank" href="https://help.commcarehq.org/display/commcarepublic/Troubleshooting">{% trans "Troubleshooting Phone Problems" %}</a>.
+                                    </li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
                     {% if can_send_sms %}
                     <div class="accordion-group">
                         <div class="accordion-heading">
                             <a class="accordion-toggle" data-bind="
                                 click: function() { track_deploy_type('Send to phone via SMS'); },
+                                click: function() { generate_short_url('short_url'); }
                             ">
                                 {% trans "Send to phone via SMS" %}
                             </a>
@@ -451,13 +456,13 @@
                                                 <a>{% trans "Send Java Phone app" %}</a>
                                             </li>
                                             <li>
-                                                <a>{% trans "Send Android app" %}</a>
+                                                <a data-bind="click: function(){ generate_short_url('short_odk_url'); }">{% trans "Send Android app" %}</a>
                                             </li>
                                         </ul>
-                                        <div class="tab-content" data-bind="foreach: [short_url(), short_odk_url()]">
+                                        <div class="tab-content" data-bind="foreach: ['java_phone', 'android'] ">
                                             <div class="tab-pane">
-                                                <div data-bind="visible: $data">
-                                                    <label class="checkbox" data-bind="visible: $parent.allow_media_install && $parent.get_short_odk_media_url && $index() === 1">
+                                                <div data-bind="visible: $parent.sms_url($index()) && !$parent.generating_url()">
+                                                    <label class="checkbox" data-bind="visible: $parent.allow_media_install && $index() === 1">
                                                         <input type="checkbox" data-bind="checked: $parent.include_media, enable: $parent.mm_supported()">
                                                         {% trans "Include Multimedia" %}
                                                         <span data-bind="visible: !$parent.mm_supported()" class="label">
@@ -474,7 +479,10 @@
                                                         <input type="submit" class="btn" value="Send"/>
                                                     </form>
                                                 </div>
-                                                <div data-bind="visible: !$data">
+                                                <div data-bind="visible: $parent.generating_url()">
+                                                    <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}"/>
+                                                </div>
+                                                <div data-bind="visible: !$parent.sms_url($index()) && !$parent.generating_url()">
                                                     <span class="label label-important">
                                                       {% trans "No URL was found for this app, try rebuilding." %}
                                                     </span>
@@ -490,15 +498,16 @@
                     {% if multimedia %}
                         <div class="accordion-group">
                             <div class="accordion-heading">
-                                <a class="accordion-toggle" href="#{{ saved_app.id }}_multimedia" data-toggle="collapse" data-target="#{{ saved_app.id }}_multimedia" data-bind="
+                                <a class="accordion-toggle" data-toggle="collapse" data-bind="
                                     click: function() { track_deploy_type('Download Multimedia'); },
+                                    attr: {href: '#' + id() + '_multimedia', 'data-target': '#' + id() + '_multimedia'}
                                 ">
                                     {% trans 'Download Multimedia' %}
                                 </a>
                             </div>
-                            <div class="accordion-body collapse" id="{{ saved_app.id }}_multimedia">
+                            <div class="accordion-body collapse" data-bind="attr: {id: id() + '_multimedia'}">
                                 <div class="accordion-inner">
-                                    {% include 'hqmedia/partials/multimedia_zip_notice.html' %}
+                                    {% include 'hqmedia/partials/multimedia_zip_notice.html' with include_modal=False %}
                                 </div>
                             </div>
                         </div>
@@ -521,4 +530,8 @@
             </div>
         </script>
     </div>
+
+<!-- Async Download Modals -->
+<script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
+{% include 'app_manager/partials/download_async_modal.html' with element_id='download-zip-modal' include_js=False%}
 {% endblock %}

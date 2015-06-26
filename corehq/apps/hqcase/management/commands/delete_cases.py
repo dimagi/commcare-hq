@@ -2,9 +2,11 @@ from optparse import make_option
 from django.core.management.base import NoArgsCommand, BaseCommand
 from couchdbkit import ResourceNotFound
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.hqcase.dbaccessors import \
+    get_number_of_cases_in_domain_by_owner, get_case_ids_in_domain_by_owner
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.couch.database import iter_bulk_delete
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, CommCareUser
 
 
 class Command(BaseCommand):
@@ -16,10 +18,6 @@ class Command(BaseCommand):
                     action='store_true',
                     dest='no_prompt',
                     help='Delete cases without prompting for confirmation'),
-        make_option('--by-last-submitter',
-                    action='store_true',
-                    dest='last_submitter',
-                    help='delete cases last updated by the specified user'),
     )
 
     @property
@@ -27,28 +25,16 @@ class Command(BaseCommand):
     def db(self):
         return CommCareCase.get_db()
 
-    def case_query(self, reduce=False):
-        if self.last_submitter:
-            view_name = 'case/by_user'
-        else:
-            view_name = 'case/by_owner'
-        return self.db.view(
-            view_name,
-            startkey=[self.user.user_id],
-            endkey=[self.user.user_id, {}],
-            reduce=reduce,
-        )
-
     def get_case_count(self):
-        res = self.case_query(reduce=True).one()
-        return res['value'] if res else 0
+        return get_number_of_cases_in_domain_by_owner(
+            self.domain, self.user.user_id)
 
     def delete_all(self):
-        case_ids = [r["id"] for r in self.case_query(reduce=False)]
+        case_ids = get_case_ids_in_domain_by_owner(
+            self.domain, self.user.user_id)
         iter_bulk_delete(self.db, case_ids)
 
     def handle(self, *args, **options):
-        self.last_submitter = options.get('last_submitter', False)
         if not len(args):
             print "Usage: ./manage.py delete_cases <user>"
             return
@@ -60,10 +46,21 @@ class Command(BaseCommand):
             print "Could not find user {}".format(args[0])
             return
 
+        if not isinstance(self.user, CommCareUser):
+            print ("Sorry, the user you specify has to be a mobile worker. "
+                   "This changed when delete_cases was refactored to use "
+                   "hqcase/by_owner instead of case/by_owner. "
+                   "The new view needs an explicit domain, "
+                   "and I didn't implement that for WebUsers who can belong "
+                   "to multiple domains, but usually do not own cases.")
+            exit(1)
+
+        self.domain = self.user.domain
+
         if not options.get('no_prompt'):
             msg = "Delete all {} cases {} by {}? (y/n)\n".format(
                 self.get_case_count(),
-                "submitted" if self.last_submitter else "owned",
+                "owned",
                 self.user.username,
             )
             if not raw_input(msg) == 'y':

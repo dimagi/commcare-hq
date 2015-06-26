@@ -23,6 +23,10 @@ class Version2CaseParsingTest(TestCase):
     def setUp(self):
         delete_all_cases()
 
+    @classmethod
+    def tearDownClass(cls):
+        delete_all_cases()
+
     def testParseCreate(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "v2", "basic_create.xml")
         with open(file_path, "rb") as f:
@@ -145,7 +149,7 @@ class Version2CaseParsingTest(TestCase):
         # quick test for ota restore
         v2response = xml.get_case_xml(case, [const.CASE_ACTION_CREATE, const.CASE_ACTION_UPDATE], V2)
         expected_v2_response = """
-        <case case_id="foo-case-id" date_modified="2011-12-07T13:42:50Z" user_id="bar-user-id" xmlns="http://commcarehq.org/case/transaction/v2">
+        <case case_id="foo-case-id" date_modified="2011-12-07T13:42:50.000000Z" user_id="bar-user-id" xmlns="http://commcarehq.org/case/transaction/v2">
                 <create>
                     <case_type>v2_case_type</case_type>
                     <case_name>test case name</case_name>

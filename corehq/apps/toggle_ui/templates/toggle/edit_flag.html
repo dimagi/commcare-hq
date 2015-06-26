@@ -24,21 +24,39 @@
         $('.hq-help').hqHelp();
     });
     $(function(){
+        var PAD_CHAR = '&nbsp;'
         function ToggleView() {
             var self = this;
             self.items = ko.observableArray();
 
-            self.init = function (item_list) {
+            self.init = function (config) {
+                self.padded_ns = {};
+                var max_ns_len = Math.max.apply(Math, _.map(config.namespaces, function (ns) { return ns.length }));
+                _(config.namespaces).each(function (namespace) {
+                    var diff = max_ns_len - namespace.length,
+                        pad = new Array(diff + 1).join(PAD_CHAR);
+                    self.padded_ns[namespace] = namespace + pad;
+                });
+
+                self.init_items(config.items);
+            };
+
+            self.init_items = function (items) {
                 self.items.removeAll();
-                _(item_list).each(function (item) {
+                _(items).each(function (item) {
+                    var fields = item.split(':'),
+                        namespace = fields.length > 1 ? fields[0] : 'user',
+                        value = fields.length > 1 ? fields[1] : fields[0];
                     self.items.push({
-                        value: ko.observable(item)
+                        namespace: ko.observable(self.padded_ns[namespace]),
+                        value: ko.observable(value)
                     });
                 });
             };
 
-            self.addItem = function () {
+            self.addItem = function (namespace) {
                 self.items.push({
+                    namespace: ko.observable(self.padded_ns[namespace]),
                     value: ko.observable()
                 });
                 self.change();
@@ -57,7 +75,10 @@
                 unsavedMessage: "You have unchanged changes",
                 save: function () {
                     var items = _.map(self.items(), function (item) {
-                        return item.value();
+                        var ns_raw = item.namespace().replace(new RegExp(PAD_CHAR, 'g'), ''),
+                            namespace = ns_raw === 'user' ? null : ns_raw,
+                            value = namespace === null ? item.value() : namespace + ':' + item.value();
+                        return value;
                     });
                     self.saveButton.ajax({
                         type: 'post',
@@ -67,7 +88,7 @@
                         },
                         dataType: 'json',
                         success: function (data) {
-                            self.init(data.item_list);
+                            self.init_items(data.item_list);
                         }
                     });
                 }
@@ -76,43 +97,27 @@
 
         var home = $('#toggle_editing_ko');
         var view = new ToggleView();
-        view.init({{ toggle.enabled_users|JSON }});
+        view.init({
+            items: {{ toggle.enabled_users|JSON }},
+            namespaces: {{ namespaces|JSON }}
+        });
         ko.applyBindings(view, home.get(0));
         home.on('change', 'input', view.change);
     });
 </script>
 {% endblock %}
-
 {% block page_content %}
+    {% if toggle_meta.description %}
+        <p>{{ toggle_meta.description }}</p>
+    {% endif %}
+    <p>{% trans "This flag is tagged as: " %}<span class="label label-{{ toggle_meta.tag.css_class }}">{{ toggle_meta.tag.name }}</span></p>
+    {% if toggle_meta.help_link %}
+    <p><a href="{{ toggle_meta.help_link }}" target="_blank">{% trans "More information" %}</a></p>
+    {% endif %}
     <div id="toggle_editing_ko">
         <div data-bind="saveButton: saveButton"></div>
         <h4>{% trans "Enabled toggle items" %}</h4>
-        <hr/>
         <div>
-            {% trans "Flag applicable to:" %}
-        <span class="hq-help-template"
-              data-title="{% trans "Toggle Items" %}"
-              data-content="{% blocktrans %}
-                <p>This list shows what kind of items are checked agains this flag.</p>
-                <p>Toggle items are by default assumed to be usernames but can also be namespaced items such as 'domain:somedomain'.</p>
-                <p>The default namespace is 'user' which does not have to be specified.</p>
-                {% endblocktrans %}"></span>
-            <ul>
-                {% for ns in toggle_meta.namespaces %}
-                    {% if ns == None %}
-                    <li>
-                        {% trans "user" %}<br/>
-                        <ul>
-                            <li>
-                                <span class="muted">{% trans "This is the default namespace so no prefix is required i.e. joe@dimagi.com not user:joe@dimagi.com" %}</span>
-                            </li>
-                        </ul>
-                    </li>
-                    {% else %}
-                    <li>{{ ns }}</li>
-                    {% endif %}
-                {% endfor %}
-            </ul>
             {% if toggle_meta.randomness %}
                 <p>
                     {% blocktrans with percent=toggle_meta.randomness_percent namespace=toggle_meta.namespace %}
@@ -137,11 +142,18 @@
                 <a href="#" class="btn btn-danger" data-bind="click: $parent.removeItem"><i class="icon-trash"></i></a>
             </div>
             <div class="span6">
-                <input type="text" data-bind="value: value">
+                <div class="input-append">
+                  <input class="input-medium" type="text" data-bind="value: value">
+                  <span class="add-on" data-bind="html: namespace" style="font-family:monospace;"></span>
+                </div>
             </div>
         </div>
         <!-- /ko -->
-        <button class="btn btn-success" data-bind="click: addItem"><i class="icon-plus"></i> {% trans "Add Item" %}</button>
+        {% for namespace in namespaces %}
+            <button class="btn btn-success" data-bind="click: function (){ addItem('{{ namespace }}') }">
+                <i class="icon-plus"></i> {% trans "Add " %}{{ namespace }}
+            </button>
+        {% endfor %}
     </div>
     {% if expanded %}
         <hr/>

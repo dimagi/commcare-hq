@@ -7,7 +7,7 @@
     <input type="hidden" name="form_type" value="commtrack" />
     <fieldset>
         {% if commtrack_enabled %}
-        <legend>{% trans 'CommTrack Settings' %}</legend>
+        <legend>{% trans 'CommCare Supply Settings' %}</legend>
         {% else %}
         <legend>{% trans 'Location Settings' %}</legend>
         {% endif %}
@@ -17,7 +17,7 @@
     <div class="form-actions">
       <button type="submit" class="btn btn-primary disable-on-submit">
           {% if commtrack_enabled %}
-          {% trans 'Update CommTrack Settings' %}
+          {% trans 'Update CommCare Supply Settings' %}
           {% else %}
           {% trans 'Update Location Settings' %}
           {% endif %}

@@ -14,9 +14,11 @@
         Stripe.setPublishableKey('{{ stripe_public_key }}');
 
         var paymentHandler = new PaymentMethodHandler(
-            {{ payment_error_messages|JSON }},
-            "{% trans "Buy Credits" %}",
-            "add-credit-form"
+            "add-credit-form",
+            {
+                submitBtnText: "{% trans "Buy Credits" %}",
+                errorMessages: {{ payment_error_messages|JSON }}
+            }
         );
         {% if plan.cards %}
             paymentHandler.loadCards({{ plan.cards|JSON }});

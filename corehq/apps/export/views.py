@@ -6,7 +6,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.utils.decorators import method_decorator
 import json
-from corehq.apps.export.custom_export_helpers import CustomExportHelper
+from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.export.exceptions import ExportNotFound, ExportAppException
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.standard.export import ExcelExportReport, CaseExportReport
@@ -101,7 +101,7 @@ class BaseCreateCustomExportView(BaseExportView):
     @property
     @memoized
     def export_helper(self):
-        return CustomExportHelper.make(self.request, self.export_type, domain=self.domain)
+        return make_custom_export_helper(self.request, self.export_type, domain=self.domain)
 
     def commit(self, request):
         self.export_helper.update_custom_export()
@@ -113,6 +113,9 @@ class BaseCreateCustomExportView(BaseExportView):
             export_tag = [self.domain, json.loads(request.GET.get("export_tag", "null") or "null")]
         except ValueError:
             return HttpResponseBadRequest()
+
+        if self.export_helper.export_type == "form" and not export_tag[1]:
+            return HttpResponseRedirect(ExcelExportReport.get_url(domain=self.domain))
 
         schema = build_latest_schema(export_tag)
 
@@ -173,7 +176,7 @@ class BaseModifyCustomExportView(BaseExportView):
     @memoized
     def export_helper(self):
         try:
-            return CustomExportHelper.make(self.request, self.export_type, self.domain, self.export_id)
+            return make_custom_export_helper(self.request, self.export_type, self.domain, self.export_id)
         except ResourceNotFound:
             raise Http404()
 
@@ -262,7 +265,7 @@ BASIC_FORM_SCHEMA = {
 def create_basic_form_checkpoint(index):
     checkpoint = ExportSchema(
         schema=BASIC_FORM_SCHEMA,
-        timestamp=datetime.min,
+        timestamp=datetime(1970, 1, 1),
         index=index,
     )
     checkpoint.save()

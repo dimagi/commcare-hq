@@ -1,5 +1,5 @@
-from couchdbkit.ext.django.schema import Document, StringProperty,\
-    BooleanProperty, DateTimeProperty, IntegerProperty
+from dimagi.ext.couchdbkit import Document, StringProperty,\
+    BooleanProperty, DateTimeProperty
 import datetime
 from corehq.apps.domain.models import Domain
 from dimagi.utils.decorators.memoized import memoized

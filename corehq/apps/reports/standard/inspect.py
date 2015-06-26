@@ -1,10 +1,9 @@
 import functools
 from couchdbkit.exceptions import ResourceNotFound
-from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
+from corehq.util.dates import iso_string_to_datetime
 
-from jsonobject import DateTimeProperty
 from corehq.apps.reports import util
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 
@@ -19,13 +18,12 @@ from corehq.apps.reports.generic import GenericTabularReport, ProjectInspectionR
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin, CompletionOrSubmissionTimeMixin
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.users.models import CouchUser
-from corehq.const import SERVER_DATETIME_FORMAT
+from corehq.const import USER_DATETIME_FORMAT_WITH_SEC
 from corehq.elastic import es_query, ADD_TO_ES_FILTER
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
+from corehq.util.timezones.conversions import ServerTime, PhoneTime
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch import get_cached_property, IncompatibleDocument, safe_index
-from corehq.apps.reports.graph_models import PieChart
-from corehq import elastic
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -187,7 +185,7 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport,
     @property
     def rows(self):
         def form_data_link(instance_id):
-            return "<a class='ajax_dialog' href='%(url)s'>%(text)s</a>" % {
+            return "<a class='ajax_dialog' target='_new' href='%(url)s'>%(text)s</a>" % {
                 "url": absolute_reverse('render_form_data', args=[self.domain, instance_id]),
                 "text": _("View Form")
             }
@@ -206,12 +204,19 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport,
             except (ResourceNotFound, IncompatibleDocument):
                 name = "<b>[unregistered]</b>"
 
+            time = iso_string_to_datetime(safe_index(form, self.time_field.split('.')))
+            if self.by_submission_time:
+                user_time = ServerTime(time).user_time(self.timezone)
+            else:
+                user_time = PhoneTime(time, self.timezone).user_time(self.timezone)
+
             init_cells = [
                 form_data_link(form["_id"]),
                 (username or _('No data for username')) + (" %s" % name if name else ""),
-                DateTimeProperty().wrap(safe_index(form, self.time_field.split('.'))).strftime(SERVER_DATETIME_FORMAT),
+                user_time.ui_string(USER_DATETIME_FORMAT_WITH_SEC),
                 xmlns_to_name(self.domain, form.get("xmlns"), app_id=form.get("app_id")),
             ]
+
             def cell(field):
                 return form["form"].get(field)
             init_cells.extend([cell(field) for field in self.other_fields])

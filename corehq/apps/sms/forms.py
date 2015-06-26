@@ -839,22 +839,34 @@ class SubscribeSMSForm(Form):
     stock_out_facilities = BooleanField(
         label=ugettext_lazy("Receive stockout facilities SMS alert"),
         required=False,
-        help_text=ugettext_lazy("This will alert you with specific users/facilities that are stocked out of your commodities")
+        help_text=ugettext_lazy(
+            "This will alert you with specific users/facilities that are "
+            "stocked out of your commodities"
+        )
     )
     stock_out_commodities = BooleanField(
         label=ugettext_lazy("Receive stockout commodities SMS alert"),
         required=False,
-        help_text=ugettext_lazy("This will alert you with specific commodities that are stocked out by your users/facilities")
+        help_text=ugettext_lazy(
+            "This will alert you with specific commodities that are stocked "
+            "out by your users/facilities"
+        )
     )
     stock_out_rates = BooleanField(
         label=ugettext_lazy("Receive stockout SMS alert"),
         required=False,
-        help_text=ugettext_lazy("This will alert you with the percent of facilities that are stocked out of a specific commodity")
+        help_text=ugettext_lazy(
+            "This will alert you with the percent of facilities that are "
+            "stocked out of a specific commodity"
+        )
     )
     non_report = BooleanField(
         label=ugettext_lazy("Receive non-reporting SMS alert"),
         required=False,
-        help_text=ugettext_lazy("This alert highlight users/facilities which have not submitted their CommTrack stock report.")
+        help_text=ugettext_lazy(
+            "This alert highlight users/facilities which have not submitted "
+            "their CommCare Supply stock report."
+        )
     )
 
     def save(self, commtrack_settings):

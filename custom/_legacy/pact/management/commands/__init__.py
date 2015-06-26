@@ -5,6 +5,7 @@ import getpass
 import urllib2
 from django.core.management.base import NoArgsCommand
 from restkit import Resource
+from corehq.util.dates import iso_string_to_datetime
 from pact.management.commands.constants import RETRY_LIMIT
 from pact.enums import PACT_DOMAIN
 from pact.utils import submit_xform
@@ -69,7 +70,7 @@ class PactMigrateCommand(NoArgsCommand):
         extra_meta = {}
 
         if phone_date:
-            date = datetime.strptime(phone_date, "%Y-%m-%dT%H:%M:%SZ")
+            date = iso_string_to_datetime(phone_date)
             date = datetime.strftime(date, "%a, %d %b %Y %H:%M:%S GMT")
             extra_meta['HTTP_DATE'] = date
 

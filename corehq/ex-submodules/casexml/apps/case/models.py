@@ -1,3 +1,9 @@
+"""
+Couch models for commcare cases.
+
+For details on casexml check out:
+http://bitbucket.org/javarosa/javarosa/wiki/casexml
+"""
 from __future__ import absolute_import
 from StringIO import StringIO
 import base64
@@ -12,40 +18,34 @@ from django.core.cache import cache
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
-from couchdbkit.ext.django.schema import *
-from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
+from couchdbkit.exceptions import ResourceNotFound, ResourceConflict, BadValueError
 from PIL import Image
+
+from casexml.apps.case.dbaccessors import get_reverse_indices
+from dimagi.ext.couchdbkit import *
 from casexml.apps.case.exceptions import MissingServerDate, ReconciliationError
 from corehq.util.couch_helpers import CouchAttachmentsBuilder
 from couchforms.util import is_deprecation, is_override
-from dimagi.utils.chunked import chunked
 from dimagi.utils.django.cached_object import CachedObject, OBJECT_ORIGINAL, OBJECT_SIZE_MAP, CachedImage, IMAGE_SIZE_ORDERING
 from casexml.apps.phone.xml import get_case_element
 from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.util import (
     get_case_xform_ids,
-    reverse_indices,
 )
 from casexml.apps.case import const
+from casexml.apps.case.exceptions import UsesReferrals
+from dimagi.utils.logging import notify_exception
 from dimagi.utils.modules import to_function
 from dimagi.utils import parsing, web
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.indicators import ComputedDocumentMixin
 from couchforms.models import XFormInstance
 from casexml.apps.case.sharedmodels import IndexHoldingMixIn, CommCareCaseIndex, CommCareCaseAttachment
-from dimagi.utils.couch.database import SafeSaveDocument, iter_docs
+from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch import (
     CouchDocLockableMixIn,
     LooselyEqualDocumentSchema,
 )
-
-
-"""
-Couch models for commcare cases.  
-
-For details on casexml check out:
-http://bitbucket.org/javarosa/javarosa/wiki/casexml
-"""
 
 CASE_STATUS_OPEN = 'open'
 CASE_STATUS_CLOSED = 'closed'
@@ -125,54 +125,8 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
         )
 
 
-class CaseQueryMixin(object):
-    @classmethod
-    def get_by_xform_id(cls, xform_id):
-        return cls.view("case/by_xform_id", reduce=False, include_docs=True,
-                        key=xform_id)
-
-    @classmethod
-    def get_all_cases(cls, domain, case_type=None, owner_id=None, status=None,
-                      reduce=False, include_docs=False, **kwargs):
-        """
-        :param domain: The domain the cases belong to.
-        :param type: Restrict results to only cases of this type.
-        :param owner_id: Restrict results to only cases owned by this user / group.
-        :param status: Restrict results to cases with this status. Either 'open' or 'closed'.
-        """
-        key = cls.get_all_cases_key(domain, case_type=case_type, owner_id=owner_id, status=status)
-        return CommCareCase.view('case/all_cases',
-            startkey=key,
-            endkey=key + [{}],
-            reduce=reduce,
-            include_docs=include_docs,
-            **kwargs).all()
-
-    @classmethod
-    def get_all_cases_key(cls, domain, case_type=None, owner_id=None, status=None):
-        """
-        :param status: One of 'all', 'open' or 'closed'.
-        """
-        if status and status not in [CASE_STATUS_ALL, CASE_STATUS_OPEN, CASE_STATUS_CLOSED]:
-            raise ValueError("Invalid value for 'status': '%s'" % status)
-
-        key = [domain]
-        prefix = status or CASE_STATUS_ALL
-        if case_type:
-            prefix += ' type'
-            key += [case_type]
-            if owner_id:
-                prefix += ' owner'
-                key += [owner_id]
-        elif owner_id:
-            prefix += ' owner'
-            key += [owner_id]
-
-        return [prefix] + key
-
-
 class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
-                   CaseQueryMixin, CouchDocLockableMixIn):
+                   CouchDocLockableMixIn):
     """
     A case, taken from casexml.  This represents the latest
     representation of the case - the result of playing all
@@ -253,7 +207,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
     @property
     @memoized
     def reverse_indices(self):
-        return reverse_indices(self.get_db(), self)
+        return get_reverse_indices(self)
 
     @memoized
     def get_subcases(self):
@@ -349,7 +303,8 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
 
     @classmethod
     def get_lite(cls, id, wrap=True):
-        results = cls.get_db().view("case/get_lite", key=id, include_docs=False).one()
+        from corehq.apps.hqcase.dbaccessors import get_lite_case_json
+        results = get_lite_case_json(id)
         if results is None:
             raise ResourceNotFound('no case with id %s exists' % id)
         if wrap:
@@ -372,18 +327,10 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
 
     @classmethod
     def bulk_get_lite(cls, ids, wrap=True, chunksize=100):
+        from corehq.apps.hqcase.dbaccessors import iter_lite_cases_json
         wrapper = lambda doc: cls.get_wrap_class(doc).wrap(doc) if wrap else doc
-        for ids in chunked(ids, chunksize):
-            for row in cls.get_db().view("case/get_lite", keys=ids, include_docs=False):
-                yield wrapper(row['value'])
-
-    def get_preloader_dict(self):
-        """
-        Gets the case as a dictionary for use in touchforms preloader framework
-        """
-        ret = copy.copy(self._doc)
-        ret["case-id"] = self.get_id
-        return ret
+        for lite_case_json in iter_lite_cases_json(ids, chunksize=chunksize):
+            yield wrapper(lite_case_json)
 
     def get_server_modified_date(self):
         # gets (or adds) the server modified timestamp
@@ -553,7 +500,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         assert not is_deprecation(xformdoc)  # you should never be able to create a case from a deleted update
         case = cls()
         case._id = case_update.id
-        case.modified_on = parsing.string_to_datetime(case_update.modified_on_str) \
+        case.modified_on = parsing.string_to_utc_datetime(case_update.modified_on_str) \
                             if case_update.modified_on_str else datetime.utcnow()
         
         # apply initial updates, if present
@@ -565,7 +512,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
             logging.error('Form {} touching case {} in domain {} is still using referrals'.format(
                 xformdoc._id, case_update.id, getattr(xformdoc, 'domain', None))
             )
-            raise Exception(_('Sorry, referrals are no longer supported!'))
+            raise UsesReferrals(_('Sorry, referrals are no longer supported!'))
 
         if is_deprecation(xformdoc):
             # Mark all of the form actions as deprecated. These will get removed on rebuild.
@@ -655,7 +602,13 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
                 value = update_action.updated_unknown_properties[item]
                 if isinstance(properties.get(item), StringProperty):
                     value = unicode(value)
-                self[item] = value
+                try:
+                    self[item] = value
+                except BadValueError:
+                    notify_exception(None, "Can't set property {} on case {} from form {}".format(
+                        item, self._id, update_action.xform_id
+                    ))
+                    raise
 
     def apply_attachments(self, attachment_action, xform=None):
         """
@@ -868,10 +821,13 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
             self._doc["_rev"] = conflict._rev
             self.force_save()
 
-    def to_xml(self, version):
+    def to_xml(self, version, include_case_on_closed=False):
         from xml.etree import ElementTree
         if self.closed:
-            elem = get_case_element(self, ('close'), version)
+            if include_case_on_closed:
+                elem = get_case_element(self, ('create', 'update', 'close'), version)
+            else:
+                elem = get_case_element(self, ('close'), version)
         else:
             elem = get_case_element(self, ('create', 'update'), version)
         return ElementTree.tostring(elem)
@@ -966,76 +922,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         return None
 
 
-import casexml.apps.case.signals
-
-
-class CommCareCaseGroup(Document):
-    """
-        This is a group of CommCareCases. Useful for managing cases in larger projects.
-    """
-    name = StringProperty()
-    domain = StringProperty()
-    cases = ListProperty()
-    timezone = StringProperty()
-
-    def get_time_zone(self):
-        # Necessary for the CommCareCaseGroup to interact with CommConnect, as if using the CommCareMobileContactMixin
-        # However, the entire mixin is not necessary.
-        return self.timezone
-
-    def get_cases(self, limit=None, skip=None):
-        case_ids = self.cases
-        if skip is not None:
-            case_ids = case_ids[skip:]
-        if limit is not None:
-            case_ids = case_ids[:limit]
-        for case_doc in iter_docs(CommCareCase.get_db(), case_ids):
-            # don't let CommCareCase-Deleted get through
-            if case_doc['doc_type'] == 'CommCareCase':
-                yield CommCareCase.wrap(case_doc)
-
-    def get_total_cases(self, clean_list=False):
-        if clean_list:
-            self.clean_cases()
-        return len(self.cases)
-
-    def clean_cases(self):
-        cleaned_list = []
-        for case_doc in iter_docs(CommCareCase.get_db(), self.cases):
-            # don't let CommCareCase-Deleted get through
-            if case_doc['doc_type'] == 'CommCareCase':
-                cleaned_list.append(case_doc['_id'])
-        if len(self.cases) != len(cleaned_list):
-            self.cases = cleaned_list
-            self.save()
-
-    @classmethod
-    def get_by_domain(cls, domain, limit=None, skip=None, include_docs=True):
-        extra_kwargs = {}
-        if limit is not None:
-            extra_kwargs['limit'] = limit
-        if skip is not None:
-            extra_kwargs['skip'] = skip
-        return cls.view(
-            'case/groups_by_domain',
-            startkey=[domain],
-            endkey=[domain, {}],
-            include_docs=include_docs,
-            reduce=False,
-            **extra_kwargs
-        ).all()
-
-    @classmethod
-    def get_total(cls, domain):
-        data = cls.get_db().view(
-            'case/groups_by_domain',
-            startkey=[domain],
-            endkey=[domain, {}],
-            reduce=True
-        ).first()
-        return data['value'] if data else 0
-
-
 def _action_sort_key_function(case):
     def _action_cmp(first_action, second_action):
         # if the forms aren't submitted by the same user, just default to server dates
@@ -1071,3 +957,7 @@ def _type_sort(action_type):
     Consistent ordering for action types
     """
     return const.CASE_ACTIONS.index(action_type)
+
+
+# import signals
+import casexml.apps.case.signals

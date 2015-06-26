@@ -4,7 +4,7 @@ import operator
 from operator import contains, eq
 
 from couchdbkit import NoResultFound, MultipleResultsFound, ResourceNotFound, QueryMixin
-from couchdbkit.ext.django.schema import StringProperty, DateProperty, DictProperty, Document
+from dimagi.ext.couchdbkit import StringProperty, DateProperty, DictProperty, Document
 from django.db import models
 from casexml.apps.case.models import CommCareCase
 from couchforms.models import XFormInstance

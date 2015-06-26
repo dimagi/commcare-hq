@@ -8,13 +8,13 @@
     <li role="presentation" ng-class="{ 'active' : allSelected()}">
         <a ng-click="filterList()">{% trans "All Forms" %}</a>
         <div class="well">
-            <ul class="nav nav-pills nav-stacked">
+            <ul class="nav nav-hq-sidebar">
                 <li ng-repeat="module in modules" role="presentation" ng-class="{ 'active' : moduleSelected(module)}">
                     <a ng-click="filterList(module)"><i class="hq-icon fa fa-folder-open"></i>
                         {% verbatim %}{{ getFormModuleLabel(module) }}{% endverbatim %}
                     </a>
                     <div class="well">
-                        <ul class="nav nav-pills nav-stacked">
+                        <ul class="nav nav-hq-sidebar">
                             <li ng-repeat="form in module.forms" ng-class="{ 'active' : formSearch.id === form.id }">
                                 <a ng-click="filterList(module, form)">
                                     {% verbatim %}{{ getFormModuleLabel(form) }}{% endverbatim %}

@@ -5,6 +5,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.hqadmin.dbaccessors import get_number_of_forms_in_all_domains
 from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.exceptions import CaseAssignmentError
@@ -84,10 +85,10 @@ class CaseAssignmentTest(TestCase):
 
     def test_assign_noop(self):
         self._make_tree()
-        num_forms = XFormInstance.get_db().view('hqadmin/forms_over_time').all()[0]['value']
+        num_forms = get_number_of_forms_in_all_domains()
         res = assign_case(self.primary, self.original_owner._id, include_subcases=True, include_parent_cases=True)
         self.assertEqual(0, len(res))
-        new_num_forms = XFormInstance.get_db().view('hqadmin/forms_over_time').all()[0]['value']
+        new_num_forms = get_number_of_forms_in_all_domains()
         self.assertEqual(new_num_forms, num_forms)
 
     def test_assign_exclusion(self):

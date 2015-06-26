@@ -1,30 +1,21 @@
-from collections import defaultdict
 import math
 from django.test import SimpleTestCase
 from corehq.util.soft_assert.core import SoftAssert
-from corehq.util.soft_assert.api import _number_is_power_of_two, _send_message
+from corehq.util.soft_assert.api import _send_message
+from corehq.util.cache_utils import ExponentialBackoff
 
 
 class SoftAssertTest(SimpleTestCase):
 
     def setUp(self):
         self.infos = []
-        self.counter = defaultdict(int)
         self.soft_assert = SoftAssert(
             send=self.send,
-            incrementing_counter=self.incrementing_counter,
-            should_send=self.should_send,
+            use_exponential_backoff=False
         )
 
     def send(self, info):
         self.infos.append(info)
-
-    def should_send(self, count):
-        return True
-
-    def incrementing_counter(self, key):
-        self.counter[key] += 1
-        return self.counter[key]
 
     def hypotenuse(self, a, b):
         return self.square_root(self.squared(a) + self.squared(b))
@@ -68,7 +59,7 @@ class SoftAssertHelpersTest(SimpleTestCase):
     def test_number_is_power_of_two(self):
         powers_of_two = [2**i for i in range(10)]
         for n in range(100):
-            actual = _number_is_power_of_two(n)
+            actual = ExponentialBackoff._number_is_power_of_two(n)
             expected = n in powers_of_two
             self.assertEqual(actual, expected,
                              '_number_is_power_of_two: {}'.format(actual))
@@ -119,8 +110,6 @@ class SoftAssertHelpersTest(SimpleTestCase):
 
         self.soft_assert = SoftAssert(
             send=lambda info: _send_message(info, backend=backend),
-            incrementing_counter=lambda key: 1,
-            should_send=lambda count: True,
         )
         # sent to test1
         self.soft_assert(False, 'This should fail')

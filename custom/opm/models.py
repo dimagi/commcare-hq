@@ -43,6 +43,8 @@ class OpmCaseFluff(fluff.IndicatorDocument):
     account_number = case_property('bank_account_number')
     block = case_property('block_name')
     village = case_property('village_name')
+    edd = case_property('edd')
+    dod = case_property('dod')
 
     opened_on = flat_field(lambda case: case.opened_on)
     closed_on = flat_field(lambda case: case.closed_on)
@@ -86,6 +88,7 @@ class OpmUserFluff(fluff.IndicatorDocument):
     block = user_data('block')
     gp = user_data('gp')
     village = user_data('village')
+    gps = user_data('gps')
 
 
 def _get_user_id(form):

@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.test import TestCase
+from corehq.apps.accounting.generator import init_default_currency
 
 from corehq.apps.sms.models import SMSLog
 from corehq.apps.sms.util import get_available_backends
@@ -9,12 +10,10 @@ from corehq.apps.smsbillables import generator
 
 class TestGatewayFee(TestCase):
     def setUp(self):
-        self.currency_usd, _ = Currency.objects.get_or_create(
-            code=settings.DEFAULT_CURRENCY,
-            name="Default Currency",
-            symbol="$",
-            rate_to_default=Decimal('1.0')
-        )
+        SmsGatewayFee.objects.all().delete()
+        SmsGatewayFeeCriteria.objects.all().delete()
+
+        self.currency_usd = init_default_currency()
         self.available_backends = get_available_backends().values()
 
         self.backend_ids = generator.arbitrary_backend_ids()
@@ -206,9 +205,14 @@ class TestGatewayFee(TestCase):
         SmsGatewayFeeCriteria.objects.all().delete()
         SmsUsageFee.objects.all().delete()
         SmsUsageFeeCriteria.objects.all().delete()
+
         self.currency_usd.delete()
         self.other_currency.delete()
-        for log in SMSLog.by_domain_asc(generator.TEST_DOMAIN):
-            log.delete()
-        for backend_instance in self.backend_ids.values():
-            SMSBackend.get(backend_instance).delete()
+        SMSLog.get_db().delete_docs(
+            SMSLog.by_domain_asc(generator.TEST_DOMAIN).all()
+        )
+
+        SMSBackend.get_db().delete_docs(
+            SMSBackend.get_db().all_docs(
+                keys=self.backend_ids.values(), include_docs=True).all()
+        )

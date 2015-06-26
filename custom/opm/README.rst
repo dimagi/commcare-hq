@@ -34,17 +34,12 @@ Extracting data from the db:
     dimagi.utils.couch.database import get_db
 
     domain_id = db.view('domain/domains', key="opm", reduce=False).one()['id']
-    cases = CommCareCase.get_all_cases('opm') # json
-    cases = CommCareCase.get_all_cases('opm', include_docs=True) # python
-    users = CommCareUser.by_domain('opm') # python
+    cases = get_case_ids_in_domain('opm')  # ids
+    cases = get_cases_in_domain('opm')  # CommCareCase objects
+    users = CommCareUser.by_domain('opm')  # CommCareUser objects
     forms = []
     for c in cases:
         forms += c.get_forms() # python
 
     # alternatively, this will pull ALL forms from a domain:
-    forms = db.view(
-        "couchforms/all_submissions_by_domain",
-        startkey=['opm'],
-        endkey=['opm', {}],
-        include_docs=True, reduce=False
-    ).all()
+    forms = get_forms_of_all_types('opm')
