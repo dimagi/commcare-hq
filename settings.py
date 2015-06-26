@@ -477,32 +477,24 @@ PAGINATOR_MAX_PAGE_LINKS = 5
 OPENROSA_VERSION = "1.0"
 
 # OTA restore fixture generators
-# Fixture ID's used by cloudcare API
-# {
-#     'group': [
-#          ('fixture_id (can be just prefix)', 'fixture generator fn'),
-#          ...
-#      ],
-#      ...
-# }
 FIXTURE_GENERATORS = {
     # fixtures that may be sent to the phone independent of cases
     'standalone': [
         # core
-        ('user-groups', "corehq.apps.users.fixturegenerators.user_groups"),
-        ('item-list', "corehq.apps.fixtures.fixturegenerators.item_lists"),
-        ('indicators', "corehq.apps.callcenter.fixturegenerators.indicators_fixture_generator"),
-        ('commtrack:products', "corehq.apps.products.fixtures.product_fixture_generator"),
-        ('commtrack:programs', "corehq.apps.programs.fixtures.program_fixture_generator"),
-        ('commcare:reports', "corehq.apps.userreports.fixtures.report_fixture_generator"),
+        "corehq.apps.users.fixturegenerators.user_groups",
+        "corehq.apps.fixtures.fixturegenerators.item_lists",
+        "corehq.apps.callcenter.fixturegenerators.indicators_fixture_generator",
+        "corehq.apps.products.fixtures.product_fixture_generator",
+        "corehq.apps.programs.fixtures.program_fixture_generator",
+        "corehq.apps.userreports.fixtures.report_fixture_generator",
         # custom
-        ('indicators:bihar-supervisor', "custom.bihar.reports.indicators.fixtures.generator"),
-        ('reports:m4change-mobile', "custom.m4change.fixtures.report_fixtures.generator"),
-        ('user-locations', "custom.m4change.fixtures.location_fixtures.generator"),
+        "custom.bihar.reports.indicators.fixtures.generator",
+        "custom.m4change.fixtures.report_fixtures.generator",
+        "custom.m4change.fixtures.location_fixtures.generator",
     ],
     # fixtures that must be sent along with the phones cases
     'case': [
-        ('commtrack:locations', "corehq.apps.locations.fixtures.location_fixture_generator"),
+        "corehq.apps.locations.fixtures.location_fixture_generator",
     ]
 }
 
