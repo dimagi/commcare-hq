@@ -3,8 +3,8 @@
 ########################
 
 # GENERAL PROCESS
-# From your commcare-hq directory with the virtualenv turned on
-# to safely push your changes to scripts/staging.yaml
+# From your commcare-hq directory with the virtualenv turned on and master
+# checked out to safely push your changes to scripts/staging.yaml
 #     $ scripts/commit-staging --push
 # to check if your branch causes any conflicts before rebuilding
 #     $ scripts/rebuildstaging --no-push
@@ -23,7 +23,7 @@
 #     you can't just merge foo into bar or vice versa, otherwise the PR
 #     for foo will contain commits from bar.  Instead make a third,
 #     conflict-resolution branch:
-#       $ git checkout -b foo+bar origin/foo
+#       $ git checkout -b foo+bar --no-track origin/foo
 #       $ git pull origin bar
 #     try to resolve conflict
 #       $ git push origin foo+bar
