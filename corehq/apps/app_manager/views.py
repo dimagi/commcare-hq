@@ -1066,17 +1066,24 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
                 'menu_refs': app.get_menu_media(
                     module, module_id, form=form, form_index=form_id, to_language=context['lang']
                 ),
-                'default_file_name': default_file_name,
+                'default_file_name': '{name}_{lang}'.format(name=default_file_name, lang=context['lang']),
             }
         }
         if module and module.uses_media():
+            def _make_name(suffix):
+                return "{default_name}_{suffix}_{lang}".format(
+                    default_name=default_file_name,
+                    suffix=suffix,
+                    lang=context['lang'],
+                )
+
             specific_media['case_list_form'] = {
                 'menu_refs': app.get_case_list_form_media(module, module_id, to_language=context['lang']),
-                'default_file_name': '{}_case_list_form'.format(default_file_name),
+                'default_file_name': _make_name('case_list_form'),
             }
             specific_media['case_list_menu_item'] = {
                 'menu_refs': app.get_case_list_menu_item_media(module, module_id, to_language=context['lang']),
-                'default_file_name': '{}_case_list_menu_item'.format(default_file_name),
+                'default_file_name': _make_name('case_list_menu_item'),
             }
             specific_media['case_list_lookup'] = {
                 'menu_refs': app.get_case_list_lookup_image(module, module_id),
