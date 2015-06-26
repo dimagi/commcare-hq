@@ -9250,6 +9250,77 @@ msgstr ""
 msgid "Cancel Transfer"
 msgstr ""
 
+#: corehq/apps/domain/templates/domain/email/domain_invite.html:2
+#: corehq/apps/domain/templates/domain/email/domain_invite.txt:2
+msgid "Hi!"
+msgstr "Bonjour,"
+
+#: corehq/apps/domain/templates/domain/email/domain_invite.html:3
+#: corehq/apps/domain/templates/domain/email/domain_invite.txt:4
+#, python-format
+msgid ""
+"%(inviter)s has invited you to join the %(domain)s project space at "
+"CommCareHQ. This invitation expires in %(days)s day(s)"
+msgstr ""
+"%(inviter)s vous a invité à joindre l’espace de projet %(domain)s sur "
+"CommCareHQ. Cette invitation expire dans %(days)s jours"
+
+#: corehq/apps/domain/templates/domain/email/domain_invite.html:4
+#: corehq/apps/domain/templates/domain/email/domain_invite.txt:6
+msgid ""
+"CommCareHQ is a tool that helps manage frontline workers around the world."
+msgstr ""
+"CommCareHQ est un outil qui permet la gestion de travailleurs de première "
+"ligne autour du monde."
+
+#: corehq/apps/domain/templates/domain/email/domain_invite.html:5
+#, python-format
+msgid ""
+"To accept this invitation click <a href=\"%(url)s\">this link</a>. If you "
+"are unable to click the link, copy and paste the following url into your "
+"browser. %(url)s"
+msgstr ""
+"Pour accepter cette invitation cliquer <a href=\"%(url)s\">ce lien</a>. "
+"Si vous n’êtes pas capable de cliquer le lien, copier et coller l’URL "
+"suivante dans votre navigateur. %(url)s"
+
+#: corehq/apps/domain/templates/domain/email/domain_invite.html:6
+msgid ""
+"If you think you have received this by mistake, you can go ahead and ignore "
+"this email. To find out more about CommCareHQ visit http://www.commcarehq."
+"org/."
+msgstr ""
+"Si vous pensez que vous avez reçu cette invitation par erreur, vous pouvez "
+"ignorer cet email. Pour en savoir plus sur CommCareHQ visiter "
+"http://www.commcarehq.org/."
+
+#: corehq/apps/domain/templates/domain/email/domain_invite.html:7
+#: corehq/apps/domain/templates/domain/email/domain_invite.txt:12
+#: venv/lib/python2.7/site-packages/django/contrib/admin/templates/registration/password_reset_email.html:10
+#, fuzzy
+msgid "Thanks for using our site!"
+msgstr "Merci d'utiliser CommCareHQ."
+
+#: corehq/apps/domain/templates/domain/email/domain_invite.html:8
+#: corehq/apps/domain/templates/domain/email/domain_invite.txt:14
+#, fuzzy
+msgid "-The CommCareHQ team"
+msgstr "--L'Équipe de CommCare HQ"
+
+#: corehq/apps/domain/templates/domain/email/domain_invite.txt:8
+#, python-format
+msgid "To accept this invitation go to: %(url)s"
+msgstr "Pour accepter cette invitation, voir url %(url)s"
+
+#: corehq/apps/domain/templates/domain/email/domain_invite.txt:10
+msgid ""
+"If you think this is a mistake, you can go ahead and ignore this email. To "
+"find out more about CommCareHQ visit http://www.commcarehq.org/."
+msgstr ""
+"Si vous pensez que vous avez reçu cette invitation par erreur, vous pouvez "
+"ignorer cet email. Pour en savoir plus sur CommCareHQ visiter "
+"http://www.commcarehq.org/."
+
 #: corehq/apps/domain/templates/domain/email/domain_transfer_from_request.html:4
 #: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.html:4
 msgid ""
@@ -22070,6 +22141,11 @@ msgstr ""
 msgid ""
 "Please agree to the Product Subscription Agreement above before continuing."
 msgstr ""
+
+#: corehq/apps/users/models.py:2362
+#, fuzzy, python-format
+msgid "Invitation from %s to join CommCareHQ"
+msgstr "Invitation pour joinder CommCareHQ de la part de %s"
 
 #: corehq/apps/users/templates/users/accept_invite_base.html:5
 msgid "Invitation to join the "
