@@ -80,7 +80,10 @@ class FixtureGenerator(object):
         """
         Only get fixtures with the specified ID.
         """
-        return self._get_fixtures(None, fixture_id, user, version, last_sync)
+        fixtures = self._get_fixtures(None, fixture_id, user, version, last_sync)
+        for fixture in fixtures:
+            if fixture.attrib.get("id") == fixture_id:
+                return fixture
 
     def get_fixtures(self, user, version, last_sync=None, group=None):
         """

@@ -168,8 +168,8 @@ class SummaryReportingRates(ReportingRatesData):
                         link_format(location_name, url),
                         values['all'],
                         values['complete'] + values['incomplete'],
-                        '%.2f%%' % (100 * (values['complete'] + values['incomplete']) / (values['all'] or 1)),
-                        '%.2f%%' % (100 * values['complete'] / (values['all'] or 1))
+                        '%d%%' % (100 * (values['complete'] + values['incomplete']) / (values['all'] or 1)),
+                        '%d%%' % (100 * values['complete'] / (values['all'] or 1))
                     ]
                 )
         return rows
@@ -363,13 +363,20 @@ class ReportingRatesReport(MultiReport):
             }
             for supply_point in supply_points
         }
-        for region in SQLLocation.objects.filter(domain=self.domain, location_type__name='region'):
-            parent_sum_rates[region.name] = {
-                'complete': 0,
-                'incomplete': 0,
-                'location_id': region.location_id,
-                'all': region.get_descendants().filter(location_type__administrative=False).count()
-            }
+        aggregate_type = None
+        if self.report_location.location_type.name == 'country':
+            aggregate_type = 'region'
+        elif self.report_location.location_type.name == 'region':
+            aggregate_type = 'district'
+        if aggregate_type:
+            for location in self.report_location.get_children().filter(location_type__administrative=True):
+                parent_sum_rates[location.name] = {
+                    'complete': 0,
+                    'incomplete': 0,
+                    'location_id': location.location_id,
+                    'all': location.get_descendants().filter(location_type__administrative=False).count()
+                }
+
         for (case_id, product_id, date) in transactions:
             if case_id in report_status:
                 report_status[case_id]['date'] = date
@@ -384,21 +391,29 @@ class ReportingRatesReport(MultiReport):
                 supply_point_id=case_id
             )
             locations_ids.add(location.location_id)
-            region = location.get_ancestors().filter(location_type__name='region')
-            if region:
-                region = region[0]
+
+            aggregate_location = None
+
+            if aggregate_type:
+                aggregate_location = location.get_ancestors(ascending=True).filter(
+                    location_type__name=aggregate_type
+                )
+
+            if aggregate_location:
+                aggregate_location = aggregate_location[0]
+
             if not (set(location.products.values_list('product_id', flat=True)) - products):
                 complete += 1
                 if case_id in report_status:
                     report_status[case_id]['status'] = 'complete'
-                if region:
-                    parent_sum_rates[region.name]['complete'] += 1
+                if aggregate_type and aggregate_location:
+                    parent_sum_rates[aggregate_location.name]['complete'] += 1
             else:
                 incomplete += 1
                 if case_id in report_status:
                     report_status[case_id]['status'] = 'incomplete'
-                if region:
-                    parent_sum_rates[region.name]['incomplete'] += 1
+                if aggregate_location:
+                    parent_sum_rates[aggregate_location.name]['incomplete'] += 1
 
         return {
             'all': all_locations_count,

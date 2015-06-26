@@ -10,6 +10,7 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
+from django.utils.translation import ugettext as _
 from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain_by_owner
 from corehq.apps.sofabed.models import CaseData
@@ -2269,6 +2270,12 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
         return getattr(self.get_domain_membership(domain), 'location_id', None)
 
     @memoized
+    def get_sql_location(self, domain):
+        from corehq.apps.locations.models import SQLLocation
+        loc_id = self.get_location_id(domain)
+        return SQLLocation.objects.get(location_id=loc_id) if loc_id else None
+
+    @memoized
     def get_location(self, domain):
         from corehq.apps.locations.models import Location
         loc_id = self.get_location_id(domain)
@@ -2358,7 +2365,7 @@ class DomainInvitation(CachedCouchDocumentMixin, Invitation):
                   "inviter": self.get_inviter().formatted_name}
         text_content = render_to_string("domain/email/domain_invite.txt", params)
         html_content = render_to_string("domain/email/domain_invite.html", params)
-        subject = 'Invitation from %s to join CommCareHQ' % self.get_inviter().formatted_name
+        subject = _('Invitation from %s to join CommCareHQ') % self.get_inviter().formatted_name
         send_HTML_email(subject, self.email, html_content, text_content=text_content,
                         cc=[self.get_inviter().get_email()],
                         email_from=settings.DEFAULT_FROM_EMAIL)

@@ -154,7 +154,8 @@ class MonthOfStockProduct(EWSData):
             if location.location_type.name == 'country':
                 supply_points = SQLLocation.objects.filter(
                     Q(parent__location_id=self.config['location_id'], is_archived=False) |
-                    Q(location_type__name='Regional Medical Store', domain=self.config['domain'])
+                    Q(location_type__name='Regional Medical Store', domain=self.config['domain']) |
+                    Q(location_type__name='Teaching Hospital', domain=self.config['domain'])
                 ).order_by('name').exclude(supply_point_id__isnull=True)
             else:
                 supply_points = SQLLocation.objects.filter(
