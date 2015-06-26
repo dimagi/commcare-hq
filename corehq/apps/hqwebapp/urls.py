@@ -17,7 +17,6 @@ urlpatterns = patterns(
     (r'^reports/$', 'redirect_to_default'),
     url(r'^bug_report/$', 'bug_report', name='bug_report'),
     url(r'^debug/notify/$', 'debug_notify', name='debug_notify'),
-    url(r'^notifications/dismiss/$', 'dismiss_notification', name="dismiss_notification"),
     url(r'^search/$', 'quick_find', name="global_quick_find"),
     url(r'^searchDescription.xml$', 'osdd', name="osdd"),
     url(r'^messaging-pricing', PublicSMSRatesView.as_view(), name=PublicSMSRatesView.urlname),

@@ -134,7 +134,7 @@ def get_table_name(domain, table_id):
     return 'config_report_{0}_{1}_{2}'.format(domain, table_id, _hash(domain, table_id))
 
 
-def get_expanded_column_config(data_source_configuration, column_config):
+def get_expanded_column_config(data_source_configuration, column_config, lang):
     """
     Given a ReportColumn, return a list of DatabaseColumn objects. Each DatabaseColumn
     is configured to show the number of occurrences of one of the values present for
@@ -156,10 +156,10 @@ def get_expanded_column_config(data_source_configuration, column_config):
         column_warnings.append(
             'The "{}" column had too many values to expand! '
             'Expansion limited to {} distinct values.'.format(
-                column_config.display, MAXIMUM_EXPANSION
+                column_config.get_header(lang), MAXIMUM_EXPANSION
             )
         )
-    return SqlColumnConfig(_expand_column(column_config, vals), warnings=column_warnings)
+    return SqlColumnConfig(_expand_column(column_config, vals, lang), warnings=column_warnings)
 
 
 def _get_distinct_values(data_source_configuration, column_config, expansion_limit=10):
@@ -199,7 +199,7 @@ def _get_distinct_values(data_source_configuration, column_config, expansion_lim
     return distinct_values, too_many_values
 
 
-def _expand_column(report_column, distinct_values):
+def _expand_column(report_column, distinct_values, lang):
     """
     Given a ReportColumn, return a list of DatabaseColumn objects. Each column
     is configured to show the number of occurrences of one of the given distinct_values.
@@ -211,7 +211,7 @@ def _expand_column(report_column, distinct_values):
     columns = []
     for val in distinct_values:
         columns.append(DatabaseColumn(
-            u"{}-{}".format(report_column.display, val),
+            u"{}-{}".format(report_column.get_header(lang), val),
             SumWhen(
                 report_column.field,
                 whens={val: 1},

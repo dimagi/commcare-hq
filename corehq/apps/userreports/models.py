@@ -12,13 +12,14 @@ from dimagi.ext.couchdbkit import (
 from dimagi.ext.couchdbkit import StringProperty, DictProperty, ListProperty, IntegerProperty
 from dimagi.ext.jsonobject import JsonObject
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
+from corehq.apps.userreports.dbaccessors import get_report_configs_by_data_source
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
 from corehq.apps.userreports.indicators import CompoundIndicator
 from corehq.apps.userreports.reports.factory import ReportFactory, ChartFactory, ReportFilterFactory, \
-    ReportColumnFactory
+    ReportColumnFactory, ReportOrderByFactory
 from corehq.apps.userreports.reports.specs import FilterSpec
 from django.utils.translation import ugettext as _
 from corehq.apps.userreports.specs import EvaluationContext
@@ -77,9 +78,11 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         filter_fn = self._get_deleted_filter()
         return filter_fn and filter_fn(document, EvaluationContext(document, 0))
 
+    @memoized
     def _get_main_filter(self):
         return self._get_filter([self.referenced_doc_type])
 
+    @memoized
     def _get_deleted_filter(self):
         return self._get_filter(get_deleted_doc_types(self.referenced_doc_type))
 
@@ -196,6 +199,12 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             for i, item in enumerate(self.get_items(doc))
         ]
 
+    def get_report_count(self):
+        """
+        Return the number of ReportConfigurations that reference this data source.
+        """
+        return get_report_configs_by_data_source(self.domain, self._id)
+
     def validate(self, required=True):
         super(DataSourceConfiguration, self).validate(required)
         # these two properties implicitly call other validation
@@ -245,6 +254,7 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     filters = ListProperty()
     columns = ListProperty()
     configured_charts = ListProperty()
+    sort_expression = ListProperty()
     report_meta = SchemaProperty(ReportMeta)
 
     def __unicode__(self):
@@ -274,6 +284,11 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         return [ChartFactory.from_spec(g._obj) for g in self.configured_charts]
 
     @property
+    @memoized
+    def sort_order(self):
+        return [ReportOrderByFactory.from_spec(e) for e in self.sort_expression]
+
+    @property
     def table_id(self):
         return self.config.table_id
 
@@ -282,6 +297,18 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             if filter.name == filter_slug:
                 return filter
         return None
+
+    def get_languages(self):
+        """
+        Return the languages used in this report's column and filter display properties.
+        Note that only explicitly identified languages are returned. So, if the
+        display properties are all strings, "en" would not be returned.
+        """
+        langs = set()
+        for item in self.columns + self.filters:
+            if isinstance(item['display'], dict):
+                langs |= set(item['display'].keys())
+        return langs
 
     def validate(self, required=True):
         def _check_for_duplicates(supposedly_unique_list, error_msg):
@@ -310,6 +337,7 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         ReportFactory.from_spec(self)
         self.ui_filters
         self.charts
+        self.sort_order
 
     @classmethod
     def by_domain(cls, domain):
@@ -332,8 +360,8 @@ class CustomDataSourceConfiguration(JsonObject):
     config = DictProperty()
 
     @classmethod
-    def get_doc_id(cls, table_id):
-        return '{}{}'.format(cls._datasource_id_prefix, table_id)
+    def get_doc_id(cls, domain, table_id):
+        return '{}{}-{}'.format(cls._datasource_id_prefix, domain, table_id)
 
     @classmethod
     def all(cls):
@@ -343,7 +371,7 @@ class CustomDataSourceConfiguration(JsonObject):
                 for domain in wrapped.domains:
                     doc = copy(wrapped.config)
                     doc['domain'] = domain
-                    doc['_id'] = cls.get_doc_id(doc['table_id'])
+                    doc['_id'] = cls.get_doc_id(domain, doc['table_id'])
                     yield DataSourceConfiguration.wrap(doc)
 
     @classmethod

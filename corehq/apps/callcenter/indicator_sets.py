@@ -3,12 +3,11 @@ from datetime import timedelta, datetime
 from django.core.cache import cache
 from django.db.models.aggregates import Count, Avg
 from django.db.models.query_utils import Q
+from corehq.apps.hqcase.dbaccessors import get_case_types_for_domain
 from dimagi.ext.jsonobject import JsonObject, DictProperty, StringProperty
 import pytz
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.utils import get_call_center_cases
 from corehq.apps.groups.models import Group
-from corehq.apps.reports.filters.select import CaseTypeMixin
 from corehq.apps.sofabed.models import FormData, CaseData
 from dimagi.utils.decorators.memoized import memoized
 import logging
@@ -201,7 +200,7 @@ class CallCenterIndicators(object):
         """
         :return: Set of all case types for the domain excluding the CallCenter case type.
         """
-        case_types = set(CaseTypeMixin.get_case_types(self.domain))
+        case_types = set(get_case_types_for_domain(self.domain))
         case_types.remove(self.cc_case_type)
         return case_types
 

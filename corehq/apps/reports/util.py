@@ -11,7 +11,6 @@ from django.conf import settings
 from django.utils.importlib import import_module
 from django.utils import html, safestring
 
-from corehq.apps.announcements.models import ReportAnnouncement
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.models import HQUserType, TempCommCareUser
 from corehq.apps.users.models import CommCareUser
@@ -276,12 +275,17 @@ def datespan_export_filter(doc, datespan):
         return True
     return False
 
-def case_users_filter(doc, users):
-    for id in (doc.get('owner_id'), doc.get('user_id')):
-        if id and id in users:
-            return True
+
+def case_users_filter(doc, users, groups=None):
+    for id_ in (doc.get('owner_id'), doc.get('user_id')):
+        if id_:
+            if id_ in users:
+                return True
+            if groups and id_ in groups:
+                return True
     else:
         return False
+
 
 def case_group_filter(doc, group):
     if group:
@@ -290,11 +294,13 @@ def case_group_filter(doc, group):
     else:
         return False
 
+
 def users_filter(doc, users):
     try:
         return doc['form']['meta']['userID'] in users
     except KeyError:
         return False
+
 
 def group_filter(doc, group):
     if group:
@@ -327,9 +333,11 @@ def create_export_filter(request, domain, export_type='form'):
 
     if export_type == 'case':
         if use_user_filters:
+            groups = [g.get_id for g in Group.get_case_sharing_groups(domain)]
             filtered_users = users_matching_filter(domain, user_filters)
             filter = SerializableFunction(case_users_filter,
-                                          users=filtered_users)
+                                          users=filtered_users,
+                                          groups=groups)
         else:
             filter = SerializableFunction(case_group_filter, group=group)
     else:
@@ -339,8 +347,10 @@ def create_export_filter(request, domain, export_type='form'):
             datespan.set_timezone(get_timezone_for_user(request.couch_user, domain))
             filter &= SerializableFunction(datespan_export_filter, datespan=datespan)
         if use_user_filters:
+            groups = [g.get_id for g in Group.get_case_sharing_groups(domain)]
             filtered_users = users_matching_filter(domain, user_filters)
-            filter &= SerializableFunction(users_filter, users=filtered_users)
+            filter &= SerializableFunction(users_filter,
+                                           users=filtered_users)
         else:
             filter &= SerializableFunction(group_filter, group=group)
     return filter
@@ -348,13 +358,11 @@ def create_export_filter(request, domain, export_type='form'):
 
 def get_possible_reports(domain_name):
     from corehq.apps.reports.dispatcher import (ProjectReportDispatcher, CustomProjectReportDispatcher)
-    from corehq.apps.adm.dispatcher import ADMSectionDispatcher
     from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 
     # todo: exports should be its own permission at some point?
     report_map = (ProjectReportDispatcher().get_reports(domain_name) +
                   CustomProjectReportDispatcher().get_reports(domain_name) +
-                  ADMSectionDispatcher().get_reports(domain_name) +
                   DataInterfaceDispatcher().get_reports(domain_name))
     reports = []
     domain = Domain.get_by_name(domain_name)
@@ -382,25 +390,6 @@ def friendly_timedelta(td):
         if t[1]:
             text.append("%d %s%s" % (t[1], t[0], "s" if t[1] != 1 else ""))
     return ", ".join(text)
-
-
-def set_report_announcements_for_user(request, couch_user):
-    key = ["type", ReportAnnouncement.__name__]
-    now = datetime.utcnow()
-
-    db = ReportAnnouncement.get_db()
-    data = cache_core.cached_view(db, "announcements/all_announcements", reduce=False,
-                                 startkey=key + [now.strftime("%Y-%m-%dT%H:00")], endkey=key + [{}],
-                                 )
-
-    announce_ids = [a['id'] for a in data if a['id'] not in couch_user.announcements_seen]
-    for announcement_id in announce_ids:
-        try:
-            announcement = ReportAnnouncement.get(announcement_id)
-            if announcement.show_to_new_users or (announcement.date_created > couch_user.created_on):
-                messages.info(request, announcement.as_html)
-        except Exception as e:
-            logging.error("Could not fetch Report Announcement: %s" % e)
 
 
 # Copied from http://djangosnippets.org/snippets/1170/

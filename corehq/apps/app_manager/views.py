@@ -99,7 +99,8 @@ from corehq.apps.app_manager.util import (
     is_usercase_in_use,
     enable_usercase,
     actions_use_usercase,
-    get_usercase_properties, 
+    advanced_actions_use_usercase,
+    get_usercase_properties,
     prefix_usercase_properties,
     get_per_type_defaults
 )
@@ -1046,10 +1047,11 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
     elif module:
         template, module_context = get_module_view_context_and_template(app, module)
         context.update(module_context)
-    else:
+    elif app:
         template = "app_manager/app_view.html"
-        if app:
-            context.update(get_app_view_context(request, app))
+        context.update(get_app_view_context(request, app))
+    else:
+        template = "dashboard/dashboard_new_user.html"
 
     # update multimedia context for forms and modules.
     menu_host = form or module
@@ -1067,7 +1069,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
                 'default_file_name': default_file_name,
             }
         }
-        if module:
+        if module and module.uses_media():
             specific_media['case_list_form'] = {
                 'menu_refs': app.get_case_list_form_media(module, module_id),
                 'default_file_name': '{}_case_list_form'.format(default_file_name),
@@ -1076,6 +1078,17 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
                 'menu_refs': app.get_case_list_menu_item_media(module, module_id),
                 'default_file_name': '{}_case_list_menu_item'.format(default_file_name),
             }
+            specific_media['case_list_lookup'] = {
+                'menu_refs': app.get_case_list_lookup_image(module, module_id),
+                'default_file_name': '{}_case_list_lookup'.format(default_file_name),
+            }
+
+            if hasattr(module, 'product_details'):
+                specific_media['product_list_lookup'] = {
+                    'menu_refs': app.get_case_list_lookup_image(module, module_id, type='product'),
+                    'default_file_name': '{}_product_list_lookup'.format(default_file_name),
+                }
+
         context.update({
             'multimedia': {
                 "references": app.get_references(),
@@ -1669,6 +1682,16 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
     resp['case_list-show'] = module.requires_case_details()
     return HttpResponse(json.dumps(resp))
 
+
+def _save_case_list_lookup_params(short, case_list_lookup):
+    short.lookup_enabled = case_list_lookup.get("lookup_enabled", short.lookup_enabled)
+    short.lookup_action = case_list_lookup.get("lookup_action", short.lookup_action)
+    short.lookup_name = case_list_lookup.get("lookup_name", short.lookup_name)
+    short.lookup_extras = case_list_lookup.get("lookup_extras", short.lookup_extras)
+    short.lookup_responses = case_list_lookup.get("lookup_responses", short.lookup_responses)
+    short.lookup_image = case_list_lookup.get("lookup_image", short.lookup_image)
+
+
 @no_conflict_require_POST
 @require_can_edit_apps
 def edit_module_detail_screens(request, domain, app_id, module_id):
@@ -1689,6 +1712,7 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
     use_case_tiles = params.get('useCaseTiles', None)
     persist_tile_on_forms = params.get("persistTileOnForms", None)
     pull_down_tile = params.get("enableTilePullDown", None)
+    case_list_lookup = params.get("case_list_lookup", None)
 
     app = get_app(domain, app_id)
     module = app.get_module(module_id)
@@ -1713,6 +1737,9 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
             detail.short.persist_tile_on_forms = persist_tile_on_forms
         if pull_down_tile is not None:
             detail.short.pull_down_tile = pull_down_tile
+        if case_list_lookup is not None:
+            _save_case_list_lookup_params(detail.short, case_list_lookup)
+
     if long is not None:
         detail.long.columns = map(DetailColumn.wrap, long)
         if tabs is not None:
@@ -2023,6 +2050,8 @@ def edit_advanced_form_actions(request, domain, app_id, module_id, form_id):
     json_loads = json.loads(request.POST.get('actions'))
     actions = AdvancedFormActions.wrap(json_loads)
     form.actions = actions
+    if advanced_actions_use_usercase(form.actions) and not is_usercase_in_use(domain):
+        enable_usercase(domain)
     response_json = {}
     app.save(response_json)
     response_json['propertiesMap'] = get_all_case_properties(app)
@@ -2247,7 +2276,6 @@ def edit_app_attr(request, domain, app_id, attr):
         ('build_spec', BuildSpec.from_string),
         ('case_sharing', None),
         ('cloudcare_enabled', None),
-        ('commtrack_enabled', None),
         ('commtrack_requisition_mode', lambda m: None if m == 'disabled' else m),
         ('manage_urls', None),
         ('name', None),
@@ -2506,6 +2534,7 @@ def download_index(request, domain, app_id, template="app_manager/download_index
     all the resource files that will end up zipped into the jar.
 
     """
+    files = None
     try:
         files = _download_index_files(request.app)
     except Exception:

@@ -3,6 +3,7 @@ from celery.task import periodic_task
 import datetime
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.commtrack.models import SupplyPointCase, StockState
+from corehq.apps.locations.dbaccessors import get_users_by_location_id
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.api import send_sms_to_verified_number
@@ -12,7 +13,7 @@ from custom.ewsghana.alerts import ONGOING_NON_REPORTING, ONGOING_STOCKOUT_AT_SD
     STOCKOUTS_MESSAGE, LOW_SUPPLY_MESSAGE, OVERSTOCKED_MESSAGE, RECEIPT_MESSAGE
 from django.core.mail import send_mail
 from custom.ewsghana.utils import ProductsReportHelper
-from custom.ewsghana.utils import send_test_message, get_reporting_types, can_receive_email
+from custom.ewsghana.utils import send_test_message, can_receive_email
 import settings
 from custom.ewsghana.models import EWSGhanaConfig
 from django.utils.translation import ugettext as _
@@ -266,7 +267,7 @@ def report_reminder_process_user(user, test=False):
     now = datetime.datetime.utcnow()
     date = now - datetime.timedelta(days=7)
 
-    if not user.location or user.location.location_type not in get_reporting_types(user.domain):
+    if not user.location or user.location.location_type.administrative:
         return
     sp = SupplyPointCase.get_by_location(user.location)
     if not sp:
@@ -371,12 +372,7 @@ def stock_alerts(transactions, user):
 
 
 def send_message_to_admins(user, message):
-    users = CommCareUser.view(
-        'locations/users_by_location_id',
-        startkey=[user.location.get_id],
-        endkey=[user.location.get_id, {}],
-        include_docs=True
-    ).all()
+    users = get_users_by_location_id(user.location.get_id)
     in_charge_users = [
         u
         for u in users

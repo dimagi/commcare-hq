@@ -2066,7 +2066,7 @@ VELLUM_TYPES = {
     },
     "DateTime": {
         'tag': 'input',
-        'type': 'xsd:datetime',
+        'type': 'xsd:dateTime',
         'icon': 'icon-vellum-datetime',
         'icon_bs3': 'fcc fcc-fd-datetime',
     },

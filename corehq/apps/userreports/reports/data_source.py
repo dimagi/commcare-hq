@@ -5,8 +5,11 @@ from sqlagg import (
 )
 from sqlalchemy.exc import ProgrammingError
 from corehq.apps.reports.sqlreport import SqlData
-from corehq.apps.userreports.exceptions import UserReportsError
+from corehq.apps.userreports.exceptions import (
+    UserReportsError, TableNotFoundWarning,
+)
 from corehq.apps.userreports.models import DataSourceConfiguration
+from corehq.apps.userreports.reports.specs import DESCENDING
 from corehq.apps.userreports.sql import get_table_name
 from corehq.apps.userreports.views import get_datasource_config_or_404
 from dimagi.utils.decorators.memoized import memoized
@@ -15,6 +18,7 @@ from dimagi.utils.decorators.memoized import memoized
 class ConfigurableReportDataSource(SqlData):
 
     def __init__(self, domain, config_or_config_id, filters, aggregation_columns, columns):
+        self.lang = None
         self.domain = domain
         if isinstance(config_or_config_id, DataSourceConfiguration):
             self._config = config_or_config_id
@@ -26,6 +30,7 @@ class ConfigurableReportDataSource(SqlData):
 
         self._filters = {f.slug: f for f in filters}
         self._filter_values = {}
+        self._order_by = []
         self.aggregation_columns = aggregation_columns
         self._column_configs = SortedDict()
         for column in columns:
@@ -58,6 +63,9 @@ class ConfigurableReportDataSource(SqlData):
         for filter_slug, value in filter_values.items():
             self._filter_values[filter_slug] = self._filters[filter_slug].create_filter_value(value)
 
+    def set_order_by(self, columns):
+        self._order_by = columns
+
     @property
     def filter_values(self):
         return {k: v for fv in self._filter_values.values() for k, v in fv.to_sql_values().items()}
@@ -82,9 +90,8 @@ class ConfigurableReportDataSource(SqlData):
         return [c for sql_conf in self.sql_column_configs for c in sql_conf.columns]
 
     @property
-    @memoized
     def sql_column_configs(self):
-        return [col.get_sql_column_config(self.config) for col in self.column_configs]
+        return [col.get_sql_column_config(self.config, self.lang) for col in self.column_configs]
 
     @property
     def column_warnings(self):
@@ -98,16 +105,30 @@ class ConfigurableReportDataSource(SqlData):
                 report_column.format_data(ret)
         except (
             ColumnNotFoundException,
-            TableNotFoundException,
             ProgrammingError,
         ) as e:
             raise UserReportsError(e.message)
-        # arbitrarily sort by the first column in memory
-        # todo: should get pushed to the database but not currently supported in sqlagg
-        return sorted(ret, key=lambda x: x.get(
-            self.column_configs[0].column_id,
-            next(x.itervalues())
-        ))
+        except TableNotFoundException as e:
+            raise TableNotFoundWarning
+        # TODO: Should sort in the database instead of memory, but not currently supported by sqlagg.
+        try:
+            # If a sort order is specified, sort by it.
+            if self._order_by:
+                for col in reversed(self._order_by):
+                    ret.sort(
+                        key=lambda x: x.get(col[0], None),
+                        reverse=col[1] == DESCENDING
+                    )
+                return ret
+            # Otherwise sort by the first column
+            else:
+                return sorted(ret, key=lambda x: x.get(
+                    self.column_configs[0].column_id,
+                    next(x.itervalues())
+                ))
+        except TypeError:
+            # if the first column isn't sortable just return the data in the order we got it
+            return ret
 
     def get_total_records(self):
         return len(self.get_data())

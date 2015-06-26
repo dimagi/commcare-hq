@@ -14,6 +14,7 @@ from django.views.decorators.http import require_POST, require_GET
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.models import User
+from django.contrib.auth import login
 from django.core import management, cache
 from django.core.urlresolvers import reverse
 from django.shortcuts import render, redirect
@@ -34,7 +35,8 @@ from restkit.errors import Unauthorized
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
-from couchdbkit import ResourceNotFound
+from couchdbkit import ResourceNotFound, Database
+from corehq.apps.hqcase.dbaccessors import get_total_case_count
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from couchforms.const import DEVICE_LOG_XMLNS
 from couchforms.dbaccessors import get_number_of_forms_all_domains_in_couch
@@ -49,6 +51,7 @@ from corehq.apps.es.forms import FormES
 from corehq.apps.hqadmin.history import get_recent_changes, download_changes
 from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.hqadmin.forms import EmailForm, BrokenBuildsForm
+from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.domain.decorators import require_superuser, require_superuser_or_developer
 from corehq.apps.domain.models import Domain
@@ -82,6 +85,7 @@ from dimagi.utils.web import json_response, get_url_base
 from dimagi.utils.django.email import send_HTML_email
 
 from .multimech import GlobalConfig
+from .forms import AuthenticateAsForm
 
 
 @require_superuser
@@ -223,6 +227,41 @@ def contact_email(request):
     response["Access-Control-Max-Age"] = "1000"
     response["Access-Control-Allow-Headers"] = "*"
     return response
+
+
+class AuthenticateAs(BasePageView):
+    urlname = 'authenticate_as'
+    page_title = _("Login as other user")
+    template_name = 'hqadmin/authenticate_as.html'
+
+    @method_decorator(require_superuser)
+    def dispatch(self, *args, **kwargs):
+        return super(AuthenticateAs, self).dispatch(*args, **kwargs)
+
+    def page_url(self):
+        return reverse(self.urlname)
+
+    def get_context_data(self, **kwargs):
+        context = super(AuthenticateAs, self).get_context_data(**kwargs)
+        context.update({
+            'hide_filters': True,
+            'page_url': self.page_url(),
+            'form': AuthenticateAsForm(initial=kwargs)
+        })
+        return context
+
+    def post(self, request, *args, **kwargs):
+        form = AuthenticateAsForm(self.request.POST)
+        if form.is_valid():
+            username = form.cleaned_data['username']
+            request.user = User.objects.get(username=username)
+
+            # http://stackoverflow.com/a/2787747/835696
+            # This allows us to bypass the authenticate call
+            request.user.backend = 'django.contrib.auth.backends.ModelBackend'
+            login(request, request.user)
+            return HttpResponseRedirect('/')
+        return self.get(request, *args, **kwargs)
 
 
 @require_superuser
@@ -429,7 +468,7 @@ def db_comparisons(request):
         },
         {
             'description': 'Cases (doc_type is "CommCareCase")',
-            'couch_docs': _simple_view_couch_query(CommCareCase.get_db(), 'case/by_owner'),
+            'couch_docs': get_total_case_count(),
             'es_query': CaseES().size(0),
             'sql_rows': CaseData.objects.count(),
         }
@@ -685,10 +724,15 @@ def doc_in_es(request):
     doc_id = request.GET.get("id")
     if not doc_id:
         return render(request, "hqadmin/doc_in_es.html", {})
-    try:
-        couch_doc = get_db().get(doc_id)
-    except ResourceNotFound:
-        couch_doc = {}
+
+    couch_doc = {}
+    db_urls = [settings.COUCH_DATABASE] + settings.EXTRA_COUCHDB_DATABASES.values()
+    for url in db_urls:
+        try:
+            couch_doc = Database(url).get(doc_id)
+            break
+        except ResourceNotFound:
+            pass
     query = {"filter":
                 {"ids": {
                     "values": [doc_id]}}}

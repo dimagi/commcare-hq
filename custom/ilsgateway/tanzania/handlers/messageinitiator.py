@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from corehq.apps.locations.dbaccessors.users_by_location_id import get_users_by_location_id
+from corehq.apps.locations.dbaccessors import get_users_by_location_id
 
 from corehq.apps.sms.api import send_sms_to_verified_number
 from dimagi.utils.dates import get_business_day_of_month_before

@@ -15,6 +15,7 @@ $(function () {
         $("input#bug-report-subject").focus();
     });
 
+    var $emailAlert = $("#invalid-email-alert");
     var $ccAlert = $("#invalid-cc-alert");
     var $descriptionAlert = $("#empty-issue-alert");
     renderAlerts($ccAlert, $descriptionAlert);
@@ -23,6 +24,12 @@ $(function () {
         var isDescriptionEmpty = !$("#bug-report-subject").val() && !$("#bug-report-message").val();
         if (isDescriptionEmpty) {
             $descriptionAlert.show();
+        }
+
+        var emailAddress = $(this).find("input[name='email']").val();
+        if (emailAddress && !IsValidEmail(emailAddress)){
+            $emailAlert.show();
+            return false;
         }
 
         var emailAddresses = $(this).find("input[name='cc']").val();

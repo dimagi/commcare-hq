@@ -2,12 +2,6 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% block js-inline %}{{ block.super }}
-    <script>
-        analytics.workflow('Created new account');
-    </script>
-{% endblock %}
-
 {% block title %}New Project Space{% endblock title %}
 
 {% block head %}{{ block.super }}

@@ -1,8 +1,8 @@
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.commtrack.dbaccessors import get_supply_point_ids_in_domain_by_location
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.products.models import Product
-from corehq.apps.locations.models import (Location, SQLLocation,
-                                          LOCATION_SHARING_PREFIX)
+from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.locations.permissions import (user_can_edit_location,
                                                user_can_view_location)
 from corehq.apps.domain.models import Domain
@@ -94,32 +94,6 @@ def allowed_child_types(domain, parent):
     return parent_child(domain).get(parent_type, [])
 
 
-def lookup_by_property(domain, prop_name, val, scope, root=None):
-    if root and not isinstance(root, basestring):
-        root = root._id
-
-    if prop_name == 'site_code':
-        index_view = 'locations/prop_index_site_code'
-    else:
-        # this was to be backwards compatible with the api
-        # if this ever comes up, please take a moment to decide whether it's
-        # worth changing the API to raise a less nonsensical error
-        # (or change this function to not sound so general!)
-        raise ResourceNotFound('missing prop_index_%s' % prop_name)
-
-    startkey = [domain, val]
-    if scope == 'global':
-        startkey.append(None)
-    elif scope == 'descendant':
-        startkey.append(root)
-    elif scope == 'child':
-        startkey.extend([root, 1])
-    else:
-        raise ValueError('invalid scope type')
-
-    return set(row['id'] for row in Location.get_db().view(index_view, startkey=startkey, endkey=startkey + [{}]))
-
-
 @quickcache(['domain'], timeout=60)
 def get_location_data_model(domain):
     from .views import LocationFieldsView
@@ -153,7 +127,8 @@ class LocationExporter(object):
             # we'll be needing these, so init 'em:
             self.products = Product.by_domain(self.domain)
             self.product_codes = [p.code for p in self.products]
-            self.supply_point_map = SupplyPointCase.get_location_map_by_domain(self.domain)
+            self.supply_point_map = get_supply_point_ids_in_domain_by_location(
+                self.domain)
             self.administrative_types = {
                 lt.name for lt in self.domain_obj.location_types
                 if lt.administrative
@@ -261,38 +236,3 @@ def write_to_file(locations):
         writer.write([(loc_type, tab_rows)])
     writer.close()
     return outfile.getvalue()
-
-
-def purge_locations(domain):
-    """
-    Delete all location data associated with <domain>.
-
-    This means Locations, SQLLocations, LocationTypes, and anything which
-    has a ForeignKey relationship to SQLLocation (as of 2015-03-02, this
-    includes only StockStates and some custom stuff).
-    """
-    location_ids = set([r['id'] for r in Location.get_db().view(
-        'locations/by_type',
-        reduce=False,
-        startkey=[domain],
-        endkey=[domain, {}],
-    ).all()])
-    iter_bulk_delete(Location.get_db(), location_ids)
-
-    for loc in SQLLocation.objects.filter(domain=domain).iterator():
-        if loc.supply_point_id:
-            case = CommCareCase.get(loc.supply_point_id)
-            case.delete()
-        loc.delete()
-
-    db = Domain.get_db()
-    domain_obj = Domain.get_by_name(domain)  # cached lookup is fast but stale
-    domain_json = db.get(domain_obj._id)  # get latest raw, unwrapped doc
-    domain_json.pop('obsolete_location_types', None)
-    domain_json.pop('location_types', None)
-    db.save_doc(domain_json)
-
-
-def loc_group_id_or_none(group_id):
-    if group_id.startswith(LOCATION_SHARING_PREFIX):
-        return group_id.split(LOCATION_SHARING_PREFIX, 1)[1]

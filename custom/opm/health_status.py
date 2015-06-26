@@ -106,7 +106,7 @@ class AWCHealthStatus(object):
          _("Mothers registered with BCSP"),
          'beneficiaries'),
         ('children',
-         _("Registered children "),
+         _("Registered children"),
          _("Children below 3 years of age registered with BCSP"),
          'beneficiaries'),
         ('eligible_by_fulfillment',
@@ -278,7 +278,7 @@ class AWCHealthStatus(object):
         ('nutritional_bonus',
          _("Eligilble for Nutritional status bonus"),
          _("Registered beneficiaries eligible for nutritonal status bonus for the month"),
-         'beneficiaries'),
+         'children'),
         ('closed_pregnants',
          _("Pregnant women cases closed"),
          _("Registered pregnant women cases closed for the month"),
@@ -297,7 +297,7 @@ class AWCHealthStatus(object):
     # subclass OPMCaseRow specifically for this report, and add in indicators to
     # our hearts' content.  This would allow us to override definitions of
     # indicators based on their meanings in THIS report.
-    def __init__(self, cases, awc, awc_code, gp):
+    def __init__(self, cases, awc, awc_code, gp, block):
         # Some of the cases are second or third children of the same mother
         # include that distinction here
         self.all_cases = cases
@@ -305,6 +305,7 @@ class AWCHealthStatus(object):
         self.awc_name = awc
         self.awc_code = awc_code
         self.gp = gp
+        self.block = block
 
     @property
     def no_denom(self):
@@ -334,21 +335,29 @@ class AWCHealthStatus(object):
     @property
     @memoized
     def eligible_by_fulfillment(self):
+        if self.block is not None and self.block == 'Khijarsarai':
+            return 'NA'
         return len([c for c in self.all_cases
                     if c.vhnd_available and c.all_conditions_met])
 
     @property
     @memoized
     def eligible_by_default(self):
+        if self.block is not None and self.block == 'Khijarsarai':
+            return 'NA'
         return len([c for c in self.all_cases
                     if not c.vhnd_available and c.all_conditions_met])
 
     @property
     def eligible(self):
+        if self.block is not None and self.block == 'Khijarsarai':
+            return 'NA'
         return self.eligible_by_default + self.eligible_by_fulfillment
 
     @property
     def total_payment(self):
+        if self.block is not None and self.block == 'Khijarsarai':
+            return 'NA'
         return sum([c.cash_amt for c in self.all_cases])
 
     @property
@@ -550,10 +559,14 @@ class AWCHealthStatus(object):
 
     @property
     def birth_spacing_bonus(self):
+        if self.block is not None and self.block == 'Khijarsarai':
+            return 'NA'
         return len([c for c in self.all_cases if c.birth_spacing_years])
 
     @property
     def nutritional_bonus(self):
+        if self.block is not None and self.block == 'Khijarsarai':
+            return 'NA'
         return len([c for c in self.all_cases if c.weight_grade_normal])
 
     @property

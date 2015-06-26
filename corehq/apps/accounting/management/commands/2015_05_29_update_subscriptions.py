@@ -30,6 +30,7 @@ class Command(BaseCommand):
                     print "Could not find BillingAccount for %s" % domain
 
                 if account is not None and subscription is not None:
+                    '''
                     service_type = self.normalize(row[1])  # self service, contracted, or not set
                     if service_type == "selfservice":
                         #print "%s service_type => SELF_SERVICE" % domain
@@ -54,18 +55,22 @@ class Command(BaseCommand):
                     else:
                         #print "Skipping entry point for %s" % domain
                         pass
+                    '''
 
                     pro_bono_status = self.normalize(row[3])  # yes/no
                     if pro_bono_status == "yes":
                         #print "%s pro_bono_status => YES" % domain
                         subscription.pro_bono_status = ProBonoStatus.YES
+                    elif pro_bono_status == "discounted":
+                        #print "%s pro_bono_status => DISCOUNTED" % domain
+                        subscription.pro_bono_status = ProBonoStatus.DISCOUNTED
                     else:
                         #print "%s pro_bono_status => NO" % domain
                         subscription.pro_bono_status = ProBonoStatus.NO
 
-                    print "setting %s's service_type=%s, entry_point=%s, pro_bono=%s" % (
+                    '''print "setting %s's service_type=%s, entry_point=%s, pro_bono=%s" % (
                         domain, subscription.service_type, account.entry_point, subscription.pro_bono_status
-                    )
+                    )'''
 
                     subscription.save()
                     account.save()

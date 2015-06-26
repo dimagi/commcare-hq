@@ -221,7 +221,7 @@ class InvoiceStripePaymentHandler(BaseStripePaymentHandler):
         context.update({
             'balance': fmt_dollar_amount(self.invoice.balance),
             'is_paid': self.invoice.is_paid,
-            'date_due': self.invoice.date_due.strftime(USER_DATE_FORMAT),
+            'date_due': self.invoice.date_due.strftime(USER_DATE_FORMAT) if self.invoice.date_due else 'None',
             'invoice_num': self.invoice.invoice_number,
         })
         return context

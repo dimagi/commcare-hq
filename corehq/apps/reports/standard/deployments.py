@@ -234,7 +234,7 @@ def _fmt_date(date):
         return format_datatables_data(
             u'<span class="{cls}">{text}</span>'.format(
                 cls=_timedelta_class(datetime.utcnow() - date),
-                text=naturaltime(date),
+                text=_(naturaltime(date)),
             ),
             date.toordinal(),
         )

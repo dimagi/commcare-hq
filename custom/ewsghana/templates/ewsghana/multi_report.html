@@ -40,6 +40,11 @@
     {% include 'reports/standard/partials/description.html' %}
 {% else %}
     <style>
+        .nvd3.nv-pie path {
+            stroke-width: 0px !important;
+            stroke-opacity: 0 !important;
+        }
+
         {% if rendered_as == "email" %}
             td {
                 border: 1px solid black;
@@ -83,16 +88,16 @@
                 width: 100%;
                 display: inline-table;
             }
-        {% elif  report.slug == "stock_status"%}
-            .report:first-of-type {
-                float: right;
+        {% elif report.slug == "stock_status"%}
+            .product-selection-pane {
+                float: right !important;
                 width: 30%;
             }
             .report:nth-of-type(n+2) {
-                float: left;
+                float: left !important;
                 width: 68%;
             }
-        {% elif  report.slug == "dashboard_report"%}
+        {% elif report.slug == "dashboard_report"%}
             .report:nth-of-type(n+2) {
                 float: left;
                 width: 50%;
@@ -257,7 +262,7 @@
         $(".dataTables_filter").css('display', 'none');
 
         $('.row div').append(
-                '<div class="desc" style="width: 100%; text-align: center; margin-top: -1cm; margin-bottom: 1cm"></div>'
+            '<div class="desc" style="width: 100%; text-align: center; margin-top: -1cm; margin-bottom: 1cm"></div>'
         );
     </script>
     <script>

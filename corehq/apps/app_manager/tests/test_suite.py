@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import copy
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.const import APP_V2
@@ -7,7 +8,7 @@ from corehq.apps.app_manager.models import (
     WORKFLOW_ROOT, AdvancedOpenCaseAction, SortElement, PreloadAction, MappingItem, OpenCaseAction,
     OpenSubCaseAction, FormActionCondition, UpdateCaseAction, WORKFLOW_FORM, FormLink, AUTO_SELECT_USERCASE,
     ReportModule, ReportAppConfig)
-from corehq.apps.app_manager.tests.util import TestFileMixin
+from corehq.apps.app_manager.tests.util import TestFileMixin, commtrack_enabled
 from corehq.apps.app_manager.xpath import dot_interpolate, UserCaseXPath, interpolate_xpath
 from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.feature_previews import MODULE_FILTER
@@ -134,9 +135,9 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         app.get_module(1).get_form(0).actions.load_update_cases[0].details_module = clinic_module_id
         self.assertXmlEqual(self.get_xml('suite-advanced-filter'), app.create_suite())
 
+    @commtrack_enabled(True)
     def test_advanced_suite_commtrack(self):
         app = Application.wrap(self.get_json('suite-advanced'))
-        app.commtrack_enabled = True
         self.assertXmlEqual(self.get_xml('suite-advanced-commtrack'), app.create_suite())
 
     def test_advanced_suite_auto_select_user(self):
@@ -748,6 +749,124 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
             app.create_app_strings('default'),
         )
 
+    def test_case_list_lookup_wo_image(self):
+        callout_action = "callout.commcarehq.org.dummycallout.LAUNCH"
+
+        app = Application.new_app('domain', 'Untitled Application', application_version=APP_V2)
+        module = app.add_module(Module.new_module('Untitled Module', None))
+        module.case_type = 'patient'
+        module.case_details.short.lookup_enabled = True
+        module.case_details.short.lookup_action = callout_action
+
+        expected = """
+            <partial>
+                <lookup action="{}"/>
+            </partial>
+        """.format(callout_action)
+
+        self.assertXmlPartialEqual(
+            expected,
+            app.create_suite(),
+            "./detail/lookup"
+        )
+
+    def test_case_list_lookup_w_image(self):
+        action = "callout.commcarehq.org.dummycallout.LAUNCH"
+        image = "jr://file/commcare/image/callout"
+
+        app = Application.new_app('domain', 'Untitled Application', application_version=APP_V2)
+        module = app.add_module(Module.new_module('Untitled Module', None))
+        module.case_type = 'patient'
+        module.case_details.short.lookup_enabled = True
+        module.case_details.short.lookup_action = action
+        module.case_details.short.lookup_image = image
+
+        expected = """
+            <partial>
+                <lookup action="{}" image="{}"/>
+            </partial>
+        """.format(action, image)
+
+        self.assertXmlPartialEqual(
+            expected,
+            app.create_suite(),
+            "./detail/lookup"
+        )
+
+    def test_case_list_lookup_w_name(self):
+        action = "callout.commcarehq.org.dummycallout.LAUNCH"
+        image = "jr://file/commcare/image/callout"
+        name = u"ιтѕ α тяαρ ʕ •ᴥ•ʔ"
+
+        app = Application.new_app('domain', 'Untitled Application', application_version=APP_V2)
+        module = app.add_module(Module.new_module('Untitled Module', None))
+        module.case_type = 'patient'
+        module.case_details.short.lookup_enabled = True
+        module.case_details.short.lookup_action = action
+        module.case_details.short.lookup_image = image
+        module.case_details.short.lookup_name = name
+
+        expected = u"""
+            <partial>
+                <lookup name="{}" action="{}" image="{}"/>
+            </partial>
+        """.format(name, action, image)
+
+        self.assertXmlPartialEqual(
+            expected,
+            app.create_suite(),
+            "./detail/lookup"
+        )
+
+    def test_case_list_lookup_w_extras_and_responses(self):
+        app = Application.new_app('domain', 'Untitled Application', application_version=APP_V2)
+        module = app.add_module(Module.new_module('Untitled Module', None))
+        module.case_type = 'patient'
+        module.case_details.short.lookup_enabled = True
+        module.case_details.short.lookup_action = "callout.commcarehq.org.dummycallout.LAUNCH"
+        module.case_details.short.lookup_extras = [
+            {'key': 'action_0', 'value': 'com.biometrac.core.SCAN'},
+            {'key': "action_1", 'value': "com.biometrac.core.IDENTIFY"},
+        ]
+        module.case_details.short.lookup_responses = [
+            {"key": "match_id_0"},
+            {"key": "match_id_1"},
+        ]
+
+        expected = """
+        <partial>
+            <lookup action="callout.commcarehq.org.dummycallout.LAUNCH">
+                <extra key="action_0" value="com.biometrac.core.SCAN"/>
+                <extra key="action_1" value="com.biometrac.core.IDENTIFY"/>
+                <response key="match_id_0"/>
+                <response key="match_id_1"/>
+            </lookup>
+        </partial>
+        """
+
+        self.assertXmlPartialEqual(
+            expected,
+            app.create_suite(),
+            "./detail/lookup"
+        )
+
+    def test_case_list_lookup_disabled(self):
+        action = "callout.commcarehq.org.dummycallout.LAUNCH"
+        app = Application.new_app('domain', 'Untitled Application', application_version=APP_V2)
+        module = app.add_module(Module.new_module('Untitled Module', None))
+        module.case_type = 'patient'
+        module.case_details.short.lookup_enabled = False
+        module.case_details.short.lookup_action = action
+        module.case_details.short.lookup_responses = ["match_id_0", "left_index"]
+
+        expected = "<partial></partial>"
+
+        self.assertXmlPartialEqual(
+            expected,
+            app.create_suite(),
+            "./detail/lookup"
+        )
+
 
 class AdvancedModuleAsChildTest(SimpleTestCase, TestFileMixin):
     file_path = ('data', 'suite')
@@ -921,6 +1040,7 @@ class RegexTest(SimpleTestCase):
                 interpolate_xpath(case[0], replacements['case']),
                 case[1].format(**replacements)
             )
+
 
 class TestFormLinking(SimpleTestCase, TestFileMixin):
     file_path = ('data', 'suite')

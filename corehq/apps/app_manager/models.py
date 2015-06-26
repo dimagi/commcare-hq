@@ -60,7 +60,7 @@ from corehq.apps.hqmedia.models import HQMediaMixin
 from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import cc_user_domain
-from corehq.apps.domain.models import cached_property
+from corehq.apps.domain.models import cached_property, Domain
 from corehq.apps.app_manager import current_builds, app_strings, remote_app
 from corehq.apps.app_manager import suite_xml, commcare_settings
 from corehq.apps.app_manager.util import (
@@ -95,12 +95,6 @@ WORKFLOW_ROOT = 'root'
 WORKFLOW_MODULE = 'module'
 WORKFLOW_PREVIOUS = 'previous_screen'
 WORKFLOW_FORM = 'form'
-
-AUTO_SELECT_USER = 'user'
-AUTO_SELECT_FIXTURE = 'fixture'
-AUTO_SELECT_CASE = 'case'
-AUTO_SELECT_RAW = 'raw'
-AUTO_SELECT_USERCASE = 'usercase'
 
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 
@@ -1282,6 +1276,7 @@ class GraphSeries(DocumentSchema):
     data_path = StringProperty()
     x_function = StringProperty()
     y_function = StringProperty()
+    radius_function = StringProperty()
 
 
 class GraphConfiguration(DocumentSchema):
@@ -1408,7 +1403,24 @@ class SortOnlyDetailColumn(DetailColumn):
         raise NotImplementedError()
 
 
-class Detail(IndexedSchema):
+class CaseListLookupMixin(DocumentSchema):
+    """
+        Allows for the addition of Android Callouts to do lookups from the CaseList
+        <lookup action="" image="" name="">
+            <extra key="" value = "" />
+            <response key ="" />
+        </lookup>
+    """
+    lookup_enabled = BooleanProperty(default=False)
+    lookup_action = StringProperty()
+    lookup_name = StringProperty()
+    lookup_image = JRResourceProperty(required=False)
+
+    lookup_extras = SchemaListProperty()
+    lookup_responses = SchemaListProperty()
+
+
+class Detail(IndexedSchema, CaseListLookupMixin):
     """
     Full configuration for a case selection screen
 
@@ -1655,6 +1667,12 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
         """
         return []
 
+    def uses_media(self):
+        """
+        Whether the module uses media. If this returns false then media will not be generated
+        for the module.
+        """
+        return True
 
 class Module(ModuleBase):
     """
@@ -2566,7 +2584,7 @@ class CareplanModule(ModuleBase):
     task_details = SchemaProperty(DetailPair)
 
     @classmethod
-    def new_module(cls, app, name, lang, target_module_id, target_case_type):
+    def new_module(cls, name, lang, target_module_id, target_case_type):
         lang = lang or 'en'
         module = CareplanModule(
             name={lang: name or ugettext("Care Plan")},
@@ -2904,6 +2922,10 @@ class ReportModule(ModuleBase):
                 for config in self.report_configs
             ]
         )
+
+    def uses_media(self):
+        # for now no media support for ReportModules
+        return False
 
 
 class VersionedDoc(LazyAttachmentDoc):
@@ -3656,9 +3678,16 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     cloudcare_enabled = BooleanProperty(default=False)
     translation_strategy = StringProperty(default='select-known',
                                           choices=app_strings.CHOICES.keys())
-    commtrack_enabled = BooleanProperty(default=False)
     commtrack_requisition_mode = StringProperty(choices=CT_REQUISITION_MODES)
     auto_gps_capture = BooleanProperty(default=False)
+
+    @property
+    @memoized
+    def commtrack_enabled(self):
+        if settings.UNIT_TESTING:
+            return False  # override with .tests.util.commtrack_enabled
+        domain_obj = Domain.get_by_name(self.domain) if self.domain else None
+        return domain_obj.commtrack_enabled if domain_obj else False
 
     @classmethod
     def wrap(cls, data):
@@ -3673,6 +3702,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     module['referral_label'][lang] = commcare_translations.load_translations(lang).get('cchq.referral', 'Referrals')
         if not data.get('build_langs'):
             data['build_langs'] = data['langs']
+        data.pop('commtrack_enabled', None)  # Remove me after migrating apps
         self = super(Application, cls).wrap(data)
 
         # make sure all form versions are None on working copies
