@@ -325,7 +325,15 @@
     </script>
 
     <script type="text/html" id="payment-complete-template">
+        <!-- ko if: paymentHandler.paymentMethod() === paymentHandler.CREDIT_CARD -->
         {% trans "Thank you for your payment!" %}
+        <!-- /ko -->
+        <!-- ko if: paymentHandler.paymentMethod() === paymentHandler.WIRE -->
+        {% blocktrans %}
+        Thank you! You will receive an invoice via email with instructions for wire payment.
+        Please include the invoice ID in the wire payment details.
+        {% endblocktrans %}
+        <!-- /ko -->
     </script>
 {% endblock %}
 

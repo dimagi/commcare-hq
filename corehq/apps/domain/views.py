@@ -56,7 +56,7 @@ from corehq.apps.accounting.models import (
     DefaultProductPlan, SoftwarePlanEdition, BillingAccount,
     BillingAccountType, BillingAccountAdmin,
     Invoice, BillingRecord, InvoicePdf, PaymentMethodType,
-    PaymentMethod, EntryPoint, WireInvoice
+    PaymentMethod, EntryPoint, WireInvoice, FeatureType
 )
 from corehq.apps.accounting.usage import FeatureUsageCalculator
 from corehq.apps.accounting.user_text import get_feature_name, PricingTable, DESC_BY_EDITION
@@ -1069,7 +1069,8 @@ class CreditsStripePaymentView(BaseStripePaymentView):
             post_data=self.request.POST.copy(),
         )
 
-class CreditsWireInvoiceView(View):
+
+class CreditsWireInvoiceView(DomainAccountingSettings):
     http_method_names = ['post']
     urlname = 'domain_wire_payment'
 
@@ -1080,15 +1081,28 @@ class CreditsWireInvoiceView(View):
 
     def post(self, request, *args, **kwargs):
         emails = request.POST.get('emails', []).split()
-        print request.POST
-        # balance = Decimal(request.POST.get('customPaymentAmount', 0))
-        # wire_invoice_factory = DomainWireInvoiceFactory(request.domain, contact_emails=emails)
-        # try:
-        #     wire_invoice_factory.create_wire_invoice(balance)
-        # except Exception, e:
-        #     return json_response({'error': {'message', e}})
+        amount = Decimal(request.POST.get('amount', 0))
+        wire_invoice_factory = DomainWireInvoiceFactory(request.domain, contact_emails=emails)
+        try:
+            wire_invoice_factory.create_wire_credits_invoice(self._get_items(request), amount)
+        except Exception, e:
+            return json_response({'error': {'message': e}})
 
         return json_response({'success': True})
+
+    def _get_items(self, request):
+        product_type = SoftwareProductType.get_type_by_domain(Domain.get_by_name(self.domain))
+
+        features = [{'type': get_feature_name(feature_type[0], product_type),
+                     'amount': Decimal(request.POST.get(feature_type[0], 0))}
+                    for feature_type in FeatureType.CHOICES
+                    if Decimal(request.POST.get(feature_type[0], 0)) > 0]
+        products = [{'type': product_type[0],
+                     'amount': Decimal(request.POST.get(product_type[0], 0))}
+                    for product_type in SoftwareProductType.CHOICES
+                    if Decimal(request.POST.get(product_type[0], 0)) > 0]
+
+        return products + features
 
 
 class InvoiceStripePaymentView(BaseStripePaymentView):

@@ -17,7 +17,8 @@ from corehq.apps.accounting.models import (
     SubscriptionAdjustmentMethod, BillingRecord,
     BillingContactInfo, SoftwarePlanEdition, CreditLine,
     EntryPoint, WireInvoice, WireBillingRecord,
-    SMALL_INVOICE_THRESHOLD,
+    SMALL_INVOICE_THRESHOLD, WirePrepaymentBillingRecord,
+    WirePrepaymentInvoice,
 )
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.users.models import CommCareUser
@@ -284,6 +285,36 @@ class DomainWireInvoiceFactory(object):
         )
 
         record = WireBillingRecord.generate_record(wire_invoice)
+
+        try:
+            record.send_email(contact_emails=self.contact_emails)
+        except InvoiceEmailThrottledError as e:
+            # Currently wire invoices are never throttled
+            if not self.logged_throttle_error:
+                logger.error("[BILLING] %s" % e)
+                self.logged_throttle_error = True
+
+        return wire_invoice
+
+    def create_wire_credits_invoice(self, items, amount):
+        account = BillingAccount.get_or_create_account_by_domain(
+            self.domain.name,
+            created_by=self.__class__.__name__,
+            created_by_invoicing=True,
+            entry_point=EntryPoint.SELF_STARTED,
+        )[0]
+
+        wire_invoice = WirePrepaymentInvoice.objects.create(
+            domain=self.domain.name,
+            date_start=datetime.datetime.utcnow(),
+            date_end=datetime.datetime.utcnow(),
+            date_due=None,
+            balance=amount,
+            account=account,
+        )
+
+        wire_invoice.add_items(items)
+        record = WirePrepaymentBillingRecord.generate_record(wire_invoice)
 
         try:
             record.send_email(contact_emails=self.contact_emails)
