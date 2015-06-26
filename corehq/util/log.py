@@ -41,7 +41,11 @@ class HqAdminEmailHandler(AdminEmailHandler):
 
         if record.exc_info:
             exc_info = record.exc_info
-            stack_trace = '\n'.join(traceback.format_exception(*record.exc_info))
+            etype, value, tb = exc_info
+            tb_list = ['Traceback (most recent call first):\n']
+            tb_list.extend(traceback.format_exception_only(etype, value))
+            tb_list.extend(traceback.format_list(reversed(traceback.extract_tb(tb))))
+            stack_trace = '\n'.join(tb_list)
         else:
             exc_info = (None, record.getMessage(), None)
             stack_trace = 'No stack trace available'

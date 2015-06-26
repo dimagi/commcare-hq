@@ -16,8 +16,8 @@ from django.forms.forms import Form
 from django.forms.widgets import CheckboxSelectMultiple
 from django import forms
 from django.forms import Field, Widget
+from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.reminders.util import DotExpandedDict, get_form_list
-from casexml.apps.case.models import CommCareCaseGroup
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.crispy import (
     BootstrapMultiField, FieldsetAccordionGroup, HiddenFieldWithErrors,

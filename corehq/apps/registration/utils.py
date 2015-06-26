@@ -284,7 +284,7 @@ The CommCareHQ Team
 
 WIKI_LINK = 'http://help.commcarehq.org'
 USERS_LINK = 'http://groups.google.com/group/commcare-users'
-PRICING_LINK = 'http://www.commcarehq.org/software-plans'
+PRICING_LINK = 'https://www.commcarehq.org/pricing'
 
 
 def send_domain_registration_email(recipient, domain_name, guid):

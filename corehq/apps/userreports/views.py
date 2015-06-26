@@ -315,6 +315,7 @@ def import_report(request, domain):
             json_spec = json.loads(spec)
             if '_id' in json_spec:
                 del json_spec['_id']
+            json_spec['domain'] = domain
             report = ReportConfiguration.wrap(json_spec)
             report.validate()
             report.save()
@@ -562,16 +563,23 @@ def choice_list_api(request, domain, report_id, filter_id):
     report = get_document_or_404(ReportConfiguration, domain, report_id)
     filter = report.get_ui_filter(filter_id)
 
-    def get_choices(data_source, filter, search_term=None, limit=20):
+    def get_choices(data_source, filter, search_term=None, limit=20, page=0):
         table = get_indicator_table(data_source)
         sql_column = table.c[filter.field]
         query = Session.query(sql_column)
         if search_term:
             query = query.filter(sql_column.contains(search_term))
 
-        return [v[0] for v in query.distinct().limit(limit)]
+        offset = page * limit
+        return [v[0] for v in query.distinct().order_by(sql_column).limit(limit).offset(offset)]
 
-    return json_response(get_choices(report.config, filter, request.GET.get('q', None)))
+    return json_response(get_choices(
+        report.config,
+        filter,
+        request.GET.get('q', None),
+        limit=int(request.GET.get('limit', 20)),
+        page=int(request.GET.get('page', 1)) - 1
+    ))
 
 
 def _shared_context(domain):

@@ -210,17 +210,10 @@ class LocationsTest(LocationTestBase):
             Location.get_in_domain(self.domain.name, 'not-a-real-id'),
         )
 
-        def _all_locations(domain):
-            return Location.view(
-                'locations/hierarchy',
-                startkey=[domain],
-                endkey=[domain, {}],
-                reduce=False,
-                include_docs=True
-            ).all()
-        compare(
-            [self.user.location, test_state1, test_state2, test_village1],
-            _all_locations(self.domain.name)
+        self.assertEqual(
+            {loc._id for loc in [self.user.location, test_state1, test_state2,
+                                 test_village1]},
+            set(SQLLocation.objects.filter(domain=self.domain.name).location_ids()),
         )
 
         # Location.by_site_code

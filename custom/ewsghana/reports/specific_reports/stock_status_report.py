@@ -151,6 +151,9 @@ class MonthOfStockProduct(EWSData):
         if not self.location:
             return ""
 
+        if self.config['export']:
+            return "Current MOS by Product"
+
         location_type = self.location.location_type.name.lower()
         if location_type == 'country':
             return "Current MOS by Product - CMS, RMS, and Teaching Hospitals"
@@ -171,7 +174,8 @@ class MonthOfStockProduct(EWSData):
             if location.location_type.name == 'country':
                 supply_points = SQLLocation.objects.filter(
                     Q(parent__location_id=self.config['location_id'], is_archived=False) |
-                    Q(location_type__name='Regional Medical Store', domain=self.config['domain'])
+                    Q(location_type__name='Regional Medical Store', domain=self.config['domain']) |
+                    Q(location_type__name='Teaching Hospital', domain=self.config['domain'])
                 ).order_by('name').exclude(supply_point_id__isnull=True)
             else:
                 supply_points = SQLLocation.objects.filter(
@@ -308,6 +312,8 @@ class StockoutTable(EWSData):
     def title(self):
         if not self.location:
             return ""
+        if self.config['export']:
+            return 'Stockouts'
 
         location_type = self.location.location_type.name.lower()
         if location_type == 'country':

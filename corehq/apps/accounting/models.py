@@ -1195,11 +1195,11 @@ class Subscription(models.Model):
         emails |= {e for e in WebUser.get_dimagi_emails_by_domain(domain_name)}
         if self.is_trial:
             subject = _("%(product)s Alert: 30 day trial for '%(domain)s' "
-                        "ends %(ending_on)s" % {
+                        "ends %(ending_on)s") % {
                 'product': product,
                 'domain': domain_name,
                 'ending_on': ending_on,
-            })
+            }
             template = 'accounting/trial_ending_reminder_email.html'
             template_plaintext = 'accounting/trial_ending_reminder_email_plaintext.txt'
         else:
@@ -1248,6 +1248,38 @@ class Subscription(models.Model):
                     'domain': domain_name,
                     'email': email,
                 })
+
+    def send_dimagi_ending_reminder_email(self):
+        if self.date_end is None:
+            raise SubscriptionReminderError(
+                "This subscription has no end date."
+            )
+        if self.account.dimagi_contact is None:
+            raise SubscriptionReminderError(
+                "This subscription has no Dimagi contact."
+            )
+
+        domain = self.subscriber.domain
+        end_date = self.date_end.strftime(USER_DATE_FORMAT)
+        email = self.account.dimagi_contact
+        subject = "Alert: {domain}'s subscription is ending on {end_date}".format(
+                  domain=domain,
+                  end_date=end_date)
+        template = 'accounting/subscription_ending_reminder_dimagi.html'
+        template_plaintext = 'accounting/subscription_ending_reminder_dimagi_plaintext.html'
+        context = {
+            'domain': domain,
+            'end_date': end_date,
+            'contacts': self.account.billingcontactinfo.emails,
+            'dimagi_contact': email,
+        }
+        email_html = render_to_string(template, context)
+        email_plaintext = render_to_string(template_plaintext, context)
+        send_HTML_email(
+            subject, email, email_html,
+            text_content=email_plaintext,
+            email_from=settings.DEFAULT_FROM_EMAIL,
+        )
 
     def set_billing_account_entry_point(self):
         no_current_entry_point = self.account.entry_point == EntryPoint.NOT_SET
@@ -1330,9 +1362,9 @@ class Subscription(models.Model):
             raise NewSubscriptionError(_(
                 "There is already a subscription '%s' with no end date "
                 "that conflicts with the start and end dates of this "
-                "subscription." %
+                "subscription.") %
                 future_subscription_no_end.latest('date_created')
-            ))
+            )
 
         future_subscriptions = available_subs.filter(
             date_end__gt=date_start
@@ -1343,12 +1375,12 @@ class Subscription(models.Model):
             raise NewSubscriptionError(unicode(_(
                 "There is already a subscription '%(sub)s' that has an end date "
                 "that conflicts with the start and end dates of this "
-                "subscription %(start)s - %(end)s." % {
+                "subscription %(start)s - %(end)s.") % {
                     'sub': future_subscriptions.latest('date_created'),
                     'start': date_start,
                     'end': date_end
                 }
-            )))
+            ))
 
         can_reactivate, last_subscription = cls.can_reactivate_domain_subscription(
             account, domain, plan_version, date_start=date_start

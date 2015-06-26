@@ -23,9 +23,24 @@ def is_locations_admin(view_fn):
     return locations_access_required(domain_admin_required(view_fn))
 
 
+def user_can_edit_any_location(user, project):
+    return user.is_domain_admin(project.name) or not project.location_restriction_for_users
+
+
+def can_edit_any_location(view_fn):
+    """
+    Decorator determining whether a user has permission to edit all locations in a project
+    """
+    @wraps(view_fn)
+    def _inner(request, domain, *args, **kwargs):
+        if user_can_edit_any_location(request.couch_user, request.project):
+            return view_fn(request, domain, *args, **kwargs)
+        raise Http404()
+    return locations_access_required(_inner)
+
+
 def user_can_edit_location(user, sql_location, project):
-    if (user.is_domain_admin(project.name) or
-            not project.location_restriction_for_users):
+    if user_can_edit_any_location(user, project):
         return True
 
     user_loc = user.get_location(sql_location.domain)

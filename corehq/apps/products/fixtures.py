@@ -30,7 +30,7 @@ def product_fixture_generator_json(domain):
             fields.append(CUSTOM_DATA_SLUG + '/' + f.slug)
 
     return {
-        'sourceUri': 'jr://fixture/commtrack:products',
+        'sourceUri': 'jr://fixture/{}'.format(ProductFixturesProvider.id),
         'defaultId': 'products',
         'initialQuery': "instance('products')/products/product",
         'name': 'Products',
@@ -42,6 +42,11 @@ def product_fixture_generator_json(domain):
     }
 
 
-def product_fixture_generator(user, version, last_sync=None):
-    data_fn = lambda: Product.by_domain(user.domain, include_archived=True)
-    return _simple_fixture_generator(user, "product", PRODUCT_FIELDS, data_fn, last_sync)
+class ProductFixturesProvider(object):
+    id = 'commtrack:products'
+
+    def __call__(self, user, version, last_sync=None):
+        data_fn = lambda: Product.by_domain(user.domain, include_archived=True)
+        return _simple_fixture_generator(user, self.id, "product", PRODUCT_FIELDS, data_fn, last_sync)
+
+product_fixture_generator = ProductFixturesProvider()

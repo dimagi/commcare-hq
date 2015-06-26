@@ -52,11 +52,11 @@ from django_prbac.decorators import requires_privilege_raise404
 from django_prbac.utils import has_privilege
 
 from corehq.apps.accounting.models import (
-    Subscription, CreditLine, SoftwareProductType,
+    Subscription, CreditLine, SoftwareProductType, SubscriptionType,
     DefaultProductPlan, SoftwarePlanEdition, BillingAccount,
     BillingAccountType, BillingAccountAdmin,
     Invoice, BillingRecord, InvoicePdf, PaymentMethodType,
-    PaymentMethod, EntryPoint, WireInvoice
+    PaymentMethod, EntryPoint, WireInvoice, SoftwarePlanVisibility
 )
 from corehq.apps.accounting.usage import FeatureUsageCalculator
 from corehq.apps.accounting.user_text import get_feature_name, PricingTable, DESC_BY_EDITION
@@ -1235,8 +1235,19 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
                     return SelectSubscriptionTypeForm({
                         'subscription_type': form_slug,
                     })
-        return SelectSubscriptionTypeForm()
 
+        subscription_type = None
+        subscription = Subscription.get_subscribed_plan_by_domain(self.domain_object)[1]
+        plan = subscription.plan_version.plan
+
+        if subscription.service_type == SubscriptionType.CONTRACTED:
+            subscription_type = "contracted_partner"
+        elif plan.edition == SoftwarePlanEdition.ENTERPRISE:
+            subscription_type = "dimagi_only_enterprise"
+        elif plan.edition == SoftwarePlanEdition.ADVANCED and plan.visibility == SoftwarePlanVisibility.TRIAL:
+            subscription_type = "advanced_extended_trial"
+
+        return SelectSubscriptionTypeForm({'subscription_type': subscription_type})
 
 
 class SelectPlanView(DomainAccountingSettings):
@@ -1250,7 +1261,7 @@ class SelectPlanView(DomainAccountingSettings):
     @property
     def edition_name(self):
         if self.edition:
-            return DESC_BY_EDITION[self.edition]['name'].encode('utf-8')
+            return DESC_BY_EDITION[self.edition]['name']
 
     @property
     def is_non_ops_superuser(self):
@@ -1269,9 +1280,12 @@ class SelectPlanView(DomainAccountingSettings):
 
     @property
     def steps(self):
+        edition_name = u" (%s)" % self.edition_name if self.edition_name else ""
         return [
             {
-                'title': _("1. Select a Plan%s") % (" (%s)" % self.edition_name if self.edition_name else ""),
+                'title': _(u"1. Select a Plan%(edition_name)s") % {
+                    "edition_name": edition_name
+                },
                 'url': reverse(SelectPlanView.urlname, args=[self.domain]),
             }
         ]
