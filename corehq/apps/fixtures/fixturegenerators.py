@@ -3,6 +3,7 @@ from xml.etree import ElementTree
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.products.fixtures import product_fixture_generator_json
+from corehq.apps.programs.fixtures import program_fixture_generator_json
 
 
 def item_lists_by_domain(domain):
@@ -38,6 +39,9 @@ def item_lists_by_domain(domain):
     products = product_fixture_generator_json(domain)
     if products:
         ret.append(products)
+    programs = program_fixture_generator_json(domain)
+    if programs:
+        ret.append(programs)
     return ret
 
 
