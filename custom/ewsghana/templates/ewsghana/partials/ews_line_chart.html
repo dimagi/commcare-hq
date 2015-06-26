@@ -117,7 +117,6 @@
                     .style('text-anchor', 'end')
                     .style('stroke', 'none')
                     .style('fill-opacity', 1);
-
             d3.selectAll('.nv-groups .nv-series-' + series +' path')
                     .style("stroke-dasharray", ("3, 10"));
         });
@@ -125,7 +124,7 @@
 
     function addGraph() {
         nv.addGraph(graphGenerator, function(chart) {
-            if (line_chart_id === '#chart_stock_status_51') {
+            if (line_chart_id.slice(-2) === '51') {
                 addUnderstockOverstockLabels(line_chart_id, line_chart_data);
             }
         });
