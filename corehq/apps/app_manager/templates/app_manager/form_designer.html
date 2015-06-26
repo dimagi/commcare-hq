@@ -58,6 +58,13 @@
                 {% endif %}
                 sessionid: {{ sessionid|JSON }}
             },
+            itemset: {
+                dataSourcesFilter: function (sources) {
+                    return _.filter(sources, function (source) {
+                        return !source.uri || /^jr:\/\/fixture\//.test(source.uri);
+                    });
+                }
+            },
             javaRosa: {
                 langs: {{ app.langs|JSON }},
                 displayLanguage: {{ lang|JSON }},
