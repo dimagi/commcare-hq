@@ -307,23 +307,25 @@ class StockoutTable(EWSData):
                 product_id: product_name
                 for (product_id, product_name) in self.config['unique_products'].values_list('product_id', 'name')
             }
-            stockouts = []
-            for (case_id, products_set) in self.config['stockouts'].iteritems():
-                supply_point = SQLLocation.objects.get(supply_point_id=case_id)
-                stockouts.append((supply_point.name, supply_point.location_id, products_set))
-            stockouts = sorted(stockouts, key=lambda x: x[0])
-            for (name, location_id, products_set) in stockouts:
+            for supply_point_id in self.config['stockout_table_supply_points']:
+                supply_point = SQLLocation.objects.get(supply_point_id=supply_point_id)
+                products_set = self.config['stockouts'].get(supply_point_id)
                 url = make_url(
                     StockLevelsReport,
                     self.config['domain'],
                     '?location_id=%s&startdate=%s&enddate=%s',
-                    (location_id, self.config['startdate'], self.config['enddate'])
+                    (supply_point.location_id, self.config['startdate'], self.config['enddate'])
                 )
-                rows.append(
-                    [link_format(name, url), ', '.join(
-                        product_id_to_name[product_id] for product_id in products_set
-                    )]
-                )
+                if products_set:
+                    rows.append(
+                        [link_format(supply_point.name, url), ', '.join(
+                            product_id_to_name[product_id] for product_id in products_set
+                        )]
+                    )
+                else:
+                    rows.append(
+                        [link_format(supply_point.name, url), '-']
+                    )
         return rows
 
 
@@ -347,7 +349,8 @@ class StockStatus(MultiReport):
             if location.location_type.name == 'country':
                 supply_points = SQLLocation.objects.filter(
                     Q(parent__location_id=self.report_config['location_id'], is_archived=False) |
-                    Q(location_type__name='Regional Medical Store', domain=self.report_config['domain'])
+                    Q(location_type__name='Regional Medical Store', domain=self.report_config['domain']) |
+                    Q(location_type__name='Teaching Hospital', domain=self.report_config['domain'])
                 ).order_by('name').exclude(supply_point_id__isnull=True)
             else:
                 supply_points = SQLLocation.objects.filter(
@@ -396,7 +399,8 @@ class StockStatus(MultiReport):
 
         return {
             'stockouts': stockouts,
-            'unique_products': unique_products
+            'unique_products': unique_products,
+            'stockout_table_supply_points': supply_points
         }
 
     def data(self):
@@ -418,10 +422,11 @@ class StockStatus(MultiReport):
             'case_id', 'product_id', 'report__date', 'stock_on_hand'
         )
 
+        stockout_table_supply_points = list(self.get_supply_points.values_list('supply_point_id', flat=True))
         grouped_by_case = defaultdict(set)
         stock_states = StockState.objects.filter(
             sql_product__domain=self.domain,
-            case_id__in=list(self.get_supply_points.values_list('supply_point_id', flat=True))
+            case_id__in=stockout_table_supply_points
         )
         product_case_with_stock = defaultdict(set)
         product_case_without_stock = defaultdict(set)
@@ -479,7 +484,8 @@ class StockStatus(MultiReport):
             'all': locations.count(),
             'months_of_stock': months_of_stock,
             'stockouts': stockouts,
-            'unique_products': unique_products
+            'unique_products': unique_products,
+            'stockout_table_supply_points': stockout_table_supply_points
         }
 
     @property
