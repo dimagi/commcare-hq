@@ -1,5 +1,6 @@
 from couchdbkit import BadValueError
 from django.test import TestCase, SimpleTestCase
+from corehq.apps.groups.models import UserRemoval
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
 
@@ -22,6 +23,8 @@ class GroupTest(TestCase):
             group.delete()
         for user in CommCareUser.all():
             user.delete()
+
+        UserRemoval.objects.all().delete()
 
     def testGetUsers(self):
         group = Group(domain=DOMAIN, name='group',
@@ -49,6 +52,31 @@ class GroupTest(TestCase):
         _check_all_users([u._id for u in group.get_static_users(is_active=False)])
         _check_all_users(group.get_static_user_ids(is_active=False))
 
+    def test_remove_users(self):
+        group = Group(domain=DOMAIN, name='group',
+                      users=[self.active_user._id, self.inactive_user._id, self.deleted_user._id])
+        group.save()
+
+        group.remove_user(self.active_user._id)
+        removal_record = UserRemoval.objects.get(group_id=group.get_id, user_id=self.active_user._id)
+        self.assertIsNotNone(removal_record)
+
+        group.add_user(self.active_user._id)
+        group.remove_user(self.active_user._id)
+        removal_record_updated = UserRemoval.objects.get(group_id=group.get_id, user_id=self.active_user._id)
+        self.assertNotEqual(removal_record.removed_on, removal_record_updated.removed_on)
+
+    def test_remove_multiple_users(self):
+        group = Group(domain=DOMAIN, name='group',
+                      users=[self.active_user._id, self.inactive_user._id, self.deleted_user._id])
+        group.save()
+
+        self.assertEqual(len(list(UserRemoval.objects.filter(group_id=group.get_id))), 0)
+        group.remove_user(self.active_user._id, save=False)
+        group.remove_user(self.inactive_user._id, save=False)
+        group.save()
+        self.assertEqual(len(list(UserRemoval.objects.filter(group_id=group.get_id))), 2)
+
     def test_bulk_save(self):
         group1 = Group(domain=DOMAIN, name='group1',
                        users=[self.active_user._id, self.inactive_user._id, self.deleted_user._id])
@@ -60,6 +88,8 @@ class GroupTest(TestCase):
         group1.remove_user(self.active_user._id, save=False)
         group2.remove_user(self.deleted_user._id, save=False)
 
+        self.assertEqual(len(list(UserRemoval.objects.filter(group_id=group1.get_id))), 0)
+        self.assertEqual(len(list(UserRemoval.objects.filter(group_id=group2.get_id))), 0)
         g1_old_modified = group1.last_modified
         g2_old_modified = group2.last_modified
 
@@ -69,6 +99,12 @@ class GroupTest(TestCase):
         group2_updated = Group.get(group2.get_id)
         self.assertNotEqual(g1_old_modified, group1_updated.last_modified)
         self.assertNotEqual(g2_old_modified, group2_updated.last_modified)
+        for group_id, user_id in [
+            (group1.get_id, self.active_user._id),
+            (group2.get_id, self.deleted_user._id),
+        ]:
+            removal_record = UserRemoval.objects.get(group_id=group_id, user_id=user_id)
+            self.assertIsNotNone(removal_record)
 
 
 # This is a mixin so importing it doesn't re-run the tests

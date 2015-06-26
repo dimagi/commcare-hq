@@ -133,7 +133,7 @@ def update_group_membership(request, domain, group_id):
     form = MultipleSelectionForm(request.POST)
     form.fields['selected_ids'].choices = [(id, 'throwaway') for id in CommCareUser.ids_by_domain(domain)]
     if form.is_valid():
-        group.users = form.cleaned_data['selected_ids']
+        group.set_users(form.cleaned_data['selected_ids'])
         group.save()
         messages.success(request, _("Group %s updated!") % group.name)
     else:
