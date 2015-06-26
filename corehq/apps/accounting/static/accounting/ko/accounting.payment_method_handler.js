@@ -1,6 +1,9 @@
 var BillingHandler = function (formId, opts) {
     'use strict';
     var self = this;
+    self.CREDIT_CARD = 'cc';
+    self.WIRE = 'wire';
+
     self.formId = formId;
     self.errorMessages = opts.errorMessages || {};
     self.submitBtnText = opts.submitBtnText;
@@ -23,6 +26,8 @@ var BillingHandler = function (formId, opts) {
     });
     self.submitURL = opts.submitURL;
 
+    self.paymentMethod = ko.observable();
+
     self.submitForm = function () {
         $('#' + self.formId).ajaxSubmit({
             success: self.handleSuccess,
@@ -37,7 +42,7 @@ var WireInvoiceHandler = function(formId, opts) {
     opts = opts ? opts : {};
 
     BillingHandler.apply(this, arguments);
-
+    self.paymentMethod = ko.observable(self.WIRE);
 
     self.handleGeneralError = function (response, textStatus, errorThrown) {
         errorThrown = errorThrown || 500;
@@ -64,14 +69,11 @@ var PaymentMethodHandler = function (formId, opts) {
     'use strict';
     var self = this;
     opts = opts ? opts : {};
-    self.CREDIT_CARD = 'cc';
-    self.WIRE = 'wire';
 
     BillingHandler.apply(this, arguments);
-
     self.paymentMethod = ko.observable(self.CREDIT_CARD);
 
-    self.submitURL = ko.computed(function(){
+    self.submitURL = self.submitURL || ko.computed(function(){
         var url = opts.credit_card_url;
         if (self.paymentMethod() === self.WIRE){
             url = opts.wire_url;
