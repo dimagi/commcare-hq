@@ -13,6 +13,7 @@ from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
+from corehq.apps.reports.standard.inspect import SubmitHistory
 
 from .dispatcher import EditDataInterfaceDispatcher
 
@@ -78,3 +79,10 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
             user_ids=self.user_ids,
         )
         return context
+
+
+class BulkArchiveFormInterface(DataInterface, SubmitHistory):
+    name = ugettext_noop("Archive Forms")
+    slug = "arhive_forms"
+
+    report_template_path = 'data_interfaces/interfaces/archive_forms.html'
