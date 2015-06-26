@@ -240,6 +240,44 @@ class WorkbookJSONReader(object):
             except IndexError:
                 raise WorksheetNotFound(title=0)
 
+    def work_book_headers_as_tuples(self):
+        """
+        Returns raw sheet headers in following format
+
+          (("employee", ("id", "name", "gender")),
+           ("building", ("id", "name", "address")))
+        """
+        all_sheet_headers = []
+        for sheet in self.worksheets:
+            all_sheet_headers.append(
+                (sheet.title, tuple(sheet.headers))
+            )
+        return tuple(all_sheet_headers)
+
+    def work_book_data_as_tuples(self):
+        """
+        Note: This is useful to get xlsx file's data into easy readible format
+        Exists only to migrate tests using xlsx files to use following format
+
+        Returns raw sheet data in following format
+
+        (("employee", (("1", "cory", "m"),
+                       ("2", "christian", "m"),
+                       ("3", "amelia", "f"))),
+         ("building", (("1", "dimagi", "585 mass ave."),
+                       ("2", "old dimagi", "529 main st."))))
+        """
+        all_sheet_data = []
+        for sheet in self.worksheets:
+            current_sheet_data = []
+            for row in sheet:
+                values = [row.get(header) for header in sheet.headers]
+                current_sheet_data.append(tuple(values))
+            all_sheet_data.append(
+                (sheet.title, tuple(current_sheet_data))
+            )
+        return tuple(all_sheet_data)
+
 # Utils for writing
 
 
