@@ -399,6 +399,7 @@ class DataExportInterface(GenericReportView):
     def template_context(self):
         context = super(DataExportInterface, self).template_context
         context.update({
+            'bulk_download_notice_text': ugettext_noop('Form Export'),
             'bulk_export_format': self.bulk_export_format,
             'saved_exports': self.saved_exports,
         })

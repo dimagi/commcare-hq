@@ -1,3 +1,42 @@
+var NewExportManager = function (o) {
+    var self = this;
+    self.selected_exports = ko.observableArray();
+    self.bulk_download_notice_text = o.bulk_download_notice_text || '';
+
+    self.requestBulkDownload = function() {
+        console.log('self.requestBulkDownload');
+    };
+
+    self.toggleSelectAllExports = function (data, event) {
+        var $toggleBtn = $(event.srcElement || event.currentTarget),
+            check_class = '.select-export';
+        if ($toggleBtn.data('all')) {
+            $.each($(check_class), function () {
+                $(this).attr('checked', true);
+                self.updateSelectedExports({}, {srcElement: this})
+            });
+        } else {
+            $.each($(check_class), function () {
+                $(this).attr('checked', false);
+                self.updateSelectedExports({}, {srcElement: this})
+            });
+        }
+    };
+
+    self.updateSelectedExports = function (data, event) {
+        var $checkbox = $(event.srcElement || event.currentTarget);
+        var add_to_list = ($checkbox.attr('checked') === 'checked'),
+            export_id = $checkbox.attr('value');
+        if (add_to_list) {
+            $checkbox.parent().find('.label').removeClass('label-info').addClass('label-success');
+            self.selected_exports.push(export_id);
+        } else {
+            $checkbox.parent().find('.label').removeClass('label-success').addClass('label-info');
+            self.selected_exports.splice(self.selected_exports().indexOf(export_id), 1);
+        }
+    };
+};
+
 var ExportManager = function (o) {
     var self = this;
     self.selected_exports = ko.observableArray();
