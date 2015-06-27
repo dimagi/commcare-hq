@@ -44,7 +44,7 @@
                 </a>
             </td>
             <td class="form-inline">
-                {% ifequal export.default_format custom_bulk_export_format %}
+                {% ifequal export.default_format bulk_export_format %}
                     <label>
                         <input type="checkbox" class="select-custom" data-bind="event: {change: updateSelectedExports}" />
                         <span class="label label-info">+ {% trans "Bulk Export" %}</span>

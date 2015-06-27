@@ -399,9 +399,14 @@ class DataExportInterface(GenericReportView):
     def template_context(self):
         context = super(DataExportInterface, self).template_context
         context.update({
+            'bulk_export_format': self.bulk_export_format,
             'saved_exports': self.saved_exports,
         })
         return context
+
+    @property
+    def bulk_export_format(self):
+        return Format.XLS_2007
 
     @property
     @memoized
