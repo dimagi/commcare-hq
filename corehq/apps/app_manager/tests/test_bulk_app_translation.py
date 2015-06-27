@@ -123,13 +123,16 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
 
     upload_headers_bad_column = (  # bad column is default-fra
         ("Modules_and_forms", (
-            "Type", "sheet_name", "default_en", "default_fra", "label_for_cases_en", "label_for_cases_fra", "icon_filepath", "audio_filepath", "unique_id"
+            "Type", "sheet_name", "default_en", "default_fra",
+            "label_for_cases_en", "label_for_cases_fra", "icon_filepath",
+            "audio_filepath", "unique_id"
         )),
         ("module1", (
             "case_property", "list_or_detail", "default_en", "default_fra"
         )),
         ("module1_form1", (
-            "label", "default_en", "default-fra", "audio_en", "audio_fra", "image_en", "image_fra", "video_en", "video_fra",
+            "label", "default_en", "default-fra", "audio_en", "audio_fra",
+            "image_en", "image_fra", "video_en", "video_fra",
         ))
     )
 
