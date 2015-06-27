@@ -232,7 +232,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
             self.fail(e)
 
     def test_bad_column_name(self):
-        self.upload_raw_excel_translations(self.upload_headers_bad_column, 
+        self.upload_raw_excel_translations(self.upload_headers_bad_column,
             self.upload_data,
             expected_messages=[
                 u'Sheet "module1_form1" has less columns than expected. Sheet '
