@@ -14,6 +14,9 @@
 </table>
 {% endif %}
 
+<p>Method: {{ method }}</p>
+<p>URL: {% if url %}<a href="{{ url }}">{{ url }}</a>{% else %}Unknown{% endif %}</p>
+
 {% for line in tb_list %}
 {% if forloop.counter0 == 0 %}
 <div>

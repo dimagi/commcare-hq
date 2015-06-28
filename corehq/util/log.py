@@ -40,7 +40,7 @@ class HqAdminEmailHandler(AdminEmailHandler):
             request_repr = "Request repr() unavailable."
         subject = self.format_subject(subject)
 
-        tb_list = None
+        tb_list = []
         if record.exc_info:
             exc_info = record.exc_info
             etype, value, tb = exc_info
@@ -49,7 +49,6 @@ class HqAdminEmailHandler(AdminEmailHandler):
             tb_list.extend(traceback.format_list(reversed(traceback.extract_tb(tb))))
             stack_trace = '\n'.join(tb_list)
         else:
-            exc_info = (None, record.getMessage(), None)
             stack_trace = 'No stack trace available'
 
         message = "%s\n\n%s" % (stack_trace, request_repr)
@@ -62,6 +61,8 @@ class HqAdminEmailHandler(AdminEmailHandler):
             'tb_list': tb_list,
             'get': request.GET,
             'post': request.POST,
+            'method': request.method,
+            'url': request.build_absolute_uri(),
             'request_repr': request_repr
         }
         html_message = render_to_string('hqadmin/email/error_email.html', context)
