@@ -127,7 +127,7 @@ class ChoiceListFilterTestCase(SimpleTestCase):
     CHOICES = [
         {
             "value": "NEGATIVE",
-            "display": "Negative"
+            "display": "negative"
         },
         {
             "value": "POSITIVE",
@@ -178,7 +178,7 @@ class ChoiceListFilterTestCase(SimpleTestCase):
         choices = [
             {
                 "value": 0,
-                "display": "Negative"
+                "display": "negative"
             },
             {
                 "value": 1,
@@ -205,8 +205,12 @@ class ChoiceListFilterTestCase(SimpleTestCase):
 
         # ensure integer values work
         self.assertEqual('positive', filter.value(diagnosis_slug=1).display)
+        # ensure 0 integer value works
+        self.assertEqual('negative', filter.value(diagnosis_slug=0).display)
         # check string to int coercion
         self.assertEqual('positive', filter.value(diagnosis_slug='1').display)
+        # ensure 0 string to int works
+        self.assertEqual('negative', filter.value(diagnosis_slug='0').display)
 
         # check missing values raise errors
         with self.assertRaises(FilterValueException):
