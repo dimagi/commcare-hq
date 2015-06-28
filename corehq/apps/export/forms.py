@@ -30,15 +30,24 @@ class CreateFormExportForm(forms.Form):
         ]
 
         self.helper = FormHelper()
-        self.helper.form_id = "account-form"
+        self.helper.form_id = "create-export-form"
         self.helper.form_class = "form-horizontal"
 
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _('Select Form'),
-                'application',
-                'module',
-                'form',
+                crispy.Field(
+                    'application',
+                    data_bind='value: appId',
+                ),
+                crispy.Field(
+                    'module',
+                    data_bind="options: moduleOptions, optionsText: 'text', optionsValue: 'value', value: moduleId",
+                ),
+                crispy.Field(
+                    'form',
+                    data_bind="options: formOptions, optionsText: 'text', optionsValue: 'value'",
+                ),
             ),
             FormActions(
                 crispy.ButtonHolder(

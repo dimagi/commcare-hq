@@ -6,7 +6,8 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.utils.decorators import method_decorator
 import json
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models import Application, get_apps_in_domain
+from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.export.exceptions import ExportNotFound, ExportAppException
 from corehq.apps.export.forms import CreateFormExportForm
@@ -284,6 +285,8 @@ class CreateFormExportView(BaseProjectDataView):
         context = super(CreateFormExportView, self).main_context
         context.update({
             'create_export_form': self.create_export_form,
+            'app_to_module_options': self.app_to_module_options,
+            'module_to_form_options': self.module_to_form_options,
         })
         return context
 
@@ -311,3 +314,24 @@ class CreateFormExportView(BaseProjectDataView):
         if self.request.method == 'POST':
             return CreateFormExportForm(self.domain, self.request.POST)
         return CreateFormExportForm(self.domain)
+
+    @property
+    def app_to_module_options(self):
+        return {
+            app._id: [{
+                'text': trans(module.name, app.langs),
+                'value': module.unique_id,
+            } for module in app.modules]
+            for app in get_apps_in_domain(self.domain)
+        }
+
+    @property
+    def module_to_form_options(self):
+        return {
+            module.unique_id: [{
+                'text': trans(form.name, app.langs),
+                'value': form.unique_id,
+            } for form in module.get_forms()]
+            for app in get_apps_in_domain(self.domain)
+            for module in app.modules
+        }
