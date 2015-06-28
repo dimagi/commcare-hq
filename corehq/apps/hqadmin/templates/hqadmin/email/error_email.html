@@ -26,7 +26,7 @@
 {% else %}
 <div>
     <b>{{ line }}</b>
-    <br />
+    <br>
 </div>
 {% endif %}
 {% endfor %}
@@ -34,6 +34,7 @@
 <h3>Parameters</h3>
 
 <div><b>GET</b></div>
+{% if get %}
 <table>
     <tbody>
         {% for key, value in get.items %}
@@ -44,8 +45,12 @@
         {% endfor %}
     </tbody>
 </table>
+{% else %}
+    Nothing found.
+{% endif %}
 
 <div><b>POST</b></div>
+{% if post %}
 <table>
     <tbody>
         {% for key, value in post.items %}
@@ -56,6 +61,10 @@
         {% endfor %}
     </tbody>
 </table>
+{% else %}
+    Nothing found.
+{% endif %}
+
 <h3>Request</h3>
 {{ request_repr }}
 
