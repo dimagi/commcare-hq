@@ -230,7 +230,7 @@ class DynamicChoiceListFilter(BaseFilter):
         self.url_generator = url_generator
 
     def value(self, **kwargs):
-        selection = kwargs.get(self.name, "")
+        selection = unicode(kwargs.get(self.name, ""))
         if selection:
             choices = selection.split(CHOICE_DELIMITER)
             typed_choices = [transform_from_datatype(self.datatype)(c) for c in choices]
