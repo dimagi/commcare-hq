@@ -2,7 +2,7 @@ import traceback
 from celery.utils.mail import ErrorMail
 from django.core import mail
 from django.utils.log import AdminEmailHandler
-from django.views.debug import get_exception_reporter_filter, ExceptionReporter
+from django.views.debug import get_exception_reporter_filter
 from django.template.loader import render_to_string
 
 
@@ -57,8 +57,6 @@ class HqAdminEmailHandler(AdminEmailHandler):
         if details:
             message = "%s\n\n%s" % (self.format_details(details), message)
 
-        reporter = ExceptionReporter(request, is_email=True, *exc_info)
-        html_message = reporter.get_traceback_html() or None
         context = {
             'details': details,
             'tb_list': tb_list,
