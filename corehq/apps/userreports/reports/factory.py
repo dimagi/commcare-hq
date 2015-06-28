@@ -43,6 +43,7 @@ def _build_choice_list_filter(spec):
         choices.insert(0, Choice(SHOW_ALL_CHOICE, _('Show all')))
     return ChoiceListFilter(
         name=wrapped.slug,
+        datatype=wrapped.datatype,
         label=wrapped.display,
         required=wrapped.required,
         choices=choices,
