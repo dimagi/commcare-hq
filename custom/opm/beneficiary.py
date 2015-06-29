@@ -879,13 +879,6 @@ class FakeConditionsMet(ConditionsMet):
             self.child_name = EMPTY_FIELD
 
     @property
-    def readable_status(self):
-        if self.report.is_rendered_as_email:
-            with localize('hin'):
-                return _(self.status)
-        return self.status
-
-    @property
     @memoized
     def preg_month(self):
         return EMPTY_FIELD
