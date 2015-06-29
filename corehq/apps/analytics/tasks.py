@@ -133,6 +133,7 @@ def track_workflow(email, event, properties=None):
         km.record(email, event, properties if properties else {})
         # TODO: Consider adding some error handling for bad/failed requests.
 
+
 @task(queue='background_queue', ignore_result=True)
 def identify(email, properties):
     """
