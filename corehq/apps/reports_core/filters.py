@@ -178,20 +178,22 @@ class ChoiceListFilter(BaseFilter):
     Filter for a list of choices. Each choice should be a Choice object as per above.
     """
 
-    def __init__(self, name, required=True, label='Choice List Filter',
+    def __init__(self, name, datatype, required=True, label='Choice List Filter',
                  template='reports_core/filters/choice_list_filter.html',
                  css_id=None, choices=None):
         params = [
             FilterParam(name, True),
         ]
         super(ChoiceListFilter, self).__init__(required=required, name=name, params=params)
+        self.datatype = datatype
         self.label = label
         self.template = template
         self.css_id = css_id or self.name
         self.choices = choices or []
 
     def value(self, **kwargs):
-        choice = unicode(kwargs[self.name])
+        raw_value = kwargs[self.name]
+        choice = transform_from_datatype(self.datatype)(raw_value) if raw_value != SHOW_ALL_CHOICE else raw_value
         choice_values = map(lambda c: c.value, self.choices)
         if choice not in choice_values:
             raise FilterValueException(_(u'Choice "{choice}" not found in choices: {choices}')
@@ -229,7 +231,7 @@ class DynamicChoiceListFilter(BaseFilter):
         self.url_generator = url_generator
 
     def value(self, **kwargs):
-        selection = kwargs.get(self.name, "")
+        selection = unicode(kwargs.get(self.name, ""))
         if selection:
             choices = selection.split(CHOICE_DELIMITER)
             typed_choices = [transform_from_datatype(self.datatype)(c) for c in choices]

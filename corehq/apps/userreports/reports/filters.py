@@ -81,7 +81,9 @@ class ChoiceListFilterValue(FilterValue):
 
     def __init__(self, filter, value):
         assert filter.type in ('choice_list', 'dynamic_choice_list')
-        assert(type(value) == list)
+        if not isinstance(value, list):
+            # if in single selection mode just force it to a list
+            value = [value]
         super(ChoiceListFilterValue, self).__init__(filter, value)
 
     @property

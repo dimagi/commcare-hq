@@ -239,6 +239,7 @@ class FilterSpec(JsonObject):
     field = StringProperty(required=True)  # this is the actual column that is queried
     display = DefaultProperty()
     required = BooleanProperty(default=False)
+    datatype = DataTypeProperty(default='string')
 
     def get_display(self):
         return self.display or self.slug
@@ -251,6 +252,7 @@ class DateFilterSpec(FilterSpec):
 class ChoiceListFilterSpec(FilterSpec):
     type = TypeProperty('choice_list')
     show_all = BooleanProperty(default=True)
+    datatype = DataTypeProperty(default='string')
     choices = ListProperty(FilterChoice)
 
 
