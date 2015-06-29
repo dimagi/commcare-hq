@@ -29,7 +29,7 @@ from custom.ewsghana.reports.specific_reports.stock_status_report import Stockou
 from custom.ewsghana.reports.stock_levels_report import InventoryManagementData, StockLevelsReport
 from custom.ewsghana.stock_data import EWSStockDataSynchronization
 from custom.ewsghana.tasks import ews_bootstrap_domain_task, ews_clear_stock_data_task, \
-    delete_last_migrated_stock_data
+    delete_last_migrated_stock_data, convert_user_data_fields_task
 from custom.ewsghana.utils import make_url, has_input_stock_permissions
 from custom.ilsgateway.views import GlobalStats
 from custom.logistics.tasks import add_products_to_loc, locations_fix, resync_web_users
@@ -263,6 +263,11 @@ def clear_products(request, domain):
 @require_POST
 def delete_last_stock_data(request, domain):
     delete_last_migrated_stock_data.delay(domain)
+    return HttpResponse('OK')
+
+
+def convert_user_data_fields(request, domain):
+    convert_user_data_fields_task.delay(domain)
     return HttpResponse('OK')
 
 
