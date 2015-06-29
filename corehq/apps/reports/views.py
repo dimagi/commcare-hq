@@ -193,10 +193,8 @@ def saved_reports(request, domain, template="reports/reports_home.html"):
         ),
     )
 
-    if request.couch_user:
-        util.set_report_announcements_for_user(request, user)
-
     return render(request, template, context)
+
 
 @login_or_digest
 @require_form_export_permission
