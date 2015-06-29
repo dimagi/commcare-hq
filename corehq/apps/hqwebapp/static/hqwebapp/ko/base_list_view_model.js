@@ -81,12 +81,12 @@ BaseListViewModel = function (o) {
             } else {
                 view_model.unsuccessful_archive_action(button, index)(data);
             }
-        }
+        };
     };
     view_model.unsuccessful_archive_action = function (button, index) {
         return function (data) {
             $(button).button('unsuccessful');
-        }
+        };
     };
 
     return view_model;

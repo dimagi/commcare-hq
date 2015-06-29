@@ -43,7 +43,7 @@ var CommtrackProductsProgramsViewModel = function (o) {
                 alert_container.show();
             }
             $(button).button('unsuccessful');
-        }
+        };
     };
 
     var reloadList = function(data) {
@@ -57,7 +57,7 @@ var CommtrackProductsProgramsViewModel = function (o) {
             view_model.data_list(data.data_list);
             view_model.archive_action_items([]);
         }
-    }
+    };
     var format_url = function(page) {
         if (!page) {
             return "#";
@@ -65,7 +65,7 @@ var CommtrackProductsProgramsViewModel = function (o) {
         return view_model.list_url +'?page=' + page +
             "&limit=" + view_model.page_limit() +
             "&show_inactive=" + view_model.show_inactive;
-    }
+    };
 
     return view_model;
 };

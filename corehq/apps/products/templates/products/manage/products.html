@@ -19,7 +19,7 @@
                 start_page: {{ data_list.page }},
                 limit: {{ data_list.limit }},
                 show_inactive: {{ show_inactive|yesno:"true,false" }},
-                list_url: '{% url "commtrack_product_fetch" domain %}',
+                list_url: '{% url "commtrack_product_fetch" domain %}'
             });
         });
     </script>
