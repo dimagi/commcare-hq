@@ -13,7 +13,7 @@ def import_products(domain, importer):
     program_ids = [program._id for program in Program.by_domain(domain)]
     codes = {
         row['code']: row['product_id']
-        for row in SQLProduct.objects.filter(domain=domain).values('code', 'product_id')
+        for row in SQLProduct.objects.filter(domain=domain, is_archived=False).values('code', 'product_id')
     }
 
     custom_data_validator = ProductFieldsView.get_validator(domain)
