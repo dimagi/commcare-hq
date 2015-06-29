@@ -28,7 +28,7 @@ def get_or_create_stripe_customer(payment_method):
             pass
     if customer is None:
         customer = stripe.Customer.create(
-            description = "{}'s cards".format(payment_method.web_user),
+            description="{}'s cards".format(payment_method.web_user),
             email=payment_method.web_user,
         )
     payment_method.customer_id = customer.id
