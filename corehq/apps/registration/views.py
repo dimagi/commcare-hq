@@ -72,16 +72,29 @@ def register_user(request, domain_type=None):
                 login(request, new_user)
                 track_workflow.delay(new_user.email, "Requested new account")
                 track_created_hq_account_on_hubspot.delay(new_user, request.COOKIES)
-                # jls: also create domain, and redirect...somewhere else
-                return redirect(
-                    'registration_domain', domain_type=domain_type)
+                # jls: test this (both from invitation and creating new user from scratch)
+                if form.cleaned_data['create_domain']:
+                    org = None
+                    # jls: update when new-domain-with-hr-name is merged
+                    # (handle inability to create domain name gracefully)
+                    request_new_domain(
+                        request, form, org, new_user=True, domain_type=domain_type)
+
+                requested_domain = form.cleaned_data['domain_name']
+                context = get_domain_context(form.cleaned_data['domain_type']).update({
+                    'alert_message': _("An email has been sent to %s.") % request.user.username,
+                    'requested_domain': requested_domain,
+                    'track_domain_registration': True,
+                })
+                return render(request, 'registration/confirmation_sent.html',
+                        context)
         else:
             form = NewWebUserRegistrationForm(
-                initial={'domain_type': domain_type, 'email': prefilled_email})
+                initial={'domain_type': domain_type, 'email': prefilled_email, 'create_domain': True})
 
         context.update({
             'form': form,
-            'domain_type': domain_type
+            'domain_type': domain_type,
         })
         return render(request, 'registration/create_new_user.html', context)
 

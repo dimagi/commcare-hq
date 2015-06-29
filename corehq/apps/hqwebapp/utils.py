@@ -154,7 +154,11 @@ class InvitationView():
                     self._invite(invitation, user)
                     return HttpResponseRedirect(reverse("login"))
             else:
-                form = NewWebUserRegistrationForm(initial={'email': invitation.email})
+                form = NewWebUserRegistrationForm(initial={
+                    'email': invitation.email,
+                    'domain_name': invitation.domain,
+                    'create_domain': False
+                })
 
         return render(request, self.template, {"form": form})
 

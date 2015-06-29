@@ -19,7 +19,7 @@ class DomainRegistrationForm(forms.Form):
     Form for creating a domain for the first time
     """
     org = forms.CharField(widget=forms.HiddenInput(), required=False)
-    domain_name = forms.CharField(label=_('Project Name:'), max_length=25,
+    domain_name = forms.CharField(label=_('Project Name'), max_length=25,
                                   help_text=_("Project name cannot contain spaces."))
     domain_type = forms.CharField(widget=forms.HiddenInput(), required=False,
                                   initial='commcare')
@@ -49,7 +49,6 @@ class NewWebUserRegistrationForm(DomainRegistrationForm):
     """
     Form for a brand new user, before they've created a domain or done anything on CommCare HQ.
     """
-    # jls: mix in DomainRegistrationForm, which may have a value for domain already, and if it does, don't display that field
     full_name = forms.CharField(label=_('Full Name'),
                                 max_length=User._meta.get_field('first_name').max_length +
                                            User._meta.get_field('last_name').max_length + 1)
@@ -63,6 +62,7 @@ class NewWebUserRegistrationForm(DomainRegistrationForm):
                                       initial=True,
                                       label="",
                                       help_text=_("Opt into emails about new features and other CommCare updates."))
+    create_domain = forms.BooleanField(widget=forms.HiddenInput(), required=False)
     # Must be set to False to have the clean_*() routine called
     eula_confirmed = forms.BooleanField(required=False,
                                         label="",
@@ -73,9 +73,6 @@ class NewWebUserRegistrationForm(DomainRegistrationForm):
                                                   href='#eulaModal'>
                                                   CommCare HQ End User License Agreement
                                                </a>.""")))
-    # not required for when a user accepts an invitation
-    #domain_type = forms.CharField(
-    #    required=False, widget=forms.HiddenInput(), initial='commcare')
 
     def clean_full_name(self):
         data = self.cleaned_data['full_name'].split()
