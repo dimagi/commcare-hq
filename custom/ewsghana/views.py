@@ -312,7 +312,12 @@ def configure_in_charge(request, domain):
     all_users = get_users_by_location_id(location_id)
 
     for u in all_users:
-        if (u.user_data.get('role') == 'In Charge') != (u._id in in_charge_ids):
-            u.user_data['role'] = 'In Charge' if u._id in in_charge_ids else 'Other'
+        roles = set(u.user_data.get('role', []))
+        if ('In Charge' in u.user_data.get('role')) != (u._id in in_charge_ids):
+            if u.get_id in in_charge_ids:
+                roles.add('In Charge')
+            elif 'In Charge' in roles:
+                roles.remove('In Charge')
+            u.user_data['role'] = list(roles)
             u.save()
     return HttpResponse('OK')

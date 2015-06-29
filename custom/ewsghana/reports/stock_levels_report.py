@@ -297,7 +297,7 @@ class UsersData(EWSData):
             'id': sms_user.get_id,
             'full_name': sms_user.full_name,
             'phone_numbers': sms_user.phone_numbers,
-            'in_charge': user.user_data.get('role') == 'In Charge',
+            'in_charge': 'In Charge' in user.user_data.get('role', []),
             'url': reverse(EditCommCareUserView.urlname, args=[self.config['domain'], sms_user.get_id])
         }
 
