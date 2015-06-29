@@ -662,7 +662,6 @@ class Domain(Document, SnapshotMixin):
                             (self.name, str(result[1]))
                 )
 
-    # jls
     def save_copy(self, new_domain_name=None, user=None, ignore=None,
                   copy_by_id=None):
         from corehq.apps.app_manager.models import get_app
