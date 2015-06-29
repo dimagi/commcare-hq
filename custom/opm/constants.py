@@ -19,12 +19,20 @@ MONTH_AMT = 250
 TWO_YEAR_AMT = 2000
 THREE_YEAR_AMT = 3000
 
+
 def get_fixture_data():
     fixtures = FixtureDataItem.get_indexed_items(DOMAIN, 'condition_amounts',
         'condition')
     return dict((k, int(fixture['rs_amount'])) for k, fixture in fixtures.items())
 
+
 class InvalidRow(Exception):
     """
     Raise this in the row constructor to skip row
+    """
+
+
+class CaseOutOfRange(InvalidRow):
+    """
+    The row is invalid because the window calculations are out of range.
     """

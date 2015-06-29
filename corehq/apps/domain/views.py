@@ -52,11 +52,11 @@ from django_prbac.decorators import requires_privilege_raise404
 from django_prbac.utils import has_privilege
 
 from corehq.apps.accounting.models import (
-    Subscription, CreditLine, SoftwareProductType,
+    Subscription, CreditLine, SoftwareProductType, SubscriptionType,
     DefaultProductPlan, SoftwarePlanEdition, BillingAccount,
     BillingAccountType,
     Invoice, BillingRecord, InvoicePdf, PaymentMethodType,
-    PaymentMethod, EntryPoint, WireInvoice
+    PaymentMethod, EntryPoint, WireInvoice, SoftwarePlanVisibility, FeatureType
 )
 from corehq.apps.accounting.usage import FeatureUsageCalculator
 from corehq.apps.accounting.user_text import get_feature_name, PricingTable, DESC_BY_EDITION
@@ -720,12 +720,13 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'plan': self.plan,
             'change_plan_url': reverse(SelectPlanView.urlname, args=[self.domain]),
             'can_purchase_credits': self.can_purchase_credits,
-            'process_payment_url': reverse(CreditsStripePaymentView.urlname,
-                                           args=[self.domain]),
+            'credit_card_url': reverse(CreditsStripePaymentView.urlname, args=[self.domain]),
+            'wire_url': reverse(CreditsWireInvoiceView.urlname, args=[self.domain]),
             'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
             'payment_error_messages': PAYMENT_ERROR_MESSAGES,
             'sms_rate_calc_url': reverse(SMSRatesView.urlname,
-                                         args=[self.domain])
+                                         args=[self.domain]),
+            'user_email': self.request.couch_user.username,
         }
 
 
@@ -993,9 +994,43 @@ class CreditsStripePaymentView(BaseStripePaymentView):
             self.domain,
             self.account,
             subscription=Subscription.get_subscribed_plan_by_domain(self.domain_object)[1],
-            product_type=self.request.POST.get('product'),
-            feature_type=self.request.POST.get('feature'),
+            post_data=self.request.POST.copy(),
         )
+
+
+class CreditsWireInvoiceView(DomainAccountingSettings):
+    http_method_names = ['post']
+    urlname = 'domain_wire_payment'
+
+    @method_decorator(login_and_domain_required)
+    @method_decorator(require_billing_admin())
+    def dispatch(self, request, *args, **kwargs):
+        return super(CreditsWireInvoiceView, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        emails = request.POST.get('emails', []).split()
+        amount = Decimal(request.POST.get('amount', 0))
+        wire_invoice_factory = DomainWireInvoiceFactory(request.domain, contact_emails=emails)
+        try:
+            wire_invoice_factory.create_wire_credits_invoice(self._get_items(request), amount)
+        except Exception, e:
+            return json_response({'error': {'message': e}})
+
+        return json_response({'success': True})
+
+    def _get_items(self, request):
+        product_type = SoftwareProductType.get_type_by_domain(Domain.get_by_name(self.domain))
+
+        features = [{'type': get_feature_name(feature_type[0], product_type),
+                     'amount': Decimal(request.POST.get(feature_type[0], 0))}
+                    for feature_type in FeatureType.CHOICES
+                    if Decimal(request.POST.get(feature_type[0], 0)) > 0]
+        products = [{'type': product_type[0],
+                     'amount': Decimal(request.POST.get(product_type[0], 0))}
+                    for product_type in SoftwareProductType.CHOICES
+                    if Decimal(request.POST.get(product_type[0], 0)) > 0]
+
+        return products + features
 
 
 class InvoiceStripePaymentView(BaseStripePaymentView):
@@ -1162,8 +1197,19 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
                     return SelectSubscriptionTypeForm({
                         'subscription_type': form_slug,
                     })
-        return SelectSubscriptionTypeForm()
 
+        subscription_type = None
+        subscription = Subscription.get_subscribed_plan_by_domain(self.domain_object)[1]
+        plan = subscription.plan_version.plan
+
+        if subscription.service_type == SubscriptionType.CONTRACTED:
+            subscription_type = "contracted_partner"
+        elif plan.edition == SoftwarePlanEdition.ENTERPRISE:
+            subscription_type = "dimagi_only_enterprise"
+        elif plan.edition == SoftwarePlanEdition.ADVANCED and plan.visibility == SoftwarePlanVisibility.TRIAL:
+            subscription_type = "advanced_extended_trial"
+
+        return SelectSubscriptionTypeForm({'subscription_type': subscription_type})
 
 
 class SelectPlanView(DomainAccountingSettings):
@@ -1177,7 +1223,7 @@ class SelectPlanView(DomainAccountingSettings):
     @property
     def edition_name(self):
         if self.edition:
-            return DESC_BY_EDITION[self.edition]['name'].encode('utf-8')
+            return DESC_BY_EDITION[self.edition]['name']
 
     @property
     def is_non_ops_superuser(self):
@@ -1196,9 +1242,12 @@ class SelectPlanView(DomainAccountingSettings):
 
     @property
     def steps(self):
+        edition_name = u" (%s)" % self.edition_name if self.edition_name else ""
         return [
             {
-                'title': _("1. Select a Plan%s") % (" (%s)" % self.edition_name if self.edition_name else ""),
+                'title': _(u"1. Select a Plan%(edition_name)s") % {
+                    "edition_name": edition_name
+                },
                 'url': reverse(SelectPlanView.urlname, args=[self.domain]),
             }
         ]

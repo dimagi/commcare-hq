@@ -12,13 +12,13 @@ from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.graph_models import Axis
-from corehq.apps.users.models import CommCareUser
 from custom.common import ALL_OPTION
 from custom.ewsghana.filters import ProductByProgramFilter, EWSDateFilter
 from custom.ewsghana.reports import EWSData, MultiReport, EWSLineChart, ProductSelectionPane
 from custom.ewsghana.utils import has_input_stock_permissions, drange, ews_date_format
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
+from corehq.apps.locations.dbaccessors import get_users_by_location_id
 from corehq.apps.locations.models import Location, SQLLocation
 
 
@@ -133,18 +133,31 @@ class FacilityReportData(EWSData):
                 )
             else:
                 months_until_stockout = '-'
+
+            if values['monthly_consumption'] and values['monthly_consumption'] != 0.00:
+                monthly_consumption = int(values['monthly_consumption'])
+            else:
+                monthly_consumption = 'not enough data'
+
+            if values['reorder_level'] and values['reorder_level'] != 0.00:
+                maximum_level = int(values['reorder_level'])
+            else:
+                maximum_level = 'unknown'
+
+            if values['maximum_level'] and values['maximum_level'] != 0.00:
+                reorder_level = int(values['maximum_level'])
+            else:
+                reorder_level = 'unknown'
+
             yield {
                 'commodity': values['commodity'],
-                'current_stock': values['current_stock'],
-                'monthly_consumption': values['monthly_consumption'] if values['monthly_consumption'] != 0.00
-                else 'not enough data',
+                'current_stock': int(values['current_stock']),
+                'monthly_consumption': monthly_consumption,
                 'months_until_stockout': months_until_stockout,
                 'stockout_duration': values['stockout_duration'],
                 'last_report': values['last_report'],
-                'reorder_level': values['reorder_level'] if values['reorder_level'] != 0.00
-                else 'unknown',
-                'maximum_level': values['maximum_level'] if values['maximum_level'] != 0.00
-                else 'unknown'}
+                'reorder_level': reorder_level,
+                'maximum_level': maximum_level}
 
     @property
     def rows(self):
@@ -278,12 +291,7 @@ class UsersData(EWSData):
     @property
     def rendered_content(self):
         from corehq.apps.users.views.mobile.users import EditCommCareUserView
-        users = CommCareUser.view(
-            'locations/users_by_location_id',
-            startkey=[self.config['location_id']],
-            endkey=[self.config['location_id'], {}],
-            include_docs=True
-        ).all()
+        users = get_users_by_location_id(self.config['location_id'])
 
         user_to_dict = lambda sms_user: {
             'id': sms_user.get_id,

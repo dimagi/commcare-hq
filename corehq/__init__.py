@@ -166,7 +166,7 @@ def _get_configurable_reports(project):
                 'show_in_navigation': show_in_navigation,
             })
 
-        yield (_('Project Reports'), [_make_report_class(config) for config in configs])
+        yield (_('Reports'), [_make_report_class(config) for config in configs])
 
 from corehq.apps.data_interfaces.interfaces import CaseReassignmentInterface
 from corehq.apps.importer.base import ImportCases
@@ -193,27 +193,13 @@ FIXTURE_INTERFACES = (
     )),
 )
 
-
-from corehq.apps.adm.reports.supervisor import SupervisorReportsADMSection
-
-ADM_SECTIONS = (
-    (_('Supervisor Report'), (
-        SupervisorReportsADMSection,
+from corehq.apps.reports.standard.export import DataExportInterface
+EXPORT_DATA_INTERFACES = (
+    (_('Export Data'), (
+        DataExportInterface,
     )),
 )
 
-from corehq.apps.adm.admin import columns, reports
-
-ADM_ADMIN_INTERFACES = (
-    (_("ADM Default Columns"), (
-        columns.ReducedADMColumnInterface,
-        columns.DaysSinceADMColumnInterface,
-        columns.ConfigurableADMColumnInterface
-    )),
-    (_("ADM Default Reports"), (
-        reports.ADMReportAdminInterface,
-    ))
-)
 
 from corehq.apps.indicators.admin import document_indicators, couch_indicators, dynamic_indicators
 
@@ -237,17 +223,6 @@ INDICATOR_ADMIN_INTERFACES = (
     )),
 )
 
-from corehq.apps.announcements.interface import (
-    ManageGlobalHQAnnouncementsInterface,
-    ManageReportAnnouncementsInterface,
-)
-
-ANNOUNCEMENTS_ADMIN_INTERFACES = (
-    (_("Manage Announcements"), (
-        ManageGlobalHQAnnouncementsInterface,
-        ManageReportAnnouncementsInterface,
-    )),
-)
 
 from corehq.apps.accounting.interface import (
     AccountingInterface,

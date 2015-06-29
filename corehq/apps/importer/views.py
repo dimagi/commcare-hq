@@ -2,6 +2,8 @@ import os.path
 from django.http import HttpResponseRedirect, HttpResponseServerError
 from django.utils.datastructures import MultiValueDictKeyError
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.hqcase.dbaccessors import get_case_properties, \
+    get_case_types_for_domain
 from corehq.apps.importer import base
 from corehq.apps.importer import util as importer_util
 from corehq.apps.importer.tasks import bulk_import_async
@@ -92,16 +94,7 @@ def excel_config(request, domain):
         if not row['key'][1] in case_types_from_apps:
             case_types_from_apps.append(row['key'][1])
 
-    case_types_from_cases = []
-    # load types from all case records
-    for row in CommCareCase.view('hqcase/types_by_domain',
-                                 reduce=True,
-                                 group=True,
-                                 startkey=[domain],
-                                 endkey=[domain, {}]).all():
-        if row['key'][1] and not row['key'][1] in case_types_from_cases:
-            case_types_from_cases.append(row['key'][1])
-
+    case_types_from_cases = get_case_types_for_domain(domain)
     # for this we just want cases that have data but aren't being used anymore
     case_types_from_cases = filter(lambda x: x not in case_types_from_apps, case_types_from_cases)
 
@@ -212,7 +205,7 @@ def excel_fields(request, domain):
     else:
         excel_fields = columns
 
-    case_fields = importer_util.get_case_properties(domain, case_type)
+    case_fields = get_case_properties(domain, case_type)
 
     # hide search column and matching case fields from the update list
     try:

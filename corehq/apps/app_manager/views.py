@@ -99,7 +99,8 @@ from corehq.apps.app_manager.util import (
     is_usercase_in_use,
     enable_usercase,
     actions_use_usercase,
-    get_usercase_properties, 
+    advanced_actions_use_usercase,
+    get_usercase_properties,
     prefix_usercase_properties,
     get_per_type_defaults
 )
@@ -1046,10 +1047,11 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
     elif module:
         template, module_context = get_module_view_context_and_template(app, module)
         context.update(module_context)
-    else:
+    elif app:
         template = "app_manager/app_view.html"
-        if app:
-            context.update(get_app_view_context(request, app))
+        context.update(get_app_view_context(request, app))
+    else:
+        template = "dashboard/dashboard_new_user.html"
 
     # update multimedia context for forms and modules.
     menu_host = form or module
@@ -2048,6 +2050,8 @@ def edit_advanced_form_actions(request, domain, app_id, module_id, form_id):
     json_loads = json.loads(request.POST.get('actions'))
     actions = AdvancedFormActions.wrap(json_loads)
     form.actions = actions
+    if advanced_actions_use_usercase(form.actions) and not is_usercase_in_use(domain):
+        enable_usercase(domain)
     response_json = {}
     app.save(response_json)
     response_json['propertiesMap'] = get_all_case_properties(app)
@@ -2530,6 +2534,7 @@ def download_index(request, domain, app_id, template="app_manager/download_index
     all the resource files that will end up zipped into the jar.
 
     """
+    files = None
     try:
         files = _download_index_files(request.app)
     except Exception:

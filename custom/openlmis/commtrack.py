@@ -2,6 +2,8 @@ import logging
 from django.dispatch import Signal
 from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.commtrack.models import SupplyPointCase, RequisitionCase
+from corehq.apps.hqcase.dbaccessors import \
+    get_supply_point_case_in_domain_by_id
 from corehq.apps.programs.models import Program
 from corehq.apps.products.models import Product
 from corehq.apps.domain.models import Domain
@@ -31,15 +33,9 @@ def bootstrap_domain(domain):
             sync_openlmis_program(domain, program)
 
 
-
 def get_supply_point(domain, facility_or_code):
     facility_code = facility_or_code if isinstance(facility_or_code, basestring) else facility_or_code.code
-    return SupplyPointCase.view('hqcase/by_domain_external_id',
-        key=[domain, facility_code],
-        reduce=False,
-        include_docs=True,
-        limit=1
-    ).first()
+    return get_supply_point_case_in_domain_by_id(domain, facility_code)
 
 
 def sync_facility_to_supply_point(domain, facility):

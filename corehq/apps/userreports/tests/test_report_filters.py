@@ -1,10 +1,11 @@
 from datetime import datetime
 from django.test import SimpleTestCase
 from corehq.apps.reports_core.filters import DatespanFilter, ChoiceListFilter, \
-    NumericFilter, DynamicChoiceListFilter
+    NumericFilter, DynamicChoiceListFilter, Choice
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.reports.factory import ReportFilterFactory
-from corehq.apps.userreports.reports.filters import SHOW_ALL_CHOICE
+from corehq.apps.userreports.reports.filters import SHOW_ALL_CHOICE, \
+    CHOICE_DELIMITER
 from corehq.apps.userreports.reports.specs import ReportFilter
 
 
@@ -42,6 +43,29 @@ class FilterTestCase(SimpleTestCase):
                 "field": "some_field",
                 "display": "Some display name"
             })
+
+    def test_translation(self):
+        shared_conf = {
+            "type": "date",
+            "field": "some_field",
+            "slug": "some_slug",
+        }
+
+        # Plain string
+        conf = {"display": "foo"}
+        conf.update(shared_conf)
+        filter = ReportFilterFactory.from_spec(conf)
+        self.assertEqual(filter.context(None, lang=None)['label'], "foo")
+        self.assertEqual(filter.context(None, lang="fr")['label'], "foo")
+
+        # Translation
+        conf = {"display": {"en": "english", "fr": "french"}}
+        conf.update(shared_conf)
+        filter = ReportFilterFactory.from_spec(conf)
+        self.assertEqual(filter.context(None, lang=None)['label'], "english")
+        self.assertEqual(filter.context(None, lang="fr")['label'], "french")
+        self.assertEqual(filter.context(None, lang="en")['label'], "english")
+        self.assertEqual(filter.context(None, lang="es")['label'], "english")
 
 
 class DateFilterTestCase(SimpleTestCase):
@@ -192,24 +216,42 @@ class DynamicChoiceListFilterTestCase(SimpleTestCase):
         self.filter_spec['datatype'] = 'string'
         filter = ReportFilterFactory.from_spec(self.filter_spec)
         tests = (
-            (1, '1'),
-            (1.2, '1.2'),
+            ('1', '1'),
+            ('1.2', '1.2'),
             ('hello', 'hello'),
         )
         for input, expected in tests:
-            choice = filter.value(dynoslug=input)
-            self.assertEqual(expected, choice.value)
-            self.assertEqual(input, choice.display)
+            choices = filter.value(dynoslug=input)
+            self.assertEqual(len(choices), 1)
+            self.assertEqual(expected, choices[0].value)
+            self.assertEqual(input, choices[0].display)
 
     def test_integer_datatype(self):
         self.filter_spec['datatype'] = 'integer'
         filter = ReportFilterFactory.from_spec(self.filter_spec)
         tests = (
-            (1, 1),
-            (1.2, 1),
+            ('1', 1),
+            ('1.2', 1),
             ('hello', None),
         )
         for input, expected in tests:
-            choice = filter.value(dynoslug=input)
-            self.assertEqual(expected, choice.value)
-            self.assertEqual(input, choice.display)
+            choices = filter.value(dynoslug=input)
+            self.assertEqual(len(choices), 1)
+            self.assertEqual(expected, choices[0].value)
+            self.assertEqual(input, choices[0].display)
+
+    def test_multiple_selections(self):
+        self.filter_spec["datatype"] = "string"
+        filter = ReportFilterFactory.from_spec(self.filter_spec)
+        test_strings = (
+            u'apple',
+            u'apple{s}banana'.format(s=CHOICE_DELIMITER),
+            u'apple{s}banana{s}carrot'.format(s=CHOICE_DELIMITER)
+        )
+        choices = [
+            Choice('apple', 'apple'),
+            Choice('banana', 'banana'),
+            Choice('carrot', 'carrot')
+        ]
+        for i, s in enumerate(test_strings):
+            self.assertListEqual(choices[0:i + 1], filter.value(dynoslug=s))

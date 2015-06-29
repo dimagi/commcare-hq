@@ -5,7 +5,6 @@ from django.test.utils import override_settings
 from casexml.apps.phone.data_providers.case.batched import BatchedCaseSyncOperation
 from casexml.apps.phone.tests.utils import generate_restore_payload
 from couchforms.tests.testutils import post_xform_to_couch
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import check_xml_line_by_line, delete_all_cases, delete_all_sync_logs
 from casexml.apps.phone.restore import RestoreConfig, RestoreState, RestoreParams
 from casexml.apps.case.xform import process_cases
@@ -16,7 +15,7 @@ from django.contrib.auth.models import User as DjangoUser
 from casexml.apps.phone.tests import const
 from casexml.apps.case import const as case_const
 from casexml.apps.phone.tests.dummy import dummy_restore_xml, dummy_user,\
-    dummy_user_xml, DUMMY_USERNAME
+    dummy_user_xml
 from corehq.apps.domain.models import Domain
 
 
@@ -86,7 +85,7 @@ class OtaRestoreTest(TestCase):
                                  "data", "create_short.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
-        form = post_xform_to_couch(xml_data)
+        form = post_xform_to_couch(xml_data, domain=self.project.name)
         # implicit length assertion
         [newcase] = process_cases(form)
         user = dummy_user()
@@ -112,7 +111,7 @@ class OtaRestoreTest(TestCase):
         expected_v2_case_block = """
         <case case_id="asdf" date_modified="2010-06-29T13:42:50.000000Z" user_id="foo" xmlns="http://commcarehq.org/case/transaction/v2" >
             <create>
-                <case_type>test_case_type</case_type> 
+                <case_type>test_case_type</case_type>
                 <case_name>test case name</case_name>
                 <owner_id>foo</owner_id>
             </create>
@@ -160,7 +159,7 @@ class OtaRestoreTest(TestCase):
                                  "data", "create_short.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
-        form = post_xform_to_couch(xml_data)
+        form = post_xform_to_couch(xml_data, domain=self.project.name)
         process_cases(form)
 
         time.sleep(1)
@@ -206,7 +205,7 @@ class OtaRestoreTest(TestCase):
                                  "data", "update_short.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
-        form = post_xform_to_couch(xml_data)
+        form = post_xform_to_couch(xml_data, domain=self.project.name)
         process_cases(form)
 
         time.sleep(1)
@@ -239,7 +238,7 @@ class OtaRestoreTest(TestCase):
                                  "data", "attributes.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
-        form = post_xform_to_couch(xml_data)
+        form = post_xform_to_couch(xml_data, domain=self.project.name)
         [newcase] = process_cases(form)
         
         self.assertTrue(isinstance(newcase.adate, dict))

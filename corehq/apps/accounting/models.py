@@ -800,8 +800,17 @@ class Subscriber(models.Model):
             }
             sub_change_email_address = (settings.INTERNAL_SUBSCRIPTION_CHANGE_EMAIL
                                         if internal_change else settings.SUBSCRIPTION_CHANGE_EMAIL)
+            env = ("[{}] ".format(settings.SERVER_ENVIRONMENT.upper())
+                   if settings.SERVER_ENVIRONMENT == "staging" else "")
+            email_subject = "{env}Subscription Change Alert: {domain} from {old_plan} to {new_plan}".format(
+                env=env,
+                domain=email_context['domain'],
+                old_plan=email_context['old_plan'],
+                new_plan=email_context['new_plan'],
+            )
+
             send_HTML_email(
-                "Subscription Change Alert: %(domain)s from %(old_plan)s to %(new_plan)s" % email_context,
+                email_subject,
                 sub_change_email_address,
                 render_to_string('accounting/subscription_change_email.html', email_context),
                 text_content=render_to_string('accounting/subscription_change_email.txt', email_context),
@@ -865,7 +874,7 @@ class Subscription(models.Model):
         try:
             Domain.get_by_name(self.subscriber.domain).save()
         except Exception as e:
-            # If a subscriber doesn't have a valid domain associated with it 
+            # If a subscriber doesn't have a valid domain associated with it
             # we don't care the pillow won't be updated
             pass
 
@@ -1180,11 +1189,11 @@ class Subscription(models.Model):
         emails |= {e for e in WebUser.get_dimagi_emails_by_domain(domain_name)}
         if self.is_trial:
             subject = _("%(product)s Alert: 30 day trial for '%(domain)s' "
-                        "ends %(ending_on)s" % {
+                        "ends %(ending_on)s") % {
                 'product': product,
                 'domain': domain_name,
                 'ending_on': ending_on,
-            })
+            }
             template = 'accounting/trial_ending_reminder_email.html'
             template_plaintext = 'accounting/trial_ending_reminder_email_plaintext.txt'
         else:
@@ -1232,6 +1241,38 @@ class Subscription(models.Model):
                     'domain': domain_name,
                     'email': email,
                 })
+
+    def send_dimagi_ending_reminder_email(self):
+        if self.date_end is None:
+            raise SubscriptionReminderError(
+                "This subscription has no end date."
+            )
+        if self.account.dimagi_contact is None:
+            raise SubscriptionReminderError(
+                "This subscription has no Dimagi contact."
+            )
+
+        domain = self.subscriber.domain
+        end_date = self.date_end.strftime(USER_DATE_FORMAT)
+        email = self.account.dimagi_contact
+        subject = "Alert: {domain}'s subscription is ending on {end_date}".format(
+                  domain=domain,
+                  end_date=end_date)
+        template = 'accounting/subscription_ending_reminder_dimagi.html'
+        template_plaintext = 'accounting/subscription_ending_reminder_dimagi_plaintext.html'
+        context = {
+            'domain': domain,
+            'end_date': end_date,
+            'contacts': self.account.billingcontactinfo.emails,
+            'dimagi_contact': email,
+        }
+        email_html = render_to_string(template, context)
+        email_plaintext = render_to_string(template_plaintext, context)
+        send_HTML_email(
+            subject, email, email_html,
+            text_content=email_plaintext,
+            email_from=settings.DEFAULT_FROM_EMAIL,
+        )
 
     def set_billing_account_entry_point(self):
         no_current_entry_point = self.account.entry_point == EntryPoint.NOT_SET
@@ -1290,7 +1331,7 @@ class Subscription(models.Model):
         if plan_version is None:
             plan_version = DefaultProductPlan.get_default_plan_by_domain(domain)
         return plan_version, subscription
-    
+
     @classmethod
     def new_domain_subscription(cls, account, domain, plan_version,
                                 date_start=None, date_end=None, note=None,
@@ -1314,9 +1355,9 @@ class Subscription(models.Model):
             raise NewSubscriptionError(_(
                 "There is already a subscription '%s' with no end date "
                 "that conflicts with the start and end dates of this "
-                "subscription." %
+                "subscription.") %
                 future_subscription_no_end.latest('date_created')
-            ))
+            )
 
         future_subscriptions = available_subs.filter(
             date_end__gt=date_start
@@ -1327,12 +1368,12 @@ class Subscription(models.Model):
             raise NewSubscriptionError(unicode(_(
                 "There is already a subscription '%(sub)s' that has an end date "
                 "that conflicts with the start and end dates of this "
-                "subscription %(start)s - %(end)s." % {
+                "subscription %(start)s - %(end)s.") % {
                     'sub': future_subscriptions.latest('date_created'),
                     'start': date_start,
                     'end': date_end
                 }
-            )))
+            ))
 
         can_reactivate, last_subscription = cls.can_reactivate_domain_subscription(
             account, domain, plan_version, date_start=date_start
@@ -1469,11 +1510,29 @@ class WireInvoice(InvoiceBase):
     def is_wire(self):
         return True
 
+    @property
+    def is_prepayment(self):
+        return False
+
     def get_domain(self):
         return self.domain
 
     def get_total(self):
         return self.balance
+
+
+class WirePrepaymentInvoice(WireInvoice):
+    class Meta:
+        proxy = True
+
+    items = []
+
+    @property
+    def is_prepayment(self):
+        return True
+
+    def add_items(self, items):
+        self.items = items
 
 
 class Invoice(InvoiceBase):
@@ -1754,6 +1813,14 @@ class WireBillingRecord(BillingRecordBase):
         return "Dimagi Accounting <{email}>".format(email=settings.INVOICING_CONTACT_EMAIL)
 
 
+class WirePrepaymentBillingRecord(WireBillingRecord):
+    class Meta:
+        proxy = True
+
+    def email_subject(self):
+        return _("Your prepayment invoice")
+
+
 class BillingRecord(BillingRecordBase):
     invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT)
     INVOICE_CONTRACTED_HTML_TEMPLATE = 'accounting/invoice_email_contracted.html'
@@ -1790,10 +1857,7 @@ class BillingRecord(BillingRecordBase):
         ))
         is_small_invoice = self.invoice.balance <= SMALL_INVOICE_THRESHOLD
         context.update({
-            'plan_name': "%(product)s %(name)s" % {
-                'product': self.invoice.subscription.plan_version.core_product,
-                'name': self.invoice.subscription.plan_version.plan.edition,
-            },
+            'plan_name': self.invoice.subscription.plan_version.plan.name,
             'date_due': self.invoice.date_due,
             'is_small_invoice': is_small_invoice,
             'total_balance': total_balance,
@@ -1845,7 +1909,8 @@ class InvoicePdf(SafeSaveDocument):
             applied_tax=getattr(invoice, 'applied_tax', Decimal('0.000')),
             applied_credit=getattr(invoice, 'applied_credit', Decimal('0.000')),
             total=invoice.get_total(),
-            is_wire=invoice.is_wire
+            is_wire=invoice.is_wire,
+            is_prepayment=invoice.is_wire and invoice.is_prepayment,
         )
 
         if not invoice.is_wire:
@@ -1862,6 +1927,17 @@ class InvoicePdf(SafeSaveDocument):
                         line_item.applied_credit,
                         line_item.total
                     )
+
+        if invoice.is_wire and invoice.is_prepayment:
+            unit_cost = 1
+            applied_credit = 0
+            for item in invoice.items:
+                template.add_item(item['type'],
+                                  item['amount'],
+                                  unit_cost,
+                                  item['amount'],
+                                  applied_credit,
+                                  item['amount'])
 
         template.get_pdf()
         filename = self.get_filename(invoice)

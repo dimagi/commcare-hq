@@ -1,5 +1,7 @@
+import warnings
 from functools import partial
 from couchdbkit import ResourceNotFound
+from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
 from dimagi.ext.couchdbkit import *
 import itertools
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
@@ -115,6 +117,21 @@ class LocationType(models.Model):
 class LocationQueriesMixin(object):
     def location_ids(self):
         return self.values_list('location_id', flat=True)
+
+    def couch_locations(self, wrapped=True):
+        """
+        Returns the couch locations corresponding to this queryset.
+        """
+        warnings.warn(
+            "Converting SQLLocations to couch locations.  This should be "
+            "used for backwards compatability only - not new features.",
+            DeprecationWarning,
+        )
+        ids = self.location_ids()
+        locations = iter_docs(Location.get_db(), ids)
+        if wrapped:
+            return itertools.imap(Location.wrap, locations)
+        return locations
 
 
 class LocationQuerySet(LocationQueriesMixin, models.query.QuerySet):
@@ -501,10 +518,12 @@ class Location(CachedCouchDocumentMixin, Document):
         # lazy migration for site_code
         if not self.site_code:
             from corehq.apps.commtrack.util import generate_code
-            self.site_code = generate_code(
-                self.name,
-                Location.site_codes_for_domain(self.domain)
-            )
+            all_codes = [
+                code.lower() for code in
+                (SQLLocation.objects.filter(domain=self.domain)
+                                    .values_list('site_code', flat=True))
+            ]
+            self.site_code = generate_code(self.name, all_codes)
 
         sql_location = None
         result = super(Location, self).save(*args, **kwargs)
@@ -549,38 +568,24 @@ class Location(CachedCouchDocumentMixin, Document):
             )
 
     @classmethod
-    def site_codes_for_domain(cls, domain):
-        """
-        This method is only used in management commands and lazy
-        migrations so DOES NOT exclude archived locations.
-        """
-        return set([r['key'][1] for r in cls.get_db().view(
-            'locations/prop_index_site_code',
-            reduce=False,
-            startkey=[domain],
-            endkey=[domain, {}],
-        ).all()])
-
-    @classmethod
     def by_site_code(cls, domain, site_code):
         """
         This method directly looks up a single location
         and can return archived locations.
         """
-        result = cls.get_db().view(
-            'locations/prop_index_site_code',
-            reduce=False,
-            startkey=[domain, site_code],
-            endkey=[domain, site_code, {}],
-        ).first()
-        return Location.get(result['id']) if result else None
+        try:
+            return (SQLLocation.objects.get(domain=domain,
+                                            site_code__iexact=site_code)
+                    .couch_location)
+        except SQLLocation.DoesNotExist:
+            return None
 
     @classmethod
     def root_locations(cls, domain):
         """
         Return all active top level locations for this domain
         """
-        return root_locations(domain)
+        return list(SQLLocation.root_locations(domain).couch_locations())
 
     @classmethod
     def get_in_domain(cls, domain, id):
@@ -611,7 +616,8 @@ class Location(CachedCouchDocumentMixin, Document):
     def siblings(self, parent=None):
         if not parent:
             parent = self.parent
-        return [loc for loc in (parent.children if parent else root_locations(self.domain)) if loc._id != self._id]
+        locs = (parent.children if parent else self.root_locations(self.domain))
+        return [loc for loc in locs if loc._id != self._id]
 
     @property
     def path(self):
@@ -620,29 +626,18 @@ class Location(CachedCouchDocumentMixin, Document):
         return _path
 
     @property
-    def _key_bounds(self):
-        startkey = list(itertools.chain([self.domain], self.path, ['']))
-        endkey = list(itertools.chain(startkey[:-1], [{}]))
-        return startkey, endkey
-
-    @property
     def descendants(self):
         """return list of all locations that have this location as an ancestor"""
-        startkey, endkey = self._key_bounds
-        return self.view('locations/hierarchy', startkey=startkey, endkey=endkey, reduce=False, include_docs=True).all()
+        return list(self.sql_location.get_descendants().couch_locations())
 
     @property
     def children(self):
         """return list of immediate children of this location"""
-        startkey, endkey = self._key_bounds
-        depth = len(self.path) + 2  # 1 for domain, 1 for next location level
-        q = self.view('locations/hierarchy', startkey=startkey, endkey=endkey, group_level=depth)
-        keys = [e['key'] for e in q if len(e['key']) == depth]
-        return self.view('locations/hierarchy', keys=keys, reduce=False, include_docs=True).all()
+        return list(SQLLocation.objects.filter(parent=self.sql_location)
+                                       .couch_locations())
 
     def linked_supply_point(self):
-        from corehq.apps.commtrack.models import SupplyPointCase
-        return SupplyPointCase.get_by_location(self)
+        return get_supply_point_case_by_location(self)
 
     @property
     def group_id(self):
@@ -655,13 +650,3 @@ class Location(CachedCouchDocumentMixin, Document):
     @property
     def location_type_object(self):
         return self.sql_location.location_type
-
-
-def root_locations(domain):
-    results = Location.get_db().view('locations/hierarchy',
-                                     startkey=[domain], endkey=[domain, {}],
-                                     reduce=True, group_level=2)
-
-    ids = [res['key'][-1] for res in results]
-    locs = [Location.get(id) for id in ids]
-    return [loc for loc in locs if not loc.is_archived]

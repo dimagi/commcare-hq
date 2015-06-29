@@ -537,13 +537,13 @@ class HQMediaMixin(Document):
             }
             _add_menu_media(module, **media_kwargs)
 
-
-            if (module.case_details.short.lookup_enabled and module.case_details.short.lookup_image):
-                media.append(ApplicationMediaReference(
-                    module.case_details.short.lookup_image,
-                    media_class=CommCareImage,
-                    **media_kwargs)
-                )
+            for name, details, display in module.get_details():
+                if display and details.display == 'short' and details.lookup_enabled and details.lookup_image:
+                    media.append(ApplicationMediaReference(
+                        details.lookup_image,
+                        media_class=CommCareImage,
+                        **media_kwargs)
+                    )
 
             if module.case_list_form.form_id:
                 media.append(ApplicationMediaReference(
@@ -557,7 +557,7 @@ class HQMediaMixin(Document):
                     **media_kwargs)
                 )
 
-            if module.case_list.show:
+            if hasattr(module, 'case_list') and module.case_list.show:
                 media.append(ApplicationMediaReference(
                     module.case_list.media_audio,
                     media_class=CommCareAudio,
@@ -610,7 +610,7 @@ class HQMediaMixin(Document):
         return self._get_item_media(module.case_list_form, media_kwargs)
 
     def get_case_list_menu_item_media(self, module, module_index):
-        if not module or not module.uses_media():
+        if not module or not module.uses_media() or not hasattr(module, 'case_list'):
             # user_registration isn't a real module, for instance
             return {}
         media_kwargs = self.get_media_ref_kwargs(module, module_index)
@@ -620,8 +620,12 @@ class HQMediaMixin(Document):
         if not module:
             return {}
         media_kwargs = self.get_media_ref_kwargs(module, module_index)
+        details_name = '{}_details'.format(type)
+        if not hasattr(module, details_name):
+            return {}
+
         image = ApplicationMediaReference(
-            module['{}_details'.format(type)].short.lookup_image,
+            module[details_name].short.lookup_image,
             media_class=CommCareImage,
             **media_kwargs
         ).as_dict()
