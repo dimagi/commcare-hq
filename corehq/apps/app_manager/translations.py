@@ -526,13 +526,20 @@ def update_form_translations(sheet, rows, missing_cols, app):
                         "./{f}value[@form='%s']" % trans_type
                     )
 
-                col_key = get_col_key(trans_type, lang)
-                new_translation = row[col_key]
+                try:
+                    col_key = get_col_key(trans_type, lang)
+                    new_translation = row[col_key]
+                except KeyError:
+                    # error has already been logged as unrecoginzed column
+                    continue
                 if not new_translation and col_key not in missing_cols:
                     # If the cell corresponding to the label for this question
                     # in this language is empty, fall back to another language
                     for l in app.langs:
-                        fallback = row[get_col_key(trans_type, l)]
+                        key = get_col_key(trans_type, l)
+                        if key in missing_cols:
+                            continue
+                        fallback = row[key]
                         if fallback:
                             new_translation = fallback
                             break
