@@ -24,13 +24,13 @@ class User(object):
     """
 
     def __init__(self, user_id, username, password, date_joined, first_name=None,
-                 last_name=None, phone_numbers=None, user_data=None,
+                 last_name=None, phone_number=None, user_data=None,
                  additional_owner_ids=None, domain=None, loadtest_factor=1):
         self.user_id = user_id
         self.username = username
         self.first_name = first_name
         self.last_name = last_name
-        self.phone_numbers = phone_numbers or []
+        self.phone_number = phone_number
         self.password = password
         self.date_joined = date_joined
         self.user_data = user_data or {}

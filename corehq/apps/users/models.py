@@ -1527,7 +1527,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             loadtest_factor=self.loadtest_factor,
             first_name=self.first_name,
             last_name=self.last_name,
-            phone_numbers=self.phone_numbers,
+            phone_number=self.phone_number,
         )
 
         def get_owner_ids():
