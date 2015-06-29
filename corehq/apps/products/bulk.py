@@ -1,4 +1,4 @@
-from corehq.apps.products.models import Product
+from corehq.apps.products.models import Product, SQLProduct
 from django.utils.translation import ugettext as _
 from corehq.apps.programs.models import Program
 
@@ -8,9 +8,13 @@ def import_products(domain, importer):
     results = {'errors': [], 'messages': []}
     to_save = []
     product_count = 0
-    seen_product_ids = set()
+    seen_codes = set()
 
     program_ids = [program._id for program in Program.by_domain(domain)]
+    codes = {
+        row['code']: row['product_id']
+        for row in SQLProduct.objects.filter(domain=domain).values('code', 'product_id')
+    }
 
     custom_data_validator = ProductFieldsView.get_validator(domain)
 
@@ -42,17 +46,18 @@ def import_products(domain, importer):
             )
             continue
 
-        if p.code and p.code in seen_product_ids:
-            results['errors'].append(_(
-                u"Product {product_name} could not be imported \
-                due to duplicated product ids in the excel \
-                file"
-            ).format(
-                product_name=p.name
-            ))
-            continue
-        elif p.code:
-            seen_product_ids.add(p.code)
+        if p.code:
+            if (p.code in codes and codes[p.code] != p.get_id) or (p.code in seen_codes):
+                results['errors'].append(_(
+                    u"Product {product_name} could not be imported \
+                    since its product ID is already assigned to another product"
+                ).format(
+                    product_name=p.name
+                ))
+                continue
+
+            if p.code not in codes:
+                seen_codes.add(p.code)
 
         if p.program_id and p.program_id not in program_ids:
             results['errors'].append(_(
