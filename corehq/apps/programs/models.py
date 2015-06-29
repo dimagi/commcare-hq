@@ -78,10 +78,10 @@ class Program(Document):
 
             # break up saving in case there are many products
             if to_save > 500:
-                Product.get_db().bulk_save(to_save)
+                Product.bulk_save(to_save)
                 to_save = []
 
-        Product.get_db().bulk_save(to_save)
+        Product.bulk_save(to_save)
 
         # bulk update sqlproducts
         SQLProduct.objects.filter(program_id=self._id).update(program_id=default._id)
