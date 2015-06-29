@@ -1238,11 +1238,10 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
 
         subscription_type = None
         subscription = Subscription.get_subscribed_plan_by_domain(self.domain_object)[1]
-        try:
-            plan = subscription.plan_version.plan
-        except AttributeError:
+        if subscription is None:
             subscription_type = None
         else:
+            plan = subscription.plan_version.plan
             if subscription.service_type == SubscriptionType.CONTRACTED:
                 subscription_type = "contracted_partner"
             elif plan.edition == SoftwarePlanEdition.ENTERPRISE:
