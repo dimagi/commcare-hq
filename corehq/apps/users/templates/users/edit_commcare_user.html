@@ -117,6 +117,15 @@
 </script>
 {% endblock %}
 
+{% block uncompressed-stylesheets %}
+    <style>
+        #customFieldsData .selectmultiple {
+            width: 206px !important;
+            padding: 4px 6px 4px 6px;
+        }
+    </style>
+{% endblock %}
+
 {% block main_column %}
     <ul class="nav nav-tabs" id="user-settings-tabs">
         <li><a href="#basic-info" data-toggle="tab">{% trans "Basic" %}</a></li>

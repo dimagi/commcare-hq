@@ -38,11 +38,19 @@ def get_prefixed(field_dict):
 
 def _make_field(field):
     if field.choices:
-        return forms.ChoiceField(
-            label=field.label,
-            required=field.is_required,
-            choices=[('', _('Select one'))] + [(c, c) for c in field.choices],
-        )
+        if not field.is_multi_choice:
+            choice_field = forms.ChoiceField(
+                label=field.label,
+                required=field.is_required,
+                choices=[('', _('Select one'))] + [(c, c) for c in field.choices],
+            )
+        else:
+            choice_field = forms.MultipleChoiceField(
+                label=field.label,
+                required=field.is_required,
+                choices=[(c, c) for c in field.choices],
+            )
+        return choice_field
     return forms.CharField(label=field.label, required=field.is_required)
 
 
