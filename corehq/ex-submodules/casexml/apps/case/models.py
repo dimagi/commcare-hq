@@ -846,6 +846,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
     def get_display_config(cls):
         return [
             {
+                "name": "Section 1",
                 "layout": [
                     [
                         {
@@ -858,6 +859,25 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
                             "parse_date": True,
                             'is_phone_time': True,
                         },
+                    ],
+                    [
+                        {
+                            "expr": "type",
+                            "name": _("Case Type"),
+                            "format": '<code>{0}</code>',
+                        },
+                        {
+                            "expr": "user_id",
+                            "name": _("Last Submitter"),
+                            "process": 'doc_info',
+                        },
+                    ],
+                ],
+            },
+            {
+                "name": "Section 2",
+                "layout": [
+                    [
                         {
                             "expr": "modified_on",
                             "name": _("Modified On"),
@@ -873,16 +893,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
                     ],
                     [
                         {
-                            "expr": "type",
-                            "name": _("Case Type"),
-                            "format": '<code>{0}</code>',
-                        },
-                        {
-                            "expr": "user_id",
-                            "name": _("Last Submitter"),
-                            "process": 'doc_info',
-                        },
-                        {
                             "expr": "owner_id",
                             "name": _("Owner"),
                             "process": 'doc_info',
@@ -893,7 +903,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
                         },
                     ],
                 ],
-            }
+            },
         ]
 
     @property
