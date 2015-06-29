@@ -72,13 +72,13 @@ def import_products(domain, importer):
         to_save.append(p)
 
         if len(to_save) > 500:
-            Product.get_db().bulk_save(to_save)
+            Product.bulk_save(to_save)
             for couch_product in to_save:
                 couch_product.sync_to_sql()
             to_save = []
 
     if to_save:
-        Product.get_db().bulk_save(to_save)
+        Product.bulk_save(to_save)
         for couch_product in to_save:
             couch_product.sync_to_sql()
 
