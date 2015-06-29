@@ -1525,7 +1525,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             user_data=self.user_data,
             domain=self.domain,
             loadtest_factor=self.loadtest_factor,
-            full_name=self.full_name,
+            first_name=self.first_name,
+            last_name=self.last_name,
             phone_numbers=self.phone_numbers,
         )
 

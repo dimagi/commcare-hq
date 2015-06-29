@@ -23,12 +23,13 @@ class User(object):
     find cases and generate the user XML.
     """
 
-    def __init__(self, user_id, username, password, date_joined, full_name=None,
-                 phone_numbers=None, user_data=None, additional_owner_ids=None,
-                 domain=None, loadtest_factor=1):
+    def __init__(self, user_id, username, password, date_joined, first_name=None,
+                 last_name=None, phone_numbers=None, user_data=None,
+                 additional_owner_ids=None, domain=None, loadtest_factor=1):
         self.user_id = user_id
         self.username = username
-        self.full_name = full_name
+        self.first_name = first_name
+        self.last_name = last_name
         self.phone_numbers = phone_numbers or []
         self.password = password
         self.date_joined = date_joined
