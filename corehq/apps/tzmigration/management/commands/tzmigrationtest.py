@@ -4,10 +4,8 @@ import json
 from django.core.management.base import LabelCommand
 from couchdbkit import ResourceNotFound
 import sqlite3
-from casexml.apps.case.dbaccessors import get_total_case_count
 from casexml.apps.case.xform import get_case_updates
-from corehq.apps.hqcase.dbaccessors import get_number_of_cases_in_domain, \
-    get_case_ids_in_domain
+from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.tzmigration import force_phone_timezones_should_be_processed
 from corehq.apps.tzmigration.timezonemigration import json_diff
 from corehq.util.dates import iso_string_to_datetime
@@ -121,12 +119,64 @@ class CaseFormRelations(object):
                     cursor.execute('SELECT uuid FROM commcare_case')}
         return case_ids
 
+    def get_form_ids_by_cases(self, case_ids):
+        cursor = self.connection.cursor()
+        set_fragment = ','.join(['?'] * len(case_ids))
+        return {form_id for (form_id, _) in cursor.execute("""
+            SELECT commcare_form, commcare_case
+              FROM commcare_case_action
+              WHERE commcare_case IN ({})
+            """.format(set_fragment), tuple(case_ids),
+        )}
+
+    def get_case_ids_by_forms(self, form_ids):
+        cursor = self.connection.cursor()
+        set_fragment = ','.join(['?'] * len(form_ids))
+        return {case_id for (_, case_id) in cursor.execute("""
+            SELECT commcare_form, commcare_case
+              FROM commcare_case_action
+              WHERE commcare_form IN ({})
+            """.format(set_fragment), tuple(form_ids),
+        )}
+
+    def span_form_id(self, form_id):
+        form_ids = {form_id}
+        case_ids = set()
+        new_forms = {form_id}
+        new_cases = set()
+        while new_forms or new_cases:
+            new_cases = self.get_case_ids_by_forms(form_ids) - case_ids
+            case_ids |= new_cases
+            new_forms = self.get_form_ids_by_cases(case_ids) - form_ids
+            form_ids |= new_forms
+        return form_ids, case_ids
+
 
 class Command(LabelCommand):
     def handle_label(self, domain, **options):
-        case_form_relations = CaseFormRelations('wvindia2-tzmigration.db')
+        case_form_relations = CaseFormRelations(
+            '{}-tzmigration.db'.format(domain))
         # self.tzmigrationtest(domain, case_form_relations)
-        self.valiate_forms_and_cases(domain, case_form_relations)
+        # self.valiate_forms_and_cases(domain, case_form_relations)
+        self.group_forms_and_cases(case_form_relations)
+
+    def group_forms_and_cases(self, case_form_relations):
+        all_form_ids = case_form_relations.get_all_form_ids()
+        all_case_ids = case_form_relations.get_all_case_ids()
+        groups = []
+        i = 0
+        while all_form_ids:
+            i += 1
+            form_id = all_form_ids.pop()
+            form_ids, case_ids = case_form_relations.span_form_id(form_id)
+            all_form_ids -= form_ids
+            all_case_ids -= case_ids
+            groups.append((form_ids, case_ids))
+
+            print 'Group {}'.format(i)
+            print 'Forms ({}): {}'.format(len(form_ids), form_ids)
+            print 'Cases ({}): {}'.format(len(case_ids), case_ids)
+        print "Left over cases: {}".format(all_case_ids)
 
     def valiate_forms_and_cases(self, domain, case_form_relations):
         form_ids_in_couch = set(get_form_ids_by_type(domain, 'XFormInstance'))
@@ -142,6 +192,7 @@ class Command(LabelCommand):
         print 'Cases in Couch: {}'.format(len(case_ids_in_couch))
         print 'Cases in Sqlite: {}'.format(len(case_ids_in_sqlite))
         print 'In Couch only: {}'.format(list(case_ids_in_couch - case_ids_in_sqlite))
+        print 'In Sqlite only: {}'.format(list(case_ids_in_sqlite - case_ids_in_couch))
 
     def tzmigrationtest(self, domain, case_form_relations):
         case_form_relations.setup()
