@@ -173,6 +173,21 @@ class TestNoCouchLocationTypes(TestCase):
     def tearDown(self):
         delete_all_locations()
 
+    def test_change_location_type_name(self):
+        loc_type = LocationType.objects.create(domain='test-domain',
+                                               name='old-name')
+        loc = Location(
+            domain='test-domain',
+            name='Somewhere',
+            location_type='old-name'
+        )
+        loc.save()
+        loc_type.name = 'new-name'
+        loc_type.save()
+        # You need to look up the location from the db again, because the
+        # in-memory version stores the location_type it was created with
+        self.assertEqual(Location.get(loc._id).location_type, 'new-name')
+
     def test_no_location_type(self):
         with self.assertRaises(LocationType.DoesNotExist):
             loc = Location(name="Something")
