@@ -1076,7 +1076,6 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
     urlname = 'domain_wire_payment'
 
     @method_decorator(login_and_domain_required)
-    @method_decorator(require_billing_admin())
     def dispatch(self, request, *args, **kwargs):
         return super(CreditsWireInvoiceView, self).dispatch(request, *args, **kwargs)
 
