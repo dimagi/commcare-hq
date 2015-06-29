@@ -1,3 +1,4 @@
+from couchdbkit.exceptions import ResourceNotFound
 from dimagi.ext.couchdbkit import (
     Document,
     StringProperty,
@@ -200,7 +201,7 @@ class Product(Document):
             ('unit', unicode),
             'description',
             'category',
-            'program_id',
+            ('program_id', str),
             ('cost', lambda a: Decimal(a) if a else None),
         ]
 
@@ -251,7 +252,12 @@ class Product(Document):
 
         id = row.get('id')
         if id:
-            p = cls.get(id)
+            try:
+                p = cls.get(id)
+            except ResourceNotFound:
+                raise InvalidProductException(
+                    _("Product with ID '{product_id}' could not be found!").format(product_id=id)
+                )
         else:
             p = cls()
 

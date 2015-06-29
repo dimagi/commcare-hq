@@ -37,6 +37,7 @@ from corehq.apps.accounting.utils import (
     get_address_from_invoice, get_dimagi_from_email_by_product,
     fmt_dollar_amount, EXCHANGE_RATE_DECIMAL_PLACES,
     ensure_domain_instance, get_change_status,
+    is_active_subscription,
 )
 from corehq.apps.accounting.subscription_changes import (
     DomainDowngradeActionHandler, DomainUpgradeActionHandler,
@@ -1405,18 +1406,19 @@ class Subscription(models.Model):
             date_end=date_end,
             **kwargs
         )
+        subscription.is_active = is_active_subscription(date_start, date_end)
+        if subscription.is_active:
+            subscriber.apply_upgrades_and_downgrades(
+                new_plan_version=plan_version,
+                web_user=web_user,
+                new_subscription=subscription,
+                internal_change=internal_change,
+            )
         SubscriptionAdjustment.record_adjustment(
             subscription, method=adjustment_method, note=note,
             web_user=web_user
         )
         subscription.save()
-
-        subscriber.apply_upgrades_and_downgrades(
-            new_plan_version=plan_version,
-            web_user=web_user,
-            new_subscription=subscription,
-            internal_change=internal_change,
-        )
 
         subscription.set_billing_account_entry_point()
 

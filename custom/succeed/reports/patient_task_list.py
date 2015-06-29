@@ -125,7 +125,7 @@ class PatientTaskListReportDisplay(CaseDisplay):
     @property
     def task_due(self):
         rand_date = self.get_property("task_due")
-        if rand_date != EMPTY_FIELD:
+        if rand_date and rand_date != EMPTY_FIELD:
             date = datetime.strptime(rand_date, INPUT_DATE_FORMAT)
             return date.strftime(OUTPUT_DATE_FORMAT)
         else:
@@ -134,7 +134,7 @@ class PatientTaskListReportDisplay(CaseDisplay):
     @property
     def last_modified(self):
         rand_date = self.get_property("last_updated")
-        if rand_date != EMPTY_FIELD:
+        if rand_date and rand_date != EMPTY_FIELD:
             date = datetime.strptime(rand_date, INPUT_DATE_FORMAT)
             return date.strftime(OUTPUT_DATE_FORMAT)
         else:
