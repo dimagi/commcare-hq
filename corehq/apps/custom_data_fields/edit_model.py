@@ -73,6 +73,7 @@ class CustomDataFieldForm(forms.Form):
     )
     is_required = forms.BooleanField(required=False)
     choices = forms.CharField(widget=forms.HiddenInput, required=False)
+    is_multi_choice = forms.BooleanField(required=False)
 
     def __init__(self, raw, *args, **kwargs):
         # Pull the raw_choices out here, because Django incorrectly
@@ -131,6 +132,7 @@ class CustomDataModelMixin(object):
             is_required=field.get('is_required'),
             label=field.get('label'),
             choices=field.get('choices'),
+            is_multi_choice=field.get('is_multi_choice')
         )
 
     @property

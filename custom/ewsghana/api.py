@@ -138,7 +138,9 @@ class EWSApi(APISynchronization):
             'name': 'role',
             'choices': [
                 'In Charge', 'Nurse', 'Pharmacist', 'Laboratory Staff', 'Other', 'Facility Manager'
-            ]
+            ],
+            'label': 'roles',
+            'is_multiple_choice': True
         }
     ]
     PRODUCT_CUSTOM_FIELDS = []
@@ -548,6 +550,10 @@ class EWSApi(APISynchronization):
         if not sms_user:
             return None
         sms_user.user_data['to'] = ews_smsuser.to
+
+        if ews_smsuser.role:
+            sms_user.user_data['role'] = [ews_smsuser.role]
+
         sms_user.save()
         if ews_smsuser.supply_point:
             if ews_smsuser.supply_point.id:

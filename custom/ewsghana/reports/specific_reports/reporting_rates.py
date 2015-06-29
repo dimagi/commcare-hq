@@ -277,7 +277,7 @@ class AlertsData(ReportingRatesData):
 
         for hit in query.run().hits:
             with_reporters.add(hit['location_id'])
-            if hit['user_data'].get('role') == 'In Charge':
+            if 'In Charge' in hit['user_data'].get('role', []):
                 with_in_charge.add(hit['location_id'])
 
         return with_reporters, with_in_charge

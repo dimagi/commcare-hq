@@ -14,7 +14,9 @@
         </div>
         {% crispy form_user_update %}
         {% if data_fields_form.fields or data_fields_form.data %}
-            {% crispy data_fields_form %}
+            <div id="customFieldsData">
+                {% crispy data_fields_form %}
+            </div>
         {% endif %}
         <div class="form-actions">
             <button type="submit" class="btn btn-primary disable-on-submit" disabled>{% trans 'Update Information' %}</button>
