@@ -11,12 +11,10 @@ require.config({
         "local-deps": [
             "underscore", 
             "jquery.jstree", 
-            "jquery.fancybox", 
             "jquery.bootstrap-popout", 
             "save-button", 
             "css/css!../lib/codemirror/codemirror", 
             "css/css!../bower_components/jstree/dist/themes/default/style", 
-            "css/css!../lib/fancybox/jquery.fancybox-1.3.4", 
             "css/css!yui-combo", 
             "css/css!../bower_components/At.js/dist/css/jquery.atwho"
         ], 
