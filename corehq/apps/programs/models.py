@@ -68,7 +68,7 @@ class Program(Document):
         products = Product.by_program_id(
             self.domain,
             self._id,
-            wrap=False
+            wrap=True
         )
         to_save = []
 
@@ -77,7 +77,7 @@ class Program(Document):
             to_save.append(product)
 
             # break up saving in case there are many products
-            if to_save > 500:
+            if len(to_save) > 500:
                 Product.bulk_save(to_save)
                 to_save = []
 
