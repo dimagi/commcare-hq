@@ -1599,19 +1599,13 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         payload.
         """
         location_type = self.location.location_type_object
-        if location_type.shares_cases:
-            if location_type.view_descendants:
-                return [
-                    loc.case_sharing_group_object(self._id)._id
-                    for loc in self.sql_location.get_descendants(include_self=True).filter(
-                        location_type__shares_cases=True,
-                    )]
-
-            else:
-                return [self.sql_location.case_sharing_group_object(self._id)._id]
-
+        if location_type.view_descendants:
+            return [
+                loc.case_sharing_group_object(self._id)._id
+                for loc in self.sql_location.get_descendants(include_self=True)
+            ]
         else:
-            return []
+            return [self.sql_location.case_sharing_group_object(self._id)._id]
 
     def get_owner_ids(self):
         from corehq.apps.groups.models import Group
@@ -1670,7 +1664,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         from corehq.apps.groups.models import Group
         # get faked location group object
         groups = []
-        if self.location and self.location.location_type_object.shares_cases:
+        if self.location:
             if self.location.location_type_object.view_descendants:
                 for loc in self.sql_location.get_descendants():
                     groups.append(loc.case_sharing_group_object(

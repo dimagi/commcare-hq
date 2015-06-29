@@ -75,6 +75,7 @@ class LocationType(models.Model):
     code = models.SlugField(db_index=False, null=True)
     parent_type = models.ForeignKey('self', null=True)
     administrative = models.BooleanField(default=False)
+    # TODO remove.  This shouldn't be used anywhere.
     shares_cases = models.BooleanField(default=False)
     view_descendants = models.BooleanField(default=False)
 
