@@ -1,5 +1,5 @@
 from corehq.apps.accounting.utils import ensure_domain_instance
-from .tasks import track_workflow
+from .tasks import identify
 
 from django.dispatch import receiver
 
@@ -52,7 +52,7 @@ def update_subscription_properties_by_user(couch_user):
         if edition in properties:
             properties[edition] = "yes"
 
-    track_workflow.delay(couch_user.username, properties)
+    identify.delay(couch_user.username, properties)
 
 
 def update_subscription_properties_by_domain(domain):
