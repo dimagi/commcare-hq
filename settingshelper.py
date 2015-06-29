@@ -13,6 +13,7 @@ class SharedDriveConfiguration(object):
         self._restore_dir = self._init_dir(restore_dir)
         self.transfer_dir = self._init_dir(transfer_dir)
         self.temp_dir = self._init_dir(temp_dir)
+        self.tzmigration_planning_dir = self._init_dir('tzmigration-planning')
 
     def _init_dir(self, name):
         if not self.shared_drive_path or not os.path.isdir(self.shared_drive_path) or not name:
