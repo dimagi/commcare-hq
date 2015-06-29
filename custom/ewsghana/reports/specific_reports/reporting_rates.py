@@ -160,7 +160,7 @@ class SummaryReportingRates(ReportingRatesData):
                     ReportingRatesReport,
                     self.config['domain'],
                     '?location_id=%s&startdate=%s&enddate=%s',
-                    ('test', self.config['startdate'], self.config['enddate'])
+                    (values['location_id'], self.config['startdate'], self.config['enddate'])
                 )
 
                 rows.append(
