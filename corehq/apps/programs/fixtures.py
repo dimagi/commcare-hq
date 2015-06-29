@@ -34,7 +34,6 @@ class ProgramFixturesProvider(object):
     id = 'commtrack:programs'
 
     def __call__(self, user, version, last_sync=None):
-        fields = ('name', 'code')
         data_fn = lambda: Program.by_domain(user.domain)
         return _simple_fixture_generator(user, self.id, "program",
                                          PROGRAM_FIELDS, data_fn, last_sync)
