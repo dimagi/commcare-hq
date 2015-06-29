@@ -14,7 +14,7 @@ from django.utils.translation import ugettext as _
 import json_field
 
 # move these too
-from corehq.apps.commtrack.exceptions import InvalidProductException
+from corehq.apps.commtrack.exceptions import InvalidProductException, DuplicateProductCodeException
 
 
 class Product(Document):
@@ -265,6 +265,9 @@ class Product(Document):
         Unarchive a product, causing it (and its data) to show
         up in Couch and SQL views again.
         """
+        if self.code:
+            if SQLProduct.objects.filter(code=self.code, is_archived=False).exists():
+                raise DuplicateProductCodeException()
         self.is_archived = False
         self.save()
 

@@ -35,6 +35,17 @@ var CommtrackProductsProgramsViewModel = function (o) {
         return false;
     };
 
+    view_model.unsuccessful_archive_action = function (button, index) {
+        return function (data) {
+            if (data.message && data.product_id) {
+                var alert_container = $('#alert_' + data.product_id);
+                alert_container.text(data.message);
+                alert_container.show();
+            }
+            $(button).button('unsuccessful');
+        }
+    };
+
     var reloadList = function(data) {
         view_model.currently_searching(false);
         if (data.success) {
