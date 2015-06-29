@@ -54,11 +54,13 @@ branches:
   - autoload-supplypoint  # Ethan 6/15
   - full-name  # Ethan 6/15
   - owns-cases-flag  # Ethan 6/24
-  - remove-billing-admin-forwards # Farid 25/6
   - track-plan-editions # Nick P 6/25
   - new-domain-with-hr-name+locations-for-robber-barons
   - locations-for-robber-barons  # Ethan 5/7
   - new-domain-with-hr-name # Jenny June 26
+  - remove-billing-admin-forwards+wire-prepay # Farid June 26
+  - remove-billing-admin-forwards # Farid 25/6
+  - wire-prepay # Farid June 26
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
