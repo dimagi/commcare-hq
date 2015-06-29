@@ -888,34 +888,12 @@ class FakeConditionsMet(ConditionsMet):
     @property
     @memoized
     def preg_month(self):
-        if self.status == 'pregnant':
-            base_window_start = add_months_to_date(self.edd, -9)
-            try:
-                non_adjusted_month = len(months_between(base_window_start, self.reporting_window_start)) - 1
-            except AssertionError:
-                return EMPTY_FIELD
-
-            # the date to check one month after they first become eligible,
-            # aka the end of their fourth month of pregnancy
-            vhnd_date_to_check = add_months_to_date(self.preg_first_eligible_date, 1)
-
-            month = self._adjust_for_vhnd_presence(non_adjusted_month, vhnd_date_to_check)
-            return month
-
-    @property
-    def preg_month_display(self):
-        return self.preg_month if self.preg_month is not None else EMPTY_FIELD
+        return EMPTY_FIELD
 
     @property
     @memoized
     def child_age(self):
-        if self.status == 'mother':
-            non_adjusted_month = len(months_between(self.dod, self.reporting_window_start)) - 1
-            # anchor date should be their one month birthday
-            anchor_date = add_months_to_date(self.dod, 1)
-
-            month = self._adjust_for_vhnd_presence(non_adjusted_month, anchor_date)
-            return month
+        return EMPTY_FIELD
 
     @property
     def cash(self):

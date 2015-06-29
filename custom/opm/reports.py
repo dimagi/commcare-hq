@@ -897,22 +897,27 @@ class MetReport(CaseReportMixin, BaseReport):
             except CaseOutOfRange:
                 try:
                     rows.append(FakeConditionsMet(row, self, child_index=1, awc_codes=awc_codes))
-                except InvalidRow:
-                    pass
+                except InvalidRow as e:
+                    if self.debug:
+                        self.add_debug_data(row._id, e)
             except InvalidRow as e:
                 if self.debug:
-                    import sys
-                    import traceback
-                    type, exc, tb = sys.exc_info()
-                    self._debug_data.append({
-                        'case_id': row._id,
-                        'message': repr(e),
-                        'traceback': ''.join(traceback.format_tb(tb)),
-                    })
+                    self.add_debug_data(row._id, e)
+
         self.total_row = ["" for __ in self.model.method_map]
         self.total_row[0] = _("Total Payment")
         self.total_row[self.column_index('cash')] = "Rs. {}".format(total_payment)
         return rows
+
+    def add_debug_data(self, row_id, e):
+        import sys
+        import traceback
+        type, exc, tb = sys.exc_info()
+        self._debug_data.append({
+            'case_id': row_id,
+            'message': repr(e),
+            'traceback': ''.join(traceback.format_tb(tb)),
+        })
 
     def get_row_data(self, row, **kwargs):
         return self.model(row, self, child_index=kwargs.get('index', 1), awc_codes=kwargs.get('awc_codes', {}))
