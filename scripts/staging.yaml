@@ -45,6 +45,7 @@
 trunk: master
 name: autostaging
 branches:
+  - phonelog-indexes  # Danny 6/30
   - remove-unused-views  # Danny 6/25
   - vellum-staging # J$ 11/13
   - fixtures-spike  # cz 1/29
