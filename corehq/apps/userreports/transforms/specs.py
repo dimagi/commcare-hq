@@ -47,7 +47,6 @@ class DateFormatTransform(Transform):
     type = TypeProperty('date_format')
     format = StringProperty(required=True)
 
-
     def get_transform_function(self):
 
         def transform_function(value):
