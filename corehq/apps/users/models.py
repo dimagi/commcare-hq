@@ -1601,18 +1601,15 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         groups used to send location data in the restore
         payload.
         """
-        location_type = self.location.location_type_object
-        if location_type.shares_cases:
-            if location_type.view_descendants:
-                return [
-                    loc.case_sharing_group_object(self._id)._id
-                    for loc in self.sql_location.get_descendants(include_self=True).filter(
-                        location_type__shares_cases=True,
-                    )]
+        def get_sharing_id(loc):
+            return loc.case_sharing_group_object(self._id)._id
 
-            else:
-                return [self.sql_location.case_sharing_group_object(self._id)._id]
-
+        if self.sql_location.location_type.view_descendants:
+            locs = (self.sql_location.get_descendants(include_self=True)
+                                     .filter(location_type__shares_cases=True))
+            return map(get_sharing_id, locs)
+        elif self.sql_location.location_type.shares_cases:
+            return [get_sharing_id(self.sql_location)]
         else:
             return []
 
