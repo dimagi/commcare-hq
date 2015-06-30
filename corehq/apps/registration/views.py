@@ -77,7 +77,6 @@ def register_user(request, domain_type=None):
                     'REMOTE_ADDR': request.META.get('REMOTE_ADDR')
                 }
                 track_created_hq_account_on_hubspot.delay(new_user, request.COOKIES, meta)
-                # jls: test this (both from invitation and creating new user from scratch)
                 requested_domain = form.cleaned_data['hr_name']
                 if form.cleaned_data['create_domain']:
                     org = None

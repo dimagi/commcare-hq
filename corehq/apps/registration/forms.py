@@ -9,7 +9,7 @@ from django.core.validators import validate_email
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import new_org_re, website_re
 from corehq.apps.orgs.models import Organization
-from corehq.apps.style.forms.widgets import Select2Widget
+from corehq.apps.style.forms.widgets import BootstrapDisabledInput, Select2Widget
 from django.utils.encoding import smart_str
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
@@ -53,7 +53,6 @@ class NewWebUserRegistrationForm(DomainRegistrationForm):
                                       initial=True,
                                       label="",
                                       help_text=_("Opt into emails about new features and other CommCare updates."))
-    create_domain = forms.BooleanField(widget=forms.HiddenInput(), required=False)
     # Must be set to False to have the clean_*() routine called
     eula_confirmed = forms.BooleanField(required=False,
                                         label="",
@@ -64,6 +63,11 @@ class NewWebUserRegistrationForm(DomainRegistrationForm):
                                                   href='#eulaModal'>
                                                   CommCare HQ End User License Agreement
                                                </a>.""")))
+
+    def __init__(self, *args, **kwargs):
+        super(DomainRegistrationForm, self).__init__(*args, **kwargs)
+        if not kwargs.get('initial', {}).get('create_domain', True):
+            self.fields['hr_name'].widget = BootstrapDisabledInput(attrs={'class': 'input-xlarge'})
 
     def clean_full_name(self):
         data = self.cleaned_data['full_name'].split()
