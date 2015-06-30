@@ -9,6 +9,7 @@ from corehq.apps.hqcase.dbaccessors import get_open_case_ids, \
 from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.toggles import OWNERSHIP_CLEANLINESS
 from django.conf import settings
+from corehq.util.soft_assert import soft_assert
 
 
 FootprintInfo = namedtuple('FootprintInfo', ['base_ids', 'all_ids'])
@@ -75,7 +76,10 @@ def set_cleanliness_flags(domain, owner_id, force_full=False):
                 not cleanliness_object.hint or not hint_still_valid(domain, owner_id, cleanliness_object.hint)
             )
         )
-    if force_full or needs_full_check(domain, cleanliness_object):
+
+    needs_check = needs_full_check(domain, cleanliness_object)
+    previous_clean_flag = cleanliness_object.is_clean
+    if force_full or needs_check:
         # either the hint wasn't set, wasn't valid or we're forcing a rebuild - rebuild from scratch
         cleanliness_flag = get_cleanliness_flag_from_scratch(domain, owner_id)
         cleanliness_object.is_clean = cleanliness_flag.is_clean
@@ -83,6 +87,13 @@ def set_cleanliness_flags(domain, owner_id, force_full=False):
 
     cleanliness_object.last_checked = datetime.utcnow()
     cleanliness_object.save()
+
+    if force_full and not needs_check and previous_clean_flag and not cleanliness_object.is_clean:
+        # we went from clean to dirty and would not have checked except that we forced it
+        # this seems to indicate a problem in the logic that invalidates the flag, unless the feature
+        # flag was turned off for the domain. either way cory probably wants to know.
+        _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'], exponential_backoff=False, fail_if_debug=True)
+        _assert(False, 'Cleanliness flags out of sync for owner {} in domain {}!'.format(owner_id, domain))
 
 
 def hint_still_valid(domain, owner_id, hint):
