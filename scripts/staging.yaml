@@ -53,7 +53,6 @@ branches:
   - index-phonelog-reportentry # Ben 6/8
   - autoload-supplypoint  # Ethan 6/15
   - full-name  # Ethan 6/15
-  - owns-cases-flag  # Ethan 6/24
   - track-plan-editions # Nick P 6/25
   - new-domain-with-hr-name+locations-for-robber-barons
   - locations-for-robber-barons  # Ethan 5/7
