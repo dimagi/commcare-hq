@@ -2,6 +2,14 @@
 {% load i18n %}
 {% load crispy_forms_tags %}
 
+{% block head %}{{ block.super }}
+    <style>
+        .bigdrop {
+            width: 600px !important;
+        }
+    </style>
+{% endblock %}
+
 {% block main_column %}
     {% crispy form %}
 {% endblock %}
