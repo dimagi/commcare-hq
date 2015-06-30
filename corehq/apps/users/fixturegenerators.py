@@ -22,27 +22,11 @@ class UserGroupsFixtureProvider(object):
             return []
 
     def get_group_fixture(self, user, last_sync=None):
-        def _should_sync_groups(groups, last_sync):
-            """
-            Determine if we need to sync the groups fixture by checking
-            the modified date on all groups compared to the
-            last sync.
-            """
-            if not last_sync or not last_sync.date:
-                return True
-
-            for group in groups:
-                if not group.last_modified or group.last_modified >= last_sync.date:
-                    return True
-
-            return False
-
+        # Always sync groups even though they have a last modified date since
+        # we aren't keeping track of when users get removed from groups.
+        # See https://github.com/dimagi/commcare-hq/pull/7148 for alternate approach
         groups = user.get_case_sharing_groups()
-
-        if _should_sync_groups(groups, last_sync):
-            return self.group_fixture(groups, user)
-        else:
-            return None
+        return self.group_fixture(groups, user)
 
     def group_fixture(self, groups, user):
         """
