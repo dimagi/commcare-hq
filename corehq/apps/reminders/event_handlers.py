@@ -379,8 +379,6 @@ def fire_ivr_survey_event(reminder, handler, recipients, verified_numbers, logge
                 CaseReminderHandler.get_now())
 
         if initiate_call:
-            logged_subevent = logged_event.create_sub_event(handler, reminder, recipient)
-
             if (isinstance(recipient, CommCareCase) and
                 not handler.force_surveys_to_use_triggered_case):
                 case_id = recipient.get_id
@@ -395,6 +393,7 @@ def fire_ivr_survey_event(reminder, handler, recipients, verified_numbers, logge
                     handler.submit_partial_forms,
                     handler.include_case_side_effects,
                     handler.max_question_retries,
+                    logged_event.pk,
                     verified_number=verified_number,
                     case_id=case_id,
                     case_for_case_submission=handler.force_surveys_to_use_triggered_case,
@@ -407,15 +406,18 @@ def fire_ivr_survey_event(reminder, handler, recipients, verified_numbers, logge
                     handler.submit_partial_forms,
                     handler.include_case_side_effects,
                     handler.max_question_retries,
+                    logged_event.pk,
                     unverified_number=unverified_number,
                     case_id=case_id,
                     case_for_case_submission=handler.force_surveys_to_use_triggered_case,
                     timestamp=CaseReminderHandler.get_now(),
                 )
             else:
+                # initiate_outbound_call will create the subevent automatically,
+                # so since we're not initiating the call here, we have to create
+                # the subevent explicitly in order to log the error.
+                logged_subevent = logged_event.create_sub_event(handler, reminder, recipient)
                 logged_subevent.error(MessagingEvent.ERROR_NO_PHONE_NUMBER)
-
-            logged_subevent.completed()
 
 
 # The dictionary which maps an event type to its event handling method

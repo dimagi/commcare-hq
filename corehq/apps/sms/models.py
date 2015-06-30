@@ -440,6 +440,7 @@ class CallLog(MessageLog):
     # The id of the case to submit the form against
     case_id = StringProperty()
     case_for_case_submission = BooleanProperty(default=False)
+    messaging_subevent_id = IntegerProperty()
 
     def __unicode__(self):
         to_from = (self.direction == INCOMING) and "from" or "to"
@@ -470,6 +471,19 @@ class CallLog(MessageLog):
                 result = True
                 break
         return result
+
+    @classmethod
+    def get_call_by_gateway_session_id(cls, gateway_session_id):
+        """
+        Returns the CallLog object, or None if not found.
+        """
+        return CallLog.view('sms/call_by_session',
+            startkey=[gateway_session_id, {}],
+            endkey=[gateway_session_id],
+            descending=True,
+            include_docs=True,
+            limit=1).one()
+
 
 class EventLog(SafeSaveDocument):
     base_doc                    = "EventLog"
@@ -773,11 +787,13 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
 
     ERROR_NO_RECIPIENT = 'NO_RECIPIENT'
     ERROR_CANNOT_RENDER_MESSAGE = 'CANNOT_RENDER_MESSAGE'
+    ERROR_UNSUPPORTED_COUNTRY = 'UNSUPPORTED_COUNTRY'
     ERROR_NO_PHONE_NUMBER = 'NO_PHONE_NUMBER'
     ERROR_NO_TWO_WAY_PHONE_NUMBER = 'NO_TWO_WAY_PHONE_NUMBER'
     ERROR_INVALID_CUSTOM_CONTENT_HANDLER = 'INVALID_CUSTOM_CONTENT_HANDLER'
     ERROR_CANNOT_LOAD_CUSTOM_CONTENT_HANDLER = 'CANNOT_LOAD_CUSTOM_CONTENT_HANDLER'
     ERROR_CANNOT_FIND_FORM = 'CANNOT_FIND_FORM'
+    ERROR_FORM_HAS_NO_QUESTIONS = 'FORM_HAS_NO_QUESTIONS'
     ERROR_CASE_EXTERNAL_ID_NOT_FOUND = 'CASE_EXTERNAL_ID_NOT_FOUND'
     ERROR_MULTIPLE_CASES_WITH_EXTERNAL_ID_FOUND = 'MULTIPLE_CASES_WITH_EXTERNAL_ID_FOUND'
     ERROR_NO_CASE_GIVEN = 'NO_CASE_GIVEN'
@@ -786,12 +802,16 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     ERROR_SUBEVENT_ERROR = 'SUBEVENT_ERROR'
     ERROR_TOUCHFORMS_ERROR = 'TOUCHFORMS_ERROR'
     ERROR_INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR'
+    ERROR_GATEWAY_ERROR = 'GATEWAY_ERROR'
+    ERROR_NO_SUITABLE_GATEWAY = 'NO_SUITABLE_GATEWAY'
 
     ERROR_MESSAGES = {
         ERROR_NO_RECIPIENT:
             ugettext_noop('No recipient'),
         ERROR_CANNOT_RENDER_MESSAGE:
             ugettext_noop('Error rendering message; please check syntax.'),
+        ERROR_UNSUPPORTED_COUNTRY:
+            ugettext_noop('Gateway does not support the destination country.'),
         ERROR_NO_PHONE_NUMBER:
             ugettext_noop('Contact has no phone number.'),
         ERROR_NO_TWO_WAY_PHONE_NUMBER:
@@ -802,6 +822,10 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             ugettext_noop('Cannot load custom content handler.'),
         ERROR_CANNOT_FIND_FORM:
             ugettext_noop('Cannot find form.'),
+        ERROR_FORM_HAS_NO_QUESTIONS:
+            ugettext_noop('No questions were available in the form. Please '
+                'check that the form has questions and that display conditions '
+                'are not preventing questions from being asked.'),
         ERROR_CASE_EXTERNAL_ID_NOT_FOUND:
             ugettext_noop('The case with the given external ID was not found.'),
         ERROR_MULTIPLE_CASES_WITH_EXTERNAL_ID_FOUND:
@@ -818,6 +842,10 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             ugettext_noop('An error occurred in the formplayer service.'),
         ERROR_INTERNAL_SERVER_ERROR:
             ugettext_noop('Internal Server Error'),
+        ERROR_GATEWAY_ERROR:
+            ugettext_noop('Gateway error.'),
+        ERROR_NO_SUITABLE_GATEWAY:
+            ugettext_noop('No suitable gateway could be found.'),
     }
 
     domain = models.CharField(max_length=126, null=False, db_index=True)
@@ -885,6 +913,21 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             content_type=content_type,
             form_unique_id=form_unique_id,
             form_name=form_name,
+            case_id=case_id,
+            status=MessagingEvent.STATUS_IN_PROGRESS,
+        )
+        return obj
+
+    def create_ivr_subevent(self, recipient, form_unqiue_id, case_id=None):
+        recipient_type = MessagingEvent.get_recipient_type(recipient)
+        obj = MessagingSubEvent.objects.create(
+            parent=self,
+            date=datetime.utcnow(),
+            recipient_type=recipient_type,
+            recipient_id=recipient.get_id if recipient_type else None,
+            content_type=CONTENT_IVR_SURVEY,
+            form_unique_id=form_unique_id,
+            form_name=cls.get_form_name_or_none(form_unique_id),
             case_id=case_id,
             status=MessagingEvent.STATUS_IN_PROGRESS,
         )

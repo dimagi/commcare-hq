@@ -23,7 +23,7 @@ from corehq.apps.reminders.models import (
 from corehq.apps.reminders.util import create_immediate_reminder
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.groups.models import Group
-from touchforms.formplayer.api import current_question
+from touchforms.formplayer.api import current_question, TouchformsError
 from corehq.apps.app_manager.models import Form
 from casexml.apps.case.models import CommCareCase
 
@@ -302,8 +302,12 @@ def handle_structured_sms(survey_keyword, survey_keyword_action, contact,
         else:
             case_id = None
 
-        session, responses = start_session(domain, contact, app, module,
-            form, case_id=case_id, yield_responses=True)
+        try:
+            session, responses = start_session(domain, contact, app, module,
+                form, case_id=case_id, yield_responses=True)
+        except TouchformsError as e:
+            # TODO: Implement in subsequent commit
+            pass
         session.workflow = WORKFLOW_KEYWORD
         session.save()
 
