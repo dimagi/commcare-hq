@@ -78,14 +78,13 @@ def register_user(request, domain_type=None):
                 }
                 track_created_hq_account_on_hubspot.delay(new_user, request.COOKIES, meta)
                 # jls: test this (both from invitation and creating new user from scratch)
+                requested_domain = form.cleaned_data['domain_name']
                 if form.cleaned_data['create_domain']:
                     org = None
-                    # jls: update when new-domain-with-hr-name is merged
-                    # (handle inability to create domain name gracefully)
-                    request_new_domain(
+                    # jls: test this handles inability to create domain name gracefully
+                    requested_domain = request_new_domain(
                         request, form, org, new_user=True, domain_type=domain_type)
 
-                requested_domain = form.cleaned_data['domain_name']
                 context = get_domain_context(form.cleaned_data['domain_type']).update({
                     'alert_message': _("An email has been sent to %s.") % request.user.username,
                     'requested_domain': requested_domain,
