@@ -710,15 +710,13 @@ class Domain(Document, SnapshotMixin):
 
         ignore = ignore if ignore is not None else []
 
+        db = Domain.get_db()
+        new_id = db.copy_doc(self.get_id)['id']
         if new_domain_name is None:
             new_domain_name = new_id
 
         with CriticalSection(['request_domain_name_{}'.format(new_domain_name)]):
             new_domain_name = Domain.generate_name(new_domain_name)
-
-            db = Domain.get_db()
-
-            new_id = db.copy_doc(self.get_id)['id']
             new_domain = Domain.get(new_id)
             new_domain.name = new_domain_name
             new_domain.hr_name = new_hr_name
