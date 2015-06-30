@@ -201,10 +201,15 @@ class PercentageColumn(ReportColumn):
 
     def get_format_fn(self):
         NO_DATA_TEXT = '--'
+        CANT_CALCULATE_TEXT = '?'
 
         def _pct(data):
             if data['denom']:
-                return '{0:.0f}%'.format((float(data['num']) / float(data['denom'])) * 100)
+                try:
+                    return '{0:.0f}%'.format((float(data['num']) / float(data['denom'])) * 100)
+                except (ValueError, TypeError):
+                    return CANT_CALCULATE_TEXT
+
             return NO_DATA_TEXT
 
         _fraction = lambda data: '{num}/{denom}'.format(**data)
