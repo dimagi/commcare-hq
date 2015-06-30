@@ -4,6 +4,10 @@
 
 {% block head %}{{ block.super }}
     <style>
+        {% comment %}
+        TODO: Use select2's dropdownAutoWidth option instead.
+              (Couldn't get it to work properly at this time.)
+        {% endcomment %}
         .bigdrop {
             width: 600px !important;
         }
