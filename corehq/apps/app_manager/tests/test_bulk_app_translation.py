@@ -151,9 +151,9 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
         ("module1_form1", (
           ("question1-label", "in english", "in french", "", "", "", "", "", ""),
           ("question2-label", "one &lt; two", "un &lt; deux", "", "", "", "", "", ""),
-          ("question2-item1-label", "item1", "item1", "", "", "", "", "", ""),
+          ("question2-item1-label", "item1's label", "item1's label", "", "", "", "", "", ""),
           ("question2-item2-label", "item2", "item2", "", "", "", "", "", ""),
-          ("question3-label", "question3", "question3", "", "", "", "", "", ""),
+          ("question3-label", "question3", "question3&#39;s label", "", "", "", "", "", ""),
           ("question3/question4-label", 'question6: <output value="/data/question6"/>', 'question6: <output value="/data/question6"/>', "", "", "", "", "", ""),
           ("question3/question5-label", "English Label", "English Label", "", "", "", "", "", ""),
           ("question7-label", "question7", "question7", "", "", "", "", "", "")
@@ -219,8 +219,10 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
         )
 
         # Test special characters and output refs
-        self.assert_question_label("one &lt; two", 0, 0, "en", "/data/question2")
-        self.assert_question_label("un &lt; deux", 0, 0, "fra", "/data/question2")
+        #jls
+        self.assert_question_label("one < two", 0, 0, "en", "/data/question2")
+        self.assert_question_label("un < deux", 0, 0, "fra", "/data/question2")
+        self.assert_question_label("question3's label", 0, 0, "fra", "/data/question3")
         self.assert_question_label("question6: ____", 0, 0, "en", "/data/question3/question4")
 
     def test_missing_itext(self):
