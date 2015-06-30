@@ -52,7 +52,6 @@ branches:
   - reverseLanguageMedia # Sravan 6/10
   - index-phonelog-reportentry # Ben 6/8
   - autoload-supplypoint  # Ethan 6/15
-  - full-name  # Ethan 6/15
   - track-plan-editions # Nick P 6/25
   - new-domain-with-hr-name+locations-for-robber-barons
   - locations-for-robber-barons  # Ethan 5/7
@@ -65,7 +64,6 @@ submodules:
     # let's leave this here even when empty
     # just so we always get latest master
     branches:
-      - tf-persistence  # wsp 5/7
       - 221-jars # wsp 5/20
   submodules/formtranslate-src:
     # let's leave this here even when empty
