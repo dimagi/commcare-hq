@@ -1466,7 +1466,12 @@ class SuiteGenerator(SuiteGeneratorBase):
     def get_userdata_autoselect(self, key, session_id, mode):
         base_xpath = session_var('data', path='user')
         xpath = session_var(key, path='user/data')
-        datum = SessionDatum(id=session_id, function=xpath)
+        protected_xpath = XPath.if_(
+            XPath.and_(base_xpath.count().eq(1), xpath.count().eq(1)),
+            xpath,
+            XPath.empty_string(),
+        )
+        datum = SessionDatum(id=session_id, function=protected_xpath)
         assertions = [
             self.get_assertion(
                 XPath.and_(base_xpath.count().eq(1),
