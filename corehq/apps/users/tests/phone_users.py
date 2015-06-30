@@ -1,4 +1,5 @@
 from django.test import TestCase
+from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CouchUser, WebUser, CommCareUser
 from dimagi.utils.couch import get_cached_property
 
@@ -12,6 +13,7 @@ class PhoneUsersTestCase(TestCase):
         self.username = 'username'
         self.password = 'password'
         self.domain = 'mockdomain'
+        Domain(name=self.domain).save()
         self.couch_user = WebUser.create(self.domain, self.username, self.password)
         self.couch_user.language = 'en'
         self.couch_user.save()
