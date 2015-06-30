@@ -372,7 +372,7 @@ class Location(CachedCouchDocumentMixin, Document):
             kwargs['lineage'] = lineage
             del kwargs['parent']
 
-        location_type = kwargs.get('location_type', None)
+        location_type = kwargs.pop('location_type', None)
         super(Document, self).__init__(*args, **kwargs)
         if location_type:
             self.location_type = location_type
