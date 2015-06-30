@@ -774,6 +774,16 @@ Rounds decimal and floating point numbers to two decimal places.
 }
 ```
 
+### Date formatting
+Formats dates with the given format string. See [here](https://docs.python.org/2/library/datetime.html#strftime-strptime-behavior) for an explanation of format string behavior.
+If there is an error formatting the date, the transform is not applied to that value.
+```
+{
+   "type": "date_format", 
+   "format": "%Y-%m-%d %H:%M"
+}
+```
+
 ## Charts
 
 There are currently three types of charts supported. Pie charts, and two types of bar charts.
