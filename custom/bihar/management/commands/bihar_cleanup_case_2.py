@@ -111,9 +111,9 @@ class Command(BaseCommand):
                         if to_update.case.user_id == MOTECH_ID:
                             to_update.new_type = "task"
                             self.cases_to_update[case_id] = to_update
-                            print("Case with name " + to_update.case.name.encode('ascii', 'xmlcharrefreplace') + " updated to type " + to_update.case.type)
+                            print("Case '{}' updated from '{}'".format(case_id, to_update.case.type))
                         else:
-                            print("Type not updated for case with name " + to_update.case.name.encode('ascii', 'xmlcharrefreplace'))
+                            print("Type not updated for case " + case_id)
 
         self.update_cases()
 
