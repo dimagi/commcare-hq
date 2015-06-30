@@ -1,3 +1,4 @@
+from collections import defaultdict
 import traceback
 from celery.utils.mail import ErrorMail
 from django.core import mail
@@ -31,6 +32,7 @@ class HqAdminEmailHandler(AdminEmailHandler):
             )
             filter = get_exception_reporter_filter(request)
             request_repr = filter.get_request_repr(request)
+            raise Exception('foo')
         except Exception:
             subject = '%s: %s' % (
                 record.levelname,
@@ -56,15 +58,19 @@ class HqAdminEmailHandler(AdminEmailHandler):
         if details:
             message = "%s\n\n%s" % (self.format_details(details), message)
 
-        context = {
+        context = defaultdict(lambda: '')
+        context.update({
             'details': details,
             'tb_list': tb_list,
-            'get': request.GET,
-            'post': request.POST,
-            'method': request.method,
-            'url': request.build_absolute_uri(),
             'request_repr': request_repr
-        }
+        })
+        if request:
+            context.update({
+                'get': request.GET,
+                'post': request.POST,
+                'method': request.method,
+                'url': request.build_absolute_uri(),
+            })
         html_message = render_to_string('hqadmin/email/error_email.html', context)
         mail.mail_admins(subject, message, fail_silently=True, html_message=html_message)
 
