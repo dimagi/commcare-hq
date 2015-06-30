@@ -44,16 +44,16 @@ def should_create_flags_on_submission(domain):
     return False
 
 
-def set_cleanliness_flags_for_domain(domain):
+def set_cleanliness_flags_for_domain(domain, force_full=False):
     """
     Sets all cleanliness flags for an entire domain.
     """
     for owner_id in get_all_case_owner_ids(domain):
         if owner_id not in WEIRD_USER_IDS:
-            set_cleanliness_flags(domain, owner_id)
+            set_cleanliness_flags(domain, owner_id, force_full=force_full)
 
 
-def set_cleanliness_flags(domain, owner_id):
+def set_cleanliness_flags(domain, owner_id, force_full=False):
     """
     For a given owner ID, manually sets the cleanliness flag on that ID.
     """
@@ -75,8 +75,8 @@ def set_cleanliness_flags(domain, owner_id):
                 not cleanliness_object.hint or not hint_still_valid(domain, owner_id, cleanliness_object.hint)
             )
         )
-    if needs_full_check(domain, cleanliness_object):
-        # either the hint wasn't set or wasn't valid - rebuild from scratch
+    if force_full or needs_full_check(domain, cleanliness_object):
+        # either the hint wasn't set, wasn't valid or we're forcing a rebuild - rebuild from scratch
         cleanliness_flag = get_cleanliness_flag_from_scratch(domain, owner_id)
         cleanliness_object.is_clean = cleanliness_flag.is_clean
         cleanliness_object.hint = cleanliness_flag.hint

@@ -48,7 +48,7 @@ class OwnerCleanlinessTest(SyncBaseTest):
         is_clean = self.owner_cleanliness.is_clean
         hint = self.owner_cleanliness.hint
         self.owner_cleanliness.delete()
-        set_cleanliness_flags(self.domain, self.owner_id)
+        set_cleanliness_flags(self.domain, self.owner_id, force_full=True)
         new_cleanliness = OwnershipCleanlinessFlag.objects.get(owner_id=self.owner_id)
         self.assertEqual(is_clean, new_cleanliness.is_clean)
         self.assertEqual(hint, new_cleanliness.hint)
