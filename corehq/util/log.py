@@ -32,7 +32,6 @@ class HqAdminEmailHandler(AdminEmailHandler):
             )
             filter = get_exception_reporter_filter(request)
             request_repr = filter.get_request_repr(request)
-            raise Exception('foo')
         except Exception:
             subject = '%s: %s' % (
                 record.levelname,
