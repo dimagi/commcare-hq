@@ -499,3 +499,10 @@ REVAMPED_EXPORTS = StaticToggle(
     'Revamped Form and Case exports',
     TAG_PRODUCT_PATH,
 )
+
+MULTIPLE_CHOICE_CUSTOM_FIELD = StaticToggle(
+    'multiple_choice_custom_field',
+    'Allow project to use multiple choice field in custom fields',
+    TAG_PRODUCT_PATH,
+    namespaces=[NAMESPACE_DOMAIN]
+)
