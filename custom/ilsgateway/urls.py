@@ -22,5 +22,6 @@ urlpatterns = patterns('custom.ilsgateway.views',
     url(r'^supervision/(?P<document_id>\d+)/$', SupervisionDocumentView.as_view(), name='supervision_document'),
     url(r'^reminder_test/(?P<phone_number>\d+)/$', RemindersTester.as_view(), name='ils_reminders_tester'),
     url(r'save_ils_note', 'save_ils_note', name='save_ils_note'),
-    url(r'fix_groups_in_location', 'fix_groups_in_location', name='fix_groups_in_location')
+    url(r'fix_groups_in_location', 'fix_groups_in_location', name='fix_groups_in_location'),
+    url(r'change_date', 'change_runner_date_to_last_migration', name='change_runner_date_to_last_migration'),
 )
