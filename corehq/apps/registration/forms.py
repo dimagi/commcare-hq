@@ -9,10 +9,11 @@ from django.core.validators import validate_email
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import new_org_re, website_re
 from corehq.apps.orgs.models import Organization
-from corehq.apps.style.forms.widgets import BootstrapDisabledInput, Select2Widget
+from corehq.apps.style.forms.widgets import BootstrapDisabledInput
 from django.utils.encoding import smart_str
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
+
 
 class DomainRegistrationForm(forms.Form):
     """
