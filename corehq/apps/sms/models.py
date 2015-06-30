@@ -918,16 +918,16 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         )
         return obj
 
-    def create_ivr_subevent(self, recipient, form_unqiue_id, case_id=None):
+    def create_ivr_subevent(self, recipient, form_unique_id, case_id=None):
         recipient_type = MessagingEvent.get_recipient_type(recipient)
         obj = MessagingSubEvent.objects.create(
             parent=self,
             date=datetime.utcnow(),
             recipient_type=recipient_type,
             recipient_id=recipient.get_id if recipient_type else None,
-            content_type=CONTENT_IVR_SURVEY,
+            content_type=MessagingEvent.CONTENT_IVR_SURVEY,
             form_unique_id=form_unique_id,
-            form_name=cls.get_form_name_or_none(form_unique_id),
+            form_name=MessagingEvent.get_form_name_or_none(form_unique_id),
             case_id=case_id,
             status=MessagingEvent.STATUS_IN_PROGRESS,
         )

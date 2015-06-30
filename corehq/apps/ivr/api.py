@@ -304,7 +304,7 @@ def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_
     call_log_entry = CallLog.get_call_by_gateway_session_id(gateway_session_id)
     logged_subevent = None
     if call_log_entry.messaging_subevent_id:
-        logged_subevent = MessagingSubevent.objects.get(
+        logged_subevent = MessagingSubEvent.objects.get(
             pk=call_log_entry.messaging_subevent_id)
 
     if call_log_entry:
@@ -393,8 +393,10 @@ def get_first_ivr_response_data(recipient, call_log_entry, logged_subevent):
             session)
         return (ivr_data, False)
 
+    return (None, False)
 
-def set_first_ivr_response(gateway_session_id, ivr_data, get_response_function):
+
+def set_first_ivr_response(call_log_entry, gateway_session_id, ivr_data, get_response_function):
     call_log_entry.xforms_session_id = ivr_data.session.session_id
     call_log_entry.use_precached_first_response = True
     call_log_entry.first_response = get_response_function(
@@ -414,7 +416,7 @@ def initiate_outbound_call(recipient, form_unique_id, submit_partial_form,
     call_log_entry = None
     logged_event = MessagingEvent.objects.get(pk=messaging_event_id)
     logged_subevent = logged_event.create_ivr_subevent(recipient,
-        form_unqiue_id, case_id=case_id)
+        form_unique_id, case_id=case_id)
 
     if not verified_number and not unverified_number:
         log_error(MessagingEvent.ERROR_NO_PHONE_NUMBER,

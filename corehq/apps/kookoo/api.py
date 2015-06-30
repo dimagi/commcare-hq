@@ -71,7 +71,7 @@ def get_status_and_message(xml_response):
 def invoke_kookoo_outbound_api(phone_number, api_key, is_test=False):
     if is_test:
         session_id = hashlib.sha224(datetime.utcnow().isoformat()).hexdigest()
-        return = "<request><status>queued</status><message>%s</message></request>" % session_id
+        return "<request><status>queued</status><message>%s</message></request>" % session_id
 
     url_base = get_url_base()
     params = urlencode({
@@ -115,7 +115,7 @@ def initiate_outbound_call(call_log_entry, logged_subevent, ivr_data=None, *args
         call_log_entry.gateway_session_id = 'KOOKOO-%s' % message
 
         if ivr_data:
-            set_first_ivr_response(call_log_entry.gateway_session_id,
+            set_first_ivr_response(call_log_entry, call_log_entry.gateway_session_id,
                 ivr_data, get_http_response_string)
     elif status == 'error':
         call_log_entry.error = True
