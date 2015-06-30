@@ -144,11 +144,15 @@ class MonthOfStockProduct(EWSData):
     show_chart = False
     show_table = True
     use_datatables = True
+    default_rows = 25
 
     @property
     def title(self):
         if not self.location:
             return ""
+
+        if self.config['export']:
+            return "Current MOS by Product"
 
         location_type = self.location.location_type.name.lower()
         if location_type == 'country':
@@ -170,7 +174,8 @@ class MonthOfStockProduct(EWSData):
             if location.location_type.name == 'country':
                 supply_points = SQLLocation.objects.filter(
                     Q(parent__location_id=self.config['location_id'], is_archived=False) |
-                    Q(location_type__name='Regional Medical Store', domain=self.config['domain'])
+                    Q(location_type__name='Regional Medical Store', domain=self.config['domain']) |
+                    Q(location_type__name='Teaching Hospital', domain=self.config['domain'])
                 ).order_by('name').exclude(supply_point_id__isnull=True)
             else:
                 supply_points = SQLLocation.objects.filter(
@@ -181,10 +186,12 @@ class MonthOfStockProduct(EWSData):
 
     @property
     def headers(self):
-        headers = DataTablesHeader(*[DataTablesColumn('Location')])
+        headers = DataTablesHeader(DataTablesColumn('Location'))
         for product in self.unique_products(self.get_supply_points, all=(not self.config['export'])):
-            headers.add_column(DataTablesColumn(product.code))
-
+            if not self.config['export']:
+                headers.add_column(DataTablesColumn(product.code))
+            else:
+                headers.add_column(DataTablesColumn(u'{} ({})'.format(product.name, product.code)))
         return headers
 
     @property
@@ -253,8 +260,10 @@ class StockoutsProduct(EWSData):
         if self.config['location_id']:
             supply_points = get_supply_points(self.config['location_id'], self.config['domain'])
             products = self.unique_products(supply_points, all=True)
+            code_name_map = {}
             for product in products:
                 rows[product.code] = []
+                code_name_map[product.code] = product.name
 
             enddate = self.config['enddate']
             startdate = self.config['startdate'] if 'custom_date' in self.config else enddate - timedelta(days=90)
@@ -270,7 +279,13 @@ class StockoutsProduct(EWSData):
                     if not any([product.code == tx['sql_product__code'] for tx in txs]):
                         rows[product.code].append({'x': d['start_date'], 'y': 0})
                 for tx in txs:
-                    rows[tx['sql_product__code']].append({'x': d['start_date'], 'y': tx['count']})
+                    rows[tx['sql_product__code']].append(
+                        {
+                            'x': d['start_date'],
+                            'y': tx['count'],
+                            'name': code_name_map[tx['sql_product__code']]
+                        }
+                    )
         return rows
 
     @property
@@ -280,6 +295,7 @@ class StockoutsProduct(EWSData):
             chart = EWSLineChart("Stockout by Product", x_axis=Axis(self.chart_x_label, dateFormat='%b %Y'),
                                  y_axis=Axis(self.chart_y_label, 'd'))
             chart.x_axis_uses_dates = True
+            chart.tooltipFormat = True
             for key, value in rows.iteritems():
                 chart.add_dataset(key, value)
             return [chart]
@@ -296,6 +312,8 @@ class StockoutTable(EWSData):
     def title(self):
         if not self.location:
             return ""
+        if self.config['export']:
+            return 'Stockouts'
 
         location_type = self.location.location_type.name.lower()
         if location_type == 'country':
@@ -307,10 +325,10 @@ class StockoutTable(EWSData):
 
     @property
     def headers(self):
-        return DataTablesHeader(*[
-            DataTablesColumn('Medical Store'),
+        return DataTablesHeader(
+            DataTablesColumn('Location'),
             DataTablesColumn('Stockouts')
-        ])
+        )
 
     @property
     def rows(self):
@@ -342,7 +360,15 @@ class StockoutTable(EWSData):
                 ).order_by('product_id', '-report__date').distinct('product_id').values_list('product_id',
                                                                                              flat=True)
                 if stockout:
-                    rows.append([supply_point.name, ', '.join(product_map[id] for id in stockout)])
+                    url = make_url(
+                        StockLevelsReport,
+                        self.config['domain'],
+                        '?location_id=%s&startdate=%s&enddate=%s',
+                        (supply_point.location_id, self.config['startdate'], self.config['enddate'])
+                    )
+                    rows.append(
+                        [link_format(supply_point.name, url), ', '.join(product_map[id] for id in stockout)]
+                    )
         return rows
 
 

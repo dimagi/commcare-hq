@@ -1,5 +1,0 @@
-Project Officer: <select name="officer">
-{% for name in officers%}
-<option value="{{ name }}" {% ifequal officer name %} selected="true"{% endifequal %}>{{ name }}</option>
-{% endfor %}
-</select>

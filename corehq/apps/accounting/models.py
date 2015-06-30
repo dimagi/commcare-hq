@@ -741,7 +741,8 @@ class Subscriber(models.Model):
                                       verbose=False,
                                       web_user=None,
                                       old_subscription=None,
-                                      new_subscription=None):
+                                      new_subscription=None,
+                                      internal_change=False):
 
         if self.organization is not None:
             raise SubscriptionChangeError("Only domain upgrades and downgrades are possible.")
@@ -803,9 +804,20 @@ class Subscriber(models.Model):
                 'request': request,
                 'referer': request.META.get('HTTP_REFERER') if request else None,
             }
+            sub_change_email_address = (settings.INTERNAL_SUBSCRIPTION_CHANGE_EMAIL
+                                        if internal_change else settings.SUBSCRIPTION_CHANGE_EMAIL)
+            env = ("[{}] ".format(settings.SERVER_ENVIRONMENT.upper())
+                   if settings.SERVER_ENVIRONMENT == "staging" else "")
+            email_subject = "{env}Subscription Change Alert: {domain} from {old_plan} to {new_plan}".format(
+                env=env,
+                domain=email_context['domain'],
+                old_plan=email_context['old_plan'],
+                new_plan=email_context['new_plan'],
+            )
+
             send_HTML_email(
-                "Subscription Change Alert: %(domain)s from %(old_plan)s to %(new_plan)s" % email_context,
-                settings.SUBSCRIPTION_CHANGE_EMAIL,
+                email_subject,
+                sub_change_email_address,
                 render_to_string('accounting/subscription_change_email.html', email_context),
                 text_content=render_to_string('accounting/subscription_change_email.txt', email_context),
             )
@@ -868,7 +880,7 @@ class Subscription(models.Model):
         try:
             Domain.get_by_name(self.subscriber.domain).save()
         except Exception as e:
-            # If a subscriber doesn't have a valid domain associated with it 
+            # If a subscriber doesn't have a valid domain associated with it
             # we don't care the pillow won't be updated
             pass
 
@@ -972,7 +984,7 @@ class Subscription(models.Model):
     def change_plan(self, new_plan_version, date_end=None,
                     note=None, web_user=None, adjustment_method=None,
                     service_type=None, pro_bono_status=None,
-                    transfer_credits=True):
+                    transfer_credits=True, internal_change=False):
         """
         Changing a plan TERMINATES the current subscription and
         creates a NEW SUBSCRIPTION where the old plan left off.
@@ -1000,6 +1012,8 @@ class Subscription(models.Model):
         )
         new_subscription.save()
 
+        new_subscription.set_billing_account_entry_point()
+
         if self.date_start > today:
             self.date_start = today
         if self.date_end is None or self.date_end > today:
@@ -1017,6 +1031,7 @@ class Subscription(models.Model):
             web_user=web_user,
             old_subscription=self,
             new_subscription=new_subscription,
+            internal_change=internal_change,
         )
 
         # transfer existing credit lines to the new subscription
@@ -1180,11 +1195,11 @@ class Subscription(models.Model):
         emails |= {e for e in WebUser.get_dimagi_emails_by_domain(domain_name)}
         if self.is_trial:
             subject = _("%(product)s Alert: 30 day trial for '%(domain)s' "
-                        "ends %(ending_on)s" % {
+                        "ends %(ending_on)s") % {
                 'product': product,
                 'domain': domain_name,
                 'ending_on': ending_on,
-            })
+            }
             template = 'accounting/trial_ending_reminder_email.html'
             template_plaintext = 'accounting/trial_ending_reminder_email_plaintext.txt'
         else:
@@ -1233,6 +1248,45 @@ class Subscription(models.Model):
                     'domain': domain_name,
                     'email': email,
                 })
+
+    def send_dimagi_ending_reminder_email(self):
+        if self.date_end is None:
+            raise SubscriptionReminderError(
+                "This subscription has no end date."
+            )
+        if self.account.dimagi_contact is None:
+            raise SubscriptionReminderError(
+                "This subscription has no Dimagi contact."
+            )
+
+        domain = self.subscriber.domain
+        end_date = self.date_end.strftime(USER_DATE_FORMAT)
+        email = self.account.dimagi_contact
+        subject = "Alert: {domain}'s subscription is ending on {end_date}".format(
+                  domain=domain,
+                  end_date=end_date)
+        template = 'accounting/subscription_ending_reminder_dimagi.html'
+        template_plaintext = 'accounting/subscription_ending_reminder_dimagi_plaintext.html'
+        context = {
+            'domain': domain,
+            'end_date': end_date,
+            'contacts': self.account.billingcontactinfo.emails,
+            'dimagi_contact': email,
+        }
+        email_html = render_to_string(template, context)
+        email_plaintext = render_to_string(template_plaintext, context)
+        send_HTML_email(
+            subject, email, email_html,
+            text_content=email_plaintext,
+            email_from=settings.DEFAULT_FROM_EMAIL,
+        )
+
+    def set_billing_account_entry_point(self):
+        no_current_entry_point = self.account.entry_point == EntryPoint.NOT_SET
+        self_serve = self.service_type == SubscriptionType.SELF_SERVICE
+        if (no_current_entry_point and self_serve and not self.is_trial):
+            self.account.entry_point = EntryPoint.SELF_STARTED
+            self.account.save()
 
     @classmethod
     def _get_plan_by_subscriber(cls, subscriber):
@@ -1284,11 +1338,11 @@ class Subscription(models.Model):
         if plan_version is None:
             plan_version = DefaultProductPlan.get_default_plan_by_domain(domain)
         return plan_version, subscription
-    
+
     @classmethod
     def new_domain_subscription(cls, account, domain, plan_version,
                                 date_start=None, date_end=None, note=None,
-                                web_user=None, adjustment_method=None,
+                                web_user=None, adjustment_method=None, internal_change=False,
                                 **kwargs):
         subscriber = Subscriber.objects.get_or_create(domain=domain, organization=None)[0]
         today = datetime.date.today()
@@ -1308,9 +1362,9 @@ class Subscription(models.Model):
             raise NewSubscriptionError(_(
                 "There is already a subscription '%s' with no end date "
                 "that conflicts with the start and end dates of this "
-                "subscription." %
+                "subscription.") %
                 future_subscription_no_end.latest('date_created')
-            ))
+            )
 
         future_subscriptions = available_subs.filter(
             date_end__gt=date_start
@@ -1321,12 +1375,12 @@ class Subscription(models.Model):
             raise NewSubscriptionError(unicode(_(
                 "There is already a subscription '%(sub)s' that has an end date "
                 "that conflicts with the start and end dates of this "
-                "subscription %(start)s - %(end)s." % {
+                "subscription %(start)s - %(end)s.") % {
                     'sub': future_subscriptions.latest('date_created'),
                     'start': date_start,
                     'end': date_end
                 }
-            )))
+            ))
 
         can_reactivate, last_subscription = cls.can_reactivate_domain_subscription(
             account, domain, plan_version, date_start=date_start
@@ -1352,12 +1406,15 @@ class Subscription(models.Model):
             new_plan_version=plan_version,
             web_user=web_user,
             new_subscription=subscription,
+            internal_change=internal_change,
         )
         SubscriptionAdjustment.record_adjustment(
             subscription, method=adjustment_method, note=note,
             web_user=web_user
         )
         subscription.save()
+
+        subscription.set_billing_account_entry_point()
 
         return subscription
 
@@ -1378,6 +1435,11 @@ class Subscription(models.Model):
                ), last_subscription
 
 
+class InvoiceBaseManager(models.Manager):
+    def get_queryset(self):
+        return super(InvoiceBaseManager, self).get_queryset().filter(is_hidden_to_ops=False)
+
+
 class InvoiceBase(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
     date_received = models.DateField(blank=True, db_index=True, null=True)
@@ -1392,6 +1454,8 @@ class InvoiceBase(models.Model):
     # control this filter
     is_hidden_to_ops = models.BooleanField(default=False)
     last_modified = models.DateTimeField(auto_now=True)
+
+    objects = InvoiceBaseManager()
 
     class Meta:
         abstract = True
@@ -1774,10 +1838,7 @@ class BillingRecord(BillingRecordBase):
         ))
         is_small_invoice = self.invoice.balance <= SMALL_INVOICE_THRESHOLD
         context.update({
-            'plan_name': "%(product)s %(name)s" % {
-                'product': self.invoice.subscription.plan_version.core_product,
-                'name': self.invoice.subscription.plan_version.plan.edition,
-            },
+            'plan_name': self.invoice.subscription.plan_version.plan.name,
             'date_due': self.invoice.date_due,
             'is_small_invoice': is_small_invoice,
             'total_balance': total_balance,

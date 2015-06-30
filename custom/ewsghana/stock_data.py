@@ -1,4 +1,8 @@
+from corehq.apps.commtrack.dbaccessors import \
+    get_supply_point_case_by_location_id
 from corehq.apps.commtrack.models import SupplyPointCase
+from corehq.apps.hqcase.dbaccessors import \
+    get_supply_point_case_in_domain_by_id
 from corehq.apps.locations.models import SQLLocation
 from custom.ewsghana.models import EWSGhanaConfig
 from custom.logistics.stock_data import StockDataSynchronization
@@ -19,18 +23,14 @@ class EWSStockDataSynchronization(StockDataSynchronization):
         return EWSGhanaConfig.for_domain(self.domain).all_stock_data
 
     def get_location_id(self, facility):
-        sp = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                  key=[self.domain, str(facility)],
-                                  reduce=False,
-                                  include_docs=True,
-                                  limit=1).first()
+        sp = get_supply_point_case_in_domain_by_id(self.domain, facility)
         return sp.location_id
 
     def get_ids(self):
         supply_points_ids = SQLLocation.objects.filter(
             domain=self.domain,
             location_type__administrative=False
-        ).exclude(external_id__isnull=True).order_by('created_at').values_list('supply_point_id', flat=True)
+        ).order_by('created_at').values_list('supply_point_id', flat=True)
         return [
             doc['external_id']
             for doc in iter_docs(SupplyPointCase.get_db(), supply_points_ids)
@@ -51,6 +51,7 @@ class EWSStockDataSynchronization(StockDataSynchronization):
         ]
 
     def get_last_processed_location(self, checkpoint):
-        supply_point = SupplyPointCase.get_by_location_id(self.domain, checkpoint.location.location_id)
+        supply_point = get_supply_point_case_by_location_id(
+            self.domain, checkpoint.location.location_id)
         external_id = supply_point.external_id if supply_point else None
         return external_id

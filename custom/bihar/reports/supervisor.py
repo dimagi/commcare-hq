@@ -22,9 +22,7 @@ from dimagi.utils.html import format_html
 from corehq.apps.groups.models import Group
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.adm.reports.supervisor import SupervisorReportsADMSection
 from custom.bihar.reports.indicators.mixins import IndicatorConfigMixIn
-from dimagi.utils.parsing import json_format_date
 
 
 def shared_bihar_context(report):
@@ -250,7 +248,7 @@ class MainNavReport(BiharSummaryReport, IndicatorConfigMixIn):
     def additional_reports(cls):
         from custom.bihar.reports.due_list import DueListSelectionReport
         from custom.bihar.reports.indicators.reports import MyPerformanceReport
-        return [WorkerRankSelectionReport, DueListSelectionReport, ToolsNavReport, MyPerformanceReport]
+        return [DueListSelectionReport, ToolsNavReport, MyPerformanceReport]
 
     @classmethod
     def show_in_navigation(cls, *args, **kwargs):
@@ -279,46 +277,6 @@ class MainNavReport(BiharSummaryReport, IndicatorConfigMixIn):
                 enumerate(self.indicator_config.indicator_sets)] + \
                [default_nav_link(self, len(self.indicator_config.indicator_sets) + i, r) \
                 for i, r in enumerate(self.additional_reports())]
-
-
-class WorkerRankSelectionReport(SubCenterSelectionReport):
-    slug = "workerranks"
-    name = ugettext_noop("Worker Rank Table")
-    # The subreport URL is hard coded here until there's an easier
-    # way to get this from configuration
-    WORKER_RANK_SLUG = 'worker_rank_table'
-
-    def _row(self, group, rank):
-        def _get_url():
-            # HACK: hard(ish) code get_url until we fix the render_as bug
-            url = SupervisorReportsADMSection.get_url(domain=self.domain,
-                                                      subreport=self.WORKER_RANK_SLUG)
-            # /a/[domain]/reports/adm/[section]/[subreport]/
-            # needs to become
-            # /a/[domain]/reports/adm/[render_as]/[section]/[subreport]/
-            if self.render_next:
-                section_chunk = "/{section}/".format(section=SupervisorReportsADMSection.slug)
-                section_with_rendering = "/{render_as}{section_chunk}".format(
-                    render_as=self.render_next, section_chunk=section_chunk
-                )
-                url = url.replace(section_chunk, section_with_rendering)
-            return url
-
-        url = _get_url()
-        end = datetime.today().date()
-        start = end - timedelta(days=30)
-        params = {
-            "ufilter": 0,
-            "startdate": json_format_date(start),
-            "enddate": json_format_date(end)
-        }
-        def _awcc_link(g):
-            params["group"] = g.get_id
-            return format_html(u'<a href="{details}">{awcc}</a>',
-                awcc=get_awcc(g),
-                details=url_and_params(url,
-                                       params))
-        return [group.name, _awcc_link(group)]
 
 
 class ToolsNavReport(BiharSummaryReport):

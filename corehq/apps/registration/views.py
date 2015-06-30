@@ -17,6 +17,7 @@ from corehq.apps.analytics.tasks import (
 )
 from corehq.apps.domain.decorators import login_required
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain.exceptions import NameUnavailableException
 from corehq.apps.orgs.views import orgs_landing
 from corehq.apps.registration.models import RegistrationRequest
 from corehq.apps.registration.forms import NewWebUserRegistrationForm, DomainRegistrationForm, OrganizationRegistrationForm
@@ -71,7 +72,11 @@ def register_user(request, domain_type=None):
                                         password=form.cleaned_data['password'])
                 login(request, new_user)
                 track_workflow.delay(new_user.email, "Requested new account")
-                track_created_hq_account_on_hubspot.delay(new_user, request.COOKIES)
+                meta = {
+                    'HTTP_X_FORWARDED_FOR': request.META.get('HTTP_X_FORWARDED_FOR'),
+                    'REMOTE_ADDR': request.META.get('REMOTE_ADDR')
+                }
+                track_created_hq_account_on_hubspot.delay(new_user, request.COOKIES, meta)
                 # jls: test this (both from invitation and creating new user from scratch)
                 if form.cleaned_data['create_domain']:
                     org = None
@@ -86,8 +91,7 @@ def register_user(request, domain_type=None):
                     'requested_domain': requested_domain,
                     'track_domain_registration': True,
                 })
-                return render(request, 'registration/confirmation_sent.html',
-                        context)
+                return render(request, 'registration/confirmation_sent.html', context)
         else:
             form = NewWebUserRegistrationForm(
                 initial={'domain_type': domain_type, 'email': prefilled_email, 'create_domain': True})
@@ -170,14 +174,20 @@ def register_domain(request, domain_type=None):
                 })
                 return render(request, 'error.html', context)
 
-            request_new_domain(
-                request, form, org, new_user=is_new, domain_type=domain_type)
+            try:
+                domain_name = request_new_domain(
+                    request, form, org, new_user=is_new, domain_type=domain_type)
+            except NameUnavailableException:
+                context.update({
+                    'error_msg': _('Project name already taken - please try another'),
+                    'show_homepage_link': 1
+                })
+                return render(request, 'error.html', context)
 
-            requested_domain = form.cleaned_data['domain_name']
             if is_new:
                 context.update({
                     'alert_message': _("An email has been sent to %s.") % request.user.username,
-                    'requested_domain': requested_domain,
+                    'requested_domain': domain_name,
                     'track_domain_registration': True,
                 })
                 return render(request, 'registration/confirmation_sent.html',
@@ -187,7 +197,7 @@ def register_domain(request, domain_type=None):
                     return HttpResponseRedirect(nextpage)
                 if referer_url:
                     return redirect(referer_url)
-                return HttpResponseRedirect(reverse("domain_homepage", args=[requested_domain]))
+                return HttpResponseRedirect(reverse("domain_homepage", args=[domain_name]))
         else:
             if nextpage:
                 return orgs_landing(request, org, form=form)

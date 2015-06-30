@@ -12,6 +12,8 @@ from dimagi.ext.couchdbkit import (
 from dimagi.ext.couchdbkit import StringProperty, DictProperty, ListProperty, IntegerProperty
 from dimagi.ext.jsonobject import JsonObject
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
+from corehq.apps.userreports.dbaccessors import get_number_of_report_configs_by_data_source, \
+    get_report_configs_for_domain, get_all_report_configs
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
@@ -198,6 +200,12 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             for i, item in enumerate(self.get_items(doc))
         ]
 
+    def get_report_count(self):
+        """
+        Return the number of ReportConfigurations that reference this data source.
+        """
+        return get_number_of_report_configs_by_data_source(self.domain, self._id)
+
     def validate(self, required=True):
         super(DataSourceConfiguration, self).validate(required)
         # these two properties implicitly call other validation
@@ -291,6 +299,18 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
                 return filter
         return None
 
+    def get_languages(self):
+        """
+        Return the languages used in this report's column and filter display properties.
+        Note that only explicitly identified languages are returned. So, if the
+        display properties are all strings, "en" would not be returned.
+        """
+        langs = set()
+        for item in self.columns + self.filters:
+            if isinstance(item['display'], dict):
+                langs |= set(item['display'].keys())
+        return langs
+
     def validate(self, required=True):
         def _check_for_duplicates(supposedly_unique_list, error_msg):
             # http://stackoverflow.com/questions/9835762/find-and-list-duplicates-in-python-list
@@ -322,17 +342,11 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
 
     @classmethod
     def by_domain(cls, domain):
-        return sorted(
-            cls.view('userreports/report_configs_by_domain', key=domain, reduce=False, include_docs=True),
-            key=lambda report: report.title,
-        )
+        return get_report_configs_for_domain(domain)
 
     @classmethod
     def all(cls):
-        ids = [res['id'] for res in cls.view('userreports/report_configs_by_domain',
-                                             reduce=False, include_docs=False)]
-        for result in iter_docs(cls.get_db(), ids):
-            yield cls.wrap(result)
+        return get_all_report_configs()
 
 
 class CustomDataSourceConfiguration(JsonObject):

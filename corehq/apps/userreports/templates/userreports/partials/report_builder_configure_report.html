@@ -36,9 +36,11 @@
          */
         var PropertyListItem = function() {
             var that = this;
+            this.existsInCurrentVersion = ko.observable(true);
             this.property = ko.observable("");
             this.displayText = ko.observable("");
             this.format = ko.observable("");
+            this.dataSourceField = ko.observable("");
 
             /**
              * Return a "plain" javascript object representing this view model
@@ -51,13 +53,20 @@
                     format: this.format()
                 };
             };
+
+            this.isNotBlank = ko.computed(function(){
+               return that.property() !== "";
+            });
+
             this.isValid= ko.computed(function(){
-                return that.property() != "";
+                return that.isNotBlank() && that.existsInCurrentVersion();
             });
         };
         PropertyListItem.wrap = function(o){
             var i = new PropertyListItem();
-            i.property(o.property);
+            i.existsInCurrentVersion(o.exists_in_current_version);
+            i.property(o.property !== undefined ? o.property : null);
+            i.dataSourceField(o.data_source_field !== undefined ? o.data_source_field : null);
             i.displayText(o.display_text);
             i.format(o.format);
             return i;
@@ -73,11 +82,28 @@
             this.hasFormatCol = ko.observable(options.hasFormatCol !== undefined ? options.hasFormatCol : true);
             this.formatOptions = ko.observableArray(["Choice", "Date", "Numeric"]);
             this.propertyOptions = ko.observableArray({{ property_options|JSON }});
-            this.optionsContainQuestions = ko.computed(function(){
-                return _.any(that.propertyOptions(),
-                    function (o) {return o.type == 'question';}
-                )
+            var rawOptions = {{ property_options|JSON }};
+            this.optionsContainQuestions = _.any(rawOptions, function (o) {
+                return o.type == 'question';
             });
+            if (!this.optionsContainQuestions){
+                this.propertyOptions = ko.observableArray(rawOptions);
+            } else {
+                // Munge the property_options into the form expected by the questionsSelect binding.
+                this.propertyOptions = ko.observableArray(
+                    _.compact(_.map(that.propertyOptions(), function (o) {
+                        if (o.type === 'question') {
+                            return o.source;
+                        } else if (o.type == 'meta') {
+                            return {
+                                value: o.source[0],
+                                label: ''
+                            }
+                        }
+                    }))
+                )
+            }
+
 
             this.columns = ko.observableArray(options.initialCols !== undefined ? options.initialCols : []);
             this.serializedProperties = ko.computed(function(){

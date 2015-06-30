@@ -7,6 +7,7 @@ from casexml.apps.case.xml import V2
 from casexml.apps.phone.tests.utils import generate_restore_payload
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from casexml.apps.stock.models import StockReport, StockTransaction
+from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_safe_write_kwargs
 
@@ -101,7 +102,7 @@ def bootstrap_user(setup, username=TEST_USER, domain=TEST_DOMAIN,
         last_name=last_name
     )
     if home_loc == setup.loc.site_code:
-        if not SupplyPointCase.get_by_location(setup.loc):
+        if not get_supply_point_case_by_location(setup.loc):
             make_supply_point(domain, setup.loc)
 
         user.set_location(setup.loc)

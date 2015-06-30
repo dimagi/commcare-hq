@@ -48,7 +48,7 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
     @memoized
     def data_source(self):
         report = ReportFactory.from_spec(self.spec)
-        report.lang = self.request.couch_user.language
+        report.lang = self.lang
         return report
 
     @property
@@ -73,7 +73,7 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
     @memoized
     def filter_context(self):
         return {
-            filter.css_id: filter.context(self.filter_values[filter.css_id])
+            filter.css_id: filter.context(self.filter_values[filter.css_id], self.lang)
             for filter in self.filters
         }
 
@@ -87,6 +87,7 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         self.request = request
         self.domain = request.domain
         self.report_config_id = report_config_id
+        self.lang = self.request.couch_user.language
         user = request.couch_user
         if self.has_permissions(self.domain, user):
             if kwargs.get('render_as') == 'email':
@@ -249,7 +250,7 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         report_config = ReportConfiguration.get(self.report_config_id)
         raw_rows = list(data.get_data())
         headers = [column.header for column in self.data_source.columns]
-        columns = [column['field'] for column in report_config.columns]
+        columns = [column['column_id'] for column in report_config.columns]
         rows = [[raw_row[column] for column in columns] for raw_row in raw_rows]
         return [
             [

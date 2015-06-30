@@ -3,6 +3,7 @@ from celery.task import periodic_task
 import datetime
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.commtrack.models import SupplyPointCase, StockState
+from corehq.apps.locations.dbaccessors import get_users_by_location_id
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.api import send_sms_to_verified_number
@@ -371,12 +372,7 @@ def stock_alerts(transactions, user):
 
 
 def send_message_to_admins(user, message):
-    users = CommCareUser.view(
-        'locations/users_by_location_id',
-        startkey=[user.location.get_id],
-        endkey=[user.location.get_id, {}],
-        include_docs=True
-    ).all()
+    users = get_users_by_location_id(user.location.get_id)
     in_charge_users = [
         u
         for u in users

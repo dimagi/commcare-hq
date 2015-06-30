@@ -26,6 +26,11 @@
         line_chart = nv.models.lineChart();
 
         line_chart.xAxis.axisLabel({{ chart.x_axis.label|JSON }});
+        {% if chart.tooltipFormat %}
+            line_chart.tooltipContent(function(key, y, e, graph) {
+                return '<h3>' + graph.point.name + '</h3><p>' + e + ' at ' + y + '</p>';
+            });
+        {% endif %}
         {% if chart.x_axis.format %}
             line_chart.xAxis.tickFormat(d3.format({{ chart.x_axis.format|JSON }}));
         {% else %}
@@ -112,12 +117,14 @@
                     .style('text-anchor', 'end')
                     .style('stroke', 'none')
                     .style('fill-opacity', 1);
+            d3.selectAll('.nv-groups .nv-series-' + series +' path')
+                    .style("stroke-dasharray", ("3, 10"));
         });
     }
 
     function addGraph() {
         nv.addGraph(graphGenerator, function(chart) {
-            if (line_chart_id === '#chart_stock_status_51') {
+            if (line_chart_id.slice(-2) === '51') {
                 addUnderstockOverstockLabels(line_chart_id, line_chart_data);
             }
         });
