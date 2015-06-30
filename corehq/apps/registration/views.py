@@ -78,12 +78,18 @@ def register_user(request, domain_type=None):
                 }
                 track_created_hq_account_on_hubspot.delay(new_user, request.COOKIES, meta)
                 # jls: test this (both from invitation and creating new user from scratch)
-                requested_domain = form.cleaned_data['domain_name']
+                requested_domain = form.cleaned_data['hr_name']
                 if form.cleaned_data['create_domain']:
                     org = None
-                    # jls: test this handles inability to create domain name gracefully
-                    requested_domain = request_new_domain(
-                        request, form, org, new_user=True, domain_type=domain_type)
+                    try:
+                        requested_domain = request_new_domain(
+                            request, form, org, new_user=True, domain_type=domain_type)
+                    except NameUnavailableException:
+                        context.update({
+                            'error_msg': _('Project name already taken - please try another'),
+                            'show_homepage_link': 1
+                        })
+                        return render(request, 'error.html', context)
 
                 context = get_domain_context(form.cleaned_data['domain_type']).update({
                     'alert_message': _("An email has been sent to %s.") % request.user.username,
