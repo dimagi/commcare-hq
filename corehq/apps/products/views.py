@@ -1,5 +1,6 @@
 import json
 from django.http.response import HttpResponseServerError
+from corehq.apps.commtrack.exceptions import DuplicateProductCodeException
 from couchexport.writers import Excel2007ExportWriter
 from couchexport.models import Format
 from couchdbkit import ResourceNotFound
@@ -56,14 +57,25 @@ def unarchive_product(request, domain, prod_id, archive=True):
     Unarchive product
     """
     product = Product.get(prod_id)
-    product.unarchive()
-    return json_response({
-        'success': True,
-        'message': _("Product '{product_name}' has successfully been {action}.").format(
+    try:
+        product.unarchive()
+    except DuplicateProductCodeException:
+        success = False
+        message = _("Another product is already using the Product ID '{product_id}'").format(
+            product_id=product.code
+        )
+    else:
+        success = True
+        message = _("Product '{product_name}' has successfully been {action}.").format(
             product_name=product.name,
             action="unarchived",
         )
+    return json_response({
+        'success': success,
+        'message': message,
+        'product_id': prod_id
     })
+
 
 
 class ProductListView(BaseCommTrackManageView):

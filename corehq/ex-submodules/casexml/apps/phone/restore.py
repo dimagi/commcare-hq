@@ -224,13 +224,16 @@ class RestoreParams(object):
     :param version:             The version of the restore format
     :param state_hash:          The case state hash string to use to verify the state of the phone
     :param include_item_count:  Set to `True` to include the item count in the response
+    :param force_restore_mode:  Set to `clean` or `legacy` to force a particular restore type.
     """
 
-    def __init__(self, sync_log_id='', version=V1, state_hash='', include_item_count=False):
+    def __init__(self, sync_log_id='', version=V1, state_hash='', include_item_count=False,
+                 force_restore_mode=None):
         self.sync_log_id = sync_log_id
         self.version = version
         self.state_hash = state_hash
         self.include_item_count = include_item_count
+        self.force_restore_mode = force_restore_mode
 
 
 class RestoreCacheSettings(object):
@@ -275,7 +278,7 @@ class RestoreState(object):
     def validate_state(self):
         check_version(self.params.version)
         if self.last_sync_log:
-            if type(self.last_sync_log) != self.sync_log_class:
+            if not isinstance(self.last_sync_log, self.sync_log_class):
                 raise IncompatibleSyncLogType('Unable to convert from {} to {}'.format(
                     type(self.last_sync_log), self.sync_log_class,
                 ))
@@ -326,6 +329,12 @@ class RestoreState(object):
                 if override is not None:
                     return override
             return OWNERSHIP_CLEANLINESS_RESTORE.enabled(domain)
+
+        # this can be overridden explicitly in the params but will default to the domain setting
+        if self.params.force_restore_mode == 'clean':
+            return True
+        elif self.params.force_restore_mode == 'legacy':
+            return False
 
         return should_use_clean_restore(self.domain)
 

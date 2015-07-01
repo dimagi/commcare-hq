@@ -6,7 +6,6 @@ BIHAR_DOMAINS = ('care-bihar', 'bihar')
 CUSTOM_REPORTS = (
     ('Custom Reports', (
         supervisor.MainNavReport,
-        supervisor.WorkerRankSelectionReport,
         due_list.DueListSelectionReport,
         due_list.DueListNav,
         due_list.VaccinationSummary,

@@ -158,6 +158,13 @@ CASE_LIST_TILE = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+CASE_LIST_LOOKUP = StaticToggle(
+    'case_list_lookup',
+    'Allow external android callouts to search the caselist',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
 DETAIL_LIST_TABS = StaticToggle(
     'detail-list-tabs',
     'Tabs in the case detail list',
@@ -364,6 +371,7 @@ VELLUM_EXPERIMENTAL_UI = StaticToggle(
     'experimental_ui',
     "Enables some experimental UI enhancements for the form builder",
     TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
 )
 
 CACHE_AND_INDEX = StaticToggle(
@@ -451,9 +459,16 @@ API_THROTTLE_WHITELIST = StaticToggle(
 
 INSTANCE_VIEWER = StaticToggle(
     'instance_viewer',
-    'View curent instance when using Touchforms',
-    TAG_EXPERIMENTAL,
+    'CloudCare Form Debugging Tool',
+    TAG_PRODUCT_PATH,
     namespaces=[NAMESPACE_USER],
+)
+
+CLOUDCARE_CACHE = StaticToggle(
+    'cloudcare_cache',
+    'Aggresively cache case list, can result in stale data',
+    TAG_EXPERIMENTAL,
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 OPENLMIS = StaticToggle(
@@ -461,4 +476,26 @@ OPENLMIS = StaticToggle(
     'Offer OpenLMIS settings',
     TAG_UNKNOWN,
     namespaces=[NAMESPACE_DOMAIN],
+)
+
+CUSTOM_MENU_BAR = StaticToggle(
+    'custom_menu_bar',
+    "Hide Dashboard and Applications from top menu bar "
+    "for non-admin users",
+    TAG_ONE_OFF,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+LINK_SUPPLY_POINT = StaticToggle(
+    'link_supply_point',
+    'Add a "Supply Point" tab to location pages.  This is feature flagged '
+    'because this is not a great way to display additional information.',
+    TAG_EXPERIMENTAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+REVAMPED_EXPORTS = StaticToggle(
+    'revamped_exports',
+    'Revamped Form and Case exports',
+    TAG_PRODUCT_PATH,
 )

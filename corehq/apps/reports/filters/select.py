@@ -4,10 +4,9 @@ import calendar
 from django.conf import settings
 from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.utils.translation import ugettext as _
+from corehq.apps.casegroups.dbaccessors import get_case_group_meta_in_domain
 
-from casexml.apps.case.models import CommCareCase, CommCareCaseGroup
 from corehq.apps.hqcase.dbaccessors import get_case_types_for_domain
-from dimagi.utils.couch.database import get_db
 
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain, LICENSES
@@ -161,4 +160,4 @@ class MultiCaseGroupFilter(BaseMultipleOptionFilter):
 
     @property
     def options(self):
-        return [(g["id"], g["key"][1]) for g in CommCareCaseGroup.get_by_domain(self.domain, include_docs=False)]
+        return get_case_group_meta_in_domain(self.domain)

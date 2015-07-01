@@ -96,13 +96,6 @@ WORKFLOW_MODULE = 'module'
 WORKFLOW_PREVIOUS = 'previous_screen'
 WORKFLOW_FORM = 'form'
 
-AUTO_SELECT_USER = 'user'
-AUTO_SELECT_FIXTURE = 'fixture'
-AUTO_SELECT_CASE = 'case'
-AUTO_SELECT_LOCATION = 'location'
-AUTO_SELECT_RAW = 'raw'
-AUTO_SELECT_USERCASE = 'usercase'
-
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 
 FIELD_SEPARATOR = ':'
@@ -1283,6 +1276,7 @@ class GraphSeries(DocumentSchema):
     data_path = StringProperty()
     x_function = StringProperty()
     y_function = StringProperty()
+    radius_function = StringProperty()
 
 
 class GraphConfiguration(DocumentSchema):
@@ -1409,7 +1403,24 @@ class SortOnlyDetailColumn(DetailColumn):
         raise NotImplementedError()
 
 
-class Detail(IndexedSchema):
+class CaseListLookupMixin(DocumentSchema):
+    """
+        Allows for the addition of Android Callouts to do lookups from the CaseList
+        <lookup action="" image="" name="">
+            <extra key="" value = "" />
+            <response key ="" />
+        </lookup>
+    """
+    lookup_enabled = BooleanProperty(default=False)
+    lookup_action = StringProperty()
+    lookup_name = StringProperty()
+    lookup_image = JRResourceProperty(required=False)
+
+    lookup_extras = SchemaListProperty()
+    lookup_responses = SchemaListProperty()
+
+
+class Detail(IndexedSchema, CaseListLookupMixin):
     """
     Full configuration for a case selection screen
 
@@ -1656,6 +1667,12 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
         """
         return []
 
+    def uses_media(self):
+        """
+        Whether the module uses media. If this returns false then media will not be generated
+        for the module.
+        """
+        return True
 
 class Module(ModuleBase):
     """
@@ -2567,7 +2584,7 @@ class CareplanModule(ModuleBase):
     task_details = SchemaProperty(DetailPair)
 
     @classmethod
-    def new_module(cls, app, name, lang, target_module_id, target_case_type):
+    def new_module(cls, name, lang, target_module_id, target_case_type):
         lang = lang or 'en'
         module = CareplanModule(
             name={lang: name or ugettext("Care Plan")},
@@ -2905,6 +2922,10 @@ class ReportModule(ModuleBase):
                 for config in self.report_configs
             ]
         )
+
+    def uses_media(self):
+        # for now no media support for ReportModules
+        return False
 
 
 class VersionedDoc(LazyAttachmentDoc):

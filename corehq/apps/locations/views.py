@@ -11,6 +11,7 @@ from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.http import require_POST
 
 from couchdbkit import ResourceNotFound, MultipleResultsFound
+from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
 from couchexport.models import Format
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
@@ -31,8 +32,14 @@ from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.util import reverse, get_document_or_404
 from custom.openlmis.tasks import bootstrap_domain_task
 
-from .permissions import (locations_access_required, is_locations_admin,
-                          can_edit_location, can_edit_location_types)
+from .permissions import (
+    locations_access_required,
+    is_locations_admin,
+    can_edit_location,
+    can_edit_location_types,
+    user_can_edit_any_location,
+    can_edit_any_location,
+)
 from .models import Location, LocationType, SQLLocation
 from .forms import LocationForm, UsersAtLocationForm
 from .util import load_locs_json, location_hierarchy_config, dump_locations
@@ -87,6 +94,7 @@ class LocationsListView(BaseLocationView):
             'has_location_types': has_location_types,
             'can_edit_root': (not loc_restricted or
                 (loc_restricted and not self.request.couch_user.get_location(self.domain))),
+            'can_edit_any_location': user_can_edit_any_location(self.request.couch_user, self.request.project),
         }
 
 
@@ -416,7 +424,7 @@ class EditLocationView(NewLocationView):
     @memoized
     def supply_point(self):
         try:
-            return SupplyPointCase.get_by_location(self.location)
+            return get_supply_point_case_by_location(self.location)
         except MultipleResultsFound:
             raise MultipleSupplyPointException
 
@@ -597,6 +605,10 @@ class LocationImportView(BaseLocationView):
     page_title = ugettext_noop('Upload Locations from Excel')
     template_name = 'locations/manage/import.html'
 
+    @method_decorator(can_edit_any_location)
+    def dispatch(self, request, *args, **kwargs):
+        return super(LocationImportView, self).dispatch(request, *args, **kwargs)
+
     @property
     def page_context(self):
         def _get_manage_consumption():
@@ -747,3 +759,37 @@ def sync_openlmis(request, domain):
     # todo: error handling, if we care.
     bootstrap_domain_task.delay(domain)
     return HttpResponse('OK')
+
+
+@locations_access_required
+def child_locations_for_select2(request, domain):
+    id = request.GET.get('id')
+    query = request.GET.get('name', '').lower()
+    user = request.couch_user
+
+    def loc_to_payload(loc):
+        return {'id': loc.location_id, 'name': loc.display_name}
+
+    if id:
+        try:
+            loc = SQLLocation.objects.get(location_id=id)
+        except SQLLocation.DoesNotExist:
+            return json_response(
+                {'message': 'no location with id %s found' % id},
+                status_code=404,
+            )
+        else:
+            return json_response(loc_to_payload(loc))
+    else:
+        locs = []
+        user_loc = user.get_sql_location(domain)
+
+        if user_can_edit_any_location(user, request.project):
+            locs = SQLLocation.objects.filter(domain=domain)
+        elif user_loc:
+            locs = user_loc.get_descendants(include_self=True)
+
+        if locs != [] and query:
+            locs = locs.filter(name__icontains=query)
+
+        return json_response(map(loc_to_payload, locs[:10]))

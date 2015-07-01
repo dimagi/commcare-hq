@@ -6,10 +6,10 @@ from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
-from corehq.apps.reports.filters.dates import DatespanFilter
-from custom.ewsghana.reports import EWSData, MultiReport, ews_date_format
+from custom.ewsghana.filters import EWSDateFilter
+from custom.ewsghana.reports import EWSData, MultiReport
 from django.utils.translation import ugettext as _
-from custom.ewsghana.utils import get_supply_points, get_country_id
+from custom.ewsghana.utils import get_supply_points, get_country_id, ews_date_format
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -152,7 +152,7 @@ class CMSRMSSummaryReportingData(EmailReportingData):
 
 
 class StockSummaryReport(MultiReport):
-    fields = [AsyncLocationFilter, DatespanFilter]
+    fields = [AsyncLocationFilter, EWSDateFilter]
     name = "Stock Summary"
     slug = 'stock_summary_report'
     exportable = False
@@ -191,7 +191,7 @@ class StockSummaryReport(MultiReport):
 
 
 class CMSRMSReport(MultiReport):
-    fields = [DatespanFilter]
+    fields = [EWSDateFilter]
     name = "CMS and RMS Summary"
     slug = 'cms_rms_summary_report'
     exportable = True

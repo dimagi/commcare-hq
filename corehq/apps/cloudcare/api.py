@@ -352,7 +352,7 @@ def get_filters_from_request(request, limit_top_level=None):
         filters = dict([(key, val) for key, val in filters.items() if '/' in key or key in limit_top_level])
 
     for system_property in ['user_id', 'closed', 'format', 'footprint',
-                            'ids_only', 'include_children']:
+                            'ids_only', 'include_children', 'use_cache']:
         if system_property in filters:
             del filters[system_property]
     return filters

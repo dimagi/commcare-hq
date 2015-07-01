@@ -500,7 +500,7 @@ Here are some sample configurations that can be used as a reference until we hav
 - [GSID form report](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/gsid/gsid-form-report.json)
 
 
-## Report filters
+## Report Filters
 
 The documentation for report filters is still in progress. Apologies for brevity below.
 
@@ -535,6 +535,10 @@ Date filters allow you filter on a date. They will show a datepicker in the UI.
   "required": false
 }
 ```
+Date filters have an optional `compare_as_string` option that allows the date
+filter to be compared against an indicator of data type `string`. You shouldn't
+ever need to use this option (make your column a `date` or `datetime` type
+instead), but it exists because the report builder needs it. 
 
 ### Dynamic choice lists
 
@@ -562,6 +566,18 @@ Choice lists allow manual configuration of a fixed, specified number of choices 
     {"value": "doctor", display:"Doctor"},
     {"value": "nurse"}
   ]
+}
+```
+
+### Internationalization
+
+Report builders may specify translations for the filter display value. See the section on internationalization in the Report Column section for more information.
+```json
+{
+    "type": "choice_list",
+    "slug": "state",
+    "display": {"en": "State", "fr": "État"},
+    ...
 }
 ```
 
@@ -674,13 +690,43 @@ Then you will get a report like this:
 +----------+----------------------+----------------------+
 ```
 
+### Internationalization
+Report columns can be translated into multiple languages. To specify translations
+for a column header, use an object as the `display` value in the configuration
+instead of a string. For example:
+```
+{
+    "type": "field",
+    "field": "owner_id",
+    "column_id": "owner_id",
+    "display": {
+        "en": "Owner Name",
+        "he": "שם"
+    },
+    "format": "default",
+    "transform": {
+        "type": "custom",
+        "custom_type": "owner_display"
+    },
+    "aggregation": "simple"
+}
+```
+The value displayed to the user is determined as follows:
+- If a display value is specified for the users language, that value will appear in the report.
+- If the users language is not present, display the `"en"` value.
+- If `"en"` is not present, show an arbitrary translation from the `display` object.
+- If `display` is a string, and not an object, the report shows the string.
+
+Valid `display` languages are any of the two or three letter language codes available on the user settings page.
+
+
 ## Aggregation
 
 TODO: finish aggregation docs
 
 ## Transforms
 
-Transforms can be used to transform the value returned by a column just before it reaches the user. Currently there are four supported transform types. These are shown below:
+Transforms can be used to transform the value returned by a column just before it reaches the user. The currently supported transform types are shown below:
 
 ### Displaying username instead of user ID
 
@@ -725,6 +771,16 @@ Rounds decimal and floating point numbers to two decimal places.
 {
     "type": "custom",
     "custom_type": "short_decimal_display"
+}
+```
+
+### Date formatting
+Formats dates with the given format string. See [here](https://docs.python.org/2/library/datetime.html#strftime-strptime-behavior) for an explanation of format string behavior.
+If there is an error formatting the date, the transform is not applied to that value.
+```
+{
+   "type": "date_format", 
+   "format": "%Y-%m-%d %H:%M"
 }
 ```
 

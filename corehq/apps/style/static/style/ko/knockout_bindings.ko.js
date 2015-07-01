@@ -518,14 +518,12 @@ ko.bindingHandlers.makeHqHelp = {
             name = ko.utils.unwrapObservable(opts.name || $(element).data('title')),
             description = ko.utils.unwrapObservable(opts.description || $(element).data('content')),
             placement = ko.utils.unwrapObservable(opts.placement || $(element).data('placement')),
-            trigger = ko.utils.unwrapObservable(opts.trigger || $(element).data('trigger')),
             format = ko.utils.unwrapObservable(opts.format);
         COMMCAREHQ.makeHqHelp({
             title: name,
             content: description,
             html: format === 'html',
             placement: placement || 'right',
-            trigger: trigger || 'hover'
         }).appendTo(element);
     }
 };
@@ -775,3 +773,28 @@ ko.bindingHandlers.paste = {
         $(element).data('pasteCallback', valueAccessor());
     }
 };
+
+/**
+ * Normally, bindings can't overlap, this binding allows them to. For example:
+ *
+ * <div id="a">
+ *     <div data-bind="stopBinding: true">
+ *          <div id="b">
+ *              <p>foo</p>
+ *          </div>
+ *     </div>
+ * </div>
+ *
+ * ko.applyBindings({}, $("#a"));
+ * ko.applyBindings({}, $("#b"));
+ *
+ *
+ * Taken straight from:
+ * http://www.knockmeout.net/2012/05/quick-tip-skip-binding.html
+ */
+ko.bindingHandlers.stopBinding = {
+    init: function() {
+        return { controlsDescendantBindings: true };
+    }
+};
+ko.virtualElements.allowedBindings.stopBinding = true;

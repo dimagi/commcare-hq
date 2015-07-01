@@ -538,12 +538,12 @@ class SubscriptionForm(forms.Form):
                 from corehq.apps.accounting.views import ManageBillingAccountView
                 raise forms.ValidationError(mark_safe(_(
                     "Please update 'Client Contact Emails' "
-                    '<strong><a href=%s target="_blank">here</a></strong> '
-                    "before using Billing Account <strong>%s</strong>."
-                ) % (
-                    reverse(ManageBillingAccountView.urlname, args=[account.id]),
-                    account.name,
-                )))
+                    '<strong><a href=%(link)s target="_blank">here</a></strong> '
+                    "before using Billing Account <strong>%(account)s</strong>."
+                ) % {
+                    'link': reverse(ManageBillingAccountView.urlname, args=[account.id]),
+                    'account': account.name,
+                }))
 
         start_date = self.cleaned_data.get('start_date') or self.subscription.date_start
         if (self.cleaned_data['end_date'] is not None
@@ -563,7 +563,6 @@ class SubscriptionForm(forms.Form):
         date_end = self.cleaned_data['end_date']
         date_delay_invoicing = self.cleaned_data['delay_invoice_until']
         salesforce_contract_id = self.cleaned_data['salesforce_contract_id']
-        is_active = is_active_subscription(date_start, date_end)
         do_not_invoice = self.cleaned_data['do_not_invoice']
         auto_generate_credits = self.cleaned_data['auto_generate_credits']
         service_type = self.cleaned_data['service_type']
@@ -574,12 +573,12 @@ class SubscriptionForm(forms.Form):
             date_end=date_end,
             date_delay_invoicing=date_delay_invoicing,
             salesforce_contract_id=salesforce_contract_id,
-            is_active=is_active,
             do_not_invoice=do_not_invoice,
             auto_generate_credits=auto_generate_credits,
             web_user=self.web_user,
             service_type=service_type,
             pro_bono_status=pro_bono_status,
+            internal_change=True,
         )
         return sub
 
@@ -679,6 +678,7 @@ class ChangeSubscriptionForm(forms.Form):
             web_user=self.web_user,
             service_type=self.cleaned_data['service_type'],
             pro_bono_status=self.cleaned_data['pro_bono_status'],
+            internal_change=True,
         )
 
 

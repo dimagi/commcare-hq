@@ -14,6 +14,7 @@ from corehq.apps.userreports.reports.filters import DateFilterValue, ChoiceListF
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.userreports.sql import get_expanded_column_config, SqlColumnConfig
 from corehq.apps.userreports.transforms.factory import TransformFactory
+from corehq.apps.userreports.util import localize
 
 
 SQLAGG_COLUMN_MAP = {
@@ -31,7 +32,8 @@ class ReportFilter(JsonObject):
     type = StringProperty(required=True)
     slug = StringProperty(required=True)
     field = StringProperty(required=True)
-    display = StringProperty()
+    display = DefaultProperty()
+    compare_as_string = BooleanProperty(default=False)
 
     def create_filter_value(self, value):
         return {
@@ -45,7 +47,7 @@ class ReportFilter(JsonObject):
 class ReportColumn(JsonObject):
     type = StringProperty(required=True)
     column_id = StringProperty(required=True)
-    display = StringProperty()
+    display = DefaultProperty()
     description = StringProperty()
     transform = DictProperty()
 
@@ -55,7 +57,7 @@ class ReportColumn(JsonObject):
         """
         pass
 
-    def get_sql_column_config(self, data_source_config):
+    def get_sql_column_config(self, data_source_config, lang):
         raise NotImplementedError('subclasses must override this')
 
     def get_format_fn(self):
@@ -68,6 +70,16 @@ class ReportColumn(JsonObject):
 
     def get_group_by_columns(self):
         raise NotImplementedError(_("You can't group by columns of type {}".format(self.type)))
+
+    def get_header(self, lang):
+        return localize(self.display, lang)
+
+    def get_column_ids(self):
+        """
+        Used as an abstraction layer for columns that can contain more than one data column
+        (for example, PercentageColumns).
+        """
+        return [self.column_id]
 
 
 class FieldColumn(ReportColumn):
@@ -105,10 +117,10 @@ class FieldColumn(ReportColumn):
                     float(row[column_name]) / total
                 )
 
-    def get_sql_column_config(self, data_source_config):
+    def get_sql_column_config(self, data_source_config, lang):
         return SqlColumnConfig(columns=[
             DatabaseColumn(
-                header=self.display,
+                header=self.get_header(lang),
                 agg_column=SQLAGG_COLUMN_MAP[self.aggregation](self.field, alias=self.column_id),
                 sortable=False,
                 data_slug=self.column_id,
@@ -132,8 +144,8 @@ class ExpandedColumn(ReportColumn):
         _add_column_id_if_missing(obj)
         return super(ExpandedColumn, cls).wrap(obj)
 
-    def get_sql_column_config(self, data_source_config):
-        return get_expanded_column_config(data_source_config, self)
+    def get_sql_column_config(self, data_source_config, lang):
+        return get_expanded_column_config(data_source_config, self, lang)
 
 
 class AggregateDateColumn(ReportColumn):
@@ -143,10 +155,10 @@ class AggregateDateColumn(ReportColumn):
     type = TypeProperty('aggregate_date')
     field = StringProperty(required=True)
 
-    def get_sql_column_config(self, data_source_config):
+    def get_sql_column_config(self, data_source_config, lang):
         return SqlColumnConfig(columns=[
             AggregateColumn(
-                header=self.display,
+                header=self.get_header(lang),
                 aggregate_fn=lambda year, month: {'year': year, 'month': month},
                 format_fn=self.get_format_fn(),
                 columns=[
@@ -178,13 +190,13 @@ class PercentageColumn(ReportColumn):
     denominator = ObjectProperty(FieldColumn, required=True)
     format = StringProperty(choices=['percent', 'fraction', 'both'], default='percent')
 
-    def get_sql_column_config(self, data_source_config):
+    def get_sql_column_config(self, data_source_config, lang):
         # todo: better checks that fields are not expand
-        num_config = self.numerator.get_sql_column_config(data_source_config)
-        denom_config = self.denominator.get_sql_column_config(data_source_config)
+        num_config = self.numerator.get_sql_column_config(data_source_config, lang)
+        denom_config = self.denominator.get_sql_column_config(data_source_config, lang)
         return SqlColumnConfig(columns=[
             AggregateColumn(
-                header=self.display,
+                header=self.get_header(lang),
                 aggregate_fn=lambda n, d: {'num': n, 'denom': d},
                 format_fn=self.get_format_fn(),
                 columns=[c.view for c in num_config.columns + denom_config.columns],
@@ -196,10 +208,15 @@ class PercentageColumn(ReportColumn):
 
     def get_format_fn(self):
         NO_DATA_TEXT = '--'
+        CANT_CALCULATE_TEXT = '?'
 
         def _pct(data):
             if data['denom']:
-                return '{0:.0f}%'.format((float(data['num']) / float(data['denom'])) * 100)
+                try:
+                    return '{0:.0f}%'.format((float(data['num']) / float(data['denom'])) * 100)
+                except (ValueError, TypeError):
+                    return CANT_CALCULATE_TEXT
+
             return NO_DATA_TEXT
 
         _fraction = lambda data: '{num}/{denom}'.format(**data)
@@ -209,6 +226,10 @@ class PercentageColumn(ReportColumn):
             'fraction': _fraction,
             'both': lambda data: '{} ({})'.format(_pct(data), _fraction(data))
         }[self.format]
+
+    def get_column_ids(self):
+        # override this to include the columns for the numerator and denominator as well
+        return [self.column_id, self.numerator.column_id, self.denominator.column_id]
 
 
 def _add_column_id_if_missing(obj):
@@ -232,16 +253,22 @@ class FilterSpec(JsonObject):
     type = StringProperty(required=True, choices=['date', 'numeric', 'choice_list', 'dynamic_choice_list'])
     slug = StringProperty(required=True)  # this shows up as the ID in the filter HTML
     field = StringProperty(required=True)  # this is the actual column that is queried
-    display = StringProperty()
+    display = DefaultProperty()
     required = BooleanProperty(default=False)
+    datatype = DataTypeProperty(default='string')
 
     def get_display(self):
         return self.display or self.slug
 
 
+class DateFilterSpec(FilterSpec):
+    compare_as_string = BooleanProperty(default=False)
+
+
 class ChoiceListFilterSpec(FilterSpec):
     type = TypeProperty('choice_list')
     show_all = BooleanProperty(default=True)
+    datatype = DataTypeProperty(default='string')
     choices = ListProperty(FilterChoice)
 
 

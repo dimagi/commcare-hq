@@ -68,7 +68,7 @@
                  self.signOff = ko.observable('');
                  self.formDeleteUserSent = ko.observable(false);
                  self.disabled = function () {
-                     var understand = self.signOff().toLowerCase() === '{{ couch_user.username }}';
+                     var understand = self.signOff().toLowerCase() === '{{ couch_user.username|safe }}';
                      return self.formDeleteUserSent() || !understand;
                  };
                  self.submit = function () {

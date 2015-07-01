@@ -138,7 +138,8 @@ class CallCenterUtilsTests(TestCase):
 
 class DomainTimezoneTests(SimpleTestCase):
     def test_midnight_for_domain(self):
-        midnight = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        midnight_past = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        midnight_future = midnight_past + timedelta(days=1)
         timezones = [
             ('Asia/Kolkata', 5.5),
             ('UTC', 0),
@@ -152,9 +153,12 @@ class DomainTimezoneTests(SimpleTestCase):
             ('Africa/Nairobi', 3),
         ]
         for tz, offset in timezones:
+            # account for DST
             offset += datetime.now(pytz.timezone(tz)).dst().total_seconds() / 3600
+
             dom = DomainLite(name='', default_timezone=tz, cc_case_type='')
-            self.assertEqual(dom.midnight, midnight - timedelta(hours=offset), tz)
+            self.assertEqual(dom.midnights[0], midnight_past - timedelta(hours=offset), tz)
+            self.assertEqual(dom.midnights[1], midnight_future - timedelta(hours=offset), tz)
 
     def test_is_midnight_for_domain(self):
         midnight = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)

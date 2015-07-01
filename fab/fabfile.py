@@ -209,7 +209,7 @@ def india():
 def zambia():
     """Our production server in wv zambia."""
     load_env('zambia')
-    env.hosts = ['41.222.19.153']
+    env.hosts = ['41.72.118.18']
 
     _setup_path()
 
@@ -228,7 +228,7 @@ def zambia():
         'lb': [],
         'deploy': [],
 
-        'django_monolith': ['41.222.19.153'],
+        'django_monolith': ['41.72.118.18'],
     }
     env.roles = ['django_monolith']
 
@@ -651,10 +651,10 @@ def hotfix_deploy():
 
 
 def _confirm_translated():
-    if datetime.datetime.now().isoweekday() != 3:
+    if datetime.datetime.now().isoweekday() != 2 or env.environment != 'production':
         return True
     return console.confirm(
-        "It's Wednesday, did you update the translations from transifex? "
+        "It's Tuesday, did you update the translations from transifex? "
         "\n(https://confluence.dimagi.com/display/commcarehq/"
         "Internationalization+and+Localization+-+Transifex+Translations)"
     )
