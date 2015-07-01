@@ -56,8 +56,6 @@ class DistrictFunctionalityReport(GenericTabularReport, DatespanMixin, CustomPro
             return 'D' if v < 25 else 'C' if v < 50 else 'B' if v < 75 else 'A'
 
         rows = [[column.header] for column in self.model.columns[2:]]
-        rows.append(["<b>Total number of ASHAs who did not report/not known</b>"])
-        rows.append(["<b>Total Number of ASHAs under each Facilitator</b>"])
 
         for block in self.get_blocks_for_district():
             self.request_params['hierarchy_block'] = block
@@ -65,7 +63,7 @@ class DistrictFunctionalityReport(GenericTabularReport, DatespanMixin, CustomPro
             q['hierarchy_block'] = block
             self.request.GET = q
             rs, block_total = BlockLevelAFReport(self.request, domain=self.domain).rows
-            for index, row in enumerate(rs):
+            for index, row in enumerate(rs[0:-2]):
                 value = percent(row[-1]['sort_key'], block_total)
                 grade = get_grade(value)
                 if index < 10:

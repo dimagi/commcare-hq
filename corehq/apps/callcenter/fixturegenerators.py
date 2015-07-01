@@ -42,29 +42,34 @@ def should_sync(domain, last_sync, utcnow=None):
     return False
 
 
-def indicators_fixture_generator(user, version, last_sync=None):
-    assert isinstance(user, CommCareUser)
+class IndicatorsFixturesProvider(object):
+    id = 'indicators'
 
-    domain = user.project
-    fixtures = []
+    def __call__(self, user, version, last_sync=None):
+        assert isinstance(user, CommCareUser)
 
-    if not domain or not domain.call_center_config.is_active_and_valid() or not should_sync(domain, last_sync):
+        domain = user.project
+        fixtures = []
+
+        if not domain or not domain.call_center_config.is_active_and_valid() or not should_sync(domain, last_sync):
+            return fixtures
+
+        try:
+            fixtures.append(gen_fixture(user, CallCenterIndicators(
+                domain.name,
+                domain.default_timezone,
+                domain.call_center_config.case_type,
+                user
+            )))
+        except Exception:  # blanket exception catching intended
+            notify_exception(None, 'problem generating callcenter fixture', details={
+                'user_id': user._id,
+                'domain': user.domain
+            })
+
         return fixtures
 
-    try:
-        fixtures.append(gen_fixture(user, CallCenterIndicators(
-            domain.name,
-            domain.default_timezone,
-            domain.call_center_config.case_type,
-            user
-        )))
-    except Exception:  # blanket exception catching intended
-        notify_exception(None, 'problem generating callcenter fixture', details={
-            'user_id': user._id,
-            'domain': user.domain
-        })
-
-    return fixtures
+indicators_fixture_generator = IndicatorsFixturesProvider()
 
 
 def gen_fixture(user, indicator_set):
@@ -93,7 +98,7 @@ def gen_fixture(user, indicator_set):
     data = indicator_set.get_data()
 
     fixture = ElementTree.Element('fixture', attrib={
-        'id': 'indicators:%s' % name,
+        'id': ':'.join((IndicatorsFixturesProvider.id, name)),
         'user_id': user.user_id,
         'date': indicator_set.reference_date.isoformat()
     })
