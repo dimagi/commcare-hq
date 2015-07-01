@@ -668,7 +668,7 @@ class ConfigureNewReportBase(forms.Form):
 
 
 class ConfigureBarChartReportForm(ConfigureNewReportBase):
-    group_by = forms.ChoiceField(label="Property")
+    group_by = forms.ChoiceField(label="Show this property as the bars in the chart")
     report_type = 'chart'
 
     def __init__(self, report_name, app_id, source_type, report_source_id, existing_report=None, *args, **kwargs):
@@ -687,8 +687,8 @@ class ConfigureBarChartReportForm(ConfigureNewReportBase):
     @property
     def container_fieldset(self):
         return crispy.Fieldset(
-            _('Categories'),
-            'group_by',
+            _('Chart'),
+            FieldWithHelpBubble('group_by', help_bubble_text="The values of the selected property will be aggregated and shown as bars in the chart."),
             self.filter_fieldset
         )
 
@@ -739,10 +739,14 @@ class ConfigureBarChartReportForm(ConfigureNewReportBase):
 
 class ConfigurePieChartReportForm(ConfigureBarChartReportForm):
 
+    def __init__(self, *args, **kwargs):
+        super(ConfigurePieChartReportForm, self).__init__(*args, **kwargs)
+        self.fields['group_by'].label = "Show this property as the sections in the chart"
+
     @property
     def container_fieldset(self):
         return crispy.Fieldset(
-            _('Categories'),
+            _('Chart'),
             FieldWithHelpBubble('group_by', help_bubble_text="The values of the selected property will be aggregated and shows as the sections of the pie chart."),
             self.filter_fieldset
         )
@@ -816,6 +820,10 @@ class ConfigureListReportForm(ConfigureNewReportBase):
 
 class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportForm):
     report_type = 'table'
+
+    def __init__(self, *args, **kwargs):
+        super(ConfigureTableReportForm, self).__init__(*args, **kwargs)
+        self.fields['group_by'].label = "Property"
 
     @property
     def container_fieldset(self):
