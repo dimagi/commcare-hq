@@ -151,6 +151,7 @@ class SupplyPointStatus(models.Model):
         obj['location_id'] = location_id
         obj['external_id'] = obj['id']
         del obj['id']
+        del obj['supply_point']
         return cls(**obj)
 
     class Meta:
@@ -177,6 +178,7 @@ class DeliveryGroupReport(models.Model):
         obj['location_id'] = location_id
         obj['external_id'] = obj['id']
         del obj['id']
+        del obj['supply_point']
         return cls(**obj)
 
 

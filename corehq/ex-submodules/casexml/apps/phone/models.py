@@ -13,7 +13,6 @@ from casexml.apps.case.sharedmodels import CommCareCaseIndex, IndexHoldingMixIn
 from casexml.apps.phone.checksum import Checksum, CaseStateHash
 import logging
 
-
 logger = logging.getLogger('phone.models')
 
 
@@ -22,6 +21,9 @@ class User(object):
     This is a basic user model that's used for OTA restore to properly
     find cases and generate the user XML.
     """
+    # todo: this model is now useless since casexml and HQ are no longer separate repos.
+    # we should remove this abstraction layer and switch all the restore code to just
+    # work off CouchUser objects
 
     def __init__(self, user_id, username, password, date_joined, first_name=None,
                  last_name=None, phone_number=None, user_data=None,
@@ -37,6 +39,19 @@ class User(object):
         self.additional_owner_ids = additional_owner_ids or []
         self.domain = domain
         self.loadtest_factor = loadtest_factor
+
+    @property
+    def user_session_data(self):
+        # todo: this is redundant with the implementation in CouchUser.
+        # this will go away when the two are reconciled
+        from corehq.apps.custom_data_fields.models import SYSTEM_PREFIX
+        session_data = copy(self.user_data)
+        session_data.update({
+            '{}_first_name'.format(SYSTEM_PREFIX): self.first_name,
+            '{}_last_name'.format(SYSTEM_PREFIX): self.last_name,
+            '{}_phone_number'.format(SYSTEM_PREFIX): self.phone_number,
+        })
+        return session_data
 
     def get_owner_ids(self):
         ret = [self.user_id]
