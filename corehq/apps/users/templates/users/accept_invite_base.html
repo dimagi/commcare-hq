@@ -50,7 +50,7 @@
                         </div>
                     {% endfor %}
                     <fieldset>
-                        <legend>New User Information</legend>
+                        <legend>{% trans 'New User Information' %}</legend>
                         {% include "users/partial/field.html" with field=form.full_name %}
                         {% include "users/partial/field.html" with field=form.email %}
                         {% include "users/partial/field.html" with field=form.password %}
@@ -58,13 +58,17 @@
                         {% include "users/partial/field.html" with field=form.email_opt_in %}
                         {% include "users/partial/field.html" with field=form.eula_confirmed %}
                     </fieldset>
-                    <div class="form-actions"><button type="submit" class="btn btn-primary btn-large">Create Account</button></div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary btn-large">{% trans 'Create Account' %}</button>
+                    </div>
                 </form>
             </div>
             <div class="span4">
                 <aside class="well">
-                    <h3>Already have an account?</h3>
-                    <a href="{% url "login" DOMAIN_TYPE %}?next={{ request.path }}" class="btn btn-primary btn-large">Sign In Now</a>
+                    <h3>{% trans 'Already have an account?' %}</h3>
+                    <a href="{% url "login" DOMAIN_TYPE %}?next={{ request.path }}" class="btn btn-primary btn-large">
+                        {% trans 'Sign In Now' %}
+                    </a>
                 </aside>
             </div>
         {% endif %}

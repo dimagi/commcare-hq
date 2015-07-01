@@ -155,13 +155,10 @@ class InvitationView():
                     self._invite(invitation, user)
                     return HttpResponseRedirect(reverse("login"))
             else:
-                domain_name = invitation.domain
-                domain = Domain.get_by_name(domain_name)
-                if domain:
-                    domain_name = domain.hr_name
+                domain = Domain.get_by_name(invitation.domain)
                 form = NewWebUserRegistrationForm(initial={
                     'email': invitation.email,
-                    'hr_name': domain_name,
+                    'hr_name': domain.hr_name if domain else invitation.domain,
                     'create_domain': False
                 })
 
