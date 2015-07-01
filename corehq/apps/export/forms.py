@@ -15,17 +15,20 @@ class CreateFormExportForm(forms.Form):
 
     def __init__(self, domain, *args, **kwargs):
         super(CreateFormExportForm, self).__init__(*args, **kwargs)
-        self.fields['application'].choices = [
-            (app._id, app.name) for app in get_apps_in_domain(domain)
+        apps = get_apps_in_domain(domain)
+        self.fields['application'].choices = ([
+            ('', _('Select Application...')),
+        ] if len(apps) > 1 else []) + [
+            (app._id, app.name) for app in apps
         ]
         self.fields['module'].choices = [
             (module.unique_id, module.name)
-            for app in get_apps_in_domain(domain)
+            for app in apps
             for module in app.modules
         ]
         self.fields['form'].choices = [
             (form.get_unique_id(), form.name)
-            for app in get_apps_in_domain(domain)
+            for app in apps
             for form in app.get_forms()
         ]
 
@@ -40,21 +43,30 @@ class CreateFormExportForm(forms.Form):
                     'application',
                     data_bind='value: appId',
                 ),
-                crispy.Field(
-                    'module',
-                    data_bind="options: moduleOptions, optionsText: 'text', optionsValue: 'value', value: moduleId",
+                crispy.Div(
+                    crispy.Field(
+                        'module',
+                        data_bind="options: moduleOptions, optionsText: 'text', optionsValue: 'value', value: moduleId",
+                    ),
+                    data_bind="visible: appId",
                 ),
-                crispy.Field(
-                    'form',
-                    data_bind="options: formOptions, optionsText: 'text', optionsValue: 'value'",
+                crispy.Div(
+                    crispy.Field(
+                        'form',
+                        data_bind="options: formOptions, optionsText: 'text', optionsValue: 'value', value: formId",
+                    ),
+                    data_bind="visible: moduleId",
                 ),
             ),
-            FormActions(
-                crispy.ButtonHolder(
-                    crispy.Submit(
-                        'create_export',
-                        _('Next'),
+            crispy.Div(
+                FormActions(
+                    crispy.ButtonHolder(
+                        crispy.Submit(
+                            'create_export',
+                            _('Next'),
+                        ),
                     ),
                 ),
+                data_bind="visible: formId",
             ),
         )

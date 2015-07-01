@@ -287,6 +287,8 @@ class CreateFormExportView(BaseProjectDataView):
             'create_export_form': self.create_export_form,
             'app_to_module_options': self.app_to_module_options,
             'module_to_form_options': self.module_to_form_options,
+            'module_prompt': _('Select Module...'),
+            'form_prompt': _('Select Form...'),
         })
         return context
 
