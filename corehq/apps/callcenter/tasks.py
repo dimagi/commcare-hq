@@ -14,7 +14,8 @@ def calculate_indicators():
     domains = [
         domain
         for domain in get_call_center_domains()
-        if is_midnight_for_domain(domain.midnight, error_margin=15)
+        for midnight in domain.midnights
+        if is_midnight_for_domain(midnight, error_margin=20)
     ]
     for domain in domains:
         all_cases = get_call_center_cases(domain.name, domain.cc_case_type)
