@@ -1,4 +1,5 @@
 from django.test import TestCase
+from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CouchUser, WebUser, CommCareUser
 from dimagi.utils.couch import get_cached_property
 
@@ -12,9 +13,19 @@ class PhoneUsersTestCase(TestCase):
         self.username = 'username'
         self.password = 'password'
         self.domain = 'mockdomain'
+        Domain(name=self.domain).save()
         self.couch_user = WebUser.create(self.domain, self.username, self.password)
         self.couch_user.language = 'en'
         self.couch_user.save()
+
+    def tearDown(self):
+        user = WebUser.get_by_username(self.username)
+        if user:
+            user.delete()
+
+        domain = Domain.get_by_name(self.domain)
+        if domain:
+            domain.delete()
 
     def testPhoneUsersViewNoNumberSet(self):
         phone_users_count = CouchUser.view("users/phone_users_by_domain", 
@@ -89,4 +100,3 @@ class PhoneUsersTestCase(TestCase):
 
         cached_full_name = get_cached_property(CouchUser, testuser.get_id, 'full_name', expiry=7*24*60*60)
         self.assertEqual(FULL_NAME, cached_full_name)
-
