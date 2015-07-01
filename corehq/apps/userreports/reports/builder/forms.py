@@ -17,7 +17,7 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.util import get_case_properties
 from corehq.apps.app_manager.xform import XForm
-
+from corehq.apps.hqwebapp.crispy import FieldWithHelpBubble
 from corehq.apps.userreports import tasks
 from corehq.apps.userreports.app_manager import _clean_table_name
 from corehq.apps.userreports.models import (
@@ -243,6 +243,11 @@ class DataSourceForm(forms.Form):
         self.app_source_helper = ApplicationDataSourceUIHelper()
         self.app_source_helper.bootstrap(self.domain)
         report_source_fields = self.app_source_helper.get_fields()
+        report_source_help_texts = {
+            "source_type": "Form: display data from form submissions.<br/>Case: display data from your cases. You must be using case management for this option.",
+            "application": "Which application should the data come from?",
+            "source": "For cases: choose the case type to use for this report.<br/>For forms: choose the form from your application you'd like to see data on.",
+        }
         self.fields.update(report_source_fields)
 
         self.fields['chart_type'].required = self.report_type == "chart"
@@ -250,15 +255,28 @@ class DataSourceForm(forms.Form):
         self.helper = FormHelper()
         self.helper.form_class = "form-horizontal"
         self.helper.form_id = "report-builder-form"
+
+        chart_type_crispy_field = None
+        if self.report_type == 'chart':
+            chart_type_crispy_field = FieldWithHelpBubble('chart_type', help_bubble_text="Bar: shows one vertical bar for each value in your case or form.<br/>Pie: shows what percentage of the total each value is.")
+        report_source_crispy_fields = []
+        for k in report_source_fields.keys():
+            if k in report_source_help_texts:
+                report_source_crispy_fields.append(FieldWithHelpBubble(
+                    k, help_bubble_text=report_source_help_texts[k]
+                ))
+            else:
+                report_source_crispy_fields.append(k)
+
+
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _('{} Report'.format(self.report_type.capitalize())),
-                'report_name',
-                'chart_type' if self.report_type == 'chart' else None
+                FieldWithHelpBubble('report_name', help_bubble_text='Web users will see this name in the "Reports" section of CommCareHQ and can click to view the report'),
+                chart_type_crispy_field
             ),
             crispy.Fieldset(
-                _('Data'),
-                *report_source_fields.keys()
+                _('Data'), *report_source_crispy_fields
             ),
             FormActions(
                 crispy.ButtonHolder(
@@ -720,6 +738,14 @@ class ConfigureBarChartReportForm(ConfigureNewReportBase):
 
 
 class ConfigurePieChartReportForm(ConfigureBarChartReportForm):
+
+    @property
+    def container_fieldset(self):
+        return crispy.Fieldset(
+            _('Categories'),
+            FieldWithHelpBubble('group_by', help_bubble_text="The values of the selected property will be aggregated and shows as the sections of the pie chart."),
+            self.filter_fieldset
+        )
 
     @property
     def _report_charts(self):
