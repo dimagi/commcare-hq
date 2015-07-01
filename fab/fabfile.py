@@ -680,7 +680,6 @@ def deploy():
 
 def _deploy_without_asking():
     try:
-        _tag_commit()
         _execute_with_timing(update_code)
         _execute_with_timing(update_virtualenv)
         _execute_with_timing(install_npm_packages)
@@ -718,6 +717,7 @@ def _deploy_without_asking():
         raise
     else:
         _execute_with_timing(services_restart)
+        _tag_commit()
         _execute_with_timing(record_successful_deploy)
 
 
@@ -735,7 +735,6 @@ def _tag_commit():
     deploy_time = datetime.datetime.utcnow()
     tag_name = "{:%Y-%m-%d_%H.%M}-{}-deploy".format(deploy_time, env.environment)
     branch = "origin/{}".format(env.code_branch)
-    # TODO make it easier than --set message="my message"
     msg = getattr(env, "message", "")
     msg += "\n{} deploy at {}".format(env.environment, deploy_time.isoformat())
     sh.git.tag(tag_name, "-m", msg, branch)
