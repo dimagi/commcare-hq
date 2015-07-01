@@ -32,7 +32,6 @@ from django.utils.safestring import mark_safe
 from django_countries.countries import COUNTRIES
 from corehq.apps.accounting.models import (
     BillingAccount,
-    BillingAccountAdmin,
     BillingAccountType,
     BillingContactInfo,
     CreditAdjustmentReason,
@@ -837,16 +836,6 @@ class ConfidentialPasswordResetForm(HQPasswordResetForm):
 
 
 class EditBillingAccountInfoForm(forms.ModelForm):
-    billing_admins = forms.CharField(
-        required=False,
-        label=ugettext_noop("Other Billing Admins"),
-        help_text=ugettext_noop(mark_safe(
-            "<p>These are the Web Users that will be able to access and "
-            "modify your account's subscription and billing information.</p> "
-            "<p>Your logged in account is already a Billing Administrator."
-            "</p>"
-        )),
-    )
 
     class Meta:
         model = BillingContactInfo
@@ -871,17 +860,9 @@ class EditBillingAccountInfoForm(forms.ModelForm):
 
         super(EditBillingAccountInfoForm, self).__init__(data, *args, **kwargs)
 
-        other_admins = self.account.billing_admins.filter(
-            domain=self.domain).exclude(web_user=self.creating_user).all()
-        self.fields['billing_admins'].initial = ','.join([o.web_user for o in other_admins])
-
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
         self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                _("Billing Administrators"),
-                crispy.Field('billing_admins', css_class='input-xxlarge'),
-            ),
             crispy.Fieldset(
                 _("Basic Information"),
                 'company_name',
@@ -909,22 +890,6 @@ class EditBillingAccountInfoForm(forms.ModelForm):
             ),
         )
 
-    def clean_billing_admins(self):
-        data = self.cleaned_data['billing_admins']
-        all_admins = data.split(',')
-        result = []
-        for admin in all_admins:
-            if admin and admin != u'':
-                result.append(BillingAccountAdmin.objects.get_or_create(
-                    web_user=admin,
-                    domain=self.domain,
-                )[0])
-        result.append(BillingAccountAdmin.objects.get_or_create(
-            web_user=self.creating_user,
-            domain=self.domain,
-        )[0])
-        return result
-
     def clean_phone_number(self):
         data = self.cleaned_data['phone_number']
         parsed_number = None
@@ -943,14 +908,6 @@ class EditBillingAccountInfoForm(forms.ModelForm):
         billing_contact_info.account = self.account
         billing_contact_info.save()
 
-        billing_admins = self.cleaned_data['billing_admins']
-        other_domain_admins = copy.copy(self.account.billing_admins.exclude(
-            domain=self.domain).all())
-        self.account.billing_admins.clear()
-        for other_admin in other_domain_admins:
-            self.account.billing_admins.add(other_admin)
-        for admin in billing_admins:
-            self.account.billing_admins.add(admin)
         self.account.save()
         return True
 
@@ -970,10 +927,6 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
         from corehq.apps.domain.views import DomainSubscriptionView
         self.helper.layout = crispy.Layout(
             'plan_edition',
-            crispy.Fieldset(
-                _("Billing Administrators"),
-                crispy.Field('billing_admins', css_class='input-xxlarge'),
-            ),
             crispy.Fieldset(
                 _("Basic Information"),
                 'company_name',
@@ -1071,10 +1024,6 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
         from corehq.apps.domain.views import DomainSubscriptionView
         self.helper.layout = crispy.Layout(
             'plan_edition',
-            crispy.Fieldset(
-                _("Billing Administrators"),
-                crispy.Field('billing_admins', css_class='input-xxlarge'),
-            ),
             crispy.Fieldset(
                 _("Basic Information"),
                 'company_name',
