@@ -443,7 +443,10 @@ class ConfigureNewReportBase(forms.Form):
         report filters.
         """
         return crispy.Fieldset(
-            _("Filters"),
+            "{title}</br><small>{fine_print}</small>".format(
+                title=_("Filters"),
+                fine_print=_("Add filters to your report to allow viewers to select which data the report will display. These filters will be displayed at the top of your report."),
+            ),
             crispy.Div(
                 crispy.HTML(self.column_config_template), id="filters-table", data_bind='with: filtersList'
             ),
@@ -764,6 +767,7 @@ class ConfigurePieChartReportForm(ConfigureBarChartReportForm):
 class ConfigureListReportForm(ConfigureNewReportBase):
     report_type = 'list'
     columns = JsonField(required=True)
+    column_legend_fine_print = _("Add columns to your report to display information from cases or form submissions. You may rearrange the order of the columns by dragging the arrows next to the column.")
 
     @property
     def container_fieldset(self):
@@ -776,7 +780,10 @@ class ConfigureListReportForm(ConfigureNewReportBase):
     @property
     def column_fieldset(self):
         return crispy.Fieldset(
-            _("Columns"),
+            "{title}</br><small>{fine_print}</small>".format(
+                title=_("Columns"),
+                fine_print=self.column_legend_fine_print
+            ),
             crispy.Div(
                 crispy.HTML(self.column_config_template), id="columns-table", data_bind='with: columnsList'
             ),
@@ -820,6 +827,8 @@ class ConfigureListReportForm(ConfigureNewReportBase):
 
 class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportForm):
     report_type = 'table'
+    # TODO: This looks like really bad when it's on multiple lines
+    column_legend_fine_print = _('Add columns for this report to aggregate. Each property you add will create a column for every value of that property.  For example, if you add a column for a yes or no question, the report will show a column for "yes" and a column for "no".')
 
     def __init__(self, *args, **kwargs):
         super(ConfigureTableReportForm, self).__init__(*args, **kwargs)
@@ -831,7 +840,10 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
             "",
             self.column_fieldset,
             crispy.Fieldset(
-                _('Rows'),
+                '{title}</br><small>{fine_print}</small>'.format(
+                    title=_("Rows"),
+                    fine_print=_('Choose which property this report will group its results by. Each value of this property will be a row in the table. For example, if you choose a yes or no question, the report will show a row for "yes" and a row for "no"'),
+                ),
                 'group_by',
             ),
             self.filter_fieldset
@@ -877,6 +889,7 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
 class ConfigureWorkerReportForm(ConfigureTableReportForm):
     # This is a ConfigureTableReportForm, but with a predetermined aggregation
     report_type = 'worker'
+    column_legend_fine_print = _('Add columns for this report to aggregate. Each property you add will create a column for every value of that property. For example, if you add a column for a yes or no question, the report will show a column for "yes" and a column for "no".')
 
     def __init__(self, *args, **kwargs):
         super(ConfigureWorkerReportForm, self).__init__(*args, **kwargs)
