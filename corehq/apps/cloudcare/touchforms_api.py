@@ -114,5 +114,5 @@ def get_user_contributions_to_touchforms_session(couch_user):
     return {
         'username': couch_user.raw_username,
         'user_id': couch_user.get_id,
-        'user_data': couch_user.user_data if isinstance(couch_user, CommCareUser) else {},
+        'user_data': couch_user.user_session_data,
     }
