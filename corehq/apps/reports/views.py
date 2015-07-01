@@ -12,6 +12,7 @@ from urllib2 import URLError
 from casexml.apps.case import const
 from casexml.apps.case.const import CASE_ACTION_CREATE
 from casexml.apps.case.dbaccessors import get_open_case_ids_in_domain
+from corehq.apps.cloudcare.touchforms_api import get_user_contributions_to_touchforms_session
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.util.timezones.utils import get_timezone_for_user
 from dimagi.utils.decorators.memoized import memoized
@@ -1294,7 +1295,8 @@ def edit_form_instance(request, domain, instance_id):
             url = '{}?instance_id={}'.format(url, instance_id)
         return url
 
-    edit_session_data = {'user_id': instance.metadata.userID}
+    user = get_document_or_404(CommCareUser, domain, instance.metadata.userID)
+    edit_session_data = get_user_contributions_to_touchforms_session(user)
     case_blocks = extract_case_blocks(instance)
 
     if len(case_blocks) == 1 and case_blocks[0].get(const.CASE_ATTR_ID):
