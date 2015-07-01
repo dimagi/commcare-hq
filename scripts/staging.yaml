@@ -45,6 +45,7 @@
 trunk: master
 name: autostaging
 branches:
+  - phonelog-indexes  # Danny 6/30
   - remove-unused-views  # Danny 6/25
   - vellum-staging # J$ 11/13
   - fixtures-spike  # cz 1/29
@@ -52,12 +53,11 @@ branches:
   - reverseLanguageMedia # Sravan 6/10
   - index-phonelog-reportentry # Ben 6/8
   - autoload-supplypoint  # Ethan 6/15
-  - full-name  # Ethan 6/15
-  - owns-cases-flag  # Ethan 6/24
   - track-plan-editions # Nick P 6/25
   - new-domain-with-hr-name+locations-for-robber-barons
   - locations-for-robber-barons  # Ethan 5/7
   - new-domain-with-hr-name # Jenny June 26
+  - new-account-domain # Jenny July 1
   - remove-billing-admin-forwards+wire-prepay # Farid June 26
   - remove-billing-admin-forwards # Farid 25/6
   - wire-prepay # Farid June 26
@@ -66,7 +66,6 @@ submodules:
     # let's leave this here even when empty
     # just so we always get latest master
     branches:
-      - tf-persistence  # wsp 5/7
       - 221-jars # wsp 5/20
   submodules/formtranslate-src:
     # let's leave this here even when empty

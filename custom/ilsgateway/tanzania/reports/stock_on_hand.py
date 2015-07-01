@@ -137,8 +137,9 @@ class SohPercentageTableData(ILSData):
                     month = enddate.month - 1 if enddate.month != 1 else 12
                     year = enddate.year - 1 if enddate.month == 1 else enddate.year
                     stockouts = StockTransaction.objects.filter(
-                        case_id__in=fac_ids,
+                        case_id__in=list(fac_ids),
                         stock_on_hand__lte=0,
+                        report__domain=self.config['domain'],
                         report__date__range=[
                             datetime(year, month, 1),
                             datetime(enddate.year, enddate.month, 1)
