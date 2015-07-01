@@ -332,10 +332,10 @@ HQ_APPS = (
     'custom.world_vision',
     'custom.tdh',
     'custom.up_nrhm',
+    'crispy_forms',
 
     'custom.care_pathways',
     'custom.common',
-    'bootstrap3_crispy',
 
     'custom.dhis2',
 )
@@ -356,7 +356,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'corehq.apps.megamobile',
     'corehq.apps.yo',
     'crispy_forms',
-    'bootstrap3_crispy',
     'django_extensions',
     'django_prbac',
     'djcelery',
