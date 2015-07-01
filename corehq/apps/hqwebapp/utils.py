@@ -13,6 +13,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from django.views.generic import TemplateView
 
+from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.views import logout
 from corehq.apps.registration.forms import NewWebUserRegistrationForm
 from corehq.apps.registration.utils import activate_new_user
@@ -154,7 +155,12 @@ class InvitationView():
                     self._invite(invitation, user)
                     return HttpResponseRedirect(reverse("login"))
             else:
-                form = NewWebUserRegistrationForm(initial={'email': invitation.email})
+                domain = Domain.get_by_name(invitation.domain)
+                form = NewWebUserRegistrationForm(initial={
+                    'email': invitation.email,
+                    'hr_name': domain.hr_name if domain else invitation.domain,
+                    'create_domain': False
+                })
 
         return render(request, self.template, {"form": form})
 
