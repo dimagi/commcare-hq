@@ -57,6 +57,7 @@ branches:
   - new-domain-with-hr-name+locations-for-robber-barons
   - locations-for-robber-barons  # Ethan 5/7
   - new-domain-with-hr-name # Jenny June 26
+  - new-account-domain # Jenny July 1
   - remove-billing-admin-forwards+wire-prepay # Farid June 26
   - remove-billing-admin-forwards # Farid 25/6
   - wire-prepay # Farid June 26
