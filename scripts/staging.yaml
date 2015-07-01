@@ -54,11 +54,12 @@ branches:
   - autoload-supplypoint  # Ethan 6/15
   - track-plan-editions # Nick P 6/25
   - index-phonelog-reportentry # Ben 6/8
-  - locations-for-robber-barons  # Ethan 5/7
   - remove-billing-admin-forwards+wire-prepay # Farid June 26
   - remove-billing-admin-forwards # Farid 25/6
   - wire-prepay # Farid June 26
+  - new-account-domain+locations-for-robber-barons # Jenny July 1
   - new-account-domain # Jenny July 1
+  - locations-for-robber-barons  # Ethan 5/7
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
