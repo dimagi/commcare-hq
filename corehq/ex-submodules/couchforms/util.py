@@ -672,6 +672,10 @@ def _handle_unexpected_error(e, instance):
     instance.__class__ = XFormError
     instance.orig_id = instance._id
     instance._id = new_id
+    if '_rev' in instance:
+        # clear the rev since we want to make a new doc
+        # this is necessary for errors that come from editing submissions
+        del instance['_rev']
     instance.problem = error_message
     instance.save()
 
