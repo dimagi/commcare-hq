@@ -50,40 +50,25 @@
                         </div>
                     {% endfor %}
                     <fieldset>
-                        <legend>New User Information</legend>
-                        {% for field in form.visible_fields %}
-                            <div class="control-group{% if field.errors %} error{% endif %}">
-                                <label class="control-label" for="{{ field.id }}">{{ field.label }}</label>
-                                <div class="controls">
-                                    {% if field|is_checkbox %}
-                                        <label class="checkbox">
-                                            {{ field }} {{ field.help_text }}
-                                        </label>
-                                        {% for error in field.errors %}
-                                            <span class="help-inline">{{ error }}</span>
-                                        {% endfor %}
-                                    {% else %}
-                                        {{ field }}
-                                        {% for error in field.errors %}
-                                            <span class="help-inline">{{ error }}</span>
-                                        {% endfor %}
-                                        {% if field.help_text %}
-                                            <p class="help-block">
-                                                {{ field.help_text }}
-                                            </p>
-                                        {% endif %}
-                                    {% endif %}
-                                </div>
-                            </div>
-                        {% endfor %}
+                        <legend>{% trans 'New User Information' %}</legend>
+                        {% include "users/partial/field.html" with field=form.full_name %}
+                        {% include "users/partial/field.html" with field=form.email %}
+                        {% include "users/partial/field.html" with field=form.password %}
+                        {% include "users/partial/field.html" with field=form.hr_name %}
+                        {% include "users/partial/field.html" with field=form.email_opt_in %}
+                        {% include "users/partial/field.html" with field=form.eula_confirmed %}
                     </fieldset>
-                    <div class="form-actions"><button type="submit" class="btn btn-primary btn-large">Create Account</button></div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary btn-large">{% trans 'Create Account' %}</button>
+                    </div>
                 </form>
             </div>
             <div class="span4">
                 <aside class="well">
-                    <h3>Already have an account?</h3>
-                    <a href="{% url "login" DOMAIN_TYPE %}?next={{ request.path }}" class="btn btn-primary btn-large">Sign In Now</a>
+                    <h3>{% trans 'Already have an account?' %}</h3>
+                    <a href="{% url "login" DOMAIN_TYPE %}?next={{ request.path }}" class="btn btn-primary btn-large">
+                        {% trans 'Sign In Now' %}
+                    </a>
                 </aside>
             </div>
         {% endif %}
