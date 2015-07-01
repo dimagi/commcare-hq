@@ -556,6 +556,7 @@ class StockStatus(MultiReport):
 
         report_type = self.request.GET.get('report_type', None)
         config = self.report_config
+        config.update(self.data())
         config['export'] = True
         if report_type == 'stockouts' or not report_type:
             r = MonthOfStockProduct(config=config)
