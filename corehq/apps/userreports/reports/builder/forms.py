@@ -71,7 +71,6 @@ class QuestionSelect(Widget):
         if value is None: value = ''
         final_attrs = self.build_attrs(attrs, name=name)
 
-        # TODO: Test this thoroughly
         return format_html(
             '<input{0} data-bind="'
             '   questionsSelect: [{1}],'
