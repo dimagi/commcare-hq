@@ -16153,8 +16153,8 @@ msgstr "Les erreurs suivantes ont été trouvées"
 #: corehq/apps/sms/forms.py:79 corehq/apps/sms/forms.py:506
 #: corehq/apps/sms/forms.py:634 corehq/apps/sms/forms.py:729
 #: corehq/apps/sms/messages.py:45
-#: submodules/bootstrap3_crispy/bootstrap3_crispy/tests/test_form_helper.py:129
-#: submodules/bootstrap3_crispy/bootstrap3_crispy/tests/test_form_helper.py:139
+#: submodules/bootstrap3_crispy/crispy_forms/tests/test_form_helper.py:129
+#: submodules/bootstrap3_crispy/crispy_forms/tests/test_form_helper.py:139
 msgid "This field is required."
 msgstr "Ce champ est requis."
 
@@ -28040,15 +28040,15 @@ msgstr "Audit Viewer"
 msgid "Audited Model Changes"
 msgstr "Vérifié modifications de modèle"
 
-#: submodules/bootstrap3_crispy/bootstrap3_crispy/tests/test_layout.py:467
+#: submodules/bootstrap3_crispy/crispy_forms/tests/test_layout.py:467
 msgid "i18n text"
 msgstr "i18n texte"
 
-#: submodules/bootstrap3_crispy/bootstrap3_crispy/tests/test_layout.py:469
+#: submodules/bootstrap3_crispy/crispy_forms/tests/test_layout.py:469
 msgid "i18n legend"
 msgstr "i18n legende"
 
-#: submodules/bootstrap3_crispy/bootstrap3_crispy/tests/test_layout_objects.py:111
+#: submodules/bootstrap3_crispy/crispy_forms/tests/test_layout_objects.py:111
 msgid "Enter a valid value."
 msgstr "Entrer une valeur valide."
 
