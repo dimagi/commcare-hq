@@ -36,6 +36,7 @@ from corehq.apps.accounting.utils import (
     get_address_from_invoice, get_dimagi_from_email_by_product,
     fmt_dollar_amount, EXCHANGE_RATE_DECIMAL_PLACES,
     ensure_domain_instance, get_change_status,
+    is_active_subscription,
 )
 from corehq.apps.accounting.subscription_changes import (
     DomainDowngradeActionHandler, DomainUpgradeActionHandler,
@@ -1402,12 +1403,14 @@ class Subscription(models.Model):
             date_end=date_end,
             **kwargs
         )
-        subscriber.apply_upgrades_and_downgrades(
-            new_plan_version=plan_version,
-            web_user=web_user,
-            new_subscription=subscription,
-            internal_change=internal_change,
-        )
+        subscription.is_active = is_active_subscription(date_start, date_end)
+        if subscription.is_active:
+            subscriber.apply_upgrades_and_downgrades(
+                new_plan_version=plan_version,
+                web_user=web_user,
+                new_subscription=subscription,
+                internal_change=internal_change,
+            )
         SubscriptionAdjustment.record_adjustment(
             subscription, method=adjustment_method, note=note,
             web_user=web_user
@@ -1837,12 +1840,16 @@ class BillingRecord(BillingRecordBase):
             subscription__subscriber__domain=self.invoice.get_domain(),
         ))
         is_small_invoice = self.invoice.balance <= SMALL_INVOICE_THRESHOLD
+        payment_status = (_("Paid")
+                          if self.invoice.is_paid or total_balance == 0
+                          else _("Payment Required"))
         context.update({
             'plan_name': self.invoice.subscription.plan_version.plan.name,
             'date_due': self.invoice.date_due,
             'is_small_invoice': is_small_invoice,
             'total_balance': total_balance,
             'is_total_balance_due': total_balance > SMALL_INVOICE_THRESHOLD,
+            'payment_status': payment_status,
         })
         if self.invoice.subscription.service_type == SubscriptionType.CONTRACTED:
             from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher

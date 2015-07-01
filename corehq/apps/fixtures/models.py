@@ -49,16 +49,15 @@ class FixtureDataType(Document):
 
     @classmethod
     def total_by_domain(cls, domain):
-        num_fixtures = FixtureDataType.get_db().view(
-            'fixtures/data_types_by_domain',
-            reduce=True,
-            key=domain,
-        ).first()
-        return num_fixtures['value'] if num_fixtures is not None else 0
+        from corehq.apps.fixtures.dbaccessors import \
+            get_number_of_fixture_data_types_in_domain
+        return get_number_of_fixture_data_types_in_domain(domain)
 
     @classmethod
     def by_domain(cls, domain):
-        return cls.view('fixtures/data_types_by_domain', key=domain, reduce=False, include_docs=True, descending=True)
+        from corehq.apps.fixtures.dbaccessors import \
+            get_fixture_data_types_in_domain
+        return get_fixture_data_types_in_domain(domain)
 
     @classmethod
     def by_domain_tag(cls, domain, tag):

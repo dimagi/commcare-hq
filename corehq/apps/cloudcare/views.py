@@ -375,12 +375,9 @@ def get_fixtures(request, domain, user_id, fixture_id=None):
             ret.append(fixture)
         return HttpResponse(ElementTree.tostring(ret), content_type="text/xml")
     else:
-        fixtures = generator.get_fixture_by_id(fixture_id, casexml_user, version=V2)
-        try:
-            fixture = next(fixtures)
-        except StopIteration:
+        fixture = generator.get_fixture_by_id(fixture_id, casexml_user, version=V2)
+        if not fixture:
             raise Http404
-
         assert len(fixture.getchildren()) == 1, 'fixture {} expected 1 child but found {}'.format(
             fixture_id, len(fixture.getchildren())
         )

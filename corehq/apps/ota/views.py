@@ -43,13 +43,15 @@ def get_restore_params(request):
         'since': request.GET.get('since'),
         'version': request.GET.get('version', "1.0"),
         'state': request.GET.get('state'),
-        'items': request.GET.get('items') == 'true'
+        'items': request.GET.get('items') == 'true',
+        'force_restore_mode': request.GET.get('mode', None)
     }
 
 
 def get_restore_response(domain, couch_user, since=None, version='1.0',
                          state=None, items=False, force_cache=False,
-                         cache_timeout=None, overwrite_cache=False):
+                         cache_timeout=None, overwrite_cache=False,
+                         force_restore_mode=None):
     # not a view just a view util
     if not couch_user.is_commcare_user():
         return HttpResponse("No linked chw found for %s" % couch_user.username,
@@ -67,6 +69,7 @@ def get_restore_response(domain, couch_user, since=None, version='1.0',
             version=version,
             state_hash=state,
             include_item_count=items,
+            force_restore_mode=force_restore_mode,
         ),
         cache_settings=RestoreCacheSettings(
             force_cache=force_cache,

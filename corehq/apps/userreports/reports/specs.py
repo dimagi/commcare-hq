@@ -201,10 +201,15 @@ class PercentageColumn(ReportColumn):
 
     def get_format_fn(self):
         NO_DATA_TEXT = '--'
+        CANT_CALCULATE_TEXT = '?'
 
         def _pct(data):
             if data['denom']:
-                return '{0:.0f}%'.format((float(data['num']) / float(data['denom'])) * 100)
+                try:
+                    return '{0:.0f}%'.format((float(data['num']) / float(data['denom'])) * 100)
+                except (ValueError, TypeError):
+                    return CANT_CALCULATE_TEXT
+
             return NO_DATA_TEXT
 
         _fraction = lambda data: '{num}/{denom}'.format(**data)
@@ -239,6 +244,7 @@ class FilterSpec(JsonObject):
     field = StringProperty(required=True)  # this is the actual column that is queried
     display = DefaultProperty()
     required = BooleanProperty(default=False)
+    datatype = DataTypeProperty(default='string')
 
     def get_display(self):
         return self.display or self.slug
@@ -251,6 +257,7 @@ class DateFilterSpec(FilterSpec):
 class ChoiceListFilterSpec(FilterSpec):
     type = TypeProperty('choice_list')
     show_all = BooleanProperty(default=True)
+    datatype = DataTypeProperty(default='string')
     choices = ListProperty(FilterChoice)
 
 

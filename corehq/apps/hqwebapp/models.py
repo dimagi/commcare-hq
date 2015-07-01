@@ -16,7 +16,7 @@ from corehq.apps.accounting.utils import (
     domain_has_privilege,
     is_accounting_admin
 )
-from corehq.apps.domain.utils import get_adm_enabled_domains, user_has_custom_top_menu
+from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.hqadmin.reports import (
     RealProjectSpacesReport,
     CommConnectProjectSpacesReport,
@@ -41,8 +41,6 @@ from dimagi.utils.django.cache import make_template_fragment_key
 from corehq.apps.reports.dispatcher import (ProjectReportDispatcher,
                                             CustomProjectReportDispatcher)
 from corehq.apps.reports.models import ReportConfig
-from corehq.apps.adm.dispatcher import (ADMAdminInterfaceDispatcher,
-                                        ADMSectionDispatcher)
 from django.db import models
 
 
@@ -307,24 +305,6 @@ class ProjectReportsTab(UITab):
         return tools + user_reports + project_reports + custom_reports
 
 
-class ADMReportsTab(UITab):
-    title = ugettext_noop("Active Data Management")
-    view = "corehq.apps.adm.views.default_adm_report"
-    dispatcher = ADMSectionDispatcher
-
-    @property
-    def is_viewable(self):
-        if not self.project or self.project.commtrack_enabled:
-            return False
-
-        adm_enabled_projects = get_adm_enabled_domains()
-
-        return (not self.project.is_snapshot and
-                self.domain in adm_enabled_projects and
-                (self.couch_user.can_view_reports() or
-                 self.couch_user.get_viewable_reports()))
-
-
 class IndicatorAdminTab(UITab):
     title = ugettext_noop("Administer Indicators")
     view = "corehq.apps.indicators.views.default_admin"
@@ -376,7 +356,7 @@ class DashboardTab(UITab):
 
 class ReportsTab(UITab):
     title = ugettext_noop("Reports")
-    subtab_classes = (ProjectReportsTab, ADMReportsTab, IndicatorAdminTab)
+    subtab_classes = (ProjectReportsTab, IndicatorAdminTab)
 
     @property
     def view(self):
@@ -1449,16 +1429,6 @@ class AdminReportsTab(UITab):
                  toggles.IS_DEVELOPER.enabled(self.couch_user.username)))
 
 
-class GlobalADMConfigTab(UITab):
-    title = ugettext_noop("Global ADM Report Configuration")
-    view = "corehq.apps.adm.views.default_adm_admin"
-    dispatcher = ADMAdminInterfaceDispatcher
-
-    @property
-    def is_viewable(self):
-        return self.couch_user and self.couch_user.is_superuser
-
-
 class AccountingTab(UITab):
     title = ugettext_noop("Accounting")
     view = "accounting_default"
@@ -1544,7 +1514,6 @@ class AdminTab(UITab):
     view = "corehq.apps.hqadmin.views.default"
     subtab_classes = (
         AdminReportsTab,
-        GlobalADMConfigTab,
         SMSAdminTab,
         AccountingTab,
         FeatureFlagsTab
@@ -1564,8 +1533,6 @@ class AdminTab(UITab):
             dropdown_dict(_("Admin Reports"), url=reverse("default_admin_report")),
             dropdown_dict(_("System Info"), url=reverse("system_info")),
             dropdown_dict(_("Management"), is_header=True),
-            dropdown_dict(mark_for_escaping(_("ADM Reports & Columns")),
-                          url=reverse("default_adm_admin_interface")),
             dropdown_dict(mark_for_escaping(_("Commands")),
                           url=reverse("management_commands")),
             # dropdown_dict(mark_for_escaping("HQ Announcements"),

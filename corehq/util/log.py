@@ -1,8 +1,10 @@
+from collections import defaultdict
 import traceback
 from celery.utils.mail import ErrorMail
 from django.core import mail
 from django.utils.log import AdminEmailHandler
-from django.views.debug import get_exception_reporter_filter, ExceptionReporter
+from django.views.debug import get_exception_reporter_filter
+from django.template.loader import render_to_string
 
 
 class HqAdminEmailHandler(AdminEmailHandler):
@@ -39,11 +41,15 @@ class HqAdminEmailHandler(AdminEmailHandler):
             request_repr = "Request repr() unavailable."
         subject = self.format_subject(subject)
 
+        tb_list = []
         if record.exc_info:
             exc_info = record.exc_info
-            stack_trace = '\n'.join(traceback.format_exception(*record.exc_info))
+            etype, value, tb = exc_info
+            tb_list = ['Traceback (most recent call first):\n']
+            tb_list.extend(traceback.format_exception_only(etype, value))
+            tb_list.extend(traceback.format_list(reversed(traceback.extract_tb(tb))))
+            stack_trace = '\n'.join(tb_list)
         else:
-            exc_info = (None, record.getMessage(), None)
             stack_trace = 'No stack trace available'
 
         message = "%s\n\n%s" % (stack_trace, request_repr)
@@ -51,8 +57,20 @@ class HqAdminEmailHandler(AdminEmailHandler):
         if details:
             message = "%s\n\n%s" % (self.format_details(details), message)
 
-        reporter = ExceptionReporter(request, is_email=True, *exc_info)
-        html_message = self.include_html and reporter.get_traceback_html() or None
+        context = defaultdict(lambda: '')
+        context.update({
+            'details': details,
+            'tb_list': tb_list,
+            'request_repr': request_repr
+        })
+        if request:
+            context.update({
+                'get': request.GET,
+                'post': request.POST,
+                'method': request.method,
+                'url': request.build_absolute_uri(),
+            })
+        html_message = render_to_string('hqadmin/email/error_email.html', context)
         mail.mail_admins(subject, message, fail_silently=True, html_message=html_message)
 
     def format_details(self, details):

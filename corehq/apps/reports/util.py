@@ -358,13 +358,11 @@ def create_export_filter(request, domain, export_type='form'):
 
 def get_possible_reports(domain_name):
     from corehq.apps.reports.dispatcher import (ProjectReportDispatcher, CustomProjectReportDispatcher)
-    from corehq.apps.adm.dispatcher import ADMSectionDispatcher
     from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 
     # todo: exports should be its own permission at some point?
     report_map = (ProjectReportDispatcher().get_reports(domain_name) +
                   CustomProjectReportDispatcher().get_reports(domain_name) +
-                  ADMSectionDispatcher().get_reports(domain_name) +
                   DataInterfaceDispatcher().get_reports(domain_name))
     reports = []
     domain = Domain.get_by_name(domain_name)
