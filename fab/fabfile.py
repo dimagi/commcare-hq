@@ -731,14 +731,15 @@ def force_update_static():
 
 
 def _tag_commit():
-    # TODO sh.git.fetch("origin", env.code_branch)
+    sh.git.fetch("origin", env.code_branch)
     deploy_time = datetime.datetime.utcnow()
-    tag_name = "{:%Y-%m-%d_%H.%M}-{}".format(deploy_time, env.environment)
+    tag_name = "{:%Y-%m-%d_%H.%M}-{}-deploy".format(deploy_time, env.environment)
     branch = "origin/{}".format(env.code_branch)
-    msg = getattr(env, "message", "")  # TODO make it easier than --set message
+    # TODO make it easier than --set message="my message"
+    msg = getattr(env, "message", "")
     msg += "\n{} deploy at {}".format(env.environment, deploy_time.isoformat())
     sh.git.tag(tag_name, "-m", msg, branch)
-    # TODO push tag back to origin, eventually deploy tag, not branch
+    sh.git.push("origin", tag_name)
 
 
 @task
