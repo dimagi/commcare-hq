@@ -152,7 +152,6 @@ class AppStringsBase(object):
             AUTO_SELECT_FIXTURE: u'lookup table field',
             AUTO_SELECT_USER: u'user data key',
             AUTO_SELECT_CASE: u'case index',
-            AUTO_SELECT_LOCATION: u'location',
             AUTO_SELECT_USERCASE: u'user case',
             AUTO_SELECT_RAW: u'custom xpath expression',
         }
@@ -165,6 +164,13 @@ class AppStringsBase(object):
             key = 'case_autoload.{0}.case_missing'.format(mode)
             if key not in messages:
                 messages[key] = u'Unable to find case referenced by auto-select case ID.'
+
+        key = 'case_autoload.{0}.property_missing'.format(AUTO_SELECT_LOCATION)
+        messages[key] = (u"This form requires access to the user's location, "
+                         "but none was found.")
+        key = 'case_autoload.{0}.case_missing'.format(AUTO_SELECT_LOCATION)
+        messages[key] = (u"This form requires the user's location to have a "
+                         "supply-point case.")
 
         return commcare_translations.dumps(messages).encode('utf-8')
 
