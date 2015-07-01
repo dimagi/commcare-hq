@@ -1281,13 +1281,20 @@ def edit_form_instance(request, domain, instance_id):
 
     context = _get_form_context(request, domain, instance_id)
     instance = context['instance']
+    if not instance.app_id or not instance.build_id:
+        messages.error(request, _('Could not detect the application/form for this submission.'))
+        return HttpResponseRedirect(reverse('render_form_data', args=[domain, instance_id]))
+
     form_meta = FormType(domain, instance.xmlns, instance.app_id).metadata
 
     def _form_meta_to_context_url(form_meta, instance_id=None):
+        # todo: this might break if the form has moved. right now fixing that is out of scope,
+        # but it wouldn't be too much work to do a more complicated lookup to infer the module/form ID
+        # based on the XMLNS using the actual build of the app
         try:
             url = reverse(
                 'cloudcare_form_context',
-                args=[domain, form_meta['app']['id'], form_meta['module']['id'], form_meta['form']['id']])
+                args=[domain, instance.build_id, form_meta['module']['id'], form_meta['form']['id']])
         except (KeyError, AttributeError):
             raise Http404(_('Missing app, module or form information!'))
 
