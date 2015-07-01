@@ -12,7 +12,6 @@ from casexml.apps.case import const
 from casexml.apps.case.sharedmodels import CommCareCaseIndex, IndexHoldingMixIn
 from casexml.apps.phone.checksum import Checksum, CaseStateHash
 import logging
-import copy
 
 logger = logging.getLogger('phone.models')
 
@@ -46,7 +45,7 @@ class User(object):
         # todo: this is redundant with the implementation in CouchUser.
         # this will go away when the two are reconciled
         from corehq.apps.custom_data_fields.models import SYSTEM_PREFIX
-        session_data = copy.copy(self.user_data)
+        session_data = copy(self.user_data)
         session_data.update({
             '{}_first_name'.format(SYSTEM_PREFIX): self.first_name,
             '{}_last_name'.format(SYSTEM_PREFIX): self.last_name,
