@@ -46,14 +46,24 @@ class CreateFormExportForm(forms.Form):
                 crispy.Div(
                     crispy.Field(
                         'module',
-                        data_bind="options: moduleOptions, optionsText: 'text', optionsValue: 'value', value: moduleId",
+                        data_bind=(
+                            "options: moduleOptions, "
+                            "optionsText: 'text', "
+                            "optionsValue: 'value', "
+                            "value: moduleId"
+                        ),
                     ),
                     data_bind="visible: appId",
                 ),
                 crispy.Div(
                     crispy.Field(
                         'form',
-                        data_bind="options: formOptions, optionsText: 'text', optionsValue: 'value', value: formId",
+                        data_bind=(
+                            "options: formOptions, "
+                            "optionsText: 'text', "
+                            "optionsValue: 'value', "
+                            "value: formId"
+                        ),
                     ),
                     data_bind="visible: moduleId",
                 ),

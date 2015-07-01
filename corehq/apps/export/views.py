@@ -18,7 +18,6 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from couchexport.models import SavedExportSchema, ExportSchema
 from couchexport.schema import build_latest_schema
-from couchforms.models import XFormInstance
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from dimagi.utils.logging import notify_exception
@@ -274,6 +273,7 @@ def create_basic_form_checkpoint(index):
     )
     checkpoint.save()
     return checkpoint
+
 
 class CreateFormExportView(BaseProjectDataView):
     urlname = 'create_export_form'
