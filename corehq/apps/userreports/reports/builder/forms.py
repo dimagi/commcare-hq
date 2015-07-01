@@ -68,7 +68,7 @@ class QuestionSelect(Widget):
         self.choices = list(choices)
 
     def render(self, name, value, attrs=None, choices=()):
-        if value is None: value = ''
+        value = '' if value is None else value
         final_attrs = self.build_attrs(attrs, name=name)
 
         return format_html(
