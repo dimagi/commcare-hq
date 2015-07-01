@@ -316,7 +316,7 @@ class TestPercentageColumn(SimpleTestCase):
         spec['format'] = 'percent'
         wrapped = ReportColumnFactory.from_spec(spec)
         for unexpected_value in ['hello', object()]:
-            self.assertEqual('?', wrapped.get_format_fn()({'num': 1, 'denom': unexpected_value}), \
+            self.assertEqual('?', wrapped.get_format_fn()({'num': 1, 'denom': unexpected_value}),
                              'non-numeric value failed for denominator {}'. format(unexpected_value))
             self.assertEqual('?', wrapped.get_format_fn()({'num': unexpected_value, 'denom': 1}))
 
