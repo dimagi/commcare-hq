@@ -108,12 +108,13 @@ class CaseListFilterOptions(EmwfOptionsView):
                           filters=[type_filter], doc_type='Group', **kwargs)
 
     def get_groups(self, start, size):
-        def wrap_group(group):
-            if group.get('case_sharing', None):
-                return self.utils.sharing_group_tuple(group)
-            return self.utils.reporting_group_tuple(group)
+        def wrap_groups(groups):
+            for group in groups:
+                yield self.utils.reporting_group_tuple(group)
+                if group.get('case_sharing', None):
+                    yield self.utils.sharing_group_tuple(group)
 
-        fields = ['_id', 'name']
+        fields = ['_id', 'name', 'case_sharing']
         groups = self.group_es_call(
             fields=fields,
             sort_by="name.exact",
@@ -121,7 +122,7 @@ class CaseListFilterOptions(EmwfOptionsView):
             start_at=start,
             size=size,
         )
-        return map(wrap_group, groups)
+        return list(wrap_groups(groups))
 
     @property
     def case_sharing_locations_query(self):
