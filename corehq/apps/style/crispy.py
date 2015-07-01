@@ -1,7 +1,7 @@
 import re
-from bootstrap3_crispy.bootstrap import FormActions as OriginalFormActions
-from bootstrap3_crispy.layout import Field as OldField, LayoutObject
-from bootstrap3_crispy.utils import render_field
+from crispy_forms.bootstrap import FormActions as OriginalFormActions
+from crispy_forms.layout import Field as OldField, LayoutObject
+from crispy_forms.utils import render_field
 from django.template import Context
 from django.template.loader import render_to_string
 
