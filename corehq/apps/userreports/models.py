@@ -330,7 +330,7 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             'Filters cannot contain duplicate slugs: {}',
         )
         _check_for_duplicates(
-            [c.column_id for c in self.report_columns],
+            [column_id for c in self.report_columns for column_id in c.get_column_ids()],
             'Columns cannot contain duplicate column_ids: {}',
         )
 

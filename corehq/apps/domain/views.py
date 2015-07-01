@@ -1238,14 +1238,16 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
 
         subscription_type = None
         subscription = Subscription.get_subscribed_plan_by_domain(self.domain_object)[1]
-        plan = subscription.plan_version.plan
-
-        if subscription.service_type == SubscriptionType.CONTRACTED:
-            subscription_type = "contracted_partner"
-        elif plan.edition == SoftwarePlanEdition.ENTERPRISE:
-            subscription_type = "dimagi_only_enterprise"
-        elif plan.edition == SoftwarePlanEdition.ADVANCED and plan.visibility == SoftwarePlanVisibility.TRIAL:
-            subscription_type = "advanced_extended_trial"
+        if subscription is None:
+            subscription_type = None
+        else:
+            plan = subscription.plan_version.plan
+            if subscription.service_type == SubscriptionType.CONTRACTED:
+                subscription_type = "contracted_partner"
+            elif plan.edition == SoftwarePlanEdition.ENTERPRISE:
+                subscription_type = "dimagi_only_enterprise"
+            elif plan.edition == SoftwarePlanEdition.ADVANCED and plan.visibility == SoftwarePlanVisibility.TRIAL:
+                subscription_type = "advanced_extended_trial"
 
         return SelectSubscriptionTypeForm({'subscription_type': subscription_type})
 

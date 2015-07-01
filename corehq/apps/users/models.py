@@ -2,6 +2,7 @@
 couch models go here
 """
 from __future__ import absolute_import
+import copy
 from datetime import datetime
 import re
 
@@ -900,6 +901,18 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         self.first_name = data.pop(0)
         self.last_name = ' '.join(data)
 
+    @property
+    def user_session_data(self):
+        from corehq.apps.custom_data_fields.models import SYSTEM_PREFIX
+
+        session_data = copy.copy(self.user_data)
+        session_data.update({
+            '{}_first_name'.format(SYSTEM_PREFIX): self.first_name,
+            '{}_last_name'.format(SYSTEM_PREFIX): self.last_name,
+            '{}_phone_number'.format(SYSTEM_PREFIX): self.phone_number,
+        })
+        return session_data
+
     def delete(self):
         try:
             user = self.get_django_user()
@@ -1525,6 +1538,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             user_data=self.user_data,
             domain=self.domain,
             loadtest_factor=self.loadtest_factor,
+            first_name=self.first_name,
+            last_name=self.last_name,
+            phone_number=self.phone_number,
         )
 
         def get_owner_ids():
@@ -1598,18 +1614,15 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         groups used to send location data in the restore
         payload.
         """
-        location_type = self.location.location_type_object
-        if location_type.shares_cases:
-            if location_type.view_descendants:
-                return [
-                    loc.case_sharing_group_object(self._id)._id
-                    for loc in self.sql_location.get_descendants(include_self=True).filter(
-                        location_type__shares_cases=True,
-                    )]
+        def get_sharing_id(loc):
+            return loc.case_sharing_group_object(self._id)._id
 
-            else:
-                return [self.sql_location.case_sharing_group_object(self._id)._id]
-
+        if self.sql_location.location_type.view_descendants:
+            locs = (self.sql_location.get_descendants(include_self=True)
+                                     .filter(location_type__shares_cases=True))
+            return map(get_sharing_id, locs)
+        elif self.sql_location.location_type.shares_cases:
+            return [get_sharing_id(self.sql_location)]
         else:
             return []
 
@@ -2067,6 +2080,7 @@ class OrgMembershipMixin(DocumentSchema):
             raise OrgMembershipError("Cannot set admin -- %s is not a member of the %s organization" %
                                      (self.username, org))
         om.is_admin = True
+
 
 class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobileContactMixin):
     #do sync and create still work?

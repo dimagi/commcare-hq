@@ -29,6 +29,7 @@ from custom.ilsgateway.tanzania.reminders.stockonhand import send_soh_reminder
 from custom.ilsgateway.tanzania.reminders.supervision import send_supervision_reminder
 from custom.ilsgateway.tasks import clear_report_data
 from casexml.apps.stock.models import StockTransaction
+from custom.logistics.models import StockDataCheckpoint
 from custom.logistics.tasks import fix_groups_in_location_task, resync_web_users
 from custom.ilsgateway.api import ILSGatewayAPI
 from custom.logistics.tasks import stock_data_task
@@ -316,4 +317,14 @@ def save_ils_note(request, domain):
 @require_POST
 def fix_groups_in_location(request, domain):
     fix_groups_in_location_task.delay(domain)
+    return HttpResponse('OK')
+
+
+@domain_admin_required
+@require_POST
+def change_runner_date_to_last_migration(request, domain):
+    checkpoint = StockDataCheckpoint.objects.get(domain=domain)
+    last_run = ReportRun.last_success(domain)
+    last_run.end = checkpoint.date
+    last_run.save()
     return HttpResponse('OK')

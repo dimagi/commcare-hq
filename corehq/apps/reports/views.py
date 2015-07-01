@@ -12,6 +12,7 @@ from urllib2 import URLError
 from casexml.apps.case import const
 from casexml.apps.case.const import CASE_ACTION_CREATE
 from casexml.apps.case.dbaccessors import get_open_case_ids_in_domain
+from corehq.apps.cloudcare.touchforms_api import get_user_contributions_to_touchforms_session
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.util.timezones.utils import get_timezone_for_user
 from dimagi.utils.decorators.memoized import memoized
@@ -59,7 +60,6 @@ from couchexport.tasks import rebuild_schemas
 from couchexport.util import SerializableFunction
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import wrapped_docs
-from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.loosechange import parse_date
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.export import WorkBook
@@ -1281,13 +1281,20 @@ def edit_form_instance(request, domain, instance_id):
 
     context = _get_form_context(request, domain, instance_id)
     instance = context['instance']
+    if not instance.app_id or not instance.build_id:
+        messages.error(request, _('Could not detect the application/form for this submission.'))
+        return HttpResponseRedirect(reverse('render_form_data', args=[domain, instance_id]))
+
     form_meta = FormType(domain, instance.xmlns, instance.app_id).metadata
 
     def _form_meta_to_context_url(form_meta, instance_id=None):
+        # todo: this might break if the form has moved. right now fixing that is out of scope,
+        # but it wouldn't be too much work to do a more complicated lookup to infer the module/form ID
+        # based on the XMLNS using the actual build of the app
         try:
             url = reverse(
                 'cloudcare_form_context',
-                args=[domain, form_meta['app']['id'], form_meta['module']['id'], form_meta['form']['id']])
+                args=[domain, instance.build_id, form_meta['module']['id'], form_meta['form']['id']])
         except (KeyError, AttributeError):
             raise Http404(_('Missing app, module or form information!'))
 
@@ -1295,7 +1302,8 @@ def edit_form_instance(request, domain, instance_id):
             url = '{}?instance_id={}'.format(url, instance_id)
         return url
 
-    edit_session_data = {'user_id': instance.metadata.userID}
+    user = get_document_or_404(CommCareUser, domain, instance.metadata.userID)
+    edit_session_data = get_user_contributions_to_touchforms_session(user)
     case_blocks = extract_case_blocks(instance)
 
     if len(case_blocks) == 1 and case_blocks[0].get(const.CASE_ATTR_ID):
