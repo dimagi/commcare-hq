@@ -195,10 +195,14 @@ class LocationForm(forms.Form):
 
     def clean_name(self):
         name = self.cleaned_data['name']
+        parent = self.cleaned_data.get('parent')
 
         if self.strict:
-            siblings = self.location.siblings(self.cleaned_data.get('parent'))
-            if name in [loc.name for loc in siblings]:
+            if (SQLLocation.objects.filter(domain=self.location.domain,
+                                           parent=parent,
+                                           name=name)
+                                   .exclude(location_id=self.location._id)
+                                   .exists()):
                 raise forms.ValidationError(
                     'name conflicts with another location with this parent'
                 )
