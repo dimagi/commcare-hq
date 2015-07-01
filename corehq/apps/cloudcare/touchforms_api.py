@@ -48,11 +48,9 @@ class SessionDataHelper(object):
         session_data = {
             'device_id': device_id,
             'app_version': '2.0',
-            'username': self.couch_user.raw_username,
-            'user_id': self.couch_user.get_id,
             'domain': self.domain,
-            'user_data': self.couch_user.user_data if isinstance(self.couch_user, CommCareUser) else {},
         }
+        session_data.update(get_user_contributions_to_touchforms_session(self.couch_user))
         if self.case_id:
             if self.delegation:
                 session_data["delegation_id"] = self.case_id
@@ -107,5 +105,14 @@ class SessionDataHelper(object):
 def get_session_data(domain, couch_user, case_id=None, device_id=CLOUDCARE_DEVICE_ID, delegation=False):
     return SessionDataHelper(domain, couch_user, case_id, delegation=delegation).get_session_data(device_id)
 
+
 def filter_cases(domain, couch_user, xpath, additional_filters=None, auth=None, delegation=False):
     return SessionDataHelper(domain, couch_user, delegation=delegation).filter_cases(xpath, additional_filters, auth)
+
+
+def get_user_contributions_to_touchforms_session(couch_user):
+    return {
+        'username': couch_user.raw_username,
+        'user_id': couch_user.get_id,
+        'user_data': couch_user.user_session_data,
+    }

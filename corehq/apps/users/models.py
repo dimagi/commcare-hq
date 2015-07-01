@@ -2,6 +2,7 @@
 couch models go here
 """
 from __future__ import absolute_import
+import copy
 from datetime import datetime
 import re
 
@@ -899,6 +900,18 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         data = full_name.split()
         self.first_name = data.pop(0)
         self.last_name = ' '.join(data)
+
+    @property
+    def user_session_data(self):
+        from corehq.apps.custom_data_fields.models import SYSTEM_PREFIX
+
+        session_data = copy.copy(self.user_data)
+        session_data.update({
+            '{}_first_name'.format(SYSTEM_PREFIX): self.first_name,
+            '{}_last_name'.format(SYSTEM_PREFIX): self.last_name,
+            '{}_phone_number'.format(SYSTEM_PREFIX): self.phone_number,
+        })
+        return session_data
 
     def delete(self):
         try:
@@ -2067,6 +2080,7 @@ class OrgMembershipMixin(DocumentSchema):
             raise OrgMembershipError("Cannot set admin -- %s is not a member of the %s organization" %
                                      (self.username, org))
         om.is_admin = True
+
 
 class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobileContactMixin):
     #do sync and create still work?
