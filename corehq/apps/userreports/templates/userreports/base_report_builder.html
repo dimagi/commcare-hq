@@ -8,6 +8,18 @@
     {# or is style/js/commcarehq.js preferred? #}
 {% endblock %}
 
+{% block head %}{{ block.super }}
+    <style>
+        {% comment %}
+        TODO: Use select2's dropdownAutoWidth option instead.
+              (Couldn't get it to work properly at this time; messes up dropdown scrolling)
+        {% endcomment %}
+        .bigdrop {
+            width: 600px !important;
+        }
+    </style>
+{% endblock %}
+
 {% block main_column %}
     {% crispy form %}
 {% endblock %}

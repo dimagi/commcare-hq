@@ -7,7 +7,7 @@ import re
 from corehq.apps.domain.forms import clean_password, max_pwd
 from django.core.validators import validate_email
 from corehq.apps.domain.models import Domain
-from corehq.apps.domain.utils import new_domain_re, new_org_re, website_re
+from corehq.apps.domain.utils import new_org_re, website_re
 from corehq.apps.orgs.models import Organization
 from corehq.apps.style.forms.widgets import Select2Widget
 from django.utils.encoding import smart_str
@@ -131,21 +131,12 @@ class DomainRegistrationForm(forms.Form):
     """
     Form for creating a domain for the first time
     """
+    max_name_length = 25
+
     org = forms.CharField(widget=forms.HiddenInput(), required=False)
-    domain_name = forms.CharField(label=_('Project Name:'), max_length=25,
-                                  help_text=_("Project name cannot contain spaces."))
+    hr_name = forms.CharField(label=_('Project Name:'), max_length=max_name_length)
     domain_type = forms.CharField(widget=forms.HiddenInput(), required=False,
                                   initial='commcare')
-
-    def clean_domain_name(self):
-        data = self.cleaned_data['domain_name'].strip().lower()
-        if not re.match("^%s$" % new_domain_re, data):
-            raise forms.ValidationError('Only lowercase letters and numbers allowed. Single hyphens may be used to separate words.')
-
-        conflict = Domain.get_by_name(data) or Domain.get_by_name(data.replace('-', '.'))
-        if conflict:
-            raise forms.ValidationError('Project name already taken---please try another')
-        return data
 
     def clean_domain_type(self):
         data = self.cleaned_data.get('domain_type', '').strip().lower()

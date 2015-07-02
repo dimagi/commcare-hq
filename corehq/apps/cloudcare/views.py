@@ -16,7 +16,7 @@ from corehq import toggles, privileges
 from corehq.apps.app_manager.suite_xml import SuiteGenerator
 from corehq.apps.cloudcare.exceptions import RemoteAppError
 from corehq.apps.cloudcare.models import ApplicationAccess
-from corehq.apps.cloudcare.touchforms_api import DELEGATION_STUB_CASE_TYPE, SessionDataHelper
+from corehq.apps.cloudcare.touchforms_api import SessionDataHelper
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest_ex, domain_admin_required
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser, CommCareUser
