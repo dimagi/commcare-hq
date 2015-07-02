@@ -169,8 +169,8 @@ class AppStringsBase(object):
         messages[key] = (u"This form requires access to the user's location, "
                          "but none was found.")
         key = 'case_autoload.{0}.case_missing'.format(AUTO_SELECT_LOCATION)
-        messages[key] = (u"This form requires the user's location to have a "
-                         "supply-point case.")
+        messages[key] = (u"This form requires the user's location to be "
+                         "marked as 'Tracks Stock'.")
 
         return commcare_translations.dumps(messages).encode('utf-8')
 
