@@ -1569,7 +1569,8 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
                     auto_generate_credits=True,
                     service_type=SubscriptionType.CONTRACTED
                 )
-                if new_subscription.date_start <= datetime.date.today() and datetime.date.today() < new_subscription.date_end:
+                if (new_subscription.date_start <= datetime.date.today()
+                   and datetime.date.today() < new_subscription.date_end):
                     new_subscription.is_active = True
                     new_subscription.save()
         except:

@@ -986,8 +986,7 @@ class Subscription(models.Model):
                     note=None, web_user=None, adjustment_method=None,
                     service_type=None, pro_bono_status=None,
                     transfer_credits=True, internal_change=False, account=None,
-                    do_not_invoice=None, **kwargs
-    ):
+                    do_not_invoice=None, **kwargs):
         """
         Changing a plan TERMINATES the current subscription and
         creates a NEW SUBSCRIPTION where the old plan left off.
