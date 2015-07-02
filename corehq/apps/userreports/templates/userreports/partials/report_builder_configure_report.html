@@ -149,9 +149,9 @@
                 hasFormatCol: true,
                 initialCols: initialFilters,
                 buttonText: 'Add Filter',
-                propertyHelpText: 'Choose the property you would you like to add as a filter to this report',
-                displayHelpText: 'Web users viewing the report will see this display text instead of the property name. Name your filter something easy for viewers to understand.',
-                formatHelpText: 'What type of property is this filter?<br/><br/>Date: select this if the property is a date<br/>Choice: select this if the property is text or multiple choice<br/>Numeric: select this if the property is a number'
+                propertyHelpText: '{{ filter_property_help_text|escapejs}}',
+                displayHelpText: '{{ filter_display_help_text|escapejs }}',
+                formatHelpText: '{{ filter_format_help_text|escapejs }}'
             });
             this.columnsList = new propertyList({
                 hasFormatCol: false,
