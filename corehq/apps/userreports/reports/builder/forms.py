@@ -717,7 +717,7 @@ class ConfigureNewReportBase(forms.Form):
 
 
 class ConfigureBarChartReportForm(ConfigureNewReportBase):
-    group_by = forms.ChoiceField(label="Show this property as the bars in the chart")
+    group_by = forms.ChoiceField(label="Group by")
     report_type = 'chart'
 
     def __init__(self, report_name, app_id, source_type, report_source_id, existing_report=None, *args, **kwargs):
@@ -789,10 +789,6 @@ class ConfigureBarChartReportForm(ConfigureNewReportBase):
 
 
 class ConfigurePieChartReportForm(ConfigureBarChartReportForm):
-
-    def __init__(self, *args, **kwargs):
-        super(ConfigurePieChartReportForm, self).__init__(*args, **kwargs)
-        self.fields['group_by'].label = "Show this property as the sections in the chart"
 
     @property
     def container_fieldset(self):
@@ -873,10 +869,6 @@ class ConfigureListReportForm(ConfigureNewReportBase):
 class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportForm):
     report_type = 'table'
     column_legend_fine_print = _('Add columns for this report to aggregate. Each property you add will create a column for every value of that property.  For example, if you add a column for a yes or no question, the report will show a column for "yes" and a column for "no".')
-
-    def __init__(self, *args, **kwargs):
-        super(ConfigureTableReportForm, self).__init__(*args, **kwargs)
-        self.fields['group_by'].label = "Property"
 
     @property
     def container_fieldset(self):
