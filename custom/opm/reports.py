@@ -23,7 +23,6 @@ from sqlagg.filters import RawFilter, IN, EQFilter
 from corehq.const import SERVER_DATETIME_FORMAT
 from couchexport.models import Format
 from custom.common import ALL_OPTION
-from custom.opm.beneficiary import FakeConditionsMet
 
 from dimagi.utils.couch.database import iter_docs, get_db
 from dimagi.utils.dates import add_months_to_date
@@ -892,14 +891,19 @@ class MetReport(CaseReportMixin, BaseReport):
         for index, row in enumerate(self.get_rows(self.datespan), 1):
             try:
                 case_row = self.get_row_data(row, index=1, awc_codes=awc_codes)
-                total_payment += case_row.cash_amt
-                rows.append(case_row)
-            except CaseOutOfRange:
-                try:
-                    rows.append(FakeConditionsMet(row, self, child_index=1, awc_codes=awc_codes))
-                except InvalidRow as e:
-                    if self.debug:
-                        self.add_debug_data(row._id, e)
+                if not case_row.case_is_out_of_range:
+                    total_payment += case_row.cash_amt
+                    rows.append(case_row)
+                else:
+                    case_row.one = ''
+                    case_row.two = ''
+                    case_row.three = ''
+                    case_row.four = ''
+                    case_row.five = ''
+                    case_row.pay = '--'
+                    case_row.payment_last_month = '--'
+                    case_row.issue = _('Reporting period incomplete')
+                    rows.append(case_row)
             except InvalidRow as e:
                 if self.debug:
                     self.add_debug_data(row._id, e)

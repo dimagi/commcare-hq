@@ -9,7 +9,7 @@ from decimal import Decimal
 from django.core.urlresolvers import reverse
 from django.template.defaultfilters import yesno
 from custom.opm.constants import InvalidRow, BIRTH_PREP_XMLNS, CHILDREN_FORMS, CFU1_XMLNS, DOMAIN, CFU2_XMLNS, \
-    MONTH_AMT, TWO_YEAR_AMT, THREE_YEAR_AMT, CaseOutOfRange
+    MONTH_AMT, TWO_YEAR_AMT, THREE_YEAR_AMT
 from dimagi.utils.dates import months_between, first_of_next_month, add_months_to_date
 
 from dimagi.utils.dates import add_months
@@ -59,6 +59,7 @@ class OPMCaseRow(object):
         self.month = explicit_month or report.month
         self.year = explicit_year or report.year
         self.is_secondary = is_secondary
+        self.case_is_out_of_range = False
 
         if not report.is_rendered_as_email:
             self.img_elem = '<div style="width:160px !important;"><img src="/static/opm/img/%s">' \
@@ -158,9 +159,8 @@ class OPMCaseRow(object):
             try:
                 non_adjusted_month = len(months_between(base_window_start, self.reporting_window_start)) - 1
             except AssertionError:
-                raise CaseOutOfRange('Mother LMP ({}) was after the reporting window date ({})'.format(
-                    base_window_start, self.reporting_window_start
-                ))
+                self.case_is_out_of_range = True
+                non_adjusted_month = 0
 
             # the date to check one month after they first become eligible,
             # aka the end of their fourth month of pregnancy
@@ -168,7 +168,7 @@ class OPMCaseRow(object):
 
             month = self._adjust_for_vhnd_presence(non_adjusted_month, vhnd_date_to_check)
             if month < 4 or month > 9:
-                raise CaseOutOfRange('pregnancy month %s not valid' % month)
+                self.case_is_out_of_range = True
             return month
 
     @property
@@ -185,8 +185,7 @@ class OPMCaseRow(object):
 
             month = self._adjust_for_vhnd_presence(non_adjusted_month, anchor_date)
             if month < 1:
-                raise CaseOutOfRange('child month %s not valid' % month)
-
+                self.case_is_out_of_range = True
             return month
 
     @property
@@ -242,7 +241,7 @@ class OPMCaseRow(object):
             raise InvalidRow("Window not found")
 
         if self.window > 14:
-            raise CaseOutOfRange(_('Child is past window 14 (was {}'.format(self.window)))
+            self.case_is_out_of_range = True
 
         name = self.case_property('name', EMPTY_FIELD)
         if getattr(self.report,  'show_html', True):
@@ -777,7 +776,8 @@ class OPMCaseRow(object):
             MONTH_AMT,
             self.bp1_cash + self.bp2_cash + self.child_cash
         ) + self.year_end_bonus_cash
-        assert amount == self.cash_amt, "The CMR and BPR disagree on payment!"
+        if not self.case_is_out_of_range:
+            assert amount == self.cash_amt, "The CMR and BPR disagree on payment!"
         return amount
 
 
@@ -855,42 +855,6 @@ class ConditionsMet(OPMCaseRow):
 
         if not self.vhnd_available:
             self.one = self.img_elem % (VHND_NO, "पोषण दिवस का आयोजन नहीं हुआ")
-
-
-class FakeConditionsMet(ConditionsMet):
-
-    def __init__(self, case, report, child_index=1, awc_codes={}, **kwargs):
-        super(ConditionsMet, self).__init__(case, report, child_index=child_index, **kwargs)
-        self.serial_number = child_index
-        self.payment_last_month = "Rs.%d" % (self.last_month_row.cash_amt if self.last_month_row else 0)
-        self.cash_received_last_month = self.last_month_row.vhnd_available_display if self.last_month_row else 'no'
-        self.awc_code = awc_codes.get(self.awc_name, EMPTY_FIELD)
-        self.issue = ''
-        self.one = ''
-        self.two = ''
-        self.three = ''
-        self.four = ''
-        self.five = ''
-        self.payment_last_month = ''
-        self.issue = _('Reporting period incomplete')
-        if self.status == 'mother':
-            self.child_name = self.case_property(self.child_xpath("child{num}_name"), EMPTY_FIELD)
-        elif self.status == 'pregnant':
-            self.child_name = EMPTY_FIELD
-
-    @property
-    @memoized
-    def preg_month(self):
-        return EMPTY_FIELD
-
-    @property
-    @memoized
-    def child_age(self):
-        return EMPTY_FIELD
-
-    @property
-    def cash(self):
-        return '--'
 
 
 class Beneficiary(OPMCaseRow):
