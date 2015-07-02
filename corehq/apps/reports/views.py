@@ -1310,7 +1310,7 @@ def edit_form_instance(request, domain, instance_id):
         edit_session_data["case_id"] = case_blocks[0].get(const.CASE_ATTR_ID)
 
     edit_session_data['function_context'] = {
-        'static': [
+        'static-date': [
             {'name': 'now', 'value': instance.metadata.timeEnd},
             {'name': 'today', 'value': instance.metadata.timeEnd.date()},
         ]
