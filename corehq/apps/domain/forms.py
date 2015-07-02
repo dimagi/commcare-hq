@@ -45,6 +45,7 @@ from corehq.apps.accounting.models import (
     Subscription,
     SubscriptionAdjustmentMethod,
     SubscriptionType,
+    EntryPoint,
 )
 from corehq.apps.app_manager.models import (Application, RemoteApp,
                                             FormBase, get_apps_in_domain)
@@ -1240,6 +1241,7 @@ class InternalSubscriptionManagementForm(forms.Form):
                 currency=Currency.get_default(),
                 dimagi_contact=self.web_user,
                 account_type=BillingAccountType.GLOBAL_SERVICES,
+                entry_point=EntryPoint.CONTRACTED,
             )
             account.save()
         contact_info, _ = BillingContactInfo.objects.get_or_create(account=account)
