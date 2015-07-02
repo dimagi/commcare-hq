@@ -2,6 +2,7 @@
 {% load proptable_tags %}
 {% load xform_tags %}
 {% load hq_shared_tags %}
+{% load humanize %}
 {% comment %}
 requires imports/proptable.html to be included in the main template
 {% endcomment %}
@@ -102,6 +103,22 @@ requires imports/proptable.html to be included in the main template
     This will also restore case data associated with the form.
     {% endblocktrans %}
 {% endif %}
+</div>
+{% endif %}
+{% if edit_info.was_edited %}
+<div class="alert alert-full alert-block">
+    {% url "render_form_data" domain edit_info.latest_version as latest_version_url %}
+    {% blocktrans %}
+    This form has been edited. The latest version can be viewed <a href="{{ latest_version_url }}">here</a>.
+    {% endblocktrans %}
+</div>
+{% endif %}
+{% if edit_info.is_edit %}
+<div class="alert alert-full alert-block">
+    {% url "render_form_data" domain edit_info.previous_version as previous_version_url %}
+    {% blocktrans with when=edit_info.edit_on|naturaltime %}
+        This submission was edited from a previous version {{ when }}. You can view the previous version <a href="{{ previous_version_url }}">here</a>.
+    {% endblocktrans %}
 </div>
 {% endif %}
 <div class="pull-right">
