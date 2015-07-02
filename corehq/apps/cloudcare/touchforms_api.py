@@ -5,7 +5,7 @@ import json
 from django.conf import settings
 from corehq.apps.cloudcare import CLOUDCARE_DEVICE_ID
 from django.core.urlresolvers import reverse
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, CouchUser
 
 DELEGATION_STUB_CASE_TYPE = "cc_delegation_stub"
 
@@ -114,5 +114,8 @@ def get_user_contributions_to_touchforms_session(couch_user):
     return {
         'username': couch_user.raw_username,
         'user_id': couch_user.get_id,
-        'user_data': couch_user.user_session_data,
+        # This API is used by smsforms, so sometimes "couch_user" can be
+        # a CommConnectCase, in which case there is no user_data.
+        'user_data': (couch_user.user_session_data
+            if isinstance(couch_user, CouchUser) else {}),
     }
