@@ -985,7 +985,8 @@ class Subscription(models.Model):
     def change_plan(self, new_plan_version, date_end=None,
                     note=None, web_user=None, adjustment_method=None,
                     service_type=None, pro_bono_status=None,
-                    transfer_credits=True, internal_change=False):
+                    transfer_credits=True, internal_change=False, account=None,
+                    do_not_invoice=None, **kwargs):
         """
         Changing a plan TERMINATES the current subscription and
         creates a NEW SUBSCRIPTION where the old plan left off.
@@ -999,7 +1000,7 @@ class Subscription(models.Model):
         new_start_date = today if self.date_start < today else self.date_start
 
         new_subscription = Subscription(
-            account=self.account,
+            account=account if account else self.account,
             plan_version=new_plan_version,
             subscriber=self.subscriber,
             salesforce_contract_id=self.salesforce_contract_id,
@@ -1007,9 +1008,10 @@ class Subscription(models.Model):
             date_end=date_end,
             date_delay_invoicing=self.date_delay_invoicing,
             is_active=self.is_active,
-            do_not_invoice=self.do_not_invoice,
+            do_not_invoice=do_not_invoice if do_not_invoice else self.do_not_invoice,
             service_type=(service_type or SubscriptionType.NOT_SET),
             pro_bono_status=(pro_bono_status or ProBonoStatus.NOT_SET),
+            **kwargs
         )
         new_subscription.save()
 
