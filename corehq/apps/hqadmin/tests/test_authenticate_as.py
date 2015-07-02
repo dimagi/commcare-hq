@@ -1,6 +1,7 @@
 from django.test import TestCase
 from django.core.urlresolvers import reverse
 
+from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser, CommCareUser
 
 from ..forms import AuthenticateAsForm
@@ -60,22 +61,24 @@ class AuthenticateAsIntegrationTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.domain = 'my-test-views'
+        cls.domain = Domain(name='my-test-views')
+        cls.domain.save()
         cls.username = 'cornelius'
         cls.regular_name = 'ron'
         cls.password = 'fudge'
-        cls.user = WebUser.create(cls.domain, cls.username, cls.password, is_active=True)
+        cls.user = WebUser.create(cls.domain.name, cls.username, cls.password, is_active=True)
 
         cls.user.is_superuser = True
         cls.user.save()
         cls.mobile_worker = CommCareUser.create('potter', 'harry@potter.commcarehq.org', '123')
-        cls.regular = WebUser.create(cls.domain, cls.regular_name, cls.password, is_active=True)
+        cls.regular = WebUser.create(cls.domain.name, cls.regular_name, cls.password, is_active=True)
 
     @classmethod
     def tearDownClass(cls):
         cls.user.delete()
         cls.mobile_worker.delete()
         cls.regular.delete()
+        cls.domain.delete()
 
     def test_authenticate_as(self):
         self.client.login(username=self.username, password=self.password)
