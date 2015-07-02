@@ -116,7 +116,8 @@
             "field":"timeEnd",
             "format":"default",
             "transform":{
-
+                "type": "date_format",
+                "format": "%Y-%m-%d %H:%M"
             },
             "column_id":"timeEnd",
             "alias":null,
