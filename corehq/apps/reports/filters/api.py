@@ -89,10 +89,9 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
         return self.locations_query.count()
 
     def _init_counts(self):
-        groups, _ = self.group_es_call(size=0, return_count=True)
         users, _ = self.user_es_call(size=0, return_count=True)
         self.group_start = len(self.static_options)
-        self.location_start = self.group_start + groups
+        self.location_start = self.group_start + self.get_group_size()
         self.user_start = self.location_start + self.get_locations_size()
         self.total_results = self.user_start + users
 
@@ -134,8 +133,11 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
     def get_users(self, start, size):
         fields = ['_id', 'username', 'first_name', 'last_name', 'doc_type']
         users = self.user_es_call(fields=fields, start_at=start, size=size,
-            sort_by='username.exact', order='asc')
+                                  sort_by='username.exact', order='asc')
         return [self.utils.user_tuple(u) for u in users]
+
+    def get_group_size(self):
+        return self.group_es_call(size=0, return_count=True)[0]
 
     def group_es_call(self, **kwargs):
         reporting_filter = {"term": {'reporting': "true"}}
