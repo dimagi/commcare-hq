@@ -76,6 +76,8 @@ class TestNoCouchLocationTypes(TestCase):
         self.loc.save()
         self.assertEqual(self.loc.location_type, 'new-type')
         self.assertEqual(self.loc.sql_location.location_type, new_type)
+        # pull the loc from the db again
+        self.assertEqual(Location.get(self.loc._id).location_type, 'new-type')
         new_type.delete()
 
     def test_change_to_nonexistent_type(self):
