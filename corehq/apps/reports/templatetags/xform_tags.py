@@ -1,5 +1,4 @@
 from functools import partial
-from django.contrib.humanize.templatetags.humanize import naturaltime
 
 from django.template.loader import render_to_string
 from django.core.urlresolvers import reverse
