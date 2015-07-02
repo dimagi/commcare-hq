@@ -336,8 +336,9 @@ def _login(req, domain_name, template_name):
             'next': req.REQUEST.get('next', '/a/%s/' % domain),
         })
 
+    authentication_form = EmailAuthenticationForm if not domain_name else CloudCareAuthenticationForm,
     return django_login(req, template_name=template_name,
-                        authentication_form=EmailAuthenticationForm if not domain_name else CloudCareAuthenticationForm,
+                        authentication_form=authentication_form,
                         extra_context=context)
 
 
