@@ -1048,6 +1048,15 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
         return OPMCaseRow(row, self)
 
     @property
+    def fields(self):
+        return [
+            HierarchyFilter,
+            MonthFilter,
+            YearFilter,
+            OpenCloseFilter,
+        ]
+
+    @property
     def fixed_cols_spec(self):
         return dict(num=7, width=600)
 
@@ -1127,7 +1136,12 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
     def format_cell(self, val, denom):
         if denom is None:
             return val if val is not None else ""
-        pct = " ({:.0%})".format(float(val) / denom) if denom != 0 else ""
+        if val == "NA":
+            return "NA"
+        try:
+            pct = " ({:.0%})".format(float(val) / denom) if denom != 0 else ""
+        except TypeError:
+            return "NA"
         return "{} / {}{}".format(val, denom, pct)
 
     @property
