@@ -155,3 +155,28 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
             size=size,
         )
         return [self.utils.reporting_group_tuple(g) for g in groups]
+
+
+def paginate_options(data_sources, query, start, size):
+    """
+    Returns the appropriate slice of values from the data sources
+    data_sources is a list of (count_fn, getter_fn) tuples
+        count_fn returns the total number of entries in a data source,
+        getter_fn takes in a start and size parameter and returns entries
+    """
+    # Note this is pretty confusing, check TestEmwfPagination for reference
+    options = []
+    for get_size, get_objects in data_sources:
+        if size <= 0:
+            break
+
+        count = get_size(query)
+        if start > count:  # skip over this whole data source
+            start -= count
+            continue
+
+        objects = get_objects(query, start, size)  # return a page of objects
+        start = 0
+        size -= len(objects)  # how many more do we need for this page?
+        options.extend(objects)
+    return options
