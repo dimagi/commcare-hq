@@ -226,6 +226,16 @@ class DataSourceBuilder(object):
         ).one()
 
 
+def _legend(title, subtext):
+    """
+    Return a string to be used in a crispy form Fieldset legend.
+    This function is just a light wrapped around some simple templating.
+    """
+    return '{title}</br><div class="subtext"><small>{subtext}</small></div>'.format(
+        title=title, subtext=subtext
+    )
+
+
 class DataSourceForm(forms.Form):
     report_name = forms.CharField()
     chart_type = forms.ChoiceField(
@@ -443,9 +453,9 @@ class ConfigureNewReportBase(forms.Form):
         report filters.
         """
         return crispy.Fieldset(
-            "{title}</br><small>{fine_print}</small>".format(
-                title=_("Filters"),
-                fine_print=_("Add filters to your report to allow viewers to select which data the report will display. These filters will be displayed at the top of your report."),
+            _legend(
+                _("Filters"),
+                _("Add filters to your report to allow viewers to select which data the report will display. These filters will be displayed at the top of your report.")
             ),
             crispy.Div(
                 crispy.HTML(self.column_config_template), id="filters-table", data_bind='with: filtersList'
@@ -780,10 +790,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
     @property
     def column_fieldset(self):
         return crispy.Fieldset(
-            "{title}</br><small>{fine_print}</small>".format(
-                title=_("Columns"),
-                fine_print=self.column_legend_fine_print
-            ),
+            _legend(_("Columns"), self.column_legend_fine_print),
             crispy.Div(
                 crispy.HTML(self.column_config_template), id="columns-table", data_bind='with: columnsList'
             ),
@@ -827,7 +834,6 @@ class ConfigureListReportForm(ConfigureNewReportBase):
 
 class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportForm):
     report_type = 'table'
-    # TODO: This looks like really bad when it's on multiple lines
     column_legend_fine_print = _('Add columns for this report to aggregate. Each property you add will create a column for every value of that property.  For example, if you add a column for a yes or no question, the report will show a column for "yes" and a column for "no".')
 
     def __init__(self, *args, **kwargs):
@@ -840,9 +846,9 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
             "",
             self.column_fieldset,
             crispy.Fieldset(
-                '{title}</br><small>{fine_print}</small>'.format(
-                    title=_("Rows"),
-                    fine_print=_('Choose which property this report will group its results by. Each value of this property will be a row in the table. For example, if you choose a yes or no question, the report will show a row for "yes" and a row for "no"'),
+                _legend(
+                    _("Rows"),
+                    _('Choose which property this report will group its results by. Each value of this property will be a row in the table. For example, if you choose a yes or no question, the report will show a row for "yes" and a row for "no"'),
                 ),
                 'group_by',
             ),
