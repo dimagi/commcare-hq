@@ -25,6 +25,7 @@ var CaseConfig = (function () {
         self.save_url = params.save_url;
         // `requires` is a ko observable so it can be read by another UI
         self.requires = params.requires;
+        self.version = params.version;  // TODO: modify the other case_management_js blocks
         self.caseType = params.caseType;
         self.reserved_words = params.reserved_words;
         self.moduleCaseTypes = params.moduleCaseTypes;
@@ -118,8 +119,11 @@ var CaseConfig = (function () {
             });
         };
 
-        self.getQuestions = function (filter, excludeHidden, includeRepeat, excludeTrigger) {
-            return CC_UTILS.getQuestions(self.questions, filter, excludeHidden, includeRepeat, excludeTrigger);
+        self.getQuestions = function(filter, excludeHidden, includeRepeat, excludeTrigger) {
+            return ko.computed(function() {
+                self.version();
+                return CC_UTILS.getQuestions(self.questions, filter, excludeHidden, includeRepeat, excludeTrigger);
+            });
         };
         self.getAnswers = function (condition) {
             return CC_UTILS.getAnswers(self.questions, condition);

@@ -156,6 +156,7 @@
                 /* form_requires needs to be a knockout observable so that
                 its value can be read by another UI (form filtering) */
                 var form_requires = ko.observable({{ form.requires|JSON }});
+                var case_config_version = ko.observable(0);
             {% endblock %}
 
             {% if app.application_version == '2.0' %}
@@ -221,19 +222,7 @@
                 });
             {% endif %}
         {% endif %}
-        });
-    </script>
-    <script>
-        $(function () {
-            COMMCAREHQ.app_manager.setupValidation(
-                '{% url "validate_form_for_build" domain app.id form.unique_id %}');
-        });
-    </script>
 
-    {% include 'app_manager/partials/form_designer_js_inline_js.html' %}
-
-    <script>
-        $(function() {
             var loadedVellum = false;
             var FormRouter = Backbone.Router.extend({
                 routes: {
@@ -245,6 +234,10 @@
                     $(".view-only").show();
                     $(".hq-content.span10").removeClass("hq-flush-content");
                     $('.edit-form-li.active .edit-form-pencil').hide();
+                    // TODO: update caseConfig.questions with whatever changed in Vellum
+                    // currently generated server-side as xform_questions.
+                    // Also, make sure caseConfig exists (i.e., we're not in user reg)
+                    caseConfig.version(caseConfig.version() + 1);
                 },
                 showFormSource: function() {
                     $(".source-only").show();
@@ -273,6 +266,15 @@
             $('footer').addClass('fixed-footer');
         });
     </script>
+    <script>
+        $(function () {
+            COMMCAREHQ.app_manager.setupValidation(
+                '{% url "validate_form_for_build" domain app.id form.unique_id %}');
+        });
+    </script>
+
+    {% include 'app_manager/partials/form_designer_js_inline_js.html' %}
+
 {% endblock %}
 
 {% block keyboard_shortcuts %}
