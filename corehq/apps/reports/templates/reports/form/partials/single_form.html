@@ -191,7 +191,7 @@ requires imports/proptable.html to be included in the main template
             {% endif %}
             {% if user.can_edit_data %}
             <p>
-                {% if not is_archived %}
+                {% if not is_archived and not edit_info.was_edited %}
                 <form action="{% url "archive_form" domain instance.get_id %}" method="POST"
                       id="archive-form">
                     <span class="hq-help-template"
@@ -204,7 +204,8 @@ requires imports/proptable.html to be included in the main template
                         <i class="icon-refresh icon-spin" id="archive-spinner" style="display:none"></i>
                     </button>
                 </form>
-                {% else %}
+                {% endif %}
+                {% if is_archived %}
                 <form action="{% url "unarchive_form" domain instance.get_id %}" method="POST"
                       id="unarchive-form">
                     <span class="hq-help-template"

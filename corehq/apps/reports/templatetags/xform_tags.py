@@ -173,6 +173,7 @@ def render_form(form, domain, options):
         user_can_edit
         and has_privilege(request, privileges.CLOUDCARE)
         and toggle_enabled(request, toggles.EDIT_SUBMISSIONS)
+        and form.doc_type != 'XFormDeprecated'
     )
     # stuffing this in the same flag as case rebuild
     show_resave = (
