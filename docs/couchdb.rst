@@ -6,7 +6,7 @@ We have a lot of views:
 .. code-block:: bash
 
     $ find . -path *_design*/map.js | wc -l
-         216
+         197
 
 Things to know about views:
 

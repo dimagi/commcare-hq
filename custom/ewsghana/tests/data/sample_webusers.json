@@ -33,5 +33,22 @@
     "groups": [
         {"name": "facility_manager"}
     ]
+  },
+  {
+    "date_joined": "2013-01-09T11:07:06.941715",
+    "email": "webreporter@ddd.com",
+    "first_name": "Web",
+    "is_active": true,
+    "is_staff": false,
+    "is_superuser": false,
+    "last_login": "2013-01-09T11:10:46.676279",
+    "last_name": "reporter",
+    "location": 1,
+    "organization": "TestOrg2",
+    "password": "sha1$a2d46$57f1712b2fbe5e129206b45fa3fa5c14d9f879be",
+    "sms_notifications": false,
+    "supply_point": 2,
+    "username": "webreporter",
+    "groups": []
   }
 ]

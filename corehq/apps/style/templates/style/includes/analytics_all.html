@@ -3,40 +3,21 @@
 {% load compress %}
 {% load hq_shared_tags %}
 
-<!DOCTYPE html>
-    {% include 'style/includes/analytics_google.html' %}
-    {% include 'style/includes/analytics_pingdom.html' %}
-    {% include 'style/includes/analytics_kissmetrics.html' %}
-    {% include 'style/includes/analytics_hubspot.html' %}
-</html>
-
+{% include 'style/includes/analytics_google.html' %}
+{% include 'style/includes/analytics_pingdom.html' %}
+{% include 'style/includes/analytics_kissmetrics.html' %}
+{% include 'style/includes/analytics_hubspot.html' %}
 <script>
 
     /**
-     * This object provides a light wrapper around the KISSmetrics API.
-     * If we choose to use additional tracking services in the future, these
-     * functions can be added to to call those APIs as well.
+     * This object provides a light wrapper around the KISSmetrics and Google
+     * analytics API. If we choose to use additional tracking services in the
+     * future, these functions can be added to to call those APIs as well.
      *
-     * At some point we might also want to migrate our Google Analytics usage
-     * into this object. But, right now we are mostly tracking different sorts
-     * of things with KISSmetrics than we are with Google Analytics.
+     * At some point we should full migrate our Google Analytics usage into this
+     * object. E.g. gaTrackLink
      *
-     * This API (mostly) mirrors that of the Segment analytics.js library.
-     * (https://segment.com/docs/libraries/analytics.js/)
-     * That (free) library provides a unified API for many many analytics services.
-     * However, using it without configuration via a segment account is not well
-     * documented. Since this object provides a compatible API, it should be easy
-     * to switch back to Segment if we decide to do that in the future.
      *
-     * There are important difference to note however:
-     * - In this library, the track function executes its callback after the
-     *   event has successfully been tracked. In analytics.js the callback is
-     *   executed after a short timeout.
-     * - In this library, trackLink accepts a selector as its first argument,
-     *   in analytics.js the arg must be a DOM element or jQuery object.
-     * - In this library, trackLink prevents the default action of the link
-     *   until after the event has been successfully tracked. In analytics.js
-     *   the default action is only delayed by a short timeout.
      */
     window.analytics = {
 
@@ -64,32 +45,58 @@
             }
             // Record identity
             if (userId !== null) {
-                _kmq.push(['identify', userId]);
+                kmqPushSafe(['identify', userId]);
             }
             if (traits !== undefined){
-                _kmq.push(['set', traits]);
+                kmqPushSafe(['set', traits]);
             }
         },
 
         /**
-         * Track an event.
+         * Track a workflow event.
+         *
+         * This is a wrapper for an analytics backend that tracks workflow
+         * events. For example, a backend that links one event to another to
+         * track a user's progress throught the site.
+         *
          * @param {string} event - Event name
          * @param {object} [properties] - Dictionary of properties to set along with the event.
-         * @param {function} [callback] - A Callback to be executed after the event has been successfully tracked.
+         * @param {function} [callback] - A Callback to be executed after the
+         *      event has been successfully tracked or after a short timeout
+         *      (whichever happens first) callback will only be called once.
          */
-        track: function(event, properties, callback) {
+        workflow: function(event, properties, callback) {
             if (properties === undefined){
                 properties = {};
             }
+
             var args = ["record", event, properties];
             if (callback !== undefined){
                 args.push(callback);
             }
-            _kmq.push(args);
+            kmqPushSafe(args);
         },
 
         /**
-         * Track an event when the given element is clicked.
+         * Track a usage event.
+         *
+         * This is a wrapper for an analytics backend that tracks site usage
+         * events. For example, a backend that aggregates how many times an
+         * event occurs over some period of time.
+         *
+         * https://developers.google.com/analytics/devguides/collection/analyticsjs/events#overview
+         *
+         * @param {string} category - required
+         * @param {string} action - required
+         * @param {string} label - optional
+         * @param {number} value - optional
+         */
+        usage: function () {
+            ga_track_event.apply(null, arguments);
+        },
+
+        /**
+         * Track a workflow event when the given element is clicked.
          * Uses a callback to ensure that the request to the analytics services
          * completes before the default click action happens. This is useful if
          * the link would otherwise navigate away from the page.
@@ -97,14 +104,17 @@
          * @param {string} event - The name of the event
          * @param {object} [properties] - Dictionary of properties to set along with the event.
          */
-        trackLink: function(element, event, properties) {
+        trackWorkflowLink: function(element, event, properties) {
             var self = this;
             if (properties === undefined){
                 properties = {};
             }
-            trackLinkHelper(element, function (cb) {self.track(event, properties, cb);});
+            trackLinkHelper(element, function (cb) {self.workflow(event, properties, cb);});
         }
     };
+
+    // DEPRECATED
+    window.analytics.track = window.analytics.workflow;
 
     {% if request.couch_user %}
         analytics.identify(

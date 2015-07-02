@@ -38,7 +38,7 @@ class CallCenterUtilsTests(TestCase):
 
     def test_sync(self):
         sync_call_center_user_case(self.user)
-        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, include_docs=True)
+        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, CASE_TYPE)
         self.assertIsNotNone(case)
         self.assertEquals(case.name, self.user.username)
         self.assertEquals(case.username, self.user.raw_username)
@@ -49,40 +49,40 @@ class CallCenterUtilsTests(TestCase):
         name = 'Ricky Bowwood'
         self.user.set_full_name(name)
         sync_call_center_user_case(self.user)
-        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, include_docs=True)
+        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, CASE_TYPE)
         self.assertIsNotNone(case)
         self.assertEquals(case.name, name)
 
     def test_sync_inactive(self):
         sync_call_center_user_case(self.user)
-        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, include_docs=True)
+        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, CASE_TYPE)
         self.assertIsNotNone(case)
 
         self.user.is_active = False
         sync_call_center_user_case(self.user)
-        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, include_docs=True)
+        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, CASE_TYPE)
         self.assertTrue(case.closed)
 
     def test_sync_retired(self):
         sync_call_center_user_case(self.user)
-        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, include_docs=True)
+        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, CASE_TYPE)
         self.assertIsNotNone(case)
 
         self.user.base_doc += DELETED_SUFFIX
         sync_call_center_user_case(self.user)
-        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, include_docs=True)
+        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, CASE_TYPE)
         self.assertTrue(case.closed)
 
     def test_sync_update_update(self):
         sync_call_center_user_case(self.user)
-        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, include_docs=True)
+        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, CASE_TYPE)
         self.assertIsNotNone(case)
         self.assertEquals(case.name, self.user.username)
 
         name = 'Ricky Bowwood'
         self.user.set_full_name(name)
         sync_call_center_user_case(self.user)
-        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, include_docs=True)
+        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, CASE_TYPE)
         self.assertEquals(case.name, name)
 
     def test_sync_custom_user_data(self):
@@ -96,7 +96,7 @@ class CallCenterUtilsTests(TestCase):
             '._starts_with_punctuation': '0',
         }
         sync_call_center_user_case(self.user)
-        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, include_docs=True)
+        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, CASE_TYPE)
         self.assertIsNotNone(case)
         self.assertEquals(case.blank_val, '')
         self.assertEquals(case.ok, 'good')
@@ -138,7 +138,8 @@ class CallCenterUtilsTests(TestCase):
 
 class DomainTimezoneTests(SimpleTestCase):
     def test_midnight_for_domain(self):
-        midnight = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        midnight_past = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        midnight_future = midnight_past + timedelta(days=1)
         timezones = [
             ('Asia/Kolkata', 5.5),
             ('UTC', 0),
@@ -152,9 +153,12 @@ class DomainTimezoneTests(SimpleTestCase):
             ('Africa/Nairobi', 3),
         ]
         for tz, offset in timezones:
+            # account for DST
             offset += datetime.now(pytz.timezone(tz)).dst().total_seconds() / 3600
+
             dom = DomainLite(name='', default_timezone=tz, cc_case_type='')
-            self.assertEqual(dom.midnight, midnight - timedelta(hours=offset), tz)
+            self.assertEqual(dom.midnights[0], midnight_past - timedelta(hours=offset), tz)
+            self.assertEqual(dom.midnights[1], midnight_future - timedelta(hours=offset), tz)
 
     def test_is_midnight_for_domain(self):
         midnight = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)

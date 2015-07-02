@@ -1,4 +1,5 @@
 from copy import copy
+from decimal import Decimal
 from django.test import SimpleTestCase
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
@@ -423,3 +424,17 @@ class ChoiceListIndicatorTest(SimpleTestCase):
         self._check_vals(indicator, dict(category='bug feature'), [1, 1, 0, 0])
         self._check_vals(indicator, dict(category='bug feature app schedule'), [1, 1, 1, 1])
         self._check_vals(indicator, dict(category='bug nomatch'), [1, 0, 0, 0])
+
+
+class IndicatorDatatypeTest(SingleIndicatorTestBase):
+
+    def testDecimal(self):
+        indicator = IndicatorFactory.from_spec({
+            'type': 'raw',
+            'column_id': 'col',
+            "property_name": "foo",
+            "datatype": "decimal",
+        })
+        self._check_result(indicator, dict(foo=5.5), Decimal(5.5))
+        self._check_result(indicator, dict(foo=None), None)
+        self._check_result(indicator, dict(foo="banana"), None)

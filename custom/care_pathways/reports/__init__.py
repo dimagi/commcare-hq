@@ -1,6 +1,5 @@
 from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
 from corehq.apps.reports.standard import CustomProjectReport
-from corehq.toggles import PATHWAYS_PREVIEW
 from custom.care_pathways.utils import get_domain_configuration
 
 
@@ -36,8 +35,4 @@ class CareBaseReport(GetParamsMixin, GenericTabularReport, CustomProjectReport, 
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        if domain and project and user is None:
-            return True
-        if user and PATHWAYS_PREVIEW.enabled(user.username):
-            return True
-        return False
+        return True

@@ -20,6 +20,6 @@ def recalculate_domain_consumption(domain):
                 case_id=supply_point_id,
                 product_id=product._id,
                 section_id=const.SECTION_TYPE_STOCK,
-            ).order_by('-report__date')
+            ).order_by('-report__date', '-pk')
             if filtered_transactions:
                 update_stock_state_for_transaction(filtered_transactions[0])

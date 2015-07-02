@@ -30,7 +30,7 @@
 
 
         /**
-         * A helper function for gaTrackLink and analytics.trackLink.
+         * A helper function for gaTrackLink and analytics.trackWorkflowLink.
          *
          * @param {(object|string)} element - A DOM element, jQuery object, or selector.
          * @param {function} trackFunction -
@@ -85,12 +85,10 @@
     </script>
 
 <script>
-    /*
-    A wrapper function for Google Analytics event tracking.
-
-    Avoids duplicating checks that GA has been loaded.
-
-    Returns true if the event is tracked, and false otherwise.
+    /**
+     * A wrapper function for Google Analytics event tracking.
+     *
+     * Avoids duplicating checks that GA has been loaded.
      */
     function ga_track_event() {
         var args = ['send', 'event'];
@@ -101,9 +99,19 @@
         // rather than the 3rd or 4th from the left, because it's variable
         // https://developers.google.com/analytics/devguides/collection/analyticsjs/events#overview
         var lastArg = arguments[arguments.length - 1];
-        if (lastArg && lastArg.hitCallback && window.event) {
-            window.event.preventDefault();
+        var callBack = lastArg.hitCallback;
+
+        if (window.ga && ga.create){
+            // Check that Google Analytics is not blocked by apps such as Ghostery
+
+            if (lastArg && callBack && window.event) {
+                window.event.preventDefault();
+            }
+            ga.apply(null, args);
         }
-        ga.apply(null, args);
+        else if(callBack){
+            // If GA is blocked, run the hitCallback
+            callBack();
+        }
     }
 </script>

@@ -15,7 +15,7 @@ class ASHAFunctionalityChecklistReport(GenericTabularReport, NRHMDatespanMixin, 
         return {
             'domain': self.domain,
             'startdate': self.datespan.startdate,
-            'enddate': self.datespan.enddate,
+            'enddate': self.datespan.enddate.replace(hour=23, minute=59, second=59),
             'af': self.request.GET.get('hierarchy_af'),
         }
 
@@ -25,7 +25,7 @@ class ASHAFunctionalityChecklistReport(GenericTabularReport, NRHMDatespanMixin, 
 
     @property
     def ashas(self):
-        return sorted(self.model_data.data.values(), key=lambda x: x['hv_asha_name'])
+        return sorted(self.model_data.data.values(), key=lambda x: x['completed_on'])
 
     @property
     def headers(self):
@@ -57,7 +57,7 @@ class ASHAFunctionalityChecklistReport(GenericTabularReport, NRHMDatespanMixin, 
             [10, 'Successful referral of the IUD, female sterilization or male '
                  'sterilization cases and/or providing OCPs/Condoms'],
             ['', 'Total of number of tasks on which ASHA reported being functional'],
-            ['', 'Total number of ASHAs who are functional on at least 6/10 tasks'],
+            ['', 'Total number of ASHAs who are functional on at least 60% of the tasks'],
             ['', 'Remark']
         ]
 
@@ -74,15 +74,22 @@ class ASHAFunctionalityChecklistReport(GenericTabularReport, NRHMDatespanMixin, 
                 domain=self.domain
             )).data
             total = 0
+            denominator = 0
             for idx, p in enumerate(properties):
                 if data[p] == 1:
                     ttotal[idx] += 1
                     total += 1
-                default_row_data[idx].append(data[p] if data[p] != 88 else 'NA')
-            if total >= 6:
+                if p != 'completed_on' and data[p] != 88:
+                    denominator += 1
+                if p == 'completed_on':
+                    default_row_data[idx].append(data[p].strftime('%Y-%m-%d %H:%M'))
+                else:
+                    default_row_data[idx].append(data[p] if data[p] != 88 else 'NA')
+            percent = total * 100 / denominator
+            if percent >= 60:
                 total_of_functional += 1
             default_row_data[-3].append(total)
-            default_row_data[-2].append('{0}/{1}'.format(total, 10))
+            default_row_data[-2].append('{0}/{1} {2}%'.format(total, denominator, percent))
             default_row_data[-1].append('')
 
         for idx, row in enumerate(default_row_data):

@@ -17,13 +17,6 @@ def bootstrap_grapevine_gateway_update(orm):
 
     currency = currency_class.objects.get_or_create(code="ZAR")[0]
 
-    # remove existing rates
-    for criteria in SmsGatewayFeeCriteria.objects.filter(
-        backend_api_id=GrapevineBackend.get_api_id()
-    ):
-        SmsGatewayFee.objects.filter(criteria=criteria).delete()
-        criteria.delete()
-
     # Incoming message to South Africa
     SmsGatewayFee.create_new(
         GrapevineBackend.get_api_id(), INCOMING, Decimal('0.65'),

@@ -10,6 +10,7 @@ from casexml.apps.case.templatetags.case_tags import get_case_hierarchy
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
+from corehq.apps.hqcase.dbaccessors import get_total_case_count
 from couchforms.tests.testutils import post_xform_to_couch
 from casexml.apps.case.xform import process_cases
 
@@ -27,7 +28,6 @@ class CaseBugTest(TestCase):
         """
         If two forms share an ID it's a conflict
         """
-        self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))
         file_path = os.path.join(os.path.dirname(__file__), "data", "bugs", "id_conflicts.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
@@ -43,7 +43,6 @@ class CaseBugTest(TestCase):
         """
         If two forms share an ID it's a conflict
         """
-        self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))
         file_path = os.path.join(os.path.dirname(__file__), "data", "bugs", "string_formatting.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
@@ -56,7 +55,6 @@ class CaseBugTest(TestCase):
         """
         How do we do when submitting an empty case id?
         """
-        self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))
         file_path = os.path.join(os.path.dirname(__file__), "data", "bugs", "empty_id.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
@@ -69,7 +67,6 @@ class CaseBugTest(TestCase):
 
 
     def _testCornerCaseDatatypeBugs(self, value):
-        self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))
 
         def _test(custom_format_args):
             case_id = uuid.uuid4().hex
@@ -121,7 +118,6 @@ class CaseBugTest(TestCase):
         How do we do when submitting multiple values for the same property
         in an update block
         """
-        self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))
         file_path = os.path.join(os.path.dirname(__file__), "data", "bugs",
                                  "duplicate_case_properties.xml")
         with open(file_path, "rb") as f:
@@ -147,7 +143,6 @@ class CaseBugTest(TestCase):
         """
         How do we do when submitting a form with multiple blocks for the same case?
         """
-        self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))
         file_path = os.path.join(os.path.dirname(__file__), "data", "bugs", "multiple_case_blocks.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
@@ -168,14 +163,13 @@ class CaseBugTest(TestCase):
         """
         How do we do when submitting a form with multiple blocks for the same case?
         """
-        self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))
         file_path = os.path.join(os.path.dirname(__file__), "data", "bugs", "lots_of_subcases.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
         form = post_xform_to_couch(xml_data)
         # before the bug was fixed this call failed
         process_cases(form)
-        self.assertEqual(11, len(CommCareCase.view("case/by_user", reduce=False).all()))
+        self.assertEqual(11, get_total_case_count())
 
     def testSubmitToDeletedCase(self):
         # submitting to a deleted case should succeed and affect the case

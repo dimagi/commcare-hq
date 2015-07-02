@@ -1,54 +1,129 @@
+import uuid
 from django.test import TestCase
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import LocationType
+from corehq.apps.locations.tests.util import make_loc
+from corehq.apps.users.models import CommCareUser
 
 
 class TestLocationTypes(TestCase):
-    def setUp(self):
-        self.domain = create_domain('locations-test')
 
-        def make_loc_type(name, parent_type=None):
-            return LocationType.objects.create(
-                domain=self.domain.name,
-                name=name,
-                code=name,
-                parent_type=parent_type,
-            )
+    @classmethod
+    def setUpClass(cls):
+        cls.domain = create_domain('locations-test')
 
-        self.state = make_loc_type('state')
-
-        self.district = make_loc_type('district', self.state)
-        self.section = make_loc_type('section', self.district)
-        self.block = make_loc_type('block', self.district)
-        self.center = make_loc_type('center', self.block)
-
-        self.county = make_loc_type('county', self.state)
-        self.city = make_loc_type('city', self.county)
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain.delete()
 
     def tearDown(self):
-        self.domain.delete()
         LocationType.objects.filter(domain=self.domain.name).delete()
 
     def test_hierarchy(self):
+        state = make_loc_type('state')
+
+        district = make_loc_type('district', state)
+        section = make_loc_type('section', district)
+        block = make_loc_type('block', district)
+        center = make_loc_type('center', block)
+
+        county = make_loc_type('county', state)
+        city = make_loc_type('city', county)
+
         hierarchy = LocationType.objects.full_hierarchy(self.domain.name)
         desired_hierarchy = {
-            self.state.id: (
-                self.state,
+            state.id: (
+                state,
                 {
-                    self.district.id: (
-                        self.district,
+                    district.id: (
+                        district,
                         {
-                            self.section.id: (self.section, {}),
-                            self.block.id: (self.block, {
-                                self.center.id: (self.center, {}),
+                            section.id: (section, {}),
+                            block.id: (block, {
+                                center.id: (center, {}),
                             }),
                         },
                     ),
-                    self.county.id: (
-                        self.county,
-                        {self.city.id: (self.city, {})},
+                    county.id: (
+                        county,
+                        {city.id: (city, {})},
                     ),
                 },
             ),
         }
         self.assertEqual(hierarchy, desired_hierarchy)
+
+
+class TestLocationTypeOwnership(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.domain = 'locations-test-ownership'
+        cls.project = create_domain(cls.domain)
+
+    def setUp(self):
+        self.user = CommCareUser.create(
+            self.domain,
+            uuid.uuid4().hex,
+            'password',
+            first_name='Location types',
+            last_name='Tester',
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.project.delete()
+
+    def tearDown(self):
+        self.user.delete()
+
+    def test_no_case_sharing(self):
+        no_case_sharing_type = make_loc_type('no-case-sharing', domain=self.domain)
+        location = make_loc('loc', type=no_case_sharing_type.name, domain=self.domain)
+        self.user.set_location(location)
+        self.assertEqual([], self.user.location_group_ids())
+
+    def test_sharing_no_descendants(self):
+        case_sharing_type = make_loc_type('case-sharing', domain=self.domain, shares_cases=True)
+        location = make_loc('loc', type=case_sharing_type.name, domain=self.domain)
+        self.user.set_location(location)
+        self.assertEqual([_group_id(location._id)], self.user.location_group_ids())
+
+    def test_assigned_loc_included_with_descendants(self):
+        parent_type = make_loc_type('parent', domain=self.domain, shares_cases=True, view_descendants=True)
+        child_type = make_loc_type('child', domain=self.domain, shares_cases=True)
+        parent_loc = make_loc('parent', type=parent_type.name, domain=self.domain)
+        child_loc = make_loc('child', type=child_type.name, domain=self.domain, parent=parent_loc)
+        self.user.set_location(parent_loc)
+        self.assertEqual(
+            set(map(_group_id, [parent_loc._id, child_loc._id])),
+            set(self.user.location_group_ids())
+        )
+
+    def test_only_case_sharing_descendents_included(self):
+        parent_type = make_loc_type('parent', domain=self.domain, shares_cases=True, view_descendants=True)
+        child_type = make_loc_type('child', domain=self.domain, shares_cases=False)
+        grandchild_type = make_loc_type('grandchild', domain=self.domain, shares_cases=True)
+        parent_loc = make_loc('parent', type=parent_type.name, domain=self.domain)
+        child_loc = make_loc('child', type=child_type.name, domain=self.domain, parent=parent_loc)
+        grandchild_loc = make_loc('grandchild', type=grandchild_type.name, domain=self.domain, parent=child_loc)
+        self.user.set_location(parent_loc)
+        self.assertEqual(
+            set(map(_group_id, [parent_loc._id, grandchild_loc._id])),
+            set(self.user.location_group_ids())
+        )
+
+
+def make_loc_type(name, parent_type=None, domain='locations-test',
+                  shares_cases=False, view_descendants=False):
+    return LocationType.objects.create(
+        domain=domain,
+        name=name,
+        code=name,
+        parent_type=parent_type,
+        shares_cases=shares_cases,
+        view_descendants=view_descendants
+    )
+
+
+def _group_id(location_id):
+    return location_id

@@ -65,12 +65,9 @@
             }"></div>
             <!-- /ko -->
 
-            <p class="alert alert-success"
-                 data-bind="visible: paymentIsComplete">
-                {% blocktrans %}
-                Thank you for your payment!
-                {% endblocktrans %}
-            </p>
+            <div class="alert alert-success" data-bind="visible: paymentIsComplete, template: {
+                name: '{{ payment_complete_template }}',
+            }"></div>
         </div>
         <div class="modal-footer">
             <button type="button"

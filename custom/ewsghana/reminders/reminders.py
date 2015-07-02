@@ -86,7 +86,7 @@ def second_soh_process_user(user, test=False):
         case_id=supply_point._id,
         last_modified_date__gte=date
     )
-    products = user.location.sql_location.products
+    products = user.sql_location.products
     location_products_ids = [product.product_id for product in products]
     reported_products_ids = [stock_state.product_id for stock_state in stock_states]
     missing_products_ids = set(location_products_ids) - set(reported_products_ids)

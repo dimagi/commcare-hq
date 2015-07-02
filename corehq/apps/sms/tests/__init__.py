@@ -1,3 +1,19 @@
+#from .inbound_handlers import *
+from .opt_tests import *
+from .migration import *
+from .test_dbaccessors import *
+
+from corehq.apps.domain.calculations import num_mobile_users
+from corehq.apps.sms.api import send_sms_to_verified_number, send_sms_with_backend, send_sms_with_backend_name
+from corehq.apps.sms.mixin import SMSBackend, BadSMSConfigException, MobileBackend
+from corehq.apps.sms.models import CommConnectCase
+from dimagi.ext.couchdbkit import *
+from couchdbkit.exceptions import ResourceNotFound
+from casexml.apps.case.models import CommCareCase
+from corehq.apps.users.models import CommCareUser
+from django.contrib.sites.models import Site
+from corehq.apps.users.util import format_username
+from django.conf import settings
 from corehq.apps.accounting import generator
 from corehq.apps.accounting.models import (
     BillingAccount,
@@ -7,24 +23,11 @@ from corehq.apps.accounting.models import (
     SubscriptionAdjustment,
 )
 from corehq.apps.accounting.tests import BaseAccountingTest
-from corehq.apps.domain.calculations import num_mobile_users
-from corehq.apps.sms.api import send_sms_to_verified_number, send_sms_with_backend, send_sms_with_backend_name
-from corehq.apps.sms.mixin import SMSBackend, BadSMSConfigException
-from corehq.apps.sms.models import CommConnectCase
-from django.conf import settings
-from dimagi.ext.couchdbkit import *
-from couchdbkit.exceptions import ResourceNotFound
-from casexml.apps.case.models import CommCareCase
-#from .inbound_handlers import *
-from .opt_tests import *
-from .migration import *
-from corehq.apps.users.models import CommCareUser
-from django.contrib.sites.models import Site
-from corehq.apps.users.util import format_username
 
 
 class BackendInvocationDoc(Document):
     pass
+
 
 class TestCaseBackend(SMSBackend):
 
@@ -142,6 +145,15 @@ class BackendTestCase(BaseAccountingTest):
         self.backend_mapping4 = BackendMapping(is_global=True,prefix="265",backend_id=self.backend4._id)
         self.backend_mapping4.save()
 
+        self.backend_mapping5 = BackendMapping(is_global=True, prefix="256", backend_id=self.backend5._id)
+        self.backend_mapping5.save()
+
+        self.backend_mapping6 = BackendMapping(is_global=True, prefix="25670", backend_id=self.backend6._id)
+        self.backend_mapping6.save()
+
+        self.backend_mapping7 = BackendMapping(is_global=True, prefix="25675", backend_id=self.backend7._id)
+        self.backend_mapping7.save()
+
         self.case = CommCareCase(domain=self.domain)
         self.case.set_case_property("contact_phone_number","15551234567")
         self.case.set_case_property("contact_phone_number_is_verified", "1")
@@ -170,12 +182,15 @@ class BackendTestCase(BaseAccountingTest):
 
         self.backend5.delete_invoke_doc()
         self.backend5.delete()
+        self.backend_mapping5.delete()
 
         self.backend6.delete_invoke_doc()
         self.backend6.delete()
+        self.backend_mapping6.delete()
 
         self.backend7.delete_invoke_doc()
         self.backend7.delete()
+        self.backend_mapping7.delete()
 
         self.contact.delete_verified_number()
         self.case.delete()
@@ -190,6 +205,11 @@ class BackendTestCase(BaseAccountingTest):
             self.site.delete()
 
         settings.SMS_LOADED_BACKENDS.pop()
+
+    def test_multiple_country_prefixes(self):
+        self.assertEqual(MobileBackend.auto_load('256800000000')._id, self.backend5._id)
+        self.assertEqual(MobileBackend.auto_load('256700000000')._id, self.backend6._id)
+        self.assertEqual(MobileBackend.auto_load('256750000000')._id, self.backend7._id)
 
     def test_backend(self):
         # Test the backend map

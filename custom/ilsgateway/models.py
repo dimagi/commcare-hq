@@ -1,7 +1,9 @@
 from datetime import datetime
+from django.dispatch.dispatcher import receiver
+from corehq.apps.domain.signals import commcare_domain_pre_delete
 
 from dimagi.ext.couchdbkit import Document, BooleanProperty, StringProperty
-from django.db import models
+from django.db import models, connection
 
 from casexml.apps.stock.models import DocDomainMapping
 from corehq.apps.products.models import Product
@@ -128,7 +130,7 @@ class SupplyPointStatus(models.Model):
     status_value = models.CharField(max_length=50,
                                     choices=((c, c) for c in SupplyPointStatusValues.CHOICES))
     status_date = models.DateTimeField(default=datetime.utcnow)
-    supply_point = models.CharField(max_length=100, db_index=True)
+    location_id = models.CharField(max_length=100, db_index=True)
     external_id = models.PositiveIntegerField(null=True, db_index=True)
 
     def save(self, *args, **kwargs):
@@ -146,9 +148,10 @@ class SupplyPointStatus(models.Model):
 
     @classmethod
     def wrap_from_json(cls, obj, location_id):
-        obj['supply_point'] = location_id
+        obj['location_id'] = location_id
         obj['external_id'] = obj['id']
         del obj['id']
+        del obj['supply_point']
         return cls(**obj)
 
     class Meta:
@@ -160,7 +163,7 @@ class SupplyPointStatus(models.Model):
 
 # Ported from: https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzania/models.py#L170
 class DeliveryGroupReport(models.Model):
-    supply_point = models.CharField(max_length=100, db_index=True)
+    location_id = models.CharField(max_length=100, db_index=True)
     quantity = models.IntegerField()
     report_date = models.DateTimeField(default=datetime.utcnow())
     message = models.CharField(max_length=100, db_index=True)
@@ -172,9 +175,10 @@ class DeliveryGroupReport(models.Model):
 
     @classmethod
     def wrap_from_json(cls, obj, location_id):
-        obj['supply_point'] = location_id
+        obj['location_id'] = location_id
         obj['external_id'] = obj['id']
         del obj['id']
+        del obj['supply_point']
         return cls(**obj)
 
 
@@ -185,7 +189,7 @@ class ReportingModel(models.Model):
     A model to encapsulate aggregate (data warehouse) data used by a report.
     """
     date = models.DateTimeField()                   # viewing time period
-    supply_point = models.CharField(max_length=100, db_index=True)
+    location_id = models.CharField(max_length=100, db_index=True)
     create_date = models.DateTimeField(editable=False)
     update_date = models.DateTimeField(editable=False)
     external_id = models.PositiveIntegerField(db_index=True, null=True)
@@ -217,7 +221,7 @@ class OrganizationSummary(ReportingModel):
     average_lead_time_in_days = models.FloatField(default=0)
 
     def __unicode__(self):
-        return "%s: %s/%s" % (self.supply_point, self.date.month, self.date.year)
+        return "%s: %s/%s" % (self.location_id, self.date.month, self.date.year)
 
 
 # Ported from:
@@ -240,7 +244,7 @@ class GroupSummary(models.Model):
         org_summary_id = obj['org_summary']['id']
         del obj['org_summary']['id']
         obj['org_summary']['external_id'] = org_summary_id
-        obj['org_summary']['supply_point'] = location_id
+        obj['org_summary']['location_id'] = location_id
         obj['org_summary']['create_date'] = force_to_datetime(obj['org_summary']['create_date'])
         obj['org_summary']['update_date'] = force_to_datetime(obj['org_summary']['update_date'])
         obj['org_summary']['date'] = force_to_datetime(obj['org_summary']['date'])
@@ -317,7 +321,7 @@ class ProductAvailabilityData(ReportingModel):
     def wrap_from_json(cls, obj, domain, location_id):
         product = Product.get_by_code(domain, obj['product'])
         obj['product'] = product._id
-        obj['supply_point'] = location_id
+        obj['location_id'] = location_id
         obj['external_id'] = obj['id']
         del obj['id']
         return cls(**obj)
@@ -460,3 +464,47 @@ class ILSNotes(models.Model):
     user_phone = models.CharField(max_length=20, null=True)
     date = models.DateTimeField()
     text = models.TextField()
+
+
+@receiver(commcare_domain_pre_delete)
+def domain_pre_delete_receiver(domain, **kwargs):
+    domain_name = domain.name
+    locations_ids = SQLLocation.objects.filter(domain=domain_name).values_list('location_id', flat=True)
+    if locations_ids:
+        DeliveryGroupReport.objects.filter(location_id__in=locations_ids).delete()
+        SupplyPointWarehouseRecord.objects.filter(supply_point__in=locations_ids).delete()
+
+        cursor = connection.cursor()
+        cursor.execute(
+            "DELETE FROM ilsgateway_alert WHERE location_id IN "
+            "(SELECT location_id FROM locations_sqllocation WHERE domain=%s)", [domain_name]
+        )
+        cursor.execute(
+            "DELETE FROM ilsgateway_groupsummary WHERE org_summary_id IN "
+            "(SELECT id FROM ilsgateway_organizationsummary WHERE location_id IN "
+            "(SELECT location_id FROM locations_sqllocation WHERE domain=%s))", [domain_name]
+        )
+
+        cursor.execute(
+            "DELETE FROM ilsgateway_organizationsummary WHERE location_id IN "
+            "(SELECT location_id FROM locations_sqllocation WHERE domain=%s)", [domain_name]
+        )
+
+        cursor.execute(
+            "DELETE FROM ilsgateway_productavailabilitydata WHERE location_id IN "
+            "(SELECT location_id FROM locations_sqllocation WHERE domain=%s)", [domain_name]
+        )
+
+        cursor.execute(
+            "DELETE FROM ilsgateway_supplypointstatus WHERE location_id IN "
+            "(SELECT location_id FROM locations_sqllocation WHERE domain=%s)", [domain_name]
+        )
+
+        cursor.execute(
+            "DELETE FROM ilsgateway_historicallocationgroup WHERE location_id_id IN "
+            "(SELECT id FROM locations_sqllocation WHERE domain=%s)", [domain_name]
+        )
+
+    ReportRun.objects.filter(domain=domain_name).delete()
+    ILSNotes.objects.filter(domain=domain_name).delete()
+    SupervisionDocument.objects.filter(domain=domain_name).delete()

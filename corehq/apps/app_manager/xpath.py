@@ -118,6 +118,10 @@ class XPath(unicode):
     def int(a):
         return XPath(u'int({})'.format(a))
 
+    @staticmethod
+    def empty_string():
+        return XPath(u"''")
+
 
 class CaseSelectionXPath(XPath):
     selector = ''
@@ -140,7 +144,7 @@ class CaseTypeXpath(CaseSelectionXPath):
 class UserCaseXPath(XPath):
     def case(self):
         user_id = session_var(var='userid', path='context')
-        return CaseTypeXpath(USERCASE_TYPE).case().select('hq_user_id', user_id)
+        return CaseTypeXpath(USERCASE_TYPE).case().select('hq_user_id', user_id).select_raw(1)
 
 
 class CaseXPath(XPath):

@@ -12,6 +12,7 @@ from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from django.template.loader import get_template
 from django.template import Context
 from django_countries.countries import COUNTRIES
+
 from corehq import toggles
 from corehq.apps.domain.forms import EditBillingAccountInfoForm
 from corehq.apps.domain.models import Domain
@@ -172,6 +173,9 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
 
     def __init__(self, *args, **kwargs):
         self.username = kwargs.pop('username') if 'username' in kwargs else None
+        self.user = kwargs.pop('user') if 'user' in kwargs else None
+        api_key = kwargs.pop('api_key') if 'api_key' in kwargs else None
+
         super(UpdateMyAccountInfoForm, self).__init__(*args, **kwargs)
 
         username_controls = []
@@ -179,6 +183,18 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
             username_controls.append(hqcrispy.StaticField(
                 _('Username'), self.username)
             )
+
+        api_key_controls = [
+            hqcrispy.StaticField(_('API Key'), api_key),
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    _('Generate API Key'),
+                    type="button",
+                    id='generate-api-key',
+                ),
+                css_class="form-group"
+            ),
+        ]
 
         self.fields['language'].label = _("My Language")
 
@@ -202,6 +218,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
             cb3_layout.Fieldset(
                 _("Other Options"),
                 hqcrispy.Field('language'),
+                cb3_layout.Div(*api_key_controls),
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
@@ -416,7 +433,7 @@ class SupplyPointSelectWidget(forms.Widget):
             'id': self.id,
             'name': name,
             'value': value or '',
-            'query_url': reverse('corehq.apps.commtrack.views.api_query_supply_point', args=[self.domain]),
+            'query_url': reverse('corehq.apps.locations.views.child_locations_for_select2', args=[self.domain]),
         }))
 
 

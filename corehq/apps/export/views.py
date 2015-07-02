@@ -6,8 +6,11 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.utils.decorators import method_decorator
 import json
-from corehq.apps.export.custom_export_helpers import CustomExportHelper
+from corehq.apps.app_manager.models import Application, get_apps_in_domain
+from corehq.apps.app_manager.templatetags.xforms_extras import trans
+from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.export.exceptions import ExportNotFound, ExportAppException
+from corehq.apps.export.forms import CreateFormExportForm
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.standard.export import ExcelExportReport, CaseExportReport
 from corehq.apps.settings.views import BaseProjectDataView
@@ -101,7 +104,7 @@ class BaseCreateCustomExportView(BaseExportView):
     @property
     @memoized
     def export_helper(self):
-        return CustomExportHelper.make(self.request, self.export_type, domain=self.domain)
+        return make_custom_export_helper(self.request, self.export_type, domain=self.domain)
 
     def commit(self, request):
         self.export_helper.update_custom_export()
@@ -113,6 +116,9 @@ class BaseCreateCustomExportView(BaseExportView):
             export_tag = [self.domain, json.loads(request.GET.get("export_tag", "null") or "null")]
         except ValueError:
             return HttpResponseBadRequest()
+
+        if self.export_helper.export_type == "form" and not export_tag[1]:
+            return HttpResponseRedirect(ExcelExportReport.get_url(domain=self.domain))
 
         schema = build_latest_schema(export_tag)
 
@@ -173,7 +179,7 @@ class BaseModifyCustomExportView(BaseExportView):
     @memoized
     def export_helper(self):
         try:
-            return CustomExportHelper.make(self.request, self.export_type, self.domain, self.export_id)
+            return make_custom_export_helper(self.request, self.export_type, self.domain, self.export_id)
         except ResourceNotFound:
             raise Http404()
 
@@ -267,3 +273,67 @@ def create_basic_form_checkpoint(index):
     )
     checkpoint.save()
     return checkpoint
+
+
+class CreateFormExportView(BaseProjectDataView):
+    urlname = 'create_export_form'
+    page_title = ugettext_noop("Create Form Export")
+    template_name = 'export/create_export.html'
+
+    @property
+    def main_context(self):
+        context = super(CreateFormExportView, self).main_context
+        context.update({
+            'create_export_form': self.create_export_form,
+            'app_to_module_options': self.app_to_module_options,
+            'module_to_form_options': self.module_to_form_options,
+            'module_prompt': _('Select Module...'),
+            'form_prompt': _('Select Form...'),
+        })
+        return context
+
+    def post(self, request, *args, **kwargs):
+        if self.create_export_form.is_valid():
+            app_id = self.create_export_form.cleaned_data['application']
+            form_unique_id = self.create_export_form.cleaned_data['form']
+            return HttpResponseRedirect(
+                reverse(
+                    CreateCustomFormExportView.urlname,
+                    args=[self.domain],
+                ) + ('?' + 'export_tag="%(export_tag)s"&app_id=%(app_id)s' % {
+                    'app_id': app_id,
+                    'export_tag': [
+                        form for form in Application.get(app_id).get_forms()
+                        if form.get_unique_id() == form_unique_id
+                    ][0].xmlns,
+                })
+            )
+        return self.get(self.request, *args, **kwargs)
+
+    @property
+    @memoized
+    def create_export_form(self):
+        if self.request.method == 'POST':
+            return CreateFormExportForm(self.domain, self.request.POST)
+        return CreateFormExportForm(self.domain)
+
+    @property
+    def app_to_module_options(self):
+        return {
+            app._id: [{
+                'text': trans(module.name, app.langs),
+                'value': module.unique_id,
+            } for module in app.modules]
+            for app in get_apps_in_domain(self.domain)
+        }
+
+    @property
+    def module_to_form_options(self):
+        return {
+            module.unique_id: [{
+                'text': trans(form.name, app.langs),
+                'value': form.unique_id,
+            } for form in module.get_forms()]
+            for app in get_apps_in_domain(self.domain)
+            for module in app.modules
+        }

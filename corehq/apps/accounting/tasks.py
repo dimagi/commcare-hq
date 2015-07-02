@@ -192,27 +192,21 @@ def send_bookkeeper_email(month=None, year=None, emails=None):
 
 
 @periodic_task(run_every=crontab(minute=0, hour=0))
-def remind_subscription_ending_30_days():
+def remind_subscription_ending():
     """
-    Sends reminder emails for subscriptions ending 30 days from now.
+    Sends reminder emails for subscriptions ending N days from now.
     """
     send_subscription_reminder_emails(30)
+    send_subscription_reminder_emails(10)
+    send_subscription_reminder_emails(1)
 
 
 @periodic_task(run_every=crontab(minute=0, hour=0))
-def remind_subscription_ending_30_days(based_on_date=None):
+def remind_dimagi_contact_subscription_ending_40_days():
     """
-    Sends reminder emails for subscriptions ending 10 days from now.
+    Sends reminder emails to Dimagi contacts that subscriptions are ending in 40 days
     """
-    send_subscription_reminder_emails(10, exclude_trials=False)
-
-
-@periodic_task(run_every=crontab(minute=0, hour=0))
-def remind_subscription_ending_30_days(based_on_date=None):
-    """
-    Sends reminder emails for subscriptions ending tomorrow.
-    """
-    send_subscription_reminder_emails(1, exclude_trials=False)
+    send_subscription_reminder_emails_dimagi_contact(40)
 
 
 def send_subscription_reminder_emails(num_days, exclude_trials=True):
@@ -225,6 +219,19 @@ def send_subscription_reminder_emails(num_days, exclude_trials=True):
         # only send reminder emails if the subscription isn't renewed
         if not subscription.is_renewed:
             subscription.send_ending_reminder_email()
+
+
+def send_subscription_reminder_emails_dimagi_contact(num_days):
+    today = datetime.date.today()
+    date_in_n_days = today + datetime.timedelta(days=num_days)
+    ending_subscriptions = (Subscription.objects
+                            .filter(is_active=True)
+                            .filter(date_end=date_in_n_days)
+                            .filter(account__dimagi_contact__isnull=False))
+    for subscription in ending_subscriptions:
+        # only send reminder emails if the subscription isn't renewed
+        if not subscription.is_renewed:
+            subscription.send_dimagi_ending_reminder_email()
 
 
 @task(ignore_result=True)
@@ -276,6 +283,7 @@ def weekly_digest():
             date_end__gte=today,
             is_active=True,
             is_trial=False,
+            account__dimagi_contact__isnull=True,
         ))
 
     if not ending_in_forty_days:
@@ -341,8 +349,11 @@ def weekly_digest():
         'file_obj': file_to_attach,
     }
     from_email = "Dimagi Accounting <%s>" % settings.DEFAULT_FROM_EMAIL
+    env = ("[{}] ".format(settings.SERVER_ENVIRONMENT.upper())
+           if settings.SERVER_ENVIRONMENT != "production" else "")
+    email_subject = "{}Subscriptions ending in 40 Days from {}".format(env, today.isoformat())
     send_HTML_email(
-        "Subscriptions ending in 40 Days from %s" % today.isoformat(),
+        email_subject,
         settings.ACCOUNTS_EMAIL,
         email_content,
         email_from=from_email,

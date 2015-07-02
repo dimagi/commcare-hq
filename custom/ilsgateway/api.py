@@ -1,4 +1,6 @@
 from django.db import transaction
+from corehq.apps.hqcase.dbaccessors import \
+    get_supply_point_case_in_domain_by_id
 from dimagi.ext.jsonobject import JsonObject, StringProperty, BooleanProperty, DecimalProperty, ListProperty, IntegerProperty,\
     FloatProperty, DictProperty
 from corehq.apps.commtrack.models import SupplyPointCase, CommtrackConfig, CommtrackActionConfig
@@ -7,7 +9,6 @@ from corehq.apps.programs.models import Program
 from corehq.apps.users.models import UserRole
 from custom.api.utils import apply_updates
 from custom.ilsgateway.models import SupplyPointStatus, DeliveryGroupReport, HistoricalLocationGroup
-from custom.logistics.utils import get_supply_point_by_external_id
 from custom.logistics.api import LogisticsEndpoint, APISynchronization, ApiSyncObject
 from corehq.apps.locations.models import Location as Loc
 
@@ -22,7 +23,8 @@ MSDZONE_MAP = {
     'Mwanza Zone': ['MZ', 'geita', 'shinyanga', 'simiyu', 'mwanza', 'kagera', 'mara'],
     'Tabora Zone': ['TB', 'kigoma', 'tabora'],
     'Tanga Zone': ['TG', 'tanga'],
-    'Zanzibar Zone': ["pemba north", "pemba south", "zanzibar central/south", "zanzibar north", "zanzibar west"],
+    'Zanzibar Zone': ['D', "pemba north", "pemba south", "zanzibar central/south", "zanzibar north",
+                      "zanzibar west"],
     'UNKNOWN': ['UN']
 }
 
@@ -99,7 +101,7 @@ class Groups(JsonObject):
 
 
 def _get_location_id(facility, domain):
-    supply_point = get_supply_point_by_external_id(domain, facility)
+    supply_point = get_supply_point_case_in_domain_by_id(domain, facility)
     return supply_point.location_id if supply_point else None
 
 
@@ -147,6 +149,14 @@ class ILSGatewayEndpoint(LogisticsEndpoint):
         return meta, [
             Groups(obj) for obj in groups_list
         ]
+
+    def get_stocktransactions(self, start_date=None, end_date=None, **kwargs):
+        kwargs.get('filters', {}).update({
+            'date__gte': start_date,
+        })
+        meta, stock_transactions = self.get_objects(self.stocktransactions_url, **kwargs)
+        return meta, [(self.models_map['stock_transaction'])(stock_transaction)
+                      for stock_transaction in stock_transactions]
 
 
 class ILSGatewayAPI(APISynchronization):

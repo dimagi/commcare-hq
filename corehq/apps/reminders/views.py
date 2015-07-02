@@ -7,6 +7,8 @@ import pytz
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponse
 from django.shortcuts import render
+from corehq.apps.casegroups.dbaccessors import get_case_groups_in_domain
+from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
@@ -73,7 +75,7 @@ from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.util import register_sms_contact, update_contact
 from corehq.apps.domain.models import Domain, DomainCounter
 from corehq.apps.groups.models import Group
-from casexml.apps.case.models import CommCareCase, CommCareCaseGroup
+from casexml.apps.case.models import CommCareCase
 from dateutil.parser import parse
 from corehq.apps.sms.util import close_task
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -1234,7 +1236,7 @@ def add_sample(request, domain, sample_id=None):
 def sample_list(request, domain):
     context = {
         "domain" : domain,
-        "samples": CommCareCaseGroup.get_by_domain(domain)
+        "samples": get_case_groups_in_domain(domain)
     }
     return render(request, "reminders/partial/sample_list.html", context)
 
@@ -1431,7 +1433,7 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
     @property
     @memoized
     def total(self):
-        data = CommCareCaseGroup.get_db().view(
+        data = SurveyKeyword.get_db().view(
             'reminders/survey_keywords',
             reduce=True,
             startkey=[self.domain],

@@ -62,14 +62,16 @@ class CaseDataTests(TestCase):
         actions = self.casedata.actions.all()
         self.assertEqual(3, len(actions))
         for action in actions:
+            self.assertEqual(self.date_modified.date(), action.date.date())
+            self.assertEqual(date.today(), action.server_date.date())
+            self.assertEqual('user', action.user_id)
+            self.assertEqual('owner', action.case_owner)
+            self.assertEqual('c_type', action.case_type)
+
             if action.index == 0:
                 self.assertEqual('create', action.action_type)
             if action.index == 1:
                 self.assertEqual('update', action.action_type)
-                self.assertEqual('update', action.action_type)
-            self.assertEqual(self.date_modified.date(), action.date.date())
-            self.assertEqual(date.today(), action.server_date.date())
-            self.assertEqual('user', action.user_id)
             if action.index == 2:
                 self.assertEqual('index', action.action_type)
 
@@ -85,11 +87,12 @@ class CaseDataTests(TestCase):
                 create=True,
                 case_id='grand_mother_case_id',
                 case_type='mother-case',
+                owner_id='owner',
                 version=V2,
             ).as_xml(format_datetime=None)
         ], {'domain': TEST_DOMAIN})
 
-        date_modified = datetime.utcnow().replace(microsecond=0)
+        date_modified = datetime.utcnow()
         post_case_blocks([
             CaseBlock(
                 close=True,
@@ -116,6 +119,8 @@ class CaseDataTests(TestCase):
                 self.assertEqual(date.today(), action.date.date())
                 self.assertEqual(date.today(), action.server_date.date())
                 self.assertEqual('user2', action.user_id)
+                self.assertEqual('owner', action.case_owner)
+                self.assertEqual('c_type', action.case_type)
 
         indices = self.casedata.indices.all()
         self.assertEqual(2, len(indices))
@@ -141,3 +146,25 @@ class CaseDataTests(TestCase):
         casedata = CaseData.create_or_update_from_instance(instance)
         self.assertIsNotNone(casedata)
         self.assertEqual('', casedata.name)
+
+    def test_empty_owner_id(self):
+        case_id = 'case_with_no_owner'
+        post_case_blocks([
+            CaseBlock(
+                create=True,
+                case_id=case_id,
+                user_id='user',
+                case_type='c_type',
+                case_name='bob',
+                date_modified=self.date_modified,
+                version=V2,
+                update={'foo': 'bar'},
+            ).as_xml(format_datetime=None)
+        ], {'domain': TEST_DOMAIN})
+
+        instance = CommCareCase.get(case_id)
+        casedata = CaseData.create_or_update_from_instance(instance)
+        self.assertIsNotNone(casedata)
+        self.assertEqual('user', casedata.case_owner)
+
+

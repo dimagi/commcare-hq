@@ -46,6 +46,7 @@ from corehq.apps.users.forms import (CommCareAccountForm, UpdateCommCareUserInfo
 from corehq.apps.users.models import CommCareUser, UserRole, CouchUser
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.models import Domain
+from corehq.apps.locations.permissions import user_can_edit_any_location
 from corehq.apps.users.bulkupload import check_headers, dump_users_and_groups, GroupNameError, UserUploadError
 from corehq.apps.users.tasks import bulk_upload_async
 from corehq.apps.users.decorators import require_can_edit_commcare_users
@@ -56,7 +57,7 @@ from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound, JSONReader
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
 from soil.exceptions import TaskFailedError
-from soil.util import get_download_context, expose_download
+from soil.util import get_download_context, expose_cached_download
 from .custom_data_fields import UserFieldsView
 
 BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
@@ -232,6 +233,8 @@ class ListCommCareUsersView(BaseUserSettingsView):
 
     @property
     def can_bulk_edit_users(self):
+        if not user_can_edit_any_location(self.request.couch_user, self.request.project):
+            return False
         try:
             ensure_request_has_privilege(self.request, privileges.BULK_USER_MANAGEMENT)
         except PermissionDenied:
@@ -439,7 +442,7 @@ class AsyncListCommCareUsersView(ListCommCareUsersView):
             if self.more_columns:
                 u_data.update({
                     'form_count': user.form_count,
-                    'case_count': user.case_count,
+                    'case_count': user.analytics_only_case_count,
                 })
                 if self.show_case_sharing:
                     u_data.update({
@@ -760,7 +763,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
         except UserUploadError as e:
             return HttpResponseBadRequest(e)
 
-        task_ref = expose_download(None, expiry=1*60*60)
+        task_ref = expose_cached_download(None, expiry=1*60*60)
         task = bulk_upload_async.delay(
             self.domain,
             list(self.user_specs),

@@ -408,6 +408,29 @@ class Style(XmlObject):
     grid_y = StringField("grid/@grid-y")
 
 
+class Extra(XmlObject):
+    ROOT_NAME = 'extra'
+
+    key = StringField("@key")
+    value = StringField("@value")
+
+
+class Response(XmlObject):
+    ROOT_NAME = 'response'
+
+    key = StringField("@key")
+
+
+class Lookup(XmlObject):
+    ROOT_NAME = 'lookup'
+
+    name = StringField("@name")
+    action = StringField("@action", required=True)
+    image = StringField("@image")
+    extras = NodeListField('extra', Extra)
+    responses = NodeListField('response', Response)
+
+
 class Field(OrderedXmlObject):
     ROOT_NAME = 'field'
     ORDER = ('header', 'template', 'sort_node')
@@ -451,6 +474,10 @@ class Detail(OrderedXmlObject, IdNode):
     """
     <detail id="">
         <title><text/></title>
+        <lookup action="" image="" name="">
+            <extra key="" value = "" />
+            <response key ="" />
+        </lookup>
         <variables>
             <__ function=""/>
         </variables>
@@ -462,9 +489,10 @@ class Detail(OrderedXmlObject, IdNode):
     """
 
     ROOT_NAME = 'detail'
-    ORDER = ('title', 'fields')
+    ORDER = ('title', 'lookup', 'fields')
 
     title = NodeField('title/text', Text)
+    lookup = NodeField('lookup', Lookup)
     fields = NodeListField('field', Field)
     action = NodeField('action', Action)
     details = NodeListField('detail', "self")
@@ -948,16 +976,21 @@ class SuiteGenerator(SuiteGeneratorBase):
     def _get_entries_datums(self, suite):
         datums = defaultdict(lambda: defaultdict(list))
         entries = {}
-        for e in suite.entries:
+
+        def _include_datums(entry):
+            # might want to make this smarter in the future, but for now just hard-code
+            # formats that we know we don't need or don't work
+            return not entry.command.id.startswith('reports') and not entry.command.id.endswith('case-list')
+
+        for e in filter(_include_datums, suite.entries):
             command = e.command.id
             module_id, form_id = command.split('-', 1)
-            if form_id != 'case-list':
-                entries[command] = e
-                if not e.datums:
-                    datums[module_id][form_id] = []
-                else:
-                    for d in e.datums:
-                        datums[module_id][form_id].append(DatumMeta(d))
+            entries[command] = e
+            if not e.datums:
+                datums[module_id][form_id] = []
+            else:
+                for d in e.datums:
+                    datums[module_id][form_id].append(DatumMeta(d))
 
         return entries, datums
 
@@ -1039,13 +1072,26 @@ class SuiteGenerator(SuiteGeneratorBase):
             else:
                 return None
 
+        # Base case (has no tabs)
         else:
-            # Base case (has no tabs)
+            # Add lookup
+            if detail.lookup_enabled and detail.lookup_action:
+                d.lookup = Lookup(
+                    name=detail.lookup_name or None,
+                    action=detail.lookup_action,
+                    image=detail.lookup_image or None,
+                )
+                d.lookup.extras = [Extra(**e) for e in detail.lookup_extras]
+                d.lookup.responses = [Response(**r) for r in detail.lookup_responses]
+
+            # Add variables
             variables = list(
                 self.detail_variables(module, detail, detail_column_infos[start:end])
             )
             if variables:
                 d.variables.extend(variables)
+
+            # Add fields
             for column_info in detail_column_infos[start:end]:
                 fields = get_column_generator(
                     self.app, module, detail,
@@ -1053,6 +1099,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 ).fields
                 d.fields.extend(fields)
 
+            # Add actions
             if module.case_list_form.form_id and detail_type.endswith('short') and \
                     not (hasattr(module, 'parent_select') and module.parent_select.active):
                 # add form action to detail
@@ -1416,6 +1463,29 @@ class SuiteGenerator(SuiteGeneratorBase):
 
         entry.require_instance(*instances)
 
+    def get_userdata_autoselect(self, key, session_id, mode):
+        base_xpath = session_var('data', path='user')
+        xpath = session_var(key, path='user/data')
+        protected_xpath = XPath.if_(
+            XPath.and_(base_xpath.count().eq(1), xpath.count().eq(1)),
+            xpath,
+            XPath.empty_string(),
+        )
+        datum = SessionDatum(id=session_id, function=protected_xpath)
+        assertions = [
+            self.get_assertion(
+                XPath.and_(base_xpath.count().eq(1),
+                           xpath.count().eq(1)),
+                'case_autoload.{0}.property_missing'.format(mode),
+                [key],
+            ),
+            self.get_assertion(
+                CaseIDXPath(xpath).case().count().eq(1),
+                'case_autoload.{0}.case_missing'.format(mode),
+            )
+        ]
+        return datum, assertions
+
     @property
     def entries(self):
         # avoid circular dependency
@@ -1437,6 +1507,20 @@ class SuiteGenerator(SuiteGeneratorBase):
                     'careplan_form': self.configure_entry_careplan_form,
                 }[form.form_type]
                 config_entry(module, e, form)
+
+                if (
+                    self.app.commtrack_enabled and
+                    session_var('supply_point_id') in getattr(form, 'source', "")
+                ):
+                    from .models import AUTO_SELECT_LOCATION
+                    datum, assertions = self.get_userdata_autoselect(
+                        'commtrack-supply-point',
+                        'supply_point_id',
+                        AUTO_SELECT_LOCATION,
+                    )
+                    e.datums.append(datum)
+                    e.assertions.extend(assertions)
+
                 results.append(e)
 
             if hasattr(module, 'case_list') and module.case_list.show:
@@ -1444,6 +1528,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                     command=Command(
                         id=self.id_strings.case_list_command(module),
                         locale_id=self.id_strings.case_list_locale(module),
+                        media_image=module.case_list.media_image,
+                        media_audio=module.case_list.media_audio,
                     )
                 )
                 if isinstance(module, Module):
@@ -1502,7 +1588,8 @@ class SuiteGenerator(SuiteGeneratorBase):
 
     def get_extra_case_id_datums(self, form):
         datums = []
-        if form.form_type == 'module_form' and actions_use_usercase(form.active_actions()):
+        actions = form.active_actions()
+        if form.form_type == 'module_form' and actions_use_usercase(actions):
             if not self.is_usercase_enabled:
                 raise SuiteError('Form uses usercase, but usercase not enabled')
             case = UserCaseXPath().case()
@@ -1510,7 +1597,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 'datum': SessionDatum(id=USERCASE_ID, function=('%s/@case_id' % case)),
                 'case_type': USERCASE_TYPE,
                 'requires_selection': False,
-                'action': None  # action and user case are independent.
+                'action': None  # Unused (and could be actions['usercase_update'] or actions['usercase_preload'])
             })
         return datums
 
@@ -1678,14 +1765,13 @@ class SuiteGenerator(SuiteGeneratorBase):
 
     def get_auto_select_datums_and_assertions(self, action, auto_select, form):
         from corehq.apps.app_manager.models import AUTO_SELECT_USER, AUTO_SELECT_CASE, \
-            AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW
+            AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW, AUTO_SELECT_USERCASE
         if auto_select.mode == AUTO_SELECT_USER:
-            xpath = session_var(auto_select.value_key, path='user/data')
-            assertions = self.get_auto_select_assertions(xpath, auto_select.mode, [auto_select.value_key])
-            return SessionDatum(
-                id=action.case_session_var,
-                function=xpath
-            ), assertions
+            return self.get_userdata_autoselect(
+                auto_select.value_key,
+                action.case_session_var,
+                auto_select.mode,
+            )
         elif auto_select.mode == AUTO_SELECT_CASE:
             try:
                 ref = form.actions.actions_meta_by_tag[auto_select.value_source]['action']
@@ -1712,10 +1798,28 @@ class SuiteGenerator(SuiteGeneratorBase):
                 function=xpath
             ), [fixture_assertion] + assertions
         elif auto_select.mode == AUTO_SELECT_RAW:
+            case_id_xpath = auto_select.value_key
+            case_count = CaseIDXPath(case_id_xpath).case().count()
             return SessionDatum(
                 id=action.case_session_var,
-                function=auto_select.value_key
-            ), []
+                function=case_id_xpath
+            ), [
+                self.get_assertion(
+                    "{0} = 1".format(case_count),
+                    'case_autoload.{0}.case_missing'.format(auto_select.mode)
+                )
+            ]
+        elif auto_select.mode == AUTO_SELECT_USERCASE:
+            case = UserCaseXPath().case()
+            return SessionDatum(
+                id=action.case_session_var,
+                function=case.slash('@case_id')
+            ), [
+                self.get_assertion(
+                    "{0} = 1".format(case.count()),
+                    'case_autoload.{0}.case_missing'.format(auto_select.mode)
+                )
+            ]
 
     def configure_entry_advanced_form(self, module, e, form, **kwargs):
         def case_sharing_requires_assertion(form):
@@ -1842,6 +1946,8 @@ class SuiteGenerator(SuiteGeneratorBase):
         root_module = module.root_module
         root_datums = []
         if root_module and root_module.module_type == 'basic':
+            # For advanced modules the onus is on the user to make things work by loading the correct cases and
+            # using the correct case tags.
             try:
                 # assume that all forms in the root module have the same case management
                 root_module_form = root_module.get_form(0)

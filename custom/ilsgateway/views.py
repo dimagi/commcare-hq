@@ -29,7 +29,8 @@ from custom.ilsgateway.tanzania.reminders.stockonhand import send_soh_reminder
 from custom.ilsgateway.tanzania.reminders.supervision import send_supervision_reminder
 from custom.ilsgateway.tasks import clear_report_data
 from casexml.apps.stock.models import StockTransaction
-from custom.logistics.tasks import sms_users_fix, fix_groups_in_location_task
+from custom.logistics.models import StockDataCheckpoint
+from custom.logistics.tasks import fix_groups_in_location_task, resync_web_users
 from custom.ilsgateway.api import ILSGatewayAPI
 from custom.logistics.tasks import stock_data_task
 from custom.ilsgateway.api import ILSGatewayEndpoint
@@ -271,10 +272,10 @@ def end_report_run(request, domain):
 
 @domain_admin_required
 @require_POST
-def ils_sms_users_fix(request, domain):
+def ils_resync_web_users(request, domain):
     config = ILSGatewayConfig.for_domain(domain)
     endpoint = ILSGatewayEndpoint.from_config(config)
-    sms_users_fix.delay(ILSGatewayAPI(domain=domain, endpoint=endpoint))
+    resync_web_users.delay(ILSGatewayAPI(domain=domain, endpoint=endpoint))
     return HttpResponse('OK')
 
 
@@ -316,4 +317,14 @@ def save_ils_note(request, domain):
 @require_POST
 def fix_groups_in_location(request, domain):
     fix_groups_in_location_task.delay(domain)
+    return HttpResponse('OK')
+
+
+@domain_admin_required
+@require_POST
+def change_runner_date_to_last_migration(request, domain):
+    checkpoint = StockDataCheckpoint.objects.get(domain=domain)
+    last_run = ReportRun.last_success(domain)
+    last_run.end = checkpoint.date
+    last_run.save()
     return HttpResponse('OK')

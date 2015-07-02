@@ -261,3 +261,20 @@ class TestESFacet(ElasticTestMixin, TestCase):
         with self.assertRaises(AssertionError):
             HQESQuery('forms')\
                 .terms_facet('form.meta.userID', 'form.meta.userID', size=10)
+
+    def test_query(self):
+        json_output = {
+            "query": {
+                "filtered": {
+                    "filter": {
+                        "and": [
+                            {"match_all": {}}
+                        ]
+                    },
+                    "query": {"fancy_query": {"foo": "bar"}}
+                }
+            },
+            "size": SIZE_LIMIT
+        }
+        query = HQESQuery('forms').set_query({"fancy_query": {"foo": "bar"}})
+        self.checkQuery(query, json_output)

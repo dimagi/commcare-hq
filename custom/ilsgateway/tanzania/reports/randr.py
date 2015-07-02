@@ -1,5 +1,6 @@
 from functools import partial
 from dateutil import rrule
+from corehq.apps.locations.dbaccessors import get_one_user_at_location
 from corehq.apps.locations.models import SQLLocation, Location
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.users.models import CommCareUser
@@ -30,9 +31,8 @@ class RRStatus(ILSData):
             for child in locations:
                 try:
                     org_summary = OrganizationSummary.objects.filter(
-                        date__range=(self.config['startdate'],
-                                     self.config['enddate']),
-                        supply_point=child.location_id
+                        date__range=(self.config['startdate'], self.config['enddate']),
+                        location_id=child.location_id
                     )
                 except OrganizationSummary.DoesNotExist:
                     return []
@@ -46,14 +46,14 @@ class RRStatus(ILSData):
                 total_possible = 0
                 group_summaries = GroupSummary.objects.filter(
                     org_summary__date__lte=self.config['startdate'],
-                    org_summary__supply_point=child.location_id,
+                    org_summary__location_id=child.location_id,
                     title=SupplyPointStatusTypes.R_AND_R_FACILITY
                 )
 
-                for g in group_summaries:
-                    if g:
-                        total_responses += g.responded
-                        total_possible += g.total
+                for group_summary in group_summaries:
+                    if group_summary:
+                        total_responses += group_summary.responded
+                        total_possible += group_summary.total
                 hist_resp_rate = rr_format_percent(total_responses, total_possible)
 
                 url = make_url(RRreport, self.config['domain'],
@@ -116,19 +116,20 @@ class RRReportingHistory(ILSData):
         for child in dg:
             total_responses = 0
             total_possible = 0
-            rr_value = randr_value(child.location_id, self.config['startdate'], self.config['enddate'])
+            submitted, rr_value = randr_value(child.location_id, self.config['startdate'], self.config['enddate'])
             if child.is_archived and not rr_value:
                 continue
 
             group_summaries = GroupSummary.objects.filter(
                 org_summary__date__lte=self.config['startdate'],
-                org_summary__supply_point=child.location_id, title=SupplyPointStatusTypes.R_AND_R_FACILITY
+                org_summary__location_id=child.location_id,
+                title=SupplyPointStatusTypes.R_AND_R_FACILITY
             )
 
-            for g in group_summaries:
-                if g:
-                    total_responses += g.responded
-                    total_possible += g.total
+            for group_summary in group_summaries:
+                if group_summary:
+                    total_responses += group_summary.responded
+                    total_possible += group_summary.total
             hist_resp_rate = rr_format_percent(total_responses, total_possible)
 
             url = make_url(FacilityDetailsReport, self.config['domain'],
@@ -138,12 +139,7 @@ class RRReportingHistory(ILSData):
                             self.config['program'], self.config['datespan_type'],
                             self.config['datespan_first'], self.config['datespan_second']))
 
-            contact = CommCareUser.get_db().view(
-                'locations/users_by_location_id',
-                startkey=[child.location_id],
-                endkey=[child.location_id, {}],
-                include_docs=True
-            ).first()
+            contact = get_one_user_at_location(child.location_id)
 
             if contact and contact['doc']:
                 contact = CommCareUser.wrap(contact['doc'])
@@ -157,7 +153,7 @@ class RRReportingHistory(ILSData):
                 [
                     child.site_code,
                     link_format(child.name, url),
-                    get_span(rr_value) % (rr_value.strftime("%d %b %Y") if rr_value else "Not reported"),
+                    get_span(submitted) % (rr_value.strftime("%d %b %Y") if rr_value else "Not reported"),
                     contact_string,
                     hist_resp_rate
                 ]

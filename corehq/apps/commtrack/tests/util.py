@@ -7,13 +7,14 @@ from casexml.apps.case.xml import V2
 from casexml.apps.phone.tests.utils import generate_restore_payload
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from casexml.apps.stock.models import StockReport, StockTransaction
+from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_safe_write_kwargs
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.models import Group
-from corehq.apps.locations.models import Location, LocationType
+from corehq.apps.locations.models import Location, LocationType, SQLLocation
 from corehq.apps.products.models import Product
 from corehq.apps.sms.backend import test
 from corehq.apps.users.models import CommCareUser
@@ -101,7 +102,7 @@ def bootstrap_user(setup, username=TEST_USER, domain=TEST_DOMAIN,
         last_name=last_name
     )
     if home_loc == setup.loc.site_code:
-        if not SupplyPointCase.get_by_location(setup.loc):
+        if not get_supply_point_case_by_location(setup.loc):
             make_supply_point(domain, setup.loc)
 
         user.set_location(setup.loc)
@@ -208,6 +209,7 @@ class CommTrackTest(TestCase):
         self.assertEqual(3, len(self.products))
 
     def tearDown(self):
+        SQLLocation.objects.all().delete()
         self.backend.delete()
         for u in self.users:
             u.delete()
@@ -222,8 +224,8 @@ class CommTrackTest(TestCase):
         )
 
 
-def get_ota_balance_xml(user):
-    xml = generate_restore_payload(user.to_casexml_user(), version=V2)
+def get_ota_balance_xml(project, user):
+    xml = generate_restore_payload(project, user.to_casexml_user(), version=V2)
     return extract_balance_xml(xml)
 
 

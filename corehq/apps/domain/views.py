@@ -52,11 +52,11 @@ from django_prbac.decorators import requires_privilege_raise404
 from django_prbac.utils import has_privilege
 
 from corehq.apps.accounting.models import (
-    Subscription, CreditLine, SoftwareProductType,
+    Subscription, CreditLine, SoftwareProductType, SubscriptionType,
     DefaultProductPlan, SoftwarePlanEdition, BillingAccount,
     BillingAccountType, BillingAccountAdmin,
     Invoice, BillingRecord, InvoicePdf, PaymentMethodType,
-    PaymentMethod, EntryPoint, WireInvoice
+    PaymentMethod, EntryPoint, WireInvoice, SoftwarePlanVisibility
 )
 from corehq.apps.accounting.usage import FeatureUsageCalculator
 from corehq.apps.accounting.user_text import get_feature_name, PricingTable, DESC_BY_EDITION
@@ -680,7 +680,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
                     days_left = (subscription.date_end - datetime.date.today()).days
                     next_subscription.update({
                         'can_renew': days_left <= 30,
-                        'renew_url': reverse(ConfirmSubscriptionRenewalView.urlname, args=[self.domain]),
+                        'renew_url': reverse(SubscriptionRenewalView.urlname, args=[self.domain]),
                     })
             general_credits = CreditLine.get_credits_by_subscription_and_features(subscription)
         elif self.account is not None:
@@ -1189,12 +1189,10 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
     form_classes = INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS
 
     @method_decorator(require_superuser)
-    @method_decorator(toggles.FM_FACING_SUBSCRIPTIONS.required_decorator())
     def get(self, request, *args, **kwargs):
         return super(InternalSubscriptionManagementView, self).get(request, *args, **kwargs)
 
     @method_decorator(require_superuser)
-    @method_decorator(toggles.FM_FACING_SUBSCRIPTIONS.required_decorator())
     def post(self, request, *args, **kwargs):
         form = self.get_post_form
         if form.is_valid():
@@ -1237,8 +1235,21 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
                     return SelectSubscriptionTypeForm({
                         'subscription_type': form_slug,
                     })
-        return SelectSubscriptionTypeForm()
 
+        subscription_type = None
+        subscription = Subscription.get_subscribed_plan_by_domain(self.domain_object)[1]
+        if subscription is None:
+            subscription_type = None
+        else:
+            plan = subscription.plan_version.plan
+            if subscription.service_type == SubscriptionType.CONTRACTED:
+                subscription_type = "contracted_partner"
+            elif plan.edition == SoftwarePlanEdition.ENTERPRISE:
+                subscription_type = "dimagi_only_enterprise"
+            elif plan.edition == SoftwarePlanEdition.ADVANCED and plan.visibility == SoftwarePlanVisibility.TRIAL:
+                subscription_type = "advanced_extended_trial"
+
+        return SelectSubscriptionTypeForm({'subscription_type': subscription_type})
 
 
 class SelectPlanView(DomainAccountingSettings):
@@ -1247,11 +1258,12 @@ class SelectPlanView(DomainAccountingSettings):
     page_title = ugettext_noop("Change Plan")
     step_title = ugettext_noop("Select Plan")
     edition = None
+    lead_text = ugettext_noop("Please select a plan below that fits your organization's needs.")
 
     @property
     def edition_name(self):
         if self.edition:
-            return DESC_BY_EDITION[self.edition]['name'].encode('utf-8')
+            return DESC_BY_EDITION[self.edition]['name']
 
     @property
     def is_non_ops_superuser(self):
@@ -1270,9 +1282,12 @@ class SelectPlanView(DomainAccountingSettings):
 
     @property
     def steps(self):
+        edition_name = u" (%s)" % self.edition_name if self.edition_name else ""
         return [
             {
-                'title': _("1. Select a Plan%s") % (" (%s)" % self.edition_name if self.edition_name else ""),
+                'title': _(u"1. Select a Plan%(edition_name)s") % {
+                    "edition_name": edition_name
+                },
                 'url': reverse(SelectPlanView.urlname, args=[self.domain]),
             }
         ]
@@ -1283,6 +1298,7 @@ class SelectPlanView(DomainAccountingSettings):
         context.update({
             'steps': self.steps,
             'step_title': self.step_title,
+            'lead_text': self.lead_text,
         })
         return context
 
@@ -1521,14 +1537,7 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
         return super(ConfirmBillingAccountInfoView, self).post(request, *args, **kwargs)
 
 
-class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin):
-    template_name = 'domain/confirm_subscription_renewal.html'
-    urlname = 'domain_subscription_renewal'
-    page_title = ugettext_noop("Renew Plan")
-    async_handlers = [
-        Select2BillingInfoHandler,
-    ]
-
+class SubscriptionMixin(object):
     @property
     @memoized
     def subscription(self):
@@ -1539,15 +1548,54 @@ class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin
             raise Http404
         return subscription
 
+
+class SubscriptionRenewalView(SelectPlanView, SubscriptionMixin):
+    urlname = "domain_subscription_renewal"
+    page_title = ugettext_noop("Renew Plan")
+    step_title = ugettext_noop("Renew or Change Plan")
+
+    @property
+    def lead_text(self):
+        return ugettext_noop("Based on your current usage we recommend you use the <strong>{plan}</strong> plan"
+                             .format(plan=self.current_subscription.plan_version.plan.edition))
+
+    @property
+    def main_context(self):
+        context = super(SubscriptionRenewalView, self).main_context
+        context.update({'is_renewal': True})
+        return context
+
+    @property
+    def page_context(self):
+        context = super(SubscriptionRenewalView, self).page_context
+
+        current_privs = get_privileges(self.subscription.plan_version)
+        plan = DefaultProductPlan.get_lowest_edition_by_domain(
+            self.domain, current_privs, return_plan=False,
+        ).lower()
+
+        context['current_edition'] = (plan
+                                      if self.current_subscription is not None
+                                      and not self.current_subscription.is_trial
+                                      else "")
+        return context
+
+
+class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin, SubscriptionMixin):
+    template_name = 'domain/confirm_subscription_renewal.html'
+    urlname = 'domain_subscription_renewal_confirmation'
+    page_title = ugettext_noop("Renew Plan")
+    async_handlers = [
+        Select2BillingInfoHandler,
+    ]
+
     @property
     @memoized
     def next_plan_version(self):
-        current_privs = get_privileges(self.subscription.plan_version)
-        plan_version = DefaultProductPlan.get_lowest_edition_by_domain(
-            self.domain, current_privs, return_plan=True,
-        )
+        new_edition = self.request.POST.get('plan_edition').title()
+        plan_version = DefaultProductPlan.get_default_plan_by_domain(self.domain, new_edition)
         if plan_version is None:
-            logging.error("[BILLING] Could not find a matching renwabled plan "
+            logging.error("[BILLING] Could not find a matching renewable plan "
                           "for %(domain)s, subscription number %(sub_pk)s." % {
                 'domain': self.domain,
                 'sub_pk': self.subscription.pk
@@ -1558,7 +1606,7 @@ class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin
     @property
     @memoized
     def confirm_form(self):
-        if self.request.method == 'POST':
+        if self.request.method == 'POST' and "from_plan_page" not in self.request.POST:
             return ConfirmSubscriptionRenewalForm(
                 self.account, self.domain, self.request.couch_user.username,
                 self.subscription, self.next_plan_version,
@@ -1793,7 +1841,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
 
                     m_file.save()
 
-            ignore = []
+            ignore = ['UserRole']
             if not request.POST.get('share_reminders', False):
                 ignore.append('CaseReminderHandler')
 

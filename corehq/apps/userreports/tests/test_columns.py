@@ -194,7 +194,7 @@ class TestExpandedColumn(TestCase):
             format="default",
             description="foo"
         ))
-        cols = _expand_column(column, ["positive", "negative"])
+        cols = _expand_column(column, ["positive", "negative"], "en")
 
         self.assertEqual(len(cols), 2)
         self.assertEqual(type(cols[0].view), SumWhen)
@@ -225,6 +225,7 @@ class TestAggregateDateColumn(SimpleTestCase):
 
 
 class TestPercentageColumn(SimpleTestCase):
+
     def test_wrap(self):
         wrapped = ReportColumnFactory.from_spec({
             'type': 'percent',
@@ -295,7 +296,8 @@ class TestPercentageColumn(SimpleTestCase):
         spec = self._test_spec()
         spec['format'] = 'percent'
         wrapped = ReportColumnFactory.from_spec(spec)
-        self.assertEqual('--', wrapped.get_format_fn()({'num': 1, 'denom': 0}))
+        for empty_value in [0, 0.0, None, '']:
+            self.assertEqual('--', wrapped.get_format_fn()({'num': 1, 'denom': empty_value}))
 
     def test_format_fraction(self):
         spec = self._test_spec()
@@ -308,6 +310,15 @@ class TestPercentageColumn(SimpleTestCase):
         spec['format'] = 'both'
         wrapped = ReportColumnFactory.from_spec(spec)
         self.assertEqual('33% (1/3)', wrapped.get_format_fn()({'num': 1, 'denom': 3}))
+
+    def test_format_pct_non_numeric(self):
+        spec = self._test_spec()
+        spec['format'] = 'percent'
+        wrapped = ReportColumnFactory.from_spec(spec)
+        for unexpected_value in ['hello', object()]:
+            self.assertEqual('?', wrapped.get_format_fn()({'num': 1, 'denom': unexpected_value}),
+                             'non-numeric value failed for denominator {}'. format(unexpected_value))
+            self.assertEqual('?', wrapped.get_format_fn()({'num': unexpected_value, 'denom': 1}))
 
     def _test_spec(self):
         return {

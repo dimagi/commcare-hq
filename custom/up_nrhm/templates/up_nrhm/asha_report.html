@@ -2,8 +2,24 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% block pretable %}
+{% block js %}
     {{ block.super }}
+    <style>
+        @media print {
+            .table th, .table td {
+                border-right: 1px solid #dddddd;
+            }
+        }
+    </style>
+{% endblock js %}
+
+{% block pretable %}
+
+    <h4 class="media-heading">{{ report.report_title }}
+        {% for subtitle in report.report_subtitles %}
+        <br/><small>{{ subtitle }}</small>
+        {% endfor %}
+    </h4>
     {% if sf == "sf2" %}
     <div class="row hq-flush-content">
         <div class="span6">
@@ -29,26 +45,26 @@
                 $('#fieldset_datespan').css('display', 'block');
                 $('#fieldset_year').css('display', 'none');
                 $('#fieldset_month').css('display', 'none');
-                $('#report_filter_hierarchy_af').parent().parent().parent().css('display', 'block');
-                $('#report_filter_hierarchy_block').parent().parent().parent().css('display', 'block');
+                $('#report_filter_hierarchy_af').parent().parent().css('display', 'block');
+                $('#report_filter_hierarchy_block').parent().parent().css('display', 'block');
             } else if (sf === "sf3") {
                 $('#fieldset_datespan').css('display', 'none');
                 $('#fieldset_year').css('display', 'block');
                 $('#fieldset_month').css('display', 'block');
-                $('#report_filter_hierarchy_af').parent().parent().parent().css('display', 'block');
-                $('#report_filter_hierarchy_block').parent().parent().parent().css('display', 'block');
+                $('#report_filter_hierarchy_af').parent().parent().css('display', 'block');
+                $('#report_filter_hierarchy_block').parent().parent().css('display', 'block');
             } else if (sf === "sf4") {
                 $('#fieldset_datespan').css('display', 'none');
                 $('#fieldset_year').css('display', 'block');
                 $('#fieldset_month').css('display', 'block');
-                $('#report_filter_hierarchy_af').parent().parent().parent().css('display', 'none');
-                $('#report_filter_hierarchy_block').parent().parent().parent().css('display', 'block');
+                $('#report_filter_hierarchy_af').parent().parent().css('display', 'none');
+                $('#report_filter_hierarchy_block').parent().parent().css('display', 'block');
             } else if (sf === "sf5") {
                 $('#fieldset_datespan').css('display', 'none');
                 $('#fieldset_year').css('display', 'block');
                 $('#fieldset_month').css('display', 'block');
-                $('#report_filter_hierarchy_af').parent().parent().parent().css('display', 'none');
-                $('#report_filter_hierarchy_block').parent().parent().parent().css('display', 'none');
+                $('#report_filter_hierarchy_af').parent().parent().css('display', 'none');
+                $('#report_filter_hierarchy_block').parent().parent().css('display', 'none');
             }
         }
         $('#report_filter_sf').on('change', function() {

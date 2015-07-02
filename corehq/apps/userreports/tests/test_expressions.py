@@ -49,7 +49,8 @@ class PropertyExpressionTest(SimpleTestCase):
     def test_datatype(self):
         for expected, datatype, original in [
             (5, "integer", "5"),
-            (None, "integer", "5.3"),
+            (5, "integer", "5.3"),
+            (None, "integer", "five"),
             (Decimal(5), "decimal", "5"),
             (Decimal("5.3"), "decimal", "5.3"),
             ("5", "string", "5"),

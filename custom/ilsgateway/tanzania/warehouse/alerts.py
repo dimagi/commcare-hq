@@ -6,7 +6,7 @@ from custom.ilsgateway.models import Alert, ProductAvailabilityData
 
 def populate_no_primary_alerts(location, date):
     # First of all we have to delete all existing alert for this date.
-    alert = Alert.objects.filter(supply_point=location._id, date=date, type=const.NO_PRIMARY_CONTACT)
+    alert = Alert.objects.filter(location_id=location._id, date=date, type=const.NO_PRIMARY_CONTACT)
     alert.delete()
     # create no primary contact alerts
     # TODO Too slow. Figure out better solution.
@@ -19,10 +19,10 @@ def populate_no_primary_alerts(location, date):
 
 def populate_facility_stockout_alerts(facility_id, date):
     # delete stockout alerts
-    alert = Alert.objects.filter(supply_point=facility_id, date=date, type=const.PRODUCT_STOCKOUT)
+    alert = Alert.objects.filter(location_id=facility_id, date=date, type=const.PRODUCT_STOCKOUT)
     alert.delete()
     # create stockout alerts
-    product_data = ProductAvailabilityData.objects.filter(supply_point=facility_id, date=date, without_stock=1)
+    product_data = ProductAvailabilityData.objects.filter(location_id=facility_id, date=date, without_stock=1)
     for p in product_data:
         create_multilevel_alert(facility_id, date, const.PRODUCT_STOCKOUT,
                                 {'org': facility_id, 'product': p.product})
@@ -49,9 +49,9 @@ def create_alert(location_id, date, alert_type, details):
         elif alert_type == const.NO_PRIMARY_CONTACT:
             text = '%s has no primary contact.' % details['org'].name
 
-        alert = Alert.objects.filter(supply_point=location_id, date=date, type=alert_type, text=text)
+        alert = Alert.objects.filter(location_id=location_id, date=date, type=alert_type, text=text)
         if not alert:
-            Alert(supply_point=location_id, date=date, type=alert_type, expires=expires, text=text).save()
+            Alert(location_id=location_id, date=date, type=alert_type, expires=expires, text=text).save()
 
     else:
         if alert_type == const.RR_NOT_SUBMITTED:
@@ -71,7 +71,7 @@ def create_alert(location_id, date, alert_type, details):
                    ((str(number) + ' facility') if number == 1 else (str(number) + ' facilities'))
 
         alert, created = Alert.objects.get_or_create(
-            supply_point=location_id,
+            location_id=location_id,
             date=date,
             type=alert_type,
             expires=expires

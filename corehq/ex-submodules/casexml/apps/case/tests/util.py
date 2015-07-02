@@ -3,6 +3,8 @@ import uuid
 from datetime import datetime
 from xml.etree import ElementTree
 from couchdbkit.exceptions import ResourceNotFound
+from corehq.apps.domain.models import Domain
+from corehq.util.test_utils import unit_testing_only
 
 from dimagi.utils.couch.database import safe_delete
 from dimagi.utils.dates import utcnow_sans_milliseconds
@@ -18,6 +20,9 @@ from casexml.apps.case.xform import process_cases
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 from casexml.apps.case.util import post_case_blocks
 from django.conf import settings
+
+
+TEST_DOMAIN_NAME = 'test-domain'
 
 
 class RestoreCaseBlock(object):
@@ -148,7 +153,10 @@ def check_user_has_case(testcase, user, case_blocks, should_have=True,
 
     if restore_id and purge_restore_cache:
         SyncLog.get(restore_id).invalidate_cached_payloads()
-    restore_config = RestoreConfig(user=user, params=RestoreParams(restore_id, version=version))
+    restore_config = RestoreConfig(
+        project=Domain(name=user.domain or TEST_DOMAIN_NAME),
+        user=user, params=RestoreParams(restore_id, version=version)
+    )
     payload_string = restore_config.get_payload().as_string()
     blocks = extract_caseblocks_from_xml(payload_string, version)
 
@@ -159,7 +167,8 @@ def check_user_has_case(testcase, user, case_blocks, should_have=True,
         n = 0
 
         def extra_info():
-            return "\n%s\n%s" % (case_block.to_string(), map(ElementTree.tostring, blocks))
+            return "\n%s\n%s" % (case_block.to_string(), map(lambda b: b.to_string(), blocks))
+
         match = None
         for block in blocks:
             if block.get_case_id() == case_id:
@@ -223,16 +232,16 @@ def _delete_all(db, viewname):
                 pass
 
 
+@unit_testing_only
 def delete_all_cases():
-    assert settings.UNIT_TESTING
     _delete_all(CommCareCase.get_db(), 'case/get_lite')
 
 
+@unit_testing_only
 def delete_all_xforms():
-    assert settings.UNIT_TESTING
     _delete_all(XFormInstance.get_db(), 'couchforms/all_submissions_by_domain')
 
 
+@unit_testing_only
 def delete_all_sync_logs():
-    assert settings.UNIT_TESTING
     _delete_all(SyncLog.get_db(), 'phone/sync_logs_by_user')
