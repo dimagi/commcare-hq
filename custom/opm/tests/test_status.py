@@ -45,7 +45,6 @@ class TestPregnancyStatus(OPMCaseReportTestBase):
         mock_case = MockCaseRow(case, self.report)
         self.assertTrue(mock_case.case_is_out_of_range)
 
-
     def test_due_in_period_not_delivered(self):
         case = OPMCase(
             forms=[],
