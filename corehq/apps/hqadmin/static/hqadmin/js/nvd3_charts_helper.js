@@ -252,7 +252,7 @@ function formatChart(chart, selector, xname, data, margin_left) {
         .tickFormat(function(d){return d3.time.format.utc('%b %d' + linebreak_txt + '%Y')(new Date(d));});
 
     chart.yAxis
-        .tickFormat(d3.format(',.1d'))
+        .tickFormat(d3.format('.1d'))
         .axisLabel(xname);
 
     d3.select(selector)
