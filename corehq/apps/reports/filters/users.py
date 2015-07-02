@@ -168,8 +168,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     label = ugettext_lazy("Groups or Users")
     default_options = None
     placeholder = ugettext_lazy(
-        "Start typing to specify the groups and users to include in the report."
-        " You can select multiple users and groups.")
+        "Specify groups and users to include in the report")
     is_cacheable = False
     options_url = 'emwf_options'
 
