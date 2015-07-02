@@ -101,7 +101,7 @@ class PatientInteractionsReport(PatientDetailsReport):
                     if oral == 'yes':
                         to_append = oral
                     elif insulin == 'yes':
-                        to_append == insulin
+                        to_append = insulin
                     else:
                         to_append = EMPTY_FIELD
 
