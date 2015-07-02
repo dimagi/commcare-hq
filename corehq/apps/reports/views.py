@@ -1322,7 +1322,7 @@ def edit_form_instance(request, domain, instance_id):
         'form_name': _('Edit Submission'),  # used in breadcrumbs
         'edit_context': {
             'formUrl': _form_meta_to_context_url(form_meta, instance_id),
-            'submitUrl': reverse('receiver_post_with_app_id', args=[domain, form_meta['app']['id']]),
+            'submitUrl': reverse('receiver_secure_post_with_app_id', args=[domain, instance.build_id]),
             'sessionData': edit_session_data,
             'returnUrl': reverse('render_form_data', args=[domain, instance_id]),
         }
@@ -1364,7 +1364,7 @@ def archive_form(request, domain, instance_id):
     }
     msg_template = u"""{notif} <a href="javascript:document.getElementById('{id}').submit();">{undo}</a>
         <form id="{id}" action="{url}" method="POST"></form>""" if instance.doc_type == "XFormArchived" \
-        else u'%(notif)s'
+        else u'{notif}'
     msg = msg_template.format(**params)
     messages.success(request, mark_safe(msg), extra_tags='html')
 
