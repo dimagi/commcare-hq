@@ -132,3 +132,18 @@ def track_workflow(email, event, properties=None):
         km = KISSmetrics.Client(key=api_key)
         km.record(email, event, properties if properties else {})
         # TODO: Consider adding some error handling for bad/failed requests.
+
+
+@task(queue='background_queue', ignore_result=True)
+def identify(email, properties):
+    """
+    Set the given properties on a KISSmetrics user.
+    :param email: The email address by which to identify the user.
+    :param properties: A dictionary or properties to set on the user.
+    :return:
+    """
+    api_key = ANALYTICS_IDS.get("KISSMETRICS_KEY", None)
+    if api_key:
+        km = KISSmetrics.Client(key=api_key)
+        km.set(email, properties)
+        # TODO: Consider adding some error handling for bad/failed requests.

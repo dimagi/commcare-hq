@@ -27,6 +27,7 @@ class TestBillingAccount(BaseAccountingTest):
         self.dimagi_user.delete()
         BillingAccount.objects.all().delete()
         Currency.objects.all().delete()
+        super(TestBillingAccount, self).tearDown()
 
 
 class TestSubscription(BaseAccountingTest):
@@ -79,3 +80,4 @@ class TestSubscription(BaseAccountingTest):
 
         generator.delete_all_subscriptions()
         generator.delete_all_accounts()
+        super(TestSubscription, self).tearDown()

@@ -31,6 +31,7 @@ from corehq.apps.accounting.exceptions import (
     SubscriptionReminderError, SubscriptionRenewalError, ProductPlanNotFoundError,
 )
 from corehq.apps.accounting.invoice_pdf import InvoiceTemplate
+from corehq.apps.accounting.signals import subscription_upgrade_or_downgrade
 from corehq.apps.accounting.utils import (
     get_privileges, get_first_last_days,
     get_address_from_invoice, get_dimagi_from_email_by_product,
@@ -822,6 +823,8 @@ class Subscriber(models.Model):
                 render_to_string('accounting/subscription_change_email.html', email_context),
                 text_content=render_to_string('accounting/subscription_change_email.txt', email_context),
             )
+
+        subscription_upgrade_or_downgrade.send_robust(self.domain, domain=self.domain)
 
 
 class Subscription(models.Model):
