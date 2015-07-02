@@ -197,8 +197,8 @@ def remind_subscription_ending():
     Sends reminder emails for subscriptions ending N days from now.
     """
     send_subscription_reminder_emails(30)
-    send_subscription_reminder_emails(10, exclude_trials=False)
-    send_subscription_reminder_emails(1, exclude_trials=False)
+    send_subscription_reminder_emails(10)
+    send_subscription_reminder_emails(1)
 
 
 @periodic_task(run_every=crontab(minute=0, hour=0))
