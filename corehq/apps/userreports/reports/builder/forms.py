@@ -1,9 +1,13 @@
 from collections import namedtuple, OrderedDict
+from itertools import chain
 from urllib import urlencode
 import uuid
 from django import forms
 from django.core.urlresolvers import reverse
+from django.forms import Widget
+from django.forms.util import flatatt
 from django.template.loader import render_to_string
+from django.utils.html import format_html
 from django.utils.translation import ugettext_noop as _
 
 from crispy_forms import layout as crispy
@@ -51,6 +55,38 @@ class FilterField(JsonField):
         for filter_conf in value:
             if filter_conf.get('format', None) not in ['Choice', 'Date', 'Numeric']:
                 raise forms.ValidationError("Invalid filter format!")
+
+
+class QuestionSelect(Widget):
+    """
+    A widget for rendering an input with our knockout "questionsSelect" binding.
+    Requires knockout to be included on the page.
+    """
+
+    def __init__(self, attrs=None, choices=()):
+        super(QuestionSelect, self).__init__(attrs)
+        self.choices = list(choices)
+
+    def render(self, name, value, attrs=None, choices=()):
+        value = '' if value is None else value
+        final_attrs = self.build_attrs(attrs, name=name)
+
+        return format_html(
+            '<input{0} data-bind="'
+            '   questionsSelect: [{1}],'
+            '   value: \'{2}\','
+            '   optionsCaption: \' \''
+            '"/>',
+            flatatt(final_attrs),
+            self.render_options(choices),
+            value
+        )
+
+    def render_options(self, choices):
+        objs = []
+        for value, label in chain(self.choices, choices):
+            objs.append("{{'value': '{0}', 'label': '{1}'}}".format(value, label))
+        return ", ".join(objs)
 
 
 class DataSourceBuilder(object):
@@ -650,6 +686,7 @@ class ConfigureNewReportBase(forms.Form):
 
 
 class ConfigureBarChartReportForm(ConfigureNewReportBase):
+
     group_by = forms.ChoiceField(label="Property")
     report_type = 'chart'
 
@@ -657,6 +694,8 @@ class ConfigureBarChartReportForm(ConfigureNewReportBase):
         super(ConfigureBarChartReportForm, self).__init__(
             report_name, app_id, source_type, report_source_id, existing_report, *args, **kwargs
         )
+        if self.source_type == "form":
+            self.fields['group_by'].widget = QuestionSelect(attrs={'class': 'input-large'})
         self.fields['group_by'].choices = self._group_by_choices
 
         # Set initial value of group_by
