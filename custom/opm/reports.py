@@ -643,7 +643,16 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
         self._debug_data = []
         for row in self.get_rows(self.datespan):
             try:
-                rows.append(self.get_row_data(row))
+                case = self.get_row_data(row)
+                if not case.case_is_out_of_range:
+                    rows.append(self.get_row_data(row))
+                else:
+                    if self.debug:
+                        self._debug_data.append({
+                            'case_id': row._id,
+                            'message': _('Reporting period incomplete'),
+                            'traceback': _('Reporting period incomplete'),
+                        })
             except InvalidRow as e:
                 if self.debug:
                     import sys, traceback
