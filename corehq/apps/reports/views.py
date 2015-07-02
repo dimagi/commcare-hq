@@ -1322,7 +1322,7 @@ def edit_form_instance(request, domain, instance_id):
         'form_name': _('Edit Submission'),  # used in breadcrumbs
         'edit_context': {
             'formUrl': _form_meta_to_context_url(form_meta, instance_id),
-            'submitUrl': reverse('receiver_post_with_app_id', args=[domain, instance.build_id]),
+            'submitUrl': reverse('receiver_secure_post_with_app_id', args=[domain, instance.build_id]),
             'sessionData': edit_session_data,
             'returnUrl': reverse('render_form_data', args=[domain, instance_id]),
         }
