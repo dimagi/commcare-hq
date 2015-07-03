@@ -290,9 +290,9 @@ class DataSourceForm(forms.Form):
         self.app_source_helper.bootstrap(self.domain)
         report_source_fields = self.app_source_helper.get_fields()
         report_source_help_texts = {
-            "source_type": "Form: display data from form submissions.<br/>Case: display data from your cases. You must be using case management for this option.",
-            "application": "Which application should the data come from?",
-            "source": "For cases: choose the case type to use for this report.<br/>For forms: choose the form from your application you'd like to see data on.",
+            "source_type": _("Form: display data from form submissions.<br/>Case: display data from your cases. You must be using case management for this option."),
+            "application": _("Which application should the data come from?"),
+            "source": _("For cases: choose the case type to use for this report.<br/>For forms: choose the form from your application you'd like to see data on."),
         }
         self.fields.update(report_source_fields)
 
@@ -304,7 +304,7 @@ class DataSourceForm(forms.Form):
 
         chart_type_crispy_field = None
         if self.report_type == 'chart':
-            chart_type_crispy_field = FieldWithHelpBubble('chart_type', help_bubble_text="Bar: shows one vertical bar for each value in your case or form.<br/>Pie: shows what percentage of the total each value is.")
+            chart_type_crispy_field = FieldWithHelpBubble('chart_type', help_bubble_text=_("Bar: shows one vertical bar for each value in your case or form.<br/>Pie: shows what percentage of the total each value is."))
         report_source_crispy_fields = []
         for k in report_source_fields.keys():
             if k in report_source_help_texts:
@@ -318,7 +318,7 @@ class DataSourceForm(forms.Form):
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _('{} Report'.format(self.report_type.capitalize())),
-                FieldWithHelpBubble('report_name', help_bubble_text='Web users will see this name in the "Reports" section of CommCareHQ and can click to view the report'),
+                FieldWithHelpBubble('report_name', help_bubble_text=_('Web users will see this name in the "Reports" section of CommCareHQ and can click to view the report')),
                 chart_type_crispy_field
             ),
             crispy.Fieldset(
@@ -739,7 +739,7 @@ class ConfigureBarChartReportForm(ConfigureNewReportBase):
     def container_fieldset(self):
         return crispy.Fieldset(
             _('Chart'),
-            FieldWithHelpBubble('group_by', help_bubble_text="The values of the selected property will be aggregated and shown as bars in the chart."),
+            FieldWithHelpBubble('group_by', help_bubble_text=_("The values of the selected property will be aggregated and shown as bars in the chart.")),
             self.filter_fieldset
         )
 
@@ -794,7 +794,7 @@ class ConfigurePieChartReportForm(ConfigureBarChartReportForm):
     def container_fieldset(self):
         return crispy.Fieldset(
             _('Chart'),
-            FieldWithHelpBubble('group_by', help_bubble_text="The values of the selected property will be aggregated and shows as the sections of the pie chart."),
+            FieldWithHelpBubble('group_by', help_bubble_text=_("The values of the selected property will be aggregated and shows as the sections of the pie chart.")),
             self.filter_fieldset
         )
 
