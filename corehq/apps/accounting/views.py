@@ -680,6 +680,24 @@ class InvoiceSummaryViewBase(AccountingSectionView):
         return reverse(self.urlname, args=self.args)
 
     @property
+    def page_context(self):
+        return {
+            'billing_records': self.billing_records,
+            'can_send_email': self.can_send_email,
+            'invoice_info_form': self.invoice_info_form,
+            'resend_email_form': self.resend_email_form,
+        }
+
+    @property
+    @memoized
+    def billing_records(self):
+        raise NotImplementedError
+
+    @property
+    def can_send_email(self):
+        raise NotImplementedError
+
+    @property
     @memoized
     def resend_email_form(self):
         if self.request.method == 'POST':
@@ -726,13 +744,8 @@ class WireInvoiceSummaryView(InvoiceSummaryViewBase):
         return self.invoice.wirebillingrecord_set.all()
 
     @property
-    def page_context(self):
-        return {
-            'billing_records': self.billing_records,
-            'invoice_info_form': self.invoice_info_form,
-            'resend_email_form': self.resend_email_form,
-            'can_send_email': True
-        }
+    def can_send_email(self):
+        return True
 
 
 class InvoiceSummaryView(InvoiceSummaryViewBase):
@@ -765,15 +778,17 @@ class InvoiceSummaryView(InvoiceSummaryViewBase):
         return adjustment_list.order_by('-date_created')
 
     @property
+    def can_send_email(self):
+        return not self.invoice.subscription.do_not_invoice
+
+    @property
     def page_context(self):
-        return {
+        context = super(InvoiceSummaryView, self).page_context
+        context.update({
             'adjust_balance_form': self.adjust_balance_form,
             'adjustment_list': self.adjustment_list,
-            'billing_records': self.billing_records,
-            'invoice_info_form': self.invoice_info_form,
-            'resend_email_form': self.resend_email_form,
-            'can_send_email': not self.invoice.subscription.do_not_invoice,
-        }
+        })
+        return context
 
 
 class ManageAccountingAdminsView(AccountingSectionView, CRUDPaginatedViewMixin):
