@@ -366,7 +366,8 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         """
         startkey = json.dumps([self.domain.name, ""])[:-3]
         endkey = "%s{" % startkey
-        reports = SavedExportSchema.view("couchexport/saved_export_schemas",
+        reports = SavedExportSchema.view(
+            "couchexport/saved_export_schemas",
             startkey=startkey,
             endkey=endkey,
             include_docs=True,
