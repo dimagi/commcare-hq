@@ -49,7 +49,7 @@ branches:
   - vellum-staging # J$ 11/13
   - fixtures-spike  # cz 1/29
   - update-submodules # TS 5/6
-  - reverseLanguageMedia # Sravan 6/10
+  - languageMedia # Sravan 6/10
   - autoload-supplypoint  # Ethan 6/15
   - track-plan-editions # Nick P 6/25
   - remove-billing-admin-forwards+wire-prepay # Farid June 26
