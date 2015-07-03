@@ -998,7 +998,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
         # This is a band-aid for apps that are created by languageMedia branch
         for media_attr in ('media_image', 'media_audio'):
             old_media = data.get(media_attr, None)
-            if old_media and isinstance(old_media, dict):
+            if old_media is not None and isinstance(old_media, dict):
                 new_media = old_media.get('default')
                 data[media_attr] = new_media
 
