@@ -4,10 +4,6 @@ from corehq.apps.commtrack.views import (
     StockLevelsView
 )
 
-urlpatterns = patterns('corehq.apps.commtrack.views',
-    url(r'^api/supply_point_query/$', 'api_query_supply_point'),
-)
-
 # used in settings urls
 settings_urls = patterns('corehq.apps.commtrack.views',
     url(r'^$', 'default', name="default_commtrack_setup"),

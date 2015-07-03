@@ -433,7 +433,7 @@ class SupplyPointSelectWidget(forms.Widget):
             'id': self.id,
             'name': name,
             'value': value or '',
-            'query_url': reverse('corehq.apps.commtrack.views.api_query_supply_point', args=[self.domain]),
+            'query_url': reverse('corehq.apps.locations.views.child_locations_for_select2', args=[self.domain]),
         }))
 
 

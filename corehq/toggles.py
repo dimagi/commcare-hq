@@ -371,6 +371,7 @@ VELLUM_EXPERIMENTAL_UI = StaticToggle(
     'experimental_ui',
     "Enables some experimental UI enhancements for the form builder",
     TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
 )
 
 CACHE_AND_INDEX = StaticToggle(

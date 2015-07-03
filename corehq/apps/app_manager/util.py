@@ -138,15 +138,10 @@ class ParentCasePropertyBuilder(object):
 
     @memoized
     def get_properties(self, case_type, already_visited=(),
-                       include_shared_properties=True):
+                       include_shared_properties=True,
+                       include_parent_properties=True):
         if case_type in already_visited:
             return ()
-
-        get_properties_recursive = functools.partial(
-            self.get_properties,
-            already_visited=already_visited + (case_type,),
-            include_shared_properties=include_shared_properties
-        )
 
         case_properties = set(self.defaults) | set(self.per_type_defaults.get(case_type, []))
 
@@ -156,15 +151,23 @@ class ParentCasePropertyBuilder(object):
         parent_types, contributed_properties = \
             self.get_parent_types_and_contributed_properties(case_type)
         case_properties.update(contributed_properties)
-        for parent_type in parent_types:
-            for property in get_properties_recursive(parent_type[0]):
-                case_properties.add('%s/%s' % (parent_type[1], property))
+        if include_parent_properties:
+            get_properties_recursive = functools.partial(
+                self.get_properties,
+                already_visited=already_visited + (case_type,),
+                include_shared_properties=include_shared_properties
+            )
+            for parent_type in parent_types:
+                for property in get_properties_recursive(parent_type[0]):
+                    case_properties.add('%s/%s' % (parent_type[1], property))
         if self.app.case_sharing and include_shared_properties:
             from corehq.apps.app_manager.models import get_apps_in_domain
             for app in self.get_other_case_sharing_apps_in_domain():
                 case_properties.update(
                     get_case_properties(
-                        app, [case_type], include_shared_properties=False
+                        app, [case_type],
+                        include_shared_properties=False,
+                        include_parent_properties=include_parent_properties,
                     ).get(case_type, [])
                 )
         return case_properties
@@ -174,6 +177,12 @@ class ParentCasePropertyBuilder(object):
         return form.get_case_updates(case_type)
 
     def get_parent_type_map(self, case_types):
+        """
+        :returns: A dict
+        ```
+        {<case_type>: {<relationship>: <parent_type>, ...}, ...}
+        ```
+        """
         parent_map = defaultdict(dict)
         for case_type in case_types:
             parent_types, _ = self.get_parent_types_and_contributed_properties(case_type)
@@ -187,25 +196,33 @@ class ParentCasePropertyBuilder(object):
                         "Case Type '%s' has multiple parents for relationship '%s': %s",
                         case_type, relationship, types
                     )
-                parent_map[case_type][relationship] = types[0] if types else []
+                parent_map[case_type][relationship] = types[0]
 
         return parent_map
 
-    def get_case_property_map(self, case_types, include_shared_properties=True):
+    def get_case_property_map(self, case_types,
+                              include_shared_properties=True,
+                              include_parent_properties=True):
         case_types = sorted(case_types)
         return {
             case_type: sorted(self.get_properties(
-                case_type, include_shared_properties=include_shared_properties
+                case_type,
+                include_shared_properties=include_shared_properties,
+                include_parent_properties=include_parent_properties,
             ))
             for case_type in case_types
         }
 
 
-def get_case_properties(app, case_types, defaults=(), include_shared_properties=True):
+def get_case_properties(app, case_types, defaults=(),
+                        include_shared_properties=True,
+                        include_parent_properties=True):
     per_type_defaults = get_per_type_defaults(app.domain, case_types)
     builder = ParentCasePropertyBuilder(app, defaults, per_type_defaults=per_type_defaults)
     return builder.get_case_property_map(
-        case_types, include_shared_properties=include_shared_properties
+        case_types,
+        include_shared_properties=include_shared_properties,
+        include_parent_properties=include_parent_properties,
     )
 
 
@@ -213,7 +230,7 @@ def get_per_type_defaults(domain, case_types=None):
     from corehq.apps.callcenter.utils import get_call_center_case_type_if_enabled
 
     per_type_defaults = {}
-    if not case_types or USERCASE_TYPE in case_types:
+    if (not case_types and is_usercase_in_use(domain)) or USERCASE_TYPE in case_types:
         per_type_defaults = {
             USERCASE_TYPE: get_usercase_default_properties(domain)
         }
@@ -231,14 +248,55 @@ def is_usercase_in_use(domain_name):
 
 
 def get_all_case_properties(app):
-    extra_types = set()
-    if is_usercase_in_use(app.domain):
-        extra_types.add(USERCASE_TYPE)
-    return get_case_properties(
-        app,
-        set(itertools.chain.from_iterable(m.get_case_types() for m in app.modules)) | extra_types,
-        defaults=('name',)
-    )
+    return get_case_properties(app, app.get_case_types(), defaults=('name',))
+
+
+def get_casedb_schema(app):
+    """Get case database schema definition
+
+    This lists all case types and their properties for the given app.
+    """
+    case_types = app.get_case_types()
+    per_type_defaults = get_per_type_defaults(app.domain, case_types)
+    builder = ParentCasePropertyBuilder(app, ['name'], per_type_defaults)
+    related = builder.get_parent_type_map(case_types)
+    map = builder.get_case_property_map(case_types, include_parent_properties=False)
+    return {
+        "id": "casedb",
+        "uri": "jr://instance/casedb",
+        "name": "case",
+        "path": "/cases/case",
+        "structure": {},
+        "subsets": [{
+            "id": ctype,
+            "key": "@case_type",
+            "structure": {p: {} for p in props},
+            "related": related.get(ctype),  # {<relationship>: <parent_type>, ...}
+        } for ctype, props in sorted(map.iteritems())],
+    }
+
+
+def get_session_schema(form):
+    """Get form session schema definition
+    """
+    structure = {}
+    # TODO handle advanced modules with more than one case
+    case_type = form.get_module().case_type
+    if case_type:
+        structure["case_id"] = {
+            "reference": {
+                "source": "casedb",
+                "subset": case_type,
+                "key": "@case_id",
+            },
+        }
+    return {
+        "id": "commcaresession",
+        "uri": "jr://instance/session",
+        "name": "Session",
+        "path": "/session/data",
+        "structure": structure,
+    }
 
 
 def get_usercase_properties(app):

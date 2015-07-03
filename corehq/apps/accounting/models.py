@@ -31,11 +31,13 @@ from corehq.apps.accounting.exceptions import (
     SubscriptionReminderError, SubscriptionRenewalError, ProductPlanNotFoundError,
 )
 from corehq.apps.accounting.invoice_pdf import InvoiceTemplate
+from corehq.apps.accounting.signals import subscription_upgrade_or_downgrade
 from corehq.apps.accounting.utils import (
     get_privileges, get_first_last_days,
     get_address_from_invoice, get_dimagi_from_email_by_product,
     fmt_dollar_amount, EXCHANGE_RATE_DECIMAL_PLACES,
     ensure_domain_instance, get_change_status,
+    is_active_subscription,
 )
 from corehq.apps.accounting.subscription_changes import (
     DomainDowngradeActionHandler, DomainUpgradeActionHandler,
@@ -822,6 +824,8 @@ class Subscriber(models.Model):
                 text_content=render_to_string('accounting/subscription_change_email.txt', email_context),
             )
 
+        subscription_upgrade_or_downgrade.send_robust(self.domain, domain=self.domain)
+
 
 class Subscription(models.Model):
     """
@@ -984,7 +988,8 @@ class Subscription(models.Model):
     def change_plan(self, new_plan_version, date_end=None,
                     note=None, web_user=None, adjustment_method=None,
                     service_type=None, pro_bono_status=None,
-                    transfer_credits=True, internal_change=False):
+                    transfer_credits=True, internal_change=False, account=None,
+                    do_not_invoice=None, **kwargs):
         """
         Changing a plan TERMINATES the current subscription and
         creates a NEW SUBSCRIPTION where the old plan left off.
@@ -998,7 +1003,7 @@ class Subscription(models.Model):
         new_start_date = today if self.date_start < today else self.date_start
 
         new_subscription = Subscription(
-            account=self.account,
+            account=account if account else self.account,
             plan_version=new_plan_version,
             subscriber=self.subscriber,
             salesforce_contract_id=self.salesforce_contract_id,
@@ -1006,9 +1011,10 @@ class Subscription(models.Model):
             date_end=date_end,
             date_delay_invoicing=self.date_delay_invoicing,
             is_active=self.is_active,
-            do_not_invoice=self.do_not_invoice,
+            do_not_invoice=do_not_invoice if do_not_invoice else self.do_not_invoice,
             service_type=(service_type or SubscriptionType.NOT_SET),
             pro_bono_status=(pro_bono_status or ProBonoStatus.NOT_SET),
+            **kwargs
         )
         new_subscription.save()
 
@@ -1402,12 +1408,14 @@ class Subscription(models.Model):
             date_end=date_end,
             **kwargs
         )
-        subscriber.apply_upgrades_and_downgrades(
-            new_plan_version=plan_version,
-            web_user=web_user,
-            new_subscription=subscription,
-            internal_change=internal_change,
-        )
+        subscription.is_active = is_active_subscription(date_start, date_end)
+        if subscription.is_active:
+            subscriber.apply_upgrades_and_downgrades(
+                new_plan_version=plan_version,
+                web_user=web_user,
+                new_subscription=subscription,
+                internal_change=internal_change,
+            )
         SubscriptionAdjustment.record_adjustment(
             subscription, method=adjustment_method, note=note,
             web_user=web_user
@@ -1837,12 +1845,16 @@ class BillingRecord(BillingRecordBase):
             subscription__subscriber__domain=self.invoice.get_domain(),
         ))
         is_small_invoice = self.invoice.balance <= SMALL_INVOICE_THRESHOLD
+        payment_status = (_("Paid")
+                          if self.invoice.is_paid or total_balance == 0
+                          else _("Payment Required"))
         context.update({
             'plan_name': self.invoice.subscription.plan_version.plan.name,
             'date_due': self.invoice.date_due,
             'is_small_invoice': is_small_invoice,
             'total_balance': total_balance,
             'is_total_balance_due': total_balance > SMALL_INVOICE_THRESHOLD,
+            'payment_status': payment_status,
         })
         if self.invoice.subscription.service_type == SubscriptionType.CONTRACTED:
             from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher

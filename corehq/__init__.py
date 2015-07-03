@@ -200,27 +200,12 @@ EXPORT_DATA_INTERFACES = (
     )),
 )
 
-
-from corehq.apps.adm.reports.supervisor import SupervisorReportsADMSection
-
-ADM_SECTIONS = (
-    (_('Supervisor Report'), (
-        SupervisorReportsADMSection,
+DATA_DOWNLOAD_INTERFACES = (
+    ('', (
+        export.FormExportReport,
     )),
 )
 
-from corehq.apps.adm.admin import columns, reports
-
-ADM_ADMIN_INTERFACES = (
-    (_("ADM Default Columns"), (
-        columns.ReducedADMColumnInterface,
-        columns.DaysSinceADMColumnInterface,
-        columns.ConfigurableADMColumnInterface
-    )),
-    (_("ADM Default Reports"), (
-        reports.ADMReportAdminInterface,
-    ))
-)
 
 from corehq.apps.indicators.admin import document_indicators, couch_indicators, dynamic_indicators
 
