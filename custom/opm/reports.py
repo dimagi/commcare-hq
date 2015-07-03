@@ -642,7 +642,7 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
         """
         rows = []
         self._debug_data = []
-        for row in self.get_rows(self.datespan):
+        for row in self.get_rows():
             try:
                 rows.append(self.get_row_data(row))
             except InvalidRow as e:
@@ -742,7 +742,7 @@ class CaseReportMixin(object):
     def users_matching_filter(self):
         return get_matching_users(self.awcs, self.gp, self.block)
 
-    def get_rows(self, datespan):
+    def get_rows(self):
         query = case_es.CaseES().domain(self.domain)\
                 .fields([])\
                 .opened_range(lte=self.datespan.enddate_utc)\
@@ -889,7 +889,7 @@ class MetReport(CaseReportMixin, BaseReport):
         awc_codes = {user['awc']: user['awc_code']
                      for user in UserSqlData().get_data()}
         total_payment = 0
-        for index, row in enumerate(self.get_rows(self.datespan), 1):
+        for index, row in enumerate(self.get_rows(), 1):
             try:
                 case_row = self.get_row_data(row, index=1, awc_codes=awc_codes)
                 total_payment += case_row.cash_amt
@@ -922,8 +922,8 @@ class MetReport(CaseReportMixin, BaseReport):
     def get_row_data(self, row, **kwargs):
         return self.model(row, self, child_index=kwargs.get('index', 1), awc_codes=kwargs.get('awc_codes', {}))
 
-    def get_rows(self, datespan):
-        result = super(MetReport, self).get_rows(datespan)
+    def get_rows(self):
+        result = super(MetReport, self).get_rows()
         result.sort(key=lambda case: [
             case.get_case_property(prop)
             for prop in ['block_name', 'village_name', 'awc_name']
@@ -1225,6 +1225,9 @@ class IncentivePaymentReport(BaseReport, CaseReportMixin):
     @property
     @memoized
     def awc_data(self):
+        """
+        Returns a map of user IDs to lists of wrapped CommCareCase objects that those users own.
+        """
         case_objects = self.row_objects + self.extra_row_objects
         cases_by_owner = {}
         for case_object in case_objects:
@@ -1236,9 +1239,9 @@ class IncentivePaymentReport(BaseReport, CaseReportMixin):
     def rows(self):
         rows = []
         for user in self.users_matching_filter:
-            case_sql_data = self.awc_data.get(user['doc_id'], None)
+            user_case_list = self.awc_data.get(user['doc_id'], None)
             form_sql_data = OpmFormSqlData(DOMAIN, user['doc_id'], self.datespan)
-            row = self.model(user, self, case_sql_data, form_sql_data.data)
+            row = self.model(user, self, user_case_list, form_sql_data.data)
             data = []
             for t in self.model.method_map:
                 data.append(getattr(row, t[0]))
@@ -1323,7 +1326,7 @@ class HealthStatusReport(DatespanMixin, BaseReport):
         return es_query(q=q, es_url=USER_INDEX + '/_search', dict_only=False,
                         start_at=self.pagination.start, size=self.pagination.count)
 
-    def get_rows(self, dataspan):
+    def get_rows(self):
         return self.es_results['hits'].get('hits', [])
 
     def get_row_data(self, row, **kwargs):
