@@ -1921,7 +1921,7 @@ class SuiteGenerator(SuiteGeneratorBase):
     def add_parent_datums(self, datums, module):
 
         def update_refs(action_, datum_, changed_ids):
-            if action:
+            if action_:
                 # Only advanced module actions have a parent_tag attribute. Basic modules don't need one
                 # because they only deal with one case type. Set parent_tag to None for them.
                 parent_tag = getattr(action_, 'parent_tag', None)
