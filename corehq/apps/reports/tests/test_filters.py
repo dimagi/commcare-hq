@@ -27,27 +27,29 @@ class TestEmwfPagination(SimpleTestCase):
         ]
 
     def test_first_page(self):
+        count, options = paginate_options(self.data_sources, "", 0, 5)
+        self.assertEqual(count, 9)
         self.assertEqual(
-            paginate_options(self.data_sources, "", 0, 5),
+            options,
             ["Iron Maiden", "Van Halen", "Queen", "Oslo", "Baldwin"],
         )
 
     def test_second_page(self):
+        count, options = paginate_options(self.data_sources, "", 5, 10)
+        self.assertEqual(count, 9)
         self.assertEqual(
-            paginate_options(self.data_sources, "", 5, 10),
+            options,
             ["Perth", "Quito", "Jdoe", "Rumpelstiltskin"],
         )
 
     def test_query_first_page(self):
         query = "o"
-        self.assertEqual(
-            paginate_options(self.data_sources, query, 0, 5),
-            ["Iron Maiden", "Oslo", "Quito", "Jdoe"],
-        )
+        count, options = paginate_options(self.data_sources, query, 0, 5)
+        self.assertEqual(count, 4)
+        self.assertEqual(options, ["Iron Maiden", "Oslo", "Quito", "Jdoe"])
 
     def test_query_no_matches(self):
         query = "Waldo"
-        self.assertEqual(
-            paginate_options(self.data_sources, query, 0, 5),
-            [],
-        )
+        count, options = paginate_options(self.data_sources, query, 0, 5)
+        self.assertEqual(count, 0)
+        self.assertEqual(options, [])
