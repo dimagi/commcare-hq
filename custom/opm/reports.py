@@ -1225,6 +1225,9 @@ class IncentivePaymentReport(BaseReport, CaseReportMixin):
     @property
     @memoized
     def awc_data(self):
+        """
+        Returns a map of user IDs to lists of wrapped CommCareCase objects that those users own.
+        """
         case_objects = self.row_objects + self.extra_row_objects
         cases_by_owner = {}
         for case_object in case_objects:
@@ -1236,9 +1239,9 @@ class IncentivePaymentReport(BaseReport, CaseReportMixin):
     def rows(self):
         rows = []
         for user in self.users_matching_filter:
-            case_sql_data = self.awc_data.get(user['doc_id'], None)
+            user_case_list = self.awc_data.get(user['doc_id'], None)
             form_sql_data = OpmFormSqlData(DOMAIN, user['doc_id'], self.datespan)
-            row = self.model(user, self, case_sql_data, form_sql_data.data)
+            row = self.model(user, self, user_case_list, form_sql_data.data)
             data = []
             for t in self.model.method_map:
                 data.append(getattr(row, t[0]))
