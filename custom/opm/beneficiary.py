@@ -415,6 +415,17 @@ class OPMCaseRow(object):
                 for form in self.filtered_forms(CHILDREN_FORMS, 3)
             )
 
+    @property
+    def growth_calculated_aww(self):
+        """
+        For the AWW we don't factor in the month window into growth calculations
+        """
+        xpath = self.child_xpath('form/child_{num}/child{num}_child_growthmon')
+        return any(
+            form.xpath(xpath) == '1'
+            for form in self.filtered_forms(CHILDREN_FORMS, 1)
+        )
+
     def child_growth_calculated_in_window(self, query_age):
         """
             query_age - must be last month of a window, multiple of 3
