@@ -948,6 +948,9 @@ def get_module_view_context_and_template(app, module):
             'case_list_form_allowed': bool(
                 module.all_forms_require_a_case and not module.parent_select.active and form_options
             ),
+            'valid_parent_modules': [parent_module
+                                     for parent_module in app.modules
+                                     if not getattr(parent_module, 'root_module_id', None)],
         }
 
 
@@ -1743,15 +1746,16 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
             for form in module.get_forms():
                 if not form.schedule:
                     form.schedule = FormSchedule()
-        if should_edit("root_module_id"):
-            if not request.POST.get("root_module_id"):
-                module["root_module_id"] = None
-            else:
-                try:
-                    app.get_module(module_id)
-                    module["root_module_id"] = request.POST.get("root_module_id")
-                except ModuleNotFoundException:
-                    messages.error(_("Unknown Module"))
+
+    if should_edit("root_module_id"):
+        if not request.POST.get("root_module_id"):
+            module["root_module_id"] = None
+        else:
+            try:
+                app.get_module(module_id)
+                module["root_module_id"] = request.POST.get("root_module_id")
+            except ModuleNotFoundException:
+                messages.error(_("Unknown Module"))
 
     _handle_media_edits(request, module, should_edit, resp)
 
