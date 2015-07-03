@@ -49,9 +49,7 @@ class Worker(object):
                                                                   opm_case.reporting_window_end)
 
                 self.service_forms_count = 'yes' if dates else 'no'
-            self.growth_monitoring_count = len([opm_case.child_growth_calculated
-                                                for opm_case in case_data
-                                                if opm_case.child_growth_calculated])
+            self.growth_monitoring_count = len(filter(lambda row: row.growth_calculated_aww, case_data))
         else:
             self.women_registered = None
             self.children_registered = None
