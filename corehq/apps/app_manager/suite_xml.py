@@ -1939,11 +1939,11 @@ class SuiteGenerator(SuiteGeneratorBase):
                 if parent_datum_.id in datum_ids_:
                     # We can't set a new ID to an ID we already have. We need to rename current ID
                     datum = datum_ids_[parent_datum_.id]
+                    new_id = '_'.join((parent_datum_.id, datum['case_type']))
                     i = 0
-                    new_id = '_'.join((parent_datum_.id, datum['case_type'], str(i)))
                     while new_id in datum_ids_:
-                        i += 1
                         new_id = '_'.join((parent_datum_.id, datum['case_type'], str(i)))
+                        i += 1
                     datum['datum'].id = new_id
 
                 changed_ids[case_tag] = {
