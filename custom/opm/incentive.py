@@ -4,7 +4,7 @@ Takes a CommCareUser and points to the appropriate fluff indicators
 for each field.
 """
 
-from .constants import *
+from custom.opm.constants import get_fixture_data
 
 
 class Worker(object):
