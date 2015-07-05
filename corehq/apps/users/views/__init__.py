@@ -675,7 +675,6 @@ def delete_user_role(request, domain):
 
 class UserInvitationView(InvitationView):
     inv_type = DomainInvitation
-    template = "users/accept_invite.html"
     need = ["domain"]
 
     def added_context(self):
@@ -697,6 +696,13 @@ class UserInvitationView(InvitationView):
     @property
     def success_msg(self):
         return "You have been added to the %s domain" % self.domain
+
+    @property
+    def template(self):
+        if CouchUser.get_by_username(self.invitation.email):
+            return "users/accept_invite_new.html"
+        else:
+            return "users/accept_invite.html"
 
     @property
     def redirect_to_on_success(self):

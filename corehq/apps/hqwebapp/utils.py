@@ -13,7 +13,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from django.views.generic import TemplateView
 
-from corehq.apps.hqwebapp.views import logout
+from corehq.apps.hqwebapp.views import domain_login, logout
 from corehq.apps.registration.forms import NewWebUserRegistrationForm
 from corehq.apps.registration.utils import activate_new_user
 from corehq.apps.users.models import Invitation, CouchUser, WebUser, DomainInvitation
@@ -38,6 +38,7 @@ def send_confirmation_email(invitation):
 
 class InvitationView():
     # todo cleanup this view so it properly inherits from BaseSectionPageView
+    inv_id = None
     inv_type = Invitation
     template = ""
     need = [] # a list of strings containing which parameters of the call function should be set as attributes to self
@@ -60,6 +61,10 @@ class InvitationView():
         raise NotImplementedError
 
     @property
+    def invitation(self):
+        return self.inv_type.get(self.inv_id)
+
+    @property
     def inviting_entity(self):
         raise NotImplementedError
 
@@ -77,6 +82,7 @@ class InvitationView():
         logging.warning("Don't use this view in more apps until it gets cleaned up.")
         # add the correct parameters to this instance
         self.request = request
+        self.inv_id = invitation_id
         for k, v in kwargs.iteritems():
             if k in self.need:
                 setattr(self, k, v)
@@ -89,7 +95,7 @@ class InvitationView():
             return HttpResponseRedirect(request.path)
 
         try:
-            invitation = self.inv_type.get(invitation_id)
+            invitation = self.invitation
         except ResourceNotFound:
             messages.error(request, _("Sorry, it looks like your invitation has expired. "
                                       "Please check the invitation link you received and try again, or request a "
@@ -154,6 +160,14 @@ class InvitationView():
                     self._invite(invitation, user)
                     return HttpResponseRedirect(reverse("login"))
             else:
+                if CouchUser.get_by_username(invitation.email) and isinstance(invitation, DomainInvitation):
+                    # jls: do i care if they're logged in as a different user / mobile user / other flows above?
+                    return domain_login(request,
+                                        invitation.domain,
+                                        extra_context={
+                                            # jls: test, for both Sign In and Sign Up
+                                            'next': reverse('domain_accept_invitation', args=[invitation.domain, invitation.get_id]),
+                                        })
                 form = NewWebUserRegistrationForm(initial={'email': invitation.email})
 
         return render(request, self.template, {"form": form})
