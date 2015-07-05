@@ -61,10 +61,6 @@ class InvitationView():
         raise NotImplementedError
 
     @property
-    def invitation(self):
-        return self.inv_type.get(self.inv_id)
-
-    @property
     def inviting_entity(self):
         raise NotImplementedError
 
@@ -95,7 +91,7 @@ class InvitationView():
             return HttpResponseRedirect(request.path)
 
         try:
-            invitation = self.invitation
+            invitation = self.inv_type.get(invitation_id)
         except ResourceNotFound:
             messages.error(request, _("Sorry, it looks like your invitation has expired. "
                                       "Please check the invitation link you received and try again, or request a "
