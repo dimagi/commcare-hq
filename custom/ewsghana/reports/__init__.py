@@ -168,7 +168,6 @@ class EWSDateSpan(DateSpan):
             end = force_to_datetime(days[1])
         else:
             start = datetime(year, month_or_week, 1, 0, 0, 0)
-            print start
             end = start + relativedelta(months=1) - relativedelta(days=1)
         return DateSpan(start, end, format, inclusive, timezone)
 
