@@ -208,9 +208,7 @@ def landing_page(req, template_name="home.html"):
     if req.user.is_authenticated():
         return HttpResponseRedirect(reverse('homepage'))
     req.base_template = settings.BASE_TEMPLATE
-    return django_login(req, template_name=template_name,
-                        authentication_form=EmailAuthenticationForm,
-                        extra_context=context)
+    return django_login(req, template_name=template_name, authentication_form=EmailAuthenticationForm)
 
 
 def yui_crossdomain(req):
@@ -337,7 +335,8 @@ def _login(req, domain, template_name):
         })
 
     return django_login(req, template_name=template_name,
-                        authentication_form=EmailAuthenticationForm if not domain else CloudCareAuthenticationForm)
+                        authentication_form=EmailAuthenticationForm if not domain else CloudCareAuthenticationForm,
+                        extra_context=context)
 
 
 def login(req, domain_type='commcare'):
