@@ -663,25 +663,11 @@ class ApplicationsTab(UITab):
                 ))
 
         if self.couch_user.can_edit_apps():
+            from corehq.apps.dashboard.views import NewUserDashboardView
             submenu_context.append(dropdown_dict(None, is_divider=True))
-            newapp_options = [
-                dropdown_dict(
-                    None,
-                    html=self._new_app_link(_('Blank Application'))
-                ),
-                dropdown_dict(
-                    None,
-                    html=self._new_app_link(_('RemoteApp (Advanced Users Only)'),
-                                            is_remote=True)),
-            ]
-            newapp_options.append(dropdown_dict(
-                _('Visit CommCare Exchange to copy existing app...'),
-                url=reverse('appstore')))
             submenu_context.append(dropdown_dict(
                 _('New Application...'),
-                '#',
-                second_level_dropdowns=newapp_options
-            ))
+                url=reverse(NewUserDashboardView.urlname, args=[self.domain])))
         return submenu_context
 
     def _new_app_link(self, title, is_remote=False):
