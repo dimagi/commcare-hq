@@ -496,6 +496,10 @@ class SubmissionPost(object):
                             # log the error and respond with a success code so that the phone doesn't
                             # keep trying to send the form
                             instance = _handle_known_error(e, instance)
+                            xforms[0] = instance
+                            # this is usually just one document, but if an edit errored we want
+                            # to save the deprecated form as well
+                            XFormInstance.get_db().bulk_save(xforms)
                             response = self._get_open_rosa_response(instance,
                                                                     None, None)
                             return response, instance, cases
@@ -647,9 +651,8 @@ def _handle_known_error(e, instance):
         u"Warning in case or stock processing "
         u"for form {}: {}."
     ).format(instance._id, error_message))
-    instance.__class__ = XFormError
+    instance.doc_type = 'XFormError'
     instance.problem = error_message
-    instance.save()
     return instance
 
 
