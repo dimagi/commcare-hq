@@ -1364,6 +1364,7 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
                 is_active=True,
                 web_user=self.web_user,
             )
+        new_subscription.is_trial = True
         new_subscription.do_not_invoice = False
         new_subscription.auto_generate_credits = False
         new_subscription.save()
