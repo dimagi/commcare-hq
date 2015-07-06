@@ -11,7 +11,11 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext
 from corehq.apps.domain.models import Domain
 from corehq.apps.accounting import utils
-from corehq.apps.accounting.exceptions import InvoiceError, CreditLineError, BillingContactInfoError
+from corehq.apps.accounting.exceptions import (
+    InvoiceError, CreditLineError,
+    BillingContactInfoError,
+    InvoiceAlreadyCreatedError
+)
 from corehq.apps.accounting.invoicing import DomainInvoiceFactory
 
 from corehq.apps.accounting.models import (
@@ -120,6 +124,11 @@ def generate_invoices(based_on_date=None, check_existing=False, is_test=False):
             except InvoiceError as e:
                 logger.error(
                     "[BILLING] Could not create invoice for domain %s: %s" % (
+                    domain.name, e
+                ))
+            except InvoiceAlreadyCreatedError as e:
+                logger.error(
+                    "[BILLING] Invoice already existed for domain %s: %s" % (
                     domain.name, e
                 ))
             except Exception as e:
