@@ -437,11 +437,34 @@ class FormExportReport(FormExportReportBase):
     @property
     def template_context(self):
         context = super(FormExportReport, self).template_context
-        export_id = self.request.GET.get('export_id')
         context.update({
-            'export': SavedExportSchema.get(export_id),
-            'additional_params': 'export_id=%(export_id)s' % {
+            'export': self.exports[0],
+            'exports': self.exports,
+            "use_bulk": len(self.export_ids) > 1,
+            'additional_params': '&'.join('export_id=%(export_id)s' % {
                 'export_id': export_id,
-            },
+            } for export_id in self.export_ids),
+            'selected_exports_data': self.selected_exports_data,
         })
         return context
+
+    @property
+    def export_ids(self):
+        return self.request.GET.getlist('export_id')
+
+    @property
+    def exports(self):
+        return [
+            SavedExportSchema.get(export_id) for export_id in self.export_ids
+        ]
+
+    @property
+    def selected_exports_data(self):
+        return {
+            export._id: {
+                'formname': export.name,
+                'modulename': export.name,
+                'xmlns': export.xmlns if hasattr(export, 'xmlns') else '',
+                'exporttype': 'form',
+            } for export in self.exports
+        }

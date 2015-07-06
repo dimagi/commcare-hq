@@ -64,6 +64,8 @@ var ExportManager = function (o) {
 
     self.sheet_names = ko.observable(new Object());
 
+    self.selectedExportsData = o.selectedExportsData || {};
+
     var resetModal = function (modal_title, newLine) {
             self.$modal.find(self.exportModalLoading).removeClass('hide');
             self.$modal.find(self.exportModalLoadedData).empty();
@@ -244,22 +246,29 @@ var ExportManager = function (o) {
         if (self.is_custom)
             prepareExport = new Array();
 
-        for (var i in self.selected_exports()) {
-            var curExpButton = self.selected_exports()[i];
+        for (var export_id in self.selectedExportsData) {
+//            var curExpButton = self.selected_exports()[i];
+//
+//            var _id = curExpButton.data('appid') || curExpButton.data('exportid'),
+//                xmlns = curExpButton.data('xmlns'),
+//                module = curExpButton.data('modulename'),
+//                export_type = curExpButton.data('exporttype'),
+//                form = curExpButton.data('formname');
 
-            var _id = curExpButton.data('appid') || curExpButton.data('exportid'),
-                xmlns = curExpButton.data('xmlns'),
-                module = curExpButton.data('modulename'),
-                export_type = curExpButton.data('exporttype'),
-                form = curExpButton.data('formname');
+            var export_data = self.selectedExportsData[export_id];
+            var xmlns = export_data['xmlns'],
+                module = export_data['modulename'],
+                export_type = export_data['exporttype'],
+                form = export_data['formname'],
+                _id = export_id;
 
             var sheetName = "sheet";
-            if (self.is_custom) {
-                var $sheetNameElem = curExpButton.parent().parent().find('.sheetname');
-                if($sheetNameElem.data('duplicate'))
-                    break;
-                sheetName = curExpButton.parent().parent().find('.sheetname').val();
-            } else
+//            if (self.is_custom) {
+//                var $sheetNameElem = curExpButton.parent().parent().find('.sheetname');
+//                if($sheetNameElem.data('duplicate'))
+//                    break;
+//                sheetName = curExpButton.parent().parent().find('.sheetname').val();
+//            } else
                 sheetName = getSheetName(module, form, xmlns);
 
             var export_tag;
