@@ -16,8 +16,7 @@ from custom.ewsghana.reports.stock_levels_report import StockLevelsReport, Inven
     StockLevelsLegend, FacilityReportData, InputStock, UsersData
 from custom.ewsghana.reports import MultiReport, EWSData, EWSMultiBarChart, ProductSelectionPane, EWSLineChart
 from casexml.apps.stock.models import StockTransaction
-from django.db.models import Q
-from custom.ewsghana.utils import get_supply_points, make_url, get_second_week, get_country_id, first_item
+from custom.ewsghana.utils import get_descendants, make_url, get_second_week, get_country_id, get_supply_points
 
 
 class ProductAvailabilityData(EWSData):
@@ -46,7 +45,7 @@ class ProductAvailabilityData(EWSData):
     def rows(self):
         rows = []
         if self.config['location_id']:
-            locations = get_supply_points(self.config['location_id'], self.config['domain'])
+            locations = get_descendants(self.config['location_id'])
             unique_products = self.unique_products(locations, all=True).order_by('code')
 
             for product in unique_products:
@@ -144,30 +143,11 @@ class MonthOfStockProduct(EWSData):
             return "Current MOS by Product"
 
     @property
-    def get_supply_points(self):
-        supply_points = []
-        if self.config['location_id']:
-            location = SQLLocation.objects.get(
-                domain=self.config['domain'],
-                location_id=self.config['location_id']
-            )
-            if location.location_type.name == 'country':
-                supply_points = SQLLocation.objects.filter(
-                    Q(parent__location_id=self.config['location_id'], is_archived=False) |
-                    Q(location_type__name='Regional Medical Store', domain=self.config['domain']) |
-                    Q(location_type__name='Teaching Hospital', domain=self.config['domain'])
-                ).order_by('name').exclude(supply_point_id__isnull=True)
-            else:
-                supply_points = SQLLocation.objects.filter(
-                    parent__location_id=self.config['location_id'], is_archived=False,
-                    location_type__administrative=False,
-                ).order_by('name').exclude(supply_point_id__isnull=True)
-        return supply_points
-
-    @property
     def headers(self):
         headers = DataTablesHeader(DataTablesColumn('Location'))
-        for product in self.unique_products(self.get_supply_points, all=(not self.config['export'])):
+        for product in self.unique_products(
+            get_supply_points(self.config['domain'], self.config['location_id']), all=(not self.config['export'])
+        ):
             if not self.config['export']:
                 headers.add_column(DataTablesColumn(product.code))
             else:
@@ -177,7 +157,9 @@ class MonthOfStockProduct(EWSData):
     @property
     def rows(self):
         rows = []
-        unique_products = self.unique_products(self.get_supply_points, all=(not self.config['export']))
+        unique_products = self.unique_products(
+            get_supply_points(self.config['domain'], self.config['location_id']), all=(not self.config['export'])
+        )
         if self.config['location_id']:
             for case_id, products in self.config['months_of_stock'].iteritems():
 
@@ -226,7 +208,7 @@ class StockoutsProduct(EWSData):
     def rows(self):
         rows = {}
         if self.config['location_id']:
-            supply_points = get_supply_points(self.config['location_id'], self.config['domain'])
+            supply_points = get_descendants(self.config['location_id'])
             products = self.unique_products(supply_points, all=True)
             code_name_map = {}
             for product in products:
@@ -307,9 +289,8 @@ class StockoutTable(EWSData):
                 product_id: product_name
                 for (product_id, product_name) in self.config['unique_products'].values_list('product_id', 'name')
             }
-            for supply_point_id in self.config['stockout_table_supply_points']:
-                supply_point = SQLLocation.objects.get(supply_point_id=supply_point_id)
-                products_set = self.config['stockouts'].get(supply_point_id)
+            for supply_point in self.config['stockout_table_supply_points']:
+                products_set = self.config['stockouts'].get(supply_point.supply_point_id)
                 url = make_url(
                     StockLevelsReport,
                     self.config['domain'],
@@ -338,27 +319,6 @@ class StockStatus(MultiReport):
     exportable = True
     is_exportable = True
 
-    @property
-    def get_supply_points(self):
-        supply_points = []
-        if self.report_config['location_id']:
-            location = SQLLocation.objects.get(
-                domain=self.report_config['domain'],
-                location_id=self.report_config['location_id']
-            )
-            if location.location_type.name == 'country':
-                supply_points = SQLLocation.objects.filter(
-                    Q(parent__location_id=self.report_config['location_id'], is_archived=False) |
-                    Q(location_type__name='Regional Medical Store', domain=self.report_config['domain']) |
-                    Q(location_type__name='Teaching Hospital', domain=self.report_config['domain'])
-                ).order_by('name').exclude(supply_point_id__isnull=True)
-            else:
-                supply_points = SQLLocation.objects.filter(
-                    parent__location_id=self.report_config['location_id'], is_archived=False,
-                    location_type__administrative=False,
-                ).order_by('name').exclude(supply_point_id__isnull=True)
-        return supply_points
-
     def unique_products(self, locations, all=False):
         if self.report_config['products'] and not all:
             return SQLProduct.objects.filter(
@@ -374,24 +334,37 @@ class StockStatus(MultiReport):
                 pk__in=locations.values_list('_products', flat=True)
             ).exclude(is_archived=True)
 
+    def get_stock_transactions_for_supply_points_and_products(self, supply_points, unique_products,
+                                                              **additional_params):
+        return StockTransaction.objects.filter(
+            type='stockonhand',
+            case_id__in=list(supply_points.values_list('supply_point_id', flat=True)),
+            report__domain=self.report_config['domain'],
+            report__date__lte=self.report_config['enddate'],
+            report__date__gte=self.report_config['startdate'],
+            product_id__in=list(unique_products.values_list('product_id', flat=True)),
+            **additional_params
+        ).distinct('case_id', 'product_id').order_by('case_id', 'product_id', '-report__date').values_list(
+            'case_id', 'product_id'
+        )
+
+    def get_stockouts_for_supply_points_and_products(self, supply_points, unique_products):
+        return self.get_stock_transactions_for_supply_points_and_products(
+            supply_points,
+            unique_products,
+            stock_on_hand=0
+        )
+
     def stockouts_data(self):
-        supply_points = self.get_supply_points.values_list('supply_point_id', flat=True)
+        supply_points = get_supply_points(self.report_config['domain'], self.report_config['location_id'])
 
         if not supply_points:
             return {}
 
-        unique_products = self.unique_products(self.get_supply_points, all=True)
-        transactions = StockTransaction.objects.filter(
-            type='stockonhand',
-            case_id__in=list(supply_points),
-            report__domain=self.report_config['domain'],
-            report__date__lte=self.report_config['enddate'],
-            report__date__gte=self.report_config['startdate'],
-            stock_on_hand=0,
-            product_id__in=list(unique_products.values_list('product_id', flat=True)),
-        ).distinct('case_id', 'product_id').order_by('case_id', 'product_id', '-report__date').values_list(
-            'case_id', 'product_id'
-        )
+        unique_products = self.unique_products(supply_points, all=True)
+        transactions = self.get_stockouts_for_supply_points_and_products(
+            supply_points, unique_products
+        ).values_list('case_id', 'product_id')
         stockouts = defaultdict(set)
 
         for (case_id, product_id) in transactions:
@@ -403,30 +376,36 @@ class StockStatus(MultiReport):
             'stockout_table_supply_points': supply_points
         }
 
+    def _get_latest_mos_for_product(self, case_id, product, stock_state_map):
+        consumption = stock_state_map.get((case_id, product.product_id))
+        try:
+            stock_on_hand = StockTransaction.objects.filter(
+                case_id=case_id,
+                product_id=product.product_id
+            ).latest('report__date').stock_on_hand
+        except StockTransaction.DoesNotExist:
+            stock_on_hand = None
+        if stock_on_hand and consumption:
+            return stock_on_hand / consumption
+
     def data(self):
         locations = self.report_location.get_descendants()
-        supply_points = locations.values_list('supply_point_id', flat=True)
+        locations_ids = locations.values_list('supply_point_id', flat=True)
 
-        if not supply_points:
+        if not locations_ids:
             return {}
 
         unique_products = self.unique_products(locations, all=True)
-        transactions = StockTransaction.objects.filter(
-            type='stockonhand',
-            case_id__in=list(supply_points),
-            report__domain=self.report_config['domain'],
-            report__date__lte=self.report_config['enddate'],
-            report__date__gte=self.report_config['startdate'],
-            product_id__in=list(unique_products.values_list('product_id', flat=True)),
-        ).distinct('case_id', 'product_id').order_by('case_id', 'product_id', '-report__date').values_list(
-            'case_id', 'product_id', 'report__date', 'stock_on_hand'
+        transactions = self.get_stock_transactions_for_supply_points_and_products(
+            locations_ids, unique_products
+        ).values_list('case_id', 'product_id', 'report__date', 'stock_on_hand')
+        current_mos_locations = get_supply_points(self.report_config['domain'], self.report_config['location_id'])
+        current_mos_locations_ids = set(
+            current_mos_locations.values_list('supply_point_id', flat=True)
         )
-
-        stockout_table_supply_points = list(self.get_supply_points.values_list('supply_point_id', flat=True))
-        grouped_by_case = defaultdict(set)
         stock_states = StockState.objects.filter(
             sql_product__domain=self.domain,
-            case_id__in=stockout_table_supply_points
+            case_id__in=current_mos_locations_ids
         )
         product_case_with_stock = defaultdict(set)
         product_case_without_stock = defaultdict(set)
@@ -438,12 +417,11 @@ class StockStatus(MultiReport):
             for stock_state in stock_states
         }
 
-        current_mos_locations = set(self.get_supply_points.values_list('supply_point_id', flat=True))
         stockouts = defaultdict(set)
         for (case_id, product_id, date, stock_on_hand) in transactions:
             if stock_on_hand > 0:
                 product_case_with_stock[product_id].add(case_id)
-                if case_id in current_mos_locations:
+                if case_id in current_mos_locations_ids:
                     stock_state_dict = stock_state_map.get((case_id, product_id))
                     if stock_state_dict:
                         months_of_stock[case_id][product_id] = stock_on_hand / stock_state_dict
@@ -451,26 +429,16 @@ class StockStatus(MultiReport):
                         months_of_stock[case_id][product_id] = None
             else:
                 product_case_without_stock[product_id].add(case_id)
-                if case_id in current_mos_locations:
+                if case_id in current_mos_locations_ids:
                     stockouts[case_id].add(product_id)
                     months_of_stock[case_id][product_id] = 0
-            grouped_by_case[case_id].add(product_id)
 
-        for case_id in current_mos_locations:
+        for case_id in current_mos_locations_ids:
             if case_id not in months_of_stock:
                 for product in unique_products:
-                    consumption = stock_state_map.get((case_id, product.product_id))
-                    try:
-                        stock_on_hand = StockTransaction.objects.filter(
-                            case_id=case_id,
-                            product_id=product.product_id
-                        ).latest('report__date').stock_on_hand
-                    except StockTransaction.DoesNotExist:
-                        stock_on_hand = None
-                    if stock_on_hand and consumption:
-                        months_of_stock[case_id][product.product_id] = stock_on_hand / consumption
-                    else:
-                        months_of_stock[case_id][product.product_id] = None
+                    months_of_stock[case_id][product.product_id] = self._get_latest_mos_for_product(
+                        case_id, product, stock_state_map
+                    )
 
         return {
             'without_stock': {
@@ -485,7 +453,7 @@ class StockStatus(MultiReport):
             'months_of_stock': months_of_stock,
             'stockouts': stockouts,
             'unique_products': unique_products,
-            'stockout_table_supply_points': stockout_table_supply_points
+            'stockout_table_supply_points': current_mos_locations
         }
 
     @property

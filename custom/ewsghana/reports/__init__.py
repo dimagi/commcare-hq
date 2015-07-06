@@ -16,7 +16,8 @@ from custom.ewsghana.filters import ProductByProgramFilter, EWSDateFilter
 from dimagi.utils.dates import DateSpan, force_to_datetime
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import SQLLocation, LocationType
-from custom.ewsghana.utils import get_supply_points, filter_slugs_by_role, ews_date_format
+from custom.ewsghana.utils import get_descendants, filter_slugs_by_role, ews_date_format, get_products_for_locations, \
+    get_products_for_locations_by_program, get_products_for_locations_by_products
 from casexml.apps.stock.models import StockTransaction
 from dimagi.utils.parsing import ISO_DATE_FORMAT
 
@@ -97,18 +98,11 @@ class EWSData(object):
 
     def unique_products(self, locations, all=False):
         if self.config['products'] and not all:
-            return SQLProduct.objects.filter(
-                pk__in=locations.values_list('_products', flat=True),
-            ).filter(pk__in=self.config['products']).exclude(is_archived=True)
+            return get_products_for_locations_by_products(locations, self.config['products'])
         elif self.config['program'] and not all:
-            return SQLProduct.objects.filter(
-                pk__in=locations.values_list('_products', flat=True),
-                program_id=self.config['program']
-            ).exclude(is_archived=True)
+            return get_products_for_locations_by_program(locations, self.config['program'])
         else:
-            return SQLProduct.objects.filter(
-                pk__in=locations.values_list('_products', flat=True)
-            ).exclude(is_archived=True)
+            return get_products_for_locations(locations)
 
 
 class ReportingRatesData(EWSData):
@@ -418,7 +412,7 @@ class ProductSelectionPane(EWSData):
 
     @property
     def rendered_content(self):
-        locations = get_supply_points(self.config['location_id'], self.config['domain'])
+        locations = get_descendants(self.config['location_id'])
         products = self.unique_products(locations, all=True)
         programs = {program.get_id: program.name for program in Program.by_domain(self.domain)}
         headers = []
