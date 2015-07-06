@@ -2,23 +2,6 @@
 {% load i18n %}{% load hq_shared_tags %}
 
 {% block js-inline %}{{ block.super }}
-<script>
-    $(function () {
-        $appstoreLink = $('#appstore-link');
-        $helpLink = $('#help-link');
-        $newAppLink = $('#new-app-link');
-
-        gaTrackLink($appstoreLink, 'Dashboard', 'Welcome Tile', 'exchange');
-        gaTrackLink($helpLink, 'Dashboard', 'Welcome Tile', 'help');
-        gaTrackLink($newAppLink, 'Dashboard', 'Welcome Tile', 'app');
-
-        analytics.workflow('Visited new user dashboard');
-        analytics.trackWorkflowLink($appstoreLink, 'Clicked Exchange in new user dashboard');
-        analytics.trackWorkflowLink($helpLink, "Clicked Help Site in new user dashboard");
-        analytics.trackWorkflowLink($newAppLink, "Clicked Applications in new user dashboard");
-
-    });
-</script>
 {% endblock js-inline %}
 
 {% block dashboard-content %}
@@ -38,7 +21,9 @@
                 {% trans 'Survey' %}
             </div>
             <div class="panel-body">
-                <p class="text-center"><a href="{% url 'appstore' %}" class="dashboard-link" id="appstore-link">
+                <p class="text-center">
+                    <a class="dashboard-link"
+                        href="{% url 'fast_import_app' domain 'ccfa9c6c4599c46dd957e5e5999006db' %}">
                     <i class="fcc fcc-survey dashboard-icon dashboard-icon-large"></i>
                     <span class="lead">{% blocktrans %}
                         One-time<br>data collection
@@ -54,9 +39,8 @@
             </div>
             <div class="panel-body">
                 <p class="text-center">
-                    <a href="{% url 'default_new_app' domain %}"
-                       class="dashboard-link"
-                       id="new-app-link">
+                    <a class="dashboard-link"
+                        href="{% url 'fast_import_app' domain 'ccfa9c6c4599c46dd957e5e5999006db' %}">
                         <i class="fcc dashboard-icon dashboard-icon-large fcc-casemgt"></i>
                         <span class="lead">
                             Track information<br>over time
@@ -70,10 +54,9 @@
         <div class="panel panel-dashboard">
             <div class="panel-heading">{% trans 'Blank Application' %}</div>
             <div class="panel-body">
-                <p class="text-center"><a href="http://help.commcarehq.org/"
-                      class="dashboard-link"
-                      id="help-link"
-                      target="_blank">
+                <p class="text-center">
+                    <a class="dashboard-link"
+                        href="{% url 'fast_import_app' domain 'ccfa9c6c4599c46dd957e5e5999006db' %}">
                     <i class="fcc fcc-blankapp dashboard-icon dashboard-icon-large"></i>
                     <span class="lead">{% blocktrans %}
                         Start from scratch<br>with a blank application

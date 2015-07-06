@@ -346,6 +346,16 @@ def migrate_app_filters(request, domain, app_id):
 
 
 @require_can_edit_apps
+def fast_import_app(request, domain, app_id):
+    _clear_app_cache(request, domain)
+    app = get_app(None, app_id)
+    name = app.name
+    assert(app.get_doc_type() in ('Application', 'RemoteApp'))
+    app = import_app_util(app_id, domain, name=name)
+    return back_to_main(request, domain, app_id=app._id)
+
+
+@require_can_edit_apps
 def import_app(request, domain, template="app_manager/import_app.html"):
     if request.method == "POST":
         _clear_app_cache(request, domain)
