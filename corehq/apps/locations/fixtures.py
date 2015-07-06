@@ -36,7 +36,11 @@ def should_sync_locations(last_sync, location_db):
         return True
 
     for location in location_db.by_id.values():
-        if not location.last_modified or location.last_modified >= last_sync.date:
+        if (
+            not location.last_modified or
+            location.last_modified >= last_sync.date or
+            location.location_type.last_modified >= last_sync.date
+        ):
             return True
 
     return False
