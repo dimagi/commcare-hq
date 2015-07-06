@@ -18,7 +18,6 @@ class SessionUtilsTest(SimpleTestCase):
         self.assertEqual(user._id, data['user_id'])
         self.assertTrue(isinstance(data['user_data'], dict))
 
-
     def test_default_user_data(self):
         user = CommCareUser(
             domain='cloudcare-tests',
