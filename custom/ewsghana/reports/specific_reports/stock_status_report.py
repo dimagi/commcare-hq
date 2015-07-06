@@ -381,7 +381,8 @@ class StockStatus(MultiReport):
         try:
             stock_on_hand = StockTransaction.objects.filter(
                 case_id=case_id,
-                product_id=product.product_id
+                product_id=product.product_id,
+                report__date__lte=self.report_config['enddate']
             ).latest('report__date').stock_on_hand
         except StockTransaction.DoesNotExist:
             stock_on_hand = None
