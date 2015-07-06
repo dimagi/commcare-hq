@@ -29,7 +29,9 @@ from corehq.apps.accounting.forms import (
     ProductRateForm, TriggerInvoiceForm, InvoiceInfoForm, AdjustBalanceForm,
     ResendEmailForm, ChangeSubscriptionForm, TriggerBookkeeperEmailForm,
     TestReminderEmailFrom,
-    CreateAdminForm)
+    CreateAdminForm,
+    SuppressInvoiceForm,
+)
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError, InvoiceError, CreditLineError,
     CreateAccountingAdminError,
@@ -686,6 +688,7 @@ class InvoiceSummaryViewBase(AccountingSectionView):
             'can_send_email': self.can_send_email,
             'invoice_info_form': self.invoice_info_form,
             'resend_email_form': self.resend_email_form,
+            'suppress_invoice_form': self.suppress_invoice_form,
         }
 
     @property
@@ -709,6 +712,13 @@ class InvoiceSummaryViewBase(AccountingSectionView):
     def invoice_info_form(self):
         return InvoiceInfoForm(self.invoice)
 
+    @property
+    @memoized
+    def suppress_invoice_form(self):
+        if self.request.method == 'POST':
+            return SuppressInvoiceForm(self.invoice, self.request.POST)
+        return SuppressInvoiceForm(self.invoice)
+
     def post(self, request, *args, **kwargs):
         if 'adjust_balance' in self.request.POST:
             if self.adjust_balance_form.is_valid():
@@ -724,6 +734,10 @@ class InvoiceSummaryViewBase(AccountingSectionView):
                 except Exception as e:
                     messages.error(request,
                                    "Could not send emails due to: %s" % e)
+        elif SuppressInvoiceForm.submit_kwarg in self.request.POST:
+            if self.suppress_invoice_form.is_valid():
+                self.suppress_invoice_form.suppress_invoice()
+                return HttpResponseRedirect(InvoiceInterface.get_url())
         return self.get(request, *args, **kwargs)
 
 
