@@ -2,11 +2,10 @@ from django.db.models import Q
 from corehq.apps.es import UserES
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.generic import GenericTabularReport
 from custom.common import ALL_OPTION
 from custom.ewsghana import StockLevelsReport
-from custom.ewsghana.filters import ProductByProgramFilter, EWSDateFilter
+from custom.ewsghana.filters import ProductByProgramFilter, EWSDateFilter, EWSRestrictionLocationFilter
 from custom.ewsghana.reports import MultiReport, ReportingRatesData, ProductSelectionPane, EWSPieChart
 from casexml.apps.stock.models import StockTransaction
 from custom.ewsghana.reports.stock_levels_report import FacilityReportData, StockLevelsLegend, \
@@ -315,7 +314,7 @@ class ReportingRatesReport(MultiReport):
     name = 'Reporting'
     title = 'Reporting'
     slug = 'reporting_page'
-    fields = [AsyncLocationFilter, ProductByProgramFilter, EWSDateFilter]
+    fields = [EWSRestrictionLocationFilter, ProductByProgramFilter, EWSDateFilter]
     split = False
     is_exportable = True
 
@@ -434,7 +433,7 @@ class ReportingRatesReport(MultiReport):
         }
 
     def report_filters(self):
-        return [f.slug for f in [AsyncLocationFilter, EWSDateFilter]]
+        return [f.slug for f in [EWSRestrictionLocationFilter, EWSDateFilter]]
 
     @property
     def report_config(self):

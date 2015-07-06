@@ -8,11 +8,10 @@ from corehq import Domain
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.commtrack.standard import CommtrackReportMixin
-from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.graph_models import LineChart, MultiBarChart, PieChart
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
-from custom.ewsghana.filters import ProductByProgramFilter, EWSDateFilter
+from custom.ewsghana.filters import ProductByProgramFilter, EWSDateFilter, EWSRestrictionLocationFilter
 from dimagi.utils.dates import DateSpan, force_to_datetime
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import SQLLocation, LocationType
@@ -291,7 +290,7 @@ class MultiReport(MonthWeekMixin, CustomProjectReport, CommtrackReportMixin, Pro
         return [f.slug for f in self.fields]
 
     def fpr_report_filters(self):
-        return [f.slug for f in [AsyncLocationFilter, ProductByProgramFilter, EWSDateFilter]]
+        return [f.slug for f in [EWSRestrictionLocationFilter, ProductByProgramFilter, EWSDateFilter]]
 
     @property
     def report_context(self):
