@@ -8,18 +8,35 @@
 
 <p>
     {% blocktrans %}
-    This email is a receipt for your payment of {{ amount }} for {{ credit_name }}
-    credits to your project {{ project }}.
+    This email is a receipt for your prepayment of {{ amount }} for credits to your project {{ project }}.
     {% endblocktrans %}
 </p>
 
-<ul>
-    <li><strong>{% trans 'Amount' %}:</strong> {{ amount }}</li>
-    <li><strong>{% trans 'Item' %}:</strong> {{ credit_name }} Credits</li>
-    <li><strong>{% trans 'Payment Date' %}:</strong> {{ date_paid }}</li>
-    <li><strong>{% trans 'Transaction No.' %}:</strong> {{ transaction_id }}</li>
-</ul>
+<table border='1' style="border-collapse:collapse;">
+    <thead>
+        <tr>
+            <td><strong>{% trans 'Item' %}</strong></td>
+            <td><strong>{% trans 'Amount' %}</strong></td>
+        </tr>
 
+    </thead>
+    <tbody>
+        {% for item in items %}
+            <tr>
+                <td>{{ item.type }}</td>
+                <td>{{ item.amount }}</td>
+            </tr>
+        {% endfor %}
+            <tr>
+                <td><strong>{% trans 'Total' %}</strong></td>
+                <td><strong>{{ amount }}</strong></td>
+            </tr>
+    </tbody>
+</table>
+<p>
+    <strong>{% trans 'Payment Date' %}:</strong> {{ date_paid }} <br />
+    <strong>{% trans 'Transaction No.' %}:</strong> {{ transaction_id }}
+</p>
 <p>
     {% blocktrans %}
     Thank you for using {{ product }}. If you have any questions, please don't

@@ -111,7 +111,6 @@ ADMIN_API_LIST = (
     FeatureResource,
     FutureRateResource,
     RoleResource,
-    BillingAccountAdminResource,
     AccountingCurrencyResource,
     SoftwareProductResource,
     SoftwarePlanResource,
