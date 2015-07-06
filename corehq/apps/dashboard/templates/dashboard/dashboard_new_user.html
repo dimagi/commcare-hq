@@ -21,40 +21,6 @@
 </script>
 {% endblock js-inline %}
 
-{% block uncompressed-js %} {{ block.super }}
-    <script type="text/javascript">
-        (function (angular, undefined) {
-            'use strict';
-            // NOTE: It's not a best practice to define the app in a script tag,
-            //       better to have it in a separate file. Leaving this here
-            //       though because this is just for an A/B test (temporary code)
-            var dashboardApp = angular.module('dashboardApp', []);
-            dashboardApp.controller("DashBoardController", ["$scope", "$timeout", function ($scope, $timeout) {
-                $scope.tilesReady = false;
-                $scope.variant = "wide applications tile";
-
-                var abFallback = $timeout(function () {
-                    // Show the default variant if something goes wrong with KISSmetrics
-                    $scope.tilesReady = true;
-                }, 1500);
-
-                _kmq.push(function () {
-                    // When KISSmetrics is loaded, get the variant for this user.
-                    $scope.$apply(function () {
-                        $scope.variant = KM.ab('New user dashboard tiles', ["equal size", "wide applications tile"]);
-                        $scope.tilesReady = true;
-                    });
-                    // Cancel the fallback because we were able to reach KISSmetrics.
-                    $timeout.cancel(abFallback);
-                });
-
-
-            }]);
-        }(window.angular));
-    </script>
-{% endblock %}
-
-
 {% block dashboard-content %}
 <div class="page-header">
     <h1>
@@ -63,64 +29,58 @@
         {% else %}
             {% trans 'Welcome to CommCare HQ' %}
         {% endif %}
-         <small>{% trans 'What would you like to do?' %}</small></h1>
+         <small>{% trans 'What type of app would you like to build?' %}</small></h1>
 </div>
-<div class="row" ng-app="dashboardApp" ng-controller="DashBoardController as dashboard">
-<div ng-show="tilesReady" ng-cloak>
-    <div ng-class="(variant == 'wide applications tile') ? 'col-md-3' : 'col-md-4'">
+<div class="row">
+    <div class="col-md-4">
         <div class="panel panel-dashboard">
             <div class="panel-heading">
-                {% trans 'Exchange' %}
+                {% trans 'Survey' %}
             </div>
             <div class="panel-body">
                 <p class="text-center"><a href="{% url 'appstore' %}" class="dashboard-link" id="appstore-link">
-                    <i class="fcc fcc-exchange dashboard-icon dashboard-icon-large"></i>
+                    <i class="fcc fcc-survey dashboard-icon dashboard-icon-large"></i>
                     <span class="lead">{% blocktrans %}
-                        Start with an<br>existing application
+                        One-time<br>data collection
                     {% endblocktrans %}</span>
                 </a></p>
             </div>
         </div>
     </div>
-    <div ng-class="(variant == 'wide applications tile') ? 'col-md-6' : 'col-md-4'">
+    <div class="col-md-4">
         <div class="panel panel-dashboard">
             <div class="panel-heading">
-                {% if project.commtrack_enabled %}
-                    {% trans 'CommCare Supply Setup' %}
-                {% else %}
-                    {% trans 'Applications' %}
-                {% endif %}
+                {% trans 'Case Management' %}
             </div>
             <div class="panel-body">
                 <p class="text-center">
                     <a href="{% url 'default_new_app' domain %}"
                        class="dashboard-link"
                        id="new-app-link">
-                        <i class="fcc dashboard-icon dashboard-icon-large fcc-applications"></i>
+                        <i class="fcc dashboard-icon dashboard-icon-large fcc-casemgt"></i>
                         <span class="lead">
-                            Build a new application<br><br>
+                            Track information<br>over time
                         </span>
                    </a>
                 </p>
             </div>
         </div>
     </div>
-    <div ng-class="(variant == 'wide applications tile') ? 'col-md-3' : 'col-md-4'">
+    <div class="col-md-4">
         <div class="panel panel-dashboard">
-            <div class="panel-heading">{% trans 'Help Site' %}</div>
+            <div class="panel-heading">{% trans 'Blank Application' %}</div>
             <div class="panel-body">
                 <p class="text-center"><a href="http://help.commcarehq.org/"
                       class="dashboard-link"
                       id="help-link"
                       target="_blank">
-                    <i class="fcc fcc-help dashboard-icon dashboard-icon-large"></i>
+                    <i class="fcc fcc-blankapp dashboard-icon dashboard-icon-large"></i>
                     <span class="lead">{% blocktrans %}
-                        Learn how to build<br>an application
+                        Start from scratch<br>with a blank application
                     {% endblocktrans %}</span>
                 </a></p>
             </div>
         </div>
     </div>
-</div>
 </div>
 {% endblock dashboard-content %}
