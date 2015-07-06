@@ -9,6 +9,7 @@ from corehq.apps.smsforms.app import _get_responses, start_session
 from corehq.apps.sms.models import WORKFLOW_KEYWORD, MessagingEvent
 from corehq.apps.sms.messages import *
 from corehq.apps.sms.handlers.form_session import validate_answer
+from corehq.apps.sms.util import touchforms_error_is_config_error
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.reminders.models import (
     SurveyKeyword,
@@ -267,6 +268,62 @@ def split_args(text, survey_keyword):
     return args
 
 
+def log_error(error, logged_subevent=None):
+    if logged_subevent:
+        logged_subevent.error(error)
+
+
+def get_case_id(contact, case=None):
+    if case:
+        case_id = case._id
+    elif contact.doc_type == "CommCareCase":
+        case_id = contact._id
+    else:
+        case_id = None
+    return case_id
+
+
+def get_app_module_form(form_unique_id, logged_subevent=None):
+    """
+    Returns (app, module, form, error, error_code)
+    """
+    try:
+        form = Form.get_form(form_unique_id)
+        app = form.get_app()
+        module = form.get_module()
+        return (app, module, form, False, None)
+    except:
+        log_error(MessagingEvent.ERROR_CANNOT_FIND_FORM, logged_subevent)
+        return (None, None, None, True, MSG_FORM_NOT_FOUND)
+
+
+def start_session_with_error_handling(domain, contact, app, module, form,
+    case_id, keyword, logged_subevent=None):
+    """
+    Returns (session, responses, error, error_code)
+    """
+    try:
+        session, responses = start_session(domain, contact, app, module,
+            form, case_id=case_id, yield_responses=True)
+        if logged_subevent:
+            logged_subevent.xforms_session_id = session.pk
+            logged_subevent.save()
+        return (session, responses, False, None)
+    except TouchformsError as e:
+        human_readable_message = e.response_data.get('human_readable_message', None)
+        logged_subevent.error(MessagingEvent.ERROR_TOUCHFORMS_ERROR,
+            additional_error_text=human_readable_message)
+
+        if touchforms_error_is_config_error(e):
+            error_code = MSG_FORM_ERROR
+        else:
+            notify_exception(None, message=('Could not process structured sms for'
+                'contact %s, domain %s, keyword %s' % (contact._id, domain, keyword)))
+            error_code = MSG_TOUCHFORMS_ERROR
+
+        return (None, None, True, error_code)
+
+
 def handle_structured_sms(survey_keyword, survey_keyword_action, contact,
     verified_number, text, send_response=False, msg=None, case=None,
     text_args=None, logged_event=None):
@@ -276,7 +333,6 @@ def handle_structured_sms(survey_keyword, survey_keyword_action, contact,
         logged_subevent = logged_event.create_structured_sms_subevent()
 
     domain = contact.domain
-    contact_doc_type = contact.doc_type
     contact_id = contact._id
 
     if text_args is not None:
@@ -290,32 +346,29 @@ def handle_structured_sms(survey_keyword, survey_keyword_action, contact,
     error_msg = None
     session = None
 
+    case_id = get_case_id(contact, case)
+    app, module, form, error_occurred, error_code = get_app_module_form(
+        survey_keyword_action.form_unique_id, logged_subevent)
+    if error_occurred:
+        error_msg = get_message(error_code, verified_number)
+        clean_up_and_send_response(msg, contact, session, error_occurred, error_msg,
+            verified_number, send_response, logged_event, logged_subevent)
+        return False
+
+    session, responses, error_occurred, error_code = start_session_with_error_handling(
+        domain, contact, app, module, form, case_id, keyword, logged_subevent)
+    if error_occurred:
+        error_msg = get_message(error_code, verified_number)
+        clean_up_and_send_response(msg, contact, session, error_occurred, error_msg,
+            verified_number, send_response, logged_event, logged_subevent)
+        return False
+
+    session.workflow = WORKFLOW_KEYWORD
+    session.save()
+
     try:
-        # Start the session
-        app, module, form = get_form(
-            survey_keyword_action.form_unique_id, include_app_module=True)
-
-        if case:
-            case_id = case._id
-        elif contact_doc_type == "CommCareCase":
-            case_id = contact_id
-        else:
-            case_id = None
-
-        try:
-            session, responses = start_session(domain, contact, app, module,
-                form, case_id=case_id, yield_responses=True)
-        except TouchformsError as e:
-            # TODO: Implement in subsequent commit
-            pass
-        session.workflow = WORKFLOW_KEYWORD
-        session.save()
-
-        if logged_subevent:
-            logged_subevent.xforms_session_id = session.pk
-            logged_subevent.save()
-
-        assert len(responses) > 0, "There should be at least one response."
+        if len(responses) == 0:
+            raise TouchformsError('There should be at least one response.')
 
         first_question = responses[-1]
         if not is_form_complete(first_question):
@@ -343,18 +396,30 @@ def handle_structured_sms(survey_keyword, survey_keyword_action, contact,
             error_msg = get_message(MSG_FIELD_DESCRIPTOR, verified_number,
                 (field_name,))
         error_msg = "%s%s" % (error_msg, sse.response_text)
+        log_error(MessagingEvent.ERROR_COULD_NOT_PROCESS_STRUCTURED_SMS, logged_subevent)
     except Exception:
         notify_exception(None, message=("Could not process structured sms for"
             "contact %s, domain %s, keyword %s" % (contact_id, domain, keyword)))
         error_occurred = True
         error_msg = get_message(MSG_TOUCHFORMS_ERROR, verified_number)
+        log_error(MessagingEvent.ERROR_TOUCHFORMS_ERROR, logged_subevent)
 
-    if session is not None:
+    clean_up_and_send_response(msg, contact, session, error_occurred, error_msg,
+        verified_number, send_response, logged_event, logged_subevent)
+
+    return not error_occurred
+
+
+def refresh_and_close_session(session):
+    if session:
         session = SQLXFormsSession.objects.get(pk=session.pk)
         if session.is_open:
             session.end(False)
             session.save()
+    return session
 
+
+def add_keyword_metadata(msg, session):
     metadata = MessageMetadata(
         workflow=WORKFLOW_KEYWORD,
         xforms_session_couch_id=session._id if session else None,
@@ -363,20 +428,29 @@ def handle_structured_sms(survey_keyword, survey_keyword_action, contact,
     if msg:
         add_msg_tags(msg, metadata)
 
-    if error_occurred and verified_number is not None and send_response:
+    return metadata
+
+
+def clean_up_and_send_response(msg, contact, session, error_occurred, error_msg,
+    verified_number=None, send_response=False, logged_event=None,
+    logged_subevent=None):
+
+    session = refresh_and_close_session(session)
+    metadata = add_keyword_metadata(msg, session)
+
+    if error_occurred and verified_number and send_response:
         response_subevent = None
         if logged_event:
             response_subevent = logged_event.create_subevent_for_single_sms(
-                contact_doc_type, contact_id)
+                contact.doc_type, contact._id)
             metadata.messaging_subevent_id = response_subevent.pk
+
         send_sms_to_verified_number(verified_number, error_msg, metadata=metadata)
         if response_subevent:
             response_subevent.completed()
 
     if logged_subevent:
         logged_subevent.completed()
-
-    return not error_occurred
 
 
 def get_question_id(xformsresponse, xpath_arg=None):
@@ -398,20 +472,10 @@ def is_form_complete(current_question):
         return False
 
 
-def get_form(form_unique_id, include_app_module=False):
-    form = Form.get_form(form_unique_id)
-    if include_app_module:
-        app = form.get_app()
-        module = form.get_module()
-        return (app, module, form)
-    else:
-        return form
-
-
 def keyword_uses_form_that_requires_case(survey_keyword):
     for action in survey_keyword.actions:
         if action.action in [METHOD_SMS_SURVEY, METHOD_STRUCTURED_SMS]:
-            form = get_form(action.form_unique_id)
+            form = Form.get_form(action.form_unique_id)
             if form.requires_case():
                 return True
     return False
@@ -565,6 +629,5 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
             if not res:
                 # If the structured sms processing wasn't successful, don't
                 # process any of the other actions
-                logged_event.error(MessagingEvent.ERROR_COULD_NOT_PROCESS_STRUCTURED_SMS)
                 return
     logged_event.completed()
