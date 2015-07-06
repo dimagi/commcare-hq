@@ -237,12 +237,7 @@ class OPMCaseRow(object):
             return datetime.datetime.combine(date, datetime.time())
 
     def set_case_properties(self):
-
-        def _is_empty(val):
-            # handle values from FakeConditionsMet as well
-            return val is None or val == EMPTY_FIELD
-
-        if _is_empty(self.child_age) and _is_empty(self.preg_month):
+        if self.child_age is None and self.preg_month is None:
             raise InvalidRow("Window not found")
 
         if self.window > 14:
