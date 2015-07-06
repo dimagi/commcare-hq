@@ -304,7 +304,7 @@ class DomainWireInvoiceFactory(object):
             account=account,
         )
 
-        wire_invoice.add_items(items)
+        wire_invoice.items = items
         record = WirePrepaymentBillingRecord.generate_record(wire_invoice)
 
         try:
