@@ -51,7 +51,6 @@ branches:
   - update-submodules # TS 5/6
   - languageMedia # Sravan 6/10
   - autoload-supplypoint  # Ethan 6/15
-  - track-plan-editions # Nick P 6/25
   - remove-billing-admin-forwards+wire-prepay # Farid June 26
   - remove-billing-admin-forwards # Farid 25/6
   - wire-prepay # Farid June 26
