@@ -36,7 +36,7 @@ def get_product_code(product_name, domain):
 
 def _locations_per_type(domain, loc_type, location):
     return (location.sql_location.get_descendants(include_self=True)
-            .filter(domain=domain, location_type__name=loc_type).count())
+            .filter(domain=domain, location_type__name=loc_type, is_archived=False).count())
 
 
 class PPSRegistered(fluff.Calculator):

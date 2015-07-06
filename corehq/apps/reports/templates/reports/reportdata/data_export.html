@@ -1,3 +1,13 @@
 {% extends 'hqwebapp/base_section.html' %}
 {% load hq_shared_tags %}
 {% load i18n %}
+
+{% block main_column %}
+    <h2>{{ report.title }}</h2>
+    <a href="{% url 'create_export_form' domain %}" class="btn btn-success">
+        <i class="icon-white icon-plus">
+            {% trans 'Create New Export' %}
+        </i>
+    </a>
+    {% include 'reports/partials/saved_exports.html' %}
+{% endblock %}

@@ -11,7 +11,6 @@ from django.conf import settings
 from django.utils.importlib import import_module
 from django.utils import html, safestring
 
-from corehq.apps.announcements.models import ReportAnnouncement
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.models import HQUserType, TempCommCareUser
 from corehq.apps.users.models import CommCareUser
@@ -359,13 +358,11 @@ def create_export_filter(request, domain, export_type='form'):
 
 def get_possible_reports(domain_name):
     from corehq.apps.reports.dispatcher import (ProjectReportDispatcher, CustomProjectReportDispatcher)
-    from corehq.apps.adm.dispatcher import ADMSectionDispatcher
     from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 
     # todo: exports should be its own permission at some point?
     report_map = (ProjectReportDispatcher().get_reports(domain_name) +
                   CustomProjectReportDispatcher().get_reports(domain_name) +
-                  ADMSectionDispatcher().get_reports(domain_name) +
                   DataInterfaceDispatcher().get_reports(domain_name))
     reports = []
     domain = Domain.get_by_name(domain_name)
@@ -393,25 +390,6 @@ def friendly_timedelta(td):
         if t[1]:
             text.append("%d %s%s" % (t[1], t[0], "s" if t[1] != 1 else ""))
     return ", ".join(text)
-
-
-def set_report_announcements_for_user(request, couch_user):
-    key = ["type", ReportAnnouncement.__name__]
-    now = datetime.utcnow()
-
-    db = ReportAnnouncement.get_db()
-    data = cache_core.cached_view(db, "announcements/all_announcements", reduce=False,
-                                 startkey=key + [now.strftime("%Y-%m-%dT%H:00")], endkey=key + [{}],
-                                 )
-
-    announce_ids = [a['id'] for a in data if a['id'] not in couch_user.announcements_seen]
-    for announcement_id in announce_ids:
-        try:
-            announcement = ReportAnnouncement.get(announcement_id)
-            if announcement.show_to_new_users or (announcement.date_created > couch_user.created_on):
-                messages.info(request, announcement.as_html)
-        except Exception as e:
-            logging.error("Could not fetch Report Announcement: %s" % e)
 
 
 # Copied from http://djangosnippets.org/snippets/1170/

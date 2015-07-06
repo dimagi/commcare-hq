@@ -1,5 +1,6 @@
+from corehq.apps.sms.dbaccessors import get_forwarding_rules_for_domain
 from corehq.apps.sms.models import (
-    ForwardingRule, FORWARD_ALL, FORWARD_BY_KEYWORD, MessagingEvent,
+    FORWARD_ALL, FORWARD_BY_KEYWORD, MessagingEvent,
     WORKFLOW_FORWARD,
 )
 from corehq.apps.sms.api import (send_sms_with_backend, add_msg_tags,
@@ -32,8 +33,7 @@ def forward_sms(msg, domain, verified_number, text, backend_id):
 
 
 def forwarding_handler(v, text, msg):
-    rules = ForwardingRule.view("sms/forwarding_rule",
-        key=[v.domain], include_docs=True).all()
+    rules = get_forwarding_rules_for_domain(v.domain)
     text_words = text.upper().split()
     keyword_to_match = text_words[0] if len(text_words) > 0 else ""
     for rule in rules:

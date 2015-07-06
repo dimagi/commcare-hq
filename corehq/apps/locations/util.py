@@ -1,4 +1,5 @@
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.commtrack.dbaccessors import get_supply_point_ids_in_domain_by_location
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.products.models import Product
 from corehq.apps.locations.models import Location, SQLLocation
@@ -126,7 +127,8 @@ class LocationExporter(object):
             # we'll be needing these, so init 'em:
             self.products = Product.by_domain(self.domain)
             self.product_codes = [p.code for p in self.products]
-            self.supply_point_map = SupplyPointCase.get_location_map_by_domain(self.domain)
+            self.supply_point_map = get_supply_point_ids_in_domain_by_location(
+                self.domain)
             self.administrative_types = {
                 lt.name for lt in self.domain_obj.location_types
                 if lt.administrative

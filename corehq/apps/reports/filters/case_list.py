@@ -80,7 +80,7 @@ class CaseListFilter(ExpandedMobileWorkerFilter):
         reporting = [self.utils.reporting_group_tuple(group['fields'])
                      for group in query_results
                      if group['fields'].get("reporting", False)]
-        sharing = [self.sharing_group_tuple(group['fields'])
+        sharing = [self.utils.sharing_group_tuple(group['fields'])
                    for group in query_results
                    if group['fields'].get("case_sharing", False)]
         return reporting + sharing
@@ -95,33 +95,27 @@ class CaseListFilterOptions(EmwfOptionsView):
     def utils(self):
         return CaseListFilterUtils(self.domain)
 
-    def group_es_call(self, group_type=None, **kwargs):
+    def group_es_call(self, group_type, **kwargs):
         # Valid group_types are "reporting" and "case_sharing"
-        if group_type is None:
-            type_filter = {"or": [
-                {"term": {"reporting": "true"}},
-                {"term": {"case_sharing": "true"}}
-            ]}
-        else:
-            type_filter = {"term": {group_type: "true"}}
+        type_filter = {"term": {group_type: "true"}}
         return es_wrapper('groups', domain=self.domain, q=self.group_query,
                           filters=[type_filter], doc_type='Group', **kwargs)
 
     def get_groups(self, start, size):
-        def wrap_group(group):
-            if group.get('case_sharing', None):
-                return self.sharing_group_tuple(group)
-            return self.utils.reporting_group_tuple(group)
-
-        fields = ['_id', 'name']
-        groups = self.group_es_call(
-            fields=fields,
-            sort_by="name.exact",
-            order="asc",
-            start_at=start,
-            size=size,
-        )
-        return map(wrap_group, groups)
+        params = {
+            'fields': ['_id', 'name', 'case_sharing'],
+            'sort_by': 'name.exact',
+            'order': 'asc',
+        }
+        reporting_groups = self.group_es_call('reporting', start_at=start,
+                                              size=size, **params)
+        sharing_start = self.reporting_group_size
+        s_start = max(0, start - sharing_start)
+        sharing_size = max(0, size - len(reporting_groups))
+        sharing_groups = self.group_es_call('case_sharing', start_at=s_start,
+                                            size=sharing_size, **params)
+        return (map(self.utils.reporting_group_tuple, reporting_groups) +
+                map(self.utils.sharing_group_tuple, sharing_groups))
 
     @property
     def case_sharing_locations_query(self):
@@ -139,3 +133,16 @@ class CaseListFilterOptions(EmwfOptionsView):
     def get_locations_size(self):
         return (self.locations_query.count() +
                 self.case_sharing_locations_query.count())
+
+    @property
+    @memoized
+    def reporting_group_size(self):
+        return self.group_es_call('reporting', size=0, return_count=True)[0]
+
+    @property
+    @memoized
+    def sharing_group_size(self):
+        return self.group_es_call('case_sharing', size=0, return_count=True)[0]
+
+    def get_group_size(self):
+        return self.reporting_group_size + self.sharing_group_size

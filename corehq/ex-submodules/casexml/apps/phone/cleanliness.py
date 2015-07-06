@@ -9,6 +9,7 @@ from corehq.apps.hqcase.dbaccessors import get_open_case_ids, \
 from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.toggles import OWNERSHIP_CLEANLINESS
 from django.conf import settings
+from corehq.util.soft_assert import soft_assert
 
 
 FootprintInfo = namedtuple('FootprintInfo', ['base_ids', 'all_ids'])
@@ -44,19 +45,20 @@ def should_create_flags_on_submission(domain):
     return False
 
 
-def set_cleanliness_flags_for_domain(domain):
+def set_cleanliness_flags_for_domain(domain, force_full=False):
     """
     Sets all cleanliness flags for an entire domain.
     """
     for owner_id in get_all_case_owner_ids(domain):
-        if owner_id not in WEIRD_USER_IDS:
-            set_cleanliness_flags(domain, owner_id)
+        if owner_id and owner_id not in WEIRD_USER_IDS:
+            set_cleanliness_flags(domain, owner_id, force_full=force_full)
 
 
-def set_cleanliness_flags(domain, owner_id):
+def set_cleanliness_flags(domain, owner_id, force_full=False):
     """
     For a given owner ID, manually sets the cleanliness flag on that ID.
     """
+    assert owner_id, "Can't set cleanliness flags for null or blank owner ids"
     cleanliness_object = OwnershipCleanlinessFlag.objects.get_or_create(
         owner_id=owner_id,
         domain=domain,
@@ -75,14 +77,24 @@ def set_cleanliness_flags(domain, owner_id):
                 not cleanliness_object.hint or not hint_still_valid(domain, owner_id, cleanliness_object.hint)
             )
         )
-    if needs_full_check(domain, cleanliness_object):
-        # either the hint wasn't set or wasn't valid - rebuild from scratch
+
+    needs_check = needs_full_check(domain, cleanliness_object)
+    previous_clean_flag = cleanliness_object.is_clean
+    if force_full or needs_check:
+        # either the hint wasn't set, wasn't valid or we're forcing a rebuild - rebuild from scratch
         cleanliness_flag = get_cleanliness_flag_from_scratch(domain, owner_id)
         cleanliness_object.is_clean = cleanliness_flag.is_clean
         cleanliness_object.hint = cleanliness_flag.hint
 
     cleanliness_object.last_checked = datetime.utcnow()
     cleanliness_object.save()
+
+    if force_full and not needs_check and previous_clean_flag and not cleanliness_object.is_clean:
+        # we went from clean to dirty and would not have checked except that we forced it
+        # this seems to indicate a problem in the logic that invalidates the flag, unless the feature
+        # flag was turned off for the domain. either way cory probably wants to know.
+        _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'], exponential_backoff=False, fail_if_debug=True)
+        _assert(False, 'Cleanliness flags out of sync for owner {} in domain {}!'.format(owner_id, domain))
 
 
 def hint_still_valid(domain, owner_id, hint):

@@ -174,7 +174,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
     def __init__(self, *args, **kwargs):
         self.username = kwargs.pop('username') if 'username' in kwargs else None
         self.user = kwargs.pop('user') if 'user' in kwargs else None
-        api_key = kwargs.pop('api_key')
+        api_key = kwargs.pop('api_key') if 'api_key' in kwargs else None
 
         super(UpdateMyAccountInfoForm, self).__init__(*args, **kwargs)
 
@@ -433,7 +433,7 @@ class SupplyPointSelectWidget(forms.Widget):
             'id': self.id,
             'name': name,
             'value': value or '',
-            'query_url': reverse('corehq.apps.commtrack.views.api_query_supply_point', args=[self.domain]),
+            'query_url': reverse('corehq.apps.locations.views.child_locations_for_select2', args=[self.domain]),
         }))
 
 

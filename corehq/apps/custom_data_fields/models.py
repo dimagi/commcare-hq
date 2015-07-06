@@ -74,7 +74,7 @@ class CustomDataFieldsDefinition(Document):
         Returns a validator to be used in bulk import
         """
         def validate_choices(field, value):
-            if field.choices and value and value not in field.choices:
+            if field.choices and value and unicode(value) not in field.choices:
                 return _(
                     "'{value}' is not a valid choice for {slug}, the available "
                     "options are: {options}."

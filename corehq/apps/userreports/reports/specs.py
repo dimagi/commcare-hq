@@ -74,6 +74,13 @@ class ReportColumn(JsonObject):
     def get_header(self, lang):
         return localize(self.display, lang)
 
+    def get_column_ids(self):
+        """
+        Used as an abstraction layer for columns that can contain more than one data column
+        (for example, PercentageColumns).
+        """
+        return [self.column_id]
+
 
 class FieldColumn(ReportColumn):
     type = TypeProperty('field')
@@ -116,7 +123,7 @@ class FieldColumn(ReportColumn):
                 header=self.get_header(lang),
                 agg_column=SQLAGG_COLUMN_MAP[self.aggregation](self.field, alias=self.column_id),
                 sortable=False,
-                slug=self.column_id,
+                data_slug=self.column_id,
                 format_fn=self.get_format_fn(),
                 help_text=self.description
             )
@@ -201,10 +208,15 @@ class PercentageColumn(ReportColumn):
 
     def get_format_fn(self):
         NO_DATA_TEXT = '--'
+        CANT_CALCULATE_TEXT = '?'
 
         def _pct(data):
             if data['denom']:
-                return '{0:.0f}%'.format((float(data['num']) / float(data['denom'])) * 100)
+                try:
+                    return '{0:.0f}%'.format((float(data['num']) / float(data['denom'])) * 100)
+                except (ValueError, TypeError):
+                    return CANT_CALCULATE_TEXT
+
             return NO_DATA_TEXT
 
         _fraction = lambda data: '{num}/{denom}'.format(**data)
@@ -214,6 +226,10 @@ class PercentageColumn(ReportColumn):
             'fraction': _fraction,
             'both': lambda data: '{} ({})'.format(_pct(data), _fraction(data))
         }[self.format]
+
+    def get_column_ids(self):
+        # override this to include the columns for the numerator and denominator as well
+        return [self.column_id, self.numerator.column_id, self.denominator.column_id]
 
 
 def _add_column_id_if_missing(obj):
@@ -239,6 +255,7 @@ class FilterSpec(JsonObject):
     field = StringProperty(required=True)  # this is the actual column that is queried
     display = DefaultProperty()
     required = BooleanProperty(default=False)
+    datatype = DataTypeProperty(default='string')
 
     def get_display(self):
         return self.display or self.slug
@@ -251,6 +268,7 @@ class DateFilterSpec(FilterSpec):
 class ChoiceListFilterSpec(FilterSpec):
     type = TypeProperty('choice_list')
     show_all = BooleanProperty(default=True)
+    datatype = DataTypeProperty(default='string')
     choices = ListProperty(FilterChoice)
 
 

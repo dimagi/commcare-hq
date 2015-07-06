@@ -11,7 +11,11 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext
 from corehq.apps.domain.models import Domain
 from corehq.apps.accounting import utils
-from corehq.apps.accounting.exceptions import InvoiceError, CreditLineError, BillingContactInfoError
+from corehq.apps.accounting.exceptions import (
+    InvoiceError, CreditLineError,
+    BillingContactInfoError,
+    InvoiceAlreadyCreatedError
+)
 from corehq.apps.accounting.invoicing import DomainInvoiceFactory
 
 from corehq.apps.accounting.models import (
@@ -122,6 +126,11 @@ def generate_invoices(based_on_date=None, check_existing=False, is_test=False):
                     "[BILLING] Could not create invoice for domain %s: %s" % (
                     domain.name, e
                 ))
+            except InvoiceAlreadyCreatedError as e:
+                logger.error(
+                    "[BILLING] Invoice already existed for domain %s: %s" % (
+                    domain.name, e
+                ))
             except Exception as e:
                 logger.error(
                     "[BILLING] Error occurred while creating invoice for "
@@ -192,27 +201,21 @@ def send_bookkeeper_email(month=None, year=None, emails=None):
 
 
 @periodic_task(run_every=crontab(minute=0, hour=0))
-def remind_subscription_ending_30_days():
+def remind_subscription_ending():
     """
-    Sends reminder emails for subscriptions ending 30 days from now.
+    Sends reminder emails for subscriptions ending N days from now.
     """
     send_subscription_reminder_emails(30)
+    send_subscription_reminder_emails(10)
+    send_subscription_reminder_emails(1)
 
 
 @periodic_task(run_every=crontab(minute=0, hour=0))
-def remind_subscription_ending_30_days(based_on_date=None):
+def remind_dimagi_contact_subscription_ending_40_days():
     """
-    Sends reminder emails for subscriptions ending 10 days from now.
+    Sends reminder emails to Dimagi contacts that subscriptions are ending in 40 days
     """
-    send_subscription_reminder_emails(10, exclude_trials=False)
-
-
-@periodic_task(run_every=crontab(minute=0, hour=0))
-def remind_subscription_ending_30_days(based_on_date=None):
-    """
-    Sends reminder emails for subscriptions ending tomorrow.
-    """
-    send_subscription_reminder_emails(1, exclude_trials=False)
+    send_subscription_reminder_emails_dimagi_contact(40)
 
 
 def send_subscription_reminder_emails(num_days, exclude_trials=True):
@@ -225,6 +228,19 @@ def send_subscription_reminder_emails(num_days, exclude_trials=True):
         # only send reminder emails if the subscription isn't renewed
         if not subscription.is_renewed:
             subscription.send_ending_reminder_email()
+
+
+def send_subscription_reminder_emails_dimagi_contact(num_days):
+    today = datetime.date.today()
+    date_in_n_days = today + datetime.timedelta(days=num_days)
+    ending_subscriptions = (Subscription.objects
+                            .filter(is_active=True)
+                            .filter(date_end=date_in_n_days)
+                            .filter(account__dimagi_contact__isnull=False))
+    for subscription in ending_subscriptions:
+        # only send reminder emails if the subscription isn't renewed
+        if not subscription.is_renewed:
+            subscription.send_dimagi_ending_reminder_email()
 
 
 @task(ignore_result=True)
@@ -276,6 +292,7 @@ def weekly_digest():
             date_end__gte=today,
             is_active=True,
             is_trial=False,
+            account__dimagi_contact__isnull=True,
         ))
 
     if not ending_in_forty_days:

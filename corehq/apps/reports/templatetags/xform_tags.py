@@ -172,15 +172,36 @@ def render_form(form, domain, options):
         user_can_edit
         and has_privilege(request, privileges.CLOUDCARE)
         and toggle_enabled(request, toggles.EDIT_SUBMISSIONS)
+        and form.doc_type != 'XFormDeprecated'
     )
     # stuffing this in the same flag as case rebuild
     show_resave = (
         user_can_edit and toggle_enabled(request, toggles.CASE_REBUILD)
     )
+
+    def _get_edit_info(instance):
+        info = {
+            'was_edited': False,
+            'is_edit': False,
+        }
+        if instance.doc_type == "XFormDeprecated":
+            info.update({
+                'was_edited': True,
+                'latest_version': instance.orig_id,
+            })
+        if getattr(instance, 'edited_on', None):
+            info.update({
+                'is_edit': True,
+                'edited_on': instance.edited_on,
+                'previous_version': instance.deprecated_form_id
+            })
+        return info
+
     return render_to_string("reports/form/partials/single_form.html", {
         "context_case_id": case_id,
         "instance": form,
         "is_archived": form.doc_type == "XFormArchived",
+        "edit_info": _get_edit_info(form),
         "domain": domain,
         'question_list_not_found': question_list_not_found,
         "form_data": form_data,

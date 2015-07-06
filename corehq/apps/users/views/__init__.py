@@ -685,7 +685,10 @@ class UserInvitationView(InvitationView):
     need = ["domain"]
 
     def added_context(self):
-        return {'domain': self.domain}
+        return {
+            'domain': self.domain,
+            'invite_type': _('Project'),
+        }
 
     def validate_invitation(self, invitation):
         assert invitation.domain == self.domain

@@ -1,4 +1,3 @@
-
 {% extends "reports_core/base_template_new.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
@@ -10,6 +9,20 @@
             width: 100%;
         }
     </style>
+{% endblock %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static 'hqwebapp/js/main.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+    <script>
+        $(function () {
+            $('.hq-help-template').each(function () {
+                COMMCAREHQ.transformHelpTemplate($(this), true);
+            });
+        });
+    </script>
 {% endblock %}
 
 {% block main_column %}
@@ -28,6 +41,7 @@
                 <a href="{% url "report_builder_select_source" domain "chart" %}">
                     <button class="btn btn-primary btn-large btn-report-type">
                         {% trans 'Chart' %}
+                        <span class="hq-help-template" data-content="A bar graph or a pie chart to show data from your cases or forms. You choose the property to graph."></span>
                     </button>
                 </a>
             </div>
@@ -35,6 +49,7 @@
                 <a href="{% url "report_builder_select_source" domain "list" %}">
                     <button class="btn btn-primary btn-large btn-report-type">
                         {% trans 'Form or Case List' %}
+                        <span class="hq-help-template" data-content="A list of cases or form submissions. You choose which properties will be columns."></span>
                     </button>
                 </a>
             </div>
@@ -42,6 +57,7 @@
                 <a href="{% url "report_builder_select_source" domain "worker" %}">
                     <button class="btn btn-primary btn-large btn-report-type">
                         {% trans 'Worker Report' %}
+                        <span class="hq-help-template" data-content="A table of your mobile workers. You choose which properties will be the columns."></span>
                     </button>
                 </a>
             </div>
@@ -49,6 +65,7 @@
                 <a href="{% url "report_builder_select_source" domain "table" %}">
                     <button class="btn btn-primary btn-large btn-report-type">
                         {% trans 'Data Table' %}
+                        <span class="hq-help-template" data-content="A table of aggregated data from form submissions or case properties. You choose the columns and rows."></span>
                     </button>
                 </a>
             </div>

@@ -29,6 +29,7 @@ from corehq.apps.sms.api import (
 )
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
+from corehq.apps.sms.dbaccessors import get_forwarding_rules_for_domain
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CouchUser, Permissions, CommCareUser
 from corehq.apps.users import models as user_models
@@ -436,10 +437,11 @@ def api_send_sms(request, domain):
     else:
         return HttpResponseBadRequest("POST Expected.")
 
+
 @login_and_domain_required
 @require_superuser
 def list_forwarding_rules(request, domain):
-    forwarding_rules = ForwardingRule.view("sms/forwarding_rule", key=[domain], include_docs=True).all()
+    forwarding_rules = get_forwarding_rules_for_domain(domain)
 
     context = {
         "domain" : domain,

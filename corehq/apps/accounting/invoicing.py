@@ -10,7 +10,13 @@ from corehq.apps.accounting.utils import ensure_domain_instance
 from dimagi.utils.decorators.memoized import memoized
 
 from corehq import Domain
-from corehq.apps.accounting.exceptions import LineItemError, InvoiceError, InvoiceEmailThrottledError, BillingContactInfoError
+from corehq.apps.accounting.exceptions import (
+    LineItemError,
+    InvoiceError,
+    InvoiceEmailThrottledError,
+    BillingContactInfoError,
+    InvoiceAlreadyCreatedError,
+)
 from corehq.apps.accounting.models import (
     LineItem, FeatureType, Invoice, DefaultProductPlan, Subscriber,
     Subscription, BillingAccount, SubscriptionAdjustment,
@@ -148,15 +154,6 @@ class DomainInvoiceFactory(object):
                         "%s because it's a trial." % subscription.pk)
             return
 
-        if subscription.auto_generate_credits:
-            for product_rate in subscription.plan_version.product_rates.all():
-                CreditLine.add_credit(
-                    product_rate.monthly_fee,
-                    subscription=subscription,
-                    product_type=product_rate.product.product_type,
-                    permit_inactive=True,
-                )
-
         if subscription.date_start > self.date_start:
             invoice_start = subscription.date_start
         else:
@@ -170,13 +167,15 @@ class DomainInvoiceFactory(object):
         else:
             invoice_end = self.date_end
 
-        invoice = Invoice(
+        invoice, is_new_invoice = Invoice.objects.get_or_create(
             subscription=subscription,
             date_start=invoice_start,
             date_end=invoice_end,
             is_hidden=subscription.do_not_invoice,
         )
-        invoice.save()
+
+        if not is_new_invoice:
+            raise InvoiceAlreadyCreatedError("invoice id: {id}".format(id=invoice.id))
 
         if subscription.subscriptionadjustment_set.count() == 0:
             # record that the subscription was created
@@ -374,6 +373,10 @@ class ProductLineItemFactory(LineItemFactory):
         if not self.is_prorated:
             line_item.base_cost = self.rate.monthly_fee
         line_item.save()
+
+        if self.subscription.auto_generate_credits:
+            self._auto_generate_credits(line_item)
+
         return line_item
 
     @property
@@ -417,6 +420,14 @@ class ProductLineItemFactory(LineItemFactory):
     @property
     def plan_name(self):
         return self.subscription.plan_version.plan.name
+
+    def _auto_generate_credits(self, line_item):
+        CreditLine.add_credit(
+            line_item.subtotal,
+            subscription=self.subscription,
+            product_type=self.rate.product.product_type,
+            permit_inactive=True,
+        )
 
 
 class FeatureLineItemFactory(LineItemFactory):

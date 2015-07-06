@@ -9,6 +9,7 @@ from corehq.apps.accounting.models import (
     BillingAccountType, Subscription, SubscriptionAdjustmentMethod, Currency,
 )
 from corehq.apps.registration.models import RegistrationRequest
+from dimagi.utils.couch import CriticalSection
 from dimagi.utils.web import get_ip, get_url_base, get_site_domain
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -188,31 +189,35 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
         dom_req.request_ip = get_ip(request)
         dom_req.activation_guid = uuid.uuid1().hex
 
-    new_domain = Domain(
-        name=form.cleaned_data['domain_name'],
-        is_active=False,
-        date_created=datetime.utcnow(),
-        commtrack_enabled=commtrack_enabled,
-        locations_enabled=commtrack_enabled,
-        creating_user=current_user.username,
-        secure_submissions=True,
-    )
+    name = form.cleaned_data['hr_name']
+    with CriticalSection(['request_domain_name_{}'.format(name)]):
+        name = Domain.generate_name(name)
+        new_domain = Domain(
+            name=name,
+            hr_name=form.cleaned_data['hr_name'],
+            is_active=False,
+            date_created=datetime.utcnow(),
+            commtrack_enabled=commtrack_enabled,
+            locations_enabled=commtrack_enabled,
+            creating_user=current_user.username,
+            secure_submissions=True,
+        )
 
-    if commtrack_enabled:
-        enable_commtrack_previews(new_domain)
+        if commtrack_enabled:
+            enable_commtrack_previews(new_domain)
 
-    if form.cleaned_data.get('domain_timezone'):
-        new_domain.default_timezone = form.cleaned_data['domain_timezone']
+        if form.cleaned_data.get('domain_timezone'):
+            new_domain.default_timezone = form.cleaned_data['domain_timezone']
 
-    if org:
-        new_domain.organization = org
-        new_domain.hr_name = request.POST.get('domain_hrname', None) or new_domain.name
+        if org:
+            new_domain.organization = org
+            new_domain.hr_name = request.POST.get('domain_hrname', None) or new_domain.name
 
-    if not new_user:
-        new_domain.is_active = True
+        if not new_user:
+            new_domain.is_active = True
 
-    # ensure no duplicate domain documents get created on cloudant
-    new_domain.save(**get_safe_write_kwargs())
+        # ensure no duplicate domain documents get created on cloudant
+        new_domain.save(**get_safe_write_kwargs())
 
     if not new_domain.name:
         new_domain.name = new_domain._id
@@ -240,6 +245,8 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
     else:
         send_global_domain_registration_email(request.user, new_domain.name)
     send_new_request_update_email(request.user, get_ip(request), new_domain.name, is_new_user=new_user)
+
+    return new_domain.name
 
 
 REGISTRATION_EMAIL_BODY_HTML = u"""

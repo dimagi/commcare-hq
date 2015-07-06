@@ -168,7 +168,6 @@ class EWSDateSpan(DateSpan):
             end = force_to_datetime(days[1])
         else:
             start = datetime(year, month_or_week, 1, 0, 0, 0)
-            print start
             end = start + relativedelta(months=1) - relativedelta(days=1)
         return DateSpan(start, end, format, inclusive, timezone)
 
@@ -242,7 +241,8 @@ class MultiReport(MonthWeekMixin, CustomProjectReport, CommtrackReportMixin, Pro
                 self.report_location.get_descendants().exclude(
                     supply_point_id__isnull=True
                 ).values_list('supply_point_id', flat=True)),
-            report__date__range=[self.report_config['startdate'], self.report_config['enddate']]
+            report__date__range=[self.report_config['startdate'], self.report_config['enddate']],
+            report__domain=self.domain
         ).order_by('report__date', 'pk')
 
     @classmethod
