@@ -21,58 +21,41 @@ class Command(BaseCommand):
                     received_on__range=(start_date, end_date)
                 )
                 num_of_forms = forms.count()
+                is_web_user = user.doc_type == 'WebUser'
                 apps_submitted_for = forms.values_list('app_id').distinct()
                 apps_submitted_for = [app_id for (app_id,) in apps_submitted_for]
-                wam_eligible = self._wam_app_in_list(apps_submitted_for)
-                is_web_user = user.doc_type == 'WebUser'
-                row = [
-                    user._id,
-                    user.username,
-                    user.email,
-                    is_web_user,
-                    str(start_date),
-                    domain.name,
-                    num_of_forms,
-                    wam_eligible
-                ]
-                csv_writer.writerow(row)
+
+                for app_id in apps_submitted_for:
+                    wam, pam = self._wam_pams(app_id)
+                    row = [
+                        user._id,
+                        user.username,
+                        user.email,
+                        app_id,
+                        is_web_user,
+                        str(start_date),
+                        domain.name,
+                        num_of_forms,
+                        wam,
+                        pam
+                    ]
+                    csv_writer.writerow(row)
 
     @classmethod
-    def _wam_app_in_list(cls, app_ids):
-        """
-        Given list of app_ids returns following
-        - 'true' if at least one app has 'amplifies_workers' set to 'yes'
-        - 'false' if none of the apps has 'amplifies_workers' set to 'yes' and
-                     at least one app has 'amplifies_workers' set to 'no'
-        - 'na' if all apps have 'amplifies_workers' set to 'not_set'
-        """
-
-        to_return = 'na'
-        for app_id in app_ids:
-            wam_eligible = cls._wam_eligible_app(app_id)
-            if wam_eligible == 'yes':
-                to_return = 'true'
-                break
-            elif wam_eligible.bool_value == 'no':
-                to_return = 'false'
-            elif wam_eligible.bool_value == 'not_set':
-                continue
-        return to_return
-
-    @classmethod
-    def _wam_eligible_app(cls, app_id):
+    def _wam_pams(cls, app_id):
         # cache per domain
         # Todo. Handle deleted app and failure
         app = Application.get(app_id)
-        wam_eligible = getattr(app, 'amplifies_workers', 'not_set')
-
-        return wam_eligible
+        return (getattr(app, 'amplifies_workers', 'not_set'),
+                getattr(app, 'amplifies_project', 'not_set'))
 
     def handle(self, *args, **options):
         # Report is required only for June 2015, add cmd option latter, if required
         start_date = datetime.date(2015, 6, 1)
         end_date = datetime.date(2015, 6, 30)
-
+        # ToDo - remove following after testing
+        # start_date = datetime.date(2014, 1, 1)
+        # end_date = datetime.date(2015, 6, 1)
         file_name = 'MALT-table-{}.csv'.format(str(start_date))
 
         with open(file_name, 'wb+') as csvfile:
@@ -87,17 +70,15 @@ class Command(BaseCommand):
                 'user_id',
                 'username ',
                 'user_email',
+                'app_id'
                 'web_user',
                 'domain',
                 'month',
                 '#forms',
-                'WAM Eligible',
+                'Amplifies Worker',
+                'Amplifies Program',
             ])
 
             self.write_data(csv_writer, start_date, end_date)
 
         print "Generated file called {}".format(file_name)
-        # ToDo - remove following after testing
-        # start_date = datetime.date(2014, 1, 1)
-        # end_date = datetime.date(2015, 6, 1)
-        # csv_writer = None
