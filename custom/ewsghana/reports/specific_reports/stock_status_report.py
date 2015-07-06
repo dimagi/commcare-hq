@@ -319,20 +319,10 @@ class StockStatus(MultiReport):
     exportable = True
     is_exportable = True
 
-    def unique_products(self, locations, all=False):
-        if self.report_config['products'] and not all:
-            return SQLProduct.objects.filter(
-                pk__in=locations.values_list('_products', flat=True),
-            ).filter(pk__in=self.report_config['products']).exclude(is_archived=True)
-        elif self.report_config['program'] and not all:
-            return SQLProduct.objects.filter(
-                pk__in=locations.values_list('_products', flat=True),
-                program_id=self.report_config['program']
-            ).exclude(is_archived=True)
-        else:
-            return SQLProduct.objects.filter(
-                pk__in=locations.values_list('_products', flat=True)
-            ).exclude(is_archived=True)
+    def unique_products(self, locations):
+        return SQLProduct.objects.filter(
+            pk__in=locations.values_list('_products', flat=True)
+        ).exclude(is_archived=True)
 
     def get_stock_transactions_for_supply_points_and_products(self, supply_points, unique_products,
                                                               **additional_params):
@@ -361,7 +351,7 @@ class StockStatus(MultiReport):
         if not supply_points:
             return {}
 
-        unique_products = self.unique_products(supply_points, all=True)
+        unique_products = self.unique_products(supply_points)
         transactions = self.get_stockouts_for_supply_points_and_products(
             supply_points, unique_products
         ).values_list('case_id', 'product_id')
@@ -396,7 +386,7 @@ class StockStatus(MultiReport):
         if not locations_ids:
             return {}
 
-        unique_products = self.unique_products(locations, all=True)
+        unique_products = self.unique_products(locations)
         transactions = self.get_stock_transactions_for_supply_points_and_products(
             locations_ids, unique_products
         ).values_list('case_id', 'product_id', 'report__date', 'stock_on_hand')
