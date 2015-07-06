@@ -1,6 +1,11 @@
 {% extends "reports_core/base_template_new.html" %}
 {% load i18n %}
 {% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static 'hqwebapp/js/main.js' %}"></script>
+{% endblock %}
 
 {% block head %}{{ block.super }}
     <style>
