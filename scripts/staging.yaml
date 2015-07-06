@@ -45,19 +45,16 @@
 trunk: master
 name: autostaging
 branches:
-  - remove-unused-views  # Danny 6/25
   - vellum-staging # J$ 11/13
   - fixtures-spike  # cz 1/29
   - update-submodules # TS 5/6
   - languageMedia # Sravan 6/10
-  - autoload-supplypoint  # Ethan 6/15
   - remove-billing-admin-forwards+wire-prepay # Farid June 26
   - remove-billing-admin-forwards # Farid 25/6
   - wire-prepay # Farid June 26
   - new-account-domain # Jenny July 1
   - locations-for-robber-barons  # Ethan 5/7
   - index-phonelog-reportentry # Ben 6/8
-  - suppress-invoice # Nick P 7/6
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
