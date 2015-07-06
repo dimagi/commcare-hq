@@ -898,10 +898,6 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         from corehq.apps.reminders.models import CASE_CRITERIA
 
         recipient_type = MessagingEvent.get_recipient_type(recipient)
-        case_id = (reminder.case_id
-            if reminder_definition.start_condition_type == CASE_CRITERIA
-            else None)
-
         content_type, form_unique_id, form_name = self.get_content_info_from_reminder(
             reminder_definition, reminder, parent=self)
 
@@ -913,7 +909,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             content_type=content_type,
             form_unique_id=form_unique_id,
             form_name=form_name,
-            case_id=case_id,
+            case_id=reminder.case_id,
             status=MessagingEvent.STATUS_IN_PROGRESS,
         )
         return obj
@@ -955,7 +951,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         )
         return obj
 
-    def create_structured_sms_subevent(self):
+    def create_structured_sms_subevent(self, case_id):
         obj = MessagingSubEvent.objects.create(
             parent=self,
             date=datetime.utcnow(),
@@ -964,6 +960,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             content_type=MessagingEvent.CONTENT_SMS_SURVEY,
             form_unique_id=self.form_unique_id,
             form_name=self.form_name,
+            case_id=case_id,
             status=MessagingEvent.STATUS_IN_PROGRESS,
         )
         return obj

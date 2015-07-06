@@ -7,8 +7,7 @@ from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.reminders.dbaccessors import get_surveys_in_domain
 from dimagi.ext.couchdbkit import *
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.sms.models import (CommConnectCase, MessagingEvent,
-    MessagingSubEvent)
+from corehq.apps.sms.models import (CommConnectCase, MessagingEvent)
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CouchUser
 from corehq.apps.groups.models import Group

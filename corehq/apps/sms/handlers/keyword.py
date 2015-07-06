@@ -328,9 +328,10 @@ def handle_structured_sms(survey_keyword, survey_keyword_action, contact,
     verified_number, text, send_response=False, msg=None, case=None,
     text_args=None, logged_event=None):
 
+    case_id = get_case_id(contact, case)
     logged_subevent = None
     if logged_event:
-        logged_subevent = logged_event.create_structured_sms_subevent()
+        logged_subevent = logged_event.create_structured_sms_subevent(case_id)
 
     domain = contact.domain
     contact_id = contact._id
@@ -346,7 +347,6 @@ def handle_structured_sms(survey_keyword, survey_keyword_action, contact,
     error_msg = None
     session = None
 
-    case_id = get_case_id(contact, case)
     app, module, form, error_occurred, error_code = get_app_module_form(
         survey_keyword_action.form_unique_id, logged_subevent)
     if error_occurred:
