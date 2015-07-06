@@ -1212,8 +1212,8 @@ class Subscription(models.Model):
                         }
 
             billing_contact_emails = BillingContactInfo.objects.get(account=self.account).emails.split(',')
-            emails |= { billing_contact_email for billing_contact_email in billing_contact_emails }
-            
+            emails |= {billing_contact_email for billing_contact_email in billing_contact_emails}
+
             template = 'accounting/subscription_ending_reminder_email.html'
             template_plaintext = 'accounting/subscription_ending_reminder_email_plaintext.html'
 

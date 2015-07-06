@@ -29,7 +29,7 @@ def get_or_create_stripe_customer(payment_method):
             pass
     if customer is None:
         customer = stripe.Customer.create(
-            description = "{}'s cards".format(payment_method.web_user),
+            description="{}'s cards".format(payment_method.web_user),
             email=payment_method.web_user,
         )
     payment_method.customer_id = customer.id
@@ -167,7 +167,7 @@ class BaseStripePaymentHandler(object):
         from corehq.apps.accounting.tasks import send_purchase_receipt
         send_purchase_receipt.delay(
             payment_record, self.core_product, self.receipt_email_template,
-            self.receipt_email_template_plaintext, additional_context, self.domain
+            self.receipt_email_template_plaintext, additional_context
         )
 
 
