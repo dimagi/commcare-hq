@@ -4,11 +4,11 @@ from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from mvp_docs.models import IndicatorXForm
 
 
-class VerbalAutopsyDeintentifiedReport(GenericTabularReport, CustomProjectReport):
+class VerbalAutopsyDeidentifiedReport(GenericTabularReport, CustomProjectReport):
     """
-        MVP Custom Report: MVIS Health Coordinator
+        MVP Custom Report: Deidentified Verbal Autopsy  Report
     """
-    slug = "deintentifiedreport_va"
+    slug = "deidentifiedreport_va"
     name = "Deidentified Verbal Autopsy  Report"
     flush_layout = True
     fields = ['corehq.apps.reports.filters.select.MonthFilter',
@@ -21,7 +21,7 @@ class VerbalAutopsyDeintentifiedReport(GenericTabularReport, CustomProjectReport
             DataTablesColumn("Month of Death"),
             DataTablesColumn("Year of Death"),
             DataTablesColumn("Age at Death"),
-            DataTablesColumn("Name of Zone (Health Facility they are associated with)"),
+            DataTablesColumn("Name of Affiliated Health Facility"),
             DataTablesColumn("Place of Death"),
             DataTablesColumn("Medical Probable Cause of Death"),
             DataTablesColumn("Reason for delay and/or not receiving medical care"),
