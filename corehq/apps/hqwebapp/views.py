@@ -309,7 +309,7 @@ def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
              })))
 
 
-def _login(req, domain, template_name, extra_context):
+def _login(req, domain, template_name):
 
     if req.user.is_authenticated() and req.method != "POST":
         redirect_to = req.REQUEST.get('next', '')
@@ -333,12 +333,9 @@ def _login(req, domain, template_name, extra_context):
             'domain': domain,
             'next': req.REQUEST.get('next', '/a/%s/' % domain),
         })
-    if extra_context:
-        context.update(extra_context)
 
     return django_login(req, template_name=template_name,
-                        authentication_form=EmailAuthenticationForm if not domain else CloudCareAuthenticationForm,
-                        extra_context=context)
+                        authentication_form=EmailAuthenticationForm if not domain else CloudCareAuthenticationForm)
 
 
 def login(req, domain_type='commcare'):
@@ -355,7 +352,7 @@ def login(req, domain_type='commcare'):
     return _login(req, domain, "login_and_password/login.html")
 
 
-def domain_login(req, domain, template_name="login_and_password/login.html", extra_context={}):
+def domain_login(req, domain, template_name="login_and_password/login.html"):
     project = Domain.get_by_name(domain)
     if not project:
         raise Http404
@@ -364,7 +361,7 @@ def domain_login(req, domain, template_name="login_and_password/login.html", ext
     # necessary domain contexts:
     req.project = project
 
-    return _login(req, domain, template_name, extra_context)
+    return _login(req, domain, template_name)
 
 
 def is_mobile_url(url):

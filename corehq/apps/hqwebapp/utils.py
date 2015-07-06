@@ -157,13 +157,8 @@ class InvitationView():
                     return HttpResponseRedirect(reverse("login"))
             else:
                 if CouchUser.get_by_username(invitation.email) and isinstance(invitation, DomainInvitation):
-                    # jls: do i care if they're logged in as a different user / mobile user / other flows above?
-                    return domain_login(request,
-                                        invitation.domain,
-                                        extra_context={
-                                            # jls: test, for both Sign In and Sign Up
-                                            'next': reverse('domain_accept_invitation', args=[invitation.domain, invitation.get_id]),
-                                        })
+                    return HttpResponseRedirect(reverse("login") +
+                        '?next=' + reverse('domain_accept_invitation', args=[invitation.domain, invitation.get_id]))
                 form = NewWebUserRegistrationForm(initial={'email': invitation.email})
 
         return render(request, self.template, {"form": form})
