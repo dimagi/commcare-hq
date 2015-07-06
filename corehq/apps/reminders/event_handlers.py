@@ -151,7 +151,7 @@ def fire_sms_event(reminder, handler, recipients, verified_numbers, logged_event
         return
 
     for recipient in recipients:
-        logged_subevent = logged_event.create_sub_event(handler, reminder, recipient)
+        logged_subevent = logged_event.create_subevent(handler, reminder, recipient)
 
         try:
             lang = recipient.get_language_code()
@@ -286,7 +286,7 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers, logge
 
         # Start a touchforms session for each recipient
         for recipient in recipients:
-            logged_subevent = logged_event.create_sub_event(handler, reminder, recipient)
+            logged_subevent = logged_event.create_subevent(handler, reminder, recipient)
 
             verified_number, unverified_number = get_recipient_phone_number(
                 reminder, recipient, verified_numbers)
@@ -411,7 +411,7 @@ def fire_ivr_survey_event(reminder, handler, recipients, verified_numbers, logge
                 # initiate_outbound_call will create the subevent automatically,
                 # so since we're not initiating the call here, we have to create
                 # the subevent explicitly in order to log the error.
-                logged_subevent = logged_event.create_sub_event(handler, reminder, recipient)
+                logged_subevent = logged_event.create_subevent(handler, reminder, recipient)
                 logged_subevent.error(MessagingEvent.ERROR_NO_PHONE_NUMBER)
 
 

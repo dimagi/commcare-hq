@@ -894,7 +894,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     def get_recipient_doc_type(self):
         return MessagingEvent._get_recipient_doc_type(self.recipient_type)
 
-    def create_sub_event(self, reminder_definition, reminder, recipient):
+    def create_subevent(self, reminder_definition, reminder, recipient):
         from corehq.apps.reminders.models import CASE_CRITERIA
 
         recipient_type = MessagingEvent.get_recipient_type(recipient)
