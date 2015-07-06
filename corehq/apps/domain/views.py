@@ -17,7 +17,7 @@ from casexml.apps.case.xml import V2
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
 from corehq.apps.accounting.decorators import (
-    require_billing_admin, requires_privilege_with_fallback,
+    requires_privilege_with_fallback,
 )
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError,
@@ -54,7 +54,7 @@ from django_prbac.utils import has_privilege
 from corehq.apps.accounting.models import (
     Subscription, CreditLine, SoftwareProductType, SubscriptionType,
     DefaultProductPlan, SoftwarePlanEdition, BillingAccount,
-    BillingAccountType, BillingAccountAdmin,
+    BillingAccountType,
     Invoice, BillingRecord, InvoicePdf, PaymentMethodType,
     PaymentMethod, EntryPoint, WireInvoice, SoftwarePlanVisibility
 )
@@ -141,7 +141,7 @@ def select(request, domain_select_template='domain/select.html', do_not_redirect
                 return dashboard_default(request, last_visited_domain)
             except Http404:
                 pass
-            
+
         del request.session['last_visited_domain']
         return render(request, domain_select_template, additional_context)
 
@@ -206,12 +206,10 @@ class SubscriptionUpgradeRequiredView(LoginAndDomainMixin, BasePageView,
         }
 
     @property
-    def is_billing_admin(self):
+    def is_domain_admin(self):
         if not hasattr(self.request, 'couch_user'):
             return False
-        return BillingAccountAdmin.get_admin_status_and_account(
-            self.request.couch_user, self.domain
-        )[0]
+        return self.request.couch_user.is_domain_admin(self.domain)
 
     @property
     def page_context(self):
@@ -221,7 +219,7 @@ class SubscriptionUpgradeRequiredView(LoginAndDomainMixin, BasePageView,
             'plan_name': self.required_plan_name,
             'change_subscription_url': reverse(SelectPlanView.urlname,
                                                args=[self.domain]),
-            'is_billing_admin': self.is_billing_admin,
+            'is_domain_admin': self.is_domain_admin,
         }
 
     @property
@@ -552,35 +550,8 @@ def logo(request, domain):
 class DomainAccountingSettings(BaseAdminProjectSettingsView):
 
     @method_decorator(login_and_domain_required)
-    @method_decorator(require_billing_admin())
     def dispatch(self, request, *args, **kwargs):
         return super(DomainAccountingSettings, self).dispatch(request, *args, **kwargs)
-
-    @property
-    def main_context(self):
-        context = super(DomainAccountingSettings, self).main_context
-        if (hasattr(self.request, 'is_billing_admin')
-            and not self.request.is_billing_admin
-            and self.request.couch_user.is_superuser
-        ):
-            # check to see if superuser is accounting admin
-            # If not, notify that they should change it.
-            from corehq.apps.accounting.utils import is_accounting_admin
-            has_privs = is_accounting_admin(self.request.user)
-            if has_privs:
-                context.update(is_ops_user_but_not_admin=True)
-                messages.info(
-                    self.request, mark_safe(_(
-                        "Hi there, Operations User. You are currently not "
-                        "a Billing Admin for this account.<br />"
-                        "<a href='%(url)s' class='btn btn-primary'>"
-                        "Change This</a>"
-                    ) % {
-                        'url': reverse(AddOpsUserAsDomainAdminView.urlname,
-                                       args=[self.domain]),
-                    })
-                )
-        return context
 
     @property
     @memoized
@@ -597,34 +568,6 @@ class DomainAccountingSettings(BaseAdminProjectSettingsView):
         return Subscription.get_subscribed_plan_by_domain(self.domain_object)[1]
 
 
-class AddOpsUserAsDomainAdminView(BaseAdminProjectSettingsView):
-    urlname = 'domain_ops_billing_admin'
-    template_name = 'domain/new_ops_billing_admin.html'
-    page_title = ugettext_noop("Join Billing Account Admins")
-
-    @method_decorator(requires_privilege_raise404(privileges.ACCOUNTING_ADMIN))
-    def dispatch(self, request, *args, **kwargs):
-        is_domain_admin, self.account = BillingAccountAdmin.get_admin_status_and_account(
-            request.couch_user, self.domain
-        )
-        if is_domain_admin:
-            return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
-        return super(AddOpsUserAsDomainAdminView, self).dispatch(request, *args, **kwargs)
-
-    def post(self, request, *args, **kwargs):
-        admin = BillingAccountAdmin.objects.get_or_create(
-            web_user=request.user.username,
-            domain=self.domain,
-        )[0]
-        self.account.billing_admins.add(admin)
-        self.account.save()
-        messages.success(
-            request,
-            _("Successfully added as Billing Admin for project %s" % self.domain)
-        )
-        return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
-
-
 class DomainSubscriptionView(DomainAccountingSettings):
     urlname = 'domain_subscription_view'
     template_name = 'domain/current_subscription.html'
@@ -632,9 +575,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
 
     @property
     def can_purchase_credits(self):
-        return BillingAccountAdmin.objects.filter(
-            web_user=self.request.user.username, domain=self.domain
-        ).exists()
+        return self.request.couch_user.is_domain_admin(self.domain)
 
     @property
     def plan(self):
@@ -917,9 +858,7 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
 
     @property
     def can_pay_invoices(self):
-        return BillingAccountAdmin.objects.filter(
-            web_user=self.request.user.username, domain=self.domain
-        ).exists()
+        return self.request.couch_user.is_domain_admin(self.domain)
 
     @property
     def paginated_list(self):
@@ -989,30 +928,17 @@ class BaseStripePaymentView(DomainAccountingSettings):
 
     @property
     @memoized
-    def billing_admin(self):
-        try:
-            admin = BillingAccountAdmin.objects.get(
-                web_user=self.request.user.username, domain=self.domain
-            )
-            # verify that this admin is still tied to the account for
-            # the invoice
-            if not self.account.billing_admins.filter(
-                    pk=admin.pk).exists():
-                raise PaymentRequestError(
-                    "The billing admin provided is not an account admin for "
-                    "the account this invoice is tied to."
-                )
-            return admin
-        except BillingAccountAdmin.DoesNotExist:
+    def domain_admin(self):
+        if self.request.couch_user.is_domain_admin(self.domain):
+            return self.request.couch_user.username
+        else:
             raise PaymentRequestError(
-                "Could not find an appropriate billing admin for the "
-                "logged in user."
+                "The logged in user was not a domain admin."
             )
 
     def get_or_create_payment_method(self):
         return PaymentMethod.objects.get_or_create(
-            account=self.account,
-            billing_admin=self.billing_admin,
+            web_user=self.domain_admin,
             method_type=PaymentMethodType.STRIPE,
         )[0]
 
@@ -1064,6 +990,7 @@ class CreditsStripePaymentView(BaseStripePaymentView):
     def get_payment_handler(self):
         return CreditStripePaymentHandler(
             self.get_or_create_payment_method(),
+            self.domain,
             self.account,
             subscription=Subscription.get_subscribed_plan_by_domain(self.domain_object)[1],
             product_type=self.request.POST.get('product'),
@@ -1095,7 +1022,7 @@ class InvoiceStripePaymentView(BaseStripePaymentView):
 
     def get_payment_handler(self):
         return InvoiceStripePaymentHandler(
-            self.get_or_create_payment_method(), self.invoice
+            self.get_or_create_payment_method(), self.domain, self.invoice
         )
 
 
@@ -1117,7 +1044,7 @@ class WireInvoiceView(View):
     urlname = 'domain_wire_invoice'
 
     @method_decorator(login_and_domain_required)
-    @method_decorator(require_billing_admin())
+    @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
         return super(WireInvoiceView, self).dispatch(request, *args, **kwargs)
 
@@ -1137,7 +1064,7 @@ class BillingStatementPdfView(View):
     urlname = 'domain_billing_statement_download'
 
     @method_decorator(login_and_domain_required)
-    @method_decorator(require_billing_admin())
+    @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
         return super(BillingStatementPdfView, self).dispatch(request, *args, **kwargs)
 
@@ -1485,7 +1412,7 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
     @property
     @memoized
     def is_form_post(self):
-        return 'billing_admins' in self.request.POST
+        return 'company_name' in self.request.POST
 
     @property
     @memoized
