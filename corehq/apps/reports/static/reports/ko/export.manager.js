@@ -143,7 +143,7 @@ var ExportManager = function (o) {
         }
     };
 
-    if(self.isNewExporter) {
+    if(!self.isNewExporter) {
         self.updateSelectedExports = function (data, event) {
             var $checkbox = $(event.srcElement || event.currentTarget);
             var add_to_list = ($checkbox.attr('checked') === 'checked'),
@@ -319,7 +319,6 @@ var ExportManager = function (o) {
                 params[filter] = self.jsonExportFilters[filter];
             }
         }
-
         self.downloadBulkExport(self.bulkDownloadUrl, params);
     };
 
@@ -418,7 +417,7 @@ var ExportManager = function (o) {
         return true;
     };
 
-    if(self.isNewExporter) {
+    if(!self.isNewExporter) {
         self.toggleSelectAllExports = function (data, event) {
             var $toggleBtn = $(event.srcElement || event.currentTarget),
                 check_class = (self.is_custom) ? '.select-custom' : '.select-bulk';
