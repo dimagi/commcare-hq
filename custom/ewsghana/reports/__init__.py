@@ -301,6 +301,7 @@ class MultiReport(MonthWeekMixin, CustomProjectReport, CommtrackReportMixin, Pro
             'r_filters': self.report_filters(),
             'fpr_filters': self.fpr_report_filters(),
             'exportable': self.is_exportable,
+            'emailable': self.emailable,
             'location_id': self.request.GET.get('location_id'),
             'slugs': filter_slugs_by_role(self.request.couch_user, self.domain)
         }

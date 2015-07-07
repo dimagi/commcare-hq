@@ -255,10 +255,21 @@
                 button.css('display', 'None');
             }
         }
+
+        function updateEmailButton() {
+            var email_button = $("#email-report");
+            if ({{ emailable|yesno:"true,false" }}){
+                email_button.css('display', 'inline-block');
+            } else {
+                email_button.css('display', 'None');
+            }
+        }
         $("#apply-filters").on('click', function(){
             updateExportButton();
+            updateEmailButton();
         });
         updateExportButton();
+        updateEmailButton();
         $(".dataTables_filter").css('display', 'none');
 
         $('.row div').append(
