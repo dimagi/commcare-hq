@@ -348,7 +348,6 @@ class ReportRunListView(ListView, DomainViewMixin):
 
 class ReportRunDeleteView(DeleteView, DomainViewMixin):
     model = ReportRun
-    success_url = reverse_lazy('report_run_list')
 
     def dispatch(self, request, *args, **kwargs):
         if not self.request.couch_user.is_domain_admin():
