@@ -236,10 +236,10 @@ var ExportManager = function (o) {
         if(self.isNewExporter) {
             for (var export_id in self.selectedExportsData) {
                 var export_data = self.selectedExportsData[export_id];
-                var xmlns = export_data['xmlns'],
-                    module = export_data['modulename'],
-                    export_type = export_data['exporttype'],
-                    form = export_data['formname'],
+                var xmlns = export_data.xmlns,
+                    module = export_data.modulename,
+                    export_type = export_data.exporttype,
+                    form = export_data.formname,
                     _id = export_id;
 
                 var sheetName = getSheetName(module, form, xmlns);
@@ -263,7 +263,7 @@ var ExportManager = function (o) {
                     prepareExport.push(export_tag);
                 else {
                     if (!prepareExport.hasOwnProperty(_id))
-                        prepareExport[_id] = new Array();
+                        prepareExport[_id] = [];
                     prepareExport[_id].push(export_tag);
                 }
             }
@@ -433,12 +433,12 @@ var ExportManager = function (o) {
             if ($toggleBtn.data('all'))
                 $.each($(check_class), function () {
                     $(this).attr('checked', true);
-                    self.updateSelectedExports({}, {srcElement: this})
+                    self.updateSelectedExports({}, {srcElement: this});
                 });
             else
                 $.each($(check_class), function () {
                     $(this).attr('checked', false);
-                    self.updateSelectedExports({}, {srcElement: this})
+                    self.updateSelectedExports({}, {srcElement: this});
                 });
         };
     } else {
@@ -448,12 +448,12 @@ var ExportManager = function (o) {
             if ($toggleBtn.data('all')) {
                 $.each($(check_class), function () {
                     $(this).attr('checked', true);
-                    self.updateSelectedExports({}, {srcElement: this})
+                    self.updateSelectedExports({}, {srcElement: this});
                 });
             } else {
                 $.each($(check_class), function () {
                     $(this).attr('checked', false);
-                    self.updateSelectedExports({}, {srcElement: this})
+                    self.updateSelectedExports({}, {srcElement: this});
                 });
             }
         };
