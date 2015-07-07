@@ -222,7 +222,7 @@ class MultiReport(DatespanMixin, CustomProjectReport, ProjectReportParametersMix
             else:
                 program_id = 'all'
 
-            url = '%s?location_id=%s&filter_by_program=%s&halo=testtest' % (
+            url = '%s?location_id=%s&filter_by_program=%s' % (
                 url,
                 dm.location_id if dm.location_id else '',
                 program_id if program_id else ''
