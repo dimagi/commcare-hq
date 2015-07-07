@@ -127,7 +127,7 @@ class FacilityReportData(EWSData):
                     state_grouping[state.product_id]['current_stock'] = state.stock_on_hand
 
         for values in state_grouping.values():
-            if values['monthly_consumption'] is not None:
+            if values['monthly_consumption'] is not None or values['current_stock'] == 0:
                 months_until_stockout = get_months_until_stockout_icon(
                     values['months_until_stockout'] if values['months_until_stockout'] else 0.0, loc
                 )
