@@ -16,6 +16,7 @@ from corehq.apps.accounting.utils import (
     domain_has_privilege,
     is_accounting_admin
 )
+from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.hqadmin.reports import (
     RealProjectSpacesReport,
@@ -347,11 +348,18 @@ class DashboardTab(UITab):
 
     @property
     def is_viewable(self):
-        return (self.domain and self.project and
-                not self.project.is_snapshot and
-                self.couch_user and
-                # domain hides Dashboard tab if user is non-admin
-                not user_has_custom_top_menu(self.domain, self.couch_user))
+        if self.domain and self.project and not self.project.is_snapshot and self.couch_user:
+            # domain hides Dashboard tab if user is non-admin
+            if not user_has_custom_top_menu(self.domain, self.couch_user):
+                apps = ApplicationBase.get_db().view(
+                    'app_manager/applications_brief',
+                    reduce=False,
+                    startkey=[self.domain],
+                    endkey=[self.domain, {}],
+                    limit=1,
+                ).all()
+                return len(apps) > 0
+        return False
 
 
 class ReportsTab(UITab):
@@ -663,11 +671,10 @@ class ApplicationsTab(UITab):
                 ))
 
         if self.couch_user.can_edit_apps():
-            from corehq.apps.dashboard.views import NewUserDashboardView
             submenu_context.append(dropdown_dict(None, is_divider=True))
             submenu_context.append(dropdown_dict(
                 _('New Application...'),
-                url=reverse(NewUserDashboardView.urlname, args=[self.domain])))
+                url=reverse('default_app', args=[self.domain])))
         return submenu_context
 
     def _new_app_link(self, title, is_remote=False):

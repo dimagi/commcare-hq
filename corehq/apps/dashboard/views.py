@@ -6,7 +6,7 @@ from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 from corehq import privileges
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 from corehq.apps.reports.standard.export import ExcelExportReport
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models import Application, ApplicationBase
 from corehq.apps.dashboard.models import (
     TileConfiguration,
     AppsPaginatedContext,
@@ -23,12 +23,10 @@ from django_prbac.utils import has_privilege
 
 @login_and_domain_required
 def dashboard_default(request, domain):
-    key = [domain]
-    apps = Application.get_db().view(
+    apps = ApplicationBase.get_db().view(
         'app_manager/applications_brief',
-        reduce=False,
-        startkey=key,
-        endkey=key+[{}],
+        startkey=[domain],
+        endkey=[domain, {}],
         limit=1,
     ).all()
 
@@ -38,7 +36,7 @@ def dashboard_default(request, domain):
 
     if len(apps) < 1:
         return HttpResponseRedirect(
-            reverse(NewUserDashboardView.urlname, args=[domain]))
+            reverse('default_app', args=[domain]))
     return HttpResponseRedirect(
         reverse(DomainDashboardView.urlname, args=[domain]))
 
@@ -60,12 +58,6 @@ class BaseDashboardView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
     @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain])
-
-
-class NewUserDashboardView(BaseDashboardView):
-    urlname = 'dashboard_new_user'
-    page_title = ugettext_noop("HQ Dashboard")
-    template_name = 'dashboard/dashboard_new_user.html'
 
 
 class DomainDashboardView(JSONResponseMixin, BaseDashboardView):

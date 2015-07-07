@@ -995,16 +995,6 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
         return bail(request, domain, app_id)
 
     context = get_apps_base_context(request, domain, app)
-    if not app:
-        all_applications = ApplicationBase.view('app_manager/applications_brief',
-            startkey=[domain],
-            endkey=[domain, {}],
-            #stale=settings.COUCH_STALE_QUERY,
-        ).all()
-        if all_applications:
-            app_id = all_applications[0].id
-            return back_to_main(request, domain, app_id=app_id, module_id=module_id,
-                                form_id=form_id)
     if app and app.copy_of:
         # don't fail hard.
         return HttpResponseRedirect(reverse("corehq.apps.app_manager.views.view_app", args=[domain,app.copy_of]))
