@@ -205,9 +205,9 @@ def remind_subscription_ending():
     """
     Sends reminder emails for subscriptions ending N days from now.
     """
-    send_subscription_reminder_emails(30)
-    send_subscription_reminder_emails(10)
-    send_subscription_reminder_emails(1)
+    send_subscription_reminder_emails(30, exclude_trials=True)
+    send_subscription_reminder_emails(10, exclude_trials=True)
+    send_subscription_reminder_emails(1, exclude_trials=True)
 
 
 @periodic_task(run_every=crontab(minute=0, hour=0))
@@ -223,7 +223,7 @@ def send_subscription_reminder_emails(num_days, exclude_trials=True):
     date_in_n_days = today + datetime.timedelta(days=num_days)
     ending_subscriptions = Subscription.objects.filter(date_end=date_in_n_days)
     if exclude_trials:
-        ending_subscriptions.filter(is_trial=False)
+        ending_subscriptions = ending_subscriptions.filter(is_trial=False)
     for subscription in ending_subscriptions:
         # only send reminder emails if the subscription isn't renewed
         if not subscription.is_renewed:
