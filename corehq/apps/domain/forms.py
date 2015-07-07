@@ -1270,22 +1270,25 @@ class DimagiOnlyEnterpriseForm(InternalSubscriptionManagementForm):
         enterprise_plan_version = DefaultProductPlan.get_default_plan_by_domain(
             self.domain, SoftwarePlanEdition.ENTERPRISE
         ).plan.get_version()
+        kwargs = {
+            'do_not_invoice': True,
+            'web_user': self.web_user,
+        }
         if self.current_subscription:
-            new_subscription = self.current_subscription.change_plan(
+            self.current_subscription.change_plan(
                 enterprise_plan_version,
-                web_user=self.web_user,
+                account=self.next_account,
+                transfer_credits=self.current_subscription.account == self.next_account,
+                **kwargs
             )
-            new_subscription.account = self.next_account
         else:
-            new_subscription = Subscription.new_domain_subscription(
+            Subscription.new_domain_subscription(
                 self.next_account,
                 self.domain,
                 enterprise_plan_version,
                 is_active=True,
-                web_user=self.web_user,
+                **kwargs
             )
-        new_subscription.do_not_invoice = True
-        new_subscription.save()
 
     @property
     def account_name(self):
