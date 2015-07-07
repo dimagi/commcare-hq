@@ -137,6 +137,7 @@ class Command(BaseCommand):
         Role(slug=privileges.HIPAA_COMPLIANCE_ASSURANCE, name='HIPAA Compliance Assurance', description=''),
         Role(slug=privileges.ALLOW_EXCESS_USERS, name='Can Add Users Above Limit', description=''),
         Role(slug=privileges.COMMCARE_LOGO_UPLOADER, name='Custom CommCare Logo Uploader', description=''),
+        Role(slug=privileges.LOCATIONS, name='Locations', description=''),
         Role(slug=privileges.REPORT_BUILDER, name='User Configurable Report Builder', description=''),
     ]
 
@@ -162,6 +163,7 @@ class Command(BaseCommand):
         privileges.BULK_USER_MANAGEMENT,
         privileges.BULK_CASE_MANAGEMENT,
         privileges.ALLOW_EXCESS_USERS,
+        privileges.LOCATIONS,
     ]
 
     pro_plan_features = standard_plan_features + [

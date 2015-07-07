@@ -1,3 +1,5 @@
+from django_prbac.decorators import requires_privilege_raise404
+from corehq import privileges
 from functools import wraps
 from django.http import Http404
 from .models import SQLLocation
@@ -8,9 +10,10 @@ from corehq.apps.domain.decorators import (login_and_domain_required,
 def locations_access_required(view_fn):
     """
     Decorator controlling domain-level access to locations.
-    Mostly a placeholder, soon this will also check for standard plan
     """
-    return login_and_domain_required(view_fn)
+    return login_and_domain_required(
+        requires_privilege_raise404(privileges.LOCATIONS)(view_fn)
+    )
 
 
 def is_locations_admin(view_fn):
