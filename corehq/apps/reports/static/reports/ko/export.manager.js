@@ -246,7 +246,7 @@ var ExportManager = function (o) {
         if (self.is_custom)
             prepareExport = new Array();
 
-        for (var export_id in self.selectedExportsData()) {
+        for (var export_id in self.selectedExportsData) {
 //            var curExpButton = self.selected_exports()[i];
 //
 //            var _id = curExpButton.data('appid') || curExpButton.data('exportid'),
@@ -255,7 +255,7 @@ var ExportManager = function (o) {
 //                export_type = curExpButton.data('exporttype'),
 //                form = curExpButton.data('formname');
 
-            var export_data = self.selectedExportsData()[export_id];
+            var export_data = self.selectedExportsData[export_id];
             var xmlns = export_data['xmlns'],
                 module = export_data['module'],
                 export_type = export_data['exporttype'],
