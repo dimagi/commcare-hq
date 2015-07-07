@@ -366,19 +366,6 @@ class StockStatus(MultiReport):
             'stockout_table_supply_points': supply_points
         }
 
-    def _get_latest_mos_for_product(self, case_id, product, stock_state_map):
-        consumption = stock_state_map.get((case_id, product.product_id))
-        try:
-            stock_on_hand = StockTransaction.objects.filter(
-                case_id=case_id,
-                product_id=product.product_id,
-                report__date__lte=self.report_config['enddate']
-            ).latest('report__date').stock_on_hand
-        except StockTransaction.DoesNotExist:
-            stock_on_hand = None
-        if stock_on_hand and consumption:
-            return stock_on_hand / consumption
-
     def data(self):
         locations = self.report_location.get_descendants()
         locations_ids = locations.values_list('supply_point_id', flat=True)
@@ -424,12 +411,27 @@ class StockStatus(MultiReport):
                     stockouts[case_id].add(product_id)
                     months_of_stock[case_id][product_id] = 0
 
-        for case_id in current_mos_locations_ids:
+        not_reporting_locations = [
+            case_id
+            for case_id in current_mos_locations_ids
+            if case_id not in months_of_stock
+        ]
+        sohs = StockTransaction.objects.filter(
+            report__date__lte=self.report_config['enddate'],
+            case_id__in=not_reporting_locations
+        ).order_by('case_id', 'product_id', '-report__date').distinct('case_id', 'product_id').values_list(
+            'case_id',
+            'product_id',
+            'stock_on_hand'
+        )
+        sohs_dict = {(case_id, product_id): stock_on_hand for case_id, product_id, stock_on_hand in sohs}
+        for case_id in not_reporting_locations:
             if case_id not in months_of_stock:
                 for product in unique_products:
-                    months_of_stock[case_id][product.product_id] = self._get_latest_mos_for_product(
-                        case_id, product, stock_state_map
-                    )
+                    soh = sohs_dict.get((case_id, product.product_id))
+                    consumption = stock_state_map.get((case_id, product.product_id))
+                    if soh and consumption:
+                        months_of_stock[case_id][product.product_id] = soh / consumption
 
         return {
             'without_stock': {
