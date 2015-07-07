@@ -15,7 +15,8 @@
             "bulk-payment-form",
             {
                 submitBtnText: "{% trans "Submit Payment" %}",
-                errorMessages: {{ payment_error_messages|JSON }}
+                errorMessages: {{ payment_error_messages|JSON }},
+                submitURL: "{{ process_bulk_payment_url }}",
             }
         );
 
@@ -25,6 +26,7 @@
                 submitBtnText: "{% trans "Submit Invoice Request" %}",
                 isWire: true,
                 errorMessages: {{ payment_error_messages|JSON }},
+                submitURL: "{{ process_wire_invoice_url }}",
             }
         );
 
@@ -33,6 +35,7 @@
             {
                 submitBtnText: "{% trans "Submit Payment" %}",
                 errorMessages: {{ payment_error_messages|JSON }},
+                submitURL: "{{ process_invoice_payment_url }}",
             }
         );
 
