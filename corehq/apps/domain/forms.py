@@ -1233,6 +1233,7 @@ class InternalSubscriptionManagementForm(forms.Form):
     @property
     def subscription_default_fields(self):
         return {
+            'internal_change': True,
             'web_user': self.web_user,
         }
 
@@ -1557,7 +1558,6 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
             'auto_generate_credits': True,
             'date_end': self.cleaned_data['end_date'],
             'do_not_invoice': False,
-            'internal_change': True,
             'service_type': SubscriptionType.CONTRACTED,
         })
         return fields
