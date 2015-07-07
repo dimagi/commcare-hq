@@ -4,6 +4,7 @@ import logging
 from datetime import timedelta, datetime
 from django.conf import settings
 
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.http import Http404
 from casexml.apps.case.models import CommCareCase
@@ -441,9 +442,11 @@ class FormExportReport(FormExportReportBase):
             'export': self.exports[0],
             'exports': self.exports,
             "use_bulk": len(self.export_ids) > 1,
-            'additional_params': '&'.join('export_id=%(export_id)s' % {
-                'export_id': export_id,
-            } for export_id in self.export_ids),
+            'additional_params': mark_safe(
+                '&'.join('export_id=%(export_id)s' % {
+                    'export_id': export_id,
+                } for export_id in self.export_ids)
+            ),
             'selected_exports_data': self.selected_exports_data,
         })
         return context
