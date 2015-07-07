@@ -1,20 +1,29 @@
-{% load i18n %}{% blocktrans %}Dear {{ name }},
+{% load i18n %}{% blocktrans %}Dear {{ name }},{% endblocktrans %}
 
-This email is a receipt for your payment of {{ amount }} for {{ credit_name }}
-credits to your project {{ project }}.
+{% blocktrans %}
+This email is a receipt for your prepayment of {{ amount }} for credits to your project {{ project }}.
+{% endblocktrans %}
 
-Amount: {{ amount }}
-Item: {{ credit_name }} Credits
-Payment Date: {{ date_paid }}
-Transaction No.: {{ transaction_id }}
+{% for item in items %}
+    {{item.type}}: {{item.amount}}
+{% endfor %}
+    {% trans 'Total' %}: {{ amount }}
 
+{% trans 'Payment Date' %}: {{ date_paid }}
+{% trans 'Transaction No.' %}: {{ transaction_id }}
+
+{% blocktrans %}
 Thank you for using {{ product }}. If you have any questions, please don't
 hesitate to contact {{ invoicing_contact_email }}.
+{% endblocktrans %}
 
+{% blocktrans %}
 Best Regards,
 The {{ product }} HQ Team
 www.commcarehq.org
+{% endblocktrans %}
 
+{% blocktrans %}
 Email From:
 CommCare HQ and the corporation Dimagi, Inc.
 585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA
