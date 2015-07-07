@@ -918,19 +918,15 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
     def initial_columns(self):
         columns = super(ConfigureTableReportForm, self).initial_columns
 
-        # Remove the aggregation indicator from the columns
+        # Remove the aggregation indicator from the columns.
         # It gets removed because we want it to be a column in the report,
         # but we don't want it to appear in the builder.
         if self.existing_report:
-            keepers = []
             agg_properties = [
                 self._get_property_from_column(c)
                 for c in self.existing_report.aggregation_columns
             ]
-            for col in columns:
-                if col.property not in agg_properties:
-                    keepers.append(col)
-            return keepers
+            return [c for c in columns if c.property not in agg_properties]
         return columns
 
     @property
